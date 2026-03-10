@@ -136,18 +136,6 @@ O QUE ESTE ARQUIVO FAZ:
 2. bloco principal 2
 3. bloco principal 3
 
-PONTOS CRITICOS:
-- dependencia de contexto ou logica critica.
--->
-```
-
-Regras praticas:
-
-- comentarios internos devem ser raros e reservados para logica critica
-- migrations podem ter cabecalho, mas nao devem ser reescritas sem necessidade
-- se um arquivo crescer demais, divida por assunto antes de empilhar mais responsabilidade
-- o template base para novos arquivos continua em [docs/new-file-template.md](docs/new-file-template.md)
-
 ## Papeis atuais do sistema
 
 - owner: visao estrategica do box e acesso maximo de negocio
@@ -197,9 +185,8 @@ Execucao:
 python manage.py import_students_csv caminho/para/alunos.csv
 ```
 
-## Proximos passos sugeridos
+## Ideias que podem ser inteligentes
 
-- mover partes mais densas da logica comercial de catalog/views.py para services dedicados
 - adicionar exportacao de relatorios financeiros e comerciais
 - aprofundar a camada de acompanhamento de recorrencia e renegociacao
 - ampliar auditoria para revisao operacional por papel
