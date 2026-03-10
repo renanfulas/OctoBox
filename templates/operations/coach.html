@@ -1,0 +1,106 @@
+<!--
+ARQUIVO: tela operacional do Coach.
+
+POR QUE ELE EXISTE:
+- Entrega uma área prática para operação de aula e presença.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Mostra aulas do dia.
+2. Lista alunos por aula.
+3. Permite registrar check-in, check-out e falta.
+
+PONTOS CRITICOS:
+- Os botões alteram o estado real da presença.
+-->
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div>
+        <h1>Área do Coach</h1>
+        <p>Esta tela foi isolada para o coach trabalhar aula, presença e acompanhamento do dia sem misturar financeiro, entrada administrativa ou rotinas do gerente.</p>
+    </div>
+    <div class="actions">
+        <span class="pill">Operação de aula</span>
+    </div>
+</section>
+
+<section class="table-card" style="margin-bottom: 24px;">
+    <p class="eyebrow">Como usar esta tela</p>
+    <ul class="capability-list">
+        {% for note in coach_notes %}
+        <li>{{ note }}</li>
+        {% endfor %}
+    </ul>
+</section>
+
+<section class="table-card" style="margin-bottom: 24px;">
+    <p class="eyebrow">Limites desta área</p>
+    <ul class="capability-list">
+        {% for note in coach_boundaries %}
+        <li>{{ note }}</li>
+        {% endfor %}
+    </ul>
+</section>
+
+{% for session in sessions_today %}
+<section class="table-card" style="margin-bottom: 24px;">
+    <p class="eyebrow">{{ session.title }} - {{ session.scheduled_at|date:"d/m/Y H:i" }}</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Aluno</th>
+                <th>Status</th>
+                <th>Ações</th>
+                <th>Ocorrência técnica</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for attendance in session.attendances.all %}
+            <tr>
+                <td>{{ attendance.student.full_name }}</td>
+                <td>{{ attendance.get_status_display }}</td>
+                <td>
+                    <div class="actions" style="margin-top: 0;">
+                        <form method="post" action="/operacao/presenca/{{ attendance.id }}/check-in/">
+                            {% csrf_token %}
+                            <button class="button" type="submit">Check-in</button>
+                        </form>
+                        <form method="post" action="/operacao/presenca/{{ attendance.id }}/check-out/">
+                            {% csrf_token %}
+                            <button class="button secondary" type="submit">Check-out</button>
+                        </form>
+                        <form method="post" action="/operacao/presenca/{{ attendance.id }}/absent/">
+                            {% csrf_token %}
+                            <button class="button secondary" type="submit">Falta</button>
+                        </form>
+                    </div>
+                </td>
+                <td>
+                    <form method="post" action="/operacao/aluno/{{ attendance.student.id }}/ocorrencia-tecnica/">
+                        {% csrf_token %}
+                        <select name="category">
+                            {% for value, label in behavior_categories %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <textarea name="description" rows="2" style="width: 100%; margin-top: 8px;">{{ attendance.notes }}</textarea>
+                        <div class="actions" style="margin-top: 8px;">
+                            <button class="button secondary" type="submit">Registrar</button>
+                        </div>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4">Nenhuma presença registrada para esta aula.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% empty %}
+<section class="table-card">
+    <p class="eyebrow">Agenda de hoje</p>
+    <p>Não há aulas cadastradas para hoje.</p>
+</section>
+{% endfor %}
+{% endblock %}

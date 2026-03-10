@@ -1,0 +1,187 @@
+<!--
+ARQUIVO: tela principal do dashboard.
+
+POR QUE ELE EXISTE:
+- Mostra de forma rápida o estado geral do box.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Exibe métricas principais.
+2. Exibe próximas aulas, alertas financeiros e risco operacional.
+3. Exibe o papel do usuário e sua leitura de escopo.
+
+PONTOS CRITICOS:
+- Depende fortemente do contexto montado em dashboard/views.py.
+- Se nomes de chaves do contexto mudarem, a tela quebra visualmente.
+-->
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div>
+        <h1>Operação do box em um painel só.</h1>
+        <p>
+            Esta primeira implementação já concentra cadastro, aulas, presença, pagamentos e ocorrências.
+            O núcleo foi pensado para crescer depois com WhatsApp, avaliação física e controle de cargas.
+        </p>
+        <div class="actions">
+            <span class="pill">{{ current_role.label }}</span>
+            <a class="button secondary" href="/acessos/">Ver papéis e acessos</a>
+        </div>
+    </div>
+    <div class="actions">
+        <a class="button" href="/admin/">Entrar no admin</a>
+        <a class="button secondary" href="/admin/auth/user/add/">Criar usuário</a>
+    </div>
+</section>
+
+<section class="layout-grid" style="margin-bottom: 24px;">
+    <article class="table-card">
+        <p class="eyebrow">Escopo do seu papel hoje</p>
+        <p>Este usuário está operando como <strong>{{ current_role.label }}</strong>. A camada de acessos já está preparada para começar a separar dono, gerente e coach.</p>
+        <ul class="capability-list">
+            {% for capability in role_capabilities %}
+            <li>{{ capability }}</li>
+            {% empty %}
+            <li>Defina um grupo de acesso para este usuário.</li>
+            {% endfor %}
+        </ul>
+    </article>
+
+    <article class="table-card">
+        <p class="eyebrow">Papéis pensados para o produto</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Papel</th>
+                    <th>Foco</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for role in role_definitions %}
+                <tr>
+                    <td>{{ role.label }}</td>
+                    <td>{{ role.summary }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+</section>
+
+<section class="panel-grid">
+    <article class="card">
+        <p class="eyebrow">Alunos ativos</p>
+        <p class="metric">{{ metrics.active_students }}</p>
+        <p class="metric-note">Base principal para check-in e retenção.</p>
+    </article>
+    <article class="card">
+        <p class="eyebrow">Aulas hoje</p>
+        <p class="metric">{{ metrics.sessions_today }}</p>
+        <p class="metric-note">Agenda operacional do dia.</p>
+    </article>
+    <article class="card">
+        <p class="eyebrow">Pagamentos atrasados</p>
+        <p class="metric">{{ metrics.overdue_payments }}</p>
+        <p class="metric-note">Prioridade para ação da secretaria.</p>
+    </article>
+    <article class="card">
+        <p class="eyebrow">Presenças no mês</p>
+        <p class="metric">{{ metrics.attendance_this_month }}</p>
+        <p class="metric-note">Volume de comparecimentos registrados.</p>
+    </article>
+    <article class="card">
+        <p class="eyebrow">Receita recebida no mês</p>
+        <p class="metric">R$ {{ metrics.monthly_revenue_paid }}</p>
+        <p class="metric-note">Somatório dos pagamentos marcados como pagos.</p>
+    </article>
+    <article class="card">
+        <p class="eyebrow">Ocorrências no mês</p>
+        <p class="metric">{{ metrics.occurrences_this_month }}</p>
+        <p class="metric-note">Eventos de acompanhamento comportamental.</p>
+    </article>
+</section>
+
+<section class="layout-grid">
+    <article class="table-card">
+        <p class="eyebrow">Próximas aulas</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Aula</th>
+                    <th>Coach</th>
+                    <th>Horário</th>
+                    <th>Ocupação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for session in upcoming_sessions %}
+                <tr>
+                    <td>{{ session.title }}</td>
+                    <td>{{ session.coach|default:"Não definido" }}</td>
+                    <td>{{ session.scheduled_at|date:"d/m/Y H:i" }}</td>
+                    <td><span class="pill">{{ session.occupied_slots }}/{{ session.capacity }}</span></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">Nenhuma aula cadastrada ainda.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+
+    <article class="table-card">
+        <p class="eyebrow">Alertas financeiros</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Aluno</th>
+                    <th>Vencimento</th>
+                    <th>Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payment_alerts %}
+                <tr>
+                    <td>{{ payment.student.full_name }}</td>
+                    <td>{{ payment.due_date|date:"d/m/Y" }}</td>
+                    <td><span class="pill warning">R$ {{ payment.amount }}</span></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">Nenhum pagamento atrasado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+
+    <article class="table-card" style="grid-column: 1 / -1;">
+        <p class="eyebrow">Risco operacional por aluno</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Aluno</th>
+                    <th>Presenças</th>
+                    <th>Faltas</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in student_health %}
+                <tr>
+                    <td>{{ student.full_name }}</td>
+                    <td>{{ student.total_attendances }}</td>
+                    <td>{{ student.total_absences }}</td>
+                    <td>{{ student.get_status_display }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">Sem dados suficientes para análise.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+</section>
+{% endblock %}

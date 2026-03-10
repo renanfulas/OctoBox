@@ -1,0 +1,174 @@
+<!--
+ARQUIVO: tela de login.
+
+POR QUE ELE EXISTE:
+- É a porta de entrada visual do sistema.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Renderiza o formulário de autenticação.
+2. Explica os papéis principais do sistema.
+3. Encaminha o usuário para a área protegida após login.
+
+PONTOS CRITICOS:
+- Alterações nos campos precisam respeitar o formulário padrão de autenticação do Django.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Entrar | OctoBox Control</title>
+    <style>
+        :root {
+            --bg: #f3f1ea;
+            --surface: #fffdf8;
+            --ink: #16211f;
+            --muted: #5f6c67;
+            --line: #d7d1c3;
+            --brand: #c96f24;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top right, rgba(201, 111, 36, 0.16), transparent 22%),
+                radial-gradient(circle at bottom left, rgba(31, 106, 93, 0.14), transparent 28%),
+                var(--bg);
+        }
+
+        .login-shell {
+            width: min(980px, 100%);
+            display: grid;
+            grid-template-columns: 1.1fr 420px;
+            border-radius: 28px;
+            overflow: hidden;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            box-shadow: 0 24px 60px rgba(22, 33, 31, 0.1);
+        }
+
+        .story {
+            padding: 48px;
+            background: rgba(22, 33, 31, 0.95);
+            color: #f4efe5;
+        }
+
+        .story h1 {
+            margin: 0 0 12px;
+            font-size: clamp(2rem, 4vw, 3.4rem);
+        }
+
+        .story p {
+            color: rgba(244, 239, 229, 0.76);
+            line-height: 1.7;
+        }
+
+        .story ul {
+            margin: 28px 0 0;
+            padding-left: 20px;
+            line-height: 1.8;
+        }
+
+        .form-wrap {
+            padding: 40px 32px;
+        }
+
+        .form-wrap h2 {
+            margin: 0 0 10px;
+            font-size: 1.9rem;
+        }
+
+        .subtitle {
+            margin: 0 0 24px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            margin-bottom: 18px;
+            background: #fff;
+            font-size: 1rem;
+        }
+
+        button {
+            width: 100%;
+            border: 0;
+            border-radius: 999px;
+            padding: 14px 18px;
+            background: var(--brand);
+            color: #fffdf8;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .errorlist {
+            margin: 0 0 16px;
+            padding-left: 18px;
+            color: #a84434;
+        }
+
+        .helper {
+            margin-top: 20px;
+            color: var(--muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 900px) {
+            .login-shell {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-shell">
+        <section class="story">
+            <h1>OctoBox Control</h1>
+            <p>
+                A camada de acesso do projeto agora já separa dono, gerente e coach para o sistema crescer com responsabilidades claras.
+            </p>
+            <ul>
+                <li>Owner: visão estratégica e controle total.</li>
+                <li>Manager: operação, alunos, agenda e financeiro.</li>
+                <li>Coach: treino, presença e acompanhamento técnico.</li>
+            </ul>
+        </section>
+        <section class="form-wrap">
+            <h2>Entrar no sistema</h2>
+            <p class="subtitle">Use um usuário interno da academia para acessar o painel.</p>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                <label for="id_username">Usuário</label>
+                {{ form.username }}
+                <label for="id_password">Senha</label>
+                {{ form.password }}
+                <button type="submit">Entrar</button>
+                <input type="hidden" name="next" value="{{ next }}">
+            </form>
+            <p class="helper">
+                Primeiro acesso: rode o comando de grupos, crie os usuários e associe cada pessoa ao papel correto no admin.
+            </p>
+        </section>
+    </div>
+</body>
+</html>

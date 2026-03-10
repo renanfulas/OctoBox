@@ -1,0 +1,39 @@
+"""
+ARQUIVO: testes da página de guia interno.
+
+POR QUE ELE EXISTE:
+- Garante que a página Mapa do Sistema continue acessível e útil para leitura do projeto.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Testa renderização da página autenticada.
+2. Valida a presença de conteúdos centrais do mapa.
+
+PONTOS CRITICOS:
+- Se esses testes falharem, a página de orientação interna pode ter quebrado ou perdido contexto.
+"""
+
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+from django.urls import reverse
+
+
+class GuideViewTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_superuser(
+            username='owner-guide',
+            email='owner-guide@example.com',
+            password='senha-forte-123',
+        )
+
+    def test_system_map_renders_for_authenticated_user(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('system-map'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Mapa do Sistema')
+        self.assertContains(response, 'Onde procurar quando houver bug')
+        self.assertContains(response, 'Operação por papel')
+        self.assertContains(response, 'Sidebar errada para o papel')
+        self.assertContains(response, 'Auditoria')
+        self.assertContains(response, 'DEV')

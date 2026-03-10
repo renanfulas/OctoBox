@@ -1,0 +1,310 @@
+<!--
+ARQUIVO: layout base do front-end autenticado.
+
+POR QUE ELE EXISTE:
+- Reúne a estrutura visual comum do sistema: sidebar, navegação e estilos compartilhados.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Define a casca visual principal do app.
+2. Mostra informações do usuário logado.
+3. Renderiza a navegação principal conforme o papel efetivo do usuário.
+
+PONTOS CRITICOS:
+- Esse template afeta praticamente todas as telas autenticadas.
+- Se o context processor de navegação falhar, a sidebar perde coerência com as permissões reais.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OctoBox Control</title>
+    <style>
+        :root {
+            --bg: #f3f1ea;
+            --surface: #fffdf8;
+            --ink: #16211f;
+            --muted: #5f6c67;
+            --line: #d7d1c3;
+            --brand: #c96f24;
+            --brand-dark: #7d4213;
+            --accent: #1f6a5d;
+            --danger: #a84434;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top right, rgba(201, 111, 36, 0.16), transparent 22%),
+                radial-gradient(circle at bottom left, rgba(31, 106, 93, 0.14), transparent 28%),
+                var(--bg);
+        }
+
+        a {
+            color: inherit;
+        }
+
+        .shell {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 260px 1fr;
+        }
+
+        .sidebar {
+            padding: 32px 24px;
+            background: rgba(22, 33, 31, 0.95);
+            color: #f4efe5;
+        }
+
+        .brand {
+            font-size: 1.7rem;
+            margin: 0 0 8px;
+            letter-spacing: 0.02em;
+        }
+
+        .tagline {
+            margin: 0 0 32px;
+            color: rgba(244, 239, 229, 0.72);
+            line-height: 1.5;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(244, 239, 229, 0.12);
+            border-radius: 14px;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .sidebar-block {
+            margin-bottom: 24px;
+        }
+
+        .sidebar-meta {
+            padding: 14px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(244, 239, 229, 0.08);
+            color: rgba(244, 239, 229, 0.86);
+        }
+
+        .sidebar-meta strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.92rem;
+        }
+
+        .content {
+            padding: 32px;
+        }
+
+        .hero {
+            display: flex;
+            justify-content: space-between;
+            gap: 24px;
+            align-items: end;
+            margin-bottom: 28px;
+        }
+
+        .hero h1 {
+            margin: 0 0 8px;
+            font-size: clamp(2rem, 4vw, 3.3rem);
+        }
+
+        .hero p {
+            margin: 0;
+            max-width: 720px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .panel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .card,
+        .table-card {
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            background: rgba(255, 253, 248, 0.94);
+            box-shadow: 0 18px 40px rgba(42, 47, 45, 0.06);
+        }
+
+        .card {
+            padding: 20px;
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        .metric {
+            font-size: 2rem;
+            margin: 0;
+        }
+
+        .metric-note {
+            margin: 8px 0 0;
+            color: var(--muted);
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr;
+            gap: 20px;
+        }
+
+        .table-card {
+            padding: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            font-size: 0.82rem;
+            color: var(--muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 0.82rem;
+            background: rgba(31, 106, 93, 0.12);
+            color: var(--accent);
+        }
+
+        .pill.warning {
+            background: rgba(168, 68, 52, 0.12);
+            color: var(--danger);
+        }
+
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .button {
+            display: inline-block;
+            text-decoration: none;
+            border-radius: 999px;
+            padding: 12px 18px;
+            border: 1px solid transparent;
+            background: var(--brand);
+            color: #fffdf8;
+        }
+
+        .button.secondary {
+            background: transparent;
+            color: var(--brand-dark);
+            border-color: var(--line);
+        }
+
+        .capability-list {
+            margin: 0;
+            padding-left: 18px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .capability-list li + li {
+            margin-top: 6px;
+        }
+
+        .message-stack {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .message {
+            padding: 14px 18px;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: rgba(255, 253, 248, 0.96);
+        }
+
+        .message.success {
+            border-color: rgba(31, 106, 93, 0.22);
+            background: rgba(31, 106, 93, 0.08);
+        }
+
+        .message.error {
+            border-color: rgba(168, 68, 52, 0.22);
+            background: rgba(168, 68, 52, 0.08);
+        }
+
+        @media (max-width: 960px) {
+            .shell {
+                grid-template-columns: 1fr;
+            }
+
+            .layout-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <aside class="sidebar">
+            <h1 class="brand">OctoBox Control</h1>
+            <p class="tagline">Centro operacional do box para frequência, financeiro, comportamento e futuras integrações.</p>
+            {% if user.is_authenticated %}
+            <div class="sidebar-block sidebar-meta">
+                <strong>{{ user.get_full_name|default:user.username }}</strong>
+                <span>{{ current_role.label|default:"Sem papel definido" }}</span>
+            </div>
+            {% for item in sidebar_navigation %}
+            <a class="nav-link" href="{{ item.href }}">{{ item.label }}</a>
+            {% endfor %}
+            <a class="nav-link" href="/logout/">Sair</a>
+            {% else %}
+            <a class="nav-link" href="/login/">Entrar</a>
+            {% endif %}
+        </aside>
+        <main class="content">
+            {% if messages %}
+            <div class="message-stack">
+                {% for message in messages %}
+                <div class="message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

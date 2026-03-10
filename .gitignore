@@ -1,0 +1,39 @@
+# Ambientes virtuais
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+
+# Django / banco local
+db.sqlite3
+*.sqlite3
+media/
+staticfiles/
+
+# Segredos e variaveis locais
+.env
+.env.*
+!.env.example
+
+# Testes, cobertura e caches
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Editor / sistema operacional
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log

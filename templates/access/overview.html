@@ -1,0 +1,44 @@
+<!--
+ARQUIVO: tela de visão geral de papéis e acessos.
+
+POR QUE ELE EXISTE:
+- Ajuda a entender quem pode fazer o quê dentro do sistema.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Mostra o papel atual do usuário.
+2. Lista capacidades de cada papel.
+3. Serve como mapa funcional da hierarquia de acesso.
+
+PONTOS CRITICOS:
+- Depende diretamente do contexto role_definitions e current_role.
+-->
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div>
+        <h1>Papéis e acessos</h1>
+        <p>
+            Esta é a primeira matriz funcional do sistema. Ela organiza o projeto por responsabilidade de negócio e já prepara a base para permissões mais finas nas próximas telas.
+        </p>
+    </div>
+    <div class="actions">
+        <span class="pill">Papel atual: {{ current_role.label }}</span>
+        <a class="button" href="/admin/auth/group/">Gerenciar grupos</a>
+    </div>
+</section>
+
+<section class="layout-grid">
+    {% for role in role_definitions %}
+    <article class="table-card">
+        <p class="eyebrow">{{ role.label }}</p>
+        <p>{{ role.summary }}</p>
+        <ul class="capability-list">
+            {% for capability in role.capabilities %}
+            <li>{{ capability }}</li>
+            {% endfor %}
+        </ul>
+    </article>
+    {% endfor %}
+</section>
+{% endblock %}

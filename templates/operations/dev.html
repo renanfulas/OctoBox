@@ -1,0 +1,84 @@
+<!--
+ARQUIVO: tela operacional do DEV.
+
+POR QUE ELE EXISTE:
+- Entrega uma área técnica separada da rotina de negócio.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Resume navegação técnica e segurança.
+2. Mostra eventos recentes de auditoria.
+3. Explica o limite entre manutenção, operação e contingência.
+
+PONTOS CRITICOS:
+- Esta área não deve virar atalho para operação administrativa ou técnica do box.
+-->
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div>
+        <h1>Área do DEV</h1>
+        <p>Esta área existe para manutenção, leitura sistêmica e investigação. Ela não substitui owner, manager nem coach e já nasce apoiada por trilha de auditoria.</p>
+    </div>
+    <div class="actions">
+        <span class="pill">Acesso técnico controlado</span>
+        <a class="button secondary" href="/mapa-sistema/">Abrir mapa do sistema</a>
+    </div>
+</section>
+
+<section class="panel-grid">
+    {% for label, value in technical_metrics.items %}
+    <article class="card">
+        <p class="eyebrow">{{ label }}</p>
+        <p class="metric">{{ value }}</p>
+    </article>
+    {% endfor %}
+</section>
+
+<section class="layout-grid" style="margin-bottom: 24px;">
+    <article class="table-card">
+        <p class="eyebrow">Limites do papel DEV</p>
+        <ul class="capability-list">
+            {% for item in dev_boundaries %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </article>
+    <article class="table-card">
+        <p class="eyebrow">Leituras úteis</p>
+        <ul class="capability-list">
+            <li>Mapa do sistema para entender arquitetura e fluxo.</li>
+            <li>Papéis e acessos para revisar fronteiras de permissão.</li>
+            <li>Trilha de auditoria para investigar ações sensíveis recentes.</li>
+        </ul>
+    </article>
+</section>
+
+<section class="table-card">
+    <p class="eyebrow">Eventos recentes de auditoria</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Quando</th>
+                <th>Ator</th>
+                <th>Papel</th>
+                <th>Ação</th>
+                <th>Alvo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for event in recent_audit_events %}
+            <tr>
+                <td>{{ event.created_at|date:"d/m/Y H:i" }}</td>
+                <td>{{ event.actor.username|default:"Sistema" }}</td>
+                <td>{{ event.actor_role|default:"-" }}</td>
+                <td>{{ event.action }}</td>
+                <td>{{ event.target_label|default:event.target_model }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">Nenhum evento sensível registrado ainda.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

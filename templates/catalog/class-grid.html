@@ -1,0 +1,89 @@
+<!--
+ARQUIVO: página visual da grade de aulas.
+
+POR QUE ELE EXISTE:
+- Entrega uma visão simples da agenda para organizar mentalmente o domínio das aulas.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Mostra métricas rápidas da grade futura.
+2. Agrupa aulas por dia.
+3. Exibe coach, status e ocupação de forma legível.
+
+PONTOS CRITICOS:
+- Depende do contexto montado em catalog/views.py.
+-->
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div>
+        <h1>Grade de aulas</h1>
+        <p>Esta página organiza visualmente a agenda do box para você enxergar a grade antes de mergulhar em regras mais profundas de ocupação, lotação, reservas e exceções operacionais.</p>
+    </div>
+    <div class="actions">
+        <span class="pill">Leitura da agenda</span>
+        <a class="button secondary" href="/admin/boxcore/classsession/">Abrir no admin</a>
+    </div>
+</section>
+
+<section class="panel-grid">
+    {% for label, value in class_metrics.items %}
+    <article class="card">
+        <p class="eyebrow">{{ label }}</p>
+        <p class="metric">{{ value }}</p>
+    </article>
+    {% endfor %}
+</section>
+
+<section class="layout-grid" style="margin-bottom: 24px;">
+    <article class="table-card">
+        <p class="eyebrow">Como ler esta página</p>
+        <ul class="capability-list">
+            {% for item in class_focus %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </article>
+    <article class="table-card">
+        <p class="eyebrow">Próxima evolução natural</p>
+        <ul class="capability-list">
+            <li>Depois esta grade pode ganhar visão semanal, filtros e conflitos de lotação.</li>
+            <li>Hoje o foco é ajudar a separar agenda de aula do restante do sistema.</li>
+            <li>A ocupação mostrada aqui já ajuda a visualizar a pressão operacional.</li>
+        </ul>
+    </article>
+</section>
+
+{% for day, sessions in grouped_sessions %}
+<section class="table-card" style="margin-bottom: 24px;">
+    <p class="eyebrow">{{ day|date:"l, d/m/Y" }}</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Aula</th>
+                <th>Coach</th>
+                <th>Horário</th>
+                <th>Status</th>
+                <th>Ocupação</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for session in sessions %}
+            <tr>
+                <td>{{ session.title }}</td>
+                <td>{{ session.coach|default:"Não definido" }}</td>
+                <td>{{ session.scheduled_at|date:"H:i" }}</td>
+                <td>{{ session.get_status_display }}</td>
+                <td>{{ session.occupied_slots }}/{{ session.capacity }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% empty %}
+<section class="table-card">
+    <p class="eyebrow">Agenda</p>
+    <p>Não há aulas cadastradas para os próximos 14 dias.</p>
+</section>
+{% endfor %}
+{% endblock %}

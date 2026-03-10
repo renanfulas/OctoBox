@@ -1,0 +1,194 @@
+<!--
+ARQUIVO: pagina visual de alunos.
+
+POR QUE ELE EXISTE:
+- Entrega uma visao comercial e operacional da base principal sem depender do admin.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Mostra metricas da base e do funil.
+2. Permite busca e filtros por status comercial e financeiro.
+3. Exibe a fila de intake pronta para conversao.
+4. Lista alunos com atalhos para operacao leve e admin.
+
+PONTOS CRITICOS:
+- Depende do contexto e das anotacoes montadas em boxcore/catalog/views.py.
+-->
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div>
+        <h1>Alunos</h1>
+        <p>Esta página existe para dar uma leitura clara da base principal de pessoas do sistema. Ela ajuda a separar mentalmente o domínio do aluno antes de entrar em regras mais pesadas de matrícula, pagamento e duplicidade.</p>
+    </div>
+    <div class="actions">
+        <span class="pill">Leitura da base</span>
+        {% if can_manage_students %}
+        <a class="button" href="/alunos/novo/">Cadastrar aluno com fluxo leve</a>
+        {% endif %}
+        <a class="button secondary" href="/admin/boxcore/student/">Abrir no admin</a>
+    </div>
+</section>
+
+<section class="panel-grid">
+    {% for label, value in student_metrics.items %}
+    <article class="card">
+        <p class="eyebrow">{{ label }}</p>
+        <p class="metric">{{ value }}</p>
+    </article>
+    {% endfor %}
+</section>
+
+<section class="panel-grid">
+    {% for label, value in student_funnel.items %}
+    <article class="card" style="background: rgba(255, 253, 248, 0.86);">
+        <p class="eyebrow">{{ label }}</p>
+        <p class="metric">{{ value }}</p>
+    </article>
+    {% endfor %}
+</section>
+
+<section class="table-card" style="margin-bottom: 24px;">
+    <p class="eyebrow">Busca e recorte comercial</p>
+    <form method="get" style="display:grid; gap:14px;">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px;">
+            <label>
+                <span class="field-label">{{ student_filter_form.query.label }}</span>
+                {{ student_filter_form.query }}
+            </label>
+            <label>
+                <span class="field-label">{{ student_filter_form.student_status.label }}</span>
+                {{ student_filter_form.student_status }}
+            </label>
+            <label>
+                <span class="field-label">{{ student_filter_form.commercial_status.label }}</span>
+                {{ student_filter_form.commercial_status }}
+            </label>
+            <label>
+                <span class="field-label">{{ student_filter_form.payment_status.label }}</span>
+                {{ student_filter_form.payment_status }}
+            </label>
+        </div>
+        <div class="actions" style="margin-top: 0;">
+            <button class="button" type="submit">Aplicar filtros</button>
+            <a class="button secondary" href="/alunos/">Limpar</a>
+        </div>
+    </form>
+</section>
+
+<section class="layout-grid" style="margin-bottom: 24px;">
+    <article class="table-card" style="background: linear-gradient(145deg, rgba(201, 111, 36, 0.16), rgba(255, 253, 248, 0.96));">
+        <p class="eyebrow">Atalho inteligente</p>
+        <h2 style="margin: 0 0 10px; font-size: 1.6rem;">Cadastro rápido, sem te jogar no backoffice bruto</h2>
+        <p style="margin: 0 0 16px; color: var(--muted); line-height: 1.6;">Você pode começar só com nome completo e WhatsApp e completar o resto depois. A ideia é reduzir atrito no primeiro contato, sem perder organização.</p>
+        {% if can_manage_students %}
+        <div class="actions" style="margin-top: 0;">
+            <a class="button" href="/alunos/novo/">Abrir cadastro rápido</a>
+            <a class="button secondary" href="/admin/boxcore/student/add/">Usar admin clássico</a>
+        </div>
+        {% else %}
+        <p style="margin: 0; color: var(--muted); line-height: 1.6;">Seu papel atual pode consultar a base, mas não cadastrar alunos por esta tela.</p>
+        {% endif %}
+    </article>
+
+    <article class="table-card">
+        <p class="eyebrow">Como ler esta página</p>
+        <ul class="capability-list">
+            {% for item in student_focus %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </article>
+    <article class="table-card">
+        <p class="eyebrow">Próxima evolução natural</p>
+        <ul class="capability-list">
+            <li>Agora ja existe costura entre entrada provisoria, aluno definitivo e camada comercial.</li>
+            <li>Busca e filtros ajudam a operar a base quando o volume começar a subir.</li>
+            <li>O objetivo desta tela e decidir rapido quem entra, quem converte e quem exige acao financeira.</li>
+        </ul>
+    </article>
+</section>
+
+<section class="table-card" style="margin-bottom: 24px;">
+    <p class="eyebrow">Fila de entrada provisoria pronta para conversao</p>
+    <div style="display:grid; gap:14px;">
+        {% for intake in intake_queue %}
+        <div style="padding: 16px; border-radius: 18px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.45); display:grid; grid-template-columns: 1fr auto; gap:16px; align-items:center;">
+            <div>
+                <strong>{{ intake.full_name }}</strong>
+                <p style="margin: 6px 0; color: var(--muted);">{{ intake.phone }}{% if intake.email %} | {{ intake.email }}{% endif %}</p>
+                <p style="margin: 0; color: var(--muted);">{{ intake.get_source_display }} | {{ intake.get_status_display }}</p>
+            </div>
+            {% if can_manage_students %}
+            <div class="actions" style="margin-top: 0;">
+                <a class="button" href="/alunos/novo/?intake={{ intake.id }}">Converter em aluno</a>
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <p style="margin:0; color: var(--muted);">Nenhuma entrada provisoria aguardando conversao agora.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="table-card">
+    <p class="eyebrow">Base principal de alunos</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>WhatsApp</th>
+                <th>Status</th>
+                <th>E-mail</th>
+                <th>Atualizado</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ student.full_name }}</td>
+                <td>{{ student.phone }}</td>
+                <td>
+                    <div style="display:grid; gap:8px;">
+                        <span>{{ student.get_status_display }}</span>
+                        {% if student.latest_enrollment_status %}<span class="pill">{{ student.latest_enrollment_status }}</span>{% endif %}
+                        {% if student.latest_payment_status == 'overdue' %}<span class="pill warning">Financeiro em atraso</span>{% endif %}
+                    </div>
+                </td>
+                <td>{% if student.email %}{{ student.email }}{% else %}Nao informado{% endif %}</td>
+                <td>{{ student.updated_at|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <div class="actions" style="margin-top: 0;">
+                        {% if can_manage_students %}
+                        <a class="button secondary" href="/alunos/{{ student.id }}/editar/">Editar</a>
+                        {% endif %}
+                        <a class="button secondary" href="/admin/boxcore/student/{{ student.id }}/change/">Admin</a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6">Nenhum aluno cadastrado ainda.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+<style>
+    input, select {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: rgba(255, 253, 248, 0.95);
+        color: var(--ink);
+        font: inherit;
+    }
+
+    .field-label {
+        display:block;
+        margin-bottom:8px;
+        font-weight:600;
+    }
+</style>
+{% endblock %}

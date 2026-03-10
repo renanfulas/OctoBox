@@ -1,0 +1,97 @@
+<!--
+ARQUIVO: edicao visual de plano financeiro.
+
+POR QUE ELE EXISTE:
+- Permite ajustar um plano sem cair direto no admin bruto.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Edita nome, valor, ciclo e entrega do plano.
+2. Mantem o fluxo integrado com a central de financeiro.
+
+PONTOS CRITICOS:
+- Depende do formulario e do contexto montados em catalog/views.py.
+-->
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div>
+        <h1>{{ page_title }}</h1>
+        <p>{{ page_subtitle }}</p>
+    </div>
+    <div class="actions">
+        <span class="pill">Plano comercial</span>
+        <a class="button secondary" href="/financeiro/">Voltar para financeiro</a>
+    </div>
+</section>
+
+<section class="layout-grid" style="align-items: start; grid-template-columns: 1.15fr 0.85fr;">
+    <article class="table-card">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <div style="display: grid; gap: 16px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+                    <label>
+                        <span class="field-label">{{ form.name.label }}</span>
+                        {{ form.name }}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ form.price.label }}</span>
+                        {{ form.price }}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ form.billing_cycle.label }}</span>
+                        {{ form.billing_cycle }}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ form.sessions_per_week.label }}</span>
+                        {{ form.sessions_per_week }}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ form.active.label }}</span>
+                        {{ form.active }}
+                    </label>
+                </div>
+                <label>
+                    <span class="field-label">{{ form.description.label }}</span>
+                    {{ form.description }}
+                </label>
+                <div class="actions" style="margin-top: 0;">
+                    <button class="button" type="submit">Salvar ajustes</button>
+                    <a class="button secondary" href="/admin/boxcore/membershipplan/{{ plan_object.id }}/change/">Editar no admin</a>
+                </div>
+            </div>
+        </form>
+    </article>
+
+    <article class="table-card">
+        <p class="eyebrow">Leitura rapida do plano</p>
+        <h2 style="margin: 0 0 10px; font-size: 1.55rem;">{{ plan_object.name }}</h2>
+        <p style="margin: 0 0 8px; color: var(--muted);">Valor atual: R$ {{ plan_object.price }}</p>
+        <p style="margin: 0 0 8px; color: var(--muted);">Ciclo: {{ plan_object.get_billing_cycle_display }}</p>
+        <p style="margin: 0 0 18px; color: var(--muted);">Aulas por semana: {{ plan_object.sessions_per_week }}</p>
+        <div class="actions" style="margin-top: 0;">
+            <a class="button secondary" href="/financeiro/">Ver portfolio</a>
+            <a class="button secondary" href="/alunos/">Ver alunos</a>
+        </div>
+    </article>
+</section>
+
+<style>
+    input, select, textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: rgba(255, 253, 248, 0.95);
+        color: var(--ink);
+        font: inherit;
+    }
+
+    .field-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}

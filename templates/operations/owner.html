@@ -1,0 +1,44 @@
+<!--
+ARQUIVO: tela operacional do Owner.
+
+POR QUE ELE EXISTE:
+- Entrega uma visão executiva para o dono da academia.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Mostra números estruturais do sistema.
+2. Resume decisões estratégicas já habilitadas.
+
+PONTOS CRITICOS:
+- Depende do contexto headline_metrics e decision_board.
+-->
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div>
+        <h1>Área do Owner</h1>
+        <p>Visão executiva do alicerce do sistema: base de alunos, fila de entrada, preparação de WhatsApp e pontos de decisão do produto.</p>
+    </div>
+    <div class="actions">
+        <span class="pill">Acesso exclusivo do owner</span>
+    </div>
+</section>
+
+<section class="panel-grid">
+    {% for label, value in headline_metrics.items %}
+    <article class="card">
+        <p class="eyebrow">{{ label }}</p>
+        <p class="metric">{{ value }}</p>
+    </article>
+    {% endfor %}
+</section>
+
+<section class="table-card">
+    <p class="eyebrow">Leitura estratégica do momento</p>
+    <ul class="capability-list">
+        {% for item in decision_board %}
+        <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endblock %}

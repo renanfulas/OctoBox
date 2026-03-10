@@ -1,0 +1,417 @@
+<!--
+ARQUIVO: central visual de financeiro.
+
+POR QUE ELE EXISTE:
+- Reune leitura comercial, planos, alertas e historico financeiro em uma tela de decisao.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Mostra indicadores de faturamento, crescimento e cancelamento.
+2. Permite filtrar a leitura por janela, plano, status e metodo.
+3. Permite cadastro rapido de planos do box.
+4. Expone portfolio, mix, fila financeira e movimentos recentes.
+
+PONTOS CRITICOS:
+- Depende do contexto e dos filtros montados em boxcore/catalog/views.py.
+-->
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div>
+        <h1>{{ page_title }}</h1>
+        <p>{{ page_subtitle }}</p>
+    </div>
+    <div class="actions">
+        <span class="pill">Leitura comercial</span>
+        {% if can_manage_finance %}
+        <a class="button" href="#cadastro-plano">Cadastrar plano</a>
+        {% endif %}
+        <a class="button secondary" href="/admin/boxcore/payment/">Abrir pagamentos no admin</a>
+    </div>
+</section>
+
+<section class="panel-grid">
+    {% for label, item in finance_metrics.items %}
+    <article class="card">
+        <p class="eyebrow">{{ label }}</p>
+        <p class="metric">{% if 'faturamento' in label or 'receita' in label or 'ticket' in label %}R$ {{ item.value }}{% else %}{{ item.value }}{% endif %}</p>
+        <p class="metric-note">{{ item.note }}</p>
+    </article>
+    {% endfor %}
+</section>
+
+<section class="table-card" style="margin-bottom: 24px;">
+    <p class="eyebrow">Filtros da leitura financeira</p>
+    <form method="get" style="display:grid; gap:14px;">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px;">
+            <label>
+                <span class="field-label">{{ finance_filter_form.months.label }}</span>
+                {{ finance_filter_form.months }}
+            </label>
+            <label>
+                <span class="field-label">{{ finance_filter_form.plan.label }}</span>
+                {{ finance_filter_form.plan }}
+            </label>
+            <label>
+                <span class="field-label">{{ finance_filter_form.payment_status.label }}</span>
+                {{ finance_filter_form.payment_status }}
+            </label>
+            <label>
+                <span class="field-label">{{ finance_filter_form.payment_method.label }}</span>
+                {{ finance_filter_form.payment_method }}
+            </label>
+        </div>
+        <div class="actions" style="margin-top: 0;">
+            <button class="button" type="submit">Aplicar filtros</button>
+            <a class="button secondary" href="/financeiro/">Limpar</a>
+        </div>
+    </form>
+</section>
+
+<section class="layout-grid" style="margin-bottom: 24px; align-items: start; grid-template-columns: 1.1fr 0.9fr;">
+    <article class="table-card">
+        <p class="eyebrow">Tendencia mensal</p>
+        <h2 style="margin: 0 0 12px; font-size: 1.55rem;">Receita real recebida nos ultimos 6 meses</h2>
+        <p style="margin: 0 0 18px; color: var(--muted); line-height: 1.6;">Aqui voce enxerga se o caixa realmente subiu ou se o crescimento ficou mais narrativo do que financeiro.</p>
+        <div class="chart-grid revenue-chart" style="grid-template-columns: repeat({{ monthly_comparison|length }}, minmax(0, 1fr));">
+            {% for item in monthly_comparison %}
+            <div class="chart-column">
+                <div class="chart-bar-wrap">
+                    <div class="chart-bar revenue" style="height: {% widthratio item.revenue comparison_peaks.max_revenue 100 %}%;"></div>
+                </div>
+                <strong>{{ item.label }}</strong>
+                <span>R$ {{ item.revenue }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="table-card">
+        <p class="eyebrow">Churn e crescimento</p>
+        <h2 style="margin: 0 0 12px; font-size: 1.55rem;">Ativacoes x cancelamentos</h2>
+        <p style="margin: 0 0 18px; color: var(--muted); line-height: 1.6;">O objetivo aqui e medir se o box esta empilhando alunos ou apenas girando base.</p>
+        <div style="display:grid; gap: 14px;">
+            {% for item in monthly_comparison %}
+            <div class="delta-row">
+                <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:8px;">
+                    <strong>{{ item.label }}</strong>
+                    <span class="pill{% if item.net_growth < 0 %} warning{% endif %}">Saldo {{ item.net_growth }}</span>
+                </div>
+                <div class="delta-track-group">
+                    <div>
+                        <div class="delta-label">Ativos</div>
+                        <div class="mix-bar-track"><div class="mix-bar-fill growth" style="width: {% widthratio item.activations comparison_peaks.max_count 100 %}%;"></div></div>
+                    </div>
+                    <div>
+                        <div class="delta-label">Cancelados</div>
+                        <div class="mix-bar-track"><div class="mix-bar-fill churn" style="width: {% widthratio item.cancellations comparison_peaks.max_count 100 %}%;"></div></div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+<section class="layout-grid" style="margin-bottom: 24px; align-items: start; grid-template-columns: 1.15fr 0.85fr;">
+    <article class="table-card">
+        <p class="eyebrow">Leitura que importa</p>
+        <ul class="capability-list">
+            <li>O plano nasce aqui e depois aparece na matricula e no historico financeiro do aluno.</li>
+            <li>O faturamento mostra caixa recebido; a receita em aberto mostra tensao comercial ainda nao resolvida.</li>
+            <li>Novos ativos e cancelamentos ajudam a ler crescimento e vazamento no mesmo mes.</li>
+        </ul>
+    </article>
+
+    <article class="table-card" id="cadastro-plano" style="background: linear-gradient(145deg, rgba(31, 106, 93, 0.14), rgba(255, 253, 248, 0.98));">
+        <p class="eyebrow">Motor de planos</p>
+        <h2 style="margin: 0 0 10px; font-size: 1.55rem;">Cadastre um plano que depois conversa com aluno, matricula e pagamento</h2>
+        <p style="margin: 0 0 18px; color: var(--muted); line-height: 1.6;">Deixe claro o valor, o ciclo e a entrega. Esse cadastro vira base para a parte comercial inteira.</p>
+        {% if can_manage_finance %}
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <div style="display: grid; gap: 14px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+                    <label>
+                        <span class="field-label">{{ form.name.label }}</span>
+                        {{ form.name }}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ form.price.label }}</span>
+                        {{ form.price }}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ form.billing_cycle.label }}</span>
+                        {{ form.billing_cycle }}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ form.sessions_per_week.label }}</span>
+                        {{ form.sessions_per_week }}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ form.active.label }}</span>
+                        {{ form.active }}
+                    </label>
+                </div>
+                <label>
+                    <span class="field-label">{{ form.description.label }}</span>
+                    {{ form.description }}
+                </label>
+                <div class="actions" style="margin-top: 0;">
+                    <button class="button" type="submit">Salvar plano</button>
+                    <a class="button secondary" href="/admin/boxcore/membershipplan/">Gerir no admin</a>
+                </div>
+            </div>
+        </form>
+        {% else %}
+        <p style="margin: 0; color: var(--muted); line-height: 1.6;">Seu papel atual pode ler o financeiro, mas nao cadastrar planos por esta tela.</p>
+        {% endif %}
+    </article>
+</section>
+
+<section class="layout-grid" style="margin-bottom: 24px; align-items: start;">
+    <article class="table-card">
+        <p class="eyebrow">Portfolio de planos</p>
+        <div style="display: grid; gap: 16px;">
+            {% for plan in plan_portfolio %}
+            <div class="plan-card">
+                <div style="display:flex; justify-content:space-between; gap:16px; align-items:start;">
+                    <div>
+                        <h3 style="margin: 0 0 8px;">{{ plan.name }}</h3>
+                        <p style="margin: 0; color: var(--muted);">R$ {{ plan.price }} por {{ plan.get_billing_cycle_display|lower }}</p>
+                    </div>
+                    <span class="pill{% if not plan.active %} warning{% endif %}">{% if plan.active %}Ativo{% else %}Inativo{% endif %}</span>
+                </div>
+                <div class="plan-stats">
+                    <div>
+                        <strong>{{ plan.active_enrollments }}</strong>
+                        <span>matriculas ativas</span>
+                    </div>
+                    <div>
+                        <strong>{{ plan.pending_enrollments }}</strong>
+                        <span>pendentes</span>
+                    </div>
+                    <div>
+                        <strong>R$ {{ plan.revenue_this_month }}</strong>
+                        <span>recebido no mes</span>
+                    </div>
+                </div>
+                <p style="margin: 0 0 16px; color: var(--muted); line-height: 1.6;">{% if plan.description %}{{ plan.description }}{% else %}Sem descricao comercial ainda. Vale detalhar posicionamento e entrega do plano.{% endif %}</p>
+                <div class="actions" style="margin-top: 0;">
+                    <a class="button secondary" href="/financeiro/planos/{{ plan.id }}/editar/">Editar plano</a>
+                    <a class="button secondary" href="/admin/boxcore/membershipplan/{{ plan.id }}/change/">Admin</a>
+                </div>
+            </div>
+            {% empty %}
+            <p style="margin: 0; color: var(--muted);">Nenhum plano cadastrado ainda.</p>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="table-card">
+        <p class="eyebrow">Mix comercial</p>
+        <div style="display: grid; gap: 14px;">
+            {% for item in plan_mix %}
+            <div>
+                <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:6px;">
+                    <strong>{{ item.name }}</strong>
+                    <span style="color: var(--muted);">{{ item.active_enrollments }} ativos</span>
+                </div>
+                <div class="mix-bar-track">
+                    <div class="mix-bar-fill" style="width: {{ item.width }}%;"></div>
+                </div>
+                <p style="margin: 6px 0 0; color: var(--muted);">Receita recebida no mes: R$ {{ item.revenue_this_month }}</p>
+            </div>
+            {% empty %}
+            <p style="margin: 0; color: var(--muted);">Cadastre planos para enxergar distribuicao comercial e adesao.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+<section class="layout-grid" style="align-items: start;">
+    <article class="table-card">
+        <p class="eyebrow">Fila financeira</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Aluno</th>
+                    <th>Plano</th>
+                    <th>Vencimento</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in financial_alerts %}
+                <tr>
+                    <td>{{ payment.student.full_name }}</td>
+                    <td>{% if payment.enrollment %}{{ payment.enrollment.plan.name }}{% else %}Sem vinculo{% endif %}</td>
+                    <td>{{ payment.due_date|date:"d/m/Y" }}</td>
+                    <td>R$ {{ payment.amount }}</td>
+                    <td>{{ payment.get_status_display }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5">Nenhuma pendencia financeira no momento.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+
+    <article class="table-card">
+        <p class="eyebrow">Movimentos recentes</p>
+        <div style="display:grid; gap:14px;">
+            {% for movement in recent_movements %}
+            <div class="timeline-row">
+                <div class="timeline-dot"></div>
+                <div>
+                    <strong>{{ movement.student.full_name }}</strong>
+                    <p style="margin: 4px 0; color: var(--muted);">{{ movement.plan.name }} | {{ movement.get_status_display }}</p>
+                    <p style="margin: 0; color: var(--muted);">Inicio {{ movement.start_date|date:"d/m/Y" }}{% if movement.end_date %} | Fim {{ movement.end_date|date:"d/m/Y" }}{% endif %}</p>
+                </div>
+            </div>
+            {% empty %}
+            <p style="margin: 0; color: var(--muted);">Nenhum movimento de matricula registrado ainda.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+<style>
+    input, select, textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: rgba(255, 253, 248, 0.95);
+        color: var(--ink);
+        font: inherit;
+    }
+
+    .field-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+
+    .plan-card {
+        padding: 18px;
+        border-radius: 20px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.55);
+    }
+
+    .plan-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+        margin: 16px 0;
+    }
+
+    .plan-stats strong,
+    .plan-stats span {
+        display: block;
+    }
+
+    .plan-stats span {
+        color: var(--muted);
+        margin-top: 4px;
+    }
+
+    .mix-bar-track {
+        height: 12px;
+        border-radius: 999px;
+        background: rgba(22, 33, 31, 0.08);
+        overflow: hidden;
+    }
+
+    .mix-bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--brand), var(--accent));
+    }
+
+    .mix-bar-fill.growth {
+        background: linear-gradient(90deg, #1f6a5d, #3c9f83);
+    }
+
+    .mix-bar-fill.churn {
+        background: linear-gradient(90deg, #a84434, #cf735f);
+    }
+
+    .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 14px;
+        align-items: end;
+        min-height: 260px;
+    }
+
+    .chart-column {
+        display: grid;
+        gap: 8px;
+        text-align: center;
+    }
+
+    .chart-column span {
+        color: var(--muted);
+        font-size: 0.88rem;
+    }
+
+    .chart-bar-wrap {
+        height: 190px;
+        display: flex;
+        align-items: end;
+        justify-content: center;
+        padding: 0 8px;
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(22, 33, 31, 0.04));
+        border: 1px solid rgba(22, 33, 31, 0.08);
+    }
+
+    .chart-bar {
+        width: 100%;
+        min-height: 10px;
+        border-radius: 16px 16px 8px 8px;
+    }
+
+    .chart-bar.revenue {
+        background: linear-gradient(180deg, rgba(31, 106, 93, 0.92), rgba(201, 111, 36, 0.82));
+        box-shadow: 0 16px 24px rgba(31, 106, 93, 0.18);
+    }
+
+    .delta-row {
+        padding: 14px 16px;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.45);
+    }
+
+    .delta-track-group {
+        display: grid;
+        gap: 12px;
+    }
+
+    .delta-label {
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: 0.86rem;
+    }
+
+    .timeline-row {
+        display: grid;
+        grid-template-columns: 18px 1fr;
+        gap: 12px;
+        align-items: start;
+    }
+
+    .timeline-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        margin-top: 6px;
+        background: var(--brand);
+        box-shadow: 0 0 0 5px rgba(201, 111, 36, 0.12);
+    }
+</style>
+{% endblock %}
