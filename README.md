@@ -68,7 +68,7 @@ boxcore/
 |   |-- students.py              -> admin de alunos
 |   `-- __init__.py              -> registra tudo no Django admin
 |-- catalog/
-|   |-- forms.py                 -> formularios leves de alunos e financeiro
+|   |-- forms.py                 -> formularios leves de alunos, financeiro e grade de aulas
 |   |-- student_queries.py       -> snapshots e leituras da area de alunos
 |   |-- finance_queries.py       -> snapshots e leituras da area financeira
 |   |-- class_grid_queries.py    -> leituras da grade de aulas
@@ -84,6 +84,11 @@ boxcore/
 |       |-- student_payment_actions.py       -> acoes de cobranca na ficha do aluno
 |       |-- finance_communication_actions.py -> comunicacao financeira e follow-up
 |       |-- membership_plan_workflows.py     -> criacao e edicao de planos
+|       |-- class_schedule_workflows.py      -> criacao recorrente e limites da grade
+|       |-- class_grid_commands.py           -> comandos operacionais da grade de aulas
+|       |-- class_grid_dispatcher.py         -> despacho de form_kind e acoes da grade
+|       |-- class_grid_policy.py             -> regras de edicao e exclusao da grade
+|       |-- class_grid_messages.py           -> mensagens operacionais centralizadas da grade
 |       `-- operational_queue.py             -> fila operacional e metricas de retencao
 |-- dashboard/
 |   |-- dashboard_snapshot_queries.py -> snapshot consolidado do painel principal
@@ -126,7 +131,7 @@ boxcore/
 
 templates/
 |-- access/                      -> login e visao de acessos
-|-- catalog/                     -> alunos, aluno-form, financeiro e edicao de plano
+|-- catalog/                     -> alunos, aluno-form, financeiro, grade de aulas e edicao de plano
 |-- dashboard/                   -> painel principal
 |-- guide/                       -> mapa visual do sistema
 |-- layouts/                     -> layout base e navegacao global
@@ -142,11 +147,24 @@ templates/
 - /financeiro/ -> leitura gerencial de planos, receita, churn e fila financeira
 - /grade-aulas/ -> grade visual de aulas
 
+## O que a grade de aulas entrega hoje
+
+A tela [templates/catalog/class-grid.html](templates/catalog/class-grid.html) ja funciona como uma central operacional de agenda fora do admin.
+
+Hoje ela entrega:
+
+1. agenda de hoje com leitura de coach, horario, status e ocupacao
+2. calendario das proximas duas semanas com acesso rapido a edicao
+3. visao mensal compacta e calendario expandido
+4. planejador recorrente com sequencia de horarios e bloqueio por limites diario, semanal e mensal
+5. edicao rapida de aula com protecao para reabertura indevida e exclusao com historico
+6. indicadores visuais de lotacao e estado em tempo real durante a execucao da aula
+
 ## Convencao de comentarios e cabecalhos
 
 Todo arquivo relevante deve explicar rapidamente seu papel no topo.
 
-Arquivos Markdown usam comentario HTML. Arquivos Python usam docstring no mesmo formato.
+Arquivos Markdown usam comentario HTML. Arquivos Python usam docstring no mesmo formato. A referencia completa e [docs/new-file-template.md](docs/new-file-template.md).
 
 Padrao para arquivos Python:
 
