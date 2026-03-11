@@ -73,7 +73,7 @@ class StudentQuickForm(forms.ModelForm):
         label='Metodo de pagamento',
     )
     confirm_payment_now = forms.TypedChoiceField(
-        choices=((False, 'Gerar cobranca pendente'), (True, 'Confirmar pagamento agora')),
+        choices=((True, 'Confirmar pagamento agora'), (False, 'Gerar cobranca pendente')),
         required=False,
         label='Confirmacao do pagamento inicial',
         coerce=lambda value: value in (True, 'True', 'true', '1', 'on'),

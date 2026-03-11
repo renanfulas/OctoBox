@@ -32,23 +32,27 @@ PONTOS CRITICOS:
 
 <section class="panel-grid">
     {% for label, value in student_metrics.items %}
-    <article class="card">
+    <article class="card metric-card primary-glow">
         <p class="eyebrow">{{ label }}</p>
         <p class="metric">{{ value }}</p>
+        <p class="metric-note">{{ label|capfirst }} acompanhados em leitura operacional rápida.</p>
+        <div class="metric-pulse"></div>
     </article>
     {% endfor %}
 </section>
 
 <section class="panel-grid">
     {% for label, value in student_funnel.items %}
-    <article class="card" style="background: rgba(255, 253, 248, 0.86);">
+    <article class="card metric-card secondary-glow">
         <p class="eyebrow">{{ label }}</p>
         <p class="metric">{{ value }}</p>
+        <p class="metric-note">Sinais comerciais para intake, conversão e inadimplência.</p>
+        <div class="metric-pulse"></div>
     </article>
     {% endfor %}
 </section>
 
-<section class="table-card" style="margin-bottom: 24px;">
+<section class="table-card glass-panel" style="margin-bottom: 24px;">
     <p class="eyebrow">Busca e recorte comercial</p>
     <form method="get" style="display:grid; gap:14px;">
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px;">
@@ -77,7 +81,7 @@ PONTOS CRITICOS:
 </section>
 
 <section class="layout-grid" style="margin-bottom: 24px;">
-    <article class="table-card" style="background: linear-gradient(145deg, rgba(201, 111, 36, 0.16), rgba(255, 253, 248, 0.96));">
+    <article class="table-card quick-hero-card">
         <p class="eyebrow">Atalho inteligente</p>
         <h2 style="margin: 0 0 10px; font-size: 1.6rem;">Cadastro rápido, sem te jogar no backoffice bruto</h2>
         <p style="margin: 0 0 16px; color: var(--muted); line-height: 1.6;">Você pode começar só com nome completo e WhatsApp e completar o resto depois. A ideia é reduzir atrito no primeiro contato, sem perder organização.</p>
@@ -91,7 +95,7 @@ PONTOS CRITICOS:
         {% endif %}
     </article>
 
-    <article class="table-card">
+    <article class="table-card info-card">
         <p class="eyebrow">Como ler esta página</p>
         <ul class="capability-list">
             {% for item in student_focus %}
@@ -99,7 +103,7 @@ PONTOS CRITICOS:
             {% endfor %}
         </ul>
     </article>
-    <article class="table-card">
+    <article class="table-card info-card">
         <p class="eyebrow">Próxima evolução natural</p>
         <ul class="capability-list">
             <li>Agora ja existe costura entre entrada provisoria, aluno definitivo e camada comercial.</li>
@@ -109,11 +113,11 @@ PONTOS CRITICOS:
     </article>
 </section>
 
-<section class="table-card" style="margin-bottom: 24px;">
+<section class="table-card glass-panel" style="margin-bottom: 24px;">
     <p class="eyebrow">Fila de entrada provisoria pronta para conversao</p>
-    <div style="display:grid; gap:14px;">
+    <div class="intake-grid">
         {% for intake in intake_queue %}
-        <div style="padding: 16px; border-radius: 18px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.45); display:grid; grid-template-columns: 1fr auto; gap:16px; align-items:center;">
+        <div class="intake-card">
             <div>
                 <strong>{{ intake.full_name }}</strong>
                 <p style="margin: 6px 0; color: var(--muted);">{{ intake.phone }}{% if intake.email %} | {{ intake.email }}{% endif %}</p>
@@ -131,7 +135,7 @@ PONTOS CRITICOS:
     </div>
 </section>
 
-<section class="table-card">
+<section class="table-card glass-panel student-table-wrap">
     <p class="eyebrow">Base principal de alunos</p>
     <table>
         <thead>
@@ -146,7 +150,7 @@ PONTOS CRITICOS:
         </thead>
         <tbody>
             {% for student in students %}
-            <tr>
+            <tr class="student-row">
                 <td>{{ student.full_name }}</td>
                 <td>{{ student.phone }}</td>
                 <td>
@@ -177,18 +181,112 @@ PONTOS CRITICOS:
 <style>
     input, select {
         width: 100%;
-        padding: 12px 14px;
-        border-radius: 14px;
+        padding: 13px 14px;
+        border-radius: 16px;
         border: 1px solid var(--line);
-        background: rgba(255, 253, 248, 0.95);
+        background: rgba(255, 255, 255, 0.8);
         color: var(--ink);
         font: inherit;
+        transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+    }
+
+    input:focus,
+    select:focus {
+        outline: none;
+        border-color: rgba(249, 115, 22, 0.32);
+        box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
+        transform: translateY(-1px);
     }
 
     .field-label {
         display:block;
         margin-bottom:8px;
         font-weight:600;
+    }
+
+    .glass-panel {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .glass-panel::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(120deg, rgba(255, 255, 255, 0.12), transparent 35%, transparent 65%, rgba(255, 255, 255, 0.08));
+        pointer-events: none;
+    }
+
+    .metric-card {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .primary-glow {
+        background: linear-gradient(145deg, rgba(249, 115, 22, 0.12), rgba(255, 255, 255, 0.92));
+    }
+
+    .secondary-glow {
+        background: linear-gradient(145deg, rgba(16, 185, 129, 0.10), rgba(255, 255, 255, 0.92));
+    }
+
+    .metric-pulse {
+        position: absolute;
+        right: -24px;
+        bottom: -24px;
+        width: 92px;
+        height: 92px;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(249, 115, 22, 0.16), transparent 70%);
+        animation: pulseFloat 3.2s ease-in-out infinite;
+    }
+
+    .quick-hero-card {
+        background: linear-gradient(145deg, rgba(249, 115, 22, 0.16), rgba(255, 255, 255, 0.92));
+    }
+
+    .info-card {
+        background: linear-gradient(145deg, rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0.92));
+    }
+
+    .intake-grid {
+        display: grid;
+        gap: 14px;
+    }
+
+    .intake-card {
+        padding: 18px;
+        border-radius: 22px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.56);
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 16px;
+        align-items: center;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .intake-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lift);
+        border-color: rgba(249, 115, 22, 0.18);
+    }
+
+    .student-table-wrap table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .student-row {
+        transition: background 0.16s ease, transform 0.16s ease;
+    }
+
+    .student-row:hover {
+        background: rgba(249, 115, 22, 0.06);
+    }
+
+    @keyframes pulseFloat {
+        0%, 100% { transform: scale(1) translateY(0); opacity: 0.7; }
+        50% { transform: scale(1.08) translateY(-4px); opacity: 1; }
     }
 </style>
 {% endblock %}
