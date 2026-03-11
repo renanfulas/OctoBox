@@ -13,7 +13,7 @@ PONTOS CRITICOS:
 
 from django.urls import path
 
-from .views import DashboardView
+from .dashboard_views import DashboardView
 
 urlpatterns = [
     path('dashboard/', DashboardView.as_view(), name='dashboard'),

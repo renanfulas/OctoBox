@@ -2,13 +2,14 @@
 ARQUIVO: testes da central visual de financeiro.
 
 POR QUE ELE EXISTE:
-- Garante que a area financeira visual continue entregando leitura comercial, filtros e manutencao leve de planos.
+- Garante que a area financeira visual continue entregando leitura comercial, filtros, regua operacional e manutencao leve de planos.
 
 O QUE ESTE ARQUIVO FAZ:
 1. Testa renderizacao da pagina de financeiro.
 2. Testa filtros por plano e metodo.
-3. Testa cadastro rapido de plano.
-4. Testa edicao rapida de plano.
+3. Testa cadastro rapido e edicao rapida de plano.
+4. Testa a presenca da regua de cobranca e retencao.
+5. Testa exportacoes CSV/PDF do financeiro.
 
 PONTOS CRITICOS:
 - Se estes testes quebrarem, o produto perde a principal leitura gerencial fora do admin.
@@ -19,7 +20,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from boxcore.models import AuditEvent, Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentStatus, Student
+from boxcore.models import AuditEvent, Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus, Student
 
 
 class FinanceCenterTests(TestCase):
@@ -38,6 +39,7 @@ class FinanceCenterTests(TestCase):
             due_date=timezone.localdate(),
             amount='319.90',
             status=PaymentStatus.PAID,
+            method=PaymentMethod.PIX,
         )
         previous_month = timezone.localdate().replace(day=1) - timezone.timedelta(days=1)
         previous_month_start = previous_month.replace(day=1)
@@ -57,6 +59,16 @@ class FinanceCenterTests(TestCase):
             due_date=previous_month_start,
             amount='199.90',
             status=PaymentStatus.PAID,
+            method=PaymentMethod.PIX,
+        )
+
+        self.overdue_payment = Payment.objects.create(
+            student=self.student,
+            enrollment=self.enrollment,
+            due_date=timezone.localdate() - timezone.timedelta(days=6),
+            amount='319.90',
+            status=PaymentStatus.PENDING,
+            method=PaymentMethod.PIX,
         )
 
     def test_finance_center_renders_dashboard_and_plan_portfolio(self):
@@ -70,6 +82,8 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'Cadastre um plano que depois conversa com aluno, matricula e pagamento')
         self.assertContains(response, 'Tendencia mensal')
         self.assertContains(response, 'Ativacoes x cancelamentos')
+        self.assertContains(response, 'Régua de cobrança e retenção')
+        self.assertContains(response, 'Registrar contato no WhatsApp')
 
     def test_finance_center_filters_by_plan_and_method(self):
         self.client.force_login(self.user)
@@ -122,3 +136,20 @@ class FinanceCenterTests(TestCase):
         self.assertEqual(self.plan.name, 'Cross Gold Plus')
         self.assertEqual(str(self.plan.price), '339.90')
         self.assertTrue(AuditEvent.objects.filter(action='membership_plan_quick_updated').exists())
+
+    def test_finance_center_can_export_csv(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('finance-report-export', args=['csv']))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/csv; charset=utf-8')
+        self.assertIn('Paula Nunes', response.content.decode())
+
+    def test_finance_center_can_export_pdf(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('finance-report-export', args=['pdf']))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')

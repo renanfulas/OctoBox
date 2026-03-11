@@ -21,7 +21,7 @@ PONTOS CRITICOS:
     <div>
         <h1>Mapa do Sistema</h1>
         <p>
-            Esta página traduz a arquitetura do projeto para uma leitura visual. A ideia é você conseguir entender o app, localizar módulos e descobrir rapidamente onde investigar quando houver bug, inclusive agora que a navegação e a operação passaram a depender do papel do usuário.
+            Esta página traduz a arquitetura do projeto para uma leitura visual. A ideia é você conseguir entender o app, localizar módulos e descobrir rapidamente onde investigar quando houver bug, inclusive agora que boa parte do produto foi separada entre views HTTP, queries ou snapshots de leitura e actions ou workflows de regra de negócio.
         </p>
     </div>
     <div class="actions">
@@ -31,7 +31,7 @@ PONTOS CRITICOS:
 </section>
 
 <section class="table-card" style="margin-bottom: 24px;">
-    <p class="eyebrow">Fluxo geral do sistema</p>
+    <p class="eyebrow">Fluxo do produto</p>
     <div class="panel-grid" style="margin-bottom: 0;">
         {% for step in system_flow %}
         <article class="card">
@@ -44,21 +44,22 @@ PONTOS CRITICOS:
 
 <section class="layout-grid" style="margin-bottom: 24px;">
     <article class="table-card">
-        <p class="eyebrow">Leitura de engenharia reversa</p>
+        <p class="eyebrow">Como ler a base sem se perder</p>
         <ul class="capability-list">
             <li>Primeiro entenda por onde a requisição entra e como as rotas são distribuídas.</li>
-            <li>Depois entenda como o papel do usuário afeta sidebar, área principal e ações permitidas.</li>
+            <li>Depois identifique se o domínio que você abriu separa view HTTP, query de leitura e action ou workflow.</li>
+            <li>Entenda como o papel do usuário afeta sidebar, área principal e ações permitidas.</li>
             <li>Só então desça para os modelos, porque eles sustentam o restante da operação.</li>
             <li>Por fim, veja templates, admin e testes para fechar a visão completa do comportamento.</li>
         </ul>
     </article>
     <article class="table-card">
-        <p class="eyebrow">Novo ponto de atenção</p>
+        <p class="eyebrow">Como o produto foi dividido</p>
         <ul class="capability-list">
-            <li>A sidebar deixou de ser fixa e agora é montada por papel.</li>
-            <li>Manager e coach não compartilham mais a mesma operação prática.</li>
-            <li>Há ações exclusivas por papel que alteram o estado do sistema.</li>
-            <li>Entrada provisória e WhatsApp agora fazem parte da leitura oficial do domínio.</li>
+            <li>Views cuidam de permissão, contexto, formulários e renderização.</li>
+            <li>Queries e snapshots concentram leitura, agregação e montagem de contexto pesado.</li>
+            <li>Actions e workflows concentram mutações reais e regras sensíveis do domínio.</li>
+            <li>Manager e coach não compartilham mais a mesma operação prática, e isso aparece na própria separação dos módulos.</li>
         </ul>
     </article>
 </section>
@@ -73,7 +74,7 @@ PONTOS CRITICOS:
         </ol>
     </article>
     <article class="table-card">
-        <p class="eyebrow">Arquivos-chave</p>
+        <p class="eyebrow">Arquivos-chave da operacao</p>
         <ul class="capability-list">
             {% for file in key_files %}
             <li>{{ file }}</li>
@@ -83,7 +84,7 @@ PONTOS CRITICOS:
 </section>
 
 <section class="table-card" style="margin-bottom: 24px;">
-    <p class="eyebrow">Módulos do projeto</p>
+    <p class="eyebrow">Areas do produto e suporte</p>
     <div class="panel-grid" style="margin-bottom: 0;">
         {% for module in module_cards %}
         <article class="card">
@@ -101,12 +102,12 @@ PONTOS CRITICOS:
 
 <section class="layout-grid">
     <article class="table-card">
-        <p class="eyebrow">Onde procurar quando houver bug</p>
+        <p class="eyebrow">Primeira triagem por sintoma</p>
         <table>
             <thead>
                 <tr>
                     <th>Sintoma</th>
-                    <th>Primeiro lugar para olhar</th>
+                    <th>Primeira leitura recomendada</th>
                 </tr>
             </thead>
             <tbody>
@@ -121,11 +122,11 @@ PONTOS CRITICOS:
     </article>
 
     <article class="table-card">
-        <p class="eyebrow">Como usar esta página</p>
+        <p class="eyebrow">Como usar este mapa</p>
         <ul class="capability-list">
             <li>Quando quiser estudar o projeto, siga a ordem recomendada de estudo.</li>
             <li>Quando encontrar um bug, use a tabela de sintomas para saber onde começar.</li>
-            <li>Quando quiser criar algo novo, compare o assunto novo com os módulos existentes antes de escolher a pasta.</li>
+            <li>Quando quiser criar algo novo, descubra primeiro se ele é uma view, uma leitura de snapshot ou uma action de negócio antes de escolher a pasta.</li>
             <li>Quando o projeto crescer, esta página deve crescer junto para continuar servindo como mapa.</li>
         </ul>
     </article>

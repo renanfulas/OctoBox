@@ -1,0 +1,138 @@
+"""
+ARQUIVO: views da area financeira do catalogo.
+
+POR QUE ELE EXISTE:
+- Agrupa a camada HTTP de financeiro, exportacoes, planos e comunicacao operacional.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Renderiza a central financeira filtrada.
+2. Orquestra cadastro e edicao leve de planos.
+3. Publica exportacoes e a acao operacional de comunicacao.
+
+PONTOS CRITICOS:
+- Qualquer regressao aqui afeta leitura gerencial, portfolio de planos e regua operacional.
+"""
+
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
+from django.views import View
+from django.views.generic import FormView
+
+from boxcore.access.permissions import RoleRequiredMixin
+from boxcore.access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
+from boxcore.catalog.services import (
+    build_operational_queue_metrics,
+    build_operational_queue_snapshot,
+    build_report_response,
+    handle_finance_communication_action,
+    run_membership_plan_create_workflow,
+    run_membership_plan_update_workflow,
+)
+from boxcore.models import BillingCycle, MembershipPlan, PaymentMethod
+
+from ..finance_queries import build_finance_snapshot
+from ..forms import MembershipPlanQuickForm
+from ..report_builders import build_finance_report
+from .catalog_base_views import CatalogBaseView
+
+
+class FinanceCenterView(CatalogBaseView, FormView):
+    template_name = 'catalog/finance.html'
+    form_class = MembershipPlanQuickForm
+    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER)
+
+    def get_success_url(self):
+        return reverse('finance-center')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_base_context())
+        snapshot = build_finance_snapshot(self.request.GET)
+        context['page_title'] = 'Financeiro'
+        context['page_subtitle'] = 'Aqui o box ganha leitura comercial: planos, receita, retencao e sinais operacionais que depois conversam com a jornada do aluno.'
+        context['can_manage_finance'] = context['current_role'].slug in (ROLE_OWNER, ROLE_MANAGER)
+        context['finance_filter_form'] = snapshot['filter_form']
+        context['finance_metrics'] = snapshot['finance_metrics']
+        context['plan_portfolio'] = snapshot['plan_portfolio']
+        context['plan_mix'] = snapshot['plan_mix']
+        context['monthly_comparison'] = snapshot['monthly_comparison']
+        context['comparison_peaks'] = snapshot['comparison_peaks']
+        context['financial_alerts'] = snapshot['financial_alerts']
+        context['recent_movements'] = snapshot['recent_movements']
+        context['operational_queue'] = build_operational_queue_snapshot()
+        context['operational_metrics'] = build_operational_queue_metrics(context['operational_queue'])
+        context['finance_export_links'] = {
+            'csv': f"{reverse('finance-report-export', args=['csv'])}?{self.request.GET.urlencode()}",
+            'pdf': f"{reverse('finance-report-export', args=['pdf'])}?{self.request.GET.urlencode()}",
+        }
+        return context
+
+    def form_valid(self, form):
+        current_role = self.get_base_context()['current_role']
+        if current_role.slug not in (ROLE_OWNER, ROLE_MANAGER):
+            messages.error(self.request, 'Seu papel atual pode consultar o financeiro, mas nao criar planos por esta tela.')
+            return redirect(self.get_success_url())
+
+        plan = run_membership_plan_create_workflow(actor=self.request.user, form=form)
+        messages.success(self.request, f'Plano {plan.name} cadastrado com sucesso.')
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'O plano nao foi salvo. Revise os campos destacados.')
+        return super().form_invalid(form)
+
+
+class FinanceReportExportView(LoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER)
+
+    def get(self, request, report_format, *args, **kwargs):
+        snapshot = build_finance_snapshot(request.GET)
+        try:
+            return build_report_response(build_finance_report(snapshot=snapshot, report_format=report_format))
+        except ValueError as exc:
+            raise Http404(str(exc)) from exc
+
+
+class FinanceCommunicationActionView(LoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
+
+    def post(self, request, *args, **kwargs):
+        result = handle_finance_communication_action(actor=request.user, payload=request.POST)
+        messages.success(request, f'Contato operacional registrado para {result["student"].full_name}.')
+        return redirect('finance-center')
+
+
+class MembershipPlanQuickUpdateView(FinanceCenterView):
+    template_name = 'catalog/finance-plan-form.html'
+    page_mode = 'update'
+    object = None
+
+    def dispatch(self, request, *args, **kwargs):
+        self.object = get_object_or_404(MembershipPlan, pk=kwargs['plan_id'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['instance'] = self.object
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Editar plano'
+        context['page_subtitle'] = 'Ajuste valor, ciclo e proposta comercial sem sair do centro financeiro.'
+        context['plan_object'] = self.object
+        context['billing_cycle_options'] = BillingCycle
+        context['payment_method_options'] = PaymentMethod
+        return context
+
+    def form_valid(self, form):
+        plan = run_membership_plan_update_workflow(
+            actor=self.request.user,
+            form=form,
+            changed_fields=list(form.changed_data),
+        )
+        messages.success(self.request, f'Plano {plan.name} atualizado com sucesso.')
+        return redirect(self.get_success_url())
