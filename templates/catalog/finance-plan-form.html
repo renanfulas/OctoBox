@@ -9,7 +9,7 @@ O QUE ESTE ARQUIVO FAZ:
 2. Mantem o fluxo integrado com a central de financeiro.
 
 PONTOS CRITICOS:
-- Depende do formulario e do contexto montados em catalog/views.py.
+- Depende do formulario e do contexto montados em boxcore/catalog/views/finance_views.py.
 -->
 {% extends "layouts/base.html" %}
 
@@ -25,12 +25,12 @@ PONTOS CRITICOS:
     </div>
 </section>
 
-<section class="layout-grid" style="align-items: start; grid-template-columns: 1.15fr 0.85fr;">
+<section class="layout-grid finance-plan-layout-grid">
     <article class="table-card">
         <form method="post" novalidate>
             {% csrf_token %}
-            <div style="display: grid; gap: 16px;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+            <div class="finance-plan-form-stack">
+                <div class="finance-plan-field-grid">
                     <label>
                         <span class="field-label">{{ form.name.label }}</span>
                         {{ form.name }}
@@ -56,7 +56,7 @@ PONTOS CRITICOS:
                     <span class="field-label">{{ form.description.label }}</span>
                     {{ form.description }}
                 </label>
-                <div class="actions" style="margin-top: 0;">
+                <div class="actions finance-plan-actions-flat">
                     <button class="button" type="submit">Salvar ajustes</button>
                     <a class="button secondary" href="/admin/boxcore/membershipplan/{{ plan_object.id }}/change/">Editar no admin</a>
                 </div>
@@ -66,11 +66,11 @@ PONTOS CRITICOS:
 
     <article class="table-card">
         <p class="eyebrow">Leitura rapida do plano</p>
-        <h2 style="margin: 0 0 10px; font-size: 1.55rem;">{{ plan_object.name }}</h2>
-        <p style="margin: 0 0 8px; color: var(--muted);">Valor atual: R$ {{ plan_object.price }}</p>
-        <p style="margin: 0 0 8px; color: var(--muted);">Ciclo: {{ plan_object.get_billing_cycle_display }}</p>
-        <p style="margin: 0 0 18px; color: var(--muted);">Aulas por semana: {{ plan_object.sessions_per_week }}</p>
-        <div class="actions" style="margin-top: 0;">
+        <h2 class="finance-plan-title">{{ plan_object.name }}</h2>
+        <p class="finance-plan-meta">Valor atual: R$ {{ plan_object.price }}</p>
+        <p class="finance-plan-meta">Ciclo: {{ plan_object.get_billing_cycle_display }}</p>
+        <p class="finance-plan-meta finance-plan-meta-spaced">Aulas por semana: {{ plan_object.sessions_per_week }}</p>
+        <div class="actions finance-plan-actions-flat">
             <a class="button secondary" href="/financeiro/">Ver portfolio</a>
             <a class="button secondary" href="/alunos/">Ver alunos</a>
         </div>
@@ -78,6 +78,40 @@ PONTOS CRITICOS:
 </section>
 
 <style>
+    .finance-plan-layout-grid {
+        align-items: start;
+        grid-template-columns: 1.15fr 0.85fr;
+    }
+
+    .finance-plan-form-stack {
+        display: grid;
+        gap: 16px;
+    }
+
+    .finance-plan-field-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+    }
+
+    .finance-plan-actions-flat {
+        margin-top: 0;
+    }
+
+    .finance-plan-title {
+        margin: 0 0 10px;
+        font-size: 1.55rem;
+    }
+
+    .finance-plan-meta {
+        margin: 0 0 8px;
+        color: var(--muted);
+    }
+
+    .finance-plan-meta-spaced {
+        margin-bottom: 18px;
+    }
+
     input, select, textarea {
         width: 100%;
         padding: 12px 14px;

@@ -2,18 +2,18 @@
 ARQUIVO: central visual de financeiro.
 
 POR QUE ELE EXISTE:
-- Reune leitura comercial, planos, alertas e historico financeiro em uma tela de decisao.
+- Reune leitura comercial, planos, alertas e historico financeiro em uma unica tela de decisao.
 
 O QUE ESTE ARQUIVO FAZ:
 1. Mostra indicadores de faturamento, crescimento e cancelamento.
 2. Permite filtrar a leitura por janela, plano, status e metodo.
 3. Permite cadastro rapido de planos do box.
-4. Expone portfolio, mix, fila financeira e movimentos recentes.
-5. Exibe a regua de cobranca e retencao com acao operacional de WhatsApp.
-6. Oferece exportacao CSV/PDF do recorte financeiro atual.
+4. Exibe portfolio, mix, fila financeira e movimentos recentes.
+5. Exibe a regua de cobranca e retencao com acao operacional por WhatsApp.
+6. Oferece exportacao em CSV e PDF do recorte financeiro atual.
 
 PONTOS CRITICOS:
-- Depende do contexto e dos filtros montados em boxcore/catalog/views.py.
+- Depende do contexto e dos filtros montados em boxcore/catalog/views/finance_views.py.
 -->
 {% extends "layouts/base.html" %}
 
@@ -107,21 +107,21 @@ PONTOS CRITICOS:
             </form>
         </article>
         {% empty %}
-        <p class="meta-text">Nenhuma ação semiassistida pendente agora.</p>
+        <p class="meta-text">Nenhuma acao semiassistida pendente no momento.</p>
         {% endfor %}
     </div>
 </section>
 
 <section class="layout-grid finance-trend-layout section-gap">
     <article class="table-card finance-glass-panel">
-        <p class="eyebrow">Tendencia mensal</p>
-        <h2 class="section-title-sm">Receita real recebida nos ultimos 6 meses</h2>
-        <p class="body-copy text-muted section-gap-top-xs no-margin">Aqui voce enxerga se o caixa realmente subiu ou se o crescimento ficou mais narrativo do que financeiro.</p>
-        <div class="chart-grid revenue-chart" style="grid-template-columns: repeat({{ monthly_comparison|length }}, minmax(0, 1fr));">
+        <p class="eyebrow">Tendência mensal</p>
+        <h2 class="section-title-sm">Receita real recebida nos últimos 6 meses</h2>
+        <p class="body-copy text-muted section-gap-top-xs no-margin">Aqui você enxerga se o caixa realmente subiu ou se o crescimento ficou mais narrativo do que financeiro.</p>
+        <div class="chart-grid revenue-chart" data-chart-columns="{{ monthly_comparison|length|default:1 }}">
             {% for item in monthly_comparison %}
             <div class="chart-column">
                 <div class="chart-bar-wrap">
-                    <div class="chart-bar revenue" style="height: {% widthratio item.revenue comparison_peaks.max_revenue 100 %}%;"></div>
+                    <div class="chart-bar revenue" data-bar-height="{% widthratio item.revenue comparison_peaks.max_revenue 100 %}"></div>
                 </div>
                 <strong>{{ item.label }}</strong>
                 <span>R$ {{ item.revenue }}</span>
@@ -132,8 +132,8 @@ PONTOS CRITICOS:
 
     <article class="table-card finance-glass-panel">
         <p class="eyebrow">Churn e crescimento</p>
-        <h2 class="section-title-sm">Ativacoes x cancelamentos</h2>
-        <p class="body-copy text-muted section-gap-top-xs no-margin">O objetivo aqui e medir se o box esta empilhando alunos ou apenas girando base.</p>
+        <h2 class="section-title-sm">Ativações x cancelamentos</h2>
+        <p class="body-copy text-muted section-gap-top-xs no-margin">O objetivo aqui é medir se o box está acumulando alunos ou apenas girando a base.</p>
         <div class="stack-14">
             {% for item in monthly_comparison %}
             <div class="delta-row">
@@ -144,11 +144,11 @@ PONTOS CRITICOS:
                 <div class="delta-track-group">
                     <div>
                         <div class="delta-label">Ativos</div>
-                        <div class="mix-bar-track"><div class="mix-bar-fill growth" style="width: {% widthratio item.activations comparison_peaks.max_count 100 %}%;"></div></div>
+                        <div class="mix-bar-track"><div class="mix-bar-fill growth" data-bar-width="{% widthratio item.activations comparison_peaks.max_count 100 %}"></div></div>
                     </div>
                     <div>
                         <div class="delta-label">Cancelados</div>
-                        <div class="mix-bar-track"><div class="mix-bar-fill churn" style="width: {% widthratio item.cancellations comparison_peaks.max_count 100 %}%;"></div></div>
+                        <div class="mix-bar-track"><div class="mix-bar-fill churn" data-bar-width="{% widthratio item.cancellations comparison_peaks.max_count 100 %}"></div></div>
                     </div>
                 </div>
             </div>
@@ -161,15 +161,15 @@ PONTOS CRITICOS:
     <article class="table-card finance-glass-panel">
         <p class="eyebrow">Leitura que importa</p>
         <ul class="capability-list">
-            <li>O plano nasce aqui e depois aparece na matricula e no historico financeiro do aluno.</li>
-            <li>O faturamento mostra caixa recebido; a receita em aberto mostra tensao comercial ainda nao resolvida.</li>
-            <li>Novos ativos e cancelamentos ajudam a ler crescimento e vazamento no mesmo mes.</li>
+            <li>O plano nasce aqui e depois aparece na matrícula e no histórico financeiro do aluno.</li>
+            <li>O faturamento mostra caixa recebido; a receita em aberto mostra tensão comercial ainda não resolvida.</li>
+            <li>Novos ativos e cancelamentos ajudam a ler crescimento e vazamento dentro do mesmo mês.</li>
         </ul>
     </article>
 
     <article class="table-card finance-hero-panel" id="cadastro-plano">
         <p class="eyebrow">Motor de planos</p>
-        <h2 class="section-title-sm">Cadastre um plano que depois conversa com aluno, matricula e pagamento</h2>
+        <h2 class="section-title-sm">Cadastre um plano que depois conversa com aluno, matrícula e pagamento</h2>
         <p class="body-copy text-muted">Deixe claro o valor, o ciclo e a entrega. Esse cadastro vira base para a parte comercial inteira.</p>
         {% if can_manage_finance %}
         <form method="post" novalidate>
@@ -208,7 +208,7 @@ PONTOS CRITICOS:
             </div>
         </form>
         {% else %}
-        <p class="meta-text">Seu papel atual pode ler o financeiro, mas nao cadastrar planos por esta tela.</p>
+        <p class="meta-text">Seu papel atual pode ler o financeiro, mas nao pode cadastrar planos por esta tela.</p>
         {% endif %}
     </article>
 </section>
@@ -262,7 +262,7 @@ PONTOS CRITICOS:
                     <span class="text-muted">{{ item.active_enrollments }} ativos</span>
                 </div>
                 <div class="mix-bar-track">
-                    <div class="mix-bar-fill" style="width: {{ item.width }}%;"></div>
+                    <div class="mix-bar-fill" data-bar-width="{{ item.width }}"></div>
                 </div>
                 <p class="meta-text-sm">Receita recebida no mes: R$ {{ item.revenue_this_month }}</p>
             </div>
@@ -290,7 +290,7 @@ PONTOS CRITICOS:
                 {% for payment in financial_alerts %}
                 <tr class="finance-row">
                     <td>{{ payment.student.full_name }}</td>
-                    <td>{% if payment.enrollment %}{{ payment.enrollment.plan.name }}{% else %}Sem vinculo{% endif %}</td>
+                    <td>{% if payment.enrollment %}{{ payment.enrollment.plan.name }}{% else %}Sem vinculo de plano{% endif %}</td>
                     <td>{{ payment.due_date|date:"d/m/Y" }}</td>
                     <td>R$ {{ payment.amount }}</td>
                     <td>{{ payment.get_status_display }}</td>
@@ -311,7 +311,7 @@ PONTOS CRITICOS:
                 <div>
                     <strong>{{ movement.student.full_name }}</strong>
                     <p class="meta-text-sm">{{ movement.plan.name }} | {{ movement.get_status_display }}</p>
-                    <p class="meta-text">Inicio {{ movement.start_date|date:"d/m/Y" }}{% if movement.end_date %} | Fim {{ movement.end_date|date:"d/m/Y" }}{% endif %}</p>
+                    <p class="meta-text">Inicio em {{ movement.start_date|date:"d/m/Y" }}{% if movement.end_date %} | Fim em {{ movement.end_date|date:"d/m/Y" }}{% endif %}</p>
                 </div>
             </div>
             {% empty %}
@@ -320,4 +320,30 @@ PONTOS CRITICOS:
         </div>
     </article>
 </section>
+
+<script>
+    (function () {
+        const revenueCharts = document.querySelectorAll('[data-chart-columns]');
+        const heightBars = document.querySelectorAll('[data-bar-height]');
+        const widthBars = document.querySelectorAll('[data-bar-width]');
+
+        revenueCharts.forEach(function (chart) {
+            const rawCount = Number(chart.dataset.chartColumns || 1);
+            const safeCount = Math.max(1, rawCount);
+            chart.style.gridTemplateColumns = 'repeat(' + safeCount + ', minmax(0, 1fr))';
+        });
+
+        heightBars.forEach(function (bar) {
+            const rawValue = Number(bar.dataset.barHeight || 0);
+            const safeValue = Math.max(0, Math.min(100, rawValue));
+            bar.style.height = safeValue + '%';
+        });
+
+        widthBars.forEach(function (bar) {
+            const rawValue = Number(bar.dataset.barWidth || 0);
+            const safeValue = Math.max(0, Math.min(100, rawValue));
+            bar.style.width = safeValue + '%';
+        });
+    }());
+</script>
 {% endblock %}

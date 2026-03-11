@@ -2,15 +2,15 @@
 ARQUIVO: extensoes visuais do catalogo.
 
 POR QUE ELE EXISTE:
-- Complementa o design system base com utilitarios e componentes especificos das telas de alunos e financeiro.
+- complementa o design system base com utilitarios e componentes especificos das telas de alunos, financeiro e grade de aulas.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Define espacamentos, grids de formulario e classes utilitarias do catalogo.
-2. Estiliza cards de metricas, funil, historico, planos, timeline e regua operacional.
-3. Padroniza paineis de nota, disclosures, graficos e blocos de parcelamento.
+1. define espacamentos, grids de formulario e classes utilitarias do catalogo.
+2. estiliza cards de metricas, funil, historico, planos, timeline e regua operacional.
+3. padroniza paineis de nota, disclosures, graficos, workspace da grade e blocos de parcelamento.
 
 PONTOS CRITICOS:
-- Este arquivo precisa ficar coerente com os templates do catalogo para evitar regressao visual.
+- este arquivo precisa ficar coerente com os templates do catalogo para evitar regressao visual.
 */
 
 .section-gap {
@@ -178,6 +178,96 @@ PONTOS CRITICOS:
     overflow: hidden;
 }
 
+.class-grid-insight-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    align-items: stretch;
+}
+
+.class-grid-insight-card {
+    height: 100%;
+}
+
+.class-grid-workspace {
+    display: grid;
+    gap: 18px;
+}
+
+.class-grid-workspace-head {
+    align-items: end;
+}
+
+.class-grid-workspace-stack {
+    display: grid;
+    gap: 18px;
+}
+
+.class-grid-workspace-panel {
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+}
+
+.class-grid-workspace-panel.is-dragging {
+    opacity: 0.72;
+    transform: rotate(1deg) scale(1.01);
+    box-shadow: var(--shadow-lift);
+    border-color: rgba(249, 115, 22, 0.28);
+}
+
+.class-grid-panel-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: start;
+    margin-bottom: 18px;
+}
+
+.class-grid-panel-title {
+    margin-bottom: 0;
+    flex: 1;
+}
+
+.class-grid-head-badges {
+    display: inline-flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: end;
+}
+
+.class-grid-grab-handle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-radius: 999px;
+    border: 1px dashed rgba(59, 130, 246, 0.28);
+    background: rgba(255, 255, 255, 0.82);
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: grab;
+    user-select: none;
+}
+
+.class-grid-grab-handle::before {
+    content: "⋮⋮";
+    letter-spacing: -0.2em;
+    font-size: 0.95rem;
+    color: var(--accent-2);
+}
+
+.class-grid-grab-handle:focus-visible {
+    outline: 2px solid rgba(59, 130, 246, 0.32);
+    outline-offset: 3px;
+}
+
+.class-grid-grab-handle:active {
+    cursor: grabbing;
+}
+
 .class-planner-layout {
     grid-template-columns: 1.25fr 0.75fr;
     align-items: start;
@@ -188,11 +278,21 @@ PONTOS CRITICOS:
 }
 
 .class-weekly-board {
-    background: linear-gradient(145deg, rgba(249, 115, 22, 0.06), rgba(255, 255, 255, 0.96));
+    background:
+        radial-gradient(circle at top right, rgba(249, 115, 22, 0.14), transparent 28%),
+        linear-gradient(145deg, rgba(249, 115, 22, 0.07), rgba(255, 255, 255, 0.97));
 }
 
 .class-monthly-board {
-    background: linear-gradient(145deg, rgba(16, 185, 129, 0.06), rgba(255, 255, 255, 0.96));
+    background:
+        radial-gradient(circle at top right, rgba(16, 185, 129, 0.12), transparent 26%),
+        linear-gradient(145deg, rgba(16, 185, 129, 0.07), rgba(255, 255, 255, 0.97));
+}
+
+.class-grid-today-panel {
+    background:
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 26%),
+        linear-gradient(145deg, rgba(59, 130, 246, 0.06), rgba(255, 255, 255, 0.97));
 }
 
 .monthly-preview-button {
@@ -258,10 +358,21 @@ PONTOS CRITICOS:
 
 .monthly-day-card.is-today {
     border-color: rgba(249, 115, 22, 0.3);
+    box-shadow: inset 0 0 0 1px rgba(249, 115, 22, 0.16);
 }
 
 .monthly-day-card.is-muted {
     opacity: 0.55;
+}
+
+.monthly-day-card.is-busy {
+    border-color: rgba(59, 130, 246, 0.24);
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.07), rgba(255, 255, 255, 0.9));
+}
+
+.monthly-day-card.is-loaded {
+    border-color: rgba(239, 68, 68, 0.22);
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.08), rgba(255, 255, 255, 0.9));
 }
 
 .monthly-day-card.is-preview {
@@ -344,6 +455,7 @@ PONTOS CRITICOS:
 
 .weekly-calendar-header {
     margin-bottom: 14px;
+    padding: 0 2px;
 }
 
 .weekly-calendar-grid {
@@ -355,16 +467,18 @@ PONTOS CRITICOS:
 .weekly-day-card {
     border: 1px solid var(--line);
     border-radius: 22px;
-    background: rgba(255, 255, 255, 0.78);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.88));
     padding: 16px;
     display: grid;
     gap: 14px;
     min-height: 210px;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
 }
 
 .weekly-day-card.is-today {
     border-color: rgba(249, 115, 22, 0.3);
     box-shadow: var(--shadow-soft);
+    background: linear-gradient(180deg, rgba(255, 247, 237, 0.92), rgba(255, 255, 255, 0.94));
 }
 
 .weekly-day-card.is-muted {
@@ -379,7 +493,7 @@ PONTOS CRITICOS:
 }
 
 .weekly-day-head strong {
-    font-size: 1.05rem;
+    font-size: 1.15rem;
 }
 
 .weekly-day-body {
@@ -392,7 +506,18 @@ PONTOS CRITICOS:
     padding: 12px;
     border-radius: 16px;
     border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.86);
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.weekly-session-chip.is-info {
+    border-color: rgba(59, 130, 246, 0.18);
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.07), rgba(255, 255, 255, 0.96));
+}
+
+.weekly-session-chip.is-warning {
+    border-color: rgba(239, 68, 68, 0.18);
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.08), rgba(255, 255, 255, 0.96));
 }
 
 .class-chip-actions {
@@ -443,9 +568,23 @@ PONTOS CRITICOS:
     line-height: 1.6;
 }
 
+.class-day-summary {
+    max-width: 78ch;
+}
+
 .class-grid-meta {
     font-size: 0.92rem;
     margin-top: 4px;
+}
+
+.class-grid-mobile-kicker {
+    display: none;
+    margin: 4px 0 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
 }
 
 .class-grid-row td {
@@ -496,6 +635,18 @@ PONTOS CRITICOS:
 }
 
 @media (max-width: 960px) {
+    .class-grid-insight-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .class-grid-panel-head {
+        flex-direction: column;
+    }
+
+    .class-grid-head-badges {
+        justify-content: start;
+    }
+
     .class-planner-layout {
         grid-template-columns: 1fr;
     }
@@ -505,6 +656,30 @@ PONTOS CRITICOS:
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .class-grid-workspace-head {
+        align-items: start;
+    }
+
+    .class-grid-workspace-head .actions {
+        width: 100%;
+    }
+
+    .class-grid-workspace-head .button,
+    .class-grid-workspace-head .pill {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .class-grid-grab-handle {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .weekly-day-card,
+    .monthly-day-card {
+        min-height: unset;
+    }
+
     .class-monthly-modal {
         width: 98vw;
         height: 94vh;
@@ -512,9 +687,171 @@ PONTOS CRITICOS:
 }
 
 @media (max-width: 640px) {
-    .monthly-calendar-grid,
+    .class-grid-mobile-kicker {
+        display: block;
+    }
+
+    .class-grid-insight-card {
+        padding: 20px;
+    }
+
+    .class-grid-workspace-stack {
+        gap: 14px;
+    }
+
+    .class-grid-workspace-panel {
+        border-radius: 24px;
+    }
+
+    .class-grid-panel-head {
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .class-grid-panel-title {
+        gap: 12px;
+    }
+
+    .class-grid-head-badges {
+        width: 100%;
+        gap: 10px;
+    }
+
+    .class-grid-head-badges .pill,
+    .class-grid-head-badges .button,
+    .class-grid-head-badges .class-grid-grab-handle {
+        flex: 1 1 100%;
+        justify-content: center;
+    }
+
     .weekly-calendar-grid {
         grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .weekly-calendar-section + .weekly-calendar-section {
+        margin-top: 16px;
+    }
+
+    .weekly-calendar-header {
+        margin-bottom: 10px;
+        padding: 0;
+    }
+
+    .weekly-calendar-header .pill {
+        display: none;
+    }
+
+    .weekly-day-card {
+        padding: 14px;
+        gap: 12px;
+        border-radius: 20px;
+    }
+
+    .weekly-day-head {
+        align-items: center;
+    }
+
+    .weekly-day-head strong {
+        font-size: 1.05rem;
+    }
+
+    .weekly-day-body {
+        gap: 8px;
+    }
+
+    .weekly-session-chip {
+        padding: 10px 12px;
+        border-radius: 14px;
+    }
+
+    .weekly-session-top {
+        align-items: start;
+    }
+
+    .weekly-session-title {
+        margin-top: 6px;
+        font-size: 0.98rem;
+    }
+
+    .class-chip-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .class-chip-actions .button,
+    .class-chip-actions form,
+    .class-chip-actions form .button {
+        width: 100%;
+    }
+
+    .monthly-preview-button {
+        text-align: inherit;
+    }
+
+    .monthly-calendar-head {
+        display: none;
+    }
+
+    .monthly-calendar-grid,
+    .monthly-calendar-grid-preview {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin-top: 0;
+    }
+
+    .monthly-calendar-grid + .monthly-calendar-grid,
+    .monthly-calendar-grid-preview + .monthly-calendar-grid-preview {
+        margin-top: 8px;
+    }
+
+    .monthly-day-card {
+        min-height: 0;
+        padding: 12px 14px;
+        gap: 8px;
+        border-radius: 16px;
+    }
+
+    .monthly-day-card.is-preview.is-empty:not(.is-today) {
+        display: none;
+    }
+
+    .monthly-day-head {
+        align-items: center;
+    }
+
+    .monthly-day-head > div {
+        display: grid;
+        gap: 2px;
+    }
+
+    .monthly-day-body {
+        gap: 5px;
+    }
+
+    .monthly-session-chip,
+    .monthly-session-chip-preview {
+        padding: 8px 10px;
+        border-radius: 12px;
+    }
+
+    .class-grid-row td {
+        display: block;
+        padding: 10px 0;
+    }
+
+    .class-grid-row td:first-child {
+        padding-top: 0;
+    }
+
+    .class-grid-row td:last-child {
+        padding-bottom: 0;
+    }
+
+    .class-occupancy-stack {
+        min-width: 0;
     }
 }
 
@@ -678,6 +1015,22 @@ PONTOS CRITICOS:
 
 .mix-bar-fill.churn {
     background: linear-gradient(90deg, #a84434, #cf735f);
+}
+
+.mix-bar-fill.class-occupancy-available {
+    background: linear-gradient(90deg, #1f6a5d, #3c9f83);
+}
+
+.mix-bar-fill.class-occupancy-medium {
+    background: linear-gradient(90deg, #d4a107, #eab308);
+}
+
+.mix-bar-fill.class-occupancy-high {
+    background: linear-gradient(90deg, #ea580c, #f59e0b);
+}
+
+.mix-bar-fill.class-occupancy-critical {
+    background: linear-gradient(90deg, #b91c1c, #ef4444);
 }
 
 .chart-grid {

@@ -55,8 +55,8 @@ class StudentDirectoryView(CatalogBaseView):
         context['priority_students'] = snapshot['priority_students']
         context['intake_queue'] = snapshot['intake_queue']
         context['student_focus'] = [
-            'Recepcao usa esta tela para localizar rapido, converter lead e abrir ficha sem perder tempo no admin.',
-            'Gerencia usa esta leitura para enxergar quem exige contato comercial, ajuste de plano ou acao financeira.',
+            'A recepcao usa esta tela para localizar rapido, converter lead e abrir ficha sem perder tempo no admin.',
+            'A gerencia usa esta leitura para enxergar quem exige contato comercial, ajuste de plano ou acao financeira.',
             'O foco aqui e praticidade: triagem primeiro, detalhe depois.',
         ]
         context['student_export_links'] = {
@@ -139,7 +139,7 @@ class StudentQuickBaseView(CatalogBaseView, FormView):
         )
         context['form_focus'] = [
             'Nome completo e WhatsApp formam o núcleo do cadastro rápido.',
-            'Os campos de perfil entram no segundo bloco com a mesma linguagem operacional da academia.',
+            'Os campos de perfil entram no segundo bloco com a mesma linguagem operacional do box.',
             'A ideia desta tela é reduzir fricção sem perder legibilidade.',
         ]
         context['student_object'] = self.object

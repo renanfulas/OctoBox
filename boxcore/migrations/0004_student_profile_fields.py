@@ -1,3 +1,19 @@
+"""
+ARQUIVO: migration 0004 de ampliacao do perfil do aluno.
+
+POR QUE ELE EXISTE:
+- adapta o cadastro de alunos ao modelo operacional atual com dados mais uteis para atendimento.
+
+O QUE ESTE ARQUIVO FAZ:
+1. adiciona campos de cpf, genero e status de questao de saude.
+2. ajusta o telefone principal para refletir o uso como WhatsApp.
+3. remove campos antigos que deixaram de fazer parte do fluxo.
+
+PONTOS CRITICOS:
+- remocoes e renomeacoes implicitas em migrations antigas podem impactar restauracoes e comparacoes de schema.
+- qualquer alteracao aqui precisa respeitar a sequencia historica de migracao.
+"""
+
 from django.db import migrations, models
 
 

@@ -15,12 +15,15 @@ PONTOS CRITICOS:
 - Se estes testes quebrarem, a operacao diaria perde o fluxo principal fora do admin.
 """
 
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from boxcore.models import (
+    Attendance,
     AuditEvent,
     ClassSession,
     Enrollment,
@@ -61,9 +64,9 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Alunos')
         self.assertContains(response, 'Bruna Costa')
-        self.assertContains(response, 'Mesa de operacao')
+        self.assertContains(response, 'Mesa de operação')
         self.assertContains(response, 'Novo aluno')
-        self.assertContains(response, 'Quem pede acao agora')
+        self.assertContains(response, 'Quem pede ação agora')
         self.assertContains(response, 'Fila de entrada provisoria pronta para conversao')
 
     def test_class_grid_renders(self):
@@ -74,8 +77,8 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Grade de aulas')
         self.assertContains(response, 'WOD 18h')
-        self.assertContains(response, 'Calendario das proximas 2 semanas')
-        self.assertContains(response, 'Expandir mes')
+        self.assertContains(response, 'Calendario das proximas duas semanas')
+        self.assertContains(response, 'Expandir mês')
         self.assertContains(response, 'Agenda de hoje')
         self.assertContains(response, 'Planejador recorrente')
 
@@ -93,6 +96,7 @@ class CatalogViewTests(TestCase):
                 'end_date': str(end_date),
                 'weekdays': ['0', '2'],
                 'start_time': '07:00',
+                'sequence_count': 0,
                 'duration_minutes': 60,
                 'capacity': 18,
                 'status': 'scheduled',
@@ -106,6 +110,123 @@ class CatalogViewTests(TestCase):
         self.assertEqual(created_sessions.count(), 4)
         self.assertEqual(created_sessions.first().capacity, 18)
         self.assertTrue(AuditEvent.objects.filter(action='class_schedule_recurring_created').exists())
+
+    def test_class_grid_can_create_recurring_schedule_with_sequence(self):
+        self.client.force_login(self.user)
+        start_date = timezone.localdate() + timezone.timedelta(days=(7 - timezone.localdate().weekday()) % 7)
+
+        response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'title': 'WOD Sequencia 07h',
+                'coach': '',
+                'start_date': start_date.strftime('%d/%m/%y'),
+                'end_date': start_date.strftime('%d/%m/%y'),
+                'weekdays': [str(start_date.weekday())],
+                'start_time': '07:00',
+                'sequence_count': 3,
+                'duration_minutes': 60,
+                'capacity': 18,
+                'status': 'scheduled',
+                'notes': 'Teste de sequencia.',
+                'skip_existing': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        created_sessions = list(ClassSession.objects.filter(title='WOD Sequencia 07h').order_by('scheduled_at'))
+        self.assertEqual(len(created_sessions), 4)
+        self.assertEqual([timezone.localtime(item.scheduled_at).strftime('%H:%M') for item in created_sessions], ['07:00', '08:00', '09:00', '10:00'])
+
+    def test_class_grid_allows_exact_daily_limit_in_single_batch(self):
+        self.client.force_login(self.user)
+        start_date = timezone.localdate() + timezone.timedelta(days=(7 - timezone.localdate().weekday()) % 7)
+
+        for index in range(6):
+            ClassSession.objects.create(
+                title=f'Base diaria {index}',
+                scheduled_at=timezone.make_aware(
+                    timezone.datetime.combine(start_date, timezone.datetime.strptime(f'{6 + index:02d}:00', '%H:%M').time()),
+                    timezone.get_current_timezone(),
+                ),
+                duration_minutes=60,
+                capacity=18,
+                status=SessionStatus.SCHEDULED,
+            )
+
+        response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'title': 'WOD Limite Diario Exato',
+                'coach': '',
+                'start_date': start_date.strftime('%d/%m/%y'),
+                'end_date': start_date.strftime('%d/%m/%y'),
+                'weekdays': [str(start_date.weekday())],
+                'start_time': '12:00',
+                'sequence_count': 5,
+                'duration_minutes': 60,
+                'capacity': 18,
+                'status': 'scheduled',
+                'notes': 'Teste do limite diario exato.',
+                'skip_existing': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(ClassSession.objects.filter(title='WOD Limite Diario Exato').count(), 6)
+        self.assertEqual(ClassSession.objects.filter(scheduled_at__date=start_date).count(), 12)
+
+    def test_class_grid_allows_large_weekly_batch_below_limit(self):
+        self.client.force_login(self.user)
+        start_date = timezone.localdate() + timezone.timedelta(days=(7 - timezone.localdate().weekday()) % 7)
+        end_date = start_date + timezone.timedelta(days=6)
+
+        response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'title': 'WOD Limite Semanal Exato',
+                'coach': '',
+                'start_date': start_date.strftime('%d/%m/%y'),
+                'end_date': end_date.strftime('%d/%m/%y'),
+                'weekdays': [str(index) for index in range(7)],
+                'start_time': '06:00',
+                'sequence_count': 5,
+                'duration_minutes': 60,
+                'capacity': 18,
+                'status': 'scheduled',
+                'notes': 'Teste de lote semanal sem bloqueio precoce.',
+                'skip_existing': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(ClassSession.objects.filter(title='WOD Limite Semanal Exato').count(), 42)
+
+    def test_class_grid_allows_exact_monthly_limit_in_single_batch(self):
+        self.client.force_login(self.user)
+        start_date = timezone.datetime(2026, 4, 1).date()
+        end_date = timezone.datetime(2026, 4, 30).date()
+
+        response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'title': 'WOD Limite Mensal Exato',
+                'coach': '',
+                'start_date': start_date.strftime('%d/%m/%y'),
+                'end_date': end_date.strftime('%d/%m/%y'),
+                'weekdays': [str(index) for index in range(7)],
+                'start_time': '06:00',
+                'sequence_count': 4,
+                'duration_minutes': 60,
+                'capacity': 18,
+                'status': 'scheduled',
+                'notes': 'Teste do limite mensal exato.',
+                'skip_existing': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(ClassSession.objects.filter(title='WOD Limite Mensal Exato').count(), 150)
 
     def test_class_grid_can_filter_by_coach_and_status(self):
         self.client.force_login(self.user)
@@ -135,9 +256,15 @@ class CatalogViewTests(TestCase):
         self.assertContains(response, 'Funcional 06h')
         self.assertNotContains(response, 'Yoga 20h')
 
-    def test_class_grid_can_update_duplicate_and_cancel_session(self):
+    def test_class_grid_can_update_and_delete_session(self):
         self.client.force_login(self.user)
         session = ClassSession.objects.get(title='WOD 18h')
+        secondary_session = ClassSession.objects.create(
+            title='Funcional 06h',
+            coach=self.coach,
+            scheduled_at=timezone.now() + timezone.timedelta(days=1),
+            status=SessionStatus.OPEN,
+        )
 
         update_response = self.client.post(
             reverse('class-grid'),
@@ -147,11 +274,10 @@ class CatalogViewTests(TestCase):
                 'return_query': '',
                 'title': 'WOD 19h',
                 'coach': self.coach.id,
-                'scheduled_date': str(timezone.localdate()),
                 'start_time': '19:00',
                 'duration_minutes': 75,
                 'capacity': 22,
-                'status': SessionStatus.OPEN,
+                'status': SessionStatus.SCHEDULED,
                 'notes': 'Turma ajustada para horario nobre.',
             },
         )
@@ -159,37 +285,161 @@ class CatalogViewTests(TestCase):
         self.assertEqual(update_response.status_code, 302)
         session.refresh_from_db()
         self.assertEqual(session.title, 'WOD 19h')
-        self.assertEqual(session.status, SessionStatus.OPEN)
+        self.assertEqual(session.status, SessionStatus.SCHEDULED)
+        self.assertEqual(timezone.localtime(session.scheduled_at).time().strftime('%H:%M'), '19:00')
 
-        duplicate_response = self.client.post(
+        delete_response = self.client.post(
             reverse('class-grid'),
             data={
                 'form_kind': 'session-action',
-                'action': 'duplicate-session',
-                'session_id': session.id,
+                'action': 'delete-session',
+                'session_id': secondary_session.id,
                 'return_query': '',
             },
         )
 
-        self.assertEqual(duplicate_response.status_code, 302)
-        self.assertEqual(ClassSession.objects.filter(title='WOD 19h').count(), 2)
-
-        cancel_response = self.client.post(
-            reverse('class-grid'),
-            data={
-                'form_kind': 'session-action',
-                'action': 'cancel-session',
-                'session_id': session.id,
-                'return_query': '',
-            },
-        )
-
-        self.assertEqual(cancel_response.status_code, 302)
-        session.refresh_from_db()
-        self.assertEqual(session.status, SessionStatus.CANCELED)
+        self.assertEqual(delete_response.status_code, 302)
+        self.assertFalse(ClassSession.objects.filter(pk=secondary_session.id).exists())
         self.assertTrue(AuditEvent.objects.filter(action='class_session_quick_updated').exists())
-        self.assertTrue(AuditEvent.objects.filter(action='class_session_quick_duplicated').exists())
-        self.assertTrue(AuditEvent.objects.filter(action='class_session_quick_canceled').exists())
+        self.assertTrue(AuditEvent.objects.filter(action='class_session_quick_deleted').exists())
+
+    def test_class_grid_blocks_delete_when_session_has_attendance(self):
+        self.client.force_login(self.user)
+        protected_session = ClassSession.objects.create(
+            title='Funcional 07h',
+            coach=self.coach,
+            scheduled_at=timezone.now() + timezone.timedelta(days=1),
+            status=SessionStatus.OPEN,
+        )
+        Attendance.objects.create(student=self.student, session=protected_session)
+
+        response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'session-action',
+                'action': 'delete-session',
+                'session_id': protected_session.id,
+                'return_query': '',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(ClassSession.objects.filter(pk=protected_session.id).exists())
+        self.assertContains(response, 'Nao exclua uma aula que ja tenha reservas ou presencas.')
+
+    def test_class_grid_blocks_reopening_completed_session_in_quick_edit(self):
+        self.client.force_login(self.user)
+        completed_session = ClassSession.objects.create(
+            title='Recovery 21h',
+            coach=self.coach,
+            scheduled_at=timezone.now() + timezone.timedelta(days=1),
+            status=SessionStatus.COMPLETED,
+        )
+
+        response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'session-edit',
+                'session_id': completed_session.id,
+                'return_query': '',
+                'title': 'Recovery 21h ajustada',
+                'coach': self.coach.id,
+                'start_time': '21:00',
+                'duration_minutes': 60,
+                'capacity': 20,
+                'status': SessionStatus.SCHEDULED,
+                'notes': 'Tentativa de reabrir aula concluida.',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        completed_session.refresh_from_db()
+        self.assertEqual(completed_session.status, SessionStatus.COMPLETED)
+        self.assertContains(response, 'Aulas concluidas nao podem voltar para agendada por esta edicao rapida.')
+
+    def test_class_grid_marks_today_session_as_in_progress_during_runtime(self):
+        self.client.force_login(self.user)
+        today = timezone.localdate()
+        session = ClassSession.objects.create(
+            title='WOD 10h',
+            coach=self.coach,
+            scheduled_at=timezone.make_aware(
+                timezone.datetime.combine(today, timezone.datetime.strptime('10:00', '%H:%M').time()),
+                timezone.get_current_timezone(),
+            ),
+            duration_minutes=60,
+            status=SessionStatus.SCHEDULED,
+        )
+        original_localtime = timezone.localtime
+        simulated_now = timezone.make_aware(
+            timezone.datetime.combine(today, timezone.datetime.strptime('10:00', '%H:%M').time()),
+            timezone.get_current_timezone(),
+        )
+
+        with patch(
+            'boxcore.catalog.class_grid_queries.timezone.localtime',
+            side_effect=lambda value=None, *args, **kwargs: simulated_now if value is None else original_localtime(value, *args, **kwargs),
+        ):
+            response = self.client.get(reverse('class-grid'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Em andamento')
+        self.assertContains(response, 'Entradas encerradas enquanto a aula estiver em andamento.')
+        self.assertContains(response, 'Com vagas')
+        session.refresh_from_db()
+        self.assertEqual(session.status, SessionStatus.SCHEDULED)
+
+    def test_class_grid_uses_occupancy_threshold_colors_and_lotada_label(self):
+        self.client.force_login(self.user)
+        full_session = ClassSession.objects.create(
+            title='WOD Lotado 18h',
+            coach=self.coach,
+            scheduled_at=timezone.now() + timezone.timedelta(days=1),
+            duration_minutes=60,
+            capacity=10,
+            status=SessionStatus.SCHEDULED,
+        )
+
+        for index in range(10):
+            student = Student.objects.create(full_name=f'Aluno Lotado {index}', phone=f'5511977700{index:03d}')
+            Attendance.objects.create(student=student, session=full_session)
+
+        response = self.client.get(reverse('class-grid'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Lotada')
+        self.assertContains(response, 'class-occupancy-critical')
+
+    def test_class_grid_auto_completes_today_session_after_end_time(self):
+        self.client.force_login(self.user)
+        today = timezone.localdate()
+        session = ClassSession.objects.create(
+            title='WOD 10h final',
+            coach=self.coach,
+            scheduled_at=timezone.make_aware(
+                timezone.datetime.combine(today, timezone.datetime.strptime('10:00', '%H:%M').time()),
+                timezone.get_current_timezone(),
+            ),
+            duration_minutes=60,
+            status=SessionStatus.SCHEDULED,
+        )
+        original_localtime = timezone.localtime
+        simulated_now = timezone.make_aware(
+            timezone.datetime.combine(today, timezone.datetime.strptime('11:01', '%H:%M').time()),
+            timezone.get_current_timezone(),
+        )
+
+        with patch(
+            'boxcore.catalog.class_grid_queries.timezone.localtime',
+            side_effect=lambda value=None, *args, **kwargs: simulated_now if value is None else original_localtime(value, *args, **kwargs),
+        ):
+            response = self.client.get(reverse('class-grid'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Finalizada')
+        session.refresh_from_db()
+        self.assertEqual(session.status, SessionStatus.COMPLETED)
 
     def test_class_grid_blocks_daily_limit(self):
         self.client.force_login(self.user)
@@ -214,6 +464,7 @@ class CatalogViewTests(TestCase):
                 'end_date': str(start_date),
                 'weekdays': [str(start_date.weekday())],
                 'start_time': '21:00',
+                'sequence_count': 0,
                 'duration_minutes': 60,
                 'capacity': 18,
                 'status': SessionStatus.SCHEDULED,
