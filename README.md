@@ -15,7 +15,25 @@ PONTOS CRITICOS:
 
 # OctoBox Control
 
-Aplicacao Django para gestao de um box com foco em operacao real: alunos, intake, planos, matriculas, cobrancas, aulas, presenca, ocorrencias, auditoria e leitura gerencial.
+OctoBox e uma central operacional para boxes e academias que precisam sair do improviso de WhatsApp, planilhas e admin bruto demais para a rotina real.
+
+## Problema que o OctoBox resolve
+
+Na pratica, muitos boxes crescem com operacao fragmentada: lead no WhatsApp, aluno em planilha, cobranca em controle manual, agenda em memoria da equipe e decisao gerencial sem leitura confiavel. O resultado costuma ser retrabalho, perda de oportunidade comercial, atraso financeiro, falha de acompanhamento e rotina dependente demais de quem esta atendendo.
+
+## Solucao proposta pelo projeto
+
+O OctoBox foi desenhado para concentrar essa operacao em um fluxo unico, claro e utilizavel no dia a dia. Ele conecta alunos, intake, planos, matriculas, cobrancas, grade de aulas, presenca, auditoria e leitura gerencial em uma base operacional simples de navegar. A proposta do projeto e transformar rotina dispersa em processo visivel, rastreavel e acionavel para recepcao, gerencia, coach e owner.
+
+## Marco de execucao
+
+O primeiro marco funcional do projeto foi entregue em menos de 24 horas.
+
+Linha do tempo deste primeiro ciclo:
+
+1. inicio do projeto em 10/03/2026
+2. marco funcional principal atingido em 11/03/2026
+3. primeira versao pronta para operacao, com base funcional validada e evolucao futura concentrada em novas features, refinamentos e melhorias
 
 ## Escopo atual
 
@@ -47,6 +65,8 @@ Nas areas com maior volume de regra, a base foi organizada de forma mais explici
 3. actions e workflows de regra de negocio
 
 Se quiser estudar a base em ordem pedagógica, use [docs/reading-guide.md](docs/reading-guide.md).
+
+Se quiser entender o raciocinio da primeira entrega, as decisoes tomadas e o que eu aprendi no processo, veja [docs/v1-retrospective.md](docs/v1-retrospective.md).
 
 ## Mapa do projeto
 
