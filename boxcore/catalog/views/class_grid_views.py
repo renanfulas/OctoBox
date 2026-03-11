@@ -19,11 +19,14 @@ from django.urls import reverse
 
 from boxcore.access.roles import ROLE_MANAGER, ROLE_OWNER
 from boxcore.catalog.services import (
-    handle_class_session_cancel_action,
-    handle_class_session_duplicate_action,
-    handle_class_session_update_action,
+    FORM_KIND_SESSION_ACTION,
+    FORM_KIND_SESSION_EDIT,
+    resolve_class_grid_form_kind,
+    resolve_class_grid_session_action,
+    run_class_session_update_command,
     run_class_schedule_create_workflow,
 )
+from boxcore.catalog.services import class_grid_messages as grid_messages
 from boxcore.models import ClassSession
 
 from ..forms import ClassScheduleRecurringForm, ClassSessionQuickEditForm
@@ -78,8 +81,8 @@ class ClassGridView(CatalogBaseView, FormView):
         context['session_edit_form'] = kwargs.get('session_edit_form') or (ClassSessionQuickEditForm(instance=selected_session) if selected_session else None)
         context['current_query_string'] = self._get_return_query_string()
         context['class_focus'] = [
-            'Use esta tela para validar rapidamente a agenda real da equipe sem abrir o admin o tempo todo.',
-            'A grade agora destaca volume de reservas, pressao de lotacao e distribuicao das aulas por dia.',
+            'Use esta tela para validar rapidamente a agenda real da equipe sem abrir o admin toda hora.',
+            'A grade destaca volume de reservas, pressao de lotacao e distribuicao das aulas por dia.',
             'Quando houver duvida operacional, leia primeiro a agenda daqui e depois aprofunde no workspace do coach ou no admin.',
         ]
         return context
@@ -87,31 +90,34 @@ class ClassGridView(CatalogBaseView, FormView):
     def post(self, request, *args, **kwargs):
         current_role = self.get_base_context()['current_role']
         if current_role.slug not in (ROLE_OWNER, ROLE_MANAGER):
-            messages.error(request, 'Seu papel atual pode consultar a grade, mas nao criar aulas por esta tela.')
+            messages.error(request, grid_messages.ROLE_CANNOT_MANAGE_CLASSES)
             return redirect(self.get_success_url())
-        form_kind = request.POST.get('form_kind') or 'planner'
-        if form_kind == 'session-action':
+        try:
+            form_kind = resolve_class_grid_form_kind(request.POST)
+        except ValueError as exc:
+            messages.error(request, str(exc))
+            return redirect(self.get_success_url())
+        if form_kind == FORM_KIND_SESSION_ACTION:
             return self._handle_session_action()
-        if form_kind == 'session-edit':
+        if form_kind == FORM_KIND_SESSION_EDIT:
             return self._handle_session_edit()
         return super().post(request, *args, **kwargs)
 
     def _handle_session_action(self):
         session = self._get_selected_session()
         if session is None:
-            messages.error(self.request, 'A aula selecionada nao foi encontrada.')
+            messages.error(self.request, grid_messages.SESSION_NOT_FOUND)
             return redirect(self.get_success_url())
 
-        action = self.request.POST.get('action')
         try:
-            if action == 'cancel-session':
-                handle_class_session_cancel_action(actor=self.request.user, session=session)
-                messages.success(self.request, f'Aula {session.title} cancelada com sucesso.')
-            elif action == 'duplicate-session':
-                duplicated_session = handle_class_session_duplicate_action(actor=self.request.user, session=session)
-                messages.success(self.request, f'Aula duplicada para {duplicated_session.scheduled_at:%d/%m %H:%M}.')
-            else:
-                messages.error(self.request, 'Acao rapida de aula nao reconhecida.')
+            handler = resolve_class_grid_session_action(self.request.POST)
+        except ValueError as exc:
+            messages.error(self.request, str(exc))
+            return redirect(self.get_success_url())
+
+        try:
+            result = handler(actor=self.request.user, session=session)
+            messages.success(self.request, result.message)
         except ValueError as exc:
             messages.error(self.request, str(exc))
         return redirect(self.get_success_url())
@@ -119,24 +125,24 @@ class ClassGridView(CatalogBaseView, FormView):
     def _handle_session_edit(self):
         session = self._get_selected_session()
         if session is None:
-            messages.error(self.request, 'A aula selecionada nao foi encontrada.')
+            messages.error(self.request, grid_messages.SESSION_NOT_FOUND)
             return redirect(self.get_success_url())
 
         form = ClassSessionQuickEditForm(self.request.POST, instance=session)
         if form.is_valid():
             try:
-                updated_session = handle_class_session_update_action(actor=self.request.user, session=session, form=form)
+                result = run_class_session_update_command(actor=self.request.user, session=session, form=form)
             except ValueError as exc:
                 form.add_error(None, str(exc))
             else:
-                messages.success(self.request, f'Aula {updated_session.title} atualizada com sucesso.')
+                messages.success(self.request, result.message)
                 query_string = self._get_return_query_string()
                 url = reverse('class-grid')
                 if query_string:
                     return redirect(f'{url}?{query_string}')
                 return redirect(url)
 
-        messages.error(self.request, 'A aula nao foi atualizada. Revise os campos destacados.')
+        messages.error(self.request, grid_messages.SESSION_UPDATE_INVALID)
         filter_params = QueryDict(self._get_return_query_string(), mutable=False)
         return self.render_to_response(
             self.get_context_data(
@@ -155,14 +161,11 @@ class ClassGridView(CatalogBaseView, FormView):
         created_count = len(result['created_sessions'])
         skipped_count = len(result['skipped_slots'])
         if created_count == 0 and skipped_count > 0:
-            messages.error(self.request, 'Nenhuma aula nova foi criada porque todos os horarios escolhidos ja existiam.')
+            messages.error(self.request, grid_messages.PLANNER_SKIPPED_ONLY)
         else:
-            message = f'{created_count} aula(s) criada(s) com sucesso.'
-            if skipped_count:
-                message += f' {skipped_count} horario(s) ja existiam e foram pulados.'
-            messages.success(self.request, message)
+            messages.success(self.request, grid_messages.planner_success(created_count, skipped_count))
         return super().form_valid(form)
 
     def form_invalid(self, form):
-        messages.error(self.request, 'A agenda nao foi criada. Revise os campos destacados do planejador.')
+        messages.error(self.request, grid_messages.PLANNER_INVALID)
         return super().form_invalid(form)

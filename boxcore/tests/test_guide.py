@@ -32,8 +32,8 @@ class GuideViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Mapa do Sistema')
-        self.assertContains(response, 'Onde procurar quando houver bug')
-        self.assertContains(response, 'Operação por papel')
-        self.assertContains(response, 'Sidebar errada para o papel')
+        self.assertContains(response, 'Primeira triagem por sintoma')
+        self.assertContains(response, 'Rotina operacional do box')
+        self.assertContains(response, 'Sidebar ou atalhos errados para o papel')
         self.assertContains(response, 'Auditoria')
         self.assertContains(response, 'DEV')

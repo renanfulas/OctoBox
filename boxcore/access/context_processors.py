@@ -1,19 +1,19 @@
 """
-ARQUIVO: contexto global de navegação por papel.
+ARQUIVO: contexto global de navegacao por papel.
 
 POR QUE ELE EXISTE:
-- Evita repetir lógica de sidebar em cada view autenticada.
-- Mantém o menu coerente com o papel efetivo do usuário.
+- evita repetir logica de sidebar, topbar e alertas em cada view autenticada.
+- mantem o menu coerente com o papel efetivo do usuario e com a rota ativa.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Descobre o papel atual do usuário logado.
-2. Monta os links permitidos para a sidebar.
-3. Inclui links técnicos e de auditoria quando o papel permite.
-4. Expõe isso para todos os templates.
+1. descobre o papel atual do usuario logado.
+2. monta os links permitidos para a sidebar.
+3. marca automaticamente o item ativo da navegacao.
+4. expoe alertas globais de financeiro e intake para os templates.
 
 PONTOS CRITICOS:
-- Mudanças aqui impactam a navegação do sistema inteiro.
-- Os links devem refletir a fronteira operacional e técnica real de cada papel.
+- mudancas aqui impactam a navegacao do sistema inteiro.
+- os links devem refletir a fronteira operacional e tecnica real de cada papel.
 """
 
 from boxcore.access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER, get_user_role
@@ -21,7 +21,19 @@ from boxcore.access.roles import ROLE_DEV
 from boxcore.models import IntakeStatus, Payment, PaymentStatus, StudentIntake
 
 
-def _build_navigation(role_slug):
+def _pick_active_href(current_path, links):
+    current_path = current_path or '/'
+    matches = []
+
+    for item in links:
+        href = item['href']
+        if current_path == href or current_path.startswith(href):
+            matches.append(href)
+
+    return max(matches, key=len, default='')
+
+
+def _build_navigation(role_slug, current_path=''):
     base_links = [
         {'label': 'Dashboard', 'href': '/dashboard/'},
         {'label': 'Alunos', 'href': '/alunos/'},
@@ -53,7 +65,16 @@ def _build_navigation(role_slug):
         ],
     }
 
-    return [*base_links, *role_links.get(role_slug, [])]
+    links = [*base_links, *role_links.get(role_slug, [])]
+    active_href = _pick_active_href(current_path, links)
+
+    return [
+        {
+            **item,
+            'is_active': item['href'] == active_href,
+        }
+        for item in links
+    ]
 
 
 def role_navigation(request):
@@ -71,7 +92,7 @@ def role_navigation(request):
 
     return {
         'current_role': role,
-        'sidebar_navigation': _build_navigation(role_slug) if request.user.is_authenticated else [],
+        'sidebar_navigation': _build_navigation(role_slug, request.path) if request.user.is_authenticated else [],
         'global_search_action': '/alunos/',
         'topbar_alerts': {
             'overdue_payments': overdue_payments,

@@ -14,7 +14,6 @@ PONTOS CRITICOS:
 - Qualquer erro aqui pode criar grade duplicada ou deixar a equipe com agenda inconsistente.
 """
 
-from collections import defaultdict
 from datetime import datetime, timedelta
 
 from django.utils import timezone
@@ -71,6 +70,7 @@ def run_class_schedule_create_workflow(*, actor, form):
     end_date = form.cleaned_data['end_date']
     weekdays = set(form.cleaned_data['weekdays'])
     start_time = form.cleaned_data['start_time']
+    sequence_count = form.cleaned_data.get('sequence_count') or 0
     duration_minutes = form.cleaned_data['duration_minutes']
     capacity = form.cleaned_data['capacity']
     status = form.cleaned_data['status']
@@ -80,25 +80,20 @@ def run_class_schedule_create_workflow(*, actor, form):
 
     created_sessions = []
     skipped_slots = []
-    pending_day_counts = defaultdict(int)
-    pending_week_counts = defaultdict(int)
-    pending_month_counts = defaultdict(int)
     cursor = start_date
 
     while cursor <= end_date:
         if cursor.weekday() in weekdays:
-            scheduled_at = timezone.make_aware(datetime.combine(cursor, start_time), current_timezone)
-            existing_session = ClassSession.objects.filter(title=title, scheduled_at=scheduled_at).first()
-            if existing_session is not None and skip_existing:
-                skipped_slots.append(scheduled_at)
-            else:
-                week_key = get_week_bounds(cursor)[0]
-                month_key = cursor.replace(day=1)
+            for sequence_offset in range(sequence_count + 1):
+                slot_start = datetime.combine(cursor, start_time) + timedelta(minutes=duration_minutes * sequence_offset)
+                scheduled_at = timezone.make_aware(slot_start, current_timezone)
+                existing_session = ClassSession.objects.filter(title=title, scheduled_at=scheduled_at).first()
+                if existing_session is not None and skip_existing:
+                    skipped_slots.append(scheduled_at)
+                    continue
+
                 ensure_schedule_limits(
                     scheduled_date=cursor,
-                    pending_day=pending_day_counts[cursor],
-                    pending_week=pending_week_counts[week_key],
-                    pending_month=pending_month_counts[month_key],
                 )
                 created_sessions.append(
                     ClassSession.objects.create(
@@ -111,9 +106,6 @@ def run_class_schedule_create_workflow(*, actor, form):
                         notes=notes,
                     )
                 )
-                pending_day_counts[cursor] += 1
-                pending_week_counts[week_key] += 1
-                pending_month_counts[month_key] += 1
         cursor += timedelta(days=1)
 
     log_audit_event(
@@ -127,6 +119,7 @@ def run_class_schedule_create_workflow(*, actor, form):
             'start_date': start_date.isoformat(),
             'end_date': end_date.isoformat(),
             'weekdays': sorted(weekdays),
+            'sequence_count': sequence_count,
             'created_count': len(created_sessions),
             'skipped_count': len(skipped_slots),
         },

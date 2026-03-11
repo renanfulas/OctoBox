@@ -1,3 +1,19 @@
+"""
+ARQUIVO: migration 0005 de parcelamento e agrupamento de cobrancas.
+
+POR QUE ELE EXISTE:
+- permite representar pagamentos parcelados e agrupar cobrancas relacionadas no financeiro.
+
+O QUE ESTE ARQUIVO FAZ:
+1. adiciona grupo de faturamento ao pagamento.
+2. adiciona numero da parcela atual.
+3. adiciona total de parcelas previstas.
+
+PONTOS CRITICOS:
+- esses campos afetam leitura financeira e integracoes futuras de automacao.
+- mudancas retroativas em migrations podem quebrar bancos ja aplicados.
+"""
+
 from django.db import migrations, models
 
 

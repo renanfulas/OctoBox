@@ -84,7 +84,7 @@ def build_student_directory_snapshot(params=None):
             },
             'Alunos ativos': {
                 'value': active_students,
-                'note': 'Base que ja deveria estar rodando com presenca e cobranca vivas.',
+                'note': 'Base que ja deveria estar rodando com presenca e cobranca ativas.',
             },
             'Leads em aberto': {
                 'value': lead_students,
@@ -92,13 +92,13 @@ def build_student_directory_snapshot(params=None):
             },
             'Com plano ativo': {
                 'value': students_with_active_plan,
-                'note': 'Alunos com matricula ativa no recorte atual.',
+                'note': 'Alunos com matricula ativa neste recorte.',
             },
         },
         'funnel': {
             'Entradas para converter': {
                 'value': pending_intakes.count(),
-                'note': 'Leads e entradas provisiorias pedindo acao rapida da recepcao.',
+                'note': 'Leads e entradas provisorias pedindo acao rapida da recepcao.',
             },
             'Financeiro em atraso': {
                 'value': overdue_students,

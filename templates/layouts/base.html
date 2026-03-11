@@ -26,6 +26,7 @@ PONTOS CRITICOS:
     {% block extra_head %}{% endblock %}
 </head>
 <body data-theme="light">
+    <a class="skip-link" href="#page-body">Pular para o conteudo</a>
     <div class="shell">
         <aside class="sidebar">
             <div class="brand-wrap">
@@ -45,18 +46,19 @@ PONTOS CRITICOS:
                 </div>
             </div>
             {% for item in sidebar_navigation %}
-            <a class="nav-link" href="{{ item.href }}">{{ item.label }}</a>
+            <a class="nav-link{% if item.is_active %} is-active{% endif %}" href="{{ item.href }}"{% if item.is_active %} aria-current="page"{% endif %}>{{ item.label }}</a>
             {% endfor %}
             <a class="nav-link" href="/logout/">Sair</a>
             {% else %}
             <a class="nav-link" href="/login/">Entrar</a>
             {% endif %}
         </aside>
+        <button class="sidebar-backdrop" type="button" id="sidebar-backdrop" aria-label="Fechar menu lateral"></button>
         <main class="content">
             {% if user.is_authenticated %}
             <header class="topbar">
                 <div class="topbar-left">
-                    <button class="sidebar-toggle" type="button" id="sidebar-toggle">Menu</button>
+                    <button class="sidebar-toggle" type="button" id="sidebar-toggle" aria-expanded="false" aria-controls="page-body">Menu</button>
                     <form class="global-search" method="get" action="{{ global_search_action }}">
                         <label class="visually-hidden" for="global-search-input">Buscar aluno ou WhatsApp</label>
                         <span class="search-kicker">Busca global</span>
@@ -65,16 +67,16 @@ PONTOS CRITICOS:
                 </div>
                 <div class="topbar-right">
                     <div class="topbar-alerts">
-                        <a class="alert-chip danger" href="/financeiro/">
+                        <a class="alert-chip danger{% if topbar_alerts.overdue_payments %} has-volume{% endif %}" href="/financeiro/">
                             <span class="alert-dot"></span>
-                            <span><strong>{{ topbar_alerts.overdue_payments }}</strong> vencimentos</span>
+                            <span><strong>{{ topbar_alerts.overdue_payments }}</strong> {% if topbar_alerts.overdue_payments == 1 %}vencimento{% else %}vencimentos{% endif %}</span>
                         </a>
-                        <a class="alert-chip" href="/alunos/">
+                        <a class="alert-chip{% if topbar_alerts.pending_intakes %} has-volume{% endif %}" href="/alunos/">
                             <span class="alert-dot"></span>
-                            <span><strong>{{ topbar_alerts.pending_intakes }}</strong> intakes</span>
+                            <span><strong>{{ topbar_alerts.pending_intakes }}</strong> {% if topbar_alerts.pending_intakes == 1 %}intake{% else %}intakes{% endif %}</span>
                         </a>
                     </div>
-                    <button class="theme-toggle" type="button" id="theme-toggle">Tema</button>
+                    <button class="theme-toggle" type="button" id="theme-toggle" aria-pressed="false">Tema</button>
                     <div class="topbar-profile">
                         <div class="avatar">{{ current_role.label|default:user.username|slice:":2"|upper }}</div>
                         <div class="profile-meta">
@@ -85,7 +87,7 @@ PONTOS CRITICOS:
                 </div>
             </header>
             {% endif %}
-            <div class="page-body">
+            <div class="page-body" id="page-body">
                 {% if messages %}
                 <div class="message-stack">
                     {% for message in messages %}
@@ -102,25 +104,63 @@ PONTOS CRITICOS:
             const body = document.body;
             const themeToggle = document.getElementById('theme-toggle');
             const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebarBackdrop = document.getElementById('sidebar-backdrop');
             const savedTheme = localStorage.getItem('octobox-theme');
+
+            function syncThemeUi() {
+                if (!themeToggle) {
+                    return;
+                }
+
+                const isDark = body.dataset.theme === 'dark';
+                themeToggle.textContent = isDark ? 'Tema claro' : 'Tema escuro';
+                themeToggle.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+            }
+
+            function syncSidebarUi() {
+                if (!sidebarToggle) {
+                    return;
+                }
+
+                sidebarToggle.setAttribute('aria-expanded', body.classList.contains('sidebar-open') ? 'true' : 'false');
+            }
 
             if (savedTheme === 'dark') {
                 body.dataset.theme = 'dark';
             }
+
+            syncThemeUi();
+            syncSidebarUi();
 
             if (themeToggle) {
                 themeToggle.addEventListener('click', function () {
                     const nextTheme = body.dataset.theme === 'dark' ? 'light' : 'dark';
                     body.dataset.theme = nextTheme;
                     localStorage.setItem('octobox-theme', nextTheme);
+                    syncThemeUi();
                 });
             }
 
             if (sidebarToggle) {
                 sidebarToggle.addEventListener('click', function () {
                     body.classList.toggle('sidebar-open');
+                    syncSidebarUi();
                 });
             }
+
+            if (sidebarBackdrop) {
+                sidebarBackdrop.addEventListener('click', function () {
+                    body.classList.remove('sidebar-open');
+                    syncSidebarUi();
+                });
+            }
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && body.classList.contains('sidebar-open')) {
+                    body.classList.remove('sidebar-open');
+                    syncSidebarUi();
+                }
+            });
         }());
     </script>
 </body>

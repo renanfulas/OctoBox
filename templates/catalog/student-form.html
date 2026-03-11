@@ -30,7 +30,7 @@ PONTOS CRITICOS:
 
 <section class="layout-grid align-start section-gap">
     <article class="table-card">
-        <p class="eyebrow">Quest de cadastro</p>
+        <p class="eyebrow">Roteiro de cadastro</p>
         <ul class="capability-list">
             {% for item in form_focus %}
             <li>{{ item }}</li>
@@ -136,7 +136,7 @@ PONTOS CRITICOS:
                         </div>
                         {{ form.enrollment_status.as_hidden }}
                         <div class="note-panel note-panel-success-soft text-muted">
-                            O plano escolhido ja prepara a matricula do aluno. Isso reduz retrabalho e faz a pagina de alunos conversar direto com a central de Financeiro.
+                            O plano escolhido ja prepara a matricula do aluno. Isso reduz retrabalho e faz a pagina de alunos conversar direto com a central de financeiro.
                         </div>
                     </div>
                 </details>
@@ -331,7 +331,7 @@ PONTOS CRITICOS:
                     <strong>{{ enrollment.plan.name }}</strong>
                     <span class="pill{% if enrollment.status == 'expired' or enrollment.status == 'canceled' %} warning{% endif %}">{{ enrollment.get_status_display }}</span>
                 </div>
-                <p class="meta-text-sm">Inicio {{ enrollment.start_date|date:"d/m/Y" }}{% if enrollment.end_date %} | Fim {{ enrollment.end_date|date:"d/m/Y" }}{% endif %}</p>
+                <p class="meta-text-sm">Inicio em {{ enrollment.start_date|date:"d/m/Y" }}{% if enrollment.end_date %} | Fim em {{ enrollment.end_date|date:"d/m/Y" }}{% endif %}</p>
                 {% if enrollment.notes %}<p class="meta-text">{{ enrollment.notes }}</p>{% endif %}
             </div>
             {% empty %}

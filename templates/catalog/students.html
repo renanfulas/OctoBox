@@ -20,10 +20,10 @@ PONTOS CRITICOS:
 <section class="hero">
     <div>
         <h1>Alunos</h1>
-        <p>Esta tela existe para atender rapido. Recepcao localiza e converte, gerente acompanha plano e financeiro, e o dono bate o olho na saude comercial da base sem cair no admin bruto.</p>
+        <p>Esta tela existe para agilizar o atendimento. A recepcao localiza e converte, a gerencia acompanha plano e financeiro, e o dono bate o olho na saude comercial da base sem cair no admin bruto.</p>
     </div>
     <div class="actions">
-        <span class="pill info">Mesa de operacao</span>
+        <span class="pill info">Mesa de operação</span>
         {% if can_manage_students %}
         <a class="button" href="/alunos/novo/">Novo aluno</a>
         {% endif %}
@@ -85,16 +85,16 @@ PONTOS CRITICOS:
 
 <section class="layout-grid section-gap">
     <article class="table-card quick-hero-card">
-        <p class="eyebrow">Acao rapida</p>
+        <p class="eyebrow">Ação rápida</p>
         <h2 class="section-title">Cadastre ou encontre sem travar o atendimento</h2>
-        <p class="body-copy text-muted">Nome e WhatsApp resolvem a entrada inicial. O resto da ficha pode amadurecer depois, quando o contato ja estiver vivo na operacao.</p>
+        <p class="body-copy text-muted">Nome e WhatsApp resolvem a entrada inicial. O restante da ficha pode amadurecer depois, quando o contato já estiver vivo na operação.</p>
         {% if can_manage_students %}
         <div class="actions actions-tight">
             <a class="button" href="/alunos/novo/">Abrir cadastro rapido</a>
             <a class="button secondary" href="/admin/boxcore/student/add/">Abrir no admin</a>
         </div>
         {% else %}
-        <p class="meta-text">Seu papel atual pode consultar a base, mas nao cadastrar alunos por esta tela.</p>
+        <p class="meta-text">Seu papel atual pode consultar a base, mas nao pode cadastrar alunos por esta tela.</p>
         {% endif %}
     </article>
 
@@ -110,7 +110,7 @@ PONTOS CRITICOS:
 
 <section class="layout-grid student-compact-layout section-gap">
     <article class="table-card student-priority-panel">
-        <p class="eyebrow">Quem pede acao agora</p>
+        <p class="eyebrow">Quem pede ação agora</p>
         <div class="stack-14">
             {% for student in priority_students %}
             <article class="priority-student-card">
@@ -142,10 +142,10 @@ PONTOS CRITICOS:
     <article class="table-card info-card">
         <p class="eyebrow">Leitura que realmente importa</p>
         <ul class="capability-list">
-            <li>Lead sem conversao parada vira perda de atendimento.</li>
+            <li>Lead sem conversao em andamento vira perda de atendimento.</li>
             <li>Aluno sem plano ativo pede revisao comercial, reativacao ou limpeza de base.</li>
             <li>Financeiro em atraso precisa aparecer cedo para nao virar surpresa no caixa.</li>
-            <li>Recepcao olha contato e proximo passo; gerente olha plano, pendencia e atraso.</li>
+            <li>Recepcao olha contato e proximo passo; a gerencia olha plano, pendencia e atraso.</li>
         </ul>
     </article>
 </section>
@@ -172,7 +172,7 @@ PONTOS CRITICOS:
             {% endif %}
         </div>
         {% empty %}
-        <p class="meta-text">Nenhuma entrada provisoria aguardando conversao agora.</p>
+        <p class="meta-text">Nenhuma entrada provisoria aguardando conversao neste momento.</p>
         {% endfor %}
     </div>
 </section>
@@ -192,7 +192,7 @@ PONTOS CRITICOS:
                 <th>Comercial</th>
                 <th>Financeiro</th>
                 <th>Atualizado</th>
-                <th>Acoes</th>
+                <th>Ações</th>
             </tr>
         </thead>
         <tbody>
