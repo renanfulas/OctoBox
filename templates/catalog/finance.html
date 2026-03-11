@@ -32,15 +32,16 @@ PONTOS CRITICOS:
 
 <section class="panel-grid">
     {% for label, item in finance_metrics.items %}
-    <article class="card">
+    <article class="card finance-metric-card {% cycle 'orange-glow' 'green-glow' 'blue-glow' 'orange-glow' 'green-glow' 'blue-glow' %}">
         <p class="eyebrow">{{ label }}</p>
         <p class="metric">{% if 'faturamento' in label or 'receita' in label or 'ticket' in label %}R$ {{ item.value }}{% else %}{{ item.value }}{% endif %}</p>
         <p class="metric-note">{{ item.note }}</p>
+        <div class="metric-spark"></div>
     </article>
     {% endfor %}
 </section>
 
-<section class="table-card" style="margin-bottom: 24px;">
+<section class="table-card finance-glass-panel" style="margin-bottom: 24px;">
     <p class="eyebrow">Filtros da leitura financeira</p>
     <form method="get" style="display:grid; gap:14px;">
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px;">
@@ -69,7 +70,7 @@ PONTOS CRITICOS:
 </section>
 
 <section class="layout-grid" style="margin-bottom: 24px; align-items: start; grid-template-columns: 1.1fr 0.9fr;">
-    <article class="table-card">
+    <article class="table-card finance-glass-panel">
         <p class="eyebrow">Tendencia mensal</p>
         <h2 style="margin: 0 0 12px; font-size: 1.55rem;">Receita real recebida nos ultimos 6 meses</h2>
         <p style="margin: 0 0 18px; color: var(--muted); line-height: 1.6;">Aqui voce enxerga se o caixa realmente subiu ou se o crescimento ficou mais narrativo do que financeiro.</p>
@@ -86,7 +87,7 @@ PONTOS CRITICOS:
         </div>
     </article>
 
-    <article class="table-card">
+    <article class="table-card finance-glass-panel">
         <p class="eyebrow">Churn e crescimento</p>
         <h2 style="margin: 0 0 12px; font-size: 1.55rem;">Ativacoes x cancelamentos</h2>
         <p style="margin: 0 0 18px; color: var(--muted); line-height: 1.6;">O objetivo aqui e medir se o box esta empilhando alunos ou apenas girando base.</p>
@@ -114,7 +115,7 @@ PONTOS CRITICOS:
 </section>
 
 <section class="layout-grid" style="margin-bottom: 24px; align-items: start; grid-template-columns: 1.15fr 0.85fr;">
-    <article class="table-card">
+    <article class="table-card finance-glass-panel">
         <p class="eyebrow">Leitura que importa</p>
         <ul class="capability-list">
             <li>O plano nasce aqui e depois aparece na matricula e no historico financeiro do aluno.</li>
@@ -123,7 +124,7 @@ PONTOS CRITICOS:
         </ul>
     </article>
 
-    <article class="table-card" id="cadastro-plano" style="background: linear-gradient(145deg, rgba(31, 106, 93, 0.14), rgba(255, 253, 248, 0.98));">
+    <article class="table-card finance-hero-panel" id="cadastro-plano">
         <p class="eyebrow">Motor de planos</p>
         <h2 style="margin: 0 0 10px; font-size: 1.55rem;">Cadastre um plano que depois conversa com aluno, matricula e pagamento</h2>
         <p style="margin: 0 0 18px; color: var(--muted); line-height: 1.6;">Deixe claro o valor, o ciclo e a entrega. Esse cadastro vira base para a parte comercial inteira.</p>
@@ -170,7 +171,7 @@ PONTOS CRITICOS:
 </section>
 
 <section class="layout-grid" style="margin-bottom: 24px; align-items: start;">
-    <article class="table-card">
+    <article class="table-card finance-glass-panel">
         <p class="eyebrow">Portfolio de planos</p>
         <div style="display: grid; gap: 16px;">
             {% for plan in plan_portfolio %}
@@ -208,7 +209,7 @@ PONTOS CRITICOS:
         </div>
     </article>
 
-    <article class="table-card">
+    <article class="table-card finance-glass-panel">
         <p class="eyebrow">Mix comercial</p>
         <div style="display: grid; gap: 14px;">
             {% for item in plan_mix %}
@@ -230,7 +231,7 @@ PONTOS CRITICOS:
 </section>
 
 <section class="layout-grid" style="align-items: start;">
-    <article class="table-card">
+    <article class="table-card finance-glass-panel">
         <p class="eyebrow">Fila financeira</p>
         <table>
             <thead>
@@ -244,7 +245,7 @@ PONTOS CRITICOS:
             </thead>
             <tbody>
                 {% for payment in financial_alerts %}
-                <tr>
+                <tr class="finance-row">
                     <td>{{ payment.student.full_name }}</td>
                     <td>{% if payment.enrollment %}{{ payment.enrollment.plan.name }}{% else %}Sem vinculo{% endif %}</td>
                     <td>{{ payment.due_date|date:"d/m/Y" }}</td>
@@ -258,7 +259,7 @@ PONTOS CRITICOS:
         </table>
     </article>
 
-    <article class="table-card">
+    <article class="table-card finance-glass-panel">
         <p class="eyebrow">Movimentos recentes</p>
         <div style="display:grid; gap:14px;">
             {% for movement in recent_movements %}
@@ -280,12 +281,20 @@ PONTOS CRITICOS:
 <style>
     input, select, textarea {
         width: 100%;
-        padding: 12px 14px;
-        border-radius: 14px;
+        padding: 13px 14px;
+        border-radius: 16px;
         border: 1px solid var(--line);
-        background: rgba(255, 253, 248, 0.95);
+        background: rgba(255, 255, 255, 0.82);
         color: var(--ink);
         font: inherit;
+        transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: rgba(249, 115, 22, 0.3);
+        box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
+        transform: translateY(-1px);
     }
 
     .field-label {
@@ -294,11 +303,63 @@ PONTOS CRITICOS:
         font-weight: 600;
     }
 
+    .finance-glass-panel {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .finance-glass-panel::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(120deg, rgba(255, 255, 255, 0.12), transparent 35%, transparent 65%, rgba(255, 255, 255, 0.08));
+        pointer-events: none;
+    }
+
+    .finance-metric-card {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .orange-glow {
+        background: linear-gradient(145deg, rgba(249, 115, 22, 0.12), rgba(255, 255, 255, 0.94));
+    }
+
+    .green-glow {
+        background: linear-gradient(145deg, rgba(16, 185, 129, 0.12), rgba(255, 255, 255, 0.94));
+    }
+
+    .blue-glow {
+        background: linear-gradient(145deg, rgba(59, 130, 246, 0.12), rgba(255, 255, 255, 0.94));
+    }
+
+    .metric-spark {
+        position: absolute;
+        right: -18px;
+        bottom: -18px;
+        width: 84px;
+        height: 84px;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.16), transparent 70%);
+        animation: financePulse 3s ease-in-out infinite;
+    }
+
+    .finance-hero-panel {
+        background: linear-gradient(145deg, rgba(16, 185, 129, 0.14), rgba(255, 255, 255, 0.94));
+    }
+
     .plan-card {
         padding: 18px;
-        border-radius: 20px;
+        border-radius: 22px;
         border: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.55);
+        background: rgba(255, 255, 255, 0.6);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .plan-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lift);
+        border-color: rgba(249, 115, 22, 0.18);
     }
 
     .plan-stats {
@@ -329,6 +390,7 @@ PONTOS CRITICOS:
         height: 100%;
         border-radius: 999px;
         background: linear-gradient(90deg, var(--brand), var(--accent));
+        transition: width 0.25s ease;
     }
 
     .mix-bar-fill.growth {
@@ -373,11 +435,16 @@ PONTOS CRITICOS:
         width: 100%;
         min-height: 10px;
         border-radius: 16px 16px 8px 8px;
+        transition: height 0.25s ease, transform 0.18s ease;
     }
 
     .chart-bar.revenue {
-        background: linear-gradient(180deg, rgba(31, 106, 93, 0.92), rgba(201, 111, 36, 0.82));
-        box-shadow: 0 16px 24px rgba(31, 106, 93, 0.18);
+        background: linear-gradient(180deg, rgba(16, 185, 129, 0.92), rgba(249, 115, 22, 0.82));
+        box-shadow: 0 16px 24px rgba(16, 185, 129, 0.18);
+    }
+
+    .chart-column:hover .chart-bar {
+        transform: translateY(-3px);
     }
 
     .delta-row {
@@ -385,6 +452,13 @@ PONTOS CRITICOS:
         border-radius: 18px;
         border: 1px solid var(--line);
         background: rgba(255, 255, 255, 0.45);
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .delta-row:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-soft);
+        border-color: rgba(59, 130, 246, 0.18);
     }
 
     .delta-track-group {
@@ -411,7 +485,20 @@ PONTOS CRITICOS:
         border-radius: 999px;
         margin-top: 6px;
         background: var(--brand);
-        box-shadow: 0 0 0 5px rgba(201, 111, 36, 0.12);
+        box-shadow: 0 0 0 5px rgba(249, 115, 22, 0.12);
+    }
+
+    .finance-row {
+        transition: background 0.16s ease;
+    }
+
+    .finance-row:hover {
+        background: rgba(249, 115, 22, 0.06);
+    }
+
+    @keyframes financePulse {
+        0%, 100% { transform: scale(1) translateY(0); opacity: 0.7; }
+        50% { transform: scale(1.08) translateY(-4px); opacity: 1; }
     }
 </style>
 {% endblock %}

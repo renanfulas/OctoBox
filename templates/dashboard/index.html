@@ -69,36 +69,59 @@ PONTOS CRITICOS:
 </section>
 
 <section class="panel-grid">
-    <article class="card">
+    <article class="card" style="background: linear-gradient(145deg, rgba(249, 115, 22, 0.12), rgba(255, 255, 255, 0.95));">
         <p class="eyebrow">Alunos ativos</p>
         <p class="metric">{{ metrics.active_students }}</p>
         <p class="metric-note">Base principal para check-in e retenção.</p>
+        <div class="accent-bar" style="margin-top: 16px;"></div>
     </article>
-    <article class="card">
+    <article class="card" style="background: linear-gradient(145deg, rgba(59, 130, 246, 0.10), rgba(255, 255, 255, 0.95));">
         <p class="eyebrow">Aulas hoje</p>
         <p class="metric">{{ metrics.sessions_today }}</p>
         <p class="metric-note">Agenda operacional do dia.</p>
+        <div class="accent-bar" style="margin-top: 16px;"></div>
     </article>
-    <article class="card">
+    <article class="card" style="background: linear-gradient(145deg, rgba(239, 68, 68, 0.10), rgba(255, 255, 255, 0.95));">
         <p class="eyebrow">Pagamentos atrasados</p>
         <p class="metric">{{ metrics.overdue_payments }}</p>
         <p class="metric-note">Prioridade para ação da secretaria.</p>
+        <div class="actions">
+            <span class="pill warning">{% if metrics.overdue_payments > 0 %}Ação imediata{% else %}Sob controle{% endif %}</span>
+        </div>
     </article>
-    <article class="card">
+    <article class="card" style="background: linear-gradient(145deg, rgba(16, 185, 129, 0.10), rgba(255, 255, 255, 0.95));">
         <p class="eyebrow">Presenças no mês</p>
         <p class="metric">{{ metrics.attendance_this_month }}</p>
         <p class="metric-note">Volume de comparecimentos registrados.</p>
     </article>
-    <article class="card">
+    <article class="card" style="background: linear-gradient(145deg, rgba(249, 115, 22, 0.08), rgba(255, 255, 255, 0.95));">
         <p class="eyebrow">Receita recebida no mês</p>
         <p class="metric">R$ {{ metrics.monthly_revenue_paid }}</p>
         <p class="metric-note">Somatório dos pagamentos marcados como pagos.</p>
     </article>
-    <article class="card">
+    <article class="card" style="background: linear-gradient(145deg, rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0.95));">
         <p class="eyebrow">Ocorrências no mês</p>
         <p class="metric">{{ metrics.occurrences_this_month }}</p>
         <p class="metric-note">Eventos de acompanhamento comportamental.</p>
     </article>
+</section>
+
+<section class="quick-grid">
+    <a class="quick-card" href="/alunos/novo/">
+        <p class="eyebrow">Ação rápida</p>
+        <strong>Novo intake / aluno</strong>
+        <p>Abra o fluxo leve para converter contato em aluno com matrícula e cobrança inicial no mesmo passo.</p>
+    </a>
+    <a class="quick-card" href="/operacao/coach/">
+        <p class="eyebrow">Ação rápida</p>
+        <strong>Marcar presença</strong>
+        <p>Entre na rotina do coach para check-in, check-out e leitura viva da operação de treino.</p>
+    </a>
+    <a class="quick-card" href="/financeiro/">
+        <p class="eyebrow">Ação rápida</p>
+        <strong>Gerar cobrança</strong>
+        <p>Vá direto para o centro financeiro e priorize vencidos, ticket médio e carteira ativa.</p>
+    </a>
 </section>
 
 <section class="layout-grid">

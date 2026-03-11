@@ -20,12 +20,16 @@ PONTOS CRITICOS:
     <title>Entrar | OctoBox Control</title>
     <style>
         :root {
-            --bg: #f3f1ea;
-            --surface: #fffdf8;
-            --ink: #16211f;
-            --muted: #5f6c67;
-            --line: #d7d1c3;
-            --brand: #c96f24;
+            --bg: #07101d;
+            --surface: rgba(255, 255, 255, 0.84);
+            --surface-dark: rgba(15, 23, 42, 0.74);
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: rgba(148, 163, 184, 0.22);
+            --brand: #f97316;
+            --accent: #10b981;
+            --accent-2: #3b82f6;
+            --danger: #ef4444;
         }
 
         * { box-sizing: border-box; }
@@ -36,11 +40,12 @@ PONTOS CRITICOS:
             display: grid;
             place-items: center;
             padding: 24px;
-            font-family: Georgia, "Times New Roman", serif;
-            color: var(--ink);
+            font-family: "Bahnschrift", "Trebuchet MS", "Segoe UI", sans-serif;
+            color: #e2e8f0;
             background:
-                radial-gradient(circle at top right, rgba(201, 111, 36, 0.16), transparent 22%),
-                radial-gradient(circle at bottom left, rgba(31, 106, 93, 0.14), transparent 28%),
+                radial-gradient(circle at top right, rgba(249, 115, 22, 0.28), transparent 20%),
+                radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.18), transparent 24%),
+                radial-gradient(circle at 50% 10%, rgba(59, 130, 246, 0.16), transparent 20%),
                 var(--bg);
         }
 
@@ -48,27 +53,89 @@ PONTOS CRITICOS:
             width: min(980px, 100%);
             display: grid;
             grid-template-columns: 1.1fr 420px;
-            border-radius: 28px;
+            border-radius: 32px;
             overflow: hidden;
-            background: var(--surface);
-            border: 1px solid var(--line);
-            box-shadow: 0 24px 60px rgba(22, 33, 31, 0.1);
+            background: rgba(15, 23, 42, 0.34);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 28px 70px rgba(2, 6, 23, 0.44);
         }
 
         .story {
-            padding: 48px;
-            background: rgba(22, 33, 31, 0.95);
-            color: #f4efe5;
+            position: relative;
+            padding: 54px;
+            background:
+                radial-gradient(circle at top left, rgba(249, 115, 22, 0.24), transparent 26%),
+                radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.18), transparent 28%),
+                linear-gradient(160deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.84));
+            color: #f8fafc;
+            overflow: hidden;
+        }
+
+        .story::after {
+            content: '';
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            border-radius: 999px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.16), transparent 70%);
+            right: -80px;
+            bottom: -80px;
         }
 
         .story h1 {
             margin: 0 0 12px;
-            font-size: clamp(2rem, 4vw, 3.4rem);
+            font-size: clamp(2.4rem, 4vw, 4rem);
+            line-height: 0.95;
+            letter-spacing: -0.05em;
         }
 
         .story p {
-            color: rgba(244, 239, 229, 0.76);
+            color: rgba(248, 250, 252, 0.74);
             line-height: 1.7;
+        }
+
+        .brand-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            margin-bottom: 18px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(248, 250, 252, 0.88);
+            font-size: 0.88rem;
+        }
+
+        .story-grid {
+            display: grid;
+            gap: 14px;
+            margin-top: 28px;
+        }
+
+        .story-stat {
+            padding: 16px 18px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: transform 0.18s ease, background 0.18s ease;
+        }
+
+        .story-stat:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.09);
+        }
+
+        .story-stat strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 1rem;
+        }
+
+        .story-stat span {
+            color: rgba(248, 250, 252, 0.68);
+            line-height: 1.6;
         }
 
         .story ul {
@@ -78,18 +145,32 @@ PONTOS CRITICOS:
         }
 
         .form-wrap {
-            padding: 40px 32px;
+            padding: 36px 32px;
+            background: var(--surface);
+            color: var(--ink);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .form-wrap h2 {
             margin: 0 0 10px;
-            font-size: 1.9rem;
+            font-size: 2rem;
+            letter-spacing: -0.03em;
         }
 
         .subtitle {
             margin: 0 0 24px;
             color: var(--muted);
             line-height: 1.6;
+        }
+
+        .form-shell {
+            padding: 22px;
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.66);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
         }
 
         label {
@@ -101,11 +182,20 @@ PONTOS CRITICOS:
         input {
             width: 100%;
             padding: 14px 16px;
-            border-radius: 14px;
+            border-radius: 16px;
             border: 1px solid var(--line);
             margin-bottom: 18px;
-            background: #fff;
+            background: rgba(255, 255, 255, 0.88);
+            color: var(--ink);
             font-size: 1rem;
+            transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: rgba(249, 115, 22, 0.32);
+            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
+            transform: translateY(-1px);
         }
 
         button {
@@ -113,16 +203,25 @@ PONTOS CRITICOS:
             border: 0;
             border-radius: 999px;
             padding: 14px 18px;
-            background: var(--brand);
+            background: linear-gradient(135deg, var(--brand), #fb923c);
             color: #fffdf8;
             font-size: 1rem;
             cursor: pointer;
+            font-weight: 700;
+            box-shadow: 0 14px 28px rgba(249, 115, 22, 0.22);
+            transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 18px 32px rgba(249, 115, 22, 0.28);
+            filter: saturate(1.06);
         }
 
         .errorlist {
             margin: 0 0 16px;
             padding-left: 18px;
-            color: #a84434;
+            color: var(--danger);
         }
 
         .helper {
@@ -132,9 +231,22 @@ PONTOS CRITICOS:
             line-height: 1.6;
         }
 
+        .helper-card {
+            margin-top: 22px;
+            padding: 16px 18px;
+            border-radius: 20px;
+            background: linear-gradient(145deg, rgba(16, 185, 129, 0.10), rgba(255, 255, 255, 0.8));
+            border: 1px solid rgba(16, 185, 129, 0.16);
+        }
+
         @media (max-width: 900px) {
             .login-shell {
                 grid-template-columns: 1fr;
+            }
+
+            .story,
+            .form-wrap {
+                padding: 28px;
             }
         }
     </style>
@@ -142,32 +254,49 @@ PONTOS CRITICOS:
 <body>
     <div class="login-shell">
         <section class="story">
+            <div class="brand-chip">
+                <span>OctoBox Control</span>
+                <span>Fitness SaaS</span>
+            </div>
             <h1>OctoBox Control</h1>
             <p>
-                A camada de acesso do projeto agora já separa dono, gerente e coach para o sistema crescer com responsabilidades claras.
+                A operação do box em um sistema que organiza energia comercial, rotina técnica e leitura financeira sem ruído visual.
             </p>
-            <ul>
-                <li>Owner: visão estratégica e controle total.</li>
-                <li>Manager: operação, alunos, agenda e financeiro.</li>
-                <li>Coach: treino, presença e acompanhamento técnico.</li>
-            </ul>
+            <div class="story-grid">
+                <div class="story-stat">
+                    <strong>Owner</strong>
+                    <span>Visão estratégica do box com leitura de operação, receita e crescimento.</span>
+                </div>
+                <div class="story-stat">
+                    <strong>Manager</strong>
+                    <span>Intake rápido, alunos, cobrança, recorrência e acompanhamento comercial.</span>
+                </div>
+                <div class="story-stat">
+                    <strong>Coach</strong>
+                    <span>Presença, rotina de treino, aula e leitura viva da operação técnica.</span>
+                </div>
+            </div>
         </section>
         <section class="form-wrap">
             <h2>Entrar no sistema</h2>
             <p class="subtitle">Use um usuário interno da academia para acessar o painel.</p>
-            <form method="post">
-                {% csrf_token %}
-                {{ form.non_field_errors }}
-                <label for="id_username">Usuário</label>
-                {{ form.username }}
-                <label for="id_password">Senha</label>
-                {{ form.password }}
-                <button type="submit">Entrar</button>
-                <input type="hidden" name="next" value="{{ next }}">
-            </form>
-            <p class="helper">
-                Primeiro acesso: rode o comando de grupos, crie os usuários e associe cada pessoa ao papel correto no admin.
-            </p>
+            <div class="form-shell">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
+                    <label for="id_username">Usuário</label>
+                    {{ form.username }}
+                    <label for="id_password">Senha</label>
+                    {{ form.password }}
+                    <button type="submit">Entrar</button>
+                    <input type="hidden" name="next" value="{{ next }}">
+                </form>
+                <div class="helper-card">
+                    <p class="helper">
+                        Primeiro acesso: rode o comando de grupos, crie os usuários e associe cada pessoa ao papel correto no admin.
+                    </p>
+                </div>
+            </div>
         </section>
     </div>
 </body>

@@ -1,3 +1,16 @@
+## ARQUIVO: regras de exclusao do Git.
+##
+## POR QUE ELE EXISTE:
+## - Evita publicar artefatos locais, segredos, banco local, caches e backups gerados no desenvolvimento.
+##
+## O QUE ESTE ARQUIVO FAZ:
+## 1. Ignora ambientes virtuais e caches de Python.
+## 2. Ignora banco local, staticfiles e media gerados no ambiente.
+## 3. Ignora variaveis locais, logs e backups.
+##
+## PONTOS CRITICOS:
+## - Se uma regra sensivel sair daqui, arquivos locais podem vazar para o repositorio.
+
 # Ambientes virtuais
 .venv/
 venv/
@@ -37,3 +50,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Backups locais
+backups/

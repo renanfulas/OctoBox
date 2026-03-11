@@ -211,6 +211,11 @@ class StudentQuickBaseView(CatalogBaseView, FormView):
         context['financial_overview'] = self.get_financial_overview()
         context['payment_management_form'] = self.get_payment_management_form()
         context['enrollment_management_form'] = self.get_enrollment_management_form()
+        form = context.get('form')
+        context['plan_price_map'] = {
+            str(plan.id): str(plan.price)
+            for plan in getattr(getattr(form, 'fields', {}).get('selected_plan'), 'queryset', [])
+        }
         return context
 
     def sync_student_enrollment(self, form):

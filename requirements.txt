@@ -1,1 +1,17 @@
+## ARQUIVO: dependencias Python do projeto.
+##
+## POR QUE ELE EXISTE:
+## - Fixa o conjunto minimo de pacotes para desenvolvimento, homologacao e producao.
+##
+## O QUE ESTE ARQUIVO FAZ:
+## 1. Define o Django usado pelo projeto.
+## 2. Adiciona suporte a PostgreSQL por URL.
+## 3. Adiciona WhiteNoise para static files em deploy simples.
+##
+## PONTOS CRITICOS:
+## - Alteracoes de versao podem quebrar deploy, testes ou compatibilidade do banco.
+
 Django==6.0.3
+dj-database-url==2.3.0
+psycopg[binary]==3.2.13
+whitenoise==6.9.0

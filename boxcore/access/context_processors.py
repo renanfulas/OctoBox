@@ -18,6 +18,7 @@ PONTOS CRITICOS:
 
 from boxcore.access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER, get_user_role
 from boxcore.access.roles import ROLE_DEV
+from boxcore.models import IntakeStatus, Payment, PaymentStatus, StudentIntake
 
 
 def _build_navigation(role_slug):
@@ -58,8 +59,22 @@ def _build_navigation(role_slug):
 def role_navigation(request):
     role = get_user_role(request.user)
     role_slug = getattr(role, 'slug', '')
+    overdue_payments = 0
+    pending_intakes = 0
+
+    if request.user.is_authenticated:
+        overdue_payments = Payment.objects.filter(status=PaymentStatus.OVERDUE).count()
+        pending_intakes = StudentIntake.objects.filter(
+            status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING],
+            linked_student__isnull=True,
+        ).count()
 
     return {
         'current_role': role,
         'sidebar_navigation': _build_navigation(role_slug) if request.user.is_authenticated else [],
+        'global_search_action': '/alunos/',
+        'topbar_alerts': {
+            'overdue_payments': overdue_payments,
+            'pending_intakes': pending_intakes,
+        },
     }

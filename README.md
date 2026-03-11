@@ -1,3 +1,18 @@
+<!--
+ARQUIVO: visao publica principal do projeto.
+
+POR QUE ELE EXISTE:
+- Explica o produto, sua arquitetura, fluxo de execucao e orientacao inicial para quem entra no repositorio.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Resume o escopo funcional atual.
+2. Explica a estrutura do projeto.
+3. Documenta execucao local e caminhos de deploy/homologacao.
+
+PONTOS CRITICOS:
+- Este arquivo precisa acompanhar a realidade do produto para nao vender uma versao falsa do sistema.
+-->
+
 # OctoBox Control
 
 Aplicacao Django para gestao de um box com foco em operacao real: alunos, intake, planos, matriculas, cobrancas, aulas, presenca, ocorrencias, auditoria e leitura gerencial.
@@ -162,6 +177,14 @@ Observacao:
 
 - login, logout, mudancas no admin e acoes comerciais sensiveis ja alimentam a trilha de auditoria
 - para ambiente local, voce pode definir `DJANGO_SECRET_KEY` em um arquivo `.env` ou nas variaveis do sistema
+- o projeto agora aceita `DJANGO_ENV=development` ou `DJANGO_ENV=production` para separar configuracao local de homologacao/producao
+- para homologacao/producao, o caminho recomendado e usar `DATABASE_URL` com PostgreSQL, rodar `collectstatic` e publicar atras de HTTPS
+
+Guias novos:
+
+- deploy de homologacao: [docs/deploy-homologation.md](docs/deploy-homologation.md)
+- backup minimo do banco: [docs/backup-guide.md](docs/backup-guide.md)
+- scripts de backup: [scripts/backup_sqlite.ps1](scripts/backup_sqlite.ps1) e [scripts/backup_postgres.ps1](scripts/backup_postgres.ps1)
 
 ## Importacao inicial de alunos
 
