@@ -7,6 +7,7 @@
 ## 1. Define o Django usado pelo projeto.
 ## 2. Adiciona suporte a PostgreSQL por URL.
 ## 3. Adiciona WhiteNoise para static files em deploy simples.
+## 4. Adiciona ReportLab para exportacoes PDF.
 ##
 ## PONTOS CRITICOS:
 ## - Alteracoes de versao podem quebrar deploy, testes ou compatibilidade do banco.
@@ -14,4 +15,5 @@
 Django==6.0.3
 dj-database-url==2.3.0
 psycopg[binary]==3.2.13
+reportlab==4.4.1
 whitenoise==6.9.0

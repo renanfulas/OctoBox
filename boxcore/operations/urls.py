@@ -17,16 +17,9 @@ PONTOS CRITICOS:
 
 from django.urls import path
 
-from .views import (
-    AttendanceActionView,
-    CoachWorkspaceView,
-    DevWorkspaceView,
-    ManagerWorkspaceView,
-    OwnerWorkspaceView,
-    PaymentEnrollmentLinkView,
-    RoleOperationRedirectView,
-    TechnicalBehaviorNoteCreateView,
-)
+from .action_views import AttendanceActionView, PaymentEnrollmentLinkView, TechnicalBehaviorNoteCreateView
+from .base_views import RoleOperationRedirectView
+from .workspace_views import CoachWorkspaceView, DevWorkspaceView, ManagerWorkspaceView, OwnerWorkspaceView
 
 urlpatterns = [
     path('operacao/', RoleOperationRedirectView.as_view(), name='role-operations'),

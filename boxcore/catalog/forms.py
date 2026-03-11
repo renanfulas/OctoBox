@@ -6,28 +6,52 @@ POR QUE ELE EXISTE:
 
 O QUE ESTE ARQUIVO FAZ:
 1. Define filtros da pagina de alunos e do centro financeiro.
-2. Define o formulario leve de aluno com intake, plano e cobranca inicial.
+2. Define o formulario leve de aluno com intake, plano, cobranca inicial e regra comercial.
 3. Define formularios de gestao pontual para pagamento e matricula.
 4. Define o formulario leve de plano financeiro.
 
 PONTOS CRITICOS:
 - Estes formularios espelham a camada operacional mais usada do produto.
-- Defaults e querysets errados aqui distorcem cadastro, conversao de leads e leitura financeira.
+- Validacoes e querysets errados aqui distorcem cadastro, conversao de leads, cobranca e leitura financeira.
 """
 
 from django import forms
+from django.contrib.auth import get_user_model
+from django.db.models import Q
 from django.utils import timezone
 
+from boxcore.access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
 from boxcore.models import (
+    ClassSession,
     EnrollmentStatus,
     IntakeStatus,
     MembershipPlan,
     PaymentMethod,
     PaymentStatus,
+    SessionStatus,
     Student,
     StudentIntake,
     StudentStatus,
 )
+
+
+WEEKDAY_CHOICES = (
+    ('0', 'Segunda'),
+    ('1', 'Terca'),
+    ('2', 'Quarta'),
+    ('3', 'Quinta'),
+    ('4', 'Sexta'),
+    ('5', 'Sabado'),
+    ('6', 'Domingo'),
+)
+
+
+def _get_class_coach_queryset():
+    user_model = get_user_model()
+    return user_model.objects.filter(
+        Q(is_superuser=True) | Q(groups__name__in=(ROLE_COACH, ROLE_MANAGER, ROLE_OWNER)),
+        is_active=True,
+    ).distinct().order_by('first_name', 'username')
 
 
 class StudentDirectoryFilterForm(forms.Form):
@@ -206,6 +230,29 @@ class StudentQuickForm(forms.ModelForm):
         if linked_intake is not None:
             self.fields['intake_record'].initial = linked_intake
 
+    def clean(self):
+        cleaned_data = super().clean()
+        selected_plan = cleaned_data.get('selected_plan')
+        billing_strategy = cleaned_data.get('billing_strategy') or 'single'
+        confirm_payment_now = bool(cleaned_data.get('confirm_payment_now'))
+        initial_payment_amount = cleaned_data.get('initial_payment_amount')
+        enrollment_status = cleaned_data.get('enrollment_status')
+        student_status = cleaned_data.get('status')
+
+        if billing_strategy in ('installments', 'recurring') and selected_plan is None:
+            self.add_error('selected_plan', 'Escolha um plano antes de usar parcelamento ou recorrencia.')
+
+        if confirm_payment_now and selected_plan is None:
+            self.add_error('confirm_payment_now', 'Nao da para confirmar pagamento inicial sem plano conectado.')
+
+        if selected_plan is not None and initial_payment_amount is not None and initial_payment_amount <= 0:
+            self.add_error('initial_payment_amount', 'O valor inicial da cobranca precisa ser maior que zero.')
+
+        if selected_plan is not None and enrollment_status == EnrollmentStatus.ACTIVE and student_status == StudentStatus.LEAD:
+            self.add_error('status', 'Lead nao pode sair com matricula ativa. Ajuste o status do aluno para ativo, pausado ou inativo.')
+
+        return cleaned_data
+
 
 class PaymentManagementForm(forms.Form):
     payment_id = forms.IntegerField(widget=forms.HiddenInput)
@@ -254,6 +301,39 @@ class FinanceFilterForm(forms.Form):
         self.fields['months'].initial = '6'
 
 
+class ClassGridFilterForm(forms.Form):
+    reference_month = forms.CharField(
+        required=False,
+        label='Mes de referencia',
+        widget=forms.TextInput(attrs={'type': 'month'}),
+    )
+    coach = forms.ModelChoiceField(
+        queryset=_get_class_coach_queryset(),
+        required=False,
+        label='Coach',
+        empty_label='Todos os coaches',
+    )
+    status = forms.ChoiceField(
+        required=False,
+        label='Status da aula',
+        choices=(('', 'Todos'), *SessionStatus.choices),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['reference_month'].initial = timezone.localdate().strftime('%Y-%m')
+
+    def clean_reference_month(self):
+        reference_month = self.cleaned_data.get('reference_month')
+        if not reference_month:
+            return timezone.localdate().replace(day=1)
+        try:
+            parsed_date = timezone.datetime.strptime(reference_month, '%Y-%m').date()
+        except ValueError as exc:
+            raise forms.ValidationError('Informe um mes valido no formato AAAA-MM.') from exc
+        return parsed_date.replace(day=1)
+
+
 class MembershipPlanQuickForm(forms.ModelForm):
     active = forms.TypedChoiceField(
         label='Status do plano',
@@ -290,3 +370,148 @@ class MembershipPlanQuickForm(forms.ModelForm):
         self.fields['description'].widget.attrs.update({'placeholder': 'Descreva proposta, limite e observacoes comerciais do plano.'})
 
         self.fields['description'].required = False
+
+
+class ClassScheduleRecurringForm(forms.ModelForm):
+    start_date = forms.DateField(
+        label='Primeiro dia da recorrencia',
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    end_date = forms.DateField(
+        label='Ultimo dia da recorrencia',
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    start_time = forms.TimeField(
+        label='Horario de inicio',
+        widget=forms.TimeInput(attrs={'type': 'time'}),
+    )
+    weekdays = forms.MultipleChoiceField(
+        label='Dias da semana',
+        choices=WEEKDAY_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+    )
+    coach = forms.ModelChoiceField(
+        queryset=get_user_model().objects.none(),
+        required=False,
+        label='Coach responsavel',
+        empty_label='Definir depois',
+    )
+    skip_existing = forms.BooleanField(
+        required=False,
+        initial=True,
+        label='Pular aulas que ja existirem no mesmo horario',
+    )
+
+    class Meta:
+        model = ClassSession
+        fields = [
+            'title',
+            'coach',
+            'start_date',
+            'end_date',
+            'weekdays',
+            'start_time',
+            'duration_minutes',
+            'capacity',
+            'status',
+            'notes',
+            'skip_existing',
+        ]
+        widgets = {
+            'notes': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['title'].label = 'Nome da aula'
+        self.fields['duration_minutes'].label = 'Duracao em minutos'
+        self.fields['capacity'].label = 'Capacidade da turma'
+        self.fields['status'].label = 'Status inicial'
+        self.fields['notes'].label = 'Observacoes operacionais'
+        self.fields['coach'].queryset = _get_class_coach_queryset()
+
+        self.fields['title'].widget.attrs.update({'placeholder': 'Ex.: WOD 07h'} )
+        self.fields['duration_minutes'].widget.attrs.update({'placeholder': 'Ex.: 60'})
+        self.fields['capacity'].widget.attrs.update({'placeholder': 'Ex.: 20'})
+        self.fields['notes'].widget.attrs.update({'placeholder': 'Ex.: aula de alta demanda, abrir check-in 15 min antes.'})
+
+        self.fields['start_date'].initial = timezone.localdate()
+        self.fields['end_date'].initial = timezone.localdate() + timezone.timedelta(days=27)
+        self.fields['duration_minutes'].initial = 60
+        self.fields['capacity'].initial = 20
+        self.fields['status'].initial = SessionStatus.SCHEDULED
+        self.fields['weekdays'].initial = [str(timezone.localdate().weekday())]
+        self.fields['notes'].required = False
+
+    def clean_weekdays(self):
+        weekdays = self.cleaned_data.get('weekdays') or []
+        return [int(value) for value in weekdays]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        weekdays = cleaned_data.get('weekdays') or []
+
+        if start_date and end_date and end_date < start_date:
+            self.add_error('end_date', 'A data final precisa ser igual ou posterior a data inicial.')
+
+        if start_date and end_date and (end_date - start_date).days > 120:
+            self.add_error('end_date', 'Para evitar excesso de agenda acidental, use um intervalo de ate 120 dias por vez.')
+
+        if not weekdays:
+            self.add_error('weekdays', 'Escolha pelo menos um dia da semana para gerar a agenda.')
+
+        return cleaned_data
+
+
+class ClassSessionQuickEditForm(forms.ModelForm):
+    scheduled_date = forms.DateField(
+        label='Data da aula',
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    start_time = forms.TimeField(
+        label='Horario de inicio',
+        widget=forms.TimeInput(attrs={'type': 'time'}),
+    )
+
+    class Meta:
+        model = ClassSession
+        fields = [
+            'title',
+            'coach',
+            'scheduled_date',
+            'start_time',
+            'duration_minutes',
+            'capacity',
+            'status',
+            'notes',
+        ]
+        widgets = {
+            'notes': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['coach'].queryset = _get_class_coach_queryset()
+        self.fields['title'].label = 'Nome da aula'
+        self.fields['coach'].label = 'Coach responsavel'
+        self.fields['duration_minutes'].label = 'Duracao em minutos'
+        self.fields['capacity'].label = 'Capacidade da turma'
+        self.fields['status'].label = 'Status da aula'
+        self.fields['notes'].label = 'Observacoes operacionais'
+        if self.instance.pk:
+            local_start = timezone.localtime(self.instance.scheduled_at)
+            self.fields['scheduled_date'].initial = local_start.date()
+            self.fields['start_time'].initial = local_start.time().replace(second=0, microsecond=0)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        scheduled_date = cleaned_data.get('scheduled_date')
+        start_time = cleaned_data.get('start_time')
+        if scheduled_date and start_time:
+            cleaned_data['scheduled_at'] = timezone.make_aware(
+                timezone.datetime.combine(scheduled_date, start_time),
+                timezone.get_current_timezone(),
+            )
+        return cleaned_data

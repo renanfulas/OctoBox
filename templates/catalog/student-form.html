@@ -9,6 +9,7 @@ O QUE ESTE ARQUIVO FAZ:
 2. Organiza perfil, saude e identificacao em blocos legiveis.
 3. Liga intake, plano, matricula e cobranca no mesmo fluxo.
 4. Exibe resumo financeiro e acoes de cobranca/matricula quando o aluno ja existe.
+5. Apoia o fluxo comercial com parcelamento, recorrencia e regras mais fortes de consistencia.
 
 PONTOS CRITICOS:
 - Depende do contexto e dos formularios montados em boxcore/catalog/views.py.
@@ -27,7 +28,7 @@ PONTOS CRITICOS:
     </div>
 </section>
 
-<section class="layout-grid" style="margin-bottom: 24px; align-items: start;">
+<section class="layout-grid align-start section-gap">
     <article class="table-card">
         <p class="eyebrow">Quest de cadastro</p>
         <ul class="capability-list">
@@ -35,15 +36,15 @@ PONTOS CRITICOS:
             <li>{{ item }}</li>
             {% endfor %}
         </ul>
-        <div style="margin-top: 20px; padding: 16px; border-radius: 18px; background: rgba(31, 106, 93, 0.07); border: 1px solid rgba(31, 106, 93, 0.12);">
+        <div class="note-panel note-panel-success section-gap-top-sm">
             <p class="eyebrow">Modo recomendado</p>
-            <p style="margin: 0; color: var(--muted); line-height: 1.6;">Preencha primeiro nome completo e WhatsApp. Depois complete perfil, saude e acompanhe a camada comercial do aluno no mesmo fluxo.</p>
+            <p class="meta-text">Preencha primeiro nome completo e WhatsApp. Depois complete perfil, saude e acompanhe a camada comercial do aluno no mesmo fluxo.</p>
         </div>
         {% if selected_intake %}
-        <div style="margin-top: 20px; padding: 16px; border-radius: 18px; background: rgba(201, 111, 36, 0.08); border: 1px solid rgba(201, 111, 36, 0.16);">
+        <div class="note-panel note-panel-warm section-gap-top-sm">
             <p class="eyebrow">Lead selecionado para conversao</p>
-            <p style="margin: 0 0 6px;"><strong>{{ selected_intake.full_name }}</strong></p>
-            <p style="margin: 0; color: var(--muted); line-height: 1.6;">{{ selected_intake.phone }}{% if selected_intake.email %} | {{ selected_intake.email }}{% endif %} | {{ selected_intake.get_source_display }}</p>
+            <p class="no-margin"><strong>{{ selected_intake.full_name }}</strong></p>
+            <p class="meta-text">{{ selected_intake.phone }}{% if selected_intake.email %} | {{ selected_intake.email }}{% endif %} | {{ selected_intake.get_source_display }}</p>
         </div>
         {% endif %}
     </article>
@@ -51,125 +52,125 @@ PONTOS CRITICOS:
     <article class="table-card">
         <form method="post" novalidate>
             {% csrf_token %}
-            <div style="display: grid; gap: 18px;">
+            <div class="form-stack-lg">
                 <!-- Os passos seguem a mesma ordem da costura de negocio: identidade, qualificacao, plano e cobranca. -->
-                <div style="padding: 18px; border-radius: 18px; background: rgba(201, 111, 36, 0.08); border: 1px solid rgba(201, 111, 36, 0.18);">
+                <div class="note-panel note-panel-warm">
                     <p class="eyebrow">Passo 1: essencial</p>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+                    <div class="field-grid-240">
                         <label>
-                            <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.full_name.label }}</span>
+                            <span class="field-label">{{ form.full_name.label }}</span>
                             {{ form.full_name }}
-                            {% for error in form.full_name.errors %}<small style="color: var(--danger); display:block; margin-top:6px;">{{ error }}</small>{% endfor %}
+                            {% for error in form.full_name.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
                         </label>
                         <label>
-                            <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.phone.label }}</span>
+                            <span class="field-label">{{ form.phone.label }}</span>
                             {{ form.phone }}
-                            {% for error in form.phone.errors %}<small style="color: var(--danger); display:block; margin-top:6px;">{{ error }}</small>{% endfor %}
+                            {% for error in form.phone.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
                         </label>
                     </div>
                 </div>
 
-                <details style="border: 1px solid var(--line); border-radius: 18px; padding: 18px; background: rgba(255, 255, 255, 0.35);">
-                    <summary style="cursor: pointer; font-weight: 600;">Passo 2: perfil do aluno</summary>
-                    <div style="display: grid; gap: 16px; margin-top: 18px;">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+                <details class="disclosure-panel">
+                    <summary>Passo 2: perfil do aluno</summary>
+                    <div class="stack-16 section-gap-top-xs">
+                        <div class="field-grid-220">
                             <label>
-                                <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.intake_record.label }}</span>
+                                <span class="field-label">{{ form.intake_record.label }}</span>
                                 {{ form.intake_record }}
-                                {% if form.intake_record.help_text %}<small style="color: var(--muted); display:block; margin-top:6px;">{{ form.intake_record.help_text }}</small>{% endif %}
+                                {% if form.intake_record.help_text %}<small class="meta-text">{{ form.intake_record.help_text }}</small>{% endif %}
                             </label>
                             <label>
-                                <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.status.label }}</span>
+                                <span class="field-label">{{ form.status.label }}</span>
                                 {{ form.status }}
                             </label>
                             <label>
-                                <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.email.label }}</span>
+                                <span class="field-label">{{ form.email.label }}</span>
                                 {{ form.email }}
                             </label>
                             <label>
-                                <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.gender.label }}</span>
+                                <span class="field-label">{{ form.gender.label }}</span>
                                 {{ form.gender }}
                             </label>
                             <label>
-                                <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.birth_date.label }}</span>
+                                <span class="field-label">{{ form.birth_date.label }}</span>
                                 {{ form.birth_date }}
                             </label>
                         </div>
                     </div>
                 </details>
 
-                <details style="border: 1px solid var(--line); border-radius: 18px; padding: 18px; background: rgba(255, 255, 255, 0.35);">
-                    <summary style="cursor: pointer; font-weight: 600;">Passo 3: saude e identificacao</summary>
-                    <div style="display: grid; gap: 16px; margin-top: 18px;">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+                <details class="disclosure-panel">
+                    <summary>Passo 3: saude e identificacao</summary>
+                    <div class="stack-16 section-gap-top-xs">
+                        <div class="field-grid-220">
                             <label>
-                                <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.health_issue_status.label }}</span>
+                                <span class="field-label">{{ form.health_issue_status.label }}</span>
                                 {{ form.health_issue_status }}
                             </label>
                             <label>
-                                <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.cpf.label }}</span>
+                                <span class="field-label">{{ form.cpf.label }}</span>
                                 {{ form.cpf }}
                             </label>
                         </div>
                         <label>
-                            <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.notes.label }}</span>
+                            <span class="field-label">{{ form.notes.label }}</span>
                             {{ form.notes }}
                         </label>
                     </div>
                 </details>
 
-                <details open style="border: 1px solid var(--line); border-radius: 18px; padding: 18px; background: rgba(31, 106, 93, 0.06);">
-                    <summary style="cursor: pointer; font-weight: 600;">Passo 4: plano e status comercial</summary>
-                    <div style="display: grid; gap: 16px; margin-top: 18px;">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+                <details open class="disclosure-panel disclosure-panel-success">
+                    <summary>Passo 4: plano e status comercial</summary>
+                    <div class="stack-16 section-gap-top-xs">
+                        <div class="field-grid-220">
                             <label>
-                                <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.selected_plan.label }}</span>
+                                <span class="field-label">{{ form.selected_plan.label }}</span>
                                 {{ form.selected_plan }}
-                                {% if form.selected_plan.help_text %}<small style="color: var(--muted); display:block; margin-top:6px;">{{ form.selected_plan.help_text }}</small>{% endif %}
+                                {% if form.selected_plan.help_text %}<small class="meta-text">{{ form.selected_plan.help_text }}</small>{% endif %}
                             </label>
                             <label>
-                                <span style="display: block; margin-bottom: 8px; font-weight: 600;">Valor do plano conectado</span>
+                                <span class="field-label">Valor do plano conectado</span>
                                 <input id="connected-plan-price" type="text" value="--" readonly>
-                                <small style="color: var(--muted); display:block; margin-top:6px;">Ao selecionar um plano, o valor da cobranca inicial acompanha esse valor automaticamente.</small>
+                                <small class="meta-text">Ao selecionar um plano, o valor da cobranca inicial acompanha esse valor automaticamente.</small>
                             </label>
                         </div>
                         {{ form.enrollment_status.as_hidden }}
-                        <div style="padding: 14px 16px; border-radius: 16px; background: rgba(255, 253, 248, 0.9); border: 1px solid rgba(31, 106, 93, 0.14); color: var(--muted); line-height: 1.6;">
+                        <div class="note-panel note-panel-success-soft text-muted">
                             O plano escolhido ja prepara a matricula do aluno. Isso reduz retrabalho e faz a pagina de alunos conversar direto com a central de Financeiro.
                         </div>
                     </div>
                 </details>
 
-                <details open style="border: 1px solid var(--line); border-radius: 18px; padding: 18px; background: rgba(201, 111, 36, 0.08);">
-                    <summary style="cursor: pointer; font-weight: 600;">Passo 5: cobranca e confirmacao</summary>
-                    <div style="display: grid; gap: 16px; margin-top: 18px;">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+                <details open class="disclosure-panel disclosure-panel-warm">
+                    <summary>Passo 5: cobranca e confirmacao</summary>
+                    <div class="stack-16 section-gap-top-xs">
+                        <div class="field-grid-220">
                             <label>
-                                <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.billing_strategy.label }}</span>
+                                <span class="field-label">{{ form.billing_strategy.label }}</span>
                                 {{ form.billing_strategy }}
                             </label>
                             <label>
-                                <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.initial_payment_amount.label }}</span>
+                                <span class="field-label">{{ form.initial_payment_amount.label }}</span>
                                 {{ form.initial_payment_amount }}
                             </label>
                             <label>
-                                <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.payment_method.label }}</span>
+                                <span class="field-label">{{ form.payment_method.label }}</span>
                                 {{ form.payment_method }}
                             </label>
                             <label>
-                                <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ form.confirm_payment_now.label }}</span>
+                                <span class="field-label">{{ form.confirm_payment_now.label }}</span>
                                 {{ form.confirm_payment_now }}
                             </label>
                         </div>
-                        <div id="installment-selector-shell" style="display: none; padding: 16px; border-radius: 16px; background: rgba(255, 253, 248, 0.92); border: 1px solid rgba(201, 111, 36, 0.18);">
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; align-items: end;">
+                        <div id="installment-selector-shell" class="installment-shell">
+                            <div class="field-grid-220 align-start">
                                 <label>
-                                    <span style="display: block; margin-bottom: 8px; font-weight: 600;">Parcelamento</span>
+                                    <span class="field-label">Parcelamento</span>
                                     <select id="installment-selector"></select>
                                 </label>
                                 <div>
-                                    <span style="display: block; margin-bottom: 8px; font-weight: 600;">Resumo do parcelamento</span>
-                                    <div id="installment-preview" style="padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.85); min-height: 48px; display:flex; align-items:center;">Escolha a quantidade de parcelas.</div>
+                                    <span class="field-label">Resumo do parcelamento</span>
+                                    <div id="installment-preview" class="installment-preview">Escolha a quantidade de parcelas.</div>
                                 </div>
                             </div>
                         </div>
@@ -177,21 +178,21 @@ PONTOS CRITICOS:
                         {{ form.payment_reference.as_hidden }}
                         {{ form.installment_total.as_hidden }}
                         {{ form.recurrence_cycles.as_hidden }}
-                        <div style="padding: 14px 16px; border-radius: 16px; background: rgba(255, 253, 248, 0.9); border: 1px solid rgba(201, 111, 36, 0.16); color: var(--muted); line-height: 1.6;">
+                        <div class="note-panel note-panel-cream text-muted">
                             Quando um plano e conectado, a cobranca pode nascer como parcela unica, parcelada ou recorrente. Se voce confirmar agora, so a primeira ja entra como paga com o metodo escolhido.
                         </div>
                     </div>
                 </details>
 
                 {% if form.non_field_errors %}
-                <div style="padding: 14px 16px; border-radius: 16px; background: rgba(168, 68, 52, 0.08); border: 1px solid rgba(168, 68, 52, 0.18); color: var(--danger);">
+                <div class="note-panel note-panel-danger">
                     {% for error in form.non_field_errors %}
                     <div>{{ error }}</div>
                     {% endfor %}
                 </div>
                 {% endif %}
 
-                <div class="actions" style="margin-top: 0;">
+                <div class="actions actions-tight">
                     <button class="button" type="submit">{% if page_mode == 'create' %}Salvar aluno{% else %}Salvar ajustes{% endif %}</button>
                     {% if student_object %}
                     <a class="button secondary" href="/admin/boxcore/student/{{ student_object.id }}/change/">Editar no admin</a>
@@ -204,10 +205,10 @@ PONTOS CRITICOS:
 
 <section class="table-card">
     <p class="eyebrow">Plano, status e tramite financeiro</p>
-    <p style="margin-top: 0; color: var(--muted); line-height: 1.6;">{{ financial_overview.summary }}</p>
+    <p class="meta-text">{{ financial_overview.summary }}</p>
 
     {% if financial_overview.has_student %}
-    <section class="panel-grid" style="margin-top: 18px;">
+    <section class="panel-grid section-gap-top-xs">
         {% for label, value in financial_overview.metrics.items %}
         <article class="card">
             <p class="eyebrow">{{ label }}</p>
@@ -216,20 +217,20 @@ PONTOS CRITICOS:
         {% endfor %}
     </section>
 
-    <div class="layout-grid" style="margin-top: 24px; align-items: start;">
-        <article class="table-card" style="margin: 0;">
+    <div class="layout-grid align-start section-gap-top">
+        <article class="table-card no-margin">
             <p class="eyebrow">Plano atual</p>
             {% if financial_overview.latest_enrollment %}
-            <h3 style="margin: 0 0 12px;">{{ financial_overview.latest_enrollment.plan.name }}</h3>
-            <p style="margin: 0 0 8px; color: var(--muted);">Status: {{ financial_overview.latest_enrollment.get_status_display }}</p>
-            <p style="margin: 0 0 8px; color: var(--muted);">Inicio: {{ financial_overview.latest_enrollment.start_date|date:"d/m/Y" }}</p>
-            <p style="margin: 0; color: var(--muted);">Fim: {% if financial_overview.latest_enrollment.end_date %}{{ financial_overview.latest_enrollment.end_date|date:"d/m/Y" }}{% else %}Em aberto{% endif %}</p>
+            <h3 class="section-title-sm">{{ financial_overview.latest_enrollment.plan.name }}</h3>
+            <p class="meta-text-sm">Status: {{ financial_overview.latest_enrollment.get_status_display }}</p>
+            <p class="meta-text-sm">Inicio: {{ financial_overview.latest_enrollment.start_date|date:"d/m/Y" }}</p>
+            <p class="meta-text">Fim: {% if financial_overview.latest_enrollment.end_date %}{{ financial_overview.latest_enrollment.end_date|date:"d/m/Y" }}{% else %}Em aberto{% endif %}</p>
             {% else %}
-            <p style="margin: 0; color: var(--muted);">Este aluno ainda nao tem matricula vinculada.</p>
+            <p class="meta-text">Este aluno ainda nao tem matricula vinculada.</p>
             {% endif %}
         </article>
 
-        <article class="table-card" style="margin: 0;">
+        <article class="table-card no-margin">
             <p class="eyebrow">Historico financeiro recente</p>
             {% if financial_overview.payments %}
             <table>
@@ -253,28 +254,28 @@ PONTOS CRITICOS:
                 </tbody>
             </table>
             {% else %}
-            <p style="margin: 0; color: var(--muted);">Nenhum pagamento registrado ainda para este aluno.</p>
+            <p class="meta-text">Nenhum pagamento registrado ainda para este aluno.</p>
             {% endif %}
         </article>
     </div>
 
     {% if enrollment_management_form %}
-    <article class="table-card" style="margin-top: 20px;">
+    <article class="table-card section-gap-top-sm">
         <p class="eyebrow">Gestao formal da matricula</p>
-        <form method="post" action="/alunos/{{ student_object.id }}/matricula/acao/" style="display:grid; gap:14px;">
+        <form method="post" action="/alunos/{{ student_object.id }}/matricula/acao/" class="form-stack">
             {% csrf_token %}
             {{ enrollment_management_form.enrollment_id }}
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
+            <div class="field-grid-220">
                 <label>
-                    <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ enrollment_management_form.action_date.label }}</span>
+                    <span class="field-label">{{ enrollment_management_form.action_date.label }}</span>
                     {{ enrollment_management_form.action_date }}
                 </label>
                 <label>
-                    <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ enrollment_management_form.reason.label }}</span>
+                    <span class="field-label">{{ enrollment_management_form.reason.label }}</span>
                     {{ enrollment_management_form.reason }}
                 </label>
             </div>
-            <div class="actions" style="margin-top: 0;">
+            <div class="actions actions-tight">
                 <button class="button secondary" type="submit" name="action" value="cancel-enrollment">Cancelar matricula</button>
                 <button class="button" type="submit" name="action" value="reactivate-enrollment">Reativar matricula</button>
             </div>
@@ -283,34 +284,34 @@ PONTOS CRITICOS:
     {% endif %}
 
     {% if payment_management_form %}
-    <article class="table-card" style="margin-top: 20px;">
+    <article class="table-card section-gap-top-sm">
         <p class="eyebrow">Gestao da cobranca atual</p>
-        <form method="post" action="/alunos/{{ student_object.id }}/financeiro/acao/" style="display:grid; gap:14px;">
+        <form method="post" action="/alunos/{{ student_object.id }}/financeiro/acao/" class="form-stack">
             {% csrf_token %}
             {{ payment_management_form.payment_id }}
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
+            <div class="field-grid-220">
                 <label>
-                    <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ payment_management_form.amount.label }}</span>
+                    <span class="field-label">{{ payment_management_form.amount.label }}</span>
                     {{ payment_management_form.amount }}
                 </label>
                 <label>
-                    <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ payment_management_form.due_date.label }}</span>
+                    <span class="field-label">{{ payment_management_form.due_date.label }}</span>
                     {{ payment_management_form.due_date }}
                 </label>
                 <label>
-                    <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ payment_management_form.method.label }}</span>
+                    <span class="field-label">{{ payment_management_form.method.label }}</span>
                     {{ payment_management_form.method }}
                 </label>
                 <label>
-                    <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ payment_management_form.reference.label }}</span>
+                    <span class="field-label">{{ payment_management_form.reference.label }}</span>
                     {{ payment_management_form.reference }}
                 </label>
             </div>
             <label>
-                <span style="display: block; margin-bottom: 8px; font-weight: 600;">{{ payment_management_form.notes.label }}</span>
+                <span class="field-label">{{ payment_management_form.notes.label }}</span>
                 {{ payment_management_form.notes }}
             </label>
-            <div class="actions" style="margin-top: 0;">
+            <div class="actions actions-tight">
                 <button class="button" type="submit" name="action" value="update-payment">Salvar cobranca</button>
                 <button class="button secondary" type="submit" name="action" value="mark-paid">Confirmar pagamento</button>
                 <button class="button secondary" type="submit" name="action" value="refund-payment">Estornar</button>
@@ -321,43 +322,27 @@ PONTOS CRITICOS:
     </article>
     {% endif %}
 
-    <article class="table-card" style="margin-top: 20px;">
+    <article class="table-card section-gap-top-sm">
         <p class="eyebrow">Historico de planos e trocas comerciais</p>
-        <div style="display:grid; gap:14px;">
+        <div class="history-stack">
             {% for enrollment in financial_overview.enrollment_history %}
-            <div style="padding: 14px 16px; border-radius: 18px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.45);">
-                <div style="display:flex; justify-content:space-between; gap:12px; align-items:start; margin-bottom:8px;">
+            <div class="history-entry">
+                <div class="row-between history-header">
                     <strong>{{ enrollment.plan.name }}</strong>
                     <span class="pill{% if enrollment.status == 'expired' or enrollment.status == 'canceled' %} warning{% endif %}">{{ enrollment.get_status_display }}</span>
                 </div>
-                <p style="margin: 0 0 6px; color: var(--muted);">Inicio {{ enrollment.start_date|date:"d/m/Y" }}{% if enrollment.end_date %} | Fim {{ enrollment.end_date|date:"d/m/Y" }}{% endif %}</p>
-                {% if enrollment.notes %}<p style="margin: 0; color: var(--muted); line-height: 1.6;">{{ enrollment.notes }}</p>{% endif %}
+                <p class="meta-text-sm">Inicio {{ enrollment.start_date|date:"d/m/Y" }}{% if enrollment.end_date %} | Fim {{ enrollment.end_date|date:"d/m/Y" }}{% endif %}</p>
+                {% if enrollment.notes %}<p class="meta-text">{{ enrollment.notes }}</p>{% endif %}
             </div>
             {% empty %}
-            <p style="margin: 0; color: var(--muted);">Nenhum historico de plano registrado ainda.</p>
+            <p class="meta-text">Nenhum historico de plano registrado ainda.</p>
             {% endfor %}
         </div>
     </article>
     {% else %}
-    <p style="margin: 0; color: var(--muted);">Esta camada aparece assim que o aluno for salvo pela primeira vez.</p>
+    <p class="meta-text">Esta camada aparece assim que o aluno for salvo pela primeira vez.</p>
     {% endif %}
 </section>
-
-<style>
-    input, select, textarea {
-        width: 100%;
-        padding: 12px 14px;
-        border-radius: 14px;
-        border: 1px solid var(--line);
-        background: rgba(255, 253, 248, 0.95);
-        color: var(--ink);
-        font: inherit;
-    }
-
-    summary::marker {
-        color: var(--brand);
-    }
-</style>
 
 {{ plan_price_map|json_script:"plan-price-map" }}
 <script>

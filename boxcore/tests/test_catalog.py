@@ -9,6 +9,7 @@ O QUE ESTE ARQUIVO FAZ:
 2. Testa criacao e edicao de aluno pelo fluxo leve.
 3. Testa conversao de intake, geracao de cobranca e mudanca de plano.
 4. Testa acoes diretas de pagamento e matricula.
+5. Testa exportacoes de alunos e o registro operacional de comunicacao por WhatsApp.
 
 PONTOS CRITICOS:
 - Se estes testes quebrarem, a operacao diaria perde o fluxo principal fora do admin.
@@ -28,8 +29,11 @@ from boxcore.models import (
     Payment,
     PaymentMethod,
     PaymentStatus,
+    SessionStatus,
     Student,
     StudentIntake,
+    WhatsAppContact,
+    WhatsAppMessageLog,
 )
 
 
@@ -47,6 +51,7 @@ class CatalogViewTests(TestCase):
         Payment.objects.create(student=self.student, enrollment=self.enrollment, due_date=timezone.localdate(), amount='289.90')
         self.intake = StudentIntake.objects.create(full_name='Lead Bruna', phone='5511970000000', email='lead@example.com')
         ClassSession.objects.create(title='WOD 18h', scheduled_at=timezone.now())
+        self.coach = self.user
 
     def test_student_directory_renders(self):
         self.client.force_login(self.user)
@@ -56,8 +61,9 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Alunos')
         self.assertContains(response, 'Bruna Costa')
-        self.assertContains(response, 'WhatsApp')
-        self.assertContains(response, 'Cadastrar aluno com fluxo leve')
+        self.assertContains(response, 'Mesa de operacao')
+        self.assertContains(response, 'Novo aluno')
+        self.assertContains(response, 'Quem pede acao agora')
         self.assertContains(response, 'Fila de entrada provisoria pronta para conversao')
 
     def test_class_grid_renders(self):
@@ -68,6 +74,157 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Grade de aulas')
         self.assertContains(response, 'WOD 18h')
+        self.assertContains(response, 'Calendario das proximas 2 semanas')
+        self.assertContains(response, 'Expandir mes')
+        self.assertContains(response, 'Agenda de hoje')
+        self.assertContains(response, 'Planejador recorrente')
+
+    def test_class_grid_can_create_recurring_schedule(self):
+        self.client.force_login(self.user)
+        start_date = timezone.localdate() + timezone.timedelta(days=(7 - timezone.localdate().weekday()) % 7)
+        end_date = start_date + timezone.timedelta(days=13)
+
+        response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'title': 'WOD 07h',
+                'coach': '',
+                'start_date': str(start_date),
+                'end_date': str(end_date),
+                'weekdays': ['0', '2'],
+                'start_time': '07:00',
+                'duration_minutes': 60,
+                'capacity': 18,
+                'status': 'scheduled',
+                'notes': 'Abrir check-in 15 minutos antes.',
+                'skip_existing': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        created_sessions = ClassSession.objects.filter(title='WOD 07h').order_by('scheduled_at')
+        self.assertEqual(created_sessions.count(), 4)
+        self.assertEqual(created_sessions.first().capacity, 18)
+        self.assertTrue(AuditEvent.objects.filter(action='class_schedule_recurring_created').exists())
+
+    def test_class_grid_can_filter_by_coach_and_status(self):
+        self.client.force_login(self.user)
+        target_month = timezone.localdate().strftime('%Y-%m')
+        ClassSession.objects.create(
+            title='Funcional 06h',
+            coach=self.coach,
+            scheduled_at=timezone.now() + timezone.timedelta(days=1),
+            status=SessionStatus.OPEN,
+        )
+        ClassSession.objects.create(
+            title='Yoga 20h',
+            scheduled_at=timezone.now() + timezone.timedelta(days=2),
+            status=SessionStatus.CANCELED,
+        )
+
+        response = self.client.get(
+            reverse('class-grid'),
+            data={
+                'reference_month': target_month,
+                'coach': self.coach.id,
+                'status': SessionStatus.OPEN,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Funcional 06h')
+        self.assertNotContains(response, 'Yoga 20h')
+
+    def test_class_grid_can_update_duplicate_and_cancel_session(self):
+        self.client.force_login(self.user)
+        session = ClassSession.objects.get(title='WOD 18h')
+
+        update_response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'session-edit',
+                'session_id': session.id,
+                'return_query': '',
+                'title': 'WOD 19h',
+                'coach': self.coach.id,
+                'scheduled_date': str(timezone.localdate()),
+                'start_time': '19:00',
+                'duration_minutes': 75,
+                'capacity': 22,
+                'status': SessionStatus.OPEN,
+                'notes': 'Turma ajustada para horario nobre.',
+            },
+        )
+
+        self.assertEqual(update_response.status_code, 302)
+        session.refresh_from_db()
+        self.assertEqual(session.title, 'WOD 19h')
+        self.assertEqual(session.status, SessionStatus.OPEN)
+
+        duplicate_response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'session-action',
+                'action': 'duplicate-session',
+                'session_id': session.id,
+                'return_query': '',
+            },
+        )
+
+        self.assertEqual(duplicate_response.status_code, 302)
+        self.assertEqual(ClassSession.objects.filter(title='WOD 19h').count(), 2)
+
+        cancel_response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'session-action',
+                'action': 'cancel-session',
+                'session_id': session.id,
+                'return_query': '',
+            },
+        )
+
+        self.assertEqual(cancel_response.status_code, 302)
+        session.refresh_from_db()
+        self.assertEqual(session.status, SessionStatus.CANCELED)
+        self.assertTrue(AuditEvent.objects.filter(action='class_session_quick_updated').exists())
+        self.assertTrue(AuditEvent.objects.filter(action='class_session_quick_duplicated').exists())
+        self.assertTrue(AuditEvent.objects.filter(action='class_session_quick_canceled').exists())
+
+    def test_class_grid_blocks_daily_limit(self):
+        self.client.force_login(self.user)
+        start_date = timezone.localdate() + timezone.timedelta(days=(7 - timezone.localdate().weekday()) % 7)
+        for index in range(12):
+            ClassSession.objects.create(
+                title=f'Extra {index}',
+                scheduled_at=timezone.make_aware(
+                    timezone.datetime.combine(start_date, timezone.datetime.strptime(f'{6 + index % 12:02d}:00', '%H:%M').time()),
+                    timezone.get_current_timezone(),
+                ),
+            )
+
+        response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'planner',
+                'return_query': '',
+                'title': 'WOD limite',
+                'coach': '',
+                'start_date': str(start_date),
+                'end_date': str(start_date),
+                'weekdays': [str(start_date.weekday())],
+                'start_time': '21:00',
+                'duration_minutes': 60,
+                'capacity': 18,
+                'status': SessionStatus.SCHEDULED,
+                'notes': '',
+                'skip_existing': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(ClassSession.objects.filter(title='WOD limite').exists())
+        self.assertContains(response, 'Limite diario atingido')
 
     def test_student_quick_create_flow_creates_student(self):
         self.client.force_login(self.user)
@@ -212,3 +369,38 @@ class CatalogViewTests(TestCase):
         self.assertContains(response, 'Passo 4: plano e status comercial')
         self.assertContains(response, 'Passo 5: cobranca e confirmacao')
         self.assertContains(response, 'Gestao da cobranca atual')
+
+    def test_student_directory_can_export_csv(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('student-directory-export', args=['csv']))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/csv; charset=utf-8')
+        self.assertIn('Bruna Costa', response.content.decode())
+
+    def test_student_directory_can_export_pdf(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('student-directory-export', args=['pdf']))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+
+    def test_finance_communication_action_registers_whatsapp_log(self):
+        self.client.force_login(self.user)
+        payment = self.student.payments.first()
+
+        response = self.client.post(
+            reverse('finance-communication-action'),
+            data={
+                'action_kind': 'overdue',
+                'student_id': self.student.id,
+                'payment_id': payment.id,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(WhatsAppContact.objects.filter(phone=self.student.phone, linked_student=self.student).exists())
+        self.assertTrue(WhatsAppMessageLog.objects.filter(contact__phone=self.student.phone, direction='outbound').exists())
+        self.assertTrue(AuditEvent.objects.filter(action='operational_whatsapp_touch_registered').exists())

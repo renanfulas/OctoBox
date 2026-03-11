@@ -40,6 +40,12 @@ Hoje o sistema tem tres camadas principais:
 2. catalogo visual para alunos e financeiro
 3. backoffice admin e auditoria
 
+Nas areas com maior volume de regra, a base foi organizada de forma mais explicita:
+
+1. views HTTP por dominio
+2. queries e snapshots de leitura
+3. actions e workflows de regra de negocio
+
 Se quiser estudar a base em ordem pedagógica, use [docs/reading-guide.md](docs/reading-guide.md).
 
 ## Mapa do projeto
@@ -63,11 +69,27 @@ boxcore/
 |   `-- __init__.py              -> registra tudo no Django admin
 |-- catalog/
 |   |-- forms.py                 -> formularios leves de alunos e financeiro
+|   |-- student_queries.py       -> snapshots e leituras da area de alunos
+|   |-- finance_queries.py       -> snapshots e leituras da area financeira
+|   |-- class_grid_queries.py    -> leituras da grade de aulas
 |   |-- urls.py                  -> rotas das telas visuais de catalogo
-|   `-- views.py                 -> alunos, financeiro e grade em experiencia leve
+|   |-- views/
+|   |   |-- catalog_base_views.py -> base HTTP compartilhada do catalogo
+|   |   |-- student_views.py      -> diretorio, cadastro leve e ficha do aluno
+|   |   |-- finance_views.py      -> financeiro visual, planos e comunicacoes
+|   |   `-- class_grid_views.py   -> grade visual de aulas
+|   `-- services/
+|       |-- student_workflows.py             -> fluxo leve de criacao e edicao de aluno
+|       |-- student_enrollment_actions.py    -> acoes de matricula na ficha do aluno
+|       |-- student_payment_actions.py       -> acoes de cobranca na ficha do aluno
+|       |-- finance_communication_actions.py -> comunicacao financeira e follow-up
+|       |-- membership_plan_workflows.py     -> criacao e edicao de planos
+|       `-- operational_queue.py             -> fila operacional e metricas de retencao
 |-- dashboard/
+|   |-- dashboard_snapshot_queries.py -> snapshot consolidado do painel principal
+|   |-- dashboard_views.py            -> camada HTTP do painel
 |   |-- urls.py                  -> rotas do painel
-|   `-- views.py                 -> logica do dashboard
+|   `-- __init__.py              -> marcador do pacote de dashboard
 |-- guide/
 |   |-- urls.py                  -> rota do mapa interno do sistema
 |   `-- views.py                 -> contexto pedagogico do mapa visual
@@ -84,15 +106,22 @@ boxcore/
 |   |-- students.py              -> alunos e dados cadastrais
 |   `-- __init__.py              -> exporta os modelos do app
 |-- operations/
+|   |-- workspace_snapshot_queries.py -> snapshots das areas operacionais por papel
+|   |-- base_views.py                -> base HTTP compartilhada de operations
+|   |-- workspace_views.py           -> workspaces de owner, dev, manager e coach
+|   |-- action_views.py              -> endpoints mutaveis da operacao
+|   |-- actions.py                   -> handlers das acoes operacionais
 |   |-- urls.py                  -> rotas das areas operacionais por papel
-|   `-- views.py                 -> telas e acoes exclusivas por papel
+|   `-- __init__.py              -> marcador do pacote operacional
 `-- tests/
 	|-- test_access.py           -> login e papeis
 	|-- test_catalog.py          -> alunos, cobrancas, matriculas e grade visual
+	|-- test_catalog_services.py -> services e workflows do catalogo
 	|-- test_dashboard.py        -> painel principal
 	|-- test_finance.py          -> centro financeiro visual
 	|-- test_guide.py            -> mapa do sistema
 	|-- test_import_students.py  -> importacao por CSV
+	|-- test_operations_services.py -> handlers e services de operations
 	`-- test_operations.py       -> operacao por papel
 
 templates/
@@ -116,6 +145,8 @@ templates/
 ## Convencao de comentarios e cabecalhos
 
 Todo arquivo relevante deve explicar rapidamente seu papel no topo.
+
+Arquivos Markdown usam comentario HTML. Arquivos Python usam docstring no mesmo formato.
 
 Padrao para arquivos Python:
 
@@ -150,6 +181,32 @@ O QUE ESTE ARQUIVO FAZ:
 1. bloco principal 1
 2. bloco principal 2
 3. bloco principal 3
+ 
+PONTOS CRITICOS:
+- o que e perigoso mexer
+- o que pode quebrar se for alterado sem cuidado
+-->
+```
+
+Padrao para arquivos Markdown:
+
+```html
+<!--
+ARQUIVO: nome e funcao geral do arquivo.
+
+POR QUE ELE EXISTE:
+- motivo da existencia do documento.
+
+O QUE ESTE ARQUIVO FAZ:
+1. contextualiza a area do sistema.
+2. orienta leitura, manutencao ou operacao.
+3. registra riscos e cuidados para quem editar.
+
+PONTOS CRITICOS:
+- manter aderencia com a estrutura real do projeto.
+- revisar sempre que arquivos ou fluxos forem renomeados.
+-->
+```
 
 ## Papeis atuais do sistema
 
