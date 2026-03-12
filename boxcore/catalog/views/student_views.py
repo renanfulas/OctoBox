@@ -24,18 +24,15 @@ from django.views.generic import FormView
 
 from boxcore.access.permissions import RoleRequiredMixin
 from boxcore.access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
-from boxcore.catalog.services import (
-    build_report_response,
-    handle_student_enrollment_action,
-    handle_student_payment_action,
-    run_student_quick_create_workflow,
-    run_student_quick_update_workflow,
-)
+from reporting.application.catalog_reports import build_student_directory_report
+from reporting.infrastructure import build_report_response
+from boxcore.catalog.services.student_enrollment_actions import handle_student_enrollment_action
+from boxcore.catalog.services.student_payment_actions import handle_student_payment_action
+from boxcore.catalog.services.student_workflows import run_student_quick_create_workflow, run_student_quick_update_workflow
 from boxcore.models import Enrollment, Payment, Student
 from communications.models import StudentIntake
 
 from ..forms import EnrollmentManagementForm, PaymentManagementForm, StudentQuickForm
-from ..report_builders import build_student_directory_report
 from ..student_queries import build_student_directory_snapshot, build_student_financial_snapshot
 from .catalog_base_views import CatalogBaseView
 

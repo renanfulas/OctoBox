@@ -1,40 +1,41 @@
 """
-ARQUIVO: workflows de plano financeiro do catalogo.
+ARQUIVO: fachada dos workflows leves de plano.
 
 POR QUE ELE EXISTE:
-- Explicita pelo nome do arquivo que esta camada resolve os workflows publicos de MembershipPlan.
+- Mantem a interface publica atual do catalogo enquanto a orquestracao real sai da camada historica e entra em use cases com adapters dedicados.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Cria planos pela central visual de financeiro.
-2. Atualiza planos com trilha de campos alterados.
-3. Registra auditoria dos movimentos comerciais ligados ao portfolio de planos.
+1. Traduz form.cleaned_data para um command explicito.
+2. Chama o fluxo concreto do dominio financeiro leve.
+3. Devolve o model historico esperado pelas views e testes atuais.
 
 PONTOS CRITICOS:
-- Qualquer regressao aqui afeta o motor comercial usado por matriculas e cobrancas.
+- Este arquivo nao deve voltar a concentrar ORM, auditoria ou transacao.
 """
 
-from boxcore.auditing import log_audit_event
+from boxcore.models import MembershipPlan
+from finance.application.commands import build_membership_plan_command
+from finance.infrastructure import (
+    execute_create_membership_plan_command,
+    execute_update_membership_plan_command,
+)
 
 
 def run_membership_plan_create_workflow(*, actor, form):
-    plan = form.save()
-    log_audit_event(
-        actor=actor,
-        action='membership_plan_quick_created',
-        target=plan,
-        description='Plano criado pela central visual de financeiro.',
-        metadata={'price': str(plan.price), 'billing_cycle': plan.billing_cycle},
+    command = build_membership_plan_command(
+        actor_id=getattr(actor, 'id', None),
+        cleaned_data=form.cleaned_data,
     )
-    return plan
+    result = execute_create_membership_plan_command(command)
+    return MembershipPlan.objects.get(pk=result.id)
 
 
 def run_membership_plan_update_workflow(*, actor, form, changed_fields):
-    plan = form.save()
-    log_audit_event(
-        actor=actor,
-        action='membership_plan_quick_updated',
-        target=plan,
-        description='Plano alterado pela central visual de financeiro.',
-        metadata={'changed_fields': changed_fields},
+    command = build_membership_plan_command(
+        actor_id=getattr(actor, 'id', None),
+        cleaned_data=form.cleaned_data,
+        plan_id=getattr(getattr(form, 'instance', None), 'id', None),
+        changed_fields=tuple(changed_fields),
     )
-    return plan
+    result = execute_update_membership_plan_command(command)
+    return MembershipPlan.objects.get(pk=result.id)

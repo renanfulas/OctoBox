@@ -19,18 +19,16 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
 
-from boxcore.catalog.services import (
-    build_operational_queue_metrics,
-    build_operational_queue_snapshot,
-    handle_finance_communication_action,
-    handle_student_enrollment_action,
-    handle_student_payment_action,
+from boxcore.catalog.services.finance_communication_actions import handle_finance_communication_action
+from boxcore.catalog.services.membership_plan_workflows import (
     run_membership_plan_create_workflow,
     run_membership_plan_update_workflow,
-    run_student_quick_create_workflow,
-    run_student_quick_update_workflow,
-    sync_student_intake,
 )
+from boxcore.catalog.services.operational_queue import build_operational_queue_metrics, build_operational_queue_snapshot
+from boxcore.catalog.services.student_enrollment_actions import handle_student_enrollment_action
+from boxcore.catalog.services.student_payment_actions import handle_student_payment_action
+from boxcore.catalog.services.student_workflows import run_student_quick_create_workflow, run_student_quick_update_workflow
+from boxcore.catalog.services.intakes import sync_student_intake
 from boxcore.catalog.services.payments import create_payment_schedule, regenerate_payment
 from boxcore.models import (
     AuditEvent,
@@ -202,7 +200,14 @@ class CatalogServiceTests(TestCase):
     def test_plan_workflows_create_and_update(self):
         create_form = DummySavedForm(
             save_callback=lambda: MembershipPlan.objects.create(name='Legends Unlimited', price=Decimal('429.90'), billing_cycle='monthly'),
-            cleaned_data={},
+            cleaned_data={
+                'name': 'Legends Unlimited',
+                'price': Decimal('429.90'),
+                'billing_cycle': 'monthly',
+                'sessions_per_week': 5,
+                'description': '',
+                'active': True,
+            },
         )
         created_plan = run_membership_plan_create_workflow(actor=self.user, form=create_form)
         self.assertEqual(created_plan.name, 'Legends Unlimited')
@@ -216,8 +221,16 @@ class CatalogServiceTests(TestCase):
 
         update_form = DummySavedForm(
             save_callback=update_plan,
-            cleaned_data={},
+            cleaned_data={
+                'name': 'Cross Gold Plus',
+                'price': Decimal('339.90'),
+                'billing_cycle': self.plan.billing_cycle,
+                'sessions_per_week': self.plan.sessions_per_week,
+                'description': self.plan.description,
+                'active': self.plan.active,
+            },
             changed_data=['name', 'price'],
+            instance=self.plan,
         )
         updated_plan = run_membership_plan_update_workflow(actor=self.user, form=update_form, changed_fields=update_form.changed_data)
         self.assertEqual(updated_plan.name, 'Cross Gold Plus')
