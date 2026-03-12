@@ -1,13 +1,16 @@
 """
-ARQUIVO: ponto de entrada do módulo de auditoria.
+ARQUIVO: fachada legada do namespace de auditoria dentro de boxcore.
 
 POR QUE ELE EXISTE:
-- Centraliza o acesso aos utilitários de auditoria do projeto.
+- Mantem compatibilidade temporaria enquanto o app real vive em auditing.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Expõe a função principal de registro de eventos.
+1. Reexporta a funcao principal de auditoria.
+
+PONTOS CRITICOS:
+- Este arquivo nao deve voltar a concentrar comportamento novo.
 """
 
-from .services import log_audit_event
+from auditing import log_audit_event
 
 __all__ = ['log_audit_event']

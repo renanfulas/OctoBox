@@ -14,31 +14,34 @@ PONTOS CRITICOS:
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<section class="hero">
-    <div>
-        <h1>Área do Owner</h1>
-        <p>Visão executiva do alicerce do sistema: base de alunos, fila de entrada, preparação de WhatsApp e pontos de decisão do produto.</p>
-    </div>
-    <div class="actions">
-        <span class="pill">Acesso exclusivo do owner</span>
-    </div>
-</section>
+<div class="operation-shell">
+    <section class="hero operation-hero">
+        <div class="operation-hero-main">
+            <div>
+                <p class="eyebrow">Minha operação</p>
+                <h1>Área do Owner</h1>
+                <p class="operation-hero-copy">Visão executiva do alicerce do sistema: base de alunos, fila de entrada, preparação de WhatsApp e pontos de decisão do produto. A ideia aqui é bater o olho e entender onde a operação está crescendo, travando ou pedindo decisão.</p>
+            </div>
+            <div class="operation-hero-tags">
+                <span class="pill accent">Cockpit executivo</span>
+                <span class="pill info">Leitura estrutural</span>
+                <span class="pill">Acesso exclusivo do owner</span>
+            </div>
+        </div>
+        <aside class="operation-hero-side">
+            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Pulso de agora" copy="Quatro sinais para entender rapidamente a pressão da base, da entrada e da cobrança." stats=hero_stats %}
+        </aside>
+    </section>
 
-<section class="panel-grid">
-    {% for label, value in headline_metrics.items %}
-    <article class="card">
-        <p class="eyebrow">{{ label }}</p>
-        <p class="metric">{{ value }}</p>
-    </article>
-    {% endfor %}
-</section>
-
-<section class="table-card">
-    <p class="eyebrow">Leitura estratégica do momento</p>
-    <ul class="capability-list">
-        {% for item in decision_board %}
-        <li>{{ item }}</li>
+    <section class="panel-grid operation-metric-grid">
+        {% for card in metric_cards %}
+        {% include "includes/ui/metric_card.html" with card=card %}
         {% endfor %}
-    </ul>
-</section>
+    </section>
+
+    <section class="layout-grid operation-grid-wide align-start">
+        {% include "includes/ui/info_list_card.html" with eyebrow="Leitura estratégica do momento" title="O que já está pronto para escalar" copy="Esses pontos mostram o que já foi estruturado e pode sustentar crescimento sem improviso." pill_label=decision_board_count_label pill_class="info" items=decision_board %}
+        {% include "includes/ui/info_list_card.html" with card_class="operation-empty-card" eyebrow="Radar executivo" title="Ordem de leitura recomendada" copy="Uma sequência simples para usar esta tela como centro de decisão, não só como painel bonito." pill_label="Prioridade" pill_class="accent" items=owner_reading_order %}
+    </section>
+</div>
 {% endblock %}

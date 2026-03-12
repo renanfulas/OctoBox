@@ -65,7 +65,7 @@ class StudentIntake(TimeStampedModel):
         blank=True,
         related_name='assigned_intakes',
     )
-    raw_payload = models.TextField(blank=True)
+    raw_payload = models.JSONField(blank=True, default=dict)
     notes = models.TextField(blank=True)
 
     class Meta:

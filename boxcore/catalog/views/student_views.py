@@ -31,7 +31,8 @@ from boxcore.catalog.services import (
     run_student_quick_create_workflow,
     run_student_quick_update_workflow,
 )
-from boxcore.models import Enrollment, Payment, Student, StudentIntake
+from boxcore.models import Enrollment, Payment, Student
+from communications.models import StudentIntake
 
 from ..forms import EnrollmentManagementForm, PaymentManagementForm, StudentQuickForm
 from ..report_builders import build_student_directory_report

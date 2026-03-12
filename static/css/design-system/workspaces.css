@@ -1,0 +1,631 @@
+/*
+ARQUIVO: extensões do design system para workspaces operacionais e dashboard.
+
+POR QUE ELE EXISTE:
+- Separa estilos de operations e dashboard do núcleo global do shell autenticado.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Estiliza hero panels, KPIs e tabelas das áreas operacionais.
+2. Estiliza cartões, grids e pílulas específicas do dashboard.
+3. Mantém os ajustes responsivos dessas áreas reunidos.
+
+PONTOS CRITICOS:
+- Mudanças aqui afetam Owner, Manager, Coach, DEV e dashboard.
+*/
+
+.operation-shell {
+    display: grid;
+    gap: var(--section-gap);
+}
+
+.operation-hero {
+    background:
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.16), transparent 32%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(249, 115, 22, 0.08), rgba(16, 185, 129, 0.08)),
+        var(--surface);
+}
+
+.operation-hero-main {
+    display: grid;
+    gap: 20px;
+    flex: 1 1 auto;
+}
+
+.operation-hero-copy {
+    max-width: 760px;
+}
+
+.operation-hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.operation-hero-side {
+    width: min(100%, 340px);
+    display: grid;
+    align-content: start;
+}
+
+.operation-hero-panel {
+    position: relative;
+    padding: 22px;
+    border-radius: 24px;
+    border: 1px solid rgba(148, 163, 184, 0.26);
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.92)),
+        rgba(255, 255, 255, 0.9);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 16px 32px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+}
+
+.operation-hero-panel::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--brand), var(--accent-2), var(--accent));
+    opacity: 0.9;
+}
+
+.operation-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.operation-mini-stat {
+    padding: 15px;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(248, 250, 252, 0.92);
+}
+
+.operation-mini-label {
+    display: block;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.operation-mini-value {
+    display: block;
+    margin-top: 6px;
+    font-size: 1.55rem;
+    line-height: 1;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+}
+
+.operation-kpi-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 174px;
+}
+
+.operation-kpi-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -28px -36px auto;
+    width: 132px;
+    height: 132px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.42), transparent 68%);
+    pointer-events: none;
+}
+
+.operation-kpi-card.owner-amber {
+    background: linear-gradient(145deg, rgba(249, 115, 22, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.operation-kpi-card.owner-blue {
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.operation-kpi-card.owner-green {
+    background: linear-gradient(145deg, rgba(16, 185, 129, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.operation-kpi-card.owner-slate {
+    background: linear-gradient(145deg, rgba(71, 85, 105, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.operation-kpi-card.manager-coral {
+    background: linear-gradient(145deg, rgba(251, 113, 133, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.operation-kpi-card.manager-sky {
+    background: linear-gradient(145deg, rgba(56, 189, 248, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.operation-kpi-card.manager-gold {
+    background: linear-gradient(145deg, rgba(234, 179, 8, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.operation-kpi-card.manager-steel {
+    background: linear-gradient(145deg, rgba(100, 116, 139, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.operation-kpi-card.coach-mint {
+    background: linear-gradient(145deg, rgba(16, 185, 129, 0.14), rgba(255, 255, 255, 0.96));
+}
+
+.operation-kpi-card.coach-indigo {
+    background: linear-gradient(145deg, rgba(99, 102, 241, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.operation-kpi-card.coach-orange {
+    background: linear-gradient(145deg, rgba(249, 115, 22, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.operation-kpi-card.dev-steel {
+    background: linear-gradient(145deg, rgba(51, 65, 85, 0.14), rgba(255, 255, 255, 0.96));
+}
+
+.operation-kpi-card.dev-cyan {
+    background: linear-gradient(145deg, rgba(6, 182, 212, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.operation-kpi-card.dev-emerald {
+    background: linear-gradient(145deg, rgba(16, 185, 129, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.operation-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.operation-card-title {
+    margin: 0;
+    font-size: 1.12rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.operation-card-copy {
+    margin: 8px 0 0;
+    color: var(--muted);
+    line-height: 1.65;
+    max-width: 62ch;
+}
+
+.operation-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.operation-grid-wide {
+    grid-template-columns: 1fr;
+}
+
+.operation-span-full {
+    grid-column: 1 / -1;
+}
+
+.operation-table-wrap {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    margin: 0 -4px;
+    padding: 0 4px 4px;
+}
+
+.operation-table-wrap table {
+    min-width: 680px;
+}
+
+.operation-table-card table {
+    margin-top: 4px;
+}
+
+.operation-session-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.operation-session-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 26px 26px 0;
+}
+
+.operation-session-title {
+    margin: 0;
+    font-size: 1.22rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+}
+
+.operation-session-meta {
+    margin: 8px 0 0;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.operation-session-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.operation-session-body {
+    padding: 20px 26px 26px;
+}
+
+.operation-inline-actions {
+    margin-top: 0;
+}
+
+.operation-note-form select,
+.operation-note-form textarea {
+    width: 100%;
+}
+
+.operation-note-form textarea {
+    margin-top: 8px;
+    min-height: 78px;
+    resize: vertical;
+}
+
+.operation-note-form .actions {
+    margin-top: 8px;
+}
+
+.operation-empty-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(241, 245, 249, 0.96));
+}
+
+.dashboard-shell {
+    display: grid;
+    gap: var(--section-gap);
+}
+
+.dashboard-hero {
+    background:
+        radial-gradient(circle at top right, rgba(249, 115, 22, 0.2), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.14), transparent 28%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(249, 115, 22, 0.08), rgba(16, 185, 129, 0.08)),
+        var(--surface);
+}
+
+.dashboard-hero .actions {
+    align-items: flex-start;
+}
+
+.dashboard-kpi-card {
+    position: relative;
+    min-height: 182px;
+    overflow: hidden;
+}
+
+.dashboard-kpi-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -30px -40px auto;
+    width: 140px;
+    height: 140px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.4), transparent 68%);
+    pointer-events: none;
+}
+
+.dashboard-kpi-card.kpi-amber {
+    background: linear-gradient(145deg, rgba(249, 115, 22, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.dashboard-kpi-card.kpi-blue {
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.dashboard-kpi-card.kpi-red {
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.dashboard-kpi-card.kpi-green {
+    background: linear-gradient(145deg, rgba(16, 185, 129, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.dashboard-kpi-card.kpi-slate {
+    background: linear-gradient(145deg, rgba(71, 85, 105, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.dashboard-role-grid {
+    grid-template-columns: 1fr;
+}
+
+.dashboard-role-table td:first-child,
+.dashboard-role-table th:first-child {
+    width: 132px;
+}
+
+.dashboard-quick-card {
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.96)),
+        rgba(255, 255, 255, 0.94);
+}
+
+.dashboard-quick-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -24px -28px auto;
+    width: 112px;
+    height: 112px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.16), transparent 68%);
+    pointer-events: none;
+}
+
+.dashboard-panel-grid {
+    grid-template-columns: 1fr;
+}
+
+.dashboard-panel-grid .operation-span-full {
+    grid-column: 1 / -1;
+}
+
+.dashboard-table-card table {
+    margin-top: 4px;
+}
+
+.dashboard-risk-pill {
+    min-width: 114px;
+    justify-content: center;
+}
+
+.dashboard-risk-pill.is-critical {
+    background: rgba(239, 68, 68, 0.14);
+    color: var(--danger);
+}
+
+.dashboard-risk-pill.is-warning {
+    background: rgba(249, 115, 22, 0.16);
+    color: #c2410c;
+}
+
+.dashboard-risk-pill.is-stable {
+    background: rgba(16, 185, 129, 0.12);
+    color: #15803d;
+}
+
+@media (max-width: 1280px) {
+    .operation-grid-wide,
+    .dashboard-panel-grid,
+    .dashboard-role-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 1600px) {
+    .operation-grid-wide {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-role-grid {
+        grid-template-columns: 1.1fr 0.9fr;
+    }
+
+    .dashboard-panel-grid {
+        grid-template-columns: 1.05fr 0.95fr;
+    }
+}
+
+@media (max-width: 1180px) {
+    .operation-grid-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (max-width: 960px) {
+    .shell {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: min(82vw, 320px);
+        transform: translateX(-102%);
+        transition: transform 0.2s ease;
+        z-index: 20;
+    }
+
+    .sidebar-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        border: 0;
+        padding: 0;
+        background: rgba(15, 23, 42, 0.34);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        z-index: 15;
+    }
+
+    body.sidebar-open .sidebar {
+        transform: translateX(0);
+    }
+
+    body.sidebar-open .sidebar-backdrop {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .content {
+        padding: 18px;
+    }
+
+    .topbar {
+        padding: 14px;
+        top: 10px;
+    }
+
+    .global-search {
+        min-width: 100%;
+    }
+
+    .layout-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hero {
+        padding: 24px;
+    }
+
+    .panel-grid,
+    .quick-grid,
+    .layout-grid,
+    .operation-shell,
+    .dashboard-shell {
+        gap: 18px;
+    }
+
+    .operation-hero {
+        flex-direction: column;
+    }
+
+    .operation-hero-side {
+        width: 100%;
+    }
+
+    .operation-grid-3,
+    .operation-grid-wide {
+        grid-template-columns: 1fr;
+    }
+
+    .operation-session-head {
+        flex-direction: column;
+    }
+
+    .operation-session-badges {
+        justify-content: flex-start;
+    }
+
+    .dashboard-role-grid,
+    .dashboard-panel-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .operation-card-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 720px) {
+    th,
+    td {
+        padding: 12px 10px;
+        font-size: 0.94rem;
+    }
+
+    th:first-child,
+    td:first-child {
+        padding-left: 0;
+    }
+
+    th:last-child,
+    td:last-child {
+        padding-right: 0;
+    }
+
+    th {
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+    }
+
+    .operation-mini-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .operation-table-wrap {
+        margin: 0 -6px;
+        padding: 0 6px 2px;
+    }
+
+    .operation-table-wrap table {
+        min-width: 560px;
+    }
+
+    .operation-inline-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .operation-inline-actions form,
+    .actions .button,
+    .operation-note-form .actions .button,
+    .dashboard-hero .actions .button,
+    .operation-hero .actions .button {
+        width: 100%;
+    }
+
+    .actions .pill,
+    .operation-hero-tags .pill {
+        width: fit-content;
+        max-width: 100%;
+    }
+
+    .hero h1 {
+        font-size: clamp(1.9rem, 8vw, 2.5rem);
+    }
+
+    .operation-session-head,
+    .operation-session-body,
+    .table-card,
+    .card,
+    .quick-card,
+    .operation-hero-panel {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .table-card,
+    .card,
+    .quick-card,
+    .operation-hero-panel {
+        padding-top: 22px;
+        padding-bottom: 22px;
+    }
+
+    .operation-hero-panel,
+    .table-card,
+    .card,
+    .quick-card {
+        border-radius: 22px;
+    }
+
+    .dashboard-role-table td:first-child,
+    .dashboard-role-table th:first-child {
+        width: auto;
+    }
+}
+
+@media (min-width: 961px) {
+    .sidebar-toggle {
+        display: none;
+    }
+}

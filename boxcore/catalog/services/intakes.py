@@ -1,35 +1,30 @@
 """
-ARQUIVO: services de intake do catálogo.
+ARQUIVO: fachada do motor de intake do catálogo.
 
 POR QUE ELE EXISTE:
-- Separa da view a conversão de entrada provisória em aluno definitivo.
+- Mantém o contrato histórico de conversão de intake enquanto a implementação real saiu para students.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Vincula um intake explícito ou encontrado por fallback de WhatsApp.
-2. Atualiza o status comercial do intake para aprovado.
-3. Registra a observação padrão de conversão na trilha do lead.
+1. Traduz a chamada legada para um command explícito.
+2. Encaminha o vínculo para o adapter real.
+3. Devolve o modelo esperado pelos chamadores históricos.
 
 PONTOS CRITICOS:
-- O fallback por telefone evita perder leads já capturados antes da conversão formal.
+- Este arquivo não deve voltar a concentrar fallback, lock ou atualização comercial.
 """
 
-from boxcore.models import IntakeStatus, StudentIntake
+from communications.models import StudentIntake
+from students.application.commands import StudentIntakeSyncCommand
+from students.infrastructure.django_intakes import execute_student_intake_sync_command
 
 
 def sync_student_intake(*, student, intake=None):
-    linked_intake = intake
-    if linked_intake is None:
-        linked_intake = StudentIntake.objects.filter(
-            phone=student.phone,
-            linked_student__isnull=True,
-        ).order_by('-created_at').first()
-    if linked_intake is None:
-        return None
-
-    linked_intake.linked_student = student
-    linked_intake.status = IntakeStatus.APPROVED
-    linked_intake.notes = '\n'.join(
-        filter(None, [linked_intake.notes.strip(), 'Convertido em aluno definitivo pela tela leve.'])
+    intake_id = execute_student_intake_sync_command(
+        StudentIntakeSyncCommand(
+            student_id=student.id,
+            intake_record_id=getattr(intake, 'id', None),
+        )
     )
-    linked_intake.save(update_fields=['linked_student', 'status', 'notes', 'updated_at'])
-    return linked_intake
+    if intake_id is None:
+        return None
+    return StudentIntake.objects.get(pk=intake_id)

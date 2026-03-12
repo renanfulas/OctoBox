@@ -386,7 +386,8 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Em andamento')
         self.assertContains(response, 'Entradas encerradas enquanto a aula estiver em andamento.')
-        self.assertContains(response, 'Com vagas')
+        self.assertContains(response, 'Fechado')
+        self.assertContains(response, 'class-occupancy-closed')
         session.refresh_from_db()
         self.assertEqual(session.status, SessionStatus.SCHEDULED)
 
@@ -438,6 +439,8 @@ class CatalogViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Finalizada')
+        self.assertContains(response, 'Fechado')
+        self.assertContains(response, 'Entradas encerradas porque a aula ja foi finalizada.')
         session.refresh_from_db()
         self.assertEqual(session.status, SessionStatus.COMPLETED)
 

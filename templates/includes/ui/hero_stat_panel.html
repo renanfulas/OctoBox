@@ -1,0 +1,12 @@
+<article class="operation-hero-panel">
+    <p class="eyebrow">{{ eyebrow }}</p>
+    <p class="operation-card-copy">{{ copy }}</p>
+    <div class="operation-mini-grid">
+        {% for stat in stats %}
+        <div class="operation-mini-stat">
+            <span class="operation-mini-label">{{ stat.label }}</span>
+            <span class="operation-mini-value">{{ stat.value }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</article>

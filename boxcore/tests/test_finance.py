@@ -80,10 +80,12 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'Financeiro')
         self.assertContains(response, 'Cross Gold')
         self.assertContains(response, 'Cadastre um plano que depois conversa com aluno, matricula e pagamento')
-        self.assertContains(response, 'Tendencia mensal')
-        self.assertContains(response, 'Ativacoes x cancelamentos')
+        self.assertContains(response, 'Tendência mensal')
+        self.assertContains(response, 'Ativações x cancelamentos')
         self.assertContains(response, 'Régua de cobrança e retenção')
+        self.assertContains(response, 'Leitura executiva do mix')
         self.assertContains(response, 'Registrar contato no WhatsApp')
+        self.assertRegex(response.content.decode(), r'R\$\s*319[,.]90')
 
     def test_finance_center_filters_by_plan_and_method(self):
         self.client.force_login(self.user)

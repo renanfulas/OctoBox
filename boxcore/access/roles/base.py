@@ -1,23 +1,16 @@
 """
-ARQUIVO: estrutura base dos papéis de acesso.
+ARQUIVO: fachada legada da estrutura base de acesso dentro de boxcore.
 
 POR QUE ELE EXISTE:
-- Define o formato padrão que todo papel do sistema precisa seguir.
+- Mantem imports antigos funcionando enquanto a implementacao real vive em access.roles.base.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Cria a estrutura RoleDefinition.
-2. Padroniza label, resumo e capacidades dos papéis.
+1. Reexporta a estrutura real de papeis.
 
 PONTOS CRITICOS:
-- Alterar a estrutura do dataclass impacta owner, dev, manager, coach e telas de acesso.
+- Este arquivo nao deve voltar a concentrar comportamento novo.
 """
 
-from dataclasses import dataclass
+from access.roles.base import RoleDefinition
 
-
-@dataclass(frozen=True)
-class RoleDefinition:
-    slug: str
-    label: str
-    summary: str
-    capabilities: tuple[str, ...]
+__all__ = ['RoleDefinition']

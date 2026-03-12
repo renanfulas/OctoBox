@@ -1,0 +1,24 @@
+/*
+ARQUIVO: ajustes finais das telas de alunos e blocos compartilhados do catálogo.
+
+POR QUE ELE EXISTE:
+- Agrupa estilos específicos de intake/alunos que ficaram fora do núcleo utilitário.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Complementa a área de alunos com layout e comportamento responsivo.
+2. Mantém ajustes finais compartilhados com telas do catálogo.
+
+PONTOS CRITICOS:
+- Mudanças aqui afetam principalmente telas de alunos e intake.
+*/
+
+@media (max-width: 960px) {
+    .student-compact-layout,
+    .intake-card {
+        grid-template-columns: 1fr;
+    }
+
+    .student-priority-badges {
+        justify-items: start;
+    }
+}
