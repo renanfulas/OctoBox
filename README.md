@@ -192,6 +192,10 @@ Hoje ela entrega:
 
 ## Convencao de comentarios e cabecalhos
 
+## Licenca
+
+Este projeto esta licenciado sob a GNU Affero General Public License v3.0 (AGPL-3.0). Veja [LICENSE](LICENSE).
+
 Todo arquivo relevante deve explicar rapidamente seu papel no topo.
 
 Arquivos Markdown usam comentario HTML. Arquivos Python usam docstring no mesmo formato. A referencia completa e [docs/new-file-template.md](docs/new-file-template.md).
