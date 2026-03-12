@@ -16,297 +16,437 @@ PONTOS CRITICOS:
 - Depende do contexto e dos filtros montados em boxcore/catalog/views/finance_views.py.
 -->
 {% extends "layouts/base.html" %}
+{% load l10n %}
 
 {% block content %}
-<section class="hero">
-    <div>
-        <h1>{{ page_title }}</h1>
-        <p>{{ page_subtitle }}</p>
-    </div>
-    <div class="actions">
-        <span class="pill">Leitura comercial</span>
-        {% if can_manage_finance %}
-        <a class="button" href="#cadastro-plano">Cadastrar plano</a>
-        {% endif %}
-        <a class="button secondary" href="{{ finance_export_links.csv }}">Exportar CSV</a>
-        <a class="button secondary" href="{{ finance_export_links.pdf }}">Exportar PDF</a>
-        <a class="button secondary" href="/admin/boxcore/payment/">Abrir pagamentos no admin</a>
-    </div>
-</section>
-
-<section class="panel-grid">
-    {% for label, item in finance_metrics.items %}
-    <article class="card finance-metric-card {% cycle 'orange-glow' 'green-glow' 'blue-glow' 'orange-glow' 'green-glow' 'blue-glow' %}">
-        <p class="eyebrow">{{ label }}</p>
-        <p class="metric">{% if 'faturamento' in label or 'receita' in label or 'ticket' in label %}R$ {{ item.value }}{% else %}{{ item.value }}{% endif %}</p>
-        <p class="metric-note">{{ item.note }}</p>
-        <div class="metric-spark"></div>
-    </article>
-    {% endfor %}
-</section>
-
-<section class="panel-grid">
-    {% for label, value in operational_metrics.items %}
-    <article class="card finance-metric-card blue-glow">
-        <p class="eyebrow">{{ label }}</p>
-        <p class="metric">{{ value }}</p>
-        <p class="metric-note">Resumo operacional da régua de cobrança e retenção.</p>
-    </article>
-    {% endfor %}
-</section>
-
-<section class="table-card finance-glass-panel section-gap">
-    <p class="eyebrow">Filtros da leitura financeira</p>
-    <form method="get" class="form-stack">
-        <div class="field-grid-200">
-            <label>
-                <span class="field-label">{{ finance_filter_form.months.label }}</span>
-                {{ finance_filter_form.months }}
-            </label>
-            <label>
-                <span class="field-label">{{ finance_filter_form.plan.label }}</span>
-                {{ finance_filter_form.plan }}
-            </label>
-            <label>
-                <span class="field-label">{{ finance_filter_form.payment_status.label }}</span>
-                {{ finance_filter_form.payment_status }}
-            </label>
-            <label>
-                <span class="field-label">{{ finance_filter_form.payment_method.label }}</span>
-                {{ finance_filter_form.payment_method }}
-            </label>
-        </div>
-        <div class="actions actions-tight">
-            <button class="button" type="submit">Aplicar filtros</button>
-            <a class="button secondary" href="/financeiro/">Limpar</a>
-        </div>
-    </form>
-</section>
-
-<section class="table-card finance-glass-panel section-gap">
-    <p class="eyebrow">Régua de cobrança e retenção</p>
-    <div class="stack-14">
-        {% for item in operational_queue %}
-        <article class="history-entry">
-            <div class="row-between history-header">
-                <div>
-                    <strong>{{ item.title }}</strong>
-                    <p class="meta-text-sm">{{ item.summary }}</p>
-                </div>
-                <span class="pill{% if item.pill_class %} {{ item.pill_class }}{% endif %}">{{ item.pill }}</span>
+<div class="operation-shell finance-shell">
+    <section class="hero operation-hero finance-hero">
+        <div class="operation-hero-main">
+            <div>
+                <p class="eyebrow">Motor comercial</p>
+                <h1>{{ page_title }}</h1>
+                <p class="operation-hero-copy">{{ page_subtitle }}</p>
             </div>
-            <p class="meta-text">{{ item.suggested_message }}</p>
-            <form method="post" action="/financeiro/comunicacao/acao/" class="actions actions-tight">
-                {% csrf_token %}
-                <input type="hidden" name="action_kind" value="{{ item.kind }}">
-                <input type="hidden" name="student_id" value="{{ item.student.id }}">
-                {% if item.payment %}<input type="hidden" name="payment_id" value="{{ item.payment.id }}">{% endif %}
-                {% if item.enrollment %}<input type="hidden" name="enrollment_id" value="{{ item.enrollment.id }}">{% endif %}
-                <button class="button" type="submit">Registrar contato no WhatsApp</button>
-                <a class="button secondary" href="/alunos/{{ item.student.id }}/editar/">Abrir ficha do aluno</a>
+            <div class="operation-hero-tags">
+                <span class="pill">Leitura comercial</span>
+                <span class="pill info">Caixa, retenção e carteira</span>
+                <span class="pill accent">Ação operacional guiada</span>
+            </div>
+            <div class="actions">
+                {% if can_manage_finance %}
+                <a class="button" href="#cadastro-plano">Cadastrar plano</a>
+                {% endif %}
+                <a class="button secondary" href="{{ finance_export_links.csv }}">Exportar CSV</a>
+                <a class="button secondary" href="{{ finance_export_links.pdf }}">Exportar PDF</a>
+                <a class="button secondary" href="/admin/boxcore/payment/">Abrir pagamentos no admin</a>
+            </div>
+        </div>
+        <aside class="operation-hero-side">
+            <article class="operation-hero-panel">
+                <p class="eyebrow">Pulso de agora</p>
+                <p class="operation-card-copy">Resumo executivo para saber se o financeiro está respirando bem ou pedindo intervenção imediata.</p>
+                <div class="operation-mini-grid">
+                    <div class="operation-mini-stat">
+                        <span class="operation-mini-label">Recebido</span>
+                        <span class="operation-mini-value finance-mini-value">R$ {{ finance_pulse.received|floatformat:2 }}</span>
+                    </div>
+                    <div class="operation-mini-stat">
+                        <span class="operation-mini-label">Em aberto</span>
+                        <span class="operation-mini-value finance-mini-value">R$ {{ finance_pulse.open|floatformat:2 }}</span>
+                    </div>
+                    <div class="operation-mini-stat">
+                        <span class="operation-mini-label">Em atraso</span>
+                        <span class="operation-mini-value">{{ finance_pulse.overdue_students }}</span>
+                    </div>
+                    <div class="operation-mini-stat">
+                        <span class="operation-mini-label">Ticket</span>
+                        <span class="operation-mini-value finance-mini-value">R$ {{ finance_pulse.ticket|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </article>
+        </aside>
+    </section>
+
+    <section class="panel-grid finance-metric-strip">
+        {% for label, item in finance_metrics.items %}
+        <article class="card finance-metric-card {% cycle 'orange-glow' 'green-glow' 'blue-glow' 'orange-glow' 'green-glow' 'blue-glow' %}">
+            <p class="eyebrow">{{ label }}</p>
+            <p class="metric{% if item.is_currency %} finance-currency-metric{% endif %}">{% if item.is_currency %}R$ {{ item.value|floatformat:2 }}{% else %}{{ item.value }}{% endif %}</p>
+            <p class="metric-note">{{ item.note }}</p>
+            <div class="metric-spark"></div>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="finance-board">
+        <article class="table-card finance-glass-panel finance-support-card finance-support-card-tight">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Leitura que importa</p>
+                    <h2 class="operation-card-title">Como usar a tela sem se perder</h2>
+                </div>
+            </div>
+            <ul class="capability-list">
+                <li>Comece por régua e fila.</li>
+                <li>Tendência e churn medem crescimento real.</li>
+                <li>Planos e mix refinam a estrutura comercial.</li>
+            </ul>
+        </article>
+        <article class="table-card finance-glass-panel finance-board-filter">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Filtros da leitura financeira</p>
+                    <h2 class="operation-card-title">Recorte o que importa antes de analisar</h2>
+                    <p class="operation-card-copy">Restrinja a leitura por janela, plano, status e método.</p>
+                </div>
+                <span class="pill info">Leitura ativa</span>
+            </div>
+            <form method="get" class="form-stack">
+                <div class="field-grid-200">
+                    <label>
+                        <span class="field-label">{{ finance_filter_form.months.label }}</span>
+                        {{ finance_filter_form.months }}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ finance_filter_form.plan.label }}</span>
+                        {{ finance_filter_form.plan }}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ finance_filter_form.payment_status.label }}</span>
+                        {{ finance_filter_form.payment_status }}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ finance_filter_form.payment_method.label }}</span>
+                        {{ finance_filter_form.payment_method }}
+                    </label>
+                </div>
+                <div class="actions actions-tight">
+                    <button class="button" type="submit">Aplicar filtros</button>
+                    <a class="button secondary" href="/financeiro/">Limpar</a>
+                </div>
             </form>
         </article>
-        {% empty %}
-        <p class="meta-text">Nenhuma acao semiassistida pendente no momento.</p>
-        {% endfor %}
-    </div>
-</section>
 
-<section class="layout-grid finance-trend-layout section-gap">
-    <article class="table-card finance-glass-panel">
-        <p class="eyebrow">Tendência mensal</p>
-        <h2 class="section-title-sm">Receita real recebida nos últimos 6 meses</h2>
-        <p class="body-copy text-muted section-gap-top-xs no-margin">Aqui você enxerga se o caixa realmente subiu ou se o crescimento ficou mais narrativo do que financeiro.</p>
-        <div class="chart-grid revenue-chart" data-chart-columns="{{ monthly_comparison|length|default:1 }}">
-            {% for item in monthly_comparison %}
-            <div class="chart-column">
-                <div class="chart-bar-wrap">
-                    <div class="chart-bar revenue" data-bar-height="{% widthratio item.revenue comparison_peaks.max_revenue 100 %}"></div>
+        <div class="finance-side-stack finance-command-side finance-card-stack finance-board-support-rail">
+            <article class="table-card finance-glass-panel finance-support-card">
+                <div class="operation-card-head">
+                    <div>
+                        <p class="eyebrow">Régua operacional em números</p>
+                        <h2 class="operation-card-title">Ação imediata</h2>
+                    </div>
+                    <span class="pill accent">{{ operational_queue|length }} caso(s)</span>
                 </div>
-                <strong>{{ item.label }}</strong>
-                <span>R$ {{ item.revenue }}</span>
-            </div>
-            {% endfor %}
+                <div class="finance-ops-grid">
+                    {% for label, value in operational_metrics.items %}
+                    <article class="finance-ops-metric-card">
+                        <p class="eyebrow">{{ label }}</p>
+                        <p class="metric">{{ value }}</p>
+                        <p class="metric-note">Resumo operacional da régua de cobrança e retenção.</p>
+                    </article>
+                    {% endfor %}
+                </div>
+            </article>
         </div>
-    </article>
 
-    <article class="table-card finance-glass-panel">
-        <p class="eyebrow">Churn e crescimento</p>
-        <h2 class="section-title-sm">Ativações x cancelamentos</h2>
-        <p class="body-copy text-muted section-gap-top-xs no-margin">O objetivo aqui é medir se o box está acumulando alunos ou apenas girando a base.</p>
-        <div class="stack-14">
-            {% for item in monthly_comparison %}
-            <div class="delta-row">
-                <div class="row-between-sm">
-                    <strong>{{ item.label }}</strong>
-                    <span class="pill{% if item.net_growth < 0 %} warning{% endif %}">Saldo {{ item.net_growth }}</span>
+        <article class="table-card finance-glass-panel finance-board-rail">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Régua de cobrança e retenção</p>
+                    <h2 class="operation-card-title">Quem pede contato agora</h2>
+                    <p class="operation-card-copy">Sinal financeiro convertido em ação com o aluno.</p>
                 </div>
-                <div class="delta-track-group">
-                    <div>
-                        <div class="delta-label">Ativos</div>
-                        <div class="mix-bar-track"><div class="mix-bar-fill growth" data-bar-width="{% widthratio item.activations comparison_peaks.max_count 100 %}"></div></div>
-                    </div>
-                    <div>
-                        <div class="delta-label">Cancelados</div>
-                        <div class="mix-bar-track"><div class="mix-bar-fill churn" data-bar-width="{% widthratio item.cancellations comparison_peaks.max_count 100 %}"></div></div>
-                    </div>
-                </div>
+                <span class="pill warning">{{ operational_queue|length }} pendência(s)</span>
             </div>
-            {% endfor %}
-        </div>
-    </article>
-</section>
-
-<section class="layout-grid finance-plan-layout section-gap">
-    <article class="table-card finance-glass-panel">
-        <p class="eyebrow">Leitura que importa</p>
-        <ul class="capability-list">
-            <li>O plano nasce aqui e depois aparece na matrícula e no histórico financeiro do aluno.</li>
-            <li>O faturamento mostra caixa recebido; a receita em aberto mostra tensão comercial ainda não resolvida.</li>
-            <li>Novos ativos e cancelamentos ajudam a ler crescimento e vazamento dentro do mesmo mês.</li>
-        </ul>
-    </article>
-
-    <article class="table-card finance-hero-panel" id="cadastro-plano">
-        <p class="eyebrow">Motor de planos</p>
-        <h2 class="section-title-sm">Cadastre um plano que depois conversa com aluno, matrícula e pagamento</h2>
-        <p class="body-copy text-muted">Deixe claro o valor, o ciclo e a entrega. Esse cadastro vira base para a parte comercial inteira.</p>
-        {% if can_manage_finance %}
-        <form method="post" novalidate>
-            {% csrf_token %}
-            <div class="form-stack">
-                <div class="field-grid-220">
-                    <label>
-                        <span class="field-label">{{ form.name.label }}</span>
-                        {{ form.name }}
-                    </label>
-                    <label>
-                        <span class="field-label">{{ form.price.label }}</span>
-                        {{ form.price }}
-                    </label>
-                    <label>
-                        <span class="field-label">{{ form.billing_cycle.label }}</span>
-                        {{ form.billing_cycle }}
-                    </label>
-                    <label>
-                        <span class="field-label">{{ form.sessions_per_week.label }}</span>
-                        {{ form.sessions_per_week }}
-                    </label>
-                    <label>
-                        <span class="field-label">{{ form.active.label }}</span>
-                        {{ form.active }}
-                    </label>
-                </div>
-                <label>
-                    <span class="field-label">{{ form.description.label }}</span>
-                    {{ form.description }}
-                </label>
-                <div class="actions actions-tight">
-                    <button class="button" type="submit">Salvar plano</button>
-                    <a class="button secondary" href="/admin/boxcore/membershipplan/">Gerir no admin</a>
-                </div>
-            </div>
-        </form>
-        {% else %}
-        <p class="meta-text">Seu papel atual pode ler o financeiro, mas nao pode cadastrar planos por esta tela.</p>
-        {% endif %}
-    </article>
-</section>
-
-<section class="layout-grid align-start section-gap">
-    <article class="table-card finance-glass-panel">
-        <p class="eyebrow">Portfolio de planos</p>
-        <div class="stack-16">
-            {% for plan in plan_portfolio %}
-            <div class="plan-card">
-                <div class="row-between-md">
-                    <div>
-                        <h3 class="history-header no-margin">{{ plan.name }}</h3>
-                        <p class="meta-text">R$ {{ plan.price }} por {{ plan.get_billing_cycle_display|lower }}</p>
+            <div class="stack-14 finance-action-list finance-action-list-compact">
+                {% for item in operational_queue %}
+                <article class="history-entry finance-action-card finance-action-card-compact">
+                    <div class="row-between history-header finance-action-head">
+                        <div class="finance-action-copy">
+                            <strong>{{ item.title }}</strong>
+                            <p class="meta-text-sm">{{ item.summary }}</p>
+                        </div>
+                        <span class="pill{% if item.pill_class %} {{ item.pill_class }}{% endif %}">{{ item.pill }}</span>
                     </div>
-                    <span class="pill{% if not plan.active %} warning{% endif %}">{% if plan.active %}Ativo{% else %}Inativo{% endif %}</span>
-                </div>
-                <div class="plan-stats">
-                    <div>
-                        <strong>{{ plan.active_enrollments }}</strong>
-                        <span>matriculas ativas</span>
+                    <div class="finance-action-body">
+                        <div class="note-panel note-panel-cream finance-action-message finance-action-message-compact">
+                            <p class="eyebrow">Próxima abordagem</p>
+                            <p class="meta-text">{{ item.suggested_message }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <strong>{{ plan.pending_enrollments }}</strong>
-                        <span>pendentes</span>
-                    </div>
-                    <div>
-                        <strong>R$ {{ plan.revenue_this_month }}</strong>
-                        <span>recebido no mes</span>
-                    </div>
-                </div>
-                <p class="body-copy text-muted">{% if plan.description %}{{ plan.description }}{% else %}Sem descricao comercial ainda. Vale detalhar posicionamento e entrega do plano.{% endif %}</p>
-                <div class="actions actions-tight">
-                    <a class="button secondary" href="/financeiro/planos/{{ plan.id }}/editar/">Editar plano</a>
-                    <a class="button secondary" href="/admin/boxcore/membershipplan/{{ plan.id }}/change/">Admin</a>
-                </div>
-            </div>
-            {% empty %}
-            <p class="meta-text">Nenhum plano cadastrado ainda.</p>
-            {% endfor %}
-        </div>
-    </article>
-
-    <article class="table-card finance-glass-panel">
-        <p class="eyebrow">Mix comercial</p>
-        <div class="stack-14">
-            {% for item in plan_mix %}
-            <div>
-                <div class="row-between-sm">
-                    <strong>{{ item.name }}</strong>
-                    <span class="text-muted">{{ item.active_enrollments }} ativos</span>
-                </div>
-                <div class="mix-bar-track">
-                    <div class="mix-bar-fill" data-bar-width="{{ item.width }}"></div>
-                </div>
-                <p class="meta-text-sm">Receita recebida no mes: R$ {{ item.revenue_this_month }}</p>
-            </div>
-            {% empty %}
-            <p class="meta-text">Cadastre planos para enxergar distribuicao comercial e adesao.</p>
-            {% endfor %}
-        </div>
-    </article>
-</section>
-
-<section class="layout-grid align-start">
-    <article class="table-card finance-glass-panel">
-        <p class="eyebrow">Fila financeira</p>
-        <table>
-            <thead>
-                <tr>
-                    <th>Aluno</th>
-                    <th>Plano</th>
-                    <th>Vencimento</th>
-                    <th>Valor</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for payment in financial_alerts %}
-                <tr class="finance-row">
-                    <td>{{ payment.student.full_name }}</td>
-                    <td>{% if payment.enrollment %}{{ payment.enrollment.plan.name }}{% else %}Sem vinculo de plano{% endif %}</td>
-                    <td>{{ payment.due_date|date:"d/m/Y" }}</td>
-                    <td>R$ {{ payment.amount }}</td>
-                    <td>{{ payment.get_status_display }}</td>
-                </tr>
+                    <form method="post" action="/financeiro/comunicacao/acao/" class="actions actions-tight finance-card-actions-compact">
+                        {% csrf_token %}
+                        <input type="hidden" name="action_kind" value="{{ item.kind }}">
+                        <input type="hidden" name="student_id" value="{{ item.student.id }}">
+                        {% if item.payment %}<input type="hidden" name="payment_id" value="{{ item.payment.id }}">{% endif %}
+                        {% if item.enrollment %}<input type="hidden" name="enrollment_id" value="{{ item.enrollment.id }}">{% endif %}
+                        <button class="button" type="submit">Registrar contato no WhatsApp</button>
+                        <a class="button secondary" href="/alunos/{{ item.student.id }}/editar/">Abrir ficha do aluno</a>
+                    </form>
+                </article>
                 {% empty %}
-                <tr><td colspan="5">Nenhuma pendencia financeira no momento.</td></tr>
+                <p class="meta-text">Nenhuma acao semiassistida pendente no momento.</p>
                 {% endfor %}
-            </tbody>
-        </table>
-    </article>
+            </div>
+        </article>
 
-    <article class="table-card finance-glass-panel">
-        <p class="eyebrow">Movimentos recentes</p>
-        <div class="stack-14">
+        <article class="table-card finance-glass-panel finance-board-queue">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Fila financeira</p>
+                    <h2 class="operation-card-title">Cobranças que já estão pressionando a carteira</h2>
+                    <p class="operation-card-copy">Priorize pendências e atrasos com impacto direto na carteira.</p>
+                </div>
+                <span class="pill warning">{{ financial_alerts|length }} item(ns)</span>
+            </div>
+            <div class="stack-14 finance-alert-list finance-alert-list-compact">
+                {% for payment in financial_alerts %}
+                <article class="finance-alert-card finance-alert-card-compact">
+                    <div class="row-between history-header finance-action-head">
+                        <div class="finance-action-copy">
+                            <strong>{{ payment.student.full_name }}</strong>
+                            <p class="meta-text-sm">{% if payment.enrollment %}{{ payment.enrollment.plan.name }}{% else %}Sem vinculo de plano{% endif %}</p>
+                        </div>
+                        <span class="pill{% if payment.status == 'overdue' or payment.status == 'pending' %} warning{% endif %}">{{ payment.get_status_display }}</span>
+                    </div>
+                    <div class="finance-alert-grid">
+                        <div class="finance-alert-stat">
+                            <span class="operation-mini-label">Vencimento</span>
+                            <strong>{{ payment.due_date|date:"d/m/Y" }}</strong>
+                        </div>
+                        <div class="finance-alert-stat">
+                            <span class="operation-mini-label">Valor</span>
+                            <strong class="finance-inline-currency">R$ {{ payment.amount|floatformat:2 }}</strong>
+                        </div>
+                        <div class="finance-alert-stat">
+                            <span class="operation-mini-label">Leitura</span>
+                            <strong>{% if payment.status == 'overdue' or payment.status == 'pending' %}Exige ação{% else %}Acompanhar{% endif %}</strong>
+                        </div>
+                    </div>
+                    <div class="actions actions-tight finance-card-actions-compact">
+                        <a class="button secondary" href="/alunos/{{ payment.student.id }}/editar/">Abrir ficha do aluno</a>
+                        <a class="button secondary" href="/admin/boxcore/payment/{{ payment.id }}/change/">Ver pagamento no admin</a>
+                    </div>
+                </article>
+                {% empty %}
+                <p class="meta-text">Nenhuma pendencia financeira no momento.</p>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="table-card finance-glass-panel finance-board-trend">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Tendência mensal</p>
+                    <h2 class="section-title-sm">Receita real recebida nos últimos 6 meses</h2>
+                    <p class="body-copy text-muted section-gap-top-xs no-margin">Mostra se o caixa realmente subiu.</p>
+                </div>
+            </div>
+            <div class="chart-grid revenue-chart" data-chart-columns="{{ monthly_comparison|length|default:1 }}">
+                {% for item in monthly_comparison %}
+                <div class="chart-column finance-chart-column">
+                    <div class="chart-bar-wrap">
+                        <div class="chart-bar revenue" data-bar-height="{% widthratio item.revenue comparison_peaks.max_revenue 100 %}"></div>
+                    </div>
+                    <strong>{{ item.label }}</strong>
+                    <span class="finance-inline-currency finance-chart-value">R$ {{ item.revenue|floatformat:2 }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="table-card finance-glass-panel finance-board-trend-side">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Churn e crescimento</p>
+                    <h2 class="section-title-sm">Ativações x cancelamentos</h2>
+                    <p class="body-copy text-muted section-gap-top-xs no-margin">Mede acúmulo real versus giro de base.</p>
+                </div>
+            </div>
+            <div class="stack-14 finance-trend-stack">
+                {% for item in monthly_comparison %}
+                <div class="delta-row">
+                    <div class="row-between-sm">
+                        <strong>{{ item.label }}</strong>
+                        <span class="pill{% if item.net_growth < 0 %} warning{% endif %}">Saldo {{ item.net_growth }}</span>
+                    </div>
+                    <div class="delta-track-group">
+                        <div>
+                            <div class="delta-label">Ativos</div>
+                            <div class="mix-bar-track"><div class="mix-bar-fill growth" data-bar-width="{% widthratio item.activations comparison_peaks.max_count 100 %}"></div></div>
+                        </div>
+                        <div>
+                            <div class="delta-label">Cancelados</div>
+                            <div class="mix-bar-track"><div class="mix-bar-fill churn" data-bar-width="{% widthratio item.cancellations comparison_peaks.max_count 100 %}"></div></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="table-card finance-hero-panel finance-board-plan" id="cadastro-plano">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Motor de planos</p>
+                    <h2 class="section-title-sm">Cadastre um plano que depois conversa com aluno, matricula e pagamento</h2>
+                    <p class="body-copy text-muted">Defina valor, ciclo e entrega.</p>
+                </div>
+                <span class="pill info">Planos e mix</span>
+            </div>
+            {% if can_manage_finance %}
+            <form method="post" novalidate class="finance-plan-form">
+                {% csrf_token %}
+                <div class="form-stack finance-plan-form-stack">
+                    <div class="field-grid-220 finance-plan-grid">
+                        <label>
+                            <span class="field-label">{{ form.name.label }}</span>
+                            {{ form.name }}
+                        </label>
+                        <label>
+                            <span class="field-label">{{ form.price.label }}</span>
+                            {{ form.price }}
+                        </label>
+                        <label>
+                            <span class="field-label">{{ form.billing_cycle.label }}</span>
+                            {{ form.billing_cycle }}
+                        </label>
+                        <label>
+                            <span class="field-label">{{ form.sessions_per_week.label }}</span>
+                            {{ form.sessions_per_week }}
+                        </label>
+                        <label>
+                            <span class="field-label">{{ form.active.label }}</span>
+                            {{ form.active }}
+                        </label>
+                    </div>
+                    <label>
+                        <span class="field-label">{{ form.description.label }}</span>
+                        {{ form.description }}
+                    </label>
+                    <div class="actions actions-tight finance-plan-actions">
+                        <button class="button" type="submit">Salvar plano</button>
+                        <a class="button secondary" href="/admin/boxcore/membershipplan/">Gerir no admin</a>
+                    </div>
+                </div>
+            </form>
+            {% else %}
+            <p class="meta-text">Seu papel atual pode ler o financeiro, mas nao pode cadastrar planos por esta tela.</p>
+            {% endif %}
+        </article>
+
+        <article class="table-card finance-glass-panel finance-board-portfolio">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Portfolio de planos</p>
+                    <h2 class="operation-card-title">Carteira comercial organizada por produto</h2>
+                    <p class="operation-card-copy">Peso de cada plano na base e na receita.</p>
+                </div>
+                <span class="pill">{{ plan_portfolio|length }} plano(s)</span>
+            </div>
+            <div class="stack-16 finance-portfolio-list">
+                {% for plan in plan_portfolio %}
+                <div class="plan-card finance-plan-card finance-plan-card-compact">
+                    <div class="row-between-md finance-plan-head">
+                        <div class="stack-8">
+                            <h3 class="history-header no-margin">{{ plan.name }}</h3>
+                            <p class="meta-text finance-inline-currency finance-plan-price">R$ {{ plan.price|floatformat:2 }} por {{ plan.get_billing_cycle_display|lower }}</p>
+                        </div>
+                        <span class="pill{% if not plan.active %} warning{% endif %}">{% if plan.active %}Ativo{% else %}Inativo{% endif %}</span>
+                    </div>
+                    <div class="plan-stats finance-plan-stats">
+                        <article class="finance-plan-stat">
+                            <strong>{{ plan.active_enrollments }}</strong>
+                            <span>matriculas ativas</span>
+                        </article>
+                        <article class="finance-plan-stat">
+                            <strong>{{ plan.pending_enrollments }}</strong>
+                            <span>pendentes</span>
+                        </article>
+                        <article class="finance-plan-stat finance-plan-stat-currency">
+                            <strong class="finance-inline-currency">R$ {{ plan.revenue_this_month|floatformat:2 }}</strong>
+                            <span>recebido no mes</span>
+                        </article>
+                    </div>
+                    <p class="body-copy text-muted finance-plan-description-compact">{% if plan.description %}{{ plan.description }}{% else %}Sem descricao comercial ainda.{% endif %}</p>
+                    <div class="actions actions-tight">
+                        <a class="button secondary" href="/financeiro/planos/{{ plan.id }}/editar/">Editar plano</a>
+                        <a class="button secondary" href="/admin/boxcore/membershipplan/{{ plan.id }}/change/">Admin</a>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="meta-text">Nenhum plano cadastrado ainda.</p>
+                {% endfor %}
+            </div>
+        </article>
+
+        <div class="finance-portfolio-side finance-card-stack finance-board-mix-side">
+            <article class="table-card finance-glass-panel finance-mix-panel finance-board-mix">
+                <div class="operation-card-head">
+                    <div>
+                        <p class="eyebrow">Mix comercial</p>
+                        <h2 class="operation-card-title">Distribuição da base entre os planos</h2>
+                    </div>
+                    <span class="pill accent">Top 6</span>
+                </div>
+                <div class="stack-14 finance-mix-list">
+                    {% for item in plan_mix %}
+                    <article class="finance-mix-card">
+                        <div class="row-between-sm finance-mix-head">
+                            <strong>{{ item.name }}</strong>
+                            <span class="text-muted">{{ item.active_enrollments }} ativos</span>
+                        </div>
+                        <div class="mix-bar-track">
+                            <div class="mix-bar-fill" data-bar-width="{{ item.width }}"></div>
+                        </div>
+                        <p class="meta-text-sm finance-inline-currency">Receita recebida no mes: R$ {{ item.revenue_this_month|floatformat:2 }}</p>
+                    </article>
+                    {% empty %}
+                    <p class="meta-text">Cadastre planos para enxergar distribuicao comercial e adesao.</p>
+                    {% endfor %}
+                </div>
+            </article>
+
+            <article class="table-card finance-glass-panel finance-mix-insight-panel finance-support-card finance-support-card-tight finance-board-mix-support">
+                <div class="operation-card-head">
+                    <div>
+                        <p class="eyebrow">Leitura executiva do mix</p>
+                        <h2 class="operation-card-title">O que olhar antes de mexer no preço</h2>
+                    </div>
+                </div>
+                <div class="finance-data-cluster">
+                    <article class="finance-data-chip">
+                        <span class="operation-mini-label">Planos ativos na tela</span>
+                        <strong>{{ plan_portfolio|length }}</strong>
+                    </article>
+                    <article class="finance-data-chip">
+                        <span class="operation-mini-label">Receita em aberto</span>
+                        <strong class="finance-inline-currency">R$ {{ finance_pulse.open|floatformat:2 }}</strong>
+                    </article>
+                    <article class="finance-data-chip">
+                        <span class="operation-mini-label">Ticket atual</span>
+                        <strong class="finance-inline-currency">R$ {{ finance_pulse.ticket|floatformat:2 }}</strong>
+                    </article>
+                </div>
+                <ul class="capability-list">
+                    <li>Concentração alta reduz margem de manobra.</li>
+                    <li>Aberto alto pode ser cobrança frouxa.</li>
+                    <li>Revise base, ticket e conversão antes de mudar preço.</li>
+                </ul>
+            </article>
+        </div>
+
+        <section class="table-card finance-glass-panel finance-movements-panel">
+        <div class="operation-card-head">
+            <div>
+                <p class="eyebrow">Movimentos recentes</p>
+                <h2 class="operation-card-title">Histórico recente de mudança na carteira</h2>
+                <p class="operation-card-copy">Entradas, saídas e reposicionamentos recentes.</p>
+            </div>
+            <span class="pill info">{{ recent_movements|length }} movimento(s)</span>
+        </div>
+        <div class="stack-14 finance-movements-list">
             {% for movement in recent_movements %}
-            <div class="timeline-row">
+            <div class="timeline-row finance-movement-item">
                 <div class="timeline-dot"></div>
                 <div>
                     <strong>{{ movement.student.full_name }}</strong>
@@ -318,8 +458,10 @@ PONTOS CRITICOS:
             <p class="meta-text">Nenhum movimento de matricula registrado ainda.</p>
             {% endfor %}
         </div>
-    </article>
-</section>
+    </section>
+
+    </section>
+</div>
 
 <script>
     (function () {

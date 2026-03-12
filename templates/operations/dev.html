@@ -15,70 +15,71 @@ PONTOS CRITICOS:
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<section class="hero">
-    <div>
-        <h1>Área do DEV</h1>
-        <p>Esta área existe para manutenção, leitura sistêmica e investigação. Ela não substitui owner, manager nem coach e já nasce apoiada por trilha de auditoria.</p>
-    </div>
-    <div class="actions">
-        <span class="pill">Acesso técnico controlado</span>
-        <a class="button secondary" href="/mapa-sistema/">Abrir mapa do sistema</a>
-    </div>
-</section>
+<div class="operation-shell">
+    <section class="hero operation-hero">
+        <div class="operation-hero-main">
+            <div>
+                <p class="eyebrow">Minha operação</p>
+                <h1>Área do DEV</h1>
+                <p class="operation-hero-copy">Esta área existe para manutenção, leitura sistêmica e investigação. Ela não substitui owner, manager nem coach e já nasce apoiada por trilha de auditoria.</p>
+            </div>
+            <div class="actions">
+                <span class="pill">Acesso técnico controlado</span>
+                <span class="pill info">Investigação e rastreabilidade</span>
+                <a class="button secondary" href="/mapa-sistema/">Abrir mapa do sistema</a>
+            </div>
+        </div>
+        <aside class="operation-hero-side">
+            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Telemetria rápida" copy="Indicadores técnicos para entender volume recente de rastros e cobertura operacional por papel." stats=hero_stats %}
+        </aside>
+    </section>
 
-<section class="panel-grid">
-    {% for label, value in technical_metrics.items %}
-    <article class="card">
-        <p class="eyebrow">{{ label }}</p>
-        <p class="metric">{{ value }}</p>
-    </article>
-    {% endfor %}
-</section>
+    <section class="panel-grid operation-metric-grid">
+        {% for card in metric_cards %}
+        {% include "includes/ui/metric_card.html" with card=card %}
+        {% endfor %}
+    </section>
 
-<section class="layout-grid" style="margin-bottom: 24px;">
-    <article class="table-card">
-        <p class="eyebrow">Limites do papel DEV</p>
-        <ul class="capability-list">
-            {% for item in dev_boundaries %}
-            <li>{{ item }}</li>
-            {% endfor %}
-        </ul>
-    </article>
-    <article class="table-card">
-        <p class="eyebrow">Leituras úteis</p>
-        <ul class="capability-list">
-            <li>Mapa do sistema para entender arquitetura e fluxo.</li>
-            <li>Papéis e acessos para revisar fronteiras de permissão.</li>
-            <li>Trilha de auditoria para investigar ações sensíveis recentes.</li>
-        </ul>
-    </article>
-</section>
+    <section class="layout-grid operation-grid-wide align-start">
+        {% include "includes/ui/info_list_card.html" with eyebrow="Limites do papel DEV" title="Fronteira técnica com governança" items=dev_boundaries %}
+        {% include "includes/ui/info_list_card.html" with card_class="operation-empty-card" eyebrow="Leituras úteis" title="Trilha curta para investigação" items=dev_reads %}
+    </section>
 
-<section class="table-card">
-    <p class="eyebrow">Eventos recentes de auditoria</p>
-    <table>
-        <thead>
-            <tr>
-                <th>Quando</th>
-                <th>Ator</th>
-                <th>Papel</th>
-                <th>Ação</th>
-                <th>Alvo</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for event in recent_audit_events %}
-            <tr>
-                <td>{{ event.created_at|date:"d/m/Y H:i" }}</td>
-                <td>{{ event.actor.username|default:"Sistema" }}</td>
-                <td>{{ event.actor_role|default:"-" }}</td>
-                <td>{{ event.action }}</td>
-                <td>{{ event.target_label|default:event.target_model }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="5">Nenhum evento sensível registrado ainda.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</section>
+    <section class="table-card operation-table-card">
+        <div class="operation-card-head">
+            <div>
+                <p class="eyebrow">Eventos recentes de auditoria</p>
+                <h2 class="operation-card-title">Últimos rastros sensíveis do sistema</h2>
+                <p class="operation-card-copy">Uma leitura rápida para localizar ator, papel e alvo antes de aprofundar a investigação.</p>
+            </div>
+            <span class="pill info">{{ recent_audit_events|length }} evento(s)</span>
+        </div>
+        <div class="operation-table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Quando</th>
+                        <th>Ator</th>
+                        <th>Papel</th>
+                        <th>Ação</th>
+                        <th>Alvo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for event in recent_audit_events %}
+                    <tr>
+                        <td>{{ event.created_at|date:"d/m/Y H:i" }}</td>
+                        <td>{{ event.actor.username|default:"Sistema" }}</td>
+                        <td>{{ event.actor_role|default:"-" }}</td>
+                        <td>{{ event.action }}</td>
+                        <td>{{ event.target_label|default:event.target_model }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5">Nenhum evento sensível registrado ainda.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
 {% endblock %}

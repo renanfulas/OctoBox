@@ -1,27 +1,16 @@
 """
-ARQUIVO: mixins de permissão por papel.
+ARQUIVO: fachada legada dos mixins de permissao de acesso dentro de boxcore.
 
 POR QUE ELE EXISTE:
-- Tira a lógica de permissão das views e deixa a regra reutilizável.
+- Mantem imports antigos funcionando enquanto a implementacao real vive em access.permissions.mixins.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Verifica se o usuário tem papel permitido.
-2. Retorna 403 quando a tela não deve ser acessada.
+1. Reexporta os mixins reais de permissao.
 
 PONTOS CRITICOS:
-- Se a lista de allowed_roles estiver errada, a tela pode abrir para a pessoa errada.
+- Este arquivo nao deve voltar a concentrar comportamento novo.
 """
 
-from django.core.exceptions import PermissionDenied
+from access.permissions.mixins import RoleRequiredMixin
 
-from boxcore.access.roles import get_user_role
-
-
-class RoleRequiredMixin:
-    allowed_roles = ()
-
-    def dispatch(self, request, *args, **kwargs):
-        role = get_user_role(request.user)
-        if role is None or role.slug not in self.allowed_roles:
-            raise PermissionDenied('Este usuário não tem permissão para acessar esta área.')
-        return super().dispatch(request, *args, **kwargs)
+__all__ = ['RoleRequiredMixin']

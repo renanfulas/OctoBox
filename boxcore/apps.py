@@ -18,6 +18,3 @@ from django.apps import AppConfig
 
 class BoxcoreConfig(AppConfig):
     name = 'boxcore'
-
-    def ready(self):
-        from boxcore.auditing import signals  # noqa: F401

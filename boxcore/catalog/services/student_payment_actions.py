@@ -1,93 +1,38 @@
 """
-ARQUIVO: handlers de acoes de pagamento do aluno no catalogo.
+ARQUIVO: fachada das actions de pagamento do aluno.
 
 POR QUE ELE EXISTE:
-- Explicita pelo nome do arquivo que esta camada resolve a acao publica handle_student_payment_action.
+- Mantem a interface publica atual enquanto o fluxo real de pagamento sai para command, use case e adapter Django.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Atualiza cobranca atual.
-2. Marca pagamento, estorna, cancela e regenera cobranca.
-3. Registra auditoria de cada movimento financeiro disparado pela operacao.
+1. Traduz parametros legados para um command explicito.
+2. Chama o use case concreto do dominio.
+3. Devolve o model historico esperado pelas views e testes.
 
 PONTOS CRITICOS:
-- Qualquer regressao aqui afeta a consistencia da trilha financeira do aluno.
+- Este arquivo nao deve voltar a concentrar auditoria, ORM ou transacao.
 """
 
-from django.utils import timezone
+from students.application.commands import StudentPaymentActionCommand
+from students.infrastructure import execute_student_payment_action_command
 
-from boxcore.auditing import log_audit_event
-from boxcore.models import PaymentStatus
-
-from .payments import regenerate_payment
+from boxcore.models import Payment
 
 
 def handle_student_payment_action(*, actor, student, payment, action, payload=None):
     payload = payload or {}
-
-    if action == 'update-payment':
-        payment.amount = payload['amount']
-        payment.due_date = payload['due_date']
-        payment.method = payload['method']
-        payment.reference = payload['reference']
-        payment.notes = payload['notes']
-        payment.save(update_fields=['amount', 'due_date', 'method', 'reference', 'notes', 'updated_at'])
-        log_audit_event(
-            actor=actor,
-            action='student_payment_updated',
-            target=payment,
-            description='Cobranca atualizada pela tela do aluno.',
-            metadata={'status': payment.status},
-        )
-        return payment
-
-    if action == 'mark-paid':
-        payment.status = PaymentStatus.PAID
-        payment.paid_at = timezone.now()
-        payment.save(update_fields=['status', 'paid_at', 'updated_at'])
-        log_audit_event(
-            actor=actor,
-            action='student_payment_marked_paid',
-            target=payment,
-            description='Cobranca confirmada como paga pela tela do aluno.',
-            metadata={'method': payment.method},
-        )
-        return payment
-
-    if action == 'refund-payment':
-        payment.status = PaymentStatus.REFUNDED
-        payment.save(update_fields=['status', 'updated_at'])
-        log_audit_event(
-            actor=actor,
-            action='student_payment_refunded',
-            target=payment,
-            description='Pagamento estornado pela tela do aluno.',
-            metadata={},
-        )
-        return payment
-
-    if action == 'cancel-payment':
-        payment.status = PaymentStatus.CANCELED
-        payment.save(update_fields=['status', 'updated_at'])
-        log_audit_event(
-            actor=actor,
-            action='student_payment_canceled',
-            target=payment,
-            description='Cobranca cancelada pela tela do aluno.',
-            metadata={},
-        )
-        return payment
-
-    if action == 'regenerate-payment':
-        enrollment = payment.enrollment or student.enrollments.order_by('-start_date', '-created_at').first()
-        new_payment = regenerate_payment(student=student, payment=payment, enrollment=enrollment)
-        if new_payment is not None:
-            log_audit_event(
-                actor=actor,
-                action='student_payment_regenerated',
-                target=new_payment,
-                description='Nova cobranca gerada pela tela do aluno.',
-                metadata={'previous_payment_id': payment.id},
-            )
-        return new_payment
-
-    return None
+    command = StudentPaymentActionCommand(
+        actor_id=getattr(actor, 'id', None),
+        student_id=student.id,
+        payment_id=payment.id,
+        action=action,
+        amount=payload.get('amount'),
+        due_date=payload.get('due_date'),
+        method=payload.get('method') or '',
+        reference=payload.get('reference') or '',
+        notes=payload.get('notes') or '',
+    )
+    result = execute_student_payment_action_command(command)
+    if result.payment_id is None:
+        return None
+    return Payment.objects.get(pk=result.payment_id)

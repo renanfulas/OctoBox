@@ -20,6 +20,8 @@ from django.test import TestCase
 from django.utils import timezone
 
 from boxcore.catalog.services import (
+    build_operational_queue_metrics,
+    build_operational_queue_snapshot,
     handle_finance_communication_action,
     handle_student_enrollment_action,
     handle_student_payment_action,
@@ -27,7 +29,9 @@ from boxcore.catalog.services import (
     run_membership_plan_update_workflow,
     run_student_quick_create_workflow,
     run_student_quick_update_workflow,
+    sync_student_intake,
 )
+from boxcore.catalog.services.payments import create_payment_schedule, regenerate_payment
 from boxcore.models import (
     AuditEvent,
     Enrollment,
@@ -43,10 +47,11 @@ from boxcore.models import (
 
 
 class DummySavedForm:
-    def __init__(self, *, save_callback, cleaned_data, changed_data=None):
+    def __init__(self, *, save_callback, cleaned_data, changed_data=None, instance=None):
         self._save_callback = save_callback
         self.cleaned_data = cleaned_data
         self.changed_data = changed_data or []
+        self.instance = instance
 
     def save(self):
         return self._save_callback()
@@ -80,6 +85,15 @@ class CatalogServiceTests(TestCase):
         form = DummySavedForm(
             save_callback=save_student,
             cleaned_data={
+                'full_name': 'Mateus Oliveira',
+                'phone': '5511977777777',
+                'status': 'active',
+                'email': '',
+                'gender': '',
+                'birth_date': None,
+                'health_issue_status': '',
+                'cpf': '',
+                'notes': '',
                 'selected_plan': self.plan,
                 'enrollment_status': EnrollmentStatus.ACTIVE,
                 'payment_due_date': timezone.localdate(),
@@ -113,6 +127,15 @@ class CatalogServiceTests(TestCase):
         form = DummySavedForm(
             save_callback=update_student,
             cleaned_data={
+                'full_name': 'Bruna Costa Lima',
+                'phone': self.student.phone,
+                'status': self.student.status,
+                'email': self.student.email,
+                'gender': self.student.gender,
+                'birth_date': self.student.birth_date,
+                'health_issue_status': self.student.health_issue_status,
+                'cpf': self.student.cpf,
+                'notes': self.student.notes,
                 'selected_plan': self.plan_plus,
                 'enrollment_status': EnrollmentStatus.ACTIVE,
                 'payment_due_date': timezone.localdate(),
@@ -126,6 +149,7 @@ class CatalogServiceTests(TestCase):
                 'intake_record': None,
             },
             changed_data=['full_name', 'selected_plan'],
+            instance=self.student,
         )
 
         result = run_student_quick_update_workflow(actor=self.user, form=form, changed_fields=form.changed_data)
@@ -223,3 +247,96 @@ class CatalogServiceTests(TestCase):
         self.assertEqual(overdue_payment.status, PaymentStatus.OVERDUE)
         self.assertTrue(WhatsAppMessageLog.objects.filter(contact__linked_student=self.student).exists())
         self.assertTrue(AuditEvent.objects.filter(action='operational_whatsapp_touch_registered').exists())
+
+    def test_create_payment_schedule_creates_installments(self):
+        first_payment = create_payment_schedule(
+            student=self.student,
+            enrollment=self.enrollment,
+            due_date=timezone.localdate(),
+            payment_method=PaymentMethod.PIX,
+            confirm_payment_now=True,
+            note='Parcelamento de teste.',
+            amount=Decimal('300.00'),
+            reference='ref-installment',
+            billing_strategy='installments',
+            installment_total=3,
+            recurrence_cycles=1,
+        )
+
+        created_payments = list(Payment.objects.filter(reference='ref-installment').order_by('installment_number'))
+        self.assertEqual(first_payment.id, created_payments[0].id)
+        self.assertEqual(len(created_payments), 3)
+        self.assertEqual([item.amount for item in created_payments], [Decimal('100.00'), Decimal('100.00'), Decimal('100.00')])
+        self.assertEqual(created_payments[0].status, PaymentStatus.PAID)
+        self.assertEqual(created_payments[1].status, PaymentStatus.PENDING)
+
+    def test_regenerate_payment_creates_next_payment(self):
+        regenerated_payment = regenerate_payment(student=self.student, payment=self.payment, enrollment=self.enrollment)
+
+        self.assertIsNotNone(regenerated_payment)
+        self.assertEqual(regenerated_payment.installment_number, self.payment.installment_number + 1)
+        self.assertEqual(regenerated_payment.amount, Decimal(self.payment.amount))
+        self.assertEqual(regenerated_payment.status, PaymentStatus.PENDING)
+        self.assertEqual(regenerated_payment.billing_group, self.payment.billing_group or regenerated_payment.billing_group)
+
+    def test_operational_queue_snapshot_builds_prioritized_items_and_metrics(self):
+        self.payment.status = PaymentStatus.PAID
+        self.payment.save(update_fields=['status', 'updated_at'])
+
+        overdue_payment = Payment.objects.create(
+            student=self.student,
+            enrollment=self.enrollment,
+            due_date=timezone.localdate() - timezone.timedelta(days=2),
+            amount='289.90',
+            status=PaymentStatus.PENDING,
+            method=PaymentMethod.PIX,
+        )
+        upcoming_payment = Payment.objects.create(
+            student=self.student,
+            enrollment=self.enrollment,
+            due_date=timezone.localdate() + timezone.timedelta(days=2),
+            amount='289.90',
+            status=PaymentStatus.PENDING,
+            method=PaymentMethod.PIX,
+        )
+        canceled_enrollment = Enrollment.objects.create(
+            student=self.student,
+            plan=self.plan,
+            status=EnrollmentStatus.CANCELED,
+            start_date=timezone.localdate() - timezone.timedelta(days=40),
+            end_date=timezone.localdate() - timezone.timedelta(days=5),
+        )
+
+        queue = build_operational_queue_snapshot(limit=9)
+        metrics = build_operational_queue_metrics(queue)
+
+        self.assertTrue(any(item['kind'] == 'upcoming' and item['payment'].id == upcoming_payment.id for item in queue))
+        self.assertTrue(any(item['kind'] == 'overdue' and item['payment'].id == overdue_payment.id for item in queue))
+        self.assertTrue(any(item['kind'] == 'reactivation' and item['enrollment'].id == canceled_enrollment.id for item in queue))
+        self.assertEqual(metrics['Vencendo nos proximos dias'], 1)
+        self.assertEqual(metrics['Cobrancas em atraso'], 1)
+        self.assertEqual(metrics['Chance de reativacao'], 1)
+
+    def test_sync_student_intake_links_latest_matching_lead_by_phone(self):
+        self.intake.delete()
+        older_intake = StudentIntake.objects.create(
+            full_name='Lead Antigo',
+            phone='(11) 97000-0000',
+            email='old@example.com',
+        )
+        latest_intake = StudentIntake.objects.create(
+            full_name='Lead Recente',
+            phone='5511970000000',
+            email='new@example.com',
+        )
+        self.student.phone = '(11) 97000-0000'
+        self.student.save(update_fields=['phone', 'updated_at'])
+
+        linked_intake = sync_student_intake(student=self.student)
+
+        self.assertEqual(linked_intake.id, latest_intake.id)
+        latest_intake.refresh_from_db()
+        older_intake.refresh_from_db()
+        self.assertEqual(latest_intake.linked_student_id, self.student.id)
+        self.assertEqual(latest_intake.status, 'approved')
+        self.assertIsNone(older_intake.linked_student_id)

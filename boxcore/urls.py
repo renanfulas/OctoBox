@@ -16,7 +16,8 @@ PONTOS CRITICOS:
 from django.urls import include, path
 
 urlpatterns = [
-    path('', include('boxcore.access.urls')),
+    path('', include('access.urls')),
+    path('api/', include('api.urls')),
     path('', include('boxcore.dashboard.urls')),
     path('', include('boxcore.catalog.urls')),
     path('', include('boxcore.guide.urls')),

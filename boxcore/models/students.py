@@ -7,11 +7,11 @@ POR QUE ELE EXISTE:
 O QUE ESTE ARQUIVO FAZ:
 1. Define status possíveis do aluno.
 2. Define o cadastro principal do aluno.
-3. Mantém o WhatsApp como identificador operacional único.
+3. Mantém um telefone principal legado para a operação atual.
 4. Guarda dados rápidos de perfil que ajudam o cadastro e a operação.
 
 PONTOS CRITICOS:
-- O campo phone representa o WhatsApp operacional e continua sendo chave importante para importação e futuras integrações.
+- O campo phone ainda sustenta importação e compatibilidade, mas a identidade de canal deve migrar gradualmente para contatos dedicados.
 - Mudanças no modelo Student podem afetar financeiro, presença e ocorrências.
 """
 

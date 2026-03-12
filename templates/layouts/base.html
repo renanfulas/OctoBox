@@ -21,8 +21,8 @@ PONTOS CRITICOS:
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>OctoBox Control</title>
-    <link rel="stylesheet" href="{% static 'css/design-system.css' %}">
-    <link rel="stylesheet" href="{% static 'css/catalog-system.css' %}">
+    <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v={{ static_asset_version }}">
+    <link rel="stylesheet" href="{% static 'css/catalog-system.css' %}?v={{ static_asset_version }}">
     {% block extra_head %}{% endblock %}
 </head>
 <body data-theme="light">

@@ -15,150 +15,176 @@ PONTOS CRITICOS:
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<section class="hero">
-    <div>
-        <h1>Área do Manager</h1>
-        <p>Esta central resolve o problema de entrada sem exigir cadastro definitivo imediato. O gerente revisa quem chegou, vincula depois e conduz a rotina administrativa sem entrar na operação técnica do treino.</p>
-    </div>
-    <div class="actions">
-        <span class="pill">Operação administrativa</span>
-        <a class="button secondary" href="/admin/boxcore/studentintake/">Abrir central de entrada</a>
-    </div>
-</section>
+<div class="operation-shell">
+    <section class="hero operation-hero">
+        <div class="operation-hero-main">
+            <div>
+                <p class="eyebrow">Minha operação</p>
+                <h1>Área do Manager</h1>
+                <p class="operation-hero-copy">Esta central resolve o problema de entrada sem exigir cadastro definitivo imediato. O gerente revisa quem chegou, vincula depois e conduz a rotina administrativa sem entrar na operação técnica do treino.</p>
+            </div>
+            <div class="actions">
+                <span class="pill">Operação administrativa</span>
+                <span class="pill info">Entrada, vínculo e cobrança</span>
+                <a class="button secondary" href="/admin/boxcore/studentintake/">Abrir central de entrada</a>
+            </div>
+        </div>
+        <aside class="operation-hero-side">
+            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Fila operacional" copy="Resumo imediato dos pontos que pedem ação do manager antes que a rotina trave." stats=hero_stats %}
+        </aside>
+    </section>
 
-<section class="layout-grid" style="margin-bottom: 24px;">
-    <article class="table-card">
-        <p class="eyebrow">Próximos passos do Manager</p>
-        <ul class="capability-list">
-            {% for item in manager_steps %}
-            <li>{{ item }}</li>
-            {% endfor %}
-        </ul>
-    </article>
-    <article class="table-card">
-        <p class="eyebrow">Limites desta área</p>
-        <ul class="capability-list">
-            {% for item in manager_boundaries %}
-            <li>{{ item }}</li>
-            {% endfor %}
-        </ul>
-    </article>
-    <article class="table-card">
-        <p class="eyebrow">Terreno pronto para WhatsApp</p>
-        <ul class="capability-list">
-            <li>Contato pode existir antes do aluno definitivo.</li>
-            <li>Contato pode ser vinculado depois ao cadastro principal.</li>
-            <li>Logs de mensagens podem ser armazenados sem quebrar o modelo atual.</li>
-        </ul>
-    </article>
-</section>
+    <section class="panel-grid operation-metric-grid">
+        {% for card in metric_cards %}
+        {% include "includes/ui/metric_card.html" with card=card %}
+        {% endfor %}
+    </section>
 
-<section class="layout-grid">
-    <article class="table-card">
-        <p class="eyebrow">Fila de entrada de alunos</p>
-        <table>
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Telefone</th>
-                    <th>Origem</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for intake in pending_intakes %}
-                <tr>
-                    <td>{{ intake.full_name }}</td>
-                    <td>{{ intake.phone }}</td>
-                    <td>{{ intake.get_source_display }}</td>
-                    <td>{{ intake.get_status_display }}</td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="4">Nenhuma entrada pendente.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </article>
+    <section class="layout-grid operation-grid-3 align-start">
+        {% include "includes/ui/info_list_card.html" with eyebrow="Próximos passos do Manager" title="Ritmo ideal da operação" items=manager_steps %}
+        {% include "includes/ui/info_list_card.html" with eyebrow="Limites desta área" title="Fronteira operacional" items=manager_boundaries %}
+        {% include "includes/ui/info_list_card.html" with card_class="operation-empty-card" eyebrow="Terreno pronto para WhatsApp" title="Base relacional preparada" items=manager_whatsapp_ready %}
+    </section>
 
-    <article class="table-card">
-        <p class="eyebrow">Contatos de WhatsApp sem vínculo</p>
-        <table>
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Telefone</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for contact in unlinked_whatsapp %}
-                <tr>
-                    <td>{{ contact.display_name|default:"Sem nome" }}</td>
-                    <td>{{ contact.phone }}</td>
-                    <td>{{ contact.get_status_display }}</td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="3">Nenhum contato pendente.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </article>
-    
-    <article class="table-card" style="grid-column: 1 / -1;">
-        <p class="eyebrow">Pagamentos sem vínculo de matrícula</p>
-        <table>
-            <thead>
-                <tr>
-                    <th>Aluno</th>
-                    <th>Vencimento</th>
-                    <th>Status</th>
-                    <th>Ação</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for payment in payments_without_enrollment %}
-                <tr>
-                    <td>{{ payment.student.full_name }}</td>
-                    <td>{{ payment.due_date|date:"d/m/Y" }}</td>
-                    <td>{{ payment.get_status_display }}</td>
-                    <td>
-                        <form method="post" action="/operacao/pagamento/{{ payment.id }}/vincular-matricula/">
-                            {% csrf_token %}
-                            <button class="button secondary" type="submit">Vincular matrícula ativa</button>
-                        </form>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="4">Nenhum pagamento aguardando vínculo.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </article>
+    <section class="layout-grid operation-grid-wide align-start">
+        <article class="table-card operation-table-card">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Fila de entrada de alunos</p>
+                    <h2 class="operation-card-title">Quem chegou e ainda pede encaminhamento</h2>
+                </div>
+                <span class="pill info">{{ pending_intakes|length }} item(ns)</span>
+            </div>
+            <div class="operation-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th>Origem</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for intake in pending_intakes %}
+                        <tr>
+                            <td>{{ intake.full_name }}</td>
+                            <td>{{ intake.phone }}</td>
+                            <td>{{ intake.get_source_display }}</td>
+                            <td>{{ intake.get_status_display }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4">Nenhuma entrada pendente.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
 
-    <article class="table-card" style="grid-column: 1 / -1;">
-        <p class="eyebrow">Alertas financeiros</p>
-        <table>
-            <thead>
-                <tr>
-                    <th>Aluno</th>
-                    <th>Vencimento</th>
-                    <th>Status</th>
-                    <th>Valor</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for payment in financial_alerts %}
-                <tr>
-                    <td>{{ payment.student.full_name }}</td>
-                    <td>{{ payment.due_date|date:"d/m/Y" }}</td>
-                    <td>{{ payment.get_status_display }}</td>
-                    <td>R$ {{ payment.amount }}</td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="4">Nenhum alerta financeiro.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </article>
-</section>
+        <article class="table-card operation-table-card">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Contatos de WhatsApp sem vínculo</p>
+                    <h2 class="operation-card-title">Conversas prontas para conexão</h2>
+                </div>
+                <span class="pill">{{ unlinked_whatsapp|length }} contato(s)</span>
+            </div>
+            <div class="operation-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contact in unlinked_whatsapp %}
+                        <tr>
+                            <td>{{ contact.display_name|default:"Sem nome" }}</td>
+                            <td>{{ contact.phone }}</td>
+                            <td>{{ contact.get_status_display }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3">Nenhum contato pendente.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="table-card operation-table-card operation-span-full">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Pagamentos sem vínculo de matrícula</p>
+                    <h2 class="operation-card-title">Corrija a estrutura antes de cobrar leitura financeira</h2>
+                </div>
+                <span class="pill accent">{{ payments_without_enrollment|length }} pendência(s)</span>
+            </div>
+            <div class="operation-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aluno</th>
+                            <th>Vencimento</th>
+                            <th>Status</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments_without_enrollment %}
+                        <tr>
+                            <td>{{ payment.student.full_name }}</td>
+                            <td>{{ payment.due_date|date:"d/m/Y" }}</td>
+                            <td>{{ payment.get_status_display }}</td>
+                            <td>
+                                <form method="post" action="/operacao/pagamento/{{ payment.id }}/vincular-matricula/">
+                                    {% csrf_token %}
+                                    <button class="button secondary" type="submit">Vincular matrícula ativa</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4">Nenhum pagamento aguardando vínculo.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="table-card operation-table-card operation-span-full">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Alertas financeiros</p>
+                    <h2 class="operation-card-title">Quem já está pressionando cobrança e retenção</h2>
+                </div>
+                <span class="pill warning">{{ financial_alerts|length }} alerta(s)</span>
+            </div>
+            <div class="operation-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aluno</th>
+                            <th>Vencimento</th>
+                            <th>Status</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in financial_alerts %}
+                        <tr>
+                            <td>{{ payment.student.full_name }}</td>
+                            <td>{{ payment.due_date|date:"d/m/Y" }}</td>
+                            <td>{{ payment.get_status_display }}</td>
+                            <td>R$ {{ payment.amount }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4">Nenhum alerta financeiro.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </section>
+</div>
 {% endblock %}

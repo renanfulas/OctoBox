@@ -20,6 +20,28 @@ from boxcore.access.roles import ROLE_DEFINITIONS, get_user_capabilities, get_us
 from .dashboard_snapshot_queries import build_dashboard_snapshot
 
 
+DASHBOARD_QUICK_ACTIONS = [
+    {
+        'eyebrow': 'Ação rápida',
+        'title': 'Novo intake / aluno',
+        'copy': 'Abra o fluxo leve para converter contato em aluno com matrícula e cobrança inicial no mesmo passo.',
+        'href': '/alunos/novo/',
+    },
+    {
+        'eyebrow': 'Ação rápida',
+        'title': 'Marcar presença',
+        'copy': 'Entre na rotina do coach para check-in, check-out e leitura viva da operação de treino.',
+        'href': '/operacao/coach/',
+    },
+    {
+        'eyebrow': 'Ação rápida',
+        'title': 'Gerar cobrança',
+        'copy': 'Vá direto para o centro financeiro e priorize vencidos, ticket médio e carteira ativa.',
+        'href': '/financeiro/',
+    },
+]
+
+
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'dashboard/index.html'
 
@@ -32,4 +54,5 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context['current_role'] = current_role
         context['role_capabilities'] = get_user_capabilities(self.request.user)
         context['role_definitions'] = ROLE_DEFINITIONS
+        context['dashboard_quick_actions'] = DASHBOARD_QUICK_ACTIONS
         return context

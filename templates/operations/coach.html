@@ -15,92 +15,114 @@ PONTOS CRITICOS:
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<section class="hero">
-    <div>
-        <h1>Área do Coach</h1>
-        <p>Esta tela foi isolada para o coach trabalhar aula, presença e acompanhamento do dia sem misturar financeiro, entrada administrativa ou rotinas do gerente.</p>
-    </div>
-    <div class="actions">
-        <span class="pill">Operação de aula</span>
-    </div>
-</section>
+<div class="operation-shell">
+    <section class="hero operation-hero">
+        <div class="operation-hero-main">
+            <div>
+                <p class="eyebrow">Minha operação</p>
+                <h1>Área do Coach</h1>
+                <p class="operation-hero-copy">Esta tela foi isolada para o coach trabalhar aula, presença e acompanhamento do dia sem misturar financeiro, entrada administrativa ou rotinas do gerente.</p>
+            </div>
+            <div class="operation-hero-tags">
+                <span class="pill">Operação de aula</span>
+                <span class="pill info">Presença e registro técnico</span>
+            </div>
+        </div>
+        <aside class="operation-hero-side">
+            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Turno de hoje" copy="Leitura rápida para saber se o coach está entrando no dia com agenda clara e rotina bem delimitada." stats=hero_stats %}
+        </aside>
+    </section>
 
-<section class="table-card" style="margin-bottom: 24px;">
-    <p class="eyebrow">Como usar esta tela</p>
-    <ul class="capability-list">
-        {% for note in coach_notes %}
-        <li>{{ note }}</li>
+    <section class="panel-grid operation-metric-grid">
+        {% for card in metric_cards %}
+        {% include "includes/ui/metric_card.html" with card=card %}
         {% endfor %}
-    </ul>
-</section>
+    </section>
 
-<section class="table-card" style="margin-bottom: 24px;">
-    <p class="eyebrow">Limites desta área</p>
-    <ul class="capability-list">
-        {% for note in coach_boundaries %}
-        <li>{{ note }}</li>
-        {% endfor %}
-    </ul>
-</section>
+    <section class="layout-grid operation-grid-wide align-start">
+        {% include "includes/ui/info_list_card.html" with eyebrow="Como usar esta tela" title="Rotina recomendada para a aula" items=coach_notes %}
+        {% include "includes/ui/info_list_card.html" with card_class="operation-empty-card" eyebrow="Limites desta área" title="Proteção da rotina do treino" items=coach_boundaries %}
+    </section>
 
-{% for session in sessions_today %}
-<section class="table-card" style="margin-bottom: 24px;">
-    <p class="eyebrow">{{ session.title }} - {{ session.scheduled_at|date:"d/m/Y H:i" }}</p>
-    <table>
-        <thead>
-            <tr>
-                <th>Aluno</th>
-                <th>Status</th>
-                <th>Ações</th>
-                <th>Ocorrência técnica</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for attendance in session.attendances.all %}
-            <tr>
-                <td>{{ attendance.student.full_name }}</td>
-                <td>{{ attendance.get_status_display }}</td>
-                <td>
-                    <div class="actions" style="margin-top: 0;">
-                        <form method="post" action="/operacao/presenca/{{ attendance.id }}/check-in/">
-                            {% csrf_token %}
-                            <button class="button" type="submit">Check-in</button>
-                        </form>
-                        <form method="post" action="/operacao/presenca/{{ attendance.id }}/check-out/">
-                            {% csrf_token %}
-                            <button class="button secondary" type="submit">Check-out</button>
-                        </form>
-                        <form method="post" action="/operacao/presenca/{{ attendance.id }}/absent/">
-                            {% csrf_token %}
-                            <button class="button secondary" type="submit">Falta</button>
-                        </form>
-                    </div>
-                </td>
-                <td>
-                    <form method="post" action="/operacao/aluno/{{ attendance.student.id }}/ocorrencia-tecnica/">
-                        {% csrf_token %}
-                        <select name="category">
-                            {% for value, label in behavior_categories %}
-                            <option value="{{ value }}">{{ label }}</option>
-                            {% endfor %}
-                        </select>
-                        <textarea name="description" rows="2" style="width: 100%; margin-top: 8px;">{{ attendance.notes }}</textarea>
-                        <div class="actions" style="margin-top: 8px;">
-                            <button class="button secondary" type="submit">Registrar</button>
-                        </div>
-                    </form>
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="4">Nenhuma presença registrada para esta aula.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</section>
-{% empty %}
-<section class="table-card">
-    <p class="eyebrow">Agenda de hoje</p>
-    <p>Não há aulas cadastradas para hoje.</p>
-</section>
-{% endfor %}
+    {% for session in sessions_today %}
+    <section class="table-card operation-session-card">
+        <div class="operation-session-head">
+            <div>
+                <p class="eyebrow">Turma do dia</p>
+                <h2 class="operation-session-title">{{ session.title }}</h2>
+                <p class="operation-session-meta">{{ session.scheduled_at|date:"d/m/Y H:i" }}{% if session.duration_minutes %} • {{ session.duration_minutes }} min{% endif %}</p>
+            </div>
+            <div class="operation-session-badges">
+                <span class="pill info">{{ session.attendances.all|length }} presença(s)</span>
+                <span class="pill accent">Registro em tempo real</span>
+            </div>
+        </div>
+        <div class="operation-session-body">
+            <div class="operation-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aluno</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                            <th>Ocorrência técnica</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attendance in session.attendances.all %}
+                        <tr>
+                            <td>{{ attendance.student.full_name }}</td>
+                            <td>{{ attendance.get_status_display }}</td>
+                            <td>
+                                <div class="actions operation-inline-actions">
+                                    <form method="post" action="/operacao/presenca/{{ attendance.id }}/check-in/">
+                                        {% csrf_token %}
+                                        <button class="button" type="submit">Check-in</button>
+                                    </form>
+                                    <form method="post" action="/operacao/presenca/{{ attendance.id }}/check-out/">
+                                        {% csrf_token %}
+                                        <button class="button secondary" type="submit">Check-out</button>
+                                    </form>
+                                    <form method="post" action="/operacao/presenca/{{ attendance.id }}/absent/">
+                                        {% csrf_token %}
+                                        <button class="button secondary" type="submit">Falta</button>
+                                    </form>
+                                </div>
+                            </td>
+                            <td>
+                                <form class="operation-note-form" method="post" action="/operacao/aluno/{{ attendance.student.id }}/ocorrencia-tecnica/">
+                                    {% csrf_token %}
+                                    <select name="category">
+                                        {% for value, label in behavior_categories %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <textarea name="description" rows="2">{{ attendance.notes }}</textarea>
+                                    <div class="actions">
+                                        <button class="button secondary" type="submit">Registrar</button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4">Nenhuma presença registrada para esta aula.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+    {% empty %}
+    <section class="table-card operation-empty-card">
+        <div class="operation-card-head">
+            <div>
+                <p class="eyebrow">Agenda de hoje</p>
+                <h2 class="operation-card-title">Nenhuma aula cadastrada</h2>
+                <p class="operation-card-copy">O coach está sem turmas programadas para hoje neste ambiente.</p>
+            </div>
+            <span class="pill info">Dia livre</span>
+        </div>
+    </section>
+    {% endfor %}
+</div>
 {% endblock %}

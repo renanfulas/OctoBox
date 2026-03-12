@@ -1,44 +1,34 @@
 """
-ARQUIVO: handlers de acoes de matricula do aluno no catalogo.
+ARQUIVO: fachada das actions de matricula do aluno.
 
 POR QUE ELE EXISTE:
-- Explicita pelo nome do arquivo que esta camada resolve a acao publica handle_student_enrollment_action.
+- Mantem a interface publica atual enquanto o fluxo real de matricula sai para command, use case e adapter Django.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Cancela matricula com data e motivo.
-2. Reativa matricula preservando historico.
-3. Registra auditoria dos movimentos comerciais ligados a matricula.
+1. Traduz parametros legados para um command explicito.
+2. Chama o use case concreto do dominio.
+3. Devolve o model historico esperado pelas views e testes.
 
 PONTOS CRITICOS:
-- Qualquer regressao aqui afeta status comercial, historico e cobranca futura do aluno.
+- Este arquivo nao deve voltar a concentrar auditoria, ORM ou transacao.
 """
 
-from boxcore.auditing import log_audit_event
+from students.application.commands import StudentEnrollmentActionCommand
+from students.infrastructure import execute_student_enrollment_action_command
 
-from .enrollments import cancel_enrollment, reactivate_enrollment
+from boxcore.models import Enrollment
 
 
 def handle_student_enrollment_action(*, actor, student, enrollment, action, action_date, reason=''):
-    if action == 'cancel-enrollment':
-        cancel_enrollment(enrollment=enrollment, action_date=action_date, reason=reason)
-        log_audit_event(
-            actor=actor,
-            action='student_enrollment_canceled',
-            target=enrollment,
-            description='Matricula cancelada pela tela do aluno.',
-            metadata={'reason': reason},
-        )
-        return enrollment
-
-    if action == 'reactivate-enrollment':
-        new_enrollment = reactivate_enrollment(student=student, enrollment=enrollment, action_date=action_date, reason=reason)
-        log_audit_event(
-            actor=actor,
-            action='student_enrollment_reactivated',
-            target=new_enrollment,
-            description='Matricula reativada pela tela do aluno.',
-            metadata={'reason': reason},
-        )
-        return new_enrollment
-
-    return None
+    command = StudentEnrollmentActionCommand(
+        actor_id=getattr(actor, 'id', None),
+        student_id=student.id,
+        enrollment_id=enrollment.id,
+        action=action,
+        action_date=action_date,
+        reason=reason,
+    )
+    result = execute_student_enrollment_action_command(command)
+    if result.enrollment_id is None:
+        return None
+    return Enrollment.objects.get(pk=result.enrollment_id)

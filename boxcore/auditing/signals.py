@@ -1,46 +1,16 @@
 """
-ARQUIVO: sinais de auditoria de autenticação.
+ARQUIVO: fachada legada dos sinais de auditoria dentro de boxcore.
 
 POR QUE ELE EXISTE:
-- Registra entrada e saída do sistema sem depender de lógica espalhada nas views.
+- Mantem imports antigos funcionando enquanto a implementacao real vive em auditing.signals.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Escuta login de usuário.
-2. Escuta logout de usuário.
-3. Cria eventos padronizados de auditoria para autenticação.
+1. Reexporta os sinais reais de auditoria.
 
 PONTOS CRITICOS:
-- Esses sinais precisam ser carregados no startup do app.
-- O login/logout deve continuar funcionando mesmo se a auditoria falhar futuramente.
+- Este arquivo nao deve voltar a concentrar comportamento novo.
 """
 
-from django.contrib.auth.signals import user_logged_in, user_logged_out
-from django.dispatch import receiver
+from auditing.signals import audit_user_logged_in, audit_user_logged_out
 
-from boxcore.auditing.services import log_audit_event
-
-
-@receiver(user_logged_in, dispatch_uid='boxcore_audit_user_logged_in')
-def audit_user_logged_in(sender, request, user, **kwargs):
-    log_audit_event(
-        actor=user,
-        action='user_login',
-        description='Usuario autenticado iniciou sessao no sistema.',
-        metadata={
-            'path': getattr(request, 'path', ''),
-            'method': getattr(request, 'method', ''),
-        },
-    )
-
-
-@receiver(user_logged_out, dispatch_uid='boxcore_audit_user_logged_out')
-def audit_user_logged_out(sender, request, user, **kwargs):
-    log_audit_event(
-        actor=user,
-        action='user_logout',
-        description='Usuario autenticado encerrou sessao no sistema.',
-        metadata={
-            'path': getattr(request, 'path', ''),
-            'method': getattr(request, 'method', ''),
-        },
-    )
+__all__ = ['audit_user_logged_in', 'audit_user_logged_out']

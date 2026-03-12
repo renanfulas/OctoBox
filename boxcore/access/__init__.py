@@ -1,12 +1,12 @@
 """
-ARQUIVO: marcador do pacote de acesso do sistema.
+ARQUIVO: fachada legada do namespace de acesso dentro de boxcore.
 
 POR QUE ELE EXISTE:
-- Agrupa login, logout, papéis e telas relacionadas a autenticação e acesso.
+- Mantem compatibilidade temporaria enquanto o app real vive em access.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Mantém o pacote access organizado e importável.
+1. Reserva o namespace legado de acesso.
 
 PONTOS CRITICOS:
-- Normalmente não precisa de edição.
+- Nao adicionar codigo novo aqui.
 """

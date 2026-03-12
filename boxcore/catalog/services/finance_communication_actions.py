@@ -1,45 +1,34 @@
 """
-ARQUIVO: handlers de acoes de comunicacao financeira do catalogo.
+ARQUIVO: fachada da ação de comunicação financeira do catálogo.
 
 POR QUE ELE EXISTE:
-- Explicita pelo nome do arquivo que esta camada resolve a acao publica handle_finance_communication_action.
+- Mantém a entrada histórica da UI enquanto a orquestração real foi movida para communications.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Resolve aluno, pagamento e matricula a partir da acao enviada pela UI.
-2. Registra o toque operacional de WhatsApp com auditoria.
-3. Devolve o aluno impactado para a camada HTTP responder com mensagem adequada.
+1. Traduz o payload da UI para um command explícito.
+2. Encaminha o fluxo para a infraestrutura de communications.
+3. Devolve o mesmo shape esperado pela camada HTTP.
 
 PONTOS CRITICOS:
-- Qualquer regressao aqui afeta a regua operacional e a trilha de comunicacao do produto.
+- Este arquivo não deve voltar a resolver ORM nem registrar mensagem diretamente.
 """
 
-from django.shortcuts import get_object_or_404
-
-from boxcore.models import Enrollment, Payment, Student
-
-from .communications import register_operational_message
+from boxcore.models import Student
+from communications.application.commands import FinanceCommunicationActionCommand
+from communications.infrastructure import execute_finance_communication_action_command, get_message_log
 
 
 def handle_finance_communication_action(*, actor, payload):
-    student = get_object_or_404(Student, pk=payload.get('student_id'))
-    payment = None
-    enrollment = None
-
-    payment_id = payload.get('payment_id')
-    enrollment_id = payload.get('enrollment_id')
-    if payment_id:
-        payment = get_object_or_404(Payment, pk=payment_id, student=student)
-    if enrollment_id:
-        enrollment = get_object_or_404(Enrollment, pk=enrollment_id, student=student)
-
-    message = register_operational_message(
-        actor=actor,
-        action_kind=payload.get('action_kind'),
-        student=student,
-        payment=payment,
-        enrollment=enrollment,
+    result = execute_finance_communication_action_command(
+        FinanceCommunicationActionCommand(
+            actor_id=getattr(actor, 'id', None),
+            action_kind=payload.get('action_kind') or '',
+            student_id=int(payload.get('student_id')),
+            payment_id=int(payload.get('payment_id')) if payload.get('payment_id') else None,
+            enrollment_id=int(payload.get('enrollment_id')) if payload.get('enrollment_id') else None,
+        )
     )
     return {
-        'student': student,
-        'message': message,
+        'student': Student.objects.get(pk=result.student_id),
+        'message': get_message_log(result.message_log_id),
     }

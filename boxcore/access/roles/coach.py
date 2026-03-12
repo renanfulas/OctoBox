@@ -1,38 +1,16 @@
 """
-ARQUIVO: definição do papel Coach.
+ARQUIVO: fachada legada do papel Coach dentro de boxcore.
 
 POR QUE ELE EXISTE:
-- Isola o escopo técnico do coach/moderador.
+- Mantem imports antigos funcionando enquanto a implementacao real vive em access.roles.coach.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Define identidade do Coach.
-2. Lista capacidades ligadas a aula, presença e observação.
-3. Define permissões limitadas ao acompanhamento técnico.
+1. Reexporta a definicao real do papel Coach.
 
 PONTOS CRITICOS:
-- Mudanças aqui influenciam o que o coach pode editar sem invadir o financeiro.
+- Este arquivo nao deve voltar a concentrar comportamento novo.
 """
 
-from .base import RoleDefinition
+from access.roles.coach import COACH_PERMISSIONS, COACH_ROLE, ROLE_COACH
 
-ROLE_COACH = 'Coach'
-
-COACH_ROLE = RoleDefinition(
-    slug=ROLE_COACH,
-    label='Coach',
-    summary='Moderador técnico da rotina de treino e acompanhamento dos alunos.',
-    capabilities=(
-        'Visualizar turmas, alunos vinculados e presença do dia.',
-        'Registrar check-in, falta, observações e ocorrências técnicas.',
-        'Acompanhar sinais de queda de frequência e necessidades do aluno.',
-    ),
-)
-
-COACH_PERMISSIONS = {
-    'student': {'view'},
-    'classsession': {'view', 'change'},
-    'attendance': {'add', 'change', 'view'},
-    'behaviornote': {'add', 'change', 'view'},
-    'enrollment': {'view'},
-    'whatsappcontact': {'view'},
-}
+__all__ = ['COACH_PERMISSIONS', 'COACH_ROLE', 'ROLE_COACH']

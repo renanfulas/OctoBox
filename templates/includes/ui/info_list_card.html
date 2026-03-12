@@ -1,0 +1,21 @@
+<article class="table-card{% if card_class %} {{ card_class }}{% endif %}">
+    <div class="operation-card-head">
+        <div>
+            <p class="eyebrow">{{ eyebrow }}</p>
+            <h2 class="operation-card-title">{{ title }}</h2>
+            {% if copy %}
+            <p class="operation-card-copy">{{ copy }}</p>
+            {% endif %}
+        </div>
+        {% if pill_label %}
+        <span class="pill{% if pill_class %} {{ pill_class }}{% endif %}">{{ pill_label }}</span>
+        {% endif %}
+    </div>
+    <ul class="capability-list">
+        {% for item in items %}
+        <li>{{ item }}</li>
+        {% empty %}
+        <li>{{ empty_text|default:'Sem itens disponíveis.' }}</li>
+        {% endfor %}
+    </ul>
+</article>

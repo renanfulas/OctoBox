@@ -1,96 +1,56 @@
 """
-ARQUIVO: snapshot e metricas da regua operacional de cobranca e retencao.
+ARQUIVO: fachada da fila operacional do financeiro.
 
 POR QUE ELE EXISTE:
-- Explicita pelo nome do arquivo que esta camada entrega build_operational_queue_snapshot e build_operational_queue_metrics.
+- Mantém a interface histórica do catálogo enquanto a montagem real do snapshot foi movida para communications.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Monta fila de lembretes de vencimento, atraso e reativacao.
-2. Resume a regua em metricas operacionais simples.
-3. Expoe mensagens sugeridas para o time agir rapido.
+1. Pede o snapshot operacional ao adapter de communications.
+2. Reidrata modelos para a UI atual.
+3. Mantém as métricas com o mesmo formato esperado pelas views.
 
 PONTOS CRITICOS:
-- A priorizacao precisa permanecer previsivel e objetiva para o time.
+- Este arquivo não deve voltar a concentrar query e priorização operacional.
 """
 
-from django.utils import timezone
-
-from boxcore.models import Enrollment, EnrollmentStatus, Payment, PaymentStatus
-
-from .communications import build_message_body, normalize_payment_status
+from boxcore.models import Enrollment, Payment, Student
+from communications.application.commands import BuildOperationalQueueSnapshotCommand
+from communications.infrastructure import execute_build_operational_queue_snapshot_command
 
 
 def build_operational_queue_snapshot(*, limit=9):
-    today = timezone.localdate()
-    soon_threshold = today + timezone.timedelta(days=3)
+    result = execute_build_operational_queue_snapshot_command(BuildOperationalQueueSnapshotCommand(limit=limit))
+    student_ids = {item.student_id for item in result.items}
+    payment_ids = {item.payment_id for item in result.items if item.payment_id is not None}
+    enrollment_ids = {item.enrollment_id for item in result.items if item.enrollment_id is not None}
 
-    upcoming_payments = list(
-        Payment.objects.select_related('student', 'enrollment__plan')
-        .filter(status=PaymentStatus.PENDING, due_date__gte=today, due_date__lte=soon_threshold)
-        .order_by('due_date', 'student__full_name')[:3]
-    )
-    overdue_payments = [
-        normalize_payment_status(payment)
-        for payment in Payment.objects.select_related('student', 'enrollment__plan')
-        .filter(status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE], due_date__lt=today)
-        .order_by('due_date', 'student__full_name')[:3]
-    ]
-    reactivation_candidates = list(
-        Enrollment.objects.select_related('student', 'plan')
-        .filter(status__in=[EnrollmentStatus.CANCELED, EnrollmentStatus.EXPIRED], end_date__isnull=False)
-        .order_by('-end_date', '-updated_at')[:3]
-    )
+    students_by_id = Student.objects.in_bulk(student_ids)
+    payments_by_id = Payment.objects.select_related('enrollment__plan', 'student').in_bulk(payment_ids)
+    enrollments_by_id = Enrollment.objects.select_related('student', 'plan').in_bulk(enrollment_ids)
 
     queue = []
-    for payment in upcoming_payments:
+    for item in result.items:
         queue.append(
             {
-                'kind': 'upcoming',
-                'title': 'Lembrete de vencimento',
-                'student': payment.student,
-                'payment': payment,
-                'enrollment': payment.enrollment,
-                'pill': 'Vence em breve',
-                'summary': f'{payment.student.full_name} | vence em {payment.due_date:%d/%m/%Y} | R$ {payment.amount}',
-                'suggested_message': build_message_body(action_kind='upcoming', student=payment.student, payment=payment),
+                'kind': item.kind,
+                'title': item.title,
+                'student': students_by_id.get(item.student_id),
+                'payment': payments_by_id.get(item.payment_id),
+                'enrollment': enrollments_by_id.get(item.enrollment_id),
+                'pill': item.pill,
+                'pill_class': item.pill_class,
+                'summary': item.summary,
+                'suggested_message': item.suggested_message,
             }
         )
-    for payment in overdue_payments:
-        queue.append(
-            {
-                'kind': 'overdue',
-                'title': 'Cobranca em atraso',
-                'student': payment.student,
-                'payment': payment,
-                'enrollment': payment.enrollment,
-                'pill': 'Atrasado',
-                'pill_class': 'warning',
-                'summary': f'{payment.student.full_name} | venceu em {payment.due_date:%d/%m/%Y} | R$ {payment.amount}',
-                'suggested_message': build_message_body(action_kind='overdue', student=payment.student, payment=payment),
-            }
-        )
-    for enrollment in reactivation_candidates:
-        queue.append(
-            {
-                'kind': 'reactivation',
-                'title': 'Tentativa de reativacao',
-                'student': enrollment.student,
-                'payment': None,
-                'enrollment': enrollment,
-                'pill': 'Retencao',
-                'pill_class': 'info',
-                'summary': f'{enrollment.student.full_name} | plano {enrollment.plan.name} | fim em {enrollment.end_date:%d/%m/%Y}',
-                'suggested_message': build_message_body(action_kind='reactivation', student=enrollment.student, enrollment=enrollment),
-            }
-        )
-    return queue[:limit]
+    return queue
 
 
 def build_operational_queue_metrics(queue):
     return {
-        'vencendo': sum(1 for item in queue if item['kind'] == 'upcoming'),
-        'atrasados': sum(1 for item in queue if item['kind'] == 'overdue'),
-        'reativacao': sum(1 for item in queue if item['kind'] == 'reactivation'),
+        'Vencendo nos proximos dias': sum(1 for item in queue if item['kind'] == 'upcoming'),
+        'Cobrancas em atraso': sum(1 for item in queue if item['kind'] == 'overdue'),
+        'Chance de reativacao': sum(1 for item in queue if item['kind'] == 'reactivation'),
     }
 
 

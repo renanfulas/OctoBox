@@ -1,17 +1,16 @@
 """
-ARQUIVO: mixins e utilitários de permissão por papel.
+ARQUIVO: fachada legada das permissoes de acesso dentro de boxcore.
 
 POR QUE ELE EXISTE:
-- Permite aplicar restrição real por papel nas telas do sistema.
+- Mantem imports antigos funcionando enquanto a implementacao real vive em access.permissions.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Expõe mixins para páginas exclusivas por função.
-2. Centraliza a checagem de roles do usuário.
+1. Reexporta os utilitarios reais de permissao.
 
 PONTOS CRITICOS:
-- Essa camada define quem entra em cada área operacional.
+- Este arquivo nao deve voltar a concentrar comportamento novo.
 """
 
-from .mixins import RoleRequiredMixin
+from access.permissions import RoleRequiredMixin
 
 __all__ = ['RoleRequiredMixin']

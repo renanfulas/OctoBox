@@ -13,21 +13,25 @@ PONTOS CRITICOS:
 
 from .test_audit import AuditTrailTests
 from .test_access import AccessViewTests, BootstrapRolesCommandTests
+from .test_api import ApiFoundationTests
 from .test_catalog import CatalogViewTests
 from .test_dashboard import DashboardViewTests
 from .test_finance import FinanceCenterTests
 from .test_guide import GuideViewTests
 from .test_import_students import ImportStudentsCsvCommandTests
+from .test_integrations import WhatsAppIntegrationFoundationTests
 from .test_operations import OperationWorkspaceTests
 
 __all__ = [
     'AuditTrailTests',
     'AccessViewTests',
+    'ApiFoundationTests',
     'BootstrapRolesCommandTests',
     'CatalogViewTests',
     'DashboardViewTests',
     'FinanceCenterTests',
     'GuideViewTests',
     'ImportStudentsCsvCommandTests',
+    'WhatsAppIntegrationFoundationTests',
     'OperationWorkspaceTests',
 ]

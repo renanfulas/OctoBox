@@ -21,6 +21,7 @@ from datetime import date
 from django.core.management.base import BaseCommand, CommandError
 
 from boxcore.models import HealthIssueStatus, Student, StudentGender, StudentStatus
+from boxcore.shared.phone_numbers import normalize_phone_number
 
 
 class Command(BaseCommand):
@@ -49,7 +50,7 @@ class Command(BaseCommand):
 
                 for row_number, row in enumerate(reader, start=2):
                     full_name = (row.get('full_name') or '').strip()
-                    phone = (row.get('whatsapp') or row.get('phone') or '').strip()
+                    phone = normalize_phone_number((row.get('whatsapp') or row.get('phone') or '').strip())
 
                     if not full_name or not phone:
                         skipped_count += 1

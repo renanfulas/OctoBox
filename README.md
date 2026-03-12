@@ -37,8 +37,8 @@ Linha do tempo deste primeiro ciclo:
 
 ## Escopo atual
 
-- base de alunos com WhatsApp como identificador operacional principal
-- central de intake para leads e entradas provisiorias antes do cadastro definitivo
+- base de alunos com telefone principal legado, enquanto a identidade de canal comeca a ser separada em contatos de WhatsApp
+- central de intake para leads e entradas provisiorias antes do cadastro definitivo, com payload estruturado para rastreio futuro
 - fluxo leve de cadastro e edicao de aluno com conversao de intake
 - conexao imediata entre aluno, plano, matricula e cobranca inicial
 - cobranca unica, parcelada ou recorrente a partir da ficha do aluno
@@ -65,6 +65,8 @@ Nas areas com maior volume de regra, a base foi organizada de forma mais explici
 3. actions e workflows de regra de negocio
 
 Se quiser estudar a base em ordem pedagógica, use [docs/reading-guide.md](docs/reading-guide.md).
+
+Se quiser entender a direcao tecnica para crescer sem perder simplicidade, use [docs/architecture-growth-plan.md](docs/architecture-growth-plan.md).
 
 Se quiser entender o raciocinio da primeira entrega, as decisoes tomadas e o que eu aprendi no processo, veja [docs/v1-retrospective.md](docs/v1-retrospective.md).
 
@@ -166,6 +168,14 @@ templates/
 - /alunos/<id>/editar/ -> ficha comercial do aluno
 - /financeiro/ -> leitura gerencial de planos, receita, churn e fila financeira
 - /grade-aulas/ -> grade visual de aulas
+
+## Fronteiras tecnicas ja abertas para crescimento
+
+- /api/ -> entrada oficial da API do produto
+- /api/v1/ -> manifesto da primeira versao da API
+- /api/v1/health/ -> saude basica da fronteira externa
+- identidade de canal ja prefere contato explicito de WhatsApp e id externo do provedor antes do fallback legado por telefone
+- payloads de intake e logs de mensagem passam a ser gravados como JSON saneado, com limite e mascara de chaves sensiveis
 
 ## O que a grade de aulas entrega hoje
 

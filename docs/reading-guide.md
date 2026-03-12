@@ -18,6 +18,12 @@ PONTOS CRITICOS:
 
 Este guia acompanha a arquitetura atual do OctoBox Control. A base deixou de concentrar comportamento em modulos genericos e passou a separar melhor cada dominio em views HTTP, queries de leitura e actions ou workflows de regra.
 
+Para a direcao de medio e longo prazo da arquitetura, leia tambem [architecture-growth-plan.md](architecture-growth-plan.md).
+
+Se o foco for preparar a quebra do atual boxcore em apps Django reais com baixo risco, leia tambem [app-split-plan.md](app-split-plan.md).
+
+Se o foco for reduzir a dependencia do negocio em Django sem reescrever o produto, leia tambem [django-decoupling-blueprint.md](django-decoupling-blueprint.md).
+
 ## Objetivo deste guia
 
 Use este roteiro para responder quatro perguntas:
@@ -35,7 +41,13 @@ Hoje vale pensar o sistema em cinco blocos:
 2. Acesso, papeis e navegacao global.
 3. Modelos centrais do negocio.
 4. Camadas de produto por dominio: catalogo, operacao por papel e dashboard.
-5. Auditoria, admin, comandos internos e testes.
+5. Fronteiras de API, integracoes e jobs.
+6. Auditoria, admin, comandos internos e testes.
+
+Observacao de transicao:
+
+1. `api`, `integrations`, `jobs`, `access`, `auditing` e `communications` ja existem como apps reais.
+2. em alguns casos, especialmente em models historicos, o dono tecnico do comportamento ja mudou antes do app label mudar.
 
 ## Ordem recomendada de leitura
 
@@ -58,6 +70,25 @@ Aqui voce entende:
 4. Quais apps entram primeiro no fluxo.
 
 Se houver bug de inicializacao, app nao carregando, template nao encontrado ou rota principal quebrada, comece aqui.
+
+### Etapa 1.5: entender a fronteira externa do produto
+
+Leia:
+
+1. [boxcore/api/urls.py](../boxcore/api/urls.py)
+2. [boxcore/api/views.py](../boxcore/api/views.py)
+3. [boxcore/api/v1/urls.py](../boxcore/api/v1/urls.py)
+4. [boxcore/api/v1/views.py](../boxcore/api/v1/views.py)
+5. [boxcore/integrations/whatsapp/contracts.py](../boxcore/integrations/whatsapp/contracts.py)
+6. [boxcore/jobs/base.py](../boxcore/jobs/base.py)
+
+Aqui voce entende:
+
+1. onde a API publica do produto deve nascer
+2. onde contratos externos devem ficar
+3. onde jobs futuros devem entrar sem contaminar a interface web
+
+Se o problema for contrato externo, expansao para mobile, webhook ou automacao futura, comece aqui.
 
 ### Etapa 2: entender acesso, login e papeis
 
@@ -106,6 +137,26 @@ Aqui voce entende:
 5. Como auditoria registra rastreabilidade.
 
 Se o bug for de banco, relacionamento, status, agregacao ou regra comercial, comece aqui.
+
+### Etapa 3.5: entender communications sem mexer ainda no app label dos modelos
+
+Leia:
+
+1. [communications/models.py](../communications/models.py)
+2. [communications/queries.py](../communications/queries.py)
+3. [communications/services.py](../communications/services.py)
+4. [integrations/whatsapp/identity.py](../integrations/whatsapp/identity.py)
+5. [integrations/whatsapp/services.py](../integrations/whatsapp/services.py)
+6. [boxcore/models/communications.py](../boxcore/models/communications.py)
+7. [boxcore/models/onboarding.py](../boxcore/models/onboarding.py)
+
+Aqui voce entende:
+
+1. Como o dominio de comunicacao passou a ter services e queries proprios.
+2. Como o WhatsApp ja conversa com a superficie publica de `communications`.
+3. Por que os modelos ainda continuam em `boxcore` nesta fase da migracao.
+
+Se o problema for fila de entrada, vinculo de contato, log de mensagem ou toque operacional de WhatsApp, comece aqui.
 
 ### Etapa 4: entender o catalogo visual
 
@@ -241,17 +292,24 @@ Se o sistema estiver funcional, mas o admin estiver ruim de usar ou quebrando su
 
 ### Etapa 10: fechar com testes
 
+Observacao importante:
+
+1. `api`, `integrations`, `access` e `auditing` ja tem dono tecnico fora de `boxcore`.
+2. Os testes continuam fisicamente em `boxcore/tests` por compatibilidade de descoberta e labels legados.
+3. Durante a transicao, leia o teste junto com o app real dono do comportamento.
+
 Feche a leitura com:
 
 1. [boxcore/tests/test_access.py](../boxcore/tests/test_access.py)
-2. [boxcore/tests/test_catalog.py](../boxcore/tests/test_catalog.py)
-3. [boxcore/tests/test_catalog_services.py](../boxcore/tests/test_catalog_services.py)
-4. [boxcore/tests/test_dashboard.py](../boxcore/tests/test_dashboard.py)
-5. [boxcore/tests/test_finance.py](../boxcore/tests/test_finance.py)
-6. [boxcore/tests/test_guide.py](../boxcore/tests/test_guide.py)
-7. [boxcore/tests/test_import_students.py](../boxcore/tests/test_import_students.py)
-8. [boxcore/tests/test_operations.py](../boxcore/tests/test_operations.py)
-9. [boxcore/tests/test_operations_services.py](../boxcore/tests/test_operations_services.py)
+2. [boxcore/tests/test_api.py](../boxcore/tests/test_api.py)
+3. [boxcore/tests/test_catalog.py](../boxcore/tests/test_catalog.py)
+4. [boxcore/tests/test_catalog_services.py](../boxcore/tests/test_catalog_services.py)
+5. [boxcore/tests/test_dashboard.py](../boxcore/tests/test_dashboard.py)
+6. [boxcore/tests/test_finance.py](../boxcore/tests/test_finance.py)
+7. [boxcore/tests/test_guide.py](../boxcore/tests/test_guide.py)
+8. [boxcore/tests/test_import_students.py](../boxcore/tests/test_import_students.py)
+9. [boxcore/tests/test_operations.py](../boxcore/tests/test_operations.py)
+10. [boxcore/tests/test_operations_services.py](../boxcore/tests/test_operations_services.py)
 
 Aqui voce entende:
 
@@ -263,16 +321,28 @@ Aqui voce entende:
 
 Use esta heuristica:
 
-1. Bug de login, papel ou menu: [boxcore/access](../boxcore/access).
+1. Bug de login, papel ou menu: [access](../access), com compatibilidade em [boxcore/access](../boxcore/access).
 2. Bug de rota principal: [config/urls.py](../config/urls.py), [boxcore/urls.py](../boxcore/urls.py) ou urls do modulo afetado.
 3. Bug de aluno ou intake: [boxcore/models/students.py](../boxcore/models/students.py), [boxcore/models/onboarding.py](../boxcore/models/onboarding.py), [boxcore/catalog/views/student_views.py](../boxcore/catalog/views/student_views.py) e [boxcore/catalog/student_queries.py](../boxcore/catalog/student_queries.py).
 4. Bug de matricula, plano ou pagamento: [boxcore/models/finance.py](../boxcore/models/finance.py), [boxcore/catalog/services/student_enrollment_actions.py](../boxcore/catalog/services/student_enrollment_actions.py), [boxcore/catalog/services/student_payment_actions.py](../boxcore/catalog/services/student_payment_actions.py), [boxcore/catalog/views/finance_views.py](../boxcore/catalog/views/finance_views.py) e [boxcore/admin/finance.py](../boxcore/admin/finance.py).
 5. Bug de filtros financeiros, relatorio ou fila operacional: [boxcore/catalog/forms.py](../boxcore/catalog/forms.py), [boxcore/catalog/finance_queries.py](../boxcore/catalog/finance_queries.py), [boxcore/catalog/services/operational_queue.py](../boxcore/catalog/services/operational_queue.py) e [boxcore/catalog/report_builders.py](../boxcore/catalog/report_builders.py).
 6. Bug de aula, presenca, ocorrencia ou workspace por papel: [boxcore/models/operations.py](../boxcore/models/operations.py), [boxcore/operations/workspace_views.py](../boxcore/operations/workspace_views.py), [boxcore/operations/workspace_snapshot_queries.py](../boxcore/operations/workspace_snapshot_queries.py), [boxcore/operations/action_views.py](../boxcore/operations/action_views.py) e [boxcore/operations/actions.py](../boxcore/operations/actions.py).
 7. Bug de dashboard: [boxcore/dashboard/dashboard_views.py](../boxcore/dashboard/dashboard_views.py) e [boxcore/dashboard/dashboard_snapshot_queries.py](../boxcore/dashboard/dashboard_snapshot_queries.py).
-8. Bug de auditoria: [boxcore/auditing/services.py](../boxcore/auditing/services.py) e [boxcore/models/audit.py](../boxcore/models/audit.py).
+8. Bug de auditoria: [auditing/services.py](../auditing/services.py), [auditing/signals.py](../auditing/signals.py) e [boxcore/models/audit.py](../boxcore/models/audit.py).
 9. Bug de importacao: [boxcore/management/commands/import_students_csv.py](../boxcore/management/commands/import_students_csv.py).
 10. Bug visual: template da area mais a view correspondente.
+
+## Fronteiras ja extraidas
+
+Hoje o ownership tecnico ja esta assim:
+
+1. API externa: [api](../api)
+2. Integracoes externas: [integrations](../integrations)
+3. Jobs e automacoes: [jobs](../jobs)
+4. Acesso, papeis e navegacao global: [access](../access)
+5. Auditoria e sinais transversais: [auditing](../auditing)
+
+Os namespaces equivalentes dentro de `boxcore` seguem existindo apenas como casca de compatibilidade.
 
 ## Como fazer engenharia reversa sem travar
 

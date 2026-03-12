@@ -1,33 +1,25 @@
 """
-ARQUIVO: services de matrícula do catálogo.
+ARQUIVO: fachada do motor de matrícula do catálogo.
 
 POR QUE ELE EXISTE:
-- Centraliza as regras comerciais de vínculo entre aluno, plano e status de matrícula.
+- Mantem o contrato historico de matrícula enquanto a implementação real foi movida para commands e adapters do domínio students.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Sincroniza a matrícula ativa com o plano escolhido no fluxo leve.
-2. Decide criação, ajuste de status, upgrade, downgrade ou troca de plano.
-3. Cancela e reativa matrículas preservando histórico.
+1. Traduz a sincronização de matrícula para um command explícito.
+2. Encaminha cancelamento e reativação para o adapter real.
+3. Devolve modelos e payloads compatíveis com os chamadores atuais.
 
 PONTOS CRITICOS:
-- Esta camada coordena criação de matrícula e cobrança inicial, então qualquer regressão aqui afeta o fluxo comercial.
+- Este arquivo não deve voltar a concentrar ORM, transação ou geração de cobrança.
 """
 
-from decimal import Decimal
-
-from django.utils import timezone
-
-from boxcore.models import Enrollment, EnrollmentStatus, PaymentMethod, PaymentStatus
-
-from .payments import create_payment_schedule
-
-
-def describe_plan_change(previous_plan, selected_plan):
-    if selected_plan.price > previous_plan.price:
-        return 'upgrade'
-    if selected_plan.price < previous_plan.price:
-        return 'downgrade'
-    return 'troca de plano'
+from boxcore.models import Enrollment, MembershipPlan, Payment
+from students.application.commands import StudentEnrollmentActionCommand, StudentEnrollmentSyncCommand
+from students.infrastructure.django_enrollments import (
+    cancel_student_enrollment_command,
+    execute_student_enrollment_sync_command,
+    reactivate_student_enrollment_command,
+)
 
 
 def sync_student_enrollment(
@@ -44,129 +36,55 @@ def sync_student_enrollment(
     recurrence_cycles=1,
     initial_payment_amount=None,
 ):
-    enrollment_status = enrollment_status or EnrollmentStatus.PENDING
-    due_date = due_date or timezone.localdate()
-    payment_method = payment_method or PaymentMethod.PIX
-    installment_total = installment_total or 1
-    recurrence_cycles = recurrence_cycles or 1
-    latest_enrollment = student.enrollments.order_by('-start_date', '-created_at').first()
-    base_amount = initial_payment_amount or (selected_plan.price if selected_plan else Decimal('0.00'))
-
-    if selected_plan is None:
-        return {'enrollment': None, 'payment': None, 'movement': 'none'}
-
-    if latest_enrollment is None:
-        enrollment = Enrollment.objects.create(
-            student=student,
-            plan=selected_plan,
-            status=enrollment_status,
-            start_date=timezone.localdate(),
-            notes='Plano conectado pela tela leve do aluno.',
-        )
-        payment = create_payment_schedule(
-            student=student,
-            enrollment=enrollment,
+    result = execute_student_enrollment_sync_command(
+        StudentEnrollmentSyncCommand(
+            student_id=student.id,
+            selected_plan_id=getattr(selected_plan, 'id', None),
+            enrollment_status=enrollment_status or '',
             due_date=due_date,
-            payment_method=payment_method,
+            payment_method=payment_method or '',
             confirm_payment_now=confirm_payment_now,
-            note='Primeira cobranca criada no fluxo leve do aluno.',
-            amount=base_amount,
-            reference=payment_reference,
+            payment_reference=payment_reference,
             billing_strategy=billing_strategy,
             installment_total=installment_total,
             recurrence_cycles=recurrence_cycles,
+            initial_payment_amount=initial_payment_amount,
         )
-        return {'enrollment': enrollment, 'payment': payment, 'movement': 'created'}
-
-    if latest_enrollment.plan_id == selected_plan.id:
-        latest_enrollment.plan = selected_plan
-        latest_enrollment.status = enrollment_status
-        if latest_enrollment.start_date is None:
-            latest_enrollment.start_date = timezone.localdate()
-        latest_enrollment.save(update_fields=['plan', 'status', 'start_date', 'updated_at'])
-        payment = None
-        if not latest_enrollment.payments.exists():
-            payment = create_payment_schedule(
-                student=student,
-                enrollment=latest_enrollment,
-                due_date=due_date,
-                payment_method=payment_method,
-                confirm_payment_now=confirm_payment_now,
-                note='Primeira cobranca criada no fluxo leve do aluno.',
-                amount=base_amount,
-                reference=payment_reference,
-                billing_strategy=billing_strategy,
-                installment_total=installment_total,
-                recurrence_cycles=recurrence_cycles,
-            )
-        return {'enrollment': latest_enrollment, 'payment': payment, 'movement': 'status_adjusted'}
-
-    movement = describe_plan_change(latest_enrollment.plan, selected_plan)
-    latest_enrollment.status = EnrollmentStatus.EXPIRED
-    latest_enrollment.end_date = timezone.localdate()
-    latest_enrollment.notes = '\n'.join(
-        filter(None, [latest_enrollment.notes.strip(), f'Encerrada por {movement} na tela leve do aluno.'])
     )
-    latest_enrollment.save(update_fields=['status', 'end_date', 'notes', 'updated_at'])
-
-    enrollment = Enrollment.objects.create(
-        student=student,
-        plan=selected_plan,
-        status=enrollment_status,
-        start_date=timezone.localdate(),
-        notes=f'{movement.capitalize()} aplicada pela tela leve do aluno.',
-    )
-    payment = create_payment_schedule(
-        student=student,
-        enrollment=enrollment,
-        due_date=due_date,
-        payment_method=payment_method,
-        confirm_payment_now=confirm_payment_now,
-        note=f'Cobranca criada apos {movement} de plano.',
-        amount=base_amount,
-        reference=payment_reference,
-        billing_strategy=billing_strategy,
-        installment_total=installment_total,
-        recurrence_cycles=recurrence_cycles,
-    )
-    return {'enrollment': enrollment, 'payment': payment, 'movement': movement}
+    enrollment = Enrollment.objects.filter(pk=result.enrollment_id).first() if result.enrollment_id else None
+    payment = Payment.objects.filter(pk=result.payment_id).first() if result.payment_id else None
+    return {'enrollment': enrollment, 'payment': payment, 'movement': result.movement}
 
 
 def cancel_enrollment(*, enrollment, action_date, reason=''):
-    enrollment.status = EnrollmentStatus.CANCELED
-    enrollment.end_date = action_date
-    enrollment.notes = '\n'.join(
-        filter(None, [enrollment.notes.strip(), f'Cancelada pela tela do aluno. Motivo: {reason or "nao informado"}.'])
+    command = StudentEnrollmentActionCommand(
+        actor_id=None,
+        student_id=enrollment.student_id,
+        enrollment_id=enrollment.id,
+        action='cancel-enrollment',
+        action_date=action_date,
+        reason=reason,
     )
-    enrollment.save(update_fields=['status', 'end_date', 'notes', 'updated_at'])
-    enrollment.payments.filter(status=PaymentStatus.PENDING, due_date__gte=action_date).update(status=PaymentStatus.CANCELED)
-    return enrollment
+    result = cancel_student_enrollment_command(command)
+    return Enrollment.objects.get(pk=result.enrollment_id)
 
 
 def reactivate_enrollment(*, student, enrollment, action_date, reason=''):
-    student.enrollments.filter(status=EnrollmentStatus.ACTIVE).exclude(pk=enrollment.pk).update(
-        status=EnrollmentStatus.EXPIRED,
-        end_date=action_date,
+    command = StudentEnrollmentActionCommand(
+        actor_id=None,
+        student_id=student.id,
+        enrollment_id=enrollment.id,
+        action='reactivate-enrollment',
+        action_date=action_date,
+        reason=reason,
     )
-    enrollment.payments.filter(status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE]).update(status=PaymentStatus.CANCELED)
-    new_enrollment = Enrollment.objects.create(
-        student=student,
-        plan=enrollment.plan,
-        status=EnrollmentStatus.ACTIVE,
-        start_date=action_date,
-        notes=f'Reativada pela tela do aluno. Motivo: {reason or "nao informado"}.',
-    )
-    create_payment_schedule(
-        student=student,
-        enrollment=new_enrollment,
-        due_date=action_date,
-        payment_method=PaymentMethod.PIX,
-        confirm_payment_now=False,
-        note='Cobranca criada na reativacao da matricula.',
-        amount=new_enrollment.plan.price,
-        reference='',
-        billing_strategy='single',
-        installment_total=1,
-        recurrence_cycles=1,
-    )
-    return new_enrollment
+    result = reactivate_student_enrollment_command(command)
+    return Enrollment.objects.get(pk=result.enrollment_id)
+
+
+def describe_plan_change(previous_plan, selected_plan):
+    if selected_plan.price > previous_plan.price:
+        return 'upgrade'
+    if selected_plan.price < previous_plan.price:
+        return 'downgrade'
+    return 'troca de plano'

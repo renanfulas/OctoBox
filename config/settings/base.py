@@ -58,15 +58,26 @@ SECRET_KEY = env_str('DJANGO_SECRET_KEY', 'dev-only-secret-key-change-me')
 ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS')
 
-INSTALLED_APPS = [
+DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+]
+
+LOCAL_APPS = [
+    'access.apps.AccessConfig',
+    'api.apps.ApiConfig',
+    'auditing.apps.AuditingConfig',
+    'communications.apps.CommunicationsConfig',
+    'jobs.apps.JobsConfig',
+    'integrations.apps.IntegrationsConfig',
     'boxcore',
 ]
+
+INSTALLED_APPS = [*DJANGO_APPS, *LOCAL_APPS]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -90,7 +101,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'boxcore.access.context_processors.role_navigation',
+                'access.context_processors.role_navigation',
             ],
         },
     },

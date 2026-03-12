@@ -16,9 +16,13 @@ PONTOS CRITICOS:
 """
 
 from .base import *  # noqa: F401,F403
-from .base import MIDDLEWARE, env_bool
+from .base import MIDDLEWARE, env_bool, env_str
 
 DEBUG = env_bool('DJANGO_DEBUG', False)
+
+_configured_secret_key = env_str('DJANGO_SECRET_KEY')
+if not _configured_secret_key or _configured_secret_key == 'dev-only-secret-key-change-me':
+    raise RuntimeError('DJANGO_SECRET_KEY forte e obrigatoria em homologacao/producao.')
 
 MIDDLEWARE = [
     MIDDLEWARE[0],

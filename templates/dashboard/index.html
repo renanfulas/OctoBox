@@ -16,195 +16,198 @@ PONTOS CRITICOS:
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<section class="hero">
-    <div>
-        <h1>Operação do box em um painel só.</h1>
-        <p>
-            Esta primeira implementação já concentra cadastro, aulas, presença, pagamentos e ocorrências.
-            O núcleo foi pensado para crescer depois com WhatsApp, avaliação física e controle de cargas.
-        </p>
-        <div class="actions">
-            <span class="pill">{{ current_role.label }}</span>
-            <a class="button secondary" href="/acessos/">Ver papéis e acessos</a>
+<div class="dashboard-shell">
+    <section class="hero operation-hero dashboard-hero">
+        <div class="operation-hero-main">
+            <div>
+                <p class="eyebrow">Cockpit do box</p>
+                <h1>Operação do box em um painel só.</h1>
+                <p class="operation-hero-copy">
+                    Esta primeira implementação já concentra cadastro, aulas, presença, pagamentos e ocorrências.
+                    O núcleo foi pensado para crescer depois com WhatsApp, avaliação física e controle de cargas.
+                </p>
+            </div>
+            <div class="operation-hero-tags">
+                <span class="pill">{{ current_role.label }}</span>
+                <span class="pill info">Leitura unificada da operação</span>
+                <span class="pill accent">Retorno rápido para gestão</span>
+            </div>
+            <div class="actions">
+                <a class="button secondary" href="/acessos/">Ver papéis e acessos</a>
+                <a class="button" href="/admin/">Entrar no admin</a>
+                <a class="button secondary" href="/admin/auth/user/add/">Criar usuário</a>
+            </div>
         </div>
-    </div>
-    <div class="actions">
-        <a class="button" href="/admin/">Entrar no admin</a>
-        <a class="button secondary" href="/admin/auth/user/add/">Criar usuário</a>
-    </div>
-</section>
+        <aside class="operation-hero-side">
+            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Leitura instantânea" copy="Quatro números para entender se a base, a agenda e a cobrança estão respirando bem hoje." stats=hero_stats %}
+        </aside>
+    </section>
 
-<section class="layout-grid" style="margin-bottom: 24px;">
-    <article class="table-card">
-        <p class="eyebrow">Escopo do seu papel hoje</p>
-        <p>Este usuário está operando como <strong>{{ current_role.label }}</strong>. A camada de acessos já está preparada para começar a separar dono, gerente e coach.</p>
-        <ul class="capability-list">
-            {% for capability in role_capabilities %}
-            <li>{{ capability }}</li>
-            {% empty %}
-            <li>Defina um grupo de acesso para este usuário.</li>
-            {% endfor %}
-        </ul>
-    </article>
+    <section class="layout-grid dashboard-role-grid align-start">
+        {% include "includes/ui/info_list_card.html" with eyebrow="Escopo do seu papel hoje" title="Como este usuário deveria operar" copy="A camada de acessos já está preparada para começar a separar dono, gerente e coach." pill_label=current_role.label pill_class="info" items=role_capabilities empty_text="Defina um grupo de acesso para este usuário." %}
 
-    <article class="table-card">
-        <p class="eyebrow">Papéis pensados para o produto</p>
-        <table>
-            <thead>
-                <tr>
-                    <th>Papel</th>
-                    <th>Foco</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for role in role_definitions %}
-                <tr>
-                    <td>{{ role.label }}</td>
-                    <td>{{ role.summary }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </article>
-</section>
+        <article class="table-card dashboard-table-card">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Papéis pensados para o produto</p>
+                    <h2 class="operation-card-title">Mapa de responsabilidades</h2>
+                </div>
+                <span class="pill accent">{{ role_definitions|length }} papéis</span>
+            </div>
+            <div class="operation-table-wrap">
+                <table class="dashboard-role-table">
+                    <thead>
+                        <tr>
+                            <th>Papel</th>
+                            <th>Foco</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for role in role_definitions %}
+                        <tr>
+                            <td>{{ role.label }}</td>
+                            <td>{{ role.summary }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </section>
 
-<section class="panel-grid">
-    <article class="card" style="background: linear-gradient(145deg, rgba(249, 115, 22, 0.12), rgba(255, 255, 255, 0.95));">
-        <p class="eyebrow">Alunos ativos</p>
-        <p class="metric">{{ metrics.active_students }}</p>
-        <p class="metric-note">Base principal para check-in e retenção.</p>
-        <div class="accent-bar" style="margin-top: 16px;"></div>
-    </article>
-    <article class="card" style="background: linear-gradient(145deg, rgba(59, 130, 246, 0.10), rgba(255, 255, 255, 0.95));">
-        <p class="eyebrow">Aulas hoje</p>
-        <p class="metric">{{ metrics.sessions_today }}</p>
-        <p class="metric-note">Agenda operacional do dia.</p>
-        <div class="accent-bar" style="margin-top: 16px;"></div>
-    </article>
-    <article class="card" style="background: linear-gradient(145deg, rgba(239, 68, 68, 0.10), rgba(255, 255, 255, 0.95));">
-        <p class="eyebrow">Pagamentos atrasados</p>
-        <p class="metric">{{ metrics.overdue_payments }}</p>
-        <p class="metric-note">Prioridade para ação da secretaria.</p>
-        <div class="actions">
-            <span class="pill warning">{% if metrics.overdue_payments > 0 %}Ação imediata{% else %}Sob controle{% endif %}</span>
-        </div>
-    </article>
-    <article class="card" style="background: linear-gradient(145deg, rgba(16, 185, 129, 0.10), rgba(255, 255, 255, 0.95));">
-        <p class="eyebrow">Presenças no mês</p>
-        <p class="metric">{{ metrics.attendance_this_month }}</p>
-        <p class="metric-note">Volume de comparecimentos registrados.</p>
-    </article>
-    <article class="card" style="background: linear-gradient(145deg, rgba(249, 115, 22, 0.08), rgba(255, 255, 255, 0.95));">
-        <p class="eyebrow">Receita recebida no mês</p>
-        <p class="metric">R$ {{ metrics.monthly_revenue_paid }}</p>
-        <p class="metric-note">Somatório dos pagamentos marcados como pagos.</p>
-    </article>
-    <article class="card" style="background: linear-gradient(145deg, rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0.95));">
-        <p class="eyebrow">Ocorrências no mês</p>
-        <p class="metric">{{ metrics.occurrences_this_month }}</p>
-        <p class="metric-note">Eventos de acompanhamento comportamental.</p>
-    </article>
-</section>
+    <section class="panel-grid">
+        {% for card in metric_cards %}
+        {% include "includes/ui/metric_card.html" with card=card %}
+        {% endfor %}
+    </section>
 
-<section class="quick-grid">
-    <a class="quick-card" href="/alunos/novo/">
-        <p class="eyebrow">Ação rápida</p>
-        <strong>Novo intake / aluno</strong>
-        <p>Abra o fluxo leve para converter contato em aluno com matrícula e cobrança inicial no mesmo passo.</p>
-    </a>
-    <a class="quick-card" href="/operacao/coach/">
-        <p class="eyebrow">Ação rápida</p>
-        <strong>Marcar presença</strong>
-        <p>Entre na rotina do coach para check-in, check-out e leitura viva da operação de treino.</p>
-    </a>
-    <a class="quick-card" href="/financeiro/">
-        <p class="eyebrow">Ação rápida</p>
-        <strong>Gerar cobrança</strong>
-        <p>Vá direto para o centro financeiro e priorize vencidos, ticket médio e carteira ativa.</p>
-    </a>
-</section>
+    <section class="quick-grid">
+        {% for action in dashboard_quick_actions %}
+        {% include "includes/ui/quick_action_card.html" with action=action %}
+        {% endfor %}
+    </section>
 
-<section class="layout-grid">
-    <article class="table-card">
-        <p class="eyebrow">Próximas aulas</p>
-        <table>
-            <thead>
-                <tr>
-                    <th>Aula</th>
-                    <th>Coach</th>
-                    <th>Horário</th>
-                    <th>Ocupação</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for session in upcoming_sessions %}
-                <tr>
-                    <td>{{ session.title }}</td>
-                    <td>{{ session.coach|default:"Não definido" }}</td>
-                    <td>{{ session.scheduled_at|date:"d/m/Y H:i" }}</td>
-                    <td><span class="pill">{{ session.occupied_slots }}/{{ session.capacity }}</span></td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4">Nenhuma aula cadastrada ainda.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </article>
+    <section class="layout-grid dashboard-panel-grid align-start">
+        <article class="table-card dashboard-table-card">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Próximas aulas</p>
+                    <h2 class="operation-card-title">A agenda que está chegando</h2>
+                    <p class="operation-card-copy">Visão rápida das próximas turmas para alinhar coach, recepção e ocupação.</p>
+                </div>
+                <span class="pill info">{{ upcoming_sessions|length }} aula(s)</span>
+            </div>
+            <div class="operation-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aula</th>
+                            <th>Coach</th>
+                            <th>Horário</th>
+                            <th>Status</th>
+                            <th>Alunos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in upcoming_sessions %}
+                        <tr>
+                            <td>{{ session.object.title }}</td>
+                            <td>{{ session.coach_name }}</td>
+                            <td>{{ session.starts_at|date:"d/m/Y H:i" }}</td>
+                            <td><span class="pill{% if session.status_pill_class %} {{ session.status_pill_class }}{% endif %}">{{ session.status_label }}</span></td>
+                            <td><span class="pill{% if session.occupancy_pill_class %} {{ session.occupancy_pill_class }}{% endif %}">{{ session.occupied_slots }}/{{ session.capacity }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5">Nenhuma aula cadastrada ainda.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
 
-    <article class="table-card">
-        <p class="eyebrow">Alertas financeiros</p>
-        <table>
-            <thead>
-                <tr>
-                    <th>Aluno</th>
-                    <th>Vencimento</th>
-                    <th>Valor</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for payment in payment_alerts %}
-                <tr>
-                    <td>{{ payment.student.full_name }}</td>
-                    <td>{{ payment.due_date|date:"d/m/Y" }}</td>
-                    <td><span class="pill warning">R$ {{ payment.amount }}</span></td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="3">Nenhum pagamento atrasado.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </article>
+        <article class="table-card dashboard-table-card">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Alertas financeiros</p>
+                    <h2 class="operation-card-title">Quem já pede ação de cobrança</h2>
+                    <p class="operation-card-copy">Use esta fila para atacar atraso antes que ele vire evasão ou ruído de caixa.</p>
+                </div>
+                <span class="pill warning">{{ payment_alerts|length }} alerta(s)</span>
+            </div>
+            <div class="operation-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aluno</th>
+                            <th>Vencimento</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payment_alerts %}
+                        <tr>
+                            <td>{{ payment.student.full_name }}</td>
+                            <td>{{ payment.due_date|date:"d/m/Y" }}</td>
+                            <td><span class="pill warning">R$ {{ payment.amount }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3">Nenhum pagamento atrasado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
 
-    <article class="table-card" style="grid-column: 1 / -1;">
-        <p class="eyebrow">Risco operacional por aluno</p>
-        <table>
-            <thead>
-                <tr>
-                    <th>Aluno</th>
-                    <th>Presenças</th>
-                    <th>Faltas</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for student in student_health %}
-                <tr>
-                    <td>{{ student.full_name }}</td>
-                    <td>{{ student.total_attendances }}</td>
-                    <td>{{ student.total_absences }}</td>
-                    <td>{{ student.get_status_display }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4">Sem dados suficientes para análise.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </article>
-</section>
+        <article class="table-card dashboard-table-card operation-span-full">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Risco operacional por aluno</p>
+                    <h2 class="operation-card-title">Quem pode pedir atenção antes de esfriar</h2>
+                    <p class="operation-card-copy">Leitura simples de presença e ausência para separar base estável de base que já pede intervenção.</p>
+                </div>
+                <span class="pill accent">{{ student_health|length }} aluno(s)</span>
+            </div>
+            <div class="operation-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aluno</th>
+                            <th>Presenças</th>
+                            <th>Faltas</th>
+                            <th>Status</th>
+                            <th>Risco</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in student_health %}
+                        <tr>
+                            <td>{{ student.full_name }}</td>
+                            <td>{{ student.total_attendances }}</td>
+                            <td>{{ student.total_absences }}</td>
+                            <td>{{ student.get_status_display }}</td>
+                            <td>
+                                {% if student.total_absences >= 3 %}
+                                <span class="pill dashboard-risk-pill is-critical">Atenção alta</span>
+                                {% elif student.total_absences >= 1 %}
+                                <span class="pill dashboard-risk-pill is-warning">Monitorar</span>
+                                {% else %}
+                                <span class="pill dashboard-risk-pill is-stable">Estável</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5">Sem dados suficientes para análise.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </section>
+</div>
 {% endblock %}

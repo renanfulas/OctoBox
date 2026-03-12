@@ -31,7 +31,7 @@ from boxcore.catalog.services import (
     run_membership_plan_create_workflow,
     run_membership_plan_update_workflow,
 )
-from boxcore.models import BillingCycle, MembershipPlan, PaymentMethod
+from boxcore.models import MembershipPlan
 
 from ..finance_queries import build_finance_snapshot
 from ..forms import MembershipPlanQuickForm
@@ -39,10 +39,42 @@ from ..report_builders import build_finance_report
 from .catalog_base_views import CatalogBaseView
 
 
-class FinanceCenterView(CatalogBaseView, FormView):
+class FinanceWorkspaceContextMixin:
+    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER)
+
+    def get_finance_snapshot(self):
+        return build_finance_snapshot(self.request.GET)
+
+    def get_finance_export_links(self):
+        return {
+            'csv': f"{reverse('finance-report-export', args=['csv'])}?{self.request.GET.urlencode()}",
+            'pdf': f"{reverse('finance-report-export', args=['pdf'])}?{self.request.GET.urlencode()}",
+        }
+
+    def build_finance_workspace_context(self, snapshot):
+        operational_queue = build_operational_queue_snapshot()
+        return {
+            'page_title': 'Financeiro',
+            'page_subtitle': 'Aqui o box ganha leitura comercial: planos, receita, retencao e sinais operacionais que depois conversam com a jornada do aluno.',
+            'can_manage_finance': self.get_base_context()['current_role'].slug in (ROLE_OWNER, ROLE_MANAGER),
+            'finance_filter_form': snapshot['filter_form'],
+            'finance_metrics': snapshot['finance_metrics'],
+            'finance_pulse': snapshot['finance_pulse'],
+            'plan_portfolio': snapshot['plan_portfolio'],
+            'plan_mix': snapshot['plan_mix'],
+            'monthly_comparison': snapshot['monthly_comparison'],
+            'comparison_peaks': snapshot['comparison_peaks'],
+            'financial_alerts': snapshot['financial_alerts'],
+            'recent_movements': snapshot['recent_movements'],
+            'operational_queue': operational_queue,
+            'operational_metrics': build_operational_queue_metrics(operational_queue),
+            'finance_export_links': self.get_finance_export_links(),
+        }
+
+
+class FinanceCenterView(FinanceWorkspaceContextMixin, CatalogBaseView, FormView):
     template_name = 'catalog/finance.html'
     form_class = MembershipPlanQuickForm
-    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER)
 
     def get_success_url(self):
         return reverse('finance-center')
@@ -50,24 +82,7 @@ class FinanceCenterView(CatalogBaseView, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
-        snapshot = build_finance_snapshot(self.request.GET)
-        context['page_title'] = 'Financeiro'
-        context['page_subtitle'] = 'Aqui o box ganha leitura comercial: planos, receita, retencao e sinais operacionais que depois conversam com a jornada do aluno.'
-        context['can_manage_finance'] = context['current_role'].slug in (ROLE_OWNER, ROLE_MANAGER)
-        context['finance_filter_form'] = snapshot['filter_form']
-        context['finance_metrics'] = snapshot['finance_metrics']
-        context['plan_portfolio'] = snapshot['plan_portfolio']
-        context['plan_mix'] = snapshot['plan_mix']
-        context['monthly_comparison'] = snapshot['monthly_comparison']
-        context['comparison_peaks'] = snapshot['comparison_peaks']
-        context['financial_alerts'] = snapshot['financial_alerts']
-        context['recent_movements'] = snapshot['recent_movements']
-        context['operational_queue'] = build_operational_queue_snapshot()
-        context['operational_metrics'] = build_operational_queue_metrics(context['operational_queue'])
-        context['finance_export_links'] = {
-            'csv': f"{reverse('finance-report-export', args=['csv'])}?{self.request.GET.urlencode()}",
-            'pdf': f"{reverse('finance-report-export', args=['pdf'])}?{self.request.GET.urlencode()}",
-        }
+        context.update(self.build_finance_workspace_context(self.get_finance_snapshot()))
         return context
 
     def form_valid(self, form):
@@ -105,10 +120,14 @@ class FinanceCommunicationActionView(LoginRequiredMixin, RoleRequiredMixin, View
         return redirect('finance-center')
 
 
-class MembershipPlanQuickUpdateView(FinanceCenterView):
+class MembershipPlanQuickUpdateView(CatalogBaseView, FormView):
+    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER)
     template_name = 'catalog/finance-plan-form.html'
-    page_mode = 'update'
+    form_class = MembershipPlanQuickForm
     object = None
+
+    def get_success_url(self):
+        return reverse('finance-center')
 
     def dispatch(self, request, *args, **kwargs):
         self.object = get_object_or_404(MembershipPlan, pk=kwargs['plan_id'])
@@ -121,11 +140,10 @@ class MembershipPlanQuickUpdateView(FinanceCenterView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context.update(self.get_base_context())
         context['page_title'] = 'Editar plano'
         context['page_subtitle'] = 'Ajuste valor, ciclo e proposta comercial sem sair do centro financeiro.'
         context['plan_object'] = self.object
-        context['billing_cycle_options'] = BillingCycle
-        context['payment_method_options'] = PaymentMethod
         return context
 
     def form_valid(self, form):
@@ -136,3 +154,7 @@ class MembershipPlanQuickUpdateView(FinanceCenterView):
         )
         messages.success(self.request, f'Plano {plan.name} atualizado com sucesso.')
         return redirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'O plano nao foi salvo. Revise os campos destacados.')
+        return super().form_invalid(form)

@@ -14,7 +14,8 @@ PONTOS CRITICOS:
 
 from django.db.models import OuterRef, Q, Subquery
 
-from boxcore.models import Enrollment, EnrollmentStatus, IntakeStatus, Payment, PaymentStatus, Student, StudentIntake, StudentStatus
+from boxcore.models import Enrollment, EnrollmentStatus, Payment, PaymentStatus, Student, StudentStatus
+from communications.models import IntakeStatus, StudentIntake
 
 from .forms import StudentDirectoryFilterForm
 
@@ -63,10 +64,7 @@ def build_student_directory_snapshot(params=None):
     lead_students = students.filter(status=StudentStatus.LEAD).count()
     students_with_active_plan = students.filter(latest_enrollment_status=EnrollmentStatus.ACTIVE).count()
     overdue_students = students.filter(latest_payment_status=PaymentStatus.OVERDUE).count()
-    pending_intakes = StudentIntake.objects.filter(
-        status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING],
-        linked_student__isnull=True,
-    )
+    pending_intakes = StudentIntake.objects.filter(status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING], linked_student__isnull=True)
 
     priority_students = students.filter(
         Q(latest_payment_status=PaymentStatus.OVERDUE)

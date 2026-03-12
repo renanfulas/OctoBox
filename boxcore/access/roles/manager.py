@@ -1,42 +1,16 @@
 """
-ARQUIVO: definição do papel Manager.
+ARQUIVO: fachada legada do papel Manager dentro de boxcore.
 
 POR QUE ELE EXISTE:
-- Isola o escopo operacional do gerente.
+- Mantem imports antigos funcionando enquanto a implementacao real vive em access.roles.manager.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Define identidade do Manager.
-2. Lista as capacidades administrativas do papel.
-3. Define permissões iniciais sobre alunos, agenda e financeiro.
+1. Reexporta a definicao real do papel Manager.
 
 PONTOS CRITICOS:
-- Mudanças aqui afetam a fronteira entre gestão e operação técnica.
+- Este arquivo nao deve voltar a concentrar comportamento novo.
 """
 
-from .base import RoleDefinition
+from access.roles.manager import MANAGER_PERMISSIONS, MANAGER_ROLE, ROLE_MANAGER
 
-ROLE_MANAGER = 'Manager'
-
-MANAGER_ROLE = RoleDefinition(
-    slug=ROLE_MANAGER,
-    label='Manager',
-    summary='Gerente focado em operação diária, financeiro, alunos e acompanhamento.',
-    capabilities=(
-        'Gerenciar alunos, planos, matrículas, pagamentos e ocorrências.',
-        'Operar agenda, confirmar presença e tratar faltas e inadimplência.',
-        'Acompanhar indicadores operacionais e preparar ações de retenção.',
-    ),
-)
-
-MANAGER_PERMISSIONS = {
-    'student': {'add', 'change', 'view'},
-    'studentintake': {'add', 'change', 'view'},
-    'membershipplan': {'add', 'change', 'view'},
-    'enrollment': {'add', 'change', 'view'},
-    'classsession': {'add', 'change', 'view'},
-    'attendance': {'add', 'change', 'view'},
-    'payment': {'add', 'change', 'view'},
-    'behaviornote': {'add', 'change', 'view'},
-    'whatsappcontact': {'add', 'change', 'view'},
-    'whatsappmessagelog': {'view'},
-}
+__all__ = ['MANAGER_PERMISSIONS', 'MANAGER_ROLE', 'ROLE_MANAGER']
