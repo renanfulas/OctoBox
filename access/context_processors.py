@@ -23,8 +23,7 @@ from pathlib import Path
 from django.conf import settings
 from django.urls import NoReverseMatch, reverse
 
-from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER, get_user_role
-from access.roles import ROLE_DEV
+from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
 from communications.queries import count_pending_intakes
 from finance.models import Payment, PaymentStatus
 
@@ -138,6 +137,13 @@ def _build_shell_page_context(current_path, role, navigation, alerts):
             'subtitle': 'A tela atual deve dizer rapidamente onde voce esta, o que importa agora e qual proximo passo evita atrito inutil.',
         }
 
+    if current_path.startswith('/dashboard/') and getattr(role, 'slug', '') == ROLE_RECEPTION:
+        section = {
+            **section,
+            'eyebrow': 'Pulso da recepcao no dia',
+            'subtitle': 'Comece por chegada, agenda proxima e caixa curto para a Recepcao entrar no turno com leitura util antes de abrir outras areas.',
+        }
+
     return {
         **section,
         'active_label': active_label,
@@ -154,7 +160,7 @@ def _build_navigation(role_slug, current_path=''):
     base_links = [
         {'label': 'Dashboard', 'href': '/dashboard/'},
         {'label': 'Alunos', 'href': '/alunos/'},
-        {'label': 'Financeiro', 'href': '/financeiro/'},
+        {'label': 'Financeiro', 'href': '/financeiro/', 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER)},
         {'label': 'Grade de aulas', 'href': '/grade-aulas/'},
         {'label': 'Minha operação', 'href': '/operacao/'},
         {'label': 'Papéis e acessos', 'href': '/acessos/'},
@@ -180,9 +186,17 @@ def _build_navigation(role_slug, current_path=''):
             {'label': 'Aulas', 'href': _admin_changelist_url('boxcore', 'classsession')},
             {'label': 'Ocorrências', 'href': _admin_changelist_url('boxcore', 'behaviornote')},
         ],
+        ROLE_RECEPTION: [],
     }
 
-    links = [*base_links, *role_links.get(role_slug, [])]
+    filtered_base_links = [
+        item for item in base_links
+        if 'roles' not in item or role_slug in item['roles']
+    ]
+    links = [
+        {key: value for key, value in item.items() if key != 'roles'}
+        for item in [*filtered_base_links, *role_links.get(role_slug, [])]
+    ]
     active_href = _pick_active_href(current_path, links)
 
     return [
@@ -192,6 +206,21 @@ def _build_navigation(role_slug, current_path=''):
         }
         for item in links
     ]
+
+
+def _build_topbar_alert_links(role_slug):
+    finance_href_map = {
+        ROLE_OWNER: '/financeiro/',
+        ROLE_DEV: '/financeiro/',
+        ROLE_MANAGER: '/financeiro/',
+        ROLE_RECEPTION: '/operacao/recepcao/#reception-payment-board',
+        ROLE_COACH: '/dashboard/#dashboard-finance-board',
+    }
+
+    return {
+        'finance': finance_href_map.get(role_slug, '/dashboard/#dashboard-finance-board'),
+        'intakes': '/alunos/',
+    }
 
 
 def role_navigation(request):
@@ -217,5 +246,6 @@ def role_navigation(request):
         'global_search_action': '/alunos/',
         'static_asset_version': _build_static_asset_version(),
         'topbar_alerts': topbar_alerts,
+        'topbar_alert_links': _build_topbar_alert_links(role_slug),
         'shell_page_context': _build_shell_page_context(request.path, role, sidebar_navigation, topbar_alerts),
     }

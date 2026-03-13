@@ -9,8 +9,21 @@ O QUE ESTE ARQUIVO FAZ:
 2. Explica a estrutura do projeto.
 3. Documenta execucao local e caminhos de deploy/homologacao.
 
+TIPO DE DOCUMENTO:
+- porta de entrada institucional e estrategica
+
+AUTORIDADE:
+- alta para contexto geral do repositorio
+
+DOCUMENTO PAI:
+- nenhum; este e o ponto de entrada publico do repositorio
+
+QUANDO USAR:
+- quando a duvida for o que e o produto, qual a direcao principal e qual documento abrir primeiro
+
 PONTOS CRITICOS:
 - Este arquivo precisa acompanhar a realidade do produto para nao vender uma versao falsa do sistema.
+- Este arquivo nao deve virar guia detalhado de depuracao ou mapa exaustivo de codigo.
 -->
 
 # OctoBox Control
@@ -50,6 +63,16 @@ Linha do tempo deste primeiro ciclo:
 - navegacao filtrada por papel
 - trilha de auditoria para login, logout, mudancas no admin e acoes sensiveis do produto
 
+## Como usar a documentacao
+
+Use os docs por nivel de pergunta:
+
+1. este README explica o produto, o estado atual e a direcao geral
+2. os docs em [docs/architecture](docs/architecture) definem tese, principios e rumo estrutural
+3. os docs em [docs/plans](docs/plans) definem frentes ativas e ordem de execucao
+4. o [docs/reference/reading-guide.md](docs/reference/reading-guide.md) serve para navegar no codigo e depurar a base, nao para definir direcao de produto
+5. os docs em [docs/rollout](docs/rollout) servem para publicacao, homologacao e operacao de campo
+
 ## Leitura rapida do produto
 
 Hoje o sistema tem tres camadas principais:
@@ -70,43 +93,45 @@ Nas areas com maior volume de regra, a base foi organizada de forma mais explici
 2. queries e snapshots de leitura
 3. actions e workflows de regra de negocio
 
-Se quiser estudar a base em ordem pedagógica, use [docs/reading-guide.md](docs/reading-guide.md).
+Este README para na camada institucional e estrategica. Para navegar arquivo por arquivo, sequencia de leitura, pontos de bug e fronteiras tecnicas do runtime, use o [docs/reference/reading-guide.md](docs/reference/reading-guide.md).
 
-Se quiser entender como o CSS do projeto deve ser organizado, expandido e debugado sem virar remendo acumulado, use [docs/css-guide.md](docs/css-guide.md).
+Se quiser estudar a base em ordem pedagógica, use [docs/reference/reading-guide.md](docs/reference/reading-guide.md).
 
-Se quiser entender especificamente o que ainda prende o estado historico em `boxcore`, use [docs/boxcore-model-state-plan.md](docs/boxcore-model-state-plan.md) e [docs/boxcore-state-residue-inventory.md](docs/boxcore-state-residue-inventory.md).
+Se quiser entender como o CSS do projeto deve ser organizado, expandido e debugado sem virar remendo acumulado, use [docs/experience/css-guide.md](docs/experience/css-guide.md).
 
-Se quiser entender a direcao tecnica para crescer sem perder simplicidade, use [docs/architecture-growth-plan.md](docs/architecture-growth-plan.md).
+Se quiser entender especificamente o que ainda prende o estado historico em `boxcore`, use [docs/architecture/boxcore-model-state-plan.md](docs/architecture/boxcore-model-state-plan.md) e [docs/architecture/boxcore-state-residue-inventory.md](docs/architecture/boxcore-state-residue-inventory.md).
 
-Se quiser entender a estrategia especifica para fazer o negocio deixar de depender de Django como core, use [docs/django-core-strategy.md](docs/django-core-strategy.md) e [docs/django-decoupling-blueprint.md](docs/django-decoupling-blueprint.md).
+Se quiser entender a direcao tecnica para crescer sem perder simplicidade, use [docs/architecture/architecture-growth-plan.md](docs/architecture/architecture-growth-plan.md).
 
-Se quiser entender a declaracao oficial de qual passa a ser o centro conceitual do sistema, use [docs/octobox-conceptual-core.md](docs/octobox-conceptual-core.md).
+Se quiser entender a estrategia especifica para fazer o negocio deixar de depender de Django como core, use [docs/architecture/django-core-strategy.md](docs/architecture/django-core-strategy.md) e [docs/architecture/django-decoupling-blueprint.md](docs/architecture/django-decoupling-blueprint.md).
 
-Se quiser entender o novo CENTER arquitetural que separa nivel de acesso e nucleo interno, use [docs/center-layer.md](docs/center-layer.md).
+Se quiser entender a declaracao oficial de qual passa a ser o centro conceitual do sistema, use [docs/architecture/octobox-conceptual-core.md](docs/architecture/octobox-conceptual-core.md).
 
-Se quiser entender a estrutura complementar de sinais, integracoes e expansao transversal do sistema, use [docs/signal-mesh.md](docs/signal-mesh.md).
+Se quiser entender o novo CENTER arquitetural que separa nivel de acesso e nucleo interno, use [docs/architecture/center-layer.md](docs/architecture/center-layer.md).
 
-Se quiser entender como a arquitetura trata suportes temporarios de construcao sem confundi-los com a estrutura final, use [docs/scaffold-agents.md](docs/scaffold-agents.md).
+Se quiser entender a estrutura complementar de sinais, integracoes e expansao transversal do sistema, use [docs/architecture/signal-mesh.md](docs/architecture/signal-mesh.md).
 
-Se quiser entender a grande fachada frontal do produto, onde a experiencia visivel precisa continuar limpa mesmo com obra lateral e transicao arquitetural, use [docs/front-display-wall.md](docs/front-display-wall.md).
+Se quiser entender como a arquitetura trata suportes temporarios de construcao sem confundi-los com a estrutura final, use [docs/architecture/scaffold-agents.md](docs/architecture/scaffold-agents.md).
 
-Se quiser entender o plano do novo modulo de Recepcao, sua fronteira funcional, custo atual versus custo futuro e por que essa area foi reinterpretada como triunfo visivel da obra, use [docs/reception-module-plan.md](docs/reception-module-plan.md).
+Se quiser entender a grande fachada frontal do produto, onde a experiencia visivel precisa continuar limpa mesmo com obra lateral e transicao arquitetural, use [docs/experience/front-display-wall.md](docs/experience/front-display-wall.md).
 
-Se quiser entender a direcao oficial do segundo andar do produto para o aplicativo do celular, sua regra de limpeza visual, sua navegacao essencial e a tese de como o Octobox deve se tornar favorito na mao das pessoas, use [docs/octobox-mobile-guide.md](docs/octobox-mobile-guide.md).
+Se quiser entender o plano do novo modulo de Recepcao, sua fronteira funcional, custo atual versus custo futuro e por que essa area foi reinterpretada como triunfo visivel da obra, use [docs/plans/reception-module-plan.md](docs/plans/reception-module-plan.md).
 
-Se quiser a traducao dessa direcao em telas concretas, ordem de prototipacao e hierarquia de navegacao do app mobile, use [docs/octobox-mobile-screen-blueprint.md](docs/octobox-mobile-screen-blueprint.md).
+Se quiser entender a direcao oficial do segundo andar do produto para o aplicativo do celular, sua regra de limpeza visual, sua navegacao essencial e a tese de como o Octobox deve se tornar favorito na mao das pessoas, use [docs/experience/octobox-mobile-guide.md](docs/experience/octobox-mobile-guide.md).
 
-Se quiser entender a camada superior de emissao visivel e sinalizacao confiavel do estado do sistema, use [docs/red-beacon.md](docs/red-beacon.md).
+Se quiser a traducao dessa direcao em telas concretas, ordem de prototipacao e hierarquia de navegacao do app mobile, use [docs/plans/octobox-mobile-screen-blueprint.md](docs/plans/octobox-mobile-screen-blueprint.md).
 
-Se quiser entender a escalada maxima de alerta e a mudanca de postura defensiva do predio, use [docs/vertical-sky-beam.md](docs/vertical-sky-beam.md) e [docs/alert-siren.md](docs/alert-siren.md).
+Se quiser entender a camada superior de emissao visivel e sinalizacao confiavel do estado do sistema, use [docs/architecture/red-beacon.md](docs/architecture/red-beacon.md).
 
-Se quiser uma visao consolidada de todo o predio arquitetural em um unico documento, use [docs/octobox-architecture-model.md](docs/octobox-architecture-model.md).
+Se quiser entender a escalada maxima de alerta e a mudanca de postura defensiva do predio, use [docs/architecture/vertical-sky-beam.md](docs/architecture/vertical-sky-beam.md) e [docs/architecture/alert-siren.md](docs/architecture/alert-siren.md).
+
+Se quiser uma visao consolidada de todo o predio arquitetural em um unico documento, use [docs/architecture/octobox-architecture-model.md](docs/architecture/octobox-architecture-model.md).
 
 Essa estrutura tambem passou a ser definida como elástica com baseline fixo, expansao controlada e retorno seguro ao estado basal quando houver risco estrutural.
 
-Se quiser estudar o criterio arquitetural por tras das decisoes, reaplicar esse metodo em outros projetos e aprender os termos em linguagem simples, use [docs/personal-architecture-framework.md](docs/personal-architecture-framework.md), [docs/architecture-terms-glossary.md](docs/architecture-terms-glossary.md) e [docs/personal-growth-roadmap.md](docs/personal-growth-roadmap.md).
+Se quiser estudar o criterio arquitetural por tras das decisoes, reaplicar esse metodo em outros projetos e aprender os termos em linguagem simples, use [docs/reference/personal-architecture-framework.md](docs/reference/personal-architecture-framework.md), [docs/reference/architecture-terms-glossary.md](docs/reference/architecture-terms-glossary.md) e [docs/reference/personal-growth-roadmap.md](docs/reference/personal-growth-roadmap.md).
 
-Se quiser entender o raciocinio da primeira entrega, as decisoes tomadas e o que eu aprendi no processo, veja [docs/v1-retrospective.md](docs/v1-retrospective.md).
+Se quiser entender o raciocinio da primeira entrega, as decisoes tomadas e o que eu aprendi no processo, veja [docs/history/v1-retrospective.md](docs/history/v1-retrospective.md).
 
 ## Mapa do projeto
 
@@ -236,7 +261,7 @@ Este projeto esta licenciado sob a GNU Affero General Public License v3.0 (AGPL-
 
 Todo arquivo relevante deve explicar rapidamente seu papel no topo.
 
-Arquivos Markdown usam comentario HTML. Arquivos Python usam docstring no mesmo formato. A referencia completa e [docs/new-file-template.md](docs/new-file-template.md).
+Arquivos Markdown usam comentario HTML. Arquivos Python usam docstring no mesmo formato. A referencia completa e [docs/reference/new-file-template.md](docs/reference/new-file-template.md).
 
 Padrao para arquivos Python:
 
@@ -329,8 +354,8 @@ Observacao:
 
 Guias novos:
 
-- deploy de homologacao: [docs/deploy-homologation.md](docs/deploy-homologation.md)
-- backup minimo do banco: [docs/backup-guide.md](docs/backup-guide.md)
+- deploy de homologacao: [docs/rollout/deploy-homologation.md](docs/rollout/deploy-homologation.md)
+- backup minimo do banco: [docs/rollout/backup-guide.md](docs/rollout/backup-guide.md)
 - scripts de backup: [scripts/backup_sqlite.ps1](scripts/backup_sqlite.ps1) e [scripts/backup_postgres.ps1](scripts/backup_postgres.ps1)
 
 ## Importacao inicial de alunos

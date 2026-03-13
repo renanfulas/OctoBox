@@ -54,5 +54,8 @@ Thumbs.db
 # Backups locais
 backups/
 
+# Artefatos temporarios de revisao local
+tmp-*-cookies.txt
+
 # Manifestos reservados para marcos futuros
 docs/*-manifesto.local.md

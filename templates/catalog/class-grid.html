@@ -61,7 +61,9 @@ PONTOS CRITICOS:
                 </div>
             </div>
             <div class="actions actions-tight">
+                {% if can_open_class_admin %}
                 <a class="button secondary button-sm" href="/admin/boxcore/classsession/">Abrir admin completo</a>
+                {% endif %}
             </div>
         </article>
     </aside>
@@ -224,7 +226,9 @@ PONTOS CRITICOS:
                 </div>
             </div>
             <div class="actions actions-tight">
+                {% if can_open_class_admin %}
                 <a class="button secondary" href="/admin/boxcore/classsession/">Cadastrar aulas no admin</a>
+                {% endif %}
             </div>
         </section>
         {% endif %}

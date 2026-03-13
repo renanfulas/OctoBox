@@ -239,13 +239,11 @@ PONTOS CRITICOS:
     border-bottom: 0;
 }
 
-.student-row,
-.finance-row {
+.student-row {
     transition: background 0.16s ease, transform 0.16s ease;
 }
 
-.student-row:hover,
-.finance-row:hover {
+.student-row:hover {
     background: rgba(249, 115, 22, 0.06);
 }
 
@@ -536,11 +534,6 @@ PONTOS CRITICOS:
     min-height: 48px;
     display: flex;
     align-items: center;
-}
-
-.student-shell-grid {
-    display: grid;
-    gap: 18px;
 }
 
 .history-header {

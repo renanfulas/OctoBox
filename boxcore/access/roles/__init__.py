@@ -17,6 +17,7 @@ from access.roles import (
     ROLE_DEFINITIONS,
     ROLE_MANAGER,
     ROLE_OWNER,
+    ROLE_RECEPTION,
     ROLE_PERMISSION_MAP,
     get_user_capabilities,
     get_user_role,
@@ -26,6 +27,7 @@ from access.roles.coach import COACH_PERMISSIONS, COACH_ROLE
 from access.roles.dev import DEV_PERMISSIONS, DEV_ROLE
 from access.roles.manager import MANAGER_PERMISSIONS, MANAGER_ROLE
 from access.roles.owner import OWNER_PERMISSIONS, OWNER_ROLE
+from access.roles.reception import RECEPTION_PERMISSIONS, RECEPTION_ROLE
 
 __all__ = [
     'COACH_PERMISSIONS',
@@ -36,11 +38,14 @@ __all__ = [
     'MANAGER_ROLE',
     'OWNER_PERMISSIONS',
     'OWNER_ROLE',
+    'RECEPTION_PERMISSIONS',
+    'RECEPTION_ROLE',
     'ROLE_COACH',
     'ROLE_DEV',
     'ROLE_DEFINITIONS',
     'ROLE_MANAGER',
     'ROLE_OWNER',
+    'ROLE_RECEPTION',
     'ROLE_PERMISSION_MAP',
     'RoleDefinition',
     'get_user_capabilities',

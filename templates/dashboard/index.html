@@ -23,7 +23,7 @@ PONTOS CRITICOS:
                 <p class="eyebrow">Leitura central do dia</p>
                 <h1>Veja primeiro o que pede ação agora.</h1>
                 <p class="operation-hero-copy">
-                    Este painel existe para orientar a operação sem exigir caça de informação. Em poucos segundos, você precisa entender a pressão do dia, a fila mais sensível e para onde olhar primeiro.
+                    {{ dashboard_hero_copy }}
                 </p>
             </div>
             <div class="operation-hero-tags">
@@ -32,9 +32,9 @@ PONTOS CRITICOS:
                 <span class="pill accent">Próxima ação acima de tudo</span>
             </div>
             <div class="actions">
-                <a class="button" href="/alunos/">Abrir alunos</a>
-                <a class="button secondary" href="/financeiro/">Abrir financeiro</a>
-                <a class="button secondary" href="/grade-aulas/">Abrir grade</a>
+                {% for action in dashboard_hero_actions %}
+                <a class="button{% if action.kind == 'secondary' %} secondary{% endif %}" href="{{ action.href }}">{{ action.label }}</a>
+                {% endfor %}
             </div>
         </div>
         <aside class="operation-hero-side">
@@ -195,9 +195,9 @@ PONTOS CRITICOS:
         <article class="table-card dashboard-table-card" id="dashboard-finance-board">
             <div class="operation-card-head">
                 <div>
-                    <p class="eyebrow">Alertas financeiros</p>
-                    <h2 class="operation-card-title">Quem já pede contato hoje</h2>
-                    <p class="operation-card-copy">Use esta fila para atacar atraso antes que ele vire evasão ou ruído de caixa.</p>
+                    <p class="eyebrow">{% if dashboard_role_mode == 'reception' %}Caixa rapido do turno{% else %}Alertas financeiros{% endif %}</p>
+                    <h2 class="operation-card-title">{% if dashboard_role_mode == 'reception' %}Quem pode ser resolvido no balcao hoje{% else %}Quem já pede contato hoje{% endif %}</h2>
+                    <p class="operation-card-copy">{% if dashboard_role_mode == 'reception' %}Leia aqui quem ja pede cobranca curta, confirmacao de pagamento ou ajuste simples sem tirar a Recepcao do compasso do atendimento.{% else %}Use esta fila para atacar atraso antes que ele vire evasão ou ruído de caixa.{% endif %}</p>
                 </div>
                 <span class="pill warning">{{ payment_alerts|length }} alerta(s)</span>
             </div>
@@ -230,9 +230,9 @@ PONTOS CRITICOS:
         <article class="table-card dashboard-table-card operation-span-full" id="dashboard-risk-board">
             <div class="operation-card-head">
                 <div>
-                    <p class="eyebrow">Risco operacional por aluno</p>
-                    <h2 class="operation-card-title">Quem pode esfriar se ninguém agir</h2>
-                    <p class="operation-card-copy">Leitura simples de presença e ausência para separar base estável de base que já pede intervenção.</p>
+                    <p class="eyebrow">{% if dashboard_role_mode == 'reception' %}Alunos que pedem cuidado{% else %}Risco operacional por aluno{% endif %}</p>
+                    <h2 class="operation-card-title">{% if dashboard_role_mode == 'reception' %}Quem merece atencao antes de esfriar{% else %}Quem pode esfriar se ninguém agir{% endif %}</h2>
+                    <p class="operation-card-copy">{% if dashboard_role_mode == 'reception' %}Aqui a Recepcao le sinais simples de esfriamento para acolher melhor, observar mudanca de ritmo e encaminhar cedo quando o vinculo começar a perder temperatura.{% else %}Leitura simples de presença e ausência para separar base estável de base que já pede intervenção.{% endif %}</p>
                 </div>
                 <span class="pill accent">{{ student_health|length }} aluno(s)</span>
             </div>

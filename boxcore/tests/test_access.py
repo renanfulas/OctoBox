@@ -20,7 +20,7 @@ from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 
-from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
+from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 
 
 class AccessViewTests(TestCase):
@@ -44,6 +44,18 @@ class AccessViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Papéis e acessos')
         self.assertContains(response, 'DEV')
+        self.assertContains(response, 'Recepcao')
+
+    def test_authenticated_shell_renders_logout_as_post_form(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('access-overview'))
+
+        self.assertContains(response, 'class="sidebar-logout-form"')
+        self.assertContains(response, 'method="post"')
+        self.assertContains(response, 'action="{}"'.format(reverse('logout')))
+        self.assertContains(response, 'csrfmiddlewaretoken')
+        self.assertContains(response, '<button class="nav-link nav-link-button" type="submit">Sair</button>', html=True)
 
 
 class BootstrapRolesCommandTests(TestCase):
@@ -53,6 +65,7 @@ class BootstrapRolesCommandTests(TestCase):
         self.assertTrue(Group.objects.filter(name=ROLE_OWNER).exists())
         self.assertTrue(Group.objects.filter(name=ROLE_DEV).exists())
         self.assertTrue(Group.objects.filter(name=ROLE_MANAGER).exists())
+        self.assertTrue(Group.objects.filter(name=ROLE_RECEPTION).exists())
         self.assertTrue(Group.objects.filter(name=ROLE_COACH).exists())
 
     def test_manager_group_receives_payment_visibility(self):

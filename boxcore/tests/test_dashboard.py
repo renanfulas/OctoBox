@@ -15,10 +15,13 @@ PONTOS CRITICOS:
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from access.roles import ROLE_RECEPTION
 from finance.models import MembershipPlan
 from operations.models import Attendance, ClassSession, SessionStatus
 from students.models import Student
@@ -26,11 +29,18 @@ from students.models import Student
 
 class DashboardViewTests(TestCase):
     def setUp(self):
+        call_command('bootstrap_roles')
         self.user = get_user_model().objects.create_superuser(
             username='gestor',
             email='gestor@example.com',
             password='senha-forte-123',
         )
+        self.reception_user = get_user_model().objects.create_user(
+            username='recepcao',
+            email='recepcao@example.com',
+            password='senha-forte-123',
+        )
+        self.reception_user.groups.add(Group.objects.get(name=ROLE_RECEPTION))
         MembershipPlan.objects.create(name='Mensal 3x', price='249.90')
         Student.objects.create(full_name='Ana Silva', phone='5511999999999')
 
@@ -47,6 +57,18 @@ class DashboardViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Veja primeiro o que pede ação agora.')
         self.assertContains(response, 'Owner')
+
+    def test_dashboard_adapts_actions_for_reception_role(self):
+        self.client.force_login(self.reception_user)
+
+        response = self.client.get(reverse('dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Este painel existe para a Recepcao entrar no dia sem caca de informacao.')
+        self.assertContains(response, 'Abrir balcao da recepcao')
+        self.assertContains(response, '/operacao/recepcao/#reception-payment-board')
+        self.assertNotContains(response, 'Abrir financeiro')
+        self.assertContains(response, 'Pulso da recepcao no dia')
 
     def test_dashboard_marks_today_session_as_in_progress_during_runtime(self):
         self.client.force_login(self.user)
