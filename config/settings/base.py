@@ -71,10 +71,14 @@ LOCAL_APPS = [
     'access.apps.AccessConfig',
     'api.apps.ApiConfig',
     'auditing.apps.AuditingConfig',
+    'catalog.apps.CatalogConfig',
     'communications.apps.CommunicationsConfig',
+    'finance.apps.FinanceConfig',
     'jobs.apps.JobsConfig',
     'integrations.apps.IntegrationsConfig',
-    'boxcore',
+    'operations.apps.OperationsConfig',
+    'students.apps.StudentsConfig',
+    'boxcore.apps.BoxcoreConfig',
 ]
 
 INSTALLED_APPS = [*DJANGO_APPS, *LOCAL_APPS]

@@ -19,29 +19,21 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
 
-from boxcore.catalog.services.finance_communication_actions import handle_finance_communication_action
-from boxcore.catalog.services.membership_plan_workflows import (
+from catalog.services.finance_communication_actions import handle_finance_communication_action
+from catalog.services.intakes import sync_student_intake
+from catalog.services.membership_plan_workflows import (
     run_membership_plan_create_workflow,
     run_membership_plan_update_workflow,
 )
-from boxcore.catalog.services.operational_queue import build_operational_queue_metrics, build_operational_queue_snapshot
-from boxcore.catalog.services.student_enrollment_actions import handle_student_enrollment_action
-from boxcore.catalog.services.student_payment_actions import handle_student_payment_action
-from boxcore.catalog.services.student_workflows import run_student_quick_create_workflow, run_student_quick_update_workflow
-from boxcore.catalog.services.intakes import sync_student_intake
-from boxcore.catalog.services.payments import create_payment_schedule, regenerate_payment
-from boxcore.models import (
-    AuditEvent,
-    Enrollment,
-    EnrollmentStatus,
-    MembershipPlan,
-    Payment,
-    PaymentMethod,
-    PaymentStatus,
-    Student,
-    StudentIntake,
-    WhatsAppMessageLog,
-)
+from catalog.services.operational_queue import build_operational_queue_metrics, build_operational_queue_snapshot
+from catalog.services.payments import create_payment_schedule, regenerate_payment
+from catalog.services.student_enrollment_actions import handle_student_enrollment_action
+from catalog.services.student_payment_actions import handle_student_payment_action
+from catalog.services.student_workflows import run_student_quick_create_workflow, run_student_quick_update_workflow
+from auditing.models import AuditEvent
+from communications.models import StudentIntake, WhatsAppMessageLog
+from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
+from students.models import Student
 
 
 class DummySavedForm:

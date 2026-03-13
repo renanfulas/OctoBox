@@ -14,7 +14,7 @@ PONTOS CRITICOS:
 
 from django import forms
 
-from boxcore.models import MembershipPlan, PaymentMethod, PaymentStatus
+from finance.models import MembershipPlan, PaymentMethod, PaymentStatus
 
 
 class FinanceFilterForm(forms.Form):

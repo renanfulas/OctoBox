@@ -14,7 +14,7 @@ PONTOS CRITICOS:
 
 from django.utils import timezone
 
-from boxcore.models import Enrollment, MembershipPlan, Payment
+from finance.models import Enrollment, MembershipPlan, Payment
 
 
 def shift_month(source_date, month_delta):

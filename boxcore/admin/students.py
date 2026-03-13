@@ -1,28 +1,17 @@
 """
-ARQUIVO: configuração do Django admin para alunos.
+ARQUIVO: fachada legada do admin de alunos dentro de boxcore.
 
 POR QUE ELE EXISTE:
-- Separa o backoffice de aluno em um arquivo específico.
-- Mantém mudanças cadastrais de aluno já integradas à auditoria administrativa.
+- Mantem imports antigos funcionando enquanto a configuracao real vive em students.admin.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Define como o cadastro de aluno aparece no admin.
-2. Define colunas, filtros e busca do módulo de alunos.
-3. Reaproveita o mixin de auditoria nas alterações feitas pelo backoffice.
+1. Reexporta a classe real do admin de alunos.
 
 PONTOS CRITICOS:
-- Mudanças aqui afetam a usabilidade do admin de alunos e a qualidade da trilha de rastreio.
+- Este arquivo nao deve voltar a concentrar comportamento novo.
 """
 
-from django.contrib import admin
-
-from .mixins import AuditedAdminMixin
-from boxcore.models import Student
+from students.admin import StudentAdmin
 
 
-@admin.register(Student)
-class StudentAdmin(AuditedAdminMixin, admin.ModelAdmin):
-    list_display = ('full_name', 'phone', 'email', 'status', 'updated_at')
-    list_filter = ('status', 'gender', 'health_issue_status')
-    search_fields = ('full_name', 'phone', 'email')
-    ordering = ('full_name',)
+__all__ = ['StudentAdmin']

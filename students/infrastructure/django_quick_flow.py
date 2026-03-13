@@ -1,28 +1,26 @@
 """
-ARQUIVO: adapters Django do fluxo rapido de aluno.
+ARQUIVO: adapters Django principais do fluxo rapido de aluno.
 
 POR QUE ELE EXISTE:
-- Implementa portas do caso de uso usando ORM, transacao e auditoria concretos da base atual.
+- Implementa portas do caso de uso usando ORM e transacao concretos da base atual.
 
 O QUE ESTE ARQUIVO FAZ:
 1. Persiste aluno via ORM.
 2. Reusa sincronizacao comercial e de intake existentes.
-3. Registra auditoria concreta com o modelo historico atual.
+3. Monta as dependencias concretas do quick flow.
 
 PONTOS CRITICOS:
-- Esta camada pode usar Django livremente, mas o contrato para cima precisa continuar estavel.
+- Auditoria concreta deste fluxo agora mora em adapter proprio para reduzir acoplamento dentro deste modulo.
 """
 
-from django.contrib.auth import get_user_model
 from django.db import transaction
 
-from boxcore.auditing import log_audit_event
-from boxcore.models import Enrollment, MembershipPlan, Payment, Student, StudentIntake
+from finance.models import MembershipPlan
+from students.models import Student
 from students.application.commands import StudentEnrollmentSyncCommand, StudentIntakeSyncCommand, StudentQuickCommand
 from students.application.ports import (
     StudentEnrollmentSyncPort,
     StudentIntakeSyncPort,
-    StudentQuickAuditPort,
     StudentWriterPort,
     UnitOfWorkPort,
 )
@@ -31,6 +29,7 @@ from students.application.use_cases import (
     execute_create_student_quick_use_case,
     execute_update_student_quick_use_case,
 )
+from students.infrastructure.django_audit import DjangoStudentQuickAudit
 from students.infrastructure.django_enrollments import execute_student_enrollment_sync_command
 from students.infrastructure.django_intakes import execute_student_intake_sync_command
 
@@ -106,115 +105,6 @@ class DjangoStudentIntakeSync(StudentIntakeSyncPort):
                 intake_record_id=intake_record_id,
             )
         )
-
-
-class DjangoStudentQuickAudit(StudentQuickAuditPort):
-    def __init__(self):
-        self.user_model = get_user_model()
-
-    def _get_actor(self, actor_id: int | None):
-        if actor_id is None:
-            return None
-        return self.user_model.objects.filter(pk=actor_id).first()
-
-    def _get_student(self, student_id: int):
-        return Student.objects.get(pk=student_id)
-
-    def _get_enrollment(self, enrollment_id: int | None):
-        if enrollment_id is None:
-            return None
-        return Enrollment.objects.get(pk=enrollment_id)
-
-    def _get_payment(self, payment_id: int | None):
-        if payment_id is None:
-            return None
-        return Payment.objects.get(pk=payment_id)
-
-    def _get_intake(self, intake_id: int | None):
-        if intake_id is None:
-            return None
-        return StudentIntake.objects.get(pk=intake_id)
-
-    def record_created(self, *, command: StudentQuickCommand, result: StudentQuickResult) -> None:
-        actor = self._get_actor(command.actor_id)
-        student = self._get_student(result.student.id)
-        payment = self._get_payment(result.enrollment_sync.payment_id)
-        intake = self._get_intake(result.intake_id)
-
-        log_audit_event(
-            actor=actor,
-            action='student_quick_created',
-            target=student,
-            description='Aluno criado pela tela leve de cadastro.',
-            metadata={
-                'status': student.status,
-                'enrollment_id': result.enrollment_sync.enrollment_id,
-                'payment_id': result.enrollment_sync.payment_id,
-                'movement': result.enrollment_sync.movement,
-                'intake_id': result.intake_id,
-            },
-        )
-        if payment is not None:
-            log_audit_event(
-                actor=actor,
-                action='student_quick_payment_created',
-                target=payment,
-                description='Primeira cobranca criada pela tela leve do aluno.',
-                metadata={'status': payment.status, 'method': payment.method},
-            )
-        if intake is not None:
-            log_audit_event(
-                actor=actor,
-                action='student_intake_converted',
-                target=intake,
-                description='Lead convertido em aluno pela tela leve.',
-                metadata={'student_id': student.id},
-            )
-
-    def record_updated(self, *, command: StudentQuickCommand, result: StudentQuickResult) -> None:
-        actor = self._get_actor(command.actor_id)
-        student = self._get_student(result.student.id)
-        enrollment = self._get_enrollment(result.enrollment_sync.enrollment_id)
-        payment = self._get_payment(result.enrollment_sync.payment_id)
-        intake = self._get_intake(result.intake_id)
-
-        log_audit_event(
-            actor=actor,
-            action='student_quick_updated',
-            target=student,
-            description='Aluno alterado pela tela leve de cadastro.',
-            metadata={
-                'changed_fields': list(result.changed_fields),
-                'enrollment_id': result.enrollment_sync.enrollment_id,
-                'payment_id': result.enrollment_sync.payment_id,
-                'movement': result.enrollment_sync.movement,
-                'intake_id': result.intake_id,
-            },
-        )
-        if enrollment is not None and result.enrollment_sync.movement in ('upgrade', 'downgrade', 'troca de plano'):
-            log_audit_event(
-                actor=actor,
-                action='student_plan_changed',
-                target=enrollment,
-                description='Troca de plano registrada pela tela leve do aluno.',
-                metadata={'movement': result.enrollment_sync.movement},
-            )
-        if payment is not None:
-            log_audit_event(
-                actor=actor,
-                action='student_quick_payment_created',
-                target=payment,
-                description='Cobranca criada ou confirmada pela tela leve do aluno.',
-                metadata={'status': payment.status, 'method': payment.method},
-            )
-        if intake is not None:
-            log_audit_event(
-                actor=actor,
-                action='student_intake_converted',
-                target=intake,
-                description='Lead vinculado ao aluno pela tela leve.',
-                metadata={'student_id': student.id},
-            )
 
 
 def _build_dependencies():

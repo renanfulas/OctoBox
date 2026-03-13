@@ -16,8 +16,10 @@ PONTOS CRITICOS:
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
-from boxcore.models import Attendance, AttendanceStatus, BehaviorNote, ClassSession, Payment, PaymentStatus, Student, StudentStatus
+from finance.models import Payment, PaymentStatus
+from operations.models import Attendance, AttendanceStatus, BehaviorNote, ClassSession
 from boxcore.session_snapshots import serialize_class_session, sync_runtime_statuses
+from students.models import Student, StudentStatus
 
 
 def build_dashboard_snapshot(*, today, month_start):

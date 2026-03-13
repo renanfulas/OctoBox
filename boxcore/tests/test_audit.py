@@ -17,7 +17,9 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from boxcore.models import AuditEvent, Payment, PaymentStatus, Student
+from auditing.models import AuditEvent
+from finance.models import Payment, PaymentStatus
+from students.models import Student
 
 
 class AuditTrailTests(TestCase):

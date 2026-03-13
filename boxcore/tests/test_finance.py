@@ -20,7 +20,9 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from boxcore.models import AuditEvent, Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus, Student
+from auditing.models import AuditEvent
+from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
+from students.models import Student
 
 
 class FinanceCenterTests(TestCase):

@@ -13,12 +13,12 @@ PONTOS CRITICOS:
 - Este arquivo nao deve voltar a concentrar ORM, auditoria ou transacao.
 """
 
-from boxcore.models import MembershipPlan
 from finance.application.commands import build_membership_plan_command
 from finance.infrastructure import (
     execute_create_membership_plan_command,
     execute_update_membership_plan_command,
 )
+from finance.models import MembershipPlan
 
 
 def run_membership_plan_create_workflow(*, actor, form):

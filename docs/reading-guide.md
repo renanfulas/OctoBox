@@ -18,11 +18,35 @@ PONTOS CRITICOS:
 
 Este guia acompanha a arquitetura atual do OctoBox Control. A base deixou de concentrar comportamento em modulos genericos e passou a separar melhor cada dominio em views HTTP, queries de leitura e actions ou workflows de regra.
 
+Leitura estrutural importante para esta fase:
+
+1. `boxcore` nao e mais a raiz canonica do runtime
+2. `boxcore` agora deve ser lido como app legado de estado, compatibilidade e migrations historicas
+3. ao navegar pela base, prefira primeiro os apps reais promovidos e so depois as fachadas historicas
+
 Para a direcao de medio e longo prazo da arquitetura, leia tambem [architecture-growth-plan.md](architecture-growth-plan.md).
 
 Se o foco for preparar a quebra do atual boxcore em apps Django reais com baixo risco, leia tambem [app-split-plan.md](app-split-plan.md).
 
+Se o foco for evitar regressao de imports historicos e saber qual caminho canonico usar no runtime atual, leia tambem [promoted-public-facades-map.md](promoted-public-facades-map.md).
+
 Se o foco for reduzir a dependencia do negocio em Django sem reescrever o produto, leia tambem [django-decoupling-blueprint.md](django-decoupling-blueprint.md).
+
+Se o foco for transformar essa direcao em estrategia operacional por ondas, guardrails e criterio de pronto, leia tambem [django-core-strategy.md](django-core-strategy.md).
+
+Se o foco for entender o novo andar de comunicacao entre acesso e nucleo interno, leia tambem [center-layer.md](center-layer.md).
+
+Se o foco for entender a malha transversal de sinais, integracoes, envelopes e observabilidade ao lado do CENTER, leia tambem [signal-mesh.md](signal-mesh.md).
+
+Se o foco for entender o que e temporario na obra arquitetural e como retirar os agentes de transicao quando o predio ficar pronto, leia tambem [scaffold-agents.md](scaffold-agents.md).
+
+Se o foco for entender a camada superior de emissao visivel, alerta e projeção externa confiavel do sistema, leia tambem [red-beacon.md](red-beacon.md).
+
+Se o foco for entender a escalada maxima de visibilidade e o sistema sonoro de mobilizacao defensiva do predio, leia tambem [vertical-sky-beam.md](vertical-sky-beam.md) e [alert-siren.md](alert-siren.md).
+
+Se o foco for ver o modelo inteiro consolidado em uma referencia unica, leia tambem [octobox-architecture-model.md](octobox-architecture-model.md).
+
+Se o foco for estudar o criterio por tras das decisoes, leia tambem [personal-architecture-framework.md](personal-architecture-framework.md), [architecture-terms-glossary.md](architecture-terms-glossary.md) e [personal-growth-roadmap.md](personal-growth-roadmap.md).
 
 ## Objetivo deste guia
 
@@ -68,6 +92,7 @@ Aqui voce entende:
 2. Como o ambiente muda entre desenvolvimento e producao.
 3. Como as rotas principais sao distribuidas.
 4. Quais apps entram primeiro no fluxo.
+5. Por que `config/urls.py` e a raiz HTTP canonica e `boxcore/urls.py` ficou como compatibilidade.
 
 Se houver bug de inicializacao, app nao carregando, template nao encontrado ou rota principal quebrada, comece aqui.
 

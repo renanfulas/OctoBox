@@ -18,7 +18,7 @@ from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-from boxcore.models import EnrollmentStatus, PaymentStatus
+from finance.models import EnrollmentStatus, PaymentStatus
 
 
 def build_plan_portfolio(plans, payments, enrollments):

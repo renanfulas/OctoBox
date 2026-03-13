@@ -19,15 +19,14 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
 
-from boxcore.access.roles import ROLE_PERMISSION_MAP
+from access.roles import ROLE_PERMISSION_MAP
 
 
 class Command(BaseCommand):
     help = 'Cria os grupos Owner, DEV, Manager e Coach com permissões iniciais do projeto.'
 
     def handle(self, *args, **options):
-        app_config = apps.get_app_config('boxcore')
-        model_index = {model._meta.model_name: model for model in app_config.get_models()}
+        model_index = {model._meta.model_name: model for model in apps.get_models()}
 
         for role_name, permission_map in ROLE_PERMISSION_MAP.items():
             group, _ = Group.objects.get_or_create(name=role_name)

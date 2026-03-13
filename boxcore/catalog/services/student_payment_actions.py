@@ -16,7 +16,7 @@ PONTOS CRITICOS:
 from students.application.commands import StudentPaymentActionCommand
 from students.infrastructure import execute_student_payment_action_command
 
-from boxcore.models import Payment
+from finance.models import Payment
 
 
 def handle_student_payment_action(*, actor, student, payment, action, payload=None):

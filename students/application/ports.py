@@ -38,6 +38,14 @@ from .results import (
 ReturnType = TypeVar('ReturnType')
 
 
+class ClockPort(Protocol):
+    def now(self):
+        ...
+
+    def today(self):
+        ...
+
+
 class StudentWriterPort(Protocol):
     def create(self, command: StudentQuickCommand) -> StudentRecord:
         ...
@@ -100,6 +108,7 @@ class StudentPaymentRegenerationPort(Protocol):
 
 
 __all__ = [
+    'ClockPort',
     'StudentEnrollmentSyncPort',
     'StudentEnrollmentActionPort',
     'StudentIntakeWorkflowPort',

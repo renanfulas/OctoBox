@@ -1,12 +1,12 @@
 """
-ARQUIVO: marcador do pacote principal do domínio do box.
+ARQUIVO: marcador do pacote legado boxcore.
 
 POR QUE ELE EXISTE:
-- Mantém a pasta boxcore como pacote Python do app principal.
+- Mantem a pasta boxcore como pacote Python da ancora historica de estado do Django.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Organiza a raiz lógica do app.
+1. Preserva o namespace historico exigido por app_label, admin e migrations antigas.
 
 PONTOS CRITICOS:
-- Normalmente não precisa de edição.
+- Nao deve voltar a ser tratado como namespace padrao de runtime para codigo novo.
 """

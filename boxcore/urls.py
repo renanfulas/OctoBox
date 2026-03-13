@@ -1,16 +1,16 @@
 """
-ARQUIVO: agregador de rotas internas do boxcore.
+ARQUIVO: agregador legado de rotas do boxcore.
 
 POR QUE ELE EXISTE:
-- Centraliza os módulos de rota por assunto sem misturar lógica de tela.
+- Preserva compatibilidade para imports historicos de boxcore.urls.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Liga o módulo de acesso.
-2. Liga o módulo de dashboard.
-3. Liga páginas visuais de catálogo.
+1. Reexporta as mesmas rotas canonicas do runtime.
+2. Evita quebra enquanto referencias antigas ainda existirem.
 
 PONTOS CRITICOS:
-- Se um include sair daqui, a área correspondente deixa de responder.
+- O roteador raiz oficial agora e config.urls.
+- Este modulo nao deve voltar a concentrar novas decisoes de roteamento.
 """
 
 from django.urls import include, path
@@ -19,7 +19,7 @@ urlpatterns = [
     path('', include('access.urls')),
     path('api/', include('api.urls')),
     path('', include('boxcore.dashboard.urls')),
-    path('', include('boxcore.catalog.urls')),
+    path('', include('catalog.urls')),
     path('', include('boxcore.guide.urls')),
-    path('', include('boxcore.operations.urls')),
+    path('', include('operations.urls')),
 ]

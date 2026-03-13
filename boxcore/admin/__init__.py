@@ -1,15 +1,15 @@
 """
-ARQUIVO: registrador central do admin do boxcore.
+ARQUIVO: agregador legado do admin dentro de boxcore.
 
 POR QUE ELE EXISTE:
-- Garante que as configurações de admin sejam carregadas quando o app sobe.
+- Mantem a descoberta historica do admin funcionando enquanto os registros reais vivem nos apps de dominio.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Importa os módulos de admin por assunto.
-2. Ativa o registro de telas do backoffice.
+1. Importa as fachadas legadas do admin por assunto.
+2. Preserva compatibilidade com o namespace historico do app.
 
 PONTOS CRITICOS:
-- Se um import sair daqui, a tela correspondente pode desaparecer do admin.
+- Registros novos devem nascer nos apps reais, nao voltar para boxcore.
 """
 
 from .audit import AuditEventAdmin

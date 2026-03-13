@@ -20,7 +20,7 @@ from pathlib import Path
 from django.core.management import call_command
 from django.test import TestCase
 
-from boxcore.models import Student
+from students.models import Student
 
 
 class ImportStudentsCsvCommandTests(TestCase):

@@ -21,6 +21,7 @@ from .commands import (
 from .ports import (
     FinanceCommunicationActionPort,
     InboundWhatsAppMessagePort,
+    OperationalMessageAuditPort,
     OperationalMessagePort,
     OperationalQueueSnapshotPort,
 )
@@ -44,8 +45,11 @@ def execute_register_operational_message_use_case(
     command: RegisterOperationalMessageCommand,
     *,
     operational_port: OperationalMessagePort,
+    audit_port: OperationalMessageAuditPort,
 ) -> OperationalMessageResult:
-    return operational_port.register(command)
+    result = operational_port.register(command)
+    audit_port.record_registered(command=command, result=result)
+    return result
 
 
 def execute_finance_communication_action_use_case(

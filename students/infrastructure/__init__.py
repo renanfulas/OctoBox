@@ -12,6 +12,8 @@ PONTOS CRITICOS:
 - As funcoes abaixo devem permanecer finas; a implementacao real mora nos modulos especificos.
 """
 
+from .django_clock import DjangoClockPort
+
 
 def execute_create_student_quick_command(command):
     from .django_quick_flow import execute_create_student_quick_command as implementation
@@ -49,6 +51,7 @@ def execute_student_payment_schedule_command(command):
     return implementation(command)
 
 __all__ = [
+    'DjangoClockPort',
 	'execute_create_student_quick_command',
 	'execute_student_enrollment_action_command',
 	'execute_student_payment_action_command',

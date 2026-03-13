@@ -1,37 +1,30 @@
 """
-ARQUIVO: regras puras de agenda financeira do aluno.
+ARQUIVO: fachada de compatibilidade para regras puras de agenda financeira do aluno.
 
 POR QUE ELE EXISTE:
-- Centraliza a logica de avanço de vencimento sem depender de ORM ou timezone do Django.
+- Preserva imports historicos enquanto a politica financeira migra para a camada de dominio explicita.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Avança meses preservando o primeiro dia do ciclo.
-2. Calcula o próximo vencimento conforme o ciclo de cobrança.
+1. Reexporta calculo de vencimento e planejamento puro de cobrancas.
 
 PONTOS CRITICOS:
-- Essas regras afetam parcelamento, recorrencia e regeneracao de cobrança.
+- Nova regra deve nascer em students.domain, nao aqui.
 """
 
-from datetime import date, timedelta
+from students.domain import (
+    PaymentRegenerationDecision,
+    PlannedPayment,
+    advance_due_date,
+    build_payment_regeneration_decision,
+    build_payment_schedule_plan,
+    shift_month,
+)
 
-
-def shift_month(source_date: date, month_delta: int) -> date:
-    month_index = source_date.month - 1 + month_delta
-    year = source_date.year + month_index // 12
-    month = month_index % 12 + 1
-    return source_date.replace(year=year, month=month, day=1)
-
-
-def advance_due_date(*, start_date: date, step: int, billing_cycle: str) -> date:
-    if step == 0:
-        return start_date
-    if billing_cycle == 'weekly':
-        return start_date + timedelta(days=7 * step)
-    if billing_cycle == 'quarterly':
-        return shift_month(start_date, step * 3)
-    if billing_cycle == 'yearly':
-        return shift_month(start_date, step * 12)
-    return shift_month(start_date, step)
-
-
-__all__ = ['advance_due_date', 'shift_month']
+__all__ = [
+    'PaymentRegenerationDecision',
+    'PlannedPayment',
+    'advance_due_date',
+    'build_payment_regeneration_decision',
+    'build_payment_schedule_plan',
+    'shift_month',
+]

@@ -18,8 +18,11 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from boxcore.access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER
-from boxcore.models import AuditEvent, Attendance, BehaviorNote, ClassSession, Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentStatus, Student
+from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER
+from auditing.models import AuditEvent
+from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentStatus
+from operations.models import Attendance, BehaviorNote, ClassSession
+from students.models import Student
 
 
 class OperationWorkspaceTests(TestCase):

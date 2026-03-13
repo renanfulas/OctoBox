@@ -14,7 +14,7 @@ PONTOS CRITICOS:
 """
 
 from access.roles import get_user_role
-from boxcore.models import AuditEvent
+from auditing.models import AuditEvent
 
 
 def log_audit_event(*, actor=None, action, target=None, description='', metadata=None):

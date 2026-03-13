@@ -17,20 +17,24 @@ from decimal import Decimal
 from uuid import uuid4
 
 from django.db import transaction
-from django.utils import timezone
 
-from boxcore.models import Payment, PaymentStatus, Student
+from finance.models import Payment, PaymentStatus
+from students.models import Student
 from students.application.commands import StudentPaymentRegenerationCommand, StudentPaymentScheduleCommand
-from students.application.payment_terms import advance_due_date
-from students.application.ports import StudentPaymentRegenerationPort, StudentPaymentSchedulePort
+from students.application.ports import ClockPort, StudentPaymentRegenerationPort, StudentPaymentSchedulePort
 from students.application.results import StudentPaymentRegenerationResult, StudentPaymentScheduleResult
 from students.application.use_cases import (
     execute_student_payment_regeneration_use_case,
     execute_student_payment_schedule_use_case,
 )
+from students.domain import build_payment_regeneration_decision, build_payment_schedule_plan
+from students.infrastructure.django_clock import DjangoClockPort
 
 
 class DjangoStudentPaymentSchedulePort(StudentPaymentSchedulePort):
+    def __init__(self, *, clock: ClockPort):
+        self.clock = clock
+
     @transaction.atomic
     def execute(self, command: StudentPaymentScheduleCommand) -> StudentPaymentScheduleResult:
         student = Student.objects.get(pk=command.student_id)
@@ -39,93 +43,39 @@ class DjangoStudentPaymentSchedulePort(StudentPaymentSchedulePort):
             enrollment = student.enrollments.select_related('plan').get(pk=command.enrollment_id)
 
         billing_group = str(uuid4())
-        normalized_amount = Decimal(command.amount)
-        created_payment = None
-        created_count = 0
-
-        if command.billing_strategy == 'installments':
-            total = max(command.installment_total, 1)
-            installment_amount = (normalized_amount / total).quantize(Decimal('0.01'))
-            running_total = Decimal('0.00')
-            for index in range(1, total + 1):
-                current_amount = installment_amount if index < total else normalized_amount - running_total
-                running_total += current_amount
-                payment = Payment.objects.create(
-                    student=student,
-                    enrollment=enrollment,
-                    due_date=advance_due_date(
-                        start_date=command.due_date,
-                        step=index - 1,
-                        billing_cycle=enrollment.plan.billing_cycle,
-                    ),
-                    amount=current_amount,
-                    status=PaymentStatus.PAID if command.confirm_payment_now and index == 1 else PaymentStatus.PENDING,
-                    method=command.payment_method,
-                    paid_at=timezone.now() if command.confirm_payment_now and index == 1 else None,
-                    reference=command.reference,
-                    notes=command.note,
-                    billing_group=billing_group,
-                    installment_number=index,
-                    installment_total=total,
-                )
-                created_payment = created_payment or payment
-                created_count += 1
-            return StudentPaymentScheduleResult(
-                student_id=student.id,
-                payment_id=getattr(created_payment, 'id', None),
-                billing_group=billing_group,
-                created_count=created_count,
-            )
-
-        if command.billing_strategy == 'recurring':
-            cycles = max(command.recurrence_cycles, 1)
-            for index in range(1, cycles + 1):
-                payment = Payment.objects.create(
-                    student=student,
-                    enrollment=enrollment,
-                    due_date=advance_due_date(
-                        start_date=command.due_date,
-                        step=index - 1,
-                        billing_cycle=enrollment.plan.billing_cycle,
-                    ),
-                    amount=normalized_amount,
-                    status=PaymentStatus.PAID if command.confirm_payment_now and index == 1 else PaymentStatus.PENDING,
-                    method=command.payment_method,
-                    paid_at=timezone.now() if command.confirm_payment_now and index == 1 else None,
-                    reference=command.reference,
-                    notes=command.note,
-                    billing_group=billing_group,
-                    installment_number=index,
-                    installment_total=cycles,
-                )
-                created_payment = created_payment or payment
-                created_count += 1
-            return StudentPaymentScheduleResult(
-                student_id=student.id,
-                payment_id=getattr(created_payment, 'id', None),
-                billing_group=billing_group,
-                created_count=created_count,
-            )
-
-        created_payment = Payment.objects.create(
-            student=student,
-            enrollment=enrollment,
+        billing_cycle = getattr(getattr(enrollment, 'plan', None), 'billing_cycle', 'monthly')
+        payment_plan = build_payment_schedule_plan(
             due_date=command.due_date,
-            amount=normalized_amount,
-            status=PaymentStatus.PAID if command.confirm_payment_now else PaymentStatus.PENDING,
-            method=command.payment_method,
-            paid_at=timezone.now() if command.confirm_payment_now else None,
-            reference=command.reference,
-            notes=command.note,
-            billing_group=billing_group,
-            installment_number=1,
-            installment_total=1,
+            amount=Decimal(command.amount),
+            billing_strategy=command.billing_strategy,
+            installment_total=command.installment_total,
+            recurrence_cycles=command.recurrence_cycles,
+            billing_cycle=billing_cycle,
+            confirm_payment_now=command.confirm_payment_now,
         )
+        created_payment = None
+        for planned_payment in payment_plan:
+            payment = Payment.objects.create(
+                student=student,
+                enrollment=enrollment,
+                due_date=planned_payment.due_date,
+                amount=planned_payment.amount,
+                status=PaymentStatus.PAID if planned_payment.charge_now else PaymentStatus.PENDING,
+                method=command.payment_method,
+                paid_at=self.clock.now() if planned_payment.charge_now else None,
+                reference=command.reference,
+                notes=command.note,
+                billing_group=billing_group,
+                installment_number=planned_payment.installment_number,
+                installment_total=planned_payment.installment_total,
+            )
+            created_payment = created_payment or payment
+
         return StudentPaymentScheduleResult(
             student_id=student.id,
-            payment_id=created_payment.id,
+            payment_id=getattr(created_payment, 'id', None),
             billing_group=billing_group,
-            created_count=1,
+            created_count=len(payment_plan),
         )
 
 
@@ -148,22 +98,25 @@ class DjangoStudentPaymentRegenerationPort(StudentPaymentRegenerationPort):
                 enrollment_id=None,
             )
 
+        regeneration = build_payment_regeneration_decision(
+            current_due_date=payment.due_date,
+            current_installment_number=payment.installment_number,
+            current_installment_total=payment.installment_total,
+            billing_cycle=target_enrollment.plan.billing_cycle,
+        )
+
         new_payment = Payment.objects.create(
             student=student,
             enrollment=target_enrollment,
-            due_date=advance_due_date(
-                start_date=payment.due_date,
-                step=1,
-                billing_cycle=target_enrollment.plan.billing_cycle,
-            ),
+            due_date=regeneration.due_date,
             amount=payment.amount,
             status=PaymentStatus.PENDING,
             method=payment.method,
             reference=payment.reference,
-            notes='Cobranca regenerada pela tela do aluno.',
+            notes=regeneration.note,
             billing_group=payment.billing_group or str(uuid4()),
-            installment_number=payment.installment_number + 1,
-            installment_total=max(payment.installment_total, payment.installment_number + 1),
+            installment_number=regeneration.installment_number,
+            installment_total=regeneration.installment_total,
         )
         return StudentPaymentRegenerationResult(
             student_id=student.id,
@@ -175,7 +128,7 @@ class DjangoStudentPaymentRegenerationPort(StudentPaymentRegenerationPort):
 def execute_student_payment_schedule_command(command: StudentPaymentScheduleCommand):
     return execute_student_payment_schedule_use_case(
         command,
-        payment_schedule_port=DjangoStudentPaymentSchedulePort(),
+        payment_schedule_port=DjangoStudentPaymentSchedulePort(clock=DjangoClockPort()),
     )
 
 

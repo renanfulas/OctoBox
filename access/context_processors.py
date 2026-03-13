@@ -21,11 +21,12 @@ import time
 from pathlib import Path
 
 from django.conf import settings
+from django.urls import NoReverseMatch, reverse
 
 from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER, get_user_role
 from access.roles import ROLE_DEV
-from boxcore.models import Payment, PaymentStatus
 from communications.queries import count_pending_intakes
+from finance.models import Payment, PaymentStatus
 
 
 _ASSET_VERSION_CACHE = {
@@ -33,6 +34,13 @@ _ASSET_VERSION_CACHE = {
     'value': '1',
 }
 _ASSET_VERSION_TTL_SECONDS = 5.0
+
+
+def _admin_changelist_url(app_label, model_name, fallback='/admin/'):
+    try:
+        return reverse(f'admin:{app_label}_{model_name}_changelist')
+    except NoReverseMatch:
+        return fallback
 
 
 def _calculate_static_asset_version():
@@ -82,21 +90,21 @@ def _build_navigation(role_slug, current_path=''):
     role_links = {
         ROLE_OWNER: [
             {'label': 'Admin Django', 'href': '/admin/'},
-            {'label': 'Auditoria', 'href': '/admin/boxcore/auditevent/'},
+            {'label': 'Auditoria', 'href': _admin_changelist_url('boxcore', 'auditevent')},
         ],
         ROLE_DEV: [
-            {'label': 'Auditoria', 'href': '/admin/boxcore/auditevent/'},
+            {'label': 'Auditoria', 'href': _admin_changelist_url('boxcore', 'auditevent')},
             {'label': 'Admin Django', 'href': '/admin/'},
         ],
         ROLE_MANAGER: [
-            {'label': 'Alunos', 'href': '/admin/boxcore/student/'},
-            {'label': 'Central de entrada', 'href': '/admin/boxcore/studentintake/'},
-            {'label': 'Pagamentos', 'href': '/admin/boxcore/payment/'},
-            {'label': 'WhatsApp', 'href': '/admin/boxcore/whatsappcontact/'},
+            {'label': 'Alunos', 'href': _admin_changelist_url('boxcore', 'student')},
+            {'label': 'Central de entrada', 'href': _admin_changelist_url('boxcore', 'studentintake')},
+            {'label': 'Pagamentos', 'href': _admin_changelist_url('boxcore', 'payment')},
+            {'label': 'WhatsApp', 'href': _admin_changelist_url('boxcore', 'whatsappcontact')},
         ],
         ROLE_COACH: [
-            {'label': 'Aulas', 'href': '/admin/boxcore/classsession/'},
-            {'label': 'Ocorrências', 'href': '/admin/boxcore/behaviornote/'},
+            {'label': 'Aulas', 'href': _admin_changelist_url('boxcore', 'classsession')},
+            {'label': 'Ocorrências', 'href': _admin_changelist_url('boxcore', 'behaviornote')},
         ],
     }
 

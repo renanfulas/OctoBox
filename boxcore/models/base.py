@@ -1,22 +1,17 @@
 """
-ARQUIVO: classes base compartilhadas pelos modelos do sistema.
+ARQUIVO: fachada legada das bases abstratas de models dentro de boxcore.
 
 POR QUE ELE EXISTE:
-- Evita repetir campos comuns em todos os modelos.
+- Mantem imports antigos funcionando enquanto as bases compartilhadas passam a viver em um modulo neutro.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Cria uma base com created_at e updated_at.
+1. Reexporta a base abstrata de timestamps.
 
 PONTOS CRITICOS:
-- Alterações nessa base se propagam para vários modelos ao mesmo tempo.
+- Este arquivo nao deve voltar a concentrar implementacao real de bases compartilhadas.
 """
 
-from django.db import models
+from model_support.base import TimeStampedModel
 
 
-class TimeStampedModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
+__all__ = ['TimeStampedModel']

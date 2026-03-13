@@ -13,9 +13,9 @@ PONTOS CRITICOS:
 - Este arquivo não deve voltar a resolver ORM nem registrar mensagem diretamente.
 """
 
-from boxcore.models import Student
 from communications.application.commands import FinanceCommunicationActionCommand
 from communications.infrastructure import execute_finance_communication_action_command, get_message_log
+from students.models import Student
 
 
 def handle_finance_communication_action(*, actor, payload):

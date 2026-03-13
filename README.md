@@ -58,6 +58,12 @@ Hoje o sistema tem tres camadas principais:
 2. catalogo visual para alunos e financeiro
 3. backoffice admin e auditoria
 
+Importante para leitura tecnica atual:
+
+1. `boxcore` ja nao deve ser lido como centro do runtime
+2. ele permanece no projeto como app legado de estado do Django
+3. o runtime atual deve preferir apps reais como `access`, `catalog`, `operations`, `students`, `finance`, `auditing`, `communications`, `api`, `integrations` e `jobs`
+
 Nas areas com maior volume de regra, a base foi organizada de forma mais explicita:
 
 1. views HTTP por dominio
@@ -66,7 +72,27 @@ Nas areas com maior volume de regra, a base foi organizada de forma mais explici
 
 Se quiser estudar a base em ordem pedagógica, use [docs/reading-guide.md](docs/reading-guide.md).
 
+Se quiser entender especificamente o que ainda prende o estado historico em `boxcore`, use [docs/boxcore-model-state-plan.md](docs/boxcore-model-state-plan.md) e [docs/boxcore-state-residue-inventory.md](docs/boxcore-state-residue-inventory.md).
+
 Se quiser entender a direcao tecnica para crescer sem perder simplicidade, use [docs/architecture-growth-plan.md](docs/architecture-growth-plan.md).
+
+Se quiser entender a estrategia especifica para fazer o negocio deixar de depender de Django como core, use [docs/django-core-strategy.md](docs/django-core-strategy.md) e [docs/django-decoupling-blueprint.md](docs/django-decoupling-blueprint.md).
+
+Se quiser entender o novo CENTER arquitetural que separa nivel de acesso e nucleo interno, use [docs/center-layer.md](docs/center-layer.md).
+
+Se quiser entender a estrutura complementar de sinais, integracoes e expansao transversal do sistema, use [docs/signal-mesh.md](docs/signal-mesh.md).
+
+Se quiser entender como a arquitetura trata suportes temporarios de construcao sem confundi-los com a estrutura final, use [docs/scaffold-agents.md](docs/scaffold-agents.md).
+
+Se quiser entender a camada superior de emissao visivel e sinalizacao confiavel do estado do sistema, use [docs/red-beacon.md](docs/red-beacon.md).
+
+Se quiser entender a escalada maxima de alerta e a mudanca de postura defensiva do predio, use [docs/vertical-sky-beam.md](docs/vertical-sky-beam.md) e [docs/alert-siren.md](docs/alert-siren.md).
+
+Se quiser uma visao consolidada de todo o predio arquitetural em um unico documento, use [docs/octobox-architecture-model.md](docs/octobox-architecture-model.md).
+
+Essa estrutura tambem passou a ser definida como elástica com baseline fixo, expansao controlada e retorno seguro ao estado basal quando houver risco estrutural.
+
+Se quiser estudar o criterio arquitetural por tras das decisoes, reaplicar esse metodo em outros projetos e aprender os termos em linguagem simples, use [docs/personal-architecture-framework.md](docs/personal-architecture-framework.md), [docs/architecture-terms-glossary.md](docs/architecture-terms-glossary.md) e [docs/personal-growth-roadmap.md](docs/personal-growth-roadmap.md).
 
 Se quiser entender o raciocinio da primeira entrega, as decisoes tomadas e o que eu aprendi no processo, veja [docs/v1-retrospective.md](docs/v1-retrospective.md).
 

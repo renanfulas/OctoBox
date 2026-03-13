@@ -13,7 +13,7 @@ PONTOS CRITICOS:
 - Este arquivo nao deve voltar a concentrar ORM nem regra de calculo financeiro.
 """
 
-from boxcore.models import Payment
+from finance.models import Payment
 from students.application.commands import StudentPaymentRegenerationCommand, StudentPaymentScheduleCommand
 from students.application.payment_terms import advance_due_date, shift_month
 from students.infrastructure.django_payments import (

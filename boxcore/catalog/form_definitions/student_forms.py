@@ -16,15 +16,9 @@ PONTOS CRITICOS:
 from django import forms
 from django.utils import timezone
 
-from boxcore.models import (
-    EnrollmentStatus,
-    MembershipPlan,
-    PaymentMethod,
-    PaymentStatus,
-    Student,
-    StudentStatus,
-)
 from communications.models import IntakeStatus, StudentIntake
+from finance.models import EnrollmentStatus, MembershipPlan, PaymentMethod, PaymentStatus
+from students.models import Student, StudentStatus
 
 
 class StudentDirectoryFilterForm(forms.Form):
