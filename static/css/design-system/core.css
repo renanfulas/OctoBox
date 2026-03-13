@@ -210,6 +210,16 @@ input[readonly] {
     transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
 }
 
+.sidebar-logout-form {
+    margin: 0;
+}
+
+.nav-link-button {
+    width: 100%;
+    font: inherit;
+    cursor: pointer;
+}
+
 .nav-link::before {
     content: "";
     width: 9px;

@@ -15,17 +15,19 @@ PONTOS CRITICOS:
 
 from django.urls import path
 
-from .action_views import AttendanceActionView, PaymentEnrollmentLinkView, ReceptionPreviewPaymentActionView, TechnicalBehaviorNoteCreateView
+from .action_views import AttendanceActionView, PaymentEnrollmentLinkView, ReceptionPaymentActionView, ReceptionPreviewPaymentActionView, TechnicalBehaviorNoteCreateView
 from .base_views import RoleOperationRedirectView
-from .workspace_views import CoachWorkspaceView, DevWorkspaceView, ManagerWorkspaceView, OwnerWorkspaceView, ReceptionPreviewWorkspaceView
+from .workspace_views import CoachWorkspaceView, DevWorkspaceView, ManagerWorkspaceView, OwnerWorkspaceView, ReceptionPreviewWorkspaceView, ReceptionWorkspaceView
 
 urlpatterns = [
     path('operacao/', RoleOperationRedirectView.as_view(), name='role-operations'),
     path('operacao/owner/', OwnerWorkspaceView.as_view(), name='owner-workspace'),
     path('operacao/dev/', DevWorkspaceView.as_view(), name='dev-workspace'),
     path('operacao/manager/', ManagerWorkspaceView.as_view(), name='manager-workspace'),
+    path('operacao/recepcao/', ReceptionWorkspaceView.as_view(), name='reception-workspace'),
     path('operacao/coach/', CoachWorkspaceView.as_view(), name='coach-workspace'),
     path('operacao/recepcao-preview/', ReceptionPreviewWorkspaceView.as_view(), name='reception-preview-workspace'),
+    path('operacao/recepcao/pagamento/<int:payment_id>/acao/', ReceptionPaymentActionView.as_view(), name='reception-payment-action'),
     path('operacao/recepcao-preview/pagamento/<int:payment_id>/acao/', ReceptionPreviewPaymentActionView.as_view(), name='reception-preview-payment-action'),
     path('operacao/pagamento/<int:payment_id>/vincular-matricula/', PaymentEnrollmentLinkView.as_view(), name='payment-enrollment-link'),
     path('operacao/aluno/<int:student_id>/ocorrencia-tecnica/', TechnicalBehaviorNoteCreateView.as_view(), name='technical-behavior-note-create'),

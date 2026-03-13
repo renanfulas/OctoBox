@@ -20,7 +20,7 @@ from django.shortcuts import get_object_or_404
 from django.views import View
 
 from access.permissions import RoleRequiredMixin
-from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
+from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from catalog.forms import PaymentManagementForm
 from catalog.services.student_payment_actions import handle_student_payment_action
 from finance.models import Payment
@@ -74,17 +74,28 @@ class ReceptionPreviewPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, V
     allowed_roles = (ROLE_OWNER,)
 
     def post(self, request, payment_id, *args, **kwargs):
+        return _handle_reception_payment_action(request, payment_id=payment_id, fallback_url='/operacao/recepcao-preview/', success_context='preview da Recepcao')
+
+
+class ReceptionPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = (ROLE_OWNER, ROLE_RECEPTION)
+
+    def post(self, request, payment_id, *args, **kwargs):
+        return _handle_reception_payment_action(request, payment_id=payment_id, fallback_url='/operacao/recepcao/', success_context='Recepcao')
+
+
+def _handle_reception_payment_action(request, *, payment_id, fallback_url, success_context):
         payment = get_object_or_404(Payment.objects.select_related('student'), pk=payment_id)
         action = request.POST.get('action')
         form = PaymentManagementForm(request.POST)
 
         if not form.is_valid():
             messages.error(request, 'A cobranca curta nao foi aplicada. Revise vencimento, metodo e referencia.')
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/operacao/recepcao-preview/'))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', fallback_url))
 
         if action not in ('update-payment', 'mark-paid'):
-            messages.error(request, 'A Recepcao em preparo so permite ajuste curto ou confirmacao de pagamento.')
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/operacao/recepcao-preview/'))
+            messages.error(request, 'A Recepcao so permite ajuste curto ou confirmacao de pagamento nesse fluxo.')
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', fallback_url))
 
         handle_student_payment_action(
             actor=request.user,
@@ -95,8 +106,8 @@ class ReceptionPreviewPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, V
         )
 
         if action == 'mark-paid':
-            messages.success(request, f'Pagamento de {payment.student.full_name} confirmado pelo preview da Recepcao.')
+            messages.success(request, f'Pagamento de {payment.student.full_name} confirmado pela {success_context}.')
         else:
-            messages.success(request, f'Cobranca curta de {payment.student.full_name} ajustada sem sair do preview.')
+            messages.success(request, f'Cobranca curta de {payment.student.full_name} ajustada sem sair da {success_context}.')
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/operacao/recepcao-preview/'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', fallback_url))

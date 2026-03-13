@@ -16,13 +16,14 @@ PONTOS CRITICOS:
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
+from access.roles import ROLE_RECEPTION
 from finance.models import Payment, PaymentStatus
 from operations.models import Attendance, AttendanceStatus, BehaviorNote, ClassSession
 from operations.session_snapshots import serialize_class_session, sync_runtime_statuses
 from students.models import Student, StudentStatus
 
 
-def build_dashboard_snapshot(*, today, month_start):
+def build_dashboard_snapshot(*, today, month_start, role_slug=''):
     active_students = Student.objects.filter(status=StudentStatus.ACTIVE)
     sessions_today = ClassSession.objects.filter(scheduled_at__date=today)
     overdue_payments = Payment.objects.filter(
@@ -57,24 +58,31 @@ def build_dashboard_snapshot(*, today, month_start):
     }
 
     operational_focus = []
+    finance_focus_href = '/operacao/recepcao/#reception-payment-board' if role_slug == ROLE_RECEPTION else '/financeiro/'
+    finance_focus_label = 'Abrir fila curta da Recepcao' if role_slug == ROLE_RECEPTION else 'Abrir financeiro'
+    finance_review_label = 'Revisar fila curta' if role_slug == ROLE_RECEPTION else 'Revisar financeiro'
     if metrics['overdue_payments'] > 0:
         operational_focus.append(
             {
-                'label': 'Cobrança pede ação agora',
-                'summary': f"{metrics['overdue_payments']} pagamento(s) já passaram do vencimento e pedem contato antes de virarem evasão.",
+                'label': 'Caixa curto pede acao agora' if role_slug == ROLE_RECEPTION else 'Cobrança pede ação agora',
+                'summary': (
+                    f"{metrics['overdue_payments']} pagamento(s) ja passaram do vencimento e podem pedir abordagem de balcao ainda hoje."
+                    if role_slug == ROLE_RECEPTION else
+                    f"{metrics['overdue_payments']} pagamento(s) já passaram do vencimento e pedem contato antes de virarem evasão."
+                ),
                 'pill_class': 'warning',
-                'href': '/financeiro/',
-                'href_label': 'Abrir financeiro',
+                'href': finance_focus_href,
+                'href_label': finance_focus_label,
             }
         )
     else:
         operational_focus.append(
             {
-                'label': 'Cobrança está sob controle',
-                'summary': 'Nenhum atraso crítico apareceu no recorte de hoje.',
+                'label': 'Caixa curto esta sob controle' if role_slug == ROLE_RECEPTION else 'Cobrança está sob controle',
+                'summary': 'Nenhum atraso crítico apareceu no recorte de hoje.' if role_slug != ROLE_RECEPTION else 'Nenhuma cobranca curta critica apareceu no recorte de hoje.',
                 'pill_class': 'success',
-                'href': '/financeiro/',
-                'href_label': 'Revisar financeiro',
+                'href': finance_focus_href,
+                'href_label': finance_review_label,
             }
         )
 
@@ -103,7 +111,11 @@ def build_dashboard_snapshot(*, today, month_start):
         operational_focus.append(
             {
                 'label': 'Base ativa exige acompanhamento',
-                'summary': f"{metrics['active_students']} aluno(s) sustentam a operação e pedem leitura de presença, risco e retenção.",
+                'summary': (
+                    f"{metrics['active_students']} aluno(s) sustentam a Recepcao e pedem leitura de ficha, risco e proxima abordagem."
+                    if role_slug == ROLE_RECEPTION else
+                    f"{metrics['active_students']} aluno(s) sustentam a operação e pedem leitura de presença, risco e retenção."
+                ),
                 'pill_class': 'accent',
                 'href': '/alunos/',
                 'href_label': 'Abrir alunos',

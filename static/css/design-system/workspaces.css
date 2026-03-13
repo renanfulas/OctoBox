@@ -212,6 +212,10 @@ PONTOS CRITICOS:
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.operation-metric-grid {
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
 .operation-grid-wide {
     grid-template-columns: 1fr;
 }
@@ -299,6 +303,10 @@ PONTOS CRITICOS:
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(255, 247, 237, 0.94));
 }
 
+.operation-execution-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(239, 246, 255, 0.92));
+}
+
 .operation-focus-list {
     display: grid;
     gap: 14px;
@@ -350,10 +358,12 @@ PONTOS CRITICOS:
     gap: 16px;
 }
 
+.reception-scene,
 .reception-preview-scene {
     gap: calc(var(--section-gap) + 6px);
 }
 
+.reception-hero,
 .reception-preview-hero {
     background:
         radial-gradient(circle at top right, rgba(249, 115, 22, 0.22), transparent 30%),
@@ -361,32 +371,52 @@ PONTOS CRITICOS:
         linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(255, 247, 237, 0.86), rgba(239, 246, 255, 0.94));
 }
 
+.reception-hero .operation-hero-panel,
 .reception-preview-hero .operation-hero-panel {
     background: linear-gradient(160deg, rgba(255, 255, 255, 0.86), rgba(255, 247, 237, 0.98));
 }
 
+.reception-sidecard,
 .reception-preview-sidecard {
     display: grid;
     gap: 12px;
     margin-top: 14px;
 }
 
+.reception-command-card,
 .reception-preview-command-card {
     background: linear-gradient(145deg, rgba(255, 248, 240, 0.92), rgba(240, 249, 255, 0.92));
 }
 
+.reception-support-grid {
+    grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+}
+
+.reception-support-grid > * {
+    min-width: 0;
+}
+
+.reception-command-card {
+    height: 100%;
+    align-content: space-between;
+}
+
+.reception-payment-board,
 .reception-preview-payment-board {
     background: linear-gradient(145deg, rgba(255, 251, 235, 0.88), rgba(255, 255, 255, 0.96));
 }
 
+.reception-payment-grid,
 .reception-preview-payment-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 16px;
 }
 
+.reception-payment-card,
 .reception-preview-payment-card {
     display: grid;
+    grid-template-rows: auto auto auto 1fr auto;
     gap: 14px;
     padding: 18px;
     border-radius: 24px;
@@ -394,16 +424,19 @@ PONTOS CRITICOS:
     background: linear-gradient(160deg, rgba(255, 255, 255, 0.78), rgba(255, 247, 237, 0.96));
 }
 
+.reception-payment-meta,
 .reception-preview-payment-meta {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.reception-payment-form,
 .reception-preview-payment-form {
     display: grid;
     gap: 12px;
     padding-top: 4px;
 }
 
+.reception-payment-actions,
 .reception-preview-payment-actions {
     align-items: stretch;
 }
@@ -413,16 +446,19 @@ PONTOS CRITICOS:
     border: 1px dashed rgba(100, 116, 139, 0.28);
 }
 
+.reception-grid-board,
 .reception-preview-grid-board {
     background: linear-gradient(145deg, rgba(239, 246, 255, 0.76), rgba(255, 255, 255, 0.96));
 }
 
+.reception-grade-grid,
 .reception-preview-grade-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 14px;
 }
 
+.reception-grade-card,
 .reception-preview-grade-card {
     display: grid;
     gap: 14px;
@@ -432,6 +468,7 @@ PONTOS CRITICOS:
     background: linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(239, 246, 255, 0.92));
 }
 
+.reception-grade-stats,
 .reception-preview-grade-stats {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -612,7 +649,8 @@ PONTOS CRITICOS:
 @media (max-width: 1280px) {
     .operation-grid-wide,
     .dashboard-panel-grid,
-    .dashboard-role-grid {
+    .dashboard-role-grid,
+    .reception-support-grid {
         grid-template-columns: 1fr;
     }
 }
@@ -765,7 +803,9 @@ PONTOS CRITICOS:
         align-items: flex-start;
     }
 
+    .reception-payment-meta,
     .reception-preview-payment-meta,
+    .reception-grade-stats,
     .reception-preview-grade-stats {
         grid-template-columns: 1fr;
     }

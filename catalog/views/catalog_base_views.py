@@ -10,11 +10,11 @@ from django.utils import timezone
 from django.views.generic import TemplateView
 
 from access.permissions import RoleRequiredMixin
-from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, get_user_role
+from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
 
 
 class CatalogBaseView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
-    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_COACH)
+    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION, ROLE_COACH)
 
     def get_base_context(self):
         return {

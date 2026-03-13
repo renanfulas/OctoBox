@@ -23,7 +23,7 @@ from access.roles import ROLE_PERMISSION_MAP
 
 
 class Command(BaseCommand):
-    help = 'Cria os grupos Owner, DEV, Manager e Coach com permissões iniciais do projeto.'
+    help = 'Cria os grupos Owner, DEV, Manager, Recepcao e Coach com permissões iniciais do projeto.'
 
     def handle(self, *args, **options):
         model_index = {model._meta.model_name: model for model in apps.get_models()}

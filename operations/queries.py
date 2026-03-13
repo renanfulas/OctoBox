@@ -420,7 +420,7 @@ def _build_reception_payment_reason(payment, *, today):
     return 'Pagamento pede leitura operacional antes de escalar para o financeiro completo.'
 
 
-def build_reception_preview_workspace_snapshot(*, today):
+def _build_reception_workspace_core(*, today):
     pending_intakes = list(get_pending_intakes(limit=6))
     payment_queue = list(
         Payment.objects.select_related('student', 'enrollment__plan')
@@ -460,6 +460,15 @@ def build_reception_preview_workspace_snapshot(*, today):
     ]
 
     return {
+        'pending_intakes': pending_intakes,
+        'payment_queue': payment_queue,
+        'next_sessions': next_sessions,
+        'first_intake': first_intake,
+        'first_payment': first_payment,
+        'next_session': next_session,
+        'active_students': active_students,
+        'overdue_payments': overdue_payments,
+        'due_today': due_today,
         'hero_stats': [
             _build_hero_stat('Entradas', len(pending_intakes)),
             _build_hero_stat('Atrasos', overdue_payments),
@@ -472,6 +481,78 @@ def build_reception_preview_workspace_snapshot(*, today):
             _build_metric_card('operation-kpi-card manager-sky', 'Base alcançada', active_students, 'Volume de alunos que ja sustenta busca rapida, RM visivel e atendimento orientado.'),
             _build_metric_card('operation-kpi-card coach-indigo', 'Proximas aulas', len(next_sessions), 'Leitura guiada da grade para orientar check-in e responder duvidas sem virar agenda tecnica.'),
         ],
+        'payment_methods': list(PaymentMethod.choices),
+        'queue': reception_payment_queue,
+        'intakes': pending_intakes,
+        'sessions': next_sessions,
+    }
+
+
+def build_reception_workspace_snapshot(*, today):
+    data = _build_reception_workspace_core(today=today)
+    first_intake = data['first_intake']
+    first_payment = data['first_payment']
+    next_session = data['next_session']
+
+    return {
+        'hero_stats': data['hero_stats'],
+        'metric_cards': data['metric_cards'],
+        'reception_focus': [
+            {
+                'label': 'Comece por quem acabou de chegar',
+                'summary': (
+                    f'{first_intake.full_name} abre a fila e mostra o melhor ponto para acolher, localizar e converter sem esfriar o atendimento.'
+                    if first_intake else
+                    'Sem entrada pendente agora, entao o balcao pode priorizar caixa curto e orientacao de aulas.'
+                ),
+                'pill_class': 'warning' if first_intake else 'success',
+                'href': '#reception-intake-board',
+                'href_label': 'Ver entradas',
+            },
+            {
+                'label': 'Depois resolva o caixa curto',
+                'summary': (
+                    f'{first_payment.student.full_name} aparece primeiro na fila e ajuda a validar se a cobranca esta clara o suficiente para ser resolvida no balcao.'
+                    if first_payment else
+                    'Sem cobranca curta em fila agora, entao o atendimento pode seguir sem pressao financeira imediata.'
+                ),
+                'pill_class': 'warning' if first_payment else 'info',
+                'href': '#reception-payment-board',
+                'href_label': 'Ver cobranca curta',
+            },
+            {
+                'label': 'Feche orientando a proxima aula',
+                'summary': (
+                    f'{next_session.title} e a proxima aula visivel para responder horario, coach e duvida rapida sem abrir gestao de agenda.'
+                    if next_session else
+                    'Sem aula futura no recorte atual, entao a leitura da grade nao e o ponto de pressao desta rodada.'
+                ),
+                'pill_class': 'accent',
+                'href': '#reception-class-grid-board',
+                'href_label': 'Ver grade em leitura',
+            },
+        ],
+        'reception_boundaries': [
+            'A Recepcao acolhe, localiza, cadastra e encaminha sem assumir o papel do manager.',
+            'A grade aqui continua em leitura apenas: orientar o balcao nao significa gerenciar agenda.',
+            'A cobranca curta resolve pagamento e ajuste simples sem abrir o centro financeiro completo.',
+        ],
+        'reception_payment_methods': data['payment_methods'],
+        'reception_queue': data['queue'],
+        'reception_intakes': data['intakes'],
+        'reception_sessions': data['sessions'],
+    }
+
+
+def build_reception_preview_workspace_snapshot(*, today):
+    data = _build_reception_workspace_core(today=today)
+    first_intake = data['first_intake']
+    first_payment = data['first_payment']
+    next_session = data['next_session']
+
+    return {
+        'hero_stats': data['hero_stats'],
+        'metric_cards': data['metric_cards'],
         'reception_preview_focus': [
             {
                 'label': 'Comece pelo balcao vivo',
@@ -512,10 +593,10 @@ def build_reception_preview_workspace_snapshot(*, today):
             'A Recepcao aqui combina aluno, grade em leitura e cobranca curta sem receber o financeiro inteiro.',
             'O marco simbolico continua reservado para quando a area estiver pronta para ser promovida a superficie oficial.',
         ],
-        'reception_preview_payment_methods': list(PaymentMethod.choices),
-        'reception_preview_queue': reception_payment_queue,
-        'reception_preview_intakes': pending_intakes,
-        'reception_preview_sessions': next_sessions,
+        'reception_preview_payment_methods': data['payment_methods'],
+        'reception_preview_queue': data['queue'],
+        'reception_preview_intakes': data['intakes'],
+        'reception_preview_sessions': data['sessions'],
     }
 
 
@@ -524,5 +605,6 @@ __all__ = [
     'build_dev_workspace_snapshot',
     'build_manager_workspace_snapshot',
     'build_owner_workspace_snapshot',
+    'build_reception_workspace_snapshot',
     'build_reception_preview_workspace_snapshot',
 ]

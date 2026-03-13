@@ -255,7 +255,7 @@ PONTOS CRITICOS:
 
                 <div class="actions actions-tight">
                     <button class="button" type="submit">{% if page_mode == 'create' %}Salvar aluno{% else %}Salvar ajustes{% endif %}</button>
-                    {% if student_object %}
+                    {% if student_object and can_open_student_admin %}
                     <a class="button secondary" href="/admin/boxcore/student/{{ student_object.id }}/change/">Editar no admin</a>
                     {% endif %}
                 </div>
@@ -375,9 +375,11 @@ PONTOS CRITICOS:
             <div class="actions actions-tight">
                 <button class="button" type="submit" name="action" value="update-payment">Salvar cobranca</button>
                 <button class="button secondary" type="submit" name="action" value="mark-paid">Confirmar pagamento</button>
+                {% if can_manage_student_payments_full %}
                 <button class="button secondary" type="submit" name="action" value="refund-payment">Estornar</button>
                 <button class="button secondary" type="submit" name="action" value="cancel-payment">Cancelar</button>
                 <button class="button secondary" type="submit" name="action" value="regenerate-payment">Regenerar</button>
+                {% endif %}
             </div>
         </form>
     </article>

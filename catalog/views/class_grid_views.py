@@ -11,7 +11,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import FormView
 
-from access.roles import ROLE_MANAGER, ROLE_OWNER
+from access.roles import ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from catalog.class_grid_queries import build_class_grid_snapshot
 from catalog.forms import ClassScheduleRecurringForm, ClassSessionQuickEditForm
 from operations.facade import run_class_schedule_create, run_class_session_delete, run_class_session_update
@@ -67,7 +67,9 @@ class ClassGridView(CatalogBaseView, FormView):
         context['monthly_calendar'] = snapshot['monthly_calendar']
         context['class_metrics'] = snapshot['class_metrics']
         context['selected_month_label'] = snapshot['selected_month_label']
-        context['can_manage_classes'] = context['current_role'].slug in (ROLE_OWNER, ROLE_MANAGER)
+        role_slug = context['current_role'].slug
+        context['can_manage_classes'] = role_slug in (ROLE_OWNER, ROLE_MANAGER)
+        context['can_open_class_admin'] = role_slug in (ROLE_OWNER, ROLE_MANAGER)
         context['schedule_form'] = kwargs.get('form') or self.get_form()
         selected_session = kwargs.get('selected_session') or self._get_selected_session()
         context['selected_session'] = selected_session

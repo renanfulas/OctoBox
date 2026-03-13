@@ -15,7 +15,7 @@ from django.views import View
 from django.views.generic import FormView
 
 from access.permissions import RoleRequiredMixin
-from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
+from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from catalog.forms import EnrollmentManagementForm, PaymentManagementForm, StudentQuickForm
 from catalog.services.student_enrollment_actions import handle_student_enrollment_action
 from catalog.services.student_payment_actions import handle_student_payment_action
@@ -74,16 +74,19 @@ class StudentDirectoryView(CatalogBaseView):
             'A gerencia usa esta leitura para enxergar quem exige contato comercial, ajuste de plano ou acao financeira.',
             'O foco aqui e praticidade: triagem primeiro, detalhe depois.',
         ]
+        current_role_slug = context['current_role'].slug
         context['student_export_links'] = {
             'csv': f"{reverse('student-directory-export', args=['csv'])}?{self.request.GET.urlencode()}",
             'pdf': f"{reverse('student-directory-export', args=['pdf'])}?{self.request.GET.urlencode()}",
         }
-        context['can_manage_students'] = context['current_role'].slug in (ROLE_OWNER, ROLE_MANAGER)
+        context['can_manage_students'] = current_role_slug in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
+        context['can_export_students'] = current_role_slug in (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER)
+        context['can_open_student_admin'] = current_role_slug in (ROLE_OWNER, ROLE_MANAGER)
         return context
 
 
 class StudentQuickBaseView(CatalogBaseView, FormView):
-    allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
     form_class = StudentQuickForm
     template_name = 'catalog/student-form.html'
     page_mode = 'create'
@@ -164,8 +167,11 @@ class StudentQuickBaseView(CatalogBaseView, FormView):
         context['student_object'] = self.object
         context['selected_intake'] = selected_intake
         context['financial_overview'] = financial_overview
-        context['payment_management_form'] = self.get_payment_management_form()
-        context['enrollment_management_form'] = self.get_enrollment_management_form()
+        role_slug = context['current_role'].slug
+        context['payment_management_form'] = self.get_payment_management_form() if role_slug in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION) else None
+        context['enrollment_management_form'] = self.get_enrollment_management_form() if role_slug in (ROLE_OWNER, ROLE_MANAGER) else None
+        context['can_open_student_admin'] = role_slug in (ROLE_OWNER, ROLE_MANAGER)
+        context['can_manage_student_payments_full'] = role_slug in (ROLE_OWNER, ROLE_MANAGER)
         context['student_form_operational_focus'] = [
             {
                 'label': 'Comece pelo núcleo do cadastro',
@@ -249,12 +255,17 @@ class StudentQuickUpdateView(StudentQuickBaseView):
 
 
 class StudentPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
-    allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
 
     def post(self, request, student_id, *args, **kwargs):
         student = get_object_or_404(Student, pk=student_id)
         action = request.POST.get('action')
         payment = get_object_or_404(Payment, pk=request.POST.get('payment_id'), student=student)
+
+        restricted_actions = {'refund-payment', 'cancel-payment', 'regenerate-payment'}
+        if action in restricted_actions and ROLE_RECEPTION in set(request.user.groups.values_list('name', flat=True)):
+            messages.error(request, 'A Recepcao so pode salvar cobranca ou confirmar pagamento neste fluxo.')
+            return redirect('student-quick-update', student_id=student.id)
 
         if action == 'update-payment':
             form = PaymentManagementForm(request.POST)

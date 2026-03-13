@@ -12,13 +12,14 @@ PONTOS CRITICOS:
 - qualquer regressao aqui afeta a experiencia operacional por papel.
 """
 
-from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
+from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 
 from operations.facade import (
     build_coach_workspace_snapshot,
     build_dev_workspace_snapshot,
     build_manager_workspace_snapshot,
     build_owner_workspace_snapshot,
+    build_reception_workspace_snapshot,
     build_reception_preview_workspace_snapshot,
 )
 
@@ -88,4 +89,18 @@ class ReceptionPreviewWorkspaceView(OperationBaseView):
         context.update(self.get_base_context())
         context.update(build_reception_preview_workspace_snapshot(today=context['today']))
         context['can_manage_reception_preview_payments'] = context['current_role'].slug == ROLE_OWNER
+        return context
+
+
+class ReceptionWorkspaceView(OperationBaseView):
+    allowed_roles = (ROLE_OWNER, ROLE_RECEPTION)
+    template_name = 'operations/reception.html'
+    page_title = 'Minha operação'
+    page_subtitle = 'Workspace da Recepcao para acolher chegada, orientar a grade e resolver cobranca curta sem cair no administrativo amplo.'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_base_context())
+        context.update(build_reception_workspace_snapshot(today=context['today']))
+        context['can_manage_reception_payments'] = context['current_role'].slug in (ROLE_OWNER, ROLE_RECEPTION)
         return context

@@ -18,7 +18,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER
+from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION
 from auditing.models import AuditEvent
 from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
 from operations.models import Attendance, BehaviorNote, ClassSession
@@ -33,11 +33,13 @@ class OperationWorkspaceTests(TestCase):
         self.manager = user_model.objects.create_user('manager1', password='senha-forte-123')
         self.coach = user_model.objects.create_user('coach1', password='senha-forte-123')
         self.dev = user_model.objects.create_user('dev1', password='senha-forte-123')
+        self.reception = user_model.objects.create_user('reception1', password='senha-forte-123')
         self.owner = user_model.objects.create_superuser('owner1', 'owner1@example.com', 'senha-forte-123')
 
         self.manager.groups.add(Group.objects.get(name=ROLE_MANAGER))
         self.coach.groups.add(Group.objects.get(name=ROLE_COACH))
         self.dev.groups.add(Group.objects.get(name=ROLE_DEV))
+        self.reception.groups.add(Group.objects.get(name=ROLE_RECEPTION))
 
         self.student = Student.objects.create(full_name='Aluno Teste', phone='5511933333333')
         self.session = ClassSession.objects.create(title='WOD 07h', scheduled_at=timezone.now())
@@ -68,6 +70,13 @@ class OperationWorkspaceTests(TestCase):
         response = self.client.get(reverse('role-operations'))
 
         self.assertRedirects(response, reverse('dev-workspace'))
+
+    def test_role_operations_redirects_reception_to_reception_area(self):
+        self.client.force_login(self.reception)
+
+        response = self.client.get(reverse('role-operations'))
+
+        self.assertRedirects(response, reverse('reception-workspace'))
 
     def test_coach_cannot_access_manager_area(self):
         self.client.force_login(self.coach)
@@ -103,6 +112,21 @@ class OperationWorkspaceTests(TestCase):
         self.client.force_login(self.manager)
 
         response = self.client.get(reverse('reception-preview-workspace'))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_reception_can_access_official_reception_workspace(self):
+        self.client.force_login(self.reception)
+
+        response = self.client.get(reverse('reception-workspace'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Centro da recepcao')
+
+    def test_manager_cannot_access_official_reception_workspace(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.get(reverse('reception-workspace'))
 
         self.assertEqual(response.status_code, 403)
 
@@ -147,6 +171,53 @@ class OperationWorkspaceTests(TestCase):
         self.assertEqual(response.status_code, 403)
         self.payment.refresh_from_db()
         self.assertEqual(self.payment.status, PaymentStatus.PENDING)
+
+    def test_reception_can_mark_payment_paid_from_official_reception_workspace(self):
+        self.client.force_login(self.reception)
+
+        response = self.client.post(
+            reverse('reception-payment-action', args=[self.payment.id]),
+            data={
+                'payment_id': self.payment.id,
+                'amount': self.payment.amount,
+                'due_date': str(self.payment.due_date),
+                'method': PaymentMethod.CASH,
+                'reference': 'BALCAO-RECEPCAO',
+                'notes': 'Recebido na recepcao oficial.',
+                'action': 'mark-paid',
+            },
+            HTTP_REFERER=reverse('reception-workspace'),
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.payment.refresh_from_db()
+        self.assertEqual(self.payment.status, PaymentStatus.PAID)
+        self.assertEqual(self.payment.method, PaymentMethod.CASH)
+
+    def test_reception_can_access_students_and_class_grid_but_not_finance_center(self):
+        self.client.force_login(self.reception)
+
+        students_response = self.client.get(reverse('student-directory'))
+        class_grid_response = self.client.get(reverse('class-grid'))
+        finance_response = self.client.get(reverse('finance-center'))
+
+        self.assertEqual(students_response.status_code, 200)
+        self.assertEqual(class_grid_response.status_code, 200)
+        self.assertEqual(finance_response.status_code, 403)
+
+    def test_reception_sidebar_hides_finance_link(self):
+        self.client.force_login(self.reception)
+
+        response = self.client.get(reverse('reception-workspace'))
+
+        self.assertNotContains(response, 'href="/financeiro/"')
+
+    def test_reception_topbar_finance_chip_points_to_reception_queue(self):
+        self.client.force_login(self.reception)
+
+        response = self.client.get(reverse('reception-workspace'))
+
+        self.assertContains(response, 'href="/operacao/recepcao/#reception-payment-board"')
 
     def test_coach_can_check_in_attendance(self):
         self.client.force_login(self.coach)
