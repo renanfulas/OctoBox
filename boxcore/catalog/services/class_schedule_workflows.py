@@ -2,22 +2,13 @@
 ARQUIVO: fachada historica do workflow recorrente da grade.
 
 POR QUE ELE EXISTE:
-- preserva a API antiga enquanto a entrada publica real passa a morar em operations.facade.class_grid.
+- preserva a API antiga enquanto a entrada publica real passa a morar em catalog.services.class_schedule_workflows.
 
 O QUE ESTE ARQUIVO FAZ:
-1. encaminha a criacao recorrente para a facade publica de class grid.
-2. adapta o resultado novo para o formato historico esperado por chamadores legados.
+1. Reexporta o workflow publico atual da grade.
 
 PONTOS CRITICOS:
-- novos entrypoints devem preferir operations.facade.class_grid diretamente.
+- novos entrypoints devem preferir catalog.services.class_schedule_workflows ou operations.facade.class_grid diretamente.
 """
 
-from operations.facade import run_class_schedule_create
-
-
-def run_class_schedule_create_workflow(*, actor, form):
-    result = run_class_schedule_create(actor=actor, form=form)
-    return {
-        'created_sessions': result.created_sessions,
-        'skipped_slots': result.skipped_slots,
-    }
+from catalog.services.class_schedule_workflows import run_class_schedule_create_workflow

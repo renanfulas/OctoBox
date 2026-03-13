@@ -73,6 +73,59 @@ class ClassGridView(CatalogBaseView, FormView):
         context['selected_session'] = selected_session
         context['session_edit_form'] = kwargs.get('session_edit_form') or (ClassSessionQuickEditForm(instance=selected_session) if selected_session else None)
         context['current_query_string'] = self._get_return_query_string()
+        today_schedule = snapshot['today_schedule']
+        grouped_sessions = snapshot['grouped_sessions']
+        monthly_calendar = snapshot['monthly_calendar']
+        today_sessions = today_schedule['sessions'] if today_schedule else []
+        today_pressure_count = sum(
+            1 for item in today_sessions
+            if item['occupied_slots'] >= item['capacity'] or item['occupancy_percent'] >= 85
+        )
+        busiest_day = max(grouped_sessions, key=lambda item: len(item['sessions']), default=None)
+        busy_days = sum(
+            1
+            for week in monthly_calendar
+            for day in week
+            if day['is_in_month'] and day['session_count'] >= 8
+        )
+        free_days = sum(
+            1
+            for week in monthly_calendar
+            for day in week
+            if day['is_in_month'] and day['session_count'] == 0
+        )
+        context['class_grid_operational_focus'] = [
+            {
+                'title': 'Comece pelo ritmo de hoje',
+                'summary': (
+                    f"{len(today_sessions)} aula(s) entram no dia e {today_pressure_count} horario(s) ja pedem olho na lotacao."
+                    if today_schedule else
+                    'Nao ha aula marcada hoje, entao vale revisar o restante da janela para nao descobrir vazios tarde demais.'
+                ),
+                'action_label': 'Abrir agenda de hoje',
+                'action_href': '#today-board',
+            },
+            {
+                'title': 'Depois leia o pico da janela',
+                'summary': (
+                    f"O maior volume da janela cai em {busiest_day['date'].strftime('%d/%m')} com {len(busiest_day['sessions'])} aula(s)."
+                    if busiest_day else
+                    'A janela atual ainda nao tem concentracao suficiente para gerar pico de agenda.'
+                ),
+                'action_label': 'Ver visao semanal',
+                'action_href': '#weekly-board',
+            },
+            {
+                'title': 'Feche com o ajuste do mes',
+                'summary': (
+                    f"O mes tem {busy_days} dia(s) com agenda carregada e {free_days} dia(s) livres para redistribuir a grade."
+                    if context['can_manage_classes'] else
+                    f"O mes mostra {busy_days} dia(s) carregados e {free_days} dia(s) livres para voce acompanhar com antecedencia."
+                ),
+                'action_label': 'Abrir mapa do mes' if not context['can_manage_classes'] else 'Revisar mes e planner',
+                'action_href': '#monthly-board' if not context['can_manage_classes'] else '#planner-board',
+            },
+        ]
         context['class_focus'] = [
             'Use esta tela para validar rapidamente a agenda real da equipe sem abrir o admin toda hora.',
             'A grade destaca volume de reservas, pressao de lotacao e distribuicao das aulas por dia.',

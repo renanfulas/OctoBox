@@ -20,22 +20,21 @@ PONTOS CRITICOS:
     <section class="hero operation-hero dashboard-hero">
         <div class="operation-hero-main">
             <div>
-                <p class="eyebrow">Cockpit do box</p>
-                <h1>Operação do box em um painel só.</h1>
+                <p class="eyebrow">Leitura central do dia</p>
+                <h1>Veja primeiro o que pede ação agora.</h1>
                 <p class="operation-hero-copy">
-                    Esta primeira implementação já concentra cadastro, aulas, presença, pagamentos e ocorrências.
-                    O núcleo foi pensado para crescer depois com WhatsApp, avaliação física e controle de cargas.
+                    Este painel existe para orientar a operação sem exigir caça de informação. Em poucos segundos, você precisa entender a pressão do dia, a fila mais sensível e para onde olhar primeiro.
                 </p>
             </div>
             <div class="operation-hero-tags">
                 <span class="pill">{{ current_role.label }}</span>
-                <span class="pill info">Leitura unificada da operação</span>
-                <span class="pill accent">Retorno rápido para gestão</span>
+                <span class="pill info">Painel de decisão</span>
+                <span class="pill accent">Próxima ação acima de tudo</span>
             </div>
             <div class="actions">
-                <a class="button secondary" href="/acessos/">Ver papéis e acessos</a>
-                <a class="button" href="/admin/">Entrar no admin</a>
-                <a class="button secondary" href="/admin/auth/user/add/">Criar usuário</a>
+                <a class="button" href="/alunos/">Abrir alunos</a>
+                <a class="button secondary" href="/financeiro/">Abrir financeiro</a>
+                <a class="button secondary" href="/grade-aulas/">Abrir grade</a>
             </div>
         </div>
         <aside class="operation-hero-side">
@@ -44,13 +43,38 @@ PONTOS CRITICOS:
     </section>
 
     <section class="layout-grid dashboard-role-grid align-start">
+        <article class="table-card dashboard-table-card dashboard-focus-card">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Comece por aqui</p>
+                    <h2 class="operation-card-title">Três leituras para não se perder</h2>
+                    <p class="operation-card-copy">Este bloco filtra o dia em prioridades simples, para você não gastar energia interpretando o painel inteiro antes de agir.</p>
+                </div>
+                <span class="pill accent">Foco operacional</span>
+            </div>
+            <div class="dashboard-focus-list">
+                {% for item in operational_focus %}
+                <article class="dashboard-focus-item">
+                    <div class="dashboard-focus-copy">
+                        <p class="eyebrow">{{ item.label }}</p>
+                        <p>{{ item.summary }}</p>
+                    </div>
+                    <div class="dashboard-focus-actions">
+                        <span class="pill {{ item.pill_class }}">prioridade</span>
+                        <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </article>
+
         {% include "includes/ui/info_list_card.html" with eyebrow="Escopo do seu papel hoje" title="Como este usuário deveria operar" copy="A camada de acessos já está preparada para começar a separar dono, gerente e coach." pill_label=current_role.label pill_class="info" items=role_capabilities empty_text="Defina um grupo de acesso para este usuário." %}
 
         <article class="table-card dashboard-table-card">
             <div class="operation-card-head">
                 <div>
-                    <p class="eyebrow">Papéis pensados para o produto</p>
-                    <h2 class="operation-card-title">Mapa de responsabilidades</h2>
+                    <p class="eyebrow">Mapa de papéis</p>
+                    <h2 class="operation-card-title">Quem deve olhar o quê</h2>
                 </div>
                 <span class="pill accent">{{ role_definitions|length }} papéis</span>
             </div>
@@ -81,7 +105,7 @@ PONTOS CRITICOS:
         {% endfor %}
     </section>
 
-    <section class="quick-grid">
+    <section class="quick-grid dashboard-quick-grid">
         {% for action in dashboard_quick_actions %}
         {% include "includes/ui/quick_action_card.html" with action=action %}
         {% endfor %}
@@ -92,7 +116,7 @@ PONTOS CRITICOS:
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Próximas aulas</p>
-                    <h2 class="operation-card-title">A agenda que está chegando</h2>
+                    <h2 class="operation-card-title">O que vai movimentar a recepção e o coach</h2>
                     <p class="operation-card-copy">Visão rápida das próximas turmas para alinhar coach, recepção e ocupação.</p>
                 </div>
                 <span class="pill info">{{ upcoming_sessions|length }} aula(s)</span>
@@ -131,7 +155,7 @@ PONTOS CRITICOS:
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Alertas financeiros</p>
-                    <h2 class="operation-card-title">Quem já pede ação de cobrança</h2>
+                    <h2 class="operation-card-title">Quem já pede contato hoje</h2>
                     <p class="operation-card-copy">Use esta fila para atacar atraso antes que ele vire evasão ou ruído de caixa.</p>
                 </div>
                 <span class="pill warning">{{ payment_alerts|length }} alerta(s)</span>
@@ -166,7 +190,7 @@ PONTOS CRITICOS:
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Risco operacional por aluno</p>
-                    <h2 class="operation-card-title">Quem pode pedir atenção antes de esfriar</h2>
+                    <h2 class="operation-card-title">Quem pode esfriar se ninguém agir</h2>
                     <p class="operation-card-copy">Leitura simples de presença e ausência para separar base estável de base que já pede intervenção.</p>
                 </div>
                 <span class="pill accent">{{ student_health|length }} aluno(s)</span>

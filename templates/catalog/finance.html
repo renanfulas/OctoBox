@@ -23,22 +23,23 @@ PONTOS CRITICOS:
     <section class="hero operation-hero finance-hero">
         <div class="operation-hero-main">
             <div>
-                <p class="eyebrow">Motor comercial</p>
+                <p class="eyebrow">Centro financeiro</p>
                 <h1>{{ page_title }}</h1>
-                <p class="operation-hero-copy">{{ page_subtitle }}</p>
+                <p class="operation-hero-copy">Esta tela precisa mostrar caixa, pressão e próxima ação sem leitura cansativa. Primeiro cobrança, depois carteira, depois tendência.</p>
             </div>
             <div class="operation-hero-tags">
                 <span class="pill">Leitura comercial</span>
-                <span class="pill info">Caixa, retenção e carteira</span>
-                <span class="pill accent">Ação operacional guiada</span>
+                <span class="pill info">Caixa, cobrança e retenção</span>
+                <span class="pill accent">Próxima ação acima de análise longa</span>
             </div>
             <div class="actions">
+                <a class="button" href="#finance-rail-board">Ver régua</a>
+                <a class="button secondary" href="#finance-queue-board">Ver fila financeira</a>
                 {% if can_manage_finance %}
-                <a class="button" href="#cadastro-plano">Cadastrar plano</a>
+                <a class="button secondary" href="#cadastro-plano">Cadastrar plano</a>
                 {% endif %}
                 <a class="button secondary" href="{{ finance_export_links.csv }}">Exportar CSV</a>
                 <a class="button secondary" href="{{ finance_export_links.pdf }}">Exportar PDF</a>
-                <a class="button secondary" href="/admin/boxcore/payment/">Abrir pagamentos no admin</a>
             </div>
         </div>
         <aside class="operation-hero-side">
@@ -76,6 +77,31 @@ PONTOS CRITICOS:
             <div class="metric-spark"></div>
         </article>
         {% endfor %}
+    </section>
+
+    <section class="table-card finance-glass-panel finance-focus-card">
+        <div class="operation-card-head">
+            <div>
+                <p class="eyebrow">Comece por aqui</p>
+                <h2 class="operation-card-title">Três leituras para não se perder no financeiro</h2>
+                <p class="operation-card-copy">Antes de analisar gráfico, plano ou mix, descubra onde está a pressão operacional do momento.</p>
+            </div>
+            <span class="pill accent">Foco financeiro</span>
+        </div>
+        <div class="finance-focus-list">
+            {% for item in finance_operational_focus %}
+            <article class="finance-focus-item">
+                <div class="finance-focus-copy">
+                    <p class="eyebrow">{{ item.label }}</p>
+                    <p>{{ item.summary }}</p>
+                </div>
+                <div class="finance-focus-actions">
+                    <span class="pill {{ item.pill_class }}">prioridade</span>
+                    <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
     </section>
 
     <section class="finance-board">
@@ -148,7 +174,7 @@ PONTOS CRITICOS:
             </article>
         </div>
 
-        <article class="table-card finance-glass-panel finance-board-rail">
+        <article class="table-card finance-glass-panel finance-board-rail" id="finance-rail-board">
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Régua de cobrança e retenção</p>
@@ -189,7 +215,7 @@ PONTOS CRITICOS:
             </div>
         </article>
 
-        <article class="table-card finance-glass-panel finance-board-queue">
+        <article class="table-card finance-glass-panel finance-board-queue" id="finance-queue-board">
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Fila financeira</p>
@@ -233,7 +259,7 @@ PONTOS CRITICOS:
             </div>
         </article>
 
-        <article class="table-card finance-glass-panel finance-board-trend">
+        <article class="table-card finance-glass-panel finance-board-trend" id="finance-trend-board">
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Tendência mensal</p>

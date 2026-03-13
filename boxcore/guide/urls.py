@@ -1,20 +1,16 @@
 """
-ARQUIVO: rotas do guia interno do sistema.
+ARQUIVO: rotas compativeis do guia interno do sistema.
 
 POR QUE ELE EXISTE:
-- Separa as páginas pedagógicas e de apoio técnico do restante da aplicação.
+- mantem imports historicos funcionando enquanto as rotas canonicas vivem em guide.urls.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Publica a página Mapa do Sistema.
+1. reexporta a rota real do Mapa do Sistema.
 
 PONTOS CRITICOS:
-- Mudança no nome da rota impacta links do menu e testes.
+- este arquivo nao deve voltar a ser a fonte principal das rotas.
 """
 
-from django.urls import path
+from guide.urls import urlpatterns
 
-from .views import SystemMapView
-
-urlpatterns = [
-    path('mapa-sistema/', SystemMapView.as_view(), name='system-map'),
-]
+__all__ = ['urlpatterns']

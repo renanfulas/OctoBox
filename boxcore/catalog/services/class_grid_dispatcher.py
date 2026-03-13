@@ -1,33 +1,24 @@
 """
-ARQUIVO: dispatcher operacional da grade de aulas.
+ARQUIVO: dispatcher operacional legado da grade de aulas.
 
 POR QUE ELE EXISTE:
-- evita que a view conheca strings soltas de form_kind e action, deixando a resolucao do fluxo em um ponto unico.
+- preserva imports antigos enquanto a superficie canonica vive em catalog.services.class_grid_dispatcher.
 
 O QUE ESTE ARQUIVO FAZ:
-1. resolve o tipo de post enviado pela grade.
-2. resolve o command de acao rapida da aula.
-3. centraliza os defaults e erros de despacho da tela.
+1. Reexporta o dispatcher publico atual da grade.
 
 PONTOS CRITICOS:
-- se o mapeamento aqui ficar inconsistente, a view perde a capacidade de despachar os fluxos corretos.
+- se esse mapeamento divergir da UI, a grade deixa de despachar corretamente.
 """
 
-from operations.application.class_grid_dispatcher import (
+from catalog.services.class_grid_dispatcher import (
     FORM_KIND_PLANNER,
     FORM_KIND_SESSION_ACTION,
     FORM_KIND_SESSION_EDIT,
     SESSION_ACTION_DELETE,
     resolve_class_grid_form_kind,
-    resolve_class_grid_session_action as resolve_class_grid_session_action_name,
+    resolve_class_grid_session_action,
 )
-
-from .class_grid_commands import CLASS_GRID_ACTION_COMMANDS
-
-
-def resolve_class_grid_session_action(post_data):
-    action = resolve_class_grid_session_action_name(post_data)
-    return CLASS_GRID_ACTION_COMMANDS[action]
 
 
 __all__ = [

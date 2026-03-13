@@ -1,0 +1,20 @@
+"""
+ARQUIVO: rotas do guia interno do sistema.
+
+POR QUE ELE EXISTE:
+- separa as paginas pedagogicas e de apoio tecnico do restante da aplicacao no app real guide.
+
+O QUE ESTE ARQUIVO FAZ:
+1. publica a pagina Mapa do Sistema.
+
+PONTOS CRITICOS:
+- mudanca no nome da rota impacta links do menu e testes.
+"""
+
+from django.urls import path
+
+from .views import SystemMapView
+
+urlpatterns = [
+    path('mapa-sistema/', SystemMapView.as_view(), name='system-map'),
+]

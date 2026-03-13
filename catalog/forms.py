@@ -1,30 +1,36 @@
 """
-ARQUIVO: fachada publica dos formularios do catalogo.
+ARQUIVO: superficie publica dos formularios do catalogo.
 
 POR QUE ELE EXISTE:
-- Permite que o app catalog consuma seus formularios sem depender diretamente do namespace historico boxcore.catalog.
+- permite que o app catalog consuma seus formularios pelo proprio dominio, com implementacao real fora do namespace legado.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Reexporta os formularios usados pela casca HTTP do catalogo.
+1. reexporta os formularios usados pela casca HTTP do catalogo.
 
 PONTOS CRITICOS:
-- A implementacao real continua historica nesta fase; este arquivo so estabiliza a fronteira de importacao.
+- os nomes exportados aqui sustentam views, queries e testes do catalogo.
 """
 
-from boxcore.catalog.forms import (
+from .form_definitions import (
+    ClassGridFilterForm,
     ClassScheduleRecurringForm,
     ClassSessionQuickEditForm,
     EnrollmentManagementForm,
+    FinanceFilterForm,
     MembershipPlanQuickForm,
     PaymentManagementForm,
+    StudentDirectoryFilterForm,
     StudentQuickForm,
 )
 
 __all__ = [
+    'ClassGridFilterForm',
     'ClassScheduleRecurringForm',
     'ClassSessionQuickEditForm',
     'EnrollmentManagementForm',
+    'FinanceFilterForm',
     'MembershipPlanQuickForm',
     'PaymentManagementForm',
+    'StudentDirectoryFilterForm',
     'StudentQuickForm',
 ]

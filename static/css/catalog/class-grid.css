@@ -18,6 +18,22 @@ PONTOS CRITICOS:
     overflow: hidden;
 }
 
+.class-grid-scene {
+    gap: var(--section-gap);
+}
+
+.class-grid-hero {
+    background:
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.14), transparent 28%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(59, 130, 246, 0.08), rgba(16, 185, 129, 0.08)),
+        var(--surface);
+}
+
+.class-grid-hero .operation-hero-panel {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(239, 246, 255, 0.96));
+}
+
 .class-grid-insight-strip {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -27,6 +43,60 @@ PONTOS CRITICOS:
 
 .class-grid-insight-card {
     height: 100%;
+}
+
+.class-grid-quick-grid {
+    display: grid;
+    gap: 18px;
+}
+
+.class-grid-focus-card {
+    display: grid;
+    gap: 18px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(239, 246, 255, 0.94));
+}
+
+.class-grid-focus-head {
+    align-items: start;
+    gap: 16px;
+}
+
+.class-grid-focus-list {
+    display: grid;
+    gap: 14px;
+}
+
+.class-grid-focus-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(59, 130, 246, 0.12);
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.class-grid-focus-copy {
+    display: grid;
+    gap: 6px;
+}
+
+.class-grid-focus-copy h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.class-grid-focus-copy p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.class-grid-focus-actions {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    flex-shrink: 0;
 }
 
 .class-grid-workspace {
@@ -46,6 +116,7 @@ PONTOS CRITICOS:
 .class-grid-workspace-panel {
     position: relative;
     overflow: hidden;
+    min-height: 100%;
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
 }
 

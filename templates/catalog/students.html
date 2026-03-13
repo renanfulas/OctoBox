@@ -17,19 +17,78 @@ PONTOS CRITICOS:
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<section class="hero">
-    <div>
-        <h1>Alunos</h1>
-        <p>Esta tela existe para agilizar o atendimento. A recepcao localiza e converte, a gerencia acompanha plano e financeiro, e o dono bate o olho na saude comercial da base sem cair no admin bruto.</p>
+<div class="operation-shell catalog-scene student-scene">
+<section class="hero operation-hero catalog-hero student-hero">
+    <div class="operation-hero-main">
+        <div>
+            <p class="eyebrow">Mesa de atendimento</p>
+            <h1>Encontre rápido, entenda rápido e aja sem travar.</h1>
+            <p class="operation-hero-copy">Esta tela existe para reduzir interpretação. A recepção precisa localizar e converter sem esforço; a gerência precisa ver pendência e próxima ação sem caçar informação.</p>
+        </div>
+        <div class="operation-hero-tags">
+            <span class="pill info">Mesa de operacao</span>
+            <span class="pill accent">Triagem, intake e conversao</span>
+            <span class="pill">{% if can_manage_students %}Ação liberada{% else %}Leitura assistida{% endif %}</span>
+        </div>
+        <div class="actions">
+            {% if can_manage_students %}
+            <a class="button" href="/alunos/novo/">Novo aluno</a>
+            {% endif %}
+            <a class="button secondary" href="#student-priority-board">Ver prioridades</a>
+            <a class="button secondary" href="{{ student_export_links.csv }}">Exportar CSV</a>
+            <a class="button secondary" href="{{ student_export_links.pdf }}">Exportar PDF</a>
+        </div>
     </div>
-    <div class="actions">
-        <span class="pill info">Mesa de operação</span>
-        {% if can_manage_students %}
-        <a class="button" href="/alunos/novo/">Novo aluno</a>
-        {% endif %}
-        <a class="button secondary" href="{{ student_export_links.csv }}">Exportar CSV</a>
-        <a class="button secondary" href="{{ student_export_links.pdf }}">Exportar PDF</a>
-        <a class="button secondary" href="/admin/boxcore/student/">Abrir no admin</a>
+    <aside class="operation-hero-side">
+        <article class="operation-hero-panel hero-side-stack">
+            <div>
+                <p class="eyebrow">Radar da base</p>
+                <p class="operation-card-copy">A recepcao enxerga contato quente, a gerencia enxerga pendencia e a operacao nao perde timing de conversao.</p>
+            </div>
+            <div class="hero-side-stat-grid">
+                <div class="hero-side-stat">
+                    <span>Visiveis</span>
+                    <strong>{{ students|length }}</strong>
+                </div>
+                <div class="hero-side-stat">
+                    <span>Triagem agora</span>
+                    <strong>{{ priority_students|length }}</strong>
+                </div>
+                <div class="hero-side-stat">
+                    <span>Intakes prontos</span>
+                    <strong>{{ intake_queue|length }}</strong>
+                </div>
+                <div class="hero-side-stat">
+                    <span>Modo</span>
+                    <strong>{% if can_manage_students %}acao{% else %}consulta{% endif %}</strong>
+                </div>
+            </div>
+        </article>
+    </aside>
+</section>
+
+<section class="table-card glass-panel student-focus-card">
+    <div class="operation-card-head">
+        <div>
+            <p class="eyebrow">Comece por aqui</p>
+            <h2 class="operation-card-title">Três leituras para não travar o atendimento</h2>
+            <p class="operation-card-copy">Antes de descer para filtros e lista, use este bloco para saber onde está a pressão do momento.</p>
+        </div>
+        <span class="pill accent">Foco imediato</span>
+    </div>
+    <div class="student-focus-list">
+        {% for item in student_operational_focus %}
+        <article class="student-focus-item">
+            <div class="student-focus-copy">
+                <p class="eyebrow">{{ item.label }}</p>
+                <p>{{ item.summary }}</p>
+            </div>
+            <div class="student-focus-actions">
+                <span class="pill {{ item.pill_class }}">prioridade</span>
+                <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
+            </div>
+        </article>
+        {% endfor %}
     </div>
 </section>
 
@@ -55,8 +114,9 @@ PONTOS CRITICOS:
     {% endfor %}
 </section>
 
-<section class="table-card glass-panel section-gap">
+<section class="table-card glass-panel section-gap student-filter-card">
     <p class="eyebrow">Busca e recorte comercial</p>
+    <p class="meta-text">Use busca e filtros apenas para estreitar a leitura. A prioridade da tela continua sendo triagem e próxima ação.</p>
     <form method="get" class="form-stack">
         <div class="field-grid-200">
             <label>
@@ -84,7 +144,7 @@ PONTOS CRITICOS:
 </section>
 
 <section class="layout-grid section-gap">
-    <article class="table-card quick-hero-card">
+    <article class="table-card quick-hero-card student-command-card">
         <p class="eyebrow">Ação rápida</p>
         <h2 class="section-title">Cadastre ou encontre sem travar o atendimento</h2>
         <p class="body-copy text-muted">Nome e WhatsApp resolvem a entrada inicial. O restante da ficha pode amadurecer depois, quando o contato já estiver vivo na operação.</p>
@@ -98,7 +158,7 @@ PONTOS CRITICOS:
         {% endif %}
     </article>
 
-    <article class="table-card info-card">
+    <article class="table-card info-card student-support-card">
         <p class="eyebrow">Como usar bem esta tela</p>
         <ul class="capability-list">
             {% for item in student_focus %}
@@ -108,7 +168,7 @@ PONTOS CRITICOS:
     </article>
 </section>
 
-<section class="layout-grid student-compact-layout section-gap">
+<section class="layout-grid student-compact-layout section-gap" id="student-priority-board">
     <article class="table-card student-priority-panel">
         <p class="eyebrow">Quem pede ação agora</p>
         <div class="stack-14">
@@ -150,7 +210,7 @@ PONTOS CRITICOS:
     </article>
 </section>
 
-<section class="table-card glass-panel section-gap">
+<section class="table-card glass-panel section-gap student-queue-panel" id="student-intake-board">
     <div class="row-between-md student-section-head">
         <div>
             <p class="eyebrow">Fila de entrada provisoria pronta para conversao</p>
@@ -177,7 +237,7 @@ PONTOS CRITICOS:
     </div>
 </section>
 
-<section class="table-card glass-panel student-table-wrap">
+<section class="table-card glass-panel student-table-wrap student-data-panel" id="student-directory-board">
     <div class="row-between-md student-section-head">
         <div>
             <p class="eyebrow">Base principal de alunos</p>
@@ -239,4 +299,5 @@ PONTOS CRITICOS:
         </tbody>
     </table>
 </section>
+</div>
 {% endblock %}

@@ -20,6 +20,38 @@ PONTOS CRITICOS:
 
 Deixar o produto visualmente maduro para uso real no dia a dia, com navegacao clara, leitura rapida, acoes obvias, formularios menos cansativos e base pronta para automacoes futuras sem inflar a interface com firula.
 
+## Fontes obrigatorias desta estrategia
+
+Esta fase deve ser conduzida sobre tres bases complementares:
+
+1. [front-display-wall.md](front-display-wall.md) como criterio de linguagem visual e de fachada do produto
+2. [ui-ux-phase1-plan.md](ui-ux-phase1-plan.md) como ordem de ataque e checklist de execucao
+3. [v1-retrospective.md](v1-retrospective.md) como relatorio de risco para nao repetir erro de priorizacao
+
+Traducao pratica:
+
+1. o Front Display Wall impede que o front pareca canteiro de obra
+2. este plano define a ordem disciplinada de lapidacao
+3. a retrospectiva lembra que a interface precisa mostrar proxima acao, e nao apenas estado
+
+## Regra inegociavel da fase
+
+Nunca vamos aceitar que um usuario fique confuso ao ler uma tela.
+
+Se a pessoa precisa parar para interpretar demais:
+
+1. a hierarquia falhou
+2. a copy falhou
+3. a organizacao da tela falhou
+
+Regra central:
+
+1. tudo deve ser intuitivo, facil e simples
+2. a genialidade desta fase esta na simplicidade
+3. clareza vence volume de informacao
+4. orientacao vence decoracao
+5. proxima acao vence exibicao passiva de estado
+
 ## Principios que vao guiar as mudancas
 
 1. uma tela deve responder rapido ao olho antes de responder ao clique
@@ -29,6 +61,20 @@ Deixar o produto visualmente maduro para uso real no dia a dia, com navegacao cl
 5. todo estado vazio, alerta ou erro precisa orientar a proxima acao
 6. interatividade so entra quando melhora decisao, velocidade ou confianca
 7. tudo que for desenhado agora deve deixar espaco para automacoes futuras
+8. se um elemento confunde mais do que ajuda, ele deve sair
+9. se a mesma tela parece exigir treinamento para ser lida, ela ainda nao esta pronta
+
+## Filtro de decisao visual
+
+Toda decisao de interface nesta fase precisa passar por estas perguntas:
+
+1. em ate tres segundos, o usuario entende o que esta vendo?
+2. em ate tres segundos, o usuario entende o que esta mais importante agora?
+3. em ate tres segundos, o usuario encontra a acao principal?
+4. a tela parece produto pronto ou mecanismo interno exposto?
+5. existe algum bloco ali porque o sistema quis mostrar estrutura, e nao porque o usuario precisava entender algo?
+
+Se a resposta ruim aparecer em qualquer uma dessas perguntas, a tela ainda nao esta boa o suficiente.
 
 ## O que nao entra nesta fase
 
@@ -37,6 +83,8 @@ Deixar o produto visualmente maduro para uso real no dia a dia, com navegacao cl
 3. filtros excessivos que compliquem atendimento rapido
 4. modos paralelos de uso que dupliquem fluxo
 5. automacao fake sem regra de negocio por tras
+6. jargao visual ou tecnico que obrigue o usuario a interpretar demais
+7. blocos bonitos que nao ajudem decisao, leitura ou acao
 
 ## Leitura atual do front-end
 
@@ -49,6 +97,25 @@ Os principais pontos percebidos na base atual sao:
 3. alunos esta forte em conteudo, porem ainda pode ficar mais escaneavel para atendimento rapido
 4. formulario de aluno esta bem montado, mas ainda exige leitura longa e pode ficar mais progressivo e confiante
 5. a linguagem visual esta boa, so que ainda falta consistencia de prioridades, estados e feedback entre telas
+
+## Leitura estrategica consolidada
+
+O ataque do front nesta fase deve seguir esta leitura:
+
+1. o produto ja tem estrutura suficiente para parecer maduro
+2. o problema principal agora nao e falta de tela, e excesso de ambiguidade na leitura
+3. a prioridade nao e deixar o sistema mais bonito antes de deixa-lo mais claro
+4. a frente do produto precisa parecer limpa, simples e utilizavel
+5. a interface deve reduzir esforco cognitivo, nao redistribui-lo
+
+Resumo operacional:
+
+1. menos ruido
+2. mais hierarquia
+3. menos texto que explica demais
+4. mais sinais que orientam o que fazer
+5. menos interface que parece sistema
+6. mais interface que parece ferramenta de uso real
 
 ## Ordem de execucao recomendada
 
@@ -184,6 +251,21 @@ Melhorias alvo:
 7. filtros com leitura do recorte ativo
 8. cards clicaveis apenas onde reduz navegacao desnecessaria
 
+## Checklist obrigatorio por tela
+
+Antes de considerar qualquer tela suficientemente boa, validar:
+
+1. o titulo da tela diz claramente para que ela serve
+2. a acao principal aparece sem precisar procurar
+3. a diferenca entre normal, atencao e urgencia esta visivel sem leitura longa
+4. o usuario entende o recorte ativo de filtros e contexto atual
+5. estados vazios, erros e alertas orientam o que fazer em seguida
+6. tabelas, cards e blocos podem ser escaneados sem fadiga horizontal desnecessaria
+7. a tela nao expoe mecanismo interno, improviso ou transicao como linguagem dominante
+8. um usuario novo conseguiria operar o fluxo principal sem ficar travado por interpretacao
+
+Se qualquer item acima falhar, a tela ainda esta confusa demais.
+
 ## Preparacao para automacao futura
 
 Estas decisoes devem ser tomadas agora para evitar retrabalho:
@@ -203,6 +285,24 @@ Esta fase pode ser considerada redonda quando:
 3. as principais telas tiverem hierarquia visual consistente
 4. os estados de vazio, erro, alerta e sucesso estiverem padronizados
 5. a interface parecer produto real, e nao painel tecnico em evolucao
+6. a operacao principal puder ser entendida sem explicacao longa
+7. a simplicidade percebida for alta mesmo nas telas mais densas
+
+## Riscos de priorizacao que nao podem voltar
+
+Com base em [v1-retrospective.md](v1-retrospective.md), esta fase nao pode repetir estes erros:
+
+1. confundir quantidade de informacao com qualidade de orientacao
+2. deixar a tela mostrar estado sem deixar clara a proxima acao
+3. aceitar copy inconsistente entre template, view, query e teste
+4. lapidar visual localizado antes de acertar casca, hierarquia e leitura global
+5. introduzir refinamento visual que aumenta carga mental em vez de reduzi-la
+
+Regra de defesa:
+
+1. primeiro clareza estrutural
+2. depois foco operacional
+3. so depois refinamento fino
 
 ## Sequencia pratica sugerida para comecar
 
@@ -221,3 +321,15 @@ Se formos fazer isso com criterio, a melhor abertura de trabalho e esta:
 3. depois entrar em templates/catalog/students.html
 
 Essa ordem evita maquiagem localizada. Primeiro acertamos a casca e a hierarquia global. Depois acertamos a tela principal. So entao refinamos a mesa operacional mais critica.
+
+## Formula curta desta estrategia
+
+Para esta fase, a formula correta e:
+
+1. usar o Front Display Wall para proteger a face do produto contra ruido
+2. usar este plano para definir ordem, escopo e criterio de pronto
+3. usar a retrospectiva para impedir recaida em priorizacao errada
+
+Em frase unica:
+
+1. o front do OctoBox precisa ser simples o suficiente para nao confundir, claro o suficiente para orientar e forte o suficiente para parecer produto real em uso diario

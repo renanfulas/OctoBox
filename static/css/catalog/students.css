@@ -12,7 +12,91 @@ PONTOS CRITICOS:
 - Mudanças aqui afetam principalmente telas de alunos e intake.
 */
 
+.student-scene {
+    gap: var(--section-gap);
+}
+
+.student-hero {
+    background:
+        radial-gradient(circle at top right, rgba(249, 115, 22, 0.22), transparent 36%),
+        radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.14), transparent 30%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(249, 115, 22, 0.1), rgba(16, 185, 129, 0.08)),
+        var(--surface);
+}
+
+.student-hero .operation-hero-panel {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.8), rgba(255, 247, 237, 0.96));
+}
+
+.student-filter-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.96));
+}
+
+.student-focus-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(255, 247, 237, 0.95));
+}
+
+.student-focus-list {
+    display: grid;
+    gap: 14px;
+}
+
+.student-focus-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 0;
+    border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.student-focus-item:first-child {
+    padding-top: 4px;
+    border-top: 0;
+}
+
+.student-focus-copy p:last-child {
+    margin: 8px 0 0;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 54ch;
+}
+
+.student-focus-actions {
+    display: grid;
+    gap: 10px;
+    justify-items: end;
+}
+
+.student-command-card,
+.student-support-card,
+.student-queue-panel,
+.student-data-panel {
+    min-height: 100%;
+}
+
+.student-command-card {
+    background: linear-gradient(145deg, rgba(249, 115, 22, 0.14), rgba(255, 255, 255, 0.94));
+}
+
+.student-support-card {
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.1), rgba(255, 255, 255, 0.94));
+}
+
+.student-queue-panel {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.96));
+}
+
+.student-data-panel {
+    overflow-x: auto;
+}
+
+.student-data-panel table {
+    min-width: 760px;
+}
+
 @media (max-width: 960px) {
+    .student-focus-item,
     .student-compact-layout,
     .intake-card {
         grid-template-columns: 1fr;
@@ -20,5 +104,15 @@ PONTOS CRITICOS:
 
     .student-priority-badges {
         justify-items: start;
+    }
+
+    .student-focus-actions {
+        justify-items: stretch;
+    }
+}
+
+@media (max-width: 640px) {
+    .student-data-panel {
+        padding-inline: 20px;
     }
 }

@@ -78,11 +78,15 @@ Se quiser entender a direcao tecnica para crescer sem perder simplicidade, use [
 
 Se quiser entender a estrategia especifica para fazer o negocio deixar de depender de Django como core, use [docs/django-core-strategy.md](docs/django-core-strategy.md) e [docs/django-decoupling-blueprint.md](docs/django-decoupling-blueprint.md).
 
+Se quiser entender a declaracao oficial de qual passa a ser o centro conceitual do sistema, use [docs/octobox-conceptual-core.md](docs/octobox-conceptual-core.md).
+
 Se quiser entender o novo CENTER arquitetural que separa nivel de acesso e nucleo interno, use [docs/center-layer.md](docs/center-layer.md).
 
 Se quiser entender a estrutura complementar de sinais, integracoes e expansao transversal do sistema, use [docs/signal-mesh.md](docs/signal-mesh.md).
 
 Se quiser entender como a arquitetura trata suportes temporarios de construcao sem confundi-los com a estrutura final, use [docs/scaffold-agents.md](docs/scaffold-agents.md).
+
+Se quiser entender a grande fachada frontal do produto, onde a experiencia visivel precisa continuar limpa mesmo com obra lateral e transicao arquitetural, use [docs/front-display-wall.md](docs/front-display-wall.md).
 
 Se quiser entender a camada superior de emissao visivel e sinalizacao confiavel do estado do sistema, use [docs/red-beacon.md](docs/red-beacon.md).
 

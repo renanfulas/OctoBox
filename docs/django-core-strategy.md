@@ -32,6 +32,38 @@ Em linguagem direta:
 1. Django continua como plataforma
 2. Django deixa de ser o cerebro
 
+Depois da formalizacao do centro do sistema em [octobox-conceptual-core.md](octobox-conceptual-core.md), essa frase fica ainda mais precisa:
+
+1. Django nao e mais a explicacao principal do produto
+2. Django nao e mais o core conceitual do OctoBox
+3. Django fica como casca de entrega, autenticacao, administracao e persistencia concreta
+
+## O que passa a ser o core conceitual
+
+O projeto agora assume oficialmente que seu centro conceitual e formado por:
+
+1. dominio
+2. use cases
+3. facades publicas
+4. snapshots publicos
+
+Isso muda a estrategia de forma pratica.
+
+O problema nao e apenas tirar regra de `django.*`.
+
+O problema tambem e parar de explicar o sistema por:
+
+1. app Django
+2. model historico
+3. QuerySet cru
+4. view ou form como dono do fluxo
+
+Daqui para frente, o movimento correto e:
+
+1. explicar a feature pela capacidade de dominio
+2. declarar a porta oficial por facade, service canonico ou use case
+3. tratar Django como mecanismo de entrega e adaptacao
+
 ## Meta tecnica real
 
 O alvo nao e este:
@@ -48,6 +80,12 @@ O alvo e este:
 - os casos de uso poderem ser reutilizados fora da web server-rendered
 - a persistencia concreta ficar atras de portas pequenas
 
+E, em paralelo, o alvo conceitual e este:
+
+- a explicacao oficial do sistema nascer por capacidade de dominio
+- a entrada oficial nascer por facade publica, service canonico ou use case explicito
+- a leitura oficial subir por snapshot publico em vez de QuerySet cru
+
 ## O que ja existe hoje
 
 O projeto ja abriu a trilha certa em varios pontos:
@@ -57,6 +95,12 @@ O projeto ja abriu a trilha certa em varios pontos:
 3. `operations/application/*` ja concentra policy, dispatcher e casos de uso operacionais
 4. `students/infrastructure/*`, `communications/infrastructure/*` e `operations/infrastructure/*` ja funcionam como adapters Django
 5. o runtime HTTP ja comecou a sair de `boxcore`
+
+E, no plano conceitual, a base tambem ja tem exemplos suficientes para sustentar a nova linguagem:
+
+1. `operations/facade/*` ja funciona como corredor oficial de capacidade
+2. `students/facade/*` e `communications/facade/*` ja empurram a leitura para fora de modules historicos
+3. `catalog/*_queries.py`, `operations/session_snapshots.py` e `dashboard/dashboard_snapshot_queries.py` ja reforcam snapshot como lingua de leitura
 
 Ou seja:
 
@@ -90,6 +134,7 @@ Regra:
 
 1. view, API, job e webhook montam command
 2. view, API, job e webhook traduzem result
+3. a explicacao oficial do fluxo deve apontar para esse contrato, nao para a view ou para o model
 
 ## 2. Use case puro para orquestracao
 
@@ -145,6 +190,11 @@ Pode usar Django livremente:
 
 Mas so abaixo da fronteira de aplicacao.
 
+Regra de linguagem:
+
+1. framework pode continuar existindo na borda
+2. framework nao pode continuar nomeando o centro do sistema
+
 ## 5. Read side separado do write side
 
 O projeto ja tem um bom inicio com queries e snapshots.
@@ -159,6 +209,7 @@ Em outras palavras:
 
 1. QuerySet pode continuar existindo
 2. QuerySet nao pode virar lingua oficial do negocio
+3. snapshot publico passa a ser a lingua oficial de leitura para cima
 
 ## 6. Politicas e regras puras saem antes dos models
 
@@ -208,6 +259,21 @@ Precisamos parar de depender so dele para validar regra.
 ## Guardrails arquiteturais
 
 Para nao regredir, vamos adotar estas regras.
+
+### Na documentacao, nas discussoes e nas reviews
+
+Deve entrar primeiro:
+
+1. capacidade de dominio afetada
+2. corredor oficial de entrada
+3. use case ou regra central envolvida
+4. snapshot publico, quando o assunto for leitura
+
+Nao deve entrar primeiro:
+
+1. app Django como explicacao principal
+2. model historico como dono automatico da conversa
+3. boxcore como centro narrativo do sistema
 
 ### Em `application/` e `domain/`
 
