@@ -18,6 +18,15 @@ from django.utils import timezone
 
 from communications.models import IntakeStatus, StudentIntake
 from finance.models import EnrollmentStatus, MembershipPlan, PaymentMethod, PaymentStatus
+from shared_support.form_inputs import (
+    apply_cpf_input_attrs,
+    apply_currency_input_attrs,
+    apply_date_input_attrs,
+    apply_integer_input_attrs,
+    apply_phone_input_attrs,
+    apply_text_input_attrs,
+)
+from shared_support.phone_numbers import normalize_phone_number
 from students.models import Student, StudentStatus
 
 
@@ -38,6 +47,10 @@ class StudentDirectoryFilterForm(forms.Form):
         label='Status financeiro',
         choices=(('', 'Todos'), *PaymentStatus.choices),
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        apply_text_input_attrs(self.fields['query'], placeholder='Nome, WhatsApp ou CPF', maxlength=150)
 
 
 class StudentQuickForm(forms.ModelForm):
@@ -154,12 +167,16 @@ class StudentQuickForm(forms.ModelForm):
         self.fields['recurrence_cycles'].initial = 3
 
         self.fields['full_name'].widget.attrs.update({'placeholder': 'Ex.: Mariana Souza'})
-        self.fields['phone'].widget.attrs.update({'placeholder': 'Ex.: 5511999999999'})
-        self.fields['email'].widget.attrs.update({'placeholder': 'Opcional neste momento'})
-        self.fields['cpf'].widget.attrs.update({'placeholder': 'Ex.: 123.456.789-00'})
-        self.fields['notes'].widget.attrs.update({'placeholder': 'Descreva o problema de saude ou deixe em branco.'})
-        self.fields['payment_reference'].widget.attrs.update({'placeholder': 'Ex.: PIX-MAR-2026'})
-        self.fields['initial_payment_amount'].widget.attrs.update({'placeholder': 'Ex.: 289.90', 'step': '0.01'})
+        apply_text_input_attrs(self.fields['full_name'], placeholder='Ex.: Mariana Souza', maxlength=150, autocomplete='name')
+        apply_phone_input_attrs(self.fields['phone'], placeholder='Ex.: 5511999999999')
+        apply_text_input_attrs(self.fields['email'], placeholder='Opcional neste momento', maxlength=254, autocomplete='email')
+        apply_date_input_attrs(self.fields['birth_date'], placeholder='dd/mm/aaaa')
+        apply_cpf_input_attrs(self.fields['cpf'], placeholder='Ex.: 123.456.789-00')
+        apply_text_input_attrs(self.fields['notes'], placeholder='Descreva o problema de saude ou deixe em branco.')
+        apply_text_input_attrs(self.fields['payment_reference'], placeholder='Ex.: PIX-MAR-2026', maxlength=100)
+        apply_currency_input_attrs(self.fields['initial_payment_amount'], placeholder='Ex.: 289.90')
+        apply_integer_input_attrs(self.fields['installment_total'], placeholder='Ex.: 3', min_value=1, max_value=12, maxlength=2)
+        apply_integer_input_attrs(self.fields['recurrence_cycles'], placeholder='Ex.: 3', min_value=1, max_value=12, maxlength=2)
 
         self.fields['email'].required = False
         self.fields['gender'].required = False
@@ -196,6 +213,17 @@ class StudentQuickForm(forms.ModelForm):
         if linked_intake is not None:
             self.fields['intake_record'].initial = linked_intake
 
+    def clean_phone(self):
+        return normalize_phone_number(self.cleaned_data.get('phone'))
+
+    def clean_cpf(self):
+        raw_cpf = ''.join(character for character in (self.cleaned_data.get('cpf') or '') if character.isdigit())
+        if not raw_cpf:
+            return ''
+        if len(raw_cpf) != 11:
+            raise forms.ValidationError('Informe um CPF valido com 11 digitos.')
+        return f'{raw_cpf[:3]}.{raw_cpf[3:6]}.{raw_cpf[6:9]}-{raw_cpf[9:]}'
+
     def clean(self):
         cleaned_data = super().clean()
         selected_plan = cleaned_data.get('selected_plan')
@@ -228,6 +256,13 @@ class PaymentManagementForm(forms.Form):
     reference = forms.CharField(required=False, label='Referencia')
     notes = forms.CharField(required=False, label='Observacoes', widget=forms.Textarea(attrs={'rows': 3}))
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        apply_currency_input_attrs(self.fields['amount'], placeholder='Ex.: 289.90')
+        apply_date_input_attrs(self.fields['due_date'], placeholder='dd/mm/aaaa')
+        apply_text_input_attrs(self.fields['reference'], placeholder='Ex.: PIX-MAR-2026', maxlength=100)
+        apply_text_input_attrs(self.fields['notes'], placeholder='Observacao curta para a cobranca.')
+
 
 class EnrollmentManagementForm(forms.Form):
     enrollment_id = forms.IntegerField(widget=forms.HiddenInput)
@@ -237,3 +272,5 @@ class EnrollmentManagementForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['action_date'].initial = timezone.localdate()
+        apply_date_input_attrs(self.fields['action_date'], placeholder='dd/mm/aaaa')
+        apply_text_input_attrs(self.fields['reason'], placeholder='Explique o motivo da acao, se precisar.')

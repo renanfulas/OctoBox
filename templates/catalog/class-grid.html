@@ -289,7 +289,7 @@ PONTOS CRITICOS:
                                 {% endif %}
                             </article>
                             {% empty %}
-                            <p class="weekly-empty-state">Sem aula cadastrada.</p>
+                            {% include "includes/ui/state_empty.html" with compact=True eyebrow="Janela semanal" title="Sem aula cadastrada" copy="Esse bloco do dia esta livre no recorte atual." badge="Dia aberto" badge_class="info" class_name="weekly-empty-state" %}
                             {% endfor %}
                         </div>
                     </article>

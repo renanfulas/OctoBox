@@ -45,7 +45,7 @@ class DashboardViewTests(TestCase):
         response = self.client.get(reverse('dashboard'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Operação do box em um painel só.')
+        self.assertContains(response, 'Veja primeiro o que pede ação agora.')
         self.assertContains(response, 'Owner')
 
     def test_dashboard_marks_today_session_as_in_progress_during_runtime(self):

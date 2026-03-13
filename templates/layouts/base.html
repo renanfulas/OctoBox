@@ -62,7 +62,7 @@ PONTOS CRITICOS:
                     <form class="global-search" method="get" action="{{ global_search_action }}">
                         <label class="visually-hidden" for="global-search-input">Buscar aluno ou WhatsApp</label>
                         <span class="search-kicker">Busca global</span>
-                        <input id="global-search-input" type="search" name="query" placeholder="Buscar aluno, WhatsApp ou CPF">
+                        <input id="global-search-input" type="search" name="query" placeholder="Buscar aluno, WhatsApp ou CPF" maxlength="150" autocomplete="off" spellcheck="false">
                     </form>
                 </div>
                 <div class="topbar-right">
@@ -86,12 +86,43 @@ PONTOS CRITICOS:
                     </div>
                 </div>
             </header>
+            <section class="page-compass" aria-label="Contexto da pagina">
+                <div class="page-compass-main">
+                    <div>
+                        <p class="eyebrow">{{ shell_page_context.eyebrow }}</p>
+                        <h1 class="page-compass-title">{{ page_title|default:shell_page_context.title }}</h1>
+                        <p class="page-compass-copy">{{ page_subtitle|default:shell_page_context.subtitle }}</p>
+                    </div>
+                    <div class="page-compass-tags">
+                        <span class="pill accent">{{ shell_page_context.active_label }}</span>
+                        <span class="pill info">{{ current_role.label|default:"Sem papel definido" }}</span>
+                    </div>
+                </div>
+                <div class="page-compass-stats" aria-label="Resumo rapido do contexto atual">
+                    {% for item in shell_page_context.stats %}
+                    <article class="page-compass-stat">
+                        <span>{{ item.label }}</span>
+                        <strong>{{ item.value }}</strong>
+                    </article>
+                    {% endfor %}
+                </div>
+            </section>
             {% endif %}
             <div class="page-body" id="page-body">
                 {% if messages %}
                 <div class="message-stack">
                     {% for message in messages %}
-                    <div class="message {{ message.tags }}">{{ message }}</div>
+                    <div class="message {{ message.tags }}">
+                        {% if 'success' in message.tags %}
+                        {% include "includes/ui/state_notice.html" with tone="success" compact=True eyebrow="Fluxo concluido" title="Confirmacao registrada" copy=message class_name="message-notice" %}
+                        {% elif 'error' in message.tags %}
+                        {% include "includes/ui/state_notice.html" with tone="danger" compact=True eyebrow="Intervencao necessaria" title="Algo pediu revisao" copy=message class_name="message-notice" %}
+                        {% elif 'warning' in message.tags %}
+                        {% include "includes/ui/state_notice.html" with tone="warning" compact=True eyebrow="Atencao operacional" title="Revise antes de seguir" copy=message class_name="message-notice" %}
+                        {% else %}
+                        {% include "includes/ui/state_notice.html" with tone="info" compact=True eyebrow="Atualizacao do sistema" title="Leitura confirmada" copy=message class_name="message-notice" %}
+                        {% endif %}
+                    </div>
                     {% endfor %}
                 </div>
                 {% endif %}
@@ -106,6 +137,173 @@ PONTOS CRITICOS:
             const sidebarToggle = document.getElementById('sidebar-toggle');
             const sidebarBackdrop = document.getElementById('sidebar-backdrop');
             const savedTheme = localStorage.getItem('octobox-theme');
+
+            function digitsOnly(value) {
+                return String(value || '').replace(/\D/g, '');
+            }
+
+            function normalizeTimeValue(value) {
+                const rawValue = String(value || '').trim();
+                if (!rawValue) {
+                    return rawValue;
+                }
+
+                let hourText = '';
+                let minuteText = '';
+
+                if (rawValue.indexOf(':') >= 0) {
+                    const parts = rawValue.split(':', 2);
+                    hourText = digitsOnly(parts[0]);
+                    minuteText = digitsOnly(parts[1]);
+                    if (!hourText) {
+                        return rawValue;
+                    }
+                    if (!minuteText) {
+                        minuteText = '00';
+                    } else if (minuteText.length === 1) {
+                        minuteText = minuteText + '0';
+                    } else {
+                        minuteText = minuteText.slice(0, 2);
+                    }
+                } else {
+                    const digits = digitsOnly(rawValue);
+                    if (!digits) {
+                        return rawValue;
+                    }
+                    if (digits.length <= 2) {
+                        hourText = digits;
+                        minuteText = '00';
+                    } else if (digits.length === 3) {
+                        hourText = digits.slice(0, 1);
+                        minuteText = digits.slice(1, 3);
+                    } else {
+                        hourText = digits.slice(0, 2);
+                        minuteText = digits.slice(2, 4);
+                    }
+                }
+
+                const hour = Number(hourText);
+                const minute = Number(minuteText);
+                if (Number.isNaN(hour) || Number.isNaN(minute) || hour > 23 || minute > 59) {
+                    return rawValue;
+                }
+
+                return String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0');
+            }
+
+            function formatCpfValue(value) {
+                const digits = digitsOnly(value).slice(0, 11);
+                if (digits.length <= 3) {
+                    return digits;
+                }
+                if (digits.length <= 6) {
+                    return digits.slice(0, 3) + '.' + digits.slice(3);
+                }
+                if (digits.length <= 9) {
+                    return digits.slice(0, 3) + '.' + digits.slice(3, 6) + '.' + digits.slice(6);
+                }
+                return digits.slice(0, 3) + '.' + digits.slice(3, 6) + '.' + digits.slice(6, 9) + '-' + digits.slice(9);
+            }
+
+            function formatDateValue(value) {
+                const digits = digitsOnly(value).slice(0, 8);
+                if (digits.length <= 2) {
+                    return digits;
+                }
+                if (digits.length <= 4) {
+                    return digits.slice(0, 2) + '/' + digits.slice(2);
+                }
+                if (digits.length <= 6) {
+                    return digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4);
+                }
+                return digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4, 8);
+            }
+
+            function formatTimeTyping(value) {
+                const digits = digitsOnly(value).slice(0, 4);
+                if (digits.length <= 2) {
+                    return digits;
+                }
+                if (digits.length === 3) {
+                    return digits.slice(0, 1) + ':' + digits.slice(1, 3);
+                }
+                return digits.slice(0, 2) + ':' + digits.slice(2, 4);
+            }
+
+            function normalizeCurrencyValue(value, isBlur) {
+                const rawValue = String(value || '').replace(',', '.');
+                let normalized = '';
+                let usedDot = false;
+
+                for (const character of rawValue) {
+                    if (/\d/.test(character)) {
+                        normalized += character;
+                        continue;
+                    }
+
+                    if (character === '.' && !usedDot) {
+                        normalized += character;
+                        usedDot = true;
+                    }
+                }
+
+                if (!isBlur || !normalized || normalized === '.') {
+                    return normalized;
+                }
+
+                const parsedValue = Number(normalized);
+                if (Number.isNaN(parsedValue)) {
+                    return normalized;
+                }
+
+                return parsedValue.toFixed(2);
+            }
+
+            function attachInputPolicies() {
+                document.querySelectorAll('input[data-mask], textarea[data-mask]').forEach(function (field) {
+                    field.addEventListener('input', function () {
+                        if (field.dataset.mask === 'date' && field.type !== 'date') {
+                            field.value = formatDateValue(field.value);
+                            return;
+                        }
+
+                        if (field.dataset.mask === 'time') {
+                            field.value = formatTimeTyping(field.value);
+                            return;
+                        }
+
+                        if (field.dataset.mask === 'cpf') {
+                            field.value = formatCpfValue(field.value);
+                            return;
+                        }
+
+                        if (field.dataset.mask === 'phone') {
+                            field.value = digitsOnly(field.value).slice(0, 20);
+                            return;
+                        }
+
+                        if (field.dataset.mask === 'currency') {
+                            field.value = normalizeCurrencyValue(field.value, false);
+                        }
+                    });
+
+                    field.addEventListener('blur', function () {
+                        if (field.dataset.mask === 'date' && field.type !== 'date') {
+                            field.value = formatDateValue(field.value);
+                            return;
+                        }
+
+                        if (field.dataset.mask === 'time') {
+                            field.value = normalizeTimeValue(field.value);
+                            return;
+                        }
+
+                        if (field.dataset.mask === 'currency') {
+                            field.value = normalizeCurrencyValue(field.value, true);
+                        }
+                    });
+                });
+            }
 
             function syncThemeUi() {
                 if (!themeToggle) {
@@ -154,6 +352,8 @@ PONTOS CRITICOS:
                     syncSidebarUi();
                 });
             }
+
+            attachInputPolicies();
 
             document.addEventListener('keydown', function (event) {
                 if (event.key === 'Escape' && body.classList.contains('sidebar-open')) {

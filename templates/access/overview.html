@@ -15,30 +15,81 @@ PONTOS CRITICOS:
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<section class="hero">
-    <div>
-        <h1>Papéis e acessos</h1>
-        <p>
-            Esta é a primeira matriz funcional do sistema. Ela organiza o projeto por responsabilidade de negócio e já prepara a base para permissões mais finas nas próximas telas.
-        </p>
-    </div>
-    <div class="actions">
-        <span class="pill">Papel atual: {{ current_role.label }}</span>
-        <a class="button" href="/admin/auth/group/">Gerenciar grupos</a>
-    </div>
-</section>
+<div class="operation-shell">
+    <section class="hero operation-hero">
+        <div class="operation-hero-main">
+            <div>
+                <p class="eyebrow">Fronteiras do sistema</p>
+                <h1>Veja quem deve agir, quem nao deve invadir e onde cada papel comeca.</h1>
+                <p class="operation-hero-copy">Esta area existe para impedir confusao de autoridade. Ela precisa mostrar com rapidez quem cuida do crescimento, quem investiga o sistema, quem executa a rotina administrativa e onde a operacao tecnica deve permanecer limpa.</p>
+            </div>
+            <div class="operation-hero-tags">
+                <span class="pill accent">{{ current_role.label }}</span>
+                <span class="pill info">Governanca operacional</span>
+                <span class="pill">Limite antes de permissao solta</span>
+            </div>
+            <div class="actions">
+                <a class="button" href="#access-current-role">Ver meu escopo</a>
+                <a class="button secondary" href="#access-role-map">Ver mapa de papeis</a>
+                <a class="button secondary" href="/admin/auth/group/">Gerenciar grupos</a>
+            </div>
+        </div>
+        <aside class="operation-hero-side">
+            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Leitura instantanea" copy="Quatro sinais para entender rapidamente qual papel esta ativo e como a governanca ja foi desenhada." stats=hero_stats %}
+        </aside>
+    </section>
 
-<section class="layout-grid">
-    {% for role in role_definitions %}
-    <article class="table-card">
-        <p class="eyebrow">{{ role.label }}</p>
-        <p>{{ role.summary }}</p>
-        <ul class="capability-list">
-            {% for capability in role.capabilities %}
-            <li>{{ capability }}</li>
+    <section class="table-card operation-focus-card">
+        <div class="operation-card-head">
+            <div>
+                <p class="eyebrow">Comece por aqui</p>
+                <h2 class="operation-card-title">Tres leituras para nao transformar acesso em texto burocratico</h2>
+                <p class="operation-card-copy">Primeiro entenda seu proprio escopo, depois compare fronteiras e so entao mexa em grupos e governanca.</p>
+            </div>
+            <span class="pill accent">Foco de leitura</span>
+        </div>
+        <div class="operation-focus-list">
+            {% for item in access_operational_focus %}
+            <article class="operation-focus-item">
+                <div class="operation-focus-copy">
+                    <p class="eyebrow">{{ item.label }}</p>
+                    <p>{{ item.summary }}</p>
+                </div>
+                <div class="operation-focus-actions">
+                    <span class="pill {{ item.pill_class }}">prioridade</span>
+                    <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
+                </div>
+            </article>
             {% endfor %}
-        </ul>
-    </article>
-    {% endfor %}
-</section>
+        </div>
+    </section>
+
+    <section class="layout-grid align-start">
+        <div id="access-current-role">
+            {% include "includes/ui/info_list_card.html" with eyebrow="Escopo do papel ativo" title="Como este usuario deveria operar" copy="Use este bloco como leitura curta do que pertence ao seu papel antes de abrir telas mais densas ou pedir permissao extra." pill_label=current_role.label pill_class="info" items=role_capabilities empty_text="Defina um grupo de acesso para este usuario." %}
+        </div>
+        <div id="access-governance-board">
+            {% include "includes/ui/info_list_card.html" with card_class="operation-empty-card" eyebrow="Governanca pratica" title="O que esta tela precisa impedir" copy="A camada de acesso deve bloquear mistura de responsabilidade antes de virar problema de rotina ou de manutencao." pill_label="Limites claros" pill_class="accent" items=governance_points %}
+        </div>
+    </section>
+
+    <section id="access-role-map" class="panel-grid">
+        {% for role in role_definitions %}
+        <article class="table-card">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">{{ role.label }}</p>
+                    <h2 class="operation-card-title">{{ role.summary }}</h2>
+                </div>
+                <span class="pill{% if current_role.slug == role.slug %} accent{% else %} info{% endif %}">{% if current_role.slug == role.slug %}papel ativo{% else %}fronteira formal{% endif %}</span>
+            </div>
+            <ul class="capability-list">
+                {% for capability in role.capabilities %}
+                <li>{{ capability }}</li>
+                {% endfor %}
+            </ul>
+        </article>
+        {% endfor %}
+    </section>
+</div>
 {% endblock %}

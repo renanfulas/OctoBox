@@ -19,18 +19,48 @@ PONTOS CRITICOS:
     <section class="hero operation-hero">
         <div class="operation-hero-main">
             <div>
-                <p class="eyebrow">Minha operação</p>
-                <h1>Área do Coach</h1>
-                <p class="operation-hero-copy">Esta tela foi isolada para o coach trabalhar aula, presença e acompanhamento do dia sem misturar financeiro, entrada administrativa ou rotinas do gerente.</p>
+                <p class="eyebrow">Rotina do coach</p>
+                <h1>Abra o dia, registre presença e feche a turma sem ruído administrativo.</h1>
+                <p class="operation-hero-copy">O coach precisa entender primeiro a agenda do turno, depois onde já há aluno para registrar e por fim onde uma ocorrência técnica realmente precisa entrar.</p>
             </div>
             <div class="operation-hero-tags">
                 <span class="pill">Operação de aula</span>
                 <span class="pill info">Presença e registro técnico</span>
+                <span class="pill accent">Treino sem distração de backoffice</span>
+            </div>
+            <div class="actions">
+                <a class="button" href="#coach-sessions-board">Ver aulas do dia</a>
+                <a class="button secondary" href="#coach-boundary-board">Ver limites da área</a>
             </div>
         </div>
         <aside class="operation-hero-side">
             {% include "includes/ui/hero_stat_panel.html" with eyebrow="Turno de hoje" copy="Leitura rápida para saber se o coach está entrando no dia com agenda clara e rotina bem delimitada." stats=hero_stats %}
         </aside>
+    </section>
+
+    <section class="table-card operation-focus-card">
+        <div class="operation-card-head">
+            <div>
+                <p class="eyebrow">Comece por aqui</p>
+                <h2 class="operation-card-title">Três leituras para abrir o turno sem se dispersar</h2>
+                <p class="operation-card-copy">Primeiro agenda, depois presença real, depois ocorrência técnica só quando fizer sentido.</p>
+            </div>
+            <span class="pill accent">Foco do coach</span>
+        </div>
+        <div class="operation-focus-list">
+            {% for item in coach_operational_focus %}
+            <article class="operation-focus-item">
+                <div class="operation-focus-copy">
+                    <p class="eyebrow">{{ item.label }}</p>
+                    <p>{{ item.summary }}</p>
+                </div>
+                <div class="operation-focus-actions">
+                    <span class="pill {{ item.pill_class }}">prioridade</span>
+                    <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
     </section>
 
     <section class="panel-grid operation-metric-grid">
@@ -39,11 +69,12 @@ PONTOS CRITICOS:
         {% endfor %}
     </section>
 
-    <section class="layout-grid operation-grid-wide align-start">
+    <section class="layout-grid operation-grid-wide align-start" id="coach-boundary-board">
         {% include "includes/ui/info_list_card.html" with eyebrow="Como usar esta tela" title="Rotina recomendada para a aula" items=coach_notes %}
         {% include "includes/ui/info_list_card.html" with card_class="operation-empty-card" eyebrow="Limites desta área" title="Proteção da rotina do treino" items=coach_boundaries %}
     </section>
 
+    <div id="coach-sessions-board" class="operation-shell">
     {% for session in sessions_today %}
     <section class="table-card operation-session-card">
         <div class="operation-session-head">
@@ -97,7 +128,7 @@ PONTOS CRITICOS:
                                         <option value="{{ value }}">{{ label }}</option>
                                         {% endfor %}
                                     </select>
-                                    <textarea name="description" rows="2">{{ attendance.notes }}</textarea>
+                                    <textarea name="description" rows="2" maxlength="280" placeholder="Explique a ocorrencia tecnica em uma frase curta.">{{ attendance.notes }}</textarea>
                                     <div class="actions">
                                         <button class="button secondary" type="submit">Registrar</button>
                                     </div>
@@ -105,7 +136,7 @@ PONTOS CRITICOS:
                             </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="4">Nenhuma presença registrada para esta aula.</td></tr>
+                        <tr><td colspan="4" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Presencas da aula" title="Nenhuma presenca registrada para esta aula" copy="O coach ainda nao recebeu check-in, check-out ou falta neste encontro." badge="Aguardando leitura" badge_class="warning" %}</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -114,15 +145,9 @@ PONTOS CRITICOS:
     </section>
     {% empty %}
     <section class="table-card operation-empty-card">
-        <div class="operation-card-head">
-            <div>
-                <p class="eyebrow">Agenda de hoje</p>
-                <h2 class="operation-card-title">Nenhuma aula cadastrada</h2>
-                <p class="operation-card-copy">O coach está sem turmas programadas para hoje neste ambiente.</p>
-            </div>
-            <span class="pill info">Dia livre</span>
-        </div>
+        {% include "includes/ui/state_empty.html" with eyebrow="Agenda de hoje" title="Nenhuma aula cadastrada" copy="O coach esta sem turmas programadas para hoje neste ambiente." badge="Dia livre" badge_class="info" %}
     </section>
     {% endfor %}
+    </div>
 </div>
 {% endblock %}

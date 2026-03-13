@@ -15,6 +15,7 @@ PONTOS CRITICOS:
 from django import forms
 
 from finance.models import MembershipPlan, PaymentMethod, PaymentStatus
+from shared_support.form_inputs import apply_currency_input_attrs, apply_integer_input_attrs, apply_text_input_attrs
 
 
 class FinanceFilterForm(forms.Form):
@@ -43,6 +44,7 @@ class FinanceFilterForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['months'].initial = '6'
+        apply_text_input_attrs(self.fields['plan'], maxlength=100)
 
 
 class MembershipPlanQuickForm(forms.ModelForm):
@@ -75,9 +77,9 @@ class MembershipPlanQuickForm(forms.ModelForm):
         self.fields['sessions_per_week'].label = 'Aulas por semana'
         self.fields['description'].label = 'O que este plano entrega'
 
-        self.fields['name'].widget.attrs.update({'placeholder': 'Ex.: Cross Prime'})
-        self.fields['price'].widget.attrs.update({'placeholder': 'Ex.: 289.90', 'step': '0.01'})
-        self.fields['sessions_per_week'].widget.attrs.update({'placeholder': 'Ex.: 3'})
-        self.fields['description'].widget.attrs.update({'placeholder': 'Descreva proposta, limite e observacoes comerciais do plano.'})
+        apply_text_input_attrs(self.fields['name'], placeholder='Ex.: Cross Prime', maxlength=100)
+        apply_currency_input_attrs(self.fields['price'], placeholder='Ex.: 289.90')
+        apply_integer_input_attrs(self.fields['sessions_per_week'], placeholder='Ex.: 3', min_value=1, maxlength=2)
+        apply_text_input_attrs(self.fields['description'], placeholder='Descreva proposta, limite e observacoes comerciais do plano.')
 
         self.fields['description'].required = False

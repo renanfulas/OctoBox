@@ -33,6 +33,7 @@ Traducao pratica:
 1. o Front Display Wall impede que o front pareca canteiro de obra
 2. este plano define a ordem disciplinada de lapidacao
 3. a retrospectiva lembra que a interface precisa mostrar proxima acao, e nao apenas estado
+4. a Front Display Wall tambem exige que a frente do produto seja atraente, viva e memoravel, nao apenas correta
 
 ## Regra inegociavel da fase
 
@@ -51,6 +52,53 @@ Regra central:
 3. clareza vence volume de informacao
 4. orientacao vence decoracao
 5. proxima acao vence exibicao passiva de estado
+6. beleza e energia visual so entram quando reforcam clareza, identidade e desejo de aproximacao
+
+## Regra de atracao visual
+
+Nesta fase, a frente do produto nao deve ser apenas legivel.
+
+Ela tambem precisa ser magnetica, acolhedora e desejavel.
+
+Regra central de fachada:
+
+1. a tela precisa chamar o olhar de forma positiva antes mesmo da leitura completa
+2. cor, brilho, ritmo e energia visual podem existir como parte funcional da interface
+3. a frente precisa parecer viva, alegre e memoravel sem virar excesso ou parque tematico
+4. a construcao em andamento pode continuar aparente, mas deve parecer evolucao bonita e promissora
+5. a experiencia precisa gerar vontade de ver mais, explorar mais e participar mais
+
+## Regra de robustez operacional
+
+Nenhuma pagina desta fase pode depender de cuidado excessivo do usuario para continuar funcionando bem.
+
+Regra central de defesa:
+
+1. a tela nao pode quebrar por uso comum, clique bobo, ordem errada ou leitura apressada
+2. o front precisa limitar erro humano de todas as formas razoaveis
+3. um humano nao pode conseguir estragar pagina, fluxo ou estado por acidente
+4. a interface deve assumir que o usuario pode errar e precisa ser protegida disso
+5. robustez de uso e tao obrigatoria quanto clareza visual
+
+## Regra para formularios e campos digitaveis
+
+Todo campo digitavel desta fase deve deixar claro o que aceita, limitar o que pode entrar e ajudar a pessoa a chegar no formato correto sem friccao desnecessaria.
+
+Regra central de entrada:
+
+1. cada campo deve aceitar apenas o tipo de dado para o qual foi criado
+2. limite de caracteres, faixa numerica, formato e mascara devem existir sempre que fizer sentido
+3. o usuario nao deve precisar adivinhar formato de hora, data, telefone, valor, percentual ou documento
+4. quando a intencao correta for obvia, o sistema deve completar ou corrigir o formato automaticamente
+5. quando a intencao nao for obvia, o sistema deve bloquear com feedback claro antes de salvar
+
+Exemplos obrigatorios desta logica:
+
+1. se um campo pede 2 digitos, ele deve aceitar e limitar a exatamente 2 digitos
+2. se o campo e de hora e a pessoa digita 8, o sistema deve interpretar como 08:00 ou 8:00 conforme o padrao visual adotado
+3. se a pessoa digita 830 em horario, o sistema deve converter para 08:30 se esse comportamento for seguro e previsivel
+4. se o campo pede moeda, o sistema deve guiar digitacao monetaria e impedir formato quebrado
+5. se o campo pede telefone, CPF ou documento estruturado, a digitacao deve ser mascarada e validada no formato certo
 
 ## Principios que vao guiar as mudancas
 
@@ -63,6 +111,13 @@ Regra central:
 7. tudo que for desenhado agora deve deixar espaco para automacoes futuras
 8. se um elemento confunde mais do que ajuda, ele deve sair
 9. se a mesma tela parece exigir treinamento para ser lida, ela ainda nao esta pronta
+10. toda acao sensivel deve reduzir chance de clique errado, dado errado ou confirmacao burra
+11. o sistema deve preferir prevenir erro em vez de apenas avisar depois
+12. validacao, bloqueio, confirmacao e estado seguro fazem parte da experiencia, nao sao detalhe tecnico
+13. campo digitavel bom limita, formata e orienta antes de deixar erro entrar
+14. formulario bom traduz intencao humana comum em formato correto sempre que isso for seguro
+15. uma tela boa nao e so clara; ela tambem parece viva, querida e digna de atencao
+16. cor, brilho e atmosfera visual so ficam quando ajudam o produto a parecer mais valioso, acolhedor e memoravel
 
 ## Filtro de decisao visual
 
@@ -73,8 +128,56 @@ Toda decisao de interface nesta fase precisa passar por estas perguntas:
 3. em ate tres segundos, o usuario encontra a acao principal?
 4. a tela parece produto pronto ou mecanismo interno exposto?
 5. existe algum bloco ali porque o sistema quis mostrar estrutura, e nao porque o usuario precisava entender algo?
+6. a tela chama o olhar de forma boa, viva e coerente com a identidade do produto?
+7. a energia visual desta tela convida aproximacao ou so adiciona ruido?
 
 Se a resposta ruim aparecer em qualquer uma dessas perguntas, a tela ainda nao esta boa o suficiente.
+
+## Interpretacao pratica da Front Display Wall nesta fase
+
+Traducao direta da metafora para a execucao de UI:
+
+1. a frente do produto deve parecer limpa, mas nao fria
+2. a interface deve parecer feliz, energizada e humana sem perder seriedade operacional
+3. valor percebido tambem nasce de cor, brilho, composicao e atmosfera, nao apenas de organizacao
+4. a obra em andamento pode aparecer como crescimento bonito, nao como improviso constrangedor
+5. a pessoa precisa sentir que esta olhando para algo vivo, valioso e em evolucao consistente
+
+Consequencias praticas:
+
+1. blocos principais precisam ter mais presenca visual do que blocos secundarios
+2. destaque de prioridade pode usar cor, contraste, brilho leve e ritmo composicional, nao apenas texto
+3. a tela deve combinar clareza de leitura com sensacao de produto desejavel
+4. nenhuma pagina pode parecer apatica, burocratica ou sem identidade
+
+## Filtro de defesa contra erro humano
+
+Toda decisao desta fase tambem precisa passar por estas perguntas:
+
+1. um usuario distraido consegue entender o que vai acontecer antes de confirmar?
+2. existe alguma acao aqui que pode disparar efeito relevante sem contexto suficiente?
+3. se a pessoa clicar no lugar errado, o sistema limita dano ou deixa seguir solto?
+4. o formulario impede combinacoes incoerentes ou apenas aceita e falha depois?
+5. um estado vazio, erro ou ausencia de permissao explica claramente o que fazer agora?
+6. os campos digitaveis estao limitando formato e tamanho do jeito certo?
+7. quando a pessoa digita um atalho humano obvio, o sistema ajuda ou pune?
+
+Se alguma resposta for ruim, a interface ainda esta fraca demais para uso real.
+
+## Politica de entrada guiada
+
+Para esta fase, formularios e digitaveis devem seguir estas regras:
+
+1. campos numericos devem ter minimo, maximo, passo e tamanho coerentes com a regra real
+2. campos de hora, data e moeda devem usar mascara, placeholder util e autocorrecao segura
+3. campos de texto estruturado devem impedir excesso de caracteres e caracteres invalidos o mais cedo possivel
+4. feedback de erro deve aparecer perto do campo e dizer como corrigir
+5. placeholder nunca substitui rotulo; ele apenas ajuda o formato esperado
+6. o valor salvo precisa sair limpo e consistente, mesmo que a digitacao humana venha torta
+7. o front-end deve reduzir o erro antes do submit e o backend deve validar de novo por seguranca
+8. sempre que existir uma interpretacao obvia e segura, o sistema deve preferir corrigir automaticamente em vez de rejeitar
+9. se uma ação interliga com a outra elas precisam conversar e falar a mesma língua a mesma lógica
+10. todos os textos devem ter ortografia perfeita, acentuação, pontos e português coerente.
 
 ## O que nao entra nesta fase
 
@@ -85,6 +188,7 @@ Se a resposta ruim aparecer em qualquer uma dessas perguntas, a tela ainda nao e
 5. automacao fake sem regra de negocio por tras
 6. jargao visual ou tecnico que obrigue o usuario a interpretar demais
 7. blocos bonitos que nao ajudem decisao, leitura ou acao
+8. brilho, neon, cor ou efeito usados como maquiagem sem funcao de identidade ou hierarquia
 
 ## Leitura atual do front-end
 
@@ -107,6 +211,7 @@ O ataque do front nesta fase deve seguir esta leitura:
 3. a prioridade nao e deixar o sistema mais bonito antes de deixa-lo mais claro
 4. a frente do produto precisa parecer limpa, simples e utilizavel
 5. a interface deve reduzir esforco cognitivo, nao redistribui-lo
+6. depois da clareza minima, a frente tambem precisa ganhar presenca, calor e valor percebido
 
 Resumo operacional:
 
@@ -116,6 +221,8 @@ Resumo operacional:
 4. mais sinais que orientam o que fazer
 5. menos interface que parece sistema
 6. mais interface que parece ferramenta de uso real
+7. mais valor percebido sem cair em ornamentacao vazia
+8. mais energia visual sem quebrar o foco operacional
 
 ## Ordem de execucao recomendada
 
@@ -137,6 +244,7 @@ Melhorias alvo:
 3. reduzir ruido visual da topbar e tornar alertas mais legiveis
 4. melhorar responsividade da shell para uso rapido em notebook e celular
 5. reforcar estados de foco, hover e click para dar sensacao de interface mais viva e confiavel
+6. aumentar presenca visual da casca global para ela parecer produto desejavel, e nao somente shell funcional
 
 ### Etapa 2: dashboard com foco operacional
 
@@ -240,6 +348,28 @@ Melhorias alvo:
 3. melhorar feedback pos-acao para check-in, ocorrencia e rotina operacional
 4. deixar a linguagem visual coerente entre manager, coach, owner e dev
 
+### Etapa 7: Recepcao como triunfo visivel
+
+Arquivos centrais:
+
+1. docs/reception-module-plan.md
+2. operations/workspace_views.py
+3. operations/queries.py
+4. templates/operations/reception.html
+5. catalog/views/student_views.py
+6. catalog/views/class_grid_views.py
+
+Objetivo:
+
+Transformar uma lacuna percebida em uma area especializada que prove intimidade com o chao do box e aumente valor percebido da obra quando o sistema estiver rodando para terceiros.
+
+Melhorias alvo:
+
+1. criar uma area de recepcao especializada, em vez de um manager reduzido
+2. unir aluno, grade em leitura e cobranca curta no mesmo compasso de atendimento
+3. permitir cobranca operacional sem entregar o centro financeiro inteiro
+4. usar a propria evolucao visivel do produto como parte da atracao da Front Display Wall
+
 ## Componentes e comportamentos que valem investir agora
 
 1. barra de acao fixa ou semi-fixa em telas longas
@@ -263,6 +393,17 @@ Antes de considerar qualquer tela suficientemente boa, validar:
 6. tabelas, cards e blocos podem ser escaneados sem fadiga horizontal desnecessaria
 7. a tela nao expoe mecanismo interno, improviso ou transicao como linguagem dominante
 8. um usuario novo conseguiria operar o fluxo principal sem ficar travado por interpretacao
+9. a pagina continua estavel mesmo com uso apressado, ordem errada ou clique ingenuo
+10. acoes sensiveis tem protecao proporcional ao risco
+11. formularios e filtros evitam combinacoes burras antes do envio
+12. a interface reduz a chance de erro humano em vez de transferir esse custo para quem opera
+13. todo campo digitavel deixa claro o formato esperado
+14. limites de tamanho, faixa e tipo estao aplicados onde precisam estar
+15. campos de hora, data, moeda e documento ajudam a pessoa a digitar certo
+16. quando a pessoa entra com um formato humano previsivel, a interface converte para o padrao correto sem quebrar o fluxo
+17. a tela parece viva, atraente e coerente com a identidade do produto
+18. cor, contraste e brilho estao ajudando a hierarquia em vez de competir com ela
+19. a pagina gera curiosidade, confianca e vontade de continuar usando
 
 Se qualquer item acima falhar, a tela ainda esta confusa demais.
 
@@ -275,6 +416,11 @@ Estas decisoes devem ser tomadas agora para evitar retrabalho:
 3. preservar espacos de interface para sugestoes automatizadas futuras
 4. evitar depender de texto solto quando o sistema puder expor estado estruturado
 5. padronizar feedback visual de eventos bem-sucedidos, pendentes e falhos
+6. padronizar confirmacoes, protecoes de acao e validacoes para impedir erro repetitivo
+7. preferir defaults seguros, campos guiados e bloqueios de combinacao invalida
+8. padronizar mascaras, limites, placeholders e autocorrecao de digitacao nos tipos de campo recorrentes
+9. definir comportamentos consistentes para hora, data, moeda, telefone e documentos antes de espalhar formularios novos
+10. definir uma linguagem de cor, brilho, contraste e presenca que faca o produto parecer o mesmo predio em todas as telas
 
 ## Definicao de pronto da fase 1
 
@@ -287,6 +433,13 @@ Esta fase pode ser considerada redonda quando:
 5. a interface parecer produto real, e nao painel tecnico em evolucao
 6. a operacao principal puder ser entendida sem explicacao longa
 7. a simplicidade percebida for alta mesmo nas telas mais densas
+8. as paginas principais estiverem estaveis e sem bugs visiveis de uso comum
+9. o fluxo principal estiver protegido contra erro humano previsivel
+10. um usuario comum nao conseguir quebrar tela, estado ou fluxo por acao boba
+11. os formularios principais estiverem guiando digitacao de forma segura e previsivel
+12. campos estruturados estiverem limitando e autocorrigindo entrada do jeito certo
+13. as telas principais parecerem vivas, desejaveis e memoraveis sem sacrificar uso real
+14. a frente do produto gerar valor percebido e vontade de continuar explorando
 
 ## Riscos de priorizacao que nao podem voltar
 
@@ -297,6 +450,11 @@ Com base em [v1-retrospective.md](v1-retrospective.md), esta fase nao pode repet
 3. aceitar copy inconsistente entre template, view, query e teste
 4. lapidar visual localizado antes de acertar casca, hierarquia e leitura global
 5. introduzir refinamento visual que aumenta carga mental em vez de reduzi-la
+6. aceitar pagina bonita, mas fragil a erro humano e uso real
+7. deixar validacao, bloqueio e protecao de fluxo para depois
+8. aceitar campo solto demais e obrigar o usuario a adivinhar formato
+9. depender de digitacao perfeita quando o sistema poderia limitar ou corrigir
+10. cair no extremo oposto e deixar a interface correta, porem fria, apatica e sem presenca
 
 Regra de defesa:
 
@@ -311,6 +469,7 @@ Regra de defesa:
 3. melhorar a tela de alunos como mesa de operacao
 4. refinar o formulario de aluno com interacao progressiva
 5. fechar financeiro, grade e operacao por papel
+6. abrir a Recepcao como nova superficie especializada quando a casca e os fluxos principais ja estiverem com leitura madura
 
 ## Primeiro corte recomendado
 

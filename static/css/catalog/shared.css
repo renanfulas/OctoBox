@@ -26,6 +26,19 @@ PONTOS CRITICOS:
         var(--surface);
 }
 
+.student-form-scene {
+    gap: var(--section-gap);
+}
+
+.student-form-hero .operation-hero-panel {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(255, 247, 237, 0.96));
+}
+
+.student-form-focus-card,
+.student-form-main-card {
+    min-height: 100%;
+}
+
 .section-gap {
     margin-bottom: var(--section-gap);
 }

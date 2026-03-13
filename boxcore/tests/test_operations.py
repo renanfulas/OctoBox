@@ -20,7 +20,7 @@ from django.utils import timezone
 
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER
 from auditing.models import AuditEvent
-from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentStatus
+from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
 from operations.models import Attendance, BehaviorNote, ClassSession
 from students.models import Student
 
@@ -83,6 +83,71 @@ class OperationWorkspaceTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+    def test_owner_can_access_hidden_reception_preview(self):
+        self.client.force_login(self.owner)
+
+        response = self.client.get(reverse('reception-preview-workspace'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Recepcao em preparo')
+
+    def test_dev_can_access_hidden_reception_preview(self):
+        self.client.force_login(self.dev)
+
+        response = self.client.get(reverse('reception-preview-workspace'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Preview oculto')
+
+    def test_manager_cannot_access_hidden_reception_preview(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.get(reverse('reception-preview-workspace'))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_owner_can_mark_payment_paid_from_hidden_reception_preview(self):
+        self.client.force_login(self.owner)
+
+        response = self.client.post(
+            reverse('reception-preview-payment-action', args=[self.payment.id]),
+            data={
+                'payment_id': self.payment.id,
+                'amount': self.payment.amount,
+                'due_date': str(self.payment.due_date),
+                'method': PaymentMethod.PIX,
+                'reference': 'BALCAO-OK',
+                'notes': 'Recebido no preview da recepcao.',
+                'action': 'mark-paid',
+            },
+            HTTP_REFERER=reverse('reception-preview-workspace'),
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.payment.refresh_from_db()
+        self.assertEqual(self.payment.status, PaymentStatus.PAID)
+        self.assertEqual(self.payment.method, PaymentMethod.PIX)
+
+    def test_dev_cannot_mutate_payment_from_hidden_reception_preview(self):
+        self.client.force_login(self.dev)
+
+        response = self.client.post(
+            reverse('reception-preview-payment-action', args=[self.payment.id]),
+            data={
+                'payment_id': self.payment.id,
+                'amount': self.payment.amount,
+                'due_date': str(self.payment.due_date),
+                'method': PaymentMethod.CASH,
+                'reference': 'DEV-BLOCKED',
+                'notes': 'Tentativa bloqueada.',
+                'action': 'mark-paid',
+            },
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.payment.refresh_from_db()
+        self.assertEqual(self.payment.status, PaymentStatus.PENDING)
+
     def test_coach_can_check_in_attendance(self):
         self.client.force_login(self.coach)
 
@@ -141,13 +206,20 @@ class OperationWorkspaceTests(TestCase):
         self.assertContains(response, 'Ocorrências')
         self.assertNotContains(response, 'Pagamentos')
 
+    def test_hidden_reception_preview_does_not_appear_in_owner_sidebar(self):
+        self.client.force_login(self.owner)
+
+        response = self.client.get(reverse('owner-workspace'))
+
+        self.assertNotContains(response, '/operacao/recepcao-preview/')
+
     def test_owner_can_access_owner_area(self):
         self.client.force_login(self.owner)
 
         response = self.client.get(reverse('owner-workspace'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Área do Owner')
+        self.assertContains(response, 'Leitura executiva do box')
 
     def test_dev_can_access_dev_workspace(self):
         self.client.force_login(self.dev)
@@ -155,5 +227,5 @@ class OperationWorkspaceTests(TestCase):
         response = self.client.get(reverse('dev-workspace'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Área do DEV')
+        self.assertContains(response, 'Leitura técnica controlada')
         self.assertContains(response, 'Eventos recentes de auditoria')

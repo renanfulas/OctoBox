@@ -145,6 +145,10 @@ class StudentQuickBaseView(CatalogBaseView, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
+        selected_intake = self.get_selected_intake()
+        financial_overview = build_student_financial_snapshot(self.object)
+        latest_enrollment = financial_overview.get('latest_enrollment')
+        recent_payments = financial_overview.get('payments', [])
         context['page_mode'] = self.page_mode
         context['page_title'] = 'Cadastrar aluno' if self.page_mode == 'create' else 'Editar aluno'
         context['page_subtitle'] = (
@@ -158,10 +162,41 @@ class StudentQuickBaseView(CatalogBaseView, FormView):
             'A ideia desta tela é reduzir fricção sem perder legibilidade.',
         ]
         context['student_object'] = self.object
-        context['selected_intake'] = self.get_selected_intake()
-        context['financial_overview'] = build_student_financial_snapshot(self.object)
+        context['selected_intake'] = selected_intake
+        context['financial_overview'] = financial_overview
         context['payment_management_form'] = self.get_payment_management_form()
         context['enrollment_management_form'] = self.get_enrollment_management_form()
+        context['student_form_operational_focus'] = [
+            {
+                'label': 'Comece pelo núcleo do cadastro',
+                'summary': 'Nome completo e WhatsApp já destravam quase todo o fluxo. O restante só entra quando melhorar decisão, vínculo ou cobrança.',
+                'pill_class': 'accent',
+                'href': '#student-form-essential',
+                'href_label': 'Abrir essencial',
+            },
+            {
+                'label': 'Use o intake para reduzir atrito',
+                'summary': (
+                    f'Esta edição já nasceu de {selected_intake.full_name} e pode seguir com conversão guiada.'
+                    if selected_intake else
+                    'Se houver lead ou entrada provisória, vincular aqui evita retrabalho e mantém a conversa viva.'
+                ),
+                'pill_class': 'info' if selected_intake else 'accent',
+                'href': '#student-form-profile',
+                'href_label': 'Ver perfil e vínculo',
+            },
+            {
+                'label': 'Feche com plano e cobrança',
+                'summary': (
+                    f'{latest_enrollment.plan.name} já está ligado ao aluno e {len(recent_payments)} cobrança(s) recente(s) ajudam a ler o financeiro sem sair desta tela.'
+                    if latest_enrollment else
+                    'Plano, status comercial e cobrança inicial ficam no mesmo fluxo para evitar ida e volta entre cadastro e financeiro.'
+                ),
+                'pill_class': 'warning' if latest_enrollment else 'success',
+                'href': '#student-form-plan',
+                'href_label': 'Ver plano e cobrança',
+            },
+        ]
         form = context.get('form')
         context['plan_price_map'] = {
             str(plan.id): str(plan.price)

@@ -38,9 +38,16 @@ class RoleOperationRedirectView(LoginRequiredMixin, View):
 
 class OperationBaseView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
     allowed_roles = ()
+    page_title = ''
+    page_subtitle = ''
 
     def get_base_context(self):
-        return {
+        context = {
             'current_role': get_user_role(self.request.user),
             'today': timezone.localdate(),
         }
+        if self.page_title:
+            context['page_title'] = self.page_title
+        if self.page_subtitle:
+            context['page_subtitle'] = self.page_subtitle
+        return context

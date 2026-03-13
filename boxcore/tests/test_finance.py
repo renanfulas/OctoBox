@@ -81,7 +81,9 @@ class FinanceCenterTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Financeiro')
         self.assertContains(response, 'Cross Gold')
-        self.assertContains(response, 'Cadastre um plano que depois conversa com aluno, matricula e pagamento')
+        self.assertContains(response, 'Primeiro ajuste o recorte')
+        self.assertContains(response, 'Pressão operacional viva')
+        self.assertContains(response, 'Cadastre um plano sem transformar modelagem comercial em formulário opaco')
         self.assertContains(response, 'Tendência mensal')
         self.assertContains(response, 'Ativações x cancelamentos')
         self.assertContains(response, 'Régua de cobrança e retenção')
@@ -140,6 +142,16 @@ class FinanceCenterTests(TestCase):
         self.assertEqual(self.plan.name, 'Cross Gold Plus')
         self.assertEqual(str(self.plan.price), '339.90')
         self.assertTrue(AuditEvent.objects.filter(action='membership_plan_quick_updated').exists())
+
+    def test_finance_plan_update_page_shows_guided_support_blocks(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('membership-plan-quick-update', args=[self.plan.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Como decidir sem espalhar a leitura')
+        self.assertContains(response, 'Leitura de impacto')
+        self.assertContains(response, 'O que esta decisao deve deixar claro')
 
     def test_finance_center_can_export_csv(self):
         self.client.force_login(self.user)
