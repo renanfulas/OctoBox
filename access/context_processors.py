@@ -76,6 +76,80 @@ def _pick_active_href(current_path, links):
     return max(matches, key=len, default='')
 
 
+def _build_shell_page_context(current_path, role, navigation, alerts):
+    active_item = next((item for item in navigation if item['is_active']), None)
+    active_label = active_item['label'] if active_item else 'OctoBox Control'
+    role_label = getattr(role, 'label', 'Sem papel definido')
+    section_map = [
+        {
+            'prefix': '/dashboard/',
+            'eyebrow': 'Pulso geral do box',
+            'title': 'Dashboard',
+            'subtitle': 'Comece pelo panorama vivo do dia antes de descer para filas, cobrancas ou ajustes de detalhe.',
+        },
+        {
+            'prefix': '/alunos/',
+            'eyebrow': 'Centro da jornada do aluno',
+            'title': 'Alunos',
+            'subtitle': 'Aqui a leitura precisa deixar claro quem entrou, quem esta ativo e onde a relacao ainda pede vinculo ou correcoes simples.',
+        },
+        {
+            'prefix': '/financeiro/',
+            'eyebrow': 'Leitura comercial do box',
+            'title': 'Financeiro',
+            'subtitle': 'Use este recorte para ver pressao de caixa, proposta comercial e sinais de retencao sem transformar a tela em extrato confuso.',
+        },
+        {
+            'prefix': '/grade-aulas/',
+            'eyebrow': 'Ritmo da operacao de treino',
+            'title': 'Grade de aulas',
+            'subtitle': 'A grade deve mostrar rapido horario, capacidade e proximas correcoes antes que a rotina dependa de memoria.',
+        },
+        {
+            'prefix': '/operacao/',
+            'eyebrow': 'Workspace principal do papel',
+            'title': active_label,
+            'subtitle': f'Este centro existe para o papel {role_label.lower()} enxergar primeiro a decisao certa, nao para navegar no escuro entre blocos longos.',
+        },
+        {
+            'prefix': '/acessos/',
+            'eyebrow': 'Fronteiras do sistema',
+            'title': 'Papeis e acessos',
+            'subtitle': 'Leia esta area como mapa de limite real: quem pode agir, onde pode agir e qual fronteira protege a rotina do box.',
+        },
+        {
+            'prefix': '/mapa-sistema/',
+            'eyebrow': 'Mapa estrutural visivel',
+            'title': 'Mapa do sistema',
+            'subtitle': 'A construcao pode aparecer, desde que continue bonita, legivel e capaz de orientar manutencao sem adivinhacao.',
+        },
+        {
+            'prefix': '/admin/',
+            'eyebrow': 'Camada administrativa',
+            'title': active_label,
+            'subtitle': 'Use esta area como apoio tecnico e administrativo, nunca como substituto da fachada principal do produto.',
+        },
+    ]
+    section = next((item for item in section_map if current_path.startswith(item['prefix'])), None)
+    if section is None:
+        section = {
+            'eyebrow': 'Centro operacional atual',
+            'title': active_label,
+            'subtitle': 'A tela atual deve dizer rapidamente onde voce esta, o que importa agora e qual proximo passo evita atrito inutil.',
+        }
+
+    return {
+        **section,
+        'active_label': active_label,
+        'role_label': role_label,
+        'stats': [
+            {'label': 'Papel ativo', 'value': role_label},
+            {'label': 'Intakes abertos', 'value': alerts['pending_intakes']},
+            {'label': 'Vencimentos', 'value': alerts['overdue_payments']},
+        ],
+    }
+
+
 def _build_navigation(role_slug, current_path=''):
     base_links = [
         {'label': 'Dashboard', 'href': '/dashboard/'},
@@ -125,18 +199,23 @@ def role_navigation(request):
     role_slug = getattr(role, 'slug', '')
     overdue_payments = 0
     pending_intakes = 0
+    sidebar_navigation = []
 
     if request.user.is_authenticated:
         overdue_payments = Payment.objects.filter(status=PaymentStatus.OVERDUE).count()
         pending_intakes = count_pending_intakes()
+        sidebar_navigation = _build_navigation(role_slug, request.path)
+
+    topbar_alerts = {
+        'overdue_payments': overdue_payments,
+        'pending_intakes': pending_intakes,
+    }
 
     return {
         'current_role': role,
-        'sidebar_navigation': _build_navigation(role_slug, request.path) if request.user.is_authenticated else [],
+        'sidebar_navigation': sidebar_navigation,
         'global_search_action': '/alunos/',
         'static_asset_version': _build_static_asset_version(),
-        'topbar_alerts': {
-            'overdue_payments': overdue_payments,
-            'pending_intakes': pending_intakes,
-        },
+        'topbar_alerts': topbar_alerts,
+        'shell_page_context': _build_shell_page_context(request.path, role, sidebar_navigation, topbar_alerts),
     }

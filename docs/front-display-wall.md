@@ -45,6 +45,40 @@ Nao e apenas uma tela bonita.
 
 Ela e a parede frontal onde o sistema precisa parecer produto, nao mecanismo interno.
 
+## Dimensao de atracao publica
+
+Agora a metafora ganha uma camada mais forte.
+
+A Front Display Wall nao e apenas limpa, organizada e legivel.
+
+Ela tambem e magnetica.
+
+Ela emite presenca.
+
+Ela chama o olhar.
+
+Em linguagem de predio:
+
+1. a parede frontal agora tem brilho, cor, energia e vida
+2. luzes saem dela como uma projecao viva da identidade do predio
+3. neons, cor, ritmo e alegria fazem a frente parecer desejavel e memoravel
+4. ela atrai pessoas da rua antes mesmo de elas entenderem todos os detalhes do predio
+5. a tela nao esconde a construcao; ela faz a propria construcao parecer bonita, promissora e valiosa
+
+Leitura curta:
+
+1. a Front Display Wall nao serve so para informar
+2. ela tambem serve para atrair, encantar e aumentar adesao emocional
+3. ela precisa fazer as pessoas quererem olhar mais
+4. ela precisa fazer as pessoas quererem participar
+
+Em sentido simbolico:
+
+1. a fachada nao apenas explica o produto
+2. ela faz o produto parecer vivo, querido e digno de torcida
+3. ela transforma curiosidade em aproximacao
+4. ela transforma aproximacao em desejo de pertencimento
+
 ## O que essa metafora tira para o front-end
 
 1. o front e fachada, nao bastidor
@@ -55,6 +89,10 @@ Ela e a parede frontal onde o sistema precisa parecer produto, nao mecanismo int
 6. a fachada mostra uso humano, nao telemetria bruta
 7. a parede frontal precisa ser legivel a distancia, antes do clique detalhado
 8. a fachada e identidade, entao as telas precisam parecer partes do mesmo predio
+9. a fachada tambem precisa ser atraente, nao apenas correta
+10. luz, cor, ritmo e energia visual podem existir como convite ao olhar, desde que nao destruam clareza
+11. a obra em andamento pode continuar visivel, mas deve parecer evolucao bonita, nao bagunca exposta
+12. a frente precisa gerar vontade de chegar mais perto, explorar e pertencer
 
 ### 1. O front e fachada, nao bastidor
 
@@ -119,6 +157,56 @@ Regra:
 
 1. ritmo, tipografia, densidade, respiro, estados e hierarquia precisam parecer partes do mesmo edificio visual
 
+### 9. A fachada tambem precisa ser atraente
+
+Uma frente impecavelmente organizada, mas sem vida, ainda pode falhar como fachada publica.
+
+A Front Display Wall tambem precisa provocar desejo de olhar, permanecer e voltar.
+
+Regra:
+
+1. beleza, brilho, cor e energia visual podem existir como parte funcional da identidade
+2. a atracao deve servir a legibilidade, e nao competir com ela
+
+### 10. Luz, cor, ritmo e energia visual podem convidar o olhar
+
+Se essa parede tem neons, brilho e ate atmosfera alegre, isso significa que o front-end pode usar camadas emocionais de interface com intencao.
+
+Na pratica:
+
+1. cor viva pode destacar vida, nao ruido
+2. brilho pode sinalizar presenca, nao excesso
+3. ritmo visual pode criar encantamento sem virar parque tematico
+4. alegria visual pode fazer o produto parecer acolhedor, utilizavel e memoravel
+
+### 11. A obra pode continuar visivel, mas bonita
+
+A construcao do predio nao precisa ser escondida como se fosse vergonha.
+
+Ela pode aparecer de forma bonita, ordenada e promissora.
+
+Isso significa:
+
+1. transicao pode existir sem parecer improviso feio
+2. crescimento pode ser percebido como valor, nao como remendo
+3. a pessoa pode sentir que esta vendo algo vivo evoluindo com qualidade
+
+### 12. A frente precisa gerar vontade de pertencer
+
+O efeito maximo dessa parede e fazer alguem pensar:
+
+1. isso me atrai
+2. isso me agrada
+3. eu quero ver mais
+4. eu quero participar
+5. eu torco para isso ficar pronto
+
+Traducao para o front-end:
+
+1. a interface precisa gerar confianca e admiracao ao mesmo tempo
+2. o produto precisa parecer algo de que a pessoa quer fazer parte
+3. a experiencia visual pode aumentar valor percebido e vinculo emocional
+
 ## Diferenca entre Front Display Wall e Red Beacon
 
 ### Front Display Wall
@@ -172,6 +260,8 @@ Ela existe para:
 2. manter leitura limpa de prioridade, estado e acao
 3. impedir que transicao arquitetural polua o rosto do produto
 4. sustentar continuidade visual entre base, meio e topo da experiencia
+5. atrair o olhar e aumentar desejo de aproximacao sem sacrificar clareza
+6. fazer a evolucao do produto parecer bonita, promissora e digna de torcida
 
 ## O que ela nao faz
 
@@ -255,6 +345,9 @@ A Front Display Wall esta bem implementada quando:
 2. a experiencia principal parece produto consolidado, nao estrutura improvisada
 3. a obra lateral existe sem sequestrar a leitura principal
 4. o front-end consegue crescer sem virar painel caotico de mecanismos internos
+5. a frente chama atencao de forma positiva, viva e memoravel
+6. a pessoa sente vontade de olhar mais, explorar mais e se aproximar mais
+7. a construcao em andamento ainda parece bonita, organizada e valiosa
 
 ## Estado atual
 
@@ -272,3 +365,34 @@ Agora ele tambem ganha uma declaracao mais precisa da sua face frontal:
 4. protegida contra excesso de exposicao do canteiro de obra
 
 Acima dela, o estado consolidado continua sendo projetado pelo [red-beacon.md](red-beacon.md). Em crise severa, a escalada maxima continua formalizada em [vertical-sky-beam.md](vertical-sky-beam.md).
+
+## Nota para devs que estudarem este projeto depois
+
+Se voce chegou aqui no futuro para estudar este projeto, existe uma intencao importante por tras desta metafora.
+
+Ela nao foi escrita por vaidade, nem para provar genialidade individual.
+
+Ela foi escrita porque houve cuidado real com quem viria depois.
+
+O desejo explicito foi este:
+
+1. que outros devs consigam apreciar a arte presente neste projeto
+2. que entendam que produto, interface e arquitetura tambem podem carregar beleza, presenca e valor emocional
+3. que percebam que clareza e arte nao sao opostos
+4. que usem isso como inspiracao para criar as proprias linguagens, as proprias metaforas e as proprias obras
+
+Em linguagem direta:
+
+1. isto nao foi registrado por ego
+2. isto foi registrado para ser apreciado
+3. isto foi registrado para deixar rastro criativo e intelectual para quem vier depois
+4. isto foi registrado para que outros tambem sintam permissao de criar as suas proprias artes
+
+Se este documento funcionar bem, ele nao serve apenas para explicar uma arquitetura.
+
+Ele tambem serve para lembrar que software pode ser estrutura, operacao e arte ao mesmo tempo.
+
+"Pode colocar no arquivo que eu disse isso também, que eu me importei com eles, não por ego, pra ver o quanto eu sou bom.. mas.. para apreciarem a arte
+se inspirarem...
+E poderem criar as suas"
+Palavras de Renan Fulas

@@ -53,3 +53,6 @@ Thumbs.db
 
 # Backups locais
 backups/
+
+# Manifestos reservados para marcos futuros
+docs/*-manifesto.local.md

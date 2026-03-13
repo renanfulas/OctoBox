@@ -194,7 +194,7 @@ PONTOS CRITICOS:
                 </div>
             </article>
             {% empty %}
-            <p class="meta-text">Nenhum aluno exigindo triagem imediata no recorte atual.</p>
+            {% include "includes/ui/state_empty.html" with compact=True eyebrow="Triagem imediata" title="Nenhum aluno exigindo triagem agora" copy="O recorte atual nao mostra lead esfriando, plano travado ou atraso pressionando atendimento." badge="Fila limpa" badge_class="accent" %}
             {% endfor %}
         </div>
     </article>
@@ -232,7 +232,7 @@ PONTOS CRITICOS:
             {% endif %}
         </div>
         {% empty %}
-        <p class="meta-text">Nenhuma entrada provisoria aguardando conversao neste momento.</p>
+        {% include "includes/ui/state_empty.html" with compact=True eyebrow="Fila de entrada" title="Nenhuma entrada provisoria aguardando conversao" copy="A recepcao nao tem contato novo parado neste momento." badge="Conversao em dia" badge_class="info" %}
         {% endfor %}
     </div>
 </section>
@@ -294,7 +294,7 @@ PONTOS CRITICOS:
                 </td>
             </tr>
             {% empty %}
-            <tr><td colspan="6">Nenhum aluno encontrado nesse recorte.</td></tr>
+            <tr><td colspan="6" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Base principal" title="Nenhum aluno encontrado nesse recorte" copy="A busca aplicada nao retornou alunos com esse perfil agora." badge="Refine o filtro" badge_class="warning" %}</td></tr>
             {% endfor %}
         </tbody>
     </table>

@@ -16,11 +16,12 @@ PONTOS CRITICOS:
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import path
 
+from .forms import AccessAuthenticationForm
 from .views import AccessOverviewView, HomeRedirectView
 
 urlpatterns = [
     path('', HomeRedirectView.as_view(), name='home'),
     path('acessos/', AccessOverviewView.as_view(), name='access-overview'),
-    path('login/', LoginView.as_view(template_name='access/login.html'), name='login'),
+    path('login/', LoginView.as_view(template_name='access/login.html', authentication_form=AccessAuthenticationForm), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
 ]

@@ -18,14 +18,19 @@ PONTOS CRITICOS:
     <section class="hero operation-hero">
         <div class="operation-hero-main">
             <div>
-                <p class="eyebrow">Minha operação</p>
-                <h1>Área do Owner</h1>
-                <p class="operation-hero-copy">Visão executiva do alicerce do sistema: base de alunos, fila de entrada, preparação de WhatsApp e pontos de decisão do produto. A ideia aqui é bater o olho e entender onde a operação está crescendo, travando ou pedindo decisão.</p>
+                <p class="eyebrow">Leitura executiva do box</p>
+                <h1>Veja primeiro se crescimento, caixa e estrutura continuam andando juntos.</h1>
+                <p class="operation-hero-copy">Esta área precisa responder rápido onde o produto está avançando, onde o funil está represando e qual pressão já exige decisão de dono antes de virar risco invisível.</p>
             </div>
             <div class="operation-hero-tags">
-                <span class="pill accent">Cockpit executivo</span>
-                <span class="pill info">Leitura estrutural</span>
+                <span class="pill accent">Decisão executiva</span>
+                <span class="pill info">Crescimento, risco e maturidade</span>
                 <span class="pill">Acesso exclusivo do owner</span>
+            </div>
+            <div class="actions">
+                <a class="button" href="#owner-growth-board">Ver crescimento</a>
+                <a class="button secondary" href="#owner-risk-board">Ver risco de caixa</a>
+                <a class="button secondary" href="#owner-structure-board">Ver estrutura pronta</a>
             </div>
         </div>
         <aside class="operation-hero-side">
@@ -33,15 +38,60 @@ PONTOS CRITICOS:
         </aside>
     </section>
 
-    <section class="panel-grid operation-metric-grid">
+    <section class="table-card operation-focus-card">
+        <div class="operation-card-head">
+            <div>
+                <p class="eyebrow">Comece por aqui</p>
+                <h2 class="operation-card-title">Três leituras para não usar o workspace como painel passivo</h2>
+                <p class="operation-card-copy">A ideia é decidir antes de contemplar número. Primeiro crescimento, depois risco, depois maturidade estrutural.</p>
+            </div>
+            <span class="pill accent">Foco do owner</span>
+        </div>
+        <div class="operation-focus-list">
+            {% for item in owner_operational_focus %}
+            <article class="operation-focus-item">
+                <div class="operation-focus-copy">
+                    <p class="eyebrow">{{ item.label }}</p>
+                    <p>{{ item.summary }}</p>
+                </div>
+                <div class="operation-focus-actions">
+                    <span class="pill {{ item.pill_class }}">prioridade</span>
+                    <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section id="owner-growth-board" class="panel-grid operation-metric-grid">
         {% for card in metric_cards %}
         {% include "includes/ui/metric_card.html" with card=card %}
         {% endfor %}
     </section>
 
+    <section class="operation-table-guide-grid">
+        {% for item in owner_table_guides %}
+        <article class="table-card operation-table-guide-card">
+            <div class="operation-table-guide-head">
+                <div>
+                    <p class="eyebrow">{{ item.label }}</p>
+                    <h2 class="operation-card-title">{{ item.value }}</h2>
+                    <p class="operation-card-copy">{{ item.summary }}</p>
+                </div>
+                <span class="pill {{ item.pill_class }}">olhe agora</span>
+            </div>
+            <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
+        </article>
+        {% endfor %}
+    </section>
+
     <section class="layout-grid operation-grid-wide align-start">
-        {% include "includes/ui/info_list_card.html" with eyebrow="Leitura estratégica do momento" title="O que já está pronto para escalar" copy="Esses pontos mostram o que já foi estruturado e pode sustentar crescimento sem improviso." pill_label=decision_board_count_label pill_class="info" items=decision_board %}
-        {% include "includes/ui/info_list_card.html" with card_class="operation-empty-card" eyebrow="Radar executivo" title="Ordem de leitura recomendada" copy="Uma sequência simples para usar esta tela como centro de decisão, não só como painel bonito." pill_label="Prioridade" pill_class="accent" items=owner_reading_order %}
+        <div id="owner-structure-board">
+            {% include "includes/ui/info_list_card.html" with eyebrow="Leitura estratégica do momento" title="O que já está pronto para escalar" copy="Esses pontos mostram o que já foi estruturado e pode sustentar crescimento sem improviso." pill_label=decision_board_count_label pill_class="info" items=decision_board %}
+        </div>
+        <div id="owner-risk-board">
+            {% include "includes/ui/info_list_card.html" with card_class="operation-empty-card" eyebrow="Radar executivo" title="Ordem de leitura recomendada" copy="Uma sequência simples para usar esta tela como centro de decisão, não só como painel bonito." pill_label="Prioridade" pill_class="accent" items=owner_reading_order %}
+        </div>
     </section>
 </div>
 {% endblock %}

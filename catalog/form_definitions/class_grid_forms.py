@@ -21,6 +21,13 @@ from django.utils import timezone
 from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
 from operations.domain import build_class_grid_session_policy
 from operations.models import ClassSession, SessionStatus
+from shared_support.form_inputs import (
+    LenientTimeField,
+    apply_date_input_attrs,
+    apply_integer_input_attrs,
+    apply_text_input_attrs,
+    apply_time_input_attrs,
+)
 
 
 WEEKDAY_CHOICES = (
@@ -63,6 +70,7 @@ class ClassGridFilterForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['reference_month'].initial = timezone.localdate().strftime('%Y-%m')
+        apply_text_input_attrs(self.fields['reference_month'], maxlength=7)
 
     def clean_reference_month(self):
         reference_month = self.cleaned_data.get('reference_month')
@@ -114,7 +122,7 @@ class ClassScheduleRecurringForm(forms.ModelForm):
             },
         ),
     )
-    start_time = forms.TimeField(
+    start_time = LenientTimeField(
         label='Horario inicial da aula (24h)',
         input_formats=['%H:%M'],
         error_messages={
@@ -187,10 +195,13 @@ class ClassScheduleRecurringForm(forms.ModelForm):
         self.fields['notes'].label = 'Observacoes operacionais'
         self.fields['coach'].queryset = _get_class_coach_queryset()
 
-        self.fields['title'].widget.attrs.update({'placeholder': 'Ex.: WOD 07h'})
-        self.fields['duration_minutes'].widget.attrs.update({'placeholder': 'Ex.: 60', 'min': '1', 'step': '1', 'inputmode': 'numeric'})
-        self.fields['capacity'].widget.attrs.update({'placeholder': 'Ex.: 20', 'min': '1', 'step': '1', 'inputmode': 'numeric'})
-        self.fields['notes'].widget.attrs.update({'placeholder': 'Ex.: aula de alta demanda; abrir check-in 15 min antes.'})
+        apply_text_input_attrs(self.fields['title'], placeholder='Ex.: WOD 07h', maxlength=100)
+        apply_time_input_attrs(self.fields['start_time'])
+        apply_integer_input_attrs(self.fields['duration_minutes'], placeholder='Ex.: 60', min_value=1, maxlength=3)
+        apply_integer_input_attrs(self.fields['capacity'], placeholder='Ex.: 20', min_value=1, maxlength=3)
+        apply_text_input_attrs(self.fields['notes'], placeholder='Ex.: aula de alta demanda; abrir check-in 15 min antes.')
+        apply_date_input_attrs(self.fields['start_date'], placeholder='11/03/26', maxlength=8, pattern='\d{2}/\d{2}/\d{2}')
+        apply_date_input_attrs(self.fields['end_date'], placeholder='08/04/26', maxlength=8, pattern='\d{2}/\d{2}/\d{2}')
 
         self.fields['start_date'].initial = timezone.localdate()
         self.fields['end_date'].initial = timezone.localdate() + timezone.timedelta(days=27)
@@ -236,9 +247,10 @@ class ClassScheduleRecurringForm(forms.ModelForm):
 
 
 class ClassSessionQuickEditForm(forms.ModelForm):
-    start_time = forms.TimeField(
+    start_time = LenientTimeField(
         label='Horario de inicio',
-        widget=forms.TimeInput(attrs={'type': 'time'}),
+        input_formats=['%H:%M'],
+        widget=forms.TimeInput(),
     )
 
     class Meta:
@@ -273,6 +285,11 @@ class ClassSessionQuickEditForm(forms.ModelForm):
         self.fields['capacity'].label = 'Capacidade da turma'
         self.fields['status'].label = 'Status da aula'
         self.fields['notes'].label = 'Observacoes operacionais'
+        apply_text_input_attrs(self.fields['title'], placeholder='Ex.: WOD 07h', maxlength=100)
+        apply_time_input_attrs(self.fields['start_time'])
+        apply_integer_input_attrs(self.fields['duration_minutes'], placeholder='Ex.: 60', min_value=1, maxlength=3)
+        apply_integer_input_attrs(self.fields['capacity'], placeholder='Ex.: 20', min_value=1, maxlength=3)
+        apply_text_input_attrs(self.fields['notes'], placeholder='Explique qualquer ajuste importante desta aula.')
         if session_policy is not None:
             self.fields['status'].choices = session_policy.quick_edit_status_choices
         if self.instance.pk:

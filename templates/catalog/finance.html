@@ -35,11 +35,10 @@ PONTOS CRITICOS:
             <div class="actions">
                 <a class="button" href="#finance-rail-board">Ver régua</a>
                 <a class="button secondary" href="#finance-queue-board">Ver fila financeira</a>
+                <a class="button secondary" href="#finance-portfolio-board">Ver carteira</a>
                 {% if can_manage_finance %}
                 <a class="button secondary" href="#cadastro-plano">Cadastrar plano</a>
                 {% endif %}
-                <a class="button secondary" href="{{ finance_export_links.csv }}">Exportar CSV</a>
-                <a class="button secondary" href="{{ finance_export_links.pdf }}">Exportar PDF</a>
             </div>
         </div>
         <aside class="operation-hero-side">
@@ -104,19 +103,49 @@ PONTOS CRITICOS:
         </div>
     </section>
 
-    <section class="finance-board">
-        <article class="table-card finance-glass-panel finance-support-card finance-support-card-tight">
+    <section class="finance-command-grid">
+        {% for item in finance_command_cards %}
+        <article class="table-card finance-command-card">
             <div class="operation-card-head">
                 <div>
-                    <p class="eyebrow">Leitura que importa</p>
-                    <h2 class="operation-card-title">Como usar a tela sem se perder</h2>
+                    <p class="eyebrow">{{ item.label }}</p>
+                    <h2 class="operation-card-title">{{ item.value }}</h2>
+                    <p class="operation-card-copy">{{ item.summary }}</p>
                 </div>
+                <span class="pill {{ item.pill_class }}">ordem sugerida</span>
             </div>
-            <ul class="capability-list">
-                <li>Comece por régua e fila.</li>
-                <li>Tendência e churn medem crescimento real.</li>
-                <li>Planos e mix refinam a estrutura comercial.</li>
-            </ul>
+            <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="finance-board">
+        <article class="table-card finance-glass-panel finance-support-card finance-support-card-tight finance-filter-summary-card" id="finance-control-board">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Recorte ativo</p>
+                    <h2 class="operation-card-title">A leitura atual do financeiro está assim</h2>
+                    <p class="operation-card-copy">Antes de comparar número com número, confirme o recorte aplicado. Isso evita decisão em cima da janela errada.</p>
+                </div>
+                <span class="pill info">Contexto visível</span>
+            </div>
+            <div class="finance-summary-grid">
+                {% for item in finance_filter_summary %}
+                <article class="finance-summary-chip">
+                    <span class="operation-mini-label">{{ item.label }}</span>
+                    <strong>{{ item.value }}</strong>
+                    <p>{{ item.summary }}</p>
+                </article>
+                {% endfor %}
+            </div>
+            <div class="actions actions-tight finance-support-actions">
+                <a class="button secondary" href="{{ finance_export_links.csv }}">Exportar CSV</a>
+                <a class="button secondary" href="{{ finance_export_links.pdf }}">Exportar PDF</a>
+            </div>
+            <div class="note-panel note-panel-success-soft finance-inline-note">
+                <p class="eyebrow">Regra de leitura</p>
+                <p class="meta-text no-margin">Este bloco existe para impedir analise fora de contexto. Se o recorte estiver errado, todo o resto da tela fica elegante e inutil ao mesmo tempo.</p>
+            </div>
         </article>
         <article class="table-card finance-glass-panel finance-board-filter">
             <div class="operation-card-head">
@@ -151,10 +180,22 @@ PONTOS CRITICOS:
                     <a class="button secondary" href="/financeiro/">Limpar</a>
                 </div>
             </form>
+            <div class="finance-filter-rule-list">
+                <article class="finance-filter-rule-card">
+                    <span class="operation-mini-label">Janela</span>
+                    <strong>Muda contexto antes de conclusão</strong>
+                    <p>Use quando quiser saber se a pressão é pontual ou se já virou padrão no período.</p>
+                </article>
+                <article class="finance-filter-rule-card">
+                    <span class="operation-mini-label">Plano e método</span>
+                    <strong>Separam ruído de causa real</strong>
+                    <p>Isole carteira ou recebimento antes de chamar qualquer problema de produto ou preço.</p>
+                </article>
+            </div>
         </article>
 
         <div class="finance-side-stack finance-command-side finance-card-stack finance-board-support-rail">
-            <article class="table-card finance-glass-panel finance-support-card">
+            <article class="table-card finance-glass-panel finance-support-card finance-support-rail-card finance-ops-summary-card">
                 <div class="operation-card-head">
                     <div>
                         <p class="eyebrow">Régua operacional em números</p>
@@ -171,6 +212,34 @@ PONTOS CRITICOS:
                     </article>
                     {% endfor %}
                 </div>
+                <div class="note-panel note-panel-warm finance-inline-note">
+                    <p class="eyebrow">Uso correto</p>
+                    <p class="meta-text no-margin">Esses números existem para abrir ação, não para substituir a leitura da fila logo abaixo.</p>
+                </div>
+            </article>
+
+            <article class="table-card finance-glass-panel finance-support-card finance-support-card-tight finance-support-rail-card finance-radar-card">
+                <div class="operation-card-head">
+                    <div>
+                        <p class="eyebrow">Radar do recorte</p>
+                        <h2 class="operation-card-title">Onde concentrar a energia agora</h2>
+                        <p class="operation-card-copy">Este resumo existe para transformar o recorte atual em prioridade prática antes da leitura estrutural.</p>
+                    </div>
+                    <span class="pill {{ finance_right_rail_priority_badge }}">{{ finance_right_rail_priority_label }}</span>
+                </div>
+                <div class="finance-data-cluster finance-radar-cluster">
+                    {% for item in finance_right_rail_snapshot %}
+                    <article class="finance-data-chip finance-radar-chip">
+                        <span class="operation-mini-label">{{ item.label }}</span>
+                        <strong>{{ item.value }}</strong>
+                        <p>{{ item.summary }}</p>
+                    </article>
+                    {% endfor %}
+                </div>
+                <div class="note-panel note-panel-success-soft finance-inline-note">
+                    <p class="eyebrow">Leitura prioritária</p>
+                    <p class="meta-text no-margin">{{ finance_right_rail_priority_summary }}</p>
+                </div>
             </article>
         </div>
 
@@ -183,6 +252,10 @@ PONTOS CRITICOS:
                 </div>
                 <span class="pill warning">{{ operational_queue|length }} pendência(s)</span>
             </div>
+            <div class="finance-section-intro" id="finance-priority-board">
+                <p class="eyebrow">Pressão operacional viva</p>
+                <p class="meta-text no-margin">A régua e a fila abaixo são a metade da tela que protege caixa e retenção antes que o problema pareça estrutural demais.</p>
+            </div>
             <div class="stack-14 finance-action-list finance-action-list-compact">
                 {% for item in operational_queue %}
                 <article class="history-entry finance-action-card finance-action-card-compact">
@@ -194,10 +267,7 @@ PONTOS CRITICOS:
                         <span class="pill{% if item.pill_class %} {{ item.pill_class }}{% endif %}">{{ item.pill }}</span>
                     </div>
                     <div class="finance-action-body">
-                        <div class="note-panel note-panel-cream finance-action-message finance-action-message-compact">
-                            <p class="eyebrow">Próxima abordagem</p>
-                            <p class="meta-text">{{ item.suggested_message }}</p>
-                        </div>
+                        {% include "includes/ui/state_notice.html" with tone="warning" compact=True eyebrow="Proxima abordagem" title="Mensagem pronta para contato" copy=item.suggested_message class_name="finance-action-message finance-action-message-compact" %}
                     </div>
                     <form method="post" action="/financeiro/comunicacao/acao/" class="actions actions-tight finance-card-actions-compact">
                         {% csrf_token %}
@@ -210,7 +280,7 @@ PONTOS CRITICOS:
                     </form>
                 </article>
                 {% empty %}
-                <p class="meta-text">Nenhuma acao semiassistida pendente no momento.</p>
+                {% include "includes/ui/state_empty.html" with compact=True eyebrow="Regua operacional" title="Nenhuma acao semiassistida pendente" copy="Nao ha contato financeiro ou de retencao aguardando disparo assistido agora." badge="Fila limpa" badge_class="accent" %}
                 {% endfor %}
             </div>
         </article>
@@ -254,7 +324,7 @@ PONTOS CRITICOS:
                     </div>
                 </article>
                 {% empty %}
-                <p class="meta-text">Nenhuma pendencia financeira no momento.</p>
+                {% include "includes/ui/state_empty.html" with compact=True eyebrow="Fila financeira" title="Nenhuma pendencia financeira no momento" copy="A carteira nao tem cobranca pressionando caixa ou retencao neste recorte." badge="Carteira estabilizada" badge_class="accent" %}
                 {% endfor %}
             </div>
         </article>
@@ -266,6 +336,15 @@ PONTOS CRITICOS:
                     <h2 class="section-title-sm">Receita real recebida nos últimos 6 meses</h2>
                     <p class="body-copy text-muted section-gap-top-xs no-margin">Mostra se o caixa realmente subiu.</p>
                 </div>
+            </div>
+            <div class="finance-guide-grid finance-guide-grid-3 finance-trend-guide-grid">
+                {% for item in finance_trend_guides %}
+                <article class="finance-guide-card finance-guide-card-soft">
+                    <span class="operation-mini-label">{{ item.label }}</span>
+                    <strong>{{ item.value }}</strong>
+                    <p>{{ item.summary }}</p>
+                </article>
+                {% endfor %}
             </div>
             <div class="chart-grid revenue-chart" data-chart-columns="{{ monthly_comparison|length|default:1 }}">
                 {% for item in monthly_comparison %}
@@ -310,45 +389,108 @@ PONTOS CRITICOS:
             </div>
         </article>
 
+        <section class="table-card finance-glass-panel finance-focus-card finance-structure-card" id="finance-portfolio-board">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Agora refine a estrutura</p>
+                    <h2 class="operation-card-title">Três leituras para a metade mais densa do financeiro</h2>
+                    <p class="operation-card-copy">Depois de régua, fila e tendência, use esta ordem para ler carteira, mix e movimentos sem dispersão.</p>
+                </div>
+                <span class="pill accent">Estrutura comercial</span>
+            </div>
+            <div class="finance-focus-list">
+                {% for item in finance_structure_focus %}
+                <article class="finance-focus-item">
+                    <div class="finance-focus-copy">
+                        <p class="eyebrow">{{ item.label }}</p>
+                        <p>{{ item.summary }}</p>
+                    </div>
+                    <div class="finance-focus-actions">
+                        <span class="pill {{ item.pill_class }}">foco</span>
+                        <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+
         <article class="table-card finance-hero-panel finance-board-plan" id="cadastro-plano">
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Motor de planos</p>
-                    <h2 class="section-title-sm">Cadastre um plano que depois conversa com aluno, matricula e pagamento</h2>
-                    <p class="body-copy text-muted">Defina valor, ciclo e entrega.</p>
+                    <h2 class="section-title-sm">Cadastre um plano sem transformar modelagem comercial em formulário opaco</h2>
+                    <p class="body-copy text-muted">Primeiro proposta, depois entrega, depois ativação. O plano precisa ser legível antes de existir na carteira.</p>
                 </div>
                 <span class="pill info">Planos e mix</span>
             </div>
             {% if can_manage_finance %}
+            <div class="finance-plan-focus-list">
+                {% for item in finance_plan_creation_focus %}
+                <article class="finance-plan-focus-item">
+                    <div class="finance-focus-copy">
+                        <p class="eyebrow">{{ item.label }}</p>
+                        <p>{{ item.summary }}</p>
+                    </div>
+                    <span class="pill {{ item.pill_class }}">foco</span>
+                </article>
+                {% endfor %}
+            </div>
             <form method="post" novalidate class="finance-plan-form">
                 {% csrf_token %}
                 <div class="form-stack finance-plan-form-stack">
-                    <div class="field-grid-220 finance-plan-grid">
+                    {% if form.errors %}
+                    <div class="note-panel note-panel-danger finance-plan-feedback-card">
+                        <p class="eyebrow">Revise antes de salvar</p>
+                        <p class="meta-text no-margin">A tela marcou os campos com problema para impedir plano salvo com leitura quebrada.</p>
+                    </div>
+                    {% endif %}
+                    <div id="plan-create-core" class="field-grid-220 finance-plan-grid">
                         <label>
                             <span class="field-label">{{ form.name.label }}</span>
                             {{ form.name }}
+                            {% for error in form.name.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
                         </label>
                         <label>
                             <span class="field-label">{{ form.price.label }}</span>
                             {{ form.price }}
+                            {% for error in form.price.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
                         </label>
                         <label>
                             <span class="field-label">{{ form.billing_cycle.label }}</span>
                             {{ form.billing_cycle }}
+                            {% for error in form.billing_cycle.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
                         </label>
                         <label>
                             <span class="field-label">{{ form.sessions_per_week.label }}</span>
                             {{ form.sessions_per_week }}
+                            {% for error in form.sessions_per_week.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
                         </label>
                         <label>
                             <span class="field-label">{{ form.active.label }}</span>
                             {{ form.active }}
+                            {% for error in form.active.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
                         </label>
                     </div>
-                    <label>
+                    <label id="plan-create-delivery">
                         <span class="field-label">{{ form.description.label }}</span>
                         {{ form.description }}
+                        {% for error in form.description.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
                     </label>
+                    {% if form.non_field_errors %}
+                    <div class="note-panel note-panel-danger finance-plan-feedback-card">
+                        {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <div class="note-panel note-panel-success-soft finance-inline-note">
+                        <p class="eyebrow">Guardrails da oferta</p>
+                        <ul class="capability-list finance-guide-list-tight">
+                            {% for item in finance_plan_creation_guardrails %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
                     <div class="actions actions-tight finance-plan-actions">
                         <button class="button" type="submit">Salvar plano</button>
                         <a class="button secondary" href="/admin/boxcore/membershipplan/">Gerir no admin</a>
@@ -368,6 +510,15 @@ PONTOS CRITICOS:
                     <p class="operation-card-copy">Peso de cada plano na base e na receita.</p>
                 </div>
                 <span class="pill">{{ plan_portfolio|length }} plano(s)</span>
+            </div>
+            <div class="finance-guide-grid finance-guide-grid-3">
+                {% for item in finance_portfolio_guides %}
+                <article class="finance-guide-card">
+                    <span class="operation-mini-label">{{ item.label }}</span>
+                    <strong>{{ item.value }}</strong>
+                    <p>{{ item.summary }}</p>
+                </article>
+                {% endfor %}
             </div>
             <div class="stack-16 finance-portfolio-list">
                 {% for plan in plan_portfolio %}
@@ -400,19 +551,27 @@ PONTOS CRITICOS:
                     </div>
                 </div>
                 {% empty %}
-                <p class="meta-text">Nenhum plano cadastrado ainda.</p>
+                {% include "includes/ui/state_empty.html" with compact=True eyebrow="Portfolio de planos" title="Nenhum plano cadastrado ainda" copy="Cadastre pelo menos uma oferta para enxergar carteira, mix e matriculas de forma legivel." badge="Estrutura inicial" badge_class="info" %}
                 {% endfor %}
             </div>
         </article>
 
         <div class="finance-portfolio-side finance-card-stack finance-board-mix-side">
-            <article class="table-card finance-glass-panel finance-mix-panel finance-board-mix">
+            <article class="table-card finance-glass-panel finance-mix-panel finance-board-mix" id="finance-mix-board">
                 <div class="operation-card-head">
                     <div>
                         <p class="eyebrow">Mix comercial</p>
                         <h2 class="operation-card-title">Distribuição da base entre os planos</h2>
                     </div>
                     <span class="pill accent">Top 6</span>
+                </div>
+                <div class="finance-guide-note">
+                    <p class="eyebrow">Leia assim</p>
+                    <ul class="capability-list finance-guide-list-tight">
+                        {% for item in finance_mix_guides %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
                 </div>
                 <div class="stack-14 finance-mix-list">
                     {% for item in plan_mix %}
@@ -427,7 +586,7 @@ PONTOS CRITICOS:
                         <p class="meta-text-sm finance-inline-currency">Receita recebida no mes: R$ {{ item.revenue_this_month|floatformat:2 }}</p>
                     </article>
                     {% empty %}
-                    <p class="meta-text">Cadastre planos para enxergar distribuicao comercial e adesao.</p>
+                    {% include "includes/ui/state_empty.html" with compact=True eyebrow="Mix comercial" title="Ainda nao ha distribuicao para comparar" copy="Cadastre planos para ler adesao, concentracao e distribuicao comercial." badge="Sem base" badge_class="warning" %}
                     {% endfor %}
                 </div>
             </article>
@@ -461,7 +620,7 @@ PONTOS CRITICOS:
             </article>
         </div>
 
-        <section class="table-card finance-glass-panel finance-movements-panel">
+        <section class="table-card finance-glass-panel finance-movements-panel" id="finance-movements-board">
         <div class="operation-card-head">
             <div>
                 <p class="eyebrow">Movimentos recentes</p>
@@ -469,6 +628,15 @@ PONTOS CRITICOS:
                 <p class="operation-card-copy">Entradas, saídas e reposicionamentos recentes.</p>
             </div>
             <span class="pill info">{{ recent_movements|length }} movimento(s)</span>
+        </div>
+        <div class="finance-guide-grid finance-guide-grid-3 finance-movement-guide-grid">
+            {% for item in finance_movement_guides %}
+            <article class="finance-guide-card finance-guide-card-soft">
+                <span class="operation-mini-label">{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+                <p>{{ item.summary }}</p>
+            </article>
+            {% endfor %}
         </div>
         <div class="stack-14 finance-movements-list">
             {% for movement in recent_movements %}
@@ -481,7 +649,7 @@ PONTOS CRITICOS:
                 </div>
             </div>
             {% empty %}
-            <p class="meta-text">Nenhum movimento de matricula registrado ainda.</p>
+            {% include "includes/ui/state_empty.html" with compact=True eyebrow="Movimentos recentes" title="Nenhum movimento de matricula registrado ainda" copy="A carteira ainda nao acumulou entradas, saidas ou reposicionamentos para leitura historica." badge="Historico em formacao" badge_class="info" %}
             {% endfor %}
         </div>
     </section>

@@ -72,6 +72,8 @@ Nas areas com maior volume de regra, a base foi organizada de forma mais explici
 
 Se quiser estudar a base em ordem pedagógica, use [docs/reading-guide.md](docs/reading-guide.md).
 
+Se quiser entender como o CSS do projeto deve ser organizado, expandido e debugado sem virar remendo acumulado, use [docs/css-guide.md](docs/css-guide.md).
+
 Se quiser entender especificamente o que ainda prende o estado historico em `boxcore`, use [docs/boxcore-model-state-plan.md](docs/boxcore-model-state-plan.md) e [docs/boxcore-state-residue-inventory.md](docs/boxcore-state-residue-inventory.md).
 
 Se quiser entender a direcao tecnica para crescer sem perder simplicidade, use [docs/architecture-growth-plan.md](docs/architecture-growth-plan.md).
@@ -87,6 +89,12 @@ Se quiser entender a estrutura complementar de sinais, integracoes e expansao tr
 Se quiser entender como a arquitetura trata suportes temporarios de construcao sem confundi-los com a estrutura final, use [docs/scaffold-agents.md](docs/scaffold-agents.md).
 
 Se quiser entender a grande fachada frontal do produto, onde a experiencia visivel precisa continuar limpa mesmo com obra lateral e transicao arquitetural, use [docs/front-display-wall.md](docs/front-display-wall.md).
+
+Se quiser entender o plano do novo modulo de Recepcao, sua fronteira funcional, custo atual versus custo futuro e por que essa area foi reinterpretada como triunfo visivel da obra, use [docs/reception-module-plan.md](docs/reception-module-plan.md).
+
+Se quiser entender a direcao oficial do segundo andar do produto para o aplicativo do celular, sua regra de limpeza visual, sua navegacao essencial e a tese de como o Octobox deve se tornar favorito na mao das pessoas, use [docs/octobox-mobile-guide.md](docs/octobox-mobile-guide.md).
+
+Se quiser a traducao dessa direcao em telas concretas, ordem de prototipacao e hierarquia de navegacao do app mobile, use [docs/octobox-mobile-screen-blueprint.md](docs/octobox-mobile-screen-blueprint.md).
 
 Se quiser entender a camada superior de emissao visivel e sinalizacao confiavel do estado do sistema, use [docs/red-beacon.md](docs/red-beacon.md).
 

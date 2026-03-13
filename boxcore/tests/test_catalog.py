@@ -23,6 +23,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from auditing.models import AuditEvent
+from catalog.forms import ClassScheduleRecurringForm, StudentQuickForm
 from communications.models import StudentIntake, WhatsAppContact, WhatsAppMessageLog
 from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
 from operations.models import Attendance, ClassSession, SessionStatus
@@ -53,7 +54,7 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Alunos')
         self.assertContains(response, 'Bruna Costa')
-        self.assertContains(response, 'Mesa de operação')
+        self.assertContains(response, 'Mesa de atendimento')
         self.assertContains(response, 'Novo aluno')
         self.assertContains(response, 'Quem pede ação agora')
         self.assertContains(response, 'Fila de entrada provisoria pronta para conversao')
@@ -126,6 +127,28 @@ class CatalogViewTests(TestCase):
         created_sessions = list(ClassSession.objects.filter(title='WOD Sequencia 07h').order_by('scheduled_at'))
         self.assertEqual(len(created_sessions), 4)
         self.assertEqual([timezone.localtime(item.scheduled_at).strftime('%H:%M') for item in created_sessions], ['07:00', '08:00', '09:00', '10:00'])
+
+    def test_class_schedule_form_normalizes_single_digit_hour(self):
+        start_date = timezone.localdate() + timezone.timedelta(days=1)
+        form = ClassScheduleRecurringForm(
+            data={
+                'title': 'WOD 08h',
+                'coach': '',
+                'start_date': start_date.strftime('%d/%m/%y'),
+                'end_date': start_date.strftime('%d/%m/%y'),
+                'weekdays': [str(start_date.weekday())],
+                'start_time': '8',
+                'sequence_count': 0,
+                'duration_minutes': 60,
+                'capacity': 18,
+                'status': SessionStatus.SCHEDULED,
+                'notes': '',
+                'skip_existing': 'on',
+            },
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['start_time'].strftime('%H:%M'), '08:00')
 
     def test_class_grid_allows_exact_daily_limit_in_single_batch(self):
         self.client.force_login(self.user)
@@ -509,6 +532,36 @@ class CatalogViewTests(TestCase):
         self.assertTrue(AuditEvent.objects.filter(action='student_quick_created').exists())
         self.assertTrue(AuditEvent.objects.filter(action='student_quick_payment_created').exists())
         self.assertTrue(AuditEvent.objects.filter(action='student_intake_converted').exists())
+
+    def test_student_quick_form_normalizes_phone_and_cpf(self):
+        form = StudentQuickForm(
+            data={
+                'full_name': 'Mateus Oliveira',
+                'phone': '(11) 97777-7777',
+                'status': 'active',
+                'email': '',
+                'gender': '',
+                'birth_date': '',
+                'health_issue_status': '',
+                'cpf': '12345678901',
+                'notes': '',
+                'selected_plan': '',
+                'enrollment_status': 'pending',
+                'payment_method': PaymentMethod.PIX,
+                'confirm_payment_now': 'False',
+                'payment_due_date': '',
+                'payment_reference': '',
+                'initial_payment_amount': '',
+                'billing_strategy': 'single',
+                'installment_total': 1,
+                'recurrence_cycles': 3,
+                'intake_record': '',
+            },
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['phone'], '11977777777')
+        self.assertEqual(form.cleaned_data['cpf'], '123.456.789-01')
 
     def test_student_quick_update_flow_updates_student(self):
         self.client.force_login(self.user)

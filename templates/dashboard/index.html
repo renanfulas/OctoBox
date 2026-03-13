@@ -111,8 +111,49 @@ PONTOS CRITICOS:
         {% endfor %}
     </section>
 
+    <section class="table-card dashboard-table-card dashboard-focus-card">
+        <div class="operation-card-head">
+            <div>
+                <p class="eyebrow">Agora destrave a metade mais densa</p>
+                <h2 class="operation-card-title">Tres leituras para baixo da dobra sem perder contexto</h2>
+                <p class="operation-card-copy">Depois do panorama principal, use esta ordem para atacar cobranca, agenda e risco sem transformar a parte baixa do dashboard em bloco pesado.</p>
+            </div>
+            <span class="pill accent">Execucao guiada</span>
+        </div>
+        <div class="dashboard-focus-list">
+            {% for item in dashboard_execution_focus %}
+            <article class="dashboard-focus-item">
+                <div class="dashboard-focus-copy">
+                    <p class="eyebrow">{{ item.label }}</p>
+                    <p>{{ item.summary }}</p>
+                </div>
+                <div class="dashboard-focus-actions">
+                    <span class="pill {{ item.pill_class }}">foco</span>
+                    <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="operation-table-guide-grid">
+        {% for item in dashboard_table_guides %}
+        <article class="table-card operation-table-guide-card">
+            <div class="operation-table-guide-head">
+                <div>
+                    <p class="eyebrow">{{ item.label }}</p>
+                    <h2 class="operation-card-title">{{ item.value }}</h2>
+                    <p class="operation-card-copy">{{ item.summary }}</p>
+                </div>
+                <span class="pill {{ item.pill_class }}">escaneie aqui</span>
+            </div>
+            <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
+        </article>
+        {% endfor %}
+    </section>
+
     <section class="layout-grid dashboard-panel-grid align-start">
-        <article class="table-card dashboard-table-card">
+        <article class="table-card dashboard-table-card" id="dashboard-sessions-board">
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Próximas aulas</p>
@@ -143,7 +184,7 @@ PONTOS CRITICOS:
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5">Nenhuma aula cadastrada ainda.</td>
+                            <td colspan="5" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Proximas aulas" title="Nenhuma aula cadastrada ainda" copy="A agenda principal ainda nao tem turma pronta para movimentar recepcao e coach neste recorte." badge="Dia leve" badge_class="info" %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -151,7 +192,7 @@ PONTOS CRITICOS:
             </div>
         </article>
 
-        <article class="table-card dashboard-table-card">
+        <article class="table-card dashboard-table-card" id="dashboard-finance-board">
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Alertas financeiros</p>
@@ -178,7 +219,7 @@ PONTOS CRITICOS:
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="3">Nenhum pagamento atrasado.</td>
+                            <td colspan="3" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Alertas financeiros" title="Nenhum pagamento atrasado" copy="A fila critica de cobranca esta limpa neste momento." badge="Respirando" badge_class="accent" %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -186,7 +227,7 @@ PONTOS CRITICOS:
             </div>
         </article>
 
-        <article class="table-card dashboard-table-card operation-span-full">
+        <article class="table-card dashboard-table-card operation-span-full" id="dashboard-risk-board">
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Risco operacional por aluno</p>
@@ -225,7 +266,7 @@ PONTOS CRITICOS:
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5">Sem dados suficientes para análise.</td>
+                            <td colspan="5" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Risco operacional" title="Sem dados suficientes para analise" copy="Ainda nao ha presencas e faltas suficientes para separar estabilidade de risco com confianca." badge="Coleta inicial" badge_class="info" %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

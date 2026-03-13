@@ -17,19 +17,80 @@ PONTOS CRITICOS:
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<section class="hero">
-    <div>
-        <h1>{{ page_title }}</h1>
-        <p>{{ page_subtitle }}</p>
+<div class="operation-shell catalog-scene student-form-scene">
+<section class="hero operation-hero catalog-hero student-hero student-form-hero">
+    <div class="operation-hero-main">
+        <div>
+            <p class="eyebrow">Fluxo leve de cadastro</p>
+            <h1>{{ page_title }}</h1>
+            <p class="operation-hero-copy">{{ page_subtitle }} Esta tela precisa deixar claro o que entra agora, o que pode esperar e como plano e cobrança se conectam sem virar formulário cansativo.</p>
+        </div>
+        <div class="operation-hero-tags">
+            <span class="pill info">Cadastro sem ruído</span>
+            <span class="pill accent">Identidade, vínculo e cobrança</span>
+            <span class="pill">{% if student_object %}Edição rápida{% else %}Entrada guiada{% endif %}</span>
+        </div>
+        <div class="actions">
+            <a class="button" href="#student-form-essential">Preencher essencial</a>
+            <a class="button secondary" href="#student-form-plan">Ver plano e cobrança</a>
+            <a class="button secondary" href="/alunos/">Voltar para alunos</a>
+        </div>
     </div>
-    <div class="actions">
-        <span class="pill">Fluxo leve</span>
-        <a class="button secondary" href="/alunos/">Voltar para alunos</a>
+    <aside class="operation-hero-side">
+        <article class="operation-hero-panel hero-side-stack">
+            <div>
+                <p class="eyebrow">Leitura instantânea</p>
+                <p class="operation-card-copy">A abertura precisa responder rápido se você está criando do zero, convertendo um lead ou só ajustando vínculo e financeiro.</p>
+            </div>
+            <div class="hero-side-stat-grid">
+                <div class="hero-side-stat">
+                    <span>Modo</span>
+                    <strong>{% if student_object %}edição{% else %}cadastro{% endif %}</strong>
+                </div>
+                <div class="hero-side-stat">
+                    <span>Intake</span>
+                    <strong>{% if selected_intake %}ligado{% else %}livre{% endif %}</strong>
+                </div>
+                <div class="hero-side-stat">
+                    <span>Plano atual</span>
+                    <strong>{% if financial_overview.latest_enrollment %}ativo{% else %}pendente{% endif %}</strong>
+                </div>
+                <div class="hero-side-stat">
+                    <span>Pagamentos</span>
+                    <strong>{{ financial_overview.payments|length }}</strong>
+                </div>
+            </div>
+        </article>
+    </aside>
+</section>
+
+<section class="table-card glass-panel student-focus-card student-form-focus-card">
+    <div class="operation-card-head">
+        <div>
+            <p class="eyebrow">Comece por aqui</p>
+            <h2 class="operation-card-title">Três leituras para não transformar cadastro em burocracia</h2>
+            <p class="operation-card-copy">Use esta ordem para preencher só o que ajuda a operação agora e deixar o resto como aprofundamento controlado.</p>
+        </div>
+        <span class="pill accent">Ordem sugerida</span>
+    </div>
+    <div class="student-focus-list">
+        {% for item in student_form_operational_focus %}
+        <article class="student-focus-item">
+            <div class="student-focus-copy">
+                <p class="eyebrow">{{ item.label }}</p>
+                <p>{{ item.summary }}</p>
+            </div>
+            <div class="student-focus-actions">
+                <span class="pill {{ item.pill_class }}">foco</span>
+                <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
+            </div>
+        </article>
+        {% endfor %}
     </div>
 </section>
 
 <section class="layout-grid align-start section-gap">
-    <article class="table-card">
+    <article class="table-card student-support-card">
         <p class="eyebrow">Roteiro de cadastro</p>
         <ul class="capability-list">
             {% for item in form_focus %}
@@ -49,12 +110,12 @@ PONTOS CRITICOS:
         {% endif %}
     </article>
 
-    <article class="table-card">
+    <article class="table-card student-filter-card student-form-main-card">
         <form method="post" novalidate>
             {% csrf_token %}
             <div class="form-stack-lg">
                 <!-- Os passos seguem a mesma ordem da costura de negocio: identidade, qualificacao, plano e cobranca. -->
-                <div class="note-panel note-panel-warm">
+                <div id="student-form-essential" class="note-panel note-panel-warm">
                     <p class="eyebrow">Passo 1: essencial</p>
                     <div class="field-grid-240">
                         <label>
@@ -70,7 +131,7 @@ PONTOS CRITICOS:
                     </div>
                 </div>
 
-                <details class="disclosure-panel">
+                <details id="student-form-profile" class="disclosure-panel">
                     <summary>Passo 2: perfil do aluno</summary>
                     <div class="stack-16 section-gap-top-xs">
                         <div class="field-grid-220">
@@ -119,7 +180,7 @@ PONTOS CRITICOS:
                     </div>
                 </details>
 
-                <details open class="disclosure-panel disclosure-panel-success">
+                <details id="student-form-plan" open class="disclosure-panel disclosure-panel-success">
                     <summary>Passo 4: plano e status comercial</summary>
                     <div class="stack-16 section-gap-top-xs">
                         <div class="field-grid-220">
@@ -343,6 +404,8 @@ PONTOS CRITICOS:
     <p class="meta-text">Esta camada aparece assim que o aluno for salvo pela primeira vez.</p>
     {% endif %}
 </section>
+
+</div>
 
 {{ plan_price_map|json_script:"plan-price-map" }}
 <script>
