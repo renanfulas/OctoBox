@@ -13,15 +13,13 @@ PONTOS CRITICOS:
 - Este arquivo nao deve voltar a concentrar ORM, transacao ou regra de reconciliacao.
 """
 
-from communications.application.commands import build_register_inbound_whatsapp_message_command
-from communications.infrastructure import execute_register_inbound_whatsapp_message_command
+from communications.facade import run_register_inbound_whatsapp_message
 
 from .contracts import WhatsAppInboundMessage, WhatsAppWebhookProcessingResult
 
 
 def register_inbound_whatsapp_message(*, inbound_message: WhatsAppInboundMessage):
-    command = build_register_inbound_whatsapp_message_command(inbound_message=inbound_message)
-    result = execute_register_inbound_whatsapp_message_command(command)
+    result = run_register_inbound_whatsapp_message(inbound_message=inbound_message)
     return WhatsAppWebhookProcessingResult(
         accepted=result.accepted,
         reason=result.reason,

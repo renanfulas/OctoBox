@@ -63,7 +63,39 @@ Use `boxcore/*` apenas em tres casos:
 ### Operations
 
 - operations/actions.py
-  substitui boxcore.operations.actions como porta publica das actions operacionais
+  substitui boxcore.operations.actions como porta publica e implementacao canonica das actions operacionais
+- operations/facade/class_grid.py
+  cria a entrada publica estavel da grade dentro do CENTER
+- operations/facade/workspace.py
+  cria a entrada publica estavel do workspace operacional dentro do CENTER
+- operations/session_snapshots.py
+  substitui boxcore.session_snapshots como superficie canonica da serializacao compartilhada de aulas para grade e dashboard
+
+### Dashboard
+
+- dashboard/urls.py
+  substitui boxcore.dashboard.urls como entrada HTTP canonica do painel principal
+- dashboard/dashboard_views.py
+  substitui boxcore.dashboard.dashboard_views como camada HTTP canonica do dashboard
+- dashboard/dashboard_snapshot_queries.py
+  substitui boxcore.dashboard.dashboard_snapshot_queries como montagem canonica do snapshot do painel
+
+### Guide
+
+- guide/urls.py
+  substitui boxcore.guide.urls como entrada HTTP canonica do mapa interno do sistema
+- guide/views.py
+  substitui boxcore.guide.views como camada canonica da pagina pedagógica Mapa do Sistema
+
+### Students
+
+- students/facade/student_lifecycle.py
+  substitui o acesso direto do catalogo historico a students.infrastructure para cadastro rapido, intake, matricula e cobrancas do aluno
+
+### Communications
+
+- communications/facade/messaging.py
+  substitui o acesso direto de integracoes e services historicos a communications.infrastructure para inbound WhatsApp, toque operacional e fila financeira
 
 ### Integrations
 
@@ -79,16 +111,24 @@ Use `boxcore/*` apenas em tres casos:
 
 ### Catalog
 
+As entradas publicas abaixo agora sao canonicas no runtime e nao passam mais por `boxcore.catalog.services`.
+
+O proprio pacote legado `boxcore/catalog/services/*` agora atua majoritariamente como compatibilidade fina sobre estas entradas publicas, em vez de concentrar implementacao propria.
+
 - catalog/forms.py
-  substitui boxcore.catalog.forms para a casca HTTP do app real catalog
+  substitui boxcore.catalog.forms como superficie publica canonica dos formularios do catalog e agora aponta para implementacao real em catalog/form_definitions/*
 - catalog/student_queries.py
-  substitui boxcore.catalog.student_queries para leituras da area de alunos
+  substitui boxcore.catalog.student_queries para leituras da area de alunos e agora concentra a implementacao canonica desses snapshots
 - catalog/finance_queries.py
-  substitui boxcore.catalog.finance_queries para leituras do financeiro
+  substitui boxcore.catalog.finance_queries para leituras do financeiro e virou a entrada publica canonica do snapshot financeiro
+- catalog/finance_snapshot/*
+  substitui a montagem real historica em boxcore.catalog.finance_snapshot e concentra a implementacao canonica do snapshot financeiro no app real catalog
 - catalog/class_grid_queries.py
-  substitui boxcore.catalog.class_grid_queries para leituras da grade
+  substitui boxcore.catalog.class_grid_queries para leituras da grade e agora concentra a implementacao canonica desse snapshot
 - catalog/services/student_enrollment_actions.py
   substitui boxcore.catalog.services.student_enrollment_actions
+- catalog/services/enrollments.py
+  substitui boxcore.catalog.services.enrollments
 - catalog/services/student_payment_actions.py
   substitui boxcore.catalog.services.student_payment_actions
 - catalog/services/student_workflows.py
@@ -97,6 +137,8 @@ Use `boxcore/*` apenas em tres casos:
   substitui boxcore.catalog.services.intakes
 - catalog/services/payments.py
   substitui boxcore.catalog.services.payments
+- catalog/services/reports.py
+  substitui boxcore.catalog.services.reports
 - catalog/services/finance_communication_actions.py
   substitui boxcore.catalog.services.finance_communication_actions
 - catalog/services/membership_plan_workflows.py
@@ -107,6 +149,12 @@ Use `boxcore/*` apenas em tres casos:
   substitui boxcore.catalog.services.class_grid_commands
 - catalog/services/class_schedule_workflows.py
   substitui boxcore.catalog.services.class_schedule_workflows
+- catalog/services/class_grid_dispatcher.py
+  substitui boxcore.catalog.services.class_grid_dispatcher
+- catalog/services/class_schedule_actions.py
+  substitui boxcore.catalog.services.class_schedule_actions
+- catalog/services/communications.py
+  substitui boxcore.catalog.services.communications
 
 ## O que ainda nao esta promovido do mesmo jeito
 

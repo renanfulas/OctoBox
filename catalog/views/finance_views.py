@@ -44,6 +44,30 @@ class FinanceWorkspaceContextMixin:
 
     def build_finance_workspace_context(self, snapshot):
         operational_queue = build_operational_queue_snapshot()
+        financial_alerts = snapshot['financial_alerts']
+        operational_focus = [
+            {
+                'label': 'Cobrança pede contato',
+                'summary': f'{len(operational_queue)} caso(s) já têm abordagem sugerida e não deveriam esperar outra leitura para virar ação.',
+                'pill_class': 'warning' if len(operational_queue) > 0 else 'success',
+                'href': '#finance-rail-board',
+                'href_label': 'Abrir régua',
+            },
+            {
+                'label': 'Fila pressionando caixa',
+                'summary': f'{len(financial_alerts)} cobrança(s) já aparecem como pendência ou atraso no recorte atual.',
+                'pill_class': 'warning' if len(financial_alerts) > 0 else 'info',
+                'href': '#finance-queue-board',
+                'href_label': 'Ver fila financeira',
+            },
+            {
+                'label': 'Pulso executivo',
+                'summary': f"Recebido: R$ {snapshot['finance_pulse']['received']:.2f} | Em aberto: R$ {snapshot['finance_pulse']['open']:.2f}.",
+                'pill_class': 'accent',
+                'href': '#finance-trend-board',
+                'href_label': 'Ver tendência',
+            },
+        ]
         return {
             'page_title': 'Financeiro',
             'page_subtitle': 'Aqui o box ganha leitura comercial: planos, receita, retencao e sinais operacionais que depois conversam com a jornada do aluno.',
@@ -55,10 +79,11 @@ class FinanceWorkspaceContextMixin:
             'plan_mix': snapshot['plan_mix'],
             'monthly_comparison': snapshot['monthly_comparison'],
             'comparison_peaks': snapshot['comparison_peaks'],
-            'financial_alerts': snapshot['financial_alerts'],
+            'financial_alerts': financial_alerts,
             'recent_movements': snapshot['recent_movements'],
             'operational_queue': operational_queue,
             'operational_metrics': build_operational_queue_metrics(operational_queue),
+            'finance_operational_focus': operational_focus,
             'finance_export_links': self.get_finance_export_links(),
         }
 

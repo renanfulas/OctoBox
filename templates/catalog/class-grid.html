@@ -15,15 +15,81 @@ PONTOS CRITICOS:
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<section class="hero">
-    <div>
-        <h1>Grade de aulas</h1>
-        <p>Esta tela organiza a agenda do box de forma operacional. O foco aqui e ajudar a equipe a entender rapidamente quais turmas estao por vir, quem conduz cada aula e onde a lotacao ja comeca a pressionar a rotina.</p>
+<div class="operation-shell catalog-scene class-grid-scene">
+<section class="hero operation-hero class-grid-hero">
+    <div class="operation-hero-main">
+        <div>
+            <p class="eyebrow">Centro de ritmo das aulas</p>
+            <h1>Grade de aulas</h1>
+            <p class="operation-hero-copy">Veja primeiro onde o dia aperta, quais horarios ja estao enchendo e onde o mes precisa de ajuste antes de virar ruido na operacao.</p>
+        </div>
+        <div class="operation-hero-tags">
+            <span class="pill info">Pressao da agenda</span>
+            <span class="pill accent">{{ selected_month_label }}</span>
+            <span class="pill">{% if can_manage_classes %}Ajuste liberado{% else %}Leitura guiada{% endif %}</span>
+        </div>
+        <div class="actions">
+            <a class="button" href="#today-board">Ler o dia primeiro</a>
+            <a class="button secondary" href="#weekly-board">Ver pico da janela</a>
+            {% if can_manage_classes %}
+            <a class="button secondary" href="#planner-board">Ajustar recorrencia</a>
+            {% endif %}
+        </div>
     </div>
-    <div class="actions">
-        <span class="pill info">Agenda operacional</span>
-        <a class="button secondary" href="/admin/boxcore/classsession/">Abrir no admin</a>
-    </div>
+    <aside class="operation-hero-side">
+        <article class="operation-hero-panel hero-side-stack">
+            <div>
+                <p class="eyebrow">Leitura instantanea</p>
+                <p class="operation-card-copy">A leitura inicial precisa responder rapido se o dia pede ajuste fino, reforco de coach ou apenas acompanhamento.</p>
+            </div>
+            <div class="hero-side-stat-grid">
+                <div class="hero-side-stat">
+                    <span>Aulas hoje</span>
+                    <strong>{% if today_schedule %}{{ today_schedule.sessions|length }}{% else %}0{% endif %}</strong>
+                </div>
+                <div class="hero-side-stat">
+                    <span>Dias na agenda</span>
+                    <strong>{{ grouped_sessions|length }}</strong>
+                </div>
+                <div class="hero-side-stat">
+                    <span>Janela</span>
+                    <strong>14 dias</strong>
+                </div>
+                <div class="hero-side-stat">
+                    <span>Modo</span>
+                    <strong>{% if can_manage_classes %}gestao{% else %}consulta{% endif %}</strong>
+                </div>
+            </div>
+            <div class="actions actions-tight">
+                <a class="button secondary button-sm" href="/admin/boxcore/classsession/">Abrir admin completo</a>
+            </div>
+        </article>
+    </aside>
+</section>
+
+<section class="class-grid-quick-grid section-gap">
+    <article class="table-card class-grid-focus-card">
+        <div class="row-between-md class-grid-focus-head">
+            <div>
+                <p class="eyebrow">Comece por aqui</p>
+                <h2 class="section-title-sm">Leia a grade sem se perder em calendario antes da hora</h2>
+            </div>
+            <span class="pill info">Ordem sugerida</span>
+        </div>
+        <div class="class-grid-focus-list">
+            {% for item in class_grid_operational_focus %}
+            <article class="class-grid-focus-item">
+                <div class="class-grid-focus-copy">
+                    <h3>{{ item.title }}</h3>
+                    <p>{{ item.summary }}</p>
+                </div>
+                <div class="class-grid-focus-actions">
+                    <a class="button secondary button-sm" href="{{ item.action_href }}">{{ item.action_label }}</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </article>
 </section>
 
 <section class="panel-grid">
@@ -80,7 +146,7 @@ PONTOS CRITICOS:
 
     <div class="class-grid-workspace-stack" id="class-grid-workspace" data-storage-key="octobox-class-grid-layout-v2">
         {% if today_schedule %}
-        <section class="table-card class-grid-workspace-panel class-grid-today-panel" data-panel-id="today-board" draggable="true">
+        <section class="table-card class-grid-workspace-panel class-grid-today-panel" id="today-board" data-panel-id="today-board" draggable="true">
             <div class="class-grid-panel-head">
                 <div class="class-day-header class-grid-panel-title">
                     <div>
@@ -146,7 +212,7 @@ PONTOS CRITICOS:
             </table>
         </section>
         {% else %}
-        <section class="table-card class-grid-workspace-panel class-grid-today-panel" data-panel-id="today-board-empty" draggable="true">
+        <section class="table-card class-grid-workspace-panel class-grid-today-panel" id="today-board" data-panel-id="today-board-empty" draggable="true">
             <div class="class-grid-panel-head">
                 <div>
                     <p class="eyebrow">Agenda de hoje</p>
@@ -163,7 +229,7 @@ PONTOS CRITICOS:
         </section>
         {% endif %}
 
-        <section class="table-card class-weekly-board class-grid-workspace-panel" data-panel-id="weekly-board" draggable="true">
+        <section class="table-card class-weekly-board class-grid-workspace-panel" id="weekly-board" data-panel-id="weekly-board" draggable="true">
             <div class="class-grid-panel-head">
                 <div class="class-day-header class-grid-panel-title">
                     <div>
@@ -233,7 +299,7 @@ PONTOS CRITICOS:
             {% endfor %}
         </section>
 
-        <section class="table-card class-monthly-board class-grid-workspace-panel" data-panel-id="monthly-board" draggable="true">
+        <section class="table-card class-monthly-board class-grid-workspace-panel" id="monthly-board" data-panel-id="monthly-board" draggable="true">
             <div class="class-grid-panel-head">
                 <div class="class-day-header class-grid-panel-title">
                     <div>
@@ -354,7 +420,7 @@ PONTOS CRITICOS:
         </section>
         {% endif %}
 
-        <section class="table-card class-grid-planner-panel class-grid-workspace-panel" data-panel-id="planner-board" draggable="true">
+        <section class="table-card class-grid-planner-panel class-grid-workspace-panel" id="planner-board" data-panel-id="planner-board" draggable="true">
             <div class="class-grid-panel-head">
                 <div class="class-day-header class-grid-panel-title">
                     <div>
@@ -516,6 +582,8 @@ PONTOS CRITICOS:
         {% endfor %}
     </div>
 </dialog>
+
+</div>
 
 <script>
     (function () {

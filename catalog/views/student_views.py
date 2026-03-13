@@ -38,6 +38,7 @@ class StudentDirectoryView(CatalogBaseView):
         context.update(self.get_base_context())
         snapshot = build_student_directory_snapshot(self.request.GET)
         students = snapshot['students']
+        student_count = students.count()
 
         context['students'] = students[:24]
         context['student_filter_form'] = snapshot['filter_form']
@@ -45,6 +46,29 @@ class StudentDirectoryView(CatalogBaseView):
         context['student_funnel'] = snapshot['funnel']
         context['priority_students'] = snapshot['priority_students']
         context['intake_queue'] = snapshot['intake_queue']
+        context['student_operational_focus'] = [
+            {
+                'label': 'Triagem imediata',
+                'summary': f'{len(snapshot["priority_students"])} aluno(s) ou lead(s) já pedem leitura antes de esfriarem.',
+                'pill_class': 'warning' if len(snapshot['priority_students']) > 0 else 'success',
+                'href': '#student-priority-board',
+                'href_label': 'Ver prioridades',
+            },
+            {
+                'label': 'Conversão pronta',
+                'summary': f'{len(snapshot["intake_queue"])} entrada(s) provisória(s) já podem virar aluno com pouco atrito.',
+                'pill_class': 'info' if len(snapshot['intake_queue']) > 0 else 'accent',
+                'href': '#student-intake-board',
+                'href_label': 'Ver fila de entrada',
+            },
+            {
+                'label': 'Base no recorte atual',
+                'summary': f'{student_count} registro(s) sustentam a leitura desta tela e precisam ser escaneados sem fadiga.',
+                'pill_class': 'accent',
+                'href': '#student-directory-board',
+                'href_label': 'Ver base principal',
+            },
+        ]
         context['student_focus'] = [
             'A recepcao usa esta tela para localizar rapido, converter lead e abrir ficha sem perder tempo no admin.',
             'A gerencia usa esta leitura para enxergar quem exige contato comercial, ajuste de plano ou acao financeira.',

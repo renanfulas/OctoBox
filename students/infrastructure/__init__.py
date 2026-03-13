@@ -39,6 +39,18 @@ def execute_student_payment_action_command(command):
     return implementation(command)
 
 
+def execute_student_enrollment_sync_command(command):
+    from .django_enrollments import execute_student_enrollment_sync_command as implementation
+
+    return implementation(command)
+
+
+def execute_student_intake_sync_command(command):
+    from .django_intakes import execute_student_intake_sync_command as implementation
+
+    return implementation(command)
+
+
 def execute_student_payment_regeneration_command(command):
     from .django_payments import execute_student_payment_regeneration_command as implementation
 
@@ -53,7 +65,9 @@ def execute_student_payment_schedule_command(command):
 __all__ = [
     'DjangoClockPort',
 	'execute_create_student_quick_command',
+    'execute_student_enrollment_sync_command',
 	'execute_student_enrollment_action_command',
+    'execute_student_intake_sync_command',
 	'execute_student_payment_action_command',
 	'execute_student_payment_regeneration_command',
 	'execute_student_payment_schedule_command',

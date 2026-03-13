@@ -1,16 +1,16 @@
 """
-ARQUIVO: indice do snapshot financeiro modularizado.
+ARQUIVO: indice compativel do snapshot financeiro modularizado.
 
 POR QUE ELE EXISTE:
-- Reune a montagem do snapshot financeiro em modulos menores sem quebrar imports antigos.
+- mantem imports historicos enquanto a implementacao canonica vive em catalog.finance_snapshot.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Exporta o construtor principal do snapshot financeiro.
+1. reexporta o construtor principal do snapshot financeiro.
 
 PONTOS CRITICOS:
-- A assinatura publica precisa continuar estavel para views e exportacoes.
+- a assinatura publica precisa continuar estavel para views e exportacoes antigas.
 """
 
-from .snapshot import build_finance_snapshot
+from catalog.finance_snapshot import build_finance_snapshot
 
 __all__ = ['build_finance_snapshot']

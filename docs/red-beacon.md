@@ -19,7 +19,7 @@ PONTOS CRITICOS:
 
 ## Tese central
 
-Se o `Center Layer` e o hall de entrada, a `Signal Mesh` e a malha de sinais e os `Scaffold Agents` sao o andaime temporario da obra, o sistema ainda precisa de uma peça superior de emissao.
+Se o `Center Layer` e o hall de entrada, a `Signal Mesh` e a malha de sinais, os `Scaffold Agents` sao o andaime temporario da obra e a `Front Display Wall` e a grande fachada visual do produto, o sistema ainda precisa de uma peça superior de emissao.
 
 Essa peca foi nomeada como `Red Beacon`.
 
@@ -56,7 +56,31 @@ O modelo arquitetural agora pode ser lido assim:
 3. Nivel 2 = nucleo interno encaixotado
 4. Signal Mesh = malha permanente de sinais e elasticidade controlada
 5. Scaffold Agents = suporte temporario de transicao
-6. Red Beacon = emissao superior visivel do estado do predio
+6. Front Display Wall = fachada frontal limpa da experiencia visivel
+7. Red Beacon = emissao superior visivel do estado do predio
+
+## Diferenca entre Front Display Wall e Red Beacon
+
+### Front Display Wall
+
+Serve para:
+
+1. expor a face utilizavel do produto
+2. sustentar a leitura humana principal da operacao
+3. manter a frente do predio limpa mesmo com obra lateral
+
+### Red Beacon
+
+Serve para:
+
+1. emitir estado consolidado acima da experiencia principal
+2. declarar alerta e prontidao do predio
+3. projetar um sinal superior e mais sintetizado
+
+Resumo:
+
+1. a Front Display Wall mostra o produto
+2. o Red Beacon mostra o estado do predio acima do produto
 
 ## Diferenca entre Red Beacon e Signal Mesh
 
@@ -242,7 +266,7 @@ Primeiro o predio precisava ganhar:
 2. malha de sinais
 3. andaime de transicao explicitamente removivel
 
-Agora ele tambem ganhou sua camada superior de emissao visivel.
+Agora ele tambem ganhou sua camada superior de emissao visivel, acima da fachada principal formalizada em [front-display-wall.md](front-display-wall.md).
 
 O passo futuro correto sera implementar o Beacon apenas quando houver um conjunto pequeno e confiavel de sinais consolidados para ele emitir.
 

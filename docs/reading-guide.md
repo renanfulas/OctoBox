@@ -34,11 +34,15 @@ Se o foco for reduzir a dependencia do negocio em Django sem reescrever o produt
 
 Se o foco for transformar essa direcao em estrategia operacional por ondas, guardrails e criterio de pronto, leia tambem [django-core-strategy.md](django-core-strategy.md).
 
+Se o foco for entender, em linguagem oficial do projeto, o que passa a ser o centro do sistema e por que Django deixa de ser o core conceitual, leia tambem [octobox-conceptual-core.md](octobox-conceptual-core.md).
+
 Se o foco for entender o novo andar de comunicacao entre acesso e nucleo interno, leia tambem [center-layer.md](center-layer.md).
 
 Se o foco for entender a malha transversal de sinais, integracoes, envelopes e observabilidade ao lado do CENTER, leia tambem [signal-mesh.md](signal-mesh.md).
 
 Se o foco for entender o que e temporario na obra arquitetural e como retirar os agentes de transicao quando o predio ficar pronto, leia tambem [scaffold-agents.md](scaffold-agents.md).
+
+Se o foco for entender a grande fachada frontal do produto, onde a experiencia visivel precisa permanecer limpa mesmo com obra lateral, leia tambem [front-display-wall.md](front-display-wall.md).
 
 Se o foco for entender a camada superior de emissao visivel, alerta e projeção externa confiavel do sistema, leia tambem [red-beacon.md](red-beacon.md).
 
@@ -252,9 +256,9 @@ O dashboard tambem foi simplificado em view HTTP e snapshot de leitura.
 
 Leia:
 
-1. [boxcore/dashboard/urls.py](../boxcore/dashboard/urls.py)
-2. [boxcore/dashboard/dashboard_views.py](../boxcore/dashboard/dashboard_views.py)
-3. [boxcore/dashboard/dashboard_snapshot_queries.py](../boxcore/dashboard/dashboard_snapshot_queries.py)
+1. [dashboard/urls.py](../dashboard/urls.py)
+2. [dashboard/dashboard_views.py](../dashboard/dashboard_views.py)
+3. [dashboard/dashboard_snapshot_queries.py](../dashboard/dashboard_snapshot_queries.py)
 4. [templates/dashboard/index.html](../templates/dashboard/index.html)
 5. [templates/layouts/base.html](../templates/layouts/base.html)
 
@@ -350,9 +354,9 @@ Use esta heuristica:
 2. Bug de rota principal: [config/urls.py](../config/urls.py), [boxcore/urls.py](../boxcore/urls.py) ou urls do modulo afetado.
 3. Bug de aluno ou intake: [boxcore/models/students.py](../boxcore/models/students.py), [boxcore/models/onboarding.py](../boxcore/models/onboarding.py), [boxcore/catalog/views/student_views.py](../boxcore/catalog/views/student_views.py) e [boxcore/catalog/student_queries.py](../boxcore/catalog/student_queries.py).
 4. Bug de matricula, plano ou pagamento: [boxcore/models/finance.py](../boxcore/models/finance.py), [boxcore/catalog/services/student_enrollment_actions.py](../boxcore/catalog/services/student_enrollment_actions.py), [boxcore/catalog/services/student_payment_actions.py](../boxcore/catalog/services/student_payment_actions.py), [boxcore/catalog/views/finance_views.py](../boxcore/catalog/views/finance_views.py) e [boxcore/admin/finance.py](../boxcore/admin/finance.py).
-5. Bug de filtros financeiros, relatorio ou fila operacional: [boxcore/catalog/forms.py](../boxcore/catalog/forms.py), [boxcore/catalog/finance_queries.py](../boxcore/catalog/finance_queries.py), [boxcore/catalog/services/operational_queue.py](../boxcore/catalog/services/operational_queue.py) e [boxcore/catalog/report_builders.py](../boxcore/catalog/report_builders.py).
-6. Bug de aula, presenca, ocorrencia ou workspace por papel: [boxcore/models/operations.py](../boxcore/models/operations.py), [boxcore/operations/workspace_views.py](../boxcore/operations/workspace_views.py), [boxcore/operations/workspace_snapshot_queries.py](../boxcore/operations/workspace_snapshot_queries.py), [boxcore/operations/action_views.py](../boxcore/operations/action_views.py) e [boxcore/operations/actions.py](../boxcore/operations/actions.py).
-7. Bug de dashboard: [boxcore/dashboard/dashboard_views.py](../boxcore/dashboard/dashboard_views.py) e [boxcore/dashboard/dashboard_snapshot_queries.py](../boxcore/dashboard/dashboard_snapshot_queries.py).
+5. Bug de filtros financeiros, relatorio ou fila operacional: [catalog/forms.py](../catalog/forms.py), [catalog/finance_queries.py](../catalog/finance_queries.py), [catalog/services/operational_queue.py](../catalog/services/operational_queue.py), [boxcore/catalog/report_builders.py](../boxcore/catalog/report_builders.py) e modelos financeiros em [boxcore/models/finance.py](../boxcore/models/finance.py).
+6. Bug de aula, presenca, ocorrencia ou workspace por papel: [boxcore/models/operations.py](../boxcore/models/operations.py), [operations/workspace_views.py](../operations/workspace_views.py), [operations/action_views.py](../operations/action_views.py), [operations/actions.py](../operations/actions.py) e [operations/facade/workspace.py](../operations/facade/workspace.py).
+7. Bug de dashboard: [dashboard/dashboard_views.py](../dashboard/dashboard_views.py) e [dashboard/dashboard_snapshot_queries.py](../dashboard/dashboard_snapshot_queries.py).
 8. Bug de auditoria: [auditing/services.py](../auditing/services.py), [auditing/signals.py](../auditing/signals.py) e [boxcore/models/audit.py](../boxcore/models/audit.py).
 9. Bug de importacao: [boxcore/management/commands/import_students_csv.py](../boxcore/management/commands/import_students_csv.py).
 10. Bug visual: template da area mais a view correspondente.

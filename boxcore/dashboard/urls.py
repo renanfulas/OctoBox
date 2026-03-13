@@ -1,20 +1,16 @@
 """
-ARQUIVO: rotas do dashboard.
+ARQUIVO: rotas compativeis do dashboard.
 
 POR QUE ELE EXISTE:
-- Mantém as rotas do painel em um bloco visual próprio.
+- mantem imports historicos funcionando enquanto as rotas canonicas vivem em dashboard.urls.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Publica a tela principal do dashboard.
+1. reexporta as rotas reais do dashboard.
 
 PONTOS CRITICOS:
-- Mudança no nome da rota impacta login, redirecionamentos e testes.
+- este arquivo nao deve voltar a ser a fonte principal das rotas.
 """
 
-from django.urls import path
+from dashboard.urls import urlpatterns
 
-from .dashboard_views import DashboardView
-
-urlpatterns = [
-    path('dashboard/', DashboardView.as_view(), name='dashboard'),
-]
+__all__ = ['urlpatterns']

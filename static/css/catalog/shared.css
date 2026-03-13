@@ -13,12 +13,25 @@ PONTOS CRITICOS:
 - Mudanças aqui podem refletir em várias áreas do catálogo ao mesmo tempo.
 */
 
+.catalog-scene {
+    display: grid;
+    gap: var(--section-gap);
+}
+
+.catalog-hero {
+    background:
+        radial-gradient(circle at top right, rgba(249, 115, 22, 0.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.12), transparent 28%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(249, 115, 22, 0.08), rgba(16, 185, 129, 0.08)),
+        var(--surface);
+}
+
 .section-gap {
-    margin-bottom: 24px;
+    margin-bottom: var(--section-gap);
 }
 
 .section-gap-top {
-    margin-top: 24px;
+    margin-top: var(--section-gap);
 }
 
 .section-gap-top-sm {
@@ -55,6 +68,7 @@ PONTOS CRITICOS:
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
+    letter-spacing: 0.01em;
 }
 
 .form-error {
@@ -115,6 +129,18 @@ PONTOS CRITICOS:
     overflow: hidden;
 }
 
+.glass-panel,
+.finance-glass-panel,
+.quick-hero-card,
+.student-priority-panel,
+.plan-card,
+.priority-student-card,
+.intake-card,
+.delta-row,
+.history-entry {
+    backdrop-filter: blur(14px);
+}
+
 .glass-panel::after,
 .finance-glass-panel::after {
     content: "";
@@ -171,6 +197,7 @@ PONTOS CRITICOS:
 
 .intake-grid {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 14px;
 }
 
@@ -178,7 +205,7 @@ PONTOS CRITICOS:
     padding: 18px;
     border-radius: 22px;
     border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.56);
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.74), rgba(248, 250, 252, 0.88));
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 16px;
@@ -222,7 +249,7 @@ PONTOS CRITICOS:
     padding: 18px;
     border-radius: 22px;
     border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.72);
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.76), rgba(248, 250, 252, 0.92));
     display: grid;
     gap: 12px;
 }
@@ -268,7 +295,7 @@ PONTOS CRITICOS:
     padding: 18px;
     border-radius: 22px;
     border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.6);
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.72), rgba(248, 250, 252, 0.9));
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
@@ -391,7 +418,7 @@ PONTOS CRITICOS:
     padding: 14px 16px;
     border-radius: 18px;
     border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.45);
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.68), rgba(248, 250, 252, 0.88));
     transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
