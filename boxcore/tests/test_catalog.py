@@ -22,22 +22,11 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from boxcore.models import (
-    Attendance,
-    AuditEvent,
-    ClassSession,
-    Enrollment,
-    EnrollmentStatus,
-    MembershipPlan,
-    Payment,
-    PaymentMethod,
-    PaymentStatus,
-    SessionStatus,
-    Student,
-    StudentIntake,
-    WhatsAppContact,
-    WhatsAppMessageLog,
-)
+from auditing.models import AuditEvent
+from communications.models import StudentIntake, WhatsAppContact, WhatsAppMessageLog
+from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
+from operations.models import Attendance, ClassSession, SessionStatus
+from students.models import Student
 
 
 class CatalogViewTests(TestCase):

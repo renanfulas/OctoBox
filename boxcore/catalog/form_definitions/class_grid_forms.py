@@ -18,9 +18,9 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.utils import timezone
 
-from boxcore.access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
-from boxcore.catalog.services.class_grid_policy import build_class_grid_session_policy
-from boxcore.models import ClassSession, SessionStatus
+from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
+from operations.domain import build_class_grid_session_policy
+from operations.models import ClassSession, SessionStatus
 
 
 WEEKDAY_CHOICES = (
@@ -258,7 +258,14 @@ class ClassSessionQuickEditForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        session_policy = build_class_grid_session_policy(self.instance) if self.instance.pk else None
+        session_policy = (
+            build_class_grid_session_policy(
+                initial_status=self.instance.status,
+                has_attendance=self.instance.attendances.exists(),
+            )
+            if self.instance.pk
+            else None
+        )
         self.fields['coach'].queryset = _get_class_coach_queryset()
         self.fields['title'].label = 'Nome da aula'
         self.fields['coach'].label = 'Coach responsavel pela aula'
@@ -280,7 +287,10 @@ class ClassSessionQuickEditForm(forms.ModelForm):
         selected_status = cleaned_data.get('status')
 
         if self.instance.pk:
-            session_policy = build_class_grid_session_policy(self.instance)
+            session_policy = build_class_grid_session_policy(
+                initial_status=self.instance.status,
+                has_attendance=self.instance.attendances.exists(),
+            )
             try:
                 session_policy.validate_quick_edit_status(selected_status)
             except ValueError as exc:

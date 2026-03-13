@@ -20,8 +20,8 @@ from datetime import date
 
 from django.core.management.base import BaseCommand, CommandError
 
-from boxcore.models import HealthIssueStatus, Student, StudentGender, StudentStatus
-from boxcore.shared.phone_numbers import normalize_phone_number
+from shared_support.phone_numbers import normalize_phone_number
+from students.models import HealthIssueStatus, Student, StudentGender, StudentStatus
 
 
 class Command(BaseCommand):

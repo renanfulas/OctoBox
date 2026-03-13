@@ -2,20 +2,25 @@
 ARQUIVO: roteador principal de URLs do projeto.
 
 POR QUE ELE EXISTE:
-- Junta em um só lugar as rotas do app e do admin.
+- Junta em um só lugar as rotas reais do sistema e o admin.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Encaminha as rotas do boxcore.
+1. Publica as rotas HTTP canonicas do runtime atual.
 2. Mantém o admin do Django ativo em /admin/.
 
 PONTOS CRITICOS:
-- Se um include for removido ou quebrado, áreas inteiras do sistema somem.
+- A ordem dos includes afeta a resolucao de URLs concorrentes.
 - Mudanças erradas aqui podem gerar 404 em massa.
 """
 from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    path('', include('boxcore.urls')),
+    path('', include('access.urls')),
+    path('api/', include('api.urls')),
+    path('', include('boxcore.dashboard.urls')),
+    path('', include('catalog.urls')),
+    path('', include('boxcore.guide.urls')),
+    path('', include('operations.urls')),
     path('admin/', admin.site.urls),
 ]

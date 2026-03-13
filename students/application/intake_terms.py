@@ -1,17 +1,30 @@
 """
-ARQUIVO: regras puras de conversão de intake.
+ARQUIVO: fachada de compatibilidade para regras puras de conversao de intake.
 
 POR QUE ELE EXISTE:
-- Centraliza a anotação padrão de conversão sem depender de ORM ou da camada web.
+- Preserva imports historicos enquanto a politica de conversao migra para a camada de dominio explicita.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Define a observação padrão de conversão do lead.
+1. Reexporta a nota padrao e as decisoes puras de lookup e conversao.
 
 PONTOS CRITICOS:
-- Mudanças aqui afetam o histórico comercial do intake convertido.
+- Nova regra deve nascer em students.domain, nao aqui.
 """
 
-DEFAULT_INTAKE_CONVERSION_NOTE = 'Convertido em aluno definitivo pela tela leve.'
+from students.domain import (
+	DEFAULT_INTAKE_CONVERSION_NOTE,
+	IntakeConversionDecision,
+	IntakeLookupDecision,
+	append_intake_note,
+	build_intake_conversion_decision,
+	build_intake_lookup_decision,
+)
 
-
-__all__ = ['DEFAULT_INTAKE_CONVERSION_NOTE']
+__all__ = [
+	'DEFAULT_INTAKE_CONVERSION_NOTE',
+	'IntakeConversionDecision',
+	'IntakeLookupDecision',
+	'append_intake_note',
+	'build_intake_conversion_decision',
+	'build_intake_lookup_decision',
+]

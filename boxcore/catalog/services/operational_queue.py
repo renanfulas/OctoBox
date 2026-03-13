@@ -13,9 +13,10 @@ PONTOS CRITICOS:
 - Este arquivo não deve voltar a concentrar query e priorização operacional.
 """
 
-from boxcore.models import Enrollment, Payment, Student
 from communications.application.commands import BuildOperationalQueueSnapshotCommand
 from communications.infrastructure import execute_build_operational_queue_snapshot_command
+from finance.models import Enrollment, Payment
+from students.models import Student
 
 
 def build_operational_queue_snapshot(*, limit=9):

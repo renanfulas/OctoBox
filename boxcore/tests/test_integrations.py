@@ -16,9 +16,10 @@ PONTOS CRITICOS:
 from django.db import IntegrityError
 from django.test import TestCase
 
-from boxcore.integrations.whatsapp.contracts import WhatsAppInboundMessage
-from boxcore.integrations.whatsapp.services import register_inbound_whatsapp_message
-from boxcore.models import MessageDirection, Student, StudentIntake, WhatsAppContact, WhatsAppContactStatus, WhatsAppMessageLog
+from communications.models import MessageDirection, StudentIntake, WhatsAppContact, WhatsAppContactStatus, WhatsAppMessageLog
+from integrations.whatsapp.contracts import WhatsAppInboundMessage
+from integrations.whatsapp.services import register_inbound_whatsapp_message
+from students.models import Student
 
 
 class WhatsAppIntegrationFoundationTests(TestCase):

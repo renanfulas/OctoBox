@@ -13,12 +13,11 @@ PONTOS CRITICOS:
 - Este arquivo é a única camada aqui que deve conhecer ORM para esse bloco do catálogo.
 """
 
-from django.utils import timezone
+from datetime import timedelta
 
-from boxcore.models import Enrollment, EnrollmentStatus, Payment, PaymentStatus, Student, WhatsAppMessageLog
 from communications.application.commands import BuildOperationalQueueSnapshotCommand, FinanceCommunicationActionCommand, RegisterOperationalMessageCommand
 from communications.application.message_templates import build_operational_message_body
-from communications.application.ports import FinanceCommunicationActionPort, OperationalQueueSnapshotPort
+from communications.application.ports import ClockPort, FinanceCommunicationActionPort, OperationalQueueSnapshotPort
 from communications.application.results import (
     FinanceCommunicationActionResult,
     OperationalQueueItemResult,
@@ -28,7 +27,11 @@ from communications.application.use_cases import (
     execute_build_operational_queue_snapshot_use_case,
     execute_finance_communication_action_use_case,
 )
+from communications.infrastructure.django_clock import DjangoClockPort
 from communications.infrastructure.django_use_cases import execute_register_operational_message_command
+from communications.models import WhatsAppMessageLog
+from finance.models import Enrollment, EnrollmentStatus, Payment, PaymentStatus
+from students.models import Student
 
 
 class DjangoFinanceCommunicationActionPort(FinanceCommunicationActionPort):
@@ -49,9 +52,12 @@ class DjangoFinanceCommunicationActionPort(FinanceCommunicationActionPort):
 
 
 class DjangoOperationalQueueSnapshotPort(OperationalQueueSnapshotPort):
+    def __init__(self, *, clock: ClockPort):
+        self.clock = clock
+
     def build_snapshot(self, command: BuildOperationalQueueSnapshotCommand) -> OperationalQueueSnapshotResult:
-        today = timezone.localdate()
-        soon_threshold = today + timezone.timedelta(days=3)
+        today = self.clock.today()
+        soon_threshold = today + timedelta(days=3)
 
         upcoming_payments = list(
             Payment.objects.select_related('student', 'enrollment__plan')
@@ -143,7 +149,7 @@ def execute_finance_communication_action_command(command: FinanceCommunicationAc
 def execute_build_operational_queue_snapshot_command(command: BuildOperationalQueueSnapshotCommand):
     return execute_build_operational_queue_snapshot_use_case(
         command,
-        snapshot_port=DjangoOperationalQueueSnapshotPort(),
+        snapshot_port=DjangoOperationalQueueSnapshotPort(clock=DjangoClockPort()),
     )
 
 

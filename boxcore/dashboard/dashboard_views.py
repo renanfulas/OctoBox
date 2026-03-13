@@ -16,7 +16,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
 from django.views.generic import TemplateView
 
-from boxcore.access.roles import ROLE_DEFINITIONS, get_user_capabilities, get_user_role
+from access.roles import ROLE_DEFINITIONS, get_user_capabilities, get_user_role
 from .dashboard_snapshot_queries import build_dashboard_snapshot
 
 

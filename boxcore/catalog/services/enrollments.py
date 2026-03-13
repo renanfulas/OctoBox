@@ -13,7 +13,7 @@ PONTOS CRITICOS:
 - Este arquivo não deve voltar a concentrar ORM, transação ou geração de cobrança.
 """
 
-from boxcore.models import Enrollment, MembershipPlan, Payment
+from finance.models import Enrollment, MembershipPlan, Payment
 from students.application.commands import StudentEnrollmentActionCommand, StudentEnrollmentSyncCommand
 from students.infrastructure.django_enrollments import (
     cancel_student_enrollment_command,

@@ -17,8 +17,8 @@ from collections import OrderedDict
 from django.db.models import Count
 from django.utils import timezone
 
-from boxcore.models import ClassSession
 from boxcore.session_snapshots import serialize_class_session, sync_runtime_statuses
+from operations.models import ClassSession
 
 from .forms import ClassGridFilterForm
 

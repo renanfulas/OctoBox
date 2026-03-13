@@ -13,7 +13,7 @@ PONTOS CRITICOS:
 - A estrutura de saida precisa permanecer estavel para templates e relatorios.
 """
 
-from boxcore.models import PaymentStatus
+from finance.models import PaymentStatus
 
 from ..forms import FinanceFilterForm
 from .base import build_finance_base

@@ -16,7 +16,12 @@ PONTOS CRITICOS:
 
 from django.db import models
 
-from boxcore.models.base import TimeStampedModel
+from model_support.base import TimeStampedModel
+
+
+HISTORICAL_BOXCORE_APP_LABEL = 'boxcore'
+HISTORICAL_BOXCORE_STUDENT_MODEL = 'boxcore.Student'
+HISTORICAL_BOXCORE_WHATSAPP_CONTACT_MODEL = 'boxcore.WhatsAppContact'
 
 
 class WhatsAppContactStatus(models.TextChoices):
@@ -42,7 +47,7 @@ class WhatsAppContact(TimeStampedModel):
     external_contact_id = models.CharField(max_length=120, blank=True)
     display_name = models.CharField(max_length=150, blank=True)
     linked_student = models.ForeignKey(
-        'boxcore.Student',
+        HISTORICAL_BOXCORE_STUDENT_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -58,7 +63,7 @@ class WhatsAppContact(TimeStampedModel):
     notes = models.TextField(blank=True)
 
     class Meta:
-        app_label = 'boxcore'
+        app_label = HISTORICAL_BOXCORE_APP_LABEL
         ordering = ['display_name', 'phone']
         constraints = [
             models.UniqueConstraint(
@@ -74,7 +79,7 @@ class WhatsAppContact(TimeStampedModel):
 
 class WhatsAppMessageLog(TimeStampedModel):
     contact = models.ForeignKey(
-        'boxcore.WhatsAppContact',
+        HISTORICAL_BOXCORE_WHATSAPP_CONTACT_MODEL,
         on_delete=models.CASCADE,
         related_name='message_logs',
     )
@@ -94,7 +99,7 @@ class WhatsAppMessageLog(TimeStampedModel):
     raw_payload = models.JSONField(blank=True, default=dict)
 
     class Meta:
-        app_label = 'boxcore'
+        app_label = HISTORICAL_BOXCORE_APP_LABEL
         ordering = ['-created_at']
         constraints = [
             models.UniqueConstraint(
@@ -109,6 +114,9 @@ class WhatsAppMessageLog(TimeStampedModel):
 
 
 __all__ = [
+    'HISTORICAL_BOXCORE_APP_LABEL',
+    'HISTORICAL_BOXCORE_STUDENT_MODEL',
+    'HISTORICAL_BOXCORE_WHATSAPP_CONTACT_MODEL',
     'MessageDirection',
     'MessageKind',
     'WhatsAppContact',

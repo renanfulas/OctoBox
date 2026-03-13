@@ -1,23 +1,16 @@
 """
-ARQUIVO: regras puras de matrícula do aluno.
+ARQUIVO: fachada de compatibilidade para regras puras de matricula.
 
 POR QUE ELE EXISTE:
-- Centraliza decisões de mudança comercial sem depender de ORM ou da camada web.
+- Preserva imports historicos enquanto a regra comercial migra para a camada de dominio explicita.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Classifica mudança de plano em upgrade, downgrade ou troca.
+1. Reexporta a classificacao pura de mudanca de plano.
 
 PONTOS CRITICOS:
-- Esta regra impacta auditoria comercial e mensagens operacionais.
+- Nova regra deve nascer em students.domain, nao aqui.
 """
 
-
-def describe_plan_change(*, previous_price, selected_price):
-    if selected_price > previous_price:
-        return 'upgrade'
-    if selected_price < previous_price:
-        return 'downgrade'
-    return 'troca de plano'
-
+from students.domain import describe_plan_change
 
 __all__ = ['describe_plan_change']

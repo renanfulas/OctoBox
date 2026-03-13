@@ -16,8 +16,7 @@ PONTOS CRITICOS:
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
-from boxcore.auditing import log_audit_event
-from boxcore.models import MembershipPlan
+from auditing import log_audit_event
 from finance.application.commands import MembershipPlanCommand
 from finance.application.ports import MembershipPlanAuditPort, MembershipPlanWriterPort, UnitOfWorkPort
 from finance.application.results import MembershipPlanRecord
@@ -25,6 +24,7 @@ from finance.application.use_cases import (
     execute_create_membership_plan_use_case,
     execute_update_membership_plan_use_case,
 )
+from finance.models import MembershipPlan
 
 
 class DjangoAtomicUnitOfWork(UnitOfWorkPort):

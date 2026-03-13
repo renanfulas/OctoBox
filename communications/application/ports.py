@@ -28,6 +28,14 @@ from .results import (
 )
 
 
+class ClockPort(Protocol):
+    def now(self):
+        ...
+
+    def today(self):
+        ...
+
+
 class InboundWhatsAppMessagePort(Protocol):
     def register(self, command: RegisterInboundWhatsAppMessageCommand) -> InboundWhatsAppMessageResult:
         ...
@@ -35,6 +43,16 @@ class InboundWhatsAppMessagePort(Protocol):
 
 class OperationalMessagePort(Protocol):
     def register(self, command: RegisterOperationalMessageCommand) -> OperationalMessageResult:
+        ...
+
+
+class OperationalMessageAuditPort(Protocol):
+    def record_registered(
+        self,
+        *,
+        command: RegisterOperationalMessageCommand,
+        result: OperationalMessageResult,
+    ) -> None:
         ...
 
 
@@ -49,8 +67,10 @@ class OperationalQueueSnapshotPort(Protocol):
 
 
 __all__ = [
+    'ClockPort',
     'FinanceCommunicationActionPort',
     'InboundWhatsAppMessagePort',
+    'OperationalMessageAuditPort',
     'OperationalMessagePort',
     'OperationalQueueSnapshotPort',
 ]

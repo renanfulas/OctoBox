@@ -14,8 +14,9 @@ PONTOS CRITICOS:
 
 from django.db.models import OuterRef, Q, Subquery
 
-from boxcore.models import Enrollment, EnrollmentStatus, Payment, PaymentStatus, Student, StudentStatus
 from communications.models import IntakeStatus, StudentIntake
+from finance.models import Enrollment, EnrollmentStatus, Payment, PaymentStatus
+from students.models import Student, StudentStatus
 
 from .forms import StudentDirectoryFilterForm
 

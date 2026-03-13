@@ -1,33 +1,17 @@
 """
-ARQUIVO: normalizacao de telefones e canais.
+ARQUIVO: fachada legada da normalizacao de telefones dentro de boxcore.
 
 POR QUE ELE EXISTE:
-- Garante uma representacao previsivel do telefone antes de cruzar aluno, intake e contato de WhatsApp.
+- Mantem compatibilidade com imports antigos enquanto a implementacao real vive em shared_support.phone_numbers.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Remove formatacao visual do telefone.
-2. Mantem apenas digitos para comparacao e deduplicacao.
-3. Centraliza a regra minima atual de identidade de canal.
+1. Reexporta os helpers de telefone usados no runtime atual.
 
 PONTOS CRITICOS:
-- Mudancas aqui afetam deduplicacao, importacao e reconciliacao de contatos.
+- Este arquivo nao deve voltar a concentrar implementacao nova.
 """
 
-
-def normalize_phone_number(raw_value):
-    digits = ''.join(character for character in str(raw_value or '') if character.isdigit())
-    return digits
+from shared_support.phone_numbers import build_phone_match_candidates, normalize_phone_number
 
 
-def build_phone_match_candidates(raw_value):
-    digits = normalize_phone_number(raw_value)
-    if not digits:
-        return []
-
-    candidates = {digits}
-    if digits.startswith('55') and len(digits) > 11:
-        candidates.add(digits[2:])
-    elif len(digits) in (10, 11):
-        candidates.add(f'55{digits}')
-
-    return list(candidates)
+__all__ = ['build_phone_match_candidates', 'normalize_phone_number']

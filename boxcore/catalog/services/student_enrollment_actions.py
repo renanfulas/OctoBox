@@ -16,7 +16,7 @@ PONTOS CRITICOS:
 from students.application.commands import StudentEnrollmentActionCommand
 from students.infrastructure import execute_student_enrollment_action_command
 
-from boxcore.models import Enrollment
+from finance.models import Enrollment
 
 
 def handle_student_enrollment_action(*, actor, student, enrollment, action, action_date, reason=''):

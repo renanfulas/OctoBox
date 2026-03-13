@@ -17,8 +17,11 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
 
-from boxcore.models import AuditEvent, Attendance, AttendanceStatus, BehaviorNote, ClassSession, Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentStatus, Student
-from boxcore.operations.actions import handle_attendance_action, handle_payment_enrollment_link_action, handle_technical_behavior_note_action
+from auditing.models import AuditEvent
+from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentStatus
+from operations.actions import handle_attendance_action, handle_payment_enrollment_link_action, handle_technical_behavior_note_action
+from operations.models import Attendance, AttendanceStatus, BehaviorNote, ClassSession
+from students.models import Student
 
 
 class OperationActionTests(TestCase):

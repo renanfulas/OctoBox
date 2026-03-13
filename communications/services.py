@@ -10,16 +10,18 @@ O QUE ESTE ARQUIVO FAZ:
 3. Reexporta helpers legados de forma compativel.
 
 PONTOS CRITICOS:
-- Este arquivo nao deve voltar a concentrar ORM, auditoria ou transacao do fluxo.
+- Este arquivo nao deve voltar a concentrar ORM, auditoria, transacao ou dependencia direta de tempo do framework.
 """
 
-from django.utils import timezone
-
-from boxcore.models import PaymentStatus
 from communications.application.message_templates import build_operational_message_body
 from communications.application.commands import RegisterOperationalMessageCommand
-from communications.infrastructure import ensure_whatsapp_contact_for_student, execute_register_operational_message_command
+from communications.domain import should_mark_payment_overdue
+from communications.infrastructure import DjangoClockPort, ensure_whatsapp_contact_for_student, execute_register_operational_message_command
 from communications.models import WhatsAppMessageLog
+from finance.models import PaymentStatus
+
+
+_clock = DjangoClockPort()
 
 
 def ensure_whatsapp_contact(student):
@@ -49,6 +51,11 @@ def register_operational_message(*, actor, action_kind, student, payment=None, e
 
 
 def normalize_payment_status(payment):
-    if payment.status == PaymentStatus.PENDING and payment.due_date < timezone.localdate():
+    if should_mark_payment_overdue(
+        action_kind='overdue',
+        payment_status=payment.status,
+        payment_due_date=payment.due_date,
+        reference_date=_clock.today(),
+    ):
         payment.status = PaymentStatus.OVERDUE
     return payment

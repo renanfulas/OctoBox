@@ -20,7 +20,7 @@ from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 
-from boxcore.access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
+from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
 
 
 class AccessViewTests(TestCase):

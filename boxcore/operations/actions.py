@@ -13,81 +13,43 @@ PONTOS CRITICOS:
 - Qualquer regressao aqui muda estado real da operacao e da trilha de auditoria.
 """
 
-from django.utils import timezone
-
-from boxcore.auditing import log_audit_event
-from boxcore.models import AttendanceStatus, BehaviorCategory, BehaviorNote, Enrollment, EnrollmentStatus
+from finance.models import Payment
+from operations.models import Attendance, BehaviorNote
+from operations.facade import (
+    run_apply_attendance_action,
+    run_create_technical_behavior_note,
+    run_link_payment_enrollment,
+)
 
 
 def handle_payment_enrollment_link_action(*, actor, payment):
-    active_enrollment = Enrollment.objects.filter(
-        student=payment.student,
-        status=EnrollmentStatus.ACTIVE,
-    ).order_by('-start_date').first()
-
-    if active_enrollment is None:
+    result = run_link_payment_enrollment(actor_id=getattr(actor, 'id', None), payment_id=payment.id)
+    if result is None:
         return None
-
-    payment.enrollment = active_enrollment
-    if not payment.notes:
-        payment.notes = 'Vinculo operacional aplicado pela area do manager.'
-    payment.save(update_fields=['enrollment', 'notes', 'updated_at'])
-    log_audit_event(
-        actor=actor,
-        action='payment_linked_to_active_enrollment',
-        target=payment,
-        description='Manager vinculou pagamento a matricula ativa.',
-        metadata={'enrollment_id': active_enrollment.id},
-    )
-    return payment
+    return Payment.objects.get(pk=result.payment_id)
 
 
 def handle_technical_behavior_note_action(*, actor, student, category, description):
-    valid_categories = {choice for choice, _ in BehaviorCategory.choices}
-    if not description or category not in valid_categories:
-        return None
-
-    note = BehaviorNote.objects.create(
-        student=student,
-        author=actor,
+    result = run_create_technical_behavior_note(
+        actor_id=getattr(actor, 'id', None),
+        student_id=student.id,
         category=category,
         description=description,
     )
-    log_audit_event(
-        actor=actor,
-        action='technical_behavior_note_created',
-        target=note,
-        description='Coach registrou ocorrencia tecnica.',
-        metadata={'student_id': student.id, 'category': category},
-    )
-    return note
+    if result is None:
+        return None
+    return BehaviorNote.objects.get(pk=result.note_id)
 
 
 def handle_attendance_action(*, actor, attendance, action):
-    now = timezone.now()
-
-    if action == 'check-in':
-        attendance.status = AttendanceStatus.CHECKED_IN
-        attendance.check_in_at = now
-    elif action == 'check-out':
-        attendance.status = AttendanceStatus.CHECKED_OUT
-        attendance.check_out_at = now
-        if attendance.check_in_at is None:
-            attendance.check_in_at = now
-    elif action == 'absent':
-        attendance.status = AttendanceStatus.ABSENT
-    else:
-        return None
-
-    attendance.save(update_fields=['status', 'check_in_at', 'check_out_at', 'updated_at'])
-    log_audit_event(
-        actor=actor,
-        action=f'attendance_{action}',
-        target=attendance,
-        description='Coach alterou status operacional de presenca.',
-        metadata={'status': attendance.status},
+    result = run_apply_attendance_action(
+        actor_id=getattr(actor, 'id', None),
+        attendance_id=attendance.id,
+        action=action,
     )
-    return attendance
+    if result is None:
+        return None
+    return Attendance.objects.get(pk=result.attendance_id)
 
 
 link_payment_to_active_enrollment = handle_payment_enrollment_link_action

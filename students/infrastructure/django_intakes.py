@@ -15,38 +15,45 @@ PONTOS CRITICOS:
 
 from django.db import transaction
 
-from boxcore.models import Student
-from boxcore.shared.phone_numbers import build_phone_match_candidates, normalize_phone_number
 from communications.models import IntakeStatus, StudentIntake
 from students.application.commands import StudentIntakeSyncCommand
-from students.application.intake_terms import DEFAULT_INTAKE_CONVERSION_NOTE
 from students.application.ports import StudentIntakeWorkflowPort
 from students.application.use_cases import execute_student_intake_sync_use_case
+from students.domain import build_intake_conversion_decision, build_intake_lookup_decision
+from students.models import Student
 
 
 class DjangoStudentIntakeWorkflowPort(StudentIntakeWorkflowPort):
     @transaction.atomic
     def sync(self, command: StudentIntakeSyncCommand) -> int | None:
         student = Student.objects.get(pk=command.student_id)
-        linked_intake = StudentIntake.objects.filter(pk=command.intake_record_id).first() if command.intake_record_id else None
-        normalized_phone = normalize_phone_number(student.phone)
-        if linked_intake is None:
+        lookup_decision = build_intake_lookup_decision(
+            intake_record_id=command.intake_record_id,
+            student_phone=student.phone,
+        )
+
+        linked_intake = StudentIntake.objects.filter(pk=lookup_decision.explicit_intake_id).first() if lookup_decision.explicit_intake_id else None
+        if linked_intake is None and lookup_decision.should_try_phone_fallback:
             linked_intake = StudentIntake.objects.filter(
-                phone__in=build_phone_match_candidates(student.phone),
+                phone__in=lookup_decision.fallback_phone_candidates,
                 linked_student__isnull=True,
             ).order_by('-pk').first()
         if linked_intake is None:
             return None
 
         linked_intake = StudentIntake.objects.select_for_update().get(pk=linked_intake.pk)
-        if normalized_phone and linked_intake.phone != normalized_phone:
-            linked_intake.phone = normalized_phone
+        conversion_decision = build_intake_conversion_decision(
+            existing_phone=linked_intake.phone,
+            existing_notes=linked_intake.notes,
+            normalized_student_phone=lookup_decision.normalized_student_phone,
+        )
+
+        if conversion_decision.normalized_phone and linked_intake.phone != conversion_decision.normalized_phone:
+            linked_intake.phone = conversion_decision.normalized_phone
 
         linked_intake.linked_student = student
-        linked_intake.status = IntakeStatus.APPROVED
-        linked_intake.notes = '\n'.join(
-            filter(None, [linked_intake.notes.strip(), DEFAULT_INTAKE_CONVERSION_NOTE])
-        )
+        linked_intake.status = conversion_decision.status
+        linked_intake.notes = conversion_decision.notes
         linked_intake.save(update_fields=['phone', 'linked_student', 'status', 'notes', 'updated_at'])
         return linked_intake.id
 

@@ -13,9 +13,11 @@ PONTOS CRITICOS:
 - Este arquivo nao deve voltar a concentrar regra de negocio do fluxo principal.
 """
 
-from boxcore.models import Enrollment, Payment, Student, StudentIntake
+from communications.models import StudentIntake
+from finance.models import Enrollment, Payment
 from students.application.commands import build_student_quick_command
 from students.infrastructure import execute_create_student_quick_command, execute_update_student_quick_command
+from students.models import Student
 
 
 def build_student_workflow_payload(*, student, form):

@@ -29,6 +29,9 @@ class OperationalMessageResult:
     contact_id: int
     message_log_id: int
     action_kind: str
+    payment_id: int | None = None
+    enrollment_id: int | None = None
+    contact_created: bool = False
 
 
 @dataclass(frozen=True, slots=True)

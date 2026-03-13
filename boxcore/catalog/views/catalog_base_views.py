@@ -12,19 +12,4 @@ PONTOS CRITICOS:
 - Mudancas aqui afetam todas as views do catalogo.
 """
 
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.utils import timezone
-from django.views.generic import TemplateView
-
-from boxcore.access.permissions import RoleRequiredMixin
-from boxcore.access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, get_user_role
-
-
-class CatalogBaseView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
-    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_COACH)
-
-    def get_base_context(self):
-        return {
-            'current_role': get_user_role(self.request.user),
-            'today': timezone.localdate(),
-        }
+from catalog.views.catalog_base_views import *
