@@ -14,6 +14,7 @@
 
 Django==6.0.3
 dj-database-url==2.3.0
+gunicorn==23.0.0
 psycopg[binary]==3.2.13
 reportlab==4.4.1
 whitenoise==6.9.0

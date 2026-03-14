@@ -58,6 +58,14 @@ SECRET_KEY = env_str('DJANGO_SECRET_KEY', 'dev-only-secret-key-change-me')
 ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS')
 
+render_external_hostname = env_str('RENDER_EXTERNAL_HOSTNAME')
+if render_external_hostname:
+    if render_external_hostname not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(render_external_hostname)
+    render_origin = f'https://{render_external_hostname}'
+    if render_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(render_origin)
+
 DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

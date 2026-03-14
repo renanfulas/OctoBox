@@ -1,0 +1,3 @@
+full_name,whatsapp,email,gender,birth_date,health_issue_status,cpf,status,notes
+Aluno Exemplo 1,5511999990001,aluno1@exemplo.com,male,1995-03-14,no,123.456.789-00,active,Aluno ativo importado para o piloto.
+Aluno Exemplo 2,5511999990002,aluno2@exemplo.com,female,1998-08-21,yes,987.654.321-00,lead,Lead vindo da base inicial do box.

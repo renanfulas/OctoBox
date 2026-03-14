@@ -50,7 +50,8 @@ Exemplo com pg_dump:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-./scripts/backup_postgres.ps1 -Host localhost -Port 5432 -Database octobox_control -User postgres -Password "sua_senha"
+$securePassword = Read-Host "Senha do banco" -AsSecureString
+./scripts/backup_postgres.ps1 -DbHost localhost -Port 5432 -Database octobox_control -User postgres -Password $securePassword
 ```
 
 ## Restauracao PostgreSQL

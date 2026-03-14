@@ -192,7 +192,7 @@ Fazer agora:
 
 1. congelar o escopo inicial do box piloto
 2. declarar o que entra e o que fica fora da primeira venda
-3. preparar script de onboarding minimo
+3. preparar script de onboarding minimo em [first-box-onboarding-runbook.md](first-box-onboarding-runbook.md)
 
 ### Prioridade 3: preparar suporte operacional
 
@@ -202,6 +202,7 @@ Fazer agora:
 2. definir tempo esperado de resposta
 3. definir criterio de severidade
 4. definir rotina de backup e restauracao
+5. registrar o fluxo de triagem em [pilot-support-playbook.md](pilot-support-playbook.md)
 
 ### Prioridade 4: abrir o primeiro box com acompanhamento proximo
 
@@ -255,9 +256,9 @@ Mitigacao:
 1. subir homologacao publica real
 2. validar pacote tecnico minimo
 3. definir escopo fechado do piloto
-4. preparar onboarding do primeiro box
+4. preparar onboarding do primeiro box com [first-box-onboarding-runbook.md](first-box-onboarding-runbook.md)
 5. colocar o primeiro box para rodar
-6. acompanhar 7 a 14 dias
+6. acompanhar 7 a 14 dias com [pilot-support-playbook.md](pilot-support-playbook.md)
 7. corrigir atritos graves
 8. abrir segunda onda pequena
 
