@@ -68,6 +68,8 @@ Critério:
 
 1. precisa suportar variaveis de ambiente, processo web, PostgreSQL e HTTPS facil
 
+Se a escolha for Render, use [render.yaml](../../render.yaml) como ponto de partida oficial do projeto.
+
 ## Etapa 1: preparar os segredos e variaveis
 
 Variaveis minimas obrigatorias:
@@ -115,6 +117,12 @@ python manage.py bootstrap_roles
 python manage.py createsuperuser
 ```
 
+Comando minimo de processo web em hosts com start command explicito:
+
+```bash
+gunicorn config.wsgi --log-file -
+```
+
 Checklist:
 
 1. dependencias instaladas
@@ -122,6 +130,15 @@ Checklist:
 3. static files coletados
 4. grupos de acesso criados
 5. superuser criado
+6. processo web configurado
+
+No Render, a configuracao esperada fica assim:
+
+1. criar Blueprint a partir do repositorio
+2. deixar o web service apontando para `render.yaml`
+3. confirmar que o banco `octobox-control-db` foi criado
+4. rodar o primeiro deploy
+5. criar superuser manualmente no shell do servico apos o deploy
 
 ## Etapa 4: validar o processo web
 

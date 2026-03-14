@@ -71,6 +71,33 @@ python manage.py bootstrap_roles
 python manage.py createsuperuser
 ```
 
+## Processo web
+
+O repositorio agora inclui um [Procfile](../../Procfile) com um processo web simples via Gunicorn.
+
+Comando minimo para hosts com start command explicito:
+
+```bash
+gunicorn config.wsgi --log-file -
+```
+
+## Fluxo recomendado no Render
+
+O repositorio agora inclui um [render.yaml](../../render.yaml) para subir um web service Django e um PostgreSQL gerenciado no Render com o minimo de friccao.
+
+Leitura pratica desse fluxo:
+
+1. o build instala dependencias e roda `collectstatic`
+2. o pre-deploy roda `migrate` e `bootstrap_roles`
+3. o processo web sobe com Gunicorn
+4. o healthcheck usa `/api/v1/health/`
+
+Observacoes importantes para Render:
+
+1. o superuser continua sendo manual e deve ser criado depois do primeiro deploy
+2. `RENDER_EXTERNAL_HOSTNAME` e absorvido automaticamente pelo Django para `ALLOWED_HOSTS` e `CSRF_TRUSTED_ORIGINS`
+3. se quiser dominio proprio, configure-o no Render e mantenha `DJANGO_ALLOWED_HOSTS` e `DJANGO_CSRF_TRUSTED_ORIGINS` como sobreposicao explicita quando necessario
+
 ## Static files
 
 Em homologacao e producao, o projeto usa WhiteNoise. Isso permite um deploy simples sem depender imediatamente de um bucket ou CDN.
