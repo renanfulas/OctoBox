@@ -12,7 +12,7 @@ PONTOS CRITICOS:
 - mudancas aqui afetam listagens, busca comercial e leitura financeira por aluno.
 """
 
-from django.db.models import OuterRef, Q, Subquery
+from django.db.models import Case, CharField, Exists, OuterRef, Q, Subquery, Value, When
 
 from communications.models import IntakeStatus, StudentIntake
 from finance.models import Enrollment, EnrollmentStatus, Payment, PaymentStatus
@@ -25,11 +25,22 @@ def build_student_directory_snapshot(params=None):
 	latest_enrollment_status = Enrollment.objects.filter(student=OuterRef('pk')).order_by('-start_date', '-created_at').values('status')[:1]
 	latest_plan_name = Enrollment.objects.filter(student=OuterRef('pk')).order_by('-start_date', '-created_at').values('plan__name')[:1]
 	latest_payment_status = Payment.objects.filter(student=OuterRef('pk')).order_by('-due_date', '-created_at').values('status')[:1]
+	overdue_payment_exists = Payment.objects.filter(student=OuterRef('pk'), status=PaymentStatus.OVERDUE)
+	pending_payment_exists = Payment.objects.filter(student=OuterRef('pk'), status=PaymentStatus.PENDING)
 
 	students = Student.objects.annotate(
 		latest_enrollment_status=Subquery(latest_enrollment_status),
 		latest_plan_name=Subquery(latest_plan_name),
 		latest_payment_status=Subquery(latest_payment_status),
+		has_overdue_payment=Exists(overdue_payment_exists),
+		has_pending_payment=Exists(pending_payment_exists),
+	).annotate(
+		operational_payment_status=Case(
+			When(has_overdue_payment=True, then=Value(PaymentStatus.OVERDUE)),
+			When(has_pending_payment=True, then=Value(PaymentStatus.PENDING)),
+			default=Subquery(latest_payment_status),
+			output_field=CharField(),
+		),
 	).order_by('full_name')
 	filter_form = StudentDirectoryFilterForm(params or None)
 
@@ -58,17 +69,17 @@ def build_student_directory_snapshot(params=None):
 		if commercial_status:
 			students = students.filter(latest_enrollment_status=commercial_status)
 		if payment_status:
-			students = students.filter(latest_payment_status=payment_status)
+			students = students.filter(operational_payment_status=payment_status)
 
 	total_students = students.count()
 	active_students = students.filter(status=StudentStatus.ACTIVE).count()
 	lead_students = students.filter(status=StudentStatus.LEAD).count()
 	students_with_active_plan = students.filter(latest_enrollment_status=EnrollmentStatus.ACTIVE).count()
-	overdue_students = students.filter(latest_payment_status=PaymentStatus.OVERDUE).count()
+	overdue_students = students.filter(operational_payment_status=PaymentStatus.OVERDUE).count()
 	pending_intakes = StudentIntake.objects.filter(status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING], linked_student__isnull=True)
 
 	priority_students = students.filter(
-		Q(latest_payment_status=PaymentStatus.OVERDUE)
+		Q(operational_payment_status=PaymentStatus.OVERDUE)
 		| Q(status=StudentStatus.LEAD)
 		| Q(latest_enrollment_status=EnrollmentStatus.PENDING)
 	).order_by('full_name')[:6]

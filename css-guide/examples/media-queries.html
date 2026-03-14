@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exemplos de Consultas de Mídia</title>
+    <link rel="stylesheet" href="../src/styles/main.css">
+</head>
+<body>
+    <header>
+        <h1>Exemplos de Consultas de Mídia</h1>
+    </header>
+    <main>
+        <section>
+            <h2>Exemplo 1: Mudança de Estilo em Diferentes Tamanhos de Tela</h2>
+            <p>Este exemplo demonstra como aplicar estilos diferentes com base na largura da tela.</p>
+            <div class="example-box">
+                <p>Este texto muda de cor em telas menores que 600px.</p>
+            </div>
+        </section>
+        <section>
+            <h2>Exemplo 2: Layout Responsivo</h2>
+            <p>Utilizando consultas de mídia para ajustar o layout em diferentes dispositivos.</p>
+            <div class="responsive-layout">
+                <div class="column">Coluna 1</div>
+                <div class="column">Coluna 2</div>
+                <div class="column">Coluna 3</div>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2023 Guia CSS</p>
+    </footer>
+    <style>
+        .example-box {
+            padding: 20px;
+            background-color: lightgray;
+            border: 1px solid #ccc;
+        }
+
+        @media (max-width: 600px) {
+            .example-box {
+                background-color: lightcoral;
+            }
+        }
+
+        .responsive-layout {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .column {
+            flex: 1;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 600px) {
+            .column {
+                flex: 100%;
+            }
+        }
+    </style>
+</body>
+</html>

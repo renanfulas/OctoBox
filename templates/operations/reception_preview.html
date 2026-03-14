@@ -15,77 +15,46 @@ PONTOS CRITICOS:
 - o preview precisa continuar claro mesmo sem receber ainda a role oficial de Recepcao.
 -->
 {% extends "layouts/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
+{% endblock %}
 
 {% block content %}
+{% with page=operation_page %}
 <div class="operation-shell reception-preview-scene">
-    <section class="hero operation-hero reception-preview-hero">
+    <section class="hero operation-hero reception-preview-hero" aria-label="Preview da recepcao">
         <div class="operation-hero-main">
             <div>
                 <p class="eyebrow">Preview oculto</p>
-                <h1>Recepcao por baixo dos panos, sem ruido publico antes da hora.</h1>
-                <p class="operation-hero-copy">Esta tela existe para lapidar a cadencia da recepcao antes de ela virar superficie oficial. Aqui o balcao encontra aluno, grade em leitura e cobranca curta no mesmo compasso.</p>
-            </div>
-            <div class="operation-hero-tags">
-                <span class="pill">Rollout controlado</span>
-                <span class="pill info">Balcao, RM e grade</span>
-                <span class="pill accent">Sem link na navegacao</span>
+                <h2>Recepção por baixo dos panos.</h2>
+                <p class="operation-hero-copy">Lapidar a cadência da recepção antes de virar superfície oficial. Aluno, grade e cobrança curta no mesmo compasso.</p>
             </div>
             <div class="actions">
-                <a class="button" href="#reception-intake-board">Ver entradas</a>
-                <a class="button secondary" href="#reception-payment-board">Ver cobranca curta</a>
+                <a class="button" href="#reception-payment-board">Ver cobrança curta</a>
+                <a class="button secondary" href="#reception-intake-board">Ver entradas</a>
                 <a class="button secondary" href="#reception-class-grid-board">Ver grade em leitura</a>
             </div>
         </div>
         <aside class="operation-hero-side">
-            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Pulso do preview" copy="Leitura curta para validar se a Recepcao ja consegue sustentar entrada, caixa rapido e orientacao de aulas sem virar mini manager." stats=hero_stats %}
-            <article class="operation-hero-panel reception-preview-sidecard">
-                <p class="eyebrow">Estado de promocao</p>
-                <h2 class="operation-card-title">Oculta por criterio, nao por medo</h2>
-                <p class="operation-card-copy">A area ja conversa com as superficies reais, mas continua sem link publico ate a experiencia ficar forte o suficiente para merecer a promocao.</p>
-                <span class="pill accent">Marco ainda reservado</span>
-            </article>
+            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Pulso do preview" copy="Valide se a recepção sustenta entrada, caixa rápido e orientação de aulas." stats=page.data.hero_stats %}
         </aside>
     </section>
 
-    <section class="table-card operation-focus-card">
-        <div class="operation-card-head">
-            <div>
-                <p class="eyebrow">Comece por aqui</p>
-                <h2 class="operation-card-title">Tres leituras para validar a Recepcao sem expor a area antes do marco</h2>
-                <p class="operation-card-copy">Primeiro veja se a triagem flui. Depois confira a cobranca curta. Feche com a grade em leitura para responder duvida rapida sem abrir a operacao inteira.</p>
-            </div>
-            <span class="pill accent">Preview guiado</span>
-        </div>
-        <div class="operation-focus-list">
-            {% for item in reception_preview_focus %}
-            <article class="operation-focus-item">
-                <div class="operation-focus-copy">
-                    <p class="eyebrow">{{ item.label }}</p>
-                    <p>{{ item.summary }}</p>
-                </div>
-                <div class="operation-focus-actions">
-                    <span class="pill {{ item.pill_class }}">foco</span>
-                    <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="panel-grid operation-metric-grid">
-        {% for card in metric_cards %}
+    <section class="panel-grid operation-metric-grid" aria-label="Metricas de preview">
+        {% for card in page.data.metric_cards %}
         {% include "includes/ui/metric_card.html" with card=card %}
         {% endfor %}
     </section>
 
-    <section class="layout-grid operation-grid-wide align-start reception-preview-support-grid">
-        {% include "includes/ui/info_list_card.html" with eyebrow="Fronteira deste preview" title="O que continua reservado" items=reception_preview_boundaries %}
+    <section class="layout-grid operation-grid-wide align-start reception-preview-support-grid" aria-label="Atalhos do preview">
         <article class="table-card operation-table-card reception-preview-command-card">
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Atalhos de validacao</p>
-                    <h2 class="operation-card-title">Abra as superficies vivas sem promover a area ainda</h2>
-                    <p class="operation-card-copy">Use esses pontos para validar se a Recepcao conversa bem com os destinos reais sem ganhar destaque publico antes da hora.</p>
+                    <h2 class="operation-card-title">Atalhos de validação</h2>
+                    <p class="operation-card-copy">Valide conexões sem promover a área.</p>
                 </div>
                 <span class="pill info">Conexao controlada</span>
             </div>
@@ -97,58 +66,18 @@ PONTOS CRITICOS:
         </article>
     </section>
 
-    <section class="layout-grid operation-grid-wide align-start">
-        <article class="table-card operation-table-card" id="reception-intake-board">
-            <div class="operation-card-head">
-                <div>
-                    <p class="eyebrow">Fila de entrada</p>
-                    <h2 class="operation-card-title">Quem a recepcao conseguiria converter sem perder temperatura</h2>
-                    <p class="operation-card-copy">Este quadro testa a primeira metade da promessa: localizar rapido, entender rapido e abrir a ficha certa sem travar o balcao.</p>
-                </div>
-                <span class="pill info">{{ reception_preview_intakes|length }} entrada(s)</span>
-            </div>
-            <div class="operation-table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Contato</th>
-                            <th>Origem</th>
-                            <th>Status</th>
-                            <th>Proximo passo</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for intake in reception_preview_intakes %}
-                        <tr>
-                            <td>
-                                <strong>{{ intake.full_name }}</strong>
-                                <p class="meta-text-sm">{{ intake.phone }}{% if intake.email %} | {{ intake.email }}{% endif %}</p>
-                            </td>
-                            <td>{{ intake.get_source_display }}</td>
-                            <td><span class="pill info">{{ intake.get_status_display }}</span></td>
-                            <td>
-                                <a class="button secondary button-sm" href="/alunos/novo/?intake={{ intake.id }}">Abrir cadastro</a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="4">Nenhuma entrada aguardando conversao neste recorte.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </article>
-
+    <section class="layout-grid operation-grid-wide align-start" aria-label="Cobranca e entradas do preview">
         <article class="table-card operation-table-card reception-preview-payment-board" id="reception-payment-board">
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Cobranca curta</p>
-                    <h2 class="operation-card-title">Fila de caixa que a recepcao deve conseguir explicar em linguagem humana</h2>
-                    <p class="operation-card-copy">Aqui a area testa se consegue mostrar quem esta em atraso, quem vence hoje e qual a leitura curta sem entregar a central financeira inteira.</p>
+                    <h2 class="operation-card-title">Fila de caixa da recepção</h2>
+                    <p class="operation-card-copy">Atraso, vencimento e leitura curta.</p>
                 </div>
-                <span class="pill warning">{{ reception_preview_queue|length }} caso(s)</span>
+                <span class="pill warning">{{ page.data.reception_preview_queue|length }} caso(s)</span>
             </div>
             <div class="reception-preview-payment-grid">
-                {% for item in reception_preview_queue %}
+                {% for item in page.data.reception_preview_queue %}
                 <article class="history-entry finance-action-card finance-action-card-compact reception-preview-payment-card">
                     <div class="row-between history-header finance-action-head">
                         <div class="finance-action-copy">
@@ -164,7 +93,7 @@ PONTOS CRITICOS:
                         </div>
                         <div class="finance-alert-stat">
                             <span class="operation-mini-label">Valor</span>
-                            <strong>R$ {{ item.amount }}</strong>
+                            <strong>R$ {{ item.amount|floatformat:2 }}</strong>
                         </div>
                         <div class="finance-alert-stat">
                             <span class="operation-mini-label">Metodo atual</span>
@@ -175,7 +104,7 @@ PONTOS CRITICOS:
                         <p class="eyebrow">Leitura de balcao</p>
                         <p class="meta-text">{{ item.reason }}</p>
                     </div>
-                    {% if can_manage_reception_preview_payments %}
+                    {% if page.capabilities.can_manage_reception_preview_payments %}
                     <form method="post" action="/operacao/recepcao-preview/pagamento/{{ item.payment_id }}/acao/" class="reception-preview-payment-form">
                         {% csrf_token %}
                         <input type="hidden" name="payment_id" value="{{ item.payment_id }}">
@@ -188,7 +117,7 @@ PONTOS CRITICOS:
                             <label>
                                 <span class="field-label">Metodo recebido</span>
                                 <select name="method">
-                                    {% for value, label in reception_preview_payment_methods %}
+                                    {% for value, label in page.data.reception_preview_payment_methods %}
                                     <option value="{{ value }}"{% if item.method == value %} selected{% endif %}>{{ label }}</option>
                                     {% endfor %}
                                 </select>
@@ -207,7 +136,7 @@ PONTOS CRITICOS:
                         <div class="actions actions-tight finance-card-actions-compact reception-preview-payment-actions">
                             <button class="button" type="submit" name="action" value="mark-paid">Confirmar pagamento</button>
                             <button class="button secondary" type="submit" name="action" value="update-payment">Salvar ajuste curto</button>
-                            <a class="button secondary" href="{{ item.student_href }}">Abrir ficha do aluno</a>
+                            <a class="button secondary" href="{{ item.student_href }}#student-financial-overview">Abrir ficha do aluno</a>
                         </div>
                     </form>
                     {% else %}
@@ -216,7 +145,7 @@ PONTOS CRITICOS:
                         <p class="meta-text">O preview permite leitura ampla para DEV, mas a mutacao curta de cobranca continua reservada ao Owner neste rollout.</p>
                     </div>
                     <div class="actions actions-tight finance-card-actions-compact">
-                        <a class="button secondary" href="{{ item.student_href }}">Abrir ficha do aluno</a>
+                        <a class="button secondary" href="{{ item.student_href }}#student-financial-overview">Abrir ficha do aluno</a>
                     </div>
                     {% endif %}
                 </article>
@@ -225,19 +154,59 @@ PONTOS CRITICOS:
                 {% endfor %}
             </div>
         </article>
+
+        <article class="table-card operation-table-card" id="reception-intake-board">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Fila de entrada</p>
+                    <h2 class="operation-card-title">Quem converter sem perder temperatura</h2>
+                    <p class="operation-card-copy">Localizar, entender e abrir a ficha certa.</p>
+                </div>
+                <span class="pill info">{{ page.data.reception_preview_intakes|length }} entrada(s)</span>
+            </div>
+            <div class="operation-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Contato</th>
+                            <th scope="col">Origem</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Proximo passo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for intake in page.data.reception_preview_intakes %}
+                        <tr>
+                            <td>
+                                <strong>{{ intake.full_name }}</strong>
+                                <p class="meta-text-sm">{{ intake.phone }}{% if intake.email %} | {{ intake.email }}{% endif %}</p>
+                            </td>
+                            <td>{{ intake.get_source_display }}</td>
+                            <td><span class="pill info">{{ intake.get_status_display }}</span></td>
+                            <td>
+                                <a class="button secondary button-sm" href="/alunos/novo/?intake={{ intake.id }}#student-form-essential">Abrir cadastro</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4">Nenhuma entrada aguardando conversao neste recorte.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
     </section>
 
-    <section class="table-card operation-table-card reception-preview-grid-board" id="reception-class-grid-board">
+    <section class="table-card operation-table-card reception-preview-grid-board" id="reception-class-grid-board" aria-label="Grade de aulas do preview">
         <div class="operation-card-head">
             <div>
                 <p class="eyebrow">Grade em leitura</p>
-                <h2 class="operation-card-title">Proximas aulas para responder rapido no balcao</h2>
-                <p class="operation-card-copy">A Recepcao aqui nao gerencia a grade. Ela apenas precisa enxergar as proximas aulas, horario e sinal suficiente para orientar check-in e duvida de rotina.</p>
+                <h2 class="operation-card-title">Próximas aulas para o balcão</h2>
+                <p class="operation-card-copy">Horário e contexto para check-in e dúvida de rotina.</p>
             </div>
             <span class="pill info">Leitura apenas</span>
         </div>
         <div class="reception-preview-grade-grid">
-            {% for session in reception_preview_sessions %}
+            {% for session in page.data.reception_preview_sessions %}
             <article class="reception-preview-grade-card">
                 <div>
                     <p class="eyebrow">Aula visivel</p>
@@ -265,4 +234,5 @@ PONTOS CRITICOS:
         </div>
     </section>
 </div>
+{% endwith %}
 {% endblock %}

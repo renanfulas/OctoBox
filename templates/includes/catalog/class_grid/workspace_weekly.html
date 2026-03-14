@@ -1,0 +1,23 @@
+<!--
+ARQUIVO: painel semanal da grade.
+-->
+<section class="table-card class-weekly-board class-grid-workspace-panel" id="weekly-board" data-panel-id="weekly-board" data-panel="class-grid-weekly-board" draggable="true">
+    {% include "includes/ui/class_grid_panel_head.html" with eyebrow="Visao semanal" title="Calendario das proximas duas semanas" pill_label="14 dias em destaque" pill_class="info" handle_aria="Arrastar janela da visao semanal" %}
+
+    {% for week in page.data.weekly_calendar|slice:":2" %}
+    <section class="weekly-calendar-section" data-panel="class-grid-weekly-section">
+        <div class="row-between-md weekly-calendar-header">
+            <div>
+                <p class="eyebrow">{{ week.label }}</p>
+            </div>
+            <span class="pill info">Seg a Dom</span>
+        </div>
+
+        <div class="weekly-calendar-grid">
+            {% for day in week.days %}
+            {% include "includes/ui/class_grid_weekly_day_card.html" with day=day page=page %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endfor %}
+</section>

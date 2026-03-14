@@ -1,0 +1,58 @@
+/*
+ARQUIVO: quick cards e accent bar.
+
+POR QUE ELE EXISTE:
+- separa atalhos visuais e barras de destaque do restante dos componentes estruturais.
+*/
+
+.quick-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--section-gap);
+}
+
+.quick-card {
+    padding: 24px;
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--line);
+    background:
+        radial-gradient(circle at top right, rgba(184, 92, 56, 0.14), transparent 36%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.72), rgba(245, 238, 227, 0.94));
+    backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-soft);
+    text-decoration: none;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.quick-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+    border-color: rgba(184, 92, 56, 0.2);
+}
+
+.quick-card strong {
+    display: block;
+    font-size: 1.18rem;
+    margin-bottom: 10px;
+    line-height: 1.12;
+}
+
+.quick-card p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.65;
+}
+
+.accent-bar {
+    height: 8px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--brand), var(--accent), var(--accent-2));
+    opacity: 0.92;
+    margin-top: 18px;
+}
+
+@media (max-width: 960px) {
+    .quick-grid {
+        gap: 18px;
+    }
+}

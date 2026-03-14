@@ -1,0 +1,23 @@
+/*
+ARQUIVO: manifesto dos componentes compartilhados do design system.
+
+POR QUE ELE EXISTE:
+- transforma o antigo arquivo monolitico de componentes em uma entrada curta e previsivel.
+- permite mexer em cards, tabelas, buttons, estados e quick cards sem varrer um arquivo gigante.
+
+O QUE ESTE ARQUIVO FAZ:
+1. importa os modulos reais de componentes em ordem estavel.
+2. preserva a carga unica do design system para o restante da aplicacao.
+
+PONTOS CRITICOS:
+- alteracoes de estilo devem acontecer no modulo certo, nao neste manifesto.
+- a ordem dos imports continua sendo parte do contrato visual.
+*/
+
+@import url("./components/hero.css");
+@import url("./components/cards.css");
+@import url("./components/tables.css");
+@import url("./components/pills.css");
+@import url("./components/actions.css");
+@import url("./components/states.css");
+@import url("./components/quick-cards.css");

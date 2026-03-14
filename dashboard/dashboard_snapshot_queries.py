@@ -128,14 +128,14 @@ def build_dashboard_snapshot(*, today, month_start, role_slug=''):
             {'label': 'Base ativa', 'value': metrics['active_students']},
             {'label': 'Aulas hoje', 'value': metrics['sessions_today']},
             {'label': 'Atrasos', 'value': metrics['overdue_payments']},
-            {'label': 'Receita', 'value': 'R$ %s' % metrics['monthly_revenue_paid']},
+            {'label': 'Receita', 'value': 'R$ %.2f' % metrics['monthly_revenue_paid']},
         ],
         'metric_cards': [
             {'card_class': 'dashboard-kpi-card kpi-amber', 'eyebrow': 'Alunos ativos', 'display_value': metrics['active_students'], 'note': 'Base principal para check-in, receita recorrente e retencao.', 'show_accent_bar': True},
             {'card_class': 'dashboard-kpi-card kpi-blue', 'eyebrow': 'Aulas hoje', 'display_value': metrics['sessions_today'], 'note': 'Agenda operacional do dia e pressao imediata na equipe.', 'show_accent_bar': True},
             {'card_class': 'dashboard-kpi-card kpi-red', 'eyebrow': 'Pagamentos atrasados', 'display_value': metrics['overdue_payments'], 'note': 'Prioridade para acao da secretaria, cobranca e retencao.', 'footer_pill_label': 'Acao imediata' if metrics['overdue_payments'] > 0 else 'Sob controle', 'footer_pill_class': 'warning' if metrics['overdue_payments'] > 0 else 'success'},
             {'card_class': 'dashboard-kpi-card kpi-green', 'eyebrow': 'Presencas no mes', 'display_value': metrics['attendance_this_month'], 'note': 'Volume real de comparecimentos que sustenta a leitura de engajamento.', 'show_accent_bar': True},
-            {'card_class': 'dashboard-kpi-card kpi-amber', 'eyebrow': 'Receita recebida no mes', 'display_value': 'R$ %s' % metrics['monthly_revenue_paid'], 'note': 'Somatorio dos pagamentos marcados como pagos no recorte atual.', 'show_accent_bar': True},
+            {'card_class': 'dashboard-kpi-card kpi-amber', 'eyebrow': 'Receita recebida no mes', 'display_value': 'R$ %.2f' % metrics['monthly_revenue_paid'], 'note': 'Somatorio dos pagamentos marcados como pagos no recorte atual.', 'show_accent_bar': True},
             {'card_class': 'dashboard-kpi-card kpi-slate', 'eyebrow': 'Ocorrencias no mes', 'display_value': metrics['occurrences_this_month'], 'note': 'Sinal de acompanhamento tecnico e comportamental ao longo da base.', 'show_accent_bar': True},
         ],
         'upcoming_sessions': [

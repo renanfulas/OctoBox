@@ -1,0 +1,76 @@
+/*
+ARQUIVO: layout estrutural do shell autenticado.
+
+POR QUE ELE EXISTE:
+- Define a grid principal (sidebar + conteúdo) e o container de página.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Grid do .shell (sidebar + main).
+2. Container .content com max-width.
+3. .page-body e scroll-margin dos IDs.
+4. Sidebar backdrop para mobile.
+
+PONTOS CRITICOS:
+- Breakpoint 960px colapsa a sidebar.
+*/
+
+.shell {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 18px;
+    padding: 18px;
+    align-items: start;
+}
+
+.content {
+    width: min(100%, var(--content-max));
+    margin: 0 auto;
+    padding: 10px 14px 34px 8px;
+    position: relative;
+}
+
+.content::before {
+    content: "";
+    position: absolute;
+    inset: 8px 0 0;
+    border-radius: 36px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 28%);
+    pointer-events: none;
+}
+
+.page-body {
+    display: grid;
+    gap: var(--section-gap);
+    position: relative;
+}
+
+.page-body > * {
+    min-width: 0;
+}
+
+.page-body [id] {
+    scroll-margin-top: 148px;
+}
+
+.sidebar-backdrop {
+    display: none;
+}
+
+@media (max-width: 960px) {
+    .shell {
+        grid-template-columns: 1fr;
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .content {
+        width: 100%;
+        padding: 8px 6px 26px;
+    }
+
+    .content::before {
+        inset: 0;
+        border-radius: 28px;
+    }
+}

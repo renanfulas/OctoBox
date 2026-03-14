@@ -1,0 +1,12 @@
+<!--
+ARQUIVO: observacoes e erros gerais da edicao rapida.
+
+POR QUE ELE EXISTE:
+- separa o bloco textual da sessao para ajustes de copy e feedback sem ruir o restante do formulario.
+-->
+<label>
+    <span class="field-label">{{ page.data.session_edit_form.notes.label }}</span>
+    {{ page.data.session_edit_form.notes }}
+    {% for error in page.data.session_edit_form.notes.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+</label>
+{% for error in page.data.session_edit_form.non_field_errors %}<span class="form-error">{{ error }}</span>{% endfor %}

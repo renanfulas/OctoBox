@@ -22,6 +22,13 @@ SCHEDULED_STATUS = 'scheduled'
 CANCELED_STATUS = 'canceled'
 COMPLETED_STATUS = 'completed'
 
+STATUS_LABELS = {
+    SCHEDULED_STATUS: 'Agendada',
+    CANCELED_STATUS: 'Cancelada',
+    COMPLETED_STATUS: 'Concluída',
+    'open': 'Liberada',
+}
+
 
 @dataclass(frozen=True, slots=True)
 class ClassGridSessionPolicy:
@@ -31,7 +38,7 @@ class ClassGridSessionPolicy:
     delete_error_message: str = ''
 
     def validate_quick_edit_status(self, new_status):
-        if self.initial_quick_edit_status == COMPLETED_STATUS and new_status != CANCELED_STATUS:
+        if self.initial_quick_edit_status == COMPLETED_STATUS and new_status not in (COMPLETED_STATUS, CANCELED_STATUS):
             raise ValueError(grid_messages.COMPLETED_SESSION_REOPEN_BLOCKED)
 
     def ensure_can_delete(self):
@@ -45,11 +52,15 @@ def build_class_grid_session_policy(*, initial_status: str, has_attendance: bool
     if not can_delete:
         delete_error_message = grid_messages.SESSION_DELETE_WITH_ATTENDANCE_BLOCKED
 
+    quick_edit_status_choices = [
+        (SCHEDULED_STATUS, STATUS_LABELS[SCHEDULED_STATUS]),
+        (CANCELED_STATUS, STATUS_LABELS[CANCELED_STATUS]),
+    ]
+    if initial_status and initial_status not in {SCHEDULED_STATUS, CANCELED_STATUS}:
+        quick_edit_status_choices.insert(0, (initial_status, STATUS_LABELS.get(initial_status, initial_status)))
+
     return ClassGridSessionPolicy(
-        quick_edit_status_choices=(
-            (SCHEDULED_STATUS, 'Agendada'),
-            (CANCELED_STATUS, 'Cancelada'),
-        ),
+        quick_edit_status_choices=tuple(quick_edit_status_choices),
         initial_quick_edit_status=initial_status,
         can_delete=can_delete,
         delete_error_message=delete_error_message,

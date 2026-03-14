@@ -13,110 +13,54 @@ PONTOS CRITICOS:
 - Esta área não deve virar atalho para operação administrativa ou técnica do box.
 -->
 {% extends "layouts/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
+{% endblock %}
 
 {% block content %}
+{% with page=operation_page %}
 <div class="operation-shell">
-    <section class="hero operation-hero">
+    <section class="hero operation-hero" aria-label="Panorama de desenvolvimento">
         <div class="operation-hero-main">
             <div>
                 <p class="eyebrow">Leitura técnica controlada</p>
-                <h1>Investigue primeiro o rastro recente, depois a fronteira, depois o sistema inteiro.</h1>
-                <p class="operation-hero-copy">Esta área não existe para operar o box. Ela existe para reduzir chute técnico, apoiar manutenção e deixar a investigação mais curta e mais rigorosa.</p>
-            </div>
-            <div class="operation-hero-tags">
-                <span class="pill">Acesso técnico controlado</span>
-                <span class="pill info">Investigação e rastreabilidade</span>
-                <span class="pill accent">Leitura antes de intervenção</span>
+                <h2>Rastro recente, fronteira, sistema inteiro.</h2>
+                <p class="operation-hero-copy">Reduza chute técnico com investigação curta e rigorosa.</p>
             </div>
             <div class="actions">
                 <a class="button" href="#dev-audit-board">Ver eventos recentes</a>
-                <a class="button secondary" href="#dev-boundary-board">Ver fronteiras</a>
                 <a class="button secondary" href="/mapa-sistema/">Abrir mapa do sistema</a>
             </div>
         </div>
         <aside class="operation-hero-side">
-            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Telemetria rápida" copy="Indicadores técnicos para entender volume recente de rastros e cobertura operacional por papel." stats=hero_stats %}
+            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Telemetria rápida" copy="Volume de rastros e cobertura por papel." stats=page.data.hero_stats %}
         </aside>
     </section>
 
-    <section class="table-card operation-focus-card">
-        <div class="operation-card-head">
-            <div>
-                <p class="eyebrow">Comece por aqui</p>
-                <h2 class="operation-card-title">Três leituras para investigar sem espalhar contexto</h2>
-                <p class="operation-card-copy">A ordem é rastro recente, fronteira de acesso e só então leitura sistêmica mais ampla.</p>
-            </div>
-            <span class="pill accent">Foco do dev</span>
-        </div>
-        <div class="operation-focus-list">
-            {% for item in dev_operational_focus %}
-            <article class="operation-focus-item">
-                <div class="operation-focus-copy">
-                    <p class="eyebrow">{{ item.label }}</p>
-                    <p>{{ item.summary }}</p>
-                </div>
-                <div class="operation-focus-actions">
-                    <span class="pill {{ item.pill_class }}">prioridade</span>
-                    <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="panel-grid operation-metric-grid">
-        {% for card in metric_cards %}
-        {% include "includes/ui/metric_card.html" with card=card %}
-        {% endfor %}
-    </section>
-
-    <section class="operation-table-guide-grid">
-        {% for item in dev_table_guides %}
-        <article class="table-card operation-table-guide-card">
-            <div class="operation-table-guide-head">
-                <div>
-                    <p class="eyebrow">{{ item.label }}</p>
-                    <h2 class="operation-card-title">{{ item.value }}</h2>
-                    <p class="operation-card-copy">{{ item.summary }}</p>
-                </div>
-                <span class="pill {{ item.pill_class }}">escaneie aqui</span>
-            </div>
-            <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
-        </article>
-        {% endfor %}
-    </section>
-
-    <section class="layout-grid operation-grid-wide align-start">
-        <div id="dev-boundary-board">
-        {% include "includes/ui/info_list_card.html" with eyebrow="Limites do papel DEV" title="Fronteira técnica com governança" items=dev_boundaries %}
-        </div>
-        <div id="dev-read-board">
-        {% include "includes/ui/info_list_card.html" with card_class="operation-empty-card" eyebrow="Leituras úteis" title="Trilha curta para investigação" items=dev_reads %}
-        </div>
-    </section>
-
-    <section class="table-card operation-table-card" id="dev-audit-board">
+    <section class="table-card operation-table-card" id="dev-audit-board" aria-label="Eventos de auditoria">
         <div class="operation-card-head">
             <div>
                 <p class="eyebrow">Eventos recentes de auditoria</p>
-                <h2 class="operation-card-title">Últimos rastros sensíveis do sistema</h2>
-                <p class="operation-card-copy">Uma leitura rápida para localizar ator, papel e alvo antes de aprofundar a investigação.</p>
+                <h2 class="operation-card-title">Últimos rastros sensíveis</h2>
+                <p class="operation-card-copy">Ator, papel e alvo antes de aprofundar.</p>
             </div>
-            <span class="pill info">{{ recent_audit_events|length }} evento(s)</span>
+            <span class="pill info">{{ page.data.recent_audit_events|length }} evento(s)</span>
         </div>
         <div class="operation-table-wrap">
             <table>
                 <thead>
                     <tr>
-                        <th>Quando</th>
-                        <th>Ator</th>
-                        <th>Papel</th>
-                        <th>Ação</th>
-                        <th>Alvo</th>
+                        <th scope="col">Quando</th>
+                        <th scope="col">Ator</th>
+                        <th scope="col">Papel</th>
+                        <th scope="col">Ação</th>
+                        <th scope="col">Alvo</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for event in recent_audit_events %}
+                    {% for event in page.data.recent_audit_events %}
                     <tr>
                         <td>{{ event.created_at|date:"d/m/Y H:i" }}</td>
                         <td>{{ event.actor.username|default:"Sistema" }}</td>
@@ -132,4 +76,5 @@ PONTOS CRITICOS:
         </div>
     </section>
 </div>
+{% endwith %}
 {% endblock %}

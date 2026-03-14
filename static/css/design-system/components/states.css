@@ -1,0 +1,182 @@
+/*
+ARQUIVO: estados vazios, notices e mensagens.
+
+POR QUE ELE EXISTE:
+- isola feedbacks visuais do sistema para que mudancas em alertas nao afetem cards e tabelas.
+*/
+
+.state-empty,
+.state-notice {
+    display: grid;
+    gap: 12px;
+    padding: 16px 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 252, 0.94));
+}
+
+.state-empty.is-compact,
+.state-notice.is-compact {
+    padding: 14px 16px;
+    border-radius: 16px;
+    gap: 10px;
+}
+
+.state-empty-head,
+.state-notice-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.state-empty-title,
+.state-notice-title {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.35;
+}
+
+.state-empty-copy,
+.state-notice-copy,
+.state-empty-hint,
+.state-notice-hint {
+    margin: 6px 0 0;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.state-empty-hint,
+.state-notice-hint {
+    margin-top: 0;
+    font-size: 0.95rem;
+}
+
+.state-empty {
+    border-color: rgba(148, 163, 184, 0.22);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(241, 245, 249, 0.96));
+}
+
+.state-notice {
+    position: relative;
+    overflow: hidden;
+}
+
+.state-notice::before,
+.message::before {
+    content: "";
+    position: absolute;
+    inset: 12px auto 12px 10px;
+    width: 4px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.4);
+}
+
+.state-notice-info {
+    border-color: rgba(59, 130, 246, 0.2);
+    background: linear-gradient(145deg, rgba(239, 246, 255, 0.9), rgba(255, 255, 255, 0.96));
+}
+
+.state-notice-info::before {
+    background: linear-gradient(180deg, #3b82f6, #06b6d4);
+}
+
+.state-notice-warning {
+    border-color: rgba(245, 158, 11, 0.24);
+    background: linear-gradient(145deg, rgba(255, 251, 235, 0.96), rgba(255, 255, 255, 0.96));
+}
+
+.state-notice-warning::before {
+    background: linear-gradient(180deg, #f59e0b, #fb923c);
+}
+
+.state-notice-success {
+    border-color: rgba(16, 185, 129, 0.22);
+    background: linear-gradient(145deg, rgba(236, 253, 245, 0.94), rgba(255, 255, 255, 0.96));
+}
+
+.state-notice-success::before {
+    background: linear-gradient(180deg, #10b981, #34d399);
+}
+
+.state-notice-danger {
+    border-color: rgba(239, 68, 68, 0.22);
+    background: linear-gradient(145deg, rgba(254, 242, 242, 0.96), rgba(255, 255, 255, 0.96));
+}
+
+.state-notice-danger::before {
+    background: linear-gradient(180deg, #ef4444, #f97316);
+}
+
+.message-stack {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 2px;
+}
+
+.message {
+    position: relative;
+    padding: 15px 18px 15px 22px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 252, 0.94));
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.05);
+}
+
+.message-notice {
+    padding-left: 6px;
+}
+
+.message .state-notice {
+    padding-left: 10px;
+    border: 0;
+    background: transparent;
+}
+
+.message .state-notice::before {
+    display: none;
+}
+
+.message.success {
+    border-color: rgba(16, 185, 129, 0.22);
+    background: linear-gradient(145deg, rgba(236, 253, 245, 0.94), rgba(255, 255, 255, 0.96));
+}
+
+.message.success::before {
+    background: linear-gradient(180deg, #10b981, #34d399);
+}
+
+.message.error {
+    border-color: rgba(239, 68, 68, 0.22);
+    background: linear-gradient(145deg, rgba(254, 242, 242, 0.96), rgba(255, 255, 255, 0.96));
+}
+
+.message.error::before {
+    background: linear-gradient(180deg, #ef4444, #f97316);
+}
+
+.message.warning {
+    border-color: rgba(245, 158, 11, 0.24);
+    background: linear-gradient(145deg, rgba(255, 251, 235, 0.96), rgba(255, 255, 255, 0.96));
+}
+
+.message.warning::before {
+    background: linear-gradient(180deg, #f59e0b, #fb923c);
+}
+
+.message.info {
+    border-color: rgba(59, 130, 246, 0.22);
+    background: linear-gradient(145deg, rgba(239, 246, 255, 0.96), rgba(255, 255, 255, 0.96));
+}
+
+.message.info::before {
+    background: linear-gradient(180deg, #3b82f6, #06b6d4);
+}
+
+@media (max-width: 720px) {
+    .state-empty-head,
+    .state-notice-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

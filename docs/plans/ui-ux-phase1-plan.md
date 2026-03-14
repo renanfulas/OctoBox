@@ -285,7 +285,7 @@ Arquivos centrais:
 1. templates/catalog/students.html
 2. boxcore/catalog/views/student_views.py
 3. boxcore/catalog/student_queries.py
-4. static/css/catalog-system.css
+4. static/css/catalog/shared.css e os modulos por pagina em static/css/catalog/
 
 Objetivo:
 
@@ -306,7 +306,7 @@ Arquivos centrais:
 1. templates/catalog/student-form.html
 2. boxcore/catalog/forms.py
 3. boxcore/catalog/views/student_views.py
-4. static/css/catalog-system.css
+4. static/css/catalog/shared.css e os modulos por pagina em static/css/catalog/
 
 Objetivo:
 

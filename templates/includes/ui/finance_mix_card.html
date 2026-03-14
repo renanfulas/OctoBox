@@ -1,0 +1,16 @@
+<!--
+ARQUIVO: card reutilizavel de item do mix financeiro.
+
+POR QUE ELE EXISTE:
+- centraliza a leitura de participacao e receita no mix comercial.
+-->
+<article class="finance-mix-card">
+    <div class="row-between-sm finance-mix-head">
+        <strong>{{ item.name }}</strong>
+        <span class="text-muted">{{ item.active_enrollments }} ativos</span>
+    </div>
+    <div class="mix-bar-track">
+        <div class="mix-bar-fill" style="--bar-width: {{ item.width }}%;"></div>
+    </div>
+    <p class="meta-text-sm finance-inline-currency">Receita recebida no mes: R$ {{ item.revenue_this_month|floatformat:2 }}</p>
+</article>

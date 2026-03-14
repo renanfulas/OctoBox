@@ -14,167 +14,133 @@ PONTOS CRITICOS:
 - Se nomes de chaves do contexto mudarem, a tela quebra visualmente.
 -->
 {% extends "layouts/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
+<link rel="stylesheet" href="{% static 'css/design-system/dashboard.css' %}?v={{ static_asset_version }}">
+{% endblock %}
 
 {% block content %}
-<div class="dashboard-shell">
-    <section class="hero operation-hero dashboard-hero">
+{% with page=dashboard_page %}
+<div class="dashboard-shell" data-page="dashboard" data-screen="dashboard" data-slot="page-root">
+    <section class="hero operation-hero dashboard-hero" aria-label="Panorama do dia" data-slot="hero" data-panel="dashboard-hero">
         <div class="operation-hero-main">
             <div>
                 <p class="eyebrow">Leitura central do dia</p>
-                <h1>Veja primeiro o que pede ação agora.</h1>
+                <h2>O que pede ação agora.</h2>
                 <p class="operation-hero-copy">
-                    {{ dashboard_hero_copy }}
+                    {{ page.data.dashboard_hero_copy }}
                 </p>
             </div>
-            <div class="operation-hero-tags">
-                <span class="pill">{{ current_role.label }}</span>
-                <span class="pill info">Painel de decisão</span>
-                <span class="pill accent">Próxima ação acima de tudo</span>
-            </div>
-            <div class="actions">
-                {% for action in dashboard_hero_actions %}
-                <a class="button{% if action.kind == 'secondary' %} secondary{% endif %}" href="{{ action.href }}">{{ action.label }}</a>
+            <div class="actions" data-slot="dashboard-hero-actions">
+                {% for action in page.data.dashboard_hero_actions %}
+                <a class="button{% if action.kind == 'secondary' %} secondary{% endif %}" href="{{ action.href }}" data-action="open-dashboard-hero-action">{{ action.label }}</a>
                 {% endfor %}
             </div>
         </div>
-        <aside class="operation-hero-side">
-            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Leitura instantânea" copy="Quatro números para entender se a base, a agenda e a cobrança estão respirando bem hoje." stats=hero_stats %}
+        <aside class="operation-hero-side" data-panel="dashboard-hero-summary">
+            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Leitura instantânea" copy="Quatro números sobre base, agenda e cobrança." stats=page.data.hero_stats %}
         </aside>
     </section>
 
-    <section class="layout-grid dashboard-role-grid align-start">
-        <article class="table-card dashboard-table-card dashboard-focus-card">
+    <section class="layout-grid dashboard-role-grid align-start" aria-label="Papel e escopo do usuario" data-slot="context">
+        <article class="table-card dashboard-table-card dashboard-focus-card" data-panel="dashboard-focus">
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Comece por aqui</p>
                     <h2 class="operation-card-title">Três leituras para não se perder</h2>
-                    <p class="operation-card-copy">Este bloco filtra o dia em prioridades simples, para você não gastar energia interpretando o painel inteiro antes de agir.</p>
+                    <p class="operation-card-copy">Filtre o dia em prioridades simples antes de agir.</p>
                 </div>
                 <span class="pill accent">Foco operacional</span>
             </div>
             <div class="dashboard-focus-list">
-                {% for item in operational_focus %}
-                <article class="dashboard-focus-item">
+                {% for item in page.data.dashboard_execution_focus %}
+                <article class="dashboard-focus-item" data-panel="dashboard-focus-item">
                     <div class="dashboard-focus-copy">
                         <p class="eyebrow">{{ item.label }}</p>
                         <p>{{ item.summary }}</p>
                     </div>
                     <div class="dashboard-focus-actions">
                         <span class="pill {{ item.pill_class }}">prioridade</span>
-                        <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
+                        <a class="button secondary" href="{{ item.href }}" data-action="open-dashboard-focus-action">{{ item.href_label }}</a>
                     </div>
                 </article>
                 {% endfor %}
             </div>
         </article>
 
-        {% include "includes/ui/info_list_card.html" with eyebrow="Escopo do seu papel hoje" title="Como este usuário deveria operar" copy="A camada de acessos já está preparada para começar a separar dono, gerente e coach." pill_label=current_role.label pill_class="info" items=role_capabilities empty_text="Defina um grupo de acesso para este usuário." %}
+        <aside class="dashboard-quick-actions-side" data-panel="dashboard-quick-actions">
+            {% for action in page.data.dashboard_quick_actions %}
+            {% include "includes/ui/quick_action_card.html" with action=action %}
+            {% endfor %}
+        </aside>
+    </section>
 
-        <article class="table-card dashboard-table-card">
+    <section class="panel-grid" aria-label="Metricas gerais" data-slot="metrics" data-panel="dashboard-metrics">
+        {% for card in page.data.metric_cards %}
+        {% include "includes/ui/metric_card.html" with card=card %}
+        {% endfor %}
+    </section>
+
+    <section class="layout-grid dashboard-panel-grid align-start" aria-label="Paineis de acompanhamento" data-slot="workspace">
+        <article class="table-card dashboard-table-card" id="dashboard-finance-board" data-panel="dashboard-finance-board">
             <div class="operation-card-head">
                 <div>
-                    <p class="eyebrow">Mapa de papéis</p>
-                    <h2 class="operation-card-title">Quem deve olhar o quê</h2>
+                    <p class="eyebrow">{% if page.data.dashboard_role_mode == 'reception' %}Caixa rapido do turno{% else %}Alertas financeiros{% endif %}</p>
+                    <h2 class="operation-card-title">{% if page.data.dashboard_role_mode == 'reception' %}Caixa rápido do turno{% else %}Quem já pede contato{% endif %}</h2>
+                    <p class="operation-card-copy">{% if page.data.dashboard_role_mode == 'reception' %}Cobrança curta sem tirar a recepção do compasso.{% else %}Ataque atrasos antes que virem evasão.{% endif %}</p>
                 </div>
-                <span class="pill accent">{{ role_definitions|length }} papéis</span>
+                <span class="pill warning">{{ page.data.payment_alerts|length }} alerta(s)</span>
             </div>
             <div class="operation-table-wrap">
-                <table class="dashboard-role-table">
+                <table>
                     <thead>
                         <tr>
-                            <th>Papel</th>
-                            <th>Foco</th>
+                            <th scope="col">Aluno</th>
+                            <th scope="col">Vencimento</th>
+                            <th scope="col">Valor</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for role in role_definitions %}
+                        {% for payment in page.data.payment_alerts %}
                         <tr>
-                            <td>{{ role.label }}</td>
-                            <td>{{ role.summary }}</td>
+                            <td>{{ payment.student.full_name }}</td>
+                            <td>{{ payment.due_date|date:"d/m/Y" }}</td>
+                            <td><span class="pill warning">R$ {{ payment.amount|floatformat:2 }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Alertas financeiros" title="Nenhum pagamento atrasado" copy="A fila critica de cobranca esta limpa neste momento." badge="Respirando" badge_class="accent" %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </article>
-    </section>
 
-    <section class="panel-grid">
-        {% for card in metric_cards %}
-        {% include "includes/ui/metric_card.html" with card=card %}
-        {% endfor %}
-    </section>
-
-    <section class="quick-grid dashboard-quick-grid">
-        {% for action in dashboard_quick_actions %}
-        {% include "includes/ui/quick_action_card.html" with action=action %}
-        {% endfor %}
-    </section>
-
-    <section class="table-card dashboard-table-card dashboard-focus-card">
-        <div class="operation-card-head">
-            <div>
-                <p class="eyebrow">Agora destrave a metade mais densa</p>
-                <h2 class="operation-card-title">Tres leituras para baixo da dobra sem perder contexto</h2>
-                <p class="operation-card-copy">Depois do panorama principal, use esta ordem para atacar cobranca, agenda e risco sem transformar a parte baixa do dashboard em bloco pesado.</p>
-            </div>
-            <span class="pill accent">Execucao guiada</span>
-        </div>
-        <div class="dashboard-focus-list">
-            {% for item in dashboard_execution_focus %}
-            <article class="dashboard-focus-item">
-                <div class="dashboard-focus-copy">
-                    <p class="eyebrow">{{ item.label }}</p>
-                    <p>{{ item.summary }}</p>
-                </div>
-                <div class="dashboard-focus-actions">
-                    <span class="pill {{ item.pill_class }}">foco</span>
-                    <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="operation-table-guide-grid">
-        {% for item in dashboard_table_guides %}
-        <article class="table-card operation-table-guide-card">
-            <div class="operation-table-guide-head">
-                <div>
-                    <p class="eyebrow">{{ item.label }}</p>
-                    <h2 class="operation-card-title">{{ item.value }}</h2>
-                    <p class="operation-card-copy">{{ item.summary }}</p>
-                </div>
-                <span class="pill {{ item.pill_class }}">escaneie aqui</span>
-            </div>
-            <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
-        </article>
-        {% endfor %}
-    </section>
-
-    <section class="layout-grid dashboard-panel-grid align-start">
-        <article class="table-card dashboard-table-card" id="dashboard-sessions-board">
+        <article class="table-card dashboard-table-card" id="dashboard-sessions-board" data-panel="dashboard-sessions-board">
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Próximas aulas</p>
-                    <h2 class="operation-card-title">O que vai movimentar a recepção e o coach</h2>
-                    <p class="operation-card-copy">Visão rápida das próximas turmas para alinhar coach, recepção e ocupação.</p>
+                    <h2 class="operation-card-title">Próximas aulas</h2>
+                    <p class="operation-card-copy">Aulas futuras para alinhar coach, recepção e ocupação.</p>
                 </div>
-                <span class="pill info">{{ upcoming_sessions|length }} aula(s)</span>
+                <span class="pill info">{{ page.data.upcoming_sessions|length }} aula(s)</span>
             </div>
             <div class="operation-table-wrap">
                 <table>
                     <thead>
                         <tr>
-                            <th>Aula</th>
-                            <th>Coach</th>
-                            <th>Horário</th>
-                            <th>Status</th>
-                            <th>Alunos</th>
+                            <th scope="col">Aula</th>
+                            <th scope="col">Coach</th>
+                            <th scope="col">Horário</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Alunos</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for session in upcoming_sessions %}
+                        {% for session in page.data.upcoming_sessions %}
                         <tr>
                             <td>{{ session.object.title }}</td>
                             <td>{{ session.coach_name }}</td>
@@ -192,63 +158,28 @@ PONTOS CRITICOS:
             </div>
         </article>
 
-        <article class="table-card dashboard-table-card" id="dashboard-finance-board">
+        <article class="table-card dashboard-table-card operation-span-full" id="dashboard-risk-board" data-panel="dashboard-risk-board">
             <div class="operation-card-head">
                 <div>
-                    <p class="eyebrow">{% if dashboard_role_mode == 'reception' %}Caixa rapido do turno{% else %}Alertas financeiros{% endif %}</p>
-                    <h2 class="operation-card-title">{% if dashboard_role_mode == 'reception' %}Quem pode ser resolvido no balcao hoje{% else %}Quem já pede contato hoje{% endif %}</h2>
-                    <p class="operation-card-copy">{% if dashboard_role_mode == 'reception' %}Leia aqui quem ja pede cobranca curta, confirmacao de pagamento ou ajuste simples sem tirar a Recepcao do compasso do atendimento.{% else %}Use esta fila para atacar atraso antes que ele vire evasão ou ruído de caixa.{% endif %}</p>
+                    <p class="eyebrow">{% if page.data.dashboard_role_mode == 'reception' %}Alunos que pedem cuidado{% else %}Risco operacional por aluno{% endif %}</p>
+                    <h2 class="operation-card-title">{% if page.data.dashboard_role_mode == 'reception' %}Quem merece atenção{% else %}Quem pode esfriar{% endif %}</h2>
+                    <p class="operation-card-copy">{% if page.data.dashboard_role_mode == 'reception' %}Sinais de esfriamento para acolher melhor.{% else %}Leitura de presença e ausência para separar base estável de risco.{% endif %}</p>
                 </div>
-                <span class="pill warning">{{ payment_alerts|length }} alerta(s)</span>
+                <span class="pill accent">{{ page.data.student_health|length }} aluno(s)</span>
             </div>
             <div class="operation-table-wrap">
                 <table>
                     <thead>
                         <tr>
-                            <th>Aluno</th>
-                            <th>Vencimento</th>
-                            <th>Valor</th>
+                            <th scope="col">Aluno</th>
+                            <th scope="col">Presenças</th>
+                            <th scope="col">Faltas</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Risco</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for payment in payment_alerts %}
-                        <tr>
-                            <td>{{ payment.student.full_name }}</td>
-                            <td>{{ payment.due_date|date:"d/m/Y" }}</td>
-                            <td><span class="pill warning">R$ {{ payment.amount }}</span></td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Alertas financeiros" title="Nenhum pagamento atrasado" copy="A fila critica de cobranca esta limpa neste momento." badge="Respirando" badge_class="accent" %}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </article>
-
-        <article class="table-card dashboard-table-card operation-span-full" id="dashboard-risk-board">
-            <div class="operation-card-head">
-                <div>
-                    <p class="eyebrow">{% if dashboard_role_mode == 'reception' %}Alunos que pedem cuidado{% else %}Risco operacional por aluno{% endif %}</p>
-                    <h2 class="operation-card-title">{% if dashboard_role_mode == 'reception' %}Quem merece atencao antes de esfriar{% else %}Quem pode esfriar se ninguém agir{% endif %}</h2>
-                    <p class="operation-card-copy">{% if dashboard_role_mode == 'reception' %}Aqui a Recepcao le sinais simples de esfriamento para acolher melhor, observar mudanca de ritmo e encaminhar cedo quando o vinculo começar a perder temperatura.{% else %}Leitura simples de presença e ausência para separar base estável de base que já pede intervenção.{% endif %}</p>
-                </div>
-                <span class="pill accent">{{ student_health|length }} aluno(s)</span>
-            </div>
-            <div class="operation-table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Aluno</th>
-                            <th>Presenças</th>
-                            <th>Faltas</th>
-                            <th>Status</th>
-                            <th>Risco</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for student in student_health %}
+                        {% for student in page.data.student_health %}
                         <tr>
                             <td>{{ student.full_name }}</td>
                             <td>{{ student.total_attendances }}</td>
@@ -275,4 +206,5 @@ PONTOS CRITICOS:
         </article>
     </section>
 </div>
+{% endwith %}
 {% endblock %}

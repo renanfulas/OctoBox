@@ -1,0 +1,18 @@
+<!--
+ARQUIVO: bloco de recuperacao/intermediacao do formulario.
+-->
+{% if student_form_recovery_guide %}
+<div class="note-panel note-panel-danger">
+    <p class="eyebrow">Intermediador do formulario</p>
+    <p class="no-margin"><strong>{{ student_form_recovery_guide.title }}</strong></p>
+    <p class="meta-text">{{ student_form_recovery_guide.copy }}</p>
+    <div class="stack-14 section-gap-top-xs">
+        {% for item in student_form_recovery_guide.items %}
+        <div>
+            <p class="no-margin"><strong><a href="{{ item.href }}">{{ item.label }}</a></strong></p>
+            <p class="meta-text">{{ item.summary }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}

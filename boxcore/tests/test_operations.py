@@ -122,6 +122,9 @@ class OperationWorkspaceTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Centro da recepcao')
+        self.assertContains(response, 'href="#reception-intake-board"')
+        self.assertContains(response, 'href="#reception-payment-board"')
+        self.assertContains(response, 'href="#reception-class-grid-board"')
 
     def test_manager_cannot_access_official_reception_workspace(self):
         self.client.force_login(self.manager)
@@ -148,6 +151,7 @@ class OperationWorkspaceTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['Location'].endswith('#reception-payment-board'))
         self.payment.refresh_from_db()
         self.assertEqual(self.payment.status, PaymentStatus.PAID)
         self.assertEqual(self.payment.method, PaymentMethod.PIX)
@@ -190,9 +194,35 @@ class OperationWorkspaceTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['Location'].endswith('#reception-payment-board'))
         self.payment.refresh_from_db()
         self.assertEqual(self.payment.status, PaymentStatus.PAID)
         self.assertEqual(self.payment.method, PaymentMethod.CASH)
+
+    def test_reception_can_update_payment_with_localized_amount_from_official_workspace(self):
+        self.client.force_login(self.reception)
+
+        response = self.client.post(
+            reverse('reception-payment-action', args=[self.payment.id]),
+            data={
+                'payment_id': self.payment.id,
+                'amount': '299,90',
+                'due_date': str(self.payment.due_date),
+                'method': PaymentMethod.PIX,
+                'reference': 'BALCAO-AJUSTE',
+                'notes': 'Ajuste curto salvo pela recepcao.',
+                'action': 'update-payment',
+            },
+            HTTP_REFERER=reverse('reception-workspace'),
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['Location'].endswith('#reception-payment-board'))
+        self.payment.refresh_from_db()
+        self.assertEqual(str(self.payment.amount), '299.90')
+        self.assertEqual(self.payment.method, PaymentMethod.PIX)
+        self.assertEqual(self.payment.reference, 'BALCAO-AJUSTE')
+        self.assertEqual(self.payment.notes, 'Ajuste curto salvo pela recepcao.')
 
     def test_reception_can_access_students_and_class_grid_but_not_finance_center(self):
         self.client.force_login(self.reception)

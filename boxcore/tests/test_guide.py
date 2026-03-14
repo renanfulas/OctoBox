@@ -37,3 +37,6 @@ class GuideViewTests(TestCase):
         self.assertContains(response, 'Sidebar ou atalhos errados para o papel')
         self.assertContains(response, 'Auditoria')
         self.assertContains(response, 'DEV')
+        self.assertContains(response, 'href="#system-flow-board"')
+        self.assertContains(response, 'href="#system-reading-board"')
+        self.assertContains(response, 'href="#system-bug-board"')

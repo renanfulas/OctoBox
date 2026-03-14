@@ -17,6 +17,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from django.views.generic import TemplateView
 
+from access.shell_actions import attach_shell_action_buttons
 from .roles import ROLE_DEFINITIONS, get_user_capabilities, get_user_role
 
 
@@ -76,4 +77,5 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
             'DEV investiga e mantem sem virar operador do box.',
             'Owner enxerga amplitude sem dissolver fronteiras entre papeis.',
         ]
+        attach_shell_action_buttons(context, focus=context['access_operational_focus'], scope='access')
         return context

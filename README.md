@@ -115,6 +115,12 @@ Se quiser entender como a arquitetura trata suportes temporarios de construcao s
 
 Se quiser entender a grande fachada frontal do produto, onde a experiencia visivel precisa continuar limpa mesmo com obra lateral e transicao arquitetural, use [docs/experience/front-display-wall.md](docs/experience/front-display-wall.md).
 
+Se quiser o plano oficial para reorganizar o front-end de forma alinhada com a Front Display Wall, com contratos claros de tela e encaixe futuro no movimento de desacoplamento do Django, use [docs/plans/front-end-restructuring-guide.md](docs/plans/front-end-restructuring-guide.md).
+
+Se quiser o blueprint especifico do catalogo para padronizar `page payload` e `presenter` em alunos, ficha, financeiro, plano e grade, use [docs/plans/catalog-page-payload-presenter-blueprint.md](docs/plans/catalog-page-payload-presenter-blueprint.md).
+
+Se quiser o passo a passo oficial para pensar, montar e validar layouts do site mantendo prioridade, pendencia e proxima acao como criterio estrutural, use [docs/experience/layout-decision-guide.md](docs/experience/layout-decision-guide.md).
+
 Se quiser entender o plano do novo modulo de Recepcao, sua fronteira funcional, custo atual versus custo futuro e por que essa area foi reinterpretada como triunfo visivel da obra, use [docs/plans/reception-module-plan.md](docs/plans/reception-module-plan.md).
 
 Se quiser entender a direcao oficial do segundo andar do produto para o aplicativo do celular, sua regra de limpeza visual, sua navegacao essencial e a tese de como o Octobox deve se tornar favorito na mao das pessoas, use [docs/experience/octobox-mobile-guide.md](docs/experience/octobox-mobile-guide.md).

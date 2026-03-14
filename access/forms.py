@@ -23,8 +23,10 @@ class AccessAuthenticationForm(AuthenticationForm):
             'maxlength': '150',
             'autocomplete': 'username',
             'spellcheck': 'false',
+            'aria-describedby': 'login-username-note',
         })
         self.fields['password'].widget.attrs.update({
             'placeholder': 'Sua senha',
             'autocomplete': 'current-password',
+            'aria-describedby': 'login-password-note',
         })

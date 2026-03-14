@@ -54,12 +54,13 @@ def apply_cpf_input_attrs(field, *, placeholder=None):
         inputmode='numeric',
         autocomplete='off',
         maxlength=14,
-        pattern='\d{3}\.\d{3}\.\d{3}-\d{2}',
+        pattern=r'\d{3}\.\d{3}\.\d{3}-\d{2}',
         **{'data-mask': 'cpf'},
     )
 
 
 def apply_currency_input_attrs(field, *, placeholder=None):
+    field.widget.input_type = 'text'
     apply_widget_attrs(
         field,
         placeholder=placeholder,
@@ -67,11 +68,14 @@ def apply_currency_input_attrs(field, *, placeholder=None):
         autocomplete='off',
         min='0',
         step='0.01',
-        **{'data-mask': 'currency'},
+        maxlength=7,
+        pattern=r'\d{1,4}([\.,]\d{0,2})?',
+        **{'data-mask': 'currency', 'data-currency-max-integer-digits': '4', 'data-decimal-places': '2'},
     )
 
 
 def apply_integer_input_attrs(field, *, placeholder=None, min_value=None, max_value=None, maxlength=None):
+    field.widget.input_type = 'text'
     apply_widget_attrs(
         field,
         placeholder=placeholder,
@@ -80,10 +84,18 @@ def apply_integer_input_attrs(field, *, placeholder=None, min_value=None, max_va
         max=max_value,
         step='1',
         maxlength=maxlength,
+        pattern=rf'\d{{1,{maxlength}}}' if maxlength else None,
+        **{'data-mask': 'integer', 'data-max-digits': maxlength},
     )
 
 
 def apply_date_input_attrs(field, *, placeholder=None, maxlength=None, pattern=None):
+    year_digits = '4'
+    if maxlength == 8:
+        year_digits = '2'
+    elif maxlength == 10:
+        year_digits = '4'
+
     apply_widget_attrs(
         field,
         placeholder=placeholder,
@@ -91,7 +103,7 @@ def apply_date_input_attrs(field, *, placeholder=None, maxlength=None, pattern=N
         autocomplete='off',
         maxlength=maxlength,
         pattern=pattern,
-        **{'data-mask': 'date'},
+        **{'data-mask': 'date', 'data-year-digits': year_digits},
     )
 
 
@@ -103,7 +115,7 @@ def apply_time_input_attrs(field, *, placeholder='07:00'):
         inputmode='numeric',
         autocomplete='off',
         maxlength=5,
-        pattern='([01]\d|2[0-3]):[0-5]\d',
+        pattern=r'([01]\d|2[0-3]):[0-5]\d',
         **{'data-mask': 'time'},
     )
 

@@ -1,0 +1,41 @@
+<!--
+ARQUIVO: blocos de tendencia e churn do financeiro.
+-->
+<article class="table-card finance-glass-panel finance-board-trend" id="finance-trend-board">
+    {% include "includes/ui/operation_card_head.html" with eyebrow="Tendencia mensal" title="Receita real recebida nos ultimos 6 meses" title_class="section-title-sm" copy="Mostra se o caixa realmente subiu." copy_class="body-copy text-muted section-gap-top-xs no-margin" %}
+    <div class="chart-grid revenue-chart" style="--chart-columns: {{ page.data.monthly_comparison|length|default:1 }};">
+        {% for item in page.data.monthly_comparison %}
+        <div class="chart-column finance-chart-column">
+            <div class="chart-bar-wrap">
+                <div class="chart-bar revenue" style="--bar-height: {% widthratio item.revenue page.data.comparison_peaks.max_revenue 100 %}%;"></div>
+            </div>
+            <strong>{{ item.label }}</strong>
+            <span class="finance-inline-currency finance-chart-value">R$ {{ item.revenue|floatformat:2 }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</article>
+
+<article class="table-card finance-glass-panel finance-board-trend-side">
+    {% include "includes/ui/operation_card_head.html" with eyebrow="Churn e crescimento" title="Ativacoes x cancelamentos" title_class="section-title-sm" copy="Mede acumulo real versus giro de base." copy_class="body-copy text-muted section-gap-top-xs no-margin" %}
+    <div class="stack-14 finance-trend-stack">
+        {% for item in page.data.monthly_comparison %}
+        <div class="delta-row">
+            <div class="row-between-sm">
+                <strong>{{ item.label }}</strong>
+                <span class="pill{% if item.net_growth < 0 %} warning{% endif %}">Saldo {{ item.net_growth }}</span>
+            </div>
+            <div class="delta-track-group">
+                <div>
+                    <div class="delta-label">Ativos</div>
+                    <div class="mix-bar-track"><div class="mix-bar-fill growth" style="--bar-width: {% widthratio item.activations page.data.comparison_peaks.max_count 100 %}%;"></div></div>
+                </div>
+                <div>
+                    <div class="delta-label">Cancelados</div>
+                    <div class="mix-bar-track"><div class="mix-bar-fill churn" style="--bar-width: {% widthratio item.cancellations page.data.comparison_peaks.max_count 100 %}%;"></div></div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</article>

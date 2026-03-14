@@ -63,6 +63,10 @@ Se o foco for entender o que e temporario na obra arquitetural e como retirar os
 
 Se o foco for entender a grande fachada frontal do produto, onde a experiencia visivel precisa permanecer limpa mesmo com obra lateral, leia tambem [../experience/front-display-wall.md](../experience/front-display-wall.md).
 
+Se o foco for reorganizar o front-end agora, com convergencia entre fachada visual, contratos de tela e o plano de longo prazo de desacoplamento do backend, leia tambem [../plans/front-end-restructuring-guide.md](../plans/front-end-restructuring-guide.md).
+
+Se o foco for padronizar especificamente a lingua estrutural do catalogo, com presenters e page payload para alunos, financeiro e grade, leia tambem [../plans/catalog-page-payload-presenter-blueprint.md](../plans/catalog-page-payload-presenter-blueprint.md).
+
 Se o foco for entender a camada superior de emissao visivel, alerta e projeção externa confiavel do sistema, leia tambem [../architecture/red-beacon.md](../architecture/red-beacon.md).
 
 Se o foco for entender a escalada maxima de visibilidade e o sistema sonoro de mobilizacao defensiva do predio, leia tambem [../architecture/vertical-sky-beam.md](../architecture/vertical-sky-beam.md) e [../architecture/alert-siren.md](../architecture/alert-siren.md).

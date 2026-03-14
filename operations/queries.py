@@ -72,6 +72,7 @@ def build_owner_workspace_snapshot(*, today):
             {
                 'label': 'Comece pelo funil que ainda pede dono',
                 'summary': f"{headline_metrics['pending_intakes']} entrada(s) seguem abertas e mostram se o crescimento está virando operação ou só acúmulo.",
+                'count': headline_metrics['pending_intakes'],
                 'pill_class': 'warning' if headline_metrics['pending_intakes'] > 0 else 'success',
                 'href': '#owner-growth-board',
                 'href_label': 'Ver crescimento',
@@ -79,6 +80,7 @@ def build_owner_workspace_snapshot(*, today):
             {
                 'label': 'Depois confira o risco de caixa',
                 'summary': f"{headline_metrics['overdue_payments']} cobrança(s) em atraso já ajudam a separar expansão saudável de pressão financeira escondida.",
+                'count': headline_metrics['overdue_payments'],
                 'pill_class': 'warning' if headline_metrics['overdue_payments'] > 0 else 'info',
                 'href': '#owner-risk-board',
                 'href_label': 'Ver risco financeiro',
@@ -86,6 +88,7 @@ def build_owner_workspace_snapshot(*, today):
             {
                 'label': 'Feche com maturidade estrutural',
                 'summary': f"{headline_metrics['whatsapp_contacts']} contato(s) no canal e {headline_metrics['messages_logged']} log(s) mostram se a operação já conversa com escala, vínculo e histórico.",
+                'count': headline_metrics['whatsapp_contacts'],
                 'pill_class': 'accent',
                 'href': '#owner-structure-board',
                 'href_label': 'Ver estrutura pronta',
@@ -249,6 +252,7 @@ def build_manager_workspace_snapshot():
             {
                 'label': 'Comece pela entrada que pode esfriar',
                 'summary': f'{len(pending_intakes)} entrada(s) já chegaram e pedem triagem antes de virarem fila morta.',
+                'count': len(pending_intakes),
                 'pill_class': 'warning' if len(pending_intakes) > 0 else 'success',
                 'href': '#manager-intake-board',
                 'href_label': 'Ver entradas',
@@ -256,6 +260,7 @@ def build_manager_workspace_snapshot():
             {
                 'label': 'Depois limpe vínculos quebrados',
                 'summary': f'{len(unlinked_whatsapp)} contato(s) sem aluno e {len(payments_without_enrollment)} cobrança(s) sem matrícula ainda escondem atrito estrutural.',
+                'count': len(unlinked_whatsapp) + len(payments_without_enrollment),
                 'pill_class': 'info' if len(unlinked_whatsapp) or len(payments_without_enrollment) else 'success',
                 'href': '#manager-link-board',
                 'href_label': 'Ver vínculos pendentes',
@@ -263,6 +268,7 @@ def build_manager_workspace_snapshot():
             {
                 'label': 'Feche com cobrança em risco',
                 'summary': f'{len(financial_alerts)} alerta(s) já mostram onde retenção e caixa podem pressionar se ninguém agir agora.',
+                'count': len(financial_alerts),
                 'pill_class': 'warning' if len(financial_alerts) > 0 else 'accent',
                 'href': '#manager-finance-board',
                 'href_label': 'Ver alertas financeiros',
@@ -376,6 +382,7 @@ def build_coach_workspace_snapshot(*, today):
             {
                 'label': 'Comece pela agenda de hoje',
                 'summary': f'{len(sessions)} aula(s) definem o turno e mostram se o coach entra em dia cheio ou leitura leve.',
+                'count': len(sessions),
                 'pill_class': 'info' if len(sessions) > 0 else 'success',
                 'href': '#coach-sessions-board',
                 'href_label': 'Ver aulas do dia',
@@ -383,6 +390,7 @@ def build_coach_workspace_snapshot(*, today):
             {
                 'label': 'Depois veja onde já há presença real',
                 'summary': f'{sessions_with_students} turma(s) já têm lista ativa e {total_attendances} presença(s) para registrar sem ruído administrativo.',
+                'count': sessions_with_students,
                 'pill_class': 'accent',
                 'href': '#coach-sessions-board',
                 'href_label': 'Abrir rotina de presença',
@@ -390,6 +398,7 @@ def build_coach_workspace_snapshot(*, today):
             {
                 'label': 'Feche com ocorrência técnica',
                 'summary': f'{len(BehaviorCategory.choices)} categoria(s) cobrem o registro técnico sem misturar treino com financeiro ou recepção.',
+                'count': len(BehaviorCategory.choices),
                 'pill_class': 'warning',
                 'href': '#coach-boundary-board',
                 'href_label': 'Ver limites da área',
@@ -505,6 +514,7 @@ def build_reception_workspace_snapshot(*, today):
                     if first_intake else
                     'Sem entrada pendente agora, entao o balcao pode priorizar caixa curto e orientacao de aulas.'
                 ),
+                'count': len(data['intakes']),
                 'pill_class': 'warning' if first_intake else 'success',
                 'href': '#reception-intake-board',
                 'href_label': 'Ver entradas',
@@ -516,6 +526,7 @@ def build_reception_workspace_snapshot(*, today):
                     if first_payment else
                     'Sem cobranca curta em fila agora, entao o atendimento pode seguir sem pressao financeira imediata.'
                 ),
+                'count': len(data['queue']),
                 'pill_class': 'warning' if first_payment else 'info',
                 'href': '#reception-payment-board',
                 'href_label': 'Ver cobranca curta',
@@ -527,6 +538,7 @@ def build_reception_workspace_snapshot(*, today):
                     if next_session else
                     'Sem aula futura no recorte atual, entao a leitura da grade nao e o ponto de pressao desta rodada.'
                 ),
+                'count': len(data['sessions']),
                 'pill_class': 'accent',
                 'href': '#reception-class-grid-board',
                 'href_label': 'Ver grade em leitura',
@@ -561,6 +573,7 @@ def build_reception_preview_workspace_snapshot(*, today):
                     if first_intake else
                     'Sem entrada pendente agora, entao a triagem inicial nao e o ponto de pressao desta rodada.'
                 ),
+                'count': len(data['intakes']),
                 'pill_class': 'warning' if first_intake else 'success',
                 'href': '#reception-intake-board',
                 'href_label': 'Ver entradas',
@@ -572,6 +585,7 @@ def build_reception_preview_workspace_snapshot(*, today):
                     if first_payment else
                     'Sem cobranca curta em fila agora, entao o preview financeiro pode ficar em segundo plano.'
                 ),
+                'count': len(data['queue']),
                 'pill_class': 'warning' if first_payment else 'info',
                 'href': '#reception-payment-board',
                 'href_label': 'Ver fila de cobranca',
@@ -583,6 +597,7 @@ def build_reception_preview_workspace_snapshot(*, today):
                     if next_session else
                     'Sem aula futura cadastrada no recorte atual, entao a leitura da grade fica sem pressao imediata.'
                 ),
+                'count': len(data['sessions']),
                 'pill_class': 'accent',
                 'href': '#reception-class-grid-board',
                 'href_label': 'Ver grade em leitura',

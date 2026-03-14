@@ -20,9 +20,9 @@ PONTOS CRITICOS:
 
 .catalog-hero {
     background:
-        radial-gradient(circle at top right, rgba(249, 115, 22, 0.18), transparent 34%),
-        radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.12), transparent 28%),
-        linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(249, 115, 22, 0.08), rgba(16, 185, 129, 0.08)),
+    radial-gradient(circle at top right, rgba(184, 92, 56, 0.18), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(40, 92, 142, 0.12), transparent 28%),
+    linear-gradient(145deg, rgba(255, 251, 245, 0.94), rgba(241, 236, 226, 0.94)),
         var(--surface);
 }
 
@@ -159,7 +159,7 @@ PONTOS CRITICOS:
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(120deg, rgba(255, 255, 255, 0.12), transparent 35%, transparent 65%, rgba(255, 255, 255, 0.08));
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0.18), transparent 35%, transparent 65%, rgba(255, 255, 255, 0.08));
     pointer-events: none;
 }
 
@@ -171,17 +171,17 @@ PONTOS CRITICOS:
 
 .primary-glow,
 .orange-glow {
-    background: linear-gradient(145deg, rgba(249, 115, 22, 0.12), rgba(255, 255, 255, 0.94));
+    background: linear-gradient(145deg, rgba(184, 92, 56, 0.16), rgba(255, 255, 255, 0.94));
 }
 
 .secondary-glow,
 .green-glow {
-    background: linear-gradient(145deg, rgba(16, 185, 129, 0.12), rgba(255, 255, 255, 0.94));
+    background: linear-gradient(145deg, rgba(47, 122, 100, 0.14), rgba(255, 255, 255, 0.94));
 }
 
 .blue-glow,
 .info-card {
-    background: linear-gradient(145deg, rgba(59, 130, 246, 0.12), rgba(255, 255, 255, 0.94));
+    background: linear-gradient(145deg, rgba(40, 92, 142, 0.14), rgba(255, 255, 255, 0.94));
 }
 
 .metric-pulse,
@@ -218,7 +218,7 @@ PONTOS CRITICOS:
     padding: 18px;
     border-radius: 22px;
     border: 1px solid var(--line);
-    background: linear-gradient(155deg, rgba(255, 255, 255, 0.74), rgba(248, 250, 252, 0.88));
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.78), rgba(244, 237, 226, 0.9));
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 16px;
@@ -253,14 +253,14 @@ PONTOS CRITICOS:
 }
 
 .student-priority-panel {
-    background: linear-gradient(145deg, rgba(249, 115, 22, 0.1), rgba(255, 255, 255, 0.95));
+    background: linear-gradient(145deg, rgba(184, 92, 56, 0.14), rgba(255, 255, 255, 0.95));
 }
 
 .priority-student-card {
     padding: 18px;
     border-radius: 22px;
     border: 1px solid var(--line);
-    background: linear-gradient(155deg, rgba(255, 255, 255, 0.76), rgba(248, 250, 252, 0.92));
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.82), rgba(244, 237, 226, 0.92));
     display: grid;
     gap: 12px;
 }
@@ -306,7 +306,7 @@ PONTOS CRITICOS:
     padding: 18px;
     border-radius: 22px;
     border: 1px solid var(--line);
-    background: linear-gradient(155deg, rgba(255, 255, 255, 0.72), rgba(248, 250, 252, 0.9));
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.8), rgba(244, 237, 226, 0.92));
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
@@ -345,6 +345,7 @@ PONTOS CRITICOS:
 }
 
 .mix-bar-fill {
+    width: var(--bar-width, 0%);
     height: 100%;
     border-radius: 999px;
     background: linear-gradient(90deg, var(--brand), var(--accent));
@@ -381,6 +382,7 @@ PONTOS CRITICOS:
 
 .chart-grid {
     display: grid;
+    grid-template-columns: repeat(var(--chart-columns, 1), minmax(0, 1fr));
     gap: 14px;
     align-items: end;
     min-height: 260px;
@@ -404,20 +406,21 @@ PONTOS CRITICOS:
     justify-content: center;
     padding: 0 8px;
     border-radius: 18px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(22, 33, 31, 0.04));
-    border: 1px solid rgba(22, 33, 31, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(112, 96, 81, 0.04));
+    border: 1px solid rgba(112, 96, 81, 0.08);
 }
 
 .chart-bar {
     width: 100%;
+    height: var(--bar-height, 10px);
     min-height: 10px;
     border-radius: 16px 16px 8px 8px;
     transition: height 0.25s ease, transform 0.18s ease;
 }
 
 .chart-bar.revenue {
-    background: linear-gradient(180deg, rgba(16, 185, 129, 0.92), rgba(249, 115, 22, 0.82));
-    box-shadow: 0 16px 24px rgba(16, 185, 129, 0.18);
+    background: linear-gradient(180deg, rgba(47, 122, 100, 0.92), rgba(184, 92, 56, 0.82));
+    box-shadow: 0 16px 24px rgba(47, 122, 100, 0.18);
 }
 
 .chart-column:hover .chart-bar {
@@ -429,7 +432,7 @@ PONTOS CRITICOS:
     padding: 14px 16px;
     border-radius: 18px;
     border: 1px solid var(--line);
-    background: linear-gradient(155deg, rgba(255, 255, 255, 0.68), rgba(248, 250, 252, 0.88));
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.74), rgba(244, 237, 226, 0.9));
     transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
@@ -458,34 +461,35 @@ PONTOS CRITICOS:
     border-radius: 999px;
     margin-top: 6px;
     background: var(--brand);
-    box-shadow: 0 0 0 5px rgba(249, 115, 22, 0.12);
+    box-shadow: 0 0 0 5px rgba(184, 92, 56, 0.12);
 }
 
 .note-panel {
-    padding: 14px 16px;
-    border-radius: 16px;
+    padding: 16px 18px;
+    border-radius: 18px;
     border: 1px solid var(--line);
     line-height: 1.6;
+    background: rgba(255, 255, 255, 0.68);
 }
 
 .note-panel-success {
-    background: rgba(31, 106, 93, 0.07);
-    border-color: rgba(31, 106, 93, 0.12);
+    background: rgba(47, 122, 100, 0.08);
+    border-color: rgba(47, 122, 100, 0.12);
 }
 
 .note-panel-warm {
-    background: rgba(201, 111, 36, 0.08);
-    border-color: rgba(201, 111, 36, 0.16);
+    background: rgba(184, 92, 56, 0.1);
+    border-color: rgba(184, 92, 56, 0.16);
 }
 
 .note-panel-cream {
-    background: rgba(255, 253, 248, 0.9);
-    border-color: rgba(201, 111, 36, 0.16);
+    background: rgba(255, 252, 247, 0.92);
+    border-color: rgba(184, 92, 56, 0.16);
 }
 
 .note-panel-success-soft {
-    background: rgba(255, 253, 248, 0.9);
-    border-color: rgba(31, 106, 93, 0.14);
+    background: rgba(250, 255, 252, 0.92);
+    border-color: rgba(47, 122, 100, 0.14);
 }
 
 .note-panel-danger {
@@ -496,9 +500,9 @@ PONTOS CRITICOS:
 
 .disclosure-panel {
     border: 1px solid var(--line);
-    border-radius: 18px;
-    padding: 18px;
-    background: rgba(255, 255, 255, 0.35);
+    border-radius: 20px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.48);
 }
 
 .disclosure-panel summary {
@@ -561,5 +565,17 @@ PONTOS CRITICOS:
 
     .student-priority-badges {
         justify-items: start;
+    }
+}
+
+@media (max-width: 720px) {
+    .row-between,
+    .row-between-sm,
+    .row-between-md {
+        flex-direction: column;
+    }
+
+    .student-section-head {
+        gap: 10px;
     }
 }

@@ -90,7 +90,7 @@ class DjangoOperationalQueueSnapshotPort(OperationalQueueSnapshotPort):
                     enrollment_id=payment.enrollment_id,
                     pill='Vence em breve',
                     pill_class='',
-                    summary=f'{payment.student.full_name} | vence em {payment.due_date:%d/%m/%Y} | R$ {payment.amount}',
+                    summary=f'{payment.student.full_name} | vence em {payment.due_date:%d/%m/%Y} | R$ {payment.amount:.2f}',
                     suggested_message=build_operational_message_body(
                         action_kind='upcoming',
                         first_name=payment.student.full_name.split()[0],
@@ -109,7 +109,7 @@ class DjangoOperationalQueueSnapshotPort(OperationalQueueSnapshotPort):
                     enrollment_id=payment.enrollment_id,
                     pill='Atrasado',
                     pill_class='warning',
-                    summary=f'{payment.student.full_name} | venceu em {payment.due_date:%d/%m/%Y} | R$ {payment.amount}',
+                    summary=f'{payment.student.full_name} | venceu em {payment.due_date:%d/%m/%Y} | R$ {payment.amount:.2f}',
                     suggested_message=build_operational_message_body(
                         action_kind='overdue',
                         first_name=payment.student.full_name.split()[0],

@@ -17,6 +17,8 @@ PONTOS CRITICOS:
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
 
+from access.shell_actions import attach_shell_action_buttons
+
 
 class SystemMapView(LoginRequiredMixin, TemplateView):
     template_name = 'guide/system-map.html'
@@ -195,6 +197,16 @@ class SystemMapView(LoginRequiredMixin, TemplateView):
             'templates/layouts/base.html',
             'templates/includes/ui/',
             'static/css/design-system.css',
-            'static/css/catalog-system.css',
+            'static/css/catalog/shared.css',
+            'static/css/catalog/students.css',
+            'static/css/catalog/finance.css',
+            'static/css/catalog/class-grid.css',
         ]
+        attach_shell_action_buttons(
+            context,
+            priority={'href': '#system-flow-board', 'summary': 'Abrir o fluxo macro do sistema para entender o ponto mais quente da arquitetura.'},
+            pending={'href': '#system-reading-board', 'summary': 'Ir para a ordem de leitura e ver o que ainda está pendente de entendimento.'},
+            next_action={'href': '#system-bug-board', 'summary': 'Descer para a triagem prática do próximo lugar onde investigar.'},
+            scope='system-map',
+        )
         return context

@@ -10,3 +10,7 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - So devem entrar aqui utilitarios sem impacto de schema, app label ou estado do Django.
 """
+
+from .page_payloads import attach_page_payload, build_page_assets, build_page_payload
+
+__all__ = ['attach_page_payload', 'build_page_assets', 'build_page_payload']

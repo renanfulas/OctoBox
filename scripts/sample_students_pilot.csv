@@ -1,0 +1,16 @@
+full_name,whatsapp,email,gender,birth_date,health_issue_status,cpf,status,notes
+Lucas Almeida,5511999911001,lucas.almeida@teste.com,male,1994-02-11,no,111.111.111-11,active,Aluno ficticio para validacao visual da base.
+Marina Costa,5511999911002,marina.costa@teste.com,female,1997-07-19,no,222.222.222-22,active,Aluna ativa com perfil de rotina recorrente.
+Thiago Ribeiro,5511999911003,thiago.ribeiro@teste.com,male,1992-04-03,yes,333.333.333-33,paused,Aluno pausado para testar filtros por status.
+Camila Moura,5511999911004,camila.moura@teste.com,female,1999-10-25,no,444.444.444-44,lead,Lead ficticia para testar entrada comercial.
+Bruno Nogueira,5511999911005,bruno.nogueira@teste.com,male,1988-01-17,no,555.555.555-55,active,Aluno ativo com dados completos.
+Isabela Ferreira,5511999911006,isabela.ferreira@teste.com,female,1995-06-09,yes,666.666.666-66,active,Aluna com observacao de saude para validar leitura.
+Rafael Martins,5511999911007,rafael.martins@teste.com,male,1991-08-14,no,777.777.777-77,inactive,Aluno inativo para validar estados antigos.
+Fernanda Lima,5511999911008,fernanda.lima@teste.com,female,1996-12-21,no,888.888.888-88,active,Aluna ativa de teste para listagem.
+Gustavo Rocha,5511999911009,gustavo.rocha@teste.com,male,1990-09-30,no,999.999.999-99,lead,Lead masculino para validar diversidade da fila.
+Patricia Gomes,5511999911010,patricia.gomes@teste.com,female,1987-03-27,no,121.212.121-21,active,Cliente ficticia com foco em visualizacao da ficha.
+Renato Araujo,5511999911011,renato.araujo@teste.com,male,1993-11-05,no,232.323.232-32,active,Aluno com nome composto para teste de busca.
+Juliana Teixeira,5511999911012,juliana.teixeira@teste.com,female,1998-05-16,yes,343.434.343-43,paused,Aluna pausada com observacao para filtros.
+Caio Barros,5511999911013,caio.barros@teste.com,male,2000-01-08,no,454.545.454-54,active,Aluno jovem para teste de base inicial.
+Amanda Duarte,5511999911014,amanda.duarte@teste.com,female,1994-07-28,no,565.656.565-65,lead,Lead ficticia pronta para conversao.
+Victor Santana,5511999911015,victor.santana@teste.com,male,1989-02-23,no,676.767.676-76,active,Aluno ativo para completar volume da lista.
