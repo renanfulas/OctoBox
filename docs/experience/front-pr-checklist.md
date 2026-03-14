@@ -30,6 +30,8 @@ PONTOS CRITICOS:
 
 Use este checklist antes de aprovar ou subir alteracoes de front.
 
+Se a duvida for como pensar ou montar a tela desde o inicio, use [layout-decision-guide.md](layout-decision-guide.md).
+
 ## Estrutura
 
 1. cada classe nova esta no arquivo CSS certo
@@ -49,12 +51,29 @@ Use este checklist antes de aprovar ou subir alteracoes de front.
 1. desktop, tablet e mobile continuam legiveis
 2. grids quebram antes de virar mosaico apertado
 3. botoes continuam clicaveis e legiveis em largura menor
+4. alvos de toque tem tamanho adequado em mobile
+
+## Acessibilidade
+
+1. elementos interativos tem estado de foco visivel
+2. contraste de texto contra fundo esta aceitavel
+3. cor nao e o unico indicador de estado
+4. labels estao vinculados aos campos de formulario
 
 ## Estados e leitura
 
 1. estado vazio orienta proxima acao
 2. alerta, confirmacao e erro seguem o mesmo padrao visual da base
 3. a acao principal continua clara em ate poucos segundos de leitura
+4. prioridade, pendencia e proxima acao continuam evidentes na composicao da pagina
+5. toda acao do usuario tem feedback visivel
+
+## Formularios
+
+1. campos tem type e inputmode corretos para o dado esperado
+2. placeholder nao esta substituindo label
+3. erro aparece perto do campo e diz como corrigir
+4. acao irreversivel pede confirmacao explicita
 
 ## Higiene
 
@@ -62,3 +81,11 @@ Use este checklist antes de aprovar ou subir alteracoes de front.
 2. nao foi deixado CSS morto ou seletor legado sem uso claro
 3. editor ficou sem erros nos arquivos alterados
 4. testes da area afetada foram executados quando a mudanca mexe em tela relevante
+
+## Gate de beta
+
+1. a mudanca melhora uma superficie central do beta ou reduz risco real dela
+2. a tela ficou mais clara e nao apenas mais diferente
+3. a triagem futura consegue localizar melhor pagina, painel, acao ou estado
+4. hooks estruturais relevantes continuam estaveis ou ficaram melhores
+5. a mudanca nao reabriu estrutura consolidada sem justificativa forte

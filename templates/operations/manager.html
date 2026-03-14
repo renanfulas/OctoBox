@@ -13,177 +13,71 @@ PONTOS CRITICOS:
 - Depende de pending_intakes, unlinked_whatsapp e financial_alerts.
 -->
 {% extends "layouts/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
+{% endblock %}
 
 {% block content %}
+{% with page=operation_page %}
 <div class="operation-shell">
-    <section class="hero operation-hero">
+    <section class="hero operation-hero" aria-label="Panorama da gerencia">
         <div class="operation-hero-main">
             <div>
                 <p class="eyebrow">Centro do manager</p>
-                <h1>Triagem primeiro, vínculo depois, cobrança logo em seguida.</h1>
-                <p class="operation-hero-copy">Esta tela precisa deixar óbvio onde a fila pode esfriar, onde a estrutura ainda está quebrada e onde o financeiro já pede ação antes de contaminar a operação.</p>
-            </div>
-            <div class="operation-hero-tags">
-                <span class="pill">Operação administrativa</span>
-                <span class="pill info">Entrada, vínculo e cobrança</span>
-                <span class="pill accent">Próxima ação antes de lista longa</span>
+                <h2>Triagem, vínculo e cobrança — nessa ordem.</h2>
+                <p class="operation-hero-copy">Onde a fila esfria, onde a estrutura quebra e onde o financeiro já pede ação.</p>
             </div>
             <div class="actions">
-                <a class="button" href="#manager-intake-board">Ver entradas</a>
+                <a class="button" href="#manager-finance-board">Ver alertas financeiros</a>
+                <a class="button secondary" href="#manager-intake-board">Ver entradas</a>
                 <a class="button secondary" href="#manager-link-board">Ver vínculos pendentes</a>
-                <a class="button secondary" href="#manager-finance-board">Ver alertas financeiros</a>
             </div>
         </div>
         <aside class="operation-hero-side">
-            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Fila operacional" copy="Resumo imediato dos pontos que pedem ação do manager antes que a rotina trave." stats=hero_stats %}
+            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Fila operacional" copy="Pontos que pedem ação antes que a rotina trave." stats=page.data.hero_stats %}
         </aside>
     </section>
 
-    <section class="table-card operation-focus-card">
-        <div class="operation-card-head">
-            <div>
-                <p class="eyebrow">Comece por aqui</p>
-                <h2 class="operation-card-title">Três leituras para não se perder entre listas parecidas</h2>
-                <p class="operation-card-copy">A ordem certa é triagem, correção estrutural e só depois pressão financeira.</p>
-            </div>
-            <span class="pill accent">Foco do manager</span>
-        </div>
-        <div class="operation-focus-list">
-            {% for item in manager_operational_focus %}
-            <article class="operation-focus-item">
-                <div class="operation-focus-copy">
-                    <p class="eyebrow">{{ item.label }}</p>
-                    <p>{{ item.summary }}</p>
-                </div>
-                <div class="operation-focus-actions">
-                    <span class="pill {{ item.pill_class }}">prioridade</span>
-                    <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="panel-grid operation-metric-grid">
-        {% for card in metric_cards %}
+    <section class="panel-grid operation-metric-grid" aria-label="Metricas de gerencia">
+        {% for card in page.data.metric_cards %}
         {% include "includes/ui/metric_card.html" with card=card %}
         {% endfor %}
     </section>
 
-    <section class="layout-grid operation-grid-3 align-start">
-        {% include "includes/ui/info_list_card.html" with eyebrow="Próximos passos do Manager" title="Ritmo ideal da operação" items=manager_steps %}
-        {% include "includes/ui/info_list_card.html" with eyebrow="Limites desta área" title="Fronteira operacional" items=manager_boundaries %}
-        {% include "includes/ui/info_list_card.html" with card_class="operation-empty-card" eyebrow="Terreno pronto para WhatsApp" title="Base relacional preparada" items=manager_whatsapp_ready %}
-    </section>
-
-    <section class="table-card operation-focus-card operation-execution-card">
-        <div class="operation-card-head">
-            <div>
-                <p class="eyebrow">Agora destrave a execução</p>
-                <h2 class="operation-card-title">Três leituras para a parte mais densa do workspace</h2>
-                <p class="operation-card-copy">Depois de entender a tela, use esta ordem para atacar fila, estrutura e cobrança sem pular contexto.</p>
-            </div>
-            <span class="pill accent">Execução do manager</span>
-        </div>
-        <div class="operation-focus-list">
-            {% for item in manager_execution_focus %}
-            <article class="operation-focus-item">
-                <div class="operation-focus-copy">
-                    <p class="eyebrow">{{ item.label }}</p>
-                    <p>{{ item.summary }}</p>
-                </div>
-                <div class="operation-focus-actions">
-                    <span class="pill {{ item.pill_class }}">foco</span>
-                    <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="operation-table-guide-grid">
-        {% for item in manager_table_guides %}
-        <article class="table-card operation-table-guide-card">
-            <div class="operation-table-guide-head">
-                <div>
-                    <p class="eyebrow">{{ item.label }}</p>
-                    <h2 class="operation-card-title">{{ item.value }}</h2>
-                    <p class="operation-card-copy">{{ item.summary }}</p>
-                </div>
-                <span class="pill {{ item.pill_class }}">escaneie aqui</span>
-            </div>
-            <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
-        </article>
-        {% endfor %}
-    </section>
-
-    <section class="layout-grid operation-grid-wide align-start">
-        <article class="table-card operation-table-card" id="manager-intake-board">
+    <section class="layout-grid operation-grid-wide align-start" aria-label="Financeiro, intake e vinculos">
+        <article class="table-card operation-table-card operation-span-full" id="manager-finance-board">
             <div class="operation-card-head">
                 <div>
-                    <p class="eyebrow">Fila de entrada de alunos</p>
-                    <h2 class="operation-card-title">Quem chegou e ainda pede encaminhamento</h2>
-                    <p class="operation-card-copy">Leia de cima para baixo. A primeira linha é a melhor candidata para destravar a fila sem perder temperatura.</p>
+                    <p class="eyebrow">Alertas financeiros</p>
+                    <h2 class="operation-card-title">Cobrança e retenção sob pressão</h2>
+                    <p class="operation-card-copy">Evite que a cobrança escale silenciosamente.</p>
                 </div>
-                <span class="pill info">{{ pending_intakes|length }} item(ns)</span>
+                <span class="pill warning">{{ page.data.financial_alerts|length }} alerta(s)</span>
             </div>
             <div class="operation-table-wrap">
                 <table>
                     <thead>
                         <tr>
-                            <th>Nome</th>
-                            <th>Telefone</th>
-                            <th>Origem</th>
-                            <th>Status</th>
-                            <th>Leitura rápida</th>
+                            <th scope="col">Aluno</th>
+                            <th scope="col">Vencimento</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Valor</th>
+                            <th scope="col">Leitura rápida</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for intake in pending_intakes %}
+                        {% for payment in page.data.financial_alerts %}
                         <tr>
-                            <td>{{ intake.full_name }}</td>
-                            <td>{{ intake.phone }}</td>
-                            <td>{{ intake.get_source_display }}</td>
-                            <td><span class="pill info">{{ intake.get_status_display }}</span></td>
-                            <td>{% if forloop.first %}<span class="pill warning">Comece aqui</span>{% else %}<span class="pill">Acompanhar</span>{% endif %}</td>
+                            <td>{{ payment.student.full_name }}</td>
+                            <td>{{ payment.due_date|date:"d/m/Y" }}</td>
+                            <td><span class="pill{% if payment.status == 'overdue' or payment.status == 'pending' %} warning{% else %} info{% endif %}">{{ payment.get_status_display }}</span></td>
+                            <td>R$ {{ payment.amount|floatformat:2 }}</td>
+                            <td>{% if forloop.first %}<span class="pill warning">Agir agora</span>{% else %}<span class="pill">Monitorar</span>{% endif %}</td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="5" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Fila de entrada" title="Nenhuma entrada pendente" copy="A triagem inicial nao tem novo contato aguardando encaminhamento agora." badge="Base limpa" badge_class="accent" %}</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </article>
-
-        <article class="table-card operation-table-card" id="manager-link-board">
-            <div class="operation-card-head">
-                <div>
-                    <p class="eyebrow">Contatos de WhatsApp sem vínculo</p>
-                    <h2 class="operation-card-title">Conversas prontas para conexão</h2>
-                    <p class="operation-card-copy">Aqui a leitura é simples: primeiro confira se o contato já tem nome claro, depois resolva o vínculo antes de continuar a conversa.</p>
-                </div>
-                <span class="pill">{{ unlinked_whatsapp|length }} contato(s)</span>
-            </div>
-            <div class="operation-table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>Telefone</th>
-                            <th>Status</th>
-                            <th>Próximo passo</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for contact in unlinked_whatsapp %}
-                        <tr>
-                            <td>{{ contact.display_name|default:"Sem nome" }}</td>
-                            <td>{{ contact.phone }}</td>
-                            <td><span class="pill info">{{ contact.get_status_display }}</span></td>
-                            <td>{% if contact.display_name %}<span class="pill accent">Vincular aluno</span>{% else %}<span class="pill warning">Identificar contato</span>{% endif %}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="4" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="WhatsApp sem vinculo" title="Nenhum contato pendente" copy="Nao ha conversa solta exigindo identificacao ou conexao com aluno agora." badge="Inbox organizado" badge_class="info" %}</td></tr>
+                        <tr><td colspan="5" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Alertas financeiros" title="Nenhum alerta financeiro" copy="A gerencia nao tem atraso ou cobranca pressionando acompanhamento agora." badge="Carteira respirando" badge_class="accent" %}</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -194,24 +88,24 @@ PONTOS CRITICOS:
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Pagamentos sem vínculo de matrícula</p>
-                    <h2 class="operation-card-title">Corrija a estrutura antes de cobrar leitura financeira</h2>
-                    <p class="operation-card-copy">Se esta tabela não estiver limpa, o financeiro fica poluído. Resolva primeiro os vencimentos mais próximos.</p>
+                    <h2 class="operation-card-title">Estrutura antes de leitura financeira</h2>
+                    <p class="operation-card-copy">Resolva vencimentos mais próximos primeiro.</p>
                 </div>
-                <span class="pill accent">{{ payments_without_enrollment|length }} pendência(s)</span>
+                <span class="pill accent">{{ page.data.payments_without_enrollment|length }} pendência(s)</span>
             </div>
             <div class="operation-table-wrap">
                 <table>
                     <thead>
                         <tr>
-                            <th>Aluno</th>
-                            <th>Vencimento</th>
-                            <th>Status</th>
-                            <th>Leitura rápida</th>
-                            <th>Ação</th>
+                            <th scope="col">Aluno</th>
+                            <th scope="col">Vencimento</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Leitura rápida</th>
+                            <th scope="col">Ação</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for payment in payments_without_enrollment %}
+                        {% for payment in page.data.payments_without_enrollment %}
                         <tr>
                             <td>{{ payment.student.full_name }}</td>
                             <td>{{ payment.due_date|date:"d/m/Y" }}</td>
@@ -232,37 +126,114 @@ PONTOS CRITICOS:
             </div>
         </article>
 
-        <article class="table-card operation-table-card operation-span-full" id="manager-finance-board">
+        <article class="table-card operation-table-card" id="manager-intake-board">
             <div class="operation-card-head">
                 <div>
-                    <p class="eyebrow">Alertas financeiros</p>
-                    <h2 class="operation-card-title">Quem já está pressionando cobrança e retenção</h2>
-                    <p class="operation-card-copy">Leia primeiro o vencimento mais próximo. O objetivo aqui não é analisar tudo, é evitar que a cobrança escale silenciosamente.</p>
+                    <p class="eyebrow">Fila de entrada de alunos</p>
+                    <h2 class="operation-card-title">Quem chegou e pede encaminhamento</h2>
+                    <p class="operation-card-copy">Primeira linha destrava a fila.</p>
                 </div>
-                <span class="pill warning">{{ financial_alerts|length }} alerta(s)</span>
+                <span class="pill info">{{ page.data.pending_intakes|length }} item(ns)</span>
             </div>
             <div class="operation-table-wrap">
                 <table>
                     <thead>
                         <tr>
-                            <th>Aluno</th>
-                            <th>Vencimento</th>
-                            <th>Status</th>
-                            <th>Valor</th>
-                            <th>Leitura rápida</th>
+                            <th scope="col">Nome</th>
+                            <th scope="col">Telefone</th>
+                            <th scope="col">Origem</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Leitura rápida</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for payment in financial_alerts %}
+                        {% for intake in page.data.pending_intakes %}
+                        <tr>
+                            <td>{{ intake.full_name }}</td>
+                            <td>{{ intake.phone }}</td>
+                            <td>{{ intake.get_source_display }}</td>
+                            <td><span class="pill info">{{ intake.get_status_display }}</span></td>
+                            <td>{% if forloop.first %}<span class="pill warning">Comece aqui</span>{% else %}<span class="pill">Acompanhar</span>{% endif %}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Fila de entrada" title="Nenhuma entrada pendente" copy="A triagem inicial nao tem novo contato aguardando encaminhamento agora." badge="Base limpa" badge_class="accent" %}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="table-card operation-table-card" id="manager-link-board">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Contatos de WhatsApp sem vínculo</p>
+                    <h2 class="operation-card-title">Conversas prontas para conexão</h2>
+                    <p class="operation-card-copy">Confira nome, resolva vínculo.</p>
+                </div>
+                <span class="pill">{{ page.data.unlinked_whatsapp|length }} contato(s)</span>
+            </div>
+            <div class="operation-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Nome</th>
+                            <th scope="col">Telefone</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Próximo passo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contact in page.data.unlinked_whatsapp %}
+                        <tr>
+                            <td>{{ contact.display_name|default:"Sem nome" }}</td>
+                            <td>{{ contact.phone }}</td>
+                            <td><span class="pill info">{{ contact.get_status_display }}</span></td>
+                            <td>{% if contact.display_name %}<span class="pill accent">Vincular aluno</span>{% else %}<span class="pill warning">Identificar contato</span>{% endif %}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="WhatsApp sem vinculo" title="Nenhum contato pendente" copy="Nao ha conversa solta exigindo identificacao ou conexao com aluno agora." badge="Inbox organizado" badge_class="info" %}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="table-card operation-table-card operation-span-full">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Pagamentos sem vínculo de matrícula</p>
+                    <h2 class="operation-card-title">Estrutura antes de leitura financeira</h2>
+                    <p class="operation-card-copy">Resolva vencimentos mais próximos primeiro.</p>
+                </div>
+                <span class="pill accent">{{ page.data.payments_without_enrollment|length }} pendência(s)</span>
+            </div>
+            <div class="operation-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Aluno</th>
+                            <th scope="col">Vencimento</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Leitura rápida</th>
+                            <th scope="col">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in page.data.payments_without_enrollment %}
                         <tr>
                             <td>{{ payment.student.full_name }}</td>
                             <td>{{ payment.due_date|date:"d/m/Y" }}</td>
                             <td><span class="pill{% if payment.status == 'overdue' or payment.status == 'pending' %} warning{% else %} info{% endif %}">{{ payment.get_status_display }}</span></td>
-                            <td>R$ {{ payment.amount }}</td>
-                            <td>{% if forloop.first %}<span class="pill warning">Agir agora</span>{% else %}<span class="pill">Monitorar</span>{% endif %}</td>
+                            <td>{% if forloop.first %}<span class="pill warning">Prioridade</span>{% else %}<span class="pill">Depois</span>{% endif %}</td>
+                            <td>
+                                <form method="post" action="/operacao/pagamento/{{ payment.id }}/vincular-matricula/">
+                                    {% csrf_token %}
+                                    <button class="button secondary" type="submit">Vincular matrícula ativa</button>
+                                </form>
+                            </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="5" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Alertas financeiros" title="Nenhum alerta financeiro" copy="A gerencia nao tem atraso ou cobranca pressionando acompanhamento agora." badge="Carteira respirando" badge_class="accent" %}</td></tr>
+                        <tr><td colspan="5" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Pagamentos sem matricula" title="Nenhum pagamento aguardando vinculo" copy="A estrutura financeira nao tem cobranca solta sem matricula ativa neste recorte." badge="Estrutura coerente" badge_class="accent" %}</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -270,4 +241,5 @@ PONTOS CRITICOS:
         </article>
     </section>
 </div>
+{% endwith %}
 {% endblock %}

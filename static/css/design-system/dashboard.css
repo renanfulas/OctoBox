@@ -1,0 +1,240 @@
+/*
+ARQUIVO: estilos especificos do dashboard.
+
+POR QUE ELE EXISTE:
+- isola a leitura do dashboard para evitar que telas operacionais paguem por esse visual.
+
+O QUE ESTE ARQUIVO FAZ:
+1. estiliza dashboard-shell, hero e kpis do painel principal.
+2. concentra listas de foco, grids e quick cards do dashboard.
+3. mantem os ajustes responsivos do dashboard sem contaminar outras superficies.
+*/
+
+.dashboard-shell {
+    display: grid;
+    gap: var(--section-gap);
+}
+
+.dashboard-shell .panel-grid > .card,
+.dashboard-shell .quick-grid > .quick-card {
+    min-height: 100%;
+}
+
+.dashboard-shell .quick-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.dashboard-quick-grid {
+    margin-top: -2px;
+}
+
+.dashboard-hero {
+    background:
+    radial-gradient(circle at top right, rgba(184, 92, 56, 0.2), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(40, 92, 142, 0.14), transparent 28%),
+    linear-gradient(145deg, rgba(255, 251, 245, 0.92), rgba(240, 235, 225, 0.94)),
+        var(--surface);
+}
+
+.dashboard-hero .actions {
+    align-items: flex-start;
+}
+
+.dashboard-kpi-card {
+    position: relative;
+    min-height: 182px;
+    overflow: hidden;
+}
+
+.dashboard-kpi-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -30px -40px auto;
+    width: 140px;
+    height: 140px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.4), transparent 68%);
+    pointer-events: none;
+}
+
+.dashboard-kpi-card.kpi-amber {
+    background: linear-gradient(145deg, rgba(249, 115, 22, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.dashboard-kpi-card.kpi-blue {
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.dashboard-kpi-card.kpi-red {
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.dashboard-kpi-card.kpi-green {
+    background: linear-gradient(145deg, rgba(16, 185, 129, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.dashboard-kpi-card.kpi-slate {
+    background: linear-gradient(145deg, rgba(71, 85, 105, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.dashboard-role-grid {
+    grid-template-columns: 1fr auto;
+}
+
+.dashboard-quick-actions-side {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 220px;
+    max-width: 280px;
+}
+
+.dashboard-focus-card {
+    background: linear-gradient(145deg, rgba(255, 251, 244, 0.92), rgba(244, 236, 224, 0.94));
+}
+
+.dashboard-focus-list {
+    display: grid;
+    gap: 14px;
+}
+
+.dashboard-focus-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 0;
+    border-top: 1px solid rgba(112, 96, 81, 0.12);
+}
+
+.dashboard-focus-item:first-child {
+    border-top: 0;
+    padding-top: 4px;
+}
+
+.dashboard-focus-copy p:last-child {
+    margin: 8px 0 0;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 54ch;
+}
+
+.dashboard-focus-actions {
+    display: grid;
+    gap: 10px;
+    justify-items: end;
+}
+
+.dashboard-role-table td:first-child,
+.dashboard-role-table th:first-child {
+    width: 132px;
+}
+
+.dashboard-quick-card {
+    position: relative;
+    overflow: hidden;
+    background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(246, 239, 228, 0.96)),
+    rgba(255, 255, 255, 0.94);
+}
+
+.dashboard-quick-card strong {
+    max-width: 14ch;
+}
+
+.dashboard-quick-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -24px -28px auto;
+    width: 112px;
+    height: 112px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.16), transparent 68%);
+    pointer-events: none;
+}
+
+.dashboard-panel-grid {
+    grid-template-columns: 1fr;
+}
+
+.dashboard-panel-grid .operation-span-full {
+    grid-column: 1 / -1;
+}
+
+.dashboard-table-card table {
+    margin-top: 4px;
+}
+
+.dashboard-table-card {
+    min-height: 100%;
+}
+
+.dashboard-risk-pill {
+    min-width: 114px;
+    justify-content: center;
+}
+
+.dashboard-risk-pill.is-critical {
+    background: rgba(239, 68, 68, 0.14);
+    color: var(--danger);
+}
+
+.dashboard-risk-pill.is-warning {
+    background: rgba(249, 115, 22, 0.16);
+    color: #c2410c;
+}
+
+.dashboard-risk-pill.is-stable {
+    background: rgba(16, 185, 129, 0.12);
+    color: #15803d;
+}
+
+@media (max-width: 1280px) {
+    .dashboard-panel-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 1600px) {
+    .dashboard-role-grid {
+        grid-template-columns: 1fr auto;
+    }
+
+    .dashboard-panel-grid {
+        grid-template-columns: 1.05fr 0.95fr;
+    }
+}
+
+@media (max-width: 960px) {
+    .dashboard-focus-item {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-focus-actions {
+        justify-items: stretch;
+    }
+
+    .dashboard-shell {
+        gap: 18px;
+    }
+
+    .dashboard-role-grid,
+    .dashboard-panel-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-quick-actions-side {
+        max-width: none;
+    }
+}
+
+@media (max-width: 720px) {
+    .dashboard-hero .actions .button {
+        width: 100%;
+    }
+
+    .dashboard-role-table td:first-child,
+    .dashboard-role-table th:first-child {
+        width: auto;
+    }
+}

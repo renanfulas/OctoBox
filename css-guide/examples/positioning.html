@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exemplos de Posicionamento - CSS Guide</title>
+    <link rel="stylesheet" href="../src/styles/main.css">
+</head>
+<body>
+    <header>
+        <h1>Exemplos de Posicionamento em CSS</h1>
+    </header>
+    <main>
+        <section>
+            <h2>Posicionamento Estático</h2>
+            <div class="static-example">
+                <p>Este é um exemplo de posicionamento estático. Os elementos são posicionados de acordo com o fluxo normal do documento.</p>
+            </div>
+        </section>
+        <section>
+            <h2>Posicionamento Relativo</h2>
+            <div class="relative-example" style="position: relative; top: 20px; left: 20px;">
+                <p>Este é um exemplo de posicionamento relativo. O elemento é posicionado em relação à sua posição original.</p>
+            </div>
+        </section>
+        <section>
+            <h2>Posicionamento Absoluto</h2>
+            <div class="absolute-example" style="position: absolute; top: 50px; left: 50px;">
+                <p>Este é um exemplo de posicionamento absoluto. O elemento é posicionado em relação ao seu ancestral mais próximo que não tenha um posicionamento estático.</p>
+            </div>
+        </section>
+        <section>
+            <h2>Posicionamento Fixo</h2>
+            <div class="fixed-example" style="position: fixed; top: 0; right: 0;">
+                <p>Este é um exemplo de posicionamento fixo. O elemento é posicionado em relação à janela de visualização e permanece fixo durante o scroll.</p>
+            </div>
+        </section>
+        <section>
+            <h2>Posicionamento Sticky</h2>
+            <div class="sticky-example" style="position: sticky; top: 0;">
+                <p>Este é um exemplo de posicionamento sticky. O elemento se comporta como relativo até que seu bloco pai seja rolado para fora da visualização.</p>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2023 CSS Guide</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!--
+ARQUIVO: chip reutilizavel de sessao semanal da grade.
+
+POR QUE ELE EXISTE:
+- concentra a leitura curta de uma sessao dentro da visao semanal.
+-->
+<article class="weekly-session-chip{% if item.occupancy_pill_class %} is-{{ item.occupancy_pill_class }}{% endif %}{% if item.booking_closed %} is-booking-closed{% endif %}" data-panel="class-grid-weekly-session-chip">
+    <div class="row-between-sm weekly-session-top">
+        <strong>{{ item.starts_at|date:"H:i" }}</strong>
+        <span class="pill{% if item.occupancy_pill_class %} {{ item.occupancy_pill_class }}{% endif %}">{{ item.occupancy_label }}</span>
+    </div>
+    <p class="weekly-session-title">{{ item.object.title }}</p>
+    <p class="class-grid-meta">{{ item.coach_name }}</p>
+    <p class="class-grid-meta">{{ item.occupied_slots }}/{{ item.capacity }} lugar(es)</p>
+    {% if page.capabilities.can_manage_classes %}
+    <div class="actions actions-tight class-chip-actions">
+        <a class="button secondary button-sm" href="/grade-aulas/?{% if page.behavior.current_query_string %}{{ page.behavior.current_query_string }}&{% endif %}edit_session={{ item.object.id }}#edicao-aula" data-action="open-class-grid-session-edit">Editar</a>
+        <form method="post" data-action="delete-class-grid-session">
+            {% csrf_token %}
+            <input type="hidden" name="form_kind" value="session-action">
+            <input type="hidden" name="action" value="delete-session">
+            <input type="hidden" name="session_id" value="{{ item.object.id }}">
+            <input type="hidden" name="return_query" value="{{ page.behavior.current_query_string }}">
+            <button class="button secondary button-sm" type="submit" data-action="confirm-class-grid-session-delete">Excluir</button>
+        </form>
+    </div>
+    {% endif %}
+</article>

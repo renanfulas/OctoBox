@@ -22,17 +22,16 @@ PONTOS CRITICOS:
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>OctoBox Control</title>
     <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v={{ static_asset_version }}">
-    <link rel="stylesheet" href="{% static 'css/catalog-system.css' %}?v={{ static_asset_version }}">
     {% block extra_head %}{% endblock %}
 </head>
-<body data-theme="light">
+<body data-theme="light" data-shell-scope="{{ shell_page_context.scope|default:'generic' }}" data-page="shell" data-ui="shell-body">
     <a class="skip-link" href="#page-body">Pular para o conteudo</a>
-    <div class="shell">
-        <aside class="sidebar">
+    <div class="shell" data-slot="shell-root">
+        <aside class="sidebar" data-slot="sidebar" data-ui="sidebar">
             <div class="brand-wrap">
                 <div class="brand-mark">OB</div>
                 <div>
-                    <h1 class="brand">OctoBox Control</h1>
+                    <p class="brand">OctoBox Control</p>
                     <p class="tagline">Gestão viva do box com energia, leitura comercial e rotina operacional clara.</p>
                 </div>
             </div>
@@ -42,45 +41,58 @@ PONTOS CRITICOS:
                 <span class="sidebar-role">{{ current_role.label|default:"Sem papel definido" }}</span>
                 <div class="sidebar-highlight">
                     <strong>Leitura rápida</strong>
-                    <span>{{ topbar_alerts.pending_intakes }} intakes pendentes e {{ topbar_alerts.overdue_payments }} pagamentos em atraso.</span>
+                    <span>{{ shell_counts.pending_intakes }} intakes pendentes e {{ shell_counts.overdue_payments }} pagamentos em atraso.</span>
                 </div>
             </div>
             {% for item in sidebar_navigation %}
-            <a class="nav-link{% if item.is_active %} is-active{% endif %}" href="{{ item.href }}"{% if item.is_active %} aria-current="page"{% endif %}>{{ item.label }}</a>
+            <a class="nav-link{% if item.is_active %} is-active{% endif %}" href="{{ item.href }}"{% if item.is_active %} aria-current="page"{% endif %}><span class="nav-icon">{{ item.icon }}</span>{{ item.label }}</a>
             {% endfor %}
             <form method="post" action="{% url 'logout' %}" class="sidebar-logout-form">
                 {% csrf_token %}
-                <button class="nav-link nav-link-button" type="submit">Sair</button>
+                <button class="nav-link nav-link-button" type="submit"><span class="nav-icon">🚪</span>Sair</button>
             </form>
             {% else %}
-            <a class="nav-link" href="/login/">Entrar</a>
+            <a class="nav-link" href="/login/"><span class="nav-icon">🔑</span>Entrar</a>
             {% endif %}
         </aside>
-        <button class="sidebar-backdrop" type="button" id="sidebar-backdrop" aria-label="Fechar menu lateral"></button>
-        <main class="content">
+        <button class="sidebar-backdrop" type="button" id="sidebar-backdrop" data-ui="sidebar-backdrop" aria-label="Fechar menu lateral"></button>
+        <main class="content" data-slot="content">
             {% if user.is_authenticated %}
-            <header class="topbar">
-                <div class="topbar-left">
-                    <button class="sidebar-toggle" type="button" id="sidebar-toggle" aria-expanded="false" aria-controls="page-body">Menu</button>
-                    <form class="global-search" method="get" action="{{ global_search_action }}">
+            <header class="topbar" data-slot="topbar" data-ui="topbar">
+                <div class="topbar-left" data-slot="topbar-left">
+                    <button class="sidebar-toggle" type="button" id="sidebar-toggle" data-ui="sidebar-toggle" aria-expanded="false" aria-controls="page-body">Menu</button>
+                    <form class="global-search" method="get" action="{{ global_search_action }}" role="combobox" aria-expanded="false" aria-haspopup="listbox" aria-owns="search-autocomplete-list" aria-controls="search-autocomplete-list search-autocomplete-status" data-ui="global-search-form" data-panel="global-search" data-autocomplete-url="/api/v1/students/autocomplete/">
                         <label class="visually-hidden" for="global-search-input">Buscar aluno ou WhatsApp</label>
                         <span class="search-kicker">Busca global</span>
-                        <input id="global-search-input" type="search" name="query" placeholder="Buscar aluno, WhatsApp ou CPF" maxlength="150" autocomplete="off" spellcheck="false">
+                        <input id="global-search-input" type="search" name="query" placeholder="Buscar aluno, WhatsApp ou CPF" maxlength="150" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-autocomplete="list" aria-controls="search-autocomplete-list" aria-describedby="search-autocomplete-status" data-ui="global-search-input">
+                        <button class="search-submit" type="submit" data-action="submit-global-search">Abrir</button>
+                        <ul id="search-autocomplete-list" class="search-autocomplete-list" role="listbox" aria-label="Resultados da busca" hidden data-ui="global-search-results"></ul>
+                        <p id="search-autocomplete-status" class="search-status visually-hidden" aria-live="polite" data-ui="global-search-status"></p>
                     </form>
                 </div>
-                <div class="topbar-right">
-                    <div class="topbar-alerts">
-                        <a class="alert-chip danger{% if topbar_alerts.overdue_payments %} has-volume{% endif %}" href="{{ topbar_alert_links.finance }}">
+                <div class="topbar-right" data-slot="topbar-right">
+                    <div class="topbar-alerts" data-slot="topbar-alerts">
+                        <a class="alert-chip danger{% if shell_counts.overdue_payments %} has-volume{% else %} is-clear{% endif %}" href="{{ topbar_alert_links.finance }}" data-ui="topbar-finance-alert" data-action="open-finance-alerts">
+                            {% if shell_counts.overdue_payments %}
                             <span class="alert-dot"></span>
-                            <span><strong>{{ topbar_alerts.overdue_payments }}</strong> {% if topbar_alerts.overdue_payments == 1 %}vencimento{% else %}vencimentos{% endif %}</span>
+                            <span><strong>{{ shell_counts.overdue_payments }}</strong> {% if shell_counts.overdue_payments == 1 %}vencimento{% else %}vencimentos{% endif %}</span>
+                            {% else %}
+                            <span class="alert-clear-icon">✅</span>
+                            <span>Cobrança em dia</span>
+                            {% endif %}
                         </a>
-                        <a class="alert-chip{% if topbar_alerts.pending_intakes %} has-volume{% endif %}" href="{{ topbar_alert_links.intakes }}">
+                        <a class="alert-chip{% if shell_counts.pending_intakes %} has-volume{% else %} is-clear{% endif %}" href="{{ topbar_alert_links.intakes }}" data-ui="topbar-intake-alert" data-action="open-intake-alerts">
+                            {% if shell_counts.pending_intakes %}
                             <span class="alert-dot"></span>
-                            <span><strong>{{ topbar_alerts.pending_intakes }}</strong> {% if topbar_alerts.pending_intakes == 1 %}intake{% else %}intakes{% endif %}</span>
+                            <span><strong>{{ shell_counts.pending_intakes }}</strong> {% if shell_counts.pending_intakes == 1 %}intake{% else %}intakes{% endif %}</span>
+                            {% else %}
+                            <span class="alert-clear-icon">✅</span>
+                            <span>Fila limpa</span>
+                            {% endif %}
                         </a>
                     </div>
-                    <button class="theme-toggle" type="button" id="theme-toggle" aria-pressed="false">Tema</button>
-                    <div class="topbar-profile">
+                    <button class="theme-toggle" type="button" id="theme-toggle" data-ui="theme-toggle" aria-pressed="false">Tema</button>
+                    <div class="topbar-profile" data-slot="topbar-profile">
                         <div class="avatar">{{ current_role.label|default:user.username|slice:":2"|upper }}</div>
                         <div class="profile-meta">
                             <strong>{{ user.get_full_name|default:user.username }}</strong>
@@ -89,19 +101,15 @@ PONTOS CRITICOS:
                     </div>
                 </div>
             </header>
-            <section class="page-compass" aria-label="Contexto da pagina">
-                <div class="page-compass-main">
+            <section class="page-compass" aria-label="Contexto da pagina" data-slot="page-compass" data-ui="page-compass">
+                <div class="page-compass-main" data-slot="page-compass-main">
                     <div>
                         <p class="eyebrow">{{ shell_page_context.eyebrow }}</p>
                         <h1 class="page-compass-title">{{ page_title|default:shell_page_context.title }}</h1>
                         <p class="page-compass-copy">{{ page_subtitle|default:shell_page_context.subtitle }}</p>
                     </div>
-                    <div class="page-compass-tags">
-                        <span class="pill accent">{{ shell_page_context.active_label }}</span>
-                        <span class="pill info">{{ current_role.label|default:"Sem papel definido" }}</span>
-                    </div>
                 </div>
-                <div class="page-compass-stats" aria-label="Resumo rapido do contexto atual">
+                <div class="page-compass-stats" aria-label="Resumo rapido do contexto atual" data-slot="page-compass-stats">
                     {% for item in shell_page_context.stats %}
                     <article class="page-compass-stat">
                         <span>{{ item.label }}</span>
@@ -109,13 +117,25 @@ PONTOS CRITICOS:
                     </article>
                     {% endfor %}
                 </div>
+                <nav class="compass-pulse compass-pulse--{{ shell_page_context.scope|default:'generic' }}" data-compass-scope="{{ shell_page_context.scope|default:'generic' }}" data-ui="shell-action-pulse" aria-label="Atalhos operacionais">
+                    {% for item in shell_action_buttons %}
+                    <a class="pulse-chip pulse-chip--{{ shell_page_context.scope|default:'generic' }} pulse-{{ item.kind }}{% if item.count %} has-count{% endif %}" href="{{ item.href }}" aria-label="{{ item.label }}{% if item.count %}: {{ item.count }}{% endif %}. {{ item.summary }}">
+                        <span class="pulse-label">{{ item.label }}</span>
+                        <span class="pulse-number" aria-hidden="true">{{ item.count|default_if_none:'' }}</span>
+                        <span class="pulse-hint">
+                            {% if item.count %}<span class="pulse-hint-count" aria-hidden="true">{{ item.count }}</span>{% endif %}
+                            <span class="pulse-hint-copy">{{ item.summary }}</span>
+                        </span>
+                    </a>
+                    {% endfor %}
+                </nav>
             </section>
             {% endif %}
-            <div class="page-body" id="page-body">
+            <div class="page-body" id="page-body" data-slot="page-body">
                 {% if messages %}
-                <div class="message-stack">
+                <div class="message-stack" aria-live="polite">
                     {% for message in messages %}
-                    <div class="message {{ message.tags }}">
+                    <div class="message {{ message.tags }}" role="alert">
                         {% if 'success' in message.tags %}
                         {% include "includes/ui/state_notice.html" with tone="success" compact=True eyebrow="Fluxo concluido" title="Confirmacao registrada" copy=message class_name="message-notice" %}
                         {% elif 'error' in message.tags %}
@@ -133,238 +153,9 @@ PONTOS CRITICOS:
             </div>
         </main>
     </div>
-    <script>
-        (function () {
-            const body = document.body;
-            const themeToggle = document.getElementById('theme-toggle');
-            const sidebarToggle = document.getElementById('sidebar-toggle');
-            const sidebarBackdrop = document.getElementById('sidebar-backdrop');
-            const savedTheme = localStorage.getItem('octobox-theme');
-
-            function digitsOnly(value) {
-                return String(value || '').replace(/\D/g, '');
-            }
-
-            function normalizeTimeValue(value) {
-                const rawValue = String(value || '').trim();
-                if (!rawValue) {
-                    return rawValue;
-                }
-
-                let hourText = '';
-                let minuteText = '';
-
-                if (rawValue.indexOf(':') >= 0) {
-                    const parts = rawValue.split(':', 2);
-                    hourText = digitsOnly(parts[0]);
-                    minuteText = digitsOnly(parts[1]);
-                    if (!hourText) {
-                        return rawValue;
-                    }
-                    if (!minuteText) {
-                        minuteText = '00';
-                    } else if (minuteText.length === 1) {
-                        minuteText = minuteText + '0';
-                    } else {
-                        minuteText = minuteText.slice(0, 2);
-                    }
-                } else {
-                    const digits = digitsOnly(rawValue);
-                    if (!digits) {
-                        return rawValue;
-                    }
-                    if (digits.length <= 2) {
-                        hourText = digits;
-                        minuteText = '00';
-                    } else if (digits.length === 3) {
-                        hourText = digits.slice(0, 1);
-                        minuteText = digits.slice(1, 3);
-                    } else {
-                        hourText = digits.slice(0, 2);
-                        minuteText = digits.slice(2, 4);
-                    }
-                }
-
-                const hour = Number(hourText);
-                const minute = Number(minuteText);
-                if (Number.isNaN(hour) || Number.isNaN(minute) || hour > 23 || minute > 59) {
-                    return rawValue;
-                }
-
-                return String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0');
-            }
-
-            function formatCpfValue(value) {
-                const digits = digitsOnly(value).slice(0, 11);
-                if (digits.length <= 3) {
-                    return digits;
-                }
-                if (digits.length <= 6) {
-                    return digits.slice(0, 3) + '.' + digits.slice(3);
-                }
-                if (digits.length <= 9) {
-                    return digits.slice(0, 3) + '.' + digits.slice(3, 6) + '.' + digits.slice(6);
-                }
-                return digits.slice(0, 3) + '.' + digits.slice(3, 6) + '.' + digits.slice(6, 9) + '-' + digits.slice(9);
-            }
-
-            function formatDateValue(value) {
-                const digits = digitsOnly(value).slice(0, 8);
-                if (digits.length <= 2) {
-                    return digits;
-                }
-                if (digits.length <= 4) {
-                    return digits.slice(0, 2) + '/' + digits.slice(2);
-                }
-                if (digits.length <= 6) {
-                    return digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4);
-                }
-                return digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4, 8);
-            }
-
-            function formatTimeTyping(value) {
-                const digits = digitsOnly(value).slice(0, 4);
-                if (digits.length <= 2) {
-                    return digits;
-                }
-                if (digits.length === 3) {
-                    return digits.slice(0, 1) + ':' + digits.slice(1, 3);
-                }
-                return digits.slice(0, 2) + ':' + digits.slice(2, 4);
-            }
-
-            function normalizeCurrencyValue(value, isBlur) {
-                const rawValue = String(value || '').replace(',', '.');
-                let normalized = '';
-                let usedDot = false;
-
-                for (const character of rawValue) {
-                    if (/\d/.test(character)) {
-                        normalized += character;
-                        continue;
-                    }
-
-                    if (character === '.' && !usedDot) {
-                        normalized += character;
-                        usedDot = true;
-                    }
-                }
-
-                if (!isBlur || !normalized || normalized === '.') {
-                    return normalized;
-                }
-
-                const parsedValue = Number(normalized);
-                if (Number.isNaN(parsedValue)) {
-                    return normalized;
-                }
-
-                return parsedValue.toFixed(2);
-            }
-
-            function attachInputPolicies() {
-                document.querySelectorAll('input[data-mask], textarea[data-mask]').forEach(function (field) {
-                    field.addEventListener('input', function () {
-                        if (field.dataset.mask === 'date' && field.type !== 'date') {
-                            field.value = formatDateValue(field.value);
-                            return;
-                        }
-
-                        if (field.dataset.mask === 'time') {
-                            field.value = formatTimeTyping(field.value);
-                            return;
-                        }
-
-                        if (field.dataset.mask === 'cpf') {
-                            field.value = formatCpfValue(field.value);
-                            return;
-                        }
-
-                        if (field.dataset.mask === 'phone') {
-                            field.value = digitsOnly(field.value).slice(0, 20);
-                            return;
-                        }
-
-                        if (field.dataset.mask === 'currency') {
-                            field.value = normalizeCurrencyValue(field.value, false);
-                        }
-                    });
-
-                    field.addEventListener('blur', function () {
-                        if (field.dataset.mask === 'date' && field.type !== 'date') {
-                            field.value = formatDateValue(field.value);
-                            return;
-                        }
-
-                        if (field.dataset.mask === 'time') {
-                            field.value = normalizeTimeValue(field.value);
-                            return;
-                        }
-
-                        if (field.dataset.mask === 'currency') {
-                            field.value = normalizeCurrencyValue(field.value, true);
-                        }
-                    });
-                });
-            }
-
-            function syncThemeUi() {
-                if (!themeToggle) {
-                    return;
-                }
-
-                const isDark = body.dataset.theme === 'dark';
-                themeToggle.textContent = isDark ? 'Tema claro' : 'Tema escuro';
-                themeToggle.setAttribute('aria-pressed', isDark ? 'true' : 'false');
-            }
-
-            function syncSidebarUi() {
-                if (!sidebarToggle) {
-                    return;
-                }
-
-                sidebarToggle.setAttribute('aria-expanded', body.classList.contains('sidebar-open') ? 'true' : 'false');
-            }
-
-            if (savedTheme === 'dark') {
-                body.dataset.theme = 'dark';
-            }
-
-            syncThemeUi();
-            syncSidebarUi();
-
-            if (themeToggle) {
-                themeToggle.addEventListener('click', function () {
-                    const nextTheme = body.dataset.theme === 'dark' ? 'light' : 'dark';
-                    body.dataset.theme = nextTheme;
-                    localStorage.setItem('octobox-theme', nextTheme);
-                    syncThemeUi();
-                });
-            }
-
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', function () {
-                    body.classList.toggle('sidebar-open');
-                    syncSidebarUi();
-                });
-            }
-
-            if (sidebarBackdrop) {
-                sidebarBackdrop.addEventListener('click', function () {
-                    body.classList.remove('sidebar-open');
-                    syncSidebarUi();
-                });
-            }
-
-            attachInputPolicies();
-
-            document.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape' && body.classList.contains('sidebar-open')) {
-                    body.classList.remove('sidebar-open');
-                    syncSidebarUi();
-                }
-            });
-        }());
-    </script>
+    {% block extra_scripts %}{% endblock %}
+    <script src="{% static 'js/core/shell.js' %}?v={{ static_asset_version }}"></script>
+    <script src="{% static 'js/core/forms.js' %}?v={{ static_asset_version }}"></script>
+    <script src="{% static 'js/core/search.js' %}?v={{ static_asset_version }}"></script>
 </body>
 </html>

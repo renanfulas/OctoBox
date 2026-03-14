@@ -15,87 +15,65 @@ PONTOS CRITICOS:
 - Depende do contexto e das leituras montadas em boxcore/catalog/views/student_views.py.
 -->
 {% extends "layouts/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
+<link rel="stylesheet" href="{% static 'css/catalog/shared.css' %}?v={{ static_asset_version }}">
+<link rel="stylesheet" href="{% static 'css/catalog/students.css' %}?v={{ static_asset_version }}">
+{% endblock %}
 
 {% block content %}
-<div class="operation-shell catalog-scene student-scene">
-<section class="hero operation-hero catalog-hero student-hero">
+{% with page=student_directory_page %}
+<div class="operation-shell catalog-scene student-scene" data-page="students" data-screen="catalog-students" data-slot="page-root">
+<section class="hero operation-hero catalog-hero student-hero" aria-label="Panorama de alunos" data-slot="hero" data-panel="students-hero">
     <div class="operation-hero-main">
         <div>
             <p class="eyebrow">Mesa de atendimento</p>
-            <h1>Encontre rápido, entenda rápido e aja sem travar.</h1>
-            <p class="operation-hero-copy">Esta tela existe para reduzir interpretação. A recepção precisa localizar e converter sem esforço; a gerência precisa ver pendência e próxima ação sem caçar informação.</p>
+            <h2>Encontre, entenda e aja sem travar.</h2>
+            <p class="operation-hero-copy">Reduza interpretação. Localize e converta sem esforço; veja pendência e próxima ação sem caçar informação.</p>
         </div>
-        <div class="operation-hero-tags">
-            <span class="pill info">Mesa de operacao</span>
-            <span class="pill accent">Triagem, intake e conversao</span>
-            <span class="pill">{% if can_manage_students %}Ação liberada{% else %}Leitura assistida{% endif %}</span>
-        </div>
-        <div class="actions">
-            {% if can_manage_students %}
-            <a class="button" href="/alunos/novo/">Novo aluno</a>
+        <div class="actions" data-slot="students-hero-actions">
+            {% if page.capabilities.can_manage_students %}
+            <a class="button" href="/alunos/novo/#student-form-essential" data-action="open-student-create">Novo aluno</a>
             {% endif %}
-            <a class="button secondary" href="#student-priority-board">Ver prioridades</a>
-            {% if can_export_students %}
-            <a class="button secondary" href="{{ student_export_links.csv }}">Exportar CSV</a>
-            <a class="button secondary" href="{{ student_export_links.pdf }}">Exportar PDF</a>
+            <a class="button secondary" href="#student-priority-board" data-action="jump-student-priorities">Ver prioridades</a>
+            {% if page.capabilities.can_export_students %}
+            <a class="button secondary" href="{{ page.actions.student_export_links.csv }}" data-action="export-students-csv">Exportar CSV</a>
+            <a class="button secondary" href="{{ page.actions.student_export_links.pdf }}" data-action="export-students-pdf">Exportar PDF</a>
             {% endif %}
         </div>
     </div>
-    <aside class="operation-hero-side">
+    <aside class="operation-hero-side" data-panel="students-hero-summary">
         <article class="operation-hero-panel hero-side-stack">
             <div>
                 <p class="eyebrow">Radar da base</p>
-                <p class="operation-card-copy">A recepcao enxerga contato quente, a gerencia enxerga pendencia e a operacao nao perde timing de conversao.</p>
+                <p class="operation-card-copy">Contato quente, pendência e timing de conversão.</p>
             </div>
             <div class="hero-side-stat-grid">
                 <div class="hero-side-stat">
                     <span>Visiveis</span>
-                    <strong>{{ students|length }}</strong>
+                    <strong>{{ page.data.students|length }}</strong>
                 </div>
                 <div class="hero-side-stat">
                     <span>Triagem agora</span>
-                    <strong>{{ priority_students|length }}</strong>
+                    <strong>{{ page.data.priority_students|length }}</strong>
                 </div>
                 <div class="hero-side-stat">
                     <span>Intakes prontos</span>
-                    <strong>{{ intake_queue|length }}</strong>
+                    <strong>{{ page.data.intake_queue|length }}</strong>
                 </div>
                 <div class="hero-side-stat">
                     <span>Modo</span>
-                    <strong>{% if can_manage_students %}acao{% else %}consulta{% endif %}</strong>
+                    <strong>{% if page.capabilities.can_manage_students %}acao{% else %}consulta{% endif %}</strong>
                 </div>
             </div>
         </article>
     </aside>
 </section>
 
-<section class="table-card glass-panel student-focus-card">
-    <div class="operation-card-head">
-        <div>
-            <p class="eyebrow">Comece por aqui</p>
-            <h2 class="operation-card-title">Três leituras para não travar o atendimento</h2>
-            <p class="operation-card-copy">Antes de descer para filtros e lista, use este bloco para saber onde está a pressão do momento.</p>
-        </div>
-        <span class="pill accent">Foco imediato</span>
-    </div>
-    <div class="student-focus-list">
-        {% for item in student_operational_focus %}
-        <article class="student-focus-item">
-            <div class="student-focus-copy">
-                <p class="eyebrow">{{ item.label }}</p>
-                <p>{{ item.summary }}</p>
-            </div>
-            <div class="student-focus-actions">
-                <span class="pill {{ item.pill_class }}">prioridade</span>
-                <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
-            </div>
-        </article>
-        {% endfor %}
-    </div>
-</section>
-
-<section class="panel-grid">
-    {% for label, item in student_metrics.items %}
+<section class="panel-grid" aria-label="Metricas da base" data-slot="metrics" data-panel="students-metrics">
+    {% for label, item in page.data.student_metrics.items %}
     <article class="card metric-card primary-glow">
         <p class="eyebrow">{{ label }}</p>
         <p class="metric">{{ item.value }}</p>
@@ -105,8 +83,8 @@ PONTOS CRITICOS:
     {% endfor %}
 </section>
 
-<section class="panel-grid">
-    {% for label, item in student_funnel.items %}
+<section class="panel-grid" aria-label="Funil de conversao" data-slot="summary" data-panel="students-funnel">
+    {% for label, item in page.data.student_funnel.items %}
     <article class="card metric-card secondary-glow">
         <p class="eyebrow">{{ label }}</p>
         <p class="metric">{{ item.value }}</p>
@@ -116,68 +94,47 @@ PONTOS CRITICOS:
     {% endfor %}
 </section>
 
-<section class="table-card glass-panel section-gap student-filter-card">
+<section class="table-card glass-panel section-gap student-filter-card" aria-label="Busca e filtros" data-slot="filters" data-panel="students-filters">
     <p class="eyebrow">Busca e recorte comercial</p>
-    <p class="meta-text">Use busca e filtros apenas para estreitar a leitura. A prioridade da tela continua sendo triagem e próxima ação.</p>
-    <form method="get" class="form-stack">
+    <p class="meta-text">Busca e filtros para estreitar a leitura. A prioridade continua sendo triagem e próxima ação.</p>
+    <form method="get" class="form-stack" data-action="filter-students">
         <div class="field-grid-200">
             <label>
-                <span class="field-label">{{ student_filter_form.query.label }}</span>
-                {{ student_filter_form.query }}
+                <span class="field-label">{{ page.data.student_filter_form.query.label }}</span>
+                {{ page.data.student_filter_form.query }}
             </label>
             <label>
-                <span class="field-label">{{ student_filter_form.student_status.label }}</span>
-                {{ student_filter_form.student_status }}
+                <span class="field-label">{{ page.data.student_filter_form.student_status.label }}</span>
+                {{ page.data.student_filter_form.student_status }}
             </label>
             <label>
-                <span class="field-label">{{ student_filter_form.commercial_status.label }}</span>
-                {{ student_filter_form.commercial_status }}
+                <span class="field-label">{{ page.data.student_filter_form.commercial_status.label }}</span>
+                {{ page.data.student_filter_form.commercial_status }}
             </label>
             <label>
-                <span class="field-label">{{ student_filter_form.payment_status.label }}</span>
-                {{ student_filter_form.payment_status }}
+                <span class="field-label">{{ page.data.student_filter_form.payment_status.label }}</span>
+                {{ page.data.student_filter_form.payment_status }}
             </label>
         </div>
         <div class="actions actions-tight">
-            <button class="button" type="submit">Aplicar filtros</button>
-            <a class="button secondary" href="/alunos/">Limpar</a>
+            <button class="button" type="submit" data-action="apply-student-filters">Aplicar filtros</button>
+            <a class="button secondary" href="/alunos/" data-action="clear-student-filters">Limpar</a>
+            {% if page.capabilities.can_manage_students %}
+            <a class="button" href="/alunos/novo/#student-form-essential" data-action="open-student-quick-create">Abrir cadastro rapido</a>
+            {% endif %}
+            {% if page.capabilities.can_open_student_admin %}
+            <a class="button secondary" href="/admin/boxcore/student/add/" data-action="open-student-admin-create">Abrir no admin</a>
+            {% endif %}
         </div>
     </form>
 </section>
 
-<section class="layout-grid section-gap">
-    <article class="table-card quick-hero-card student-command-card">
-        <p class="eyebrow">Ação rápida</p>
-        <h2 class="section-title">Cadastre ou encontre sem travar o atendimento</h2>
-        <p class="body-copy text-muted">Nome e WhatsApp resolvem a entrada inicial. O restante da ficha pode amadurecer depois, quando o contato já estiver vivo na operação.</p>
-        {% if can_manage_students %}
-        <div class="actions actions-tight">
-            <a class="button" href="/alunos/novo/">Abrir cadastro rapido</a>
-            {% if can_open_student_admin %}
-            <a class="button secondary" href="/admin/boxcore/student/add/">Abrir no admin</a>
-            {% endif %}
-        </div>
-        {% else %}
-        <p class="meta-text">Seu papel atual pode consultar a base, mas nao pode cadastrar alunos por esta tela.</p>
-        {% endif %}
-    </article>
-
-    <article class="table-card info-card student-support-card">
-        <p class="eyebrow">Como usar bem esta tela</p>
-        <ul class="capability-list">
-            {% for item in student_focus %}
-            <li>{{ item }}</li>
-            {% endfor %}
-        </ul>
-    </article>
-</section>
-
-<section class="layout-grid student-compact-layout section-gap" id="student-priority-board">
-    <article class="table-card student-priority-panel">
+<section class="layout-grid student-compact-layout section-gap" id="student-priority-board" aria-label="Painel de prioridade" data-slot="students-priority-board">
+    <article class="table-card student-priority-panel" data-panel="students-priority-board">
         <p class="eyebrow">Quem pede ação agora</p>
         <div class="stack-14">
-            {% for student in priority_students %}
-            <article class="priority-student-card">
+            {% for student in page.data.priority_students %}
+            <article class="priority-student-card" data-panel="priority-student-card">
                 <div class="row-between-md">
                     <div>
                         <strong>{{ student.full_name }}</strong>
@@ -191,11 +148,11 @@ PONTOS CRITICOS:
                 </div>
                 <p class="meta-text">{% if student.latest_plan_name %}Plano atual: {{ student.latest_plan_name }}.{% else %}Ainda sem plano conectado.{% endif %}</p>
                 <div class="actions actions-tight">
-                    {% if can_manage_students %}
-                    <a class="button secondary" href="/alunos/{{ student.id }}/editar/">Abrir ficha</a>
+                    {% if page.capabilities.can_manage_students %}
+                    <a class="button secondary" href="/alunos/{{ student.id }}/editar/#student-financial-overview" data-action="open-priority-student-form">Abrir ficha</a>
                     {% endif %}
-                    {% if can_open_student_admin %}
-                    <a class="button secondary" href="/admin/boxcore/student/{{ student.id }}/change/">Admin</a>
+                    {% if page.capabilities.can_open_student_admin %}
+                    <a class="button secondary" href="/admin/boxcore/student/{{ student.id }}/change/" data-action="open-priority-student-admin">Admin</a>
                     {% endif %}
                 </div>
             </article>
@@ -204,36 +161,26 @@ PONTOS CRITICOS:
             {% endfor %}
         </div>
     </article>
-
-    <article class="table-card info-card">
-        <p class="eyebrow">Leitura que realmente importa</p>
-        <ul class="capability-list">
-            <li>Lead sem conversao em andamento vira perda de atendimento.</li>
-            <li>Aluno sem plano ativo pede revisao comercial, reativacao ou limpeza de base.</li>
-            <li>Financeiro em atraso precisa aparecer cedo para nao virar surpresa no caixa.</li>
-            <li>Recepcao olha contato e proximo passo; a gerencia olha plano, pendencia e atraso.</li>
-        </ul>
-    </article>
 </section>
 
-<section class="table-card glass-panel section-gap student-queue-panel" id="student-intake-board">
+<section class="table-card glass-panel section-gap student-queue-panel" id="student-intake-board" aria-label="Fila de intake" data-panel="students-intake-board">
     <div class="row-between-md student-section-head">
         <div>
             <p class="eyebrow">Fila de entrada provisoria pronta para conversao</p>
-            <p class="meta-text">Aqui ficam os contatos que a recepcao pode transformar em aluno definitivo com menos atrito.</p>
+            <p class="meta-text">Contatos prontos para virar aluno com menos atrito.</p>
         </div>
     </div>
     <div class="intake-grid">
-        {% for intake in intake_queue %}
-        <div class="intake-card">
+        {% for intake in page.data.intake_queue %}
+        <div class="intake-card" data-panel="students-intake-card">
             <div>
                 <strong>{{ intake.full_name }}</strong>
                 <p class="meta-text-sm">{{ intake.phone }}{% if intake.email %} | {{ intake.email }}{% endif %}</p>
                 <p class="meta-text">{{ intake.get_source_display }} | {{ intake.get_status_display }} | {{ intake.created_at|date:"d/m H:i" }}</p>
             </div>
-            {% if can_manage_students %}
+            {% if page.capabilities.can_manage_students %}
             <div class="actions actions-tight">
-                <a class="button" href="/alunos/novo/?intake={{ intake.id }}">Converter em aluno</a>
+                <a class="button" href="/alunos/novo/?intake={{ intake.id }}#student-form-essential" data-action="convert-intake-to-student">Converter em aluno</a>
             </div>
             {% endif %}
         </div>
@@ -243,27 +190,27 @@ PONTOS CRITICOS:
     </div>
 </section>
 
-<section class="table-card glass-panel student-table-wrap student-data-panel" id="student-directory-board">
+<section class="table-card glass-panel student-table-wrap student-data-panel" id="student-directory-board" aria-label="Diretorio de alunos" data-panel="students-directory-board">
     <div class="row-between-md student-section-head">
         <div>
             <p class="eyebrow">Base principal de alunos</p>
-            <p class="meta-text">Lista enxuta para atendimento rapido, com foco em contato, plano, financeiro e proxima acao.</p>
+            <p class="meta-text">Lista enxuta com foco em contato, plano, financeiro e ação.</p>
         </div>
     </div>
     <table>
         <thead>
             <tr>
-                <th>Aluno</th>
-                <th>Contato</th>
-                <th>Comercial</th>
-                <th>Financeiro</th>
-                <th>Atualizado</th>
-                <th>Ações</th>
+                <th scope="col">Aluno</th>
+                <th scope="col">Contato</th>
+                <th scope="col">Comercial</th>
+                <th scope="col">Financeiro</th>
+                <th scope="col">Atualizado</th>
+                <th scope="col">Ações</th>
             </tr>
         </thead>
         <tbody>
-            {% for student in students %}
-            <tr class="student-row">
+            {% for student in page.data.students %}
+            <tr class="student-row" data-panel="student-row">
                 <td>
                     <strong>{{ student.full_name }}</strong>
                     <p class="meta-text-sm">{{ student.get_status_display }}</p>
@@ -280,10 +227,18 @@ PONTOS CRITICOS:
                 </td>
                 <td>
                     <div class="stack-8">
-                        {% if student.latest_payment_status == 'overdue' %}
+                        {% if student.operational_payment_status == 'overdue' %}
                         <span class="pill warning">Em atraso</span>
-                        {% elif student.latest_payment_status %}
-                        <span class="pill info">{{ student.latest_payment_status }}</span>
+                        {% elif student.operational_payment_status == 'pending' %}
+                        <span class="pill info">Pendente</span>
+                        {% elif student.operational_payment_status == 'paid' %}
+                        <span class="pill success">Pago</span>
+                        {% elif student.operational_payment_status == 'canceled' %}
+                        <span class="pill">Cancelado</span>
+                        {% elif student.operational_payment_status == 'refunded' %}
+                        <span class="pill warning">Estornado</span>
+                        {% elif student.operational_payment_status %}
+                        <span class="pill info">{{ student.operational_payment_status }}</span>
                         {% else %}
                         <span class="pill">Sem cobranca</span>
                         {% endif %}
@@ -292,18 +247,23 @@ PONTOS CRITICOS:
                 <td>{{ student.updated_at|date:"d/m/Y H:i" }}</td>
                 <td>
                     <div class="actions actions-tight">
-                        {% if can_manage_students %}
-                        <a class="button secondary" href="/alunos/{{ student.id }}/editar/">Abrir ficha</a>
+                        {% if page.capabilities.can_manage_students %}
+                        <a class="button secondary" href="/alunos/{{ student.id }}/editar/#student-financial-overview" data-action="open-student-form">Abrir ficha</a>
                         {% endif %}
-                        <a class="button secondary" href="/admin/boxcore/student/{{ student.id }}/change/">Admin</a>
+                        <a class="button secondary" href="/admin/boxcore/student/{{ student.id }}/change/" data-action="open-student-admin">Admin</a>
                     </div>
                 </td>
             </tr>
             {% empty %}
-            <tr><td colspan="6" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Base principal" title="Nenhum aluno encontrado nesse recorte" copy="A busca aplicada nao retornou alunos com esse perfil agora." badge="Refine o filtro" badge_class="warning" %}</td></tr>
+            <tr>
+                <td colspan="6" class="table-empty-cell">
+                    {% include "includes/ui/state_empty.html" with compact=True eyebrow="Base principal" title="Nenhum aluno encontrado neste recorte" copy="Ajuste a busca ou os filtros para ampliar a leitura da base principal." badge="Sem resultados" badge_class="info" %}
+                </td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
 </section>
 </div>
+{% endwith %}
 {% endblock %}

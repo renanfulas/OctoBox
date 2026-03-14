@@ -13,20 +13,20 @@ PONTOS CRITICOS:
 - Depende diretamente do contexto role_definitions e current_role.
 -->
 {% extends "layouts/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
+{% endblock %}
 
 {% block content %}
 <div class="operation-shell">
-    <section class="hero operation-hero">
+    <section class="hero operation-hero" aria-label="Panorama de acessos">
         <div class="operation-hero-main">
             <div>
                 <p class="eyebrow">Fronteiras do sistema</p>
-                <h1>Veja quem deve agir, quem nao deve invadir e onde cada papel comeca.</h1>
-                <p class="operation-hero-copy">Esta area existe para impedir confusao de autoridade. Ela precisa mostrar com rapidez quem cuida do crescimento, quem investiga o sistema, quem executa a rotina administrativa e onde a operacao tecnica deve permanecer limpa.</p>
-            </div>
-            <div class="operation-hero-tags">
-                <span class="pill accent">{{ current_role.label }}</span>
-                <span class="pill info">Governanca operacional</span>
-                <span class="pill">Limite antes de permissao solta</span>
+                <h2>Quem age, quem não invade e onde cada papel começa.</h2>
+                <p class="operation-hero-copy">Mapa rápido de autoridade: crescimento, investigação, rotina administrativa e operação técnica.</p>
             </div>
             <div class="actions">
                 <a class="button" href="#access-current-role">Ver meu escopo</a>
@@ -35,16 +35,16 @@ PONTOS CRITICOS:
             </div>
         </div>
         <aside class="operation-hero-side">
-            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Leitura instantanea" copy="Quatro sinais para entender rapidamente qual papel esta ativo e como a governanca ja foi desenhada." stats=hero_stats %}
+            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Leitura instantanea" copy="Papel ativo e governança atual." stats=hero_stats %}
         </aside>
     </section>
 
-    <section class="table-card operation-focus-card">
+    <section class="table-card operation-focus-card" aria-label="Foco de leitura de acesso">
         <div class="operation-card-head">
             <div>
                 <p class="eyebrow">Comece por aqui</p>
-                <h2 class="operation-card-title">Tres leituras para nao transformar acesso em texto burocratico</h2>
-                <p class="operation-card-copy">Primeiro entenda seu proprio escopo, depois compare fronteiras e so entao mexa em grupos e governanca.</p>
+                <h2 class="operation-card-title">Três leituras de acesso</h2>
+                <p class="operation-card-copy">Escopo próprio → fronteiras → governança.</p>
             </div>
             <span class="pill accent">Foco de leitura</span>
         </div>
@@ -64,16 +64,16 @@ PONTOS CRITICOS:
         </div>
     </section>
 
-    <section class="layout-grid align-start">
+    <section class="layout-grid align-start" aria-label="Escopo e governanca">
         <div id="access-current-role">
-            {% include "includes/ui/info_list_card.html" with eyebrow="Escopo do papel ativo" title="Como este usuario deveria operar" copy="Use este bloco como leitura curta do que pertence ao seu papel antes de abrir telas mais densas ou pedir permissao extra." pill_label=current_role.label pill_class="info" items=role_capabilities empty_text="Defina um grupo de acesso para este usuario." %}
+            {% include "includes/ui/info_list_card.html" with eyebrow="Escopo do papel ativo" title="Como este usuario deveria operar" copy="O que pertence ao seu papel." pill_label=current_role.label pill_class="info" items=role_capabilities empty_text="Defina um grupo de acesso para este usuario." %}
         </div>
         <div id="access-governance-board">
-            {% include "includes/ui/info_list_card.html" with card_class="operation-empty-card" eyebrow="Governanca pratica" title="O que esta tela precisa impedir" copy="A camada de acesso deve bloquear mistura de responsabilidade antes de virar problema de rotina ou de manutencao." pill_label="Limites claros" pill_class="accent" items=governance_points %}
+            {% include "includes/ui/info_list_card.html" with card_class="operation-empty-card" eyebrow="Governanca pratica" title="O que esta tela precisa impedir" copy="Bloquear mistura de responsabilidade." pill_label="Limites claros" pill_class="accent" items=governance_points %}
         </div>
     </section>
 
-    <section id="access-role-map" class="panel-grid">
+    <section id="access-role-map" class="panel-grid" aria-label="Mapa de papeis">
         {% for role in role_definitions %}
         <article class="table-card">
             <div class="operation-card-head">

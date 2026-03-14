@@ -79,11 +79,11 @@ def build_finance_report(*, snapshot, report_format):
 
     if report_format == 'pdf':
         plan_lines = [
-            f'{plan.name} | R$ {plan.price} | {plan.get_billing_cycle_display()} | ativo={"sim" if plan.active else "nao"}'
+            f'{plan.name} | R$ {plan.price:.2f} | {plan.get_billing_cycle_display()} | ativo={"sim" if plan.active else "nao"}'
             for plan in plans[:30]
         ] or ['Nenhum plano encontrado para o filtro atual.']
         payment_lines = [
-            f'{payment.student.full_name} | {payment.due_date:%d/%m/%Y} | R$ {payment.amount} | {payment.get_status_display()}'
+            f'{payment.student.full_name} | {payment.due_date:%d/%m/%Y} | R$ {payment.amount:.2f} | {payment.get_status_display()}'
             for payment in payments.order_by('due_date', 'student__full_name')[:45]
         ] or ['Nenhum pagamento encontrado para o filtro atual.']
         movement_lines = [

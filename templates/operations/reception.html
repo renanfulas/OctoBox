@@ -14,141 +14,70 @@ PONTOS CRITICOS:
 - cobranca aqui e operacional, nao leitura gerencial de caixa.
 -->
 {% extends "layouts/base.html" %}
+{% load static l10n %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
+{% endblock %}
 
 {% block content %}
-<div class="operation-shell reception-scene">
-    <section class="hero operation-hero reception-hero">
+{% with page=operation_page %}
+<div class="operation-shell reception-scene" data-page="reception" data-screen="operations-reception" data-slot="page-root">
+    <section class="hero operation-hero reception-hero" aria-label="Panorama da recepcao" data-panel="reception-hero">
         <div class="operation-hero-main">
             <div>
                 <p class="eyebrow">Centro da recepcao</p>
-                <h1>Veja quem chegou, qual aula importa agora e qual cobranca cabe no balcao.</h1>
-                <p class="operation-hero-copy">Esta tela existe para a Recepcao trabalhar no compasso certo: acolher, localizar, orientar e resolver o caixa curto sem afundar em administrativo amplo.</p>
+                <h2>Quem chegou, qual aula importa e qual cobrança cabe no balcão.</h2>
+                <p class="operation-hero-copy">Acolher, localizar, orientar e resolver o caixa curto sem afundar em administrativo amplo.</p>
             </div>
-            <div class="operation-hero-tags">
-                <span class="pill">Atendimento rapido</span>
-                <span class="pill info">Aluno, aula e cobranca</span>
-                <span class="pill accent">Sem financeiro completo</span>
-            </div>
-            <div class="actions">
-                <a class="button" href="#reception-intake-board">Ver entradas</a>
-                <a class="button secondary" href="#reception-payment-board">Ver cobranca curta</a>
-                <a class="button secondary" href="#reception-class-grid-board">Ver grade em leitura</a>
+            <div class="actions" data-slot="reception-jump-links">
+                <a class="button" href="#reception-payment-board" data-action="jump-reception-payments">Ver cobrança curta</a>
+                <a class="button secondary" href="#reception-intake-board" data-action="jump-reception-intakes">Ver entradas</a>
+                <a class="button secondary" href="#reception-class-grid-board" data-action="jump-reception-class-grid">Ver grade em leitura</a>
             </div>
         </div>
-        <aside class="operation-hero-side">
-            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Pulso do balcao" copy="Leitura imediata para decidir se o turno pede acolhimento, caixa curto ou orientacao de agenda antes de qualquer outra coisa." stats=hero_stats %}
-            <article class="operation-hero-panel reception-sidecard">
-                <p class="eyebrow">Promessa da area</p>
-                <h2 class="operation-card-title">Acolher sem perder ritmo</h2>
-                <p class="operation-card-copy">A Recepcao existe para resolver o que precisa caber no atendimento: ficha, proxima aula e pagamento curto, nessa ordem quando o turno apertar.</p>
-                <span class="pill accent">Papel oficial</span>
-            </article>
+        <aside class="operation-hero-side" data-panel="reception-pulse-panel">
+            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Pulso do balcão" copy="Decida se o turno pede acolhimento, caixa curto ou orientação de agenda." stats=page.data.hero_stats %}
         </aside>
     </section>
 
-    <section class="table-card operation-focus-card">
-        <div class="operation-card-head">
-            <div>
-                <p class="eyebrow">Comece por aqui</p>
-                <h2 class="operation-card-title">Tres leituras para a Recepcao nao cair no administrativo longo</h2>
-                <p class="operation-card-copy">Primeiro o aluno. Depois a cobranca curta. Feche com a grade em leitura para orientar rapido quem chegou no balcao.</p>
-            </div>
-            <span class="pill accent">Ritmo do balcao</span>
-        </div>
-        <div class="operation-focus-list">
-            {% for item in reception_focus %}
-            <article class="operation-focus-item">
-                <div class="operation-focus-copy">
-                    <p class="eyebrow">{{ item.label }}</p>
-                    <p>{{ item.summary }}</p>
-                </div>
-                <div class="operation-focus-actions">
-                    <span class="pill {{ item.pill_class }}">foco</span>
-                    <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="panel-grid operation-metric-grid">
-        {% for card in metric_cards %}
+    <section class="panel-grid operation-metric-grid" aria-label="Metricas operacionais" data-slot="reception-metric-grid">
+        {% for card in page.data.metric_cards %}
         {% include "includes/ui/metric_card.html" with card=card %}
         {% endfor %}
     </section>
 
-    <section class="layout-grid operation-grid-wide align-start reception-support-grid">
-        {% include "includes/ui/info_list_card.html" with eyebrow="Fronteira da Recepcao" title="O que esta area resolve" items=reception_boundaries %}
-        <article class="table-card operation-table-card reception-command-card">
+    <section class="layout-grid operation-grid-wide align-start reception-support-grid" aria-label="Atalhos" data-slot="reception-support-grid">
+        <article class="table-card operation-table-card reception-command-card" data-panel="reception-shortcuts">
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Atalhos de atendimento</p>
-                    <h2 class="operation-card-title">Abra o necessario sem sair do compasso</h2>
-                    <p class="operation-card-copy">Esses destinos sustentam o atendimento rapido sem levar a Recepcao para o centro financeiro ou para a gestao da agenda.</p>
+                    <h2 class="operation-card-title">Atalhos de atendimento</h2>
+                    <p class="operation-card-copy">Destinos de fluxo curto sem sair do compasso.</p>
                 </div>
                 <span class="pill info">Fluxo curto</span>
             </div>
             <div class="actions actions-tight">
-                <a class="button secondary" href="/alunos/">Abrir alunos</a>
-                <a class="button secondary" href="/alunos/novo/">Novo aluno</a>
-                <a class="button secondary" href="/grade-aulas/">Abrir grade</a>
+                <a class="button secondary" href="/alunos/" data-action="open-students-directory">Abrir alunos</a>
+                <a class="button secondary" href="/alunos/novo/#student-form-essential" data-action="open-student-registration">Novo aluno</a>
+                <a class="button secondary" href="/grade-aulas/" data-action="open-class-grid">Abrir grade</a>
             </div>
         </article>
     </section>
 
-    <section class="layout-grid operation-grid-wide align-start">
-        <article class="table-card operation-table-card" id="reception-intake-board">
-            <div class="operation-card-head">
-                <div>
-                    <p class="eyebrow">Fila de entrada</p>
-                    <h2 class="operation-card-title">Quem pode virar ficha sem perder temperatura</h2>
-                    <p class="operation-card-copy">Este quadro abre o atendimento pela pessoa certa: localizar rapido, entender a origem e abrir o cadastro com pouco atrito.</p>
-                </div>
-                <span class="pill info">{{ reception_intakes|length }} entrada(s)</span>
-            </div>
-            <div class="operation-table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Contato</th>
-                            <th>Origem</th>
-                            <th>Status</th>
-                            <th>Proximo passo</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for intake in reception_intakes %}
-                        <tr>
-                            <td>
-                                <strong>{{ intake.full_name }}</strong>
-                                <p class="meta-text-sm">{{ intake.phone }}{% if intake.email %} | {{ intake.email }}{% endif %}</p>
-                            </td>
-                            <td>{{ intake.get_source_display }}</td>
-                            <td><span class="pill info">{{ intake.get_status_display }}</span></td>
-                            <td>
-                                <a class="button secondary button-sm" href="/alunos/novo/?intake={{ intake.id }}">Abrir cadastro</a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="4" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Fila de entrada" title="Nenhuma chegada aguardando conversao" copy="O balcao nao tem novo contato pendente neste recorte." badge="Fluxo limpo" badge_class="accent" %}</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </article>
-
-        <article class="table-card operation-table-card reception-payment-board" id="reception-payment-board">
+    <section class="layout-grid operation-grid-wide align-start" aria-label="Cobranca e entradas" data-slot="reception-main-grid">
+        <article class="table-card operation-table-card reception-payment-board" id="reception-payment-board" data-panel="reception-payment-board">
             <div class="operation-card-head">
                 <div>
                     <p class="eyebrow">Cobranca operacional</p>
-                    <h2 class="operation-card-title">Fila de caixa explicada em linguagem de balcao</h2>
-                    <p class="operation-card-copy">Aqui a Recepcao enxerga quem esta em atraso, quem vence hoje e o motivo curto da abordagem sem abrir o centro financeiro.</p>
+                    <h2 class="operation-card-title">Fila de caixa do balcão</h2>
+                    <p class="operation-card-copy">Atraso, vencimento e motivo curto da abordagem.</p>
                 </div>
-                <span class="pill warning">{{ reception_queue|length }} caso(s)</span>
+                <span class="pill warning">{{ page.data.reception_queue|length }} caso(s)</span>
             </div>
             <div class="reception-payment-grid">
-                {% for item in reception_queue %}
-                <article class="history-entry finance-action-card finance-action-card-compact reception-payment-card">
+                {% for item in page.data.reception_queue %}
+                <article class="history-entry finance-action-card finance-action-card-compact reception-payment-card" data-panel="reception-payment-card">
                     <div class="row-between history-header finance-action-head">
                         <div class="finance-action-copy">
                             <strong>{{ item.student_name }}</strong>
@@ -163,7 +92,7 @@ PONTOS CRITICOS:
                         </div>
                         <div class="finance-alert-stat">
                             <span class="operation-mini-label">Valor</span>
-                            <strong>R$ {{ item.amount }}</strong>
+                            <strong>R$ {{ item.amount|floatformat:2 }}</strong>
                         </div>
                         <div class="finance-alert-stat">
                             <span class="operation-mini-label">Metodo atual</span>
@@ -174,11 +103,13 @@ PONTOS CRITICOS:
                         <p class="eyebrow">Leitura de balcao</p>
                         <p class="meta-text">{{ item.reason }}</p>
                     </div>
-                    {% if can_manage_reception_payments %}
-                    <form method="post" action="/operacao/recepcao/pagamento/{{ item.payment_id }}/acao/" class="reception-payment-form">
+                    {% if page.capabilities.can_manage_reception_payments %}
+                    <form method="post" action="/operacao/recepcao/pagamento/{{ item.payment_id }}/acao/" class="reception-payment-form" data-action="manage-reception-payment">
                         {% csrf_token %}
                         <input type="hidden" name="payment_id" value="{{ item.payment_id }}">
+                        {% localize off %}
                         <input type="hidden" name="amount" value="{{ item.amount }}">
+                        {% endlocalize %}
                         <div class="field-grid-220">
                             <label>
                                 <span class="field-label">Vencimento curto</span>
@@ -187,7 +118,7 @@ PONTOS CRITICOS:
                             <label>
                                 <span class="field-label">Metodo recebido</span>
                                 <select name="method">
-                                    {% for value, label in reception_payment_methods %}
+                                    {% for value, label in page.data.reception_payment_methods %}
                                     <option value="{{ value }}"{% if item.method == value %} selected{% endif %}>{{ label }}</option>
                                     {% endfor %}
                                 </select>
@@ -204,9 +135,9 @@ PONTOS CRITICOS:
                             </label>
                         </div>
                         <div class="actions actions-tight finance-card-actions-compact reception-payment-actions">
-                            <button class="button" type="submit" name="action" value="mark-paid">Confirmar pagamento</button>
-                            <button class="button secondary" type="submit" name="action" value="update-payment">Salvar ajuste curto</button>
-                            <a class="button secondary" href="{{ item.student_href }}">Abrir ficha do aluno</a>
+                            <button class="button" type="submit" name="action" value="mark-paid" data-action="confirm-reception-payment">Confirmar pagamento</button>
+                            <button class="button secondary" type="submit" name="action" value="update-payment" data-action="save-reception-payment-update">Salvar ajuste curto</button>
+                            <a class="button secondary" href="{{ item.student_href }}#student-financial-overview" data-action="open-student-financial-overview">Abrir ficha do aluno</a>
                         </div>
                     </form>
                     {% endif %}
@@ -218,20 +149,60 @@ PONTOS CRITICOS:
                 {% endfor %}
             </div>
         </article>
+
+        <article class="table-card operation-table-card" id="reception-intake-board" data-panel="reception-intake-board">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Fila de entrada</p>
+                    <h2 class="operation-card-title">Quem pode virar ficha agora</h2>
+                    <p class="operation-card-copy">Localizar, entender a origem e abrir cadastro com pouco atrito.</p>
+                </div>
+                <span class="pill info">{{ page.data.reception_intakes|length }} entrada(s)</span>
+            </div>
+            <div class="operation-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Contato</th>
+                            <th scope="col">Origem</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Proximo passo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for intake in page.data.reception_intakes %}
+                        <tr>
+                            <td>
+                                <strong>{{ intake.full_name }}</strong>
+                                <p class="meta-text-sm">{{ intake.phone }}{% if intake.email %} | {{ intake.email }}{% endif %}</p>
+                            </td>
+                            <td>{{ intake.get_source_display }}</td>
+                            <td><span class="pill info">{{ intake.get_status_display }}</span></td>
+                            <td>
+                                <a class="button secondary button-sm" href="/alunos/novo/?intake={{ intake.id }}#student-form-essential" data-action="open-intake-registration">Abrir cadastro</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Fila de entrada" title="Nenhuma chegada aguardando conversao" copy="O balcao nao tem novo contato pendente neste recorte." badge="Fluxo limpo" badge_class="accent" %}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
     </section>
 
-    <section class="table-card operation-table-card reception-grid-board" id="reception-class-grid-board">
+    <section class="table-card operation-table-card reception-grid-board" id="reception-class-grid-board" aria-label="Grade de aulas da recepcao" data-panel="reception-class-grid-board">
         <div class="operation-card-head">
             <div>
                 <p class="eyebrow">Grade em leitura</p>
-                <h2 class="operation-card-title">Proximas aulas para orientar rapido no balcao</h2>
-                <p class="operation-card-copy">A Recepcao aqui nao ajusta a agenda. Ela so precisa enxergar horario, coach e contexto suficiente para responder a rotina do turno.</p>
+                <h2 class="operation-card-title">Próximas aulas para orientar no balcão</h2>
+                <p class="operation-card-copy">Horário, coach e contexto para a rotina do turno.</p>
             </div>
             <span class="pill info">Leitura apenas</span>
         </div>
         <div class="reception-grade-grid">
-            {% for session in reception_sessions %}
-            <article class="reception-grade-card">
+            {% for session in page.data.reception_sessions %}
+            <article class="reception-grade-card" data-panel="reception-class-session-card">
                 <div>
                     <p class="eyebrow">Aula visivel</p>
                     <h3 class="operation-card-title">{{ session.title }}</h3>
@@ -249,7 +220,7 @@ PONTOS CRITICOS:
                     </div>
                 </div>
                 <div class="actions actions-tight">
-                    <a class="button secondary button-sm" href="/grade-aulas/">Abrir grade completa</a>
+                    <a class="button secondary button-sm" href="/grade-aulas/" data-action="open-full-class-grid">Abrir grade completa</a>
                 </div>
             </article>
             {% empty %}
@@ -260,4 +231,5 @@ PONTOS CRITICOS:
         </div>
     </section>
 </div>
+{% endwith %}
 {% endblock %}

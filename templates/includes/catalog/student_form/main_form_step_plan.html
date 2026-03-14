@@ -1,0 +1,25 @@
+<!--
+ARQUIVO: passo de plano e status comercial da ficha do aluno.
+-->
+<details id="student-form-plan"{% if page_mode == 'create' or form.selected_plan.errors or form.enrollment_status.errors %} open{% endif %} class="disclosure-panel disclosure-panel-success">
+    <summary>Passo 4: plano e status comercial</summary>
+    <div class="stack-16 section-gap-top-xs">
+        <div class="field-grid-220">
+            <label>
+                <span class="field-label">{{ form.selected_plan.label }}</span>
+                {{ form.selected_plan }}
+                {% if form.selected_plan.help_text %}<small class="meta-text">{{ form.selected_plan.help_text }}</small>{% endif %}
+                {% for error in form.selected_plan.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+            </label>
+            <label>
+                <span class="field-label">Valor do plano conectado</span>
+                <input id="connected-plan-price" type="text" value="--" readonly>
+                <small class="meta-text">Ao selecionar um plano, o valor da cobranca inicial acompanha esse valor automaticamente.</small>
+            </label>
+        </div>
+        {{ form.enrollment_status.as_hidden }}
+        <div class="note-panel note-panel-success-soft text-muted">
+            O plano escolhido ja prepara a matricula do aluno. Isso reduz retrabalho e faz a pagina de alunos conversar direto com a central de financeiro.
+        </div>
+    </div>
+</details>

@@ -1,0 +1,43 @@
+<!--
+ARQUIVO: gestao da cobranca atual do aluno.
+-->
+{% if page.data.payment_management_form %}
+<article class="table-card section-gap-top-sm" id="student-payment-management">
+    <p class="eyebrow">Gestao da cobranca atual</p>
+    <form method="post" action="/alunos/{{ page.data.student_object.id }}/financeiro/acao/" class="form-stack">
+        {% csrf_token %}
+        {{ page.data.payment_management_form.payment_id }}
+        <div class="field-grid-220">
+            <label>
+                <span class="field-label">{{ page.data.payment_management_form.amount.label }}</span>
+                {{ page.data.payment_management_form.amount }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.payment_management_form.due_date.label }}</span>
+                {{ page.data.payment_management_form.due_date }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.payment_management_form.method.label }}</span>
+                {{ page.data.payment_management_form.method }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.payment_management_form.reference.label }}</span>
+                {{ page.data.payment_management_form.reference }}
+            </label>
+        </div>
+        <label>
+            <span class="field-label">{{ page.data.payment_management_form.notes.label }}</span>
+            {{ page.data.payment_management_form.notes }}
+        </label>
+        <div class="actions actions-tight">
+            <button class="button" type="submit" name="action" value="update-payment">Salvar cobranca</button>
+            <button class="button secondary" type="submit" name="action" value="mark-paid">Confirmar pagamento</button>
+            {% if page.capabilities.can_manage_student_payments_full %}
+            <button class="button secondary" type="submit" name="action" value="refund-payment">Estornar</button>
+            <button class="button secondary" type="submit" name="action" value="cancel-payment">Cancelar</button>
+            <button class="button secondary" type="submit" name="action" value="regenerate-payment">Regenerar</button>
+            {% endif %}
+        </div>
+    </form>
+</article>
+{% endif %}

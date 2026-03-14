@@ -1,0 +1,43 @@
+<!--
+ARQUIVO: recorte ativo e filtros do financeiro.
+-->
+<article class="table-card finance-glass-panel finance-support-card finance-support-card-tight finance-filter-summary-card" id="finance-control-board" data-panel="finance-control-summary">
+    {% include "includes/ui/operation_card_head.html" with eyebrow="Recorte ativo" title="Recorte ativo" copy="Confirme o recorte aplicado antes de comparar numeros." pill_label="Contexto visivel" pill_class="info" %}
+    <div class="finance-summary-grid">
+        {% for item in page.data.finance_filter_summary %}
+        {% include "includes/ui/finance_snapshot_chip.html" with item=item chip_class="finance-summary-chip" %}
+        {% endfor %}
+    </div>
+    <div class="actions actions-tight finance-support-actions">
+        <a class="button secondary" href="{{ page.actions.finance_export_links.csv }}" data-action="export-finance-csv">Exportar CSV</a>
+        <a class="button secondary" href="{{ page.actions.finance_export_links.pdf }}" data-action="export-finance-pdf">Exportar PDF</a>
+    </div>
+</article>
+
+<article class="table-card finance-glass-panel finance-board-filter" data-panel="finance-filter-form">
+    {% include "includes/ui/operation_card_head.html" with eyebrow="Filtros da leitura financeira" title="Recorte o que importa" copy="Restrinja por janela, plano, status e metodo." pill_label="Leitura ativa" pill_class="info" %}
+    <form method="get" class="form-stack" data-action="filter-finance">
+        <div class="field-grid-200">
+            <label>
+                <span class="field-label">{{ page.data.finance_filter_form.months.label }}</span>
+                {{ page.data.finance_filter_form.months }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.finance_filter_form.plan.label }}</span>
+                {{ page.data.finance_filter_form.plan }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.finance_filter_form.payment_status.label }}</span>
+                {{ page.data.finance_filter_form.payment_status }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.finance_filter_form.payment_method.label }}</span>
+                {{ page.data.finance_filter_form.payment_method }}
+            </label>
+        </div>
+        <div class="actions actions-tight">
+            <button class="button" type="submit" data-action="apply-finance-filters">Aplicar filtros</button>
+            <a class="button secondary" href="/financeiro/" data-action="clear-finance-filters">Limpar</a>
+        </div>
+    </form>
+</article>

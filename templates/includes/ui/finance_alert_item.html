@@ -1,0 +1,33 @@
+<!--
+ARQUIVO: card reutilizavel de alerta financeiro.
+
+POR QUE ELE EXISTE:
+- concentra a apresentacao das cobrancas que pressionam a carteira.
+-->
+<article class="finance-alert-card finance-alert-card-compact">
+    <div class="row-between history-header finance-action-head">
+        <div class="finance-action-copy">
+            <strong>{{ payment.student.full_name }}</strong>
+            <p class="meta-text-sm">{% if payment.enrollment %}{{ payment.enrollment.plan.name }}{% else %}Sem vinculo de plano{% endif %}</p>
+        </div>
+        <span class="pill{% if payment.status == 'overdue' or payment.status == 'pending' %} warning{% endif %}">{{ payment.get_status_display }}</span>
+    </div>
+    <div class="finance-alert-grid">
+        <div class="finance-alert-stat">
+            <span class="operation-mini-label">Vencimento</span>
+            <strong>{{ payment.due_date|date:"d/m/Y" }}</strong>
+        </div>
+        <div class="finance-alert-stat">
+            <span class="operation-mini-label">Valor</span>
+            <strong class="finance-inline-currency">R$ {{ payment.amount|floatformat:2 }}</strong>
+        </div>
+        <div class="finance-alert-stat">
+            <span class="operation-mini-label">Leitura</span>
+            <strong>{% if payment.status == 'overdue' or payment.status == 'pending' %}Exige acao{% else %}Acompanhar{% endif %}</strong>
+        </div>
+    </div>
+    <div class="actions actions-tight finance-card-actions-compact">
+        <a class="button secondary" href="/alunos/{{ payment.student.id }}/editar/#student-financial-overview">Abrir ficha do aluno</a>
+        <a class="button secondary" href="/admin/boxcore/payment/{{ payment.id }}/change/">Ver pagamento no admin</a>
+    </div>
+</article>

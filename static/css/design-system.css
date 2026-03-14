@@ -5,12 +5,20 @@ POR QUE ELE EXISTE:
 - Mantem o entrypoint original carregado pelo layout enquanto distribui o CSS em modulos menores.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Importa o nucleo visual global.
-2. Importa estilos de workspaces operacionais e dashboard.
+1. Importa tokens (variáveis, reset, tipografia base).
+2. Importa shell (grid principal), sidebar, topbar e compass.
+3. Importa componentes compartilhados (hero, cards, tabelas, pills, botões, estados).
 
 PONTOS CRITICOS:
 - O layout base continua apontando para este arquivo; a ordem dos imports precisa permanecer estavel.
+- Cada módulo tem suas próprias media queries embutidas.
 */
 
-@import url("./design-system/core.css");
-@import url("./design-system/workspaces.css");
+@layer tokens, shell, sidebar, topbar, compass, components;
+
+@import url("./design-system/tokens.css") layer(tokens);
+@import url("./design-system/shell.css") layer(shell);
+@import url("./design-system/sidebar.css") layer(sidebar);
+@import url("./design-system/topbar.css") layer(topbar);
+@import url("./design-system/compass.css") layer(compass);
+@import url("./design-system/components.css") layer(components);

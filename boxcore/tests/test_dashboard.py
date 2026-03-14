@@ -55,8 +55,14 @@ class DashboardViewTests(TestCase):
         response = self.client.get(reverse('dashboard'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Veja primeiro o que pede ação agora.')
+        self.assertContains(response, 'O que pede ação agora.')
         self.assertContains(response, 'Owner')
+        self.assertContains(response, 'Prioridade')
+        self.assertContains(response, 'Pendente')
+        self.assertContains(response, 'Próxima ação')
+        self.assertContains(response, 'href="#dashboard-finance-board"')
+        self.assertContains(response, 'href="/alunos/#student-intake-board"')
+        self.assertContains(response, 'href="#dashboard-sessions-board"')
 
     def test_dashboard_adapts_actions_for_reception_role(self):
         self.client.force_login(self.reception_user)

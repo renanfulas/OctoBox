@@ -41,29 +41,57 @@ Regra central:
 
 ## Mapa real do CSS
 
-Hoje a base esta organizada em duas entradas principais:
+Hoje a base esta organizada em uma entrada global e complementos por pagina:
 
 1. [static/css/design-system.css](../../static/css/design-system.css) para o shell autenticado e o design system base
-2. [static/css/catalog-system.css](../../static/css/catalog-system.css) para as telas visuais do catalogo
+2. [static/css/catalog/shared.css](../../static/css/catalog/shared.css) como base reutilizavel do catalogo
+3. [static/css/catalog/students.css](../../static/css/catalog/students.css), [static/css/catalog/finance.css](../../static/css/catalog/finance.css) e [static/css/catalog/class-grid.css](../../static/css/catalog/class-grid.css) carregados apenas nas telas que precisam deles
 
 Dentro disso, a divisao atual e:
 
-1. [static/css/design-system/core.css](../../static/css/design-system/core.css)
-define tokens, layout estrutural, topbar, sidebar, hero e componentes base
+1. [static/css/design-system.css](../../static/css/design-system.css)
+define o manifesto base do shell autenticado, importando tokens, shell, sidebar, topbar, compass e componentes compartilhados
 
-2. [static/css/design-system/workspaces.css](../../static/css/design-system/workspaces.css)
-define variacoes e estruturas das areas operacionais e dashboards fora do catalogo
+2. [static/css/design-system/operations.css](../../static/css/design-system/operations.css)
+define variacoes e estruturas das areas operacionais, access e a base operacional reutilizada pelo catalogo
 
-3. [static/css/catalog/shared.css](../../static/css/catalog/shared.css)
+3. [static/css/design-system/dashboard.css](../../static/css/design-system/dashboard.css)
+define ajustes especificos do dashboard sem contaminar operations ou catalogo
+
+4. [static/css/design-system/components.css](../../static/css/design-system/components.css)
+agora funciona como manifesto estavel dos componentes compartilhados e delega a implementacao para modulos menores
+
+5. [static/css/design-system/components/hero.css](../../static/css/design-system/components/hero.css)
+define o hero compartilhado e seus stats laterais
+
+6. [static/css/design-system/components/cards.css](../../static/css/design-system/components/cards.css)
+define cards, table-cards, panel-grid, layout-grid e metricas
+
+7. [static/css/design-system/components/tables.css](../../static/css/design-system/components/tables.css)
+define a apresentacao tabular compartilhada
+
+8. [static/css/design-system/components/pills.css](../../static/css/design-system/components/pills.css)
+define badges, pills e variacoes de status/ocupacao
+
+9. [static/css/design-system/components/actions.css](../../static/css/design-system/components/actions.css)
+define botoes, barras de acao e listas de capacidade
+
+10. [static/css/design-system/components/states.css](../../static/css/design-system/components/states.css)
+define empty states, notices e mensagens
+
+11. [static/css/design-system/components/quick-cards.css](../../static/css/design-system/components/quick-cards.css)
+define quick cards e accent bars
+
+12. [static/css/catalog/shared.css](../../static/css/catalog/shared.css)
 define utilitarios, grids de formulario, blocos neutros, glass panels e bases compartilhadas do catalogo
 
-4. [static/css/catalog/students.css](../../static/css/catalog/students.css)
+13. [static/css/catalog/students.css](../../static/css/catalog/students.css)
 define ajustes finais da area de alunos
 
-5. [static/css/catalog/finance.css](../../static/css/catalog/finance.css)
+14. [static/css/catalog/finance.css](../../static/css/catalog/finance.css)
 define layout, cards, rail, carteira, tendencia e comportamento responsivo do financeiro
 
-6. [static/css/catalog/class-grid.css](../../static/css/catalog/class-grid.css)
+15. [static/css/catalog/class-grid.css](../../static/css/catalog/class-grid.css)
 define a grade visual de aulas
 
 ## Regra de localizacao
@@ -82,6 +110,21 @@ Traducao pratica:
 1. `glass-panel` e base compartilhada
 2. `finance-radar-card` e semantica local do financeiro
 3. `student-focus-card` e semantica local de alunos
+
+## Mapa rapido de ownership
+
+Se a alteracao for visual e recorrente, o primeiro passo e cair no modulo certo.
+
+1. hero compartilhado e stats laterais: [static/css/design-system/components/hero.css](../../static/css/design-system/components/hero.css)
+2. cards, metric cards, panel-grid e layout-grid: [static/css/design-system/components/cards.css](../../static/css/design-system/components/cards.css)
+3. tabela, thead, tbody e empty cell: [static/css/design-system/components/tables.css](../../static/css/design-system/components/tables.css)
+4. pills de status, badges e ocupacao: [static/css/design-system/components/pills.css](../../static/css/design-system/components/pills.css)
+5. botoes, barras de acao e capability-list: [static/css/design-system/components/actions.css](../../static/css/design-system/components/actions.css)
+6. empty state, notice e mensagens: [static/css/design-system/components/states.css](../../static/css/design-system/components/states.css)
+7. quick cards e accent bar: [static/css/design-system/components/quick-cards.css](../../static/css/design-system/components/quick-cards.css)
+8. estrutura operacional da pagina: [static/css/design-system/operations.css](../../static/css/design-system/operations.css)
+9. visual exclusivo do dashboard: [static/css/design-system/dashboard.css](../../static/css/design-system/dashboard.css)
+10. semantica local de catalogo: arquivos de [static/css/catalog](../../static/css/catalog)
 
 ## Regra de naming
 

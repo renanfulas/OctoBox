@@ -1,0 +1,130 @@
+/*
+ARQUIVO: grids e cards compartilhados.
+
+POR QUE ELE EXISTE:
+- concentra estruturas de painel e cards reutilizadas entre paginas operacionais e dashboards.
+*/
+
+.panel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--section-gap);
+    margin-bottom: 0;
+}
+
+.card,
+.table-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-panel);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent 100%),
+        var(--surface);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(14px);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.card:hover,
+.table-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+    border-color: rgba(184, 92, 56, 0.24);
+}
+
+.card::before,
+.table-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.72), transparent 72%);
+}
+
+.card {
+    padding: 20px 22px;
+}
+
+.table-card {
+    padding: 22px 24px;
+}
+
+.eyebrow {
+    margin: 0 0 6px;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.metric {
+    font-size: clamp(1.7rem, 2.6vw, 2.4rem);
+    margin: 0;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.05em;
+}
+
+.metric-note {
+    margin: 6px 0 0;
+    color: var(--muted);
+    line-height: 1.55;
+    max-width: 42ch;
+    font-size: 0.88rem;
+}
+
+.layout-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(320px, 1fr);
+    gap: var(--section-gap);
+}
+
+.layout-grid.align-start {
+    align-items: start;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (max-width: 960px) {
+    .panel-grid,
+    .layout-grid {
+        gap: 18px;
+    }
+
+    .layout-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .table-card,
+    .card,
+    .quick-card {
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-top: 22px;
+        padding-bottom: 22px;
+        border-radius: 22px;
+    }
+}
+
+@media (max-width: 640px) {
+    .card,
+    .table-card,
+    .quick-card {
+        border-radius: 22px;
+    }
+}

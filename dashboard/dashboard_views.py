@@ -17,6 +17,8 @@ from django.utils import timezone
 from django.views.generic import TemplateView
 
 from access.roles import ROLE_DEFINITIONS, ROLE_RECEPTION, get_user_capabilities, get_user_role
+from access.shell_actions import build_shell_action_buttons
+from shared_support.page_payloads import attach_page_payload, build_page_assets, build_page_payload
 from .dashboard_snapshot_queries import build_dashboard_snapshot
 
 
@@ -81,15 +83,9 @@ def _build_dashboard_hero_actions(role_slug):
 
 def _build_dashboard_hero_copy(role_slug):
     if role_slug == ROLE_RECEPTION:
-        return (
-            'Este painel existe para a Recepcao entrar no dia sem caca de informacao. '
-            'Em poucos segundos, voce precisa entender chegada, agenda proxima e cobranca curta antes de abrir o restante da operacao.'
-        )
+        return 'Chegada, agenda e caixa curto para abrir o turno.'
 
-    return (
-        'Este painel existe para orientar a operação sem exigir caça de informação. '
-        'Em poucos segundos, você precisa entender a pressão do dia, a fila mais sensível e para onde olhar primeiro.'
-    )
+    return 'Pressao do dia, fila sensivel e proximo passo.'
 
 
 def _build_dashboard_execution_focus(role_slug, *, next_session, next_payment_alert, highest_risk_student):
@@ -218,26 +214,58 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         next_session = upcoming_sessions[0] if upcoming_sessions else None
         next_payment_alert = payment_alerts[0] if payment_alerts else None
         highest_risk_student = next((student for student in student_health if student.total_absences >= 1), None)
-
-        context['dashboard_role_mode'] = 'reception' if role_slug == ROLE_RECEPTION else 'default'
-
-        context.update(snapshot)
         context['current_role'] = current_role
-        context['role_capabilities'] = get_user_capabilities(self.request.user)
-        context['role_definitions'] = ROLE_DEFINITIONS
-        context['dashboard_hero_copy'] = _build_dashboard_hero_copy(role_slug)
-        context['dashboard_hero_actions'] = _build_dashboard_hero_actions(role_slug)
-        context['dashboard_quick_actions'] = RECEPTION_DASHBOARD_QUICK_ACTIONS if role_slug == ROLE_RECEPTION else DASHBOARD_QUICK_ACTIONS
-        context['dashboard_execution_focus'] = _build_dashboard_execution_focus(
-            role_slug,
-            next_session=next_session,
-            next_payment_alert=next_payment_alert,
-            highest_risk_student=highest_risk_student,
+        page_payload = build_page_payload(
+            context={
+                'page_key': 'dashboard',
+                'title': 'Painel principal',
+                'subtitle': 'Pressao do dia, fila sensivel e proximo passo numa leitura curta e executavel.',
+                'mode': 'reception' if role_slug == ROLE_RECEPTION else 'default',
+                'role_slug': role_slug,
+            },
+            shell={
+                'shell_action_buttons': build_shell_action_buttons(
+                    priority=_build_dashboard_execution_focus(
+                        role_slug,
+                        next_session=next_session,
+                        next_payment_alert=next_payment_alert,
+                        highest_risk_student=highest_risk_student,
+                    )[0],
+                    pending={
+                        'href': '/operacao/recepcao/#reception-intake-board' if role_slug == ROLE_RECEPTION else '/alunos/#student-intake-board',
+                        'summary': 'Abrir o que segue pendente de entrada, vínculo ou acolhimento antes de esfriar.',
+                    },
+                    next_action=_build_dashboard_execution_focus(
+                        role_slug,
+                        next_session=next_session,
+                        next_payment_alert=next_payment_alert,
+                        highest_risk_student=highest_risk_student,
+                    )[1],
+                    scope='dashboard-reception' if role_slug == ROLE_RECEPTION else 'dashboard',
+                ),
+            },
+            data={
+                **snapshot,
+                'dashboard_role_mode': 'reception' if role_slug == ROLE_RECEPTION else 'default',
+                'role_capabilities': get_user_capabilities(self.request.user),
+                'role_definitions': ROLE_DEFINITIONS,
+                'dashboard_hero_copy': _build_dashboard_hero_copy(role_slug),
+                'dashboard_hero_actions': _build_dashboard_hero_actions(role_slug),
+                'dashboard_quick_actions': RECEPTION_DASHBOARD_QUICK_ACTIONS if role_slug == ROLE_RECEPTION else DASHBOARD_QUICK_ACTIONS,
+                'dashboard_execution_focus': _build_dashboard_execution_focus(
+                    role_slug,
+                    next_session=next_session,
+                    next_payment_alert=next_payment_alert,
+                    highest_risk_student=highest_risk_student,
+                ),
+                'dashboard_table_guides': _build_dashboard_table_guides(
+                    role_slug,
+                    next_session=next_session,
+                    next_payment_alert=next_payment_alert,
+                    highest_risk_student=highest_risk_student,
+                ),
+            },
+            assets=build_page_assets(css=['css/design-system/operations.css', 'css/design-system/dashboard.css']),
         )
-        context['dashboard_table_guides'] = _build_dashboard_table_guides(
-            role_slug,
-            next_session=next_session,
-            next_payment_alert=next_payment_alert,
-            highest_risk_student=highest_risk_student,
-        )
+        attach_page_payload(context, payload_key='dashboard_page', payload=page_payload)
         return context

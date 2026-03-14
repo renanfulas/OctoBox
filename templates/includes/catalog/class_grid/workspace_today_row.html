@@ -1,0 +1,38 @@
+<!--
+ARQUIVO: linha da agenda de hoje na grade.
+-->
+<tr class="class-grid-row">
+    <td>
+        <strong>{{ item.object.title }}</strong>
+        <p class="class-grid-meta">{{ item.object.duration_minutes }} min de aula</p>
+        {% if page.capabilities.can_manage_classes %}
+        <div class="actions actions-tight class-chip-actions">
+            <a class="button secondary button-sm" href="/grade-aulas/?{% if page.behavior.current_query_string %}{{ page.behavior.current_query_string }}&{% endif %}edit_session={{ item.object.id }}#edicao-aula">Editar</a>
+        </div>
+        {% endif %}
+    </td>
+    <td>
+        {{ item.coach_name }}
+        {% if item.object.notes %}
+        <p class="class-grid-meta">{{ item.object.notes }}</p>
+        {% endif %}
+    </td>
+    <td>
+        {{ item.starts_at|date:"H:i" }} - {{ item.ends_at|date:"H:i" }}
+    </td>
+    <td>
+        <span class="pill{% if item.status_pill_class %} {{ item.status_pill_class }}{% endif %}">{{ item.status_label }}</span>
+    </td>
+    <td>
+        <div class="class-occupancy-stack{% if item.booking_closed %} is-closed{% endif %}">
+            <div class="row-between-sm class-occupancy-labels">
+                <span>{{ item.occupied_slots }}/{{ item.capacity }}</span>
+                <span class="pill{% if item.occupancy_pill_class %} {{ item.occupancy_pill_class }}{% endif %}">{{ item.occupancy_label }}</span>
+            </div>
+            <div class="mix-bar-track">
+                <div class="mix-bar-fill{% if item.occupancy_fill_class %} {{ item.occupancy_fill_class }}{% endif %}" style="--bar-width: {{ item.occupancy_percent }}%;"></div>
+            </div>
+            <p class="class-grid-meta">{{ item.occupancy_note }}</p>
+        </div>
+    </td>
+</tr>

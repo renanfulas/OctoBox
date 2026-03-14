@@ -13,70 +13,40 @@ PONTOS CRITICOS:
 - Os botões alteram o estado real da presença.
 -->
 {% extends "layouts/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
+{% endblock %}
 
 {% block content %}
+{% with page=operation_page %}
 <div class="operation-shell">
-    <section class="hero operation-hero">
+    <section class="hero operation-hero" aria-label="Panorama do coach">
         <div class="operation-hero-main">
             <div>
                 <p class="eyebrow">Rotina do coach</p>
-                <h1>Abra o dia, registre presença e feche a turma sem ruído administrativo.</h1>
-                <p class="operation-hero-copy">O coach precisa entender primeiro a agenda do turno, depois onde já há aluno para registrar e por fim onde uma ocorrência técnica realmente precisa entrar.</p>
-            </div>
-            <div class="operation-hero-tags">
-                <span class="pill">Operação de aula</span>
-                <span class="pill info">Presença e registro técnico</span>
-                <span class="pill accent">Treino sem distração de backoffice</span>
+                <h2>Abra o dia, registre presença, feche a turma.</h2>
+                <p class="operation-hero-copy">Agenda do turno, aluno para registrar, ocorrência técnica quando necessária.</p>
             </div>
             <div class="actions">
                 <a class="button" href="#coach-sessions-board">Ver aulas do dia</a>
-                <a class="button secondary" href="#coach-boundary-board">Ver limites da área</a>
             </div>
         </div>
         <aside class="operation-hero-side">
-            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Turno de hoje" copy="Leitura rápida para saber se o coach está entrando no dia com agenda clara e rotina bem delimitada." stats=hero_stats %}
+            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Turno de hoje" copy="Agenda e rotina do turno." stats=page.data.hero_stats %}
         </aside>
     </section>
 
-    <section class="table-card operation-focus-card">
-        <div class="operation-card-head">
-            <div>
-                <p class="eyebrow">Comece por aqui</p>
-                <h2 class="operation-card-title">Três leituras para abrir o turno sem se dispersar</h2>
-                <p class="operation-card-copy">Primeiro agenda, depois presença real, depois ocorrência técnica só quando fizer sentido.</p>
-            </div>
-            <span class="pill accent">Foco do coach</span>
-        </div>
-        <div class="operation-focus-list">
-            {% for item in coach_operational_focus %}
-            <article class="operation-focus-item">
-                <div class="operation-focus-copy">
-                    <p class="eyebrow">{{ item.label }}</p>
-                    <p>{{ item.summary }}</p>
-                </div>
-                <div class="operation-focus-actions">
-                    <span class="pill {{ item.pill_class }}">prioridade</span>
-                    <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="panel-grid operation-metric-grid">
-        {% for card in metric_cards %}
+    <section class="panel-grid operation-metric-grid" aria-label="Metricas do turno">
+        {% for card in page.data.metric_cards %}
         {% include "includes/ui/metric_card.html" with card=card %}
         {% endfor %}
     </section>
 
-    <section class="layout-grid operation-grid-wide align-start" id="coach-boundary-board">
-        {% include "includes/ui/info_list_card.html" with eyebrow="Como usar esta tela" title="Rotina recomendada para a aula" items=coach_notes %}
-        {% include "includes/ui/info_list_card.html" with card_class="operation-empty-card" eyebrow="Limites desta área" title="Proteção da rotina do treino" items=coach_boundaries %}
-    </section>
-
     <div id="coach-sessions-board" class="operation-shell">
-    {% for session in sessions_today %}
-    <section class="table-card operation-session-card">
+    {% for session in page.data.sessions_today %}
+    <section class="table-card operation-session-card" aria-label="Sessoes e presenca">
         <div class="operation-session-head">
             <div>
                 <p class="eyebrow">Turma do dia</p>
@@ -93,10 +63,10 @@ PONTOS CRITICOS:
                 <table>
                     <thead>
                         <tr>
-                            <th>Aluno</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                            <th>Ocorrência técnica</th>
+                            <th scope="col">Aluno</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Ações</th>
+                            <th scope="col">Ocorrência técnica</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -124,7 +94,7 @@ PONTOS CRITICOS:
                                 <form class="operation-note-form" method="post" action="/operacao/aluno/{{ attendance.student.id }}/ocorrencia-tecnica/">
                                     {% csrf_token %}
                                     <select name="category">
-                                        {% for value, label in behavior_categories %}
+                                        {% for value, label in page.data.behavior_categories %}
                                         <option value="{{ value }}">{{ label }}</option>
                                         {% endfor %}
                                     </select>
@@ -144,10 +114,11 @@ PONTOS CRITICOS:
         </div>
     </section>
     {% empty %}
-    <section class="table-card operation-empty-card">
+    <section class="table-card operation-empty-card" aria-label="Status geral das sessoes">
         {% include "includes/ui/state_empty.html" with eyebrow="Agenda de hoje" title="Nenhuma aula cadastrada" copy="O coach esta sem turmas programadas para hoje neste ambiente." badge="Dia livre" badge_class="info" %}
     </section>
     {% endfor %}
     </div>
 </div>
+{% endwith %}
 {% endblock %}

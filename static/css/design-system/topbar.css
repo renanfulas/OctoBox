@@ -1,0 +1,313 @@
+/*
+ARQUIVO: estilos da topbar e seus componentes.
+
+POR QUE ELE EXISTE:
+- Isola a barra superior sticky com busca, alertas e perfil.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Topbar sticky com glassmorphism.
+2. Busca global com autocomplete dropdown.
+3. Alert chips (vencimentos, intakes).
+4. Toggle de sidebar e tema.
+5. Perfil e avatar do usuário.
+
+PONTOS CRITICOS:
+- Breakpoint 640px reduz padding e border-radius da topbar.
+*/
+
+.topbar {
+    position: sticky;
+    top: 18px;
+    z-index: 12;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: var(--section-gap);
+    padding: 16px 18px;
+    border-radius: 28px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.32), transparent 120%),
+        var(--bg-elevated);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-soft);
+}
+
+.topbar-left,
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.sidebar-toggle,
+.theme-toggle {
+    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface-strong) 86%, transparent);
+    color: var(--ink);
+    border-radius: 18px;
+    padding: 12px 14px;
+    cursor: pointer;
+    font: inherit;
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.sidebar-toggle:hover,
+.theme-toggle:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-soft);
+}
+
+.global-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: min(440px, 100%);
+    padding: 11px 15px;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--surface-strong) 90%, transparent);
+    border: 1px solid var(--line);
+    position: relative;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.56);
+}
+
+.global-search input {
+    border: 0;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    width: 100%;
+}
+
+.search-submit {
+    border: 0;
+    border-radius: 999px;
+    padding: 8px 12px;
+    background: color-mix(in srgb, var(--brand) 86%, white 14%);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.search-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-soft);
+}
+
+.search-kicker {
+    font-size: 0.82rem;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+/* ---------- Autocomplete dropdown ---------- */
+
+.search-autocomplete-list {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 8px 0;
+    list-style: none;
+    background: color-mix(in srgb, var(--surface) 96%, transparent);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow-soft);
+    z-index: 900;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.search-autocomplete-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background 0.1s;
+}
+
+.search-autocomplete-item:hover,
+.search-autocomplete-item.is-active {
+    background: var(--surface-strong);
+}
+
+.search-ac-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.search-ac-meta {
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.search-status {
+    position: absolute;
+    left: 14px;
+    bottom: -24px;
+}
+
+/* ---------- Alert chips ---------- */
+
+.topbar-alerts {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.alert-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--surface-strong) 90%, transparent);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    text-decoration: none;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.alert-chip:hover,
+.alert-chip:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-soft);
+    border-color: rgba(249, 115, 22, 0.2);
+}
+
+.alert-chip.has-volume {
+    color: var(--ink);
+}
+
+.alert-chip.is-clear {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.22);
+    color: #059669;
+}
+
+.alert-chip.is-clear:hover,
+.alert-chip.is-clear:focus-visible {
+    border-color: rgba(16, 185, 129, 0.36);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.12);
+}
+
+.alert-clear-icon {
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
+.alert-chip strong {
+    color: var(--ink);
+}
+
+.alert-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--warning);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.14);
+}
+
+.alert-chip.danger .alert-dot {
+    background: var(--danger);
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.14);
+}
+
+/* ---------- Perfil ---------- */
+
+.topbar-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px 8px 8px;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--surface-strong) 88%, transparent);
+    border: 1px solid var(--line);
+}
+
+.avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(145deg, var(--brand), rgba(40, 92, 142, 0.92));
+    color: #fff;
+    font-weight: 800;
+    box-shadow: 0 14px 28px rgba(184, 92, 56, 0.22);
+}
+
+.profile-meta strong {
+    display: block;
+    font-size: 0.96rem;
+}
+
+.profile-meta span {
+    display: block;
+    font-size: 0.84rem;
+    color: var(--muted);
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 960px) {
+    .topbar {
+        padding: 14px;
+        top: 10px;
+    }
+
+    .global-search {
+        min-width: 100%;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 640px) {
+    .topbar {
+        top: 10px;
+        padding: 12px 14px;
+        border-radius: 24px;
+    }
+
+    .topbar-left,
+    .topbar-right,
+    .topbar-alerts,
+    .topbar-profile {
+        width: 100%;
+    }
+
+    .topbar-right {
+        justify-content: space-between;
+    }
+
+    .global-search {
+        padding: 10px 12px;
+    }
+
+    .search-kicker {
+        width: 100%;
+    }
+
+    .search-submit {
+        width: 100%;
+    }
+
+    .topbar-profile {
+        justify-content: flex-start;
+    }
+}
+
+@media (min-width: 961px) {
+    .sidebar-toggle {
+        display: none;
+    }
+}

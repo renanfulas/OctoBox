@@ -24,8 +24,10 @@ from django.conf import settings
 from django.urls import NoReverseMatch, reverse
 
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
+from access.shell_actions import build_default_shell_action_buttons, resolve_shell_scope
 from communications.queries import count_pending_intakes
 from finance.models import Payment, PaymentStatus
+from operations.models import ClassSession
 
 
 _ASSET_VERSION_CACHE = {
@@ -43,7 +45,11 @@ def _admin_changelist_url(app_label, model_name, fallback='/admin/'):
 
 
 def _calculate_static_asset_version():
-    asset_paths = list((settings.BASE_DIR / 'static' / 'css').rglob('*.css'))
+    static_root = settings.BASE_DIR / 'static'
+    asset_paths = [
+        *list((static_root / 'css').rglob('*.css')),
+        *list((static_root / 'js').rglob('*.js')),
+    ]
     mtimes = []
 
     for asset_path in asset_paths:
@@ -79,54 +85,64 @@ def _build_shell_page_context(current_path, role, navigation, alerts):
     active_item = next((item for item in navigation if item['is_active']), None)
     active_label = active_item['label'] if active_item else 'OctoBox Control'
     role_label = getattr(role, 'label', 'Sem papel definido')
+    role_slug = getattr(role, 'slug', '')
+    scope = resolve_shell_scope(current_path=current_path, role_slug=role_slug)
     section_map = [
         {
             'prefix': '/dashboard/',
             'eyebrow': 'Pulso geral do box',
             'title': 'Dashboard',
-            'subtitle': 'Comece pelo panorama vivo do dia antes de descer para filas, cobrancas ou ajustes de detalhe.',
+            'subtitle': 'Panorama do dia, filas e proxima acao.',
+            'scope': 'dashboard',
         },
         {
             'prefix': '/alunos/',
             'eyebrow': 'Centro da jornada do aluno',
             'title': 'Alunos',
-            'subtitle': 'Aqui a leitura precisa deixar claro quem entrou, quem esta ativo e onde a relacao ainda pede vinculo ou correcoes simples.',
+            'subtitle': 'Entrada, base ativa e vinculos pendentes.',
+            'scope': 'students',
         },
         {
             'prefix': '/financeiro/',
             'eyebrow': 'Leitura comercial do box',
             'title': 'Financeiro',
-            'subtitle': 'Use este recorte para ver pressao de caixa, proposta comercial e sinais de retencao sem transformar a tela em extrato confuso.',
+            'subtitle': 'Caixa, cobranca e carteira num so lugar.',
+            'scope': 'finance',
         },
         {
             'prefix': '/grade-aulas/',
             'eyebrow': 'Ritmo da operacao de treino',
             'title': 'Grade de aulas',
-            'subtitle': 'A grade deve mostrar rapido horario, capacidade e proximas correcoes antes que a rotina dependa de memoria.',
+            'subtitle': 'Horario, capacidade e ajustes rapidos.',
+            'scope': 'class-grid',
         },
         {
             'prefix': '/operacao/',
             'eyebrow': 'Workspace principal do papel',
             'title': active_label,
-            'subtitle': f'Este centro existe para o papel {role_label.lower()} enxergar primeiro a decisao certa, nao para navegar no escuro entre blocos longos.',
+            'subtitle': f'Decisao certa para o papel {role_label.lower()}.',
+            'scope': 'operations-owner',
         },
         {
             'prefix': '/acessos/',
             'eyebrow': 'Fronteiras do sistema',
             'title': 'Papeis e acessos',
-            'subtitle': 'Leia esta area como mapa de limite real: quem pode agir, onde pode agir e qual fronteira protege a rotina do box.',
+            'subtitle': 'Quem pode agir e onde.',
+            'scope': 'access',
         },
         {
             'prefix': '/mapa-sistema/',
             'eyebrow': 'Mapa estrutural visivel',
             'title': 'Mapa do sistema',
-            'subtitle': 'A construcao pode aparecer, desde que continue bonita, legivel e capaz de orientar manutencao sem adivinhacao.',
+            'subtitle': 'Arquitetura, modulos e onde investigar.',
+            'scope': 'system-map',
         },
         {
             'prefix': '/admin/',
             'eyebrow': 'Camada administrativa',
             'title': active_label,
-            'subtitle': 'Use esta area como apoio tecnico e administrativo, nunca como substituto da fachada principal do produto.',
+            'subtitle': 'Apoio tecnico e administrativo.',
+            'scope': 'admin',
         },
     ]
     section = next((item for item in section_map if current_path.startswith(item['prefix'])), None)
@@ -134,18 +150,20 @@ def _build_shell_page_context(current_path, role, navigation, alerts):
         section = {
             'eyebrow': 'Centro operacional atual',
             'title': active_label,
-            'subtitle': 'A tela atual deve dizer rapidamente onde voce esta, o que importa agora e qual proximo passo evita atrito inutil.',
+            'subtitle': 'Onde voce esta e o que importa agora.',
+            'scope': 'generic',
         }
 
-    if current_path.startswith('/dashboard/') and getattr(role, 'slug', '') == ROLE_RECEPTION:
+    if current_path.startswith('/dashboard/') and role_slug == ROLE_RECEPTION:
         section = {
             **section,
             'eyebrow': 'Pulso da recepcao no dia',
-            'subtitle': 'Comece por chegada, agenda proxima e caixa curto para a Recepcao entrar no turno com leitura util antes de abrir outras areas.',
+            'subtitle': 'Chegada, agenda e caixa curto do turno.',
         }
 
     return {
         **section,
+        'scope': scope,
         'active_label': active_label,
         'role_label': role_label,
         'stats': [
@@ -158,33 +176,33 @@ def _build_shell_page_context(current_path, role, navigation, alerts):
 
 def _build_navigation(role_slug, current_path=''):
     base_links = [
-        {'label': 'Dashboard', 'href': '/dashboard/'},
-        {'label': 'Alunos', 'href': '/alunos/'},
-        {'label': 'Financeiro', 'href': '/financeiro/', 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER)},
-        {'label': 'Grade de aulas', 'href': '/grade-aulas/'},
-        {'label': 'Minha operação', 'href': '/operacao/'},
-        {'label': 'Papéis e acessos', 'href': '/acessos/'},
-        {'label': 'Mapa do sistema', 'href': '/mapa-sistema/'},
+        {'label': 'Dashboard', 'href': '/dashboard/', 'icon': '🏠'},
+        {'label': 'Alunos', 'href': '/alunos/', 'icon': '🎓'},
+        {'label': 'Financeiro', 'href': '/financeiro/', 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER), 'icon': '💰'},
+        {'label': 'Grade de aulas', 'href': '/grade-aulas/', 'icon': '📅'},
+        {'label': 'Minha operação', 'href': '/operacao/', 'icon': '⚡'},
+        {'label': 'Papéis e acessos', 'href': '/acessos/', 'icon': '🔐'},
+        {'label': 'Mapa do sistema', 'href': '/mapa-sistema/', 'icon': '🗺️'},
     ]
 
     role_links = {
         ROLE_OWNER: [
-            {'label': 'Admin Django', 'href': '/admin/'},
-            {'label': 'Auditoria', 'href': _admin_changelist_url('boxcore', 'auditevent')},
+            {'label': 'Admin Django', 'href': '/admin/', 'icon': '⚙️'},
+            {'label': 'Auditoria', 'href': _admin_changelist_url('boxcore', 'auditevent'), 'icon': '📋'},
         ],
         ROLE_DEV: [
-            {'label': 'Auditoria', 'href': _admin_changelist_url('boxcore', 'auditevent')},
-            {'label': 'Admin Django', 'href': '/admin/'},
+            {'label': 'Auditoria', 'href': _admin_changelist_url('boxcore', 'auditevent'), 'icon': '📋'},
+            {'label': 'Admin Django', 'href': '/admin/', 'icon': '⚙️'},
         ],
         ROLE_MANAGER: [
-            {'label': 'Alunos', 'href': _admin_changelist_url('boxcore', 'student')},
-            {'label': 'Central de entrada', 'href': _admin_changelist_url('boxcore', 'studentintake')},
-            {'label': 'Pagamentos', 'href': _admin_changelist_url('boxcore', 'payment')},
-            {'label': 'WhatsApp', 'href': _admin_changelist_url('boxcore', 'whatsappcontact')},
+            {'label': 'Alunos', 'href': _admin_changelist_url('boxcore', 'student'), 'icon': '👥'},
+            {'label': 'Central de entrada', 'href': _admin_changelist_url('boxcore', 'studentintake'), 'icon': '📥'},
+            {'label': 'Pagamentos', 'href': _admin_changelist_url('boxcore', 'payment'), 'icon': '💳'},
+            {'label': 'WhatsApp', 'href': _admin_changelist_url('boxcore', 'whatsappcontact'), 'icon': '💬'},
         ],
         ROLE_COACH: [
-            {'label': 'Aulas', 'href': _admin_changelist_url('boxcore', 'classsession')},
-            {'label': 'Ocorrências', 'href': _admin_changelist_url('boxcore', 'behaviornote')},
+            {'label': 'Aulas', 'href': _admin_changelist_url('boxcore', 'classsession'), 'icon': '📅'},
+            {'label': 'Ocorrências', 'href': _admin_changelist_url('boxcore', 'behaviornote'), 'icon': '📝'},
         ],
         ROLE_RECEPTION: [],
     }
@@ -197,6 +215,8 @@ def _build_navigation(role_slug, current_path=''):
         {key: value for key, value in item.items() if key != 'roles'}
         for item in [*filtered_base_links, *role_links.get(role_slug, [])]
     ]
+    for item in links:
+        item.setdefault('icon', '')
     active_href = _pick_active_href(current_path, links)
 
     return [
@@ -230,14 +250,19 @@ def role_navigation(request):
     pending_intakes = 0
     sidebar_navigation = []
 
+    sessions_today = 0
+
     if request.user.is_authenticated:
+        from django.utils import timezone
         overdue_payments = Payment.objects.filter(status=PaymentStatus.OVERDUE).count()
         pending_intakes = count_pending_intakes()
+        sessions_today = ClassSession.objects.filter(scheduled_at__date=timezone.localdate()).count()
         sidebar_navigation = _build_navigation(role_slug, request.path)
 
-    topbar_alerts = {
+    shell_counts = {
         'overdue_payments': overdue_payments,
         'pending_intakes': pending_intakes,
+        'sessions_today': sessions_today,
     }
 
     return {
@@ -245,7 +270,14 @@ def role_navigation(request):
         'sidebar_navigation': sidebar_navigation,
         'global_search_action': '/alunos/',
         'static_asset_version': _build_static_asset_version(),
-        'topbar_alerts': topbar_alerts,
         'topbar_alert_links': _build_topbar_alert_links(role_slug),
-        'shell_page_context': _build_shell_page_context(request.path, role, sidebar_navigation, topbar_alerts),
+        'shell_page_context': _build_shell_page_context(request.path, role, sidebar_navigation, shell_counts),
+        'shell_counts': shell_counts,
+        'shell_action_buttons': build_default_shell_action_buttons(
+            current_path=request.path,
+            role_slug=role_slug,
+            overdue_payments=overdue_payments,
+            pending_intakes=pending_intakes,
+            sessions_today=sessions_today,
+        ),
     }

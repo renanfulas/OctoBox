@@ -86,7 +86,7 @@ class StudentQuickForm(forms.ModelForm):
     payment_due_date = forms.DateField(
         required=False,
         label='Vencimento da primeira cobranca',
-        widget=forms.DateInput(attrs={'type': 'date'}),
+        widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
     )
     payment_reference = forms.CharField(
         required=False,
@@ -135,7 +135,7 @@ class StudentQuickForm(forms.ModelForm):
             'notes',
         ]
         widgets = {
-            'birth_date': forms.DateInput(attrs={'type': 'date'}),
+            'birth_date': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
             'notes': forms.Textarea(attrs={'rows': 4}),
         }
 
@@ -251,22 +251,39 @@ class StudentQuickForm(forms.ModelForm):
 class PaymentManagementForm(forms.Form):
     payment_id = forms.IntegerField(widget=forms.HiddenInput)
     amount = forms.DecimalField(decimal_places=2, max_digits=10, min_value=0, label='Valor da cobranca')
-    due_date = forms.DateField(label='Vencimento', widget=forms.DateInput(attrs={'type': 'date'}))
+    due_date = forms.DateField(label='Vencimento', input_formats=['%d/%m/%Y', '%Y-%m-%d'], widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'))
     method = forms.ChoiceField(choices=PaymentMethod.choices, label='Metodo')
     reference = forms.CharField(required=False, label='Referencia')
     notes = forms.CharField(required=False, label='Observacoes', widget=forms.Textarea(attrs={'rows': 3}))
 
     def __init__(self, *args, **kwargs):
+        if args and args[0] is not None:
+            args = list(args)
+            args[0] = self._normalize_bound_data(args[0])
+        elif kwargs.get('data') is not None:
+            kwargs = dict(kwargs)
+            kwargs['data'] = self._normalize_bound_data(kwargs['data'])
         super().__init__(*args, **kwargs)
         apply_currency_input_attrs(self.fields['amount'], placeholder='Ex.: 289.90')
         apply_date_input_attrs(self.fields['due_date'], placeholder='dd/mm/aaaa')
         apply_text_input_attrs(self.fields['reference'], placeholder='Ex.: PIX-MAR-2026', maxlength=100)
         apply_text_input_attrs(self.fields['notes'], placeholder='Observacao curta para a cobranca.')
 
+    @staticmethod
+    def _normalize_bound_data(data):
+        raw_amount = data.get('amount') if hasattr(data, 'get') else None
+        if not isinstance(raw_amount, str) or ',' not in raw_amount:
+            return data
+
+        normalized_data = data.copy()
+        normalized_amount = raw_amount.replace('.', '').replace(',', '.') if '.' in raw_amount else raw_amount.replace(',', '.')
+        normalized_data['amount'] = normalized_amount
+        return normalized_data
+
 
 class EnrollmentManagementForm(forms.Form):
     enrollment_id = forms.IntegerField(widget=forms.HiddenInput)
-    action_date = forms.DateField(label='Data da acao', widget=forms.DateInput(attrs={'type': 'date'}))
+    action_date = forms.DateField(label='Data da acao', widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'))
     reason = forms.CharField(required=False, label='Motivo', widget=forms.Textarea(attrs={'rows': 3}))
 
     def __init__(self, *args, **kwargs):

@@ -15,6 +15,7 @@ PONTOS CRITICOS:
 - Se estes testes quebrarem, a operacao diaria perde o fluxo principal fora do admin.
 """
 
+from datetime import datetime
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -315,6 +316,52 @@ class CatalogViewTests(TestCase):
         self.assertTrue(AuditEvent.objects.filter(action='class_session_quick_updated').exists())
         self.assertTrue(AuditEvent.objects.filter(action='class_session_quick_deleted').exists())
 
+    def test_class_grid_quick_edit_renders_start_time_without_seconds(self):
+        self.client.force_login(self.user)
+        session = ClassSession.objects.create(
+            title='Cross 06h',
+            coach=self.coach,
+            scheduled_at=timezone.make_aware(datetime(2026, 3, 20, 6, 0), timezone.get_current_timezone()),
+            status=SessionStatus.SCHEDULED,
+        )
+
+        response = self.client.get(reverse('class-grid'), data={'edit_session': session.id})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="start_time" value="06:00"', html=False)
+        self.assertNotContains(response, 'name="start_time" value="06:00:00"', html=False)
+
+    def test_class_grid_can_update_completed_session_without_reopening_it(self):
+        self.client.force_login(self.user)
+        session = ClassSession.objects.create(
+            title='Cross 06h',
+            coach=self.coach,
+            scheduled_at=timezone.make_aware(datetime(2026, 3, 20, 6, 0), timezone.get_current_timezone()),
+            status=SessionStatus.COMPLETED,
+            notes='Sessao concluida seed.',
+        )
+
+        response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'session-edit',
+                'session_id': session.id,
+                'return_query': '',
+                'title': 'Cross 06h',
+                'coach': self.coach.id,
+                'start_time': '06:00',
+                'duration_minutes': 60,
+                'capacity': 14,
+                'status': SessionStatus.COMPLETED,
+                'notes': 'Sessao concluida ajustada sem reabrir status.',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        session.refresh_from_db()
+        self.assertEqual(session.status, SessionStatus.COMPLETED)
+        self.assertEqual(session.notes, 'Sessao concluida ajustada sem reabrir status.')
+
     def test_class_grid_blocks_delete_when_session_has_attendance(self):
         self.client.force_login(self.user)
         protected_session = ClassSession.objects.create(
@@ -563,6 +610,38 @@ class CatalogViewTests(TestCase):
         self.assertEqual(form.cleaned_data['phone'], '11977777777')
         self.assertEqual(form.cleaned_data['cpf'], '123.456.789-01')
 
+    def test_student_quick_create_flow_shows_conversational_recovery_guide_when_invalid(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('student-quick-create'),
+            data={
+                'full_name': 'Mateus Oliveira',
+                'phone': '5511977777777',
+                'status': 'lead',
+                'email': '',
+                'gender': '',
+                'birth_date': '',
+                'health_issue_status': '',
+                'cpf': '',
+                'notes': '',
+                'selected_plan': self.plan.id,
+                'enrollment_status': 'active',
+                'payment_method': PaymentMethod.PIX,
+                'confirm_payment_now': 'False',
+                'payment_due_date': str(timezone.localdate()),
+                'billing_strategy': 'single',
+                'installment_total': 1,
+                'recurrence_cycles': 3,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Vamos destravar isso por etapa')
+        self.assertContains(response, 'O box separou onde travou para voce corrigir sem cacar erro no formulario inteiro.')
+        self.assertContains(response, 'Passo 2: perfil do aluno')
+        self.assertContains(response, 'Lead nao pode sair com matricula ativa.')
+
     def test_student_quick_update_flow_updates_student(self):
         self.client.force_login(self.user)
         student = Student.objects.get(full_name='Bruna Costa')
@@ -622,8 +701,29 @@ class CatalogViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['Location'].endswith('#student-financial-overview'))
         payment.refresh_from_db()
         self.assertEqual(payment.status, PaymentStatus.PAID)
+
+    def test_student_directory_uses_operational_payment_status_with_overdue_priority(self):
+        self.client.force_login(self.user)
+        payment = self.student.payments.first()
+        payment.status = PaymentStatus.OVERDUE
+        payment.save(update_fields=['status', 'updated_at'])
+        Payment.objects.create(
+            student=self.student,
+            enrollment=self.enrollment,
+            due_date=timezone.localdate() + timezone.timedelta(days=5),
+            amount='289.90',
+            status=PaymentStatus.PAID,
+        )
+
+        response = self.client.get(reverse('student-directory'))
+
+        self.assertEqual(response.status_code, 200)
+        student_row = next(item for item in response.context['students'] if item.id == self.student.id)
+        self.assertEqual(student_row.operational_payment_status, PaymentStatus.OVERDUE)
+        self.assertContains(response, 'Em atraso')
 
     def test_student_enrollment_action_can_cancel_and_reactivate(self):
         self.client.force_login(self.user)
@@ -665,6 +765,22 @@ class CatalogViewTests(TestCase):
         self.assertContains(response, 'Passo 4: plano e status comercial')
         self.assertContains(response, 'Passo 5: cobranca e confirmacao')
         self.assertContains(response, 'Gestao da cobranca atual')
+
+    def test_student_update_page_renders_date_inputs_in_iso_format(self):
+        self.client.force_login(self.user)
+        student = Student.objects.get(full_name='Bruna Costa')
+        student.birth_date = timezone.datetime(2000, 1, 8).date()
+        student.save(update_fields=['birth_date', 'updated_at'])
+        enrollment = student.enrollments.select_related('plan').first()
+        payment = enrollment.payments.order_by('-due_date', '-created_at').first()
+
+        response = self.client.get(reverse('student-quick-update', args=[student.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="birth_date" value="2000-01-08"', html=False)
+        self.assertContains(response, f'name="payment_due_date" value="{payment.due_date:%Y-%m-%d}"', html=False)
+        self.assertContains(response, f'name="due_date" value="{payment.due_date:%Y-%m-%d}"', html=False)
+        self.assertContains(response, f'name="action_date" value="{timezone.localdate():%Y-%m-%d}"', html=False)
 
     def test_student_directory_can_export_csv(self):
         self.client.force_login(self.user)

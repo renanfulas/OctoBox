@@ -1,0 +1,28 @@
+<!--
+ARQUIVO: card reutilizavel de dia no calendario mensal expandido.
+
+POR QUE ELE EXISTE:
+- concentra a leitura do dia mensal completo para o modal expandido.
+-->
+<article class="monthly-day-card monthly-day-card-expanded{% if day.is_today %} is-today{% endif %}{% if not day.is_in_month %} is-muted{% endif %}{% if day.session_count %} has-sessions{% else %} is-empty{% endif %}{% if day.session_count >= 12 %} is-loaded{% elif day.session_count >= 8 %} is-busy{% endif %}" data-panel="class-grid-monthly-day-card">
+    <div class="row-between-sm monthly-day-head">
+        <div>
+            <strong>{{ day.date|date:"d" }}</strong>
+            <p class="class-grid-mobile-kicker">{{ day.date|date:"D" }}</p>
+        </div>
+        {% if day.session_count %}<span class="pill{% if day.session_count >= 12 %} warning{% elif day.session_count >= 8 %} info{% endif %}">{{ day.session_count }}</span>{% endif %}
+    </div>
+    <div class="monthly-day-body">
+        {% for item in day.visible_sessions %}
+        <div class="monthly-session-chip">
+            <strong>{{ item.starts_at|date:"H:i" }}</strong>
+            <span>{{ item.object.title }}</span>
+        </div>
+        {% endfor %}
+        {% if day.remaining_sessions %}
+        <p class="weekly-empty-state">+ {{ day.remaining_sessions }} aula(s)</p>
+        {% elif not day.session_count %}
+        <p class="weekly-empty-state">Livre</p>
+        {% endif %}
+    </div>
+</article>

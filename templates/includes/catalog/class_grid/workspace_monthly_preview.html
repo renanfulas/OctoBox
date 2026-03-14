@@ -1,0 +1,47 @@
+<!--
+ARQUIVO: painel de preview mensal da grade.
+-->
+<section class="table-card class-monthly-board class-grid-workspace-panel" id="monthly-board" data-panel-id="monthly-board" data-panel="class-grid-monthly-preview" draggable="true">
+    {% include "includes/ui/class_grid_panel_head.html" with eyebrow="Visao mensal compacta" title=page.data.selected_month_label summary="A miniatura ajuda a localizar concentracoes e vazios. Clique para expandir." pill_label="150 aulas por mes" pill_class="info" badges_class="actions actions-tight class-grid-head-badges" button_label="Expandir mes" button_id="open-monthly-calendar" handle_aria="Arrastar janela de visao mensal" %}
+
+    <button class="monthly-preview-button" type="button" id="open-monthly-calendar-preview" aria-label="Expandir calendario mensal" data-action="open-monthly-calendar-preview">
+        <div class="monthly-calendar-grid monthly-calendar-head monthly-calendar-head-preview">
+            <span>Seg</span>
+            <span>Ter</span>
+            <span>Qua</span>
+            <span>Qui</span>
+            <span>Sex</span>
+            <span>Sab</span>
+            <span>Dom</span>
+        </div>
+
+        {% for week in page.data.monthly_calendar %}
+        <div class="monthly-calendar-grid monthly-calendar-grid-preview">
+            {% for day in week %}
+            <article class="monthly-day-card is-preview{% if day.is_today %} is-today{% endif %}{% if not day.is_in_month %} is-muted{% endif %}{% if day.session_count %} has-sessions{% else %} is-empty{% endif %}{% if day.session_count >= 12 %} is-loaded{% elif day.session_count >= 8 %} is-busy{% endif %}" data-panel="class-grid-monthly-preview-day">
+                <div class="row-between-sm monthly-day-head">
+                    <div>
+                        <strong>{{ day.date|date:"d" }}</strong>
+                        <p class="class-grid-mobile-kicker">{{ day.date|date:"D" }}</p>
+                    </div>
+                    {% if day.session_count %}<span class="pill{% if day.session_count >= 12 %} warning{% elif day.session_count >= 8 %} info{% endif %}">{{ day.session_count }}</span>{% endif %}
+                </div>
+                <div class="monthly-day-body">
+                    {% if day.visible_sessions %}
+                    <div class="monthly-session-chip monthly-session-chip-preview">
+                        <strong>{{ day.visible_sessions.0.starts_at|date:"H:i" }}</strong>
+                        <span>{{ day.visible_sessions.0.object.title }}</span>
+                    </div>
+                    {% endif %}
+                    {% if day.remaining_sessions %}
+                    <p class="weekly-empty-state">+ {{ day.remaining_sessions }} aula(s)</p>
+                    {% elif not day.session_count %}
+                    <p class="weekly-empty-state">Livre</p>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </button>
+</section>

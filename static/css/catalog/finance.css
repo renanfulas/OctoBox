@@ -398,9 +398,9 @@ PONTOS CRITICOS:
 
 .finance-hero {
     background:
-        radial-gradient(circle at top right, rgba(16, 185, 129, 0.16), transparent 34%),
-        radial-gradient(circle at bottom left, rgba(249, 115, 22, 0.14), transparent 28%),
-        linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(16, 185, 129, 0.08), rgba(59, 130, 246, 0.08)),
+    radial-gradient(circle at top right, rgba(47, 122, 100, 0.18), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(184, 92, 56, 0.14), transparent 28%),
+    linear-gradient(145deg, rgba(249, 253, 250, 0.94), rgba(238, 242, 235, 0.94)),
         var(--surface);
 }
 
@@ -451,7 +451,7 @@ PONTOS CRITICOS:
 }
 
 .finance-ops-summary-card {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.84), rgba(255, 247, 237, 0.92));
+    background: linear-gradient(145deg, rgba(255, 252, 246, 0.92), rgba(243, 235, 223, 0.94));
 }
 
 .finance-support-card .operation-card-head {
@@ -473,11 +473,11 @@ PONTOS CRITICOS:
 }
 
 .finance-filter-summary-card {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.84), rgba(240, 249, 255, 0.94));
+    background: linear-gradient(145deg, rgba(250, 252, 255, 0.92), rgba(236, 242, 248, 0.96));
 }
 
 .finance-radar-card {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.84), rgba(236, 253, 245, 0.92));
+    background: linear-gradient(145deg, rgba(247, 253, 249, 0.92), rgba(234, 243, 238, 0.96));
 }
 
 .finance-radar-chip {
@@ -504,7 +504,7 @@ PONTOS CRITICOS:
     height: 100%;
     border-radius: 18px;
     border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.78);
+    background: rgba(255, 255, 255, 0.84);
 }
 
 .finance-summary-chip strong {
@@ -554,8 +554,8 @@ PONTOS CRITICOS:
     align-content: start;
     border-radius: 20px;
     border: 1px solid rgba(148, 163, 184, 0.22);
-    background: rgba(255, 255, 255, 0.58);
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    background: rgba(255, 255, 255, 0.74);
+    box-shadow: 0 10px 24px rgba(85, 56, 35, 0.06);
 }
 
 .finance-action-head {
@@ -601,7 +601,7 @@ PONTOS CRITICOS:
     padding: 14px;
     border-radius: 16px;
     border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(248, 250, 252, 0.82);
+    background: rgba(250, 246, 239, 0.9);
 }
 
 .finance-alert-stat strong {
@@ -657,7 +657,7 @@ PONTOS CRITICOS:
     padding: 14px;
     border-radius: 20px;
     border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.48);
+    background: rgba(255, 255, 255, 0.64);
 }
 
 .finance-chart-column strong {
@@ -682,8 +682,8 @@ PONTOS CRITICOS:
     grid-template-rows: auto auto auto 1fr auto;
     align-content: start;
     gap: 12px;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.72), rgba(248, 250, 252, 0.9));
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(244, 237, 226, 0.92));
+    box-shadow: 0 12px 30px rgba(85, 56, 35, 0.06);
 }
 
 .finance-plan-card-compact {
@@ -743,7 +743,7 @@ PONTOS CRITICOS:
     padding: 12px 14px;
     border-radius: 18px;
     border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.86);
+    background: rgba(255, 255, 255, 0.92);
 }
 
 .finance-plan-card-compact .finance-plan-stats {
@@ -782,7 +782,7 @@ PONTOS CRITICOS:
 
 .finance-mix-panel,
 .finance-mix-insight-panel {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.76), rgba(248, 250, 252, 0.92));
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(244, 237, 226, 0.94));
 }
 
 .finance-mix-list {
@@ -800,7 +800,7 @@ PONTOS CRITICOS:
     align-content: start;
     border-radius: 18px;
     border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.68);
+    background: rgba(255, 255, 255, 0.78);
 }
 
 .finance-mix-head {
@@ -819,7 +819,7 @@ PONTOS CRITICOS:
     height: 100%;
     border-radius: 18px;
     border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(248, 250, 252, 0.82);
+    background: rgba(255, 255, 255, 0.86);
 }
 
 .finance-data-chip strong {
@@ -857,7 +857,7 @@ PONTOS CRITICOS:
     align-content: start;
     border-radius: 20px;
     border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.76);
 }
 
 @media (max-width: 960px) {
@@ -911,6 +911,20 @@ PONTOS CRITICOS:
     .finance-metric-strip,
     .finance-plan-grid {
         grid-template-columns: 1fr;
+    }
+
+    .finance-support-actions,
+    .finance-plan-actions,
+    .finance-card-actions-compact,
+    .finance-plan-card-compact .actions {
+        justify-content: stretch;
+    }
+
+    .finance-support-actions .button,
+    .finance-plan-actions .button,
+    .finance-card-actions-compact .button,
+    .finance-plan-card-compact .actions .button {
+        width: 100%;
     }
 }
 

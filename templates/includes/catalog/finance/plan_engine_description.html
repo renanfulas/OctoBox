@@ -1,0 +1,8 @@
+<!--
+ARQUIVO: descricao comercial do motor de planos.
+-->
+<label id="plan-create-delivery">
+    <span class="field-label">{{ page.data.form.description.label }}</span>
+    {{ page.data.form.description }}
+    {% for error in page.data.form.description.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+</label>

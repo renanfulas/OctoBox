@@ -1,0 +1,22 @@
+<!--
+ARQUIVO: cabecalho reutilizavel de cards operacionais.
+
+POR QUE ELE EXISTE:
+- evita repetir a mesma moldura visual de titulo, copy e pill nos paineis de leitura operacional.
+-->
+<div class="operation-card-head">
+    <div>
+        <p class="eyebrow">{{ eyebrow }}</p>
+        {% if title_tag == "h3" %}
+        <h3 class="{{ title_class|default:'operation-card-title' }}">{{ title }}</h3>
+        {% else %}
+        <h2 class="{{ title_class|default:'operation-card-title' }}">{{ title }}</h2>
+        {% endif %}
+        {% if copy %}
+        <p class="{{ copy_class|default:'operation-card-copy' }}">{{ copy }}</p>
+        {% endif %}
+    </div>
+    {% if pill_label %}
+    <span class="pill{% if pill_class %} {{ pill_class }}{% endif %}">{{ pill_label }}</span>
+    {% endif %}
+</div>

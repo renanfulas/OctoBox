@@ -1,0 +1,36 @@
+<!--
+ARQUIVO: insights e orientacoes da grade.
+-->
+<section class="table-card section-gap" aria-label="Insights rapidos">
+    <details class="disclosure-panel">
+        <summary>Dicas de leitura e recorrencia</summary>
+        <div class="class-grid-insight-strip section-gap-top-xs">
+            <article class="table-card class-grid-insight-card no-margin">
+                <p class="eyebrow">Como ler esta pagina</p>
+                <ul class="capability-list">
+                    {% for item in page.data.class_focus %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </article>
+            <article class="table-card class-grid-insight-card no-margin">
+                <p class="eyebrow">Leitura operacional</p>
+                <ul class="capability-list">
+                    <li>Se uma aula estiver perto da capacidade, a equipe ja consegue agir antes do gargalo.</li>
+                    <li>Use os horarios e a ocupacao para alinhar coach, recepcao e rotina de presenca.</li>
+                    <li>Atalho do admin disponivel no topo.</li>
+                </ul>
+            </article>
+            <article class="table-card class-grid-insight-card no-margin">
+                <p class="eyebrow">Como montar a recorrencia</p>
+                <ul class="capability-list">
+                    <li>Nome padrao para a turma, como WOD 07h ou Funcional 18h.</li>
+                    <li>Marque os dias da semana e um intervalo enxuto, como 4 semanas por vez.</li>
+                    <li>Observacoes para orientar sobre lotacao, material ou check-in.</li>
+                    <li>Sistema pula slots ja existentes para evitar duplicidade.</li>
+                    <li>Limite: 12 aulas por dia, 70 por semana, 150 por mes.</li>
+                </ul>
+            </article>
+        </div>
+    </details>
+</section>

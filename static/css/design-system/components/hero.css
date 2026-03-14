@@ -1,0 +1,132 @@
+/*
+ARQUIVO: componentes de hero compartilhados.
+
+POR QUE ELE EXISTE:
+- concentra a estrutura visual dos blocos hero usados nas superficies principais.
+
+PONTOS CRITICOS:
+- controla composicao, gradiente, estatisticas laterais e responsividade do header principal.
+*/
+
+.hero {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-5);
+    align-items: stretch;
+    margin-bottom: 0;
+    padding: clamp(24px, 2.4vw, 34px);
+    border-radius: var(--radius-shell);
+    background:
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.3), transparent 26%),
+        var(--hero-gradient),
+        var(--surface);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(14px);
+}
+
+.hero > div:first-child,
+.hero > aside,
+.hero > section {
+    min-width: 0;
+}
+
+.hero::after {
+    content: "";
+    position: absolute;
+    inset: auto -8% -30% auto;
+    width: 280px;
+    height: 280px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.28), transparent 70%);
+    pointer-events: none;
+}
+
+.hero::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 5px;
+    background: linear-gradient(180deg, var(--brand), rgba(40, 92, 142, 0.8), rgba(47, 122, 100, 0.8));
+    opacity: 0.88;
+}
+
+.hero :is(h1, h2) {
+    margin: 0 0 8px;
+    font-size: clamp(2rem, 3.5vw, 3.2rem);
+    line-height: 0.96;
+    letter-spacing: -0.04em;
+}
+
+.hero p {
+    margin: 0;
+    max-width: 720px;
+    color: var(--muted);
+    line-height: 1.72;
+}
+
+.hero-side-stack {
+    display: grid;
+    gap: 14px;
+}
+
+.hero-side-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.hero-side-stat {
+    padding: 12px 12px;
+    border-radius: 18px;
+    border: 1px solid rgba(112, 96, 81, 0.12);
+    background: rgba(255, 255, 255, 0.58);
+}
+
+.hero-side-stat span {
+    display: block;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.hero-side-stat strong {
+    display: block;
+    margin-top: 4px;
+    font-size: clamp(0.95rem, 1.2vw, 1.2rem);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+}
+
+@media (max-width: 960px) {
+    .hero {
+        padding: 24px;
+        flex-direction: column;
+        gap: var(--space-5);
+    }
+
+    .hero-side-stat-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .hero :is(h1, h2) {
+        font-size: clamp(1.9rem, 8vw, 2.5rem);
+    }
+}
+
+@media (max-width: 640px) {
+    .hero {
+        padding: 22px;
+        border-radius: 28px;
+    }
+
+    .hero-side-stat-grid {
+        grid-template-columns: 1fr;
+    }
+}

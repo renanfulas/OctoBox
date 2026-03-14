@@ -24,14 +24,14 @@ PONTOS CRITICOS:
 
 .class-grid-hero {
     background:
-        radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 34%),
-        radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.14), transparent 28%),
-        linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(59, 130, 246, 0.08), rgba(16, 185, 129, 0.08)),
+        radial-gradient(circle at top right, rgba(40, 92, 142, 0.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(47, 122, 100, 0.14), transparent 28%),
+        linear-gradient(145deg, rgba(248, 251, 255, 0.94), rgba(236, 242, 248, 0.94)),
         var(--surface);
 }
 
 .class-grid-hero .operation-hero-panel {
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(239, 246, 255, 0.96));
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.84), rgba(236, 242, 248, 0.96));
 }
 
 .class-grid-insight-strip {
@@ -53,7 +53,7 @@ PONTOS CRITICOS:
 .class-grid-focus-card {
     display: grid;
     gap: 18px;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(239, 246, 255, 0.94));
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(236, 242, 248, 0.94));
 }
 
 .class-grid-focus-head {
@@ -73,8 +73,8 @@ PONTOS CRITICOS:
     align-items: center;
     padding: 16px 18px;
     border-radius: 18px;
-    border: 1px solid rgba(59, 130, 246, 0.12);
-    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(40, 92, 142, 0.12);
+    background: rgba(255, 255, 255, 0.84);
 }
 
 .class-grid-focus-copy {
@@ -117,6 +117,7 @@ PONTOS CRITICOS:
     position: relative;
     overflow: hidden;
     min-height: 100%;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(243, 238, 229, 0.94));
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
 }
 
@@ -185,25 +186,25 @@ PONTOS CRITICOS:
 }
 
 .class-grid-planner-panel {
-    background: linear-gradient(145deg, rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0.94));
+    background: linear-gradient(145deg, rgba(40, 92, 142, 0.1), rgba(255, 255, 255, 0.94));
 }
 
 .class-weekly-board {
     background:
-        radial-gradient(circle at top right, rgba(249, 115, 22, 0.14), transparent 28%),
-        linear-gradient(145deg, rgba(249, 115, 22, 0.07), rgba(255, 255, 255, 0.97));
+    radial-gradient(circle at top right, rgba(184, 92, 56, 0.14), transparent 28%),
+    linear-gradient(145deg, rgba(184, 92, 56, 0.08), rgba(255, 255, 255, 0.97));
 }
 
 .class-monthly-board {
     background:
-        radial-gradient(circle at top right, rgba(16, 185, 129, 0.12), transparent 26%),
-        linear-gradient(145deg, rgba(16, 185, 129, 0.07), rgba(255, 255, 255, 0.97));
+    radial-gradient(circle at top right, rgba(47, 122, 100, 0.12), transparent 26%),
+    linear-gradient(145deg, rgba(47, 122, 100, 0.08), rgba(255, 255, 255, 0.97));
 }
 
 .class-grid-today-panel {
     background:
-        radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 26%),
-        linear-gradient(145deg, rgba(59, 130, 246, 0.06), rgba(255, 255, 255, 0.97));
+    radial-gradient(circle at top right, rgba(40, 92, 142, 0.12), transparent 26%),
+    linear-gradient(145deg, rgba(40, 92, 142, 0.08), rgba(255, 255, 255, 0.97));
 }
 
 .monthly-preview-button {
@@ -378,7 +379,7 @@ PONTOS CRITICOS:
 .weekly-day-card {
     border: 1px solid var(--line);
     border-radius: 22px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.88));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 238, 229, 0.9));
     padding: 16px;
     display: grid;
     gap: 14px;
@@ -387,9 +388,9 @@ PONTOS CRITICOS:
 }
 
 .weekly-day-card.is-today {
-    border-color: rgba(249, 115, 22, 0.3);
+    border-color: rgba(184, 92, 56, 0.3);
     box-shadow: var(--shadow-soft);
-    background: linear-gradient(180deg, rgba(255, 247, 237, 0.92), rgba(255, 255, 255, 0.94));
+    background: linear-gradient(180deg, rgba(255, 247, 237, 0.94), rgba(255, 255, 255, 0.96));
 }
 
 .weekly-day-card.is-muted {
@@ -417,7 +418,7 @@ PONTOS CRITICOS:
     padding: 12px;
     border-radius: 16px;
     border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.94);
+    background: rgba(255, 255, 255, 0.96);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
@@ -561,7 +562,7 @@ PONTOS CRITICOS:
     padding: 12px 14px;
     border-radius: 16px;
     border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.82);
     color: var(--ink);
 }
 
@@ -635,6 +636,10 @@ PONTOS CRITICOS:
 @media (max-width: 640px) {
     .class-grid-mobile-kicker {
         display: block;
+    }
+
+    .class-day-header {
+        flex-direction: column;
     }
 
     .class-grid-insight-card {

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Especificidade em CSS</title>
+    <link rel="stylesheet" href="../src/styles/main.css">
+</head>
+<body>
+    <header>
+        <h1>Especificidade em CSS</h1>
+        <p>Entenda como a especificidade afeta a aplicação de estilos em seus elementos.</p>
+    </header>
+    <section>
+        <h2>O que é Especificidade?</h2>
+        <p>A especificidade é um mecanismo que o navegador usa para determinar qual regra CSS deve ser aplicada a um elemento quando várias regras podem se aplicar.</p>
+    </section>
+    <section>
+        <h2>Como Funciona?</h2>
+        <p>A especificidade é calculada com base em três categorias:</p>
+        <ul>
+            <li>Seletores de ID (mais específicos)</li>
+            <li>Seletores de classe, atributos e pseudo-classes</li>
+            <li>Seletores de elementos e pseudo-elementos (menos específicos)</li>
+        </ul>
+    </section>
+    <section>
+        <h2>Exemplo de Especificidade</h2>
+        <div class="example">
+            <style>
+                /* Estilos de exemplo */
+                .box {
+                    width: 100px;
+                    height: 100px;
+                    background-color: blue;
+                }
+                .box.red {
+                    background-color: red; /* Classe tem maior especificidade */
+                }
+                #boxId {
+                    background-color: green; /* ID tem maior especificidade que classe */
+                }
+            </style>
+            <div class="box">Box</div>
+            <div id="boxId" class="box red">Box com ID</div>
+        </div>
+        <p>No exemplo acima, o box com ID terá a cor de fundo verde, pois a especificidade do ID é maior que a da classe.</p>
+    </section>
+    <footer>
+        <p>Para mais informações, consulte a documentação sobre <a href="https://developer.mozilla.org/pt-BR/docs/Web/CSS/Specificity">especificidade</a>.</p>
+    </footer>
+</body>
+</html>

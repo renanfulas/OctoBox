@@ -1,0 +1,23 @@
+{
+  "name": "css-guide",
+  "version": "1.0.0",
+  "description": "A comprehensive guide to CSS best practices, principles, and examples.",
+  "main": "src/styles/main.css",
+  "scripts": {
+    "build": "npm run build-css",
+    "watch": "npm run watch-css"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "postcss": "^8.3.6",
+    "autoprefixer": "^10.3.1"
+  },
+  "keywords": [
+    "css",
+    "guide",
+    "styles",
+    "best practices"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

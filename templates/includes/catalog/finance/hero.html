@@ -1,0 +1,47 @@
+<!--
+ARQUIVO: hero da central financeira.
+
+POR QUE ELE EXISTE:
+- concentra a abertura executiva da pagina em um bloco localizavel.
+-->
+<section class="hero operation-hero finance-hero" aria-label="Panorama financeiro">
+    <div class="operation-hero-main">
+        <div>
+            <p class="eyebrow">Centro financeiro</p>
+            <h2>{{ page.context.title }}</h2>
+            <p class="operation-hero-copy">Caixa, pressão e próxima ação sem leitura cansativa.</p>
+        </div>
+        <div class="actions">
+            <a class="button" href="#finance-priority-board">Ver régua</a>
+            <a class="button secondary" href="#finance-queue-board">Ver fila financeira</a>
+            <a class="button secondary" href="#finance-portfolio-board">Ver carteira</a>
+            {% if page.capabilities.can_manage_finance %}
+            <a class="button secondary" href="#cadastro-plano">Cadastrar plano</a>
+            {% endif %}
+        </div>
+    </div>
+    <aside class="operation-hero-side">
+        <article class="operation-hero-panel">
+            <p class="eyebrow">Pulso de agora</p>
+            <p class="operation-card-copy">Resumo executivo para saber se o financeiro respira bem ou pede intervenção.</p>
+            <div class="operation-mini-grid">
+                <div class="operation-mini-stat">
+                    <span class="operation-mini-label">Recebido</span>
+                    <span class="operation-mini-value finance-mini-value">R$ {{ page.data.finance_pulse.received|floatformat:2 }}</span>
+                </div>
+                <div class="operation-mini-stat">
+                    <span class="operation-mini-label">Em aberto</span>
+                    <span class="operation-mini-value finance-mini-value">R$ {{ page.data.finance_pulse.open|floatformat:2 }}</span>
+                </div>
+                <div class="operation-mini-stat">
+                    <span class="operation-mini-label">Em atraso</span>
+                    <span class="operation-mini-value">{{ page.data.finance_pulse.overdue_students }}</span>
+                </div>
+                <div class="operation-mini-stat">
+                    <span class="operation-mini-label">Ticket</span>
+                    <span class="operation-mini-value finance-mini-value">R$ {{ page.data.finance_pulse.ticket|floatformat:2 }}</span>
+                </div>
+            </div>
+        </article>
+    </aside>
+</section>

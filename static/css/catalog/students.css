@@ -18,18 +18,18 @@ PONTOS CRITICOS:
 
 .student-hero {
     background:
-        radial-gradient(circle at top right, rgba(249, 115, 22, 0.22), transparent 36%),
-        radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.14), transparent 30%),
-        linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(249, 115, 22, 0.1), rgba(16, 185, 129, 0.08)),
+        radial-gradient(circle at top right, rgba(184, 92, 56, 0.22), transparent 36%),
+        radial-gradient(circle at bottom left, rgba(47, 122, 100, 0.14), transparent 30%),
+        linear-gradient(145deg, rgba(255, 251, 245, 0.94), rgba(241, 236, 226, 0.94)),
         var(--surface);
 }
 
 .student-hero .operation-hero-panel {
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.8), rgba(255, 247, 237, 0.96));
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(245, 238, 227, 0.96));
 }
 
 .student-filter-card {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.96));
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.84), rgba(244, 237, 226, 0.96));
 }
 
 .student-focus-card {
@@ -76,15 +76,15 @@ PONTOS CRITICOS:
 }
 
 .student-command-card {
-    background: linear-gradient(145deg, rgba(249, 115, 22, 0.14), rgba(255, 255, 255, 0.94));
+    background: linear-gradient(145deg, rgba(184, 92, 56, 0.16), rgba(255, 255, 255, 0.94));
 }
 
 .student-support-card {
-    background: linear-gradient(145deg, rgba(59, 130, 246, 0.1), rgba(255, 255, 255, 0.94));
+    background: linear-gradient(145deg, rgba(40, 92, 142, 0.14), rgba(255, 255, 255, 0.94));
 }
 
 .student-queue-panel {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.96));
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.84), rgba(244, 237, 226, 0.96));
 }
 
 .student-data-panel {

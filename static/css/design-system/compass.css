@@ -1,0 +1,361 @@
+/*
+ARQUIVO: page compass e pulse bar.
+
+POR QUE ELE EXISTE:
+- Isola o contexto de página (título, stats) e a barra de atalhos operacionais (pulse).
+
+O QUE ESTE ARQUIVO FAZ:
+1. .page-compass com título, subtítulo, tags e stats.
+2. Compass-pulse: faixa de chips na base do compass.
+3. Pulse chips com variantes (priority, pending, next-action).
+4. Animação hover: badge numérico colapsa e hint expande.
+
+PONTOS CRITICOS:
+- Hover agora funciona como aprimoramento em ponteiro fino; em touch/mobile o hint fica visível por padrão.
+- Breakpoint 640px reduz padding do compass.
+*/
+
+.page-compass {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.9fr);
+    gap: 20px;
+    margin-bottom: var(--section-gap);
+    padding: 24px 24px 0;
+    border-radius: 30px;
+    border: 1px solid var(--line);
+    background:
+        radial-gradient(circle at top right, rgba(184, 92, 56, 0.16), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(40, 92, 142, 0.1), transparent 26%),
+        linear-gradient(145deg, rgba(255, 252, 247, 0.9), rgba(246, 239, 229, 0.94));
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(14px);
+    overflow: hidden;
+}
+
+.page-compass-main {
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+}
+
+.page-compass-actions {
+    display: none;
+}
+
+.page-compass-title {
+    margin: 0;
+    font-size: clamp(1.8rem, 2.8vw, 2.8rem);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+}
+
+.page-compass-copy {
+    margin: 10px 0 0;
+    max-width: 68ch;
+    color: var(--muted);
+    line-height: 1.65;
+}
+
+.page-compass-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.page-compass-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    min-width: min(100%, 420px);
+    align-content: start;
+}
+
+.page-compass-stat {
+    padding: 16px 16px 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(112, 96, 81, 0.12);
+    background: rgba(255, 255, 255, 0.58);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.52);
+}
+
+.page-compass-stat span {
+    display: block;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.page-compass-stat strong {
+    display: block;
+    margin-top: 8px;
+    font-size: 1.16rem;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+}
+
+/* ── Pulse bar ── */
+
+.compass-pulse {
+    --pulse-min: 220px;
+    --pulse-gap: 14px;
+    --pulse-chip-padding: 16px 18px;
+    --pulse-chip-min-height: 92px;
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--pulse-gap);
+    margin-top: 14px;
+    padding: 16px 0 8px;
+    border-top: 1px solid rgba(112, 96, 81, 0.12);
+}
+
+.compass-pulse--dashboard,
+.compass-pulse--dashboard-reception {
+    --pulse-min: 210px;
+}
+
+.compass-pulse--students,
+.compass-pulse--student-form {
+    --pulse-min: 235px;
+}
+
+.compass-pulse--finance,
+.compass-pulse--finance-plan-form {
+    --pulse-min: 230px;
+    --pulse-chip-min-height: 94px;
+}
+
+.compass-pulse--class-grid {
+    --pulse-min: 210px;
+    --pulse-chip-min-height: 84px;
+}
+
+.compass-pulse--operations-owner {
+    --pulse-min: 220px;
+}
+
+.compass-pulse--operations-manager {
+    --pulse-min: 228px;
+    --pulse-chip-min-height: 92px;
+}
+
+.compass-pulse--operations-coach {
+    --pulse-min: 212px;
+    --pulse-chip-min-height: 82px;
+}
+
+.compass-pulse--operations-reception,
+.compass-pulse--operations-reception-preview {
+    --pulse-min: 236px;
+    --pulse-chip-min-height: 96px;
+}
+
+.compass-pulse--access,
+.compass-pulse--system-map,
+.compass-pulse--admin {
+    --pulse-min: 245px;
+}
+
+.pulse-chip {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "label number"
+        "hint hint";
+    gap: 10px 12px;
+    align-items: start;
+    min-height: var(--pulse-chip-min-height);
+    padding: var(--pulse-chip-padding);
+    border-radius: 24px;
+    border: 1px solid rgba(112, 96, 81, 0.12);
+    text-decoration: none;
+    line-height: 1.2;
+    transition: transform 0.16s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.pulse-chip:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.10);
+}
+
+.pulse-chip:active {
+    transform: scale(0.99);
+}
+
+.pulse-chip--finance,
+.pulse-chip--finance-plan-form {
+    backdrop-filter: blur(6px);
+}
+
+.pulse-label {
+    grid-area: label;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.pulse-number {
+    grid-area: number;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 9px;
+    border-radius: 999px;
+    border: 1.5px solid currentColor;
+    font-size: 0.74rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    text-align: center;
+}
+
+.pulse-chip:not(.has-count) .pulse-number {
+    display: none;
+}
+
+.pulse-hint {
+    grid-area: hint;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+}
+
+.pulse-hint-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 7px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+    background: color-mix(in srgb, currentColor 10%, white);
+    font-size: 0.69rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.pulse-hint-copy {
+    display: block;
+    color: color-mix(in srgb, var(--ink) 72%, transparent);
+    font-size: 0.84rem;
+    line-height: 1.45;
+    text-wrap: pretty;
+}
+
+.pulse-priority {
+    background: linear-gradient(180deg, rgba(189, 63, 47, 0.12), rgba(255, 255, 255, 0.72));
+    color: #9c271c;
+    border-color: rgba(189, 63, 47, 0.16);
+}
+
+.pulse-pending {
+    background: linear-gradient(180deg, rgba(40, 92, 142, 0.12), rgba(255, 255, 255, 0.72));
+    color: #1d4c78;
+    border-color: rgba(40, 92, 142, 0.16);
+}
+
+.pulse-next-action {
+    background: linear-gradient(180deg, rgba(184, 92, 56, 0.14), rgba(255, 255, 255, 0.72));
+    color: var(--brand-dark);
+    border-color: rgba(184, 92, 56, 0.18);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .pulse-chip:hover,
+    .pulse-chip:focus-visible {
+        transform: translateY(-1px);
+    }
+
+    .pulse-priority:hover,
+    .pulse-priority:focus-visible {
+        background: linear-gradient(180deg, rgba(220, 38, 38, 0.14), rgba(255, 255, 255, 0.88));
+        box-shadow: 0 8px 20px rgba(220, 38, 38, 0.10);
+    }
+
+    .pulse-pending:hover,
+    .pulse-pending:focus-visible {
+        background: linear-gradient(180deg, rgba(37, 99, 235, 0.14), rgba(255, 255, 255, 0.88));
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.10);
+    }
+
+    .pulse-next-action:hover,
+    .pulse-next-action:focus-visible {
+        background: linear-gradient(180deg, rgba(234, 88, 12, 0.14), rgba(255, 255, 255, 0.88));
+        box-shadow: 0 8px 20px rgba(234, 88, 12, 0.10);
+    }
+}
+
+.pulse-clear {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #059669;
+    padding: 5px 0;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1180px) {
+    .compass-pulse {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(var(--pulse-min), 1fr));
+    }
+}
+
+@media (max-width: 960px) {
+    .page-compass {
+        grid-template-columns: 1fr;
+    }
+
+    .page-compass-actions {
+        display: none;
+    }
+
+    .page-compass-stats {
+        min-width: 0;
+    }
+
+    .compass-pulse {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .page-compass {
+        padding: 18px;
+    }
+
+    .page-compass-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .compass-pulse {
+        grid-template-columns: 1fr;
+    }
+
+    .pulse-chip {
+        border-radius: 20px;
+    }
+
+    .pulse-chip {
+        min-height: 0;
+        padding: 12px 14px;
+        border-radius: 18px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pulse-chip,
+    .pulse-number,
+    .pulse-hint {
+        transition: none;
+    }
+}

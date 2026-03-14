@@ -200,8 +200,8 @@ class ClassScheduleRecurringForm(forms.ModelForm):
         apply_integer_input_attrs(self.fields['duration_minutes'], placeholder='Ex.: 60', min_value=1, maxlength=3)
         apply_integer_input_attrs(self.fields['capacity'], placeholder='Ex.: 20', min_value=1, maxlength=3)
         apply_text_input_attrs(self.fields['notes'], placeholder='Ex.: aula de alta demanda; abrir check-in 15 min antes.')
-        apply_date_input_attrs(self.fields['start_date'], placeholder='11/03/26', maxlength=8, pattern='\d{2}/\d{2}/\d{2}')
-        apply_date_input_attrs(self.fields['end_date'], placeholder='08/04/26', maxlength=8, pattern='\d{2}/\d{2}/\d{2}')
+        apply_date_input_attrs(self.fields['start_date'], placeholder='11/03/26', maxlength=8, pattern=r'\d{2}/\d{2}/\d{2}')
+        apply_date_input_attrs(self.fields['end_date'], placeholder='08/04/26', maxlength=8, pattern=r'\d{2}/\d{2}/\d{2}')
 
         self.fields['start_date'].initial = timezone.localdate()
         self.fields['end_date'].initial = timezone.localdate() + timezone.timedelta(days=27)
@@ -250,7 +250,7 @@ class ClassSessionQuickEditForm(forms.ModelForm):
     start_time = LenientTimeField(
         label='Horario de inicio',
         input_formats=['%H:%M'],
-        widget=forms.TimeInput(),
+        widget=forms.TimeInput(format='%H:%M'),
     )
 
     class Meta:
@@ -294,9 +294,7 @@ class ClassSessionQuickEditForm(forms.ModelForm):
             self.fields['status'].choices = session_policy.quick_edit_status_choices
         if self.instance.pk:
             local_start = timezone.localtime(self.instance.scheduled_at)
-            self.fields['start_time'].initial = local_start.time().replace(second=0, microsecond=0)
-            if self.instance.status not in dict(self.fields['status'].choices):
-                self.fields['status'].initial = SessionStatus.SCHEDULED
+            self.fields['start_time'].initial = local_start.strftime('%H:%M')
 
     def clean(self):
         cleaned_data = super().clean()

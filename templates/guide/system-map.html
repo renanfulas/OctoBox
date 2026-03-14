@@ -17,11 +17,11 @@ PONTOS CRITICOS:
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<section class="hero">
+<section class="hero" id="system-flow-board" aria-label="Panorama do mapa do sistema">
     <div>
-        <h1>Mapa do Sistema</h1>
+        <h2>Mapa do Sistema</h2>
         <p>
-            Esta página traduz a arquitetura do projeto para uma leitura visual. A ideia é você conseguir entender o app, localizar módulos e descobrir rapidamente onde investigar quando houver bug, inclusive agora que boa parte do produto foi separada entre views HTTP, queries ou snapshots de leitura e actions ou workflows de regra de negócio.
+            Visão visual da arquitetura: módulos, fronteiras e onde investigar bugs.
         </p>
     </div>
     <div class="actions">
@@ -42,29 +42,27 @@ PONTOS CRITICOS:
     </div>
 </section>
 
-<section class="layout-grid" style="margin-bottom: 24px;">
+<section class="layout-grid" style="margin-bottom: 24px;" id="system-reading-board" aria-label="Como ler a base">
     <article class="table-card">
         <p class="eyebrow">Como ler a base sem se perder</p>
         <ul class="capability-list">
-            <li>Primeiro entenda por onde a requisição entra e como as rotas são distribuídas.</li>
-            <li>Depois identifique se o domínio que você abriu separa view HTTP, query de leitura e action ou workflow.</li>
-            <li>Entenda como o papel do usuário afeta sidebar, área principal e ações permitidas.</li>
-            <li>Só então desça para os modelos, porque eles sustentam o restante da operação.</li>
-            <li>Por fim, veja templates, admin e testes para fechar a visão completa do comportamento.</li>
+            <li>Entenda por onde a requisição entra e como rotas são distribuídas.</li>
+            <li>Identifique se o domínio separa view HTTP, query de leitura e action/workflow.</li>
+            <li>Veja como o papel do usuário afeta sidebar, área principal e ações.</li>
+            <li>Desça para modelos, depois templates, admin e testes.</li>
         </ul>
     </article>
     <article class="table-card">
         <p class="eyebrow">Como o produto foi dividido</p>
         <ul class="capability-list">
-            <li>Views cuidam de permissão, contexto, formulários e renderização.</li>
-            <li>Queries e snapshots concentram leitura, agregação e montagem de contexto pesado.</li>
-            <li>Actions e workflows concentram mutações reais e regras sensíveis do domínio.</li>
-            <li>Manager e coach não compartilham mais a mesma operação prática, e isso aparece na própria separação dos módulos.</li>
+            <li>Views: permissão, contexto, formulários e renderização.</li>
+            <li>Queries/snapshots: leitura, agregação e montagem de contexto pesado.</li>
+            <li>Actions/workflows: mutações reais e regras sensíveis do domínio.</li>
         </ul>
     </article>
 </section>
 
-<section class="layout-grid" style="margin-bottom: 24px;">
+<section class="layout-grid" style="margin-bottom: 24px;" aria-label="Ordem de estudo e arquivos-chave">
     <article class="table-card">
         <p class="eyebrow">Ordem recomendada de estudo</p>
         <ol class="capability-list" style="padding-left: 22px;">
@@ -83,7 +81,7 @@ PONTOS CRITICOS:
     </article>
 </section>
 
-<section class="table-card" style="margin-bottom: 24px;">
+<section class="table-card" style="margin-bottom: 24px;" aria-label="Areas do produto">
     <p class="eyebrow">Areas do produto e suporte</p>
     <div class="panel-grid" style="margin-bottom: 0;">
         {% for module in module_cards %}
@@ -100,14 +98,14 @@ PONTOS CRITICOS:
     </div>
 </section>
 
-<section class="layout-grid">
+<section class="layout-grid" id="system-bug-board" aria-label="Triagem de bugs e uso do mapa">
     <article class="table-card">
         <p class="eyebrow">Primeira triagem por sintoma</p>
         <table>
             <thead>
                 <tr>
-                    <th>Sintoma</th>
-                    <th>Primeira leitura recomendada</th>
+                    <th scope="col">Sintoma</th>
+                    <th scope="col">Primeira leitura recomendada</th>
                 </tr>
             </thead>
             <tbody>

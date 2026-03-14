@@ -13,6 +13,8 @@ PONTOS CRITICOS:
 - essas rotas disparam mutacoes reais e precisam manter permissao e side effects.
 """
 
+from urllib.parse import urlsplit, urlunsplit
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect
@@ -31,6 +33,18 @@ from operations.facade import (
 )
 from operations.models import Attendance, BehaviorCategory
 from students.models import Student
+
+
+def _append_fragment_to_url(url, fragment):
+    if not fragment:
+        return url
+    parsed_url = urlsplit(url)
+    return urlunsplit((parsed_url.scheme, parsed_url.netloc, parsed_url.path, parsed_url.query, fragment))
+
+
+def _redirect_back(request, *, fallback_url, fragment=''):
+    target_url = request.META.get('HTTP_REFERER', fallback_url)
+    return HttpResponseRedirect(_append_fragment_to_url(target_url, fragment))
 
 
 class PaymentEnrollmentLinkView(LoginRequiredMixin, RoleRequiredMixin, View):
@@ -91,11 +105,11 @@ def _handle_reception_payment_action(request, *, payment_id, fallback_url, succe
 
         if not form.is_valid():
             messages.error(request, 'A cobranca curta nao foi aplicada. Revise vencimento, metodo e referencia.')
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', fallback_url))
+            return _redirect_back(request, fallback_url=fallback_url, fragment='reception-payment-board')
 
         if action not in ('update-payment', 'mark-paid'):
             messages.error(request, 'A Recepcao so permite ajuste curto ou confirmacao de pagamento nesse fluxo.')
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', fallback_url))
+            return _redirect_back(request, fallback_url=fallback_url, fragment='reception-payment-board')
 
         handle_student_payment_action(
             actor=request.user,
@@ -110,4 +124,4 @@ def _handle_reception_payment_action(request, *, payment_id, fallback_url, succe
         else:
             messages.success(request, f'Cobranca curta de {payment.student.full_name} ajustada sem sair da {success_context}.')
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER', fallback_url))
+        return _redirect_back(request, fallback_url=fallback_url, fragment='reception-payment-board')
