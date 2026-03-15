@@ -1,0 +1,24 @@
+<!--
+ARQUIVO: leitura de origem da Central de Intake.
+
+POR QUE ELE EXISTE:
+- isola a quebra por canal para facilitar manutencao da leitura curta.
+-->
+<article class="table-card layout-panel layout-panel--stack glass-panel" id="intake-source-board" data-panel="intake-source-board">
+    {% include "includes/ui/operation_card_head.html" with eyebrow="De onde a fila esta vindo" title="Origens que abastecem a entrada" copy="Ajuda a separar problema de canal, captura ou triagem humana." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
+    <div class="intake-source-grid">
+        {% for item in page.data.source_breakdown %}
+        <article class="intake-mini-card" data-panel="intake-source-card">
+            <div class="card-body intake-mini-card-body">
+                <div class="card-value-stack intake-mini-card-value-stack">
+                    <strong>{{ item.label }}</strong>
+                    <p class="metric">{{ item.value }}</p>
+                </div>
+                <div class="card-content intake-mini-card-content">
+                    <p class="meta-text-sm">{{ item.note }}</p>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</article>
