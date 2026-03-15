@@ -21,6 +21,9 @@ from .test_guide import GuideViewTests
 from .test_import_students import ImportStudentsCsvCommandTests
 from .test_integrations import WhatsAppIntegrationFoundationTests
 from .test_operations import OperationWorkspaceTests
+from .test_page_payloads import PageHeroContractTests, PagePayloadBridgeContractTests
+from .test_settings import SettingsHelperTests
+from .test_shell_hints import ShellHintBuilderUnitTests, ShellHintIntegrationTests
 
 __all__ = [
     'AuditTrailTests',
@@ -34,4 +37,9 @@ __all__ = [
     'ImportStudentsCsvCommandTests',
     'WhatsAppIntegrationFoundationTests',
     'OperationWorkspaceTests',
+    'PageHeroContractTests',
+    'PagePayloadBridgeContractTests',
+    'SettingsHelperTests',
+    'ShellHintBuilderUnitTests',
+    'ShellHintIntegrationTests',
 ]

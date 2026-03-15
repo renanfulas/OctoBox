@@ -12,57 +12,11 @@ PONTOS CRITICOS:
 - Depende do formulario e do contexto montados em boxcore/catalog/views/finance_views.py.
 -->
 {% extends "layouts/base.html" %}
-{% load static %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
-<link rel="stylesheet" href="{% static 'css/catalog/shared.css' %}?v={{ static_asset_version }}">
-<link rel="stylesheet" href="{% static 'css/catalog/finance.css' %}?v={{ static_asset_version }}">
-{% endblock %}
 
 {% block content %}
 {% with page=finance_plan_page %}
 <div class="operation-shell finance-shell finance-plan-page" data-page="finance-plan-form" data-screen="catalog-finance-plan-form" data-slot="page-root">
-<section class="hero operation-hero finance-hero finance-plan-page-hero" data-slot="hero" data-panel="finance-plan-hero">
-    <div class="operation-hero-main">
-        <div>
-            <p class="eyebrow">Plano comercial</p>
-            <h1>{{ page.context.title }}</h1>
-            <p class="operation-hero-copy">{{ page.context.subtitle }} A ideia aqui é editar proposta, entrega e ativação sem cair no admin bruto nem obrigar leitura longa para entender o impacto.</p>
-        </div>
-        <div class="actions">
-            <a class="button" href="#plan-form-core">Editar núcleo</a>
-            <a class="button secondary" href="#plan-form-summary">Ver leitura rápida</a>
-            <a class="button secondary" href="/financeiro/">Voltar para financeiro</a>
-        </div>
-    </div>
-    <aside class="operation-hero-side">
-        <article class="operation-hero-panel hero-side-stack">
-            <div>
-                <p class="eyebrow">Leitura instantânea</p>
-                <p class="operation-card-copy">Antes de salvar, esta abertura precisa responder se o plano continua claro para vender, cobrar e manter na carteira.</p>
-            </div>
-            <div class="hero-side-stat-grid">
-                <div class="hero-side-stat">
-                    <span>Status</span>
-                    <strong>{% if page.data.plan_object.active %}ativo{% else %}inativo{% endif %}</strong>
-                </div>
-                <div class="hero-side-stat">
-                    <span>Valor</span>
-                    <strong>R$ {{ page.data.plan_object.price|floatformat:0 }}</strong>
-                </div>
-                <div class="hero-side-stat">
-                    <span>Ciclo</span>
-                    <strong>{{ page.data.plan_object.get_billing_cycle_display|lower }}</strong>
-                </div>
-                <div class="hero-side-stat">
-                    <span>Aulas</span>
-                    <strong>{{ page.data.plan_object.sessions_per_week }}</strong>
-                </div>
-            </div>
-        </article>
-    </aside>
-</section>
+{% include "includes/ui/page_hero.html" with hero=page.data.hero %}
 
 <section class="layout-grid finance-plan-support-grid align-start" data-slot="context">
     <article class="table-card finance-plan-support-card" data-panel="finance-plan-guardrails">
@@ -151,7 +105,9 @@ PONTOS CRITICOS:
                 </div>
                 <div class="actions finance-plan-actions-flat">
                     <button class="button" type="submit">Salvar ajustes</button>
-                    <a class="button secondary" href="/admin/boxcore/membershipplan/{{ page.data.plan_object.id }}/change/">Editar no admin</a>
+                    {% if page.actions.secondary.admin %}
+                    <a class="button secondary" href="{{ page.actions.secondary.admin }}">Editar no admin</a>
+                    {% endif %}
                 </div>
             </div>
         </form>
@@ -159,20 +115,20 @@ PONTOS CRITICOS:
 
     <article class="table-card finance-plan-summary-card" id="plan-form-summary" data-panel="finance-plan-summary">
         <p class="eyebrow">Leitura rápida do plano</p>
-        <h2 class="finance-plan-title">{{ page.data.plan_object.name }}</h2>
-        <p class="finance-plan-meta">Valor atual: R$ {{ page.data.plan_object.price|floatformat:2 }}</p>
-        <p class="finance-plan-meta">Ciclo: {{ page.data.plan_object.get_billing_cycle_display }}</p>
-        <p class="finance-plan-meta finance-plan-meta-spaced">Aulas por semana: {{ page.data.plan_object.sessions_per_week }}</p>
+        <h2 class="finance-plan-title">{{ page.data.plan.name }}</h2>
+        <p class="finance-plan-meta">Valor atual: {{ page.data.plan.price_display_full }}</p>
+        <p class="finance-plan-meta">Ciclo: {{ page.data.plan.billing_cycle_label }}</p>
+        <p class="finance-plan-meta finance-plan-meta-spaced">Aulas por semana: {{ page.data.plan.sessions_per_week }}</p>
         <div class="note-panel note-panel-success-soft finance-plan-note">
-            {% if page.data.plan_object.description %}
-            <p class="meta-text no-margin">{{ page.data.plan_object.description }}</p>
+            {% if page.data.plan.description %}
+            <p class="meta-text no-margin">{{ page.data.plan.description }}</p>
             {% else %}
             <p class="meta-text no-margin">Este plano ainda não tem descrição comercial. Vale preencher para reduzir ambiguidade entre recepção, venda e cobrança.</p>
             {% endif %}
         </div>
         <div class="actions finance-plan-actions-flat">
-            <a class="button secondary" href="/financeiro/">Ver portfolio</a>
-            <a class="button secondary" href="/alunos/">Ver alunos</a>
+            <a class="button secondary" href="{{ page.actions.secondary.finance_center }}">Ver portfolio</a>
+            <a class="button secondary" href="{{ page.actions.secondary.students }}">Ver alunos</a>
         </div>
     </article>
 </section>

@@ -56,6 +56,14 @@ PONTOS CRITICOS:
     min-width: 0;
 }
 
+.finance-board > [data-panel$='-section'] {
+    display: contents;
+}
+
+.finance-board > [data-panel$='-section'] > * {
+    min-width: 0;
+}
+
 .finance-board > section {
     grid-column: 1 / -1;
 }
@@ -839,7 +847,89 @@ PONTOS CRITICOS:
 }
 
 .finance-movements-panel {
+    grid-column: 1 / -1;
     padding-bottom: 22px;
+}
+
+body[data-theme="dark"] .finance-shell .operation-hero,
+body[data-theme="dark"] .finance-shell .operation-hero-panel,
+body[data-theme="dark"] .finance-shell .table-card,
+body[data-theme="dark"] .finance-shell .card,
+body[data-theme="dark"] .finance-shell .finance-action-card,
+body[data-theme="dark"] .finance-shell .finance-alert-card,
+body[data-theme="dark"] .finance-shell .finance-action-message,
+body[data-theme="dark"] .finance-shell .finance-ops-metric-card,
+body[data-theme="dark"] .finance-shell .finance-plan-card,
+body[data-theme="dark"] .finance-shell .finance-radar-chip,
+body[data-theme="dark"] .finance-shell .finance-plan-focus-item,
+body[data-theme="dark"] .finance-shell .finance-summary-chip,
+body[data-theme="dark"] .finance-shell .finance-alert-stat,
+body[data-theme="dark"] .finance-shell .finance-chart-column,
+body[data-theme="dark"] .finance-shell .finance-data-chip,
+body[data-theme="dark"] .finance-shell .finance-movement-item,
+body[data-theme="dark"] .finance-shell .finance-mix-card,
+body[data-theme="dark"] .finance-shell .finance-plan-stat,
+body[data-theme="dark"] .finance-shell .finance-guide-card,
+body[data-theme="dark"] .finance-shell .finance-guide-note,
+body[data-theme="dark"] .finance-shell .finance-filter-rule-card,
+body[data-theme="dark"] .finance-shell .finance-section-intro {
+    color: var(--ink);
+    border-color: rgba(199, 186, 167, 0.14);
+    background: linear-gradient(145deg, rgba(19, 28, 38, 0.94), rgba(28, 39, 52, 0.96));
+    box-shadow: 0 20px 42px rgba(0, 0, 0, 0.22);
+}
+
+body[data-theme="dark"] .finance-shell .finance-action-card,
+body[data-theme="dark"] .finance-shell .finance-alert-card,
+body[data-theme="dark"] .finance-shell .finance-plan-card,
+body[data-theme="dark"] .finance-shell .finance-radar-chip,
+body[data-theme="dark"] .finance-shell .finance-ops-metric-card,
+body[data-theme="dark"] .finance-shell .finance-plan-focus-item {
+    background: linear-gradient(145deg, rgba(15, 23, 33, 0.96), rgba(24, 34, 47, 0.98));
+}
+
+body[data-theme="dark"] .finance-shell .finance-action-message {
+    background: linear-gradient(145deg, rgba(38, 28, 19, 0.9), rgba(26, 34, 45, 0.96));
+    border-color: rgba(214, 164, 112, 0.18);
+}
+
+body[data-theme="dark"] .finance-shell .button.secondary {
+    color: rgba(245, 239, 228, 0.94);
+    border-color: rgba(199, 186, 167, 0.18);
+    background: linear-gradient(145deg, rgba(37, 50, 66, 0.96), rgba(24, 34, 47, 0.98));
+}
+
+body[data-theme="dark"] .finance-shell .button.secondary:hover {
+    color: #fff8ef;
+    border-color: rgba(214, 164, 112, 0.3);
+    background: linear-gradient(145deg, rgba(61, 80, 102, 0.98), rgba(28, 39, 52, 1));
+}
+
+body[data-theme="dark"] .finance-shell .finance-inline-currency,
+body[data-theme="dark"] .finance-shell .history-header,
+body[data-theme="dark"] .finance-shell .metric,
+body[data-theme="dark"] .finance-shell .operation-card-title,
+body[data-theme="dark"] .finance-shell .operation-card-copy,
+body[data-theme="dark"] .finance-shell .body-copy strong {
+    color: var(--ink);
+}
+
+body[data-theme="dark"] .finance-shell .orange-glow {
+    background: linear-gradient(145deg, rgba(154, 52, 18, 0.34), rgba(28, 39, 52, 0.96));
+}
+
+body[data-theme="dark"] .finance-shell .green-glow {
+    background: linear-gradient(145deg, rgba(20, 83, 45, 0.34), rgba(28, 39, 52, 0.96));
+}
+
+body[data-theme="dark"] .finance-shell .blue-glow,
+body[data-theme="dark"] .finance-shell .info-card {
+    background: linear-gradient(145deg, rgba(30, 64, 175, 0.3), rgba(28, 39, 52, 0.96));
+}
+
+body[data-theme="dark"] .finance-shell .metric-spark,
+body[data-theme="dark"] .finance-shell .metric-pulse {
+    opacity: 0.45;
 }
 
 .finance-movements-list {
@@ -853,8 +943,10 @@ PONTOS CRITICOS:
     padding: 16px 18px;
     height: 100%;
     display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
     gap: 8px;
     align-content: start;
+    align-items: start;
     border-radius: 20px;
     border: 1px solid rgba(148, 163, 184, 0.18);
     background: rgba(255, 255, 255, 0.76);

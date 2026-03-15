@@ -1,0 +1,40 @@
+/*
+ARQUIVO: estilos dedicados da tela interna de mapa do sistema.
+
+POR QUE ELE EXISTE:
+- fecha a ownership visual da pagina de guia sem depender de estilo inline no template.
+
+O QUE ESTE ARQUIVO FAZ:
+1. controla espacamento vertical consistente da pagina.
+2. define leitura mais estavel para cards e blocos textuais.
+3. preserva responsividade sem inflar o design system global.
+*/
+
+.system-map-hero,
+.system-map-section {
+    margin-bottom: 24px;
+}
+
+.system-map-panel-grid {
+    margin-bottom: 0;
+}
+
+.system-map-copy {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.system-map-ordered-list {
+    padding-left: 22px;
+}
+
+@media (max-width: 720px) {
+    .system-map-hero,
+    .system-map-section {
+        margin-bottom: 20px;
+    }
+
+    .system-map-ordered-list {
+        padding-left: 18px;
+    }
+}

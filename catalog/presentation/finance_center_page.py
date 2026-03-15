@@ -7,9 +7,10 @@ POR QUE ELE EXISTE:
 """
 
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
-from access.shell_actions import build_shell_action_buttons
+from access.shell_actions import build_shell_action_buttons_from_focus
+from shared_support.page_payloads import build_page_hero
 
-from .shared import build_catalog_page_payload, build_page_assets
+from .shared import build_catalog_assets, build_catalog_page_payload
 
 
 def build_finance_filter_summary(filter_form):
@@ -89,6 +90,7 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         {
             'label': 'Cobranca pede contato',
             'summary': f'{len(operational_queue)} caso(s) ja tem abordagem sugerida e nao deveriam esperar outra leitura para virar acao.',
+            'count': len(operational_queue),
             'pill_class': 'warning' if len(operational_queue) > 0 else 'success',
             'href': '#finance-rail-board',
             'href_label': 'Abrir regua',
@@ -96,6 +98,7 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         {
             'label': 'Fila pressionando caixa',
             'summary': f'{len(financial_alerts)} cobranca(s) ja aparecem como pendencia ou atraso no recorte atual.',
+            'count': len(financial_alerts),
             'pill_class': 'warning' if len(financial_alerts) > 0 else 'info',
             'href': '#finance-queue-board',
             'href_label': 'Ver fila financeira',
@@ -108,21 +111,46 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
             'href_label': 'Ver tendencia',
         },
     ]
-    shell_action_buttons = build_shell_action_buttons(
-        priority=operational_focus[0],
-        pending=operational_focus[1],
+    shell_action_buttons = build_shell_action_buttons_from_focus(
+        focus=operational_focus,
         next_action={
             'href': '#finance-portfolio-board',
             'summary': 'Depois da pressao viva, desca para a carteira e leia a proxima acao estrutural do financeiro.',
         },
         scope='finance',
     )
+    hero_actions = [
+        {'label': 'Ver regua', 'href': '#finance-priority-board', 'kind': 'primary'},
+        {'label': 'Ver fila financeira', 'href': '#finance-queue-board', 'kind': 'secondary'},
+        {'label': 'Ver carteira', 'href': '#finance-portfolio-board', 'kind': 'secondary'},
+    ]
+    if can_manage_finance:
+        hero_actions.append({'label': 'Cadastrar plano', 'href': '#cadastro-plano', 'kind': 'secondary'})
+    hero = build_page_hero(
+        eyebrow='Centro financeiro',
+        title='Financeiro',
+        copy='Caixa, pressao e proxima acao sem leitura cansativa.',
+        actions=hero_actions,
+        side={
+            'kind': 'stat-grid',
+            'eyebrow': 'Pulso de agora',
+            'copy': 'Resumo para saber se o financeiro respira ou pede acao.',
+            'items': [
+                {'label': 'Recebido', 'value': f"R$ {finance_pulse['received']:.2f}"},
+                {'label': 'Em aberto', 'value': f"R$ {finance_pulse['open']:.2f}"},
+                {'label': 'Em atraso', 'value': finance_pulse['overdue_students']},
+                {'label': 'Ticket', 'value': f"R$ {finance_pulse['ticket']:.2f}"},
+            ],
+        },
+        aria_label='Panorama financeiro',
+        classes=['finance-hero'],
+    )
 
     return build_catalog_page_payload(
         context={
             'page_key': 'finance-center',
             'title': 'Financeiro',
-            'subtitle': 'Aqui o box ganha leitura comercial: planos, receita, retencao e sinais operacionais que depois conversam com a jornada do aluno.',
+            'subtitle': 'Planos, receita, retencao e sinais operacionais num so painel.',
             'mode': 'management' if can_manage_finance else 'read-only',
             'role_slug': current_role_slug,
         },
@@ -130,6 +158,7 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
             'shell_action_buttons': shell_action_buttons,
         },
         data={
+            'hero': hero,
             'can_manage_finance': can_manage_finance,
             'finance_filter_form': filter_form,
             'finance_metrics': snapshot['finance_metrics'],
@@ -155,5 +184,5 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
             'can_manage_finance': can_manage_finance,
             'can_export_finance': current_role_slug in (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER),
         },
-        assets=build_page_assets(css=['css/catalog/shared.css', 'css/catalog/finance.css']),
+        assets=build_catalog_assets(css=['css/catalog/finance.css'], include_catalog_shared=True),
     )

@@ -1,0 +1,87 @@
+/*
+ARQUIVO: blocos estruturais reutilizaveis de layout.
+
+POR QUE ELE EXISTE:
+- separa a macroestrutura de pagina dos estilos especificos de cada tela.
+- permite compor pages por blocos independentes, sem acoplamento visual acidental.
+
+O QUE ESTE ARQUIVO FAZ:
+1. cria um stack base para cenas/paginas.
+2. define wrappers reutilizaveis para secoes, trilhos e paineis.
+3. expõe variacoes simples para split, rail e workspace sem depender da pagina.
+
+PONTOS CRITICOS:
+- modificadores aqui devem resolver estrutura, nao identidade visual de dominio.
+- estilos de dashboard, catalogo ou operations continuam nos modulos especificos.
+*/
+
+.scene-stack {
+    display: grid;
+    gap: clamp(20px, 2.4vw, 30px);
+    position: relative;
+}
+
+.scene-stack > * {
+    min-width: 0;
+}
+
+.layout-block {
+    display: grid;
+    gap: var(--section-gap);
+    min-width: 0;
+}
+
+.layout-block--tight {
+    gap: clamp(16px, 1.8vw, 22px);
+}
+
+.layout-block--split {
+    grid-template-columns: minmax(0, 1.3fr) minmax(320px, 1fr);
+    align-items: start;
+}
+
+.layout-block--rail {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.layout-block--workspace {
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(18px, 2.2vw, 26px);
+}
+
+.layout-panel {
+    min-width: 0;
+    min-height: 100%;
+}
+
+.layout-panel--stack {
+    display: grid;
+    gap: 14px;
+    align-content: start;
+}
+
+.layout-panel-head {
+    display: grid;
+    gap: 12px;
+}
+
+.layout-panel-body {
+    min-width: 0;
+}
+
+.layout-panel-rail {
+    display: grid;
+    gap: 14px;
+}
+
+@media (max-width: 960px) {
+    .layout-block,
+    .scene-stack {
+        gap: 18px;
+    }
+
+    .layout-block--split,
+    .layout-block--workspace {
+        grid-template-columns: 1fr;
+    }
+}

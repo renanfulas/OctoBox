@@ -48,8 +48,21 @@ CSS estrutural do shell:
 3. [static/css/design-system/sidebar.css](static/css/design-system/sidebar.css)
 4. [static/css/design-system/topbar.css](static/css/design-system/topbar.css)
 5. [static/css/design-system/compass.css](static/css/design-system/compass.css)
+6. [static/css/design-system/spacing.css](static/css/design-system/spacing.css)
+7. [static/css/design-system/responsiveness.css](static/css/design-system/responsiveness.css)
+
+Contrato rapido do design system:
+
+1. [docs/reference/design-system-contract.md](docs/reference/design-system-contract.md)
 
 ## Contrato de tela
+
+Heuristica curta do contrato semantico enxuto:
+
+1. backend entrega o minimo semantico necessario: dado real, permissao, estado, contexto e acao possivel
+2. frontend organiza hierarquia, composicao, repeticao visual e experiencia
+3. se o mesmo valor vai aparecer em varios cards, o contrato deve continuar semantico e unico
+4. se a mudanca for apenas cosmetica ou distributiva, desconfie de qualquer novo peso no payload
 
 Helper generico do page payload:
 
@@ -62,8 +75,59 @@ Bridge do catalogo:
 Guia estrutural oficial:
 
 1. [docs/plans/front-end-restructuring-guide.md](docs/plans/front-end-restructuring-guide.md)
+2. [docs/reference/functional-circuits-matrix.md](docs/reference/functional-circuits-matrix.md)
 
 ## Paginas principais e ownership
+
+## Regra por funcionalidade
+
+Cada funcionalidade relevante do produto deve conseguir ser localizada por um trilho curto e previsivel.
+
+Estrutura esperada por funcionalidade:
+
+1. entrada HTTP em `views` do dominio
+2. montagem semantica em `presentation` ou builder equivalente
+3. regra e mutacao em `services`, `workflows` ou `actions`
+4. template principal da funcionalidade
+5. includes locais da funcionalidade
+6. CSS local da funcionalidade
+7. JS local da funcionalidade, quando houver comportamento proprio
+8. testes do contrato funcional e da comunicacao compartilhada
+
+Regra pratica:
+
+1. a funcionalidade deve ter dono local claro
+2. a comunicacao com o resto do produto deve subir por contrato compartilhado, nao por improviso em template
+3. quando uma funcionalidade mudar, o impacto no shell, nos atalhos e na leitura cruzada deve ser revisado no mesmo pacote
+
+Matriz operacional desta regra:
+
+1. [docs/reference/functional-circuits-matrix.md](docs/reference/functional-circuits-matrix.md)
+
+## Comunicacao transversal
+
+No estado atual do OctoBox, a comunicacao entre funcionalidades e outras paginas passa principalmente por estes pontos:
+
+1. [shared_support/page_payloads.py](shared_support/page_payloads.py) para contexto, shell, behavior e assets da tela
+2. [access/context_processors.py](access/context_processors.py) para shell global, topbar, alertas e contexto da navegacao
+3. [access/shell_actions.py](access/shell_actions.py) para prioridade, pendente e proxima acao entre paginas
+
+Regra de alteracao:
+
+1. se a mudanca altera leitura global, revisar `context_processors`
+2. se a mudanca altera atalhos ou foco operacional, revisar `shell_actions`
+3. se a mudanca altera hero, assets, behavior ou payload da tela, revisar `page_payloads`
+4. se a mudanca for so local de layout, manter dentro da propria funcionalidade
+
+## Checklist ao alterar uma funcionalidade
+
+Antes de fechar uma alteracao funcional, revisar nesta ordem:
+
+1. a view continua curta e a funcionalidade segue com ownership local claro
+2. o payload da tela continua semantico e sem duplicacao cosmetica
+3. o shell global ainda comunica prioridade, pendencia e proxima acao da forma certa
+4. os alertas, atalhos ou links cruzados em outras paginas continuam coerentes
+5. os testes de contrato da funcionalidade e da comunicacao compartilhada continuam verdes
 
 Dashboard:
 

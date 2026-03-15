@@ -14,6 +14,7 @@ PONTOS CRITICOS:
 
 from django.contrib import admin
 
+from access.admin import user_can_access_admin
 from auditing.models import AuditEvent
 
 
@@ -23,6 +24,12 @@ class AuditEventAdmin(admin.ModelAdmin):
     list_filter = ('actor_role', 'action', 'target_model', 'created_at')
     search_fields = ('actor__username', 'target_label', 'description', 'target_id')
     autocomplete_fields = ('actor',)
+
+    def has_module_permission(self, request):
+        return user_can_access_admin(request.user)
+
+    def has_view_permission(self, request, obj=None):
+        return user_can_access_admin(request.user)
 
     def has_add_permission(self, request):
         return False

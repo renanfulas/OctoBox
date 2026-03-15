@@ -7,7 +7,7 @@ POR QUE ELE EXISTE:
 */
 
 (function () {
-    var payloadElement = document.getElementById('class-grid-page-payload');
+    var payloadElement = document.getElementById('current-page-behavior');
     var pagePayload = {};
     if (payloadElement) {
         try {

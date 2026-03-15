@@ -21,23 +21,7 @@ PONTOS CRITICOS:
 
 {% block content %}
 <div class="operation-shell">
-    <section class="hero operation-hero" aria-label="Panorama de acessos">
-        <div class="operation-hero-main">
-            <div>
-                <p class="eyebrow">Fronteiras do sistema</p>
-                <h2>Quem age, quem não invade e onde cada papel começa.</h2>
-                <p class="operation-hero-copy">Mapa rápido de autoridade: crescimento, investigação, rotina administrativa e operação técnica.</p>
-            </div>
-            <div class="actions">
-                <a class="button" href="#access-current-role">Ver meu escopo</a>
-                <a class="button secondary" href="#access-role-map">Ver mapa de papeis</a>
-                <a class="button secondary" href="/admin/auth/group/">Gerenciar grupos</a>
-            </div>
-        </div>
-        <aside class="operation-hero-side">
-            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Leitura instantanea" copy="Papel ativo e governança atual." stats=hero_stats %}
-        </aside>
-    </section>
+    {% include "includes/ui/page_hero.html" with hero=access_hero %}
 
     <section class="table-card operation-focus-card" aria-label="Foco de leitura de acesso">
         <div class="operation-card-head">

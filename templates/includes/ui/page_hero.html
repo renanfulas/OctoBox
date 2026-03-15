@@ -1,0 +1,49 @@
+<section class="hero operation-hero{% for class_name in hero.classes %} {{ class_name }}{% endfor %}" aria-label="{{ hero.aria_label }}"{% if hero.data_slot %} data-slot="{{ hero.data_slot }}"{% endif %}{% if hero.data_panel %} data-panel="{{ hero.data_panel }}"{% endif %}>
+    <div class="operation-hero-main">
+        <div>
+            <p class="eyebrow">{{ hero.eyebrow }}</p>
+            {% if hero.heading_level == 'h1' %}
+            <h1 data-max-lines="{{ hero.contract.max_title_lines }}">{{ hero.title }}</h1>
+            {% else %}
+            <h2 data-max-lines="{{ hero.contract.max_title_lines }}">{{ hero.title }}</h2>
+            {% endif %}
+            <p class="operation-hero-copy" data-max-lines="{{ hero.contract.max_copy_lines }}">{{ hero.copy }}</p>
+        </div>
+        {% if hero.actions %}
+        <div class="actions"{% if hero.actions_slot %} data-slot="{{ hero.actions_slot }}"{% endif %}>
+            {% for action in hero.actions %}
+            <a class="button{% if action.kind == 'secondary' %} secondary{% endif %}{% if action.class_name %} {{ action.class_name }}{% endif %}" href="{{ action.href }}"{% if action.data_action %} data-action="{{ action.data_action }}"{% endif %}>{{ action.label }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% if hero.side %}
+    <aside class="operation-hero-side{% if hero.side.panel_class %} {{ hero.side.panel_class }}{% endif %}"{% if hero.side.data_panel %} data-panel="{{ hero.side.data_panel }}"{% endif %}>
+        {% if hero.side.kind == 'stats-panel' %}
+        {% include "includes/ui/hero_stat_panel.html" with eyebrow=hero.side.eyebrow copy=hero.side.copy stats=hero.side.stats actions=hero.side.actions card_class=hero.side.card_class actions_class=hero.side.actions_class %}
+        {% elif hero.side.kind == 'stat-grid' %}
+        <article class="operation-hero-panel{% if hero.side.stack %} hero-side-stack{% endif %}">
+            <div>
+                <p class="eyebrow">{{ hero.side.eyebrow }}</p>
+                <p class="operation-card-copy" data-max-lines="{{ hero.contract.max_panel_copy_lines }}">{{ hero.side.copy }}</p>
+            </div>
+            <div class="hero-side-stat-grid">
+                {% for item in hero.side.items %}
+                <div class="hero-side-stat">
+                    <span>{{ item.label }}</span>
+                    <strong>{{ item.value }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+            {% if hero.side.actions %}
+            <div class="actions{% if hero.side.actions_class %} {{ hero.side.actions_class }}{% endif %}">
+                {% for action in hero.side.actions %}
+                <a class="button{% if action.kind == 'secondary' %} secondary{% endif %}{% if action.class_name %} {{ action.class_name }}{% endif %}" href="{{ action.href }}"{% if action.data_action %} data-action="{{ action.data_action }}"{% endif %}>{{ action.label }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </article>
+        {% endif %}
+    </aside>
+    {% endif %}
+</section>

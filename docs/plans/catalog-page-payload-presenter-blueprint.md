@@ -144,6 +144,22 @@ Responsabilidade:
 
 ## Contrato-base do page payload do catalogo
 
+### Principio espelhado do contrato semantico enxuto
+
+No catalogo, o page payload deve nascer da mesma regra-mestra do front:
+
+1. o backend entrega apenas o minimo semantico necessario para a tela existir com verdade
+2. esse minimo inclui dados reais, permissoes, estado, contexto e acoes possiveis
+3. o frontend assume organizacao visual, repeticao de leitura e composicao da interface
+4. o presenter organiza a lingua da tela, mas nao deve inflar o payload com cosmetica redundante
+
+Traducao pratica para este blueprint:
+
+1. o payload deve carregar o que altera leitura real, navegacao, estado e acao
+2. o payload nao deve carregar varias versoes cosmeticas do mesmo valor so para sustentar layout
+3. o mesmo dado pode aparecer em varios pontos da interface sem exigir duplicacao semantica no contrato
+4. presenter bom reduz contexto informal, mas nao vira fabrica de copy redundante nem mini framework visual
+
 Todo payload de tela do catalogo deve convergir para este shape conceitual:
 
 ```text

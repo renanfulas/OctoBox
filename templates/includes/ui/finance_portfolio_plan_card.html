@@ -23,6 +23,8 @@ POR QUE ELE EXISTE:
     <p class="body-copy text-muted finance-plan-description-compact">{% if plan.description %}{{ plan.description }}{% else %}Sem descricao comercial ainda.{% endif %}</p>
     <div class="actions actions-tight">
         <a class="button secondary" href="/financeiro/planos/{{ plan.id }}/editar/">Editar plano</a>
-        <a class="button secondary" href="/admin/boxcore/membershipplan/{{ plan.id }}/change/">Admin</a>
+        {% if can_access_admin %}
+        <a class="button secondary" href="{% url 'admin:boxcore_membershipplan_change' plan.id %}">Admin</a>
+        {% endif %}
     </div>
 </div>

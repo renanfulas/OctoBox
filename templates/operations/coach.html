@@ -13,30 +13,11 @@ PONTOS CRITICOS:
 - Os botões alteram o estado real da presença.
 -->
 {% extends "layouts/base.html" %}
-{% load static %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
-{% endblock %}
 
 {% block content %}
 {% with page=operation_page %}
 <div class="operation-shell">
-    <section class="hero operation-hero" aria-label="Panorama do coach">
-        <div class="operation-hero-main">
-            <div>
-                <p class="eyebrow">Rotina do coach</p>
-                <h2>Abra o dia, registre presença, feche a turma.</h2>
-                <p class="operation-hero-copy">Agenda do turno, aluno para registrar, ocorrência técnica quando necessária.</p>
-            </div>
-            <div class="actions">
-                <a class="button" href="#coach-sessions-board">Ver aulas do dia</a>
-            </div>
-        </div>
-        <aside class="operation-hero-side">
-            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Turno de hoje" copy="Agenda e rotina do turno." stats=page.data.hero_stats %}
-        </aside>
-    </section>
+    {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
 
     <section class="panel-grid operation-metric-grid" aria-label="Metricas do turno">
         {% for card in page.data.metric_cards %}

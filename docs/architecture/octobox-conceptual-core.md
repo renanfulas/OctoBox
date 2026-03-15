@@ -41,6 +41,26 @@ Em linguagem curta:
 2. o centro do sistema nao e boxcore
 3. o centro do sistema e comportamento de negocio organizado por capacidade
 
+## Imperativo de velocidade acima do ritmo humano
+
+O OctoBox passa a assumir oficialmente uma necessidade de negocio que orienta arquitetura, contrato e experiencia.
+
+Essa necessidade e esta:
+
+1. o sistema precisa responder mais rapido do que o humano consegue procurar, organizar e interpretar manualmente
+2. a sensacao correta de uso e esta: o sistema ja processou e apresentou antes de a pessoa terminar de montar o contexto sozinha
+3. leitura, consolidacao e entrega precisam acontecer em milissegundos sempre que a tarefa for operacional, comercial ou executiva de rotina
+
+Essa nao e uma preferencia secundaria.
+
+Essa e uma regra de negocio do produto.
+
+Traducao pratica:
+
+1. o sistema existe para reduzir atrito cognitivo e operacional, nao para apenas digitalizar espera humana
+2. se a pessoa precisar esperar demais ou recompor contexto manualmente, o produto falha na funcao principal
+3. backend e frontend precisam se comportar como organismo vivo com comunicacao curta, clara e eficaz
+
 ## O que e core conceitual do OctoBox
 
 O core conceitual do OctoBox e formado por quatro camadas de sentido que juntas definem o produto:

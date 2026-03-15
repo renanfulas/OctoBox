@@ -1,0 +1,93 @@
+/*
+ARQUIVO: contrato compartilhado de espacamento.
+
+POR QUE ELE EXISTE:
+- separa regras de respiro e cadencia visual do restante do design system.
+- cria um baseline previsivel entre blocos, cards e grupos internos sem engessar telas futuras.
+
+O QUE ESTE ARQUIVO FAZ:
+1. define utilitarios leves de stack e section gap.
+2. padroniza o ritmo entre titulos, formularios e agrupamentos recorrentes.
+3. deixa o espacamento centralizado num arquivo facil de revisar e evoluir.
+
+PONTOS CRITICOS:
+- este arquivo deve conter regra de ritmo, nao identidade visual de pagina.
+- se um espacamento depender do contexto local da tela, ele continua no CSS da tela.
+*/
+
+:root {
+    --stack-gap-xs: 8px;
+    --stack-gap-sm: 14px;
+    --stack-gap-md: 16px;
+    --stack-gap-lg: 18px;
+}
+
+.section-gap {
+    margin-bottom: var(--section-gap);
+}
+
+.section-gap-top {
+    margin-top: var(--section-gap);
+}
+
+.section-gap-top-sm {
+    margin-top: 20px;
+}
+
+.section-gap-top-xs {
+    margin-top: 18px;
+}
+
+.no-margin {
+    margin: 0;
+}
+
+.form-stack {
+    display: grid;
+    gap: var(--stack-gap-sm);
+}
+
+.form-stack-lg {
+    display: grid;
+    gap: var(--stack-gap-lg);
+}
+
+.stack-8 {
+    display: grid;
+    gap: var(--stack-gap-xs);
+}
+
+.stack-14 {
+    display: grid;
+    gap: var(--stack-gap-sm);
+}
+
+.stack-16 {
+    display: grid;
+    gap: var(--stack-gap-md);
+}
+
+:where(.card, .table-card, .quick-card, .operation-hero-panel) > :where(h1, h2, h3, h4):first-child,
+:where(.card, .table-card, .quick-card, .operation-hero-panel) > :where(.eyebrow):first-child {
+    margin-top: 0;
+}
+
+:where(.card, .table-card, .quick-card, .operation-hero-panel) > :last-child {
+    margin-bottom: 0;
+}
+
+@media (max-width: 720px) {
+    :root {
+        --stack-gap-sm: 12px;
+        --stack-gap-md: 14px;
+        --stack-gap-lg: 16px;
+    }
+
+    .section-gap {
+        margin-bottom: 22px;
+    }
+
+    .section-gap-top {
+        margin-top: 22px;
+    }
+}

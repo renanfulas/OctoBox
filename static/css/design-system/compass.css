@@ -13,15 +13,16 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Hover agora funciona como aprimoramento em ponteiro fino; em touch/mobile o hint fica visível por padrão.
 - Breakpoint 640px reduz padding do compass.
+- Page compass segue contrato de duas linhas maximas para titulo e copy.
 */
 
 .page-compass {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.9fr);
-    gap: 20px;
+    grid-template-columns: minmax(0, 1.45fr) minmax(240px, 0.82fr);
+    gap: 14px;
     margin-bottom: var(--section-gap);
-    padding: 24px 24px 0;
-    border-radius: 30px;
+    padding: 16px 18px 0;
+    border-radius: 28px;
     border: 1px solid var(--line);
     background:
         radial-gradient(circle at top right, rgba(184, 92, 56, 0.16), transparent 34%),
@@ -29,13 +30,22 @@ PONTOS CRITICOS:
         linear-gradient(145deg, rgba(255, 252, 247, 0.9), rgba(246, 239, 229, 0.94));
     box-shadow: var(--shadow-soft);
     backdrop-filter: blur(14px);
-    overflow: hidden;
+    position: relative;
+    z-index: 1;
+    overflow: visible;
 }
 
 .page-compass-main {
     display: grid;
-    gap: 14px;
+    gap: 6px;
     min-width: 0;
+    align-content: start;
+}
+
+.page-compass-main > div:first-child {
+    display: grid;
+    gap: 6px;
+    max-width: 52ch;
 }
 
 .page-compass-actions {
@@ -44,16 +54,27 @@ PONTOS CRITICOS:
 
 .page-compass-title {
     margin: 0;
-    font-size: clamp(1.8rem, 2.8vw, 2.8rem);
-    line-height: 0.95;
+    max-width: 12ch;
+    font-size: clamp(1.52rem, 2.15vw, 2.12rem);
+    line-height: 0.98;
     letter-spacing: -0.04em;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
 }
 
 .page-compass-copy {
-    margin: 10px 0 0;
-    max-width: 68ch;
+    margin: 0;
+    max-width: 48ch;
     color: var(--muted);
-    line-height: 1.65;
+    line-height: 1.38;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
 }
 
 .page-compass-tags {
@@ -63,117 +84,165 @@ PONTOS CRITICOS:
 }
 
 .page-compass-stats {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-    min-width: min(100%, 420px);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0;
+    width: fit-content;
+    min-width: 0;
+    max-width: 100%;
     align-content: start;
+    align-self: start;
+    justify-self: end;
+    padding: 6px 10px;
+    border: 1px solid rgba(112, 96, 81, 0.1);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.38);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
 }
 
 .page-compass-stat {
-    padding: 16px 16px 18px;
-    border-radius: 20px;
-    border: 1px solid rgba(112, 96, 81, 0.12);
-    background: rgba(255, 255, 255, 0.58);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.52);
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 4px 12px;
+    min-height: 28px;
+    white-space: nowrap;
+    border-radius: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.page-compass-stat + .page-compass-stat {
+    border-left: 1px solid rgba(112, 96, 81, 0.12);
 }
 
 .page-compass-stat span {
-    display: block;
-    font-size: 0.74rem;
+    display: inline;
+    font-size: 0.62rem;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     color: var(--muted);
     font-weight: 700;
+    white-space: nowrap;
 }
 
 .page-compass-stat strong {
-    display: block;
-    margin-top: 8px;
-    font-size: 1.16rem;
-    line-height: 1.2;
+    display: inline;
+    margin-top: 0;
+    font-size: 0.95rem;
+    line-height: 1.05;
     letter-spacing: -0.03em;
+    white-space: nowrap;
 }
 
 /* ── Pulse bar ── */
 
 .compass-pulse {
-    --pulse-min: 220px;
-    --pulse-gap: 14px;
-    --pulse-chip-padding: 16px 18px;
-    --pulse-chip-min-height: 92px;
+    --pulse-gap: 6px;
+    --pulse-chip-padding: 3px 7px;
+    --pulse-chip-min-height: 28px;
+    --pulse-hint-width: clamp(200px, 22vw, 280px);
     grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--pulse-gap);
-    margin-top: 14px;
-    padding: 16px 0 8px;
-    border-top: 1px solid rgba(112, 96, 81, 0.12);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0;
+    margin-top: 2px;
+    padding: 7px 0 4px;
+    border-top: 1px solid rgba(112, 96, 81, 0.1);
+    position: relative;
+    z-index: 4;
+    isolation: auto;
 }
 
 .compass-pulse--dashboard,
 .compass-pulse--dashboard-reception {
-    --pulse-min: 210px;
+    --pulse-chip-min-height: 30px;
 }
 
 .compass-pulse--students,
 .compass-pulse--student-form {
-    --pulse-min: 235px;
+    --pulse-chip-min-height: 30px;
 }
 
 .compass-pulse--finance,
 .compass-pulse--finance-plan-form {
-    --pulse-min: 230px;
-    --pulse-chip-min-height: 94px;
+    --pulse-chip-min-height: 31px;
 }
 
 .compass-pulse--class-grid {
-    --pulse-min: 210px;
-    --pulse-chip-min-height: 84px;
+    --pulse-chip-min-height: 30px;
 }
 
 .compass-pulse--operations-owner {
-    --pulse-min: 220px;
+    --pulse-chip-min-height: 30px;
 }
 
 .compass-pulse--operations-manager {
-    --pulse-min: 228px;
-    --pulse-chip-min-height: 92px;
+    --pulse-chip-min-height: 31px;
 }
 
 .compass-pulse--operations-coach {
-    --pulse-min: 212px;
-    --pulse-chip-min-height: 82px;
+    --pulse-chip-min-height: 30px;
 }
 
 .compass-pulse--operations-reception,
 .compass-pulse--operations-reception-preview {
-    --pulse-min: 236px;
-    --pulse-chip-min-height: 96px;
+    --pulse-chip-min-height: 31px;
 }
 
 .compass-pulse--access,
 .compass-pulse--system-map,
 .compass-pulse--admin {
-    --pulse-min: 245px;
+    --pulse-chip-min-height: 30px;
 }
 
 .pulse-chip {
     position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    z-index: 1;
+    display: inline-grid;
+    grid-template-columns: auto;
     grid-template-areas:
-        "label number"
-        "hint hint";
-    gap: 10px 12px;
-    align-items: start;
+        "head";
+    column-gap: 0;
+    row-gap: 0;
+    align-items: center;
+    align-content: center;
+    width: fit-content;
+    max-width: min(100%, 100%);
     min-height: var(--pulse-chip-min-height);
     padding: var(--pulse-chip-padding);
-    border-radius: 24px;
-    border: 1px solid rgba(112, 96, 81, 0.12);
+    border-radius: 0;
+    border: 0;
     text-decoration: none;
-    line-height: 1.2;
-    transition: transform 0.16s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+    line-height: 1;
+    box-shadow: none;
+    overflow: visible;
+    isolation: isolate;
+    transition: transform 0.18s ease, box-shadow 0.22s ease, border-color 0.22s ease, background-color 0.22s ease, padding 0.22s ease;
+}
+
+.pulse-chip + .pulse-chip {
+    margin-left: 4px;
+    padding-left: 12px;
+}
+
+.pulse-chip + .pulse-chip::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 1px;
+    height: 16px;
+    background: rgba(112, 96, 81, 0.14);
+    transform: translateY(-50%);
+}
+
+.pulse-chip::after {
+    display: none;
 }
 
 .pulse-chip:focus-visible {
@@ -190,29 +259,45 @@ PONTOS CRITICOS:
     backdrop-filter: blur(6px);
 }
 
+.pulse-head {
+    grid-area: head;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    width: fit-content;
+    min-width: 0;
+}
+
 .pulse-label {
-    grid-area: label;
-    font-size: 0.76rem;
+    display: block;
+    min-width: 0;
+    font-size: 0.53rem;
     font-weight: 800;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
+    line-height: 1;
+    white-space: nowrap;
 }
 
 .pulse-number {
-    grid-area: number;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 30px;
-    height: 30px;
-    padding: 0 9px;
+    min-width: 12px;
+    width: auto;
+    height: 12px;
+    padding: 0 3px;
     border-radius: 999px;
-    border: 1.5px solid currentColor;
-    font-size: 0.74rem;
+    border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+    font-size: 0.47rem;
     font-weight: 900;
     font-variant-numeric: tabular-nums;
     line-height: 1;
     text-align: center;
+    flex-shrink: 0;
+    transition: transform 0.2s ease, box-shadow 0.22s ease, background-color 0.22s ease, border-color 0.22s ease;
 }
 
 .pulse-chip:not(.has-count) .pulse-number {
@@ -220,78 +305,257 @@ PONTOS CRITICOS:
 }
 
 .pulse-hint {
-    grid-area: hint;
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
+    display: block;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    top: auto;
+    z-index: 80;
+    width: var(--pulse-hint-width);
     min-width: 0;
-}
-
-.pulse-hint-count {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 24px;
-    height: 24px;
-    padding: 0 7px;
-    border-radius: 999px;
-    border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
-    background: color-mix(in srgb, currentColor 10%, white);
-    font-size: 0.69rem;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-    flex-shrink: 0;
+    max-width: var(--pulse-hint-width);
+    height: auto;
+    border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 245, 239, 0.98));
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.12);
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+    contain: paint;
+    transform: translateY(6px);
+    transition: max-width 0.24s ease, opacity 0.18s ease, transform 0.18s ease;
 }
 
 .pulse-hint-copy {
     display: block;
-    color: color-mix(in srgb, var(--ink) 72%, transparent);
-    font-size: 0.84rem;
-    line-height: 1.45;
-    text-wrap: pretty;
+    height: auto;
+    padding: 8px 10px;
+    min-width: 0;
+    color: color-mix(in srgb, var(--ink) 86%, transparent);
+    font-size: 0.65rem;
+    font-weight: 600;
+    line-height: 1.35;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.16s ease 0.05s, transform 0.18s ease 0.05s;
 }
 
 .pulse-priority {
-    background: linear-gradient(180deg, rgba(189, 63, 47, 0.12), rgba(255, 255, 255, 0.72));
     color: #9c271c;
-    border-color: rgba(189, 63, 47, 0.16);
 }
 
 .pulse-pending {
-    background: linear-gradient(180deg, rgba(40, 92, 142, 0.12), rgba(255, 255, 255, 0.72));
     color: #1d4c78;
-    border-color: rgba(40, 92, 142, 0.16);
 }
 
 .pulse-next-action {
-    background: linear-gradient(180deg, rgba(184, 92, 56, 0.14), rgba(255, 255, 255, 0.72));
     color: var(--brand-dark);
-    border-color: rgba(184, 92, 56, 0.18);
+}
+
+body[data-theme="dark"] .page-compass {
+    background:
+        radial-gradient(circle at top right, rgba(184, 92, 56, 0.2), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(40, 92, 142, 0.18), transparent 26%),
+        linear-gradient(145deg, rgba(18, 27, 36, 0.94), rgba(27, 37, 49, 0.96));
+    border-color: rgba(199, 186, 167, 0.14);
+    box-shadow: var(--shadow-soft);
+}
+
+body[data-theme="dark"] .page-compass-stat {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+body[data-theme="dark"] .page-compass-stats {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(199, 186, 167, 0.12);
+}
+
+body[data-theme="dark"] .page-compass-stat + .page-compass-stat {
+    border-left-color: rgba(199, 186, 167, 0.14);
+}
+
+body[data-theme="dark"] .compass-pulse {
+    border-top-color: rgba(199, 186, 167, 0.14);
+}
+
+body[data-theme="dark"] .pulse-chip {
+    border-color: transparent;
+    box-shadow: none;
+}
+
+body[data-theme="dark"] .pulse-chip + .pulse-chip::before {
+    background: rgba(199, 186, 167, 0.16);
+}
+
+body[data-theme="dark"] .pulse-number {
+    background: rgba(12, 18, 26, 0.82);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
+}
+
+body[data-theme="dark"] .pulse-hint-copy {
+    color: color-mix(in srgb, var(--ink) 90%, transparent);
+}
+
+body[data-theme="dark"] .pulse-hint {
+    border-color: rgba(199, 186, 167, 0.16);
+    background: linear-gradient(180deg, rgba(24, 34, 47, 0.98), rgba(17, 25, 35, 0.98));
+    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
+}
+
+body[data-theme="dark"] .pulse-priority {
+    color: #fecaca;
+}
+
+body[data-theme="dark"] .pulse-pending {
+    color: #bfdbfe;
+}
+
+body[data-theme="dark"] .pulse-next-action {
+    color: #fed7aa;
 }
 
 @media (hover: hover) and (pointer: fine) {
     .pulse-chip:hover,
     .pulse-chip:focus-visible {
         transform: translateY(-1px);
+        z-index: 40;
+    }
+
+    .pulse-chip:hover .pulse-number,
+    .pulse-chip:focus-visible .pulse-number {
+        transform: scale(1.04);
+        background: rgba(255, 255, 255, 0.98);
+        box-shadow: 0 10px 18px rgba(15, 23, 42, 0.12);
+    }
+
+    .pulse-chip:hover .pulse-hint,
+    .pulse-chip:focus-visible .pulse-hint {
+        max-width: var(--pulse-hint-width);
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+
+    .pulse-chip:hover .pulse-hint-copy,
+    .pulse-chip:focus-visible .pulse-hint-copy {
+        opacity: 1;
+        transform: translateY(0);
     }
 
     .pulse-priority:hover,
     .pulse-priority:focus-visible {
-        background: linear-gradient(180deg, rgba(220, 38, 38, 0.14), rgba(255, 255, 255, 0.88));
-        box-shadow: 0 8px 20px rgba(220, 38, 38, 0.10);
+        box-shadow: none;
     }
 
     .pulse-pending:hover,
     .pulse-pending:focus-visible {
-        background: linear-gradient(180deg, rgba(37, 99, 235, 0.14), rgba(255, 255, 255, 0.88));
-        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.10);
+        box-shadow: none;
     }
 
     .pulse-next-action:hover,
     .pulse-next-action:focus-visible {
-        background: linear-gradient(180deg, rgba(234, 88, 12, 0.14), rgba(255, 255, 255, 0.88));
-        box-shadow: 0 8px 20px rgba(234, 88, 12, 0.10);
+        box-shadow: none;
+    }
+}
+
+@media (hover: none), (pointer: coarse) {
+    .page-compass-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .page-compass-stat {
+        display: block;
+        padding: 10px 12px 11px;
+        border-radius: 15px;
+        border: 1px solid rgba(112, 96, 81, 0.12);
+        background: rgba(255, 255, 255, 0.5);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.44);
+    }
+
+    .page-compass-stat + .page-compass-stat {
+        border-left: 1px solid rgba(112, 96, 81, 0.12);
+    }
+
+    .page-compass-stat span,
+    .page-compass-stat strong {
+        display: block;
+    }
+
+    .page-compass-stat strong {
+        margin-top: 4px;
+    }
+
+    .pulse-chip {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "head"
+            "hint hint";
+        width: 100%;
+        max-width: none;
+        gap: 8px 10px;
+        padding: 9px 11px;
+        border-radius: 18px;
+        border: 1px solid rgba(112, 96, 81, 0.14);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58), 0 3px 10px rgba(191, 161, 129, 0.04);
+    }
+
+    .pulse-chip + .pulse-chip {
+        margin-left: 0;
+        padding-left: 11px;
+    }
+
+    .pulse-chip + .pulse-chip::before {
+        display: none;
+    }
+
+    .pulse-hint {
+        position: static;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        height: auto;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+        contain: initial;
+    }
+
+    .pulse-hint-copy {
+        padding: 10px 0 0;
+        border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+        border-left: 0;
+        border-right: 0;
+        border-bottom: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        height: auto;
+        font-size: 0.72rem;
+        font-weight: 500;
+        line-height: 1.45;
+        opacity: 1;
+        transform: none;
+        white-space: normal;
+        text-overflow: clip;
     }
 }
 
@@ -302,11 +566,70 @@ PONTOS CRITICOS:
     padding: 5px 0;
 }
 
+@media (min-width: 961px) {
+    .page-compass-main {
+        justify-items: center;
+        text-align: center;
+    }
+
+    .page-compass-main > div:first-child {
+        margin-inline: auto;
+    }
+
+    .page-compass-copy,
+    .page-compass-tags {
+        margin-inline: auto;
+    }
+
+    .page-compass-tags {
+        justify-content: center;
+    }
+
+    .page-compass-stats {
+        justify-self: center;
+        justify-content: center;
+    }
+
+    .page-compass-stat {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .compass-pulse {
+        --pulse-chip-padding: 4px 10px;
+        --pulse-chip-min-height: 32px;
+        --pulse-hint-width: clamp(220px, 24vw, 320px);
+        padding-top: 9px;
+        padding-bottom: 6px;
+    }
+
+    .pulse-chip + .pulse-chip {
+        margin-left: 6px;
+        padding-left: 14px;
+    }
+
+    .pulse-label {
+        font-size: 0.61rem;
+        letter-spacing: 0.09em;
+    }
+
+    .pulse-number {
+        min-width: 14px;
+        height: 14px;
+        padding: 0 4px;
+        font-size: 0.54rem;
+    }
+
+    .pulse-hint-copy {
+        font-size: 0.72rem;
+        line-height: 1.4;
+    }
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1180px) {
     .compass-pulse {
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        grid-template-columns: repeat(auto-fit, minmax(var(--pulse-min), 1fr));
+        gap: 8px;
     }
 }
 
@@ -320,11 +643,20 @@ PONTOS CRITICOS:
     }
 
     .page-compass-stats {
+        width: 100%;
         min-width: 0;
+        justify-self: stretch;
     }
 
     .compass-pulse {
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 8px;
+    }
+}
+
+@media (max-width: 760px) {
+    .compass-pulse {
+        display: grid;
+        grid-template-columns: 1fr;
     }
 }
 
@@ -338,18 +670,56 @@ PONTOS CRITICOS:
     }
 
     .compass-pulse {
-        grid-template-columns: 1fr;
-    }
-
-    .pulse-chip {
-        border-radius: 20px;
+        gap: 10px;
     }
 
     .pulse-chip {
         min-height: 0;
-        padding: 12px 14px;
-        border-radius: 18px;
     }
+
+    .pulse-head {
+        gap: 10px;
+    }
+
+    .pulse-number {
+        min-width: 32px;
+        width: 32px;
+        height: 32px;
+        font-size: 0.76rem;
+    }
+
+    .pulse-label {
+        white-space: normal;
+    }
+
+    .pulse-hint-copy {
+        font-size: 0.8rem;
+        line-height: 1.45;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-compass {
+        padding: 16px;
+        gap: 16px;
+    }
+
+    .page-compass-copy {
+        margin-top: 8px;
+        line-height: 1.55;
+    }
+
+    .compass-pulse {
+        margin-top: 10px;
+        padding-top: 14px;
+        padding-bottom: 4px;
+    }
+
+    .pulse-chip {
+        gap: 8px;
+        padding: 12px;
+    }
+
 }
 
 @media (prefers-reduced-motion: reduce) {

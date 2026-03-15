@@ -72,9 +72,9 @@ Preencher ao menos um usuario por papel necessario.
 
 ### Recepcao
 
-1. nome: nao ha papel fixo de recepcao no box no momento
-2. email: nao se aplica por enquanto
-3. telefone: nao se aplica por enquanto
+1. nome: definir operador responsavel pelo balcao ou registrar uso temporario por Owner ou Manager
+2. email: definir quando o fluxo dedicado entrar com usuario proprio
+3. telefone: definir quando houver pessoa dedicada ao balcao
 
 ### Coach
 
@@ -177,7 +177,7 @@ Confirmar como o box trabalha hoje:
 1. principal metodo de pagamento: pix e cartao
 2. cobranca recorrente existe: pendente
 3. parcelamento existe: nao
-4. existe alguem na recepcao tratando atraso curto: nao ha papel fixo de recepcao no momento
+4. existe alguem na recepcao tratando atraso curto: definir se o fluxo sera coberto por usuario Recepcao ou temporariamente por Owner ou Manager
 
 ## Operacao do primeiro dia
 

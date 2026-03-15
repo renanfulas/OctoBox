@@ -53,6 +53,27 @@ Em linguagem curta:
 3. sinais, alertas e transicoes precisam de lugar proprio
 4. tudo que e temporario precisa nascer com criterio de saida
 
+## Regra estrutural de velocidade superior ao humano
+
+Este predio inteiro precisa obedecer a uma necessidade operacional simples:
+
+1. o sistema precisa ser mais rapido do que o humano
+2. a experiencia correta e a de um organismo vivo que processa, conecta e apresenta antes de a pessoa conseguir montar isso manualmente
+3. a arquitetura nao pode apenas suportar funcionalidade; ela precisa suportar resposta em milissegundos e leitura quase imediata
+
+Isso reorganiza a leitura do modelo:
+
+1. o CENTER existe para encurtar a comunicacao
+2. o nucleo existe para decidir sem desperdiçar travessias
+3. a Front Display Wall existe para apresentar a leitura pronta com friccao minima
+4. Signal Mesh e estruturas elasticas so vencem se preservarem velocidade percebida com integridade estrutural
+
+Regra de criterio:
+
+1. se a arquitetura ficar mais bonita e o produto ficar mais lento, a arquitetura piorou
+2. se a comunicacao entre backend e frontend exigir recomposicao manual ou muitas passagens desnecessarias, o predio perdeu eficiencia vital
+3. o sistema so cumpre sua tese quando processamento, consolidacao e exibicao trabalham como um fluxo vivo e sincronizado
+
 Se houver duvida sobre qual leitura vence, a resposta oficial agora esta em [octobox-conceptual-core.md](octobox-conceptual-core.md):
 
 1. primeiro capacidade de dominio

@@ -26,7 +26,7 @@ ARQUIVO: painel da agenda de hoje.
     {% include "includes/ui/class_grid_panel_head.html" with eyebrow="Agenda de hoje" summary="Nao ha aulas cadastradas para hoje." pill_label="Dia livre" pill_class="info" header_class="" handle_aria="Arrastar janela da agenda de hoje" %}
     <div class="actions actions-tight">
         {% if page.capabilities.can_open_class_admin %}
-        <a class="button secondary" href="/admin/boxcore/classsession/" data-action="open-class-admin">Cadastrar aulas no admin</a>
+        <a class="button secondary" href="{% url 'admin:boxcore_classsession_changelist' %}" data-action="open-class-admin">Cadastrar aulas no admin</a>
         {% endif %}
     </div>
 </section>

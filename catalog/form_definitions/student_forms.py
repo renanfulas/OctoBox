@@ -281,8 +281,60 @@ class PaymentManagementForm(forms.Form):
         return normalized_data
 
 
+class StudentPaymentActionForm(forms.Form):
+    ACTION_CHOICES = (
+        ('update-payment', 'Salvar cobranca'),
+        ('mark-paid', 'Confirmar pagamento'),
+        ('refund-payment', 'Estornar pagamento'),
+        ('cancel-payment', 'Cancelar cobranca'),
+        ('regenerate-payment', 'Regenerar cobranca'),
+    )
+
+    payment_id = forms.IntegerField(widget=forms.HiddenInput, min_value=1)
+    action = forms.ChoiceField(choices=ACTION_CHOICES)
+
+
+class ReceptionPaymentManagementForm(forms.Form):
+    ACTION_CHOICES = (
+        ('update-payment', 'Salvar ajuste curto'),
+        ('mark-paid', 'Confirmar pagamento'),
+    )
+
+    payment_id = forms.IntegerField(widget=forms.HiddenInput)
+    action = forms.ChoiceField(choices=ACTION_CHOICES)
+    due_date = forms.DateField(label='Vencimento', input_formats=['%d/%m/%Y', '%Y-%m-%d'], widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'))
+    method = forms.ChoiceField(choices=PaymentMethod.choices, label='Metodo')
+    reference = forms.CharField(required=False, label='Referencia')
+    notes = forms.CharField(required=False, label='Observacoes')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        apply_date_input_attrs(self.fields['due_date'], placeholder='dd/mm/aaaa')
+        apply_text_input_attrs(self.fields['reference'], placeholder='Ex.: PIX-MAR-2026', maxlength=100)
+        apply_text_input_attrs(self.fields['notes'], placeholder='Observacao curta para a cobranca.', maxlength=255)
+
+
+class FinanceCommunicationActionForm(forms.Form):
+    ACTION_KIND_CHOICES = (
+        ('upcoming', 'Lembrete de vencimento'),
+        ('overdue', 'Cobranca em atraso'),
+        ('reactivation', 'Reativacao'),
+    )
+
+    action_kind = forms.ChoiceField(choices=ACTION_KIND_CHOICES)
+    student_id = forms.IntegerField(min_value=1)
+    payment_id = forms.IntegerField(required=False, min_value=1)
+    enrollment_id = forms.IntegerField(required=False, min_value=1)
+
+
 class EnrollmentManagementForm(forms.Form):
+    ACTION_CHOICES = (
+        ('cancel-enrollment', 'Cancelar matricula'),
+        ('reactivate-enrollment', 'Reativar matricula'),
+    )
+
     enrollment_id = forms.IntegerField(widget=forms.HiddenInput)
+    action = forms.ChoiceField(choices=ACTION_CHOICES)
     action_date = forms.DateField(label='Data da acao', widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'))
     reason = forms.CharField(required=False, label='Motivo', widget=forms.Textarea(attrs={'rows': 3}))
 

@@ -69,6 +69,25 @@ O alvo e este:
 4. encaixe natural com `Center Layer`, `snapshots`, `facades` e `use cases`
 5. caminho limpo para o dia em que Django deixar de ser o centro explicativo da entrega
 
+## Regra oficial de velocidade percebida
+
+O front-end do OctoBox nao pode apenas parecer organizado.
+
+Ele precisa sustentar a sensacao de que o sistema e mais rapido do que o humano.
+
+Em termos de produto:
+
+1. a pessoa precisa sentir que a informacao ja chegou pronta antes de ela mesma tentar montar o contexto manualmente
+2. a tela precisa carregar, consolidar e orientar em milissegundos nas rotinas centrais
+3. backend e frontend precisam operar como um organismo vivo, com passagem curta, clara e eficaz de estado, acao e leitura
+
+Consequencia direta para este guia:
+
+1. payload bom nao e so payload limpo; e payload que reduz latencia percebida
+2. presenter bom nao e so presenter organizado; e presenter que entrega leitura pronta sem inflar a borda
+3. composicao visual boa nao e so bonita; e composicao que deixa a proxima acao obvia antes de o usuario precisar procurar demais
+4. qualquer camada, include, script ou contrato que atrase a resposta percebida esta violando a tese do front
+
 ## Problema que estamos resolvendo agora
 
 Hoje o projeto ja tem um backend caminhando para desacoplamento real.
@@ -129,6 +148,29 @@ Regra de ouro:
 Quando um dado existe apenas para sustentar apresentacao, repeticao visual, amostragem auxiliar ou conveniencia de leitura, ele deve nascer uma vez e ser replicado no frontend.
 
 O backend nao deve gastar contrato, payload e montagem com duplicacao de UI sem efeito interno.
+
+### Principio oficial do contrato semantico enxuto
+
+O back-end deve entregar apenas o minimo semantico necessario para a tela existir com verdade: dados reais, permissoes, estado, contexto e acoes possiveis.
+
+O front-end assume a organizacao visual, a repeticao de leitura e a composicao da interface.
+
+Assim, a aparencia pode evoluir sem inflar o back-end com responsabilidade de UI.
+
+O resultado esperado e este:
+
+1. rota mais limpa e sustentavel para o front-end
+2. menos acoplamento visual entre backend e interface
+3. menos risco de bug por duplicacao de apresentacao
+4. menor sobrecarga desnecessaria no back-end
+
+Regra pratica permanente:
+
+1. o back-end entrega verdade, acesso, estado e acao possivel
+2. o front-end organiza hierarquia, distribuicao, repeticao visual e experiencia
+3. o mesmo dado pode aparecer em varios pontos da interface sem exigir duplicacao de payload
+4. o back-end nao deve enviar variantes cosmeticas do mesmo valor so para sustentar layout
+5. o front-end nao deve adivinhar regra de negocio, permissao ou estado critico
 
 Use esta regra:
 
@@ -389,13 +431,16 @@ Isto significa:
 2. payloads, hooks e ownership das superficies centrais ja estao suficientemente estabilizados para sustentar beta assistido sem reabrir arquitetura
 3. a passada visual assistida foi concluida nas superficies simbolicas do beta
 4. a rodada assistida de saves leves ja confirmou persistencia real em recepcao, grade, ficha leve do aluno e edicao de plano
-5. a energia restante deve ir para leitura sob uso acelerado, viewport estreita, acessibilidade curta e observacao assistida de uso real
+5. a passada complementar de viewport e fallback no ambiente assistido nao abriu novo bloqueador estrutural de beta
+6. a energia restante deve ir para leitura sob uso acelerado, viewport estreita, acessibilidade curta e observacao assistida de uso real
+7. a confirmacao mobile fisica em navegador externo ou dispositivo real continua pendente porque o browser integrado nao sustentou emulacao fisica estreita com confianca suficiente
 
 Tambem significa o que nao fazer:
 
 1. nao reabrir layout-base ou contratos centrais sem motivo operacional forte
 2. nao confundir refinamento final com nova fase de exploracao visual
 3. nao confundir pronto para beta assistido com pronto absoluto sem vigilancia
+4. nao tratar validacao mobile do browser integrado como substituto automatico de uma passada fisica real quando a emulacao se mostrar limitada
 9. recepcao
 
 Regra de prioridade:
@@ -1393,96 +1438,144 @@ O DOM nao deve ser usado como deposito informal de regra de negocio escondida.
 
 Se uma view cresce ao ponto de virar dona de contexto inteiro, copy inteira, links inteiros e detalhes interativos da pagina, ela precisa perder peso para um page builder.
 
+## Plano de acao imediato para o tradeoff estrutural
+
+O projeto entra agora numa fase em que organizacao estrutural vale mais do que microganho local.
+
+Nao vamos remendar views grandes nem aceitar payload inflado so porque a tela ja funciona.
+
+Vamos perseguir este tradeoff:
+
+1. backend cada vez mais fino na borda HTTP
+2. presenter cada vez mais claro como fronteira semantica da tela
+3. frontend cada vez mais dono da composicao visual e da repeticao de leitura
+4. zero tolerancia a montagem visual residual espalhada em view quando ela puder ser promovida para uma camada propria
+
+Sequencia obrigatoria daqui para frente:
+
+1. remover montagem visual residual das views que ainda carregam contexto demais
+2. convergir essas telas para presenter ou page builder explicito
+3. podar duplicacao cosmetica do payload antes de aceitar nova copy, novo card ou nova variante visual
+4. fechar ownership de template, CSS e JS por tela antes de qualquer refinamento lateral
+
+Anti-objetivos explicitos:
+
+1. nao abrir reescrita geral do front so por zelo arquitetural
+2. nao empurrar para o browser regra, permissao ou decisao operacional
+3. nao inflar presenter com mini framework, fabrica de copy ou decoracao redundante
+4. nao esconder backlog estrutural atras de pequenos ajustes de interface
+
 ## Ondas de execucao
 
-## Onda 1: estabilizar a espinha dorsal
+## Onda 1: retirar montagem visual residual das views
 
 Objetivo:
 
-1. remover os maiores acoplamentos sem mudar o produto visual
+1. eliminar os ultimos pontos em que a view HTTP ainda monta a tela de forma informal
 
 Entradas:
 
-1. extrair scripts inline de paginas fortes
-2. corrigir versionamento de assets para CSS e JS
-3. centralizar utilitarios duplicados de front
-4. mapear contratos atuais de pagina
+1. extrair a edicao de plano de [catalog/views/finance_views.py](catalog/views/finance_views.py) para um presenter proprio
+2. extrair a montagem do dashboard de [dashboard/dashboard_views.py](dashboard/dashboard_views.py) para uma camada de presentation
+3. extrair a montagem do guia de [guide/views.py](guide/views.py) para uma camada de presentation ou builder estatico
+4. deixar cada view restrita a request, autorizacao, chamada de snapshot ou query, attach do payload e resposta
 
 Criterio de pronto:
 
-1. nenhuma pagina central depende de script inline grande
-2. os assets nao sofrem cache enganoso em mudancas de JS
-3. os utilitarios compartilhados deixam de ser copiados entre paginas
+1. nenhuma dessas views continua dona de listas visuais, copy estrutural e montagem extensa de blocos da pagina
+2. cada uma passa a anexar um payload oficial em vez de espalhar contexto informal
+3. a leitura da tela deixa de depender de abrir a view inteira
 
-## Onda 2: modularizar por pagina
+## Onda 2: convergir os payloads para contrato semantico enxuto
 
 Objetivo:
 
-1. transformar telas fortes em composicoes legiveis
+1. garantir que o backend entregue so verdade semantica e pare de carregar cosmetica de tela sem necessidade
 
 Entradas:
 
-1. quebrar templates grandes em includes
-2. separar CSS por pagina
-3. reduzir manifesto global carregado em todas as telas
-4. padronizar bloco de assets extras no layout base
+1. revisar cada presenter novo para separar com rigidez context, shell, data, actions, behavior, capabilities e assets
+2. retirar variacoes cosmeticas redundantes do payload quando o frontend puder compor a partir da mesma fonte
+3. promover links, ancoras, estados e capacidades para secoes corretas do contrato
+4. manter aliases legados apenas no helper compartilhado, nunca na view ou no template por conveniencia
 
 Criterio de pronto:
 
-1. cada pagina central possui casca fina e modulos internos claros
-2. alterar um bloco nao exige percorrer o template inteiro
+1. o payload de cada tela explica a pagina por semantica, nao por acidente de render
+2. nenhum presenter novo carrega duplicacao de badge, resumo ou copy so para sustentar layout
+3. a fronteira backend versus frontend fica defensavel por leitura direta do arquivo
 
-## Onda 3: formalizar os contratos de tela
+## Onda 3: fechar ownership de composicao por tela
 
 Objetivo:
 
-1. alinhar de vez backend e front por objetos claros
+1. fazer cada superficie relevante ficar facil de localizar, alterar e testar sem caca cega
 
 Entradas:
 
-1. criar presenters ou page builders
-2. separar `screen context`, `screen data` e `screen actions`
-3. padronizar `json_script` e `data-*` oficiais
-4. eliminar URLs e ids sensiveis hardcoded sem contrato
+1. garantir template principal fino, includes por papel claro, CSS proprio e JS proprio para cada tela tocada
+2. revisar hooks estruturais para que JS e testes nao dependam de classe visual
+3. revisar estados de interface para que empty, error, readonly, editable e success aparecam de forma localizavel
+4. consolidar vocabulary estrutural unico entre dashboard, guide e catalogo
 
 Criterio de pronto:
 
-1. a tela consegue ser explicada por payload, nao por acidente de render
-2. o JS da pagina consome contrato e nao DOM improvisado
+1. quem abrir uma tela responde rapido onde esta a composicao, o contrato e o comportamento
+2. o JS da pagina consome contrato e hooks estaveis, nao DOM improvisado
+3. a manutencao deixa de depender de memoria oral da montagem
 
-## Onda 4: preparar o encaixe futuro de canais
+## Onda 4: congelar a regra estrutural para o restante do projeto
 
 Objetivo:
 
-1. deixar o front pronto para evoluir para areas mais dinamicas sem trauma
+1. impedir regressao para contexto informal e remendo estrutural nas proximas entregas
 
 Entradas:
 
-1. identificar zonas candidatas a ilhas interativas
-2. abrir contratos de endpoint mais estaveis para interacoes assíncronas
-3. adicionar testes de comportamento para fluxos criticos
+1. transformar este plano em regra de entrada para qualquer tela nova ou tela revisitada
+2. atualizar blueprint e ownership map sempre que uma nova fronteira estrutural ficar canonica
+3. adicionar testes ou smoke checks onde a nova fronteira reduzir risco real
+4. recusar qualquer nova mudanca que reintroduza montagem visual pesada em view HTTP
 
 Criterio de pronto:
 
-1. o sistema pode ganhar mais dinamismo sem trocar de paradigma inteiro
+1. a regra deixa de ser intencao e passa a ser comportamento padrao do repositorio
+2. novas telas nascem no contrato certo sem depender de mutirao futuro
 
 ## Frentes prioritarias do OctoBox agora
 
 Pela pressao estrutural atual, a ordem recomendada e:
 
-1. `class-grid`
-2. `student-form`
-3. `finance`
-4. `dashboard`
-5. `operations` por papel
+1. `membership-plan`
+2. `dashboard`
+3. `guide`
+4. `finance-center` apenas para poda semantica fina se sobrar resquicio
+5. `operations` e outras telas novas somente sob a regra nova, sem reabrir as ja estabilizadas
 
 Motivo:
 
-1. a grade concentra interacao forte
-2. a ficha do aluno concentra conexao sensivel entre cadastro, plano, matricula e cobranca
-3. o financeiro concentra leitura e acao assistida
-4. o dashboard precisa consolidar a linguagem final da fachada
-5. operations fecha a unidade organica por papel
+1. a edicao de plano ainda concentra montagem de tela dentro da view e oferece o melhor ganho estrutural por baixo risco
+2. o dashboard ja tem payload, mas ainda mistura borda HTTP com modelagem visual e merece separar isso antes de crescer mais
+3. o guia ainda usa a view como deposito de blocos visuais estaticos e precisa servir de exemplo de organizacao
+4. o centro financeiro principal ja esta mais maduro e deve receber apenas poda semantica, nao nova cirurgia ampla
+5. operations ja esta bem encaixado no shape atual e deve ser protegido, nao reaberto sem motivo forte
+
+## Ordem operacional imediata
+
+Para nao dispersar energia, a execucao imediata passa a ser esta:
+
+1. extrair presenter da edicao de plano
+2. extrair presenter do dashboard
+3. extrair builder do system map
+4. revisar payloads dessas tres frentes para eliminar copy e derivacoes cosmeticas desnecessarias
+5. so depois disso refinar qualquer composicao visual residual que ainda atrapalhe leitura ou manutencao
+
+Definicao de sucesso dessa rodada:
+
+1. menos logica de tela dentro das views
+2. menos contexto informal por pagina
+3. contrato mais curto, mais semantico e mais facil de localizar
+4. nenhum aumento desnecessario de arquivos ou camadas sem funcao clara
 
 ## Guardrails para nao perder alinhamento
 

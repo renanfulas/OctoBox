@@ -6,10 +6,12 @@ POR QUE ELE EXISTE:
 - organiza a tela por contrato explicito para preparar a convergencia com page payload.
 """
 
-from access.roles import ROLE_MANAGER, ROLE_OWNER
-from access.shell_actions import build_shell_action_buttons
+from access.admin import admin_changelist_url
+from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
+from access.shell_actions import build_shell_action_buttons_from_focus
+from shared_support.page_payloads import build_page_hero
 
-from .shared import build_catalog_page_payload, build_page_assets
+from .shared import build_catalog_assets, build_catalog_page_payload
 
 
 def _build_operational_focus(*, today_schedule, grouped_sessions, monthly_calendar, can_manage_classes):
@@ -70,7 +72,7 @@ def _build_operational_focus(*, today_schedule, grouped_sessions, monthly_calend
 def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_session, session_edit_form, current_query_string):
     role_slug = base_context['current_role'].slug
     can_manage_classes = role_slug in (ROLE_OWNER, ROLE_MANAGER)
-    can_open_class_admin = role_slug in (ROLE_OWNER, ROLE_MANAGER)
+    can_open_class_admin = role_slug in (ROLE_OWNER, ROLE_DEV)
     operational_focus = _build_operational_focus(
         today_schedule=snapshot['today_schedule'],
         grouped_sessions=snapshot['grouped_sessions'],
@@ -82,18 +84,43 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
         'A grade destaca volume de reservas, pressao de lotacao e distribuicao das aulas por dia.',
         'Quando houver duvida operacional, leia primeiro a agenda daqui e depois aprofunde no workspace do coach ou no admin.',
     ]
-    shell_action_buttons = build_shell_action_buttons(
-        priority={'href': operational_focus[0]['action_href'], 'summary': operational_focus[0]['summary']},
-        pending={'href': operational_focus[1]['action_href'], 'summary': operational_focus[1]['summary']},
-        next_action={'href': operational_focus[2]['action_href'], 'summary': operational_focus[2]['summary']},
-        scope='class-grid',
+    shell_action_buttons = build_shell_action_buttons_from_focus(focus=operational_focus, scope='class-grid')
+    hero = build_page_hero(
+        eyebrow='Centro de ritmo das aulas',
+        title='Grade de aulas',
+        copy='Agenda, lotacao e ajuste de janela numa leitura curta.',
+        actions=[
+            {'label': 'Ler o dia primeiro', 'href': '#today-board'},
+            {'label': 'Ver pico da janela', 'href': '#weekly-board', 'kind': 'secondary'},
+            *([
+                {'label': 'Ajustar recorrencia', 'href': '#planner-board', 'kind': 'secondary'},
+            ] if can_manage_classes else []),
+        ],
+        side={
+            'kind': 'stat-grid',
+            'eyebrow': 'Leitura instantânea',
+            'copy': 'Mostra se o dia pede ajuste, reforco ou acompanhamento.',
+            'items': [
+                {'label': 'Aulas hoje', 'value': len(snapshot['today_schedule']['sessions']) if snapshot['today_schedule'] else 0},
+                {'label': 'Dias na agenda', 'value': len(snapshot['grouped_sessions'])},
+                {'label': 'Janela', 'value': '14 dias'},
+                {'label': 'Modo', 'value': 'gestao' if can_manage_classes else 'consulta'},
+            ],
+            'stack': True,
+            'actions': ([
+                {'label': 'Abrir admin completo', 'href': admin_changelist_url('boxcore', 'classsession'), 'kind': 'secondary', 'class_name': 'button-sm'},
+            ] if can_open_class_admin else []),
+            'actions_class': 'actions-tight',
+        },
+        aria_label='Panorama da grade',
+        classes=['class-grid-hero'],
     )
 
     payload = build_catalog_page_payload(
         context={
             'page_key': 'class-grid',
             'title': 'Grade de aulas',
-            'subtitle': 'Veja onde o dia aperta, quais horarios enchem e onde o mes precisa de ajuste.',
+            'subtitle': 'Agenda, lotacao e ajuste de janela numa leitura curta.',
             'mode': 'management' if can_manage_classes else 'read-only',
             'role_slug': role_slug,
             'today': base_context['today'],
@@ -102,6 +129,7 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
             'shell_action_buttons': shell_action_buttons,
         },
         data={
+            'hero': hero,
             'grouped_sessions': snapshot['grouped_sessions'],
             'today_schedule': snapshot['today_schedule'],
             'weekly_calendar': snapshot['weekly_calendar'],
@@ -121,7 +149,7 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
                 'monthly': '#monthly-board',
                 'planner': '#planner-board',
             },
-            'admin': '/admin/boxcore/classsession/' if can_open_class_admin else None,
+            'admin': admin_changelist_url('boxcore', 'classsession') if can_open_class_admin else None,
         },
         behavior={
             'workspace_storage_key': 'octobox-class-grid-layout-v2',
@@ -131,6 +159,10 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
             'can_manage_classes': can_manage_classes,
             'can_open_class_admin': can_open_class_admin,
         },
-        assets=build_page_assets(js=['js/pages/class-grid.js']),
+        assets=build_catalog_assets(
+            css=['css/catalog/class-grid.css'],
+            js=['js/pages/class-grid.js'],
+            include_catalog_shared=True,
+        ),
     )
     return payload

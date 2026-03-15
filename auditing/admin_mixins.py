@@ -15,6 +15,7 @@ PONTOS CRITICOS:
 """
 
 from auditing import log_audit_event
+from access.admin import user_can_access_admin
 
 
 class AuditedAdminMixin:
@@ -29,6 +30,21 @@ class AuditedAdminMixin:
         if bulk_count is not None:
             metadata['bulk_count'] = bulk_count
         return metadata
+
+    def has_module_permission(self, request):
+        return user_can_access_admin(request.user)
+
+    def has_view_permission(self, request, obj=None):
+        return user_can_access_admin(request.user)
+
+    def has_add_permission(self, request):
+        return user_can_access_admin(request.user)
+
+    def has_change_permission(self, request, obj=None):
+        return user_can_access_admin(request.user)
+
+    def has_delete_permission(self, request, obj=None):
+        return user_can_access_admin(request.user)
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)

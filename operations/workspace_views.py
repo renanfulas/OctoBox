@@ -32,7 +32,7 @@ class OwnerWorkspaceView(OperationBaseView):
     allowed_roles = (ROLE_OWNER,)
     template_name = 'operations/owner.html'
     page_title = 'Minha operação'
-    page_subtitle = 'Workspace executivo do owner para ler crescimento, caixa e maturidade estrutural sem depender de interpretacao longa.'
+    page_subtitle = 'Crescimento, caixa e estrutura sem leitura longa.'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -55,7 +55,7 @@ class DevWorkspaceView(OperationBaseView):
     allowed_roles = (ROLE_DEV,)
     template_name = 'operations/dev.html'
     page_title = 'Minha operação'
-    page_subtitle = 'Workspace tecnico para investigar rastros, proteger fronteiras e encurtar manutencao sem invadir a rotina operacional.'
+    page_subtitle = 'Rastros, fronteiras e manutencao sem invadir a operacao.'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -78,7 +78,7 @@ class ManagerWorkspaceView(OperationBaseView):
     allowed_roles = (ROLE_MANAGER,)
     template_name = 'operations/manager.html'
     page_title = 'Minha operação'
-    page_subtitle = 'Workspace administrativo para decidir triagem, vinculo e cobranca numa ordem que evita fila fria e atrito estrutural.'
+    page_subtitle = 'Triagem, vinculo e cobranca em ordem curta.'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -101,7 +101,7 @@ class CoachWorkspaceView(OperationBaseView):
     allowed_roles = (ROLE_COACH,)
     template_name = 'operations/coach.html'
     page_title = 'Minha operação'
-    page_subtitle = 'Workspace do coach para manter leitura de aula, presenca e ocorrencias com decisao curta e contexto visivel.'
+    page_subtitle = 'Aula, presenca e ocorrencia com leitura curta.'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -124,7 +124,7 @@ class ReceptionPreviewWorkspaceView(OperationBaseView):
     allowed_roles = (ROLE_OWNER, ROLE_DEV)
     template_name = 'operations/reception_preview.html'
     page_title = 'Recepcao em preparo'
-    page_subtitle = 'Preview oculto da Recepcao para lapidar balcao, grade em leitura e cobranca curta sem expor a area na navegacao publica antes do marco real.'
+    page_subtitle = 'Balcao, grade e cobranca curta antes do rollout.'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -148,7 +148,7 @@ class ReceptionWorkspaceView(OperationBaseView):
     allowed_roles = (ROLE_OWNER, ROLE_RECEPTION)
     template_name = 'operations/reception.html'
     page_title = 'Minha operação'
-    page_subtitle = 'Workspace da Recepcao para acolher chegada, orientar a grade e resolver cobranca curta sem cair no administrativo amplo.'
+    page_subtitle = 'Chegada, agenda e cobranca curta no balcao.'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

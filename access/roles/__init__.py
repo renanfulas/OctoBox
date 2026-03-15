@@ -32,24 +32,41 @@ ROLE_PERMISSION_MAP = {
     ROLE_COACH: COACH_PERMISSIONS,
 }
 
+_ROLE_CACHE_ATTR = '_octobox_cached_role'
 
-def get_user_role(user):
-    if not user.is_authenticated:
-        return None
-    if user.is_superuser:
-        return ROLE_MAP[ROLE_OWNER]
 
-    group_names = set(user.groups.values_list('name', flat=True))
-    for role_name in ROLE_PRIORITY:
-        if role_name in group_names:
-            return ROLE_MAP[role_name]
-
+def _build_fallback_role():
     return RoleDefinition(
         slug='SemPapel',
         label='Sem papel definido',
         summary='Usuário autenticado sem escopo formal ainda.',
         capabilities=('Acesso autenticado sem papel de negócio associado.',),
     )
+
+
+def get_user_role(user):
+    if not user.is_authenticated:
+        return None
+
+    cached_role = getattr(user, _ROLE_CACHE_ATTR, None)
+    if cached_role is not None:
+        return cached_role
+
+    if user.is_superuser:
+        role = ROLE_MAP[ROLE_OWNER]
+        setattr(user, _ROLE_CACHE_ATTR, role)
+        return role
+
+    group_names = set(user.groups.values_list('name', flat=True))
+    for role_name in ROLE_PRIORITY:
+        if role_name in group_names:
+            role = ROLE_MAP[role_name]
+            setattr(user, _ROLE_CACHE_ATTR, role)
+            return role
+
+    role = _build_fallback_role()
+    setattr(user, _ROLE_CACHE_ATTR, role)
+    return role
 
 
 def get_user_capabilities(user):

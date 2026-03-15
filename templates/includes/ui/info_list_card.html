@@ -1,14 +1,14 @@
 <article class="table-card{% if card_class %} {{ card_class }}{% endif %}">
-    <div class="operation-card-head">
-        <div>
-            <p class="eyebrow">{{ eyebrow }}</p>
-            <h2 class="operation-card-title">{{ title }}</h2>
+    <div class="operation-card-head card-head">
+        <div class="card-head-main">
+            <p class="eyebrow card-label">{{ eyebrow }}</p>
+            <h2 class="operation-card-title card-title">{{ title }}</h2>
             {% if copy %}
-            <p class="operation-card-copy">{{ copy }}</p>
+            <p class="operation-card-copy card-copy">{{ copy }}</p>
             {% endif %}
         </div>
         {% if pill_label %}
-        <span class="pill{% if pill_class %} {{ pill_class }}{% endif %}">{{ pill_label }}</span>
+        <span class="pill card-action{% if pill_class %} {{ pill_class }}{% endif %}">{{ pill_label }}</span>
         {% endif %}
     </div>
     <ul class="capability-list">

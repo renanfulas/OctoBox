@@ -59,9 +59,17 @@ Linha do tempo deste primeiro ciclo:
 - centro visual de financeiro com filtros por janela, plano, status e metodo
 - dashboard inicial para leitura rapida da operacao
 - aulas, presenca, check-in, check-out, faltas e ocorrencias operacionais
-- autenticacao propria com papeis owner, dev, manager e coach
+- autenticacao propria com papeis owner, dev, manager, recepcao e coach
 - navegacao filtrada por papel
 - trilha de auditoria para login, logout, mudancas no admin e acoes sensiveis do produto
+
+## Estado operacional atual
+
+- branch atual fechada como beta assistido mergeavel com observacao operacional
+- admin endurecido por caminho privado configuravel e gate centralizado por papel
+- throttle por escopo ativo para login, admin, writes, exports, dashboard, leituras pesadas e autocomplete
+- cache compartilhada opcional via Redis, com fallback local e degradacao segura quando o cache externo falhar
+- presenters e page payloads consolidados nas superficies centrais de dashboard, catalogo, guide e operations
 
 ## Como usar a documentacao
 
@@ -130,6 +138,10 @@ Se quiser a traducao dessa direcao em telas concretas, ordem de prototipacao e h
 Se quiser entender a camada superior de emissao visivel e sinalizacao confiavel do estado do sistema, use [docs/architecture/red-beacon.md](docs/architecture/red-beacon.md).
 
 Se quiser entender a escalada maxima de alerta e a mudanca de postura defensiva do predio, use [docs/architecture/vertical-sky-beam.md](docs/architecture/vertical-sky-beam.md) e [docs/architecture/alert-siren.md](docs/architecture/alert-siren.md).
+
+Se quiser a baseline operacional de seguranca para deploy, throttles, proxies confiaveis e criterio inicial de blocklist sem chute, use [docs/reference/production-security-baseline.md](docs/reference/production-security-baseline.md) e [docs/reference/external-security-edge-playbook.md](docs/reference/external-security-edge-playbook.md).
+
+Se quiser a traducao direta disso para regras do Cloudflare e postura fechada do admin, use [docs/reference/cloudflare-edge-rules.md](docs/reference/cloudflare-edge-rules.md).
 
 Se quiser uma visao consolidada de todo o predio arquitetural em um unico documento, use [docs/architecture/octobox-architecture-model.md](docs/architecture/octobox-architecture-model.md).
 
@@ -334,6 +346,7 @@ PONTOS CRITICOS:
 - owner: visao estrategica do box e acesso maximo de negocio
 - dev: manutencao tecnica, inspecao, suporte e auditoria controlada
 - manager: operacao administrativa, comercial, financeiro e alunos
+- recepcao: balcao, agenda, intake e cobranca curta no fluxo operacional
 - coach: rotina tecnica de aulas, presenca e acompanhamento
 
 O comando para preparar os grupos base e:
@@ -346,22 +359,27 @@ python manage.py bootstrap_roles
 
 1. Crie e ative o ambiente virtual.
 2. Instale dependencias com `pip install -r requirements.txt`.
-3. Rode `python manage.py migrate`.
-4. Rode `python manage.py bootstrap_roles`.
-5. Crie um usuario administrativo com `python manage.py createsuperuser`.
-6. Suba o servidor com `python manage.py runserver`.
+3. Copie `.env.example` para `.env` e ajuste o minimo necessario.
+4. Rode `python manage.py migrate`.
+5. Rode `python manage.py bootstrap_roles`.
+6. Crie um usuario administrativo com `python manage.py createsuperuser`.
+7. Suba o servidor com `python manage.py runserver`.
 
 Observacao:
 
 - login, logout, mudancas no admin e acoes comerciais sensiveis ja alimentam a trilha de auditoria
 - para ambiente local, voce pode definir `DJANGO_SECRET_KEY` em um arquivo `.env` ou nas variaveis do sistema
 - o projeto agora aceita `DJANGO_ENV=development` ou `DJANGO_ENV=production` para separar configuracao local de homologacao/producao
-- para homologacao/producao, o caminho recomendado e usar `DATABASE_URL` com PostgreSQL, rodar `collectstatic` e publicar atras de HTTPS
+- para homologacao/producao, o caminho recomendado e usar `DATABASE_URL` com PostgreSQL, `REDIS_URL` para cache compartilhada, rodar `collectstatic` e publicar atras de HTTPS
+- o caminho publico do admin deve ser definido por `DJANGO_ADMIN_URL_PATH`, nao por `/admin/`
+- para abrir o servidor na rede local, use a task `Run Django Server (LAN)` ou rode `python manage.py runserver 0.0.0.0:8000`
 
 Guias novos:
 
 - deploy de homologacao: [docs/rollout/deploy-homologation.md](docs/rollout/deploy-homologation.md)
 - backup minimo do banco: [docs/rollout/backup-guide.md](docs/rollout/backup-guide.md)
+- baseline de seguranca de producao: [docs/reference/production-security-baseline.md](docs/reference/production-security-baseline.md)
+- checklist de validacao mobile real: [docs/experience/mobile-real-validation-checklist.md](docs/experience/mobile-real-validation-checklist.md)
 - scripts de backup: [scripts/backup_sqlite.ps1](scripts/backup_sqlite.ps1) e [scripts/backup_postgres.ps1](scripts/backup_postgres.ps1)
 
 ## Importacao inicial de alunos

@@ -14,7 +14,13 @@ PONTOS CRITICOS:
 - Esses atalhos são parte do core operacional do produto; links errados quebram a promessa principal de reduzir tempo de decisão.
 """
 
+from django.conf import settings
+from django.core.cache import cache
+
 from access.roles import ROLE_DEV, ROLE_RECEPTION
+
+
+ADMIN_PATH_PREFIX = f"/{settings.ADMIN_URL_PATH}"
 
 
 def resolve_shell_scope(*, current_path, role_slug=None):
@@ -34,13 +40,15 @@ def resolve_shell_scope(*, current_path, role_slug=None):
         return 'operations-manager'
     if current_path.startswith('/operacao/coach/'):
         return 'operations-coach'
+    if current_path.startswith('/operacao/dev/'):
+        return 'operations-dev'
     if current_path.startswith('/operacao/'):
         return 'operations-owner'
     if current_path.startswith('/acessos/'):
         return 'access'
     if current_path.startswith('/mapa-sistema/'):
         return 'system-map'
-    if current_path.startswith('/admin/'):
+    if current_path.startswith(ADMIN_PATH_PREFIX):
         return 'admin'
     return 'generic'
 
@@ -58,17 +66,35 @@ def _build_action(kind, default_label, default_summary, source, *, scope='generi
     }
 
 
-def get_shell_counts():
-    """Retorna os counts globais para os pulse chips."""
+def get_shell_counts(*, use_cache=True):
+    """Retorna os counts globais para os pulse chips com cache curto para aliviar o shell."""
     from django.utils import timezone
     from communications.queries import count_pending_intakes
-    from finance.models import Payment, PaymentStatus
+    from finance.models import Enrollment, EnrollmentStatus, Payment, PaymentStatus
     from operations.models import ClassSession
-    return {
+    from students.models import Student, StudentStatus
+    today = timezone.localdate().isoformat()
+    cache_key = f'octobox:shell-counts:{today}'
+
+    if use_cache:
+        cached_counts = cache.get(cache_key)
+        if cached_counts is not None:
+            return cached_counts
+
+    counts = {
         'overdue_payments': Payment.objects.filter(status=PaymentStatus.OVERDUE).count(),
+        'overdue_students': Payment.objects.filter(status=PaymentStatus.OVERDUE).values('student_id').distinct().count(),
         'pending_intakes': count_pending_intakes(),
         'sessions_today': ClassSession.objects.filter(scheduled_at__date=timezone.localdate()).count(),
+        'active_students': Student.objects.filter(status=StudentStatus.ACTIVE).count(),
+        'lead_students': Student.objects.filter(status=StudentStatus.LEAD).count(),
+        'active_enrollments': Enrollment.objects.filter(status=EnrollmentStatus.ACTIVE).count(),
     }
+
+    if use_cache:
+        cache.set(cache_key, counts, timeout=getattr(settings, 'SHELL_COUNTS_CACHE_TTL_SECONDS', 15))
+
+    return counts
 
 
 def build_shell_action_buttons(*, priority=None, pending=None, next_action=None, counts=None, scope='generic'):
@@ -98,13 +124,30 @@ def build_shell_action_buttons(*, priority=None, pending=None, next_action=None,
     ]
 
 
+def build_shell_action_buttons_from_focus(*, focus=None, priority=None, pending=None, next_action=None, counts=None, scope='generic'):
+    focus = list(focus or [])
+
+    def merge_focus_item(index, override):
+        base = dict(focus[index] if len(focus) > index else {})
+        base.update(override or {})
+        return base or None
+
+    return build_shell_action_buttons(
+        priority=merge_focus_item(0, priority),
+        pending=merge_focus_item(1, pending),
+        next_action=merge_focus_item(2, next_action),
+        counts=counts,
+        scope=scope,
+    )
+
+
 def attach_shell_action_buttons(context, *, focus=None, priority=None, pending=None, next_action=None, counts=None, scope='generic'):
     """Anexa shell_action_buttons ao contexto, evitando repeticao nas views."""
-    focus = focus or []
-    context['shell_action_buttons'] = build_shell_action_buttons(
-        priority=priority if priority is not None else (focus[0] if len(focus) > 0 else None),
-        pending=pending if pending is not None else (focus[1] if len(focus) > 1 else None),
-        next_action=next_action if next_action is not None else (focus[2] if len(focus) > 2 else None),
+    context['shell_action_buttons'] = build_shell_action_buttons_from_focus(
+        focus=focus,
+        priority=priority,
+        pending=pending,
+        next_action=next_action,
         counts=counts,
         scope=scope,
     )
@@ -197,6 +240,14 @@ def build_default_shell_action_buttons(*, current_path, role_slug, overdue_payme
             scope=scope,
         )
 
+    if current_path.startswith('/operacao/dev/'):
+        return build_shell_action_buttons(
+            priority={'href': '#dev-audit-board', 'summary': 'Rastros recentes e leitura tecnica.'},
+            pending={'href': '/mapa-sistema/#system-reading-board', 'summary': 'Ordem de leitura do sistema.'},
+            next_action={'href': '/acessos/#access-role-map', 'summary': 'Fronteiras por papel e acesso.'},
+            scope=scope,
+        )
+
     if current_path.startswith('/operacao/'):
         return build_shell_action_buttons(
             priority={'href': '#owner-growth-board', 'summary': 'Crescimento e rotina.'},
@@ -229,4 +280,4 @@ def build_default_shell_action_buttons(*, current_path, role_slug, overdue_payme
     )
 
 
-__all__ = ['attach_shell_action_buttons', 'build_default_shell_action_buttons', 'build_shell_action_buttons', 'get_shell_counts', 'resolve_shell_scope']
+__all__ = ['attach_shell_action_buttons', 'build_default_shell_action_buttons', 'build_shell_action_buttons', 'build_shell_action_buttons_from_focus', 'get_shell_counts', 'resolve_shell_scope']

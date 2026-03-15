@@ -15,8 +15,8 @@ from django.views import View
 from django.views.generic import FormView
 
 from access.permissions import RoleRequiredMixin
-from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
-from catalog.forms import EnrollmentManagementForm, PaymentManagementForm, StudentQuickForm
+from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
+from catalog.forms import EnrollmentManagementForm, PaymentManagementForm, StudentPaymentActionForm, StudentQuickForm
 from catalog.presentation import build_student_directory_page, build_student_form_page
 from catalog.presentation.shared import attach_catalog_page_payload
 from catalog.services.student_enrollment_actions import handle_student_enrollment_action
@@ -54,6 +54,7 @@ class StudentDirectoryView(CatalogBaseView):
         students = snapshot['students']
         student_count = students.count()
         current_role_slug = base_context['current_role'].slug
+        context['students'] = students
         export_links = {
             'csv': f"{reverse('student-directory-export', args=['csv'])}?{self.request.GET.urlencode()}",
             'pdf': f"{reverse('student-directory-export', args=['pdf'])}?{self.request.GET.urlencode()}",
@@ -211,11 +212,16 @@ class StudentPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
 
     def post(self, request, student_id, *args, **kwargs):
         student = get_object_or_404(Student, pk=student_id)
-        action = request.POST.get('action')
-        payment = get_object_or_404(Payment, pk=request.POST.get('payment_id'), student=student)
+        action_form = StudentPaymentActionForm(request.POST)
+        if not action_form.is_valid():
+            messages.error(request, 'A acao financeira enviada para o aluno nao e valida neste fluxo.')
+            return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
+
+        action = action_form.cleaned_data['action']
+        payment = get_object_or_404(Payment, pk=action_form.cleaned_data['payment_id'], student=student)
 
         restricted_actions = {'refund-payment', 'cancel-payment', 'regenerate-payment'}
-        if action in restricted_actions and ROLE_RECEPTION in set(request.user.groups.values_list('name', flat=True)):
+        if action in restricted_actions and getattr(get_user_role(request.user), 'slug', '') == ROLE_RECEPTION:
             messages.error(request, 'A Recepcao so pode salvar cobranca ou confirmar pagamento neste fluxo.')
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
@@ -256,9 +262,9 @@ class StudentEnrollmentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
 
     def post(self, request, student_id, *args, **kwargs):
         student = get_object_or_404(Student, pk=student_id)
-        action = request.POST.get('action')
         form = EnrollmentManagementForm(request.POST)
         if not form.is_valid():
+            messages.error(request, 'A acao de matricula nao foi aplicada. Revise os campos enviados.')
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
         enrollment = get_object_or_404(Enrollment, pk=form.cleaned_data['enrollment_id'], student=student)
@@ -266,7 +272,7 @@ class StudentEnrollmentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
             actor=request.user,
             student=student,
             enrollment=enrollment,
-            action=action,
+            action=form.cleaned_data['action'],
             action_date=form.cleaned_data['action_date'],
             reason=form.cleaned_data['reason'],
         )

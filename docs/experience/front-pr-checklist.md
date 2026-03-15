@@ -32,6 +32,8 @@ Use este checklist antes de aprovar ou subir alteracoes de front.
 
 Se a duvida for como pensar ou montar a tela desde o inicio, use [layout-decision-guide.md](layout-decision-guide.md).
 
+Se a mudanca tocar comunicacao entre paginas, payload compartilhado, CTA global ou circuito funcional do beta, use tambem [../reference/pr-circuit-checklist.md](../reference/pr-circuit-checklist.md).
+
 ## Estrutura
 
 1. cada classe nova esta no arquivo CSS certo

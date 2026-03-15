@@ -14,46 +14,15 @@ PONTOS CRITICOS:
 - Se nomes de chaves do contexto mudarem, a tela quebra visualmente.
 -->
 {% extends "layouts/base.html" %}
-{% load static %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
-<link rel="stylesheet" href="{% static 'css/design-system/dashboard.css' %}?v={{ static_asset_version }}">
-{% endblock %}
 
 {% block content %}
 {% with page=dashboard_page %}
-<div class="dashboard-shell" data-page="dashboard" data-screen="dashboard" data-slot="page-root">
-    <section class="hero operation-hero dashboard-hero" aria-label="Panorama do dia" data-slot="hero" data-panel="dashboard-hero">
-        <div class="operation-hero-main">
-            <div>
-                <p class="eyebrow">Leitura central do dia</p>
-                <h2>O que pede ação agora.</h2>
-                <p class="operation-hero-copy">
-                    {{ page.data.dashboard_hero_copy }}
-                </p>
-            </div>
-            <div class="actions" data-slot="dashboard-hero-actions">
-                {% for action in page.data.dashboard_hero_actions %}
-                <a class="button{% if action.kind == 'secondary' %} secondary{% endif %}" href="{{ action.href }}" data-action="open-dashboard-hero-action">{{ action.label }}</a>
-                {% endfor %}
-            </div>
-        </div>
-        <aside class="operation-hero-side" data-panel="dashboard-hero-summary">
-            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Leitura instantânea" copy="Quatro números sobre base, agenda e cobrança." stats=page.data.hero_stats %}
-        </aside>
-    </section>
+<div class="scene-stack dashboard-shell" data-page="dashboard" data-screen="dashboard" data-slot="page-root">
+    {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
 
-    <section class="layout-grid dashboard-role-grid align-start" aria-label="Papel e escopo do usuario" data-slot="context">
-        <article class="table-card dashboard-table-card dashboard-focus-card" data-panel="dashboard-focus">
-            <div class="operation-card-head">
-                <div>
-                    <p class="eyebrow">Comece por aqui</p>
-                    <h2 class="operation-card-title">Três leituras para não se perder</h2>
-                    <p class="operation-card-copy">Filtre o dia em prioridades simples antes de agir.</p>
-                </div>
-                <span class="pill accent">Foco operacional</span>
-            </div>
+    <section class="layout-block layout-block--split dashboard-role-grid align-start" aria-label="Papel e escopo do usuario" data-slot="context">
+        <article class="table-card layout-panel layout-panel--stack dashboard-table-card dashboard-focus-card" data-panel="dashboard-focus">
+            {% include "includes/ui/operation_card_head.html" with eyebrow="Comece por aqui" title="Três leituras para não se perder" copy="Filtre o dia em prioridades simples antes de agir." pill_label="Foco operacional" pill_class="accent" %}
             <div class="dashboard-focus-list">
                 {% for item in page.data.dashboard_execution_focus %}
                 <article class="dashboard-focus-item" data-panel="dashboard-focus-item">
@@ -77,22 +46,19 @@ PONTOS CRITICOS:
         </aside>
     </section>
 
-    <section class="panel-grid" aria-label="Metricas gerais" data-slot="metrics" data-panel="dashboard-metrics">
+    <section class="layout-block layout-block--rail panel-grid" aria-label="Metricas gerais" data-slot="metrics" data-panel="dashboard-metrics">
         {% for card in page.data.metric_cards %}
         {% include "includes/ui/metric_card.html" with card=card %}
         {% endfor %}
     </section>
 
-    <section class="layout-grid dashboard-panel-grid align-start" aria-label="Paineis de acompanhamento" data-slot="workspace">
-        <article class="table-card dashboard-table-card" id="dashboard-finance-board" data-panel="dashboard-finance-board">
-            <div class="operation-card-head">
-                <div>
-                    <p class="eyebrow">{% if page.data.dashboard_role_mode == 'reception' %}Caixa rapido do turno{% else %}Alertas financeiros{% endif %}</p>
-                    <h2 class="operation-card-title">{% if page.data.dashboard_role_mode == 'reception' %}Caixa rápido do turno{% else %}Quem já pede contato{% endif %}</h2>
-                    <p class="operation-card-copy">{% if page.data.dashboard_role_mode == 'reception' %}Cobrança curta sem tirar a recepção do compasso.{% else %}Ataque atrasos antes que virem evasão.{% endif %}</p>
-                </div>
-                <span class="pill warning">{{ page.data.payment_alerts|length }} alerta(s)</span>
-            </div>
+    <section class="layout-block layout-block--workspace dashboard-panel-grid align-start" aria-label="Paineis de acompanhamento" data-slot="workspace">
+        <article class="table-card layout-panel layout-panel--stack dashboard-table-card" id="dashboard-finance-board" data-panel="dashboard-finance-board">
+            {% if page.data.dashboard_role_mode == 'reception' %}
+            {% include "includes/ui/operation_card_head.html" with eyebrow="Caixa rapido do turno" title="Caixa rápido do turno" copy="Cobrança curta sem tirar a recepção do compasso." pill_label=page.data.payment_alerts|length|add:" alerta(s)" pill_class="warning" %}
+            {% else %}
+            {% include "includes/ui/operation_card_head.html" with eyebrow="Alertas financeiros" title="Quem já pede contato" copy="Ataque atrasos antes que virem evasão." pill_label=page.data.payment_alerts|length|add:" alerta(s)" pill_class="warning" %}
+            {% endif %}
             <div class="operation-table-wrap">
                 <table>
                     <thead>
@@ -119,15 +85,8 @@ PONTOS CRITICOS:
             </div>
         </article>
 
-        <article class="table-card dashboard-table-card" id="dashboard-sessions-board" data-panel="dashboard-sessions-board">
-            <div class="operation-card-head">
-                <div>
-                    <p class="eyebrow">Próximas aulas</p>
-                    <h2 class="operation-card-title">Próximas aulas</h2>
-                    <p class="operation-card-copy">Aulas futuras para alinhar coach, recepção e ocupação.</p>
-                </div>
-                <span class="pill info">{{ page.data.upcoming_sessions|length }} aula(s)</span>
-            </div>
+        <article class="table-card layout-panel layout-panel--stack dashboard-table-card" id="dashboard-sessions-board" data-panel="dashboard-sessions-board">
+            {% include "includes/ui/operation_card_head.html" with eyebrow="Próximas aulas" title="Próximas aulas" copy="Aulas futuras para alinhar coach, recepção e ocupação." pill_label=page.data.upcoming_sessions|length|add:" aula(s)" pill_class="info" %}
             <div class="operation-table-wrap">
                 <table>
                     <thead>
@@ -158,15 +117,12 @@ PONTOS CRITICOS:
             </div>
         </article>
 
-        <article class="table-card dashboard-table-card operation-span-full" id="dashboard-risk-board" data-panel="dashboard-risk-board">
-            <div class="operation-card-head">
-                <div>
-                    <p class="eyebrow">{% if page.data.dashboard_role_mode == 'reception' %}Alunos que pedem cuidado{% else %}Risco operacional por aluno{% endif %}</p>
-                    <h2 class="operation-card-title">{% if page.data.dashboard_role_mode == 'reception' %}Quem merece atenção{% else %}Quem pode esfriar{% endif %}</h2>
-                    <p class="operation-card-copy">{% if page.data.dashboard_role_mode == 'reception' %}Sinais de esfriamento para acolher melhor.{% else %}Leitura de presença e ausência para separar base estável de risco.{% endif %}</p>
-                </div>
-                <span class="pill accent">{{ page.data.student_health|length }} aluno(s)</span>
-            </div>
+        <article class="table-card layout-panel layout-panel--stack dashboard-table-card operation-span-full" id="dashboard-risk-board" data-panel="dashboard-risk-board">
+            {% if page.data.dashboard_role_mode == 'reception' %}
+            {% include "includes/ui/operation_card_head.html" with eyebrow="Alunos que pedem cuidado" title="Quem merece atenção" copy="Sinais de esfriamento para acolher melhor." pill_label=page.data.student_health|length|add:" aluno(s)" pill_class="accent" %}
+            {% else %}
+            {% include "includes/ui/operation_card_head.html" with eyebrow="Risco operacional por aluno" title="Quem pode esfriar" copy="Leitura de presença e ausência para separar base estável de risco." pill_label=page.data.student_health|length|add:" aluno(s)" pill_class="accent" %}
+            {% endif %}
             <div class="operation-table-wrap">
                 <table>
                     <thead>

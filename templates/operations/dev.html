@@ -13,31 +13,11 @@ PONTOS CRITICOS:
 - Esta área não deve virar atalho para operação administrativa ou técnica do box.
 -->
 {% extends "layouts/base.html" %}
-{% load static %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
-{% endblock %}
 
 {% block content %}
 {% with page=operation_page %}
 <div class="operation-shell">
-    <section class="hero operation-hero" aria-label="Panorama de desenvolvimento">
-        <div class="operation-hero-main">
-            <div>
-                <p class="eyebrow">Leitura técnica controlada</p>
-                <h2>Rastro recente, fronteira, sistema inteiro.</h2>
-                <p class="operation-hero-copy">Reduza chute técnico com investigação curta e rigorosa.</p>
-            </div>
-            <div class="actions">
-                <a class="button" href="#dev-audit-board">Ver eventos recentes</a>
-                <a class="button secondary" href="/mapa-sistema/">Abrir mapa do sistema</a>
-            </div>
-        </div>
-        <aside class="operation-hero-side">
-            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Telemetria rápida" copy="Volume de rastros e cobertura por papel." stats=page.data.hero_stats %}
-        </aside>
-    </section>
+    {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
 
     <section class="table-card operation-table-card" id="dev-audit-board" aria-label="Eventos de auditoria">
         <div class="operation-card-head">

@@ -17,7 +17,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from django.views.generic import TemplateView
 
+from access.admin import admin_changelist_url, user_can_access_admin
 from access.shell_actions import attach_shell_action_buttons
+from shared_support.page_payloads import build_page_hero
 from .roles import ROLE_DEFINITIONS, get_user_capabilities, get_user_role
 
 
@@ -41,7 +43,7 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
         context['role_capabilities'] = role_capabilities
         context['role_definitions'] = role_definitions
         context['page_title'] = 'Papeis e acessos'
-        context['page_subtitle'] = 'Mapa de fronteiras do produto para deixar claro quem deve decidir o que, onde cada rotina comeca e onde cada papel precisa parar.'
+        context['page_subtitle'] = 'Quem decide o que e onde cada papel para.'
         context['hero_stats'] = [
             {'label': 'Papel atual', 'value': current_role.label},
             {'label': 'Capacidades do papel', 'value': len(role_capabilities)},
@@ -71,11 +73,31 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
                 'href_label': 'Ver governanca',
             },
         ]
+        context['access_hero'] = build_page_hero(
+            eyebrow='Fronteiras do sistema',
+            title='Quem age, quem não invade e onde cada papel começa.',
+            copy='Autoridade, fronteira e papel sem ambiguidade.',
+            actions=[
+                {'label': 'Ver meu escopo', 'href': '#access-current-role'},
+                {'label': 'Ver mapa de papeis', 'href': '#access-role-map', 'kind': 'secondary'},
+                *([
+                    {'label': 'Gerenciar grupos', 'href': admin_changelist_url('auth', 'group'), 'kind': 'secondary'},
+                ] if user_can_access_admin(self.request.user) else []),
+            ],
+            side={
+                'kind': 'stats-panel',
+                'eyebrow': 'Leitura instantânea',
+                'copy': 'Papel ativo e governança atual.',
+                'stats': context['hero_stats'],
+            },
+            aria_label='Panorama de acessos',
+        )
         context['governance_points'] = [
             'Manager nao vira coach por atalho.',
             'Coach nao carrega rotina financeira ou administrativa.',
             'DEV investiga e mantem sem virar operador do box.',
             'Owner enxerga amplitude sem dissolver fronteiras entre papeis.',
         ]
+        context['group_admin_url'] = admin_changelist_url('auth', 'group') if user_can_access_admin(self.request.user) else ''
         attach_shell_action_buttons(context, focus=context['access_operational_focus'], scope='access')
         return context

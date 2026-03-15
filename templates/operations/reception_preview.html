@@ -15,32 +15,11 @@ PONTOS CRITICOS:
 - o preview precisa continuar claro mesmo sem receber ainda a role oficial de Recepcao.
 -->
 {% extends "layouts/base.html" %}
-{% load static %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
-{% endblock %}
 
 {% block content %}
 {% with page=operation_page %}
 <div class="operation-shell reception-preview-scene">
-    <section class="hero operation-hero reception-preview-hero" aria-label="Preview da recepcao">
-        <div class="operation-hero-main">
-            <div>
-                <p class="eyebrow">Preview oculto</p>
-                <h2>Recepção por baixo dos panos.</h2>
-                <p class="operation-hero-copy">Lapidar a cadência da recepção antes de virar superfície oficial. Aluno, grade e cobrança curta no mesmo compasso.</p>
-            </div>
-            <div class="actions">
-                <a class="button" href="#reception-payment-board">Ver cobrança curta</a>
-                <a class="button secondary" href="#reception-intake-board">Ver entradas</a>
-                <a class="button secondary" href="#reception-class-grid-board">Ver grade em leitura</a>
-            </div>
-        </div>
-        <aside class="operation-hero-side">
-            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Pulso do preview" copy="Valide se a recepção sustenta entrada, caixa rápido e orientação de aulas." stats=page.data.hero_stats %}
-        </aside>
-    </section>
+    {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
 
     <section class="panel-grid operation-metric-grid" aria-label="Metricas de preview">
         {% for card in page.data.metric_cards %}
@@ -60,7 +39,7 @@ PONTOS CRITICOS:
             </div>
             <div class="actions actions-tight">
                 <a class="button secondary" href="/alunos/">Abrir alunos</a>
-                <a class="button secondary" href="/grade-aulas/">Abrir grade</a>
+                <a class="button secondary" href="/grade-aulas/">Abrir aulas</a>
                 <a class="button secondary" href="/financeiro/">Abrir financeiro</a>
             </div>
         </article>
@@ -108,7 +87,6 @@ PONTOS CRITICOS:
                     <form method="post" action="/operacao/recepcao-preview/pagamento/{{ item.payment_id }}/acao/" class="reception-preview-payment-form">
                         {% csrf_token %}
                         <input type="hidden" name="payment_id" value="{{ item.payment_id }}">
-                        <input type="hidden" name="amount" value="{{ item.amount }}">
                         <div class="field-grid-220">
                             <label>
                                 <span class="field-label">Vencimento curto</span>

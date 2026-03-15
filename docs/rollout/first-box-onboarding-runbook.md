@@ -94,7 +94,7 @@ Papéis recomendados no piloto:
 
 1. um responsavel Owner
 2. um operador Manager, se existir
-3. um operador Recepcao, se o box tiver balcao ativo
+3. um operador Recepcao, quando o box tiver balcao ativo ou decidir usar o fluxo dedicado desde o dia 1
 4. um ou mais Coach, se a rotina exigir
 
 Evitar criar usuarios sem papel definido.
@@ -107,9 +107,9 @@ Checklist:
 
 1. criar usuario Owner do box
 2. criar usuario Manager quando existir
-3. criar usuario Recepcao quando existir
+3. criar usuario Recepcao quando o piloto for usar o fluxo com operador dedicado
 4. criar usuario Coach quando existir
-5. validar login individual de pelo menos um usuario por papel
+5. validar login individual de pelo menos um usuario por papel ativo no piloto
 
 ### Etapa 2. Cadastrar planos principais
 
@@ -180,7 +180,7 @@ Antes de considerar o box apto para uso real, confirmar:
 
 1. Owner consegue logar
 2. Manager consegue logar, se existir
-3. Recepcao consegue logar, se existir
+3. Recepcao consegue logar, quando houver usuario dedicado para esse fluxo
 4. Coach consegue logar, se existir
 5. dashboard abre
 6. alunos abre
@@ -217,7 +217,7 @@ O primeiro box so entra em uso piloto real quando:
 
 1. os usuarios principais conseguem entrar
 2. a operacao minima roda sem admin bruto
-3. a Recepcao consegue localizar aluno, enxergar aula e tratar cobranca curta
+3. o fluxo de Recepcao consegue localizar aluno, enxergar aula e tratar cobranca curta com usuario proprio ou cobertura temporaria de Owner ou Manager
 4. existe um canal de suporte ativo para os primeiros 7 a 14 dias
 
 ## Formula curta

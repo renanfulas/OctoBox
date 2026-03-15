@@ -21,27 +21,17 @@ import time
 from pathlib import Path
 
 from django.conf import settings
-from django.urls import NoReverseMatch, reverse
+from django.urls import reverse
 
+from access.admin import admin_changelist_url, admin_index_url, user_can_access_admin
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
-from access.shell_actions import build_default_shell_action_buttons, resolve_shell_scope
-from communications.queries import count_pending_intakes
-from finance.models import Payment, PaymentStatus
-from operations.models import ClassSession
+from access.shell_actions import build_default_shell_action_buttons, get_shell_counts, resolve_shell_scope
 
 
 _ASSET_VERSION_CACHE = {
     'checked_at': 0.0,
     'value': '1',
 }
-_ASSET_VERSION_TTL_SECONDS = 5.0
-
-
-def _admin_changelist_url(app_label, model_name, fallback='/admin/'):
-    try:
-        return reverse(f'admin:{app_label}_{model_name}_changelist')
-    except NoReverseMatch:
-        return fallback
 
 
 def _calculate_static_asset_version():
@@ -60,8 +50,12 @@ def _calculate_static_asset_version():
 
 
 def _build_static_asset_version():
+    if not settings.DEBUG:
+        return getattr(settings, 'STATIC_ASSET_VERSION', '1')
+
     now = time.monotonic()
-    if now - _ASSET_VERSION_CACHE['checked_at'] < _ASSET_VERSION_TTL_SECONDS:
+    ttl_seconds = getattr(settings, 'STATIC_ASSET_SCAN_TTL_SECONDS', 30)
+    if now - _ASSET_VERSION_CACHE['checked_at'] < ttl_seconds:
         return _ASSET_VERSION_CACHE['value']
 
     _ASSET_VERSION_CACHE['value'] = _calculate_static_asset_version()
@@ -138,7 +132,7 @@ def _build_shell_page_context(current_path, role, navigation, alerts):
             'scope': 'system-map',
         },
         {
-            'prefix': '/admin/',
+            'prefix': f"/{settings.ADMIN_URL_PATH}",
             'eyebrow': 'Camada administrativa',
             'title': active_label,
             'subtitle': 'Apoio tecnico e administrativo.',
@@ -161,20 +155,44 @@ def _build_shell_page_context(current_path, role, navigation, alerts):
             'subtitle': 'Chegada, agenda e caixa curto do turno.',
         }
 
+    stats_by_scope = {
+        'finance': [
+            {'label': 'Papel ativo', 'value': role_label},
+            {'label': 'Alunos em atraso', 'value': alerts.get('overdue_students', 0)},
+            {'label': 'Matriculas ativas', 'value': alerts.get('active_enrollments', 0)},
+        ],
+        'finance-plan-form': [
+            {'label': 'Papel ativo', 'value': role_label},
+            {'label': 'Alunos em atraso', 'value': alerts.get('overdue_students', 0)},
+            {'label': 'Matriculas ativas', 'value': alerts.get('active_enrollments', 0)},
+        ],
+        'students': [
+            {'label': 'Papel ativo', 'value': role_label},
+            {'label': 'Leads abertos', 'value': alerts.get('lead_students', 0)},
+            {'label': 'Planos ativos', 'value': alerts.get('active_enrollments', 0)},
+        ],
+        'student-form': [
+            {'label': 'Papel ativo', 'value': role_label},
+            {'label': 'Leads abertos', 'value': alerts.get('lead_students', 0)},
+            {'label': 'Planos ativos', 'value': alerts.get('active_enrollments', 0)},
+        ],
+    }
+
     return {
         **section,
         'scope': scope,
         'active_label': active_label,
         'role_label': role_label,
-        'stats': [
+        'stats': stats_by_scope.get(scope, [
             {'label': 'Papel ativo', 'value': role_label},
-            {'label': 'Intakes abertos', 'value': alerts['pending_intakes']},
-            {'label': 'Vencimentos', 'value': alerts['overdue_payments']},
-        ],
+            {'label': 'Base ativa', 'value': alerts.get('active_students', 0)},
+            {'label': 'Aulas hoje', 'value': alerts.get('sessions_today', 0)},
+        ]),
     }
 
 
 def _build_navigation(role_slug, current_path=''):
+    admin_home = admin_index_url()
     base_links = [
         {'label': 'Dashboard', 'href': '/dashboard/', 'icon': '🏠'},
         {'label': 'Alunos', 'href': '/alunos/', 'icon': '🎓'},
@@ -187,22 +205,22 @@ def _build_navigation(role_slug, current_path=''):
 
     role_links = {
         ROLE_OWNER: [
-            {'label': 'Admin Django', 'href': '/admin/', 'icon': '⚙️'},
-            {'label': 'Auditoria', 'href': _admin_changelist_url('boxcore', 'auditevent'), 'icon': '📋'},
+            {'label': 'Admin Django', 'href': admin_home, 'icon': '⚙️'},
+            {'label': 'Auditoria', 'href': admin_changelist_url('boxcore', 'auditevent'), 'icon': '📋'},
         ],
         ROLE_DEV: [
-            {'label': 'Auditoria', 'href': _admin_changelist_url('boxcore', 'auditevent'), 'icon': '📋'},
-            {'label': 'Admin Django', 'href': '/admin/', 'icon': '⚙️'},
+            {'label': 'Auditoria', 'href': admin_changelist_url('boxcore', 'auditevent'), 'icon': '📋'},
+            {'label': 'Admin Django', 'href': admin_home, 'icon': '⚙️'},
         ],
         ROLE_MANAGER: [
-            {'label': 'Alunos', 'href': _admin_changelist_url('boxcore', 'student'), 'icon': '👥'},
-            {'label': 'Central de entrada', 'href': _admin_changelist_url('boxcore', 'studentintake'), 'icon': '📥'},
-            {'label': 'Pagamentos', 'href': _admin_changelist_url('boxcore', 'payment'), 'icon': '💳'},
-            {'label': 'WhatsApp', 'href': _admin_changelist_url('boxcore', 'whatsappcontact'), 'icon': '💬'},
+            {'label': 'Alunos', 'href': '/alunos/', 'icon': '👥'},
+            {'label': 'Central de entrada', 'href': '/operacao/manager/#manager-intake-board', 'icon': '📥'},
+            {'label': 'Pagamentos', 'href': '/financeiro/', 'icon': '💳'},
+            {'label': 'WhatsApp', 'href': '/operacao/manager/#manager-link-board', 'icon': '💬'},
         ],
         ROLE_COACH: [
-            {'label': 'Aulas', 'href': _admin_changelist_url('boxcore', 'classsession'), 'icon': '📅'},
-            {'label': 'Ocorrências', 'href': _admin_changelist_url('boxcore', 'behaviornote'), 'icon': '📝'},
+            {'label': 'Aulas', 'href': '/grade-aulas/', 'icon': '📅'},
+            {'label': 'Ocorrências', 'href': '/operacao/coach/#coach-boundary-board', 'icon': '📝'},
         ],
         ROLE_RECEPTION: [],
     }
@@ -246,26 +264,23 @@ def _build_topbar_alert_links(role_slug):
 def role_navigation(request):
     role = get_user_role(request.user)
     role_slug = getattr(role, 'slug', '')
-    overdue_payments = 0
-    pending_intakes = 0
     sidebar_navigation = []
-
-    sessions_today = 0
-
-    if request.user.is_authenticated:
-        from django.utils import timezone
-        overdue_payments = Payment.objects.filter(status=PaymentStatus.OVERDUE).count()
-        pending_intakes = count_pending_intakes()
-        sessions_today = ClassSession.objects.filter(scheduled_at__date=timezone.localdate()).count()
-        sidebar_navigation = _build_navigation(role_slug, request.path)
-
     shell_counts = {
-        'overdue_payments': overdue_payments,
-        'pending_intakes': pending_intakes,
-        'sessions_today': sessions_today,
+        'overdue_payments': 0,
+        'overdue_students': 0,
+        'pending_intakes': 0,
+        'sessions_today': 0,
+        'active_students': 0,
+        'lead_students': 0,
+        'active_enrollments': 0,
     }
 
+    if request.user.is_authenticated:
+        shell_counts = get_shell_counts()
+        sidebar_navigation = _build_navigation(role_slug, request.path)
+
     return {
+        'can_access_admin': user_can_access_admin(request.user),
         'current_role': role,
         'sidebar_navigation': sidebar_navigation,
         'global_search_action': '/alunos/',
@@ -276,8 +291,8 @@ def role_navigation(request):
         'shell_action_buttons': build_default_shell_action_buttons(
             current_path=request.path,
             role_slug=role_slug,
-            overdue_payments=overdue_payments,
-            pending_intakes=pending_intakes,
-            sessions_today=sessions_today,
+            overdue_payments=shell_counts['overdue_payments'],
+            pending_intakes=shell_counts['pending_intakes'],
+            sessions_today=shell_counts['sessions_today'],
         ),
     }
