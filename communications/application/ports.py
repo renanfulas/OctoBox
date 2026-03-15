@@ -55,6 +55,14 @@ class OperationalMessageAuditPort(Protocol):
     ) -> None:
         ...
 
+    def record_blocked(
+        self,
+        *,
+        command: RegisterOperationalMessageCommand,
+        result: OperationalMessageResult,
+    ) -> None:
+        ...
+
 
 class FinanceCommunicationActionPort(Protocol):
     def execute(self, command: FinanceCommunicationActionCommand) -> FinanceCommunicationActionResult:

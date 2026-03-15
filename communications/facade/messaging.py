@@ -53,12 +53,14 @@ class OperationalMessageFacadeResult:
     payment_id: int | None = None
     enrollment_id: int | None = None
     contact_created: bool = False
+    blocked: bool = False
 
 
 @dataclass(frozen=True, slots=True)
 class FinanceCommunicationFacadeResult:
     student_id: int
     message_log_id: int
+    blocked: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -120,6 +122,7 @@ def run_register_operational_message(
         payment_id=result.payment_id,
         enrollment_id=result.enrollment_id,
         contact_created=result.contact_created,
+        blocked=result.blocked,
     )
 
 
@@ -143,6 +146,7 @@ def run_finance_communication_action(
     return FinanceCommunicationFacadeResult(
         student_id=result.student_id,
         message_log_id=result.message_log_id,
+        blocked=result.blocked,
     )
 
 

@@ -10,8 +10,8 @@
     <div class="page-compass-stats" aria-label="Resumo rapido do contexto atual" data-slot="page-compass-stats">
         {% for item in shell_page_context.stats %}
         <article class="page-compass-stat">
-            <span>{{ item.label }}</span>
-            <strong>{{ item.value }}</strong>
+            <span class="page-compass-stat-label">{{ item.label }}</span>
+            <strong class="page-compass-stat-value">{{ item.value }}</strong>
         </article>
         {% endfor %}
     </div>
@@ -19,13 +19,13 @@
     {% if shell_action_buttons %}
     <nav class="compass-pulse compass-pulse--{{ shell_page_context.scope|default:'generic' }}" data-compass-scope="{{ shell_page_context.scope|default:'generic' }}" data-ui="shell-action-pulse" aria-label="Atalhos operacionais">
         {% for item in shell_action_buttons %}
-        <a class="pulse-chip pulse-chip--{{ shell_page_context.scope|default:'generic' }} pulse-{{ item.kind }}{% if item.count %} has-count{% endif %}" href="{{ item.href }}" aria-label="{{ item.label }}{% if item.count %}: {{ item.count }}{% endif %}. {{ item.summary }}">
+        <a class="pulse-chip pulse-chip--{{ shell_page_context.scope|default:'generic' }} pulse-{{ item.kind }}{% if item.count %} has-count{% endif %}" href="{{ item.href }}" data-priority-level="{% if item.kind == 'priority' %}primary{% elif item.kind == 'pending' %}secondary{% else %}neutral{% endif %}" aria-label="{{ item.label }}{% if item.count %}: {{ item.count }}{% endif %}. {{ item.target_label }}" title="{{ item.target_label }}">
             <span class="pulse-head">
                 <span class="pulse-label">{{ item.label }}</span>
                 <span class="pulse-number" aria-hidden="true">{{ item.count|default_if_none:'' }}</span>
             </span>
             <span class="pulse-hint">
-                <span class="pulse-hint-copy">{{ item.summary }}</span>
+                <span class="pulse-hint-copy">{{ item.target_label }}</span>
             </span>
         </a>
         {% endfor %}

@@ -14,8 +14,8 @@ PONTOS CRITICOS:
 
 from django.db.models import Case, CharField, Exists, OuterRef, Q, Subquery, Value, When
 
-from communications.models import IntakeStatus, StudentIntake
 from finance.models import Enrollment, EnrollmentStatus, Payment, PaymentStatus
+from onboarding.queries import count_pending_intakes, get_intake_conversion_queue
 from students.models import Student, StudentStatus
 
 from catalog.forms import StudentDirectoryFilterForm
@@ -76,7 +76,8 @@ def build_student_directory_snapshot(params=None):
 	lead_students = students.filter(status=StudentStatus.LEAD).count()
 	students_with_active_plan = students.filter(latest_enrollment_status=EnrollmentStatus.ACTIVE).count()
 	overdue_students = students.filter(operational_payment_status=PaymentStatus.OVERDUE).count()
-	pending_intakes = StudentIntake.objects.filter(status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING], linked_student__isnull=True)
+	pending_intakes_count = count_pending_intakes()
+	intake_queue = list(get_intake_conversion_queue(limit=6))
 
 	priority_students = students.filter(
 		Q(operational_payment_status=PaymentStatus.OVERDUE)
@@ -107,7 +108,7 @@ def build_student_directory_snapshot(params=None):
 		},
 		'funnel': {
 			'Entradas para converter': {
-				'value': pending_intakes.count(),
+				'value': pending_intakes_count,
 				'note': 'Leads e entradas provisorias pedindo acao rapida da recepcao.',
 			},
 			'Financeiro em atraso': {
@@ -120,10 +121,7 @@ def build_student_directory_snapshot(params=None):
 			},
 		},
 		'priority_students': priority_students,
-		'intake_queue': StudentIntake.objects.filter(
-			status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING, IntakeStatus.MATCHED],
-			linked_student__isnull=True,
-		).order_by('status', '-created_at')[:6],
+		'intake_queue': intake_queue,
 	}
 
 

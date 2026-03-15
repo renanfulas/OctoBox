@@ -1,0 +1,46 @@
+<!--
+ARQUIVO: filtros da pagina de alunos.
+
+POR QUE ELE EXISTE:
+- isola busca, recorte e utilitarios em um bloco facil de manter.
+-->
+<section class="table-card layout-panel layout-panel--stack glass-panel section-gap student-filter-card" aria-label="Busca e filtros" data-slot="filters" data-panel="students-filters">
+    {% include "includes/ui/operation_card_head.html" with eyebrow="Busca e recorte comercial" title="Filtre a base sem perder a prioridade" copy="Busca e filtros para estreitar a leitura. A prioridade continua sendo triagem e próxima ação." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
+    <form method="get" class="form-stack" data-action="filter-students">
+        <div class="field-grid-200">
+            <label>
+                <span class="field-label">{{ page.data.student_filter_form.query.label }}</span>
+                {{ page.data.student_filter_form.query }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.student_filter_form.student_status.label }}</span>
+                {{ page.data.student_filter_form.student_status }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.student_filter_form.commercial_status.label }}</span>
+                {{ page.data.student_filter_form.commercial_status }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.student_filter_form.payment_status.label }}</span>
+                {{ page.data.student_filter_form.payment_status }}
+            </label>
+        </div>
+        <div class="actions actions-tight student-filter-actions-primary">
+            <button class="button" type="submit" data-action="apply-student-filters">Aplicar filtros</button>
+            <a class="button secondary" href="/alunos/" data-action="clear-student-filters">Limpar</a>
+        </div>
+    </form>
+    <div class="student-utility-actions">
+        {% if page.capabilities.can_manage_students %}
+        <a class="button" href="/alunos/novo/#student-form-essential" data-action="open-student-quick-create">Abrir cadastro rapido</a>
+        {% endif %}
+        <div class="actions actions-tight student-filter-actions-secondary">
+            {% if page.capabilities.can_export_students %}
+            <a class="button secondary" href="{{ page.actions.student_export_links.pdf }}" data-action="export-students-pdf">Exportar PDF</a>
+            {% endif %}
+            {% if page.capabilities.can_open_student_admin %}
+            <a class="button secondary" href="{% url 'admin:boxcore_student_add' %}" data-action="open-student-admin-create">Abrir no admin</a>
+            {% endif %}
+        </div>
+    </div>
+</section>

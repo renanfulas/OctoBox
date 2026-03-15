@@ -6,30 +6,48 @@ ARQUIVO: insights e orientacoes da grade.
         <summary>Dicas de leitura e recorrencia</summary>
         <div class="class-grid-insight-strip section-gap-top-xs">
             <article class="table-card class-grid-insight-card no-margin">
-                <p class="eyebrow">Como ler esta pagina</p>
-                <ul class="capability-list">
-                    {% for item in page.data.class_focus %}
-                    <li>{{ item }}</li>
-                    {% endfor %}
-                </ul>
+                <div class="card-body card-body-list class-grid-insight-card-body">
+                    <div class="card-head-main-stack">
+                        <p class="eyebrow">Como ler esta pagina</p>
+                    </div>
+                    <div class="card-content">
+                        <ul class="capability-list card-list">
+                            {% for item in page.data.class_focus %}
+                            <li class="card-list-item">{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
             </article>
             <article class="table-card class-grid-insight-card no-margin">
-                <p class="eyebrow">Leitura operacional</p>
-                <ul class="capability-list">
-                    <li>Se uma aula estiver perto da capacidade, a equipe ja consegue agir antes do gargalo.</li>
-                    <li>Use os horarios e a ocupacao para alinhar coach, recepcao e rotina de presenca.</li>
-                    <li>Atalho do admin disponivel no topo.</li>
-                </ul>
+                <div class="card-body card-body-list class-grid-insight-card-body">
+                    <div class="card-head-main-stack">
+                        <p class="eyebrow">Leitura operacional</p>
+                    </div>
+                    <div class="card-content">
+                        <ul class="capability-list card-list">
+                            <li class="card-list-item">Se uma aula estiver perto da capacidade, a equipe ja consegue agir antes do gargalo.</li>
+                            <li class="card-list-item">Use os horarios e a ocupacao para alinhar coach, recepcao e rotina de presenca.</li>
+                            <li class="card-list-item">Atalho do admin disponivel no topo.</li>
+                        </ul>
+                    </div>
+                </div>
             </article>
             <article class="table-card class-grid-insight-card no-margin">
-                <p class="eyebrow">Como montar a recorrencia</p>
-                <ul class="capability-list">
-                    <li>Nome padrao para a turma, como WOD 07h ou Funcional 18h.</li>
-                    <li>Marque os dias da semana e um intervalo enxuto, como 4 semanas por vez.</li>
-                    <li>Observacoes para orientar sobre lotacao, material ou check-in.</li>
-                    <li>Sistema pula slots ja existentes para evitar duplicidade.</li>
-                    <li>Limite: 12 aulas por dia, 70 por semana, 150 por mes.</li>
-                </ul>
+                <div class="card-body card-body-list class-grid-insight-card-body">
+                    <div class="card-head-main-stack">
+                        <p class="eyebrow">Como montar a recorrencia</p>
+                    </div>
+                    <div class="card-content">
+                        <ul class="capability-list card-list">
+                            <li class="card-list-item">Nome padrao para a turma, como WOD 07h ou Funcional 18h.</li>
+                            <li class="card-list-item">Marque os dias da semana e um intervalo enxuto, como 4 semanas por vez.</li>
+                            <li class="card-list-item">Observacoes para orientar sobre lotacao, material ou check-in.</li>
+                            <li class="card-list-item">Sistema pula slots ja existentes para evitar duplicidade.</li>
+                            <li class="card-list-item">Limite: 12 aulas por dia, 70 por semana, 150 por mes.</li>
+                        </ul>
+                    </div>
+                </div>
             </article>
         </div>
     </details>

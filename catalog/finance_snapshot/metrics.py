@@ -21,6 +21,7 @@ from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from finance.models import EnrollmentStatus, Payment, PaymentStatus
+from finance.overdue_metrics import count_overdue_students, get_overdue_payments_queryset, sum_overdue_amount
 
 
 def _format_currency_br(value):
@@ -55,7 +56,9 @@ def build_finance_metrics(payments, enrollments):
         status=EnrollmentStatus.CANCELED,
         updated_at__date__gte=month_start,
     ).count()
-    overdue_students = payments.filter(status=PaymentStatus.OVERDUE).values('student_id').distinct().count()
+    overdue_students = count_overdue_students(payments, today=today)
+    overdue_payments = get_overdue_payments_queryset(payments, today=today)
+    overdue_amount = sum_overdue_amount(payments, today=today)
 
     return OrderedDict(
         [
@@ -103,7 +106,11 @@ def build_finance_metrics(payments, enrollments):
                 'Alunos com atraso ativo',
                 {
                     'value': overdue_students,
-                    'note': 'Quantidade de pessoas que ja pedem acao de cobranca e cuidado comercial.',
+                    'submetric': {
+                        'label': 'Valor vencido',
+                        'value': f'R$ {_format_currency_br(overdue_amount)}',
+                    },
+                    'note': f'{overdue_payments.count()} cobranca(s) ja passaram do vencimento e pedem acao de cobranca e cuidado comercial.',
                     'is_currency': False,
                 },
             ),

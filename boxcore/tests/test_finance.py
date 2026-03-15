@@ -90,10 +90,13 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'Ativacoes x cancelamentos')
         self.assertContains(response, 'Regua de cobranca e retencao')
         self.assertContains(response, 'Leitura executiva do mix')
-        self.assertContains(response, 'Registrar contato no WhatsApp')
+        self.assertContains(response, 'Nenhum contato operacional recente registrado.')
+        self.assertContains(response, 'Registrar e abrir WhatsApp')
+        self.assertContains(response, 'name="open_in_whatsapp" value="1"', html=False)
         self.assertContains(response, 'href="#finance-priority-board"')
         self.assertContains(response, 'href="#finance-queue-board"')
         self.assertContains(response, 'href="#finance-portfolio-board"')
+        self.assertContains(response, 'Valor vencido: R$ 319,90')
         self.assertRegex(response.content.decode(), r'R\$\s*319[,.]90')
 
     def test_finance_center_filters_by_plan_and_method(self):

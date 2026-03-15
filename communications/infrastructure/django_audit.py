@@ -48,5 +48,24 @@ class DjangoOperationalMessageAuditPort(OperationalMessageAuditPort):
             },
         )
 
+    def record_blocked(self, *, command: RegisterOperationalMessageCommand, result: OperationalMessageResult) -> None:
+        actor = self._get_actor(command.actor_id)
+        message = WhatsAppMessageLog.objects.get(pk=result.message_log_id)
+        log_audit_event(
+            actor=actor,
+            action='operational_whatsapp_touch_blocked',
+            target=message,
+            description='Tentativa repetida de contato operacional no WhatsApp bloqueada no mesmo dia.',
+            metadata={
+                'student_id': result.student_id,
+                'payment_id': result.payment_id,
+                'enrollment_id': result.enrollment_id,
+                'contact_id': result.contact_id,
+                'action_kind': result.action_kind,
+                'contact_created': result.contact_created,
+                'blocked': True,
+            },
+        )
+
 
 __all__ = ['DjangoOperationalMessageAuditPort']

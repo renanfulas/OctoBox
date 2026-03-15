@@ -48,7 +48,11 @@ class DjangoFinanceCommunicationActionPort(FinanceCommunicationActionPort):
                 enrollment_id=getattr(enrollment, 'id', None),
             )
         )
-        return FinanceCommunicationActionResult(student_id=student.id, message_log_id=message_result.message_log_id)
+        return FinanceCommunicationActionResult(
+            student_id=student.id,
+            message_log_id=message_result.message_log_id,
+            blocked=message_result.blocked,
+        )
 
 
 class DjangoOperationalQueueSnapshotPort(OperationalQueueSnapshotPort):

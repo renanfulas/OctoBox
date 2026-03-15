@@ -1,0 +1,91 @@
+<!--
+ARQUIVO: fila curta de cobranca da Recepcao.
+
+POR QUE ELE EXISTE:
+- separa a leitura de caixa do balcao do restante da tela.
+-->
+<article class="table-card operation-table-card reception-payment-board" id="reception-payment-board" data-panel="reception-payment-board">
+    <div class="operation-card-head">
+        <div>
+            <p class="eyebrow">Cobranca operacional</p>
+            <h2 class="operation-card-title">Fila de caixa do balcão</h2>
+            <p class="operation-card-copy">Atraso, vencimento e motivo curto da abordagem.</p>
+        </div>
+        <span class="pill warning">{{ page.data.reception_queue|length }} caso(s)</span>
+    </div>
+    <div class="reception-payment-grid">
+        {% for item in page.data.reception_queue %}
+        <article class="history-entry finance-action-card finance-action-card-compact reception-payment-card" data-panel="reception-payment-card">
+            <div class="row-between history-header finance-action-head">
+                <div class="finance-action-copy">
+                    <strong>{{ item.student_name }}</strong>
+                    <p class="meta-text-sm">{{ item.plan_name }}</p>
+                </div>
+                <span class="pill {{ item.status_class }}">{{ item.status_label }}</span>
+            </div>
+            <div class="finance-alert-grid reception-payment-meta">
+                <div class="finance-alert-stat">
+                    <span class="operation-mini-label">Vencimento</span>
+                    <strong>{{ item.due_date|date:"d/m/Y" }}</strong>
+                </div>
+                <div class="finance-alert-stat">
+                    <span class="operation-mini-label">Valor</span>
+                    <strong>R$ {{ item.amount|floatformat:2 }}</strong>
+                </div>
+                <div class="finance-alert-stat">
+                    <span class="operation-mini-label">Metodo atual</span>
+                    <strong>{{ item.method_label }}</strong>
+                </div>
+            </div>
+            <div class="note-panel note-panel-cream finance-action-message finance-action-message-compact">
+                <p class="eyebrow">Leitura de balcao</p>
+                <p class="meta-text">{{ item.reason }}</p>
+            </div>
+            {% if page.capabilities.can_manage_reception_payments %}
+            <form method="post" action="/operacao/recepcao/pagamento/{{ item.payment_id }}/acao/" class="reception-payment-form" data-action="manage-reception-payment">
+                {% csrf_token %}
+                <input type="hidden" name="payment_id" value="{{ item.payment_id }}">
+                <div class="field-grid-220 reception-payment-form-primary">
+                    <label>
+                        <span class="field-label">Vencimento curto</span>
+                        <input type="date" name="due_date" value="{{ item.due_date|date:'Y-m-d' }}">
+                    </label>
+                    <label>
+                        <span class="field-label">Metodo recebido</span>
+                        <select name="method">
+                            {% for value, label in page.data.reception_payment_methods %}
+                            <option value="{{ value }}"{% if item.method == value %} selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+                <div class="actions actions-tight finance-card-actions-compact reception-payment-actions reception-payment-actions-primary">
+                    <button class="button" type="submit" name="action" value="mark-paid" data-action="confirm-reception-payment">Confirmar pagamento</button>
+                    <a class="button secondary" href="{{ item.student_href }}#student-financial-overview" data-action="open-student-financial-overview">Abrir ficha do aluno</a>
+                </div>
+                <details class="reception-payment-advanced">
+                    <summary>Ajuste opcional</summary>
+                    <div class="field-grid-220 reception-payment-form-secondary">
+                        <label>
+                            <span class="field-label">Referencia curta</span>
+                            <input type="text" name="reference" value="{{ item.reference }}" maxlength="100" placeholder="Ex.: BALCAO-MAR-2026">
+                        </label>
+                        <label>
+                            <span class="field-label">Observacao</span>
+                            <input type="text" name="notes" value="{{ item.notes }}" maxlength="255" placeholder="Observacao curta de balcao.">
+                        </label>
+                    </div>
+                    <div class="actions actions-tight finance-card-actions-compact reception-payment-actions">
+                        <button class="button secondary" type="submit" name="action" value="update-payment" data-action="save-reception-payment-update">Salvar ajuste curto</button>
+                    </div>
+                </details>
+            </form>
+            {% endif %}
+        </article>
+        {% empty %}
+        <div class="table-card operation-empty-card">
+            {% include "includes/ui/state_empty.html" with compact=True eyebrow="Cobranca curta" title="Nenhum caixa curto pendente" copy="A fila do balcao nao tem cobranca aguardando leitura agora." badge="Caixa limpo" badge_class="success" %}
+        </div>
+        {% endfor %}
+    </div>
+</article>

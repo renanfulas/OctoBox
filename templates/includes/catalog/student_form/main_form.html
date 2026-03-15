@@ -8,7 +8,7 @@ ARQUIVO: formulario principal da ficha do aluno.
     <article class="table-card student-filter-card student-form-main-card" data-panel="student-form-main-card">
         <form method="post" novalidate data-action="submit-student-form">
             {% csrf_token %}
-            <div class="form-stack-lg" data-slot="student-form-steps">
+            <div class="form-stack-lg student-form-steps" data-slot="student-form-steps">
                 {% include "includes/catalog/student_form/main_form_recovery.html" %}
                 {% include "includes/catalog/student_form/main_form_step_essential.html" %}
                 {% include "includes/catalog/student_form/main_form_step_profile.html" %}

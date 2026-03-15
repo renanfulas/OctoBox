@@ -58,7 +58,8 @@ class CatalogViewTests(TestCase):
         self.assertContains(response, 'Mesa de atendimento')
         self.assertContains(response, 'Novo aluno')
         self.assertContains(response, 'Quem pede ação agora')
-        self.assertContains(response, 'Fila de entrada provisoria pronta para conversao')
+        self.assertContains(response, 'A fila principal agora mora na Central de Intake')
+        self.assertContains(response, 'Abrir central de intake')
 
     def test_class_grid_renders(self):
         self.client.force_login(self.user)
@@ -361,6 +362,118 @@ class CatalogViewTests(TestCase):
         session.refresh_from_db()
         self.assertEqual(session.status, SessionStatus.COMPLETED)
         self.assertEqual(session.notes, 'Sessao concluida ajustada sem reabrir status.')
+
+    def test_class_grid_quick_edit_allows_notes_roundtrip_on_completed_session(self):
+        self.client.force_login(self.user)
+        session = ClassSession.objects.create(
+            title='Mobility 08h',
+            coach=self.coach,
+            scheduled_at=timezone.make_aware(datetime(2026, 3, 21, 8, 0), timezone.get_current_timezone()),
+            status=SessionStatus.COMPLETED,
+            notes='',
+        )
+
+        update_response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'session-edit',
+                'session_id': session.id,
+                'return_query': '',
+                'title': 'Mobility 08h',
+                'coach': self.coach.id,
+                'start_time': '08:00',
+                'duration_minutes': 60,
+                'capacity': 14,
+                'status': SessionStatus.COMPLETED,
+                'notes': 'Observacao QA ida e volta.',
+            },
+        )
+
+        self.assertEqual(update_response.status_code, 302)
+        session.refresh_from_db()
+        self.assertEqual(session.status, SessionStatus.COMPLETED)
+        self.assertEqual(session.notes, 'Observacao QA ida e volta.')
+
+        clear_response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'session-edit',
+                'session_id': session.id,
+                'return_query': '',
+                'title': 'Mobility 08h',
+                'coach': self.coach.id,
+                'start_time': '08:00',
+                'duration_minutes': 60,
+                'capacity': 14,
+                'status': SessionStatus.COMPLETED,
+                'notes': '',
+            },
+        )
+
+        self.assertEqual(clear_response.status_code, 302)
+        session.refresh_from_db()
+        self.assertEqual(session.status, SessionStatus.COMPLETED)
+        self.assertEqual(session.notes, '')
+
+    def test_class_grid_quick_edit_allows_schedule_roundtrip_on_completed_session(self):
+        self.client.force_login(self.user)
+        session = ClassSession.objects.create(
+            title='Engine 18h',
+            coach=self.coach,
+            scheduled_at=timezone.make_aware(datetime(2026, 3, 21, 18, 0), timezone.get_current_timezone()),
+            duration_minutes=60,
+            capacity=16,
+            status=SessionStatus.COMPLETED,
+        )
+
+        update_response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'session-edit',
+                'session_id': session.id,
+                'return_query': '',
+                'title': 'Engine 18h reforcada',
+                'coach': self.coach.id,
+                'start_time': '18:30',
+                'duration_minutes': 45,
+                'capacity': 12,
+                'status': SessionStatus.COMPLETED,
+                'notes': 'Ajuste operacional temporario.',
+            },
+        )
+
+        self.assertEqual(update_response.status_code, 302)
+        session.refresh_from_db()
+        self.assertEqual(session.status, SessionStatus.COMPLETED)
+        self.assertEqual(timezone.localtime(session.scheduled_at).strftime('%H:%M'), '18:30')
+        self.assertEqual(session.duration_minutes, 45)
+        self.assertEqual(session.capacity, 12)
+        self.assertEqual(session.title, 'Engine 18h reforcada')
+
+        restore_response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'session-edit',
+                'session_id': session.id,
+                'return_query': '',
+                'title': 'Engine 18h',
+                'coach': self.coach.id,
+                'start_time': '18:00',
+                'duration_minutes': 60,
+                'capacity': 16,
+                'status': SessionStatus.COMPLETED,
+                'notes': '',
+            },
+        )
+
+        self.assertEqual(restore_response.status_code, 302)
+        session.refresh_from_db()
+        self.assertEqual(session.status, SessionStatus.COMPLETED)
+        self.assertEqual(timezone.localtime(session.scheduled_at).strftime('%H:%M'), '18:00')
+        self.assertEqual(session.duration_minutes, 60)
+        self.assertEqual(session.capacity, 16)
+        self.assertEqual(session.title, 'Engine 18h')
+        self.assertEqual(session.notes, '')
 
     def test_class_grid_blocks_delete_when_session_has_attendance(self):
         self.client.force_login(self.user)
@@ -851,3 +964,52 @@ class CatalogViewTests(TestCase):
         self.assertTrue(WhatsAppContact.objects.filter(phone=self.student.phone, linked_student=self.student).exists())
         self.assertTrue(WhatsAppMessageLog.objects.filter(contact__phone=self.student.phone, direction='outbound').exists())
         self.assertTrue(AuditEvent.objects.filter(action='operational_whatsapp_touch_registered').exists())
+
+    def test_finance_communication_action_can_register_and_redirect_to_whatsapp(self):
+        self.client.force_login(self.user)
+        payment = self.student.payments.first()
+
+        response = self.client.post(
+            reverse('finance-communication-action'),
+            data={
+                'action_kind': 'overdue',
+                'student_id': self.student.id,
+                'payment_id': payment.id,
+                'open_in_whatsapp': '1',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['Location'].startswith(f'https://wa.me/{self.student.phone}?text='))
+        self.assertTrue(WhatsAppMessageLog.objects.filter(contact__phone=self.student.phone, direction='outbound').exists())
+        self.assertTrue(AuditEvent.objects.filter(action='operational_whatsapp_touch_registered').exists())
+
+    def test_finance_communication_action_blocks_same_whatsapp_touch_twice_in_a_day(self):
+        self.client.force_login(self.user)
+        payment = self.student.payments.first()
+
+        first_response = self.client.post(
+            reverse('finance-communication-action'),
+            data={
+                'action_kind': 'overdue',
+                'student_id': self.student.id,
+                'payment_id': payment.id,
+                'open_in_whatsapp': '1',
+            },
+        )
+        second_response = self.client.post(
+            reverse('finance-communication-action'),
+            data={
+                'action_kind': 'overdue',
+                'student_id': self.student.id,
+                'payment_id': payment.id,
+                'open_in_whatsapp': '1',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(first_response.status_code, 302)
+        self.assertEqual(second_response.status_code, 200)
+        self.assertContains(second_response, 'Contato de WhatsApp ja registrado nas ultimas 24h para Bruna Costa.')
+        self.assertEqual(WhatsAppMessageLog.objects.filter(contact__phone=self.student.phone, direction='outbound').count(), 1)
+        self.assertTrue(AuditEvent.objects.filter(action='operational_whatsapp_touch_blocked').exists())

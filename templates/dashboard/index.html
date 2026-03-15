@@ -17,63 +17,117 @@ PONTOS CRITICOS:
 
 {% block content %}
 {% with page=dashboard_page %}
-<div class="scene-stack dashboard-shell" data-page="dashboard" data-screen="dashboard" data-slot="page-root">
+<div class="scene-stack dashboard-shell dashboard-stripe-shell" data-page="dashboard" data-screen="dashboard" data-slot="page-root">
     {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
 
-    <section class="layout-block layout-block--split dashboard-role-grid align-start" aria-label="Papel e escopo do usuario" data-slot="context">
-        <article class="table-card layout-panel layout-panel--stack dashboard-table-card dashboard-focus-card" data-panel="dashboard-focus">
-            {% include "includes/ui/operation_card_head.html" with eyebrow="Comece por aqui" title="Três leituras para não se perder" copy="Filtre o dia em prioridades simples antes de agir." pill_label="Foco operacional" pill_class="accent" %}
-            <div class="dashboard-focus-list">
-                {% for item in page.data.dashboard_execution_focus %}
-                <article class="dashboard-focus-item" data-panel="dashboard-focus-item">
-                    <div class="dashboard-focus-copy">
-                        <p class="eyebrow">{{ item.label }}</p>
-                        <p>{{ item.summary }}</p>
-                    </div>
-                    <div class="dashboard-focus-actions">
-                        <span class="pill {{ item.pill_class }}">prioridade</span>
-                        <a class="button secondary" href="{{ item.href }}" data-action="open-dashboard-focus-action">{{ item.href_label }}</a>
+    <section class="dashboard-instagram-layout" aria-label="Painel principal do dashboard" data-slot="workspace">
+        <div class="dashboard-instagram-main">
+            <section class="layout-block dashboard-role-grid align-start" aria-label="Papel e escopo do usuario" data-slot="context">
+                <article class="table-card layout-panel layout-panel--stack dashboard-table-card dashboard-focus-card operation-span-full" data-panel="dashboard-focus">
+                    {% include "includes/ui/operation_card_head.html" with eyebrow="Comece por aqui" title="Três leituras para decidir rápido" copy="Veja prioridade, agenda e risco sem abrir tudo ao mesmo tempo." pill_label="Foco operacional" pill_class="accent" %}
+                    <div class="dashboard-focus-shell">
+                        <div class="dashboard-focus-list">
+                            {% for item in page.data.dashboard_execution_focus %}
+                            <article class="dashboard-focus-item" data-panel="dashboard-focus-item">
+                                <div class="dashboard-focus-copy">
+                                    <p class="eyebrow">{{ item.label }}</p>
+                                    <p>{{ item.summary }}</p>
+                                </div>
+                                <div class="dashboard-focus-actions">
+                                    <a class="button secondary" href="{{ item.href }}" data-action="open-dashboard-focus-action">{{ item.href_label }}</a>
+                                </div>
+                            </article>
+                            {% endfor %}
+                        </div>
+                        <aside class="dashboard-quick-links" data-panel="dashboard-quick-actions">
+                            <div class="dashboard-quick-links-head">
+                                <p class="eyebrow">Acessos diretos</p>
+                                <p class="meta-text">Atalhos úteis sem competir com a decisão principal.</p>
+                            </div>
+                            <div class="dashboard-quick-links-list">
+                                {% for action in page.data.dashboard_quick_actions %}
+                                <a class="dashboard-quick-link-item" href="{{ action.href }}">
+                                    <strong>{{ action.title }}</strong>
+                                    <span>{{ action.copy }}</span>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </aside>
                     </div>
                 </article>
+            </section>
+
+            <section class="layout-block layout-block--rail panel-grid dashboard-instagram-metrics" aria-label="Metricas gerais" data-slot="metrics" data-panel="dashboard-metrics">
+                {% for card in page.data.metric_cards %}
+                {% include "includes/ui/metric_card.html" with card=card %}
                 {% endfor %}
-            </div>
-        </article>
+            </section>
 
-        <aside class="dashboard-quick-actions-side" data-panel="dashboard-quick-actions">
-            {% for action in page.data.dashboard_quick_actions %}
-            {% include "includes/ui/quick_action_card.html" with action=action %}
-            {% endfor %}
-        </aside>
-    </section>
-
-    <section class="layout-block layout-block--rail panel-grid" aria-label="Metricas gerais" data-slot="metrics" data-panel="dashboard-metrics">
-        {% for card in page.data.metric_cards %}
-        {% include "includes/ui/metric_card.html" with card=card %}
-        {% endfor %}
-    </section>
-
-    <section class="layout-block layout-block--workspace dashboard-panel-grid align-start" aria-label="Paineis de acompanhamento" data-slot="workspace">
-        <article class="table-card layout-panel layout-panel--stack dashboard-table-card" id="dashboard-finance-board" data-panel="dashboard-finance-board">
+            <section class="layout-block layout-block--workspace dashboard-panel-grid dashboard-instagram-panels align-start" aria-label="Paineis de acompanhamento">
+                <article class="table-card layout-panel layout-panel--stack dashboard-table-card" id="dashboard-finance-board" data-panel="dashboard-finance-board">
             {% if page.data.dashboard_role_mode == 'reception' %}
-            {% include "includes/ui/operation_card_head.html" with eyebrow="Caixa rapido do turno" title="Caixa rápido do turno" copy="Cobrança curta sem tirar a recepção do compasso." pill_label=page.data.payment_alerts|length|add:" alerta(s)" pill_class="warning" %}
+            {% include "includes/ui/operation_card_head.html" with eyebrow="Caixa rapido do turno" title="Quem cobrar agora" copy="Abra a conversa certa sem travar o balcão." pill_label=page.data.payment_alerts_total_label pill_class="warning" %}
             {% else %}
-            {% include "includes/ui/operation_card_head.html" with eyebrow="Alertas financeiros" title="Quem já pede contato" copy="Ataque atrasos antes que virem evasão." pill_label=page.data.payment_alerts|length|add:" alerta(s)" pill_class="warning" %}
+            {% include "includes/ui/operation_card_head.html" with eyebrow="Alertas financeiros" title="Quem cobrar agora" copy="Ataque atrasos antes que virem perda de receita." pill_label=page.data.payment_alerts_total_label pill_class="warning" %}
             {% endif %}
             <div class="operation-table-wrap">
                 <table>
                     <thead>
                         <tr>
                             <th scope="col">Aluno</th>
-                            <th scope="col">Vencimento</th>
-                            <th scope="col">Valor</th>
+                            <th scope="col">Atraso</th>
+                            <th scope="col">Ação</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for payment in page.data.payment_alerts %}
                         <tr>
-                            <td>{{ payment.student.full_name }}</td>
-                            <td>{{ payment.due_date|date:"d/m/Y" }}</td>
-                            <td><span class="pill warning">R$ {{ payment.amount|floatformat:2 }}</span></td>
+                            <td>
+                                <div class="dashboard-finance-student-cell">
+                                    <strong>{{ payment.student.full_name }}</strong>
+                                    <p class="meta-text-sm">Venceu em {{ payment.due_date|date:"d/m/Y" }}</p>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="dashboard-finance-pressure-cell">
+                                    <span class="pill warning">R$ {{ payment.amount|floatformat:2 }}</span>
+                                    <span class="dashboard-finance-pressure-note">Cobrar hoje.</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if page.data.dashboard_can_register_finance_whatsapp and payment.dashboard_whatsapp_href %}
+                                <div class="dashboard-finance-action-stack">
+                                    <span class="dashboard-finance-status" title="{{ payment.dashboard_whatsapp_last_contact_label }}{% if payment.dashboard_whatsapp_next_available_label %} {{ payment.dashboard_whatsapp_next_available_label }}{% endif %}">
+                                        {% if payment.dashboard_whatsapp_repeat_blocked %}
+                                        Janela bloqueada
+                                        {% elif payment.dashboard_whatsapp_last_contact_label == 'Nenhum contato operacional recente registrado.' %}
+                                        Sem contato recente
+                                        {% else %}
+                                        Contato recente
+                                        {% endif %}
+                                    </span>
+                                {% if payment.dashboard_whatsapp_repeat_blocked %}
+                                <button class="button secondary button-sm" type="button" disabled aria-disabled="true">Bloqueado agora</button>
+                                {% else %}
+                                <form method="post" action="{% url 'finance-communication-action' %}" target="_blank" class="actions actions-tight dashboard-finance-action-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action_kind" value="overdue">
+                                    <input type="hidden" name="student_id" value="{{ payment.student.id }}">
+                                    <input type="hidden" name="payment_id" value="{{ payment.id }}">
+                                    <input type="hidden" name="open_in_whatsapp" value="1">
+                                    <button class="button secondary button-sm" type="submit" data-action="open-dashboard-finance-whatsapp">Abrir WhatsApp</button>
+                                </form>
+                                {% endif %}
+                                </div>
+                                {% elif payment.dashboard_whatsapp_href %}
+                                <div class="dashboard-finance-action-stack">
+                                    <span class="dashboard-finance-status" title="{{ payment.dashboard_whatsapp_last_contact_label }}{% if payment.dashboard_whatsapp_next_available_label %} {{ payment.dashboard_whatsapp_next_available_label }}{% endif %}">Sem contato direto</span>
+                                    <span class="meta-text-sm">Sem permissao para contato</span>
+                                </div>
+                                {% else %}
+                                <span class="meta-text-sm">Sem WhatsApp</span>
+                                {% endif %}
+                            </td>
                         </tr>
                         {% empty %}
                         <tr>
@@ -83,45 +137,13 @@ PONTOS CRITICOS:
                     </tbody>
                 </table>
             </div>
-        </article>
+                </article>
 
-        <article class="table-card layout-panel layout-panel--stack dashboard-table-card" id="dashboard-sessions-board" data-panel="dashboard-sessions-board">
-            {% include "includes/ui/operation_card_head.html" with eyebrow="Próximas aulas" title="Próximas aulas" copy="Aulas futuras para alinhar coach, recepção e ocupação." pill_label=page.data.upcoming_sessions|length|add:" aula(s)" pill_class="info" %}
-            <div class="operation-table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th scope="col">Aula</th>
-                            <th scope="col">Coach</th>
-                            <th scope="col">Horário</th>
-                            <th scope="col">Status</th>
-                            <th scope="col">Alunos</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for session in page.data.upcoming_sessions %}
-                        <tr>
-                            <td>{{ session.object.title }}</td>
-                            <td>{{ session.coach_name }}</td>
-                            <td>{{ session.starts_at|date:"d/m/Y H:i" }}</td>
-                            <td><span class="pill{% if session.status_pill_class %} {{ session.status_pill_class }}{% endif %}">{{ session.status_label }}</span></td>
-                            <td><span class="pill{% if session.occupancy_pill_class %} {{ session.occupancy_pill_class }}{% endif %}">{{ session.occupied_slots }}/{{ session.capacity }}</span></td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Proximas aulas" title="Nenhuma aula cadastrada ainda" copy="A agenda principal ainda nao tem turma pronta para movimentar recepcao e coach neste recorte." badge="Dia leve" badge_class="info" %}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </article>
-
-        <article class="table-card layout-panel layout-panel--stack dashboard-table-card operation-span-full" id="dashboard-risk-board" data-panel="dashboard-risk-board">
+                <article class="table-card layout-panel layout-panel--stack dashboard-table-card operation-span-full" id="dashboard-risk-board" data-panel="dashboard-risk-board">
             {% if page.data.dashboard_role_mode == 'reception' %}
-            {% include "includes/ui/operation_card_head.html" with eyebrow="Alunos que pedem cuidado" title="Quem merece atenção" copy="Sinais de esfriamento para acolher melhor." pill_label=page.data.student_health|length|add:" aluno(s)" pill_class="accent" %}
+            {% include "includes/ui/operation_card_head.html" with eyebrow="Alunos que pedem cuidado" title="Quem merece atenção" copy="Veja quem pede contato antes de esfriar." pill_label=page.data.student_health|length|add:" aluno(s)" pill_class="accent" %}
             {% else %}
-            {% include "includes/ui/operation_card_head.html" with eyebrow="Risco operacional por aluno" title="Quem pode esfriar" copy="Leitura de presença e ausência para separar base estável de risco." pill_label=page.data.student_health|length|add:" aluno(s)" pill_class="accent" %}
+            {% include "includes/ui/operation_card_head.html" with eyebrow="Risco operacional por aluno" title="Quem pode esfriar" copy="Presença e faltas para separar base estável de risco." pill_label=page.data.student_health|length|add:" aluno(s)" pill_class="accent" %}
             {% endif %}
             <div class="operation-table-wrap">
                 <table>
@@ -130,7 +152,6 @@ PONTOS CRITICOS:
                             <th scope="col">Aluno</th>
                             <th scope="col">Presenças</th>
                             <th scope="col">Faltas</th>
-                            <th scope="col">Status</th>
                             <th scope="col">Risco</th>
                         </tr>
                     </thead>
@@ -140,7 +161,6 @@ PONTOS CRITICOS:
                             <td>{{ student.full_name }}</td>
                             <td>{{ student.total_attendances }}</td>
                             <td>{{ student.total_absences }}</td>
-                            <td>{{ student.get_status_display }}</td>
                             <td>
                                 {% if student.total_absences >= 3 %}
                                 <span class="pill dashboard-risk-pill is-critical">Atenção alta</span>
@@ -153,13 +173,49 @@ PONTOS CRITICOS:
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Risco operacional" title="Sem dados suficientes para analise" copy="Ainda nao ha presencas e faltas suficientes para separar estabilidade de risco com confianca." badge="Coleta inicial" badge_class="info" %}</td>
+                            <td colspan="4" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Risco operacional" title="Sem dados suficientes para analise" copy="Ainda não há presença e faltas suficientes para separar estabilidade de risco com confiança." badge="Coleta inicial" badge_class="info" %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-        </article>
+                </article>
+            </section>
+        </div>
+
+        <aside class="dashboard-instagram-side">
+            <article class="table-card layout-panel layout-panel--stack dashboard-table-card dashboard-side-card dashboard-side-card-sticky" id="dashboard-sessions-board" data-panel="dashboard-sessions-board">
+            {% include "includes/ui/operation_card_head.html" with eyebrow="Próximas aulas" title="Agenda do turno" copy="Veja o que ocupa equipe, coach e recepção nas próximas horas." pill_label=page.data.upcoming_sessions|length|add:" aula(s)" pill_class="info" %}
+            <div class="operation-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Aula</th>
+                            <th scope="col">Coach</th>
+                            <th scope="col">Hora</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Lotação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in page.data.upcoming_sessions %}
+                        <tr>
+                            <td>{{ session.object.title }}</td>
+                            <td>{{ session.coach_name }}</td>
+                            <td>{{ session.starts_at|date:"H:i" }}</td>
+                            <td><span class="pill{% if session.status_pill_class %} {{ session.status_pill_class }}{% endif %}">{{ session.status_label }}</span></td>
+                            <td><span class="pill{% if session.occupancy_pill_class %} {{ session.occupancy_pill_class }}{% endif %}">{{ session.occupied_slots }}/{{ session.capacity }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Proximas aulas" title="Nenhuma aula cadastrada ainda" copy="A agenda principal ainda nao tem turma pronta para movimentar recepcao e coach neste recorte." badge="Dia leve" badge_class="info" %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            </article>
+        </aside>
     </section>
 </div>
 {% endwith %}

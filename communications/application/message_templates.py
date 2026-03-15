@@ -17,13 +17,13 @@ PONTOS CRITICOS:
 def build_operational_message_body(*, action_kind, first_name, payment_due_date=None, payment_amount=None, plan_name=None):
     if action_kind == 'upcoming':
         return (
-            f'Oi, {first_name}. Passando para lembrar que sua cobranca do box vence em '
-            f'{payment_due_date:%d/%m/%Y} no valor de R$ {payment_amount}. Se precisar, respondemos por aqui.'
+            f'Oi, {first_name}. Seu pagamento do box vence em '
+            f'{payment_due_date:%d/%m/%Y}, no valor de R$ {payment_amount}. Se quiser, ja te ajudamos por aqui.'
         )
     if action_kind == 'overdue':
         return (
-            f'Oi, {first_name}. Identificamos uma cobranca em aberto do box com vencimento em '
-            f'{payment_due_date:%d/%m/%Y}, no valor de R$ {payment_amount}. Se quiser regularizar ou renegociar, nos responda.'
+            f'Oi, {first_name}. Vimos um pagamento do box em aberto, vencido em '
+            f'{payment_due_date:%d/%m/%Y}, no valor de R$ {payment_amount}. Se quiser regularizar, te atendemos por aqui.'
         )
     return (
         f'Oi, {first_name}. Sentimos sua falta no box. Se fizer sentido retomar, conseguimos te ajudar '

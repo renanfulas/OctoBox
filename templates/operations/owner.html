@@ -9,28 +9,33 @@ O QUE ESTE ARQUIVO FAZ:
 2. Resume decisões estratégicas já habilitadas.
 
 PONTOS CRITICOS:
-- Depende do contexto headline_metrics e decision_board.
+- Depende do contexto semanticamente enxuto montado em operation_page.
+- Deve continuar como composição de includes; leitura detalhada mora nos painéis locais.
 -->
 {% extends "layouts/base.html" %}
 
 {% block content %}
 {% with page=operation_page %}
-<div class="operation-shell">
+<div class="operation-shell owner-scene owner-simple-shell">
     {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
 
-    <section id="owner-growth-board" class="panel-grid operation-metric-grid" aria-label="Metricas de crescimento">
-        {% for card in page.data.metric_cards %}
-        {% include "includes/ui/metric_card.html" with card=card %}
-        {% endfor %}
-    </section>
+    <section class="owner-workspace" aria-label="Painel principal do owner">
+        <section class="owner-panel-grid" aria-label="Prioridade e resumo do dia">
+            {% include "operations/includes/owner_primary_panel.html" %}
+            {% include "operations/includes/owner_status_panel.html" %}
+        </section>
 
-    <section class="layout-grid operation-grid-wide align-start" aria-label="Estrutura e risco">
-        <div id="owner-structure-board">
-            {% include "includes/ui/info_list_card.html" with eyebrow="Leitura estratégica" title="O que já está pronto para escalar" copy="Estrutura que sustenta crescimento sem improviso." pill_label=page.data.decision_board_count_label pill_class="info" items=page.data.decision_board %}
-        </div>
-        <div id="owner-risk-board">
-            {% include "includes/ui/info_list_card.html" with card_class="operation-empty-card" eyebrow="Radar executivo" title="Ordem de leitura recomendada" copy="Uma sequência simples para usar esta tela como centro de decisão, não só como painel bonito." pill_label="Prioridade" pill_class="accent" items=page.data.owner_reading_order %}
-        </div>
+        {% include "operations/includes/owner_metrics_section.html" %}
+
+        <section class="owner-support-grid" aria-label="Leituras complementares do owner">
+            <div id="owner-risk-board">
+                {% include "operations/includes/owner_sequence_panel.html" %}
+            </div>
+
+            <div id="owner-structure-board">
+                {% include "operations/includes/owner_structure_panel.html" %}
+            </div>
+        </section>
     </section>
 </div>
 {% endwith %}

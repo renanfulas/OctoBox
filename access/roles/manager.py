@@ -22,9 +22,9 @@ MANAGER_ROLE = RoleDefinition(
     label='Manager',
     summary='Gerente focado em operação diária, financeiro, alunos e acompanhamento.',
     capabilities=(
-        'Gerenciar alunos, planos, matrículas, pagamentos e ocorrências.',
-        'Operar agenda, confirmar presença e tratar faltas e inadimplência.',
-        'Acompanhar indicadores operacionais e preparar ações de retenção.',
+        'Gerenciar alunos, planos, matrículas e pagamentos no fluxo operacional.',
+        'Ajustar a grade de aulas, intake e vínculos sem assumir a rotina técnica do coach.',
+        'Acompanhar indicadores operacionais e preparar ações de retenção e cobrança.',
     ),
 )
 

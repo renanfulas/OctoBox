@@ -1,0 +1,77 @@
+<!--
+ARQUIVO: diretorio principal de alunos.
+
+POR QUE ELE EXISTE:
+- isola a tabela principal da base para facilitar manutencao e leitura.
+-->
+<section class="table-card layout-panel layout-panel--stack glass-panel student-table-wrap student-data-panel" id="student-directory-board" aria-label="Diretorio de alunos" data-panel="students-directory-board">
+    {% include "includes/ui/operation_card_head.html" with eyebrow="Base principal de alunos" title="Diretorio com leitura operacional" copy="Lista enxuta com foco em contato, plano, financeiro e ação." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
+    <table>
+        <thead>
+            <tr>
+                <th scope="col">Aluno</th>
+                <th scope="col">Contato</th>
+                <th scope="col">Comercial</th>
+                <th scope="col">Financeiro</th>
+                <th scope="col">Atualizado</th>
+                <th scope="col">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in page.data.students %}
+            <tr class="student-row" data-panel="student-row">
+                <td>
+                    <strong>{{ student.full_name }}</strong>
+                    <p class="meta-text-sm">{{ student.get_status_display }}</p>
+                </td>
+                <td>
+                    <strong>{{ student.phone }}</strong>
+                    <p class="meta-text-sm">{% if student.email %}{{ student.email }}{% else %}Sem e-mail informado{% endif %}</p>
+                </td>
+                <td>
+                    <div class="stack-8">
+                        {% if student.latest_plan_name %}<strong>{{ student.latest_plan_name }}</strong>{% else %}<strong>Sem plano conectado</strong>{% endif %}
+                        {% if student.latest_enrollment_status %}<span class="pill">{{ student.latest_enrollment_status }}</span>{% else %}<span class="pill">Sem matricula</span>{% endif %}
+                    </div>
+                </td>
+                <td>
+                    <div class="stack-8">
+                        {% if student.operational_payment_status == 'overdue' %}
+                        <span class="pill warning">Em atraso</span>
+                        {% elif student.operational_payment_status == 'pending' %}
+                        <span class="pill info">Pendente</span>
+                        {% elif student.operational_payment_status == 'paid' %}
+                        <span class="pill success">Pago</span>
+                        {% elif student.operational_payment_status == 'canceled' %}
+                        <span class="pill">Cancelado</span>
+                        {% elif student.operational_payment_status == 'refunded' %}
+                        <span class="pill warning">Estornado</span>
+                        {% elif student.operational_payment_status %}
+                        <span class="pill info">{{ student.operational_payment_status }}</span>
+                        {% else %}
+                        <span class="pill">Sem cobranca</span>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>{{ student.updated_at|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <div class="actions actions-tight">
+                        {% if page.capabilities.can_manage_students %}
+                        <a class="button secondary" href="/alunos/{{ student.id }}/editar/#student-financial-overview" data-action="open-student-form">Abrir ficha</a>
+                        {% endif %}
+                        {% if page.capabilities.can_open_student_admin %}
+                        <a class="button secondary" href="{% url 'admin:boxcore_student_change' student.id %}" data-action="open-student-admin">Admin</a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="table-empty-cell">
+                    {% include "includes/ui/state_empty.html" with compact=True eyebrow="Base principal" title="Nenhum aluno encontrado neste recorte" copy="Ajuste a busca ou os filtros para ampliar a leitura da base principal." badge="Sem resultados" badge_class="info" %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>

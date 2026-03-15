@@ -62,13 +62,15 @@ Criar no minimo:
 
 1. um Owner
 2. um Manager, se existir operacao de gestao no box
-3. um Coach
+3. um Recepcao, se houver operador real de balcao ou se o piloto ja for usar a area oficial
+4. um Coach
 
-Se o box ainda nao tiver recepcao formal:
+Se o box ainda nao tiver operador dedicado de balcao:
 
-1. o fluxo de Recepcao do piloto pode ser testado temporariamente com Owner ou Manager
-2. nao inventar usuario de recepcao ficticio apenas para completar papel sem uso real
-3. criar usuario Recepcao assim que houver operador real de balcao
+1. manter a Recepcao como fluxo oficial do sistema
+2. registrar explicitamente a contingencia se o piloto precisar de cobertura por Owner ou Manager
+3. nao inventar usuario de recepcao ficticio apenas para completar papel sem uso real
+4. criar usuario Recepcao assim que houver operador real de balcao
 
 Checklist:
 
@@ -128,9 +130,9 @@ Checklist:
 
 ## Etapa 6. Testar Recepcao do piloto
 
-Mesmo sem recepcionista formal, validar a capacidade:
+Validar a capacidade da area oficial de Recepcao:
 
-1. abrir `/operacao/recepcao/` com um papel autorizado para o piloto
+1. abrir `/operacao/recepcao/` com o usuario oficial de Recepcao ou, se necessario, com a contingencia registrada
 2. localizar aluno
 3. enxergar grade em leitura
 4. validar cobranca curta quando houver dado suficiente
@@ -138,7 +140,8 @@ Mesmo sem recepcionista formal, validar a capacidade:
 Se o box nao tiver pessoa dedicada na recepcao ainda:
 
 1. tratar a Recepcao como fluxo funcional do sistema
-2. nao como papel obrigatorio de equipe no dia 1
+2. registrar que a cobertura operacional esta em contingencia por Owner ou Manager
+3. nao tratar essa cobertura como desenho final do piloto
 
 ## Etapa 7. Validar cobranca curta
 

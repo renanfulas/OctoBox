@@ -18,16 +18,16 @@ PONTOS CRITICOS:
 
 .page-compass {
     display: grid;
-    grid-template-columns: minmax(0, 1.45fr) minmax(240px, 0.82fr);
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 292px);
     gap: 14px;
     margin-bottom: var(--section-gap);
-    padding: 16px 18px 0;
-    border-radius: 28px;
+    padding: clamp(14px, 1.35vw, 18px) clamp(14px, 1.35vw, 18px) 0;
+    border-radius: 22px;
     border: 1px solid var(--line);
     background:
-        radial-gradient(circle at top right, rgba(184, 92, 56, 0.16), transparent 34%),
-        radial-gradient(circle at bottom left, rgba(40, 92, 142, 0.1), transparent 26%),
-        linear-gradient(145deg, rgba(255, 252, 247, 0.9), rgba(246, 239, 229, 0.94));
+        radial-gradient(circle at top right, rgba(41, 103, 163, 0.08), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.06), transparent 22%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(245, 249, 253, 0.98));
     box-shadow: var(--shadow-soft);
     backdrop-filter: blur(14px);
     position: relative;
@@ -37,15 +37,18 @@ PONTOS CRITICOS:
 
 .page-compass-main {
     display: grid;
-    gap: 6px;
+    gap: 4px;
     min-width: 0;
     align-content: start;
+    justify-items: start;
+    text-align: left;
 }
 
 .page-compass-main > div:first-child {
     display: grid;
     gap: 6px;
-    max-width: 52ch;
+    max-width: 620px;
+    justify-items: start;
 }
 
 .page-compass-actions {
@@ -54,9 +57,9 @@ PONTOS CRITICOS:
 
 .page-compass-title {
     margin: 0;
-    max-width: 12ch;
-    font-size: clamp(1.52rem, 2.15vw, 2.12rem);
-    line-height: 0.98;
+    max-width: 16ch;
+    font-size: clamp(1.44rem, 2.1vw, 2rem);
+    line-height: 1.02;
     letter-spacing: -0.04em;
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -67,13 +70,13 @@ PONTOS CRITICOS:
 
 .page-compass-copy {
     margin: 0;
-    max-width: 48ch;
+    max-width: 52ch;
     color: var(--muted);
-    line-height: 1.38;
+    line-height: 1.4;
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
     overflow: hidden;
 }
 
@@ -87,28 +90,31 @@ PONTOS CRITICOS:
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     gap: 0;
-    width: fit-content;
+    width: min(100%, 292px);
     min-width: 0;
-    max-width: 100%;
+    max-width: 292px;
     align-content: start;
     align-self: start;
     justify-self: end;
-    padding: 6px 10px;
-    border: 1px solid rgba(112, 96, 81, 0.1);
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.38);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+    padding: 10px 12px;
+    border: 1px solid rgba(52, 71, 70, 0.1);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(246, 249, 253, 0.42));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.46);
 }
 
 .page-compass-stat {
     display: inline-flex;
-    align-items: baseline;
-    gap: 6px;
-    padding: 4px 12px;
-    min-height: 28px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    padding: 6px 10px;
+    min-height: 40px;
     white-space: nowrap;
+    text-align: center;
     border-radius: 0;
     border: 0;
     background: transparent;
@@ -116,12 +122,12 @@ PONTOS CRITICOS:
 }
 
 .page-compass-stat + .page-compass-stat {
-    border-left: 1px solid rgba(112, 96, 81, 0.12);
+    border-left: 1px solid rgba(52, 71, 70, 0.12);
 }
 
-.page-compass-stat span {
-    display: inline;
-    font-size: 0.62rem;
+.page-compass-stat-label {
+    display: block;
+    font-size: 0.58rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--muted);
@@ -129,11 +135,11 @@ PONTOS CRITICOS:
     white-space: nowrap;
 }
 
-.page-compass-stat strong {
-    display: inline;
+.page-compass-stat-value {
+    display: block;
     margin-top: 0;
-    font-size: 0.95rem;
-    line-height: 1.05;
+    font-size: 0.88rem;
+    line-height: 1.02;
     letter-spacing: -0.03em;
     white-space: nowrap;
 }
@@ -142,17 +148,17 @@ PONTOS CRITICOS:
 
 .compass-pulse {
     --pulse-gap: 6px;
-    --pulse-chip-padding: 3px 7px;
-    --pulse-chip-min-height: 28px;
-    --pulse-hint-width: clamp(200px, 22vw, 280px);
+    --pulse-chip-padding: 7px 10px;
+    --pulse-chip-min-height: 30px;
+    --pulse-hint-width: clamp(180px, 18vw, 232px);
     grid-column: 1 / -1;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0;
-    margin-top: 2px;
-    padding: 7px 0 4px;
-    border-top: 1px solid rgba(112, 96, 81, 0.1);
+    gap: 8px;
+    margin-top: 0;
+    padding: 10px 0 4px;
+    border-top: 1px solid rgba(52, 71, 70, 0.1);
     position: relative;
     z-index: 4;
     isolation: auto;
@@ -215,30 +221,31 @@ PONTOS CRITICOS:
     max-width: min(100%, 100%);
     min-height: var(--pulse-chip-min-height);
     padding: var(--pulse-chip-padding);
-    border-radius: 0;
-    border: 0;
+    border-radius: 16px;
+    border: 1px solid transparent;
     text-decoration: none;
     line-height: 1;
-    box-shadow: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
     overflow: visible;
     isolation: isolate;
     transition: transform 0.18s ease, box-shadow 0.22s ease, border-color 0.22s ease, background-color 0.22s ease, padding 0.22s ease;
 }
 
 .pulse-chip + .pulse-chip {
-    margin-left: 4px;
-    padding-left: 12px;
+    margin-left: 0;
 }
 
-.pulse-chip + .pulse-chip::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    width: 1px;
-    height: 16px;
-    background: rgba(112, 96, 81, 0.14);
-    transform: translateY(-50%);
+body[data-theme="dark"] .page-compass {
+    background:
+        radial-gradient(circle at top right, rgba(41, 103, 163, 0.12), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.08), transparent 22%),
+        linear-gradient(145deg, rgba(20, 32, 46, 0.98), rgba(12, 20, 30, 0.98));
+}
+
+body[data-theme="dark"] .page-compass-stats {
+    border-color: rgba(163, 194, 224, 0.16);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(7, 14, 22, 0.12));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .pulse-chip::after {
@@ -271,7 +278,7 @@ PONTOS CRITICOS:
 .pulse-label {
     display: block;
     min-width: 0;
-    font-size: 0.53rem;
+    font-size: 0.5rem;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -283,15 +290,15 @@ PONTOS CRITICOS:
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 12px;
+    min-width: 11px;
     width: auto;
-    height: 12px;
+    height: 11px;
     padding: 0 3px;
     border-radius: 999px;
     border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
     background: rgba(255, 255, 255, 0.92);
     box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
-    font-size: 0.47rem;
+    font-size: 0.44rem;
     font-weight: 900;
     font-variant-numeric: tabular-nums;
     line-height: 1;
@@ -330,30 +337,41 @@ PONTOS CRITICOS:
 .pulse-hint-copy {
     display: block;
     height: auto;
-    padding: 8px 10px;
+    padding: 7px 9px;
     min-width: 0;
     color: color-mix(in srgb, var(--ink) 86%, transparent);
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 600;
-    line-height: 1.35;
+    line-height: 1.28;
     white-space: normal;
     overflow: visible;
     text-overflow: clip;
     opacity: 0;
     transform: translateY(4px);
     transition: opacity 0.16s ease 0.05s, transform 0.18s ease 0.05s;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
 }
 
 .pulse-priority {
-    color: #9c271c;
+    color: #8d2b1a;
+    border-color: rgba(184, 92, 56, 0.18);
+    background: linear-gradient(180deg, rgba(255, 241, 236, 0.98), rgba(255, 229, 220, 0.92));
+    box-shadow: 0 12px 26px rgba(184, 92, 56, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.48);
 }
 
 .pulse-pending {
-    color: #1d4c78;
+    color: #235a86;
+    border-color: rgba(41, 103, 163, 0.16);
+    background: linear-gradient(180deg, rgba(243, 248, 255, 0.98), rgba(233, 243, 255, 0.92));
 }
 
 .pulse-next-action {
-    color: var(--brand-dark);
+    color: color-mix(in srgb, var(--ink) 76%, transparent);
+    border-color: rgba(98, 127, 161, 0.12);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(246, 249, 252, 0.88));
 }
 
 body[data-theme="dark"] .page-compass {
@@ -385,12 +403,7 @@ body[data-theme="dark"] .compass-pulse {
 }
 
 body[data-theme="dark"] .pulse-chip {
-    border-color: transparent;
-    box-shadow: none;
-}
-
-body[data-theme="dark"] .pulse-chip + .pulse-chip::before {
-    background: rgba(199, 186, 167, 0.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 body[data-theme="dark"] .pulse-number {
@@ -410,15 +423,21 @@ body[data-theme="dark"] .pulse-hint {
 }
 
 body[data-theme="dark"] .pulse-priority {
-    color: #fecaca;
+    color: #ffd8ce;
+    border-color: rgba(248, 136, 107, 0.22);
+    background: linear-gradient(180deg, rgba(95, 34, 24, 0.64), rgba(52, 18, 13, 0.4));
 }
 
 body[data-theme="dark"] .pulse-pending {
-    color: #bfdbfe;
+    color: #d7ebff;
+    border-color: rgba(89, 156, 221, 0.22);
+    background: linear-gradient(180deg, rgba(24, 54, 90, 0.62), rgba(13, 28, 47, 0.38));
 }
 
 body[data-theme="dark"] .pulse-next-action {
-    color: #fed7aa;
+    color: #dbe5f0;
+    border-color: rgba(163, 194, 224, 0.16);
+    background: linear-gradient(180deg, rgba(33, 46, 61, 0.58), rgba(18, 27, 38, 0.36));
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -450,18 +469,12 @@ body[data-theme="dark"] .pulse-next-action {
     }
 
     .pulse-priority:hover,
-    .pulse-priority:focus-visible {
-        box-shadow: none;
-    }
-
+    .pulse-priority:focus-visible,
     .pulse-pending:hover,
-    .pulse-pending:focus-visible {
-        box-shadow: none;
-    }
-
+    .pulse-pending:focus-visible,
     .pulse-next-action:hover,
     .pulse-next-action:focus-visible {
-        box-shadow: none;
+        box-shadow: var(--shadow-soft);
     }
 }
 
@@ -568,25 +581,25 @@ body[data-theme="dark"] .pulse-next-action {
 
 @media (min-width: 961px) {
     .page-compass-main {
-        justify-items: center;
-        text-align: center;
+        justify-items: start;
+        text-align: left;
     }
 
     .page-compass-main > div:first-child {
-        margin-inline: auto;
+        margin-inline: 0;
     }
 
     .page-compass-copy,
     .page-compass-tags {
-        margin-inline: auto;
+        margin-inline: 0;
     }
 
     .page-compass-tags {
-        justify-content: center;
+        justify-content: flex-start;
     }
 
     .page-compass-stats {
-        justify-self: center;
+        justify-self: end;
         justify-content: center;
     }
 
@@ -596,33 +609,33 @@ body[data-theme="dark"] .pulse-next-action {
     }
 
     .compass-pulse {
-        --pulse-chip-padding: 4px 10px;
-        --pulse-chip-min-height: 32px;
-        --pulse-hint-width: clamp(220px, 24vw, 320px);
-        padding-top: 9px;
-        padding-bottom: 6px;
+        --pulse-chip-padding: 3px 8px;
+        --pulse-chip-min-height: 26px;
+        --pulse-hint-width: clamp(190px, 18vw, 250px);
+        padding-top: 6px;
+        padding-bottom: 4px;
     }
 
     .pulse-chip + .pulse-chip {
-        margin-left: 6px;
-        padding-left: 14px;
+        margin-left: 5px;
+        padding-left: 12px;
     }
 
     .pulse-label {
-        font-size: 0.61rem;
+        font-size: 0.56rem;
         letter-spacing: 0.09em;
     }
 
     .pulse-number {
-        min-width: 14px;
-        height: 14px;
+        min-width: 12px;
+        height: 12px;
         padding: 0 4px;
-        font-size: 0.54rem;
+        font-size: 0.48rem;
     }
 
     .pulse-hint-copy {
-        font-size: 0.72rem;
-        line-height: 1.4;
+        font-size: 0.66rem;
+        line-height: 1.32;
     }
 }
 
@@ -663,6 +676,11 @@ body[data-theme="dark"] .pulse-next-action {
 @media (max-width: 640px) {
     .page-compass {
         padding: 18px;
+    }
+
+    .page-compass-copy {
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
     }
 
     .page-compass-stats {

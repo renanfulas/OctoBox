@@ -17,9 +17,11 @@ PONTOS CRITICOS:
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
 
+from access.permissions import RoleRequiredMixin
+from access.roles import ROLE_DEV, ROLE_OWNER
 from shared_support.page_payloads import attach_page_payload
 
-from .presentation import build_system_map_page
+from .presentation import build_operational_settings_page, build_system_map_page
 
 
 class SystemMapView(LoginRequiredMixin, TemplateView):
@@ -31,6 +33,21 @@ class SystemMapView(LoginRequiredMixin, TemplateView):
         attach_page_payload(
             context,
             payload_key='system_map_page',
+            payload=page_payload,
+        )
+        return context
+
+
+class OperationalSettingsView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
+    allowed_roles = (ROLE_OWNER, ROLE_DEV)
+    template_name = 'guide/operational-settings.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        page_payload = build_operational_settings_page()
+        attach_page_payload(
+            context,
+            payload_key='operational_settings_page',
             payload=page_payload,
         )
         return context

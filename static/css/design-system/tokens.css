@@ -18,13 +18,13 @@ PONTOS CRITICOS:
 
 :root {
     color-scheme: light;
-    --bg: #f3efe6;
-    --bg-depth: #e9dfcf;
-    --bg-elevated: rgba(255, 250, 242, 0.8);
-    --surface: rgba(255, 251, 245, 0.86);
-    --surface-muted: rgba(247, 241, 231, 0.9);
-    --surface-strong: rgba(255, 255, 255, 0.94);
-    --surface-inverse: #14202d;
+    --bg: #f6f8fb;
+    --bg-depth: #e8edf4;
+    --bg-elevated: rgba(255, 255, 255, 0.88);
+    --surface: rgba(255, 255, 255, 0.9);
+    --surface-muted: rgba(246, 249, 253, 0.96);
+    --surface-strong: rgba(255, 255, 255, 0.98);
+    --surface-inverse: #102029;
     --font-body: "Aptos", "Segoe UI Variable Text", "Trebuchet MS", sans-serif;
     --font-display: "Rockwell", "Aptos Display", "Bahnschrift", serif;
     --space-2: 12px;
@@ -37,48 +37,57 @@ PONTOS CRITICOS:
     --radius-card: 22px;
     --radius-panel: 30px;
     --radius-shell: 36px;
-    --ink: #18212b;
-    --muted: #655f59;
-    --line: rgba(112, 96, 81, 0.16);
-    --line-strong: rgba(112, 96, 81, 0.28);
-    --brand: #b85c38;
-    --brand-dark: #7d3418;
-    --accent: #2f7a64;
-    --accent-2: #285c8e;
+    --ink: #13212a;
+    --muted: #5d6978;
+    --line: rgba(61, 84, 112, 0.14);
+    --line-strong: rgba(61, 84, 112, 0.26);
+    --brand: #c46734;
+    --brand-dark: #7a3318;
+    --accent: #0e7c86;
+    --accent-2: #2967a3;
     --danger: #bd3f2f;
     --warning: #b57a15;
-    --shadow-soft: 0 22px 48px rgba(85, 56, 35, 0.08);
-    --shadow-lift: 0 28px 80px rgba(85, 56, 35, 0.16);
-    --sidebar-bg: linear-gradient(180deg, rgba(20, 32, 45, 0.96), rgba(32, 45, 58, 0.92));
-    --sidebar-line: rgba(255, 238, 215, 0.12);
-    --sidebar-ink: #f9f1e4;
-    --sidebar-muted: rgba(249, 241, 228, 0.68);
-    --sidebar-active: rgba(184, 92, 56, 0.22);
-    --hero-gradient: linear-gradient(135deg, rgba(184, 92, 56, 0.2), rgba(40, 92, 142, 0.12) 52%, rgba(47, 122, 100, 0.16));
+    --shadow-soft: 0 22px 54px rgba(29, 46, 67, 0.08);
+    --shadow-lift: 0 30px 92px rgba(18, 35, 56, 0.14);
+    --sidebar-bg: linear-gradient(180deg, rgba(9, 23, 35, 0.98), rgba(12, 43, 67, 0.97) 56%, rgba(10, 82, 92, 0.95));
+    --sidebar-line: rgba(235, 244, 255, 0.14);
+    --sidebar-ink: #f6fbff;
+    --sidebar-muted: rgba(234, 244, 255, 0.72);
+    --sidebar-active: rgba(41, 103, 163, 0.24);
+    --hero-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.58), rgba(41, 103, 163, 0.09) 50%, rgba(14, 124, 134, 0.1));
     --content-max: 1560px;
 }
 
 body[data-theme="dark"] {
     color-scheme: dark;
-    --bg: #0d151d;
-    --bg-depth: #16202c;
-    --bg-elevated: rgba(13, 21, 29, 0.82);
-    --surface: rgba(21, 31, 41, 0.84);
-    --surface-muted: rgba(17, 25, 35, 0.92);
-    --surface-strong: rgba(27, 38, 51, 0.96);
-    --surface-inverse: #f7f0e6;
-    --ink: #edf0ea;
-    --muted: #adb4b6;
-    --line: rgba(199, 186, 167, 0.12);
-    --line-strong: rgba(199, 186, 167, 0.2);
-    --shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.32);
-    --shadow-lift: 0 34px 86px rgba(0, 0, 0, 0.46);
-    --sidebar-bg: linear-gradient(180deg, rgba(7, 12, 18, 0.96), rgba(20, 30, 42, 0.94));
-    --sidebar-line: rgba(249, 241, 228, 0.08);
-    --sidebar-ink: #f9f1e4;
-    --sidebar-muted: rgba(249, 241, 228, 0.62);
-    --sidebar-active: rgba(184, 92, 56, 0.28);
-    --hero-gradient: linear-gradient(135deg, rgba(184, 92, 56, 0.16), rgba(40, 92, 142, 0.18) 52%, rgba(47, 122, 100, 0.18));
+    --bg: #071019;
+    --bg-depth: #0c1823;
+    --bg-elevated: rgba(11, 19, 28, 0.86);
+    --surface: rgba(15, 25, 36, 0.94);
+    --surface-muted: rgba(11, 20, 30, 0.98);
+    --surface-strong: rgba(20, 32, 46, 0.98);
+    --surface-inverse: #f7fbff;
+    --ink: #f2f7fc;
+    --muted: #b5c2d2;
+    --line: rgba(133, 164, 194, 0.2);
+    --line-strong: rgba(163, 194, 224, 0.28);
+    --shadow-soft: 0 24px 68px rgba(0, 0, 0, 0.4);
+    --shadow-lift: 0 36px 96px rgba(0, 0, 0, 0.56);
+    --sidebar-bg: linear-gradient(180deg, rgba(2, 10, 16, 0.99), rgba(7, 29, 46, 0.98) 56%, rgba(7, 65, 77, 0.96));
+    --sidebar-line: rgba(226, 239, 255, 0.1);
+    --sidebar-ink: #f6fbff;
+    --sidebar-muted: rgba(224, 238, 255, 0.68);
+    --sidebar-active: rgba(41, 103, 163, 0.26);
+    --hero-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(41, 103, 163, 0.18) 50%, rgba(14, 124, 134, 0.16));
+}
+
+body[data-theme="dark"] {
+    background:
+        radial-gradient(circle at 12% 12%, rgba(41, 103, 163, 0.18), transparent 20%),
+        radial-gradient(circle at 84% 16%, rgba(14, 124, 134, 0.16), transparent 18%),
+        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04), transparent 24%),
+        linear-gradient(180deg, rgba(8, 15, 24, 0.98), rgba(8, 17, 27, 0.99) 34%, rgba(6, 13, 21, 1)),
+        var(--bg);
 }
 
 * {
@@ -92,10 +101,10 @@ body {
     color: var(--ink);
     overflow-x: hidden;
     background:
-        radial-gradient(circle at top right, rgba(184, 92, 56, 0.18), transparent 22%),
-        radial-gradient(circle at bottom left, rgba(47, 122, 100, 0.12), transparent 30%),
-        radial-gradient(circle at 44% 0%, rgba(40, 92, 142, 0.1), transparent 24%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 36%),
+        radial-gradient(circle at 10% 10%, rgba(41, 103, 163, 0.08), transparent 22%),
+        radial-gradient(circle at 84% 18%, rgba(14, 124, 134, 0.08), transparent 20%),
+        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.66), transparent 28%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(246, 248, 251, 0.98) 36%, rgba(238, 242, 248, 0.96)),
         var(--bg);
     transition: background 0.24s ease, color 0.24s ease;
     position: relative;
@@ -112,10 +121,10 @@ body::after {
 
 body::before {
     background:
-        linear-gradient(rgba(112, 96, 81, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(112, 96, 81, 0.04) 1px, transparent 1px);
-    background-size: 24px 24px;
-    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.52), transparent 90%);
+        linear-gradient(rgba(98, 127, 161, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(98, 127, 161, 0.035) 1px, transparent 1px);
+    background-size: 30px 30px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.56), transparent 90%);
 }
 
 body::after {
@@ -123,7 +132,19 @@ body::after {
     width: 42vw;
     height: 42vw;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(184, 92, 56, 0.16), transparent 68%);
+    background: radial-gradient(circle, rgba(41, 103, 163, 0.12), transparent 68%);
+}
+
+body[data-theme="dark"]::before {
+    background:
+        linear-gradient(rgba(122, 149, 182, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(122, 149, 182, 0.045) 1px, transparent 1px);
+    background-size: 30px 30px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.36), transparent 92%);
+}
+
+body[data-theme="dark"]::after {
+    background: radial-gradient(circle, rgba(41, 103, 163, 0.18), transparent 68%);
 }
 
 h1,
@@ -185,8 +206,8 @@ input:focus,
 select:focus,
 textarea:focus {
     outline: none;
-    border-color: rgba(184, 92, 56, 0.34);
-    box-shadow: 0 0 0 4px rgba(184, 92, 56, 0.12);
+    border-color: rgba(15, 118, 110, 0.34);
+    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
     transform: translateY(-1px);
 }
 
@@ -202,6 +223,6 @@ textarea {
 }
 
 :focus-visible {
-    outline: 2px solid rgba(184, 92, 56, 0.34);
+    outline: 2px solid rgba(15, 118, 110, 0.34);
     outline-offset: 2px;
 }

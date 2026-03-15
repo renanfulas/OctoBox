@@ -1,0 +1,26 @@
+<!--
+ARQUIVO: resumo lateral do Owner.
+
+POR QUE ELE EXISTE:
+- mostra o estado do dia sem repetir a mesa principal inteira.
+-->
+<article class="table-card owner-panel owner-status-panel" data-panel="owner-status-panel">
+    {% include "includes/ui/operation_card_head.html" with eyebrow="Estado do dia" title="Como o dia esta" copy="So confira estes pontos antes de abrir outras areas." pill_label="Resumo" pill_class="info" %}
+    <div class="owner-status-list">
+        <a class="owner-status-item" href="#owner-growth-board">
+            <p class="owner-status-label">Entradas abertas</p>
+            <strong class="owner-status-value">{{ page.data.headline_metrics.pending_intakes }} esperando</strong>
+            <p class="owner-status-copy">Se esse numero sobe, tem gente esperando resposta.</p>
+        </a>
+        <a class="owner-status-item" href="#owner-risk-board">
+            <p class="owner-status-label">Cobrancas atrasadas</p>
+            <strong class="owner-status-value">{{ page.data.headline_metrics.overdue_payments }} atrasadas</strong>
+            <p class="owner-status-copy">R$ {{ page.data.headline_metrics.overdue_amount|floatformat:2 }} ainda nao entraram no caixa.</p>
+        </a>
+        <a class="owner-status-item" href="#owner-structure-board">
+            <p class="owner-status-label">Base pronta</p>
+            <strong class="owner-status-value">{{ page.data.headline_metrics.whatsapp_contacts }} contatos prontos</strong>
+            <p class="owner-status-copy">{{ page.data.headline_metrics.messages_logged }} conversa(s) ja ficaram salvas.</p>
+        </a>
+    </div>
+</article>

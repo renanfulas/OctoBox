@@ -1,10 +1,12 @@
 """
-ARQUIVO: presentation da tela Mapa do Sistema.
+ARQUIVO: presentation das telas do guide interno.
 
 POR QUE ELE EXISTE:
-- tira da view HTTP a montagem estrutural do mapa interno do sistema.
-- organiza a leitura pedagogica em um payload explicito para destravar a composicao do front.
+- tira da view HTTP a montagem estrutural das telas internas do guide.
+- organiza a leitura pedagogica e operacional em payloads explicitos.
 """
+
+from django.conf import settings
 
 from access.shell_actions import build_shell_action_buttons_from_focus
 from shared_support.page_payloads import build_page_assets, build_page_payload
@@ -226,6 +228,53 @@ def build_system_map_page():
             'primary': {
                 'roles': '/acessos/',
             },
+        },
+        assets=build_page_assets(css=['css/guide/system-map.css']),
+    )
+
+
+def build_operational_settings_page():
+    operational_focus = [
+        {'href': '#operational-settings-window', 'summary': 'Ver a janela atual de repeticao do WhatsApp operacional.'},
+        {'href': '#operational-settings-impact', 'summary': 'Ler onde a regra afeta Financeiro, Dashboard e Auditoria.'},
+        {'href': '#operational-settings-change', 'summary': 'Entender como alterar a configuracao do ambiente.'},
+    ]
+    repeat_block_hours = max(0, int(getattr(settings, 'OPERATIONAL_WHATSAPP_REPEAT_BLOCK_HOURS', 24)))
+
+    return build_page_payload(
+        context={
+            'page_key': 'operational-settings',
+            'title': 'Configuracoes operacionais',
+            'subtitle': 'Janela de repeticao do WhatsApp e impacto direto na rotina.',
+        },
+        shell={
+            'shell_action_buttons': build_shell_action_buttons_from_focus(
+                focus=operational_focus,
+                scope='operational-settings',
+            ),
+        },
+        data={
+            'repeat_block_hours': repeat_block_hours,
+            'repeat_block_mode_label': (
+                'Repeticao imediata liberada'
+                if repeat_block_hours == 0 else
+                f'Bloqueio de repeticao por {repeat_block_hours}h'
+            ),
+            'affected_surfaces': [
+                'Financeiro: regua de cobranca e retencao.',
+                'Dashboard: alertas financeiros com CTA rastreavel.',
+                'Auditoria: tentativa registrada e tentativa bloqueada.',
+            ],
+            'guardrails': [
+                'A mesma mensagem para o mesmo contato nao dispara de novo dentro da janela configurada.',
+                'Quando bloqueado, o ultimo log valido e reaproveitado para manter rastreabilidade.',
+                'Papeis somente leitura nao recebem CTA de disparo no Dashboard.',
+            ],
+            'change_steps': [
+                'Ajuste a variavel OPERATIONAL_WHATSAPP_REPEAT_BLOCK_HOURS no ambiente ativo.',
+                'Use 24 para uma trava diaria, 12 para um intervalo menor ou 0 para liberar repeticao imediata.',
+                'Republique o ambiente para aplicar a nova configuracao.',
+            ],
         },
         assets=build_page_assets(css=['css/guide/system-map.css']),
     )

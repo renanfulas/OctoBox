@@ -1,0 +1,40 @@
+<!--
+ARQUIVO: handoff de intake dentro da base de alunos.
+
+POR QUE ELE EXISTE:
+- deixa claro que a fila principal vive na central propria, sem misturar com o diretorio.
+-->
+<section class="table-card layout-panel layout-panel--stack glass-panel section-gap student-queue-panel" id="student-intake-board" aria-label="Fila de intake" data-panel="students-intake-board">
+    {% include "includes/ui/operation_card_head.html" with eyebrow="Handoff para a central propria de intake" title="A fila principal agora mora na Central de Intake" copy="Use Alunos para base e ficha definitiva. A triagem canonica da entrada segue na central propria." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
+    <div class="actions actions-tight">
+        <a class="button" href="/entradas/#intake-queue-board" data-action="open-intake-center">Abrir central de intake</a>
+        {% if page.capabilities.can_manage_students %}
+        <a class="button secondary" href="/alunos/novo/#student-form-essential" data-action="open-student-quick-create-from-intake-handoff">Abrir cadastro rapido</a>
+        {% endif %}
+    </div>
+    <div class="intake-grid">
+        {% for intake in page.data.intake_queue %}
+        <div class="intake-card" data-panel="students-intake-card">
+            <div class="card-body student-intake-card-body">
+                <div class="card-value-stack">
+                    <strong>{{ intake.full_name }}</strong>
+                    <p class="meta-text-sm">{{ intake.phone }}{% if intake.email %} | {{ intake.email }}{% endif %}</p>
+                </div>
+                <div class="card-content">
+                    <p class="meta-text">{{ intake.get_source_display }} | {{ intake.get_status_display }} | {{ intake.created_at|date:"d/m H:i" }}</p>
+                </div>
+            </div>
+            <div class="card-footer student-intake-card-footer">
+                <div class="actions actions-tight">
+                    <a class="button secondary" href="/entradas/#intake-queue-board" data-action="open-intake-center-from-preview">Ver fila completa</a>
+                    {% if page.capabilities.can_manage_students %}
+                    <a class="button" href="/alunos/novo/?intake={{ intake.id }}#student-form-essential" data-action="convert-intake-to-student">Converter em aluno</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        {% include "includes/ui/state_empty.html" with compact=True eyebrow="Central de intake" title="Nenhuma entrada provisoria aguardando conversao" copy="A fila principal esta limpa neste momento; use a central propria para acompanhar novas chegadas." badge="Conversao em dia" badge_class="info" %}
+        {% endfor %}
+    </div>
+</section>

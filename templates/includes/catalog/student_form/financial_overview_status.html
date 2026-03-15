@@ -1,17 +1,17 @@
 <!--
 ARQUIVO: status e metricas do overview financeiro do aluno.
 -->
-<section class="panel-grid section-gap-top-xs" aria-label="Metricas financeiras">
+<section class="panel-grid section-gap-top-xs student-financial-metrics" aria-label="Metricas financeiras">
     {% for label, value in page.data.financial_overview.metrics.items %}
-    <article class="card">
-        <p class="eyebrow">{{ label }}</p>
+    <article class="card student-financial-metric-card">
+        <p class="eyebrow">{{ label|cut:"_"|title }}</p>
         <p class="metric">{{ value }}</p>
     </article>
     {% endfor %}
 </section>
 
-<div class="layout-grid align-start section-gap-top">
-    <article class="table-card no-margin">
+<div class="layout-grid align-start section-gap-top student-financial-status-grid">
+    <article class="table-card no-margin student-financial-plan-card">
         <p class="eyebrow">Plano atual</p>
         {% if page.data.financial_overview.latest_enrollment %}
         <h3 class="section-title-sm">{{ page.data.financial_overview.latest_enrollment.plan.name }}</h3>
@@ -23,29 +23,31 @@ ARQUIVO: status e metricas do overview financeiro do aluno.
         {% endif %}
     </article>
 
-    <article class="table-card no-margin">
+    <article class="table-card no-margin student-financial-history-table-card">
         <p class="eyebrow">Historico financeiro recente</p>
         {% if page.data.financial_overview.payments %}
-        <table>
-            <thead>
-                <tr>
-                    <th scope="col">Vencimento</th>
-                    <th scope="col">Valor</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Metodo</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for payment in page.data.financial_overview.payments %}
-                <tr>
-                    <td>{{ payment.due_date|date:"d/m/Y" }}</td>
-                    <td>R$ {{ payment.amount|floatformat:2 }}</td>
-                    <td>{{ payment.get_status_display }}</td>
-                    <td>{{ payment.get_method_display }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="operation-table-wrap student-financial-history-table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Vencimento</th>
+                        <th scope="col">Valor</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Metodo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in page.data.financial_overview.payments %}
+                    <tr>
+                        <td>{{ payment.due_date|date:"d/m/Y" }}</td>
+                        <td>R$ {{ payment.amount|floatformat:2 }}</td>
+                        <td>{{ payment.get_status_display }}</td>
+                        <td>{{ payment.get_method_display }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% else %}
         <p class="meta-text">Nenhum pagamento registrado ainda para este aluno.</p>
         {% endif %}

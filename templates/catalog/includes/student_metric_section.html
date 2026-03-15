@@ -1,0 +1,24 @@
+<!--
+ARQUIVO: faixa de metricas da pagina de alunos.
+
+POR QUE ELE EXISTE:
+- reaproveita a mesma moldura para base e funil sem repetir markup.
+-->
+<section class="layout-block layout-block--rail panel-grid" aria-label="{{ section_aria }}" data-slot="{{ section_slot }}" data-panel="{{ section_panel }}">
+    {% for label, item in items.items %}
+    <article class="card metric-card {{ tone_class }}">
+        <div class="card-body card-body-metric student-metric-card-body">
+            <div class="card-value-stack">
+                <p class="eyebrow card-label">{{ label }}</p>
+                <p class="metric card-value">{{ item.value }}</p>
+            </div>
+            <div class="card-content">
+                <p class="metric-note card-copy">{{ item.note }}</p>
+            </div>
+        </div>
+        <div class="card-footer student-metric-card-footer">
+            <div class="metric-pulse"></div>
+        </div>
+    </article>
+    {% endfor %}
+</section>

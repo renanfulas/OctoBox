@@ -10,21 +10,62 @@ from access.shell_actions import build_shell_action_buttons_from_focus
 from shared_support.page_payloads import build_page_assets, build_page_hero, build_page_payload
 
 
+def _build_owner_hero_content(snapshot):
+    owner_focus = snapshot.get('owner_operational_focus') or []
+    primary_focus = owner_focus[0] if owner_focus else {}
+    primary_key = primary_focus.get('key')
+    metrics = snapshot.get('headline_metrics') or {}
+
+    if primary_key == 'intakes':
+        return {
+            'title': 'Abra as entradas.',
+            'copy': (
+                'Tem gente esperando resposta agora.'
+                if metrics.get('pending_intakes')
+                else 'A fila de entradas esta limpa agora.'
+            ),
+        }
+    if primary_key == 'payments':
+        return {
+            'title': 'Veja as cobrancas.',
+            'copy': (
+                'Tem cobranca atrasada pedindo contato agora.'
+                if metrics.get('overdue_payments')
+                else 'As cobrancas atrasadas nao pedem acao agora.'
+            ),
+        }
+    return {
+        'title': 'Confirme a base.',
+        'copy': 'Veja se WhatsApp, historico e estrutura continuam no lugar.',
+    }
+
+
 def _build_operation_workspace_hero(page_key, snapshot):
+    owner_focus = snapshot.get('owner_operational_focus') or []
+    owner_primary_focus = owner_focus[0] if owner_focus else None
+    owner_hero = _build_owner_hero_content(snapshot)
+    owner_actions = []
+    if owner_primary_focus:
+        owner_actions = [
+            {
+                'label': owner_primary_focus.get('href_label', 'Abrir agora'),
+                'href': owner_primary_focus.get('href', '#owner-growth-board'),
+            },
+            *[
+                {'label': item['href_label'], 'href': item['href'], 'kind': 'secondary'}
+                for item in owner_focus[1:3]
+            ],
+        ]
     hero_map = {
         'operations-owner': build_page_hero(
-            eyebrow='Leitura executiva do box',
-            title='Crescimento, caixa e estrutura andando juntos.',
-            copy='Crescimento, caixa e risco na mesma leitura.',
-            actions=[
-                {'label': 'Ver crescimento', 'href': '#owner-growth-board'},
-                {'label': 'Ver risco de caixa', 'href': '#owner-risk-board', 'kind': 'secondary'},
-                {'label': 'Ver estrutura pronta', 'href': '#owner-structure-board', 'kind': 'secondary'},
-            ],
+            eyebrow='Agora',
+            title=owner_hero['title'],
+            copy=owner_hero['copy'],
+            actions=owner_actions,
             side={
                 'kind': 'stats-panel',
-                'eyebrow': 'Pulso de agora',
-                'copy': 'Pressão da base, entrada e cobrança.',
+                'eyebrow': 'Resumo rapido',
+                'copy': 'Quatro numeros para saber se o dia esta sob controle.',
                 'stats': snapshot.get('hero_stats'),
             },
             aria_label='Panorama do dono',
@@ -76,24 +117,6 @@ def _build_operation_workspace_hero(page_key, snapshot):
                 'stats': snapshot.get('hero_stats'),
             },
             aria_label='Panorama de desenvolvimento',
-        ),
-        'operations-reception-preview': build_page_hero(
-            eyebrow='Preview oculto',
-            title='Recepção por baixo dos panos.',
-            copy='Balcao, grade e cobranca curta antes do rollout.',
-            actions=[
-                {'label': 'Ver cobranca curta', 'href': '#reception-payment-board'},
-                {'label': 'Ver entradas', 'href': '#reception-intake-board', 'kind': 'secondary'},
-                {'label': 'Ver grade em leitura', 'href': '#reception-class-grid-board', 'kind': 'secondary'},
-            ],
-            side={
-                'kind': 'stats-panel',
-                'eyebrow': 'Pulso do preview',
-                'copy': 'Valide se a recepção sustenta entrada, caixa rápido e orientação de aulas.',
-                'stats': snapshot.get('hero_stats'),
-            },
-            aria_label='Preview da recepção',
-            classes=['reception-preview-hero'],
         ),
         'operations-reception': build_page_hero(
             eyebrow='Centro da recepcao',

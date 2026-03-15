@@ -1,9 +1,9 @@
 <!--
 ARQUIVO: passo de cobranca da ficha do aluno.
 -->
-<details id="student-form-billing" open class="disclosure-panel disclosure-panel-warm">
+<details id="student-form-billing" open class="disclosure-panel disclosure-panel-warm student-form-step student-form-step-disclosure">
     <summary>Passo 5: cobranca e confirmacao</summary>
-    <div class="stack-16 section-gap-top-xs">
+    <div class="stack-16 section-gap-top-xs student-form-step-body">
         <div class="field-grid-220">
             <label>
                 <span class="field-label">{{ form.billing_strategy.label }}</span>
@@ -26,7 +26,7 @@ ARQUIVO: passo de cobranca da ficha do aluno.
                 {% for error in form.confirm_payment_now.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
             </label>
         </div>
-        <div id="installment-selector-shell" class="installment-shell">
+        <div id="installment-selector-shell" class="installment-shell student-form-installment-shell">
             <div class="field-grid-220 align-start">
                 <label>
                     <span class="field-label">Parcelamento</span>
@@ -42,7 +42,7 @@ ARQUIVO: passo de cobranca da ficha do aluno.
         {{ form.payment_reference.as_hidden }}
         {{ form.installment_total.as_hidden }}
         {{ form.recurrence_cycles.as_hidden }}
-        <div class="note-panel note-panel-cream text-muted">
+        <div class="note-panel note-panel-cream text-muted student-form-step-note">
             Quando um plano e conectado, a cobranca pode nascer como parcela unica, parcelada ou recorrente. Se voce confirmar agora, so a primeira ja entra como paga com o metodo escolhido.
         </div>
     </div>

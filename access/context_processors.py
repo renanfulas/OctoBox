@@ -90,6 +90,13 @@ def _build_shell_page_context(current_path, role, navigation, alerts):
             'scope': 'dashboard',
         },
         {
+            'prefix': '/entradas/',
+            'eyebrow': 'Centro canonico da entrada',
+            'title': 'Central de Intake',
+            'subtitle': 'Triagem, fila e passagem para aluno.',
+            'scope': 'intake-center',
+        },
+        {
             'prefix': '/alunos/',
             'eyebrow': 'Centro da jornada do aluno',
             'title': 'Alunos',
@@ -132,6 +139,13 @@ def _build_shell_page_context(current_path, role, navigation, alerts):
             'scope': 'system-map',
         },
         {
+            'prefix': '/configuracoes-operacionais/',
+            'eyebrow': 'Leitura de guardrails do runtime',
+            'title': 'Configuracoes operacionais',
+            'subtitle': 'Parametros que afetam WhatsApp, rastreio e repeticao.',
+            'scope': 'operational-settings',
+        },
+        {
             'prefix': f"/{settings.ADMIN_URL_PATH}",
             'eyebrow': 'Camada administrativa',
             'title': active_label,
@@ -156,6 +170,11 @@ def _build_shell_page_context(current_path, role, navigation, alerts):
         }
 
     stats_by_scope = {
+        'intake-center': [
+            {'label': 'Papel ativo', 'value': role_label},
+            {'label': 'Entradas pendentes', 'value': alerts.get('pending_intakes', 0)},
+            {'label': 'Leads abertos', 'value': alerts.get('lead_students', 0)},
+        ],
         'finance': [
             {'label': 'Papel ativo', 'value': role_label},
             {'label': 'Alunos em atraso', 'value': alerts.get('overdue_students', 0)},
@@ -195,31 +214,30 @@ def _build_navigation(role_slug, current_path=''):
     admin_home = admin_index_url()
     base_links = [
         {'label': 'Dashboard', 'href': '/dashboard/', 'icon': '🏠'},
+        {'label': 'Minha operação', 'href': '/operacao/', 'icon': '⚡'},
         {'label': 'Alunos', 'href': '/alunos/', 'icon': '🎓'},
         {'label': 'Financeiro', 'href': '/financeiro/', 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER), 'icon': '💰'},
+        {'label': 'Entradas', 'href': '/entradas/', 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION), 'icon': '📥'},
         {'label': 'Grade de aulas', 'href': '/grade-aulas/', 'icon': '📅'},
-        {'label': 'Minha operação', 'href': '/operacao/', 'icon': '⚡'},
         {'label': 'Papéis e acessos', 'href': '/acessos/', 'icon': '🔐'},
         {'label': 'Mapa do sistema', 'href': '/mapa-sistema/', 'icon': '🗺️'},
     ]
 
     role_links = {
         ROLE_OWNER: [
+            {'label': 'Config. operacionais', 'href': '/configuracoes-operacionais/', 'icon': '🎛️'},
             {'label': 'Admin Django', 'href': admin_home, 'icon': '⚙️'},
             {'label': 'Auditoria', 'href': admin_changelist_url('boxcore', 'auditevent'), 'icon': '📋'},
         ],
         ROLE_DEV: [
+            {'label': 'Config. operacionais', 'href': '/configuracoes-operacionais/', 'icon': '🎛️'},
             {'label': 'Auditoria', 'href': admin_changelist_url('boxcore', 'auditevent'), 'icon': '📋'},
             {'label': 'Admin Django', 'href': admin_home, 'icon': '⚙️'},
         ],
         ROLE_MANAGER: [
-            {'label': 'Alunos', 'href': '/alunos/', 'icon': '👥'},
-            {'label': 'Central de entrada', 'href': '/operacao/manager/#manager-intake-board', 'icon': '📥'},
-            {'label': 'Pagamentos', 'href': '/financeiro/', 'icon': '💳'},
             {'label': 'WhatsApp', 'href': '/operacao/manager/#manager-link-board', 'icon': '💬'},
         ],
         ROLE_COACH: [
-            {'label': 'Aulas', 'href': '/grade-aulas/', 'icon': '📅'},
             {'label': 'Ocorrências', 'href': '/operacao/coach/#coach-boundary-board', 'icon': '📝'},
         ],
         ROLE_RECEPTION: [],
@@ -229,10 +247,15 @@ def _build_navigation(role_slug, current_path=''):
         item for item in base_links
         if 'roles' not in item or role_slug in item['roles']
     ]
-    links = [
-        {key: value for key, value in item.items() if key != 'roles'}
-        for item in [*filtered_base_links, *role_links.get(role_slug, [])]
-    ]
+    links = []
+    seen_hrefs = set()
+    for item in [*filtered_base_links, *role_links.get(role_slug, [])]:
+        href = item.get('href', '')
+        if href in seen_hrefs:
+            continue
+        seen_hrefs.add(href)
+        links.append({key: value for key, value in item.items() if key != 'roles'})
+
     for item in links:
         item.setdefault('icon', '')
     active_href = _pick_active_href(current_path, links)
@@ -257,8 +280,28 @@ def _build_topbar_alert_links(role_slug):
 
     return {
         'finance': finance_href_map.get(role_slug, '/dashboard/#dashboard-finance-board'),
-        'intakes': '/alunos/',
+        'intakes': '/entradas/',
     }
+
+
+def _build_topbar_quick_actions(role_slug):
+    if role_slug not in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION):
+        return []
+
+    return [
+        {
+            'label': 'Novo aluno',
+            'href': f"{reverse('student-quick-create')}#student-form-essential",
+            'tone': 'primary',
+            'data_action': 'open-topbar-student-quick-create',
+        },
+        {
+            'label': 'Nova entrada',
+            'href': reverse('intake-center'),
+            'tone': 'secondary',
+            'data_action': 'open-topbar-intake-center',
+        },
+    ]
 
 
 def role_navigation(request):
@@ -286,6 +329,7 @@ def role_navigation(request):
         'global_search_action': '/alunos/',
         'static_asset_version': _build_static_asset_version(),
         'topbar_alert_links': _build_topbar_alert_links(role_slug),
+        'topbar_quick_actions': _build_topbar_quick_actions(role_slug),
         'shell_page_context': _build_shell_page_context(request.path, role, sidebar_navigation, shell_counts),
         'shell_counts': shell_counts,
         'shell_action_buttons': build_default_shell_action_buttons(

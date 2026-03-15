@@ -35,7 +35,9 @@ PONTOS CRITICOS:
     position: absolute;
     inset: 8px 0 0;
     border-radius: 36px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 28%);
+    background:
+        radial-gradient(circle at top right, rgba(41, 103, 163, 0.08), transparent 24%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.02) 24%);
     pointer-events: none;
 }
 
