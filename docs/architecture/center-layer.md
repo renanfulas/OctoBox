@@ -109,6 +109,31 @@ Ele nao deve:
 3. concentrar ORM pesado quando isso puder ficar abaixo dele
 4. substituir `application` ou `domain`
 
+## Regra de velocidade do CENTER
+
+O CENTER nao existe apenas para organizar o predio.
+
+Ele existe para acelerar a comunicacao entre intencao humana e resposta do sistema.
+
+Nova regra oficial:
+
+1. a pessoa deve sentir que o sistema chegou primeiro na leitura util
+2. a comunicacao entre borda e nucleo precisa acontecer como organismo vivo, com passagem curta, clara e eficaz
+3. o CENTER deve reduzir latencia de entendimento, nao apenas centralizar chamadas
+
+Em termos praticos:
+
+1. a borda entra por uma porta pequena e previsivel
+2. o CENTER traduz rapido para o fluxo certo
+3. o Nivel 2 devolve uma resposta estavel e pronta para subir
+4. a borda apresenta sem reconstruir manualmente o que o miolo ja sabia
+
+Anti-padrao proibido:
+
+1. fazer a view ou o frontend remontar contexto que poderia ter subido pronto por facade ou snapshot
+2. aceitar corredores publicos que parecem organizados, mas aumentam o tempo de ida e volta da informacao
+3. introduzir camadas extras que atrasam o produto e apenas melhoram o desenho conceitual no papel
+
 ## Regra de comunicacao
 
 Nova regra oficial do projeto:

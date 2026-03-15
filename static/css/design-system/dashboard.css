@@ -12,7 +12,32 @@ O QUE ESTE ARQUIVO FAZ:
 
 .dashboard-shell {
     display: grid;
-    gap: var(--section-gap);
+    gap: clamp(20px, 2.4vw, 30px);
+    position: relative;
+    isolation: isolate;
+}
+
+.dashboard-shell::before,
+.dashboard-shell::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.dashboard-shell::before {
+    background:
+        radial-gradient(circle at top right, rgba(184, 92, 56, 0.12), transparent 24%),
+        radial-gradient(circle at 12% 42%, rgba(40, 92, 142, 0.1), transparent 20%);
+}
+
+.dashboard-shell::after {
+    inset: 18px 0 auto;
+    height: 340px;
+    border-radius: 32px;
+    background: linear-gradient(180deg, rgba(255, 250, 242, 0.84), rgba(255, 250, 242, 0));
+    opacity: 0.75;
 }
 
 .dashboard-shell .panel-grid > .card,
@@ -34,10 +59,53 @@ O QUE ESTE ARQUIVO FAZ:
     radial-gradient(circle at bottom left, rgba(40, 92, 142, 0.14), transparent 28%),
     linear-gradient(145deg, rgba(255, 251, 245, 0.92), rgba(240, 235, 225, 0.94)),
         var(--surface);
+    gap: 20px;
+    padding: clamp(20px, 2vw, 28px);
+}
+
+.dashboard-hero .operation-hero-main {
+    gap: 16px;
+}
+
+.dashboard-hero .operation-hero-main > div:first-child {
+    gap: 10px;
+}
+
+.dashboard-hero h2 {
+    font-size: clamp(2.35rem, 4vw, 3.4rem);
+    line-height: 0.98;
+}
+
+.dashboard-hero .operation-hero-copy {
+    max-width: 620px;
 }
 
 .dashboard-hero .actions {
     align-items: flex-start;
+    gap: 10px;
+}
+
+.dashboard-hero .actions .button {
+    padding: 10px 16px;
+    border-radius: 16px;
+}
+
+.dashboard-hero .operation-hero-side {
+    width: min(100%, 300px);
+}
+
+.dashboard-hero .operation-hero-panel {
+    padding: 16px 18px;
+    border-radius: 22px;
+}
+
+.dashboard-hero .operation-mini-grid {
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.dashboard-hero .operation-mini-stat {
+    padding: 9px 11px;
 }
 
 .dashboard-kpi-card {
@@ -78,24 +146,30 @@ O QUE ESTE ARQUIVO FAZ:
 }
 
 .dashboard-role-grid {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1.2fr) minmax(240px, 0.72fr);
+    align-items: stretch;
 }
 
 .dashboard-quick-actions-side {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
     min-width: 220px;
-    max-width: 280px;
+    max-width: 320px;
 }
 
 .dashboard-focus-card {
-    background: linear-gradient(145deg, rgba(255, 251, 244, 0.92), rgba(244, 236, 224, 0.94));
+    background:
+        radial-gradient(circle at top right, rgba(184, 92, 56, 0.16), transparent 30%),
+        linear-gradient(150deg, rgba(255, 252, 246, 0.96), rgba(243, 235, 223, 0.94));
+    border-color: rgba(184, 92, 56, 0.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78), 0 18px 38px rgba(85, 56, 35, 0.08);
 }
 
 .dashboard-focus-list {
     display: grid;
-    gap: 14px;
+    gap: 12px;
+    margin-top: 6px;
 }
 
 .dashboard-focus-item {
@@ -103,13 +177,17 @@ O QUE ESTE ARQUIVO FAZ:
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 16px;
     align-items: center;
-    padding: 16px 0;
-    border-top: 1px solid rgba(112, 96, 81, 0.12);
+    padding: 16px 18px;
+    border: 1px solid rgba(112, 96, 81, 0.12);
+    border-radius: 20px;
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(248, 242, 233, 0.96)),
+        rgba(255, 255, 255, 0.9);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
 .dashboard-focus-item:first-child {
-    border-top: 0;
-    padding-top: 4px;
+    padding-top: 16px;
 }
 
 .dashboard-focus-copy p:last-child {
@@ -125,6 +203,11 @@ O QUE ESTE ARQUIVO FAZ:
     justify-items: end;
 }
 
+.dashboard-focus-actions .button.secondary {
+    border-color: rgba(112, 96, 81, 0.16);
+    background: rgba(255, 255, 255, 0.78);
+}
+
 .dashboard-role-table td:first-child,
 .dashboard-role-table th:first-child {
     width: 132px;
@@ -134,8 +217,11 @@ O QUE ESTE ARQUIVO FAZ:
     position: relative;
     overflow: hidden;
     background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(246, 239, 228, 0.96)),
+    radial-gradient(circle at top right, rgba(184, 92, 56, 0.14), transparent 34%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.86), rgba(246, 239, 228, 0.98)),
     rgba(255, 255, 255, 0.94);
+    border-color: rgba(112, 96, 81, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 14px 30px rgba(85, 56, 35, 0.06);
 }
 
 .dashboard-quick-card strong {
@@ -154,7 +240,8 @@ O QUE ESTE ARQUIVO FAZ:
 }
 
 .dashboard-panel-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(18px, 2.2vw, 26px);
 }
 
 .dashboard-panel-grid .operation-span-full {
@@ -167,6 +254,56 @@ O QUE ESTE ARQUIVO FAZ:
 
 .dashboard-table-card {
     min-height: 100%;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.32), transparent 100%),
+        linear-gradient(150deg, rgba(255, 252, 246, 0.96), rgba(242, 237, 228, 0.96));
+    border-color: rgba(112, 96, 81, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76), 0 18px 34px rgba(85, 56, 35, 0.07);
+}
+
+.dashboard-table-card .operation-card-head {
+    margin-bottom: 16px;
+}
+
+.dashboard-table-card .operation-table-wrap {
+    padding: 14px 14px 12px;
+    margin: 0;
+    border: 1px solid rgba(112, 96, 81, 0.1);
+    border-radius: 24px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(248, 242, 233, 0.94)),
+        rgba(255, 255, 255, 0.9);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.dashboard-table-card .operation-table-wrap table {
+    margin-top: 0;
+}
+
+.dashboard-table-card tbody tr {
+    transition: background-color 0.18s ease;
+}
+
+.dashboard-table-card tbody tr:hover {
+    background: rgba(184, 92, 56, 0.06);
+}
+
+#dashboard-finance-board {
+    background:
+        radial-gradient(circle at top right, rgba(249, 115, 22, 0.16), transparent 30%),
+        linear-gradient(150deg, rgba(255, 252, 246, 0.96), rgba(245, 237, 227, 0.96));
+}
+
+#dashboard-sessions-board {
+    background:
+        radial-gradient(circle at top right, rgba(40, 92, 142, 0.16), transparent 30%),
+        linear-gradient(150deg, rgba(251, 253, 255, 0.96), rgba(237, 243, 249, 0.96));
+}
+
+#dashboard-risk-board {
+    background:
+        radial-gradient(circle at top right, rgba(47, 122, 100, 0.14), transparent 30%),
+        linear-gradient(150deg, rgba(250, 253, 249, 0.96), rgba(238, 245, 238, 0.96));
 }
 
 .dashboard-risk-pill {
@@ -226,6 +363,11 @@ O QUE ESTE ARQUIVO FAZ:
     .dashboard-quick-actions-side {
         max-width: none;
     }
+
+    .dashboard-table-card .operation-table-wrap {
+        padding: 12px;
+        border-radius: 20px;
+    }
 }
 
 @media (max-width: 720px) {
@@ -236,5 +378,10 @@ O QUE ESTE ARQUIVO FAZ:
     .dashboard-role-table td:first-child,
     .dashboard-role-table th:first-child {
         width: auto;
+    }
+
+    .dashboard-focus-item {
+        padding: 14px 14px 16px;
+        border-radius: 18px;
     }
 }

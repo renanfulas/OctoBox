@@ -103,7 +103,7 @@ def build_dashboard_snapshot(*, today, month_start, role_slug=''):
                 'summary': 'Não há aulas previstas hoje, então o foco pode cair mais em base e financeiro.',
                 'pill_class': 'accent',
                 'href': '/grade-aulas/',
-                'href_label': 'Abrir grade',
+                'href_label': 'Abrir aulas',
             }
         )
 

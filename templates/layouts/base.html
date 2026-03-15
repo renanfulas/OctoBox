@@ -22,9 +22,12 @@ PONTOS CRITICOS:
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>OctoBox Control</title>
     <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v={{ static_asset_version }}">
+    {% for stylesheet in current_page_assets.css %}
+    <link rel="stylesheet" href="{% static stylesheet %}?v={{ static_asset_version }}">
+    {% endfor %}
     {% block extra_head %}{% endblock %}
 </head>
-<body data-theme="light" data-shell-scope="{{ shell_page_context.scope|default:'generic' }}" data-page="shell" data-ui="shell-body">
+<body data-theme="light" data-shell-scope="{{ shell_page_context.scope|default:'generic' }}" data-page="shell" data-ui="shell-body"{% if user.is_authenticated %} data-shell-user-id="{{ user.id }}"{% endif %}>
     <a class="skip-link" href="#page-body">Pular para o conteudo</a>
     <div class="shell" data-slot="shell-root">
         <aside class="sidebar" data-slot="sidebar" data-ui="sidebar">
@@ -72,26 +75,25 @@ PONTOS CRITICOS:
                 </div>
                 <div class="topbar-right" data-slot="topbar-right">
                     <div class="topbar-alerts" data-slot="topbar-alerts">
-                        <a class="alert-chip danger{% if shell_counts.overdue_payments %} has-volume{% else %} is-clear{% endif %}" href="{{ topbar_alert_links.finance }}" data-ui="topbar-finance-alert" data-action="open-finance-alerts">
+                        <a class="alert-chip danger{% if shell_counts.overdue_payments %} has-volume{% else %} is-zero{% endif %}" href="{{ topbar_alert_links.finance }}" data-ui="topbar-finance-alert" data-action="open-finance-alerts" data-count-kind="overdue-payments" data-count-value="{{ shell_counts.overdue_payments }}" aria-label="{{ shell_counts.overdue_payments }} {% if shell_counts.overdue_payments == 1 %}vencimento{% else %}vencimentos{% endif %}">
                             {% if shell_counts.overdue_payments %}
                             <span class="alert-dot"></span>
-                            <span><strong>{{ shell_counts.overdue_payments }}</strong> {% if shell_counts.overdue_payments == 1 %}vencimento{% else %}vencimentos{% endif %}</span>
                             {% else %}
-                            <span class="alert-clear-icon">✅</span>
-                            <span>Cobrança em dia</span>
                             {% endif %}
+                            <span><strong>{{ shell_counts.overdue_payments }}</strong> {% if shell_counts.overdue_payments == 1 %}vencimento{% else %}vencimentos{% endif %}</span>
                         </a>
-                        <a class="alert-chip{% if shell_counts.pending_intakes %} has-volume{% else %} is-clear{% endif %}" href="{{ topbar_alert_links.intakes }}" data-ui="topbar-intake-alert" data-action="open-intake-alerts">
+                        <a class="alert-chip{% if shell_counts.pending_intakes %} has-volume{% else %} is-zero{% endif %}" href="{{ topbar_alert_links.intakes }}" data-ui="topbar-intake-alert" data-action="open-intake-alerts" data-count-kind="pending-intakes" data-count-value="{{ shell_counts.pending_intakes }}" aria-label="{{ shell_counts.pending_intakes }} {% if shell_counts.pending_intakes == 1 %}intake{% else %}intakes{% endif %}">
                             {% if shell_counts.pending_intakes %}
                             <span class="alert-dot"></span>
-                            <span><strong>{{ shell_counts.pending_intakes }}</strong> {% if shell_counts.pending_intakes == 1 %}intake{% else %}intakes{% endif %}</span>
                             {% else %}
-                            <span class="alert-clear-icon">✅</span>
-                            <span>Fila limpa</span>
                             {% endif %}
+                            <span><strong>{{ shell_counts.pending_intakes }}</strong> {% if shell_counts.pending_intakes == 1 %}intake{% else %}intakes{% endif %}</span>
                         </a>
                     </div>
-                    <button class="theme-toggle" type="button" id="theme-toggle" data-ui="theme-toggle" aria-pressed="false">Tema</button>
+                    <button class="theme-toggle" type="button" id="theme-toggle" data-ui="theme-toggle" data-theme-state="light" aria-pressed="false" aria-label="Ativar tema escuro" title="Ativar tema escuro">
+                        <span class="theme-toggle-icon" aria-hidden="true">☼</span>
+                        <span class="theme-toggle-label visually-hidden">Claro</span>
+                    </button>
                     <div class="topbar-profile" data-slot="topbar-profile">
                         <div class="avatar">{{ current_role.label|default:user.username|slice:":2"|upper }}</div>
                         <div class="profile-meta">
@@ -101,35 +103,7 @@ PONTOS CRITICOS:
                     </div>
                 </div>
             </header>
-            <section class="page-compass" aria-label="Contexto da pagina" data-slot="page-compass" data-ui="page-compass">
-                <div class="page-compass-main" data-slot="page-compass-main">
-                    <div>
-                        <p class="eyebrow">{{ shell_page_context.eyebrow }}</p>
-                        <h1 class="page-compass-title">{{ page_title|default:shell_page_context.title }}</h1>
-                        <p class="page-compass-copy">{{ page_subtitle|default:shell_page_context.subtitle }}</p>
-                    </div>
-                </div>
-                <div class="page-compass-stats" aria-label="Resumo rapido do contexto atual" data-slot="page-compass-stats">
-                    {% for item in shell_page_context.stats %}
-                    <article class="page-compass-stat">
-                        <span>{{ item.label }}</span>
-                        <strong>{{ item.value }}</strong>
-                    </article>
-                    {% endfor %}
-                </div>
-                <nav class="compass-pulse compass-pulse--{{ shell_page_context.scope|default:'generic' }}" data-compass-scope="{{ shell_page_context.scope|default:'generic' }}" data-ui="shell-action-pulse" aria-label="Atalhos operacionais">
-                    {% for item in shell_action_buttons %}
-                    <a class="pulse-chip pulse-chip--{{ shell_page_context.scope|default:'generic' }} pulse-{{ item.kind }}{% if item.count %} has-count{% endif %}" href="{{ item.href }}" aria-label="{{ item.label }}{% if item.count %}: {{ item.count }}{% endif %}. {{ item.summary }}">
-                        <span class="pulse-label">{{ item.label }}</span>
-                        <span class="pulse-number" aria-hidden="true">{{ item.count|default_if_none:'' }}</span>
-                        <span class="pulse-hint">
-                            {% if item.count %}<span class="pulse-hint-count" aria-hidden="true">{{ item.count }}</span>{% endif %}
-                            <span class="pulse-hint-copy">{{ item.summary }}</span>
-                        </span>
-                    </a>
-                    {% endfor %}
-                </nav>
-            </section>
+            {% include "includes/ui/page_compass.html" %}
             {% endif %}
             <div class="page-body" id="page-body" data-slot="page-body">
                 {% if messages %}
@@ -154,6 +128,12 @@ PONTOS CRITICOS:
         </main>
     </div>
     {% block extra_scripts %}{% endblock %}
+    {% if current_page_behavior %}
+    {{ current_page_behavior|json_script:"current-page-behavior" }}
+    {% endif %}
+    {% for script_path in current_page_assets.js %}
+    <script src="{% static script_path %}?v={{ static_asset_version }}"></script>
+    {% endfor %}
     <script src="{% static 'js/core/shell.js' %}?v={{ static_asset_version }}"></script>
     <script src="{% static 'js/core/forms.js' %}?v={{ static_asset_version }}"></script>
     <script src="{% static 'js/core/search.js' %}?v={{ static_asset_version }}"></script>

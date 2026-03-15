@@ -1,0 +1,34 @@
+<section class="page-compass" aria-label="Contexto da pagina" data-slot="page-compass" data-ui="page-compass">
+    <div class="page-compass-main" data-slot="page-compass-main">
+        <div>
+            <p class="eyebrow">{{ shell_page_context.eyebrow }}</p>
+            <h1 class="page-compass-title" data-max-lines="2">{{ page_title|default:shell_page_context.title }}</h1>
+            <p class="page-compass-copy" data-max-lines="2">{{ page_subtitle|default:shell_page_context.subtitle }}</p>
+        </div>
+    </div>
+    {% if shell_page_context.stats %}
+    <div class="page-compass-stats" aria-label="Resumo rapido do contexto atual" data-slot="page-compass-stats">
+        {% for item in shell_page_context.stats %}
+        <article class="page-compass-stat">
+            <span>{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+        </article>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if shell_action_buttons %}
+    <nav class="compass-pulse compass-pulse--{{ shell_page_context.scope|default:'generic' }}" data-compass-scope="{{ shell_page_context.scope|default:'generic' }}" data-ui="shell-action-pulse" aria-label="Atalhos operacionais">
+        {% for item in shell_action_buttons %}
+        <a class="pulse-chip pulse-chip--{{ shell_page_context.scope|default:'generic' }} pulse-{{ item.kind }}{% if item.count %} has-count{% endif %}" href="{{ item.href }}" aria-label="{{ item.label }}{% if item.count %}: {{ item.count }}{% endif %}. {{ item.summary }}">
+            <span class="pulse-head">
+                <span class="pulse-label">{{ item.label }}</span>
+                <span class="pulse-number" aria-hidden="true">{{ item.count|default_if_none:'' }}</span>
+            </span>
+            <span class="pulse-hint">
+                <span class="pulse-hint-copy">{{ item.summary }}</span>
+            </span>
+        </a>
+        {% endfor %}
+    </nav>
+    {% endif %}
+</section>

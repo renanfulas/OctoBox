@@ -13,32 +13,11 @@ PONTOS CRITICOS:
 - Depende de pending_intakes, unlinked_whatsapp e financial_alerts.
 -->
 {% extends "layouts/base.html" %}
-{% load static %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
-{% endblock %}
 
 {% block content %}
 {% with page=operation_page %}
 <div class="operation-shell">
-    <section class="hero operation-hero" aria-label="Panorama da gerencia">
-        <div class="operation-hero-main">
-            <div>
-                <p class="eyebrow">Centro do manager</p>
-                <h2>Triagem, vínculo e cobrança — nessa ordem.</h2>
-                <p class="operation-hero-copy">Onde a fila esfria, onde a estrutura quebra e onde o financeiro já pede ação.</p>
-            </div>
-            <div class="actions">
-                <a class="button" href="#manager-finance-board">Ver alertas financeiros</a>
-                <a class="button secondary" href="#manager-intake-board">Ver entradas</a>
-                <a class="button secondary" href="#manager-link-board">Ver vínculos pendentes</a>
-            </div>
-        </div>
-        <aside class="operation-hero-side">
-            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Fila operacional" copy="Pontos que pedem ação antes que a rotina trave." stats=page.data.hero_stats %}
-        </aside>
-    </section>
+    {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
 
     <section class="panel-grid operation-metric-grid" aria-label="Metricas de gerencia">
         {% for card in page.data.metric_cards %}

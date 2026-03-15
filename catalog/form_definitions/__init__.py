@@ -17,7 +17,10 @@ from .class_grid_forms import ClassGridFilterForm, ClassScheduleRecurringForm, C
 from .finance_forms import FinanceFilterForm, MembershipPlanQuickForm
 from .student_forms import (
     EnrollmentManagementForm,
+    FinanceCommunicationActionForm,
     PaymentManagementForm,
+    ReceptionPaymentManagementForm,
+    StudentPaymentActionForm,
     StudentDirectoryFilterForm,
     StudentQuickForm,
 )
@@ -27,9 +30,12 @@ __all__ = [
     'ClassScheduleRecurringForm',
     'ClassSessionQuickEditForm',
     'EnrollmentManagementForm',
+    'FinanceCommunicationActionForm',
     'FinanceFilterForm',
     'MembershipPlanQuickForm',
     'PaymentManagementForm',
+    'ReceptionPaymentManagementForm',
+    'StudentPaymentActionForm',
     'StudentDirectoryFilterForm',
     'StudentQuickForm',
 ]

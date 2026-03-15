@@ -705,6 +705,41 @@ class CatalogViewTests(TestCase):
         payment.refresh_from_db()
         self.assertEqual(payment.status, PaymentStatus.PAID)
 
+    def test_student_payment_action_rejects_invalid_action(self):
+        self.client.force_login(self.user)
+        payment = self.student.payments.first()
+
+        response = self.client.post(
+            reverse('student-payment-action', args=[self.student.id]),
+            data={
+                'payment_id': payment.id,
+                'action': 'escalar-invalido',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['Location'].endswith('#student-financial-overview'))
+        payment.refresh_from_db()
+        self.assertEqual(payment.status, PaymentStatus.PENDING)
+
+    def test_student_enrollment_action_rejects_invalid_action(self):
+        self.client.force_login(self.user)
+        initial_status = self.enrollment.status
+
+        response = self.client.post(
+            reverse('student-enrollment-action', args=[self.student.id]),
+            data={
+                'enrollment_id': self.enrollment.id,
+                'action_date': str(timezone.localdate()),
+                'reason': 'Tentativa invalida.',
+                'action': 'hack-enrollment',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.enrollment.refresh_from_db()
+        self.assertEqual(self.enrollment.status, initial_status)
+
     def test_student_directory_uses_operational_payment_status_with_overdue_priority(self):
         self.client.force_login(self.user)
         payment = self.student.payments.first()

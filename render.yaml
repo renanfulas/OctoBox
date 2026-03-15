@@ -27,6 +27,54 @@ services:
         sync: false
       - key: DJANGO_CSRF_TRUSTED_ORIGINS
         sync: false
+      - key: DJANGO_ADMIN_URL_PATH
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          name: octobox-control-cache
+          type: keyvalue
+          property: connectionString
+      - key: LOGIN_RATE_LIMIT_MAX_REQUESTS
+        value: "8"
+      - key: LOGIN_RATE_LIMIT_WINDOW_SECONDS
+        value: "300"
+      - key: ADMIN_RATE_LIMIT_MAX_REQUESTS
+        value: "12"
+      - key: ADMIN_RATE_LIMIT_WINDOW_SECONDS
+        value: "300"
+      - key: WRITE_RATE_LIMIT_MAX_REQUESTS
+        value: "30"
+      - key: WRITE_RATE_LIMIT_WINDOW_SECONDS
+        value: "60"
+      - key: EXPORT_RATE_LIMIT_MAX_REQUESTS
+        value: "6"
+      - key: EXPORT_RATE_LIMIT_WINDOW_SECONDS
+        value: "300"
+      - key: HEAVY_READ_RATE_LIMIT_MAX_REQUESTS
+        value: "30"
+      - key: HEAVY_READ_RATE_LIMIT_WINDOW_SECONDS
+        value: "60"
+      - key: DASHBOARD_RATE_LIMIT_MAX_REQUESTS
+        value: "30"
+      - key: DASHBOARD_RATE_LIMIT_WINDOW_SECONDS
+        value: "60"
+      - key: AUTOCOMPLETE_RATE_LIMIT_MAX_REQUESTS
+        value: "60"
+      - key: AUTOCOMPLETE_RATE_LIMIT_WINDOW_SECONDS
+        value: "60"
+      - key: SECURITY_TRUSTED_PROXY_IPS
+        sync: false
+      - key: SECURITY_BLOCKED_IPS
+        sync: false
+      - key: SECURITY_BLOCKED_IP_RANGES
+        sync: false
+      - key: SECURITY_LOG_LEVEL
+        value: WARNING
+  - type: keyvalue
+    name: octobox-control-cache
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
 
 databases:
   - name: octobox-control-db

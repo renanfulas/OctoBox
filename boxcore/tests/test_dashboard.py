@@ -16,8 +16,9 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core.cache import cache
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -29,6 +30,7 @@ from students.models import Student
 
 class DashboardViewTests(TestCase):
     def setUp(self):
+        cache.clear()
         call_command('bootstrap_roles')
         self.user = get_user_model().objects.create_superuser(
             username='gestor',
@@ -55,7 +57,7 @@ class DashboardViewTests(TestCase):
         response = self.client.get(reverse('dashboard'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'O que pede ação agora.')
+        self.assertContains(response, 'O que pede acao agora.')
         self.assertContains(response, 'Owner')
         self.assertContains(response, 'Prioridade')
         self.assertContains(response, 'Pendente')
@@ -70,11 +72,22 @@ class DashboardViewTests(TestCase):
         response = self.client.get(reverse('dashboard'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Este painel existe para a Recepcao entrar no dia sem caca de informacao.')
+        self.assertContains(response, 'Chegada, agenda e caixa curto para abrir o turno.')
         self.assertContains(response, 'Abrir balcao da recepcao')
         self.assertContains(response, '/operacao/recepcao/#reception-payment-board')
         self.assertNotContains(response, 'Abrir financeiro')
         self.assertContains(response, 'Pulso da recepcao no dia')
+
+    @override_settings(DASHBOARD_RATE_LIMIT_MAX_REQUESTS=1, DASHBOARD_RATE_LIMIT_WINDOW_SECONDS=60)
+    def test_dashboard_blocks_short_burst_attempts(self):
+        self.client.force_login(self.user)
+
+        first_response = self.client.get(reverse('dashboard'))
+        blocked_response = self.client.get(reverse('dashboard'))
+
+        self.assertEqual(first_response.status_code, 200)
+        self.assertEqual(blocked_response.status_code, 429)
+        self.assertEqual(blocked_response['Retry-After'], '60')
 
     def test_dashboard_marks_today_session_as_in_progress_during_runtime(self):
         self.client.force_login(self.user)

@@ -20,5 +20,20 @@ def build_catalog_page_payload(*, context, shell, data, actions, behavior=None, 
     )
 
 
+def build_catalog_assets(*, css=None, js=None, include_operations=True, include_catalog_shared=False):
+    css_paths = []
+
+    if include_operations:
+        css_paths.append('css/design-system/operations.css')
+    if include_catalog_shared:
+        css_paths.append('css/catalog/shared.css')
+
+    for asset_path in css or []:
+        if asset_path not in css_paths:
+            css_paths.append(asset_path)
+
+    return build_page_assets(css=css_paths, js=js)
+
+
 def attach_catalog_page_payload(context, *, payload_key, payload, include_sections=None):
     return attach_page_payload(context, payload_key=payload_key, payload=payload, include_sections=include_sections)

@@ -13,7 +13,13 @@ PONTOS CRITICOS:
 - Mudanças erradas aqui podem gerar 404 em massa.
 """
 from django.contrib import admin
+from django.conf import settings
 from django.urls import include, path
+
+from access.admin import install_admin_site_gate
+
+
+install_admin_site_gate()
 
 urlpatterns = [
     path('', include('access.urls')),
@@ -22,5 +28,5 @@ urlpatterns = [
     path('', include('catalog.urls')),
     path('', include('guide.urls')),
     path('', include('operations.urls')),
-    path('admin/', admin.site.urls),
+    path(settings.ADMIN_URL_PATH, admin.site.urls),
 ]

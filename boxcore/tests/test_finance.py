@@ -15,6 +15,8 @@ PONTOS CRITICOS:
 - Se estes testes quebrarem, o produto perde a principal leitura gerencial fora do admin.
 """
 
+from pathlib import Path
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -82,11 +84,11 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'Financeiro')
         self.assertContains(response, 'Cross Gold')
         self.assertContains(response, 'Recorte ativo')
-        self.assertContains(response, 'Pressão operacional viva')
-        self.assertContains(response, 'Cadastre um plano de forma legível')
-        self.assertContains(response, 'Tendência mensal')
-        self.assertContains(response, 'Ativações x cancelamentos')
-        self.assertContains(response, 'Régua de cobrança e retenção')
+        self.assertContains(response, 'Pulso de agora')
+        self.assertContains(response, 'Cadastre um plano de forma legivel')
+        self.assertContains(response, 'Tendencia mensal')
+        self.assertContains(response, 'Ativacoes x cancelamentos')
+        self.assertContains(response, 'Regua de cobranca e retencao')
         self.assertContains(response, 'Leitura executiva do mix')
         self.assertContains(response, 'Registrar contato no WhatsApp')
         self.assertContains(response, 'href="#finance-priority-board"')
@@ -105,6 +107,27 @@ class FinanceCenterTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Filtros da leitura financeira')
         self.assertContains(response, 'Cross Gold')
+
+    def test_finance_center_renders_recent_movements_board_with_expected_cards(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('finance-center'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="finance-movements-board"')
+        self.assertContains(response, 'finance-movements-panel')
+        self.assertContains(response, 'finance-movements-list')
+        self.assertContains(response, 'class="timeline-row finance-movement-item"', count=2)
+        self.assertContains(response, 'Paula Nunes')
+        self.assertContains(response, 'Rafa Souza')
+
+    def test_finance_movements_css_preserves_full_width_board_and_card_grid(self):
+        finance_css = (
+            Path(__file__).resolve().parents[2] / 'static' / 'css' / 'catalog' / 'finance.css'
+        ).read_text(encoding='utf-8')
+
+        self.assertIn('.finance-movements-panel {\n    grid-column: 1 / -1;', finance_css)
+        self.assertIn('grid-template-columns: 18px minmax(0, 1fr);', finance_css)
 
     def test_finance_center_can_create_plan(self):
         self.client.force_login(self.user)

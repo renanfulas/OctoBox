@@ -39,26 +39,6 @@ PONTOS CRITICOS:
     min-height: 100%;
 }
 
-.section-gap {
-    margin-bottom: var(--section-gap);
-}
-
-.section-gap-top {
-    margin-top: var(--section-gap);
-}
-
-.section-gap-top-sm {
-    margin-top: 20px;
-}
-
-.section-gap-top-xs {
-    margin-top: 18px;
-}
-
-.no-margin {
-    margin: 0;
-}
-
 .body-copy {
     line-height: 1.6;
 }
@@ -88,31 +68,6 @@ PONTOS CRITICOS:
     display: block;
     margin-top: 6px;
     color: var(--danger);
-}
-
-.form-stack {
-    display: grid;
-    gap: 14px;
-}
-
-.form-stack-lg {
-    display: grid;
-    gap: 18px;
-}
-
-.stack-8 {
-    display: grid;
-    gap: 8px;
-}
-
-.stack-14 {
-    display: grid;
-    gap: 14px;
-}
-
-.stack-16 {
-    display: grid;
-    gap: 16px;
 }
 
 .field-grid-200,

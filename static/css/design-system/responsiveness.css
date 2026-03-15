@@ -1,0 +1,135 @@
+/*
+ARQUIVO: contrato responsivo compartilhado.
+
+POR QUE ELE EXISTE:
+- separa as regras de resposta visual e estrutural do restante dos componentes.
+- cria um baseline estavel para telas, cards, paines e blocos sem travar customizacao futura.
+
+O QUE ESTE ARQUIVO FAZ:
+1. mantem elementos e filhos fluidos dentro das grades e superficies principais.
+2. evita overflow visual em texto, midia e acoes compartilhadas.
+3. aplica ajustes moveis de baixa especificidade para continuar facil de sobrescrever.
+
+PONTOS CRITICOS:
+- as regras usam :where(...) para manter especificidade baixa.
+- mudancas aqui se espalham pelo shell inteiro, entao os ajustes devem continuar pequenos e previsiveis.
+*/
+
+:root {
+    --responsive-cluster-gap: clamp(12px, 1.8vw, 18px);
+}
+
+:where(
+    .page-body,
+    .panel-grid,
+    .layout-grid,
+    .quick-grid,
+    .operation-shell,
+    .dashboard-shell,
+    .finance-board,
+    [class$="-grid"],
+    [class*="-grid "]
+) > * {
+    min-width: 0;
+}
+
+:where(
+    .card,
+    .table-card,
+    .quick-card,
+    .operation-hero,
+    .page-compass,
+    .topbar,
+    .sidebar-block,
+    [class$="-panel"],
+    [class*="-panel "]
+) {
+    min-width: 0;
+    max-width: 100%;
+}
+
+:where(
+    .actions,
+    .operation-card-head,
+    .card-head,
+    .topbar-left,
+    .topbar-right,
+    .topbar-alerts,
+    [class$="-actions"],
+    [class*="-actions "]
+) {
+    gap: var(--responsive-cluster-gap);
+}
+
+:where(
+    .actions,
+    .operation-card-head,
+    .card-head,
+    .topbar-left,
+    .topbar-right,
+    .topbar-alerts,
+    [class$="-actions"],
+    [class*="-actions "]
+) {
+    flex-wrap: wrap;
+}
+
+:where(.operation-table-wrap, .table-card, .card, .quick-card) {
+    max-width: 100%;
+}
+
+:where(img, svg, video, canvas) {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+:where(input, select, textarea, button) {
+    max-width: 100%;
+}
+
+:where(
+    h1,
+    h2,
+    h3,
+    h4,
+    p,
+    li,
+    td,
+    th,
+    .metric,
+    .card-value,
+    .metric-note,
+    .card-copy,
+    .card-title,
+    .operation-card-copy,
+    .page-compass-copy,
+    .pulse-hint-copy
+) {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 960px) {
+    :where(.topbar-right, .topbar-alerts) {
+        width: 100%;
+    }
+
+    :where(.topbar-alerts > .alert-chip) {
+        flex: 1 1 180px;
+    }
+
+    :where(.actions) > :where(.button, button, a) {
+        flex: 1 1 180px;
+    }
+
+    :where(.operation-card-head, .card-head) > :last-child {
+        align-self: flex-start;
+    }
+}
+
+@media (max-width: 720px) {
+    :where(.actions) > :where(.button, button, a),
+    :where(.topbar-alerts > .alert-chip) {
+        width: 100%;
+    }
+}

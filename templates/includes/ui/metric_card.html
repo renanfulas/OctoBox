@@ -1,10 +1,10 @@
 <article class="card {{ card.card_class }}" data-panel="metric-card" data-slot="metric-card">
-    <p class="eyebrow">{{ card.eyebrow }}</p>
-    <p class="metric">{{ card.display_value }}</p>
-    <p class="metric-note">{{ card.note }}</p>
+    <p class="eyebrow card-label">{{ card.eyebrow }}</p>
+    <p class="metric card-value">{{ card.display_value }}</p>
+    <p class="metric-note card-copy">{{ card.note }}</p>
     {% if card.footer_pill_label %}
-    <div class="actions">
-        <span class="pill{% if card.footer_pill_class %} {{ card.footer_pill_class }}{% endif %}">{{ card.footer_pill_label }}</span>
+    <div class="actions card-actions">
+        <span class="pill card-action{% if card.footer_pill_class %} {{ card.footer_pill_class }}{% endif %}">{{ card.footer_pill_label }}</span>
     </div>
     {% elif card.show_accent_bar %}
     <div class="accent-bar"></div>

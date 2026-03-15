@@ -17,13 +17,6 @@ PONTOS CRITICOS:
 -->
 {% extends "layouts/base.html" %}
 {% load l10n %}
-{% load static %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
-<link rel="stylesheet" href="{% static 'css/catalog/shared.css' %}?v={{ static_asset_version }}">
-<link rel="stylesheet" href="{% static 'css/catalog/finance.css' %}?v={{ static_asset_version }}">
-{% endblock %}
 
 {% block content %}
 {% with page=finance_center_page %}

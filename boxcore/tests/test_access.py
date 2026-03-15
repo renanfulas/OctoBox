@@ -55,7 +55,7 @@ class AccessViewTests(TestCase):
         self.assertContains(response, 'method="post"')
         self.assertContains(response, 'action="{}"'.format(reverse('logout')))
         self.assertContains(response, 'csrfmiddlewaretoken')
-        self.assertContains(response, '<button class="nav-link nav-link-button" type="submit">Sair</button>', html=True)
+        self.assertContains(response, '<button class="nav-link nav-link-button" type="submit"><span class="nav-icon">🚪</span>Sair</button>', html=True)
 
 
 class BootstrapRolesCommandTests(TestCase):

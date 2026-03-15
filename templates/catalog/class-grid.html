@@ -13,18 +13,6 @@ PONTOS CRITICOS:
 - Depende do contexto montado em boxcore/catalog/views/class_grid_views.py.
 -->
 {% extends "layouts/base.html" %}
-{% load static %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
-<link rel="stylesheet" href="{% static 'css/catalog/shared.css' %}?v={{ static_asset_version }}">
-<link rel="stylesheet" href="{% static 'css/catalog/class-grid.css' %}?v={{ static_asset_version }}">
-{% endblock %}
-
-{% block extra_scripts %}
-{{ class_grid_page.behavior|json_script:"class-grid-page-payload" }}
-<script src="{% static 'js/pages/class-grid.js' %}?v={{ static_asset_version }}"></script>
-{% endblock %}
 
 {% block content %}
 {% with page=class_grid_page %}

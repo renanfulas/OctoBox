@@ -6,6 +6,7 @@ POR QUE ELE EXISTE:
 """
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils.functional import cached_property
 from django.utils import timezone
 from django.views.generic import TemplateView
 
@@ -16,8 +17,12 @@ from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RE
 class CatalogBaseView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
     allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION, ROLE_COACH)
 
-    def get_base_context(self):
+    @cached_property
+    def base_context(self):
         return {
             'current_role': get_user_role(self.request.user),
             'today': timezone.localdate(),
         }
+
+    def get_base_context(self):
+        return dict(self.base_context)

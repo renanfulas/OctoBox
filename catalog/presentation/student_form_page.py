@@ -6,10 +6,11 @@ POR QUE ELE EXISTE:
 - organiza a tela por contrato explicito para o catalogo amadurecer por payload.
 """
 
-from access.roles import ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
-from access.shell_actions import build_shell_action_buttons
+from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
+from access.shell_actions import build_shell_action_buttons_from_focus
+from shared_support.page_payloads import build_page_hero
 
-from .shared import build_catalog_page_payload, build_page_assets
+from .shared import build_catalog_assets, build_catalog_page_payload
 
 
 STUDENT_FORM_GUIDE_STEPS = (
@@ -89,7 +90,7 @@ def build_student_form_recovery_guide(form):
 def build_student_form_page(*, form, student_object, selected_intake, financial_overview, page_mode, current_role_slug):
     latest_enrollment = financial_overview.get('latest_enrollment')
     recent_payments = financial_overview.get('payments', [])
-    can_open_student_admin = current_role_slug in (ROLE_OWNER, ROLE_MANAGER)
+    can_open_student_admin = current_role_slug in (ROLE_OWNER, ROLE_DEV)
     can_manage_student_payments_full = current_role_slug in (ROLE_OWNER, ROLE_MANAGER)
     payment_management_form = financial_overview.get('payment_management_form')
     enrollment_management_form = financial_overview.get('enrollment_management_form')
@@ -119,22 +120,46 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
                 if latest_enrollment else
                 'Plano, status comercial e cobranca inicial ficam no mesmo fluxo para evitar ida e volta entre cadastro e financeiro.'
             ),
+            'count': len(recent_payments),
             'pill_class': 'warning' if latest_enrollment else 'success',
             'href': '#student-form-plan',
             'href_label': 'Ver plano e cobranca',
         },
     ]
-    shell_action_buttons = build_shell_action_buttons(
-        priority={'href': operational_focus[0]['href'], 'summary': operational_focus[0]['summary']},
-        pending={'href': operational_focus[1]['href'], 'summary': operational_focus[1]['summary']},
-        next_action={'href': operational_focus[2]['href'], 'summary': operational_focus[2]['summary'], 'count': len(recent_payments)},
-        scope='student-form',
-    )
+    shell_action_buttons = build_shell_action_buttons_from_focus(focus=operational_focus, scope='student-form')
     plan_price_map = {
         str(plan.id): str(plan.price)
         for plan in getattr(getattr(form, 'fields', {}).get('selected_plan'), 'queryset', [])
     }
     recovery_guide = build_student_form_recovery_guide(form)
+    hero = build_page_hero(
+        eyebrow='Fluxo leve de cadastro',
+        title='Cadastrar aluno' if page_mode == 'create' else 'Editar aluno',
+        copy=(
+            'Essencial agora, plano e cobranca no mesmo fluxo.'
+            if page_mode == 'create'
+            else 'Ajuste cadastro, plano e cobranca sem cair no admin.'
+        ),
+        actions=[
+            {'label': 'Preencher essencial', 'href': '#student-form-essential', 'kind': 'primary'},
+            {'label': 'Ver plano e cobranca', 'href': '#student-form-plan', 'kind': 'secondary'},
+            {'label': 'Voltar para alunos', 'href': '/alunos/', 'kind': 'secondary'},
+        ],
+        side={
+            'kind': 'stat-grid',
+            'eyebrow': 'Leitura instantanea',
+            'copy': 'Mostra se e cadastro, conversao de lead ou ajuste de vinculo.',
+            'items': [
+                {'label': 'Modo', 'value': 'edicao' if student_object else 'cadastro'},
+                {'label': 'Intake', 'value': 'ligado' if selected_intake else 'livre'},
+                {'label': 'Plano atual', 'value': 'ativo' if latest_enrollment else 'pendente'},
+                {'label': 'Pagamentos', 'value': len(recent_payments)},
+            ],
+            'stack': True,
+        },
+        aria_label='Ficha do aluno',
+        classes=['catalog-hero', 'student-hero', 'student-form-hero'],
+    )
 
     return build_catalog_page_payload(
         context={
@@ -152,6 +177,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'shell_action_buttons': shell_action_buttons,
         },
         data={
+            'hero': hero,
             'form': form,
             'page_mode': page_mode,
             'student_object': student_object,
@@ -189,5 +215,9 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'can_open_student_admin': can_open_student_admin,
             'can_manage_student_payments_full': can_manage_student_payments_full,
         },
-        assets=build_page_assets(js=['js/pages/student-form.js']),
+        assets=build_catalog_assets(
+            css=['css/catalog/students.css'],
+            js=['js/pages/student-form.js'],
+            include_catalog_shared=True,
+        ),
     )

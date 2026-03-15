@@ -93,10 +93,27 @@ O alvo e este:
 - a persistencia concreta ficar atras de portas pequenas
 
 E, em paralelo, o alvo conceitual e este:
-
 - a explicacao oficial do sistema nascer por capacidade de dominio
 - a entrada oficial nascer por facade publica, service canonico ou use case explicito
 - a leitura oficial subir por snapshot publico em vez de QuerySet cru
+
+## Regra de velocidade arquitetural
+
+O OctoBox nao quer apenas desacoplamento bonito.
+
+Ele precisa operar acima do ritmo humano.
+
+Isso significa:
+
+1. o sistema precisa consolidar e entregar leitura util em milissegundos quando o fluxo for operacional, comercial ou executivo de rotina
+2. a pessoa nao deve sentir que esta esperando o sistema pensar algo que ela mesma ja conseguiria montar manualmente
+3. a arquitetura so esta correta quando reduz tempo real de decisao, nao apenas acoplamento tecnico
+
+Regra objetiva:
+
+1. cada travessia entre borda, center, aplicacao e leitura precisa justificar seu custo
+2. cada contrato deve carregar sinal util, nao peso redundante
+3. cada camada deve encurtar a resposta percebida, nao alongar o caminho da informacao
 
 ## O que ja existe hoje
 
@@ -183,6 +200,7 @@ Regra:
 
 1. cada porta existe porque um caso de uso precisa dela
 2. a porta nao e criada para satisfazer pureza academica
+3. a porta precisa ajudar a resposta a chegar mais rapido e com menos reconstrucao de contexto na borda
 
 ## 4. Django restrito a adapter e delivery
 
@@ -222,6 +240,7 @@ Em outras palavras:
 1. QuerySet pode continuar existindo
 2. QuerySet nao pode virar lingua oficial do negocio
 3. snapshot publico passa a ser a lingua oficial de leitura para cima
+4. snapshot publico bom reduz custo de leitura na borda e acelera a percepcao de resposta do usuario
 
 ## 6. Politicas e regras puras saem antes dos models
 

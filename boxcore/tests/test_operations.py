@@ -14,7 +14,8 @@ O QUE ESTE ARQUIVO FAZ:
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.management import call_command
-from django.test import TestCase
+from django.core.cache import cache
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -27,6 +28,7 @@ from students.models import Student
 
 class OperationWorkspaceTests(TestCase):
     def setUp(self):
+        cache.clear()
         call_command('bootstrap_roles')
         user_model = get_user_model()
 
@@ -107,6 +109,17 @@ class OperationWorkspaceTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Preview oculto')
+
+    def test_dev_workspace_uses_dev_shell_scope_and_shortcuts(self):
+        self.client.force_login(self.dev)
+
+        response = self.client.get(reverse('dev-workspace'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'compass-pulse--operations-dev')
+        self.assertContains(response, 'href="#dev-audit-board"')
+        self.assertContains(response, 'href="#dev-boundary-board"')
+        self.assertContains(response, 'href="#dev-read-board"')
 
     def test_manager_cannot_access_hidden_reception_preview(self):
         self.client.force_login(self.manager)
@@ -223,6 +236,40 @@ class OperationWorkspaceTests(TestCase):
         self.assertEqual(self.payment.method, PaymentMethod.PIX)
         self.assertEqual(self.payment.reference, 'BALCAO-AJUSTE')
         self.assertEqual(self.payment.notes, 'Ajuste curto salvo pela recepcao.')
+
+    @override_settings(WRITE_RATE_LIMIT_MAX_REQUESTS=2, WRITE_RATE_LIMIT_WINDOW_SECONDS=60)
+    def test_reception_payment_action_blocks_burst_requests(self):
+        self.client.force_login(self.reception)
+
+        payload = {
+            'payment_id': self.payment.id,
+            'due_date': str(self.payment.due_date),
+            'method': PaymentMethod.PIX,
+            'reference': 'BALCAO-THROTTLE',
+            'notes': 'Teste de rajada bloqueada.',
+            'action': 'update-payment',
+        }
+
+        first_response = self.client.post(
+            reverse('reception-payment-action', args=[self.payment.id]),
+            data=payload,
+            HTTP_REFERER=reverse('reception-workspace'),
+        )
+        second_response = self.client.post(
+            reverse('reception-payment-action', args=[self.payment.id]),
+            data=payload,
+            HTTP_REFERER=reverse('reception-workspace'),
+        )
+        blocked_response = self.client.post(
+            reverse('reception-payment-action', args=[self.payment.id]),
+            data=payload,
+            HTTP_REFERER=reverse('reception-workspace'),
+        )
+
+        self.assertEqual(first_response.status_code, 302)
+        self.assertEqual(second_response.status_code, 302)
+        self.assertEqual(blocked_response.status_code, 429)
+        self.assertEqual(blocked_response['Retry-After'], '60')
 
     def test_reception_can_access_students_and_class_grid_but_not_finance_center(self):
         self.client.force_login(self.reception)

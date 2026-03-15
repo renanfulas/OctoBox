@@ -1,6 +1,6 @@
-<article class="operation-hero-panel">
-    <p class="eyebrow">{{ eyebrow }}</p>
-    <p class="operation-card-copy">{{ copy }}</p>
+<article class="operation-hero-panel{% if card_class %} {{ card_class }}{% endif %}">
+    <p class="eyebrow card-label">{{ eyebrow }}</p>
+    <p class="operation-card-copy card-copy">{{ copy }}</p>
     <div class="operation-mini-grid">
         {% for stat in stats %}
         <div class="operation-mini-stat">
@@ -9,4 +9,11 @@
         </div>
         {% endfor %}
     </div>
+    {% if actions %}
+    <div class="actions card-actions{% if actions_class %} {{ actions_class }}{% endif %}">
+        {% for action in actions %}
+        <a class="button card-action{% if action.kind == 'secondary' %} secondary{% endif %}{% if action.class_name %} {{ action.class_name }}{% endif %}" href="{{ action.href }}"{% if action.data_action %} data-action="{{ action.data_action }}"{% endif %}>{{ action.label }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
 </article>

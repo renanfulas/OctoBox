@@ -15,18 +15,6 @@ PONTOS CRITICOS:
 - Depende do contexto e dos formularios montados em boxcore/catalog/views.py.
 -->
 {% extends "layouts/base.html" %}
-{% load static %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
-<link rel="stylesheet" href="{% static 'css/catalog/shared.css' %}?v={{ static_asset_version }}">
-<link rel="stylesheet" href="{% static 'css/catalog/students.css' %}?v={{ static_asset_version }}">
-{% endblock %}
-
-{% block extra_scripts %}
-{{ student_form_page.behavior|json_script:"student-form-page-payload" }}
-<script src="{% static 'js/pages/student-form.js' %}?v={{ static_asset_version }}"></script>
-{% endblock %}
 
 {% block content %}
 {% with page=student_form_page %}

@@ -16,30 +16,10 @@ PONTOS CRITICOS:
 {% extends "layouts/base.html" %}
 {% load static l10n %}
 
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
-{% endblock %}
-
 {% block content %}
 {% with page=operation_page %}
 <div class="operation-shell reception-scene" data-page="reception" data-screen="operations-reception" data-slot="page-root">
-    <section class="hero operation-hero reception-hero" aria-label="Panorama da recepcao" data-panel="reception-hero">
-        <div class="operation-hero-main">
-            <div>
-                <p class="eyebrow">Centro da recepcao</p>
-                <h2>Quem chegou, qual aula importa e qual cobrança cabe no balcão.</h2>
-                <p class="operation-hero-copy">Acolher, localizar, orientar e resolver o caixa curto sem afundar em administrativo amplo.</p>
-            </div>
-            <div class="actions" data-slot="reception-jump-links">
-                <a class="button" href="#reception-payment-board" data-action="jump-reception-payments">Ver cobrança curta</a>
-                <a class="button secondary" href="#reception-intake-board" data-action="jump-reception-intakes">Ver entradas</a>
-                <a class="button secondary" href="#reception-class-grid-board" data-action="jump-reception-class-grid">Ver grade em leitura</a>
-            </div>
-        </div>
-        <aside class="operation-hero-side" data-panel="reception-pulse-panel">
-            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Pulso do balcão" copy="Decida se o turno pede acolhimento, caixa curto ou orientação de agenda." stats=page.data.hero_stats %}
-        </aside>
-    </section>
+    {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
 
     <section class="panel-grid operation-metric-grid" aria-label="Metricas operacionais" data-slot="reception-metric-grid">
         {% for card in page.data.metric_cards %}
@@ -60,7 +40,7 @@ PONTOS CRITICOS:
             <div class="actions actions-tight">
                 <a class="button secondary" href="/alunos/" data-action="open-students-directory">Abrir alunos</a>
                 <a class="button secondary" href="/alunos/novo/#student-form-essential" data-action="open-student-registration">Novo aluno</a>
-                <a class="button secondary" href="/grade-aulas/" data-action="open-class-grid">Abrir grade</a>
+                <a class="button secondary" href="/grade-aulas/" data-action="open-class-grid">Abrir aulas</a>
             </div>
         </article>
     </section>
@@ -107,9 +87,6 @@ PONTOS CRITICOS:
                     <form method="post" action="/operacao/recepcao/pagamento/{{ item.payment_id }}/acao/" class="reception-payment-form" data-action="manage-reception-payment">
                         {% csrf_token %}
                         <input type="hidden" name="payment_id" value="{{ item.payment_id }}">
-                        {% localize off %}
-                        <input type="hidden" name="amount" value="{{ item.amount }}">
-                        {% endlocalize %}
                         <div class="field-grid-220">
                             <label>
                                 <span class="field-label">Vencimento curto</span>

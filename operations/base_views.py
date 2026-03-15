@@ -14,6 +14,7 @@ PONTOS CRITICOS:
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
+from django.utils.functional import cached_property
 from django.utils import timezone
 from django.views import View
 from django.views.generic import TemplateView
@@ -43,7 +44,8 @@ class OperationBaseView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
     page_title = ''
     page_subtitle = ''
 
-    def get_base_context(self):
+    @cached_property
+    def base_context(self):
         context = {
             'current_role': get_user_role(self.request.user),
             'today': timezone.localdate(),
@@ -53,3 +55,6 @@ class OperationBaseView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
         if self.page_subtitle:
             context['page_subtitle'] = self.page_subtitle
         return context
+
+    def get_base_context(self):
+        return dict(self.base_context)

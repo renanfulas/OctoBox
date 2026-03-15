@@ -57,6 +57,9 @@ DJANGO_SECRET_KEY=coloque-uma-chave-forte-aqui
 DJANGO_ALLOWED_HOSTS=homolog.seudominio.com
 DJANGO_CSRF_TRUSTED_ORIGINS=https://homolog.seudominio.com
 DATABASE_URL=postgresql://postgres:senha@host:5432/octobox_control
+DJANGO_ADMIN_URL_PATH=painel-interno-nao-obvio
+REDIS_URL=redis://usuario:senha@host:6379/0
+CACHE_IGNORE_EXCEPTIONS=True
 DB_SSL_REQUIRE=True
 DJANGO_SECURE_SSL_REDIRECT=True
 ```
@@ -89,14 +92,16 @@ Leitura pratica desse fluxo:
 
 1. o build instala dependencias e roda `collectstatic`
 2. o pre-deploy roda `migrate` e `bootstrap_roles`
-3. o processo web sobe com Gunicorn
-4. o healthcheck usa `/api/v1/health/`
+3. o blueprint inclui tambem uma Key Value para a cache compartilhada
+4. o processo web sobe com Gunicorn
+5. o healthcheck usa `/api/v1/health/`
 
 Observacoes importantes para Render:
 
 1. o superuser continua sendo manual e deve ser criado depois do primeiro deploy
 2. `RENDER_EXTERNAL_HOSTNAME` e absorvido automaticamente pelo Django para `ALLOWED_HOSTS` e `CSRF_TRUSTED_ORIGINS`
-3. se quiser dominio proprio, configure-o no Render e mantenha `DJANGO_ALLOWED_HOSTS` e `DJANGO_CSRF_TRUSTED_ORIGINS` como sobreposicao explicita quando necessario
+3. `DJANGO_ADMIN_URL_PATH` deve ser preenchido com um caminho nao obvio antes de abrir o ambiente
+4. se quiser dominio proprio, configure-o no Render e mantenha `DJANGO_ALLOWED_HOSTS` e `DJANGO_CSRF_TRUSTED_ORIGINS` como sobreposicao explicita quando necessario
 
 ## Static files
 
@@ -141,10 +146,12 @@ DATABASE_URL=postgresql://postgres:senha@localhost:5432/octobox_control
 3. ALLOWED_HOSTS preenchido
 4. CSRF_TRUSTED_ORIGINS preenchido com HTTPS
 5. PostgreSQL configurado
-6. collectstatic executado
-7. bootstrap_roles executado
-8. superuser criado
-9. backup do banco testado
+6. cache compartilhada configurada ou fallback local conscientemente aceito
+7. admin privado configurado por `DJANGO_ADMIN_URL_PATH`
+8. collectstatic executado
+9. bootstrap_roles executado
+10. superuser criado
+11. backup do banco testado
 
 ## Proximo nivel depois disso
 

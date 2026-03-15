@@ -66,9 +66,23 @@ class DjangoStudentPaymentActionPort(StudentPaymentActionPort):
             return StudentPaymentActionResult(student_id=student.id, payment_id=payment.id, action=command.action)
 
         if mutation_decision is not None:
+            if command.action == 'mark-paid':
+                if command.amount is not None:
+                    payment.amount = command.amount
+                if command.due_date is not None:
+                    payment.due_date = command.due_date
+                if command.method:
+                    payment.method = command.method
+                if command.reference:
+                    payment.reference = command.reference
+                if command.notes:
+                    payment.notes = command.notes
+
             payment.status = mutation_decision.status
             payment.paid_at = self.clock.now() if mutation_decision.update_paid_at else payment.paid_at
             update_fields = ['status', 'updated_at']
+            if command.action == 'mark-paid':
+                update_fields = ['amount', 'due_date', 'method', 'reference', 'notes', *update_fields]
             if mutation_decision.update_paid_at:
                 update_fields.insert(1, 'paid_at')
             payment.save(update_fields=update_fields)

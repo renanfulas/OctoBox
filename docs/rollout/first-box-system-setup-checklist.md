@@ -68,6 +68,7 @@ Se o box ainda nao tiver recepcao formal:
 
 1. o fluxo de Recepcao do piloto pode ser testado temporariamente com Owner ou Manager
 2. nao inventar usuario de recepcao ficticio apenas para completar papel sem uso real
+3. criar usuario Recepcao assim que houver operador real de balcao
 
 Checklist:
 
@@ -161,7 +162,14 @@ Testar pelo menos um caso controlado:
 1. login
 2. operacao
 3. alunos
-4. Recepcao, se o piloto usar esse fluxo nele
+4. Recepcao, quando o piloto estiver cobrindo esse fluxo com Manager
+
+### Recepcao
+
+1. login, quando houver usuario dedicado
+2. operacao
+3. alunos
+4. cobranca curta
 
 ### Coach
 

@@ -12,32 +12,11 @@ PONTOS CRITICOS:
 - Depende do contexto headline_metrics e decision_board.
 -->
 {% extends "layouts/base.html" %}
-{% load static %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
-{% endblock %}
 
 {% block content %}
 {% with page=operation_page %}
 <div class="operation-shell">
-    <section class="hero operation-hero" aria-label="Panorama do dono">
-        <div class="operation-hero-main">
-            <div>
-                <p class="eyebrow">Leitura executiva do box</p>
-                <h2>Crescimento, caixa e estrutura andando juntos.</h2>
-                <p class="operation-hero-copy">Onde o produto avança, onde o funil represa e qual pressão já exige decisão de dono.</p>
-            </div>
-            <div class="actions">
-                <a class="button" href="#owner-growth-board">Ver crescimento</a>
-                <a class="button secondary" href="#owner-risk-board">Ver risco de caixa</a>
-                <a class="button secondary" href="#owner-structure-board">Ver estrutura pronta</a>
-            </div>
-        </div>
-        <aside class="operation-hero-side">
-            {% include "includes/ui/hero_stat_panel.html" with eyebrow="Pulso de agora" copy="Pressão da base, entrada e cobrança." stats=page.data.hero_stats %}
-        </aside>
-    </section>
+    {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
 
     <section id="owner-growth-board" class="panel-grid operation-metric-grid" aria-label="Metricas de crescimento">
         {% for card in page.data.metric_cards %}
