@@ -1,16 +1,15 @@
 <!--
-ARQUIVO: pagina visual da Central de Intake.
+ARQUIVO: composicao visual da Central de Intake.
 
 POR QUE ELE EXISTE:
-- Entrega uma area propria para triagem de entradas e conversao sem depender da pagina de alunos.
+- organiza a fronteira de intake em blocos pequenos sem devolver complexidade ao backend.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Mostra o pulso da fila de intake.
-2. Explica origem, status e proximo passo das entradas.
-3. Oferece handoff direto para conversao em aluno.
+1. monta a hero e os blocos da fila canonica de intake.
+2. delega filtros, metricas e fila para includes menores.
 
 PONTOS CRITICOS:
-- Os atalhos globais de intake passam a desembocar aqui; a clareza desta tela vira parte do core operacional.
+- ids e data-actions precisam continuar estaveis porque shell, atalhos e testes apontam para esta tela.
 -->
 {% extends "layouts/base.html" %}
 
@@ -19,157 +18,16 @@ PONTOS CRITICOS:
 <div class="scene-stack operation-shell catalog-scene intake-scene" data-page="intake-center" data-screen="onboarding-intake-center" data-slot="page-root">
 {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
 
-<section class="table-card layout-panel layout-panel--stack glass-panel section-gap intake-filter-card" aria-label="Busca e filtros da central de intake" data-slot="filters" data-panel="intake-filters">
-    {% include "includes/ui/operation_card_head.html" with eyebrow="Busca e recorte da fila" title="Filtre a central sem perder a ordem operacional" copy="O intake continua dono da fila; o filtro so ajuda a recortar o que voce precisa agir agora." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
-    <form method="get" class="form-stack" data-action="filter-intakes">
-        <div class="field-grid-200">
-            <label>
-                <span class="field-label">{{ page.data.filter_form.query.label }}</span>
-                {{ page.data.filter_form.query }}
-            </label>
-            <label>
-                <span class="field-label">{{ page.data.filter_form.status.label }}</span>
-                {{ page.data.filter_form.status }}
-            </label>
-            <label>
-                <span class="field-label">{{ page.data.filter_form.source.label }}</span>
-                {{ page.data.filter_form.source }}
-            </label>
-            <label>
-                <span class="field-label">{{ page.data.filter_form.semantic_stage.label }}</span>
-                {{ page.data.filter_form.semantic_stage }}
-            </label>
-            <label>
-                <span class="field-label">{{ page.data.filter_form.assignment.label }}</span>
-                {{ page.data.filter_form.assignment }}
-            </label>
-        </div>
-        <div class="actions actions-tight">
-            <button class="button" type="submit" data-action="apply-intake-filters">Aplicar filtros</button>
-            <a class="button secondary" href="/entradas/" data-action="clear-intake-filters">Limpar</a>
-        </div>
-    </form>
-</section>
+{% include "onboarding/includes/intake_filters_panel.html" %}
 
-<section class="layout-block layout-block--rail panel-grid" aria-label="Metricas da central de intake" data-slot="metrics" data-panel="intake-metrics">
-    {% for label, item in page.data.metrics.items %}
-    <article class="card metric-card primary-glow">
-        <div class="card-body card-body-metric intake-metric-body">
-            <div class="card-value-stack">
-                <p class="eyebrow card-label">{{ label }}</p>
-                <p class="metric card-value">{{ item.value }}</p>
-            </div>
-            <div class="card-content">
-                <p class="metric-note card-copy">{{ item.note }}</p>
-            </div>
-        </div>
-        <div class="card-footer intake-metric-footer">
-            <div class="metric-pulse"></div>
-        </div>
-    </article>
-    {% endfor %}
-</section>
+{% include "onboarding/includes/intake_metrics_section.html" %}
 
 <section class="layout-block layout-block--split intake-compact-layout section-gap" aria-label="Leituras da central de intake" data-slot="summary">
-    <article class="table-card layout-panel layout-panel--stack glass-panel" id="intake-source-board" data-panel="intake-source-board">
-        {% include "includes/ui/operation_card_head.html" with eyebrow="De onde a fila esta vindo" title="Origens que abastecem a entrada" copy="Ajuda a separar problema de canal, captura ou triagem humana." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
-        <div class="intake-source-grid">
-            {% for item in page.data.source_breakdown %}
-            <article class="intake-mini-card" data-panel="intake-source-card">
-                <div class="card-body intake-mini-card-body">
-                    <div class="card-value-stack intake-mini-card-value-stack">
-                        <strong>{{ item.label }}</strong>
-                        <p class="metric">{{ item.value }}</p>
-                    </div>
-                    <div class="card-content intake-mini-card-content">
-                        <p class="meta-text-sm">{{ item.note }}</p>
-                    </div>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-    </article>
-
-    <article class="table-card layout-panel layout-panel--stack glass-panel" id="intake-conversion-board" data-panel="intake-conversion-board">
-        {% include "includes/ui/operation_card_head.html" with eyebrow="O que esta sendo triado aqui" title="Intake ainda nao e aluno" copy="Esta central cuida da entrada provisória; a ficha do aluno so abre quando a conversao fizer sentido." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
-        <div class="stack-14">
-            {% for item in page.data.conversion_rules %}
-            <article class="intake-rule-card" data-panel="intake-rule-card">
-                <div class="card-body intake-rule-card-body">
-                    <div class="card-value-stack intake-rule-card-value-stack">
-                        <strong>{{ item.title }}</strong>
-                    </div>
-                    <div class="card-content intake-rule-card-content">
-                        <p class="meta-text">{{ item.copy }}</p>
-                    </div>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-    </article>
+    {% include "onboarding/includes/intake_source_board.html" %}
+    {% include "onboarding/includes/intake_conversion_board.html" %}
 </section>
 
-<section class="table-card layout-panel layout-panel--stack glass-panel section-gap intake-queue-panel" id="intake-queue-board" aria-label="Fila principal de intake" data-panel="intake-queue-board">
-    {% include "includes/ui/operation_card_head.html" with eyebrow="Fila pronta para leitura e conversao" title="Entradas provisórias no ponto de acao" copy="Triagem, atribuicao e conversao saem daqui sem depender da tela de alunos para orientar a fila." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
-    <div class="intake-grid">
-        {% for item in page.data.queue_items %}
-        {% with intake=item.object semantic=item.semantic_state conversion=item.conversion permissions=item.action_permissions %}
-        <div class="intake-card intake-card--detailed" data-panel="intake-queue-card">
-            <div class="card-body intake-card-body">
-                <div class="stack-8 intake-card-main">
-                    <div class="row-between-md intake-card-header">
-                        <div class="card-head-main-stack">
-                            <strong>{{ intake.full_name }}</strong>
-                            <p class="meta-text-sm">{{ intake.phone }}{% if intake.email %} | {{ intake.email }}{% endif %}</p>
-                        </div>
-                        <div class="stack-8 student-priority-badges card-head-aside">
-                            <span class="pill">{{ semantic.entity_label }}</span>
-                            <span class="pill info">{{ semantic.semantic_label }}</span>
-                            <span class="pill info">{{ intake.get_source_display }}</span>
-                            <span class="pill{% if intake.status == 'reviewing' %} warning{% elif intake.status == 'matched' %} success{% endif %}">{{ intake.get_status_display }}</span>
-                        </div>
-                    </div>
-                    <div class="card-content intake-card-content">
-                        <div class="intake-meta-list">
-                            <p class="meta-text">Chegou em {{ intake.created_at|date:"d/m/Y H:i" }}.</p>
-                            <p class="meta-text">{% if intake.assigned_to %}Responsavel atual: {{ intake.assigned_to.get_full_name|default:intake.assigned_to.username }}.{% else %}Ainda sem responsavel definido.{% endif %}</p>
-                            <p class="meta-text">{{ semantic.note }}</p>
-                            <p class="meta-text">{{ conversion.reason }}</p>
-                            {% if intake.notes %}<p class="meta-text">{{ intake.notes|truncatechars:180 }}</p>{% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-footer intake-card-footer">
-                <div class="actions actions-tight intake-card-actions">
-                    {% if page.capabilities.can_work_queue %}
-                    <form method="post" class="intake-action-form" data-action="intake-queue-actions">
-                        {% csrf_token %}
-                        <input type="hidden" name="intake_id" value="{{ intake.id }}">
-                        <input type="hidden" name="return_query" value="{{ request.GET.urlencode }}">
-                        {% if permissions.can_assign_to_me %}<button class="button secondary" type="submit" name="action" value="assign-to-me">Assumir</button>{% endif %}
-                        {% if permissions.can_start_review %}<button class="button secondary" type="submit" name="action" value="start-review">Iniciar triagem</button>{% endif %}
-                        {% if permissions.can_mark_matched %}<button class="button secondary" type="submit" name="action" value="mark-matched">Pronto para conversao</button>{% endif %}
-                        {% if permissions.can_clear_assignee %}<button class="button secondary" type="submit" name="action" value="clear-assignee">Limpar responsavel</button>{% endif %}
-                        {% if permissions.can_approve %}<button class="button secondary" type="submit" name="action" value="approve-intake">Aprovar</button>{% endif %}
-                        {% if permissions.can_reject %}<button class="button secondary" type="submit" name="action" value="reject-intake">Rejeitar</button>{% endif %}
-                    </form>
-                    {% endif %}
-                    {% if page.capabilities.can_manage_students and conversion.can_convert %}
-                    <a class="button" href="/alunos/novo/?intake={{ intake.id }}#student-form-essential" data-action="convert-intake-to-student">{{ conversion.action_label }}</a>
-                    {% else %}
-                    <span class="pill intake-conversion-pill">{{ conversion.action_label }}</span>
-                    {% endif %}
-                    <a class="button secondary" href="/alunos/" data-action="open-students-directory-from-intake">Abrir base de alunos</a>
-                </div>
-            </div>
-        </div>
-        {% endwith %}
-        {% empty %}
-        {% include "includes/ui/state_empty.html" with compact=True eyebrow="Fila principal" title="Nenhuma entrada provisoria pede triagem agora" copy="A fila de intake esta limpa neste recorte e a conversao nao depende de pendencia aberta." badge="Fila limpa" badge_class="success" %}
-        {% endfor %}
-    </div>
-</section>
+{% include "onboarding/includes/intake_queue_panel.html" %}
 </div>
 {% endwith %}
 {% endblock %}
