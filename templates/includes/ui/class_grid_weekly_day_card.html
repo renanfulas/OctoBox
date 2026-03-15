@@ -5,20 +5,24 @@ POR QUE ELE EXISTE:
 - evita concentrar a composicao de cada dia semanal dentro do painel maior.
 -->
 <article class="weekly-day-card{% if day.is_today %} is-today{% endif %}{% if not day.is_in_window %} is-muted{% endif %}{% if day.sessions %} has-sessions{% endif %}" data-panel="class-grid-weekly-day-card">
-    <div class="weekly-day-head">
-        <div>
-            <p class="eyebrow">{{ day.weekday_label }}</p>
-            <strong>{{ day.date|date:"d/m" }}</strong>
-            <p class="class-grid-mobile-kicker">{% if day.sessions %}{{ day.sessions|length }} aula(s) no dia{% else %}Dia livre{% endif %}</p>
+    <div class="card-body weekly-day-card-body">
+        <div class="weekly-day-head card-head">
+            <div class="card-head-main-stack weekly-day-head-main">
+                <p class="eyebrow">{{ day.weekday_label }}</p>
+                <strong>{{ day.date|date:"d/m" }}</strong>
+                <p class="class-grid-mobile-kicker">{% if day.sessions %}{{ day.sessions|length }} aula(s) no dia{% else %}Dia livre{% endif %}</p>
+            </div>
+            {% if day.is_today %}
+            <div class="card-head-aside"><span class="pill">Hoje</span></div>
+            {% endif %}
         </div>
-        {% if day.is_today %}<span class="pill">Hoje</span>{% endif %}
-    </div>
 
-    <div class="weekly-day-body" data-slot="class-grid-weekly-day-body">
-        {% for item in day.sessions %}
-        {% include "includes/ui/class_grid_weekly_session_chip.html" with item=item page=page %}
-        {% empty %}
-        {% include "includes/ui/state_empty.html" with compact=True eyebrow="Janela semanal" title="Sem aula cadastrada" copy="Esse bloco do dia esta livre no recorte atual." badge="Dia aberto" badge_class="info" class_name="weekly-empty-state" %}
-        {% endfor %}
+        <div class="card-content weekly-day-body" data-slot="class-grid-weekly-day-body">
+            {% for item in day.sessions %}
+            {% include "includes/ui/class_grid_weekly_session_chip.html" with item=item page=page %}
+            {% empty %}
+            {% include "includes/ui/state_empty.html" with compact=True eyebrow="Janela semanal" title="Sem aula cadastrada" copy="Esse bloco do dia esta livre no recorte atual." badge="Dia aberto" badge_class="info" class_name="weekly-empty-state" %}
+            {% endfor %}
+        </div>
     </div>
 </article>

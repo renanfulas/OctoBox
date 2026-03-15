@@ -21,7 +21,6 @@ from operations.facade import (
     build_manager_workspace_snapshot,
     build_owner_workspace_snapshot,
     build_reception_workspace_snapshot,
-    build_reception_preview_workspace_snapshot,
 )
 from operations.presentation import build_operation_workspace_page
 
@@ -115,30 +114,6 @@ class CoachWorkspaceView(OperationBaseView):
             snapshot=snapshot,
             current_role_slug=context['current_role'].slug,
             focus_key='coach_operational_focus',
-        )
-        attach_page_payload(context, payload_key='operation_page', payload=payload)
-        return context
-
-
-class ReceptionPreviewWorkspaceView(OperationBaseView):
-    allowed_roles = (ROLE_OWNER, ROLE_DEV)
-    template_name = 'operations/reception_preview.html'
-    page_title = 'Recepcao em preparo'
-    page_subtitle = 'Balcao, grade e cobranca curta antes do rollout.'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(self.get_base_context())
-        snapshot = build_reception_preview_workspace_snapshot(today=context['today'])
-        payload = build_operation_workspace_page(
-            page_key='operations-reception-preview',
-            title=self.page_title,
-            subtitle=self.page_subtitle,
-            scope='operations-reception-preview',
-            snapshot=snapshot,
-            current_role_slug=context['current_role'].slug,
-            focus_key='reception_preview_focus',
-            capabilities={'can_manage_reception_preview_payments': context['current_role'].slug == ROLE_OWNER},
         )
         attach_page_payload(context, payload_key='operation_page', payload=payload)
         return context

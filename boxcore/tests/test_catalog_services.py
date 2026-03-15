@@ -16,7 +16,7 @@ PONTOS CRITICOS:
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from catalog.services.finance_communication_actions import handle_finance_communication_action
@@ -240,18 +240,75 @@ class CatalogServiceTests(TestCase):
 
         result = handle_finance_communication_action(
             actor=self.user,
-            payload={
-                'action_kind': 'overdue',
-                'student_id': self.student.id,
-                'payment_id': overdue_payment.id,
-            },
+            action_kind='overdue',
+            student_id=self.student.id,
+            payment_id=overdue_payment.id,
         )
 
         overdue_payment.refresh_from_db()
         self.assertEqual(result['student'], self.student)
+        self.assertFalse(result['blocked'])
         self.assertEqual(overdue_payment.status, PaymentStatus.OVERDUE)
         self.assertTrue(WhatsAppMessageLog.objects.filter(contact__linked_student=self.student).exists())
         self.assertTrue(AuditEvent.objects.filter(action='operational_whatsapp_touch_registered').exists())
+
+    def test_finance_communication_handler_blocks_duplicate_same_day_message(self):
+        overdue_payment = Payment.objects.create(
+            student=self.student,
+            enrollment=self.enrollment,
+            due_date=timezone.localdate() - timezone.timedelta(days=3),
+            amount='289.90',
+            status=PaymentStatus.PENDING,
+            method=PaymentMethod.PIX,
+        )
+
+        first_result = handle_finance_communication_action(
+            actor=self.user,
+            action_kind='overdue',
+            student_id=self.student.id,
+            payment_id=overdue_payment.id,
+        )
+        second_result = handle_finance_communication_action(
+            actor=self.user,
+            action_kind='overdue',
+            student_id=self.student.id,
+            payment_id=overdue_payment.id,
+        )
+
+        self.assertFalse(first_result['blocked'])
+        self.assertTrue(second_result['blocked'])
+        self.assertEqual(first_result['message'].id, second_result['message'].id)
+        self.assertEqual(WhatsAppMessageLog.objects.filter(contact__linked_student=self.student, direction='outbound').count(), 1)
+        self.assertTrue(AuditEvent.objects.filter(action='operational_whatsapp_touch_blocked').exists())
+
+    @override_settings(OPERATIONAL_WHATSAPP_REPEAT_BLOCK_HOURS=0)
+    def test_finance_communication_handler_allows_repeat_when_block_window_is_disabled(self):
+        overdue_payment = Payment.objects.create(
+            student=self.student,
+            enrollment=self.enrollment,
+            due_date=timezone.localdate() - timezone.timedelta(days=3),
+            amount='289.90',
+            status=PaymentStatus.PENDING,
+            method=PaymentMethod.PIX,
+        )
+
+        first_result = handle_finance_communication_action(
+            actor=self.user,
+            action_kind='overdue',
+            student_id=self.student.id,
+            payment_id=overdue_payment.id,
+        )
+        second_result = handle_finance_communication_action(
+            actor=self.user,
+            action_kind='overdue',
+            student_id=self.student.id,
+            payment_id=overdue_payment.id,
+        )
+
+        self.assertFalse(first_result['blocked'])
+        self.assertFalse(second_result['blocked'])
+        self.assertNotEqual(first_result['message'].id, second_result['message'].id)
+        self.assertEqual(WhatsAppMessageLog.objects.filter(contact__linked_student=self.student, direction='outbound').count(), 2)
 
     def test_create_payment_schedule_creates_installments(self):
         first_payment = create_payment_schedule(

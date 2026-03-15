@@ -6,6 +6,9 @@ ARQUIVO: faixa de metricas da central financeira.
     <article class="card finance-metric-card {% cycle 'orange-glow' 'green-glow' 'blue-glow' 'orange-glow' 'green-glow' 'blue-glow' %}">
         <p class="eyebrow card-label">{{ label }}</p>
         <p class="metric card-value{% if item.is_currency %} finance-currency-metric{% endif %}">{% if item.is_currency %}R$ {{ item.value|floatformat:2 }}{% else %}{{ item.value }}{% endif %}</p>
+        {% if item.submetric %}
+        <p class="meta-text-sm">{{ item.submetric.label }}: {{ item.submetric.value }}</p>
+        {% endif %}
         <p class="metric-note card-copy">{{ item.note }}</p>
         <div class="metric-spark"></div>
     </article>

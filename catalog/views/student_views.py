@@ -23,8 +23,8 @@ from catalog.services.student_enrollment_actions import handle_student_enrollmen
 from catalog.services.student_payment_actions import handle_student_payment_action
 from catalog.services.student_workflows import run_student_quick_create_workflow, run_student_quick_update_workflow
 from catalog.student_queries import build_student_directory_snapshot, build_student_financial_snapshot
-from communications.models import StudentIntake
 from finance.models import Enrollment, Payment
+from onboarding.models import StudentIntake
 from reporting.application.catalog_reports import build_student_directory_report
 from reporting.infrastructure import build_report_response
 from students.models import Student

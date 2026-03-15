@@ -18,8 +18,14 @@ PONTOS CRITICOS:
     overflow: hidden;
 }
 
+.class-grid-metric-card-body,
+.class-grid-insight-card-body,
+.class-grid-focus-card-body {
+    height: 100%;
+}
+
 .class-grid-scene {
-    gap: var(--section-gap);
+    gap: calc(var(--section-gap) - 2px);
 }
 
 .class-grid-hero {
@@ -30,6 +36,50 @@ PONTOS CRITICOS:
         var(--surface);
 }
 
+.class-grid-hero .operation-hero {
+    padding: 18px 20px;
+}
+
+.class-grid-hero .operation-hero-main {
+    gap: 10px;
+}
+
+.class-grid-hero .operation-hero-main > div:first-child {
+    gap: 6px;
+    max-width: 560px;
+}
+
+.class-grid-hero .operation-hero-copy {
+    max-width: 40ch;
+}
+
+.class-grid-hero .operation-hero .actions {
+    gap: 6px;
+    max-width: 520px;
+}
+
+.class-grid-hero .operation-hero .actions .button {
+    min-height: 33px;
+    padding: 7px 12px;
+}
+
+.class-grid-hero .operation-hero-side {
+    width: min(100%, 304px);
+}
+
+.class-grid-hero .operation-hero-panel {
+    padding: 12px 14px;
+}
+
+.class-grid-hero .operation-mini-grid {
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.class-grid-hero .operation-mini-stat {
+    padding: 7px 8px;
+}
+
 .class-grid-hero .operation-hero-panel {
     background: linear-gradient(160deg, rgba(255, 255, 255, 0.84), rgba(236, 242, 248, 0.96));
 }
@@ -37,7 +87,7 @@ PONTOS CRITICOS:
 .class-grid-insight-strip {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px;
+    gap: 12px;
     align-items: stretch;
 }
 
@@ -45,33 +95,41 @@ PONTOS CRITICOS:
     height: 100%;
 }
 
+.class-grid-insight-card .card-content {
+    gap: 10px;
+}
+
 .class-grid-quick-grid {
     display: grid;
-    gap: 18px;
+    gap: 12px;
 }
 
 .class-grid-focus-card {
     display: grid;
-    gap: 18px;
+    gap: 12px;
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(236, 242, 248, 0.94));
+}
+
+.class-grid-focus-content {
+    gap: 12px;
 }
 
 .class-grid-focus-head {
     align-items: start;
-    gap: 16px;
+    gap: 12px;
 }
 
 .class-grid-focus-list {
     display: grid;
-    gap: 14px;
+    gap: 8px;
 }
 
 .class-grid-focus-item {
     display: flex;
     justify-content: space-between;
-    gap: 16px;
+    gap: 10px;
     align-items: center;
-    padding: 16px 18px;
+    padding: 12px 14px;
     border-radius: 18px;
     border: 1px solid rgba(40, 92, 142, 0.12);
     background: rgba(255, 255, 255, 0.84);
@@ -79,7 +137,7 @@ PONTOS CRITICOS:
 
 .class-grid-focus-copy {
     display: grid;
-    gap: 6px;
+    gap: 4px;
 }
 
 .class-grid-focus-copy h3 {
@@ -101,7 +159,7 @@ PONTOS CRITICOS:
 
 .class-grid-workspace {
     display: grid;
-    gap: 18px;
+    gap: 12px;
 }
 
 .class-grid-workspace-head {
@@ -110,7 +168,7 @@ PONTOS CRITICOS:
 
 .class-grid-workspace-stack {
     display: grid;
-    gap: 18px;
+    gap: 12px;
 }
 
 .class-grid-workspace-panel {
@@ -131,9 +189,9 @@ PONTOS CRITICOS:
 .class-grid-panel-head {
     display: flex;
     justify-content: space-between;
-    gap: 18px;
+    gap: 12px;
     align-items: start;
-    margin-bottom: 18px;
+    margin-bottom: 12px;
 }
 
 .class-grid-panel-title {
@@ -143,7 +201,7 @@ PONTOS CRITICOS:
 
 .class-grid-head-badges {
     display: inline-flex;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
     align-items: center;
     justify-content: end;
@@ -153,7 +211,7 @@ PONTOS CRITICOS:
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 9px 12px;
+    padding: 7px 10px;
     border-radius: 999px;
     border: 1px dashed rgba(59, 130, 246, 0.28);
     background: rgba(255, 255, 255, 0.82);
@@ -207,6 +265,15 @@ PONTOS CRITICOS:
     linear-gradient(145deg, rgba(40, 92, 142, 0.08), rgba(255, 255, 255, 0.97));
 }
 
+.class-grid-scene [data-panel="class-grid-context-panels"] > section + section {
+    margin-top: 14px;
+}
+
+.class-grid-scene [data-panel="class-grid-context-panels"] .table-card.section-gap {
+    padding-top: 22px;
+    padding-bottom: 22px;
+}
+
 .monthly-preview-button {
     width: 100%;
     border: 0;
@@ -231,7 +298,7 @@ PONTOS CRITICOS:
 .monthly-calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 10px;
+    gap: 8px;
 }
 
 .monthly-calendar-grid + .monthly-calendar-grid {
@@ -259,13 +326,19 @@ PONTOS CRITICOS:
 }
 
 .monthly-day-card {
-    min-height: 140px;
+    min-height: 128px;
     border-radius: 18px;
     border: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.82);
-    padding: 12px;
+    padding: 10px;
     display: grid;
-    gap: 10px;
+    gap: 8px;
+}
+
+.monthly-day-card-body,
+.weekly-day-card-body,
+.weekly-session-chip-body {
+    height: 100%;
 }
 
 .monthly-day-card.is-today {
@@ -289,26 +362,39 @@ PONTOS CRITICOS:
 
 .monthly-day-card.is-preview {
     min-height: 92px;
-    padding: 10px;
-    gap: 8px;
+    padding: 8px;
+    gap: 6px;
 }
 
 .monthly-day-card-expanded {
-    min-height: 164px;
+    min-height: 150px;
+}
+
+.monthly-day-card-body-preview {
+    gap: 6px;
 }
 
 .monthly-day-body {
     display: grid;
-    gap: 6px;
+    gap: 5px;
     align-content: start;
+}
+
+.monthly-day-head-main {
+    gap: 2px;
 }
 
 .monthly-session-chip {
     display: grid;
     gap: 2px;
-    padding: 8px 10px;
+    padding: 7px 9px;
     border-radius: 12px;
     background: rgba(22, 33, 31, 0.05);
+}
+
+.monthly-session-chip-body {
+    display: grid;
+    gap: 2px;
 }
 
 .monthly-session-chip strong,
@@ -362,28 +448,28 @@ PONTOS CRITICOS:
 }
 
 .weekly-calendar-section + .weekly-calendar-section {
-    margin-top: 24px;
+    margin-top: 20px;
 }
 
 .weekly-calendar-header {
-    margin-bottom: 14px;
+    margin-bottom: 12px;
     padding: 0 2px;
 }
 
 .weekly-calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 12px;
+    gap: 10px;
 }
 
 .weekly-day-card {
     border: 1px solid var(--line);
     border-radius: 22px;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 238, 229, 0.9));
-    padding: 16px;
+    padding: 14px;
     display: grid;
-    gap: 14px;
-    min-height: 210px;
+    gap: 12px;
+    min-height: 194px;
     box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
 }
 
@@ -404,22 +490,30 @@ PONTOS CRITICOS:
     align-items: start;
 }
 
+.weekly-day-head-main {
+    gap: 2px;
+}
+
 .weekly-day-head strong {
     font-size: 1.15rem;
 }
 
 .weekly-day-body {
     display: grid;
-    gap: 10px;
+    gap: 8px;
     align-content: start;
 }
 
 .weekly-session-chip {
-    padding: 12px;
+    padding: 10px;
     border-radius: 16px;
     border: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.96);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.weekly-session-chip-content {
+    gap: 4px;
 }
 
 .weekly-session-chip.is-info {
@@ -448,7 +542,11 @@ PONTOS CRITICOS:
 }
 
 .class-chip-actions {
-    margin-top: 10px;
+    margin-top: 8px;
+}
+
+.weekly-session-chip .card-footer {
+    margin-top: 2px;
 }
 
 .class-chip-actions form {
@@ -480,12 +578,25 @@ PONTOS CRITICOS:
     line-height: 1.6;
 }
 
+@media (max-width: 1240px) {
+    .weekly-calendar-section {
+        overflow-x: auto;
+        padding-bottom: 6px;
+        scrollbar-width: thin;
+    }
+
+    .weekly-calendar-grid {
+        min-width: 1540px;
+        grid-template-columns: repeat(7, minmax(200px, 1fr));
+    }
+}
+
 .class-day-header {
     display: flex;
     justify-content: space-between;
     gap: 16px;
     align-items: start;
-    margin-bottom: 18px;
+    margin-bottom: 14px;
 }
 
 .class-day-summary,
@@ -515,13 +626,13 @@ PONTOS CRITICOS:
 }
 
 .class-grid-row td {
-    padding-top: 16px;
-    padding-bottom: 16px;
+    padding-top: 14px;
+    padding-bottom: 14px;
 }
 
 .class-occupancy-stack {
     display: grid;
-    gap: 8px;
+    gap: 6px;
     min-width: 200px;
 }
 
@@ -582,6 +693,10 @@ PONTOS CRITICOS:
 }
 
 @media (max-width: 960px) {
+    .class-grid-hero .operation-hero {
+        padding: 18px;
+    }
+
     .class-grid-insight-strip {
         grid-template-columns: 1fr;
     }
@@ -633,6 +748,74 @@ PONTOS CRITICOS:
     }
 }
 
+.class-grid-hero.operation-hero {
+    gap: 18px;
+    min-height: 252px;
+    padding: clamp(18px, 1.8vw, 22px);
+    background:
+        radial-gradient(circle at top right, rgba(40, 92, 142, 0.14), transparent 32%),
+        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.1), transparent 28%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(241, 247, 252, 0.96)),
+        var(--surface);
+}
+
+    body[data-theme="dark"] .class-grid-hero.operation-hero {
+        background:
+        radial-gradient(circle at top right, rgba(41, 103, 163, 0.2), transparent 30%),
+        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.12), transparent 24%),
+        linear-gradient(145deg, rgba(18, 28, 40, 0.96), rgba(11, 19, 29, 0.98)),
+        var(--surface);
+    }
+
+.class-grid-hero.operation-hero .operation-hero-main {
+    gap: 12px;
+}
+
+.class-grid-hero.operation-hero .operation-hero-main > div:first-child {
+    gap: 8px;
+    max-width: 560px;
+}
+
+.class-grid-hero.operation-hero .operation-hero-copy {
+    max-width: 40ch;
+}
+
+.class-grid-hero.operation-hero .actions {
+    gap: 8px;
+    max-width: 560px;
+}
+
+.class-grid-hero.operation-hero .actions .button {
+    min-height: 36px;
+    padding: 8px 13px;
+}
+
+.class-grid-hero.operation-hero .operation-hero-side {
+    width: 100%;
+}
+
+.class-grid-hero.operation-hero .operation-hero-panel {
+    padding: 14px 16px;
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.84), rgba(241, 247, 252, 0.94)),
+        rgba(255, 255, 255, 0.9);
+}
+
+body[data-theme="dark"] .class-grid-hero.operation-hero .operation-hero-panel {
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(10, 17, 27, 0.14)),
+        rgba(14, 22, 33, 0.9);
+}
+
+.class-grid-hero.operation-hero .operation-mini-grid {
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.class-grid-hero.operation-hero .operation-mini-stat {
+    padding: 8px 10px;
+}
+
 @media (max-width: 640px) {
     .class-grid-mobile-kicker {
         display: block;
@@ -643,11 +826,11 @@ PONTOS CRITICOS:
     }
 
     .class-grid-insight-card {
-        padding: 20px;
+        padding: 18px;
     }
 
     .class-grid-workspace-stack {
-        gap: 14px;
+        gap: 12px;
     }
 
     .class-grid-workspace-panel {
@@ -655,8 +838,8 @@ PONTOS CRITICOS:
     }
 
     .class-grid-panel-head {
-        gap: 12px;
-        margin-bottom: 14px;
+        gap: 10px;
+        margin-bottom: 12px;
     }
 
     .class-grid-panel-title {

@@ -2,25 +2,19 @@
 ARQUIVO: consultas de leitura do dominio communications.
 
 POR QUE ELE EXISTE:
-- Tira leituras de intake e WhatsApp de modulos genericamente operacionais e da camada HTTP.
+- Centraliza leituras de WhatsApp e compoe metricas cruzadas usadas no shell e na operacao.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Resume metricas de entradas e contatos.
-2. Expoe listas curtas para workspaces operacionais.
-3. Centraliza contagens usadas em navegacao e alertas globais.
+1. Resume metricas de WhatsApp e funis relacionados.
+2. Expoe listas curtas de contatos para workspaces operacionais.
+3. Mantem compatibilidade enquanto intake termina de migrar para onboarding.
 
 PONTOS CRITICOS:
 - Essas consultas alimentam menus e snapshots de operacao; qualquer regressao aparece rapido na leitura do produto.
 """
 
-from communications.models import IntakeStatus, StudentIntake, WhatsAppContact, WhatsAppContactStatus, WhatsAppMessageLog
-
-
-def count_pending_intakes():
-    return StudentIntake.objects.filter(
-        status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING],
-        linked_student__isnull=True,
-    ).count()
+from communications.models import WhatsAppContact, WhatsAppContactStatus, WhatsAppMessageLog
+from onboarding.queries import count_pending_intakes
 
 
 def count_whatsapp_contacts():
@@ -33,14 +27,10 @@ def count_messages_logged():
 
 def build_communications_headline_metrics(*, today):
     return {
-        'pending_intakes': StudentIntake.objects.filter(status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING]).count(),
+        'pending_intakes': count_pending_intakes(),
         'whatsapp_contacts': count_whatsapp_contacts(),
         'messages_logged': count_messages_logged(),
     }
-
-
-def get_pending_intakes(*, limit=8):
-    return StudentIntake.objects.select_related('linked_student', 'assigned_to').order_by('status', '-created_at')[:limit]
 
 
 def get_unlinked_whatsapp_contacts(*, limit=8):

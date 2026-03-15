@@ -40,3 +40,13 @@ class GuideViewTests(TestCase):
         self.assertContains(response, 'href="#system-flow-board"')
         self.assertContains(response, 'href="#system-reading-board"')
         self.assertContains(response, 'href="#system-bug-board"')
+
+    def test_operational_settings_renders_for_authenticated_user(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('operational-settings'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Configuracoes operacionais')
+        self.assertContains(response, 'OPERATIONAL_WHATSAPP_REPEAT_BLOCK_HOURS')
+        self.assertContains(response, 'Financeiro: regua de cobranca e retencao.')

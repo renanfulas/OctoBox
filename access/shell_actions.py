@@ -18,6 +18,8 @@ from django.conf import settings
 from django.core.cache import cache
 
 from access.roles import ROLE_DEV, ROLE_RECEPTION
+from finance.overdue_metrics import count_overdue_students, get_overdue_payments_queryset
+from onboarding.queries import count_pending_intakes
 
 
 ADMIN_PATH_PREFIX = f"/{settings.ADMIN_URL_PATH}"
@@ -26,14 +28,14 @@ ADMIN_PATH_PREFIX = f"/{settings.ADMIN_URL_PATH}"
 def resolve_shell_scope(*, current_path, role_slug=None):
     if current_path.startswith('/dashboard/'):
         return 'dashboard-reception' if role_slug == ROLE_RECEPTION else 'dashboard'
+    if current_path.startswith('/entradas/'):
+        return 'intake-center'
     if current_path.startswith('/alunos/'):
         return 'student-form' if ('/novo/' in current_path or '/editar/' in current_path) else 'students'
     if current_path.startswith('/financeiro/'):
         return 'finance-plan-form' if '/planos/' in current_path else 'finance'
     if current_path.startswith('/grade-aulas/'):
         return 'class-grid'
-    if current_path.startswith('/operacao/recepcao-preview/'):
-        return 'operations-reception-preview'
     if current_path.startswith('/operacao/recepcao/'):
         return 'operations-reception'
     if current_path.startswith('/operacao/manager/'):
@@ -53,15 +55,19 @@ def resolve_shell_scope(*, current_path, role_slug=None):
     return 'generic'
 
 
-def _build_action(kind, default_label, default_summary, source, *, scope='generic'):
+def _build_action(kind, default_label, default_target_label, source, *, scope='generic'):
     source = source or {}
     count = source.get('count')
-    summary = source.get('summary') or source.get('copy') or source.get('note') or default_summary
     return {
         'kind': kind,
         'label': default_label,
         'count': count if count and count > 0 else None,
-        'summary': summary,
+        'target_label': (
+            source.get('target_label')
+            or source.get('href_label')
+            or source.get('action_label')
+            or default_target_label
+        ),
         'href': source.get('href') or source.get('action_href') or '#page-body',
     }
 
@@ -69,11 +75,10 @@ def _build_action(kind, default_label, default_summary, source, *, scope='generi
 def get_shell_counts(*, use_cache=True):
     """Retorna os counts globais para os pulse chips com cache curto para aliviar o shell."""
     from django.utils import timezone
-    from communications.queries import count_pending_intakes
-    from finance.models import Enrollment, EnrollmentStatus, Payment, PaymentStatus
+    from finance.models import Enrollment, EnrollmentStatus, Payment
     from operations.models import ClassSession
     from students.models import Student, StudentStatus
-    today = timezone.localdate().isoformat()
+    today = timezone.localdate()
     cache_key = f'octobox:shell-counts:{today}'
 
     if use_cache:
@@ -81,9 +86,11 @@ def get_shell_counts(*, use_cache=True):
         if cached_counts is not None:
             return cached_counts
 
+    overdue_payments = get_overdue_payments_queryset(Payment.objects.all(), today=today)
+
     counts = {
-        'overdue_payments': Payment.objects.filter(status=PaymentStatus.OVERDUE).count(),
-        'overdue_students': Payment.objects.filter(status=PaymentStatus.OVERDUE).values('student_id').distinct().count(),
+        'overdue_payments': overdue_payments.count(),
+        'overdue_students': count_overdue_students(Payment.objects.all(), today=today),
         'pending_intakes': count_pending_intakes(),
         'sessions_today': ClassSession.objects.filter(scheduled_at__date=timezone.localdate()).count(),
         'active_students': Student.objects.filter(status=StudentStatus.ACTIVE).count(),
@@ -118,9 +125,9 @@ def build_shell_action_buttons(*, priority=None, pending=None, next_action=None,
         next_action.setdefault('count', st)
 
     return [
-        _build_action('priority', 'Prioridade', 'Abrir agora o ponto mais quente da operação.', priority, scope=scope),
-        _build_action('pending', 'Pendente', 'Ir direto para o bloco que ainda está em aberto.', pending, scope=scope),
-        _build_action('next-action', 'Próxima ação', 'Abrir o próximo passo que destrava o dia.', next_action, scope=scope),
+        _build_action('priority', 'Prioridade', 'Abrir agora', priority, scope=scope),
+        _build_action('pending', 'Pendente', 'Ver pendencia', pending, scope=scope),
+        _build_action('next-action', 'Próxima ação', 'Abrir proximo passo', next_action, scope=scope),
     ]
 
 
@@ -166,116 +173,124 @@ def build_default_shell_action_buttons(*, current_path, role_slug, overdue_payme
     if current_path.startswith('/dashboard/'):
         if role_slug == ROLE_RECEPTION:
             return build_shell_action_buttons(
-                priority={'href': '/operacao/recepcao/#reception-payment-board', 'summary': 'Caixa curto do balcao.', 'count': op},
-                pending={'href': '/operacao/recepcao/#reception-intake-board', 'summary': 'Chegadas pendentes.', 'count': pi},
-                next_action={'href': '/grade-aulas/#today-board', 'summary': 'Agenda do turno.', 'count': st},
+                priority={'href': '/operacao/recepcao/#reception-payment-board', 'target_label': 'Abrir cobranca curta', 'count': op},
+                pending={'href': '/operacao/recepcao/#reception-intake-board', 'target_label': 'Ver entradas', 'count': pi},
+                next_action={'href': '/grade-aulas/#today-board', 'target_label': 'Abrir agenda do turno', 'count': st},
                 scope=scope,
             )
         return build_shell_action_buttons(
-            priority={'href': '/financeiro/#finance-priority-board', 'summary': 'Regua financeira.', 'count': op},
-            pending={'href': '/alunos/#student-intake-board', 'summary': 'Fila de entrada.', 'count': pi},
-            next_action={'href': '/grade-aulas/#today-board', 'summary': 'Agenda de hoje.', 'count': st},
+            priority={'href': '/financeiro/#finance-priority-board', 'target_label': 'Abrir financeiro', 'count': op},
+            pending={'href': '/entradas/#intake-queue-board', 'target_label': 'Ver entradas', 'count': pi},
+            next_action={'href': '/grade-aulas/#today-board', 'target_label': 'Abrir agenda do dia', 'count': st},
+            scope=scope,
+        )
+
+    if current_path.startswith('/entradas/'):
+        return build_shell_action_buttons(
+            priority={'href': '#intake-queue-board', 'target_label': 'Abrir fila principal', 'count': pi},
+            pending={'href': '#intake-source-board', 'target_label': 'Ver origens'},
+            next_action={'href': '#intake-conversion-board', 'target_label': 'Ver conversao'},
             scope=scope,
         )
 
     if current_path.startswith('/alunos/'):
         if '/novo/' in current_path or '/editar/' in current_path:
             return build_shell_action_buttons(
-                priority={'href': '#student-form-essential', 'summary': 'Nucleo do cadastro.'},
-                pending={'href': '#student-form-profile', 'summary': 'Vinculo e perfil.'},
-                next_action={'href': '#student-form-plan', 'summary': 'Plano e cobranca.'},
+                priority={'href': '#student-form-essential', 'target_label': 'Abrir nucleo do cadastro'},
+                pending={'href': '#student-form-profile', 'target_label': 'Ver vinculo e perfil'},
+                next_action={'href': '#student-form-plan', 'target_label': 'Ver plano e cobranca'},
                 scope=scope,
             )
         return build_shell_action_buttons(
-            priority={'href': '#student-priority-board', 'summary': 'Leads e acoes imediatas.'},
-            pending={'href': '#student-intake-board', 'summary': 'Fila de entrada.', 'count': pi},
-            next_action={'href': '#student-directory-board', 'summary': 'Base principal.'},
+            priority={'href': '#student-priority-board', 'target_label': 'Abrir prioridades'},
+            pending={'href': '/entradas/#intake-queue-board', 'target_label': 'Abrir central de intake', 'count': pi},
+            next_action={'href': '#student-directory-board', 'target_label': 'Abrir base principal'},
             scope=scope,
         )
 
     if current_path.startswith('/financeiro/'):
         if '/planos/' in current_path:
             return build_shell_action_buttons(
-                priority={'href': '#plan-form-core', 'summary': 'Nucleo do plano.'},
-                pending={'href': '#plan-form-delivery', 'summary': 'Clareza comercial.'},
-                next_action={'href': '#plan-form-summary', 'summary': 'Impacto na carteira.'},
+                priority={'href': '#plan-form-core', 'target_label': 'Abrir nucleo do plano'},
+                pending={'href': '#plan-form-delivery', 'target_label': 'Ver clareza comercial'},
+                next_action={'href': '#plan-form-summary', 'target_label': 'Ver impacto na carteira'},
                 scope=scope,
             )
         return build_shell_action_buttons(
-            priority={'href': '#finance-priority-board', 'summary': 'Pressao de cobranca.', 'count': op},
-            pending={'href': '#finance-queue-board', 'summary': 'Fila de atrasados.', 'count': op},
-            next_action={'href': '#finance-portfolio-board', 'summary': 'Carteira ativa.'},
+            priority={'href': '#finance-priority-board', 'target_label': 'Abrir pressao de cobranca', 'count': op},
+            pending={'href': '#finance-queue-board', 'target_label': 'Ver fila de atrasados', 'count': op},
+            next_action={'href': '#finance-portfolio-board', 'target_label': 'Abrir carteira ativa'},
             scope=scope,
         )
 
     if current_path.startswith('/grade-aulas/'):
         return build_shell_action_buttons(
-            priority={'href': '#today-board', 'summary': 'Aulas de hoje.', 'count': st},
-            pending={'href': '#weekly-board', 'summary': 'Pico da semana.'},
-            next_action={'href': '#planner-board', 'summary': 'Ajustar grade.'},
+            priority={'href': '#today-board', 'target_label': 'Abrir aulas de hoje', 'count': st},
+            pending={'href': '#weekly-board', 'target_label': 'Ver pico da semana'},
+            next_action={'href': '#planner-board', 'target_label': 'Ajustar grade'},
             scope=scope,
         )
 
-    if current_path.startswith('/operacao/recepcao-preview/') or current_path.startswith('/operacao/recepcao/'):
+    if current_path.startswith('/operacao/recepcao/'):
         return build_shell_action_buttons(
-            priority={'href': '#reception-intake-board', 'summary': 'Chegada quente.', 'count': pi},
-            pending={'href': '#reception-payment-board', 'summary': 'Fila curta.', 'count': op},
-            next_action={'href': '#reception-class-grid-board', 'summary': 'Proxima aula.', 'count': st},
+            priority={'href': '#reception-intake-board', 'target_label': 'Ver chegada quente', 'count': pi},
+            pending={'href': '#reception-payment-board', 'target_label': 'Abrir fila curta', 'count': op},
+            next_action={'href': '#reception-class-grid-board', 'target_label': 'Ver proxima aula', 'count': st},
             scope=scope,
         )
 
     if current_path.startswith('/operacao/manager/'):
         return build_shell_action_buttons(
-            priority={'href': '#manager-intake-board', 'summary': 'Triagem aberta.', 'count': pi},
-            pending={'href': '#manager-link-board', 'summary': 'Vinculos pendentes.'},
-            next_action={'href': '#manager-finance-board', 'summary': 'Cobranca urgente.', 'count': op},
+            priority={'href': '#manager-intake-board', 'target_label': 'Ver triagem aberta', 'count': pi},
+            pending={'href': '#manager-link-board', 'target_label': 'Ver vinculos pendentes'},
+            next_action={'href': '#manager-finance-board', 'target_label': 'Abrir cobranca urgente', 'count': op},
             scope=scope,
         )
 
     if current_path.startswith('/operacao/coach/'):
         return build_shell_action_buttons(
-            priority={'href': '#coach-sessions-board', 'summary': 'Turmas do turno.', 'count': st},
-            pending={'href': '#coach-sessions-board', 'summary': 'Presenca aberta.'},
-            next_action={'href': '#coach-boundary-board', 'summary': 'Decisao tecnica.'},
+            priority={'href': '#coach-sessions-board', 'target_label': 'Abrir turmas do turno', 'count': st},
+            pending={'href': '#coach-sessions-board', 'target_label': 'Abrir presenca'},
+            next_action={'href': '#coach-boundary-board', 'target_label': 'Ver decisao tecnica'},
             scope=scope,
         )
 
     if current_path.startswith('/operacao/dev/'):
         return build_shell_action_buttons(
-            priority={'href': '#dev-audit-board', 'summary': 'Rastros recentes e leitura tecnica.'},
-            pending={'href': '/mapa-sistema/#system-reading-board', 'summary': 'Ordem de leitura do sistema.'},
-            next_action={'href': '/acessos/#access-role-map', 'summary': 'Fronteiras por papel e acesso.'},
+            priority={'href': '#dev-audit-board', 'target_label': 'Abrir rastros recentes'},
+            pending={'href': '/mapa-sistema/#system-reading-board', 'target_label': 'Ver mapa do sistema'},
+            next_action={'href': '/acessos/#access-role-map', 'target_label': 'Ver fronteiras de acesso'},
             scope=scope,
         )
 
     if current_path.startswith('/operacao/'):
         return build_shell_action_buttons(
-            priority={'href': '#owner-growth-board', 'summary': 'Crescimento e rotina.'},
-            pending={'href': '#owner-risk-board', 'summary': 'Risco de caixa.', 'count': op},
-            next_action={'href': '#owner-structure-board', 'summary': 'Estrutura do box.'},
+            priority={'href': '#owner-growth-board', 'target_label': 'Abrir crescimento e rotina'},
+            pending={'href': '#owner-risk-board', 'target_label': 'Ver risco de caixa', 'count': op},
+            next_action={'href': '#owner-structure-board', 'target_label': 'Abrir estrutura do box'},
             scope=scope,
         )
 
     if current_path.startswith('/acessos/'):
         return build_shell_action_buttons(
-            priority={'href': '#access-current-role', 'summary': 'Escopo do papel.'},
-            pending={'href': '#access-role-map', 'summary': 'Mapa de fronteiras.'},
-            next_action={'href': '#access-governance-board', 'summary': 'Governanca pratica.'},
+            priority={'href': '#access-current-role', 'target_label': 'Ver escopo do papel'},
+            pending={'href': '#access-role-map', 'target_label': 'Ver mapa de fronteiras'},
+            next_action={'href': '#access-governance-board', 'target_label': 'Ver governanca pratica'},
             scope=scope,
         )
 
     if current_path.startswith('/mapa-sistema/'):
         return build_shell_action_buttons(
-            priority={'href': '#system-flow-board', 'summary': 'Fluxo macro.'},
-            pending={'href': '#system-reading-board', 'summary': 'Ordem de estudo.'},
-            next_action={'href': '#system-bug-board', 'summary': 'Triagem de bugs.'},
+            priority={'href': '#system-flow-board', 'target_label': 'Abrir fluxo macro'},
+            pending={'href': '#system-reading-board', 'target_label': 'Ver ordem de estudo'},
+            next_action={'href': '#system-bug-board', 'target_label': 'Ver triagem de bugs'},
             scope=scope,
         )
 
     return build_shell_action_buttons(
-        priority={'href': '/dashboard/', 'summary': 'Panorama do dia.'},
-        pending={'href': '/alunos/#student-intake-board', 'summary': 'Fila pendente.', 'count': pi},
-        next_action={'href': '/grade-aulas/#today-board', 'summary': 'Proxima acao.', 'count': st},
+        priority={'href': '/dashboard/', 'target_label': 'Abrir panorama do dia'},
+        pending={'href': '/entradas/#intake-queue-board', 'target_label': 'Abrir fila pendente', 'count': pi},
+        next_action={'href': '/grade-aulas/#today-board', 'target_label': 'Abrir proxima acao', 'count': st},
         scope=scope,
     )
 

@@ -25,6 +25,7 @@ urlpatterns = [
     path('', include('access.urls')),
     path('api/', include('api.urls')),
     path('', include('dashboard.urls')),
+    path('', include('onboarding.urls')),
     path('', include('catalog.urls')),
     path('', include('guide.urls')),
     path('', include('operations.urls')),

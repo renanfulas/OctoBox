@@ -1,12 +1,25 @@
 <article class="card {{ card.card_class }}" data-panel="metric-card" data-slot="metric-card">
-    <p class="eyebrow card-label">{{ card.eyebrow }}</p>
-    <p class="metric card-value">{{ card.display_value }}</p>
-    <p class="metric-note card-copy">{{ card.note }}</p>
+    <div class="card-body card-body-metric">
+        <div class="card-value-stack">
+            <p class="eyebrow card-label">{{ card.eyebrow }}</p>
+            <p class="metric card-value">{{ card.display_value }}</p>
+            {% if card.submetric %}
+            <p class="meta-text-sm card-meta">{{ card.submetric.label }}: {{ card.submetric.value }}</p>
+            {% endif %}
+        </div>
+        <div class="card-content">
+            <p class="metric-note card-copy">{{ card.note }}</p>
+        </div>
+    </div>
     {% if card.footer_pill_label %}
-    <div class="actions card-actions">
-        <span class="pill card-action{% if card.footer_pill_class %} {{ card.footer_pill_class }}{% endif %}">{{ card.footer_pill_label }}</span>
+    <div class="card-footer">
+        <div class="actions card-actions">
+            <span class="pill card-action{% if card.footer_pill_class %} {{ card.footer_pill_class }}{% endif %}">{{ card.footer_pill_label }}</span>
+        </div>
     </div>
     {% elif card.show_accent_bar %}
-    <div class="accent-bar"></div>
+    <div class="card-footer">
+        <div class="accent-bar"></div>
+    </div>
     {% endif %}
 </article>

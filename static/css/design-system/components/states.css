@@ -12,7 +12,10 @@ POR QUE ELE EXISTE:
     padding: 16px 18px;
     border-radius: 18px;
     border: 1px solid rgba(148, 163, 184, 0.18);
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 252, 0.94));
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.82), transparent 24%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(243, 248, 255, 0.96));
+    box-shadow: 0 16px 34px rgba(37, 64, 97, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.82);
 }
 
 .state-empty.is-compact,
@@ -119,8 +122,20 @@ POR QUE ELE EXISTE:
     padding: 15px 18px 15px 22px;
     border-radius: 20px;
     border: 1px solid var(--line);
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 252, 0.94));
-    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.05);
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.78), transparent 22%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(243, 248, 255, 0.96));
+    box-shadow: 0 16px 34px rgba(37, 64, 97, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+body[data-theme="dark"] .state-empty,
+body[data-theme="dark"] .state-notice,
+body[data-theme="dark"] .message {
+    border-color: rgba(176, 201, 232, 0.14);
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 22%),
+        linear-gradient(145deg, rgba(24, 34, 47, 0.96), rgba(11, 19, 29, 0.98));
+    box-shadow: 0 24px 56px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .message-notice {

@@ -49,8 +49,8 @@ def build_student_directory_page(*, student_count, students, student_filter_form
             'summary': f'{len(intake_queue)} entrada(s) provisoria(s) ja podem virar aluno com pouco atrito.',
             'count': len(intake_queue),
             'pill_class': 'info' if len(intake_queue) > 0 else 'accent',
-            'href': '#student-intake-board',
-            'href_label': 'Ver fila de entrada',
+            'href': '/entradas/#intake-queue-board',
+            'href_label': 'Abrir central de intake',
         },
         {
             'label': 'Base no recorte atual',

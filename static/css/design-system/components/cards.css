@@ -17,10 +17,13 @@ POR QUE ELE EXISTE:
     border: 1px solid var(--line);
     border-radius: var(--radius-panel);
     background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent 100%),
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.86), transparent 26%),
+        radial-gradient(circle at 88% 16%, rgba(80, 143, 245, 0.08), transparent 24%),
+        radial-gradient(circle at 18% 100%, rgba(92, 206, 196, 0.05), transparent 28%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.78) 42%, rgba(245, 247, 251, 0.98) 100%),
         var(--surface);
-    box-shadow: var(--shadow-soft);
-    backdrop-filter: blur(14px);
+    box-shadow: 0 22px 48px rgba(37, 64, 97, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(22px) saturate(1.12);
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
     position: relative;
     overflow: hidden;
@@ -29,8 +32,8 @@ POR QUE ELE EXISTE:
 .card:hover,
 .table-card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-lift);
-    border-color: rgba(184, 92, 56, 0.24);
+    box-shadow: 0 28px 68px rgba(33, 61, 96, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.96);
+    border-color: rgba(126, 148, 180, 0.22);
 }
 
 .card::before,
@@ -39,8 +42,48 @@ POR QUE ELE EXISTE:
     position: absolute;
     inset: 0 auto auto 0;
     width: 100%;
-    height: 1px;
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.72), transparent 72%);
+    height: 72px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0));
+}
+
+.card::after,
+.table-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -22px -28px auto;
+    width: 132px;
+    height: 132px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(141, 156, 180, 0.12), rgba(255, 255, 255, 0) 68%);
+    pointer-events: none;
+}
+
+body[data-theme="dark"] .card,
+body[data-theme="dark"] .table-card {
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 20%),
+        radial-gradient(circle at 88% 16%, rgba(80, 143, 245, 0.09), transparent 24%),
+        radial-gradient(circle at 18% 100%, rgba(92, 206, 196, 0.06), transparent 24%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03) 26%, rgba(13, 21, 32, 0.94) 100%),
+        var(--surface);
+    border-color: rgba(176, 201, 232, 0.12);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="dark"] .card:hover,
+body[data-theme="dark"] .table-card:hover {
+    border-color: rgba(138, 159, 196, 0.22);
+    box-shadow: 0 32px 82px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+body[data-theme="dark"] .card::before,
+body[data-theme="dark"] .table-card::before {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0));
+}
+
+body[data-theme="dark"] .card::after,
+body[data-theme="dark"] .table-card::after {
+    background: radial-gradient(circle, rgba(141, 156, 180, 0.16), rgba(255, 255, 255, 0) 68%);
 }
 
 .card {
@@ -71,6 +114,21 @@ POR QUE ELE EXISTE:
 
 .card-head-main {
     min-width: 0;
+}
+
+.card-head-main-stack {
+    display: grid;
+    gap: 0;
+}
+
+.card-head-copy-wrap {
+    min-width: 0;
+}
+
+.card-head-aside {
+    display: flex;
+    align-items: flex-start;
+    flex-shrink: 0;
 }
 
 .card-title {
@@ -104,6 +162,52 @@ POR QUE ELE EXISTE:
     flex-wrap: wrap;
     align-items: center;
     gap: var(--responsive-cluster-gap);
+}
+
+.card-body {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+}
+
+.card-body-metric {
+    align-content: start;
+}
+
+.card-body-list {
+    gap: 14px;
+}
+
+.card-value-stack {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.card-content {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+}
+
+.card-meta {
+    margin: 0;
+}
+
+.card-footer {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--responsive-cluster-gap);
+}
+
+.card-list {
+    margin: 0;
+}
+
+.card-list-item {
+    min-width: 0;
 }
 
 .card-action {

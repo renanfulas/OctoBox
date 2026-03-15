@@ -47,7 +47,6 @@ HEAVY_READ_PATH_RULES = (
     ('/operacao/manager/', 'operations-manager-read'),
     ('/operacao/coach/', 'operations-coach-read'),
     ('/operacao/recepcao/', 'operations-reception-read'),
-    ('/operacao/recepcao-preview/', 'operations-reception-preview-read'),
 )
 
 

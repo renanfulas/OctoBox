@@ -48,7 +48,10 @@ def execute_register_operational_message_use_case(
     audit_port: OperationalMessageAuditPort,
 ) -> OperationalMessageResult:
     result = operational_port.register(command)
-    audit_port.record_registered(command=command, result=result)
+    if result.blocked:
+        audit_port.record_blocked(command=command, result=result)
+    else:
+        audit_port.record_registered(command=command, result=result)
     return result
 
 

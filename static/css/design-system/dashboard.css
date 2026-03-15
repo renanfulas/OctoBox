@@ -12,9 +12,12 @@ O QUE ESTE ARQUIVO FAZ:
 
 .dashboard-shell {
     display: grid;
-    gap: clamp(20px, 2.4vw, 30px);
+    gap: clamp(18px, 2.1vw, 26px);
     position: relative;
     isolation: isolate;
+    --dashboard-warm: rgba(184, 92, 56, 0.16);
+    --dashboard-cool: rgba(40, 92, 142, 0.14);
+    --dashboard-glass: rgba(255, 255, 255, 0.72);
 }
 
 .dashboard-shell::before,
@@ -28,16 +31,19 @@ O QUE ESTE ARQUIVO FAZ:
 
 .dashboard-shell::before {
     background:
-        radial-gradient(circle at top right, rgba(184, 92, 56, 0.12), transparent 24%),
-        radial-gradient(circle at 12% 42%, rgba(40, 92, 142, 0.1), transparent 20%);
+        radial-gradient(circle at top right, rgba(184, 92, 56, 0.18), transparent 22%),
+        radial-gradient(circle at 10% 38%, rgba(40, 92, 142, 0.14), transparent 20%),
+        radial-gradient(circle at 52% 0%, rgba(255, 255, 255, 0.55), transparent 28%);
 }
 
 .dashboard-shell::after {
     inset: 18px 0 auto;
-    height: 340px;
-    border-radius: 32px;
-    background: linear-gradient(180deg, rgba(255, 250, 242, 0.84), rgba(255, 250, 242, 0));
-    opacity: 0.75;
+    height: 390px;
+    border-radius: 36px;
+    background:
+        linear-gradient(180deg, rgba(255, 250, 242, 0.88), rgba(255, 250, 242, 0)),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent 58%);
+    opacity: 0.92;
 }
 
 .dashboard-shell .panel-grid > .card,
@@ -54,64 +60,131 @@ O QUE ESTE ARQUIVO FAZ:
 }
 
 .dashboard-hero {
+    position: relative;
+    overflow: hidden;
     background:
-    radial-gradient(circle at top right, rgba(184, 92, 56, 0.2), transparent 34%),
-    radial-gradient(circle at bottom left, rgba(40, 92, 142, 0.14), transparent 28%),
-    linear-gradient(145deg, rgba(255, 251, 245, 0.92), rgba(240, 235, 225, 0.94)),
+    radial-gradient(circle at top right, rgba(41, 103, 163, 0.14), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.1), transparent 28%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(241, 247, 252, 0.97)),
         var(--surface);
-    gap: 20px;
-    padding: clamp(20px, 2vw, 28px);
+    gap: 12px;
+    padding: clamp(16px, 1.6vw, 22px);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        0 22px 46px rgba(85, 56, 35, 0.08);
+}
+
+.dashboard-hero::before,
+.dashboard-hero::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+}
+
+.dashboard-hero::before {
+    inset: auto auto -42px -28px;
+    width: 180px;
+    height: 180px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(40, 92, 142, 0.12), transparent 68%);
+}
+
+.dashboard-hero::after {
+    inset: 0 0 auto auto;
+    width: 42%;
+    height: 100%;
+    background: linear-gradient(125deg, rgba(255, 255, 255, 0.18), transparent 55%);
 }
 
 .dashboard-hero .operation-hero-main {
-    gap: 16px;
+    gap: 10px;
+    position: relative;
+    z-index: 1;
 }
 
 .dashboard-hero .operation-hero-main > div:first-child {
-    gap: 10px;
+    gap: 6px;
+    max-width: 560px;
 }
 
 .dashboard-hero h2 {
-    font-size: clamp(2.35rem, 4vw, 3.4rem);
-    line-height: 0.98;
+    max-width: 11ch;
+    font-size: clamp(2.15rem, 3.6vw, 3.15rem);
+    line-height: 0.95;
+    letter-spacing: -0.05em;
 }
 
 .dashboard-hero .operation-hero-copy {
-    max-width: 620px;
+    max-width: 40ch;
+    font-size: 1rem;
+    line-height: 1.45;
 }
 
 .dashboard-hero .actions {
     align-items: flex-start;
-    gap: 10px;
+    gap: 6px;
 }
 
 .dashboard-hero .actions .button {
-    padding: 10px 16px;
-    border-radius: 16px;
+    min-height: 33px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    box-shadow: 0 10px 20px rgba(85, 56, 35, 0.08);
+}
+
+.dashboard-hero .actions .button:not(.secondary) {
+    background: linear-gradient(135deg, rgba(198, 106, 66, 1), rgba(170, 82, 48, 1));
+    border-color: rgba(150, 72, 41, 0.42);
+    color: #fffaf6;
+}
+
+.dashboard-hero .actions .button.secondary {
+    background: rgba(255, 255, 255, 0.82);
+    border-color: rgba(61, 84, 112, 0.12);
 }
 
 .dashboard-hero .operation-hero-side {
     width: min(100%, 300px);
+    position: relative;
+    z-index: 1;
 }
 
 .dashboard-hero .operation-hero-panel {
-    padding: 16px 18px;
-    border-radius: 22px;
+    padding: 12px 14px;
+    border-radius: 24px;
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.88), rgba(241, 247, 252, 0.92)),
+        rgba(255, 255, 255, 0.76);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.84);
 }
 
 .dashboard-hero .operation-mini-grid {
-    gap: 10px;
-    margin-top: 14px;
+    gap: 6px;
+    margin-top: 8px;
 }
 
 .dashboard-hero .operation-mini-stat {
-    padding: 9px 11px;
+    padding: 7px 9px;
 }
 
 .dashboard-kpi-card {
     position: relative;
-    min-height: 182px;
+    min-height: 158px;
     overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.84),
+        0 16px 30px rgba(85, 56, 35, 0.07);
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.dashboard-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.86),
+        0 20px 36px rgba(85, 56, 35, 0.1);
 }
 
 .dashboard-kpi-card::after {
@@ -126,86 +199,282 @@ O QUE ESTE ARQUIVO FAZ:
 }
 
 .dashboard-kpi-card.kpi-amber {
-    background: linear-gradient(145deg, rgba(249, 115, 22, 0.12), rgba(255, 255, 255, 0.96));
+    background: linear-gradient(145deg, rgba(248, 243, 238, 0.98), rgba(255, 255, 255, 0.98));
+    border-color: rgba(215, 157, 116, 0.22);
 }
 
 .dashboard-kpi-card.kpi-blue {
-    background: linear-gradient(145deg, rgba(59, 130, 246, 0.12), rgba(255, 255, 255, 0.96));
+    background: linear-gradient(145deg, rgba(241, 245, 252, 0.98), rgba(248, 252, 255, 0.98));
+    border-color: rgba(122, 153, 198, 0.22);
 }
 
 .dashboard-kpi-card.kpi-red {
-    background: linear-gradient(145deg, rgba(239, 68, 68, 0.12), rgba(255, 255, 255, 0.96));
+    background: linear-gradient(145deg, rgba(248, 241, 242, 0.98), rgba(255, 255, 255, 0.98));
+    border-color: rgba(187, 122, 132, 0.22);
 }
 
 .dashboard-kpi-card.kpi-green {
-    background: linear-gradient(145deg, rgba(16, 185, 129, 0.12), rgba(255, 255, 255, 0.96));
+    background: linear-gradient(145deg, rgba(241, 247, 245, 0.98), rgba(248, 253, 252, 0.98));
+    border-color: rgba(113, 176, 161, 0.2);
 }
 
 .dashboard-kpi-card.kpi-slate {
-    background: linear-gradient(145deg, rgba(71, 85, 105, 0.12), rgba(255, 255, 255, 0.96));
+    background: linear-gradient(145deg, rgba(244, 246, 249, 0.98), rgba(248, 251, 255, 0.98));
+    border-color: rgba(145, 155, 172, 0.18);
+}
+
+body[data-theme="dark"] .dashboard-hero {
+    background:
+        radial-gradient(circle at top right, rgba(41, 103, 163, 0.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.12), transparent 28%),
+        linear-gradient(145deg, rgba(18, 28, 40, 0.97), rgba(10, 17, 27, 0.99)),
+        var(--surface);
+    border-color: rgba(163, 194, 224, 0.16);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 24px 52px rgba(0, 0, 0, 0.28);
+}
+
+body[data-theme="dark"] .dashboard-hero::after {
+    background: linear-gradient(125deg, rgba(255, 255, 255, 0.06), transparent 55%);
+}
+
+body[data-theme="dark"] .dashboard-hero .actions .button.secondary {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(163, 194, 224, 0.16);
+    color: var(--ink);
+}
+
+body[data-theme="dark"] .dashboard-hero .operation-hero-panel {
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(10, 17, 27, 0.14)),
+        rgba(14, 22, 33, 0.9);
+    border-color: rgba(163, 194, 224, 0.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+body[data-theme="dark"] .dashboard-kpi-card {
+    border-color: rgba(163, 194, 224, 0.14);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 18px 38px rgba(0, 0, 0, 0.24);
+}
+
+body[data-theme="dark"] .dashboard-kpi-card.kpi-amber {
+    background: linear-gradient(145deg, rgba(198, 103, 52, 0.24), rgba(18, 28, 40, 0.98));
+}
+
+body[data-theme="dark"] .dashboard-kpi-card.kpi-blue {
+    background: linear-gradient(145deg, rgba(41, 103, 163, 0.24), rgba(18, 28, 40, 0.98));
+}
+
+body[data-theme="dark"] .dashboard-kpi-card.kpi-red {
+    background: linear-gradient(145deg, rgba(189, 63, 47, 0.24), rgba(18, 28, 40, 0.98));
+}
+
+body[data-theme="dark"] .dashboard-kpi-card.kpi-green {
+    background: linear-gradient(145deg, rgba(14, 124, 134, 0.22), rgba(18, 28, 40, 0.98));
+}
+
+body[data-theme="dark"] .dashboard-kpi-card.kpi-slate {
+    background: linear-gradient(145deg, rgba(93, 105, 120, 0.2), rgba(18, 28, 40, 0.98));
 }
 
 .dashboard-role-grid {
-    grid-template-columns: minmax(0, 1.2fr) minmax(240px, 0.72fr);
+    grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
 }
 
-.dashboard-quick-actions-side {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    min-width: 220px;
-    max-width: 320px;
+.dashboard-instagram-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.16fr) minmax(300px, 0.84fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.dashboard-instagram-main,
+.dashboard-instagram-side {
+    display: grid;
+    gap: 16px;
+}
+
+.dashboard-instagram-main {
+    gap: 18px;
+}
+
+.dashboard-instagram-side {
+    align-content: start;
+}
+
+.dashboard-side-card-sticky {
+    position: sticky;
+    top: 108px;
+}
+
+.dashboard-focus-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(240px, 0.75fr);
+    gap: 12px;
+    align-items: start;
 }
 
 .dashboard-focus-card {
     background:
-        radial-gradient(circle at top right, rgba(184, 92, 56, 0.16), transparent 30%),
-        linear-gradient(150deg, rgba(255, 252, 246, 0.96), rgba(243, 235, 223, 0.94));
-    border-color: rgba(184, 92, 56, 0.16);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78), 0 18px 38px rgba(85, 56, 35, 0.08);
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.82), transparent 24%),
+        radial-gradient(circle at top right, rgba(141, 156, 180, 0.08), transparent 26%),
+        linear-gradient(150deg, rgba(255, 255, 255, 0.97), rgba(246, 248, 251, 0.98));
+    border-color: rgba(126, 148, 180, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 20px 42px rgba(37, 64, 97, 0.06);
+    border-radius: 28px;
+}
+
+.dashboard-focus-card .operation-card-head {
+    margin-bottom: 16px;
 }
 
 .dashboard-focus-list {
     display: grid;
-    gap: 12px;
-    margin-top: 6px;
+    gap: 10px;
+    margin-top: 0;
 }
 
 .dashboard-focus-item {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 16px;
+    gap: 12px;
     align-items: center;
-    padding: 16px 18px;
-    border: 1px solid rgba(112, 96, 81, 0.12);
+    padding: 13px 14px;
+    border: 1px solid rgba(136, 150, 176, 0.16);
     border-radius: 20px;
     background:
-        linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(248, 242, 233, 0.96)),
+        linear-gradient(160deg, rgba(255, 255, 255, 0.94), rgba(246, 248, 251, 0.98)),
         rgba(255, 255, 255, 0.9);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88), 0 8px 18px rgba(37, 64, 97, 0.03);
+    position: relative;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.dashboard-focus-item::before {
+    content: "";
+    position: absolute;
+    inset: 12px auto 12px 0;
+    width: 3px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(181, 145, 111, 0.82), rgba(127, 144, 170, 0.76));
+}
+
+.dashboard-focus-item:hover {
+    transform: translateY(-1px);
+    border-color: rgba(126, 148, 180, 0.2);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 14px 28px rgba(37, 64, 97, 0.06);
+}
+
+body[data-theme="dark"] .dashboard-focus-card {
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 22%),
+        radial-gradient(circle at top right, rgba(141, 156, 180, 0.12), transparent 24%),
+        linear-gradient(150deg, rgba(24, 34, 47, 0.96), rgba(11, 19, 29, 0.98));
+    border-color: rgba(138, 159, 196, 0.14);
+}
+
+body[data-theme="dark"] .dashboard-focus-item {
+    border-color: rgba(176, 201, 232, 0.12);
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(14, 22, 33, 0.92)),
+        rgba(14, 22, 33, 0.92);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 14px 30px rgba(0, 0, 0, 0.16);
 }
 
 .dashboard-focus-item:first-child {
-    padding-top: 16px;
+    padding-top: 12px;
 }
 
 .dashboard-focus-copy p:last-child {
-    margin: 8px 0 0;
+    margin: 4px 0 0;
     color: var(--muted);
-    line-height: 1.6;
-    max-width: 54ch;
+    line-height: 1.42;
+    max-width: 44ch;
 }
 
 .dashboard-focus-actions {
     display: grid;
-    gap: 10px;
+    gap: 6px;
     justify-items: end;
+}
+
+.dashboard-focus-actions .button {
+    min-height: 32px;
+    padding: 7px 12px;
+    min-width: 156px;
+    white-space: nowrap;
 }
 
 .dashboard-focus-actions .button.secondary {
     border-color: rgba(112, 96, 81, 0.16);
-    background: rgba(255, 255, 255, 0.78);
+    background: rgba(255, 255, 255, 0.82);
+}
+
+.dashboard-quick-links {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    padding: 14px 14px;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.68);
+    background:
+        linear-gradient(160deg, rgba(248, 251, 255, 0.84), rgba(236, 242, 248, 0.88)),
+        rgba(255, 255, 255, 0.66);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.dashboard-quick-links-head {
+    display: grid;
+    gap: 2px;
+}
+
+.dashboard-quick-links-list {
+    display: grid;
+    gap: 8px;
+}
+
+.dashboard-quick-link-item {
+    display: grid;
+    gap: 3px;
+    padding: 11px 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(112, 96, 81, 0.12);
+    background: rgba(255, 255, 255, 0.82);
+    color: inherit;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.dashboard-quick-link-item::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: linear-gradient(180deg, rgba(40, 92, 142, 0.88), rgba(184, 92, 56, 0.9));
+}
+
+.dashboard-quick-link-item:hover {
+    transform: translateY(-1px);
+    border-color: rgba(184, 92, 56, 0.18);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.dashboard-quick-link-item strong {
+    font-size: 0.96rem;
+}
+
+.dashboard-quick-link-item span {
+    color: var(--muted);
+    font-size: 0.84rem;
+    line-height: 1.42;
 }
 
 .dashboard-role-table td:first-child,
@@ -217,11 +486,13 @@ O QUE ESTE ARQUIVO FAZ:
     position: relative;
     overflow: hidden;
     background:
-    radial-gradient(circle at top right, rgba(184, 92, 56, 0.14), transparent 34%),
-    linear-gradient(160deg, rgba(255, 255, 255, 0.86), rgba(246, 239, 228, 0.98)),
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.84), transparent 24%),
+    radial-gradient(circle at top right, rgba(255, 159, 107, 0.2), transparent 30%),
+    radial-gradient(circle at bottom left, rgba(90, 154, 255, 0.12), transparent 24%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.94), rgba(243, 248, 255, 0.98)),
     rgba(255, 255, 255, 0.94);
-    border-color: rgba(112, 96, 81, 0.14);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 14px 30px rgba(85, 56, 35, 0.06);
+    border-color: rgba(122, 153, 198, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.84), 0 18px 36px rgba(37, 64, 97, 0.08);
 }
 
 .dashboard-quick-card strong {
@@ -235,13 +506,42 @@ O QUE ESTE ARQUIVO FAZ:
     width: 112px;
     height: 112px;
     border-radius: 999px;
-    background: radial-gradient(circle, rgba(249, 115, 22, 0.16), transparent 68%);
+    background: radial-gradient(circle, rgba(255, 159, 107, 0.18), transparent 68%);
     pointer-events: none;
+}
+
+body[data-theme="dark"] .dashboard-quick-card {
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 24%),
+        radial-gradient(circle at top right, rgba(255, 159, 107, 0.18), transparent 26%),
+        radial-gradient(circle at bottom left, rgba(90, 154, 255, 0.14), transparent 24%),
+        linear-gradient(160deg, rgba(24, 34, 47, 0.96), rgba(11, 19, 29, 0.98));
+    border-color: rgba(176, 201, 232, 0.14);
 }
 
 .dashboard-panel-grid {
     grid-template-columns: minmax(0, 1fr);
-    gap: clamp(18px, 2.2vw, 26px);
+    gap: clamp(14px, 1.8vw, 20px);
+}
+
+.dashboard-instagram-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.dashboard-instagram-metrics .card {
+    min-height: 172px;
+    border-radius: 24px;
+}
+
+.dashboard-instagram-metrics .card:first-child,
+.dashboard-instagram-metrics .card:nth-child(4),
+.dashboard-instagram-metrics .card:last-child {
+    grid-column: 1 / -1;
+}
+
+.dashboard-instagram-panels {
+    gap: 16px;
 }
 
 .dashboard-panel-grid .operation-span-full {
@@ -254,30 +554,122 @@ O QUE ESTE ARQUIVO FAZ:
 
 .dashboard-table-card {
     min-height: 100%;
+    position: relative;
+    overflow: hidden;
     background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.32), transparent 100%),
-        linear-gradient(150deg, rgba(255, 252, 246, 0.96), rgba(242, 237, 228, 0.96));
+        linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 100%),
+        linear-gradient(150deg, rgba(255, 252, 246, 0.98), rgba(242, 237, 228, 0.98));
     border-color: rgba(112, 96, 81, 0.14);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76), 0 18px 34px rgba(85, 56, 35, 0.07);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 18px 34px rgba(85, 56, 35, 0.07);
+    border-radius: 28px;
+}
+
+.dashboard-table-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(125deg, rgba(255, 255, 255, 0.16), transparent 38%);
 }
 
 .dashboard-table-card .operation-card-head {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(112, 96, 81, 0.08);
+}
+
+.dashboard-table-card .operation-card-copy {
+    max-width: 28ch;
+    line-height: 1.36;
+}
+
+.dashboard-side-card {
+    background:
+        radial-gradient(circle at top right, rgba(40, 92, 142, 0.16), transparent 28%),
+        linear-gradient(150deg, rgba(251, 253, 255, 0.98), rgba(237, 243, 249, 0.98));
 }
 
 .dashboard-table-card .operation-table-wrap {
-    padding: 14px 14px 12px;
+    padding: 10px 10px 8px;
     margin: 0;
     border: 1px solid rgba(112, 96, 81, 0.1);
-    border-radius: 24px;
+    border-radius: 20px;
     background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(248, 242, 233, 0.94)),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(248, 242, 233, 0.96)),
         rgba(255, 255, 255, 0.9);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .dashboard-table-card .operation-table-wrap table {
     margin-top: 0;
+    min-width: 0;
+    table-layout: fixed;
+}
+
+.dashboard-table-card th,
+.dashboard-table-card td {
+    padding: 14px 10px;
+}
+
+.dashboard-table-card th {
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.dashboard-finance-action-stack {
+    display: grid;
+    gap: 5px;
+    align-items: start;
+    min-width: 0;
+}
+
+.dashboard-finance-student-cell,
+.dashboard-finance-pressure-cell {
+    display: grid;
+    gap: 3px;
+}
+
+.dashboard-finance-student-cell strong {
+    display: block;
+}
+
+.dashboard-finance-pressure-note {
+    color: var(--muted);
+    font-size: 0.72rem;
+    line-height: 1.28;
+}
+
+.dashboard-finance-status {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    padding: 4px 7px;
+    border-radius: 999px;
+    border: 1px solid rgba(112, 96, 81, 0.14);
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: normal;
+}
+
+.dashboard-finance-student-cell .meta-text-sm,
+.dashboard-table-card td .meta-text-sm {
+    line-height: 1.28;
+}
+
+.dashboard-finance-action-form {
+    margin-top: 0;
+}
+
+.dashboard-finance-action-form .button,
+#dashboard-finance-board .button.button-sm {
+    min-height: 34px;
+    padding: 7px 12px;
+    font-size: 0.8rem;
 }
 
 .dashboard-table-card tbody tr {
@@ -285,25 +677,48 @@ O QUE ESTE ARQUIVO FAZ:
 }
 
 .dashboard-table-card tbody tr:hover {
-    background: rgba(184, 92, 56, 0.06);
+    background: linear-gradient(90deg, rgba(184, 92, 56, 0.08), rgba(184, 92, 56, 0.02));
 }
 
 #dashboard-finance-board {
     background:
-        radial-gradient(circle at top right, rgba(249, 115, 22, 0.16), transparent 30%),
-        linear-gradient(150deg, rgba(255, 252, 246, 0.96), rgba(245, 237, 227, 0.96));
+    radial-gradient(circle at top right, rgba(249, 115, 22, 0.18), transparent 30%),
+    linear-gradient(150deg, rgba(255, 252, 246, 0.98), rgba(245, 237, 227, 0.98));
+}
+
+#dashboard-finance-board th,
+#dashboard-finance-board td {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    vertical-align: top;
+}
+
+#dashboard-finance-board td:last-child,
+#dashboard-sessions-board td:last-child,
+#dashboard-risk-board td:last-child {
+    width: 150px;
+}
+
+#dashboard-finance-board .pill.warning {
+    width: fit-content;
+}
+
+#dashboard-risk-board td:first-child,
+#dashboard-finance-board td:first-child,
+#dashboard-sessions-board td:first-child {
+    font-weight: 700;
 }
 
 #dashboard-sessions-board {
     background:
-        radial-gradient(circle at top right, rgba(40, 92, 142, 0.16), transparent 30%),
-        linear-gradient(150deg, rgba(251, 253, 255, 0.96), rgba(237, 243, 249, 0.96));
+        radial-gradient(circle at top right, rgba(40, 92, 142, 0.18), transparent 30%),
+        linear-gradient(150deg, rgba(251, 253, 255, 0.98), rgba(237, 243, 249, 0.98));
 }
 
 #dashboard-risk-board {
     background:
-        radial-gradient(circle at top right, rgba(47, 122, 100, 0.14), transparent 30%),
-        linear-gradient(150deg, rgba(250, 253, 249, 0.96), rgba(238, 245, 238, 0.96));
+        radial-gradient(circle at top right, rgba(47, 122, 100, 0.16), transparent 30%),
+        linear-gradient(150deg, rgba(250, 253, 249, 0.98), rgba(238, 245, 238, 0.98));
 }
 
 .dashboard-risk-pill {
@@ -337,14 +752,23 @@ O QUE ESTE ARQUIVO FAZ:
         grid-template-columns: 1fr auto;
     }
 
-    .dashboard-panel-grid {
-        grid-template-columns: 1.05fr 0.95fr;
+    .dashboard-instagram-layout {
+        grid-template-columns: minmax(0, 1.22fr) minmax(320px, 0.78fr);
     }
 }
 
 @media (max-width: 960px) {
+    .dashboard-instagram-layout,
+    .dashboard-instagram-metrics,
+    .dashboard-focus-shell,
     .dashboard-focus-item {
         grid-template-columns: 1fr;
+    }
+
+    .dashboard-instagram-metrics .card:first-child,
+    .dashboard-instagram-metrics .card:nth-child(4),
+    .dashboard-instagram-metrics .card:last-child {
+        grid-column: auto;
     }
 
     .dashboard-focus-actions {
@@ -355,18 +779,38 @@ O QUE ESTE ARQUIVO FAZ:
         gap: 18px;
     }
 
+    .dashboard-hero {
+        padding: 18px;
+    }
+
     .dashboard-role-grid,
-    .dashboard-panel-grid {
+    .dashboard-panel-grid,
+    .dashboard-instagram-layout {
         grid-template-columns: 1fr;
     }
 
-    .dashboard-quick-actions-side {
-        max-width: none;
+    .dashboard-side-card-sticky {
+        position: static;
     }
 
     .dashboard-table-card .operation-table-wrap {
         padding: 12px;
         border-radius: 20px;
+    }
+
+    .dashboard-table-card th,
+    .dashboard-table-card td {
+        padding: 12px 10px;
+    }
+
+    #dashboard-finance-board .operation-table-wrap {
+        padding: 8px 8px 6px;
+    }
+
+    #dashboard-finance-board th,
+    #dashboard-finance-board td {
+        padding-top: 9px;
+        padding-bottom: 9px;
     }
 }
 
@@ -381,7 +825,516 @@ O QUE ESTE ARQUIVO FAZ:
     }
 
     .dashboard-focus-item {
-        padding: 14px 14px 16px;
+        padding: 12px 12px 14px;
         border-radius: 18px;
     }
+
+    .dashboard-finance-pressure-note {
+        display: none;
+    }
+
+    .dashboard-finance-action-stack {
+        gap: 4px;
+    }
+
+    .dashboard-finance-action-form,
+    .dashboard-finance-action-form .button,
+    #dashboard-finance-board .button.button-sm {
+        width: 100%;
+    }
+}
+
+.dashboard-hero {
+    gap: 18px;
+    min-height: 252px;
+    padding: clamp(18px, 1.8vw, 22px);
+    background:
+        radial-gradient(circle at top right, rgba(40, 92, 142, 0.14), transparent 32%),
+        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.1), transparent 28%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(241, 247, 252, 0.96)),
+        var(--surface);
+}
+
+.dashboard-hero .operation-hero-main {
+    gap: 12px;
+}
+
+.dashboard-hero .operation-hero-main > div:first-child {
+    gap: 8px;
+    max-width: 560px;
+}
+
+.dashboard-hero h2 {
+    max-width: 12ch;
+    font-size: clamp(2rem, 3.2vw, 2.8rem);
+    line-height: 0.96;
+}
+
+.dashboard-hero .operation-hero-copy {
+    max-width: 40ch;
+    font-size: 0.99rem;
+    line-height: 1.48;
+}
+
+.dashboard-hero .actions {
+    gap: 8px;
+    max-width: 560px;
+}
+
+.dashboard-hero .actions .button {
+    min-height: 36px;
+    padding: 8px 13px;
+    border-radius: 14px;
+}
+
+.dashboard-hero .operation-hero-side {
+    width: 100%;
+}
+
+.dashboard-hero .operation-hero-panel {
+    padding: 14px 16px;
+    border-radius: 22px;
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.84), rgba(241, 247, 252, 0.94)),
+        rgba(255, 255, 255, 0.9);
+}
+
+.dashboard-hero .operation-mini-grid {
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.dashboard-hero .operation-mini-stat {
+    padding: 8px 10px;
+}
+
+body[data-theme="dark"] .dashboard-hero {
+    background:
+        radial-gradient(circle at top right, rgba(41, 103, 163, 0.2), transparent 30%),
+        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.12), transparent 24%),
+        linear-gradient(145deg, rgba(18, 28, 40, 0.96), rgba(11, 19, 29, 0.98)),
+        var(--surface);
+}
+
+body[data-theme="dark"] .dashboard-hero .operation-hero-panel {
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(10, 17, 27, 0.14)),
+        rgba(14, 22, 33, 0.9);
+}
+
+.dashboard-stripe-shell {
+    --stripe-ink: #0f172f;
+    --stripe-indigo: #635bff;
+    --stripe-sky: #0ea5e9;
+    --stripe-mint: #10b981;
+    --stripe-rose: #f97316;
+    --stripe-gold: #d4a24c;
+    --stripe-line: rgba(99, 91, 255, 0.12);
+    --stripe-surface: rgba(255, 255, 255, 0.86);
+    --stripe-pearl: rgba(255, 252, 247, 0.98);
+    --stripe-noir: #111827;
+    --stripe-glow: rgba(99, 91, 255, 0.22);
+}
+
+.dashboard-stripe-shell::before {
+    background:
+        radial-gradient(circle at 8% 0%, rgba(99, 91, 255, 0.22), transparent 26%),
+        radial-gradient(circle at 92% 8%, rgba(14, 165, 233, 0.18), transparent 24%),
+        radial-gradient(circle at 52% 32%, rgba(16, 185, 129, 0.1), transparent 20%),
+        linear-gradient(180deg, rgba(250, 251, 255, 0.98), rgba(241, 246, 255, 0));
+}
+
+.dashboard-stripe-shell::after {
+    inset: 12px 0 auto;
+    height: 520px;
+    border-radius: 44px;
+    background:
+        repeating-linear-gradient(90deg, rgba(99, 91, 255, 0.05) 0 1px, transparent 1px 92px),
+        linear-gradient(180deg, rgba(237, 242, 255, 0.82), rgba(237, 242, 255, 0)),
+        linear-gradient(125deg, rgba(255, 255, 255, 0.56), transparent 58%);
+    opacity: 0.95;
+}
+
+.dashboard-stripe-shell .dashboard-hero {
+    border-radius: 34px;
+    border-color: rgba(99, 91, 255, 0.12);
+    background:
+        radial-gradient(circle at 14% 0%, rgba(99, 91, 255, 0.22), transparent 24%),
+        radial-gradient(circle at 88% 18%, rgba(14, 165, 233, 0.16), transparent 26%),
+        radial-gradient(circle at 70% 100%, rgba(212, 162, 76, 0.12), transparent 24%),
+        linear-gradient(142deg, rgba(255, 255, 255, 0.995), rgba(245, 248, 255, 0.985) 56%, rgba(238, 246, 255, 0.98)),
+        var(--surface);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.96),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.34),
+        0 30px 72px rgba(61, 72, 136, 0.16),
+        0 10px 24px rgba(212, 162, 76, 0.08);
+}
+
+.dashboard-stripe-shell .dashboard-hero::before {
+    inset: -42px auto auto -28px;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(99, 91, 255, 0.2), transparent 70%);
+}
+
+.dashboard-stripe-shell .dashboard-hero::after {
+    width: 54%;
+    background:
+        linear-gradient(120deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0.05) 62%),
+        linear-gradient(180deg, rgba(212, 162, 76, 0.08), transparent 72%);
+}
+
+.dashboard-stripe-shell .dashboard-hero .operation-hero-main > div:first-child {
+    max-width: 15ch;
+}
+
+.dashboard-stripe-shell .dashboard-hero :is(h1, h2) {
+    font-size: clamp(2.45rem, 4vw, 4.15rem);
+    line-height: 0.94;
+    letter-spacing: -0.065em;
+}
+
+.dashboard-stripe-shell .dashboard-hero .operation-hero-copy {
+    max-width: 37ch;
+    font-size: 1.01rem;
+    line-height: 1.5;
+}
+
+.dashboard-stripe-shell .dashboard-hero :is(h1, h2),
+.dashboard-stripe-shell .dashboard-focus-copy p,
+.dashboard-stripe-shell .dashboard-table-card .operation-card-title,
+.dashboard-stripe-shell .dashboard-instagram-metrics .metric {
+    color: var(--stripe-ink);
+}
+
+.dashboard-stripe-shell .dashboard-hero .eyebrow,
+.dashboard-stripe-shell .dashboard-quick-link-item span,
+.dashboard-stripe-shell .dashboard-focus-copy p:last-child,
+.dashboard-stripe-shell .dashboard-table-card .operation-card-copy,
+.dashboard-stripe-shell .dashboard-finance-pressure-note,
+.dashboard-stripe-shell .dashboard-finance-status {
+    color: rgba(45, 55, 102, 0.72);
+}
+
+.dashboard-stripe-shell .dashboard-hero .actions .button:not(.secondary) {
+    background: linear-gradient(135deg, rgba(99, 91, 255, 0.98), rgba(79, 70, 229, 0.96) 52%, rgba(14, 165, 233, 0.92));
+    border-color: rgba(99, 91, 255, 0.26);
+    box-shadow: 0 20px 34px rgba(99, 91, 255, 0.24);
+}
+
+.dashboard-stripe-shell .dashboard-hero .actions .button.secondary,
+.dashboard-stripe-shell .dashboard-focus-actions .button.secondary,
+.dashboard-stripe-shell .dashboard-finance-action-form .button.secondary,
+.dashboard-stripe-shell #dashboard-finance-board .button.button-sm {
+    color: var(--stripe-ink);
+    border-color: rgba(99, 91, 255, 0.12);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(246, 248, 255, 0.84)),
+        rgba(255, 255, 255, 0.92);
+}
+
+.dashboard-stripe-shell .dashboard-hero .operation-hero-panel {
+    border-color: rgba(99, 91, 255, 0.12);
+    background:
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.78), transparent 26%),
+        radial-gradient(circle at bottom left, rgba(99, 91, 255, 0.1), transparent 24%),
+        linear-gradient(145deg, rgba(252, 252, 255, 0.985), rgba(238, 244, 255, 0.975));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.94),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+        0 22px 42px rgba(61, 72, 136, 0.12);
+    backdrop-filter: blur(12px);
+}
+
+.dashboard-stripe-shell .dashboard-hero .operation-mini-stat {
+    border: 1px solid rgba(99, 91, 255, 0.1);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.dashboard-stripe-shell .dashboard-focus-card,
+.dashboard-stripe-shell .dashboard-table-card,
+.dashboard-stripe-shell .dashboard-quick-links,
+.dashboard-stripe-shell .dashboard-instagram-metrics .card {
+    border-color: rgba(99, 91, 255, 0.1);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.92),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.24),
+        0 24px 56px rgba(61, 72, 136, 0.1);
+}
+
+.dashboard-stripe-shell .dashboard-focus-card {
+    background:
+        radial-gradient(circle at top right, rgba(99, 91, 255, 0.1), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.1), transparent 22%),
+        linear-gradient(155deg, rgba(255, 255, 255, 0.995), rgba(243, 247, 255, 0.992));
+}
+
+.dashboard-stripe-shell .dashboard-focus-card::after {
+    background: radial-gradient(circle, rgba(99, 91, 255, 0.16), transparent 70%);
+}
+
+.dashboard-stripe-shell .dashboard-focus-item {
+    border-color: rgba(99, 91, 255, 0.1);
+    background:
+        radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.64), transparent 28%),
+        linear-gradient(160deg, rgba(255, 255, 255, 0.995), rgba(247, 249, 255, 0.992)),
+        rgba(255, 255, 255, 0.94);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88), 0 14px 28px rgba(61, 72, 136, 0.05);
+}
+
+.dashboard-stripe-shell .dashboard-focus-item::before,
+.dashboard-stripe-shell .dashboard-quick-link-item::before,
+.dashboard-stripe-shell .dashboard-instagram-metrics .card::before {
+    background: linear-gradient(180deg, var(--stripe-indigo), var(--stripe-sky));
+}
+
+.dashboard-stripe-shell .dashboard-quick-links {
+    background:
+        radial-gradient(circle at top right, rgba(14, 165, 233, 0.1), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(99, 91, 255, 0.1), transparent 24%),
+        linear-gradient(160deg, rgba(250, 251, 255, 0.995), rgba(241, 246, 255, 0.985));
+    backdrop-filter: blur(10px);
+}
+
+.dashboard-stripe-shell .dashboard-quick-link-item {
+    border-color: rgba(99, 91, 255, 0.1);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 255, 0.94)),
+        rgba(255, 255, 255, 0.92);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 12px 24px rgba(61, 72, 136, 0.06);
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.dashboard-stripe-shell .dashboard-quick-link-item strong {
+    letter-spacing: -0.02em;
+}
+
+.dashboard-stripe-shell .dashboard-quick-link-item:hover {
+    border-color: rgba(99, 91, 255, 0.18);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.94),
+        0 16px 30px rgba(61, 72, 136, 0.08);
+}
+
+.dashboard-stripe-shell .dashboard-instagram-metrics .card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.74), transparent 30%),
+        radial-gradient(circle at 0% 100%, rgba(212, 162, 76, 0.08), transparent 28%),
+        linear-gradient(155deg, rgba(255, 255, 255, 0.99), rgba(243, 247, 255, 0.97));
+    backdrop-filter: blur(10px);
+}
+
+.dashboard-stripe-shell .dashboard-instagram-metrics .card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+}
+
+.dashboard-stripe-shell .dashboard-instagram-metrics .card::after {
+    background: radial-gradient(circle, rgba(99, 91, 255, 0.18), transparent 68%);
+}
+
+.dashboard-stripe-shell .dashboard-instagram-metrics .card .card-value-stack {
+    gap: 6px;
+}
+
+.dashboard-stripe-shell .dashboard-instagram-metrics .card .card-copy {
+    max-width: 28ch;
+    font-size: 0.94rem;
+    line-height: 1.52;
+}
+
+.dashboard-stripe-shell .dashboard-table-card {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.68), transparent 100%),
+        radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.54), transparent 28%),
+        linear-gradient(150deg, rgba(255, 255, 255, 0.99), rgba(244, 248, 255, 0.99));
+    backdrop-filter: blur(12px);
+}
+
+.dashboard-stripe-shell .dashboard-table-card .operation-card-head {
+    border-bottom-color: rgba(99, 91, 255, 0.08);
+    padding-bottom: 14px;
+}
+
+.dashboard-stripe-shell .dashboard-table-card .operation-table-wrap {
+    border-color: rgba(99, 91, 255, 0.08);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 255, 0.99)),
+        rgba(255, 255, 255, 0.96);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.94), 0 12px 24px rgba(61, 72, 136, 0.04);
+}
+
+.dashboard-stripe-shell .dashboard-table-card tbody tr:hover {
+    background: linear-gradient(90deg, rgba(99, 91, 255, 0.08), rgba(14, 165, 233, 0.03));
+}
+
+.dashboard-stripe-shell #dashboard-finance-board {
+    background:
+        radial-gradient(circle at top right, rgba(99, 91, 255, 0.18), transparent 30%),
+    radial-gradient(circle at bottom left, rgba(249, 115, 22, 0.12), transparent 26%),
+        linear-gradient(150deg, rgba(255, 255, 255, 0.99), rgba(243, 246, 255, 0.99));
+}
+
+.dashboard-stripe-shell #dashboard-sessions-board,
+.dashboard-stripe-shell .dashboard-side-card {
+    background:
+        radial-gradient(circle at top right, rgba(14, 165, 233, 0.18), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(99, 91, 255, 0.08), transparent 24%),
+        linear-gradient(150deg, rgba(252, 254, 255, 0.99), rgba(241, 247, 255, 0.99));
+}
+
+.dashboard-stripe-shell #dashboard-risk-board {
+    background:
+        radial-gradient(circle at top right, rgba(16, 185, 129, 0.18), transparent 28%),
+    radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.12), transparent 24%),
+        linear-gradient(150deg, rgba(250, 255, 252, 0.99), rgba(239, 249, 244, 0.99));
+}
+
+.dashboard-stripe-shell .dashboard-finance-status {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 255, 0.9));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.94), 0 10px 20px rgba(61, 72, 136, 0.05);
+}
+
+.dashboard-stripe-shell .dashboard-risk-pill {
+    border: 1px solid transparent;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.46);
+}
+
+.dashboard-stripe-shell .dashboard-risk-pill.is-critical {
+    background: rgba(239, 68, 68, 0.12);
+    color: #b91c1c;
+}
+
+.dashboard-stripe-shell .dashboard-risk-pill.is-warning {
+    background: rgba(249, 115, 22, 0.12);
+    color: #c2410c;
+}
+
+.dashboard-stripe-shell .dashboard-risk-pill.is-stable {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+}
+
+body[data-theme="dark"] .dashboard-stripe-shell::before {
+    background:
+    radial-gradient(circle at 8% 0%, rgba(99, 91, 255, 0.32), transparent 26%),
+    radial-gradient(circle at 92% 8%, rgba(14, 165, 233, 0.22), transparent 24%),
+        radial-gradient(circle at 48% 30%, rgba(16, 185, 129, 0.1), transparent 18%),
+        linear-gradient(180deg, rgba(10, 15, 29, 0.94), rgba(10, 15, 29, 0));
+}
+
+body[data-theme="dark"] .dashboard-stripe-shell::after {
+    background:
+    repeating-linear-gradient(90deg, rgba(129, 140, 248, 0.06) 0 1px, transparent 1px 92px),
+        linear-gradient(180deg, rgba(18, 25, 46, 0.72), rgba(18, 25, 46, 0)),
+        linear-gradient(125deg, rgba(255, 255, 255, 0.06), transparent 58%);
+}
+
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-hero {
+    border-color: rgba(129, 140, 248, 0.18);
+    background:
+        radial-gradient(circle at 14% 0%, rgba(99, 91, 255, 0.32), transparent 24%),
+        radial-gradient(circle at 88% 18%, rgba(14, 165, 233, 0.2), transparent 26%),
+        radial-gradient(circle at 70% 100%, rgba(255, 183, 77, 0.08), transparent 24%),
+        linear-gradient(140deg, rgba(15, 23, 42, 0.98), rgba(11, 20, 38, 0.98) 58%, rgba(10, 27, 43, 0.98));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 30px 60px rgba(0, 0, 0, 0.32);
+}
+
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-hero .operation-hero-panel {
+    background:
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.12), transparent 24%),
+        radial-gradient(circle at bottom left, rgba(99, 91, 255, 0.1), transparent 24%),
+        linear-gradient(145deg, rgba(21, 30, 52, 0.98), rgba(13, 29, 51, 0.97));
+}
+
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-hero :is(h1, h2),
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-focus-copy p,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-table-card .operation-card-title,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-instagram-metrics .metric {
+    color: rgba(241, 245, 255, 0.96);
+}
+
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-hero .eyebrow,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-quick-link-item span,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-focus-copy p:last-child,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-table-card .operation-card-copy,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-finance-pressure-note,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-finance-status {
+    color: rgba(196, 205, 230, 0.72);
+}
+
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-hero .actions .button.secondary,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-focus-actions .button.secondary,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-finance-action-form .button.secondary,
+body[data-theme="dark"] .dashboard-stripe-shell #dashboard-finance-board .button.button-sm {
+    color: rgba(241, 245, 255, 0.92);
+    border-color: rgba(129, 140, 248, 0.18);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+        rgba(14, 22, 38, 0.92);
+}
+
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-hero .operation-hero-panel {
+    border-color: rgba(129, 140, 248, 0.16);
+    background:
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.1), transparent 24%),
+        linear-gradient(145deg, rgba(21, 30, 52, 0.96), rgba(13, 29, 51, 0.96));
+}
+
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-hero .operation-mini-stat,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-focus-card,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-focus-item,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-quick-links,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-quick-link-item,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-instagram-metrics .card,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-table-card,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-table-card .operation-table-wrap {
+    border-color: rgba(129, 140, 248, 0.14);
+}
+
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-focus-card,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-instagram-metrics .card,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-table-card {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.08), transparent 28%),
+        linear-gradient(155deg, rgba(15, 23, 42, 0.96), rgba(11, 20, 38, 0.98));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 24px 48px rgba(0, 0, 0, 0.3);
+}
+
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-quick-links,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-quick-link-item,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-table-card .operation-table-wrap {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.08), transparent 28%),
+        linear-gradient(155deg, rgba(18, 28, 50, 0.94), rgba(12, 20, 36, 0.96));
+}
+
+body[data-theme="dark"] .dashboard-stripe-shell #dashboard-finance-board {
+    background:
+        radial-gradient(circle at top right, rgba(99, 91, 255, 0.22), transparent 30%),
+        linear-gradient(150deg, rgba(18, 25, 46, 0.98), rgba(12, 20, 38, 0.98));
+}
+
+body[data-theme="dark"] .dashboard-stripe-shell #dashboard-sessions-board,
+body[data-theme="dark"] .dashboard-stripe-shell .dashboard-side-card {
+    background:
+        radial-gradient(circle at top right, rgba(14, 165, 233, 0.18), transparent 28%),
+        linear-gradient(150deg, rgba(16, 24, 44, 0.98), rgba(11, 20, 36, 0.98));
+}
+
+body[data-theme="dark"] .dashboard-stripe-shell #dashboard-risk-board {
+    background:
+        radial-gradient(circle at top right, rgba(16, 185, 129, 0.18), transparent 28%),
+        linear-gradient(150deg, rgba(15, 29, 35, 0.98), rgba(11, 22, 30, 0.98));
 }

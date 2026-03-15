@@ -32,12 +32,14 @@ class OperationalMessageResult:
     payment_id: int | None = None
     enrollment_id: int | None = None
     contact_created: bool = False
+    blocked: bool = False
 
 
 @dataclass(frozen=True, slots=True)
 class FinanceCommunicationActionResult:
     student_id: int
     message_log_id: int
+    blocked: bool = False
 
 
 @dataclass(frozen=True, slots=True)

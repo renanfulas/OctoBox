@@ -17,19 +17,69 @@ from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
 from access.roles import ROLE_RECEPTION
+from communications.application.message_templates import build_operational_message_body
+from communications.models import WhatsAppContact
 from finance.models import Payment, PaymentStatus
+from finance.overdue_metrics import get_overdue_payments_queryset
 from operations.models import Attendance, AttendanceStatus, BehaviorNote, ClassSession
 from operations.session_snapshots import serialize_class_session, sync_runtime_statuses
+from shared_support.whatsapp_contact_state import build_whatsapp_contact_state
+from shared_support.whatsapp_links import build_whatsapp_message_href
 from students.models import Student, StudentStatus
+
+
+def _build_payment_alert_whatsapp_href(payment):
+    message = build_operational_message_body(
+        action_kind='overdue',
+        first_name=payment.student.full_name.split()[0],
+        payment_due_date=payment.due_date,
+        payment_amount=payment.amount,
+    )
+    return build_whatsapp_message_href(phone=getattr(payment.student, 'phone', ''), message=message)
+
+
+def _decorate_payment_alerts(payment_alerts):
+    student_ids = [payment.student_id for payment in payment_alerts]
+    contacts_by_student_id = {
+        contact.linked_student_id: contact
+        for contact in WhatsAppContact.objects.filter(linked_student_id__in=student_ids)
+    }
+    for payment in payment_alerts:
+        payment.dashboard_whatsapp_href = _build_payment_alert_whatsapp_href(payment)
+        contact_state = build_whatsapp_contact_state(contacts_by_student_id.get(payment.student_id))
+        payment.dashboard_whatsapp_last_contact_label = contact_state['whatsapp_last_contact_label']
+        payment.dashboard_whatsapp_next_available_label = contact_state['whatsapp_next_available_label']
+        payment.dashboard_whatsapp_repeat_blocked = contact_state['whatsapp_repeat_blocked']
+        payment.dashboard_requires_whatsapp_followup = bool(
+            getattr(payment.student, 'status', '') == StudentStatus.ACTIVE
+            and payment.dashboard_whatsapp_href
+            and not payment.dashboard_whatsapp_repeat_blocked
+        )
+    return payment_alerts
+
+
+def _build_dashboard_payment_alert_snapshot(*, overdue_payments_queryset):
+    active_overdue_payments = list(
+        overdue_payments_queryset
+        .select_related('student')
+        .filter(student__status=StudentStatus.ACTIVE)
+        .order_by('due_date', 'student__full_name')
+    )
+    decorated_alerts = _decorate_payment_alerts(active_overdue_payments)
+    actionable_alerts = [payment for payment in decorated_alerts if payment.dashboard_requires_whatsapp_followup]
+    return {
+        'payment_alerts': decorated_alerts[:5],
+        'payment_alerts_total_count': len(decorated_alerts),
+        'payment_alerts_total_label': f'{len(decorated_alerts)} alerta(s)',
+        'actionable_payment_alerts_count': len(actionable_alerts),
+        'next_actionable_payment_alert': actionable_alerts[0] if actionable_alerts else None,
+    }
 
 
 def build_dashboard_snapshot(*, today, month_start, role_slug=''):
     active_students = Student.objects.filter(status=StudentStatus.ACTIVE)
     sessions_today = ClassSession.objects.filter(scheduled_at__date=today)
-    overdue_payments = Payment.objects.filter(
-        status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE],
-        due_date__lt=today,
-    )
+    overdue_payments = get_overdue_payments_queryset(Payment.objects.all(), today=today)
     monthly_attendance = Attendance.objects.filter(
         session__scheduled_at__date__gte=month_start,
         status__in=[AttendanceStatus.CHECKED_IN, AttendanceStatus.CHECKED_OUT],
@@ -122,6 +172,8 @@ def build_dashboard_snapshot(*, today, month_start, role_slug=''):
             }
         )
 
+    payment_alert_snapshot = _build_dashboard_payment_alert_snapshot(overdue_payments_queryset=overdue_payments)
+
     return {
         'metrics': metrics,
         'hero_stats': [
@@ -142,7 +194,11 @@ def build_dashboard_snapshot(*, today, month_start, role_slug=''):
             serialize_class_session(session, now=current_time)
             for session in upcoming_session_objects
         ],
-        'payment_alerts': overdue_payments.select_related('student').order_by('due_date')[:5],
+        'payment_alerts': payment_alert_snapshot['payment_alerts'],
+        'payment_alerts_total_count': payment_alert_snapshot['payment_alerts_total_count'],
+        'payment_alerts_total_label': payment_alert_snapshot['payment_alerts_total_label'],
+        'actionable_payment_alerts_count': payment_alert_snapshot['actionable_payment_alerts_count'],
+        'next_actionable_payment_alert': payment_alert_snapshot['next_actionable_payment_alert'],
         'operational_focus': operational_focus,
         'student_health': (
             Student.objects.annotate(

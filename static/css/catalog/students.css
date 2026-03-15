@@ -13,7 +13,7 @@ PONTOS CRITICOS:
 */
 
 .student-scene {
-    gap: var(--section-gap);
+    gap: calc(var(--section-gap) - 2px);
 }
 
 .student-hero {
@@ -29,46 +29,104 @@ PONTOS CRITICOS:
 }
 
 .student-hero .operation-hero-main > div:first-child {
-    max-width: 700px;
+    max-width: 560px;
 }
 
 .student-hero h2 {
-    max-width: 11ch;
+    max-width: 13ch;
+    font-size: clamp(2.05rem, 3.4vw, 2.9rem);
+    line-height: 1;
 }
 
 .student-hero .operation-hero-copy {
-    max-width: 58ch;
+    max-width: 40ch;
 }
 
 .student-hero .actions {
-    max-width: 720px;
+    max-width: 560px;
+    gap: 6px;
 }
 
 .student-hero .actions .button {
-    min-height: 38px;
-    padding: 9px 14px;
+    min-height: 33px;
+    padding: 7px 12px;
+}
+
+.student-scene .metric-card {
+    min-height: 150px;
+    padding: 14px 16px;
+}
+
+.student-metric-card-body {
+    height: 100%;
+}
+
+.student-metric-card-footer {
+    padding-top: 0;
+}
+
+.student-scene .metric-note {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .student-filter-card {
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.84), rgba(244, 237, 226, 0.96));
 }
 
+.student-filter-card .form-stack {
+    gap: 12px;
+}
+
+.student-filter-card .field-grid-200 {
+    gap: 10px;
+}
+
+.student-filter-card .operation-card-head {
+    margin-bottom: 12px;
+}
+
+.student-filter-actions-primary {
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.student-utility-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.student-filter-actions-secondary {
+    justify-content: flex-end;
+}
+
 .student-focus-card {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(255, 247, 237, 0.95));
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.84), transparent 24%),
+        radial-gradient(circle at top right, rgba(255, 159, 107, 0.16), transparent 26%),
+        radial-gradient(circle at bottom left, rgba(92, 206, 196, 0.12), transparent 22%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(244, 248, 255, 0.98));
 }
 
 .student-focus-list {
     display: grid;
-    gap: 14px;
+    gap: 10px;
 }
 
 .student-focus-item {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 16px;
+    gap: 12px;
     align-items: center;
-    padding: 16px 0;
-    border-top: 1px solid rgba(148, 163, 184, 0.18);
+    padding: 14px 0;
+    border-top: 1px solid rgba(122, 153, 198, 0.14);
 }
 
 .student-focus-item:first-child {
@@ -77,16 +135,79 @@ PONTOS CRITICOS:
 }
 
 .student-focus-copy p:last-child {
-    margin: 8px 0 0;
+    margin: 6px 0 0;
     color: var(--muted);
-    line-height: 1.6;
-    max-width: 54ch;
+    line-height: 1.48;
+    max-width: 48ch;
 }
 
 .student-focus-actions {
     display: grid;
-    gap: 10px;
+    gap: 8px;
     justify-items: end;
+}
+
+.student-priority-panel .operation-card-head {
+    margin-bottom: 12px;
+}
+
+body[data-theme="dark"] .student-focus-card {
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 22%),
+        radial-gradient(circle at top right, rgba(255, 159, 107, 0.14), transparent 24%),
+        linear-gradient(145deg, rgba(24, 34, 47, 0.96), rgba(11, 19, 29, 0.98));
+}
+
+body[data-theme="dark"] .student-focus-item {
+    border-top-color: rgba(176, 201, 232, 0.12);
+}
+
+.student-priority-panel .stack-14 {
+    gap: 10px;
+}
+
+.priority-student-card {
+    padding: 14px;
+    gap: 8px;
+}
+
+.priority-student-card-body,
+.student-intake-card-body {
+    gap: 10px;
+}
+
+.priority-student-card-content,
+.student-intake-card-footer {
+    padding-top: 0;
+}
+
+.priority-student-card .row-between-md {
+    gap: 12px;
+}
+
+.priority-student-card .meta-text,
+.priority-student-card .meta-text-sm {
+    line-height: 1.4;
+}
+
+.priority-student-card .meta-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.priority-student-card .actions {
+    gap: 6px;
+}
+
+.student-priority-badges {
+    gap: 6px;
+}
+
+.priority-student-card .actions .button {
+    min-height: 34px;
+    padding: 7px 11px;
 }
 
 .student-command-card,
@@ -108,12 +229,53 @@ PONTOS CRITICOS:
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.84), rgba(244, 237, 226, 0.96));
 }
 
+.student-queue-panel .intake-grid {
+    gap: 8px;
+}
+
+.student-queue-panel .intake-card {
+    padding: 12px 14px;
+    gap: 10px;
+}
+
+.student-intake-card-body .card-content {
+    gap: 6px;
+}
+
+.student-queue-panel .intake-card .actions .button {
+    min-height: 34px;
+    padding: 7px 11px;
+}
+
 .student-data-panel {
     overflow-x: auto;
 }
 
 .student-data-panel table {
     min-width: 760px;
+}
+
+.student-data-panel .operation-card-head {
+    margin-bottom: 12px;
+}
+
+.student-data-panel th,
+.student-data-panel td {
+    padding: 10px 9px;
+}
+
+.student-data-panel th {
+    font-size: 0.72rem;
+}
+
+.student-data-panel td .actions {
+    gap: 6px;
+}
+
+.student-data-panel td .button {
+    min-height: 32px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
 }
 
 @media (max-width: 960px) {
@@ -123,17 +285,100 @@ PONTOS CRITICOS:
         grid-template-columns: 1fr;
     }
 
+    .student-scene .metric-card {
+        min-height: 146px;
+    }
+
     .student-priority-badges {
         justify-items: start;
     }
 
+    .priority-student-card .row-between-md {
+        grid-template-columns: 1fr;
+    }
+
     .student-focus-actions {
         justify-items: stretch;
+    }
+
+    .student-utility-actions {
+        align-items: stretch;
+        justify-content: stretch;
+    }
+
+    .student-filter-actions-secondary {
+        justify-content: stretch;
     }
 }
 
 @media (max-width: 640px) {
     .student-data-panel {
         padding-inline: 20px;
+    }
+
+    .student-utility-actions {
+        flex-direction: column;
+    }
+
+
+.student-hero.operation-hero {
+    gap: 18px;
+    min-height: 252px;
+    padding: clamp(18px, 1.8vw, 22px);
+    background:
+        radial-gradient(circle at top right, rgba(40, 92, 142, 0.14), transparent 32%),
+        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.1), transparent 28%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(241, 247, 252, 0.96)),
+        var(--surface);
+}
+
+    body[data-theme="dark"] .student-hero.operation-hero {
+        background:
+        radial-gradient(circle at top right, rgba(41, 103, 163, 0.2), transparent 30%),
+        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.12), transparent 24%),
+        linear-gradient(145deg, rgba(18, 28, 40, 0.96), rgba(11, 19, 29, 0.98)),
+        var(--surface);
+    }
+
+.student-hero.operation-hero .operation-hero-main > div:first-child {
+    max-width: 560px;
+    gap: 8px;
+}
+
+.student-hero.operation-hero h2 {
+    max-width: 12ch;
+    font-size: clamp(2rem, 3.2vw, 2.8rem);
+    line-height: 0.96;
+}
+
+.student-hero.operation-hero .operation-hero-copy {
+    max-width: 40ch;
+}
+
+.student-hero.operation-hero .actions {
+    max-width: 560px;
+    gap: 8px;
+}
+
+.student-hero.operation-hero .actions .button {
+    min-height: 36px;
+    padding: 8px 13px;
+}
+
+.student-hero.operation-hero .operation-hero-panel {
+    padding: 14px 16px;
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.84), rgba(241, 247, 252, 0.94)),
+        rgba(255, 255, 255, 0.9);
+}
+
+body[data-theme="dark"] .student-hero.operation-hero .operation-hero-panel {
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(10, 17, 27, 0.14)),
+        rgba(14, 22, 33, 0.9);
+}
+    .student-data-panel th,
+    .student-data-panel td {
+        padding: 10px 8px;
     }
 }

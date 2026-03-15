@@ -1,0 +1,58 @@
+<!--
+ARQUIVO: pagina simples de configuracao operacional.
+
+POR QUE ELE EXISTE:
+- expoe parametros sensiveis do runtime para leitura rapida sem exigir ida ao codigo.
+-->
+{% extends "layouts/base.html" %}
+
+{% block content %}
+{% with page=operational_settings_page %}
+<section class="hero system-map-hero" id="operational-settings-window" aria-label="Janela operacional do WhatsApp">
+    <div>
+        <h2>{{ page.context.title }}</h2>
+        <p>{{ page.context.subtitle }}</p>
+    </div>
+    <div class="actions">
+        <span class="pill">{{ page.data.repeat_block_mode_label }}</span>
+        <a class="button secondary" href="/financeiro/#finance-priority-board">Abrir financeiro</a>
+    </div>
+</section>
+
+<section class="layout-grid system-map-section" aria-label="Leitura da configuracao atual">
+    <article class="table-card">
+        <p class="eyebrow">Janela atual</p>
+        <h3>{{ page.data.repeat_block_hours }}h</h3>
+        <p class="system-map-copy">Esse e o intervalo usado para impedir repeticao da mesma abordagem de WhatsApp para o mesmo contato.</p>
+    </article>
+    <article class="table-card" id="operational-settings-impact">
+        <p class="eyebrow">Onde isso impacta</p>
+        <ul class="capability-list">
+            {% for item in page.data.affected_surfaces %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </article>
+</section>
+
+<section class="layout-grid system-map-section" aria-label="Guardrails e alteracao da configuracao">
+    <article class="table-card">
+        <p class="eyebrow">Guardrails ativos</p>
+        <ul class="capability-list">
+            {% for item in page.data.guardrails %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </article>
+    <article class="table-card" id="operational-settings-change">
+        <p class="eyebrow">Como alterar</p>
+        <ul class="capability-list">
+            {% for item in page.data.change_steps %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+        <p class="system-map-copy">Variavel esperada: OPERATIONAL_WHATSAPP_REPEAT_BLOCK_HOURS.</p>
+    </article>
+</section>
+{% endwith %}
+{% endblock %}

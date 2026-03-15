@@ -1,9 +1,9 @@
 <!--
 ARQUIVO: passo de plano e status comercial da ficha do aluno.
 -->
-<details id="student-form-plan"{% if page_mode == 'create' or form.selected_plan.errors or form.enrollment_status.errors %} open{% endif %} class="disclosure-panel disclosure-panel-success">
+<details id="student-form-plan"{% if page_mode == 'create' or form.selected_plan.errors or form.enrollment_status.errors %} open{% endif %} class="disclosure-panel disclosure-panel-success student-form-step student-form-step-disclosure">
     <summary>Passo 4: plano e status comercial</summary>
-    <div class="stack-16 section-gap-top-xs">
+    <div class="stack-16 section-gap-top-xs student-form-step-body">
         <div class="field-grid-220">
             <label>
                 <span class="field-label">{{ form.selected_plan.label }}</span>
@@ -18,7 +18,7 @@ ARQUIVO: passo de plano e status comercial da ficha do aluno.
             </label>
         </div>
         {{ form.enrollment_status.as_hidden }}
-        <div class="note-panel note-panel-success-soft text-muted">
+        <div class="note-panel note-panel-success-soft text-muted student-form-step-note">
             O plano escolhido ja prepara a matricula do aluno. Isso reduz retrabalho e faz a pagina de alunos conversar direto com a central de financeiro.
         </div>
     </div>

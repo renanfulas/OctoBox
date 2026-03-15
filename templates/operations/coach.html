@@ -16,90 +16,10 @@ PONTOS CRITICOS:
 
 {% block content %}
 {% with page=operation_page %}
-<div class="operation-shell">
+<div class="operation-shell coach-scene">
     {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
-
-    <section class="panel-grid operation-metric-grid" aria-label="Metricas do turno">
-        {% for card in page.data.metric_cards %}
-        {% include "includes/ui/metric_card.html" with card=card %}
-        {% endfor %}
-    </section>
-
-    <div id="coach-sessions-board" class="operation-shell">
-    {% for session in page.data.sessions_today %}
-    <section class="table-card operation-session-card" aria-label="Sessoes e presenca">
-        <div class="operation-session-head">
-            <div>
-                <p class="eyebrow">Turma do dia</p>
-                <h2 class="operation-session-title">{{ session.title }}</h2>
-                <p class="operation-session-meta">{{ session.scheduled_at|date:"d/m/Y H:i" }}{% if session.duration_minutes %} • {{ session.duration_minutes }} min{% endif %}</p>
-            </div>
-            <div class="operation-session-badges">
-                <span class="pill info">{{ session.attendances.all|length }} presença(s)</span>
-                <span class="pill accent">Registro em tempo real</span>
-            </div>
-        </div>
-        <div class="operation-session-body">
-            <div class="operation-table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th scope="col">Aluno</th>
-                            <th scope="col">Status</th>
-                            <th scope="col">Ações</th>
-                            <th scope="col">Ocorrência técnica</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for attendance in session.attendances.all %}
-                        <tr>
-                            <td>{{ attendance.student.full_name }}</td>
-                            <td>{{ attendance.get_status_display }}</td>
-                            <td>
-                                <div class="actions operation-inline-actions">
-                                    <form method="post" action="/operacao/presenca/{{ attendance.id }}/check-in/">
-                                        {% csrf_token %}
-                                        <button class="button" type="submit">Check-in</button>
-                                    </form>
-                                    <form method="post" action="/operacao/presenca/{{ attendance.id }}/check-out/">
-                                        {% csrf_token %}
-                                        <button class="button secondary" type="submit">Check-out</button>
-                                    </form>
-                                    <form method="post" action="/operacao/presenca/{{ attendance.id }}/absent/">
-                                        {% csrf_token %}
-                                        <button class="button secondary" type="submit">Falta</button>
-                                    </form>
-                                </div>
-                            </td>
-                            <td>
-                                <form class="operation-note-form" method="post" action="/operacao/aluno/{{ attendance.student.id }}/ocorrencia-tecnica/">
-                                    {% csrf_token %}
-                                    <select name="category">
-                                        {% for value, label in page.data.behavior_categories %}
-                                        <option value="{{ value }}">{{ label }}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <textarea name="description" rows="2" maxlength="280" placeholder="Explique a ocorrencia tecnica em uma frase curta.">{{ attendance.notes }}</textarea>
-                                    <div class="actions">
-                                        <button class="button secondary" type="submit">Registrar</button>
-                                    </div>
-                                </form>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="4" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Presencas da aula" title="Nenhuma presenca registrada para esta aula" copy="O coach ainda nao recebeu check-in, check-out ou falta neste encontro." badge="Aguardando leitura" badge_class="warning" %}</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </section>
-    {% empty %}
-    <section class="table-card operation-empty-card" aria-label="Status geral das sessoes">
-        {% include "includes/ui/state_empty.html" with eyebrow="Agenda de hoje" title="Nenhuma aula cadastrada" copy="O coach esta sem turmas programadas para hoje neste ambiente." badge="Dia livre" badge_class="info" %}
-    </section>
-    {% endfor %}
-    </div>
+    {% include "operations/includes/coach_metrics_section.html" %}
+    {% include "operations/includes/coach_sessions_section.html" %}
 </div>
 {% endwith %}
 {% endblock %}

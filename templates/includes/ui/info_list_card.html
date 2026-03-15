@@ -1,21 +1,14 @@
 <article class="table-card{% if card_class %} {{ card_class }}{% endif %}">
-    <div class="operation-card-head card-head">
-        <div class="card-head-main">
-            <p class="eyebrow card-label">{{ eyebrow }}</p>
-            <h2 class="operation-card-title card-title">{{ title }}</h2>
-            {% if copy %}
-            <p class="operation-card-copy card-copy">{{ copy }}</p>
-            {% endif %}
+    <div class="card-body card-body-list">
+        {% include "includes/ui/operation_card_head.html" with eyebrow=eyebrow title=title copy=copy pill_label=pill_label pill_class=pill_class %}
+        <div class="card-content">
+            <ul class="capability-list card-list">
+                {% for item in items %}
+                <li class="card-list-item">{{ item }}</li>
+                {% empty %}
+                <li class="card-list-item">{{ empty_text|default:'Sem itens disponíveis.' }}</li>
+                {% endfor %}
+            </ul>
         </div>
-        {% if pill_label %}
-        <span class="pill card-action{% if pill_class %} {{ pill_class }}{% endif %}">{{ pill_label }}</span>
-        {% endif %}
     </div>
-    <ul class="capability-list">
-        {% for item in items %}
-        <li>{{ item }}</li>
-        {% empty %}
-        <li>{{ empty_text|default:'Sem itens disponíveis.' }}</li>
-        {% endfor %}
-    </ul>
 </article>

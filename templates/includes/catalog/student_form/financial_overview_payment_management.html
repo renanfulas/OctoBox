@@ -2,9 +2,9 @@
 ARQUIVO: gestao da cobranca atual do aluno.
 -->
 {% if page.data.payment_management_form %}
-<article class="table-card section-gap-top-sm" id="student-payment-management">
+<article class="table-card section-gap-top-sm student-payment-management-card" id="student-payment-management">
     <p class="eyebrow">Gestao da cobranca atual</p>
-    <form method="post" action="/alunos/{{ page.data.student_object.id }}/financeiro/acao/" class="form-stack">
+    <form method="post" action="/alunos/{{ page.data.student_object.id }}/financeiro/acao/" class="form-stack student-payment-management-form">
         {% csrf_token %}
         {{ page.data.payment_management_form.payment_id }}
         <div class="field-grid-220">
@@ -29,13 +29,17 @@ ARQUIVO: gestao da cobranca atual do aluno.
             <span class="field-label">{{ page.data.payment_management_form.notes.label }}</span>
             {{ page.data.payment_management_form.notes }}
         </label>
-        <div class="actions actions-tight">
-            <button class="button" type="submit" name="action" value="update-payment">Salvar cobranca</button>
-            <button class="button secondary" type="submit" name="action" value="mark-paid">Confirmar pagamento</button>
+        <div class="student-payment-management-actions">
+            <div class="actions actions-tight student-payment-management-actions-primary">
+                <button class="button" type="submit" name="action" value="update-payment">Salvar cobranca</button>
+                <button class="button secondary" type="submit" name="action" value="mark-paid">Confirmar pagamento</button>
+            </div>
             {% if page.capabilities.can_manage_student_payments_full %}
-            <button class="button secondary" type="submit" name="action" value="refund-payment">Estornar</button>
-            <button class="button secondary" type="submit" name="action" value="cancel-payment">Cancelar</button>
-            <button class="button secondary" type="submit" name="action" value="regenerate-payment">Regenerar</button>
+            <div class="actions actions-tight student-payment-management-actions-secondary">
+                <button class="button secondary" type="submit" name="action" value="refund-payment">Estornar</button>
+                <button class="button secondary" type="submit" name="action" value="cancel-payment">Cancelar</button>
+                <button class="button secondary" type="submit" name="action" value="regenerate-payment">Regenerar</button>
+            </div>
             {% endif %}
         </div>
     </form>

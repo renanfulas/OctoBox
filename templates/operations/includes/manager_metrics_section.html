@@ -1,0 +1,11 @@
+<!--
+ARQUIVO: grade de metricas do Manager.
+
+POR QUE ELE EXISTE:
+- isola os numeros da gerencia para manter a pagina principal curta.
+-->
+<section class="panel-grid operation-metric-grid manager-metric-grid" aria-label="Metricas de gerencia">
+    {% for card in page.data.metric_cards %}
+    {% include "includes/ui/metric_card.html" with card=card %}
+    {% endfor %}
+</section>

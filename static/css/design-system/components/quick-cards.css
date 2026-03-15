@@ -16,18 +16,33 @@ POR QUE ELE EXISTE:
     border-radius: var(--radius-panel);
     border: 1px solid var(--line);
     background:
-        radial-gradient(circle at top right, rgba(184, 92, 56, 0.14), transparent 36%),
-        linear-gradient(145deg, rgba(255, 255, 255, 0.72), rgba(245, 238, 227, 0.94));
-    backdrop-filter: blur(16px);
-    box-shadow: var(--shadow-soft);
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.84), transparent 26%),
+        radial-gradient(circle at 84% 14%, rgba(255, 159, 107, 0.18), transparent 26%),
+        radial-gradient(circle at 20% 100%, rgba(90, 154, 255, 0.12), transparent 28%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(242, 247, 255, 0.96));
+    backdrop-filter: blur(22px) saturate(1.1);
+    box-shadow: 0 24px 52px rgba(37, 64, 97, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.88);
     text-decoration: none;
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    position: relative;
+    overflow: hidden;
 }
 
 .quick-card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-lift);
-    border-color: rgba(184, 92, 56, 0.2);
+    box-shadow: 0 34px 78px rgba(33, 61, 96, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    border-color: rgba(90, 154, 255, 0.22);
+}
+
+.quick-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -24px -28px auto;
+    width: 128px;
+    height: 128px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(255, 159, 107, 0.16), transparent 70%);
+    pointer-events: none;
 }
 
 .quick-card strong {
@@ -41,6 +56,20 @@ POR QUE ELE EXISTE:
     margin: 0;
     color: var(--muted);
     line-height: 1.65;
+}
+
+body[data-theme="dark"] .quick-card {
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 22%),
+        radial-gradient(circle at 84% 14%, rgba(255, 159, 107, 0.18), transparent 24%),
+        radial-gradient(circle at 20% 100%, rgba(90, 154, 255, 0.14), transparent 24%),
+        linear-gradient(145deg, rgba(24, 34, 47, 0.96), rgba(11, 19, 29, 0.98));
+    border-color: rgba(176, 201, 232, 0.14);
+    box-shadow: 0 28px 68px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="dark"] .quick-card:hover {
+    border-color: rgba(120, 170, 255, 0.26);
 }
 
 .accent-bar {

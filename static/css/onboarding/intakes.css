@@ -1,0 +1,157 @@
+/*
+ARQUIVO: ajustes visuais da Central de Intake.
+
+POR QUE ELE EXISTE:
+- Dá acabamento proprio para a nova area de entradas sem duplicar todo o sistema visual.
+*/
+
+.intake-scene {
+    gap: var(--section-gap);
+}
+
+.intake-compact-layout {
+    align-items: start;
+    gap: 14px;
+}
+
+.intake-filter-card {
+    gap: 0.85rem;
+}
+
+.intake-filter-card .field-grid-200 {
+    gap: 14px;
+}
+
+.intake-filter-card .actions {
+    padding-top: 0;
+}
+
+[data-panel="intake-metrics"] {
+    gap: 12px;
+}
+
+.intake-scene .metric-card {
+    min-height: 172px;
+}
+
+.intake-source-grid {
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.intake-mini-card,
+.intake-rule-card {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 18px;
+    padding: 0.9rem 1rem;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+}
+
+.intake-metric-body,
+.intake-mini-card-body,
+.intake-rule-card-body,
+.intake-card-body {
+    gap: 12px;
+}
+
+.intake-mini-card-value-stack,
+.intake-rule-card-value-stack {
+    gap: 6px;
+}
+
+.intake-mini-card-content,
+.intake-rule-card-content,
+.intake-card-content {
+    gap: 8px;
+}
+
+.intake-metric-footer {
+    margin-top: 0;
+}
+
+.intake-card--detailed {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.intake-card-main {
+    min-width: 0;
+}
+
+.intake-meta-list {
+    display: grid;
+    gap: 0.25rem;
+}
+
+.intake-card-footer {
+    margin-top: 0;
+}
+
+.intake-card-actions {
+    justify-content: flex-start;
+    gap: 0.5rem;
+}
+
+.intake-action-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.intake-conversion-pill {
+    align-self: flex-start;
+}
+
+@media (min-width: 760px) {
+    .intake-card--detailed {
+        align-items: start;
+        justify-content: space-between;
+        flex-direction: row;
+    }
+
+    .intake-card-actions {
+        align-items: flex-end;
+        justify-content: center;
+        min-width: 204px;
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 960px) {
+    .intake-source-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .intake-scene .metric-card {
+        min-height: 160px;
+    }
+}
+
+@media (max-width: 720px) {
+    .intake-source-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .intake-card-actions,
+    .intake-action-form {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .intake-card-actions .button,
+    .intake-action-form .button,
+    .intake-conversion-pill {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .intake-meta-list .meta-text:last-child {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+}

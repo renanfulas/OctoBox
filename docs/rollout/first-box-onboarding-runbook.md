@@ -94,7 +94,7 @@ Papéis recomendados no piloto:
 
 1. um responsavel Owner
 2. um operador Manager, se existir
-3. um operador Recepcao, quando o box tiver balcao ativo ou decidir usar o fluxo dedicado desde o dia 1
+3. um operador Recepcao, sempre que o piloto for usar o fluxo oficial de balcao
 4. um ou mais Coach, se a rotina exigir
 
 Evitar criar usuarios sem papel definido.
@@ -217,7 +217,7 @@ O primeiro box so entra em uso piloto real quando:
 
 1. os usuarios principais conseguem entrar
 2. a operacao minima roda sem admin bruto
-3. o fluxo de Recepcao consegue localizar aluno, enxergar aula e tratar cobranca curta com usuario proprio ou cobertura temporaria de Owner ou Manager
+3. o fluxo oficial de Recepcao consegue localizar aluno, enxergar aula e tratar cobranca curta; se houver contingencia por Owner ou Manager, isso precisa estar formalmente registrado
 4. existe um canal de suporte ativo para os primeiros 7 a 14 dias
 
 ## Formula curta

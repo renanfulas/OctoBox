@@ -72,8 +72,8 @@ Preencher ao menos um usuario por papel necessario.
 
 ### Recepcao
 
-1. nome: definir operador responsavel pelo balcao ou registrar uso temporario por Owner ou Manager
-2. email: definir quando o fluxo dedicado entrar com usuario proprio
+1. nome: registrar o operador responsavel pelo balcao; se houver cobertura por Owner ou Manager, registrar como contingencia
+2. email: registrar o usuario oficial de Recepcao quando ele existir
 3. telefone: definir quando houver pessoa dedicada ao balcao
 
 ### Coach
@@ -177,7 +177,7 @@ Confirmar como o box trabalha hoje:
 1. principal metodo de pagamento: pix e cartao
 2. cobranca recorrente existe: pendente
 3. parcelamento existe: nao
-4. existe alguem na recepcao tratando atraso curto: definir se o fluxo sera coberto por usuario Recepcao ou temporariamente por Owner ou Manager
+4. existe alguem na recepcao tratando atraso curto: confirmar o usuario oficial de Recepcao; se a cobertura estiver com Owner ou Manager, registrar como contingencia
 
 ## Operacao do primeiro dia
 

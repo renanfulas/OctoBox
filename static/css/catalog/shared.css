@@ -27,7 +27,7 @@ PONTOS CRITICOS:
 }
 
 .student-form-scene {
-    gap: var(--section-gap);
+    gap: calc(var(--section-gap) - 2px);
 }
 
 .student-form-hero .operation-hero-panel {
@@ -37,6 +37,159 @@ PONTOS CRITICOS:
 .student-form-focus-card,
 .student-form-main-card {
     min-height: 100%;
+}
+
+.student-form-main-card {
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+.student-form-steps {
+    gap: 12px;
+}
+
+.student-form-step {
+    margin: 0;
+}
+
+.student-form-step-essential {
+    padding: 12px 14px;
+}
+
+.student-form-step-disclosure {
+    padding: 14px 16px;
+    border-radius: 18px;
+}
+
+.student-form-step-disclosure summary {
+    font-size: 0.94rem;
+    font-weight: 700;
+}
+
+.student-form-step-body {
+    gap: 10px;
+}
+
+.student-form-step-note {
+    padding: 10px 12px;
+    line-height: 1.5;
+}
+
+.student-form-installment-shell {
+    padding: 10px 12px;
+}
+
+.catalog-hero.operation-hero {
+    background:
+        radial-gradient(circle at top right, rgba(40, 92, 142, 0.14), transparent 32%),
+        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.1), transparent 28%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(241, 247, 252, 0.96)),
+        var(--surface);
+}
+
+.catalog-hero.operation-hero .actions .button {
+    min-height: 36px;
+    padding: 8px 13px;
+}
+
+body[data-theme="dark"] .catalog-hero.operation-hero {
+    background:
+        radial-gradient(circle at top right, rgba(41, 103, 163, 0.2), transparent 30%),
+        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.12), transparent 24%),
+        linear-gradient(145deg, rgba(18, 28, 40, 0.96), rgba(11, 19, 29, 0.98)),
+        var(--surface);
+}
+
+.student-financial-overview-card {
+    display: grid;
+    gap: 12px;
+}
+
+.student-financial-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.student-financial-metric-card {
+    min-height: 124px;
+    padding: 14px 16px;
+}
+
+.student-financial-status-grid {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: 12px;
+}
+
+.student-financial-plan-card,
+.student-financial-history-table-card {
+    min-height: 100%;
+}
+
+.student-financial-history-table-wrap {
+    margin-top: 8px;
+    padding: 6px 6px 4px;
+    border-radius: 18px;
+}
+
+.student-financial-history-table-card th,
+.student-financial-history-table-card td {
+    padding: 9px 7px;
+}
+
+.student-financial-history-table-card th {
+    font-size: 0.72rem;
+}
+
+.student-financial-history-table-card td {
+    vertical-align: top;
+}
+
+.student-payment-management-card {
+    display: grid;
+    gap: 10px;
+}
+
+.student-payment-management-form {
+    gap: 12px;
+}
+
+.student-payment-management-form textarea {
+    min-height: 80px;
+}
+
+.student-payment-management-actions {
+    display: grid;
+    gap: 6px;
+}
+
+.student-payment-management-actions-primary,
+.student-payment-management-actions-secondary {
+    margin-top: 0;
+}
+
+.student-payment-management-actions-primary {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.student-payment-management-actions-secondary {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding-top: 6px;
+    border-top: 1px solid rgba(112, 96, 81, 0.12);
+}
+
+.student-payment-management-actions-primary .button {
+    min-height: 34px;
+    padding: 7px 12px;
+}
+
+.student-payment-management-actions-secondary .button {
+    min-height: 33px;
+    padding: 6px 10px;
+    font-size: 0.84rem;
 }
 
 .body-copy {
@@ -59,7 +212,7 @@ PONTOS CRITICOS:
 
 .field-label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     font-weight: 600;
     letter-spacing: 0.01em;
 }
@@ -126,17 +279,26 @@ PONTOS CRITICOS:
 
 .primary-glow,
 .orange-glow {
-    background: linear-gradient(145deg, rgba(184, 92, 56, 0.16), rgba(255, 255, 255, 0.94));
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.82), transparent 24%),
+        linear-gradient(145deg, rgba(248, 243, 238, 0.98), rgba(255, 255, 255, 0.98));
+    border-color: rgba(215, 157, 116, 0.24);
 }
 
 .secondary-glow,
 .green-glow {
-    background: linear-gradient(145deg, rgba(47, 122, 100, 0.14), rgba(255, 255, 255, 0.94));
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.82), transparent 24%),
+        linear-gradient(145deg, rgba(241, 247, 245, 0.98), rgba(255, 255, 255, 0.98));
+    border-color: rgba(113, 176, 161, 0.22);
 }
 
 .blue-glow,
 .info-card {
-    background: linear-gradient(145deg, rgba(40, 92, 142, 0.14), rgba(255, 255, 255, 0.94));
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.82), transparent 24%),
+        linear-gradient(145deg, rgba(241, 245, 252, 0.98), rgba(255, 255, 255, 0.98));
+    border-color: rgba(122, 153, 198, 0.24);
 }
 
 .metric-pulse,
@@ -160,7 +322,24 @@ PONTOS CRITICOS:
 }
 
 .quick-hero-card {
-    background: linear-gradient(145deg, rgba(249, 115, 22, 0.16), rgba(255, 255, 255, 0.92));
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.84), transparent 24%),
+    linear-gradient(145deg, rgba(247, 243, 239, 0.96), rgba(255, 255, 255, 0.98));
+}
+
+body[data-theme="dark"] .orange-glow,
+body[data-theme="dark"] .primary-glow {
+    background: linear-gradient(145deg, rgba(71, 54, 42, 0.76), rgba(18, 28, 40, 0.98));
+}
+
+body[data-theme="dark"] .green-glow,
+body[data-theme="dark"] .secondary-glow {
+    background: linear-gradient(145deg, rgba(38, 63, 58, 0.76), rgba(18, 28, 40, 0.98));
+}
+
+body[data-theme="dark"] .blue-glow,
+body[data-theme="dark"] .info-card {
+    background: linear-gradient(145deg, rgba(42, 55, 76, 0.8), rgba(18, 28, 40, 0.98));
 }
 
 .intake-grid {
@@ -518,6 +697,16 @@ PONTOS CRITICOS:
         grid-template-columns: 1fr;
     }
 
+    .student-financial-metrics,
+    .student-financial-status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .student-payment-management-actions-primary,
+    .student-payment-management-actions-secondary {
+        flex-wrap: wrap;
+    }
+
     .student-priority-badges {
         justify-items: start;
     }
@@ -532,5 +721,33 @@ PONTOS CRITICOS:
 
     .student-section-head {
         gap: 10px;
+    }
+
+    .student-form-main-card {
+        padding-top: 16px;
+        padding-bottom: 16px;
+    }
+
+    .student-form-step-disclosure,
+    .student-form-step-essential {
+        padding: 14px 14px;
+    }
+
+    .student-form-step-body {
+        gap: 10px;
+    }
+
+    .student-financial-metric-card {
+        min-height: 116px;
+    }
+
+    .student-financial-history-table-wrap {
+        padding: 6px 6px 4px;
+    }
+
+    .student-payment-management-actions-primary,
+    .student-payment-management-actions-secondary {
+        display: grid;
+        grid-template-columns: 1fr;
     }
 }

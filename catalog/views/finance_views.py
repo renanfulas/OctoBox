@@ -5,6 +5,7 @@ POR QUE ELE EXISTE:
 - publica a casca HTTP de financeiro, exportacoes, planos e comunicacao no app catalog.
 """
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404
@@ -14,7 +15,7 @@ from django.views import View
 from django.views.generic import FormView
 
 from access.permissions import RoleRequiredMixin
-from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
+from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from catalog.finance_queries import build_finance_snapshot
 from catalog.forms import FinanceCommunicationActionForm, MembershipPlanQuickForm
 from catalog.presentation import build_finance_center_page, build_membership_plan_page
@@ -100,9 +101,10 @@ class FinanceReportExportView(LoginRequiredMixin, RoleRequiredMixin, View):
 
 
 class FinanceCommunicationActionView(LoginRequiredMixin, RoleRequiredMixin, View):
-    allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
 
     def post(self, request, *args, **kwargs):
+        open_in_whatsapp = request.POST.get('open_in_whatsapp') == '1'
         form = FinanceCommunicationActionForm(request.POST)
         if not form.is_valid():
             messages.error(request, 'A acao de comunicacao nao foi registrada. Revise os dados do contato operacional.')
@@ -115,6 +117,17 @@ class FinanceCommunicationActionView(LoginRequiredMixin, RoleRequiredMixin, View
             payment_id=form.cleaned_data.get('payment_id'),
             enrollment_id=form.cleaned_data.get('enrollment_id'),
         )
+        if result['blocked']:
+            repeat_block_hours = max(0, int(getattr(settings, 'OPERATIONAL_WHATSAPP_REPEAT_BLOCK_HOURS', 24)))
+            if repeat_block_hours:
+                messages.warning(request, f'Contato de WhatsApp ja registrado nas ultimas {repeat_block_hours}h para {result["student"].full_name}. Aguarde a proxima janela antes de repetir a mesma acao.')
+            else:
+                messages.warning(request, f'Contato de WhatsApp repetido bloqueado para {result["student"].full_name}.')
+            return redirect('finance-center')
+
+        if open_in_whatsapp and result['whatsapp_href']:
+            return redirect(result['whatsapp_href'])
+
         messages.success(request, f'Contato operacional registrado para {result["student"].full_name}.')
         return redirect('finance-center')
 

@@ -17,7 +17,8 @@ PONTOS CRITICOS:
     padding: clamp(18px, 1.8vw, 26px);
     border-radius: var(--radius-shell);
     background:
-        radial-gradient(circle at top right, rgba(255, 255, 255, 0.3), transparent 26%),
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.66), transparent 24%),
+        radial-gradient(circle at 82% 24%, rgba(41, 103, 163, 0.08), transparent 18%),
         var(--hero-gradient),
         var(--surface);
     border: 1px solid var(--line);
@@ -39,7 +40,7 @@ PONTOS CRITICOS:
     inset: auto -8% -30% auto;
     width: 220px;
     height: 220px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.28), transparent 70%);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.48), transparent 70%);
     pointer-events: none;
 }
 
@@ -48,7 +49,7 @@ PONTOS CRITICOS:
     position: absolute;
     inset: 0 auto 0 0;
     width: 4px;
-    background: linear-gradient(180deg, var(--brand), rgba(40, 92, 142, 0.8), rgba(47, 122, 100, 0.8));
+    background: linear-gradient(180deg, var(--brand), rgba(34, 95, 143, 0.82), rgba(15, 118, 110, 0.82));
     opacity: 0.88;
 }
 
@@ -81,8 +82,23 @@ PONTOS CRITICOS:
 .hero-side-stat {
     padding: 9px;
     border-radius: 14px;
-    border: 1px solid rgba(112, 96, 81, 0.12);
-    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(52, 71, 70, 0.12);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(246, 249, 253, 0.42));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+}
+
+body[data-theme="dark"] .hero {
+    background:
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.08), transparent 24%),
+        radial-gradient(circle at 82% 24%, rgba(41, 103, 163, 0.14), transparent 18%),
+        var(--hero-gradient),
+        var(--surface);
+}
+
+body[data-theme="dark"] .hero-side-stat {
+    border-color: rgba(163, 194, 224, 0.18);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(7, 15, 24, 0.18));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .hero-side-stat span {

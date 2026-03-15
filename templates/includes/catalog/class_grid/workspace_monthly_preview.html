@@ -19,25 +19,32 @@ ARQUIVO: painel de preview mensal da grade.
         <div class="monthly-calendar-grid monthly-calendar-grid-preview">
             {% for day in week %}
             <article class="monthly-day-card is-preview{% if day.is_today %} is-today{% endif %}{% if not day.is_in_month %} is-muted{% endif %}{% if day.session_count %} has-sessions{% else %} is-empty{% endif %}{% if day.session_count >= 12 %} is-loaded{% elif day.session_count >= 8 %} is-busy{% endif %}" data-panel="class-grid-monthly-preview-day">
-                <div class="row-between-sm monthly-day-head">
-                    <div>
-                        <strong>{{ day.date|date:"d" }}</strong>
-                        <p class="class-grid-mobile-kicker">{{ day.date|date:"D" }}</p>
+                <div class="card-body monthly-day-card-body monthly-day-card-body-preview">
+                    <div class="row-between-sm monthly-day-head card-head">
+                        <div class="card-head-main-stack monthly-day-head-main">
+                            <strong>{{ day.date|date:"d" }}</strong>
+                            <p class="class-grid-mobile-kicker">{{ day.date|date:"D" }}</p>
+                        </div>
+                        {% if day.session_count %}
+                        <div class="card-head-aside"><span class="pill{% if day.session_count >= 12 %} warning{% elif day.session_count >= 8 %} info{% endif %}">{{ day.session_count }}</span></div>
+                        {% endif %}
                     </div>
-                    {% if day.session_count %}<span class="pill{% if day.session_count >= 12 %} warning{% elif day.session_count >= 8 %} info{% endif %}">{{ day.session_count }}</span>{% endif %}
-                </div>
-                <div class="monthly-day-body">
-                    {% if day.visible_sessions %}
-                    <div class="monthly-session-chip monthly-session-chip-preview">
-                        <strong>{{ day.visible_sessions.0.starts_at|date:"H:i" }}</strong>
-                        <span>{{ day.visible_sessions.0.object.title }}</span>
+
+                    <div class="card-content monthly-day-body">
+                        {% if day.visible_sessions %}
+                        <div class="monthly-session-chip monthly-session-chip-preview">
+                            <div class="monthly-session-chip-body">
+                                <strong>{{ day.visible_sessions.0.starts_at|date:"H:i" }}</strong>
+                                <span>{{ day.visible_sessions.0.object.title }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if day.remaining_sessions %}
+                        <p class="weekly-empty-state">+ {{ day.remaining_sessions }} aula(s)</p>
+                        {% elif not day.session_count %}
+                        <p class="weekly-empty-state">Livre</p>
+                        {% endif %}
                     </div>
-                    {% endif %}
-                    {% if day.remaining_sessions %}
-                    <p class="weekly-empty-state">+ {{ day.remaining_sessions }} aula(s)</p>
-                    {% elif not day.session_count %}
-                    <p class="weekly-empty-state">Livre</p>
-                    {% endif %}
                 </div>
             </article>
             {% endfor %}

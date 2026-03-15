@@ -127,10 +127,10 @@ class ShellHintBuilderUnitTests(UnitTestCase):
     def test_build_shell_action_buttons_from_focus_preserves_hint_contract(self):
         buttons = build_shell_action_buttons_from_focus(
             focus=[
-                {'summary': 'Abrir a fila mais quente.', 'count': 4, 'href': '#priority-board'},
-                {'summary': 'Ler o que ainda esta em aberto.', 'count': 0, 'href': '#pending-board'},
+                {'target_label': 'Abrir a fila mais quente', 'count': 4, 'href': '#priority-board'},
+                {'target_label': 'Ver o que ainda esta em aberto', 'count': 0, 'href': '#pending-board'},
             ],
-            next_action={'summary': 'Fechar o proximo passo do dia.', 'href': '#next-board'},
+            next_action={'target_label': 'Fechar o proximo passo do dia', 'href': '#next-board'},
             scope='finance',
         )
 
@@ -142,21 +142,21 @@ class ShellHintBuilderUnitTests(UnitTestCase):
                     'kind': 'priority',
                     'label': 'Prioridade',
                     'count': 4,
-                    'summary': 'Abrir a fila mais quente.',
+                    'target_label': 'Abrir a fila mais quente',
                     'href': '#priority-board',
                 },
                 {
                     'kind': 'pending',
                     'label': 'Pendente',
                     'count': None,
-                    'summary': 'Ler o que ainda esta em aberto.',
+                    'target_label': 'Ver o que ainda esta em aberto',
                     'href': '#pending-board',
                 },
                 {
                     'kind': 'next-action',
                     'label': 'Próxima ação',
                     'count': None,
-                    'summary': 'Fechar o proximo passo do dia.',
+                    'target_label': 'Fechar o proximo passo do dia',
                     'href': '#next-board',
                 },
             ],
@@ -243,16 +243,16 @@ class ShellHintBuilderUnitTests(UnitTestCase):
         ).read_text(encoding='utf-8')
 
         self.assertIn('.alert-chip.has-volume {', topbar_css)
-        self.assertIn('color: #854d0e;', topbar_css)
-        self.assertIn('rgba(245, 158, 11, 0.12)', topbar_css)
-        self.assertIn('rgba(245, 158, 11, 0.2)', topbar_css)
+        self.assertIn('color: #6f4316;', topbar_css)
+        self.assertIn('rgba(196, 103, 52, 0.16)', topbar_css)
+        self.assertIn('rgba(196, 103, 52, 0.2)', topbar_css)
         self.assertIn('.alert-chip.danger.has-volume {', topbar_css)
         self.assertIn('color: #991b1b;', topbar_css)
-        self.assertIn('rgba(239, 68, 68, 0.12)', topbar_css)
+        self.assertIn('rgba(189, 63, 47, 0.14)', topbar_css)
         self.assertIn('rgba(239, 68, 68, 0.2)', topbar_css)
         self.assertIn('.alert-chip.is-zero {', topbar_css)
-        self.assertIn('color: #166534;', topbar_css)
-        self.assertIn('rgba(16, 185, 129, 0.12)', topbar_css)
+        self.assertIn('color: #0f5a55;', topbar_css)
+        self.assertIn('rgba(15, 118, 110, 0.14)', topbar_css)
         self.assertIn('.alert-chip.is-zero .alert-dot,', topbar_css)
         self.assertIn('.alert-chip.danger.is-zero .alert-dot {', topbar_css)
         self.assertIn('background: #16a34a;', topbar_css)
@@ -273,7 +273,7 @@ class ShellHintIntegrationTests(TestCase):
         Payment.objects.create(
             student=self.student,
             enrollment=self.enrollment,
-            due_date=timezone.localdate(),
+            due_date=timezone.localdate() - timezone.timedelta(days=1),
             amount='289.90',
             status=PaymentStatus.OVERDUE,
         )
@@ -377,21 +377,24 @@ class ShellHintIntegrationTests(TestCase):
                 self.assertEqual(finance_alert['data-count-value'], '1')
                 self.assertIn('1 vencimento', finance_alert['aria-label'])
 
-                self.assertEqual(intake_alert['href'], '/alunos/')
+                self.assertEqual(intake_alert['href'], '/entradas/')
                 self.assertEqual(intake_alert['data-count-kind'], 'pending-intakes')
                 self.assertEqual(intake_alert['data-count-value'], '1')
-                self.assertIn('1 intake', intake_alert['aria-label'])
+                self.assertIn('1 entrada pendente', intake_alert['aria-label'])
 
-    def test_dashboard_and_finance_keep_intake_communication_pointing_to_students_anchor(self):
+    def test_dashboard_and_finance_point_intake_communication_to_the_new_center(self):
         self.client.force_login(self.user)
 
         dashboard_response = self.client.get(reverse('dashboard'))
         finance_response = self.client.get(reverse('finance-center'))
+        intake_response = self.client.get(reverse('intake-center'))
         students_response = self.client.get(reverse('student-directory'))
 
-        self.assertContains(dashboard_response, 'href="/alunos/#student-intake-board"')
-        self.assertContains(finance_response, 'href="/alunos/"')
+        self.assertContains(dashboard_response, 'href="/entradas/#intake-queue-board"')
+        self.assertContains(finance_response, 'href="/entradas/"')
+        self.assertContains(intake_response, 'id="intake-queue-board"')
         self.assertContains(students_response, 'id="student-intake-board"')
+        self.assertContains(students_response, 'href="/entradas/#intake-queue-board"')
 
     def test_reception_dashboard_and_workspace_share_operational_intake_and_payment_targets(self):
         self.client.force_login(self.reception)
@@ -414,8 +417,9 @@ class ShellHintIntegrationTests(TestCase):
         topbar_parser = TopbarAlertParser()
         topbar_parser.feed(dashboard_response.content.decode())
         self.assertEqual(topbar_parser.alerts['topbar-finance-alert']['href'], '/operacao/recepcao/#reception-payment-board')
-        self.assertEqual(topbar_parser.alerts['topbar-intake-alert']['href'], '/alunos/')
+        self.assertEqual(topbar_parser.alerts['topbar-intake-alert']['href'], '/entradas/')
 
         self.assertContains(reception_response, 'id="reception-intake-board"')
         self.assertContains(reception_response, 'id="reception-payment-board"')
         self.assertContains(students_response, 'id="student-intake-board"')
+        self.assertContains(students_response, 'href="/entradas/#intake-queue-board"')

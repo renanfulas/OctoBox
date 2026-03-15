@@ -23,6 +23,7 @@ from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION
 from auditing.models import AuditEvent
 from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
 from operations.models import Attendance, BehaviorNote, ClassSession
+from operations.queries import build_reception_workspace_snapshot
 from students.models import Student
 
 
@@ -94,22 +95,6 @@ class OperationWorkspaceTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-    def test_owner_can_access_hidden_reception_preview(self):
-        self.client.force_login(self.owner)
-
-        response = self.client.get(reverse('reception-preview-workspace'))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Recepcao em preparo')
-
-    def test_dev_can_access_hidden_reception_preview(self):
-        self.client.force_login(self.dev)
-
-        response = self.client.get(reverse('reception-preview-workspace'))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Preview oculto')
-
     def test_dev_workspace_uses_dev_shell_scope_and_shortcuts(self):
         self.client.force_login(self.dev)
 
@@ -120,13 +105,6 @@ class OperationWorkspaceTests(TestCase):
         self.assertContains(response, 'href="#dev-audit-board"')
         self.assertContains(response, 'href="#dev-boundary-board"')
         self.assertContains(response, 'href="#dev-read-board"')
-
-    def test_manager_cannot_access_hidden_reception_preview(self):
-        self.client.force_login(self.manager)
-
-        response = self.client.get(reverse('reception-preview-workspace'))
-
-        self.assertEqual(response.status_code, 403)
 
     def test_reception_can_access_official_reception_workspace(self):
         self.client.force_login(self.reception)
@@ -145,49 +123,6 @@ class OperationWorkspaceTests(TestCase):
         response = self.client.get(reverse('reception-workspace'))
 
         self.assertEqual(response.status_code, 403)
-
-    def test_owner_can_mark_payment_paid_from_hidden_reception_preview(self):
-        self.client.force_login(self.owner)
-
-        response = self.client.post(
-            reverse('reception-preview-payment-action', args=[self.payment.id]),
-            data={
-                'payment_id': self.payment.id,
-                'amount': self.payment.amount,
-                'due_date': str(self.payment.due_date),
-                'method': PaymentMethod.PIX,
-                'reference': 'BALCAO-OK',
-                'notes': 'Recebido no preview da recepcao.',
-                'action': 'mark-paid',
-            },
-            HTTP_REFERER=reverse('reception-preview-workspace'),
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(response['Location'].endswith('#reception-payment-board'))
-        self.payment.refresh_from_db()
-        self.assertEqual(self.payment.status, PaymentStatus.PAID)
-        self.assertEqual(self.payment.method, PaymentMethod.PIX)
-
-    def test_dev_cannot_mutate_payment_from_hidden_reception_preview(self):
-        self.client.force_login(self.dev)
-
-        response = self.client.post(
-            reverse('reception-preview-payment-action', args=[self.payment.id]),
-            data={
-                'payment_id': self.payment.id,
-                'amount': self.payment.amount,
-                'due_date': str(self.payment.due_date),
-                'method': PaymentMethod.CASH,
-                'reference': 'DEV-BLOCKED',
-                'notes': 'Tentativa bloqueada.',
-                'action': 'mark-paid',
-            },
-        )
-
-        self.assertEqual(response.status_code, 403)
-        self.payment.refresh_from_db()
-        self.assertEqual(self.payment.status, PaymentStatus.PENDING)
 
     def test_reception_can_mark_payment_paid_from_official_reception_workspace(self):
         self.client.force_login(self.reception)
@@ -289,12 +224,63 @@ class OperationWorkspaceTests(TestCase):
 
         self.assertNotContains(response, 'href="/financeiro/"')
 
+    def test_sidebar_keeps_my_operation_immediately_after_dashboard_for_main_roles(self):
+        scenarios = [
+            (self.owner, 'owner-workspace'),
+            (self.manager, 'manager-workspace'),
+            (self.coach, 'coach-workspace'),
+            (self.reception, 'reception-workspace'),
+        ]
+
+        for user, route_name in scenarios:
+            with self.subTest(route_name=route_name):
+                self.client.force_login(user)
+                response = self.client.get(reverse(route_name))
+                hrefs = [item['href'] for item in response.context['sidebar_navigation']]
+
+                self.assertIn('/dashboard/', hrefs)
+                self.assertIn('/operacao/', hrefs)
+                self.assertLess(hrefs.index('/dashboard/'), hrefs.index('/operacao/'))
+
+    def test_sidebar_positions_entries_between_finance_and_class_grid_when_visible(self):
+        scenarios = [
+            (self.owner, 'owner-workspace'),
+            (self.manager, 'manager-workspace'),
+        ]
+
+        for user, route_name in scenarios:
+            with self.subTest(route_name=route_name):
+                self.client.force_login(user)
+                response = self.client.get(reverse(route_name))
+                hrefs = [item['href'] for item in response.context['sidebar_navigation']]
+
+                self.assertIn('/financeiro/', hrefs)
+                self.assertIn('/entradas/', hrefs)
+                self.assertIn('/grade-aulas/', hrefs)
+                self.assertLess(hrefs.index('/financeiro/'), hrefs.index('/entradas/'))
+                self.assertLess(hrefs.index('/entradas/'), hrefs.index('/grade-aulas/'))
+
     def test_reception_topbar_finance_chip_points_to_reception_queue(self):
         self.client.force_login(self.reception)
 
         response = self.client.get(reverse('reception-workspace'))
 
         self.assertContains(response, 'href="/operacao/recepcao/#reception-payment-board"')
+
+    def test_reception_snapshot_counts_pending_past_due_as_real_overdue(self):
+        Payment.objects.create(
+            student=self.student,
+            enrollment=self.enrollment,
+            due_date=timezone.localdate() - timezone.timedelta(days=1),
+            amount='149.90',
+            status=PaymentStatus.PENDING,
+        )
+
+        snapshot = build_reception_workspace_snapshot(today=timezone.localdate())
+
+        overdue_stat = next(item for item in snapshot['hero_stats'] if item['label'] == 'Atrasos')
+        self.assertEqual(overdue_stat['value'], 1)
+        self.assertIn('Pagamento vencido ha 1 dia(s)', snapshot['reception_queue'][0]['reason'])
 
     def test_coach_can_check_in_attendance(self):
         self.client.force_login(self.coach)
@@ -342,32 +328,52 @@ class OperationWorkspaceTests(TestCase):
         self.client.force_login(self.manager)
 
         response = self.client.get(reverse('manager-workspace'))
+        hrefs = [item['href'] for item in response.context['sidebar_navigation']]
 
+        self.assertEqual(hrefs.count('/alunos/'), 1)
+        self.assertEqual(hrefs.count('/entradas/'), 1)
+        self.assertEqual(hrefs.count('/financeiro/'), 1)
         self.assertContains(response, 'Pagamentos')
         self.assertNotContains(response, 'Ocorrências')
+
+    def test_manager_workspace_keeps_single_enrollment_link_board(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.get(reverse('manager-workspace'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'manager-scene')
+        self.assertContains(response, 'id="manager-enrollment-link-board"', count=1)
+        self.assertContains(response, 'Estrutura antes de leitura financeira', count=1)
 
     def test_coach_sidebar_hides_manager_links(self):
         self.client.force_login(self.coach)
 
         response = self.client.get(reverse('coach-workspace'))
+        hrefs = [item['href'] for item in response.context['sidebar_navigation']]
 
+        self.assertEqual(hrefs.count('/grade-aulas/'), 1)
         self.assertContains(response, 'Ocorrências')
         self.assertNotContains(response, 'Pagamentos')
-
-    def test_hidden_reception_preview_does_not_appear_in_owner_sidebar(self):
-        self.client.force_login(self.owner)
-
-        response = self.client.get(reverse('owner-workspace'))
-
-        self.assertNotContains(response, '/operacao/recepcao-preview/')
 
     def test_owner_can_access_owner_area(self):
         self.client.force_login(self.owner)
 
+        Payment.objects.create(
+            student=self.student,
+            enrollment=self.enrollment,
+            due_date=timezone.localdate() - timezone.timedelta(days=2),
+            amount='299.90',
+            status=PaymentStatus.PENDING,
+            method=PaymentMethod.PIX,
+        )
+
         response = self.client.get(reverse('owner-workspace'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Leitura executiva do box')
+        self.assertContains(response, 'Resumo rapido')
+        self.assertContains(response, 'Caixa vencido: R$ 299,90')
+        self.assertContains(response, '1 cobranca(s) estao atrasadas e pedem contato.')
 
     def test_dev_can_access_dev_workspace(self):
         self.client.force_login(self.dev)

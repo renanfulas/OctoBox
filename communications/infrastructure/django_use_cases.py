@@ -13,6 +13,9 @@ PONTOS CRITICOS:
 - Este arquivo concentra o uso concreto de ORM e deve permanecer abaixo da camada de aplicação.
 """
 
+from datetime import timedelta
+
+from django.conf import settings
 from django.db import IntegrityError, transaction
 
 from communications.application.commands import RegisterInboundWhatsAppMessageCommand, RegisterOperationalMessageCommand
@@ -159,6 +162,12 @@ class DjangoOperationalMessagePort(OperationalMessagePort):
     def __init__(self, *, clock: ClockPort):
         self.clock = clock
 
+    def _repeat_block_threshold(self):
+        repeat_block_hours = max(0, int(getattr(settings, 'OPERATIONAL_WHATSAPP_REPEAT_BLOCK_HOURS', 24)))
+        if repeat_block_hours == 0:
+            return None
+        return self.clock.now() - timedelta(hours=repeat_block_hours)
+
     def _ensure_whatsapp_contact(self, student):
         normalized_phone = normalize_phone_number(student.phone)
         identity = resolve_whatsapp_channel_identity(phone=normalized_phone)
@@ -205,12 +214,45 @@ class DjangoOperationalMessagePort(OperationalMessagePort):
             payment_amount=getattr(payment, 'amount', None),
             plan_name=getattr(getattr(enrollment, 'plan', None), 'name', None),
         )
+        duplicate_message = None
+        repeat_block_threshold = self._repeat_block_threshold()
+        if repeat_block_threshold is not None:
+            duplicate_message = (
+                WhatsAppMessageLog.objects.filter(
+                    contact=contact,
+                    direction=MessageDirection.OUTBOUND,
+                    kind=MessageKind.SYSTEM,
+                    delivered_at__gte=repeat_block_threshold,
+                    body=body,
+                )
+                .order_by('-delivered_at', '-id')
+                .first()
+            )
+        if duplicate_message is not None:
+            return OperationalMessageResult(
+                student_id=student.id,
+                contact_id=contact.id,
+                message_log_id=duplicate_message.id,
+                action_kind=command.action_kind,
+                payment_id=payment.id if payment else None,
+                enrollment_id=enrollment.id if enrollment else None,
+                contact_created=created,
+                blocked=True,
+            )
+
         message = WhatsAppMessageLog.objects.create(
             contact=contact,
             direction=MessageDirection.OUTBOUND,
             kind=MessageKind.SYSTEM,
             body=body,
             delivered_at=self.clock.now(),
+            raw_payload={
+                'source': 'operational-message',
+                'action_kind': command.action_kind,
+                'student_id': student.id,
+                'payment_id': getattr(payment, 'id', None),
+                'enrollment_id': getattr(enrollment, 'id', None),
+            },
         )
         contact.last_outbound_at = message.delivered_at
         contact.save(update_fields=['last_outbound_at', 'updated_at'])
@@ -232,6 +274,7 @@ class DjangoOperationalMessagePort(OperationalMessagePort):
             payment_id=payment.id if payment else None,
             enrollment_id=enrollment.id if enrollment else None,
             contact_created=created,
+            blocked=False,
         )
 
 

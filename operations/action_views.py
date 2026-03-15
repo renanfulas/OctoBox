@@ -96,13 +96,6 @@ class AttendanceActionView(LoginRequiredMixin, RoleRequiredMixin, View):
         return _redirect_back(request, fallback_url='/operacao/coach/')
 
 
-class ReceptionPreviewPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
-    allowed_roles = (ROLE_OWNER,)
-
-    def post(self, request, payment_id, *args, **kwargs):
-        return _handle_reception_payment_action(request, payment_id=payment_id, fallback_url='/operacao/recepcao-preview/', success_context='preview da Recepcao')
-
-
 class ReceptionPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
     allowed_roles = (ROLE_OWNER, ROLE_RECEPTION)
 

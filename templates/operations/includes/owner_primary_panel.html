@@ -1,0 +1,42 @@
+<!--
+ARQUIVO: painel principal do Owner.
+
+POR QUE ELE EXISTE:
+- concentra o primeiro passo e os proximos passos da tela em um bloco curto.
+
+PONTO CRITICO:
+- deve continuar pequeno; se crescer, perde a funcao de comando rapido.
+-->
+<article class="table-card owner-panel owner-primary-panel" data-panel="owner-primary-panel">
+    {% with primary_focus=page.data.owner_operational_focus|first %}
+    {% if primary_focus.key == 'intakes' %}
+    {% include "includes/ui/operation_card_head.html" with eyebrow="Comece por aqui" title="Abra as entradas." copy="Tem gente esperando resposta agora." pill_label="Agora" pill_class="accent" %}
+    {% elif primary_focus.key == 'payments' %}
+    {% include "includes/ui/operation_card_head.html" with eyebrow="Comece por aqui" title="Veja as cobrancas." copy="Tem cobranca atrasada pedindo contato agora." pill_label="Agora" pill_class="accent" %}
+    {% else %}
+    {% include "includes/ui/operation_card_head.html" with eyebrow="Comece por aqui" title="Confirme a base." copy="Veja se WhatsApp, historico e estrutura continuam no lugar." pill_label="Agora" pill_class="accent" %}
+    {% endif %}
+    <div class="owner-primary-spotlight">
+        <div class="owner-primary-copy">
+            <p class="eyebrow">{{ primary_focus.label }}</p>
+            <p class="owner-primary-text">{{ primary_focus.summary }}</p>
+        </div>
+        <div class="owner-primary-actions">
+            <span class="pill{% if primary_focus.pill_class %} {{ primary_focus.pill_class }}{% endif %}">{% if primary_focus.count or primary_focus.count == 0 %}{{ primary_focus.count }}{% else %}Ler{% endif %}</span>
+            <a class="button" href="{{ primary_focus.href }}">{{ primary_focus.href_label }}</a>
+        </div>
+    </div>
+    {% endwith %}
+    <div class="owner-secondary-list" aria-label="Proximos passos">
+        {% for item in page.data.owner_operational_focus|slice:"1:" %}
+        <a class="owner-secondary-item" href="{{ item.href }}">
+            <span class="owner-secondary-step">Depois</span>
+            <span class="owner-secondary-body">
+                <strong>{{ item.label }}</strong>
+                <span>{{ item.summary }}</span>
+            </span>
+            <span class="pill{% if item.pill_class %} {{ item.pill_class }}{% endif %}">{% if item.count or item.count == 0 %}{{ item.count }}{% else %}Ler{% endif %}</span>
+        </a>
+        {% endfor %}
+    </div>
+</article>

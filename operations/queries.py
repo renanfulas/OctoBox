@@ -20,10 +20,11 @@ from django.utils import timezone
 from auditing.models import AuditEvent
 from communications.queries import (
     build_communications_headline_metrics,
-    get_pending_intakes,
     get_unlinked_whatsapp_contacts,
 )
 from finance.models import Payment, PaymentMethod, PaymentStatus
+from finance.overdue_metrics import get_overdue_payments_queryset, sum_overdue_amount
+from onboarding.queries import get_pending_intakes
 from operations.models import BehaviorCategory, ClassSession
 from students.models import Student
 
@@ -41,96 +42,98 @@ def _build_metric_card(card_class, eyebrow, value, note):
     }
 
 
+def _build_owner_focus_item(*, key, label, summary, count, pill_class, href, href_label):
+    return {
+        'key': key,
+        'label': label,
+        'summary': summary,
+        'count': count,
+        'pill_class': pill_class,
+        'href': href,
+        'href_label': href_label,
+    }
+
+
 def build_owner_workspace_snapshot(*, today):
     communications_metrics = build_communications_headline_metrics(today=today)
+    overdue_payments = get_overdue_payments_queryset(Payment.objects.all(), today=today)
+    overdue_amount = sum_overdue_amount(Payment.objects.all(), today=today)
     headline_metrics = {
         'students': Student.objects.count(),
         'pending_intakes': communications_metrics['pending_intakes'],
         'whatsapp_contacts': communications_metrics['whatsapp_contacts'],
         'messages_logged': communications_metrics['messages_logged'],
-        'overdue_payments': Payment.objects.filter(
-            status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE],
-            due_date__lt=today,
-        ).count(),
+        'overdue_payments': overdue_payments.count(),
+        'overdue_amount': overdue_amount,
     }
+    focus_map = {
+        'intakes': _build_owner_focus_item(
+            key='intakes',
+            label='Ver entradas',
+            summary=(
+                f"{headline_metrics['pending_intakes']} entrada(s) esperam resposta."
+                if headline_metrics['pending_intakes']
+                else 'Nenhuma entrada espera resposta agora.'
+            ),
+            count=headline_metrics['pending_intakes'],
+            pill_class='warning' if headline_metrics['pending_intakes'] > 0 else 'success',
+            href='#owner-growth-board',
+            href_label='Abrir entradas',
+        ),
+        'payments': _build_owner_focus_item(
+            key='payments',
+            label='Ver cobrancas',
+            summary=(
+                f"{headline_metrics['overdue_payments']} cobranca(s) estao atrasadas e pedem contato."
+                if headline_metrics['overdue_payments']
+                else 'Nenhuma cobranca atrasada pede contato agora.'
+            ),
+            count=headline_metrics['overdue_payments'],
+            pill_class='warning' if headline_metrics['overdue_payments'] > 0 else 'info',
+            href='#owner-risk-board',
+            href_label='Abrir cobrancas',
+        ),
+        'structure': _build_owner_focus_item(
+            key='structure',
+            label='Ver estrutura',
+            summary=(
+                f"{headline_metrics['whatsapp_contacts']} contato(s) com WhatsApp e {headline_metrics['messages_logged']} conversa(s) salvas."
+            ),
+            count=headline_metrics['whatsapp_contacts'],
+            pill_class='accent',
+            href='#owner-structure-board',
+            href_label='Abrir estrutura',
+        ),
+    }
+    if headline_metrics['pending_intakes'] > 0:
+        focus_order = ['intakes', 'payments', 'structure']
+    elif headline_metrics['overdue_payments'] > 0:
+        focus_order = ['payments', 'intakes', 'structure']
+    else:
+        focus_order = ['structure', 'intakes', 'payments']
+    owner_operational_focus = [focus_map[key] for key in focus_order]
     return {
         'headline_metrics': headline_metrics,
         'hero_stats': [
-            _build_hero_stat('Base ativa', headline_metrics['students']),
-            _build_hero_stat('Entradas', headline_metrics['pending_intakes']),
-            _build_hero_stat('Atrasos', headline_metrics['overdue_payments']),
-            _build_hero_stat('WhatsApp', headline_metrics['whatsapp_contacts']),
+            _build_hero_stat('Cadastros', headline_metrics['students']),
+            _build_hero_stat('Entradas em aberto', headline_metrics['pending_intakes']),
+            _build_hero_stat('Cobrancas em atraso', headline_metrics['overdue_payments']),
+            _build_hero_stat('Contatos com WhatsApp', headline_metrics['whatsapp_contacts']),
         ],
         'metric_cards': [
-            _build_metric_card('operation-kpi-card owner-amber', 'Alunos registrados', headline_metrics['students'], 'Tamanho da base principal que sustenta presença, retenção e receita.'),
-            _build_metric_card('operation-kpi-card owner-blue', 'Entradas pendentes', headline_metrics['pending_intakes'], 'Leads e cadastros provisórios que ainda pedem conversão ou revisão.'),
-            _build_metric_card('operation-kpi-card owner-green', 'Contatos no WhatsApp', headline_metrics['whatsapp_contacts'], 'Capilaridade do canal de conversa pronta para vínculo operacional.'),
-            _build_metric_card('operation-kpi-card owner-slate', 'Mensagens logadas', headline_metrics['messages_logged'], 'Histórico acumulado para rastrear relacionamento e futuras automações.'),
-            _build_metric_card('operation-kpi-card owner-amber', 'Cobranças em atraso', headline_metrics['overdue_payments'], 'Sinal direto da pressão financeira que já exige leitura de retenção.'),
-        ],
-        'owner_operational_focus': [
+            _build_metric_card('operation-kpi-card owner-amber', 'Total de alunos', headline_metrics['students'], 'Tamanho atual da base.'),
+            _build_metric_card('operation-kpi-card owner-blue', 'Entradas abertas', headline_metrics['pending_intakes'], 'Pessoas que ainda esperam resposta ou fechamento.'),
+            _build_metric_card('operation-kpi-card owner-green', 'WhatsApp pronto', headline_metrics['whatsapp_contacts'], 'Contatos que ja podem receber conversa e cobranca.'),
+            _build_metric_card('operation-kpi-card owner-slate', 'Historico salvo', headline_metrics['messages_logged'], 'Conversas guardadas para nao depender de memoria.'),
             {
-                'label': 'Comece pelo funil que ainda pede dono',
-                'summary': f"{headline_metrics['pending_intakes']} entrada(s) seguem abertas e mostram se o crescimento está virando operação ou só acúmulo.",
-                'count': headline_metrics['pending_intakes'],
-                'pill_class': 'warning' if headline_metrics['pending_intakes'] > 0 else 'success',
-                'href': '#owner-growth-board',
-                'href_label': 'Ver crescimento',
-            },
-            {
-                'label': 'Depois confira o risco de caixa',
-                'summary': f"{headline_metrics['overdue_payments']} cobrança(s) em atraso já ajudam a separar expansão saudável de pressão financeira escondida.",
-                'count': headline_metrics['overdue_payments'],
-                'pill_class': 'warning' if headline_metrics['overdue_payments'] > 0 else 'info',
-                'href': '#owner-risk-board',
-                'href_label': 'Ver risco financeiro',
-            },
-            {
-                'label': 'Feche com maturidade estrutural',
-                'summary': f"{headline_metrics['whatsapp_contacts']} contato(s) no canal e {headline_metrics['messages_logged']} log(s) mostram se a operação já conversa com escala, vínculo e histórico.",
-                'count': headline_metrics['whatsapp_contacts'],
-                'pill_class': 'accent',
-                'href': '#owner-structure-board',
-                'href_label': 'Ver estrutura pronta',
+                **_build_metric_card('operation-kpi-card owner-amber', 'Cobrancas atrasadas', headline_metrics['overdue_payments'], 'Dinheiro que ja deveria ter entrado.'),
+                'submetric': {
+                    'label': 'Caixa vencido',
+                    'value': f"R$ {headline_metrics['overdue_amount']:.2f}".replace('.', ','),
+                },
             },
         ],
-        'decision_board': [
-            'Central de entrada pronta para receber alunos antes do cadastro definitivo.',
-            'Base de WhatsApp pronta para armazenar contatos, vínculo e logs.',
-            'Permissões reais por papel já separadas em áreas operacionais.',
-        ],
-        'decision_board_count_label': '3 frentes',
-        'owner_reading_order': [
-            'Comece pela fila de entrada e confira se o funil continua girando sem acúmulo indevido.',
-            'Olhe os atrasos financeiros para medir risco de caixa e necessidade de ação de retenção.',
-            'Use a base de WhatsApp e os logs como termômetro da maturidade operacional do produto.',
-        ],
-        'owner_table_guides': [
-            {
-                'label': 'Crescimento que ainda pede dono',
-                'value': f"{headline_metrics['pending_intakes']} entrada(s) aguardando leitura",
-                'summary': 'Use este recorte para separar crescimento vivo de fila parada antes que a entrada perca temperatura comercial.',
-                'pill_class': 'warning' if headline_metrics['pending_intakes'] > 0 else 'success',
-                'href': '#owner-growth-board',
-                'href_label': 'Ler crescimento agora',
-            },
-            {
-                'label': 'Risco que pressiona caixa',
-                'value': f"{headline_metrics['overdue_payments']} cobranca(s) em atraso",
-                'summary': 'Aqui o owner ve cedo se a pressao financeira ainda esta sob controle ou se ja contamina retencao e previsibilidade.',
-                'pill_class': 'warning' if headline_metrics['overdue_payments'] > 0 else 'info',
-                'href': '#owner-risk-board',
-                'href_label': 'Ver risco de caixa',
-            },
-            {
-                'label': 'Estrutura pronta para escalar',
-                'value': f"{headline_metrics['whatsapp_contacts']} contato(s) e {headline_metrics['messages_logged']} log(s)",
-                'summary': 'Esse quadro mostra se a operacao ja ganhou memoria, conversa e base suficiente para crescer sem improviso fragil.',
-                'pill_class': 'accent',
-                'href': '#owner-structure-board',
-                'href_label': 'Ver estrutura pronta',
-            },
-        ],
+        'owner_operational_focus': owner_operational_focus,
     }
 
 
@@ -227,10 +230,6 @@ def build_manager_workspace_snapshot():
         enrollment__isnull=True,
         status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE],
     ).order_by('due_date')[:8]
-    first_intake = pending_intakes[0] if pending_intakes else None
-    nearest_financial_alert = financial_alerts[0] if financial_alerts else None
-    first_unlinked_contact = unlinked_whatsapp[0] if unlinked_whatsapp else None
-    first_unlinked_payment = payments_without_enrollment[0] if payments_without_enrollment else None
     return {
         'pending_intakes': pending_intakes,
         'unlinked_whatsapp': unlinked_whatsapp,
@@ -273,90 +272,6 @@ def build_manager_workspace_snapshot():
                 'href': '#manager-finance-board',
                 'href_label': 'Ver alertas financeiros',
             },
-        ],
-        'manager_execution_focus': [
-            {
-                'label': 'Fila mais quente',
-                'summary': (
-                    f'{first_intake.full_name} aparece no topo da triagem e ajuda a abrir a fila pelo caso mais quente do momento.'
-                    if first_intake else
-                    'Sem entrada pendente agora, então a triagem pode ceder espaço para vínculo e cobrança.'
-                ),
-                'pill_class': 'warning' if first_intake else 'success',
-                'href': '#manager-intake-board',
-                'href_label': 'Abrir triagem',
-            },
-            {
-                'label': 'Estrutura que ainda atrita',
-                'summary': f'{len(unlinked_whatsapp)} contato(s) sem aluno e {len(payments_without_enrollment)} cobrança(s) sem matrícula continuam sendo os dois vazamentos mais diretos da rotina.',
-                'pill_class': 'info' if len(unlinked_whatsapp) or len(payments_without_enrollment) else 'success',
-                'href': '#manager-link-board',
-                'href_label': 'Ver vínculos e estrutura',
-            },
-            {
-                'label': 'Cobrança mais sensível',
-                'summary': (
-                    f'{nearest_financial_alert.student.full_name} já aparece primeiro na fila e vence em {nearest_financial_alert.due_date.strftime("%d/%m/%Y")}. '
-                    if nearest_financial_alert else
-                    'Sem alerta financeiro aberto no momento.'
-                ),
-                'pill_class': 'warning' if nearest_financial_alert else 'accent',
-                'href': '#manager-finance-board',
-                'href_label': 'Abrir cobrança',
-            },
-        ],
-        'manager_table_guides': [
-            {
-                'label': 'Triagem',
-                'value': f'{len(pending_intakes)} caso(s)',
-                'summary': (
-                    f'Abra por {first_intake.full_name} e mantenha a fila andando a partir do topo.'
-                    if first_intake else
-                    'Sem fila aberta agora, então a triagem não é a prioridade desta rodada.'
-                ),
-                'href': '#manager-intake-board',
-                'href_label': 'Ir para entradas',
-                'pill_class': 'warning' if first_intake else 'success',
-            },
-            {
-                'label': 'Estrutura',
-                'value': f'{len(unlinked_whatsapp) + len(payments_without_enrollment)} atrito(s)',
-                'summary': (
-                    f'{(first_unlinked_contact.display_name or "Sem nome") if first_unlinked_contact else "o primeiro contato sem vínculo"} e {first_unlinked_payment.student.full_name if first_unlinked_payment else "a fila financeira"} ajudam a abrir os dois vazamentos mais prováveis.'
-                    if first_unlinked_contact or first_unlinked_payment else
-                    'Sem atrito estrutural no momento, então a base relacional está limpa para seguir operação.'
-                ),
-                'href': '#manager-link-board',
-                'href_label': 'Ir para estrutura',
-                'pill_class': 'info' if first_unlinked_contact or first_unlinked_payment else 'success',
-            },
-            {
-                'label': 'Cobrança',
-                'value': f'{len(financial_alerts)} alerta(s)',
-                'summary': (
-                    f'Comece por {nearest_financial_alert.student.full_name} para agir no vencimento mais próximo.'
-                    if nearest_financial_alert else
-                    'Sem alerta financeiro aberto, então cobrança pode ficar fora do foco imediato.'
-                ),
-                'href': '#manager-finance-board',
-                'href_label': 'Ir para alertas',
-                'pill_class': 'warning' if nearest_financial_alert else 'accent',
-            },
-        ],
-        'manager_steps': [
-            'Revisar entradas vindas de CSV, WhatsApp ou cadastro manual.',
-            'Vincular contatos ao aluno definitivo quando houver match.',
-            'Acompanhar inadimplência e preparar ações de retenção.',
-        ],
-        'manager_boundaries': [
-            'Esta área não executa presença de aula em nome do coach.',
-            'O foco aqui é entrada, vínculo, retenção e rotina financeira.',
-            'A operação técnica do treino continua isolada na área do coach.',
-        ],
-        'manager_whatsapp_ready': [
-            'Contato pode existir antes do aluno definitivo.',
-            'Contato pode ser vinculado depois ao cadastro principal.',
-            'Logs de mensagens podem ser armazenados sem quebrar o modelo atual.',
         ],
     }
 
@@ -404,22 +319,12 @@ def build_coach_workspace_snapshot(*, today):
                 'href_label': 'Ver limites da área',
             },
         ],
-        'coach_notes': [
-            'Use check-in ao iniciar presença real do aluno.',
-            'Use check-out ao encerrar a aula ou saída do aluno.',
-            'Use falta quando a reserva existia e o aluno não compareceu.',
-        ],
         'behavior_categories': BehaviorCategory.choices,
-        'coach_boundaries': [
-            'Esta área não mostra fila financeira nem central de entrada.',
-            'O foco do coach aqui é turma, presença e leitura do dia.',
-            'Ocorrências técnicas podem ser registradas sem expor dados administrativos.',
-        ],
     }
 
 
 def _build_reception_payment_reason(payment, *, today):
-    if payment.status == PaymentStatus.OVERDUE:
+    if payment.status in [PaymentStatus.PENDING, PaymentStatus.OVERDUE] and payment.due_date < today:
         delay_days = max((today - payment.due_date).days, 0)
         return f'Pagamento vencido ha {delay_days} dia(s) e ja pede abordagem curta de balcao.'
     if payment.status == PaymentStatus.PENDING and payment.due_date == today:
@@ -436,13 +341,14 @@ def _build_reception_workspace_core(*, today):
         .filter(status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE])
         .order_by('due_date')[:6]
     )
+    overdue_payments_queryset = get_overdue_payments_queryset(Payment.objects.all(), today=today)
     next_sessions = list(
         ClassSession.objects.filter(scheduled_at__date__gte=today)
         .prefetch_related('attendances')
         .order_by('scheduled_at')[:6]
     )
     active_students = Student.objects.count()
-    overdue_payments = sum(1 for payment in payment_queue if payment.status == PaymentStatus.OVERDUE)
+    overdue_payments = overdue_payments_queryset.count()
     due_today = sum(1 for payment in payment_queue if payment.status == PaymentStatus.PENDING and payment.due_date == today)
     first_intake = pending_intakes[0] if pending_intakes else None
     first_payment = payment_queue[0] if payment_queue else None
@@ -556,70 +462,10 @@ def build_reception_workspace_snapshot(*, today):
     }
 
 
-def build_reception_preview_workspace_snapshot(*, today):
-    data = _build_reception_workspace_core(today=today)
-    first_intake = data['first_intake']
-    first_payment = data['first_payment']
-    next_session = data['next_session']
-
-    return {
-        'hero_stats': data['hero_stats'],
-        'metric_cards': data['metric_cards'],
-        'reception_preview_focus': [
-            {
-                'label': 'Comece pelo balcao vivo',
-                'summary': (
-                    f'{first_intake.full_name} abre a fila de entrada e mostra como a Recepcao pode converter sem atrito.'
-                    if first_intake else
-                    'Sem entrada pendente agora, entao a triagem inicial nao e o ponto de pressao desta rodada.'
-                ),
-                'count': len(data['intakes']),
-                'pill_class': 'warning' if first_intake else 'success',
-                'href': '#reception-intake-board',
-                'href_label': 'Ver entradas',
-            },
-            {
-                'label': 'Depois leia o caixa curto',
-                'summary': (
-                    f'{first_payment.student.full_name} aparece primeiro na fila e mostra a logica de cobranca curta sem abrir a central completa.'
-                    if first_payment else
-                    'Sem cobranca curta em fila agora, entao o preview financeiro pode ficar em segundo plano.'
-                ),
-                'count': len(data['queue']),
-                'pill_class': 'warning' if first_payment else 'info',
-                'href': '#reception-payment-board',
-                'href_label': 'Ver fila de cobranca',
-            },
-            {
-                'label': 'Feche com a leitura da grade',
-                'summary': (
-                    f'{next_session.title} e a proxima aula visivel para orientar check-in e responder duvidas de rotina no balcao.'
-                    if next_session else
-                    'Sem aula futura cadastrada no recorte atual, entao a leitura da grade fica sem pressao imediata.'
-                ),
-                'count': len(data['sessions']),
-                'pill_class': 'accent',
-                'href': '#reception-class-grid-board',
-                'href_label': 'Ver grade em leitura',
-            },
-        ],
-        'reception_preview_boundaries': [
-            'Este preview continua oculto da navegacao publica e existe so para lapidacao controlada.',
-            'A Recepcao aqui combina aluno, grade em leitura e cobranca curta sem receber o financeiro inteiro.',
-            'O marco simbolico continua reservado para quando a area estiver pronta para ser promovida a superficie oficial.',
-        ],
-        'reception_preview_payment_methods': data['payment_methods'],
-        'reception_preview_queue': data['queue'],
-        'reception_preview_intakes': data['intakes'],
-        'reception_preview_sessions': data['sessions'],
-    }
-
-
 __all__ = [
     'build_coach_workspace_snapshot',
     'build_dev_workspace_snapshot',
     'build_manager_workspace_snapshot',
     'build_owner_workspace_snapshot',
     'build_reception_workspace_snapshot',
-    'build_reception_preview_workspace_snapshot',
 ]

@@ -13,8 +13,9 @@ PONTOS CRITICOS:
 
 from django.urls import path
 
-from .views import SystemMapView
+from .views import OperationalSettingsView, SystemMapView
 
 urlpatterns = [
     path('mapa-sistema/', SystemMapView.as_view(), name='system-map'),
+    path('configuracoes-operacionais/', OperationalSettingsView.as_view(), name='operational-settings'),
 ]

@@ -31,7 +31,6 @@ from operations.queries import (
     build_manager_workspace_snapshot as _build_manager_workspace_snapshot,
     build_owner_workspace_snapshot as _build_owner_workspace_snapshot,
     build_reception_workspace_snapshot as _build_reception_workspace_snapshot,
-    build_reception_preview_workspace_snapshot as _build_reception_preview_workspace_snapshot,
 )
 
 
@@ -66,10 +65,6 @@ def build_manager_workspace_snapshot():
 
 def build_coach_workspace_snapshot(*, today):
     return _build_coach_workspace_snapshot(today=today)
-
-
-def build_reception_preview_workspace_snapshot(*, today):
-    return _build_reception_preview_workspace_snapshot(today=today)
 
 
 def build_reception_workspace_snapshot(*, today):
@@ -129,7 +124,6 @@ __all__ = [
     'build_manager_workspace_snapshot',
     'build_owner_workspace_snapshot',
     'build_reception_workspace_snapshot',
-    'build_reception_preview_workspace_snapshot',
     'run_apply_attendance_action',
     'run_create_technical_behavior_note',
     'run_link_payment_enrollment',
