@@ -155,6 +155,27 @@ def _build_navigation(role_slug, current_path=''):
 
     for item in links:
         item.setdefault('icon', '')
+    # map short icon codes to sophisticated emoji choices
+    emoji_map = {
+        'DB': '🧭',
+        'OP': '🛠️',
+        'AL': '🎓',
+        'FI': '💰',
+        'EN': '📥',
+        'AU': '🗓️',
+        'AC': '👥',
+        'MP': '🗺️',
+        'CF': '⚙️',
+        'AD': '🧩',
+        'AT': '🔍',
+        'WA': '💬',
+        'OC': '🚨',
+    }
+
+    for item in links:
+        code = item.get('icon', '')
+        # prefer mapped emoji, fall back to existing icon text
+        item['icon'] = emoji_map.get(code, code)
     active_href = _pick_active_href(current_path, links)
 
     return [
