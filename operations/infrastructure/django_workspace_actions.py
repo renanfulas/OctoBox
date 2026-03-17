@@ -13,7 +13,6 @@ PONTOS CRITICOS:
 - essas acoes alteram estado real da operacao e precisam preservar side effects e trilha de auditoria.
 """
 
-from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from operations.application.workspace_commands import (
@@ -22,7 +21,6 @@ from operations.application.workspace_commands import (
     LinkPaymentEnrollmentCommand,
 )
 from operations.application.workspace_ports import (
-    WorkspaceActionAuditPort,
     WorkspaceClockPort,
     WorkspaceActionWriterPort,
     WorkspaceUnitOfWorkPort,

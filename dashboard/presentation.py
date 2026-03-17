@@ -184,11 +184,11 @@ def _build_dashboard_priority_cards(
     overdue_count = metrics['overdue_payments']
 
     if actionable_payment_alerts_count > 0 and primary_payment_alert:
-        urgency_card = {
+        emergency_card = {
             'href': finance_href,
             'card_class': 'is-finance',
             'indicator_class': 'is-finance',
-            'kicker': 'Urgencia',
+            'kicker': 'Emergência',
             'value': actionable_payment_alerts_count,
             'indicator': 'Caixa' if role_slug == ROLE_RECEPTION else 'Urgente',
             'copy': (
@@ -198,11 +198,11 @@ def _build_dashboard_priority_cards(
             ),
         }
     elif overdue_count > 0 and primary_payment_alert:
-        urgency_card = {
+        emergency_card = {
             'href': finance_href,
             'card_class': 'is-finance',
             'indicator_class': 'is-finance',
-            'kicker': 'Urgencia',
+            'kicker': 'Emergência',
             'value': overdue_count,
             'indicator': 'Controle',
             'copy': (
@@ -212,11 +212,11 @@ def _build_dashboard_priority_cards(
             ),
         }
     else:
-        urgency_card = {
+        emergency_card = {
             'href': finance_href,
             'card_class': 'is-finance',
             'indicator_class': 'is-finance',
-            'kicker': 'Urgencia',
+            'kicker': 'Emergência',
             'value': 0,
             'indicator': 'Estavel',
             'copy': (
@@ -235,11 +235,11 @@ def _build_dashboard_priority_cards(
     )
 
     if highest_risk_student and highest_risk_student.total_absences >= 1:
-        emergency_card = {
+        urgency_card = {
             'href': '/alunos/',
             'card_class': 'is-base',
             'indicator_class': 'is-base',
-            'kicker': 'Emergencia',
+            'kicker': 'Urgente',
             'value': highest_risk_student.total_absences,
             'indicator': 'Retencao' if role_slug != ROLE_RECEPTION else 'Cuidado',
             'copy': (
@@ -250,11 +250,11 @@ def _build_dashboard_priority_cards(
         }
     elif pressured_session:
         starts_at_label = timezone.localtime(pressured_session['starts_at']).strftime('%H:%M')
-        emergency_card = {
+        urgency_card = {
             'href': '#dashboard-sessions-board',
             'card_class': 'is-sessions',
             'indicator_class': 'is-sessions',
-            'kicker': 'Emergencia',
+            'kicker': 'Urgente',
             'value': pressured_session['occupancy_percent'] or len(upcoming_sessions),
             'indicator': 'Turno',
             'copy': (
@@ -264,11 +264,11 @@ def _build_dashboard_priority_cards(
             ),
         }
     else:
-        emergency_card = {
+        urgency_card = {
             'href': '/alunos/',
             'card_class': 'is-base',
             'indicator_class': 'is-base',
-            'kicker': 'Emergencia',
+            'kicker': 'Urgente',
             'value': 0,
             'indicator': 'Estavel',
             'copy': 'Tudo tranquilo na retencao. A comunidade esta bem e voce pode focar no que quiser.',
@@ -310,7 +310,7 @@ def _build_dashboard_priority_cards(
             'copy': 'Rotina limpa. O box esta funcionando bem e voce pode confiar no ritmo.',
         }
 
-    return [urgency_card, emergency_card, risk_card]
+    return [emergency_card, urgency_card, risk_card]
 
 
 def build_dashboard_page(*, request_user, role_slug, snapshot):

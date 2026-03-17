@@ -43,10 +43,10 @@ Se um passo critico falhar, corrigir antes de seguir para o proximo.
 
 Confirmar:
 
-1. home redireciona corretamente em [access/urls.py](access/urls.py)
-2. login abre em [access/urls.py](access/urls.py)
-3. dashboard abre em [dashboard/urls.py](dashboard/urls.py)
-4. operacao por papel responde em [operations/urls.py](operations/urls.py)
+1. home redireciona corretamente em [../../access/urls.py](../../access/urls.py)
+2. login abre em [../../access/urls.py](../../access/urls.py)
+3. dashboard abre em [../../dashboard/urls.py](../../dashboard/urls.py)
+4. operacao por papel responde em [../../operations/urls.py](../../operations/urls.py)
 
 URLs base do dia 1:
 

@@ -11,4 +11,3 @@ PONTOS CRITICOS:
 - novos entrypoints devem preferir catalog.services.class_schedule_workflows ou operations.facade.class_grid diretamente.
 """
 
-from catalog.services.class_schedule_workflows import run_class_schedule_create_workflow

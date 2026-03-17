@@ -16,7 +16,7 @@ PONTOS CRITICOS:
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
-from finance.models import Enrollment, Payment, PaymentStatus
+from finance.models import Enrollment, Payment
 from students.models import Student
 from students.application.commands import StudentEnrollmentActionCommand, StudentPaymentActionCommand
 from students.application.ports import ClockPort, StudentEnrollmentActionPort, StudentPaymentActionPort
@@ -29,12 +29,12 @@ from students.domain import (
 )
 from students.infrastructure.django_audit import DjangoStudentActionAudit
 from students.infrastructure.django_clock import DjangoClockPort
+from students.infrastructure.django_payments import execute_student_payment_regeneration_command
+from students.application.commands import StudentPaymentRegenerationCommand
 from students.infrastructure.django_enrollments import (
     cancel_student_enrollment_command,
     reactivate_student_enrollment_command,
 )
-from students.infrastructure.django_payments import execute_student_payment_regeneration_command
-from students.application.commands import StudentPaymentRegenerationCommand
 
 
 class DjangoStudentPaymentActionPort(StudentPaymentActionPort):

@@ -15,7 +15,7 @@ PONTOS CRITICOS:
 - Referencias, nomes e notas foram desenhados para permitir nova execucao sem duplicacao.
 """
 
-from datetime import date, datetime, time, timedelta
+from datetime import datetime, time, timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model

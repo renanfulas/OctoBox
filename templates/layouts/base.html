@@ -22,10 +22,75 @@ PONTOS CRITICOS:
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>OctoBox Control</title>
     <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v={{ static_asset_version }}">
+    <link rel="icon" href="{% static 'images/favicon.svg' %}?v={{ static_asset_version }}" type="image/svg+xml">
     {% for stylesheet in current_page_assets.css %}
     <link rel="stylesheet" href="{% static stylesheet %}?v={{ static_asset_version }}">
     {% endfor %}
     {% block extra_head %}{% endblock %}
+    <script>
+    // Otimizações de carregamento: lazy-load por padrão e preload do maior recurso visível
+    (function(){
+        function setLoadingAttrs(){
+            try{
+                const imgs = Array.from(document.images || []);
+                imgs.forEach(img => {
+                    if(img.hasAttribute('loading')) return;
+                    // keep eager for summary/hero zones
+                    if(img.closest('.dashboard-summary-topline, .dashboard-metrics-lead, .dashboard-hero, .hero')){
+                        img.loading = 'eager';
+                        img.setAttribute('fetchpriority','high');
+                    } else {
+                        img.loading = 'lazy';
+                    }
+                });
+            }catch(e){}
+        }
+
+        function preloadLargest(){
+            try{
+                // pick largest visible image or background-image
+                const candidates = [];
+                const els = Array.from(document.querySelectorAll('body *'));
+                const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+                els.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    if(rect.width<=0 || rect.height<=0) return;
+                    if(rect.top > vh) return; // below fold
+                    const bg = getComputedStyle(el).backgroundImage || '';
+                    if(bg && bg !== 'none'){
+                        const m = bg.match(/url\(["']?([^"')]+)["']?\)/);
+                        if(m) candidates.push({src:m[1], area: rect.width*rect.height});
+                    }
+                });
+                // also check <img>
+                Array.from(document.images || []).forEach(img=>{
+                    const r = img.getBoundingClientRect();
+                    if(r.width<=0||r.height<=0) return;
+                    if(r.top > vh) return;
+                    if(img.currentSrc || img.src) candidates.push({src: img.currentSrc || img.src, area: r.width*r.height});
+                });
+                candidates.sort((a,b)=>b.area-a.area);
+                if(candidates.length){
+                    const top = candidates[0];
+                    if(top.src){
+                        // avoid duplicate preload
+                        if(!document.querySelector('link[rel="preload"][href="'+top.src+'"]')){
+                            const l = document.createElement('link');
+                            l.rel = 'preload'; l.as = 'image'; l.href = top.src; l.crossOrigin='anonymous';
+                            document.head.appendChild(l);
+                        }
+                    }
+                }
+            }catch(e){}
+        }
+
+        if(document.readyState==='loading'){
+            document.addEventListener('DOMContentLoaded', function(){ setLoadingAttrs(); preloadLargest(); });
+        } else {
+            setLoadingAttrs(); preloadLargest();
+        }
+    })();
+    </script>
 </head>
 <body data-theme="light" data-shell-scope="{{ shell_page_context.scope|default:'generic' }}" data-page="shell" data-ui="shell-body"{% if user.is_authenticated %} data-shell-user-id="{{ user.id }}"{% endif %}>
     <a class="skip-link" href="#page-body">Pular para o conteudo</a>

@@ -11,4 +11,3 @@ PONTOS CRITICOS:
 - Este arquivo nao deve voltar a concentrar ORM nem regra de calculo financeiro.
 """
 
-from catalog.services.payments import advance_due_date, create_payment_schedule, regenerate_payment, shift_month

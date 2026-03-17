@@ -11,9 +11,3 @@ PONTOS CRITICOS:
 - novos entrypoints devem preferir catalog.services.class_grid_commands ou operations.facade.class_grid.
 """
 
-from catalog.services.class_grid_commands import (
-    CLASS_GRID_ACTION_COMMANDS,
-    ClassGridCommandResult,
-    run_class_session_delete_command,
-    run_class_session_update_command,
-)

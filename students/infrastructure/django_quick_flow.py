@@ -15,7 +15,6 @@ PONTOS CRITICOS:
 
 from django.db import transaction
 
-from finance.models import MembershipPlan
 from students.models import Student
 from students.application.commands import StudentEnrollmentSyncCommand, StudentIntakeSyncCommand, StudentQuickCommand
 from students.application.ports import (

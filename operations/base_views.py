@@ -20,7 +20,7 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from access.permissions import RoleRequiredMixin
-from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
+from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
 
 
 class RoleOperationRedirectView(LoginRequiredMixin, View):

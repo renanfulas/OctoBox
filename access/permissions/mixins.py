@@ -30,11 +30,30 @@ class RoleRequiredMixin:
                             getattr(role, 'slug', None),
                             self.allowed_roles,
                             getattr(request, 'path', None))
+        # debug via logger only
         if role is None or role.slug not in self.allowed_roles:
             ACCESS_LOGGER.warning('permission_denied user_id=%s role=%s allowed=%s path=%s',
                                   getattr(getattr(request, 'user', None), 'pk', None),
                                   getattr(role, 'slug', None),
                                   self.allowed_roles,
                                   getattr(request, 'path', None))
+            # additional debug: persist request info to disk to help headless reproductions
+            try:
+                logfile = 'playwright_debug.log'
+                with open(logfile, 'a', encoding='utf-8') as f:
+                    f.write('\n---- PLAYWRIGHT DEBUG ----\n')
+                    f.write(f'user_authenticated={getattr(request.user, "is_authenticated", False)}\n')
+                    f.write(f'user_id={getattr(getattr(request, "user", None), "pk", None)}\n')
+                    f.write(f'role_slug={getattr(role, "slug", None)}\n')
+                    f.write(f'path={getattr(request, "path", None)}\n')
+                    f.write('COOKIES:\n')
+                    for k, v in request.COOKIES.items():
+                        f.write(f'  {k}={v}\n')
+                    f.write('HEADERS:\n')
+                    for k, v in request.META.items():
+                        if k.startswith('HTTP_'):
+                            f.write(f'  {k}={v}\n')
+            except Exception:
+                pass
             raise PermissionDenied('Este usuário não tem permissão para acessar esta área.')
         return super().dispatch(request, *args, **kwargs)

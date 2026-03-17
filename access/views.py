@@ -68,8 +68,8 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
                 'href_label': 'Ver mapa de Papéis',
             },
             {
-                'label': 'Feche com a governanca pratica',
-                'chip_label': 'GovernanÃ§a',
+                'label': 'Feche com a governança prática',
+                'chip_label': 'Governança',
                 'summary': 'Grupos e permissoes devem sustentar o desenho do produto, nunca obrigar a operacao a adivinhar limite por tentativa e erro.',
                 'pill_class': 'warning',
                 'href': '#access-governance-board',
@@ -78,7 +78,7 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
         ]
         context['access_hero'] = build_page_hero(
             eyebrow='Fronteiras do sistema',
-            title='Quem age, quem nÃ£o invade e onde cada papel comeÃ§a.',
+            title='Quem age, quem não invade e onde cada papel começa.',
             copy='Autoridade, fronteira e papel sem ambiguidade.',
             actions=[
                 {'label': 'Ver meu escopo', 'href': '#access-current-role'},
@@ -90,10 +90,10 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
             aria_label='Panorama de acessos',
         )
         context['governance_points'] = [
-            'Manager nao vira coach por atalho.',
-            'Coach nao carrega rotina financeira ou administrativa.',
-            'DEV investiga e mantem sem virar operador do box.',
-            'Owner enxerga amplitude sem dissolver fronteiras entre Papéis.',
+            'Manager não vira coach por atalho.',
+            'Coach não carrega rotina financeira ou administrativa.',
+            'DEV investiga e mantém sem virar operador do box.',
+            'Owner enxerga amplitude sem dissolver fronteiras entre papéis.',
         ]
         context['group_admin_url'] = admin_changelist_url('auth', 'group') if user_can_access_admin(self.request.user) else ''
         attach_shell_action_buttons(context, focus=context['access_operational_focus'], scope='access')

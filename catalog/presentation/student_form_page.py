@@ -6,7 +6,7 @@ POR QUE ELE EXISTE:
 - organiza a tela por contrato explicito para o catalogo amadurecer por payload.
 """
 
-from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
+from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
 from access.shell_actions import build_shell_action_buttons_from_focus
 from shared_support.page_payloads import build_page_hero
 

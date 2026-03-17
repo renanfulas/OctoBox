@@ -14,10 +14,11 @@ PONTOS CRITICOS:
 """
 
 from datetime import timedelta
+import calendar
+from datetime import date
 
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
-
 from access.roles import ROLE_RECEPTION
 from communications.application.message_templates import build_operational_message_body
 from communications.models import WhatsAppContact
@@ -31,81 +32,35 @@ from shared_support.whatsapp_links import build_whatsapp_message_href
 from students.models import Student, StudentStatus
 
 
-def _build_payment_alert_whatsapp_href(payment):
-    message = build_operational_message_body(
-        action_kind='overdue',
-        first_name=payment.student.full_name.split()[0],
-        payment_due_date=payment.due_date,
-        payment_amount=payment.amount,
-    )
-    return build_whatsapp_message_href(phone=getattr(payment.student, 'phone', ''), message=message)
-
-
-def _decorate_payment_alerts(payment_alerts):
-    student_ids = [payment.student_id for payment in payment_alerts]
-    contacts_by_student_id = {
-        contact.linked_student_id: contact
-        for contact in WhatsAppContact.objects.filter(linked_student_id__in=student_ids)
-    }
-    for payment in payment_alerts:
-        payment.dashboard_whatsapp_href = _build_payment_alert_whatsapp_href(payment)
-        contact_state = build_whatsapp_contact_state(contacts_by_student_id.get(payment.student_id))
-        payment.dashboard_whatsapp_last_contact_label = contact_state['whatsapp_last_contact_label']
-        payment.dashboard_whatsapp_next_available_label = contact_state['whatsapp_next_available_label']
-        payment.dashboard_whatsapp_repeat_blocked = contact_state['whatsapp_repeat_blocked']
-        payment.dashboard_requires_whatsapp_followup = bool(
-            getattr(payment.student, 'status', '') == StudentStatus.ACTIVE
-            and payment.dashboard_whatsapp_href
-            and not payment.dashboard_whatsapp_repeat_blocked
-        )
-    return payment_alerts
-
-
-def _build_dashboard_payment_alert_snapshot(*, overdue_payments_queryset):
-    active_overdue_payments = list(
-        overdue_payments_queryset
-        .select_related('student')
-        .filter(student__status=StudentStatus.ACTIVE)
-        .order_by('due_date', 'student__full_name')
-    )
-    decorated_alerts = _decorate_payment_alerts(active_overdue_payments)
-    actionable_alerts = [payment for payment in decorated_alerts if payment.dashboard_requires_whatsapp_followup]
-    return {
-        'payment_alerts': decorated_alerts[:5],
-        'payment_alerts_total_count': len(decorated_alerts),
-        'payment_alerts_total_label': f'{len(decorated_alerts)} alerta(s)',
-        'actionable_payment_alerts_count': len(actionable_alerts),
-        'next_actionable_payment_alert': actionable_alerts[0] if actionable_alerts else None,
-    }
-
-
-def _format_currency(value):
-    from decimal import Decimal
-    normalized = (value if value else Decimal('0.00'))
-    if isinstance(normalized, (int, float)):
-        normalized = Decimal(str(normalized))
-    normalized = normalized.quantize(Decimal('0.01'))
-    integer_part, decimal_part = str(normalized).split('.')
-    if integer_part.startswith('-'):
-        sign = '-'
-        integer_part = integer_part[1:]
-    else:
-        sign = ''
-    formatted_integer = ''
-    for i, digit in enumerate(reversed(integer_part)):
-        if i > 0 and i % 3 == 0:
-            formatted_integer = '.' + formatted_integer
-        formatted_integer = digit + formatted_integer
-    return f'R$ {sign}{formatted_integer},{decimal_part}'
-
-
 def _build_delta_badge(current, previous, *, label, formatter=str, semantic='neutral'):
-    diff = current - previous
-    if diff == 0:
-        return {'tone': 'neutral', 'value': 'Mesmo ritmo', 'label': label}
+    # Ensure callers can rely on a numeric representation of the delta
+    # 'value' remains the display string, 'value_raw' is always an int/float (or None)
+    try:
+        diff = (current or 0) - (previous or 0)
+    except Exception:
+        diff = 0
 
-    if previous == 0:
-        return {'tone': 'neutral', 'value': 'Primeira leitura', 'label': label}
+    # exact same: expose numeric zero but keep human-friendly display
+    if diff == 0:
+        return {
+            'tone': 'neutral',
+            'value': 'Mesmo ritmo',
+            'value_raw': 0,
+            'value_percent': 0,
+            'is_small': False,
+            'label': label,
+        }
+
+    # previous == 0 => first meaningful reading
+    if not previous:
+        return {
+            'tone': 'neutral',
+            'value': 'Primeira leitura',
+            'value_raw': None,
+            'value_percent': None,
+            'is_small': False,
+            'label': label,
+        }
 
     if diff > 0:
         symbol = '+'
@@ -114,11 +69,42 @@ def _build_delta_badge(current, previous, *, label, formatter=str, semantic='neu
         symbol = '-'
         tone = 'bad' if semantic == 'positive' else 'good' if semantic == 'negative' else 'neutral'
 
-    return {'tone': tone, 'value': f'{symbol} {formatter(abs(diff))}', 'label': label}
+    # compute percent relative to previous (signed)
+    try:
+        percent = (diff / float(previous)) * 100
+    except Exception:
+        percent = None
+
+    is_small = False
+    if percent is not None:
+        try:
+            is_small = abs(percent) <= 10 and tone in ('good', 'bad')
+        except Exception:
+            is_small = False
+
+    return {
+        'tone': tone,
+        'value': f'{symbol} {formatter(abs(diff))}',
+        'value_raw': diff,
+        'value_percent': percent,
+        'is_small': is_small,
+        'label': label,
+    }
 
 
 def _format_percent(value):
     return f"{int(round(value))}%"
+
+
+def _format_currency(value):
+    try:
+        v = float(value or 0)
+        # format as BRL: 1.234.567,89
+        s = f"{v:,.2f}"
+        s = s.replace(',', 'X').replace('.', ',').replace('X', '.')
+        return f"R$ {s}"
+    except Exception:
+        return f"R$ {value}"
 
 
 def _build_dashboard_metric_cards(metrics, *, pending_intakes_count, today_schedule_occupancy_percent):
@@ -128,13 +114,25 @@ def _build_dashboard_metric_cards(metrics, *, pending_intakes_count, today_sched
         occupancy_signal_tone = 'bad'
         occupancy_signal_value = 'Quase lotado'
 
+    # Prefer weekly revenue when it's a non-zero reading; otherwise show monthly accumulated
+    _weekly = metrics.get('weekly_revenue_paid')
+    _weekly_prev = metrics.get('weekly_revenue_paid_previous')
+    current_revenue = _weekly if _weekly else metrics['monthly_revenue_paid']
+    previous_revenue = _weekly_prev if _weekly_prev else metrics['monthly_revenue_paid_previous']
+
     return [
         {
             'card_class': 'dashboard-kpi-card kpi-amber is-stage',
             'eyebrow': 'Receita realizada',
             'kicker': 'O que realmente chegou',
-            'display_value': _format_currency(metrics['monthly_revenue_paid']),
-            'change': _build_delta_badge(metrics['monthly_revenue_paid'], metrics['monthly_revenue_paid_previous'], label='vs mes anterior', formatter=_format_currency, semantic='positive'),
+            'display_value': _format_currency(current_revenue),
+            'change': _build_delta_badge(
+                current_revenue,
+                previous_revenue,
+                label='vs semana anterior',
+                formatter=_format_currency,
+                semantic='positive',
+            ),
             'note': 'Esse e o dinheiro real que entrou. Eu te mostro onde esta indo bem e onde precisa de atencao.',
             'hide_footer': True,
         },
@@ -157,7 +155,7 @@ def _build_dashboard_metric_cards(metrics, *, pending_intakes_count, today_sched
                 'value': 'Responder hoje' if pending_intakes_count else 'Fila limpa',
                 'label': 'pipeline comercial',
             },
-            'note': 'Cada entrada aqui e alguem que esta esperando por voce. Vamos cuidar antes que esfrie.',
+            'note': 'Cada entrada aqui pode ser alguém que está esperando por você mudar a vida dela.\nVamos cuidar antes que esfrie.',
             'hide_footer': True,
         },
         {
@@ -170,7 +168,7 @@ def _build_dashboard_metric_cards(metrics, *, pending_intakes_count, today_sched
                 'value': occupancy_signal_value,
                 'label': 'ocupacao media',
             },
-            'note': 'A agenda do dia esta aqui. Eu cuido da leitura pra voce tomar a melhor decisao.',
+            'note': 'Cuide da lotação para o seu Coach possa entregar uma aula melhor para os alunos.',
             'hide_footer': True,
         },
         {
@@ -206,6 +204,51 @@ def _decorate_dashboard_sessions(serialized_sessions):
         else:
             session['dashboard_kicker'] = 'Em seguida'
     return visible_sessions
+
+
+def _build_dashboard_payment_alert_snapshot(*, overdue_payments_queryset):
+    qs = overdue_payments_queryset.order_by('due_date')
+    payment_alerts = []
+    actionable_count = 0
+    next_actionable_instance = None
+
+    for p in qs[:10]:
+        student = getattr(p, 'student', None)
+        # determine if this payment still requires an actionable touch
+        contact = None
+        try:
+            contact = WhatsAppContact.objects.filter(linked_student=student).order_by('-last_outbound_at').first()
+        except Exception:
+            contact = None
+
+        # If we've recently had an outbound attempt (last_outbound_at exists), consider it non-actionable
+        is_actionable = not (contact and getattr(contact, 'last_outbound_at', None))
+        if is_actionable:
+            actionable_count += 1
+            if next_actionable_instance is None:
+                next_actionable_instance = p
+
+        payment_alerts.append({
+            'id': getattr(p, 'id', None),
+            'student': student,
+            'student_full_name': getattr(student, 'full_name', None),
+            'due_date': getattr(p, 'due_date', None),
+            'amount': getattr(p, 'amount', None),
+            'href': '/financeiro/',
+            'is_actionable': is_actionable,
+            'dashboard_requires_whatsapp_followup': bool(contact and getattr(contact, 'last_outbound_at', None)),
+        })
+
+    total_count = qs.count()
+    total_label = f"{total_count} cobranca(s)" if total_count else 'Nenhuma cobranca'
+
+    return {
+        'payment_alerts': payment_alerts,
+        'payment_alerts_total_count': total_count,
+        'payment_alerts_total_label': total_label,
+        'actionable_payment_alerts_count': actionable_count,
+        'next_actionable_payment_alert': next_actionable_instance,
+    }
 
 
 def _build_dashboard_glance_summary(*, metrics, role_slug, upcoming_sessions, payment_alert_snapshot):
@@ -309,6 +352,64 @@ def build_dashboard_snapshot(*, today, month_start, role_slug=''):
         ).count(),
     }
 
+    # --- Weekly revenue computation ---
+    def _last_day_of_month(year, month):
+        return calendar.monthrange(year, month)[1]
+
+    def _revenue_for_month_week(year, month, week_index):
+        # week_index: 1 => days 1-7, 2 => 8-14, etc.
+        start_day = 1 + (week_index - 1) * 7
+        last_day = _last_day_of_month(year, month)
+        end_day = min(start_day + 6, last_day)
+        start_date = date(year, month, start_day)
+        end_date = date(year, month, end_day)
+        total = Payment.objects.filter(
+            status=PaymentStatus.PAID,
+            due_date__date__gte=start_date,
+            due_date__date__lte=end_date,
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        return total
+
+    # determine current week index in the current month
+    week_index = (today.day - 1) // 7 + 1
+    this_year = today.year
+    this_month = today.month
+    # previous month/year
+    prev_month_date = (month_start - timedelta(days=1))
+    prev_year = prev_month_date.year
+    prev_month = prev_month_date.month
+
+    try:
+        weekly_total = _revenue_for_month_week(this_year, this_month, week_index)
+    except Exception:
+        weekly_total = 0
+
+    # Primary previous candidate: previous week in same month (if exists)
+    if week_index > 1:
+        try:
+            previous_week_total = _revenue_for_month_week(this_year, this_month, week_index - 1)
+        except Exception:
+            previous_week_total = 0
+    else:
+        # week_index == 1 -> compare with same week index in previous month
+        try:
+            previous_week_total = _revenue_for_month_week(prev_year, prev_month, 1)
+        except Exception:
+            previous_week_total = 0
+
+    # Fallback: if previous is zero, try same week index in previous month
+    if previous_week_total == 0:
+        try:
+            fallback = _revenue_for_month_week(prev_year, prev_month, week_index)
+            # only use fallback if it's different from current previous
+            if fallback:
+                previous_week_total = fallback
+        except Exception:
+            pass
+
+    metrics['weekly_revenue_paid'] = weekly_total
+    metrics['weekly_revenue_paid_previous'] = previous_week_total
+
     operational_focus = []
     finance_focus_href = '/operacao/recepcao/#reception-payment-board' if role_slug == ROLE_RECEPTION else '/financeiro/'
     finance_focus_label = 'Abrir fila curta da Recepcao' if role_slug == ROLE_RECEPTION else 'Abrir financeiro'
@@ -379,7 +480,17 @@ def build_dashboard_snapshot(*, today, month_start, role_slug=''):
             }
         )
 
-    payment_alert_snapshot = _build_dashboard_payment_alert_snapshot(overdue_payments_queryset=overdue_payments)
+    try:
+        payment_alert_snapshot = _build_dashboard_payment_alert_snapshot(overdue_payments_queryset=overdue_payments)
+    except NameError:
+        total_count = overdue_payments.count()
+        payment_alert_snapshot = {
+            'payment_alerts': [],
+            'payment_alerts_total_count': total_count,
+            'payment_alerts_total_label': f"{total_count} cobranca(s)" if total_count else 'Nenhuma cobranca',
+            'actionable_payment_alerts_count': total_count,
+            'next_actionable_payment_alert': None,
+        }
     serialized_sessions = [
         serialize_class_session(session, now=current_time)
         for session in upcoming_session_objects
