@@ -24,3 +24,4 @@ PONTOS CRITICOS:
 @import url("./design-system/spacing.css") layer(spacing);
 @import url("./design-system/responsiveness.css") layer(responsiveness);
 @import url("./design-system/components.css") layer(components);
+@import url("./design-system/neon.css") layer(components);

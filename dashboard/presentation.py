@@ -377,6 +377,6 @@ def build_dashboard_page(*, request_user, role_slug, snapshot):
             'dashboard_execution_focus': execution_focus,
             'dashboard_priority_cards': priority_cards,
         },
-        assets=build_page_assets(css=['css/design-system/operations.css', 'css/design-system/dashboard.css']),
+        assets=build_page_assets(css=['css/design-system/operations.css', 'css/design-system/dashboard.css', 'css/design-system/neon.css']),
     )
 

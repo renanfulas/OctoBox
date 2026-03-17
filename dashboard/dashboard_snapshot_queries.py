@@ -142,6 +142,7 @@ def _build_dashboard_metric_cards(metrics, *, pending_intakes_count, today_sched
             'kicker': 'Precisa do seu olhar',
             'display_value': metrics['overdue_payments'],
             'change': _build_delta_badge(metrics['overdue_payments'], metrics['overdue_payments_previous_day'], label='desde ontem', semantic='negative'),
+            'data_action': 'blink-topbar-finance',
             'note': 'Cada cobranca aqui ainda tem chance. Vou te ajudar a priorizar quem abordar primeiro.',
             'hide_footer': True,
         },
@@ -150,6 +151,7 @@ def _build_dashboard_metric_cards(metrics, *, pending_intakes_count, today_sched
             'eyebrow': 'Entradas pendentes',
             'kicker': 'Esperando por voce',
             'display_value': pending_intakes_count,
+            'data_action': 'blink-topbar-intake',
             'signal': {
                 'tone': 'neutral' if pending_intakes_count else 'good',
                 'value': 'Responder hoje' if pending_intakes_count else 'Fila limpa',
@@ -168,6 +170,7 @@ def _build_dashboard_metric_cards(metrics, *, pending_intakes_count, today_sched
                 'value': occupancy_signal_value,
                 'label': 'ocupacao media',
             },
+            'data_action': 'blink-board-sessions',
             'note': 'Cuide da lotação para o seu Coach possa entregar uma aula melhor para os alunos.',
             'hide_footer': True,
         },
