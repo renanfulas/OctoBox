@@ -84,6 +84,11 @@ PONTOS CRITICOS:
     position: relative;
 }
 
+/* Force default cursor for specific metric cards that should not appear as links */
+[data-no-pointer="true"] {
+    cursor: default !important;
+}
+
 .sidebar-logout-form {
     margin: 0;
 }

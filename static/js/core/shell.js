@@ -266,6 +266,24 @@ POR QUE ELE EXISTE:
     });
   }
 
+  // Blink topbar finance alert when specific metric cards request attention
+  document.addEventListener('click', function(event) {
+    var trigger = event.target.closest('[data-action="blink-topbar-finance"]');
+    if (!trigger) {
+      return;
+    }
+
+    if (!financeAlert) {
+      return;
+    }
+
+    // add blink class then remove after animation duration
+    financeAlert.classList.add('blink');
+    window.setTimeout(function() {
+      financeAlert.classList.remove('blink');
+    }, 220 * 6 + 80); // animation-duration * iterations + small buffer
+  });
+
   revealHashTarget();
   window.addEventListener('hashchange', revealHashTarget);
 

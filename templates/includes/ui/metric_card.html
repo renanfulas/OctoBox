@@ -1,5 +1,5 @@
 {% load dashboard_filters %}
-<article class="card{% if compact %} metric-card-compact{% endif %} {{ card.card_class }}{% if card.status_hint %} status-{{ card.status_hint }}{% endif %}" data-panel="metric-card" data-slot="metric-card">
+<article class="card{% if compact %} metric-card-compact{% endif %} {{ card.card_class }}{% if card.status_hint %} status-{{ card.status_hint }}{% endif %}" data-panel="metric-card" data-slot="metric-card"{% if card.eyebrow == 'Cobrancas em atraso' %} data-action="blink-topbar-finance" data-no-pointer="true"{% endif %}>
     <div class="card-body card-body-metric">
         <div class="card-value-stack">
             <p class="eyebrow card-label">{{ card.eyebrow }}</p>
