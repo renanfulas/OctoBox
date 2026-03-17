@@ -1,11 +1,11 @@
-<!--
+﻿<!--
 ARQUIVO: tela principal do dashboard.
 
 POR QUE ELE EXISTE:
 - Mostra de forma rapida o estado geral do box.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Abre com a leitura curta prioritÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ria do dia.
+1. Abre com a leitura curta prioritária do dia.
 2. Mantem metricas como camada seguinte de entendimento.
 3. Deixa a agenda como trilho de apoio, sem competir com a abertura.
 
@@ -25,10 +25,20 @@ PONTOS CRITICOS:
         <div class="dashboard-instagram-main">
             <section class="layout-block dashboard-summary-zone" aria-label="Leitura rapida do box">
                 <div class="dashboard-summary-shell">
+                    <!-- KPI controls: owner can choose which KPI to highlight -->
+                    <div class="dashboard-kpi-controls" style="display:flex;justify-content:flex-end;margin-bottom:8px;gap:8px;align-items:center;">
+                        <label for="kpi-selector" class="visually-hidden">Selecionar KPI principal</label>
+                        <select id="kpi-selector" aria-label="Selecionar KPI para destaque">
+                            {% for c in page.data.dashboard_priority_cards %}
+                            <option value="{{ forloop.counter0 }}">{{ c.kicker }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
                     <div class="dashboard-summary-topline">
                         {% with primary_card=page.data.dashboard_priority_cards.0 %}
                         <section class="dashboard-glance-strip dashboard-glance-strip--summary" aria-label="Resumo visual do dia" data-slot="glance-strip">
-                            <a class="dashboard-glance-card dashboard-glance-card--summary {{ primary_card.card_class }}" href="{{ primary_card.href }}">
+                            <a class="dashboard-glance-card dashboard-glance-card--summary {{ primary_card.card_class }}" href="{{ primary_card.href }}" data-metric-id="0">
                                 <span class="dashboard-glance-kicker">{{ primary_card.kicker }}</span>
                                 <div class="dashboard-glance-value-row">
                                     <strong class="dashboard-glance-value">{{ primary_card.value }}</strong>
@@ -41,7 +51,7 @@ PONTOS CRITICOS:
 
                         <section class="dashboard-support-grid" aria-label="Radar de apoio">
                             {% for card in page.data.dashboard_priority_cards|slice:"1:" %}
-                            <a class="dashboard-glance-card dashboard-glance-card--summary {{ card.card_class }}" href="{{ card.href }}">
+                            <a class="dashboard-glance-card dashboard-glance-card--summary {{ card.card_class }}" href="{{ card.href }}" data-metric-id="{{ forloop.counter|add:'1' }}">
                                 <span class="dashboard-glance-kicker">{{ card.kicker }}</span>
                                 <div class="dashboard-glance-value-row">
                                     <strong class="dashboard-glance-value">{{ card.value }}</strong>
@@ -141,3 +151,6 @@ PONTOS CRITICOS:
 {% endwith %}
 {% endblock %}
 
+{% block extra_scripts %}
+<script src="{% static 'js/dashboard/sparklines.js' %}?v={{ static_asset_version }}"></script>
+{% endblock %}

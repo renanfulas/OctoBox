@@ -1,4 +1,4 @@
-/*
+﻿/*
 ARQUIVO: estilos especificos do dashboard.
 
 POR QUE ELE EXISTE:
@@ -204,7 +204,7 @@ body[data-shell-scope="dashboard"] .content {
 }
 
 .dashboard-summary-topline .dashboard-glance-card--summary {
-    min-height: 172px;
+    min-height: 130px;
     grid-template-rows: auto auto 1fr;
     align-content: start;
 }
@@ -1205,7 +1205,7 @@ body[data-theme="dark"] .dashboard-support-kicker {
     }
 
     .dashboard-kpi-slot--lead .dashboard-kpi-card {
-        min-height: 172px;
+        min-height: 130px;
     }
 }
 
@@ -1491,7 +1491,7 @@ body[data-theme="dark"][data-shell-scope="dashboard"] .topbar {
    COLOR MAP: Linguagem cromatica integrada do dashboard
    -------------------------------------------------------
    Principio: cada familia de cor tem UM significado semantico.
-   Nenhuma cor aparece "por acaso" — ela sempre comunica algo.
+   Nenhuma cor aparece "por acaso" â€” ela sempre comunica algo.
 
    Copper  (#c2410c) -> Dinheiro: receita, caixa, fluxo financeiro
    Ember   (#dc2626) -> Alerta financeiro: cobrancas, divida ativa
@@ -1564,7 +1564,7 @@ body[data-theme="dark"][data-shell-scope="dashboard"] .topbar {
     color: rgb(124, 45, 18);
 }
 
-/* --- KPI card: kpi-emerald (comunidade — pessoas, nao dinheiro) --- */
+/* --- KPI card: kpi-emerald (comunidade â€” pessoas, nao dinheiro) --- */
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-emerald {
     --kpi-good-surface: linear-gradient(135deg, rgba(5, 150, 105, 0.14), rgba(52, 211, 153, 0.09));
     --kpi-good-border: rgba(4, 120, 87, 0.24);
@@ -1662,3 +1662,26 @@ body[data-theme="dark"] .dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card
     font-size: 0.62rem;
 }
 
+
+
+/* Compact metric card variant for dashboard */
+.metric-card-compact {
+    padding: 10px 12px;
+    min-height: 110px;
+}
+.metric-card-compact .card-value-row {
+    gap: 8px;
+}
+/* Ensure focus outline for accessibility */
+.card-body-metric:focus-within, .card-body-metric:focus {
+    outline: 3px solid rgba(59,130,246,0.12);
+    outline-offset: 2px;
+}
+
+/* Lazy sparkline placeholder */
+.metric-spark[data-spark] {
+    min-width: 64px;
+    height: 28px;
+    display: inline-block;
+    background: linear-gradient(90deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%);
+}
