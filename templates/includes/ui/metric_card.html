@@ -1,4 +1,4 @@
-﻿{% load dashboard_filters %}
+{% load dashboard_filters %}
 <article class="card{% if compact %} metric-card-compact{% endif %} {{ card.card_class }}{% if card.status_hint %} status-{{ card.status_hint }}{% endif %}" data-panel="metric-card" data-slot="metric-card">
     <div class="card-body card-body-metric">
         <div class="card-value-stack">
@@ -7,18 +7,16 @@
             <p class="card-kicker">{{ card.kicker }}</p>
             {% endif %}
             <div class="card-value-row">
-                <p class="metric card-value" aria-live="polite" aria-atomic="true">{{ card.display_value }}</p>
+                <p class="metric card-value">{{ card.display_value }}</p>
                 {% if card.change %}
-                <div class="card-signal{% if card.change.tone %} is-{{ card.change.tone }}{% endif %}" role="status" aria-label="{{ card.change.label|default:card.change.value }}">
+                <div class="card-signal{% if card.change.tone %} is-{{ card.change.tone }}{% endif %}"{% if card.change.label %} title="{{ card.change.label }}"{% endif %}>
                     <span class="card-signal-dot" aria-hidden="true"></span>
                     <span class="card-signal-value">{{ card.change.value }}</span>
-                    <span class="visually-hidden">{{ card.change.label|default:card.change.value }}</span>
                 </div>
                 {% elif card.signal %}
-                <div class="card-signal{% if card.signal.tone %} is-{{ card.signal.tone }}{% endif %}" role="status" aria-label="{{ card.signal.label|default:card.signal.value }}">
+                <div class="card-signal{% if card.signal.tone %} is-{{ card.signal.tone }}{% endif %}"{% if card.signal.label %} title="{{ card.signal.label }}"{% endif %}>
                     <span class="card-signal-dot" aria-hidden="true"></span>
                     <span class="card-signal-value">{{ card.signal.value }}</span>
-                    <span class="visually-hidden">{{ card.signal.label|default:card.signal.value }}</span>
                 </div>
                 {% endif %}
             </div>
