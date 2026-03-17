@@ -108,6 +108,19 @@ PONTOS CRITICOS:
     border: none;
 }
 
+/* Ensure emojis render crisply and harmonize with UI */
+.nav-icon {
+    font-family: 'Segoe UI Emoji', 'Noto Color Emoji', 'Apple Color Emoji', 'Twemoji Mozilla', 'Segoe UI Symbol', sans-serif;
+    font-size: 18px;
+    line-height: 1;
+    display: inline-grid;
+    place-items: center;
+}
+.nav-icon.emoji-soft {
+    filter: saturate(0.95) contrast(0.98);
+    opacity: 0.95;
+}
+
 .nav-link:hover,
 .nav-link:focus-visible {
     color: var(--sidebar-ink);
