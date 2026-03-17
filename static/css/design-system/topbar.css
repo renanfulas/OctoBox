@@ -451,15 +451,27 @@ body[data-theme="dark"] .topbar-quick-link--secondary:focus-visible {
     transition: background 0.14s ease, border-color 0.14s ease;
 }
 
-/* Blink animation used when a metric card requests attention */
+/* Attention pulse: single neon burst to highlight the alert once */
 .alert-chip.blink {
-    animation: topbar-blink 220ms linear 0s 6;
+    animation: topbar-neon 1000ms ease-in-out 0s 1 both;
 }
 
-@keyframes topbar-blink {
-    0% { opacity: 1; transform: translateY(0); }
-    50% { opacity: 0.18; transform: translateY(-2px); }
-    100% { opacity: 1; transform: translateY(0); }
+@keyframes topbar-neon {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+        box-shadow: 0 0 0 color-mix(in srgb, currentColor 0%, transparent);
+    }
+    40% {
+        opacity: 1;
+        transform: translateY(-2px);
+        box-shadow: 0 0 10px color-mix(in srgb, currentColor 95%, transparent), 0 0 24px color-mix(in srgb, currentColor 60%, transparent);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        box-shadow: 0 0 0 color-mix(in srgb, currentColor 0%, transparent);
+    }
 }
 
 .alert-chip:hover,

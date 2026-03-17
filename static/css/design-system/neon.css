@@ -1,0 +1,102 @@
+/* Neon visual utilities - separado para facilitar cache/invalidação e reutilização */
+:root {
+    --neon-default: #092a5f; /* azul escuro padrão */
+    --neon-default-rgb: 9, 42, 95; /* RGB fallback for broader browser support */
+}
+
+/* Base positioning so glow (box-shadow) can extend outside the board */
+#dashboard-sessions-board {
+    position: relative;
+    overflow: visible;
+    z-index: 0; /* ensure stacking for animated shadow */
+}
+
+/* Blink animation: animate box-shadow briefly and return to no outline. */
+#dashboard-sessions-board.neon-blink {
+    animation: neon-pulse-shadow 1000ms ease 1 forwards;
+}
+
+@keyframes neon-pulse-shadow {
+    0% {
+        box-shadow: none;
+    }
+    30% {
+        box-shadow: 0 0 34px rgba(var(--neon-default-rgb), 0.36), 0 0 12px rgba(var(--neon-default-rgb), 0.18), inset 0 0 18px rgba(var(--neon-default-rgb), 0.10);
+    }
+    100% {
+        box-shadow: none;
+    }
+}
+
+/* Ensure any stray pseudo elements don't interfere */
+/* (Allow dashboard card pseudo-elements; utilities will opt-in) */
+
+/* (Override for the article pseudo-element removed per request.) */
+
+/* Narrow safety overrides: neutralize pseudo-elements for cards inside the dashboard side column
+   This avoids touching global pseudo-elements used elsewhere (sidebar, hero, tokens). */
+aside.dashboard-instagram-side .table-card::before,
+aside.dashboard-instagram-side .table-card::after,
+aside.dashboard-instagram-side .dashboard-side-card::before,
+aside.dashboard-instagram-side .dashboard-side-card::after,
+aside.dashboard-instagram-side .dashboard-table-card::before,
+aside.dashboard-instagram-side .dashboard-table-card::after {
+    content: none !important;
+    display: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+/* Utility: top stripe for cards (opt-in via class) */
+.card-decor-topstripe::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto auto 0;
+        width: 100%;
+        height: 3px;
+        background: var(--brand);
+        pointer-events: none;
+}
+
+/* Utility: subtle card glow (opt-in, non-animated) */
+.card-decor-glow {
+        box-shadow: 0 6px 12px rgba(var(--neon-default-rgb), 0.06);
+}
+
+@keyframes neon-pulse {
+    0% {
+        opacity: 0.0;
+        transform: scale(1);
+        box-shadow: 0 0 6px color-mix(in srgb, var(--neon-default) 12%, transparent), inset 0 0 6px color-mix(in srgb, var(--neon-default) 6%, transparent);
+    }
+    30% {
+        opacity: 1;
+        transform: scale(1.01);
+        box-shadow: 0 0 34px color-mix(in srgb, var(--neon-default) 36%, transparent), 0 0 12px color-mix(in srgb, var(--neon-default) 18%, transparent), inset 0 0 18px color-mix(in srgb, var(--neon-default) 10%, transparent);
+    }
+    100% {
+        opacity: 0.6;
+        transform: scale(1);
+        box-shadow: 0 0 14px color-mix(in srgb, var(--neon-default) 18%, transparent), inset 0 0 8px color-mix(in srgb, var(--neon-default) 6%, transparent);
+    }
+}
+
+/* Utility: ensure the sessions board can show its glow (avoid clipping on inner panels) */
+#dashboard-sessions-board {
+    overflow: visible;
+}
+
+/* Neon outline for sidebar nav links (e.g. "Grade de aulas") */
+.nav-link {
+    position: relative;
+}
+
+.nav-link.neon-outline {
+    /* keep as no-op (we won't add persistent outline) */
+    box-shadow: none !important;
+}
+
+.nav-link.neon-blink {
+    animation: neon-pulse 900ms ease 1 forwards;
+}
+
