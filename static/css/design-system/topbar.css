@@ -451,6 +451,17 @@ body[data-theme="dark"] .topbar-quick-link--secondary:focus-visible {
     transition: background 0.14s ease, border-color 0.14s ease;
 }
 
+/* Blink animation used when a metric card requests attention */
+.alert-chip.blink {
+    animation: topbar-blink 220ms linear 0s 6;
+}
+
+@keyframes topbar-blink {
+    0% { opacity: 1; transform: translateY(0); }
+    50% { opacity: 0.18; transform: translateY(-2px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
 .alert-chip:hover,
 .alert-chip:focus-visible {
     background: var(--surface-strong);
