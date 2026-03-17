@@ -159,6 +159,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         'intake_operational_focus': [
             {
                 'label': 'Comece pela fila aberta',
+                'chip_label': 'Fila',
                 'summary': (
                     f'{visible_queue_count} entrada(s) aparecem neste recorte da fila principal e pedem leitura antes de esfriarem ou virarem ruido operacional.'
                     if visible_queue_count > 0 else
@@ -171,6 +172,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
             },
             {
                 'label': 'Depois leia a origem do fluxo',
+                'chip_label': 'Origens',
                 'summary': 'A origem ajuda a separar gargalo de captação, canal ou passagem de bastão.',
                 'pill_class': 'info' if created_today > 0 else 'accent',
                 'href': '#intake-source-board',
@@ -178,6 +180,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
             },
             {
                 'label': 'Feche pela regra de conversao',
+                'chip_label': 'Conversão',
                 'summary': f'{matched_count} caso(s) ja estao mais maduros e pedem conversao ou decisao final sem empurrar a fila para Alunos.',
                 'count': matched_count,
                 'pill_class': 'accent' if matched_count == 0 else 'success',

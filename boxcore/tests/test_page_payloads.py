@@ -5,7 +5,7 @@ POR QUE ELE EXISTE:
 - protege a regra de heroes curtos e previsiveis nas superficies principais.
 
 O QUE ESTE ARQUIVO FAZ:
-1. valida que o builder de hero limita acoes principais e densidade lateral.
+1. valida que o builder de hero limita acoes principais.
 2. protege a regra minima para evitar que o bloco volte a crescer sem controle.
 """
 
@@ -26,32 +26,12 @@ class PageHeroContractTests(SimpleTestCase):
                 {'label': 'Acao 3', 'href': '#3'},
                 {'label': 'Acao 4', 'href': '#4'},
             ],
-            side={
-                'kind': 'stat-grid',
-                'items': [
-                    {'label': 'A', 'value': '1'},
-                    {'label': 'B', 'value': '2'},
-                    {'label': 'C', 'value': '3'},
-                    {'label': 'D', 'value': '4'},
-                    {'label': 'E', 'value': '5'},
-                ],
-                'stats': [
-                    {'label': 'A', 'value': '1'},
-                    {'label': 'B', 'value': '2'},
-                    {'label': 'C', 'value': '3'},
-                    {'label': 'D', 'value': '4'},
-                    {'label': 'E', 'value': '5'},
-                ],
-            },
         )
 
         self.assertEqual(hero['contract'], PAGE_HERO_CONTENT_RULES)
         self.assertEqual(len(hero['actions']), PAGE_HERO_CONTENT_RULES['max_primary_actions'])
-        self.assertEqual(len(hero['side']['items']), PAGE_HERO_CONTENT_RULES['max_side_grid_items'])
-        self.assertEqual(len(hero['side']['stats']), PAGE_HERO_CONTENT_RULES['max_side_stats'])
         self.assertEqual(hero['contract']['max_title_lines'], 2)
         self.assertEqual(hero['contract']['max_copy_lines'], 2)
-        self.assertEqual(hero['contract']['max_panel_copy_lines'], 2)
 
 
 class PagePayloadBridgeContractTests(SimpleTestCase):

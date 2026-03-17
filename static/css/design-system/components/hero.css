@@ -9,6 +9,27 @@ PONTOS CRITICOS:
 */
 
 .hero {
+    --hero-surface: var(--surface);
+    --hero-border: var(--line);
+    --hero-shadow: var(--shadow-soft);
+    --hero-rail: var(--brand);
+    --hero-halo: radial-gradient(circle at 100% 100%, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0));
+    --hero-ink: var(--ink);
+    --hero-copy: var(--muted);
+    --hero-eyebrow: color-mix(in srgb, var(--brand) 70%, var(--ink) 30%);
+    --hero-side-width: min(100%, 320px);
+    --hero-panel-surface: var(--bg);
+    --hero-panel-border: var(--line);
+    --hero-panel-shadow: none;
+    --hero-panel-ink: var(--ink);
+    --hero-panel-copy: var(--muted);
+    --hero-panel-stat-surface: var(--surface);
+    --hero-panel-stat-border: var(--line);
+    --hero-badge-surface: color-mix(in srgb, var(--brand) 10%, transparent);
+    --hero-badge-border: color-mix(in srgb, var(--brand) 18%, transparent);
+    --hero-badge-ink: var(--brand-dark);
+    --hero-pulse-surface: color-mix(in srgb, var(--brand) 5%, transparent);
+    --hero-pulse-border: color-mix(in srgb, var(--brand) 12%, transparent);
     display: flex;
     justify-content: space-between;
     gap: 18px;
@@ -16,16 +37,11 @@ PONTOS CRITICOS:
     margin-bottom: 0;
     padding: clamp(18px, 1.8vw, 26px);
     border-radius: var(--radius-shell);
-    background:
-        radial-gradient(circle at top right, rgba(255, 255, 255, 0.66), transparent 24%),
-        radial-gradient(circle at 82% 24%, rgba(41, 103, 163, 0.08), transparent 18%),
-        var(--hero-gradient),
-        var(--surface);
-    border: 1px solid var(--line);
-    box-shadow: var(--shadow-soft);
+    background: var(--hero-surface);
+    border: 1px solid var(--hero-border);
+    box-shadow: var(--hero-shadow);
     position: relative;
     overflow: hidden;
-    backdrop-filter: blur(14px);
 }
 
 .hero > div:first-child,
@@ -40,7 +56,7 @@ PONTOS CRITICOS:
     inset: auto -8% -30% auto;
     width: 220px;
     height: 220px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.48), transparent 70%);
+    background: var(--hero-halo);
     pointer-events: none;
 }
 
@@ -49,7 +65,7 @@ PONTOS CRITICOS:
     position: absolute;
     inset: 0 auto 0 0;
     width: 4px;
-    background: linear-gradient(180deg, var(--brand), rgba(34, 95, 143, 0.82), rgba(15, 118, 110, 0.82));
+    background: var(--hero-rail);
     opacity: 0.88;
 }
 
@@ -58,13 +74,42 @@ PONTOS CRITICOS:
     font-size: clamp(1.68rem, 2.7vw, 2.45rem);
     line-height: 0.98;
     letter-spacing: -0.04em;
+    color: var(--hero-ink);
+}
+
+.hero .operation-hero-main {
+    width: 100%;
+    max-width: none;
 }
 
 .hero p {
     margin: 0;
     max-width: 58ch;
-    color: var(--muted);
+    color: var(--hero-copy);
     line-height: 1.54;
+}
+
+.hero .eyebrow {
+    color: var(--hero-eyebrow);
+}
+
+.hero .operation-hero-side {
+    width: var(--hero-side-width);
+    position: relative;
+    z-index: 1;
+}
+
+.hero .operation-hero-panel {
+    padding: 16px 18px;
+    border-radius: var(--radius-card);
+    background: var(--hero-panel-surface);
+    border: 1px solid var(--hero-panel-border);
+    box-shadow: var(--hero-panel-shadow);
+    color: var(--hero-panel-ink);
+}
+
+.hero .operation-hero-panel .operation-card-copy {
+    color: var(--hero-panel-copy);
 }
 
 .hero-side-stack {
@@ -81,24 +126,9 @@ PONTOS CRITICOS:
 
 .hero-side-stat {
     padding: 9px;
-    border-radius: 14px;
-    border: 1px solid rgba(52, 71, 70, 0.12);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(246, 249, 253, 0.42));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
-}
-
-body[data-theme="dark"] .hero {
-    background:
-        radial-gradient(circle at top right, rgba(255, 255, 255, 0.08), transparent 24%),
-        radial-gradient(circle at 82% 24%, rgba(41, 103, 163, 0.14), transparent 18%),
-        var(--hero-gradient),
-        var(--surface);
-}
-
-body[data-theme="dark"] .hero-side-stat {
-    border-color: rgba(163, 194, 224, 0.18);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(7, 15, 24, 0.18));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    border: 1px solid var(--hero-panel-stat-border);
+    background: var(--hero-panel-stat-surface);
 }
 
 .hero-side-stat span {
@@ -106,7 +136,7 @@ body[data-theme="dark"] .hero-side-stat {
     font-size: 0.68rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--muted);
+    color: var(--hero-panel-copy);
     font-weight: 700;
 }
 
@@ -116,6 +146,45 @@ body[data-theme="dark"] .hero-side-stat {
     font-size: clamp(0.9rem, 1vw, 1.02rem);
     line-height: 1.1;
     letter-spacing: -0.03em;
+    color: var(--hero-panel-ink);
+}
+
+.operation-hero-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.operation-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--hero-badge-surface);
+    border: 1px solid var(--hero-badge-border);
+    color: var(--hero-badge-ink);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.operation-hero-kicker {
+    margin-top: 8px;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--hero-panel-copy);
+}
+
+body[data-theme="dark"] .hero {
+    --hero-surface: var(--surface);
+    --hero-panel-surface: var(--surface-2, rgba(15, 23, 42, 0.72));
+    --hero-panel-border: var(--line);
+    --hero-panel-stat-surface: rgba(255, 255, 255, 0.04);
+    --hero-panel-stat-border: rgba(148, 163, 184, 0.18);
 }
 
 @media (max-width: 960px) {
@@ -123,6 +192,10 @@ body[data-theme="dark"] .hero-side-stat {
         padding: 20px;
         flex-direction: column;
         gap: 18px;
+    }
+
+    .hero .operation-hero-side {
+        width: 100%;
     }
 
     .hero-side-stat-grid {
@@ -140,6 +213,11 @@ body[data-theme="dark"] .hero-side-stat {
     .hero {
         padding: 18px;
         border-radius: 24px;
+    }
+
+    .operation-hero-panel-head {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
     .hero-side-stat-grid {

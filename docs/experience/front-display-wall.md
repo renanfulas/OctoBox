@@ -1,8 +1,8 @@
-<!--
-ARQUIVO: formalizacao da Front Display Wall como grande superficie frontal limpa onde o predio projeta a experiencia visivel do produto.
+﻿<!--
+ARQUIVO: manifesto conceitual da Front Display Wall como fachada viva, limpa e magnetica do produto.
 
 TIPO DE DOCUMENTO:
-- direcao de experiencia e fachada do produto
+- direcao arquitetural e manifesto de fachada
 
 AUTORIDADE:
 - alta
@@ -11,358 +11,203 @@ DOCUMENTO PAI:
 - [../architecture/octobox-architecture-model.md](../architecture/octobox-architecture-model.md)
 
 QUANDO USAR:
-- quando a duvida for como a experiencia visivel deve permanecer limpa, coesa e protegida durante a evolucao do sistema
+- quando a duvida for qual e a natureza da fachada do produto
+- quando for preciso decidir o que pertence a experiencia frontal e o que deve ficar fora dela
+- quando for necessario proteger a frente do produto contra ruido de obra, debug ou remendo
 
 POR QUE ELE EXISTE:
-- transforma a intuicao da grande tela frontal em uma peca arquitetural clara, separada do Beacon no topo e do andaime lateral da obra.
-- define a fachada visual do produto como superficie curada, legivel e protegida contra poluicao de transicao.
+- formaliza a Front Display Wall como conceito central de fachada do OctoBox
+- separa a ideia de fachada do Beacon, do Center e do andaime arquitetural
+- registra a intencao artistica e emocional da experiencia sem misturar isso com o roteiro de implementacao
 
 O QUE ESTE ARQUIVO FAZ:
-1. define o que e a Front Display Wall.
-2. explica sua relacao com front-end, Red Beacon e Scaffold Agents.
-3. estabelece guardrails para manter a fachada limpa mesmo durante a construcao arquitetural.
+1. define o que e a Front Display Wall
+2. explica por que a fachada do produto precisa parecer pronta antes do miolo estar pronto
+3. separa fachada, Beacon e Scaffold Agents
+4. estabelece guardrails conceituais para a frente do produto
 
 PONTOS CRITICOS:
-- a Front Display Wall nao pode virar mural de debug, remendo ou exposicao acidental de andaime.
-- ela precisa continuar mostrando produto, nao canteiro de obra.
+- este arquivo e conceitual; ele nao substitui o guia pratico de aplicacao
+- a fachada nao pode virar mural de debug, remendo ou exposicao acidental de andaime
+- limpeza nunca pode esconder tensao operacional real
 -->
 
 # Front Display Wall
 
 ## Tese central
 
-Se o `Center Layer` e o hall de entrada, a `Signal Mesh` e a malha de sinais, os `Scaffold Agents` sao o andaime temporario e o `Red Beacon` e a emissao superior no topo, o predio ainda precisa de uma grande fachada visual.
+Se o Center e o hall de entrada, o Red Beacon e a emissao superior e os Scaffold Agents sao o andaime temporario da obra, o produto ainda precisa de uma grande fachada visivel.
 
-Essa fachada foi nomeada como `Front Display Wall`.
+Essa fachada foi nomeada como Front Display Wall.
 
-Em linguagem simples:
+Em linguagem direta:
 
-1. ela e o telao frontal do predio
-2. ela sobe da base visivel ate o topo atual da experiencia de front-end
-3. ela mostra o produto de forma clara, limpa e legivel
-4. ela nao deve parecer uma obra, mesmo quando a obra ainda existe pelos lados
+1. ela e a grande frente do produto
+2. ela mostra o sistema como produto, nao como mecanismo interno
+3. ela precisa parecer pronta antes de o miolo estar totalmente pronto
+4. ela precisa ser legivel, humana, magnetica e coerente
 
-## O que a Front Display Wall representa
+A Front Display Wall nao e apenas uma tela bonita.
 
-Ela representa a superficie frontal onde a experiencia do produto aparece para quem olha o predio.
+Ela e a superficie onde o OctoBox precisa parecer produto vivo, confiavel e desejavel.
 
-Na pratica, ela corresponde a camada visivel de interface:
+## O que ela representa
 
-1. front-end
-2. hierarquia visual
-3. leitura operacional de tela
-4. composicao de estados, acoes e prioridades para uso humano
+Na pratica, a Front Display Wall corresponde a camada visivel de interface:
 
-Nao e apenas uma tela bonita.
+1. hierarquia visual
+2. leitura operacional
+3. composicao de estados
+4. acao humana
+5. identidade percebida
 
-Ela e a parede frontal onde o sistema precisa parecer produto, nao mecanismo interno.
+Ela e a resposta para esta pergunta:
 
-## Dimensao de atracao publica
+1. como o produto aparece de frente para quem vai usa-lo?
 
-Agora a metafora ganha uma camada mais forte.
+## Dimensao artistica e emocional
 
-A Front Display Wall nao e apenas limpa, organizada e legivel.
+A Front Display Wall nao serve apenas para informar.
 
-Ela tambem e magnetica.
+Ela tambem precisa:
 
-Ela emite presenca.
+1. chamar o olhar
+2. sustentar presenca
+3. gerar admiracao
+4. aumentar desejo de aproximacao
+5. transformar clareza em pertencimento
 
-Ela chama o olhar.
+Por isso, a fachada pode ter:
 
-Em linguagem de predio:
+1. cor
+2. brilho
+3. ritmo
+4. energia visual
+5. atmosfera
+6. neon
 
-1. a parede frontal agora tem brilho, cor, energia e vida
-2. luzes saem dela como uma projecao viva da identidade do predio
-3. neons, cor, ritmo e alegria fazem a frente parecer desejavel e memoravel
-4. ela atrai pessoas da rua antes mesmo de elas entenderem todos os detalhes do predio
-5. a tela nao esconde a construcao; ela faz a propria construcao parecer bonita, promissora e valiosa
+Mas tudo isso so e valido quando reforca:
 
-Leitura curta:
+1. leitura
+2. prioridade
+3. estado
+4. proxima acao
 
-1. a Front Display Wall nao serve so para informar
-2. ela tambem serve para atrair, encantar e aumentar adesao emocional
-3. ela precisa fazer as pessoas quererem olhar mais
-4. ela precisa fazer as pessoas quererem participar
+Magnetismo sem clareza e cenografia vazia.
 
-Em sentido simbolico:
+Clareza sem presenca vira painel frio.
 
-1. a fachada nao apenas explica o produto
-2. ela faz o produto parecer vivo, querido e digno de torcida
-3. ela transforma curiosidade em aproximacao
-4. ela transforma aproximacao em desejo de pertencimento
+A Front Display Wall exige equilibrio entre os dois.
 
-## O que essa metafora tira para o front-end
+## O que essa metafora exige do front-end
 
 1. o front e fachada, nao bastidor
-2. a frente do predio precisa parecer pronta antes de o miolo estar totalmente pronto
-3. a parede frontal e continua, e nao um mosaico de pecas sem unidade
-4. o andaime pode aparecer, mas nao pode sequestrar a fachada
+2. a experiencia principal precisa parecer produto, nao obra exposta
+3. a frente deve ser continua, nao mosaico de pecas desconectadas
+4. o andaime pode aparecer, mas nao pode sequestrar a linguagem dominante
 5. limpo nao significa vazio; significa curado e legivel
-6. a fachada mostra uso humano, nao telemetria bruta
-7. a parede frontal precisa ser legivel a distancia, antes do clique detalhado
-8. a fachada e identidade, entao as telas precisam parecer partes do mesmo predio
-9. a fachada tambem precisa ser atraente, nao apenas correta
-10. luz, cor, ritmo e energia visual podem existir como convite ao olhar, desde que nao destruam clareza
-11. a obra em andamento pode continuar visivel, mas deve parecer evolucao bonita, nao bagunca exposta
-12. a frente precisa gerar vontade de chegar mais perto, explorar e pertencer
+6. a fachada precisa mostrar uso humano, nao telemetria bruta
+7. a pessoa precisa entender a tela a distancia, antes do clique detalhado
+8. as telas precisam parecer partes do mesmo edificio visual
+9. a frente precisa ser atraente sem competir com a verdade operacional
+10. crescimento e transicao podem aparecer, mas de forma bonita e controlada
 
-### 1. O front e fachada, nao bastidor
+## O que a fachada deve mostrar
 
-Isso quer dizer que a interface deve mostrar produto, fluxo e decisao, nao o processo interno de construcao.
-
-Regra:
-
-1. remendo, transicao e improviso tecnico nao podem dominar a leitura principal
-
-### 2. A frente do predio precisa parecer pronta antes de o miolo estar totalmente pronto
-
-Isso nao significa maquiar a realidade.
-
-Significa proteger a experiencia principal contra ruido de obra enquanto o sistema ainda amadurece por dentro.
-
-### 3. A parede frontal e continua
-
-Se ela vai da base ao topo atual do front-end, entao a experiencia visual precisa transmitir continuidade.
-
-Regra:
-
-1. base, conteudo, paines, estados e acoes devem parecer partes da mesma superficie
-
-### 4. O andaime pode aparecer, mas nao pode sequestrar a fachada
-
-Fluxos temporarios, avisos provisiorios e excecoes visuais podem existir.
-
-Mas eles devem aparecer como excecao localizada, e nao como a linguagem dominante do produto.
-
-### 5. Limpo nao significa vazio
-
-Uma parede branca, clara e clean nao e uma parede muda.
-
-No front-end isso significa:
-
-1. menos ruido
-2. mais contraste entre contexto, prioridade e acao
-
-### 6. A fachada mostra uso humano, nao telemetria bruta
-
-A Front Display Wall precisa orientar olho, decisao e clique.
-
-Regra:
-
-1. o centro da tela deve ser experiencia de operacao humana
-2. mecanismo interno e sinal tecnico nao devem tomar o lugar da interface principal
-
-### 7. A parede frontal precisa ser legivel a distancia
-
-Antes da interacao detalhada, a pessoa ja deveria entender:
+A Front Display Wall esta correta quando deixa visivel:
 
 1. o que a tela faz
 2. o que esta saudavel
 3. o que esta pressionado
 4. o que pede acao agora
+5. o que pertence ao produto final e o que e excecao temporaria
 
-### 8. A fachada e identidade
+## O que ela nao deve virar
 
-Se cada tela parece um predio diferente, a metafora quebra.
+A Front Display Wall nao deve:
 
-Regra:
-
-1. ritmo, tipografia, densidade, respiro, estados e hierarquia precisam parecer partes do mesmo edificio visual
-
-### 9. A fachada tambem precisa ser atraente
-
-Uma frente impecavelmente organizada, mas sem vida, ainda pode falhar como fachada publica.
-
-A Front Display Wall tambem precisa provocar desejo de olhar, permanecer e voltar.
-
-Regra:
-
-1. beleza, brilho, cor e energia visual podem existir como parte funcional da identidade
-2. a atracao deve servir a legibilidade, e nao competir com ela
-
-### 10. Luz, cor, ritmo e energia visual podem convidar o olhar
-
-Se essa parede tem neons, brilho e ate atmosfera alegre, isso significa que o front-end pode usar camadas emocionais de interface com intencao.
-
-Na pratica:
-
-1. cor viva pode destacar vida, nao ruido
-2. brilho pode sinalizar presenca, nao excesso
-3. ritmo visual pode criar encantamento sem virar parque tematico
-4. alegria visual pode fazer o produto parecer acolhedor, utilizavel e memoravel
-
-### 11. A obra pode continuar visivel, mas bonita
-
-A construcao do predio nao precisa ser escondida como se fosse vergonha.
-
-Ela pode aparecer de forma bonita, ordenada e promissora.
-
-Isso significa:
-
-1. transicao pode existir sem parecer improviso feio
-2. crescimento pode ser percebido como valor, nao como remendo
-3. a pessoa pode sentir que esta vendo algo vivo evoluindo com qualidade
-
-### 12. A frente precisa gerar vontade de pertencer
-
-O efeito maximo dessa parede e fazer alguem pensar:
-
-1. isso me atrai
-2. isso me agrada
-3. eu quero ver mais
-4. eu quero participar
-5. eu torco para isso ficar pronto
-
-Traducao para o front-end:
-
-1. a interface precisa gerar confianca e admiracao ao mesmo tempo
-2. o produto precisa parecer algo de que a pessoa quer fazer parte
-3. a experiencia visual pode aumentar valor percebido e vinculo emocional
+1. substituir o Center
+2. substituir o Beacon
+3. substituir observabilidade interna
+4. expor debug cru como produto
+5. expor flags soltas como linguagem principal
+6. virar deposito de excecoes, banners e transicoes temporarias
+7. esconder tensao real sob uma limpeza cosmetica
 
 ## Diferenca entre Front Display Wall e Red Beacon
 
 ### Front Display Wall
 
-Responde a pergunta:
-
-1. como o produto aparece de frente para quem vai usa-lo?
+Mostra a face utilizavel do produto.
 
 Ela serve para:
 
 1. sustentar navegacao e leitura visual
 2. organizar acao humana
-3. dar contexto, hierarquia e ritmo para a operacao
+3. dar contexto e ritmo a operacao
 4. expor a experiencia principal do sistema
 
 ### Red Beacon
 
-Responde a pergunta:
-
-1. que estado consolidado o predio precisa projetar para fora com alta visibilidade?
+Mostra o estado consolidado do predio acima da fachada.
 
 Resumo:
 
-1. a Front Display Wall mostra a face utilizavel do produto
-2. o Red Beacon mostra o estado consolidado do predio acima dela
+1. a Front Display Wall mostra a frente utilizavel
+2. o Red Beacon mostra a emissao superior de estado consolidado
 
 ## Diferenca entre Front Display Wall e Scaffold Agents
 
-Os `Scaffold Agents` continuam existindo como suporte temporario de obra.
+Os Scaffold Agents continuam existindo como suporte temporario de obra.
 
 Mas a posicao correta deles nao e dominar a fachada principal.
 
 Leitura correta:
 
-1. os agentes de andaime operam mais pelas laterais, fundos e bordas de transicao
-2. um ou outro pode ficar visivel na frente quando a obra exige exposicao temporaria
-3. essa exposicao deve ser rara, controlada e claramente provisoria
-4. a fachada principal deve continuar limpa o suficiente para o produto permanecer legivel
-
-Em linguagem curta:
-
-1. o andaime nao pode sequestrar a frente do predio
-2. a obra pode aparecer um pouco
-3. o produto precisa continuar aparecendo mais
-
-## O que a Front Display Wall faz
-
-Ela existe para:
-
-1. projetar a experiencia principal do sistema em uma superficie frontal coerente
-2. manter leitura limpa de prioridade, estado e acao
-3. impedir que transicao arquitetural polua o rosto do produto
-4. sustentar continuidade visual entre base, meio e topo da experiencia
-5. atrair o olhar e aumentar desejo de aproximacao sem sacrificar clareza
-6. fazer a evolucao do produto parecer bonita, promissora e digna de torcida
-
-## O que ela nao faz
-
-A Front Display Wall nao deve:
-
-1. substituir o CENTER
-2. substituir o Beacon
-3. substituir observabilidade interna
-4. expor debug bruto, flags soltas ou mecanismos temporarios como se fossem produto final
-5. virar deposito de mensagens de transicao, excecoes ou ruido tecnico
-
-## Quando o ceu for rasgado
-
-Se o Vertical Sky Beam entrar em sua camada extraordinaria, a Front Display Wall nao deixa de existir.
-
-Ela muda de escala percebida.
-
-O que antes parecia apenas fachada principal de um grande predio passa a ser lido como frente visivel de uma obra cuja altura real excede o mapa original.
-
-Nessa hora:
-
-1. a fachada continua limpa, utilizavel e humana
-2. mas ela passa a carregar o reflexo de uma grandeza que ja nao cabe na leitura comum do projeto
-3. o que parecia somente produto maduro comeca a ser percebido como monumento vivo
-4. a frente deixa de apontar apenas para uso e passa a apontar tambem para legado
-
-## Regra visual e arquitetural
-
-A regra forte desta peca e simples:
-
-1. a frente do predio precisa parecer pronta antes de estar totalmente pronta por dentro
-
-Isso nao significa mentir.
-
-Significa proteger a experiencia principal contra ruido desnecessario de construcao.
-
-## Fontes da Front Display Wall
-
-A parede frontal deve ser alimentada por sinais e estruturas curadas:
-
-1. snapshots publicos
-2. estados operacionais ja consolidados
-3. acoes oficiais vindas de corredores validos
-4. hierarquia de interface pensada para papel e contexto
-
-Regra:
-
-1. a fachada nao deve depender de remendo lateral como fonte principal
-2. quando um suporte temporario aparecer nela, isso precisa ter criterio de entrada e saida
+1. eles operam pelas laterais, fundos e bordas de transicao
+2. podem aparecer na frente em casos raros e controlados
+3. essa aparicao precisa parecer provisoria
+4. o produto precisa continuar aparecendo mais do que a obra
 
 ## Riscos reais
 
-### Risco 1: a fachada virar mural de obra
+### Risco 1. A fachada virar mural de obra
 
-Sintoma:
+Sintomas:
 
-1. banners provisiorios por toda parte
-2. sinais de transicao aparecendo como linguagem normal do produto
+1. banners provisiorios em toda parte
+2. sinais de transicao virando linguagem normal do produto
 3. UX principal parecendo remendada
 
 Mitigacao:
 
-1. deixar Scaffold Agents fora da frente sempre que possivel
-2. limitar exposicoes temporarias na face principal
-3. tratar excecao visual como excecao, nao como baseline
+1. limitar exposicoes temporarias na face principal
+2. tratar excecao como excecao, nao como baseline
+3. preservar a leitura dominante do produto
 
-### Risco 2: confundir interface com emissao superior
+### Risco 2. Confundir fachada com emissao superior
 
-Sintoma:
+Sintomas:
 
-1. a tela frontal tenta agir como Beacon
+1. a tela tenta agir como Beacon
 2. o Beacon tenta substituir a experiencia principal de uso
 
 Mitigacao:
 
 1. separar experiencia utilizavel de estado consolidado superior
-2. manter a Front Display Wall como rosto do produto e o Beacon como sinal acima dele
+2. manter a fachada como rosto do produto e o Beacon como sinal acima dele
 
-### Risco 3: a frente ficar limpa demais e perder verdade operacional
+### Risco 3. Limpeza demais e verdade de menos
 
-Sintoma:
+Sintomas:
 
-1. a tela parece bonita mas omite tensao real
+1. a tela parece bonita, mas omite tensao real
 2. a interface esconde prioridade, risco e proxima acao
 
 Mitigacao:
 
 1. limpeza nao pode significar maquiagem
-2. a fachada deve mostrar operacao real com clareza, nao esconder complexidade relevante
+2. a fachada deve mostrar operacao real com clareza
 
 ## Criterio de boa implementacao
 
@@ -371,29 +216,19 @@ A Front Display Wall esta bem implementada quando:
 1. a pessoa entende rapidamente o que o produto faz e o que exige acao agora
 2. a experiencia principal parece produto consolidado, nao estrutura improvisada
 3. a obra lateral existe sem sequestrar a leitura principal
-4. o front-end consegue crescer sem virar painel caotico de mecanismos internos
-5. a frente chama atencao de forma positiva, viva e memoravel
-6. a pessoa sente vontade de olhar mais, explorar mais e se aproximar mais
-7. a construcao em andamento ainda parece bonita, organizada e valiosa
+4. a frente chama atencao de forma positiva, viva e memoravel
+5. a pessoa sente vontade de olhar mais, explorar mais e se aproximar mais
+6. a construcao em andamento ainda parece bonita, organizada e valiosa
 
-## Estado atual
+## Como este manifesto se conecta ao restante da base
 
-Neste momento, a Front Display Wall e um conceito arquitetural formalizado.
+Este documento explica o que a fachada e.
 
-Isso e coerente com a fase atual.
+O documento pratico para transformar esse conceito na aparencia real do produto e [layout-decision-guide.md](layout-decision-guide.md).
 
-Primeiro o predio precisou ganhar hall, malha, andaime explicito, emissao superior e escalada critica.
+A checklist operacional para marcar a implantacao por etapas e [front-display-wall-implementation-checklist.md](front-display-wall-implementation-checklist.md).
 
-Agora ele tambem ganha uma declaracao mais precisa da sua face frontal:
-
-1. limpa
-2. clara
-3. utilizavel
-4. protegida contra excesso de exposicao do canteiro de obra
-
-Acima dela, o estado consolidado continua sendo projetado pelo [../architecture/red-beacon.md](../architecture/red-beacon.md). Em crise severa, a escalada maxima continua formalizada em [../architecture/vertical-sky-beam.md](../architecture/vertical-sky-beam.md).
-
-Na camada extraordinaria dessa escalada, o feixe nao anuncia apenas crise: ele pode anunciar abertura de caminho, ruptura necessaria e a chegada de uma escala maior do que a prevista inicialmente para a obra.
+O guia estrutural de CSS continua em [css-guide.md](css-guide.md).
 
 ## Nota para devs que estudarem este projeto depois
 
@@ -408,7 +243,7 @@ O desejo explicito foi este:
 1. que outros devs consigam apreciar a arte presente neste projeto
 2. que entendam que produto, interface e arquitetura tambem podem carregar beleza, presenca e valor emocional
 3. que percebam que clareza e arte nao sao opostos
-4. que usem isso como inspiracao para criar as proprias linguagens, as proprias metaforas e as proprias obras
+4. que usem isso como inspiracao para criar as proprias linguagens, metaforas e obras
 
 Em linguagem direta:
 
@@ -417,13 +252,4 @@ Em linguagem direta:
 3. isto foi registrado para deixar rastro criativo e intelectual para quem vier depois
 4. isto foi registrado para que outros tambem sintam permissao de criar as suas proprias artes
 
-Se este documento funcionar bem, ele nao serve apenas para explicar uma arquitetura.
-
-Ele tambem serve para lembrar que software pode ser estrutura, operacao e arte ao mesmo tempo.
-
-E para os devs que leem com mais profundidade do que a media: a obra nao se entrega inteira na fachada. Ha camadas que preferem permanecer no intervalo entre a parede e o ceu, visiveis apenas para quem desacelera o olhar e aceita ler alem do que foi servido.
-
-"Isso que eu disse pode colocar no arquivo que eu disse isso também, que eu me importei com eles, não por ego, pra ver o quanto eu sou bom.. mas.. para apreciarem a arte
-se inspirarem...
-E poderem criar as suas"
 Palavras de Renan Fulas

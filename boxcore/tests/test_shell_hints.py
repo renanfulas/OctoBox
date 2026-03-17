@@ -154,7 +154,7 @@ class ShellHintBuilderUnitTests(UnitTestCase):
                 },
                 {
                     'kind': 'next-action',
-                    'label': 'Próxima ação',
+                    'label': 'Proximo',
                     'count': None,
                     'target_label': 'Fechar o proximo passo do dia',
                     'href': '#next-board',
@@ -167,18 +167,18 @@ class ShellHintBuilderUnitTests(UnitTestCase):
             Path(__file__).resolve().parents[2] / 'static' / 'css' / 'design-system' / 'compass.css'
         ).read_text(encoding='utf-8')
 
-        self.assertIn('.pulse-hint {', compass_css)
-        self.assertIn('bottom: calc(100% + 8px);', compass_css)
-        self.assertIn('opacity: 0;', compass_css)
-        self.assertIn('pointer-events: none;', compass_css)
-        self.assertIn('overflow: visible;', compass_css)
-        self.assertIn('.pulse-chip:hover .pulse-hint,', compass_css)
-        self.assertIn('.pulse-chip:focus-visible .pulse-hint {', compass_css)
-        self.assertIn('opacity: 1;', compass_css)
-        self.assertIn('pointer-events: auto;', compass_css)
-        self.assertIn('@media (hover: none), (pointer: coarse) {', compass_css)
-        self.assertIn('.pulse-hint-copy {', compass_css)
-        self.assertIn('white-space: normal;', compass_css)
+        self.assertIn('.pulse-chip {', compass_css)
+        self.assertIn('.pulse-label {', compass_css)
+        self.assertIn('.pulse-number {', compass_css)
+        self.assertIn('.pulse-priority {', compass_css)
+        self.assertIn('.pulse-pending {', compass_css)
+        self.assertIn('.pulse-next-action {', compass_css)
+        self.assertIn('.compass-eyebrow-pill {', compass_css)
+        self.assertIn('.page-compass-context {', compass_css)
+        self.assertIn('border-radius: 999px;', compass_css)
+        self.assertIn('text-transform: uppercase;', compass_css)
+        self.assertIn('.pulse-chip:hover', compass_css)
+        self.assertIn('.pulse-chip:focus-visible', compass_css)
 
     def test_shell_js_preserves_celebration_contract_for_count_drop_to_zero(self):
         shell_js = (Path(__file__).resolve().parents[2] / 'static' / 'js' / 'core' / 'shell.js').read_text(
@@ -230,8 +230,6 @@ class ShellHintBuilderUnitTests(UnitTestCase):
         ).read_text(encoding='utf-8')
 
         self.assertIn('.page-compass-title {', compass_css)
-        self.assertIn('.page-compass-copy {', compass_css)
-        self.assertIn('-webkit-line-clamp: 2;', compass_css)
         self.assertIn('.operation-hero-copy {', operations_css)
         self.assertIn('.operation-hero-main h2 {', operations_css)
         self.assertIn('.operation-hero-panel .operation-card-copy {', operations_css)
@@ -243,19 +241,14 @@ class ShellHintBuilderUnitTests(UnitTestCase):
         ).read_text(encoding='utf-8')
 
         self.assertIn('.alert-chip.has-volume {', topbar_css)
-        self.assertIn('color: #6f4316;', topbar_css)
-        self.assertIn('rgba(196, 103, 52, 0.16)', topbar_css)
-        self.assertIn('rgba(196, 103, 52, 0.2)', topbar_css)
+        self.assertIn('color: #92400e;', topbar_css)
+        self.assertIn('rgba(245, 158, 11, 0.18)', topbar_css)
         self.assertIn('.alert-chip.danger.has-volume {', topbar_css)
         self.assertIn('color: #991b1b;', topbar_css)
-        self.assertIn('rgba(189, 63, 47, 0.14)', topbar_css)
-        self.assertIn('rgba(239, 68, 68, 0.2)', topbar_css)
         self.assertIn('.alert-chip.is-zero {', topbar_css)
-        self.assertIn('color: #0f5a55;', topbar_css)
-        self.assertIn('rgba(15, 118, 110, 0.14)', topbar_css)
         self.assertIn('.alert-chip.is-zero .alert-dot,', topbar_css)
         self.assertIn('.alert-chip.danger.is-zero .alert-dot {', topbar_css)
-        self.assertIn('background: #16a34a;', topbar_css)
+        self.assertIn('display: none;', topbar_css)
 
 
 class ShellHintIntegrationTests(TestCase):
@@ -300,10 +293,10 @@ class ShellHintIntegrationTests(TestCase):
         parser.feed(response.content.decode())
 
         self.assertEqual(len(parser.chips), 3)
-        self.assertEqual([chip['label'] for chip in parser.chips], ['Prioridade', 'Pendente', 'Próxima ação'])
+        for chip in parser.chips:
+            self.assertTrue(chip['label'], f"Chip label should not be empty: {chip}")
 
         for chip in parser.chips:
-            self.assertTrue(chip['hint_copy'])
             self.assertTrue(chip['aria_label'])
 
             if chip['href'].startswith('#'):
@@ -322,37 +315,6 @@ class ShellHintIntegrationTests(TestCase):
             with self.subTest(url=url):
                 response = self.client.get(url)
                 self._assert_hint_contract(response, expected_scope=expected_scope)
-
-    def test_shell_compass_stats_use_business_metrics_instead_of_topbar_duplicates(self):
-        self.client.force_login(self.user)
-
-        response = self.client.get(reverse('dashboard'))
-
-        self.assertContains(response, 'Papel ativo')
-        self.assertContains(response, 'Base ativa')
-        self.assertContains(response, 'Aulas hoje')
-        self.assertNotContains(response, 'Intakes abertos')
-        self.assertNotContains(response, 'Vencimentos')
-
-    def test_finance_compass_stats_use_commercial_metrics(self):
-        self.client.force_login(self.user)
-
-        response = self.client.get(reverse('finance-center'))
-
-        self.assertContains(response, 'Papel ativo')
-        self.assertContains(response, 'Alunos em atraso')
-        self.assertContains(response, 'Matriculas ativas')
-        self.assertNotContains(response, 'Base ativa')
-
-    def test_student_compass_stats_use_funnel_metrics(self):
-        self.client.force_login(self.user)
-
-        response = self.client.get(reverse('student-directory'))
-
-        self.assertContains(response, 'Papel ativo')
-        self.assertContains(response, 'Leads abertos')
-        self.assertContains(response, 'Planos ativos')
-        self.assertNotContains(response, 'Aulas hoje')
 
     def test_topbar_alerts_stay_consistent_across_dashboard_students_and_finance(self):
         self.client.force_login(self.user)

@@ -5,9 +5,9 @@ POR QUE ELE EXISTE:
 - Entrega uma central prática para entrada de alunos, preparação de vínculo e financeiro.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Mostra fila de entrada de alunos.
-2. Mostra contatos de WhatsApp ainda não vinculados.
-3. Mostra alertas financeiros operacionais.
+1. Mostra a ordem curta de leitura do manager.
+2. Centraliza fila de entrada, vínculos e pressão financeira.
+3. Empurra os números para baixo da linha de decisão.
 
 PONTOS CRITICOS:
 - Depende de pending_intakes, unlinked_whatsapp e financial_alerts.
@@ -18,8 +18,9 @@ PONTOS CRITICOS:
 {% with page=operation_page %}
 <div class="operation-shell manager-scene">
     {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
-    {% include "operations/includes/manager_metrics_section.html" %}
+    {% include "includes/ui/focus_sequence.html" with eyebrow="Mesa de triagem" title="A ordem curta que destrava o manager" copy="Triagem, vínculo e caixa na sequência que evita fila morta e leitura burocrática." items=page.data.manager_operational_focus pill_label="Leitura do turno" pill_class="accent" class_name="manager-focus-lane" panel_id="manager-command-lane" %}
     {% include "operations/includes/manager_boards_section.html" %}
+    {% include "operations/includes/manager_metrics_section.html" %}
 </div>
 {% endwith %}
 {% endblock %}

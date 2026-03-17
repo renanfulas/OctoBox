@@ -17,15 +17,11 @@ PONTOS CRITICOS:
 }
 
 .student-hero {
-    background:
-        radial-gradient(circle at top right, rgba(184, 92, 56, 0.22), transparent 36%),
-        radial-gradient(circle at bottom left, rgba(47, 122, 100, 0.14), transparent 30%),
-        linear-gradient(145deg, rgba(255, 251, 245, 0.94), rgba(241, 236, 226, 0.94)),
-        var(--surface);
+    background: var(--surface);
 }
 
 .student-hero .operation-hero-panel {
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(245, 238, 227, 0.96));
+    background: var(--surface);
 }
 
 .student-hero .operation-hero-main > div:first-child {
@@ -73,7 +69,7 @@ PONTOS CRITICOS:
 }
 
 .student-filter-card {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.84), rgba(244, 237, 226, 0.96));
+    background: var(--surface);
 }
 
 .student-filter-card .form-stack {
@@ -108,11 +104,7 @@ PONTOS CRITICOS:
 }
 
 .student-focus-card {
-    background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.84), transparent 24%),
-        radial-gradient(circle at top right, rgba(255, 159, 107, 0.16), transparent 26%),
-        radial-gradient(circle at bottom left, rgba(92, 206, 196, 0.12), transparent 22%),
-        linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(244, 248, 255, 0.98));
+    background: var(--surface);
 }
 
 .student-focus-list {
@@ -152,10 +144,7 @@ PONTOS CRITICOS:
 }
 
 body[data-theme="dark"] .student-focus-card {
-    background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 22%),
-        radial-gradient(circle at top right, rgba(255, 159, 107, 0.14), transparent 24%),
-        linear-gradient(145deg, rgba(24, 34, 47, 0.96), rgba(11, 19, 29, 0.98));
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .student-focus-item {
@@ -218,15 +207,15 @@ body[data-theme="dark"] .student-focus-item {
 }
 
 .student-command-card {
-    background: linear-gradient(145deg, rgba(184, 92, 56, 0.16), rgba(255, 255, 255, 0.94));
+    background: var(--surface);
 }
 
 .student-support-card {
-    background: linear-gradient(145deg, rgba(40, 92, 142, 0.14), rgba(255, 255, 255, 0.94));
+    background: var(--surface);
 }
 
 .student-queue-panel {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.84), rgba(244, 237, 226, 0.96));
+    background: var(--surface);
 }
 
 .student-queue-panel .intake-grid {
@@ -325,19 +314,11 @@ body[data-theme="dark"] .student-focus-item {
     gap: 18px;
     min-height: 252px;
     padding: clamp(18px, 1.8vw, 22px);
-    background:
-        radial-gradient(circle at top right, rgba(40, 92, 142, 0.14), transparent 32%),
-        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.1), transparent 28%),
-        linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(241, 247, 252, 0.96)),
-        var(--surface);
+    background: var(--surface);
 }
 
     body[data-theme="dark"] .student-hero.operation-hero {
-        background:
-        radial-gradient(circle at top right, rgba(41, 103, 163, 0.2), transparent 30%),
-        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.12), transparent 24%),
-        linear-gradient(145deg, rgba(18, 28, 40, 0.96), rgba(11, 19, 29, 0.98)),
-        var(--surface);
+        background: var(--surface);
     }
 
 .student-hero.operation-hero .operation-hero-main > div:first-child {
@@ -367,15 +348,11 @@ body[data-theme="dark"] .student-focus-item {
 
 .student-hero.operation-hero .operation-hero-panel {
     padding: 14px 16px;
-    background:
-        linear-gradient(160deg, rgba(255, 255, 255, 0.84), rgba(241, 247, 252, 0.94)),
-        rgba(255, 255, 255, 0.9);
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .student-hero.operation-hero .operation-hero-panel {
-    background:
-        linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(10, 17, 27, 0.14)),
-        rgba(14, 22, 33, 0.9);
+    background: var(--surface);
 }
     .student-data-panel th,
     .student-data-panel td {

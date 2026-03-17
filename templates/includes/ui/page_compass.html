@@ -1,32 +1,14 @@
 <section class="page-compass" aria-label="Contexto da pagina" data-slot="page-compass" data-ui="page-compass">
-    <div class="page-compass-main" data-slot="page-compass-main">
-        <div>
-            <p class="eyebrow">{{ shell_page_context.eyebrow }}</p>
-            <h1 class="page-compass-title" data-max-lines="2">{{ page_title|default:shell_page_context.title }}</h1>
-            <p class="page-compass-copy" data-max-lines="2">{{ page_subtitle|default:shell_page_context.subtitle }}</p>
-        </div>
+    <div class="page-compass-context">
+        <span class="compass-eyebrow-pill">{{ shell_page_context.eyebrow }}</span>
+        <h1 class="page-compass-title">{{ page_title|default:shell_page_context.title }}</h1>
     </div>
-    {% if shell_page_context.stats %}
-    <div class="page-compass-stats" aria-label="Resumo rapido do contexto atual" data-slot="page-compass-stats">
-        {% for item in shell_page_context.stats %}
-        <article class="page-compass-stat">
-            <span class="page-compass-stat-label">{{ item.label }}</span>
-            <strong class="page-compass-stat-value">{{ item.value }}</strong>
-        </article>
-        {% endfor %}
-    </div>
-    {% endif %}
     {% if shell_action_buttons %}
     <nav class="compass-pulse compass-pulse--{{ shell_page_context.scope|default:'generic' }}" data-compass-scope="{{ shell_page_context.scope|default:'generic' }}" data-ui="shell-action-pulse" aria-label="Atalhos operacionais">
         {% for item in shell_action_buttons %}
         <a class="pulse-chip pulse-chip--{{ shell_page_context.scope|default:'generic' }} pulse-{{ item.kind }}{% if item.count %} has-count{% endif %}" href="{{ item.href }}" data-priority-level="{% if item.kind == 'priority' %}primary{% elif item.kind == 'pending' %}secondary{% else %}neutral{% endif %}" aria-label="{{ item.label }}{% if item.count %}: {{ item.count }}{% endif %}. {{ item.target_label }}" title="{{ item.target_label }}">
-            <span class="pulse-head">
-                <span class="pulse-label">{{ item.label }}</span>
-                <span class="pulse-number" aria-hidden="true">{{ item.count|default_if_none:'' }}</span>
-            </span>
-            <span class="pulse-hint">
-                <span class="pulse-hint-copy">{{ item.target_label }}</span>
-            </span>
+            <span class="pulse-label">{{ item.label }}</span>
+            {% if item.count %}<span class="pulse-number">{{ item.count }}</span>{% endif %}
         </a>
         {% endfor %}
     </nav>

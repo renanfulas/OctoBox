@@ -5,12 +5,13 @@ POR QUE ELE EXISTE:
 - Entrega uma visão executiva para o dono da academia.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Mostra números estruturais do sistema.
-2. Resume decisões estratégicas já habilitadas.
+1. Hero de comando: frase de acao + 3 stats compactos.
+2. Proximos passos: sequencia curta de leitura do dia.
+3. Pulso do box: 4 metricas-chave com status semantico.
 
 PONTOS CRITICOS:
+- Cada numero aparece exatamente 1 vez na tela.
 - Depende do contexto semanticamente enxuto montado em operation_page.
-- Deve continuar como composição de includes; leitura detalhada mora nos painéis locais.
 -->
 {% extends "layouts/base.html" %}
 
@@ -20,22 +21,8 @@ PONTOS CRITICOS:
     {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
 
     <section class="owner-workspace" aria-label="Painel principal do owner">
-        <section class="owner-panel-grid" aria-label="Prioridade e resumo do dia">
-            {% include "operations/includes/owner_primary_panel.html" %}
-            {% include "operations/includes/owner_status_panel.html" %}
-        </section>
-
+        {% include "operations/includes/owner_next_steps.html" %}
         {% include "operations/includes/owner_metrics_section.html" %}
-
-        <section class="owner-support-grid" aria-label="Leituras complementares do owner">
-            <div id="owner-risk-board">
-                {% include "operations/includes/owner_sequence_panel.html" %}
-            </div>
-
-            <div id="owner-structure-board">
-                {% include "operations/includes/owner_structure_panel.html" %}
-            </div>
-        </section>
     </section>
 </div>
 {% endwith %}

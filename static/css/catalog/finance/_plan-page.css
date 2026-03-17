@@ -1,0 +1,78 @@
+/*
+ARQUIVO: estilos da página dedicada de plano (/financeiro/plano/).
+
+POR QUE ELE EXISTE:
+- Isola layout, form, summary, field grid e ações da página de edição de plano.
+- Separado dos plan-cards (em _cards.css) que aparecem na central financeira.
+*/
+
+.finance-plan-page {
+    gap: var(--section-gap);
+}
+
+.finance-plan-page-hero .operation-hero-panel {
+    background: var(--surface);
+}
+
+.finance-plan-page-focus,
+.finance-plan-edit-card,
+.finance-plan-summary-card {
+    min-height: 100%;
+}
+
+.finance-plan-support-grid {
+    grid-template-columns: 0.9fr 1.1fr;
+}
+
+.finance-plan-support-card {
+    background: var(--surface);
+}
+
+.finance-plan-summary-rail {
+    background: var(--surface);
+}
+
+.finance-plan-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.finance-plan-summary-chip {
+    min-height: 100%;
+}
+
+.finance-plan-layout-grid {
+    align-items: start;
+    grid-template-columns: 1.15fr 0.85fr;
+}
+
+.finance-plan-field-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.finance-plan-actions-flat {
+    margin-top: 0;
+}
+
+.finance-plan-feedback-card {
+    margin: 0;
+}
+
+.finance-plan-title {
+    margin: 0 0 10px;
+    font-size: 1.55rem;
+}
+
+.finance-plan-meta {
+    margin: 0 0 8px;
+    color: var(--muted);
+}
+
+.finance-plan-meta-spaced {
+    margin-bottom: 18px;
+}
+
+.finance-plan-note {
+    margin-bottom: 18px;
+}

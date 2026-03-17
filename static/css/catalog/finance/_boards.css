@@ -1,0 +1,270 @@
+/*
+ARQUIVO: conteúdo das board sections do financeiro.
+
+POR QUE ELE EXISTE:
+- Isola structure cards, focus list/items, guide grids/cards/notes,
+  filter rules, section intro, plan focus, support cards, filter-summary,
+  summary grid, radar, e ações de suporte.
+*/
+
+/* ── Structure & focus ── */
+
+.finance-structure-card {
+    grid-column: 1 / -1;
+}
+
+.finance-focus-list {
+    display: grid;
+    gap: 14px;
+    grid-auto-rows: 1fr;
+}
+
+.finance-focus-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 0;
+    border-top: 1px solid rgba(136, 150, 176, 0.14);
+}
+
+.finance-focus-item:first-child {
+    padding-top: 4px;
+    border-top: 0;
+}
+
+.finance-focus-copy p:last-child {
+    margin: 8px 0 0;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 56ch;
+}
+
+.finance-focus-actions {
+    display: grid;
+    gap: 10px;
+    justify-items: end;
+    align-self: stretch;
+    align-content: center;
+}
+
+/* ── Guide grid & cards ── */
+
+.finance-guide-grid {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 16px;
+    grid-auto-rows: 1fr;
+}
+
+.finance-guide-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.finance-guide-card {
+    padding: 14px 16px;
+    height: 100%;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(248, 250, 252, 0.82);
+}
+
+.finance-guide-card strong {
+    display: block;
+    margin-top: 6px;
+    font-size: 1.05rem;
+}
+
+.finance-guide-card p {
+    margin: 8px 0 0;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.finance-guide-card-soft {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.finance-guide-note {
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(248, 250, 252, 0.76);
+}
+
+.finance-guide-note .eyebrow {
+    margin-bottom: 8px;
+}
+
+.finance-guide-list-tight {
+    gap: 8px;
+    margin: 0;
+}
+
+/* ── Inline notes & filter rules ── */
+
+.finance-inline-note {
+    margin-top: 14px;
+}
+
+.finance-inline-note .eyebrow {
+    margin-bottom: 6px;
+}
+
+.finance-filter-rule-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.finance-filter-rule-card {
+    padding: 14px 16px;
+    height: 100%;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(255, 255, 255, 0.74);
+}
+
+.finance-filter-rule-card strong {
+    display: block;
+    margin-top: 6px;
+    font-size: 1rem;
+}
+
+.finance-filter-rule-card p {
+    margin: 8px 0 0;
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+/* ── Board filter form ── */
+
+.finance-board-filter .form-stack {
+    gap: 16px;
+}
+
+.finance-board-filter .actions {
+    padding-top: 2px;
+}
+
+/* ── Section intro ── */
+
+.finance-section-intro {
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(255, 255, 255, 0.62);
+}
+
+/* ── Trend/movement guide & plan focus ── */
+
+.finance-trend-guide-grid {
+    margin-bottom: 14px;
+}
+
+.finance-movement-guide-grid {
+    margin-bottom: 14px;
+}
+
+.finance-plan-focus-list {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.finance-plan-focus-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(255, 255, 255, 0.72);
+}
+
+/* ── Support cards ── */
+
+.finance-support-card {
+    padding: 18px;
+}
+
+.finance-support-rail-card {
+    display: grid;
+    align-content: start;
+}
+
+.finance-ops-summary-card {
+    background: var(--surface);
+}
+
+.finance-support-card .operation-card-head {
+    margin-bottom: 12px;
+}
+
+.finance-support-card .operation-card-title {
+    font-size: 1.22rem;
+}
+
+.finance-support-card .capability-list {
+    gap: 10px;
+    margin: 0;
+}
+
+.finance-support-card-tight {
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+/* ── Filter summary & radar ── */
+
+.finance-filter-summary-card {
+    background: var(--surface);
+}
+
+.finance-radar-card {
+    background: var(--surface);
+}
+
+.finance-radar-chip {
+    background: rgba(255, 255, 255, 0.86);
+}
+
+.finance-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    grid-auto-rows: 1fr;
+}
+
+.finance-filter-summary-card .finance-summary-grid {
+    grid-template-columns: 1fr;
+}
+
+.finance-filter-summary-card .operation-card-copy {
+    max-width: 46ch;
+}
+
+/* ── Support actions ── */
+
+.finance-support-actions {
+    margin-top: 12px;
+    justify-content: flex-start;
+}
+
+.finance-support-actions-utility .button {
+    min-height: 36px;
+}
+
+.finance-filter-summary-card .finance-support-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.finance-filter-summary-card .finance-support-actions .button {
+    width: 100%;
+}

@@ -1,0 +1,115 @@
+/*
+ARQUIVO: estilos do hero financeiro.
+
+POR QUE ELE EXISTE:
+- Isola hero-panel, hero sizing, mini-grid e mini-stats do shell financeiro.
+- Inclui overrides progressivos (o segundo bloco refina tamanhos do primeiro).
+*/
+
+.finance-hero-panel {
+    background: var(--surface);
+}
+
+.finance-shell .operation-hero {
+    padding: 18px 20px;
+}
+
+.finance-shell .operation-hero-main {
+    gap: 10px;
+}
+
+.finance-shell .operation-hero-main > div:first-child {
+    gap: 6px;
+    max-width: 560px;
+}
+
+.finance-shell .operation-hero-copy {
+    max-width: 40ch;
+}
+
+.finance-shell .operation-hero .actions {
+    gap: 6px;
+}
+
+.finance-shell .operation-hero .actions .button {
+    min-height: 34px;
+    padding: 7px 12px;
+}
+
+.finance-shell .operation-hero-side {
+    width: min(100%, 300px);
+}
+
+.finance-shell .operation-hero-panel {
+    padding: 12px 14px;
+}
+
+.finance-shell .operation-mini-grid {
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.finance-shell .operation-mini-stat {
+    padding: 7px 8px;
+}
+
+.finance-hero {
+    background: var(--surface);
+}
+
+/* ── Refinamento do hero (overrides progressivos) ── */
+
+.finance-shell .operation-hero {
+    gap: 18px;
+    min-height: 252px;
+    padding: clamp(18px, 1.8vw, 22px);
+}
+
+.finance-shell .operation-hero-main {
+    gap: 12px;
+}
+
+.finance-shell .operation-hero-main > div:first-child {
+    gap: 8px;
+    max-width: 560px;
+}
+
+.finance-shell .operation-hero-copy {
+    max-width: 40ch;
+}
+
+.finance-shell .operation-hero .actions {
+    gap: 8px;
+    max-width: 560px;
+}
+
+.finance-shell .operation-hero .actions .button {
+    min-height: 36px;
+    padding: 8px 13px;
+}
+
+.finance-shell .operation-hero-side {
+    width: 100%;
+}
+
+.finance-shell .operation-hero-panel,
+.finance-plan-page-hero .operation-hero-panel,
+.finance-hero-panel.operation-hero-panel {
+    padding: 14px 16px;
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .finance-shell .operation-hero-panel,
+body[data-theme="dark"] .finance-plan-page-hero .operation-hero-panel,
+body[data-theme="dark"] .finance-hero-panel.operation-hero-panel {
+    background: var(--surface);
+}
+
+.finance-shell .operation-mini-grid {
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.finance-shell .operation-mini-stat {
+    padding: 8px 10px;
+}

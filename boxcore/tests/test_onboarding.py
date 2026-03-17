@@ -80,7 +80,7 @@ class IntakeCenterViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Triado Central')
         self.assertNotContains(response, 'Lead Central')
-        self.assertContains(response, 'aria-label="Prioridade: 1.', html=False)
+        self.assertContains(response, 'aria-label="Fila: 1.', html=False)
         self.assertNotContains(response, 'pulse-pending has-count')
 
     def test_reception_can_assume_and_start_review_from_intake_center(self):

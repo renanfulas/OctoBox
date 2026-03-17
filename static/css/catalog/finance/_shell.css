@@ -1,0 +1,139 @@
+/*
+ARQUIVO: scaffolding da finance-shell e finance-board.
+
+POR QUE ELE EXISTE:
+- Isola o grid principal e overrides genericos do shell financeiro.
+- Board layout (12-column grid), seções, card stack e side stacks.
+*/
+
+.finance-shell {
+    display: grid;
+    gap: calc(var(--section-gap) - 2px);
+}
+
+.finance-shell [id] {
+    scroll-margin-top: 132px;
+}
+
+.finance-shell .operation-card-head {
+    margin-bottom: 12px;
+}
+
+.finance-shell .operation-card-copy,
+.finance-shell .body-copy {
+    line-height: 1.62;
+}
+
+.finance-shell .table-card,
+.finance-shell .card {
+    min-height: 100%;
+}
+
+.finance-card-stack {
+    display: grid;
+    align-items: start;
+}
+
+.finance-board {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: calc(var(--section-gap) - 2px);
+    align-items: start;
+}
+
+.finance-board > * {
+    min-width: 0;
+}
+
+.finance-board > [data-panel$='-section'] {
+    display: contents;
+}
+
+.finance-board > [data-panel$='-section'] > * {
+    min-width: 0;
+}
+
+.finance-board > section {
+    grid-column: 1 / -1;
+}
+
+.finance-board-filter {
+    grid-column: span 7;
+    background: var(--surface);
+}
+
+.finance-filter-summary-card {
+    grid-column: span 5;
+}
+
+.finance-board-support-rail {
+    grid-column: span 3;
+}
+
+.finance-board-support-rail > * {
+    min-width: 0;
+}
+
+.finance-board-rail {
+    grid-column: span 7;
+    background: var(--surface);
+}
+
+.finance-board-queue {
+    grid-column: span 5;
+    background: var(--surface);
+}
+
+.finance-board-trend {
+    grid-column: span 7;
+}
+
+.finance-board-plan {
+    grid-column: 1 / -1;
+}
+
+.finance-board-trend-side,
+.finance-board-plan-support {
+    grid-column: span 5;
+}
+
+.finance-board-portfolio {
+    grid-column: span 8;
+}
+
+.finance-board-trend,
+.finance-board-trend-side,
+.finance-board-portfolio {
+    background: var(--surface);
+}
+
+.finance-board-mix-side {
+    grid-column: span 4;
+}
+
+.finance-board-mix,
+.finance-board-mix-support {
+    min-width: 0;
+}
+
+.finance-side-stack {
+    display: grid;
+    gap: var(--section-gap);
+}
+
+.finance-command-side {
+    gap: 14px;
+}
+
+.finance-portfolio-side {
+    display: grid;
+    gap: 14px;
+}
+
+.finance-command-layout,
+.finance-priority-layout,
+.finance-portfolio-layout,
+.finance-trend-layout,
+.finance-plan-layout {
+    align-items: start;
+}

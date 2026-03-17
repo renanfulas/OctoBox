@@ -89,6 +89,7 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
     operational_focus = [
         {
             'label': 'Cobranca pede contato',
+            'chip_label': 'Cobranças',
             'summary': f'{len(operational_queue)} caso(s) ja tem abordagem sugerida e nao deveriam esperar outra leitura para virar acao.',
             'count': len(operational_queue),
             'pill_class': 'warning' if len(operational_queue) > 0 else 'success',
@@ -97,6 +98,7 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         },
         {
             'label': 'Fila pressionando caixa',
+            'chip_label': 'Fila',
             'summary': f'{len(financial_alerts)} cobranca(s) ja aparecem como pendencia ou atraso no recorte atual.',
             'count': len(financial_alerts),
             'pill_class': 'warning' if len(financial_alerts) > 0 else 'info',
@@ -105,6 +107,7 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         },
         {
             'label': 'Pulso executivo',
+            'chip_label': 'Carteira',
             'summary': f"Recebido: R$ {finance_pulse['received']:.2f} | Em aberto: R$ {finance_pulse['open']:.2f}.",
             'pill_class': 'accent',
             'href': '#finance-trend-board',
@@ -131,17 +134,6 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         title='Financeiro',
         copy='Caixa, pressao e proxima acao sem leitura cansativa.',
         actions=hero_actions,
-        side={
-            'kind': 'stat-grid',
-            'eyebrow': 'Pulso de agora',
-            'copy': 'Resumo para saber se o financeiro respira ou pede acao.',
-            'items': [
-                {'label': 'Recebido', 'value': f"R$ {finance_pulse['received']:.2f}"},
-                {'label': 'Em aberto', 'value': f"R$ {finance_pulse['open']:.2f}"},
-                {'label': 'Em atraso', 'value': finance_pulse['overdue_students']},
-                {'label': 'Ticket', 'value': f"R$ {finance_pulse['ticket']:.2f}"},
-            ],
-        },
         aria_label='Panorama financeiro',
         classes=['finance-hero'],
     )
@@ -184,5 +176,16 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
             'can_manage_finance': can_manage_finance,
             'can_export_finance': current_role_slug in (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER),
         },
-        assets=build_catalog_assets(css=['css/catalog/finance.css'], include_catalog_shared=True),
+        assets=build_catalog_assets(css=[
+            'css/catalog/finance/_shell.css',
+            'css/catalog/finance/_hero.css',
+            'css/catalog/finance/_metrics.css',
+            'css/catalog/finance/_cards.css',
+            'css/catalog/finance/_boards.css',
+            'css/catalog/finance/_plan-page.css',
+            'css/catalog/finance/_movements.css',
+            'css/catalog/finance/_dark.css',
+            'css/catalog/finance/_responsive.css',
+            'css/catalog/finance/_signature.css',
+        ], include_catalog_shared=True),
     )

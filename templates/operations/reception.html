@@ -5,9 +5,9 @@ POR QUE ELE EXISTE:
 - materializa a Recepcao como papel real do produto, sem empurra-la para manager ou financeiro completo.
 
 O QUE ESTE ARQUIVO FAZ:
-1. organiza chegada, aluno, grade em leitura e cobranca curta em uma unica superficie.
-2. entrega o compasso operacional do balcao com foco em acolhimento e decisao rapida.
-3. preserva a fronteira da Recepcao sem abrir a central financeira ou a gestao da agenda.
+1. organiza chegada, caixa curto e grade em ordem de balcão.
+2. entrega a sequência curta de decisão da recepção.
+3. deixa métricas como profundidade, não como abertura fria.
 
 PONTOS CRITICOS:
 - esta tela precisa continuar curta e humana; se crescer demais, vira manager disfarçado.
@@ -21,17 +21,19 @@ PONTOS CRITICOS:
 <div class="operation-shell reception-scene" data-page="reception" data-screen="operations-reception" data-slot="page-root">
     {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
 
-    {% include "operations/includes/reception_metrics_section.html" %}
-
-    {% include "operations/includes/reception_shortcuts_panel.html" %}
+    {% include "includes/ui/focus_sequence.html" with eyebrow="Compasso do balcão" title="A recepção decide em três passagens curtas" copy="Chegada, cobrança e orientação de aula em sequência limpa para não travar o atendimento." items=page.data.reception_focus pill_label="Atendimento vivo" pill_class="accent" class_name="reception-focus-lane" panel_id="reception-command-lane" %}
 
     <section class="layout-grid operation-grid-wide align-start reception-main-grid" aria-label="Cobranca e entradas" data-slot="reception-main-grid">
         {% include "operations/includes/reception_payment_board.html" %}
-
         {% include "operations/includes/reception_intake_board.html" %}
     </section>
 
-    {% include "operations/includes/reception_class_grid_board.html" %}
+    <section class="layout-grid align-start reception-support-grid" aria-label="Apoio do balcão" data-slot="reception-support-grid">
+        {% include "operations/includes/reception_shortcuts_panel.html" %}
+        {% include "operations/includes/reception_class_grid_board.html" %}
+    </section>
+
+    {% include "operations/includes/reception_metrics_section.html" %}
 </div>
 {% endwith %}
 {% endblock %}

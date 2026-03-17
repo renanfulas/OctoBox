@@ -76,7 +76,8 @@ class CatalogViewTests(TestCase):
 
     def test_class_grid_can_create_recurring_schedule(self):
         self.client.force_login(self.user)
-        start_date = timezone.localdate() + timezone.timedelta(days=(7 - timezone.localdate().weekday()) % 7)
+        days_ahead = (7 - timezone.localdate().weekday()) % 7 or 7
+        start_date = timezone.localdate() + timezone.timedelta(days=days_ahead)
         end_date = start_date + timezone.timedelta(days=13)
 
         response = self.client.post(
@@ -105,7 +106,8 @@ class CatalogViewTests(TestCase):
 
     def test_class_grid_can_create_recurring_schedule_with_sequence(self):
         self.client.force_login(self.user)
-        start_date = timezone.localdate() + timezone.timedelta(days=(7 - timezone.localdate().weekday()) % 7)
+        days_ahead = (7 - timezone.localdate().weekday()) % 7 or 7
+        start_date = timezone.localdate() + timezone.timedelta(days=days_ahead)
 
         response = self.client.post(
             reverse('class-grid'),
@@ -154,7 +156,8 @@ class CatalogViewTests(TestCase):
 
     def test_class_grid_allows_exact_daily_limit_in_single_batch(self):
         self.client.force_login(self.user)
-        start_date = timezone.localdate() + timezone.timedelta(days=(7 - timezone.localdate().weekday()) % 7)
+        days_ahead = (7 - timezone.localdate().weekday()) % 7 or 7
+        start_date = timezone.localdate() + timezone.timedelta(days=days_ahead)
 
         for index in range(6):
             ClassSession.objects.create(
@@ -192,7 +195,8 @@ class CatalogViewTests(TestCase):
 
     def test_class_grid_allows_large_weekly_batch_below_limit(self):
         self.client.force_login(self.user)
-        start_date = timezone.localdate() + timezone.timedelta(days=(7 - timezone.localdate().weekday()) % 7)
+        days_ahead = (7 - timezone.localdate().weekday()) % 7 or 7
+        start_date = timezone.localdate() + timezone.timedelta(days=days_ahead)
         end_date = start_date + timezone.timedelta(days=6)
 
         response = self.client.post(
@@ -618,7 +622,8 @@ class CatalogViewTests(TestCase):
 
     def test_class_grid_blocks_daily_limit(self):
         self.client.force_login(self.user)
-        start_date = timezone.localdate() + timezone.timedelta(days=(7 - timezone.localdate().weekday()) % 7)
+        days_ahead = (7 - timezone.localdate().weekday()) % 7 or 7
+        start_date = timezone.localdate() + timezone.timedelta(days=days_ahead)
         for index in range(12):
             ClassSession.objects.create(
                 title=f'Extra {index}',

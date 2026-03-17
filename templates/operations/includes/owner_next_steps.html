@@ -1,0 +1,23 @@
+<!--
+ARQUIVO: sequencia de proximos passos do Owner.
+
+POR QUE ELE EXISTE:
+- mostra os passos restantes do dia como lista curta, sem repetir o hero.
+-->
+<section class="owner-next-steps" aria-label="Proximos passos">
+    <h2 class="owner-next-steps-title">Proximos passos</h2>
+    <div class="owner-next-steps-list">
+        {% for item in page.data.owner_operational_focus %}
+        <a class="owner-step-card{% if forloop.first %} owner-step-card-primary{% endif %}" href="{{ item.href }}">
+            <span class="owner-step-number">{{ forloop.counter|stringformat:"02d" }}</span>
+            <span class="owner-step-body">
+                <strong>{{ item.label }}</strong>
+                <span class="owner-step-summary">{{ item.summary }}</span>
+            </span>
+            <span class="owner-step-aside">
+                <span class="pill{% if item.pill_class %} {{ item.pill_class }}{% endif %}">{% if item.count or item.count == 0 %}{{ item.count }}{% else %}Ler{% endif %}</span>
+            </span>
+        </a>
+        {% endfor %}
+    </div>
+</section>

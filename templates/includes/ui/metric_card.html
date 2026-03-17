@@ -1,8 +1,24 @@
-<article class="card {{ card.card_class }}" data-panel="metric-card" data-slot="metric-card">
+<article class="card{% if compact %} metric-card-compact{% endif %} {{ card.card_class }}{% if card.status_hint %} status-{{ card.status_hint }}{% endif %}" data-panel="metric-card" data-slot="metric-card">
     <div class="card-body card-body-metric">
         <div class="card-value-stack">
             <p class="eyebrow card-label">{{ card.eyebrow }}</p>
-            <p class="metric card-value">{{ card.display_value }}</p>
+            {% if card.kicker %}
+            <p class="card-kicker">{{ card.kicker }}</p>
+            {% endif %}
+            <div class="card-value-row">
+                <p class="metric card-value">{{ card.display_value }}</p>
+                {% if card.change %}
+                <div class="card-signal{% if card.change.tone %} is-{{ card.change.tone }}{% endif %}"{% if card.change.label %} title="{{ card.change.label }}"{% endif %}>
+                    <span class="card-signal-dot" aria-hidden="true"></span>
+                    <span class="card-signal-value">{{ card.change.value }}</span>
+                </div>
+                {% elif card.signal %}
+                <div class="card-signal{% if card.signal.tone %} is-{{ card.signal.tone }}{% endif %}"{% if card.signal.label %} title="{{ card.signal.label }}"{% endif %}>
+                    <span class="card-signal-dot" aria-hidden="true"></span>
+                    <span class="card-signal-value">{{ card.signal.value }}</span>
+                </div>
+                {% endif %}
+            </div>
             {% if card.submetric %}
             <p class="meta-text-sm card-meta">{{ card.submetric.label }}: {{ card.submetric.value }}</p>
             {% endif %}
@@ -11,15 +27,22 @@
             <p class="metric-note card-copy">{{ card.note }}</p>
         </div>
     </div>
-    {% if card.footer_pill_label %}
+    {% if not card.hide_footer %}
+        {% if card.footer_pill_label or card.footer_action_label %}
     <div class="card-footer">
         <div class="actions card-actions">
+            {% if card.footer_pill_label %}
             <span class="pill card-action{% if card.footer_pill_class %} {{ card.footer_pill_class }}{% endif %}">{{ card.footer_pill_label }}</span>
+            {% endif %}
+            {% if card.footer_action_label and card.footer_action_href %}
+            <a class="button secondary button-sm" href="{{ card.footer_action_href }}">{{ card.footer_action_label }}</a>
+            {% endif %}
         </div>
     </div>
-    {% elif card.show_accent_bar %}
+        {% elif card.show_accent_bar %}
     <div class="card-footer">
         <div class="accent-bar"></div>
     </div>
+        {% endif %}
     {% endif %}
 </article>

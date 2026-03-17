@@ -38,6 +38,7 @@ def build_student_directory_page(*, student_count, students, student_filter_form
     operational_focus = [
         {
             'label': 'Triagem imediata',
+            'chip_label': 'Prioridades',
             'summary': f'{len(priority_students)} aluno(s) ou lead(s) ja pedem leitura antes de esfriarem.',
             'count': len(priority_students),
             'pill_class': 'warning' if len(priority_students) > 0 else 'success',
@@ -46,6 +47,7 @@ def build_student_directory_page(*, student_count, students, student_filter_form
         },
         {
             'label': 'Conversao pronta',
+            'chip_label': 'Entradas',
             'summary': f'{len(intake_queue)} entrada(s) provisoria(s) ja podem virar aluno com pouco atrito.',
             'count': len(intake_queue),
             'pill_class': 'info' if len(intake_queue) > 0 else 'accent',
@@ -54,6 +56,7 @@ def build_student_directory_page(*, student_count, students, student_filter_form
         },
         {
             'label': 'Base no recorte atual',
+            'chip_label': 'Base',
             'summary': f'{student_count} registro(s) sustentam a leitura desta tela e precisam ser escaneados sem fadiga.',
             'count': student_count,
             'pill_class': 'accent',
@@ -67,19 +70,6 @@ def build_student_directory_page(*, student_count, students, student_filter_form
         title='Encontre, entenda e aja sem travar.',
         copy='Triagem, pendencia e proxima acao sem caca visual.',
         actions=hero_actions,
-        side={
-            'kind': 'stat-grid',
-            'eyebrow': 'Radar da base',
-            'copy': 'Contato quente, pendencia e conversao.',
-            'items': [
-                {'label': 'Visiveis', 'value': len(students)},
-                {'label': 'Triagem agora', 'value': len(priority_students)},
-                {'label': 'Intakes prontos', 'value': len(intake_queue)},
-                {'label': 'Modo', 'value': 'acao' if can_manage_students else 'consulta'},
-            ],
-            'stack': True,
-            'data_panel': 'students-hero-summary',
-        },
         aria_label='Panorama de alunos',
         classes=['catalog-hero', 'student-hero'],
         data_slot='hero',
