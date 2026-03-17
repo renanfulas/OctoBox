@@ -157,8 +157,8 @@ def _build_navigation(role_slug, current_path=''):
         item.setdefault('icon', '')
     # map short icon codes to sophisticated emoji choices
     emoji_map = {
-        'DB': '📊',
-        'OP': '⚙️',
+        'DB': '🏠',
+        'OP': '⚡',
         'AL': '🎓',
         'FI': '💰',
         'EN': '📥',
