@@ -50,7 +50,7 @@ Leitura virtual:
 
 Evidencias estruturais:
 
-1. em [static/css/design-system/operations.css](static/css/design-system/operations.css), abaixo de 1280px o trilho de suporte cai para 1 coluna
+1. em [../../static/css/design-system/operations.css](../../static/css/design-system/operations.css), abaixo de 1280px o trilho de suporte cai para 1 coluna
 2. abaixo de 960px o hero operacional vira coluna unica
 3. abaixo de 720px os grids de pagamento e de grade da recepcao viram 1 coluna
 4. metas e stats internos tambem viram 1 coluna abaixo de 720px
@@ -73,7 +73,7 @@ Leitura virtual:
 
 Evidencias estruturais:
 
-1. em [static/css/catalog/shared.css](static/css/catalog/shared.css), field-grid-200, 220 e 240 usam auto-fit com minmax de 200px, 220px e 240px
+1. em [../../static/css/catalog/shared.css](../../static/css/catalog/shared.css), field-grid-200, 220 e 240 usam auto-fit com minmax de 200px, 220px e 240px
 2. em 390px esses grids tendem a empilhar em 1 coluna naturalmente quando nao couberem duas
 3. o formulario foi montado por passos e disclosures, o que ajuda a leitura vertical em tela estreita
 
@@ -118,7 +118,7 @@ Leitura virtual:
 
 Evidencias estruturais:
 
-1. em [static/css/catalog/class-grid.css](static/css/catalog/class-grid.css), abaixo de 960px varios paineis e headers caem para coluna unica
+1. em [../../static/css/catalog/class-grid.css](../../static/css/catalog/class-grid.css), abaixo de 960px varios paineis e headers caem para coluna unica
 2. a visao semanal cai para 2 colunas abaixo de 960px e para 1 coluna abaixo de 640px
 3. o preview mensal tambem cai para 1 coluna abaixo de 640px
 4. acoes de chip e botoes internos passam para largura total em largura menor

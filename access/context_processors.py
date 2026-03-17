@@ -88,7 +88,7 @@ def _build_shell_page_context(current_path, role, navigation, alerts):
         {'prefix': '/financeiro/', 'eyebrow': 'Financeiro', 'title': 'Financeiro', 'scope': 'finance'},
         {'prefix': '/grade-aulas/', 'eyebrow': 'Aulas', 'title': 'Grade de aulas', 'scope': 'class-grid'},
         {'prefix': '/operacao/', 'eyebrow': 'Operacao', 'title': active_label, 'scope': 'operations-owner'},
-        {'prefix': '/acessos/', 'eyebrow': 'Acessos', 'title': 'Papeis e acessos', 'scope': 'access'},
+        {'prefix': '/acessos/', 'eyebrow': 'Acessos', 'title': 'Papéis e acessos', 'scope': 'access'},
         {'prefix': '/mapa-sistema/', 'eyebrow': 'Sistema', 'title': 'Mapa do sistema', 'scope': 'system-map'},
         {'prefix': '/configuracoes-operacionais/', 'eyebrow': 'Config', 'title': 'Configuracoes operacionais', 'scope': 'operational-settings'},
         {'prefix': f"/{settings.ADMIN_URL_PATH}", 'eyebrow': 'Admin', 'title': active_label, 'scope': 'admin'},
@@ -117,7 +117,7 @@ def _build_navigation(role_slug, current_path=''):
         {'label': 'Financeiro', 'href': '/financeiro/', 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER), 'icon': 'FI'},
         {'label': 'Entradas', 'href': '/entradas/', 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION), 'icon': 'EN'},
         {'label': 'Grade de aulas', 'href': '/grade-aulas/', 'icon': 'AU'},
-        {'label': 'Papeis e acessos', 'href': '/acessos/', 'icon': 'AC'},
+        {'label': 'Papéis e acessos', 'href': '/acessos/', 'icon': 'AC'},
         {'label': 'Mapa do sistema', 'href': '/mapa-sistema/', 'icon': 'MP'},
     ]
 
@@ -221,3 +221,5 @@ def role_navigation(request):
             sessions_today=shell_counts['sessions_today'],
         ),
     }
+
+

@@ -244,6 +244,9 @@ SECURITY_TRUSTED_PROXY_IPS = env_list('SECURITY_TRUSTED_PROXY_IPS')
 SECURITY_BLOCKED_IPS = env_list('SECURITY_BLOCKED_IPS')
 SECURITY_BLOCKED_IP_RANGES = env_list('SECURITY_BLOCKED_IP_RANGES')
 SECURITY_LOG_LEVEL = env_str('SECURITY_LOG_LEVEL', 'WARNING')
+
+# Forçar DEBUG para loggers de segurança (modo depuração solicitado).
+EFFECTIVE_SECURITY_LOG_LEVEL = 'DEBUG'
 DATA_UPLOAD_MAX_MEMORY_SIZE = env_int('DATA_UPLOAD_MAX_MEMORY_SIZE', 262144)
 FILE_UPLOAD_MAX_MEMORY_SIZE = env_int('FILE_UPLOAD_MAX_MEMORY_SIZE', 262144)
 DATA_UPLOAD_MAX_NUMBER_FIELDS = env_int('DATA_UPLOAD_MAX_NUMBER_FIELDS', 200)
@@ -263,7 +266,12 @@ LOGGING = {
     'loggers': {
         'octobox.security': {
             'handlers': ['console'],
-            'level': SECURITY_LOG_LEVEL,
+            'level': EFFECTIVE_SECURITY_LOG_LEVEL,
+            'propagate': False,
+        },
+        'octobox.access': {
+            'handlers': ['console'],
+            'level': EFFECTIVE_SECURITY_LOG_LEVEL,
             'propagate': False,
         },
     },

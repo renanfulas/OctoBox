@@ -275,9 +275,9 @@ Status:
 
 Escopo imediato:
 
-1. edicao de plano em [catalog/views/finance_views.py](catalog/views/finance_views.py)
-2. dashboard em [dashboard/dashboard_views.py](dashboard/dashboard_views.py)
-3. guia em [guide/views.py](guide/views.py)
+1. edicao de plano em [../../catalog/views/finance_views.py](../../catalog/views/finance_views.py)
+2. dashboard em [../../dashboard/dashboard_views.py](../../dashboard/dashboard_views.py)
+3. guia em [../../guide/views.py](../../guide/views.py)
 
 Saida esperada:
 

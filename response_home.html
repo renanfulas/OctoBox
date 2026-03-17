@@ -1,0 +1,494 @@
+<!--
+ARQUIVO: tela de login.
+
+POR QUE ELE EXISTE:
+- É a porta de entrada visual do sistema.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Renderiza o formulário de autenticação.
+2. Explica os papéis principais do sistema.
+3. Encaminha o usuário para a área protegida após login.
+
+PONTOS CRITICOS:
+- Alterações nos campos precisam respeitar o formulário padrão de autenticação do Django.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Entrar | OctoBox Control</title>
+    <style>
+        :root {
+            --bg: #0d151d;
+            --surface: rgba(255, 249, 241, 0.9);
+            --surface-dark: rgba(20, 32, 45, 0.82);
+            --ink: #1a222c;
+            --muted: #655f59;
+            --line: rgba(112, 96, 81, 0.18);
+            --brand: #b85c38;
+            --accent: #2f7a64;
+            --accent-2: #285c8e;
+            --danger: #bd3f2f;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            font-family: "Aptos", "Segoe UI Variable Text", "Trebuchet MS", sans-serif;
+            color: #e2e8f0;
+            background:
+                radial-gradient(circle at top right, rgba(184, 92, 56, 0.28), transparent 20%),
+                radial-gradient(circle at bottom left, rgba(47, 122, 100, 0.18), transparent 24%),
+                radial-gradient(circle at 50% 10%, rgba(40, 92, 142, 0.16), transparent 20%),
+                var(--bg);
+        }
+
+        .login-shell {
+            width: min(980px, 100%);
+            display: grid;
+            grid-template-columns: 1.1fr 420px;
+            border-radius: 36px;
+            overflow: hidden;
+            background: rgba(20, 32, 45, 0.42);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 30px 80px rgba(2, 6, 23, 0.46);
+        }
+
+        .story {
+            position: relative;
+            padding: 54px;
+            background:
+                radial-gradient(circle at top left, rgba(184, 92, 56, 0.24), transparent 26%),
+                radial-gradient(circle at bottom right, rgba(47, 122, 100, 0.18), transparent 28%),
+                linear-gradient(160deg, rgba(20, 32, 45, 0.96), rgba(15, 22, 31, 0.9));
+            color: #f8fafc;
+            overflow: hidden;
+        }
+
+        .story::after {
+            content: '';
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            border-radius: 999px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.16), transparent 70%);
+            right: -80px;
+            bottom: -80px;
+        }
+
+        .story h1 {
+            margin: 0 0 12px;
+            font-size: clamp(2.4rem, 4vw, 4rem);
+            line-height: 0.95;
+            letter-spacing: -0.05em;
+            font-family: "Rockwell", "Aptos Display", serif;
+        }
+
+        .story p {
+            color: rgba(248, 250, 252, 0.74);
+            line-height: 1.7;
+        }
+
+        .brand-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            margin-bottom: 18px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(248, 250, 252, 0.88);
+            font-size: 0.88rem;
+        }
+
+        .story-grid {
+            display: grid;
+            gap: 14px;
+            margin-top: 28px;
+        }
+
+        .story-rhythm {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        .story-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 34px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(248, 250, 252, 0.92);
+            font-size: 0.84rem;
+            font-weight: 700;
+        }
+
+        .story-stat {
+            padding: 16px 18px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: transform 0.18s ease, background 0.18s ease;
+        }
+
+        .story-stat:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.09);
+        }
+
+        .story-stat strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 1rem;
+        }
+
+        .story-stat span {
+            color: rgba(248, 250, 252, 0.68);
+            line-height: 1.6;
+        }
+
+        .story ul {
+            margin: 28px 0 0;
+            padding-left: 20px;
+            line-height: 1.8;
+        }
+
+        .form-wrap {
+            padding: 36px 32px;
+            background: var(--surface);
+            color: var(--ink);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .form-wrap h2 {
+            margin: 0 0 10px;
+            font-size: 2rem;
+            letter-spacing: -0.03em;
+            font-family: "Rockwell", "Aptos Display", serif;
+        }
+
+        .subtitle {
+            margin: 0 0 24px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .form-shell {
+            padding: 22px;
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(112, 96, 81, 0.14);
+            box-shadow: 0 18px 40px rgba(85, 56, 35, 0.08);
+        }
+
+        .entry-focus {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .entry-focus-item {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: center;
+            padding: 14px 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(112, 96, 81, 0.12);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .entry-focus-item strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.96rem;
+        }
+
+        .entry-focus-item span {
+            color: var(--muted);
+            line-height: 1.55;
+            font-size: 0.92rem;
+        }
+
+        .entry-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 32px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: rgba(184, 92, 56, 0.12);
+            color: #8d3c21;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .entry-badge.info {
+            background: rgba(40, 92, 142, 0.12);
+            color: var(--accent-2);
+        }
+
+        .field-note {
+            margin: -12px 0 14px;
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            margin-bottom: 18px;
+            background: rgba(255, 255, 255, 0.92);
+            color: var(--ink);
+            font-size: 1rem;
+            transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: rgba(184, 92, 56, 0.32);
+            box-shadow: 0 0 0 4px rgba(184, 92, 56, 0.12);
+            transform: translateY(-1px);
+        }
+
+        button {
+            width: 100%;
+            border: 0;
+            border-radius: 999px;
+            padding: 14px 18px;
+            background: linear-gradient(145deg, var(--brand), #cf8359);
+            color: #fffdf8;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: 700;
+            box-shadow: 0 14px 28px rgba(184, 92, 56, 0.22);
+            transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 18px 32px rgba(184, 92, 56, 0.28);
+            filter: saturate(1.06);
+        }
+
+        .errorlist {
+            margin: 0 0 16px;
+            padding-left: 18px;
+            color: var(--danger);
+        }
+
+        .helper {
+            margin-top: 20px;
+            color: var(--muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .helper-card {
+            margin-top: 22px;
+            padding: 16px 18px;
+            border-radius: 20px;
+            background: linear-gradient(145deg, rgba(47, 122, 100, 0.1), rgba(255, 255, 255, 0.84));
+            border: 1px solid rgba(47, 122, 100, 0.16);
+        }
+
+        .helper-card strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.96rem;
+        }
+
+        .error-summary {
+            margin-bottom: 18px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(189, 63, 47, 0.1);
+            border: 1px solid rgba(189, 63, 47, 0.16);
+            color: #7b261c;
+        }
+
+        .error-summary strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .error-summary ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+        .field-errors {
+            margin: -10px 0 14px;
+            padding-left: 18px;
+            color: var(--danger);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 900px) {
+            .login-shell {
+                grid-template-columns: 1fr;
+            }
+
+            .story,
+            .form-wrap {
+                padding: 28px;
+            }
+
+            .entry-focus-item {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 16px;
+            }
+
+            .login-shell {
+                border-radius: 28px;
+            }
+
+            .story,
+            .form-wrap {
+                padding: 22px;
+            }
+
+            .form-shell {
+                padding: 18px;
+                border-radius: 22px;
+            }
+
+            .brand-chip {
+                width: 100%;
+                justify-content: space-between;
+                flex-wrap: wrap;
+            }
+
+            .story h1,
+            .form-wrap h2 {
+                line-height: 1.05;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+
+            .story,
+            .form-wrap {
+                padding: 18px;
+            }
+
+            .form-shell {
+                padding: 16px;
+            }
+
+            .entry-focus-item {
+                padding: 12px 14px;
+            }
+        }
+    </style>
+</head>
+<body data-page="login" data-screen="entry-auth" data-ui="login-body">
+    <main data-slot="login-root">
+    <div class="login-shell" data-panel="login-shell">
+        <section class="story" aria-label="Apresentacao do sistema" data-panel="login-story">
+            <div class="brand-chip">
+                <span>OctoBox Control</span>
+                <span>Fitness SaaS</span>
+            </div>
+            <h1>OctoBox Control</h1>
+            <p>
+                A operação do box em um sistema que organiza energia comercial, rotina técnica e leitura financeira sem ruído visual.
+            </p>
+            <div class="story-rhythm">
+                <span class="story-pill">Entrada clara</span>
+                <span class="story-pill">Fronteiras por papel</span>
+                <span class="story-pill">Energia comercial com ordem</span>
+            </div>
+            <div class="story-grid">
+                <div class="story-stat">
+                    <strong>Owner</strong>
+                    <span>Visão estratégica do box com leitura de operação, receita e crescimento.</span>
+                </div>
+                <div class="story-stat">
+                    <strong>Manager</strong>
+                        <span>Grade, intake, alunos, cobrança e acompanhamento operacional sem assumir a rotina técnica do coach.</span>
+                </div>
+                <div class="story-stat">
+                    <strong>Coach</strong>
+                    <span>Presença, rotina de treino, aula e leitura viva da operação técnica.</span>
+                </div>
+            </div>
+        </section>
+        <section class="form-wrap" aria-label="Formulario de login" data-panel="login-form">
+            <h2>Entrar no sistema</h2>
+            <p class="subtitle">Use um usuário interno da academia para acessar o painel.</p>
+            <div class="form-shell" data-slot="login-form-shell">
+                <div class="entry-focus" data-slot="login-entry-guide">
+                    <article class="entry-focus-item">
+                        <div>
+                            <strong>Comece pelo usuário correto</strong>
+                            <span>O login deve abrir o papel certo sem misturar recepção, coach, manutenção e dono no mesmo acesso.</span>
+                        </div>
+                        <span class="entry-badge">passo 1</span>
+                    </article>
+                    <article class="entry-focus-item">
+                        <div>
+                            <strong>Entre para a rotina certa</strong>
+                            <span>Depois do login, a ideia é cair direto numa leitura útil, não numa tela que obriga interpretação longa logo na entrada.</span>
+                        </div>
+                        <span class="entry-badge info">passo 2</span>
+                    </article>
+                </div>
+                <form method="post" data-slot="login-form-fields" data-action="submit-login">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="NmYGXIibBOX6A5jBFsI1SZCuhmfAaCUqgvYgcJFermcFa1GwrWfmE0ETqAGXVmsw">
+                    
+                    <label for="id_username">Usuário</label>
+                    <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" placeholder="Seu usuario interno" spellcheck="false" aria-describedby="login-username-note" required id="id_username">
+                    
+                    <p class="field-note" id="login-username-note">Use o identificador interno da academia. Evite email pessoal ou apelido solto.</p>
+                    <label for="id_password">Senha</label>
+                    <input type="password" name="password" autocomplete="current-password" placeholder="Sua senha" aria-describedby="login-password-note" required id="id_password">
+                    
+                    <p class="field-note" id="login-password-note">Entre com a senha do usuário interno para cair direto no papel certo.</p>
+                    <button type="submit" data-action="confirm-login">Entrar</button>
+                    <input type="hidden" name="next" value="" autocomplete="off">
+                </form>
+                <div class="helper-card" data-panel="login-support-card">
+                    <strong>Primeira preparação</strong>
+                    <p class="helper">
+                        Primeiro acesso: rode o comando de grupos, crie os usuários e associe cada pessoa ao papel correto no admin.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </div>
+    </main>
+</body>
+</html>
