@@ -28,6 +28,33 @@
     }
 }
 
+/* Ensure the board's content doesn't transform or change opacity when blinking.
+   Only the box-shadow should be animated. */
+#dashboard-sessions-board.neon-blink {
+    transform: none !important;
+    opacity: 1 !important;
+}
+
+/* Prevent descendant animations/transitions that could cause the card to "blink" visually. */
+#dashboard-sessions-board.neon-blink * {
+    animation: none !important;
+    transition-property: none !important;
+}
+
+/* Quiet mode: suppress any transforms, transitions or opacity changes on the
+   board and its descendants while active. This prevents visual "jank" from
+   other page animations when the neon blink runs. */
+#dashboard-sessions-board.neon-quiet {
+    transform: none !important;
+    opacity: 1 !important;
+    transition: none !important;
+}
+
+#dashboard-sessions-board.neon-quiet * {
+    animation: none !important;
+    transition-property: none !important;
+}
+
 /* Ensure any stray pseudo elements don't interfere */
 /* (Allow dashboard card pseudo-elements; utilities will opt-in) */
 
@@ -86,17 +113,5 @@ aside.dashboard-instagram-side .dashboard-table-card::after {
     overflow: visible;
 }
 
-/* Neon outline for sidebar nav links (e.g. "Grade de aulas") */
-.nav-link {
-    position: relative;
-}
-
-.nav-link.neon-outline {
-    /* keep as no-op (we won't add persistent outline) */
-    box-shadow: none !important;
-}
-
-.nav-link.neon-blink {
-    animation: neon-pulse 900ms ease 1 forwards;
-}
+/* Sidebar neon/blink rules removed per request */
 

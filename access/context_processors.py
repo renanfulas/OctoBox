@@ -35,8 +35,12 @@ _ASSET_VERSION_CACHE = {
 
 def _calculate_static_asset_version():
     static_root = settings.BASE_DIR / 'static'
+    css_paths = [
+        asset_path for asset_path in (static_root / 'css').rglob('*.css')
+        if 'build' not in asset_path.parts
+    ]
     asset_paths = [
-        *list((static_root / 'css').rglob('*.css')),
+        *css_paths,
         *list((static_root / 'js').rglob('*.js')),
     ]
     mtimes = []

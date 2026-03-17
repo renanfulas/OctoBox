@@ -41,27 +41,30 @@ POR QUE ELE EXISTE:
   var draggedPanel = null;
   var dragHandlePressed = false;
 
-  function onlyDigits(value) {
-    return (value || '').replace(/\D/g, '');
+  function readStorage(key) {
+    try {
+      return window.localStorage.getItem(key);
+    } catch (error) {
+      return null;
+    }
   }
 
-  function formatDateInput(value) {
-    var digits = onlyDigits(value).slice(0, 6);
-    if (digits.length <= 2) {
-      return digits;
+  function writeStorage(key, value) {
+    try {
+      window.localStorage.setItem(key, value);
+      return true;
+    } catch (error) {
+      return false;
     }
-    if (digits.length <= 4) {
-      return digits.slice(0, 2) + '/' + digits.slice(2);
-    }
-    return digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4);
   }
 
-  function formatTimeInput(value) {
-    var digits = onlyDigits(value).slice(0, 4);
-    if (digits.length <= 2) {
-      return digits;
+  function removeStorage(key) {
+    try {
+      window.localStorage.removeItem(key);
+      return true;
+    } catch (error) {
+      return false;
     }
-    return digits.slice(0, 2) + ':' + digits.slice(2);
   }
 
   function isValidShortDate(value) {
@@ -188,7 +191,6 @@ POR QUE ELE EXISTE:
   }
 
   bindPlannerField(plannerStartDateField, function() {
-    plannerStartDateField.value = formatDateInput(plannerStartDateField.value);
     validatePlannerDateField(plannerStartDateField, 'Informe o primeiro dia da recorrencia.', 'Use a data no formato dd/mm/aa. Ex.: 11/03/26.');
     validatePlannerDateRange();
   }, function() {
@@ -197,7 +199,6 @@ POR QUE ELE EXISTE:
   });
 
   bindPlannerField(plannerEndDateField, function() {
-    plannerEndDateField.value = formatDateInput(plannerEndDateField.value);
     validatePlannerDateField(plannerEndDateField, 'Informe a data final da recorrencia.', 'Use a data no formato dd/mm/aa. Ex.: 08/04/26.');
     validatePlannerDateRange();
   }, function() {
@@ -206,7 +207,6 @@ POR QUE ELE EXISTE:
   });
 
   bindPlannerField(plannerStartTimeField, function() {
-    plannerStartTimeField.value = formatTimeInput(plannerStartTimeField.value);
     validatePlannerTimeField(plannerStartTimeField);
   }, function() {
     validatePlannerTimeField(plannerStartTimeField);
@@ -305,7 +305,7 @@ POR QUE ELE EXISTE:
     var order = getWorkspacePanels().map(function(panel) {
       return panel.dataset.panelId;
     });
-    localStorage.setItem(storageKey, JSON.stringify(order));
+    writeStorage(storageKey, JSON.stringify(order));
     syncPanelButtons();
   }
 
@@ -314,7 +314,7 @@ POR QUE ELE EXISTE:
       return;
     }
 
-    var storedOrder = localStorage.getItem(storageKey);
+    var storedOrder = readStorage(storageKey);
     if (!storedOrder) {
       syncPanelButtons();
       return;
@@ -329,7 +329,7 @@ POR QUE ELE EXISTE:
         }
       });
     } catch (error) {
-      localStorage.removeItem(storageKey);
+      removeStorage(storageKey);
     }
 
     syncPanelButtons();
@@ -424,7 +424,7 @@ POR QUE ELE EXISTE:
 
   if (resetLayoutButton && workspace && storageKey) {
     resetLayoutButton.addEventListener('click', function() {
-      localStorage.removeItem(storageKey);
+      removeStorage(storageKey);
       defaultOrder.forEach(function(id) {
         var panel = workspace.querySelector('[data-panel-id="' + id + '"]');
         if (panel) {

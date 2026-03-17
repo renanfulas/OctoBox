@@ -38,21 +38,6 @@ body[data-shell-scope="dashboard"] .content {
 }
 
 .dashboard-shell::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: -1;
-}
-
-.dashboard-shell::before {
-    background:
-        radial-gradient(circle at top right, rgba(249, 115, 22, 0.12), transparent 22%),
-        radial-gradient(circle at 12% 34%, rgba(37, 99, 235, 0.1), transparent 20%),
-        radial-gradient(circle at 55% 0%, rgba(255, 255, 255, 0.56), transparent 28%);
-}
-
-.dashboard-shell::after {
     inset: 16px 0 auto;
     height: 360px;
     border-radius: var(--radius-shell);
@@ -886,7 +871,6 @@ body[data-shell-scope="dashboard"] .topbar {
     border: 1px solid rgba(255, 255, 255, 0.42);
     border-radius: 18px;
     box-shadow: var(--fdw-shadow);
-    backdrop-filter: blur(18px);
 }
 
 body[data-theme="dark"][data-shell-scope="dashboard"] .topbar {
@@ -927,34 +911,7 @@ body[data-theme="dark"][data-shell-scope="dashboard"] .topbar {
     content: "";
 }
 
-/* Neon visuals neutralized: keep board layout but remove neon box-shadows/animation */
-#dashboard-sessions-board {
-    position: relative;
-    --neon-color: #092a5f; /* azul escuro kept for vars but not used */
-    box-shadow: none;
-    transition: none;
-}
-
-/* placeholders — no visual outline */
-#dashboard-sessions-board.neon-outline {
-    box-shadow: none !important;
-}
-
-/* blink animation handled by `neon.css` (scoped). Keep placeholder here. */
-.neon-blink {
-    /* no-op: visual blink is controlled in neon.css */
-    --neon-placeholder: 0;
-}
-
-/* Support applying neon to the aside that wraps the board */
-.dashboard-instagram-side.neon-outline {
-    box-shadow: none !important;
-}
-
-.dashboard-instagram-side.neon-blink {
-    /* no-op: visual blink is controlled in neon.css */
-    --neon-placeholder: 0;
-}
+/* Neon visuals moved to `neon.css` to centralize behavior. */
 
 .dashboard-glance-card:hover,
 .dashboard-support-card:hover,

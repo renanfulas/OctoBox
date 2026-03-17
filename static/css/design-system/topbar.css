@@ -769,7 +769,6 @@ body[data-theme="dark"] .topbar-quick-link--secondary:focus-visible {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.54)), var(--fdw-panel);
     border: 1px solid rgba(255, 255, 255, 0.42);
     box-shadow: var(--fdw-shadow);
-    backdrop-filter: blur(18px);
 }
 
 body[data-theme="dark"] .topbar {
@@ -834,14 +833,6 @@ body[data-theme="dark"] .topbar {
 
 
 /* --- Front Display Wall artistic topbar pass --- */
-.topbar::after {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto;
-    height: 1px;
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.28), transparent 42%, rgba(255, 255, 255, 0.16));
-    pointer-events: none;
-}
 
 .global-search {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.62)), var(--surface);
@@ -854,5 +845,20 @@ body[data-theme="dark"] .topbar {
 
 .alert-chip {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.32));
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sidebar-toggle,
+    .theme-toggle,
+    .theme-toggle::before,
+    .theme-toggle-icon,
+    .global-search,
+    .topbar-quick-link,
+    .alert-chip,
+    .shell-celebration-toast,
+    .shell-celebration-piece {
+        transition: none;
+        animation: none;
+    }
 }
 

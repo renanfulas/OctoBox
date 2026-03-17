@@ -63,6 +63,7 @@ PONTOS CRITICOS:
 
 .student-scene .metric-note {
     display: -webkit-box;
+    line-clamp: 2;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
@@ -181,6 +182,7 @@ body[data-theme="dark"] .student-focus-item {
 
 .priority-student-card .meta-text {
     display: -webkit-box;
+    line-clamp: 2;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
@@ -237,11 +239,63 @@ body[data-theme="dark"] .student-focus-item {
 }
 
 .student-data-panel {
-    overflow-x: auto;
+    overflow: hidden;
 }
 
-.student-data-panel table {
+.student-table-scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-gutter: stable both-edges;
+    -webkit-overflow-scrolling: touch;
+}
+
+.student-table-scroll table {
     min-width: 760px;
+}
+
+.student-hero.operation-hero {
+    gap: 18px;
+    min-height: 252px;
+    padding: clamp(18px, 1.8vw, 22px);
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .student-hero.operation-hero {
+    background: var(--surface);
+}
+
+.student-hero.operation-hero .operation-hero-main > div:first-child {
+    max-width: 560px;
+    gap: 8px;
+}
+
+.student-hero.operation-hero h2 {
+    max-width: 12ch;
+    font-size: clamp(2rem, 3.2vw, 2.8rem);
+    line-height: 0.96;
+}
+
+.student-hero.operation-hero .operation-hero-copy {
+    max-width: 40ch;
+}
+
+.student-hero.operation-hero .actions {
+    max-width: 560px;
+    gap: 8px;
+}
+
+.student-hero.operation-hero .actions .button {
+    min-height: 36px;
+    padding: 8px 13px;
+}
+
+.student-hero.operation-hero .operation-hero-panel {
+    padding: 14px 16px;
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .student-hero.operation-hero .operation-hero-panel {
+    background: var(--surface);
 }
 
 .student-data-panel .operation-card-head {
@@ -309,53 +363,16 @@ body[data-theme="dark"] .student-focus-item {
         flex-direction: column;
     }
 
-
-.student-hero.operation-hero {
-    gap: 18px;
-    min-height: 252px;
-    padding: clamp(18px, 1.8vw, 22px);
-    background: var(--surface);
-}
-
-    body[data-theme="dark"] .student-hero.operation-hero {
-        background: var(--surface);
-    }
-
-.student-hero.operation-hero .operation-hero-main > div:first-child {
-    max-width: 560px;
-    gap: 8px;
-}
-
-.student-hero.operation-hero h2 {
-    max-width: 12ch;
-    font-size: clamp(2rem, 3.2vw, 2.8rem);
-    line-height: 0.96;
-}
-
-.student-hero.operation-hero .operation-hero-copy {
-    max-width: 40ch;
-}
-
-.student-hero.operation-hero .actions {
-    max-width: 560px;
-    gap: 8px;
-}
-
-.student-hero.operation-hero .actions .button {
-    min-height: 36px;
-    padding: 8px 13px;
-}
-
-.student-hero.operation-hero .operation-hero-panel {
-    padding: 14px 16px;
-    background: var(--surface);
-}
-
-body[data-theme="dark"] .student-hero.operation-hero .operation-hero-panel {
-    background: var(--surface);
-}
     .student-data-panel th,
     .student-data-panel td {
         padding: 10px 8px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .student-row,
+    .priority-student-card,
+    .student-focus-item {
+        transition: none;
     }
 }

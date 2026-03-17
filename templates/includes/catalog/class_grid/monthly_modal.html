@@ -1,12 +1,12 @@
 <!--
 ARQUIVO: modal expandido do calendario mensal.
 -->
-<dialog class="class-monthly-modal" id="class-monthly-modal" data-panel="class-grid-monthly-modal">
+<dialog class="class-monthly-modal" id="class-monthly-modal" data-panel="class-grid-monthly-modal" aria-labelledby="class-monthly-modal-title">
     <div class="class-monthly-modal-panel" data-slot="class-grid-monthly-modal-panel">
         <div class="class-day-header class-monthly-modal-head">
             <div>
                 <p class="eyebrow">Calendario mensal expandido</p>
-                <h2 class="section-title-sm">{{ page.data.selected_month_label }}</h2>
+                <h2 class="section-title-sm" id="class-monthly-modal-title">{{ page.data.selected_month_label }}</h2>
                 <p class="class-day-summary">Visao completa do mes para enxergar distribuicao, dias vazios e picos de ocupacao sem compactacao excessiva.</p>
             </div>
             <div class="actions actions-tight" data-slot="class-grid-monthly-modal-actions">
