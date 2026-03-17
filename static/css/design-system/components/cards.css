@@ -25,7 +25,7 @@ POR QUE ELE EXISTE:
 
 .card:hover,
 .table-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(0);
     box-shadow: var(--shadow-lift);
     border-color: var(--line-strong);
 }
@@ -338,7 +338,7 @@ body[data-theme="dark"] .table-card::after {
 }
 
 .fdw-focus-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(0);
     box-shadow: var(--shadow-lift);
     border-color: var(--brand);
 }
@@ -462,7 +462,7 @@ body[data-theme="dark"] .fdw-focus-card.is-primary {
 
 .card:hover,
 .table-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(0);
 }
 
 .card:active,
@@ -475,3 +475,90 @@ body[data-theme="dark"] .fdw-focus-card.is-primary {
     border-color: var(--line-strong);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08), var(--shadow-soft);
 }
+
+/* --- Front Display Wall facade cards pass --- */
+.card,
+.table-card {
+    border-color: var(--fdw-line);
+    background: var(--fdw-panel);
+    box-shadow: var(--fdw-shadow);
+}
+
+.card::before,
+.table-card::before {
+    display: block;
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(196, 91, 45, 0.82), rgba(29, 78, 216, 0.74));
+    opacity: 0.74;
+}
+
+.card::after,
+.table-card::after {
+    display: block;
+    content: "";
+    position: absolute;
+    inset: auto -38px -46px auto;
+    width: 140px;
+    height: 140px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(29, 78, 216, 0.08), transparent 72%);
+    pointer-events: none;
+}
+
+.card:hover,
+.table-card:hover {
+    box-shadow: var(--fdw-shadow-lift);
+    border-color: var(--fdw-line-strong);
+}
+
+body[data-theme="dark"] .card,
+body[data-theme="dark"] .table-card {
+    background: var(--fdw-panel);
+    border-color: var(--fdw-line);
+    box-shadow: var(--fdw-shadow);
+}
+
+body[data-theme="dark"] .card::after,
+body[data-theme="dark"] .table-card::after {
+    background: radial-gradient(circle, rgba(45, 212, 191, 0.08), transparent 72%);
+}
+
+.card-title {
+    letter-spacing: -0.04em;
+}
+
+
+/* --- Front Display Wall artistic cards pass --- */
+.card::before,
+.table-card::before {
+    height: 2px;
+    background: linear-gradient(90deg, rgba(212, 102, 44, 0.4), rgba(37, 85, 220, 0.3));
+}
+
+.card::after,
+.table-card::after {
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle, rgba(37, 85, 220, 0.02), transparent 72%);
+}
+
+.card:hover,
+.table-card:hover {
+    transform: translateY(0);
+}
+
+.fdw-focus-card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 248, 252, 0.98));
+    border-color: rgba(72, 92, 124, 0.14);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.fdw-focus-card.is-primary {
+    background: linear-gradient(160deg, rgba(255, 248, 242, 0.99), rgba(244, 248, 255, 0.99));
+    border-color: rgba(212, 102, 44, 0.14);
+}
+

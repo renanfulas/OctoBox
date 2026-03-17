@@ -1,3 +1,4 @@
+{% load dashboard_filters %}
 <article class="card{% if compact %} metric-card-compact{% endif %} {{ card.card_class }}{% if card.status_hint %} status-{{ card.status_hint }}{% endif %}" data-panel="metric-card" data-slot="metric-card">
     <div class="card-body card-body-metric">
         <div class="card-value-stack">
@@ -24,7 +25,7 @@
             {% endif %}
         </div>
         <div class="card-content">
-            <p class="metric-note card-copy">{{ card.note }}</p>
+            <p class="metric-note card-copy">{{ card.note|smart_break }}</p>
         </div>
     </div>
     {% if not card.hide_footer %}

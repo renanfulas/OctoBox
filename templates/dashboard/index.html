@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 ARQUIVO: tela principal do dashboard.
 
 POR QUE ELE EXISTE:
@@ -14,6 +14,7 @@ PONTOS CRITICOS:
 - Se nomes de chaves do contexto mudarem, a tela quebra visualmente.
 -->
 {% extends "layouts/base.html" %}
+{% load dashboard_filters %}
 
 {% block content %}
 {% with page=dashboard_page %}
@@ -33,7 +34,7 @@ PONTOS CRITICOS:
                                     <strong class="dashboard-glance-value">{{ primary_card.value }}</strong>
                                     <span class="dashboard-glance-indicator {{ primary_card.indicator_class }}">{{ primary_card.indicator }}</span>
                                 </div>
-                                <p class="dashboard-glance-copy">{{ primary_card.copy }}</p>
+                                <p class="dashboard-glance-copy">{{ primary_card.copy|smart_break }}</p>
                             </a>
                         </section>
                         {% endwith %}
@@ -46,7 +47,7 @@ PONTOS CRITICOS:
                                     <strong class="dashboard-glance-value">{{ card.value }}</strong>
                                     <span class="dashboard-glance-indicator {{ card.indicator_class }}">{{ card.indicator }}</span>
                                 </div>
-                                <p class="dashboard-glance-copy">{{ card.copy }}</p>
+                                <p class="dashboard-glance-copy">{{ card.copy|smart_break }}</p>
                             </a>
                             {% endfor %}
                         </section>

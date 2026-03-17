@@ -1,4 +1,4 @@
-﻿"""
+"""
 ARQUIVO: testes do dashboard.
 
 POR QUE ELE EXISTE:
@@ -65,7 +65,7 @@ class DashboardViewTests(TestCase):
         response = self.client.get(reverse('dashboard'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Seu box em alta performance.')
+        self.assertContains(response, 'Bom te ver.')
         self.assertContains(response, 'Owner')
         self.assertContains(response, 'Leitura rapida')
         self.assertContains(response, 'class="dashboard-glance-strip dashboard-glance-strip--summary"', html=False)
@@ -75,9 +75,9 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, 'Urgencia')
         self.assertContains(response, 'Emergencia')
         self.assertContains(response, 'Risco')
-        self.assertContains(response, 'Sem pendencia financeira critica no recorte atual', html=False)
-        self.assertContains(response, 'Nenhuma pendencia emergente ligada a retencao ou experiencia aparece no recorte atual', html=False)
-        self.assertContains(response, 'Sem sinal forte de desorganizacao no recorte imediato', html=False)
+        self.assertContains(response, 'Caixa limpo.<br>Voce esta no controle', html=False)
+        self.assertContains(response, 'Tudo tranquilo na retencao.<br>A comunidade esta bem', html=False)
+        self.assertContains(response, 'Rotina limpa.<br>O box esta funcionando bem', html=False)
         self.assertContains(response, 'href="/financeiro/"', html=False)
         self.assertContains(response, 'href="/alunos/"', html=False)
         self.assertContains(response, 'href="#dashboard-sessions-board"', html=False)
@@ -95,7 +95,7 @@ class DashboardViewTests(TestCase):
         response = self.client.get(reverse('dashboard'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Chegada, agenda e caixa curto em um painel rapido, energico e imediatamente util para o balcao.')
+        self.assertContains(response, 'Estou aqui com voce. Vamos cuidar do balcao juntos.')
         self.assertContains(response, 'href="/alunos/novo/"', html=False)
         self.assertContains(response, '/operacao/recepcao/#reception-payment-board')
         self.assertContains(response, 'Abrir cobrancas do balcao')
@@ -165,7 +165,7 @@ class DashboardViewTests(TestCase):
         response = self.client.get(reverse('dashboard'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Nenhuma pendencia emergente ligada a retencao ou experiencia aparece no recorte atual', html=False)
+        self.assertContains(response, 'Tudo tranquilo na retencao.<br>A comunidade esta bem', html=False)
         self.assertContains(response, 'Entradas pendentes')
 
     def test_dashboard_priority_counts_only_actionable_financial_alerts(self):

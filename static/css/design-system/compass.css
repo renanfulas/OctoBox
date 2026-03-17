@@ -47,21 +47,22 @@ PONTOS CRITICOS:
 .compass-eyebrow-pill {
     display: inline-flex;
     align-items: center;
-    padding: 3px 9px;
+    padding: 5px 11px;
     border-radius: 999px;
     background: color-mix(in srgb, var(--brand) 10%, transparent);
     color: var(--brand);
-    font-size: 0.58rem;
+    font-size: 0.68rem;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    line-height: 1;
+    line-height: 1.1;
     white-space: nowrap;
     flex-shrink: 0;
 }
 
 .page-compass-title {
     margin: 0;
+    font-family: var(--font-body);
     font-size: clamp(0.92rem, 1.2vw, 1.1rem);
     font-weight: 700;
     line-height: 1.1;
@@ -256,3 +257,75 @@ body[data-theme="dark"] .pulse-next-action {
         transition: none;
     }
 }
+
+/* --- Front Display Wall facade compass pass --- */
+.page-compass {
+    min-height: 54px;
+    padding: 8px clamp(13px, 1.3vw, 18px);
+    border-radius: 18px;
+    border-color: rgba(80, 102, 128, 0.12);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.56)), var(--fdw-panel);
+    box-shadow: var(--fdw-shadow);
+    overflow: visible;
+}
+
+.page-compass::before {
+    content: "";
+    position: absolute;
+    inset: -1px auto -1px -1px;
+    width: 4px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--fdw-copper), var(--fdw-sky));
+}
+
+.compass-eyebrow-pill {
+    background: linear-gradient(135deg, rgba(196, 91, 45, 0.14), rgba(29, 78, 216, 0.12));
+    color: var(--ink-soft);
+    border: 1px solid rgba(80, 102, 128, 0.08);
+}
+
+.page-compass-title {
+    letter-spacing: -0.04em;
+}
+
+.pulse-chip {
+    min-height: 26px;
+    padding: 5px 11px;
+}
+
+.pulse-priority {
+    background: rgba(196, 91, 45, 0.1);
+    border-color: rgba(196, 91, 45, 0.18);
+}
+
+.pulse-pending {
+    background: rgba(29, 78, 216, 0.08);
+}
+
+.pulse-next-action {
+    background: rgba(15, 118, 110, 0.06);
+    border-color: rgba(15, 118, 110, 0.12);
+}
+
+body[data-theme="dark"] .page-compass {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)), var(--fdw-panel);
+    border-color: rgba(148, 163, 184, 0.12);
+}
+
+
+/* --- Front Display Wall artistic compass pass --- */
+.compass-eyebrow-pill {
+    background: linear-gradient(135deg, rgba(212, 102, 44, 0.04), rgba(37, 85, 220, 0.03));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+
+.page-compass-title {
+    letter-spacing: -0.05em;
+    font-size: clamp(0.98rem, 1.24vw, 1.16rem);
+}
+
+.pulse-chip {
+    min-height: 28px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+

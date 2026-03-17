@@ -97,3 +97,70 @@ PONTOS CRITICOS:
 .grid-span-12 {
     grid-column: 1 / -1;
 }
+
+/* --- Front Display Wall facade shell pass --- */
+.shell {
+    gap: 21px;
+    padding: 21px;
+}
+
+.content {
+    padding: 8px 12px 34px 0;
+}
+
+.content::before {
+    inset: 0;
+    border-radius: 32px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(255, 255, 255, 0.1)), var(--fdw-panel);
+    border: 1px solid rgba(255, 255, 255, 0.46);
+    box-shadow: var(--fdw-shadow);
+}
+
+.content::after {
+    content: "";
+    position: absolute;
+    inset: 18px 16px auto;
+    height: 64px;
+    border-radius: 28px;
+    background: linear-gradient(90deg, rgba(212, 102, 44, 0.02), transparent 30%, rgba(37, 85, 220, 0.02) 70%, transparent);
+    filter: blur(10px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.page-body {
+    gap: calc(var(--section-gap) + 4px);
+    padding: 8px 0 0;
+}
+
+body[data-theme="dark"] .content::before {
+    border-color: rgba(148, 163, 184, 0.14);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)), var(--fdw-panel);
+    box-shadow: var(--fdw-shadow);
+}
+
+body[data-theme="dark"] .content::after {
+    background: linear-gradient(90deg, rgba(212, 102, 44, 0.06), transparent 28%, rgba(37, 85, 220, 0.06) 70%, transparent);
+    opacity: 0.4;
+}
+
+@media (max-width: 960px) {
+    .shell {
+        gap: 13px;
+        padding: 13px;
+    }
+
+    .content {
+        padding: 0 4px 21px;
+    }
+
+    .content::before {
+        border-radius: 24px;
+    }
+
+    .content::after {
+        inset: 12px 10px auto;
+        height: 84px;
+        border-radius: 20px;
+    }
+}

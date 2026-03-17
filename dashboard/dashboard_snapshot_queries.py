@@ -1,4 +1,4 @@
-﻿"""
+"""
 ARQUIVO: queries do snapshot principal do dashboard.
 
 POR QUE ELE EXISTE:
@@ -80,13 +80,32 @@ def _build_dashboard_payment_alert_snapshot(*, overdue_payments_queryset):
 
 
 def _format_currency(value):
-    return f'R$ {value:.2f}'
+    from decimal import Decimal
+    normalized = (value if value else Decimal('0.00'))
+    if isinstance(normalized, (int, float)):
+        normalized = Decimal(str(normalized))
+    normalized = normalized.quantize(Decimal('0.01'))
+    integer_part, decimal_part = str(normalized).split('.')
+    if integer_part.startswith('-'):
+        sign = '-'
+        integer_part = integer_part[1:]
+    else:
+        sign = ''
+    formatted_integer = ''
+    for i, digit in enumerate(reversed(integer_part)):
+        if i > 0 and i % 3 == 0:
+            formatted_integer = '.' + formatted_integer
+        formatted_integer = digit + formatted_integer
+    return f'R$ {sign}{formatted_integer},{decimal_part}'
 
 
 def _build_delta_badge(current, previous, *, label, formatter=str, semantic='neutral'):
     diff = current - previous
     if diff == 0:
         return {'tone': 'neutral', 'value': 'Mesmo ritmo', 'label': label}
+
+    if previous == 0:
+        return {'tone': 'neutral', 'value': 'Primeira leitura', 'label': label}
 
     if diff > 0:
         symbol = '+'
@@ -113,63 +132,63 @@ def _build_dashboard_metric_cards(metrics, *, pending_intakes_count, today_sched
         {
             'card_class': 'dashboard-kpi-card kpi-amber is-stage',
             'eyebrow': 'Receita realizada',
-            'kicker': 'Resultado que entrou no caixa',
+            'kicker': 'O que realmente chegou',
             'display_value': _format_currency(metrics['monthly_revenue_paid']),
             'change': _build_delta_badge(metrics['monthly_revenue_paid'], metrics['monthly_revenue_paid_previous'], label='vs mes anterior', formatter=_format_currency, semantic='positive'),
-            'note': 'Dinheiro que realmente entrou. E a leitura principal para decidir onde apertar caixa, comercial e retencao.',
+            'note': 'Esse e o dinheiro real que entrou. Eu te mostro onde esta indo bem e onde precisa de atencao.',
             'hide_footer': True,
         },
         {
             'card_class': 'dashboard-kpi-card kpi-red is-panel',
             'eyebrow': 'Cobrancas em atraso',
-            'kicker': 'Receita que ja escapou da rotina',
+            'kicker': 'Precisa do seu olhar',
             'display_value': metrics['overdue_payments'],
             'change': _build_delta_badge(metrics['overdue_payments'], metrics['overdue_payments_previous_day'], label='desde ontem', semantic='negative'),
-            'note': 'Mostra o tamanho do vazamento direto de caixa que o dono precisa conter primeiro.',
+            'note': 'Cada cobranca aqui ainda tem chance. Vou te ajudar a priorizar quem abordar primeiro.',
             'hide_footer': True,
         },
         {
             'card_class': 'dashboard-kpi-card kpi-blue is-ribbon',
             'eyebrow': 'Entradas pendentes',
-            'kicker': 'Fila comercial que ainda pede dono',
+            'kicker': 'Esperando por voce',
             'display_value': pending_intakes_count,
             'signal': {
                 'tone': 'neutral' if pending_intakes_count else 'good',
                 'value': 'Responder hoje' if pending_intakes_count else 'Fila limpa',
                 'label': 'pipeline comercial',
             },
-            'note': 'Mostra o quanto ainda existe de oportunidade em aberto antes da conversa esfriar e virar perda invisivel.',
+            'note': 'Cada entrada aqui e alguem que esta esperando por voce. Vamos cuidar antes que esfrie.',
             'hide_footer': True,
         },
         {
             'card_class': 'dashboard-kpi-card kpi-slate is-ledger',
             'eyebrow': 'Aproveitamento da agenda hoje',
-            'kicker': 'Ocupacao real do dia',
+            'kicker': 'Pulso do dia',
             'display_value': _format_percent(today_schedule_occupancy_percent),
             'signal': {
                 'tone': occupancy_signal_tone,
                 'value': occupancy_signal_value,
                 'label': 'ocupacao media',
             },
-            'note': 'Ajuda a sentir se a agenda do dia esta enchendo bem ou se existem horas ociosas pedindo ajuste comercial ou operacional.',
+            'note': 'A agenda do dia esta aqui. Eu cuido da leitura pra voce tomar a melhor decisao.',
             'hide_footer': True,
         },
         {
             'card_class': 'dashboard-kpi-card kpi-green is-rail',
             'eyebrow': 'Presenca no mes',
-            'kicker': 'Treino que virou rotina',
+            'kicker': 'Compromisso que voltou',
             'display_value': metrics['attendance_this_month'],
             'change': _build_delta_badge(metrics['attendance_this_month'], metrics['attendance_previous_month'], label='vs mes anterior', semantic='positive'),
-            'note': 'Leitura de engajamento real da base. Sem presenca, a receita recorrente vira apenas cadastro otimista.',
+            'note': 'Cada presenca e uma pessoa que escolheu voltar. Voce esta construindo algo que importa.',
             'hide_footer': True,
         },
         {
-            'card_class': 'dashboard-kpi-card kpi-amber is-orbit',
+            'card_class': 'dashboard-kpi-card kpi-emerald is-orbit',
             'eyebrow': 'Comunidade ativa',
-            'kicker': 'Carteira que sustenta recorrencia',
+            'kicker': 'Sua comunidade viva',
             'display_value': metrics['active_students'],
             'signal': {'tone': 'good', 'value': 'Base viva', 'label': 'comunidade ativa'},
-            'note': 'Referencia do tamanho real da carteira que sustenta receita, agenda e previsibilidade do box.',
+            'note': 'Essa e a sua comunidade. Cada pessoa aqui confia no que voce esta construindo.',
             'hide_footer': True,
         },
     ]
@@ -201,9 +220,9 @@ def _build_dashboard_glance_summary(*, metrics, role_slug, upcoming_sessions, pa
             'value': count,
             'indicator': 'Caixa' if role_slug == ROLE_RECEPTION else 'Urgente',
             'copy': (
-                f'{count} cobranca(s) com espaco real para contato agora. Vale agir antes da agenda roubar energia.'
+                f'{count} cobranca(s) prontas pra contato. Eu separei pra voce. Comece por aqui e o dia flui melhor.'
                 if role_slug != ROLE_RECEPTION else
-                f'{count} cobranca(s) cabem na abordagem de balcao neste momento. Vale puxar antes da fila crescer.'
+                f'{count} cobranca(s) cabem agora no seu turno. Uma por uma, voce resolve. Estou aqui contigo.'
             ),
         }
 
@@ -212,9 +231,9 @@ def _build_dashboard_glance_summary(*, metrics, role_slug, upcoming_sessions, pa
         starts_at_label = timezone.localtime(primary_session['starts_at']).strftime('%H:%M')
         indicator = primary_session['status_label'] if primary_session['status_label'] == 'Em andamento' else primary_session['occupancy_label']
         copy = (
-            f"{primary_session['object'].title} esta rodando agora e pede olho em coach, recepcao e ritmo do turno."
+            f"{primary_session['object'].title} esta rodando agora. Eu cuido do painel, voce cuida do salao."
             if primary_session['status_label'] == 'Em andamento' else
-            f"{primary_session['object'].title} comeca as {starts_at_label} e ja define o pulso operacional do proximo bloco."
+            f"{primary_session['object'].title} comeca as {starts_at_label}. Preparei tudo pra voce so conferir."
         )
         return {
             'href': '#dashboard-sessions-board',
@@ -233,7 +252,7 @@ def _build_dashboard_glance_summary(*, metrics, role_slug, upcoming_sessions, pa
         'kicker': 'Base em foco',
         'value': metrics['active_students'],
         'indicator': 'Comunidade',
-        'copy': 'Sem urgencia financeira e sem aula no radar imediato. O melhor uso do turno e cuidar da base ativa.',
+        'copy': 'Sem urgencias agora. O melhor presente que voce pode dar pro box e cuidar de quem ja esta aqui.',
     }
 
 def build_dashboard_snapshot(*, today, month_start, role_slug=''):
