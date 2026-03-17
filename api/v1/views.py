@@ -15,8 +15,7 @@ PONTOS CRITICOS:
 """
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q, Value
-from django.db.models.functions import Concat
+from django.db.models import Q
 from django.http import JsonResponse
 from django.views import View
 

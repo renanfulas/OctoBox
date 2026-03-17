@@ -15,7 +15,7 @@ PONTOS CRITICOS:
 
 from django.db import transaction
 
-from communications.models import IntakeStatus, StudentIntake
+from communications.models import StudentIntake
 from students.application.commands import StudentIntakeSyncCommand
 from students.application.ports import StudentIntakeWorkflowPort
 from students.application.use_cases import execute_student_intake_sync_use_case

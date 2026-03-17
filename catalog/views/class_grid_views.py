@@ -11,7 +11,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import FormView
 
-from access.roles import ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
+from access.roles import ROLE_MANAGER, ROLE_OWNER
 from catalog.class_grid_queries import build_class_grid_snapshot
 from catalog.forms import ClassScheduleRecurringForm, ClassSessionQuickEditForm
 from catalog.presentation import build_class_grid_page

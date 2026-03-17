@@ -1,0 +1,36 @@
+[
+  {
+    "event": "response",
+    "url": "http://127.0.0.1:8000/login/",
+    "status": 200,
+    "text_snippet": "<!--\nARQUIVO: tela de login.\n\nPOR QUE ELE EXISTE:\n- É a porta de entrada visual do sistema.\n\nO QUE ESTE ARQUIVO FAZ:\n1. Renderiza o formulário de autenticação.\n2. Explica os papéis principais do sistema.\n3. Encaminha o usuário para a área protegida após login.\n\nPONTOS CRITICOS:\n- Alterações nos campos precisam respeitar o formulário padrão de autenticação do Django.\n-->\n<!DOCTYPE html>\n<html lang=\"pt-BR\">\n<head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <title>Entrar | OctoBox Control</title>\n    <style>\n        :root {\n            --bg: #0d151d;\n            --surface: rgba(255, 249, 241, 0.9);\n            --surface-dark: rgba(20, 32, 45, 0.82);\n            --ink: #1a222c;\n            --muted: #655f59;\n            --line: rgba(112, 96, 81, 0.18);\n            --brand: #b85c38;\n            --accent: #2f7a64;\n            --accent-2: #285c8e;\n            --danger: #bd3f2f;\n        }\n\n        * { box-sizing: border-box; }\n\n      "
+  },
+  {
+    "event": "response",
+    "url": "http://127.0.0.1:8000/login/",
+    "status": 302,
+    "text_snippet": ""
+  },
+  {
+    "event": "response",
+    "url": "http://127.0.0.1:8000/operacao/",
+    "status": 302,
+    "text_snippet": ""
+  },
+  {
+    "event": "console",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "location": {
+      "url": "http://127.0.0.1:8000/operacao/coach/",
+      "lineNumber": 0,
+      "columnNumber": 0
+    }
+  },
+  {
+    "event": "response",
+    "url": "http://127.0.0.1:8000/operacao/coach/",
+    "status": 403,
+    "text_snippet": "\n<!doctype html>\n<html lang=\"en\">\n<head>\n  <title>403 Forbidden</title>\n</head>\n<body>\n  <h1>403 Forbidden</h1><p></p>\n</body>\n</html>\n"
+  }
+]

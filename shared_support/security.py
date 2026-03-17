@@ -96,18 +96,10 @@ def _get_client_ip(request) -> str:
             candidate_ip = header_value.split(',')[0].strip()
             if _coerce_ip(candidate_ip) is not None:
                 SECURITY_LOGGER.debug('client_ip resolved from header %s -> %s', header_name, candidate_ip)
-                try:
-                    print(f"[SEC-DEBUG] client_ip resolved from header {header_name} -> {candidate_ip}")
-                except Exception:
-                    pass
                 return candidate_ip
 
     if _coerce_ip(remote_addr) is not None:
         SECURITY_LOGGER.debug('client_ip using REMOTE_ADDR -> %s', remote_addr)
-        try:
-            print(f"[SEC-DEBUG] client_ip using REMOTE_ADDR -> {remote_addr}")
-        except Exception:
-            pass
         return remote_addr
     return 'unknown'
 
@@ -183,10 +175,7 @@ class RequestSecurityMiddleware:
             window_seconds=rule.window_seconds,
         )
         SECURITY_LOGGER.debug('rate_limit check scope=%s token=%s allowed=%s', rule.scope, _get_actor_token(request), allowed)
-        try:
-            print(f"[SEC-DEBUG] rate_limit scope={rule.scope} token={_get_actor_token(request)} allowed={allowed} retry_after={retry_after} path={request.path} method={request.method}")
-        except Exception:
-            pass
+        # debug via logger only
         if allowed:
             return None
 

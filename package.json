@@ -1,0 +1,19 @@
+{
+  "name": "integrador-octobox-frontend-tools",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "format:js": "prettier --write \"static/js/**/*.js\"",
+    "lint:js": "eslint \"static/js/**/*.js\" --fix || true",
+    "format:css": "stylelint \"static/css/**/*.css\" --fix || true",
+    "lint:css": "stylelint \"static/css/**/*.css\"",
+    "format": "npm run format:js && npm run format:css",
+    "lint": "npm run lint:js && npm run lint:css"
+  },
+  "devDependencies": {
+    "prettier": "^2.8.8",
+    "eslint": "^8.48.0",
+    "stylelint": "^15.10.0",
+    "stylelint-config-standard": "^30.0.0"
+  }
+}

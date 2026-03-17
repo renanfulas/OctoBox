@@ -11,7 +11,3 @@ PONTOS CRITICOS:
 - Este arquivo nao deve voltar a concentrar ORM, auditoria ou transacao.
 """
 
-from catalog.services.membership_plan_workflows import (
-    run_membership_plan_create_workflow,
-    run_membership_plan_update_workflow,
-)

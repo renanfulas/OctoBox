@@ -43,9 +43,7 @@ from communications.infrastructure.django_clock import DjangoClockPort
 from communications.models import (
     MessageDirection,
     MessageKind,
-    StudentIntake,
     WhatsAppContact,
-    WhatsAppContactStatus,
     WhatsAppMessageLog,
 )
 from finance.models import Enrollment, Payment, PaymentStatus

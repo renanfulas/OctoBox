@@ -37,23 +37,23 @@ Casca autenticada principal:
 
 Comportamento universal do shell:
 
-1. [static/js/core/shell.js](static/js/core/shell.js)
-2. [static/js/core/search.js](static/js/core/search.js)
-3. [static/js/core/forms.js](static/js/core/forms.js)
+1. [../../static/js/core/shell.js](../../static/js/core/shell.js)
+2. [../../static/js/core/search.js](../../static/js/core/search.js)
+3. [../../static/js/core/forms.js](../../static/js/core/forms.js)
 
 CSS estrutural do shell:
 
-1. [static/css/design-system/tokens.css](static/css/design-system/tokens.css)
-2. [static/css/design-system/shell.css](static/css/design-system/shell.css)
-3. [static/css/design-system/sidebar.css](static/css/design-system/sidebar.css)
-4. [static/css/design-system/topbar.css](static/css/design-system/topbar.css)
-5. [static/css/design-system/compass.css](static/css/design-system/compass.css)
-6. [static/css/design-system/spacing.css](static/css/design-system/spacing.css)
-7. [static/css/design-system/responsiveness.css](static/css/design-system/responsiveness.css)
+1. [../../static/css/design-system/tokens.css](../../static/css/design-system/tokens.css)
+2. [../../static/css/design-system/shell.css](../../static/css/design-system/shell.css)
+3. [../../static/css/design-system/sidebar.css](../../static/css/design-system/sidebar.css)
+4. [../../static/css/design-system/topbar.css](../../static/css/design-system/topbar.css)
+5. [../../static/css/design-system/compass.css](../../static/css/design-system/compass.css)
+6. [../../static/css/design-system/spacing.css](../../static/css/design-system/spacing.css)
+7. [../../static/css/design-system/responsiveness.css](../../static/css/design-system/responsiveness.css)
 
 Contrato rapido do design system:
 
-1. [docs/reference/design-system-contract.md](docs/reference/design-system-contract.md)
+1. [design-system-contract.md](design-system-contract.md)
 
 ## Contrato de tela
 
@@ -66,16 +66,16 @@ Heuristica curta do contrato semantico enxuto:
 
 Helper generico do page payload:
 
-1. [shared_support/page_payloads.py](shared_support/page_payloads.py)
+1. [../../shared_support/page_payloads.py](../../shared_support/page_payloads.py)
 
 Bridge do catalogo:
 
-1. [catalog/presentation/shared.py](catalog/presentation/shared.py)
+1. [../../catalog/presentation/shared.py](../../catalog/presentation/shared.py)
 
 Guia estrutural oficial:
 
-1. [docs/plans/front-end-restructuring-guide.md](docs/plans/front-end-restructuring-guide.md)
-2. [docs/reference/functional-circuits-matrix.md](docs/reference/functional-circuits-matrix.md)
+1. [../plans/front-end-restructuring-guide.md](../plans/front-end-restructuring-guide.md)
+2. [functional-circuits-matrix.md](functional-circuits-matrix.md)
 
 ## Paginas principais e ownership
 
@@ -102,15 +102,15 @@ Regra pratica:
 
 Matriz operacional desta regra:
 
-1. [docs/reference/functional-circuits-matrix.md](docs/reference/functional-circuits-matrix.md)
+1. [functional-circuits-matrix.md](functional-circuits-matrix.md)
 
 ## Comunicacao transversal
 
 No estado atual do OctoBox, a comunicacao entre funcionalidades e outras paginas passa principalmente por estes pontos:
 
-1. [shared_support/page_payloads.py](shared_support/page_payloads.py) para contexto, shell, behavior e assets da tela
-2. [access/context_processors.py](access/context_processors.py) para shell global, topbar, alertas e contexto da navegacao
-3. [access/shell_actions.py](access/shell_actions.py) para prioridade, pendente e proxima acao entre paginas
+1. [../../shared_support/page_payloads.py](../../shared_support/page_payloads.py) para contexto, shell, behavior e assets da tela
+2. [../../access/context_processors.py](../../access/context_processors.py) para shell global, topbar, alertas e contexto da navegacao
+3. [../../access/shell_actions.py](../../access/shell_actions.py) para prioridade, pendente e proxima acao entre paginas
 
 Regra de alteracao:
 
@@ -131,42 +131,42 @@ Antes de fechar uma alteracao funcional, revisar nesta ordem:
 
 Dashboard:
 
-1. template principal: [templates/dashboard/index.html](templates/dashboard/index.html)
-2. view e payload: [dashboard/dashboard_views.py](dashboard/dashboard_views.py)
-3. leitura base: [dashboard/dashboard_snapshot_queries.py](dashboard/dashboard_snapshot_queries.py)
-4. CSS: [static/css/design-system/dashboard.css](static/css/design-system/dashboard.css)
+1. template principal: [../../templates/dashboard/index.html](../../templates/dashboard/index.html)
+2. view e payload: [../../dashboard/dashboard_views.py](../../dashboard/dashboard_views.py)
+3. leitura base: [../../dashboard/dashboard_snapshot_queries.py](../../dashboard/dashboard_snapshot_queries.py)
+4. CSS: [../../static/css/design-system/dashboard.css](../../static/css/design-system/dashboard.css)
 
 Alunos:
 
-1. listagem principal: [templates/catalog/students.html](templates/catalog/students.html)
-2. ficha leve: [templates/catalog/student-form.html](templates/catalog/student-form.html)
-3. views: [catalog/views/student_views.py](catalog/views/student_views.py)
-4. presenters: [catalog/presentation/student_directory_page.py](catalog/presentation/student_directory_page.py) e [catalog/presentation/student_form_page.py](catalog/presentation/student_form_page.py)
-5. CSS: [static/css/catalog/students.css](static/css/catalog/students.css)
-6. JS da ficha: [static/js/pages/student-form.js](static/js/pages/student-form.js)
+1. listagem principal: [../../templates/catalog/students.html](../../templates/catalog/students.html)
+2. ficha leve: [../../templates/catalog/student-form.html](../../templates/catalog/student-form.html)
+3. views: [../../catalog/views/student_views.py](../../catalog/views/student_views.py)
+4. presenters: [../../catalog/presentation/student_directory_page.py](../../catalog/presentation/student_directory_page.py) e [../../catalog/presentation/student_form_page.py](../../catalog/presentation/student_form_page.py)
+5. CSS: [../../static/css/catalog/students.css](../../static/css/catalog/students.css)
+6. JS da ficha: [../../static/js/pages/student-form.js](../../static/js/pages/student-form.js)
 
 Financeiro:
 
-1. central financeira: [templates/catalog/finance.html](templates/catalog/finance.html)
-2. edicao de plano: [templates/catalog/finance-plan-form.html](templates/catalog/finance-plan-form.html)
-3. views: [catalog/views/finance_views.py](catalog/views/finance_views.py)
-4. presenter: [catalog/presentation/finance_center_page.py](catalog/presentation/finance_center_page.py)
-5. CSS: [static/css/catalog/finance.css](static/css/catalog/finance.css)
+1. central financeira: [../../templates/catalog/finance.html](../../templates/catalog/finance.html)
+2. edicao de plano: [../../templates/catalog/finance-plan-form.html](../../templates/catalog/finance-plan-form.html)
+3. views: [../../catalog/views/finance_views.py](../../catalog/views/finance_views.py)
+4. presenter: [../../catalog/presentation/finance_center_page.py](../../catalog/presentation/finance_center_page.py)
+5. CSS: [../../static/css/catalog/finance/](../../static/css/catalog/finance/)
 
 Grade de aulas:
 
-1. template principal: [templates/catalog/class-grid.html](templates/catalog/class-grid.html)
-2. view: [catalog/views/class_grid_views.py](catalog/views/class_grid_views.py)
-3. presenter: [catalog/presentation/class_grid_page.py](catalog/presentation/class_grid_page.py)
-4. CSS: [static/css/catalog/class-grid.css](static/css/catalog/class-grid.css)
-5. JS: [static/js/pages/class-grid.js](static/js/pages/class-grid.js)
+1. template principal: [../../templates/catalog/class-grid.html](../../templates/catalog/class-grid.html)
+2. view: [../../catalog/views/class_grid_views.py](../../catalog/views/class_grid_views.py)
+3. presenter: [../../catalog/presentation/class_grid_page.py](../../catalog/presentation/class_grid_page.py)
+4. CSS: [../../static/css/catalog/class-grid.css](../../static/css/catalog/class-grid.css)
+5. JS: [../../static/js/pages/class-grid.js](../../static/js/pages/class-grid.js)
 
 Operacao por papel:
 
-1. views: [operations/workspace_views.py](operations/workspace_views.py)
-2. payload: [operations/presentation.py](operations/presentation.py)
-3. templates: [templates/operations](templates/operations)
-4. CSS base visual: [static/css/design-system/operations.css](static/css/design-system/operations.css)
+1. views: [../../operations/workspace_views.py](../../operations/workspace_views.py)
+2. payload: [../../operations/presentation.py](../../operations/presentation.py)
+3. templates: [../../templates/operations](../../templates/operations)
+4. CSS base visual: [../../static/css/design-system/operations.css](../../static/css/design-system/operations.css)
 
 ## Convencao de hooks estruturais
 

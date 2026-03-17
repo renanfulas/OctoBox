@@ -198,6 +198,24 @@ body[data-shell-scope="dashboard"] .content {
     min-width: 0;
 }
 
+/* small arrows for metric delta */
+.card-signal .signal-arrow {
+    display: inline-block;
+    width: 1em;
+    margin-right: 0.35rem;
+    font-size: 0.85em;
+    line-height: 1;
+    vertical-align: text-bottom;
+}
+.card-signal .signal-arrow.is-good { color: #16a34a; }
+.card-signal .signal-arrow.is-bad { color: #dc2626; }
+
+/* Colored numeric value for KPIs: green, red, and small-change orange */
+.dashboard-metrics-cluster .dashboard-kpi-card .metric-number { color: inherit; font-weight: 700; }
+.dashboard-metrics-cluster .dashboard-kpi-card .metric-number.is-good { color: #16a34a; }
+.dashboard-metrics-cluster .dashboard-kpi-card .metric-number.is-bad { color: #dc2626; }
+.dashboard-metrics-cluster .dashboard-kpi-card .metric-number.is-warning { color: #f97316; }
+
 .dashboard-summary-topline .dashboard-glance-strip,
 .dashboard-summary-topline .dashboard-glance-card {
     height: 100%;
@@ -286,15 +304,15 @@ body[data-shell-scope="dashboard"] .content {
 }
 
 .dashboard-glance-card.is-finance::before {
-    background: linear-gradient(90deg, rgba(249, 115, 22, 0.98), rgba(239, 68, 68, 0.9));
+    background: linear-gradient(90deg, rgba(220, 38, 38, 0.98), rgba(185, 28, 28, 0.9));
 }
 
 .dashboard-glance-card.is-base::before {
-    background: linear-gradient(90deg, rgba(16, 185, 129, 0.96), rgba(45, 212, 191, 0.84));
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.98), rgba(234, 88, 12, 0.9));
 }
 
 .dashboard-glance-card.is-risk::before {
-    background: linear-gradient(90deg, rgba(245, 158, 11, 0.98), rgba(234, 88, 12, 0.9));
+    background: linear-gradient(90deg, rgba(6, 78, 59, 0.98), rgba(4, 62, 48, 0.9));
 }
 
 .dashboard-glance-card::before {
@@ -355,18 +373,18 @@ body[data-shell-scope="dashboard"] .content {
 }
 
 .dashboard-glance-indicator.is-finance {
-    color: rgb(194, 65, 12);
-    background: rgba(249, 115, 22, 0.12);
+    color: rgb(185, 28, 28);
+    background: rgba(220, 38, 38, 0.12);
 }
 
 .dashboard-glance-indicator.is-base {
-    color: rgb(4, 120, 87);
-    background: rgba(16, 185, 129, 0.12);
+    color: rgb(180, 83, 9);
+    background: rgba(245, 158, 11, 0.12);
 }
 
 .dashboard-glance-indicator.is-risk {
-    color: rgb(180, 83, 9);
-    background: rgba(245, 158, 11, 0.14);
+    color: rgb(6, 78, 59);
+    background: rgba(6, 78, 59, 0.12);
 }
 
 .dashboard-glance-copy {
@@ -515,6 +533,28 @@ body[data-shell-scope="dashboard"] .content {
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber::before {
     background: linear-gradient(90deg, rgba(249, 115, 22, 1), rgba(251, 146, 60, 0.88));
+}
+
+/* Ajuste: 'Receita realizada' (kpi-amber.is-stage) -> antes vermelho; fundo e fonte iguais a outros cards */
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage::before{
+    background: linear-gradient(90deg, rgba(239,68,68,1), rgba(220,38,38,0.9));
+}
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage{
+    /* Quase idêntico aos outros cards, com um leve brilho/gradiente sutil. */
+    background:
+        linear-gradient(160deg, rgba(247, 250, 255, 0.96), rgba(240, 246, 252, 0.98)),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0)),
+        var(--surface);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    color: inherit;
+}
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage .card-kicker{
+    background: rgba(255, 255, 255, 0.46);
+    color: var(--muted-strong);
+}
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage .card-copy,
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage .card-value{
+    color: inherit;
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-blue::before {
@@ -1484,136 +1524,6 @@ body[data-theme="dark"][data-shell-scope="dashboard"] .topbar {
         opacity: 1;
         transform: translate3d(0, 0, 0);
     }
-}
-
-
-/* ============================================================
-   COLOR MAP: Linguagem cromatica integrada do dashboard
-   -------------------------------------------------------
-   Principio: cada familia de cor tem UM significado semantico.
-   Nenhuma cor aparece "por acaso" — ela sempre comunica algo.
-
-   Copper  (#c2410c) -> Dinheiro: receita, caixa, fluxo financeiro
-   Ember   (#dc2626) -> Alerta financeiro: cobrancas, divida ativa
-   Sky     (#2563eb) -> Pipeline e fluxo: entradas, sessoes, agenda
-   Emerald (#059669) -> Comunidade e presenca: base viva, retencao
-   Amber   (#d97706) -> Atencao moderada: risco, ocorrencias
-   Aqua    (#0f766e) -> Pulso operacional: aproveitamento, ritmo
-   ============================================================ */
-
-/* --- Glance cards: a superficie sussurra o dominio --- */
-.dashboard-glance-card.is-finance {
-    background: linear-gradient(160deg, rgba(255, 247, 240, 0.98), rgba(254, 243, 235, 0.97));
-}
-
-.dashboard-glance-card.is-base {
-    background: linear-gradient(160deg, rgba(236, 253, 245, 0.98), rgba(240, 253, 250, 0.97));
-}
-
-.dashboard-glance-card.is-risk {
-    background: linear-gradient(160deg, rgba(255, 251, 235, 0.98), rgba(254, 249, 230, 0.97));
-}
-
-.dashboard-glance-card.is-sessions {
-    background: linear-gradient(160deg, rgba(239, 246, 255, 0.98), rgba(235, 244, 254, 0.97));
-}
-
-/* --- Glance ::before: copper vs amber claramente diferenciados --- */
-.dashboard-glance-card.is-finance::before {
-    background: linear-gradient(90deg, rgba(194, 65, 12, 0.94), rgba(234, 88, 12, 0.84));
-}
-
-.dashboard-glance-card.is-risk::before {
-    background: linear-gradient(90deg, rgba(217, 119, 6, 0.94), rgba(245, 158, 11, 0.84));
-}
-
-.dashboard-glance-card.is-sessions::before {
-    background: linear-gradient(90deg, rgba(37, 99, 235, 0.92), rgba(14, 165, 233, 0.82));
-}
-
-/* --- Indicator pills: amber dourado separado do copper --- */
-.dashboard-glance-indicator.is-finance {
-    color: rgb(180, 52, 8);
-    background: rgba(194, 65, 12, 0.1);
-}
-
-.dashboard-glance-indicator.is-risk {
-    color: rgb(161, 98, 7);
-    background: rgba(217, 119, 6, 0.1);
-}
-
-/* --- KPI lead primary: refinado para copper (dinheiro) --- */
-.dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card {
-    background:
-        radial-gradient(circle at top right, rgba(212, 102, 44, 0.07), transparent 24%),
-        radial-gradient(circle at left bottom, rgba(194, 65, 12, 0.04), transparent 26%),
-        linear-gradient(160deg, rgba(255, 252, 248, 0.98), rgba(255, 255, 255, 0.98));
-    border-color: rgba(194, 65, 12, 0.14);
-}
-
-.dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card .card-value {
-    color: rgb(194, 65, 12);
-}
-
-.dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card .card-kicker {
-    background: rgba(212, 102, 44, 0.1);
-    color: rgb(154, 52, 18);
-}
-
-.dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card .card-copy {
-    color: rgb(124, 45, 18);
-}
-
-/* --- KPI card: kpi-emerald (comunidade — pessoas, nao dinheiro) --- */
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-emerald {
-    --kpi-good-surface: linear-gradient(135deg, rgba(5, 150, 105, 0.14), rgba(52, 211, 153, 0.09));
-    --kpi-good-border: rgba(4, 120, 87, 0.24);
-    --kpi-bad-surface: linear-gradient(135deg, rgba(5, 150, 105, 0.1), rgba(249, 115, 22, 0.08));
-    --kpi-bad-border: rgba(4, 120, 87, 0.22);
-    --kpi-neutral-surface: linear-gradient(135deg, rgba(5, 150, 105, 0.1), rgba(56, 189, 248, 0.06));
-    --kpi-neutral-border: rgba(4, 120, 87, 0.18);
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-emerald::before {
-    background: linear-gradient(90deg, rgba(5, 150, 105, 0.96), rgba(52, 211, 153, 0.84));
-}
-
-/* --- Dark mode: superficies adaptadas por dominio --- */
-body[data-theme="dark"] .dashboard-glance-card.is-finance {
-    background: linear-gradient(160deg, rgba(30, 20, 14, 0.98), rgba(24, 16, 10, 0.97));
-}
-
-body[data-theme="dark"] .dashboard-glance-card.is-base {
-    background: linear-gradient(160deg, rgba(12, 28, 22, 0.98), rgba(10, 24, 18, 0.97));
-}
-
-body[data-theme="dark"] .dashboard-glance-card.is-risk {
-    background: linear-gradient(160deg, rgba(28, 22, 10, 0.98), rgba(24, 18, 8, 0.97));
-}
-
-body[data-theme="dark"] .dashboard-glance-card.is-sessions {
-    background: linear-gradient(160deg, rgba(12, 18, 30, 0.98), rgba(10, 16, 28, 0.97));
-}
-
-body[data-theme="dark"] .dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card {
-    background:
-        radial-gradient(circle at top right, rgba(212, 102, 44, 0.12), transparent 24%),
-        radial-gradient(circle at left bottom, rgba(194, 65, 12, 0.06), transparent 26%),
-        linear-gradient(160deg, rgba(18, 14, 10, 0.98), rgba(12, 10, 8, 0.98));
-    border-color: rgba(212, 102, 44, 0.18);
-}
-
-body[data-theme="dark"] .dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card .card-value {
-    color: rgb(251, 146, 60);
-}
-
-body[data-theme="dark"] .dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card .card-kicker {
-    background: rgba(212, 102, 44, 0.14);
-    color: rgba(251, 146, 60, 0.88);
-}
-
-body[data-theme="dark"] .dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card .card-copy {
-    color: rgba(251, 191, 146, 0.82);
 }
 
 /* ============================================================

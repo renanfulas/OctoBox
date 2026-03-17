@@ -11,9 +11,9 @@ PONTOS CRITICOS:
 - mudancas aqui devem permanecer apenas de compatibilidade.
 """
 
-from django.utils import timezone
 
 from catalog.class_grid_queries import build_class_grid_snapshot
+from django.utils import timezone
 
 
-__all__ = ['build_class_grid_snapshot']
+__all__ = ['build_class_grid_snapshot', 'timezone']

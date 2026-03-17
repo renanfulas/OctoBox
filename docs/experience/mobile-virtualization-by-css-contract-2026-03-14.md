@@ -58,7 +58,7 @@ Evidencias estruturais:
 Watchpoints:
 
 1. tabelas que usam .operation-table-wrap ainda podem exigir scroll horizontal
-2. em [static/css/design-system/operations.css](static/css/design-system/operations.css), tabelas dentro desse wrap chegam a min-width de 560px abaixo de 720px
+2. em [../../static/css/design-system/operations.css](../../static/css/design-system/operations.css), tabelas dentro desse wrap chegam a min-width de 560px abaixo de 720px
 
 Conclusao curta:
 
@@ -95,7 +95,7 @@ Leitura virtual:
 
 Evidencias estruturais:
 
-1. em [static/css/catalog/finance.css](static/css/catalog/finance.css), abaixo de 960px os layouts principais caem para 1 coluna
+1. em [../../static/css/catalog/finance/](../../static/css/catalog/finance/), abaixo de 960px os layouts principais caem para 1 coluna
 2. abaixo de 960px clusters de fila, regua, summary e listas passam para 1 coluna
 3. abaixo de 720px metric strip e plan grid passam para 1 coluna
 4. acoes compactas passam a esticar e seus botoes vao para largura total

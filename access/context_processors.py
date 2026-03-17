@@ -21,7 +21,6 @@ import time
 from pathlib import Path
 
 from django.conf import settings
-from django.urls import reverse
 
 from access.admin import admin_changelist_url, admin_index_url, user_can_access_admin
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role

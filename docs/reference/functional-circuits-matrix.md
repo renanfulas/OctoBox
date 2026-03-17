@@ -135,7 +135,7 @@ Dono local:
 2. [catalog/presentation/finance_center_page.py](../../catalog/presentation/finance_center_page.py)
 3. [templates/catalog/finance.html](../../templates/catalog/finance.html)
 4. [templates/catalog/finance-plan-form.html](../../templates/catalog/finance-plan-form.html)
-5. [static/css/catalog/finance.css](../../static/css/catalog/finance.css)
+5. [../../static/css/catalog/finance/](../../static/css/catalog/finance/)
 
 Contratos compartilhados:
 

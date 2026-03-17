@@ -7,11 +7,32 @@
             <p class="card-kicker">{{ card.kicker }}</p>
             {% endif %}
             <div class="card-value-row">
-                <p class="metric card-value">{{ card.display_value }}</p>
+                <p class="metric card-value">
+                    {% if card.change %}
+                        {% if card.change.is_small %}
+                            <span class="metric-number is-warning">{{ card.display_value }}</span>
+                        {% elif card.change.tone == 'good' %}
+                            <span class="metric-number is-good">{{ card.display_value }}</span>
+                        {% elif card.change.tone == 'bad' %}
+                            <span class="metric-number is-bad">{{ card.display_value }}</span>
+                        {% else %}
+                            <span class="metric-number">{{ card.display_value }}</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="metric-number">{{ card.display_value }}</span>
+                    {% endif %}
+                </p>
                 {% if card.change %}
                 <div class="card-signal{% if card.change.tone %} is-{{ card.change.tone }}{% endif %}"{% if card.change.label %} title="{{ card.change.label }}"{% endif %}>
                     <span class="card-signal-dot" aria-hidden="true"></span>
-                    <span class="card-signal-value">{{ card.change.value }}</span>
+                    <span class="card-signal-value">
+                        {% if card.change.tone == 'good' %}
+                            <span class="signal-arrow is-good" aria-hidden="true">▲</span>
+                        {% elif card.change.tone == 'bad' %}
+                            <span class="signal-arrow is-bad" aria-hidden="true">▼</span>
+                        {% endif %}
+                        {{ card.change.value }}
+                    </span>
                 </div>
                 {% elif card.signal %}
                 <div class="card-signal{% if card.signal.tone %} is-{{ card.signal.tone }}{% endif %}"{% if card.signal.label %} title="{{ card.signal.label }}"{% endif %}>
