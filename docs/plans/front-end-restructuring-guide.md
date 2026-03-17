@@ -1475,9 +1475,9 @@ Objetivo:
 
 Entradas:
 
-1. extrair a edicao de plano de [catalog/views/finance_views.py](catalog/views/finance_views.py) para um presenter proprio
-2. extrair a montagem do dashboard de [dashboard/dashboard_views.py](dashboard/dashboard_views.py) para uma camada de presentation
-3. extrair a montagem do guia de [guide/views.py](guide/views.py) para uma camada de presentation ou builder estatico
+1. extrair a edicao de plano de [../../catalog/views/finance_views.py](../../catalog/views/finance_views.py) para um presenter proprio
+2. extrair a montagem do dashboard de [../../dashboard/dashboard_views.py](../../dashboard/dashboard_views.py) para uma camada de presentation
+3. extrair a montagem do guia de [../../guide/views.py](../../guide/views.py) para uma camada de presentation ou builder estatico
 4. deixar cada view restrita a request, autorizacao, chamada de snapshot ou query, attach do payload e resposta
 
 Criterio de pronto:

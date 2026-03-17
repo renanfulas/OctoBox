@@ -45,7 +45,7 @@ Hoje a base esta organizada em uma entrada global e complementos por pagina:
 
 1. [static/css/design-system.css](../../static/css/design-system.css) para o shell autenticado e o design system base
 2. [static/css/catalog/shared.css](../../static/css/catalog/shared.css) como base reutilizavel do catalogo
-3. [static/css/catalog/students.css](../../static/css/catalog/students.css), [static/css/catalog/finance.css](../../static/css/catalog/finance.css) e [static/css/catalog/class-grid.css](../../static/css/catalog/class-grid.css) carregados apenas nas telas que precisam deles
+3. [static/css/catalog/students.css](../../static/css/catalog/students.css), [static/css/catalog/finance/](../../static/css/catalog/finance/) e [static/css/catalog/class-grid.css](../../static/css/catalog/class-grid.css) carregados apenas nas telas que precisam deles
 
 Dentro disso, a divisao atual e:
 
@@ -88,7 +88,7 @@ define utilitarios, grids de formulario, blocos neutros, glass panels e bases co
 13. [static/css/catalog/students.css](../../static/css/catalog/students.css)
 define ajustes finais da area de alunos
 
-14. [static/css/catalog/finance.css](../../static/css/catalog/finance.css)
+14. [static/css/catalog/finance/](../../static/css/catalog/finance/)
 define layout, cards, rail, carteira, tendencia e comportamento responsivo do financeiro
 
 15. [static/css/catalog/class-grid.css](../../static/css/catalog/class-grid.css)
@@ -161,7 +161,7 @@ Exemplo do que e fragil:
 
 1. um card importante usar so `finance-support-card` sem classe propria da funcao dele
 2. um bloco de grid existir no template sem seletor local definindo sua coluna, largura ou papel
-3. um namespace `finance-*` aparecer no HTML sem seletor em [static/css/catalog/finance.css](../../static/css/catalog/finance.css) nem em [static/css/catalog/shared.css](../../static/css/catalog/shared.css)
+3. um namespace `finance-*` aparecer no HTML sem seletor em [static/css/catalog/finance/](../../static/css/catalog/finance/) nem em [static/css/catalog/shared.css](../../static/css/catalog/shared.css)
 
 Exemplo do que e robusto:
 

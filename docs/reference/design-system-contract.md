@@ -21,10 +21,10 @@ PONTOS CRITICOS:
 
 Quando uma mudanca for de front-end compartilhado, revise nesta ordem:
 
-1. [static/css/design-system/tokens.css](static/css/design-system/tokens.css)
-2. [static/css/design-system/spacing.css](static/css/design-system/spacing.css)
-3. [static/css/design-system/responsiveness.css](static/css/design-system/responsiveness.css)
-4. [static/css/design-system/components.css](static/css/design-system/components.css)
+1. [../../static/css/design-system/tokens.css](../../static/css/design-system/tokens.css)
+2. [../../static/css/design-system/spacing.css](../../static/css/design-system/spacing.css)
+3. [../../static/css/design-system/responsiveness.css](../../static/css/design-system/responsiveness.css)
+4. [../../static/css/design-system/components.css](../../static/css/design-system/components.css)
 5. CSS da tela local
 
 ## O que entra em cada camada

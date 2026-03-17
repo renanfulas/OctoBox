@@ -1,12 +1,12 @@
-"""
+﻿"""
 ARQUIVO: views do modulo de acesso.
 
 POR QUE ELE EXISTE:
-- Concentra as telas e redirecionamentos ligados ao login e aos papeis do sistema.
+- Concentra as telas e redirecionamentos ligados ao login e aos Papéis do sistema.
 
 O QUE ESTE ARQUIVO FAZ:
 1. Redireciona a raiz para login ou dashboard.
-2. Monta a tela de visao geral de papeis e capacidades.
+2. Monta a tela de visao geral de Papéis e capacidades.
 
 PONTOS CRITICOS:
 - Alteracoes erradas nos redirecionamentos mudam o fluxo inicial do sistema.
@@ -42,12 +42,12 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
         context['current_role'] = current_role
         context['role_capabilities'] = role_capabilities
         context['role_definitions'] = role_definitions
-        context['page_title'] = 'Papeis e acessos'
+        context['page_title'] = 'Papéis e acessos'
         context['page_subtitle'] = 'Quem decide o que e onde cada papel para.'
         context['hero_stats'] = [
             {'label': 'Papel atual', 'value': current_role.label},
             {'label': 'Capacidades do papel', 'value': len(role_capabilities)},
-            {'label': 'Papeis formais', 'value': len(role_definitions)},
+            {'label': 'Papéis formais', 'value': len(role_definitions)},
             {'label': 'Fronteira central', 'value': 'Governanca'},
         ]
         context['access_operational_focus'] = [
@@ -65,11 +65,11 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
                 'summary': f'{len(role_definitions)} papel(is) ja desenham quem decide crescimento, manutencao, administracao e rotina tecnica sem mistura indevida.',
                 'pill_class': 'info',
                 'href': '#access-role-map',
-                'href_label': 'Ver mapa de papeis',
+                'href_label': 'Ver mapa de Papéis',
             },
             {
                 'label': 'Feche com a governanca pratica',
-                'chip_label': 'Governança',
+                'chip_label': 'GovernanÃ§a',
                 'summary': 'Grupos e permissoes devem sustentar o desenho do produto, nunca obrigar a operacao a adivinhar limite por tentativa e erro.',
                 'pill_class': 'warning',
                 'href': '#access-governance-board',
@@ -78,11 +78,11 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
         ]
         context['access_hero'] = build_page_hero(
             eyebrow='Fronteiras do sistema',
-            title='Quem age, quem não invade e onde cada papel começa.',
+            title='Quem age, quem nÃ£o invade e onde cada papel comeÃ§a.',
             copy='Autoridade, fronteira e papel sem ambiguidade.',
             actions=[
                 {'label': 'Ver meu escopo', 'href': '#access-current-role'},
-                {'label': 'Ver mapa de papeis', 'href': '#access-role-map', 'kind': 'secondary'},
+                {'label': 'Ver mapa de Papéis', 'href': '#access-role-map', 'kind': 'secondary'},
                 *([
                     {'label': 'Gerenciar grupos', 'href': admin_changelist_url('auth', 'group'), 'kind': 'secondary'},
                 ] if user_can_access_admin(self.request.user) else []),
@@ -93,8 +93,10 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
             'Manager nao vira coach por atalho.',
             'Coach nao carrega rotina financeira ou administrativa.',
             'DEV investiga e mantem sem virar operador do box.',
-            'Owner enxerga amplitude sem dissolver fronteiras entre papeis.',
+            'Owner enxerga amplitude sem dissolver fronteiras entre Papéis.',
         ]
         context['group_admin_url'] = admin_changelist_url('auth', 'group') if user_can_access_admin(self.request.user) else ''
         attach_shell_action_buttons(context, focus=context['access_operational_focus'], scope='access')
         return context
+
+

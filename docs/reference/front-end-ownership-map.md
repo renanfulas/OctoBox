@@ -33,7 +33,7 @@ Se a duvida for sobre estrutura, comece por esta ordem:
 
 Casca autenticada principal:
 
-1. [templates/layouts/base.html](templates/layouts/base.html)
+1. [../../templates/layouts/base.html](../../templates/layouts/base.html)
 
 Comportamento universal do shell:
 
