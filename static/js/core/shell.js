@@ -18,9 +18,27 @@ POR QUE ELE EXISTE:
   const sidebarBackdrop = document.querySelector('[data-ui="sidebar-backdrop"]') || document.getElementById('sidebar-backdrop');
   const financeAlert = document.querySelector('[data-ui="topbar-finance-alert"]');
   const intakeAlert = document.querySelector('[data-ui="topbar-intake-alert"]');
-  const savedTheme = localStorage.getItem('octobox-theme');
   const shellUserId = body.dataset.shellUserId || 'anonymous';
   const celebrationStorageKey = 'octobox-shell-counts:' + shellUserId;
+
+  function readStorage(storage, key) {
+    try {
+      return storage.getItem(key);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function writeStorage(storage, key, value) {
+    try {
+      storage.setItem(key, value);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  const savedTheme = readStorage(window.localStorage, 'octobox-theme');
 
   function parseCount(element) {
     if (!element) {
@@ -125,7 +143,7 @@ POR QUE ELE EXISTE:
     let previousCounts = null;
 
     try {
-      previousCounts = JSON.parse(sessionStorage.getItem(celebrationStorageKey) || 'null');
+      previousCounts = JSON.parse(readStorage(window.sessionStorage, celebrationStorageKey) || 'null');
     } catch (error) {
       previousCounts = null;
     }
@@ -135,7 +153,7 @@ POR QUE ELE EXISTE:
       celebrateCountDrop('pending-intakes', previousCounts.pendingIntakes || 0, currentCounts.pendingIntakes);
     }
 
-    sessionStorage.setItem(celebrationStorageKey, JSON.stringify(currentCounts));
+    writeStorage(window.sessionStorage, celebrationStorageKey, JSON.stringify(currentCounts));
   }
 
   function shouldIgnoreTopbarScrollClick(target) {
@@ -183,6 +201,20 @@ POR QUE ELE EXISTE:
     }
 
     sidebarToggle.setAttribute('aria-expanded', body.classList.contains('sidebar-open') ? 'true' : 'false');
+  }
+
+  function openSidebar() {
+    if (!body.classList.contains('sidebar-open')) {
+      body.classList.add('sidebar-open');
+    }
+    syncSidebarUi();
+  }
+
+  function closeSidebar() {
+    if (body.classList.contains('sidebar-open')) {
+      body.classList.remove('sidebar-open');
+    }
+    syncSidebarUi();
   }
 
   function revealHashTarget() {
@@ -237,22 +269,24 @@ POR QUE ELE EXISTE:
     themeToggle.addEventListener('click', function() {
       var nextTheme = body.dataset.theme === 'dark' ? 'light' : 'dark';
       body.dataset.theme = nextTheme;
-      localStorage.setItem('octobox-theme', nextTheme);
+      writeStorage(window.localStorage, 'octobox-theme', nextTheme);
       syncThemeUi();
     });
   }
 
   if (sidebarToggle) {
     sidebarToggle.addEventListener('click', function() {
-      body.classList.toggle('sidebar-open');
-      syncSidebarUi();
+      if (body.classList.contains('sidebar-open')) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
     });
   }
 
   if (sidebarBackdrop) {
     sidebarBackdrop.addEventListener('click', function() {
-      body.classList.remove('sidebar-open');
-      syncSidebarUi();
+      closeSidebar();
     });
   }
 
@@ -309,89 +343,45 @@ POR QUE ELE EXISTE:
       // Apply neon to the sessions board article itself (avoid wrapper)
       var applyTarget = btarget;
       // single-run blink animation on the board — do not add a persistent outline.
+      // Also add a short-lived "neon-quiet" class to suppress other transitions
+      // and animations on the board while the blink runs and slightly after it.
       var boardNeonDuration = 1000; // ms (matches CSS keyframes)
       applyTarget.classList.add('neon-blink');
+      // mark that *this* handler added the quiet suppression so we don't
+      // remove a pre-existing `neon-quiet` that belonged to another actor.
+      applyTarget.classList.add('neon-quiet');
+      try {
+        applyTarget.dataset.neonQuietOwner = 'shell';
+      } catch (e) {
+        // ignore if dataset isn't writable for some reason
+      }
+      // keep quiet only a short time after the visual blink to avoid residual effects
+      var quietExtra = 80; // ms (short buffer)
       window.setTimeout(function() {
         applyTarget.classList.remove('neon-blink');
-      }, boardNeonDuration + 120);
+      }, boardNeonDuration);
+      window.setTimeout(function() {
+        try {
+          if (applyTarget.dataset && applyTarget.dataset.neonQuietOwner === 'shell') {
+            applyTarget.classList.remove('neon-quiet');
+            delete applyTarget.dataset.neonQuietOwner;
+          }
+        } catch (e) {
+          applyTarget.classList.remove('neon-quiet');
+        }
+      }, boardNeonDuration + quietExtra);
       return;
     }
   });
 
-  // When clicking the 'Comunidade ativa' metric, apply a neon to the sidebar 'Grade de aulas' link
-  document.addEventListener('click', function(event) {
-    // Walk up from the click target to find any ancestor that either has the title
-    // or contains the textual label 'comunidade ativa' (case-insensitive). This
-    // makes the handler resilient to different markup shapes.
-    var node = event.target;
-    var communityTrigger = null;
-    while (node && node !== document) {
-      try {
-        var title = node.getAttribute && node.getAttribute('title');
-        var text = node.textContent && node.textContent.trim().toLowerCase();
-        if ((title && title.toLowerCase() === 'comunidade ativa') || (text && text.indexOf('comunidade ativa') !== -1)) {
-          communityTrigger = node;
-          break;
-        }
-      } catch (e) {
-        // ignore and continue walking up
-      }
-      node = node.parentElement;
-    }
+  // Sidebar neon behavior removed: no-op handler kept for compatibility
+  document.addEventListener('click', function() {
+    // Intentionally left blank: sidebar neon/blink handled elsewhere no longer.
+  });
 
-    if (!communityTrigger) {
-      return;
-    }
-
-    // prefer an enclosing dashboard card/article that may hold the ::before gradient
-    var parentCard = communityTrigger.closest('.dashboard-kpi-card') || communityTrigger.closest('article') || communityTrigger.closest('.card') || communityTrigger;
-    var navLink = document.querySelector('.nav-link[href="/grade-aulas/"]') || document.querySelector('a[href="/grade-aulas/"]');
-    if (!navLink) {
-      return;
-    }
-
-    // Remove existing neon-blink from other nav links
-    document.querySelectorAll('.nav-link.neon-blink').forEach(function(n) {
-      if (n !== navLink) {
-        n.classList.remove('neon-blink');
-        n.style.removeProperty('--neon-link-rgb');
-      }
-    });
-
-    // Try to extract an RGB from the card's ::before background-image (gradient)
-    var rgb = null;
-    try {
-      var pseudo = window.getComputedStyle(parentCard, '::before').getPropertyValue('background-image') || '';
-      var m = pseudo.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-      if (m) {
-        rgb = m[1] + ',' + m[2] + ',' + m[3];
-      }
-    } catch (e) {
-      rgb = null;
-    }
-
-    // Fallback: use the element color
-    if (!rgb) {
-      try {
-        var cs = window.getComputedStyle(communityTrigger).getPropertyValue('color') || '';
-        var mc = cs.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-        if (mc) {
-          rgb = mc[1] + ',' + mc[2] + ',' + mc[3];
-        }
-      } catch (e) {
-        rgb = null;
-      }
-    }
-
-    if (rgb) {
-      navLink.style.setProperty('--neon-link-rgb', rgb);
-    }
-
-    // Apply only the blink class (no persistent outline)
-    navLink.classList.add('neon-blink');
-    window.setTimeout(function() {
-      navLink.classList.remove('neon-blink');
-    }, 1000 + 120);
+  // Finance sidebar highlight removed: no-op for click events to avoid errors
+  document.addEventListener('click', function() {
+    // Intentionally left blank: finance sidebar neon removed.
   });
 
   revealHashTarget();
@@ -399,7 +389,7 @@ POR QUE ELE EXISTE:
 
   document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape' && body.classList.contains('sidebar-open')) {
-      body.classList.remove('sidebar-open');
+      closeSidebar();
       syncSidebarUi();
     }
   });

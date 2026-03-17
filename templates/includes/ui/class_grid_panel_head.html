@@ -23,7 +23,7 @@ POR QUE ELE EXISTE:
             <button class="{{ button_class|default:'button secondary' }}" type="button"{% if button_id %} id="{{ button_id }}"{% endif %} data-action="class-grid-panel-button">{{ button_label }}</button>
             {% endif %}
             {% if handle_aria %}
-            <span class="class-grid-grab-handle" data-drag-handle data-action="drag-class-grid-panel" role="button" tabindex="0" aria-label="{{ handle_aria }}">Mover painel</span>
+            <button class="class-grid-grab-handle" type="button" data-drag-handle data-action="drag-class-grid-panel" aria-label="{{ handle_aria }}">Mover painel</button>
             {% endif %}
         </div>
     </div>

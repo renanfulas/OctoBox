@@ -17,6 +17,7 @@ POR QUE ELE EXISTE:
   var debounceTimer = null;
   var activeIndex = -1;
   var lastRequestId = 0;
+  var activeRequestController = null;
   var autocompleteUrl = form.getAttribute('data-autocomplete-url') || '/api/v1/students/autocomplete/';
 
   function setStatus(message) {
@@ -42,6 +43,15 @@ POR QUE ELE EXISTE:
     list.hidden = true;
     form.setAttribute('aria-expanded', 'false');
     clearList();
+  }
+
+  function abortPendingRequest() {
+    if (!activeRequestController) {
+      return;
+    }
+
+    activeRequestController.abort();
+    activeRequestController = null;
   }
 
   function escapeHtml(text) {
@@ -104,6 +114,7 @@ POR QUE ELE EXISTE:
     var query = input.value.trim();
     clearTimeout(debounceTimer);
     if (query.length < 2) {
+      abortPendingRequest();
       setStatus(query.length ? 'Digite pelo menos 2 caracteres para abrir a busca global.' : '');
       hideList();
       return;
@@ -112,12 +123,15 @@ POR QUE ELE EXISTE:
     debounceTimer = setTimeout(function() {
       var requestId = lastRequestId + 1;
       lastRequestId = requestId;
+      abortPendingRequest();
+      activeRequestController = typeof AbortController === 'function' ? new AbortController() : null;
       setStatus('Buscando alunos e contatos relacionados.');
       fetch(autocompleteUrl + '?q=' + encodeURIComponent(query), {
           credentials: 'same-origin',
           headers: {
             'X-Requested-With': 'XMLHttpRequest'
-          }
+          },
+          signal: activeRequestController ? activeRequestController.signal : undefined
         })
         .then(function(response) {
           if (!response.ok) {
@@ -131,9 +145,16 @@ POR QUE ELE EXISTE:
             return;
           }
 
+          activeRequestController = null;
+
           renderResults(data.results || []);
         })
-        .catch(function() {
+        .catch(function(error) {
+          if (error && error.name === 'AbortError') {
+            return;
+          }
+
+          activeRequestController = null;
           setStatus('A busca global nao respondeu agora. Use Enter para abrir a lista completa.');
           hideList();
         });

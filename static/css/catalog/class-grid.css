@@ -570,6 +570,8 @@ PONTOS CRITICOS:
     .weekly-calendar-section {
         overflow-x: auto;
         padding-bottom: 6px;
+        scrollbar-gutter: stable both-edges;
+        -webkit-overflow-scrolling: touch;
         scrollbar-width: thin;
     }
 
@@ -788,6 +790,20 @@ body[data-theme="dark"] .class-grid-hero.operation-hero .operation-hero-panel {
 
 .class-grid-hero.operation-hero .operation-mini-stat {
     padding: 8px 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .class-grid-workspace-panel,
+    .monthly-day-card,
+    .weekly-day-card,
+    .weekly-session-chip,
+    .class-grid-grab-handle {
+        transition: none;
+    }
+
+    .class-monthly-modal::backdrop {
+        backdrop-filter: none;
+    }
 }
 
 @media (max-width: 640px) {

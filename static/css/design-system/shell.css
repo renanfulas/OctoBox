@@ -123,7 +123,6 @@ PONTOS CRITICOS:
     height: 64px;
     border-radius: 28px;
     background: linear-gradient(90deg, rgba(212, 102, 44, 0.02), transparent 30%, rgba(37, 85, 220, 0.02) 70%, transparent);
-    filter: blur(10px);
     pointer-events: none;
     z-index: 0;
 }
