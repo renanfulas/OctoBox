@@ -26,20 +26,15 @@ REGRA VISUAL:
 }
 
 .operation-hero {
-    background:
-    radial-gradient(circle at top right, rgba(40, 92, 142, 0.14), transparent 32%),
-    radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.1), transparent 28%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(241, 247, 252, 0.96)),
-        var(--surface);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-soft);
 }
 
 body[data-theme="dark"] .operation-hero {
-    background:
-        radial-gradient(circle at top right, rgba(41, 103, 163, 0.2), transparent 30%),
-        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.12), transparent 24%),
-        linear-gradient(145deg, rgba(18, 28, 40, 0.96), rgba(11, 19, 29, 0.98)),
-        var(--surface);
-    border-color: rgba(163, 194, 224, 0.18);
+    background: var(--surface);
+    border-color: var(--line);
 }
 
 .operation-hero-main {
@@ -96,12 +91,9 @@ body[data-theme="dark"] .operation-hero {
 .operation-hero-panel {
     position: relative;
     padding: 14px 16px;
-    border-radius: 20px;
-    border: 1px solid rgba(112, 96, 81, 0.16);
-    background:
-        linear-gradient(160deg, rgba(255, 255, 255, 0.76), rgba(247, 241, 231, 0.92)),
-        rgba(255, 255, 255, 0.9);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 12px 24px rgba(85, 56, 35, 0.05);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--line);
+    background: var(--bg);
     overflow: hidden;
 }
 
@@ -133,9 +125,8 @@ body[data-theme="dark"] .operation-hero {
     content: "";
     position: absolute;
     inset: 0 auto 0 0;
-    width: 4px;
-    background: linear-gradient(180deg, var(--brand), var(--accent-2), var(--accent));
-    opacity: 0.9;
+    width: 3px;
+    background: var(--brand);
 }
 
 .operation-mini-grid {
@@ -147,9 +138,9 @@ body[data-theme="dark"] .operation-hero {
 
 .operation-mini-stat {
     padding: 8px 9px;
-    border-radius: 12px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(248, 250, 252, 0.92);
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface);
 }
 
 .operation-mini-label {
@@ -181,7 +172,7 @@ body[data-theme="dark"] .operation-hero {
 .operation-hero .actions .button {
     min-height: 36px;
     padding: 8px 13px;
-    border-radius: 14px;
+    border-radius: 8px;
     font-size: 0.92rem;
 }
 
@@ -192,119 +183,112 @@ body[data-theme="dark"] .operation-hero {
 }
 
 .operation-kpi-card::after {
-    content: "";
-    position: absolute;
-    inset: auto -28px -36px auto;
-    width: 132px;
-    height: 132px;
-    border-radius: 999px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.42), transparent 68%);
-    pointer-events: none;
+    display: none;
 }
 
 .operation-kpi-card.owner-amber {
-    background: linear-gradient(145deg, rgba(248, 243, 238, 0.98), rgba(255, 255, 255, 0.98));
-    border-color: rgba(215, 157, 116, 0.2);
+    background: var(--surface);
+    border-color: rgba(234, 88, 12, 0.16);
 }
 
 .operation-kpi-card.owner-blue {
-    background: linear-gradient(145deg, rgba(241, 245, 252, 0.98), rgba(255, 255, 255, 0.98));
-    border-color: rgba(122, 153, 198, 0.2);
+    background: var(--surface);
+    border-color: rgba(37, 99, 235, 0.16);
 }
 
 .operation-kpi-card.owner-green {
-    background: linear-gradient(145deg, rgba(241, 247, 245, 0.98), rgba(255, 255, 255, 0.98));
-    border-color: rgba(113, 176, 161, 0.18);
+    background: var(--surface);
+    border-color: rgba(16, 185, 129, 0.16);
 }
 
 .operation-kpi-card.owner-slate {
-    background: linear-gradient(145deg, rgba(244, 246, 249, 0.98), rgba(255, 255, 255, 0.98));
-    border-color: rgba(145, 155, 172, 0.16);
+    background: var(--surface);
+    border-color: var(--line-strong);
 }
 
 .operation-kpi-card.manager-coral {
-    background: linear-gradient(145deg, rgba(248, 241, 242, 0.98), rgba(255, 255, 255, 0.98));
-    border-color: rgba(187, 122, 132, 0.18);
+    background: var(--surface);
+    border-color: rgba(239, 68, 68, 0.16);
 }
 
 .operation-kpi-card.manager-sky {
-    background: linear-gradient(145deg, rgba(241, 245, 252, 0.98), rgba(255, 255, 255, 0.98));
-    border-color: rgba(122, 153, 198, 0.2);
+    background: var(--surface);
+    border-color: rgba(37, 99, 235, 0.16);
 }
 
 .operation-kpi-card.manager-gold {
-    background: linear-gradient(145deg, rgba(248, 245, 239, 0.98), rgba(255, 255, 255, 0.98));
-    border-color: rgba(188, 164, 112, 0.18);
+    background: var(--surface);
+    border-color: rgba(234, 88, 12, 0.16);
 }
 
 .operation-kpi-card.manager-steel {
-    background: linear-gradient(145deg, rgba(244, 246, 249, 0.98), rgba(255, 255, 255, 0.98));
-    border-color: rgba(145, 155, 172, 0.16);
+    background: var(--surface);
+    border-color: var(--line-strong);
 }
 
 .operation-kpi-card.coach-mint {
-    background: linear-gradient(145deg, rgba(241, 247, 245, 0.98), rgba(255, 255, 255, 0.98));
-    border-color: rgba(113, 176, 161, 0.18);
+    background: var(--surface);
+    border-color: rgba(16, 185, 129, 0.16);
 }
 
 .operation-kpi-card.coach-indigo {
-    background: linear-gradient(145deg, rgba(242, 242, 250, 0.98), rgba(255, 255, 255, 0.98));
-    border-color: rgba(131, 137, 191, 0.18);
+    background: var(--surface);
+    border-color: rgba(37, 99, 235, 0.16);
 }
 
 .operation-kpi-card.coach-orange {
-    background: linear-gradient(145deg, rgba(248, 243, 238, 0.98), rgba(255, 255, 255, 0.98));
-    border-color: rgba(215, 157, 116, 0.2);
+    background: var(--surface);
+    border-color: rgba(234, 88, 12, 0.16);
 }
 
 .operation-kpi-card.dev-steel {
-    background: linear-gradient(145deg, rgba(244, 246, 249, 0.98), rgba(255, 255, 255, 0.98));
-    border-color: rgba(145, 155, 172, 0.16);
+    background: var(--surface);
+    border-color: var(--line-strong);
 }
 
 .operation-kpi-card.dev-cyan {
-    background: linear-gradient(145deg, rgba(241, 245, 252, 0.98), rgba(255, 255, 255, 0.98));
-    border-color: rgba(122, 153, 198, 0.2);
+    background: var(--surface);
+    border-color: rgba(37, 99, 235, 0.16);
 }
 
 .operation-kpi-card.dev-emerald {
-    background: linear-gradient(145deg, rgba(241, 247, 245, 0.98), rgba(255, 255, 255, 0.98));
-    border-color: rgba(113, 176, 161, 0.18);
+    background: var(--surface);
+    border-color: rgba(16, 185, 129, 0.16);
 }
 
 body[data-theme="dark"] .operation-kpi-card.owner-amber,
 body[data-theme="dark"] .operation-kpi-card.coach-orange {
-    background: linear-gradient(145deg, rgba(71, 54, 42, 0.76), rgba(18, 28, 40, 0.98));
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .operation-kpi-card.owner-blue,
 body[data-theme="dark"] .operation-kpi-card.manager-sky,
 body[data-theme="dark"] .operation-kpi-card.dev-cyan {
-    background: linear-gradient(145deg, rgba(42, 55, 76, 0.8), rgba(18, 28, 40, 0.98));
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .operation-kpi-card.owner-green,
 body[data-theme="dark"] .operation-kpi-card.coach-mint,
 body[data-theme="dark"] .operation-kpi-card.dev-emerald {
-    background: linear-gradient(145deg, rgba(38, 63, 58, 0.76), rgba(18, 28, 40, 0.98));
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .operation-kpi-card.owner-slate,
 body[data-theme="dark"] .operation-kpi-card.manager-steel,
 body[data-theme="dark"] .operation-kpi-card.dev-steel {
-    background: linear-gradient(145deg, rgba(53, 60, 72, 0.78), rgba(18, 28, 40, 0.98));
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .operation-kpi-card.manager-coral {
-    background: linear-gradient(145deg, rgba(73, 49, 55, 0.8), rgba(18, 28, 40, 0.98));
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .operation-kpi-card.manager-gold {
-    background: linear-gradient(145deg, rgba(72, 64, 47, 0.8), rgba(18, 28, 40, 0.98));
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .operation-kpi-card.coach-indigo {
-    background: linear-gradient(145deg, rgba(55, 57, 84, 0.8), rgba(18, 28, 40, 0.98));
+    background: var(--surface);
 }
 
 .operation-card-head,
@@ -422,23 +406,15 @@ body[data-theme="dark"] .operation-kpi-card.coach-indigo {
 }
 
 .operation-empty-card {
-    background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.82), transparent 24%),
-        linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(243, 248, 255, 0.98));
+    background: var(--surface);
 }
 
 .operation-focus-card {
-    background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.84), transparent 24%),
-    radial-gradient(circle at top right, rgba(141, 156, 180, 0.08), transparent 26%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(246, 248, 251, 0.98));
+    background: var(--surface);
 }
 
 .operation-execution-card {
-    background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.82), transparent 24%),
-    radial-gradient(circle at top right, rgba(141, 156, 180, 0.08), transparent 26%),
-    linear-gradient(145deg, rgba(246, 248, 251, 0.98), rgba(238, 242, 247, 0.96));
+    background: var(--bg);
 }
 
 .operation-focus-list {
@@ -476,10 +452,7 @@ body[data-theme="dark"] .operation-kpi-card.coach-indigo {
 body[data-theme="dark"] .operation-empty-card,
 body[data-theme="dark"] .operation-focus-card,
 body[data-theme="dark"] .operation-execution-card {
-    background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 22%),
-    radial-gradient(circle at top right, rgba(141, 156, 180, 0.08), transparent 24%),
-        linear-gradient(145deg, rgba(24, 34, 47, 0.96), rgba(11, 19, 29, 0.98));
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .operation-focus-item {
@@ -495,7 +468,7 @@ body[data-theme="dark"] .operation-focus-item {
 .operation-table-guide-card {
     display: grid;
     gap: 14px;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(241, 245, 249, 0.96));
+    background: var(--surface);
 }
 
 .operation-table-guide-head {
@@ -910,15 +883,12 @@ body[data-theme="dark"] .operation-focus-item {
 
 .reception-hero,
 .reception-preview-hero {
-    background:
-    radial-gradient(circle at top right, rgba(184, 92, 56, 0.22), transparent 30%),
-    radial-gradient(circle at bottom left, rgba(40, 92, 142, 0.14), transparent 28%),
-    linear-gradient(145deg, rgba(255, 248, 240, 0.94), rgba(239, 244, 250, 0.94));
+    background: var(--surface);
 }
 
 .reception-hero .operation-hero-panel,
 .reception-preview-hero .operation-hero-panel {
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.86), rgba(255, 247, 237, 0.98));
+    background: var(--bg);
 }
 
 .reception-sidecard,
@@ -930,7 +900,7 @@ body[data-theme="dark"] .operation-focus-item {
 
 .reception-command-card,
 .reception-preview-command-card {
-    background: linear-gradient(145deg, rgba(255, 248, 240, 0.92), rgba(240, 249, 255, 0.92));
+    background: var(--surface);
 }
 
 .reception-command-card .operation-card-head,
@@ -970,7 +940,7 @@ body[data-theme="dark"] .operation-focus-item {
 
 .reception-payment-board,
 .reception-preview-payment-board {
-    background: linear-gradient(145deg, rgba(255, 251, 235, 0.88), rgba(255, 255, 255, 0.96));
+    background: var(--surface);
 }
 
 .reception-payment-grid,
@@ -986,9 +956,9 @@ body[data-theme="dark"] .operation-focus-item {
     grid-template-rows: auto auto auto 1fr auto;
     gap: 10px;
     padding: 14px;
-    border-radius: 18px;
-    border: 1px solid rgba(249, 115, 22, 0.14);
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.78), rgba(255, 247, 237, 0.96));
+    border-radius: var(--radius-card);
+    border: 1px solid rgba(234, 88, 12, 0.14);
+    background: var(--surface);
 }
 
 .reception-payment-card .finance-action-copy,
@@ -1142,13 +1112,13 @@ body[data-theme="dark"] .operation-focus-item {
 }
 
 .reception-preview-lock-note {
-    background: linear-gradient(145deg, rgba(241, 245, 249, 0.96), rgba(255, 255, 255, 0.96));
-    border: 1px dashed rgba(100, 116, 139, 0.28);
+    background: var(--bg);
+    border: 1px dashed var(--line-strong);
 }
 
 .reception-grid-board,
 .reception-preview-grid-board {
-    background: linear-gradient(145deg, rgba(239, 246, 255, 0.76), rgba(255, 255, 255, 0.96));
+    background: var(--surface);
 }
 
 .reception-grade-grid,
@@ -1163,9 +1133,9 @@ body[data-theme="dark"] .operation-focus-item {
     display: grid;
     gap: 12px;
     padding: 16px;
-    border-radius: 18px;
-    border: 1px solid rgba(56, 189, 248, 0.16);
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(239, 246, 255, 0.92));
+    border-radius: var(--radius-card);
+    border: 1px solid rgba(37, 99, 235, 0.14);
+    background: var(--surface);
 }
 
 .reception-grade-stats,
@@ -1313,7 +1283,7 @@ body[data-theme="dark"] .operation-focus-item {
 }
 
 .owner-summary-card {
-    border-radius: 24px;
+    border-radius: var(--radius-panel);
 }
 
 .owner-summary-card .operation-card-head,
@@ -1322,33 +1292,32 @@ body[data-theme="dark"] .operation-focus-item {
 }
 
 .owner-summary-card-structure {
-    background:
-        radial-gradient(circle at top right, rgba(41, 103, 163, 0.08), transparent 24%),
-        linear-gradient(155deg, rgba(255, 255, 255, 0.97), rgba(243, 247, 250, 0.98));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.9),
-        0 20px 38px rgba(19, 33, 50, 0.08);
-    border-color: rgba(122, 153, 198, 0.16);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+    border-color: rgba(37, 99, 235, 0.14);
 }
 
 .owner-summary-card-priority {
-    background:
-        radial-gradient(circle at top right, rgba(196, 103, 52, 0.08), transparent 24%),
-        linear-gradient(155deg, rgba(255, 255, 255, 0.97), rgba(246, 248, 250, 0.98));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.9),
-        0 20px 38px rgba(19, 33, 50, 0.08);
-    border-color: rgba(196, 103, 52, 0.16);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+    border-color: rgba(234, 88, 12, 0.14);
 }
 
 .owner-summary-card-structure::before,
 .owner-summary-card-priority::before {
     content: "";
     display: block;
-    height: 5px;
+    height: 3px;
     margin: -18px -18px 14px;
-    border-radius: 24px 24px 0 0;
-    background: linear-gradient(90deg, var(--brand), var(--accent), var(--accent-2));
+    border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+}
+
+.owner-summary-card-structure::before {
+    background: var(--brand);
+}
+
+.owner-summary-card-priority::before {
+    background: var(--danger);
 }
 
 .owner-summary-card .card-copy {
@@ -1364,28 +1333,17 @@ body[data-theme="dark"] .operation-focus-item {
 
 .owner-summary-card .capability-list li {
     padding: 13px 14px;
-    border-radius: 16px;
-    border: 1px solid rgba(136, 150, 176, 0.14);
-    background: rgba(255, 255, 255, 0.66);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--bg);
 }
 
 body[data-theme="dark"] .owner-summary-card-structure {
-    background:
-        radial-gradient(circle at top right, rgba(41, 103, 163, 0.14), transparent 26%),
-        linear-gradient(155deg, rgba(17, 27, 40, 0.98), rgba(11, 19, 29, 0.98));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        0 22px 40px rgba(0, 0, 0, 0.26);
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .owner-summary-card-priority {
-    background:
-        radial-gradient(circle at top right, rgba(196, 103, 52, 0.14), transparent 26%),
-        linear-gradient(155deg, rgba(17, 27, 40, 0.98), rgba(11, 19, 29, 0.98));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        0 22px 40px rgba(0, 0, 0, 0.26);
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .owner-summary-card .capability-list li {
@@ -1394,17 +1352,7 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
 }
 
 .owner-notion-shell {
-    --owner-notion-ink: #191919;
-    --owner-notion-muted: #5f5a54;
-    --owner-notion-line: rgba(55, 53, 47, 0.12);
-    --owner-notion-soft: rgba(247, 246, 243, 0.96);
-    --owner-notion-card: rgba(255, 255, 255, 0.98);
-    --owner-art-noir: #23252b;
-    --owner-art-champagne: rgba(215, 189, 136, 0.18);
-    --owner-art-indigo: rgba(99, 91, 255, 0.12);
-    --owner-art-cyan: rgba(14, 165, 233, 0.1);
-    --owner-art-mint: rgba(16, 185, 129, 0.08);
-    --owner-art-amber: rgba(245, 158, 11, 0.08);
+    /* tema legado neutralizado ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â usa tokens globais */
 }
 
 .owner-notion-shell {
@@ -1415,67 +1363,42 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
 
 .owner-notion-shell::before,
 .owner-notion-shell::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: -1;
+    display: none;
 }
 
 .owner-notion-shell::before {
-    background:
-        radial-gradient(circle at 14% 0%, var(--owner-art-indigo), transparent 22%),
-        radial-gradient(circle at 86% 12%, var(--owner-art-cyan), transparent 24%),
-        radial-gradient(circle at 42% 36%, var(--owner-art-mint), transparent 18%),
-    radial-gradient(circle at 64% 16%, var(--owner-art-amber), transparent 18%),
-    radial-gradient(circle at 58% 6%, var(--owner-art-champagne), transparent 16%);
+    background: transparent;
 }
 
 .owner-notion-shell::after {
     inset: 22px 0 auto;
     height: 500px;
     border-radius: 32px;
-    background:
-        repeating-linear-gradient(0deg, rgba(35, 37, 43, 0.025) 0 1px, transparent 1px 56px),
-        linear-gradient(180deg, rgba(246, 247, 251, 0.92), rgba(246, 247, 251, 0)),
-        linear-gradient(120deg, rgba(255, 255, 255, 0.38), transparent 60%);
+    background: transparent;
 }
 
 .owner-notion-shell .operation-hero {
     min-height: 0;
     padding: 28px 30px 24px;
-    border-radius: 30px;
-    border-color: var(--owner-notion-line);
-    background:
-        radial-gradient(circle at top right, rgba(99, 91, 255, 0.11), transparent 24%),
-        radial-gradient(circle at 80% 100%, rgba(215, 189, 136, 0.13), transparent 22%),
-        radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.07), transparent 22%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(250, 249, 247, 0.992));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.88),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.24),
-        0 30px 70px rgba(31, 41, 55, 0.08);
-    backdrop-filter: blur(10px);
+    border-radius: var(--radius-panel);
+    border-color: var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
 }
 
 .owner-notion-shell .operation-hero::before {
-    width: 4px;
-    background: linear-gradient(180deg, rgba(99, 91, 255, 0.42), rgba(14, 165, 233, 0.22), rgba(215, 189, 136, 0.22), rgba(55, 53, 47, 0.08));
+    width: 3px;
+    background: var(--brand);
 }
 
 .owner-notion-shell .operation-hero::after {
-    display: block;
-    inset: auto -3% -24% auto;
-    width: 320px;
-    height: 320px;
-    border-radius: 999px;
-    background: radial-gradient(circle, rgba(14, 165, 233, 0.1), rgba(215, 189, 136, 0.08) 28%, transparent 68%);
+    display: none;
 }
 
 .owner-notion-shell .operation-hero :is(h1, h2),
 .owner-notion-shell .owner-metric-grid .metric,
 .owner-notion-shell .owner-summary-card .operation-card-title {
-    color: var(--owner-notion-ink);
+    color: var(--ink);
 }
 
 .owner-notion-shell .operation-hero .eyebrow,
@@ -1484,7 +1407,7 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
 .owner-notion-shell .owner-metric-grid .meta-text-sm,
 .owner-notion-shell .owner-summary-card .operation-card-copy,
 .owner-notion-shell .owner-summary-card .capability-list {
-    color: var(--owner-notion-muted);
+    color: var(--ink-soft);
 }
 
 .owner-notion-shell .operation-hero h2 {
@@ -1513,19 +1436,15 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
 }
 
 .owner-notion-shell .operation-hero .actions .button:not(.secondary) {
-    border-color: rgba(55, 53, 47, 0.2);
-    background: linear-gradient(135deg, rgba(35, 37, 43, 1), rgba(58, 61, 74, 0.98) 54%, rgba(99, 91, 255, 0.84));
-    color: #f7f6f3;
-    box-shadow: 0 14px 28px rgba(35, 37, 43, 0.12), 0 8px 20px rgba(99, 91, 255, 0.12);
+    border-color: var(--brand);
+    background: var(--brand);
+    color: #fff;
 }
 
 .owner-notion-shell .operation-hero .actions .button.secondary {
-    border-color: var(--owner-notion-line);
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 248, 252, 0.96)),
-        rgba(255, 255, 255, 0.98);
-    color: var(--owner-notion-ink);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88);
+    border-color: var(--line-strong);
+    background: var(--surface);
+    color: var(--ink);
 }
 
 .owner-notion-shell .operation-hero-side {
@@ -1533,16 +1452,9 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
 }
 
 .owner-notion-shell .operation-hero-panel {
-    border-radius: 20px;
-    border: 1px solid var(--owner-notion-line);
-    background:
-        radial-gradient(circle at top right, rgba(99, 91, 255, 0.07), transparent 24%),
-        radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.06), transparent 22%),
-        radial-gradient(circle at 100% 100%, rgba(215, 189, 136, 0.12), transparent 26%),
-        linear-gradient(180deg, rgba(251, 250, 248, 0.995), rgba(246, 244, 240, 0.992));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.82),
-        0 18px 38px rgba(31, 41, 55, 0.06);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--line);
+    background: var(--bg);
 }
 
 .owner-notion-shell .operation-mini-grid {
@@ -1550,10 +1462,9 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
 }
 
 .owner-notion-shell .operation-mini-stat {
-    border: 1px solid var(--owner-notion-line);
-    border-radius: 16px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(247, 246, 243, 0.8));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
 }
 
 .owner-notion-shell .owner-instagram-layout {
@@ -1584,27 +1495,20 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
 
 .owner-notion-shell .owner-feed-card::before,
 .owner-notion-shell .owner-feed-card::after {
-    content: "";
-    position: absolute;
-    border-radius: 22px;
-    pointer-events: none;
-    z-index: -1;
+    display: none;
 }
 
 .owner-notion-shell .owner-feed-card::before {
     inset: -8px -6px auto;
     height: 108px;
-    background:
-        radial-gradient(circle at 14% 24%, rgba(99, 91, 255, 0.12), transparent 42%),
-        radial-gradient(circle at 84% 18%, rgba(14, 165, 233, 0.1), transparent 38%),
-        radial-gradient(circle at 52% 0%, rgba(215, 189, 136, 0.12), transparent 34%);
+    background: transparent;
     opacity: 0.9;
 }
 
 .owner-notion-shell .owner-feed-card::after {
     inset: auto 10% -12px;
     height: 56px;
-    background: radial-gradient(circle, rgba(15, 23, 42, 0.08), transparent 70%);
+    background: transparent;
     filter: blur(16px);
     opacity: 0.75;
 }
@@ -1617,33 +1521,23 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
 .owner-notion-shell .owner-focus-card {
     position: relative;
     overflow: hidden;
-    border-radius: 24px;
-    border: 1px solid var(--owner-notion-line);
-    background:
-        radial-gradient(circle at 100% 0%, rgba(99, 91, 255, 0.08), transparent 24%),
-        radial-gradient(circle at 0% 100%, rgba(215, 189, 136, 0.12), transparent 28%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(248, 246, 242, 0.99));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.82),
-        0 20px 42px rgba(31, 41, 55, 0.06);
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
 }
 
 .owner-notion-shell .owner-command-card,
 .owner-notion-shell .owner-proof-card {
     position: relative;
     overflow: hidden;
-    border-radius: 28px;
-    border: 1px solid var(--owner-notion-line);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.82),
-        0 24px 48px rgba(31, 41, 55, 0.06);
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-soft);
 }
 
 .owner-notion-shell .owner-command-card {
-    background:
-        radial-gradient(circle at 100% 0%, rgba(99, 91, 255, 0.12), transparent 26%),
-        radial-gradient(circle at 0% 100%, rgba(215, 189, 136, 0.18), transparent 34%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(247, 244, 239, 0.992));
+    background: var(--surface);
     padding-bottom: 14px;
 }
 
@@ -1656,21 +1550,20 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
 }
 
 .owner-notion-shell .owner-command-card::before {
-    background: linear-gradient(180deg, rgba(99, 91, 255, 0.42), rgba(14, 165, 233, 0.24), rgba(215, 189, 136, 0.28));
+    background: var(--brand);
 }
 
 .owner-notion-shell .owner-proof-card::before {
-    background: linear-gradient(180deg, rgba(14, 165, 233, 0.38), rgba(16, 185, 129, 0.26), rgba(215, 189, 136, 0.24));
+    background: var(--accent);
 }
 
 .owner-notion-shell .owner-command-intro {
     margin-bottom: 16px;
     padding: 22px 24px;
-    border-radius: 22px;
-    background:
-        linear-gradient(135deg, rgba(35, 37, 43, 0.98), rgba(61, 66, 86, 0.94) 58%, rgba(99, 91, 255, 0.76));
-    color: #f8f6f2;
-    box-shadow: 0 18px 34px rgba(35, 37, 43, 0.14);
+    border-radius: var(--radius-card);
+    background: var(--ink);
+    color: #f8f8f8;
+    box-shadow: var(--shadow-soft);
 }
 
 .owner-notion-shell .owner-command-manifesto {
@@ -1693,12 +1586,10 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
     gap: 16px;
     align-items: center;
     padding: 18px 18px 18px 16px;
-    border-radius: 22px;
-    border: 1px solid rgba(55, 53, 47, 0.08);
-    background:
-        radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.58), transparent 26%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 244, 240, 0.95));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 10px 22px rgba(31, 41, 55, 0.035);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
 }
 
 .owner-notion-shell .owner-command-item:nth-child(2) {
@@ -1716,12 +1607,10 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
     width: 42px;
     min-width: 42px;
     height: 42px;
-    border-radius: 14px;
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(243, 242, 237, 0.92)),
-        rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(55, 53, 47, 0.08);
-    color: var(--owner-art-noir);
+    border-radius: 10px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--ink);
     font-size: 0.78rem;
     font-weight: 900;
     letter-spacing: 0.08em;
@@ -1743,32 +1632,25 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
 
 .owner-notion-shell .owner-command-copy p:last-child {
     margin: 0;
-    color: var(--owner-notion-muted);
+    color: var(--ink-soft);
     line-height: 1.48;
     max-width: 46ch;
 }
 
 .owner-notion-shell .owner-command-item--primary {
     padding: 22px 22px 22px 18px;
-    background:
-        radial-gradient(circle at 100% 0%, rgba(99, 91, 255, 0.16), transparent 26%),
-        radial-gradient(circle at 0% 100%, rgba(215, 189, 136, 0.18), transparent 28%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(247, 244, 239, 0.98));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.84),
-        0 18px 34px rgba(31, 41, 55, 0.06);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
 }
 
 .owner-notion-shell .owner-command-item--primary .owner-command-index {
     width: 50px;
     min-width: 50px;
     height: 50px;
-    border-radius: 16px;
-    background:
-        linear-gradient(135deg, rgba(35, 37, 43, 1), rgba(61, 66, 86, 0.94) 58%, rgba(99, 91, 255, 0.82));
-    color: #f8f6f2;
-    border-color: rgba(35, 37, 43, 0.14);
-    box-shadow: 0 14px 26px rgba(35, 37, 43, 0.16);
+    border-radius: 12px;
+    background: var(--brand);
+    color: #fff;
+    border-color: var(--brand);
 }
 
 .owner-notion-shell .owner-command-item--primary .owner-command-kicker {
@@ -1810,17 +1692,12 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
 .owner-notion-shell .owner-command-actions .button.secondary {
     min-width: 172px;
     min-height: 36px;
-    border-color: rgba(55, 53, 47, 0.1);
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 248, 252, 0.95)),
-        rgba(255, 255, 255, 0.98);
+    border-color: var(--line-strong);
+    background: var(--surface);
 }
 
 .owner-notion-shell .owner-proof-card {
-    background:
-        radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.12), transparent 28%),
-        radial-gradient(circle at 0% 100%, rgba(16, 185, 129, 0.12), transparent 30%),
-        linear-gradient(180deg, rgba(253, 254, 252, 0.995), rgba(245, 248, 244, 0.992));
+    background: var(--surface);
     margin-left: 40px;
 }
 
@@ -1834,12 +1711,10 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
     display: grid;
     gap: 6px;
     padding: 18px 18px 16px;
-    border-radius: 22px;
-    border: 1px solid rgba(55, 53, 47, 0.08);
-    background:
-        radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.56), transparent 28%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(245, 247, 243, 0.96));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.84), 0 10px 22px rgba(31, 41, 55, 0.03);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
 }
 
 .owner-notion-shell .owner-proof-item:nth-child(2) {
@@ -1888,7 +1763,7 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
     position: absolute;
     inset: 0 auto 0 0;
     width: 4px;
-    background: linear-gradient(180deg, rgba(99, 91, 255, 0.38), rgba(14, 165, 233, 0.22), rgba(215, 189, 136, 0.26));
+    background: var(--brand);
 }
 
 .owner-notion-shell .owner-focus-list {
@@ -1902,12 +1777,10 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
     gap: 14px;
     align-items: center;
     padding: 14px 16px;
-    border-radius: 18px;
-    border: 1px solid rgba(55, 53, 47, 0.08);
-    background:
-        radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.58), transparent 26%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 244, 240, 0.95));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 10px 22px rgba(31, 41, 55, 0.035);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
 }
 
 .owner-notion-shell .owner-focus-copy {
@@ -1935,25 +1808,17 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
 
 .owner-notion-shell .owner-focus-actions .button.secondary {
     min-height: 34px;
-    border-color: rgba(55, 53, 47, 0.1);
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 248, 252, 0.95)),
-        rgba(255, 255, 255, 0.98);
+    border-color: var(--line-strong);
+    background: var(--surface);
 }
 
 .owner-notion-shell .owner-metric-grid .operation-kpi-card {
     min-height: 156px;
     padding: 18px 18px 17px;
-    border-radius: 22px;
-    border: 1px solid var(--owner-notion-line);
-    background:
-        radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.64), transparent 28%),
-        radial-gradient(circle at 0% 100%, rgba(215, 189, 136, 0.1), transparent 26%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(248, 247, 244, 0.992)),
-        var(--owner-notion-card);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.82),
-        0 22px 44px rgba(31, 41, 55, 0.06);
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
     grid-column: span 2;
 }
 
@@ -1982,33 +1847,27 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
     inset: 0 auto 0 0;
     width: 4px;
     border-radius: 22px 0 0 22px;
-    background: linear-gradient(180deg, rgba(99, 91, 255, 0.3), rgba(14, 165, 233, 0.16), rgba(16, 185, 129, 0.12));
+    background: var(--brand);
 }
 
 .owner-notion-shell .owner-metric-grid .operation-kpi-card::after {
-    display: block;
-    inset: auto -14px -16px auto;
-    width: 120px;
-    height: 120px;
-    border-radius: 999px;
-    background: radial-gradient(circle, rgba(99, 91, 255, 0.1), rgba(215, 189, 136, 0.08) 36%, transparent 70%);
-    opacity: 0.9;
+    display: none;
 }
 
 .owner-notion-shell .owner-metric-grid .operation-kpi-card.owner-amber::before {
-    background: linear-gradient(180deg, rgba(184, 92, 56, 0.46), rgba(215, 189, 136, 0.28));
+    background: var(--danger);
 }
 
 .owner-notion-shell .owner-metric-grid .operation-kpi-card.owner-blue::before {
-    background: linear-gradient(180deg, rgba(99, 91, 255, 0.42), rgba(14, 165, 233, 0.28));
+    background: var(--brand);
 }
 
 .owner-notion-shell .owner-metric-grid .operation-kpi-card.owner-green::before {
-    background: linear-gradient(180deg, rgba(16, 185, 129, 0.44), rgba(14, 165, 233, 0.22));
+    background: var(--accent);
 }
 
 .owner-notion-shell .owner-metric-grid .operation-kpi-card.owner-slate::before {
-    background: linear-gradient(180deg, rgba(55, 53, 47, 0.32), rgba(99, 91, 255, 0.22));
+    background: var(--ink-soft);
 }
 
 .owner-notion-shell .owner-metric-grid .card-label {
@@ -2016,40 +1875,28 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
 }
 
 .owner-notion-shell .owner-summary-card {
-    border-radius: 22px;
-    border: 1px solid var(--owner-notion-line);
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 248, 245, 0.98)),
-        var(--owner-notion-card);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.8),
-        0 18px 36px rgba(31, 41, 55, 0.05);
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
     overflow: hidden;
 }
 
 .owner-notion-shell .owner-summary-card-structure,
 .owner-notion-shell .owner-summary-card-priority {
-    border-color: var(--owner-notion-line);
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 248, 245, 0.98)),
-        var(--owner-notion-card);
-    box-shadow: 0 12px 28px rgba(31, 41, 55, 0.035);
+    border-color: var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
 }
 
 .owner-notion-shell .owner-summary-card-structure {
-    background:
-        radial-gradient(circle at 88% 12%, rgba(14, 165, 233, 0.08), transparent 26%),
-        radial-gradient(circle at 16% 100%, rgba(16, 185, 129, 0.07), transparent 24%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 248, 244, 0.98));
-    box-shadow: 0 16px 36px rgba(32, 63, 88, 0.055);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
 }
 
 .owner-notion-shell .owner-summary-card-priority {
-    background:
-        radial-gradient(circle at 84% 14%, rgba(99, 91, 255, 0.08), transparent 24%),
-        radial-gradient(circle at 8% 92%, rgba(184, 92, 56, 0.08), transparent 26%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(248, 246, 243, 0.98));
-    box-shadow: 0 18px 38px rgba(72, 57, 122, 0.06);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
 }
 
 .owner-notion-shell .owner-summary-card-structure::before,
@@ -2057,15 +1904,15 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
     height: 3px;
     margin: -18px -18px 16px;
     border-radius: 0;
-    background: linear-gradient(90deg, rgba(99, 91, 255, 0.14), rgba(14, 165, 233, 0.1), rgba(55, 53, 47, 0.04));
+    background: var(--brand);
 }
 
 .owner-notion-shell .owner-summary-card-structure::before {
-    background: linear-gradient(90deg, rgba(14, 165, 233, 0.28), rgba(16, 185, 129, 0.18), rgba(55, 53, 47, 0.05));
+    background: var(--brand);
 }
 
 .owner-notion-shell .owner-summary-card-priority::before {
-    background: linear-gradient(90deg, rgba(99, 91, 255, 0.3), rgba(184, 92, 56, 0.18), rgba(55, 53, 47, 0.05));
+    background: var(--danger);
 }
 
 .owner-notion-shell .owner-summary-card .operation-card-head,
@@ -2086,10 +1933,10 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
 .owner-notion-shell .owner-summary-card .capability-list li {
     position: relative;
     padding: 12px 13px;
-    border-radius: 14px;
-    border-color: rgba(55, 53, 47, 0.08);
-    background: linear-gradient(180deg, rgba(247, 246, 243, 0.96), rgba(244, 244, 241, 0.9));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 8px 18px rgba(31, 41, 55, 0.04);
+    border-radius: 8px;
+    border-color: var(--line);
+    background: var(--bg);
+    box-shadow: none;
     overflow: hidden;
 }
 
@@ -2103,23 +1950,19 @@ body[data-theme="dark"] .owner-summary-card .capability-list li {
 }
 
 .owner-notion-shell .owner-summary-card-priority .capability-list li {
-    background:
-        radial-gradient(circle at 100% 20%, rgba(99, 91, 255, 0.06), transparent 32%),
-        linear-gradient(180deg, rgba(249, 247, 245, 0.98), rgba(244, 242, 240, 0.92));
+    background: var(--bg);
 }
 
 .owner-notion-shell .owner-summary-card-priority .capability-list li::before {
-    background: linear-gradient(180deg, rgba(99, 91, 255, 0.34), rgba(184, 92, 56, 0.18));
+    background: var(--danger);
 }
 
 .owner-notion-shell .owner-summary-card-structure .capability-list li {
-    background:
-        radial-gradient(circle at 100% 20%, rgba(14, 165, 233, 0.06), transparent 32%),
-        linear-gradient(180deg, rgba(248, 247, 244, 0.98), rgba(243, 244, 241, 0.92));
+    background: var(--bg);
 }
 
 .owner-notion-shell .owner-summary-card-structure .capability-list li::before {
-    background: linear-gradient(180deg, rgba(14, 165, 233, 0.32), rgba(16, 185, 129, 0.18));
+    background: var(--brand);
 }
 
 .owner-notion-shell .pill {
@@ -2139,30 +1982,23 @@ body[data-theme="dark"] .owner-notion-shell {
 }
 
 body[data-theme="dark"] .owner-notion-shell::after {
-    background:
-        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 56px),
-        linear-gradient(180deg, rgba(21, 24, 33, 0.72), rgba(21, 24, 33, 0)),
-        linear-gradient(120deg, rgba(255, 255, 255, 0.04), transparent 60%);
+    background: transparent;
 }
 
 body[data-theme="dark"] .owner-notion-shell .operation-hero {
-    border-color: var(--owner-notion-line);
-    background:
-        radial-gradient(circle at top right, rgba(99, 91, 255, 0.2), transparent 24%),
-        radial-gradient(circle at 80% 100%, rgba(215, 189, 136, 0.12), transparent 22%),
-        radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.14), transparent 22%),
-        linear-gradient(180deg, rgba(28, 29, 31, 0.99), rgba(24, 25, 27, 0.99));
-    box-shadow: 0 28px 58px rgba(0, 0, 0, 0.24);
+    border-color: var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
 }
 
 body[data-theme="dark"] .owner-notion-shell .operation-hero::before {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(99, 91, 255, 0.12), rgba(215, 189, 136, 0.08), rgba(255, 255, 255, 0.04));
+    background: var(--brand);
 }
 
 body[data-theme="dark"] .owner-notion-shell .operation-hero .actions .button:not(.secondary) {
-    border-color: rgba(255, 255, 255, 0.1);
-    background: linear-gradient(135deg, rgba(243, 244, 246, 0.14), rgba(99, 91, 255, 0.22));
-    color: rgba(243, 244, 246, 0.96);
+    border-color: var(--brand);
+    background: var(--brand);
+    color: #fff;
 }
 
 body[data-theme="dark"] .owner-notion-shell .operation-hero .actions .button.secondary {
@@ -2179,37 +2015,29 @@ body[data-theme="dark"] .owner-notion-shell .owner-metric-grid .operation-kpi-ca
 body[data-theme="dark"] .owner-notion-shell .owner-summary-card,
 body[data-theme="dark"] .owner-notion-shell .owner-summary-card-structure,
 body[data-theme="dark"] .owner-notion-shell .owner-summary-card-priority {
-    border-color: var(--owner-notion-line);
-    background:
-        linear-gradient(180deg, rgba(34, 35, 37, 0.98), rgba(29, 31, 34, 0.98)),
-        var(--owner-notion-card);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    border-color: var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-feed-card::before {
-    background:
-        radial-gradient(circle at 14% 24%, rgba(99, 91, 255, 0.16), transparent 42%),
-        radial-gradient(circle at 84% 18%, rgba(14, 165, 233, 0.12), transparent 38%);
+    background: transparent;
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-focus-item {
-    border-color: var(--owner-notion-line);
-    background:
-        radial-gradient(circle at 100% 0%, rgba(99, 91, 255, 0.12), transparent 28%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+    border-color: var(--line);
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-command-intro {
-    background: linear-gradient(135deg, rgba(35, 37, 43, 0.98), rgba(49, 56, 76, 0.94) 58%, rgba(99, 91, 255, 0.54));
-    box-shadow: 0 20px 36px rgba(0, 0, 0, 0.26);
+    background: var(--ink);
+    box-shadow: var(--shadow-soft);
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-command-item,
 body[data-theme="dark"] .owner-notion-shell .owner-proof-item {
-    border-color: var(--owner-notion-line);
-    background:
-        radial-gradient(circle at 100% 0%, rgba(99, 91, 255, 0.14), transparent 28%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+    border-color: var(--line);
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-command-kicker {
@@ -2217,10 +2045,7 @@ body[data-theme="dark"] .owner-notion-shell .owner-command-kicker {
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-command-item--primary {
-    background:
-        radial-gradient(circle at 100% 0%, rgba(99, 91, 255, 0.22), transparent 26%),
-        radial-gradient(circle at 0% 100%, rgba(215, 189, 136, 0.16), transparent 28%),
-        linear-gradient(180deg, rgba(39, 42, 49, 0.98), rgba(30, 32, 37, 0.98));
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-command-item--primary .owner-command-index {
@@ -2228,9 +2053,9 @@ body[data-theme="dark"] .owner-notion-shell .owner-command-item--primary .owner-
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-command-index {
-    border-color: var(--owner-notion-line);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-    color: rgba(243, 244, 246, 0.92);
+    border-color: var(--line);
+    background: var(--bg);
+    color: var(--ink);
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-command-copy p:last-child,
@@ -2314,39 +2139,29 @@ body[data-theme="dark"] .owner-notion-shell .owner-focus-actions .button.seconda
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-feed-card::after {
-    background: radial-gradient(circle, rgba(0, 0, 0, 0.34), transparent 70%);
+    background: transparent;
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-summary-card-structure {
-    background:
-        radial-gradient(circle at 88% 12%, rgba(14, 165, 233, 0.12), transparent 26%),
-        radial-gradient(circle at 16% 100%, rgba(16, 185, 129, 0.1), transparent 24%),
-        linear-gradient(180deg, rgba(34, 35, 37, 0.98), rgba(28, 30, 33, 0.98));
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-summary-card-priority {
-    background:
-        radial-gradient(circle at 84% 14%, rgba(99, 91, 255, 0.14), transparent 24%),
-        radial-gradient(circle at 8% 92%, rgba(184, 92, 56, 0.12), transparent 26%),
-        linear-gradient(180deg, rgba(34, 35, 37, 0.98), rgba(28, 30, 33, 0.98));
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .owner-notion-shell .operation-mini-stat,
 body[data-theme="dark"] .owner-notion-shell .owner-summary-card .capability-list li {
-    border-color: var(--owner-notion-line);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.03));
+    border-color: var(--line);
+    background: var(--bg);
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-summary-card-priority .capability-list li {
-    background:
-        radial-gradient(circle at 100% 20%, rgba(99, 91, 255, 0.14), transparent 34%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+    background: var(--bg);
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-summary-card-structure .capability-list li {
-    background:
-        radial-gradient(circle at 100% 20%, rgba(14, 165, 233, 0.12), transparent 34%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+    background: var(--bg);
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-summary-card-structure::before,
@@ -2385,7 +2200,74 @@ Use este bloco para evoluir a tela atual do owner.
 
 .owner-workspace {
     display: grid;
-    gap: 18px;
+    gap: 32px;
+}
+
+/* --- next-steps (sequencia curta de leitura do dia) --- */
+
+.owner-next-steps {
+    display: grid;
+    gap: 14px;
+}
+
+.owner-next-steps-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0;
+}
+
+.owner-next-steps-list {
+    display: grid;
+    gap: 10px;
+}
+
+.owner-step-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: start;
+    padding: 14px 16px;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: inherit;
+    text-decoration: none;
+    transition: box-shadow 0.15s ease;
+}
+
+.owner-step-card:hover {
+    box-shadow: var(--shadow-lift);
+}
+
+.owner-step-number {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 800;
+    color: rgba(95, 90, 84, 0.74);
+}
+
+.owner-step-body {
+    display: grid;
+    gap: 4px;
+}
+
+.owner-step-body strong {
+    color: var(--ink);
+    font-size: 1rem;
+    line-height: 1.3;
+}
+
+.owner-step-summary {
+    color: var(--ink-soft);
+    line-height: 1.45;
+}
+
+.owner-step-aside {
+    display: grid;
+    gap: 8px;
+    justify-items: end;
 }
 
 .owner-panel-grid,
@@ -2397,10 +2279,10 @@ Use este bloco para evoluir a tela atual do owner.
 }
 
 .owner-panel {
-    border-radius: 24px;
-    border: 1px solid rgba(55, 53, 47, 0.08);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 245, 241, 0.96));
-    box-shadow: 0 18px 36px rgba(31, 41, 55, 0.05);
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
 }
 
 .owner-primary-panel .operation-card-head,
@@ -2418,9 +2300,9 @@ Use este bloco para evoluir a tela atual do owner.
     gap: 16px;
     align-items: center;
     padding: 18px;
-    border-radius: 20px;
-    border: 1px solid rgba(99, 91, 255, 0.12);
-    background: linear-gradient(135deg, rgba(35, 37, 43, 0.98), rgba(63, 67, 84, 0.96) 58%, rgba(99, 91, 255, 0.78));
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--line);
+    background: var(--ink);
     color: #f8f6f2;
 }
 
@@ -2468,9 +2350,9 @@ Use este bloco para evoluir a tela atual do owner.
     display: grid;
     gap: 6px;
     padding: 14px 16px;
-    border-radius: 18px;
-    border: 1px solid rgba(55, 53, 47, 0.08);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 243, 239, 0.94));
+    border-radius: var(--radius-card);
+    border: 1px solid var(--line);
+    background: var(--surface);
     color: inherit;
     text-decoration: none;
 }
@@ -2518,16 +2400,16 @@ Use este bloco para evoluir a tela atual do owner.
 }
 
 .owner-simple-shell .owner-metric-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 14px;
 }
 
 .owner-simple-shell .owner-metric-grid .operation-kpi-card {
     min-height: 150px;
-    border-radius: 20px;
-    border: 1px solid rgba(55, 53, 47, 0.08);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 245, 241, 0.96));
-    box-shadow: 0 16px 32px rgba(31, 41, 55, 0.045);
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
     grid-column: auto;
 }
 
@@ -2538,11 +2420,25 @@ Use este bloco para evoluir a tela atual do owner.
     min-height: 150px;
 }
 
+/* --- status-hint: borda esquerda semantica nos metric cards --- */
+
+.owner-simple-shell .owner-metric-grid .operation-kpi-card.status-clean {
+    border-left: 3px solid var(--accent);
+}
+
+.owner-simple-shell .owner-metric-grid .operation-kpi-card.status-attention {
+    border-left: 3px solid var(--danger);
+}
+
+.owner-simple-shell .owner-metric-grid .operation-kpi-card.status-neutral {
+    border-left: 3px solid var(--line-strong);
+}
+
 .owner-summary-card {
-    border-radius: 24px;
-    border: 1px solid rgba(55, 53, 47, 0.08);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 245, 241, 0.96));
-    box-shadow: 0 18px 36px rgba(31, 41, 55, 0.05);
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
 }
 
 .owner-summary-card .capability-list {
@@ -2552,9 +2448,9 @@ Use este bloco para evoluir a tela atual do owner.
 
 .owner-summary-card .capability-list li {
     padding: 12px 14px;
-    border-radius: 14px;
-    border: 1px solid rgba(55, 53, 47, 0.08);
-    background: linear-gradient(180deg, rgba(248, 247, 244, 0.96), rgba(244, 243, 239, 0.92));
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--bg);
 }
 
 body[data-theme="dark"] .owner-simple-shell .operation-hero,
@@ -2563,14 +2459,31 @@ body[data-theme="dark"] .owner-simple-shell .owner-metric-grid .operation-kpi-ca
 body[data-theme="dark"] .owner-simple-shell .owner-summary-card,
 body[data-theme="dark"] .owner-simple-shell .owner-secondary-item,
 body[data-theme="dark"] .owner-simple-shell .owner-status-item,
+body[data-theme="dark"] .owner-simple-shell .owner-step-card,
 body[data-theme="dark"] .owner-simple-shell .owner-summary-card .capability-list li {
-    border-color: rgba(255, 255, 255, 0.08);
-    background: linear-gradient(180deg, rgba(34, 35, 37, 0.98), rgba(29, 31, 34, 0.98));
-    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.18);
+    border-color: var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+}
+
+body[data-theme="dark"] .owner-next-steps-title {
+    color: rgba(243, 244, 246, 0.96);
+}
+
+body[data-theme="dark"] .owner-step-number {
+    color: rgba(209, 213, 219, 0.62);
+}
+
+body[data-theme="dark"] .owner-step-body strong {
+    color: rgba(243, 244, 246, 0.96);
+}
+
+body[data-theme="dark"] .owner-step-summary {
+    color: rgba(209, 213, 219, 0.72);
 }
 
 body[data-theme="dark"] .owner-simple-shell .owner-primary-spotlight {
-    background: linear-gradient(135deg, rgba(35, 37, 43, 0.98), rgba(48, 53, 68, 0.96) 58%, rgba(99, 91, 255, 0.56));
+    background: var(--ink);
 }
 
 body[data-theme="dark"] .owner-simple-shell .owner-primary-copy .eyebrow,
@@ -2605,28 +2518,6 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
 }
 
 @media (max-width: 960px) {
-    .owner-panel-grid,
-    .owner-support-grid,
-    .owner-simple-shell .owner-metric-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .owner-primary-spotlight,
-    .owner-secondary-item {
-        grid-template-columns: 1fr;
-    }
-
-    .owner-primary-actions {
-        justify-items: stretch;
-    }
-
-    .owner-primary-actions .button {
-        min-width: 0;
-        width: 100%;
-    }
-}
-
-@media (max-width: 960px) {
     .dev-scene .operation-hero,
     .manager-scene .operation-hero,
     .coach-scene .operation-hero,
@@ -2654,6 +2545,75 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
     .owner-metric-grid .operation-kpi-card {
         min-height: 144px;
     }
+}
+
+.owner-primary-title {
+    margin: 0;
+    font-size: clamp(1.35rem, 2vw, 1.7rem);
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+}
+
+.owner-secondary-kicker {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.11em;
+    color: rgba(95, 90, 84, 0.68);
+    font-weight: 700;
+}
+
+.owner-secondary-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--brand);
+}
+
+.owner-simple-shell .operation-hero {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+}
+
+.owner-panel,
+.owner-summary-card,
+.owner-simple-shell .owner-metric-grid .operation-kpi-card {
+    border-color: var(--line);
+    box-shadow: var(--shadow-soft);
+}
+
+.owner-primary-spotlight {
+    border-color: var(--line);
+    background: var(--ink);
+    box-shadow: var(--shadow-soft);
+}
+
+.owner-status-item,
+.owner-secondary-item {
+    transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.owner-status-item:hover,
+.owner-secondary-item:hover {
+    transform: translateY(-1px);
+    border-color: var(--brand);
+    box-shadow: var(--shadow-lift);
+}
+
+body[data-theme="dark"] .owner-secondary-kicker {
+    color: rgba(209, 213, 219, 0.58);
+}
+
+body[data-theme="dark"] .owner-secondary-step {
+    border-color: var(--line);
+    background: var(--surface);
+    color: var(--brand);
 }
 
 @media (max-width: 1280px) {
@@ -2689,7 +2649,7 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
     }
 
     .operation-hero {
-        flex-direction: column;
+        grid-template-columns: 1fr;
     }
 
     .operation-hero-side {
@@ -2701,33 +2661,6 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
         grid-template-columns: 1fr;
     }
 
-
-@media (max-width: 720px) {
-    .operation-card-head,
-    .operation-table-guide-head {
-        grid-template-columns: 1fr;
-        display: grid;
-    }
-
-    .reception-payment-grid,
-    .reception-preview-payment-grid,
-    .reception-grade-grid,
-    .reception-preview-grade-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .reception-payment-actions-primary,
-    .reception-preview-payment-actions-primary {
-        grid-template-columns: 1fr;
-    }
-
-    .reception-payment-meta,
-    .reception-preview-payment-meta,
-    .reception-grade-stats,
-    .reception-preview-grade-stats {
-        grid-template-columns: 1fr;
-    }
-}
     .operation-table-guide-grid {
         grid-template-columns: 1fr;
     }
@@ -2748,12 +2681,36 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
     .reception-payment-meta,
     .reception-preview-payment-meta,
     .reception-grade-stats,
-    .reception-preview-grade-stats {
+    .reception-preview-grade-stats,
+    .reception-command-card .actions {
         grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 720px) {
+    .operation-card-head,
+    .operation-table-guide-head {
+        grid-template-columns: 1fr;
+        display: grid;
+    }
+
+    .reception-payment-grid,
+    .reception-preview-payment-grid,
+    .reception-grade-grid,
+    .reception-preview-grade-grid,
+    .reception-payment-actions-primary,
+    .reception-preview-payment-actions-primary,
+    .reception-command-card .actions {
+        grid-template-columns: 1fr;
+    }
+
+    .reception-payment-meta,
+    .reception-preview-payment-meta,
+    .reception-grade-stats,
+    .reception-preview-grade-stats {
+        grid-template-columns: 1fr;
+    }
+
     .operation-mini-grid {
         grid-template-columns: 1fr;
     }
@@ -2796,7 +2753,6 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
         border-radius: 22px;
     }
 }
-
 .operation-hero {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(280px, 308px);
@@ -2853,10 +2809,8 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
     align-content: space-between;
     min-height: 100%;
     padding: 14px 16px;
-    border-radius: 22px;
-    background:
-        linear-gradient(160deg, rgba(255, 255, 255, 0.84), rgba(241, 247, 252, 0.94)),
-        rgba(255, 255, 255, 0.9);
+    border-radius: var(--radius-card);
+    background: var(--bg);
 }
 
 .operation-mini-grid {
@@ -2869,16 +2823,14 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
 }
 
 body[data-theme="dark"] .operation-hero-panel {
-    border-color: rgba(163, 194, 224, 0.16);
-    background:
-        linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(10, 17, 27, 0.14)),
-        rgba(14, 22, 33, 0.9);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    border-color: var(--line);
+    background: var(--surface);
+    box-shadow: none;
 }
 
 body[data-theme="dark"] .operation-mini-stat {
-    border-color: rgba(163, 194, 224, 0.14);
-    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--line);
+    background: var(--surface);
 }
 
 .manager-scene .operation-hero,
@@ -2983,20 +2935,12 @@ body[data-theme="dark"] .operation-mini-stat {
 
 .reception-hero.operation-hero,
 .reception-preview-hero.operation-hero {
-    background:
-        radial-gradient(circle at top right, rgba(40, 92, 142, 0.14), transparent 32%),
-        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.1), transparent 28%),
-        linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(241, 247, 252, 0.96)),
-        var(--surface);
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .reception-hero.operation-hero,
 body[data-theme="dark"] .reception-preview-hero.operation-hero {
-    background:
-        radial-gradient(circle at top right, rgba(41, 103, 163, 0.2), transparent 30%),
-        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.12), transparent 24%),
-        linear-gradient(145deg, rgba(18, 28, 40, 0.96), rgba(11, 19, 29, 0.98)),
-        var(--surface);
+    background: var(--surface);
 }
 
 .operation-hero .actions {
@@ -3014,5 +2958,248 @@ body[data-theme="dark"] .reception-preview-hero.operation-hero {
     .operation-hero .actions {
         flex-wrap: wrap;
         overflow: visible;
+    }
+}
+
+
+/* --- Front Display Wall: composicao agressiva dos workspaces --- */
+
+.manager-focus-lane,
+.coach-focus-lane,
+.reception-focus-lane {
+    margin-top: -2px;
+}
+
+.manager-main-grid {
+    grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+    grid-template-areas:
+        "intake finance"
+        "enrollment finance"
+        "link finance";
+    align-items: start;
+}
+
+#manager-intake-board {
+    grid-area: intake;
+}
+
+#manager-enrollment-link-board {
+    grid-area: enrollment;
+}
+
+#manager-link-board {
+    grid-area: link;
+}
+
+#manager-finance-board {
+    grid-area: finance;
+}
+
+.manager-main-grid .manager-priority-card,
+.manager-main-grid .manager-secondary-card {
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-soft);
+}
+
+.manager-main-grid .manager-priority-card::before,
+.manager-main-grid .manager-secondary-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 3px;
+    background: var(--line-strong);
+}
+
+.manager-main-grid #manager-intake-board::before {
+    background: var(--danger);
+}
+
+.manager-main-grid #manager-enrollment-link-board::before {
+    background: var(--warning);
+}
+
+.manager-main-grid #manager-link-board::before {
+    background: var(--brand);
+}
+
+.manager-main-grid #manager-finance-board::before {
+    background: var(--danger);
+}
+
+.coach-sessions-board {
+    display: grid;
+    gap: 20px;
+}
+
+.coach-session-card {
+    border-radius: var(--radius-panel);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+}
+
+.coach-session-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: var(--brand);
+}
+
+.coach-session-card .operation-session-head {
+    padding: 22px 24px 0;
+}
+
+.coach-session-card .operation-session-body {
+    padding: 16px 24px 24px;
+}
+
+.reception-main-grid {
+    grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
+}
+
+.reception-support-grid {
+    grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+}
+
+.reception-command-card,
+.reception-grid-board,
+.reception-payment-board,
+#reception-intake-board {
+    border-radius: var(--radius-panel);
+}
+
+.reception-command-card {
+    background: var(--bg);
+    box-shadow: none;
+}
+
+.reception-grid-board::before,
+.reception-payment-board::before,
+#reception-intake-board::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 3px;
+}
+
+.reception-payment-board::before {
+    background: var(--danger);
+}
+
+#reception-intake-board::before {
+    background: var(--brand);
+}
+
+.reception-grid-board::before {
+    background: var(--line-strong);
+}
+
+.owner-next-steps .owner-step-card:first-child {
+    background: linear-gradient(160deg, color-mix(in srgb, var(--brand) 8%, white), var(--surface));
+    border-color: color-mix(in srgb, var(--brand) 22%, transparent);
+}
+
+@media (max-width: 960px) {
+    .manager-main-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "intake"
+            "finance"
+            "enrollment"
+            "link";
+    }
+
+    .reception-main-grid,
+    .reception-support-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- operations-refine-pass --- */
+.manager-focus-lane,
+.coach-focus-lane,
+.reception-focus-lane,
+.owner-next-steps {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-panel);
+}
+
+.manager-focus-lane::before,
+.coach-focus-lane::before,
+.reception-focus-lane::before,
+.owner-next-steps::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 3px;
+    background: var(--brand);
+}
+
+.manager-focus-lane,
+.coach-focus-lane,
+.reception-focus-lane,
+.owner-next-steps {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(246, 248, 251, 0.98));
+    box-shadow: var(--shadow-soft);
+}
+
+.manager-focus-lane .fdw-focus-list,
+.coach-focus-lane .fdw-focus-list,
+.reception-focus-lane .fdw-focus-list {
+    gap: 12px;
+}
+
+.manager-main-grid .manager-priority-card,
+.manager-main-grid .manager-secondary-card,
+.reception-main-grid > *,
+.reception-support-grid > *,
+.coach-session-card,
+.owner-step-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.coach-sessions-board {
+    gap: 16px;
+}
+
+.coach-session-card {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(246, 248, 251, 0.98));
+}
+
+.reception-command-card .actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.reception-command-card .button {
+    width: 100%;
+}
+
+.owner-next-steps {
+    padding: 18px;
+    border: 1px solid var(--line);
+}
+
+.owner-next-steps .owner-step-card:first-child {
+    box-shadow: var(--shadow-soft);
+}
+
+body[data-theme="dark"] .manager-focus-lane,
+body[data-theme="dark"] .coach-focus-lane,
+body[data-theme="dark"] .reception-focus-lane,
+body[data-theme="dark"] .coach-session-card,
+body[data-theme="dark"] .owner-next-steps {
+    background: var(--surface);
+}
+
+@media (max-width: 960px) {
+    .reception-command-card .actions {
+        grid-template-columns: 1fr;
     }
 }

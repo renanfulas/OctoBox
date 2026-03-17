@@ -4,7 +4,7 @@ ARQUIVO: lista de sessoes do Coach.
 POR QUE ELE EXISTE:
 - isola o loop de sessoes e o estado vazio da agenda.
 -->
-<div id="coach-sessions-board" class="operation-shell coach-sessions-board">
+<section id="coach-sessions-board" class="coach-sessions-board" aria-label="Agenda operacional do coach">
     {% for session in page.data.sessions_today %}
     {% include "operations/includes/coach_session_card.html" with session=session %}
     {% empty %}
@@ -12,4 +12,4 @@ POR QUE ELE EXISTE:
         {% include "includes/ui/state_empty.html" with eyebrow="Agenda de hoje" title="Nenhuma aula cadastrada" copy="O coach esta sem turmas programadas para hoje neste ambiente." badge="Dia livre" badge_class="info" %}
     </section>
     {% endfor %}
-</div>
+</section>

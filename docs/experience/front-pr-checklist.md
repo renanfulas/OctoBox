@@ -1,4 +1,4 @@
-<!--
+﻿<!--
 ARQUIVO: checklist curto de PR para front-end.
 
 TIPO DE DOCUMENTO:
@@ -32,6 +32,8 @@ Use este checklist antes de aprovar ou subir alteracoes de front.
 
 Se a duvida for como pensar ou montar a tela desde o inicio, use [layout-decision-guide.md](layout-decision-guide.md).
 
+Se a duvida for em que etapa da implantacao da fachada estamos ou o que ainda falta fechar, use [front-display-wall-implementation-checklist.md](front-display-wall-implementation-checklist.md).
+
 Se a mudanca tocar comunicacao entre paginas, payload compartilhado, CTA global ou circuito funcional do beta, use tambem [../reference/pr-circuit-checklist.md](../reference/pr-circuit-checklist.md).
 
 ## Estrutura
@@ -47,6 +49,9 @@ Se a mudanca tocar comunicacao entre paginas, payload compartilhado, CTA global 
 2. cards que precisam alinhar entre si continuam com altura e CTA consistentes
 3. nenhum bloco ficou apertado, solto ou competindo por causa de largura errada
 4. anchors continuam pousando bem quando a tela usa topbar sticky
+5. no dashboard owner, o topline continua com 3 cards iguais e papeis fixos: urgencia, emergencia e risco
+6. no dashboard owner, a grade de suporte nao repete a mesma pergunta de negocio ja respondida no topline ou nos cards lideres
+7. espacamentos e respiros do dashboard continuam conservadores e em cadencia proxima de 8, 13 e 21 quando a tela for tocada
 
 ## Responsividade
 
@@ -91,3 +96,7 @@ Se a mudanca tocar comunicacao entre paginas, payload compartilhado, CTA global 
 3. a triagem futura consegue localizar melhor pagina, painel, acao ou estado
 4. hooks estruturais relevantes continuam estaveis ou ficaram melhores
 5. a mudanca nao reabriu estrutura consolidada sem justificativa forte
+
+
+
+

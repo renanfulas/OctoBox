@@ -15,13 +15,8 @@ POR QUE ELE EXISTE:
     padding: 24px;
     border-radius: var(--radius-panel);
     border: 1px solid var(--line);
-    background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.84), transparent 26%),
-        radial-gradient(circle at 84% 14%, rgba(255, 159, 107, 0.18), transparent 26%),
-        radial-gradient(circle at 20% 100%, rgba(90, 154, 255, 0.12), transparent 28%),
-        linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(242, 247, 255, 0.96));
-    backdrop-filter: blur(22px) saturate(1.1);
-    box-shadow: 0 24px 52px rgba(37, 64, 97, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.88);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
     text-decoration: none;
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
     position: relative;
@@ -30,8 +25,8 @@ POR QUE ELE EXISTE:
 
 .quick-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 34px 78px rgba(33, 61, 96, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.92);
-    border-color: rgba(90, 154, 255, 0.22);
+    box-shadow: var(--shadow-lift);
+    border-color: var(--brand);
 }
 
 .quick-card::after {
@@ -41,7 +36,7 @@ POR QUE ELE EXISTE:
     width: 128px;
     height: 128px;
     border-radius: 999px;
-    background: radial-gradient(circle, rgba(255, 159, 107, 0.16), transparent 70%);
+    background: transparent;
     pointer-events: none;
 }
 
@@ -59,13 +54,9 @@ POR QUE ELE EXISTE:
 }
 
 body[data-theme="dark"] .quick-card {
-    background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 22%),
-        radial-gradient(circle at 84% 14%, rgba(255, 159, 107, 0.18), transparent 24%),
-        radial-gradient(circle at 20% 100%, rgba(90, 154, 255, 0.14), transparent 24%),
-        linear-gradient(145deg, rgba(24, 34, 47, 0.96), rgba(11, 19, 29, 0.98));
-    border-color: rgba(176, 201, 232, 0.14);
-    box-shadow: 0 28px 68px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    background: var(--surface);
+    border-color: var(--line);
+    box-shadow: var(--shadow-soft);
 }
 
 body[data-theme="dark"] .quick-card:hover {
@@ -75,7 +66,7 @@ body[data-theme="dark"] .quick-card:hover {
 .accent-bar {
     height: 8px;
     border-radius: 999px;
-    background: linear-gradient(90deg, var(--brand), var(--accent), var(--accent-2));
+    background: var(--brand);
     opacity: 0.92;
     margin-top: 18px;
 }

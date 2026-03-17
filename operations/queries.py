@@ -42,10 +42,11 @@ def _build_metric_card(card_class, eyebrow, value, note):
     }
 
 
-def _build_owner_focus_item(*, key, label, summary, count, pill_class, href, href_label):
+def _build_owner_focus_item(*, key, label, summary, count, pill_class, href, href_label, chip_label=''):
     return {
         'key': key,
         'label': label,
+        'chip_label': chip_label,
         'summary': summary,
         'count': count,
         'pill_class': pill_class,
@@ -58,6 +59,7 @@ def build_owner_workspace_snapshot(*, today):
     communications_metrics = build_communications_headline_metrics(today=today)
     overdue_payments = get_overdue_payments_queryset(Payment.objects.all(), today=today)
     overdue_amount = sum_overdue_amount(Payment.objects.all(), today=today)
+    classes_today = ClassSession.objects.filter(scheduled_at__date=today).count()
     headline_metrics = {
         'students': Student.objects.count(),
         'pending_intakes': communications_metrics['pending_intakes'],
@@ -70,38 +72,41 @@ def build_owner_workspace_snapshot(*, today):
         'intakes': _build_owner_focus_item(
             key='intakes',
             label='Ver entradas',
+            chip_label='Entradas',
             summary=(
                 f"{headline_metrics['pending_intakes']} entrada(s) esperam resposta."
                 if headline_metrics['pending_intakes']
                 else 'Nenhuma entrada espera resposta agora.'
             ),
             count=headline_metrics['pending_intakes'],
-            pill_class='warning' if headline_metrics['pending_intakes'] > 0 else 'success',
-            href='#owner-growth-board',
+            pill_class='danger' if headline_metrics['pending_intakes'] > 0 else 'success',
+            href='/entradas/',
             href_label='Abrir entradas',
         ),
         'payments': _build_owner_focus_item(
             key='payments',
             label='Ver cobrancas',
+            chip_label='Cobranças',
             summary=(
                 f"{headline_metrics['overdue_payments']} cobranca(s) estao atrasadas e pedem contato."
                 if headline_metrics['overdue_payments']
                 else 'Nenhuma cobranca atrasada pede contato agora.'
             ),
             count=headline_metrics['overdue_payments'],
-            pill_class='warning' if headline_metrics['overdue_payments'] > 0 else 'info',
-            href='#owner-risk-board',
+            pill_class='danger' if headline_metrics['overdue_payments'] > 0 else 'success',
+            href='/financeiro/',
             href_label='Abrir cobrancas',
         ),
         'structure': _build_owner_focus_item(
             key='structure',
             label='Ver estrutura',
+            chip_label='Estrutura',
             summary=(
                 f"{headline_metrics['whatsapp_contacts']} contato(s) com WhatsApp e {headline_metrics['messages_logged']} conversa(s) salvas."
             ),
             count=headline_metrics['whatsapp_contacts'],
-            pill_class='accent',
-            href='#owner-structure-board',
+            pill_class='success',
+            href='/alunos/',
             href_label='Abrir estrutura',
         ),
     }
@@ -114,23 +119,27 @@ def build_owner_workspace_snapshot(*, today):
     owner_operational_focus = [focus_map[key] for key in focus_order]
     return {
         'headline_metrics': headline_metrics,
-        'hero_stats': [
-            _build_hero_stat('Cadastros', headline_metrics['students']),
-            _build_hero_stat('Entradas em aberto', headline_metrics['pending_intakes']),
-            _build_hero_stat('Cobrancas em atraso', headline_metrics['overdue_payments']),
-            _build_hero_stat('Contatos com WhatsApp', headline_metrics['whatsapp_contacts']),
-        ],
+        'classes_today': classes_today,
         'metric_cards': [
-            _build_metric_card('operation-kpi-card owner-amber', 'Total de alunos', headline_metrics['students'], 'Tamanho atual da base.'),
-            _build_metric_card('operation-kpi-card owner-blue', 'Entradas abertas', headline_metrics['pending_intakes'], 'Pessoas que ainda esperam resposta ou fechamento.'),
-            _build_metric_card('operation-kpi-card owner-green', 'WhatsApp pronto', headline_metrics['whatsapp_contacts'], 'Contatos que ja podem receber conversa e cobranca.'),
-            _build_metric_card('operation-kpi-card owner-slate', 'Historico salvo', headline_metrics['messages_logged'], 'Conversas guardadas para nao depender de memoria.'),
+            {
+                **_build_metric_card('operation-kpi-card owner-amber', 'Total de alunos', headline_metrics['students'], 'Tamanho atual da base.'),
+                'status_hint': 'neutral',
+            },
+            {
+                **_build_metric_card('operation-kpi-card owner-blue', 'Entradas abertas', headline_metrics['pending_intakes'], 'Pessoas que ainda esperam resposta.'),
+                'status_hint': 'clean' if headline_metrics['pending_intakes'] == 0 else 'attention',
+            },
+            {
+                **_build_metric_card('operation-kpi-card owner-green', 'WhatsApp pronto', headline_metrics['whatsapp_contacts'], 'Contatos prontos para conversa.'),
+                'status_hint': 'neutral',
+            },
             {
                 **_build_metric_card('operation-kpi-card owner-amber', 'Cobrancas atrasadas', headline_metrics['overdue_payments'], 'Dinheiro que ja deveria ter entrado.'),
                 'submetric': {
                     'label': 'Caixa vencido',
                     'value': f"R$ {headline_metrics['overdue_amount']:.2f}".replace('.', ','),
                 },
+                'status_hint': 'clean' if headline_metrics['overdue_payments'] == 0 else 'attention',
             },
         ],
         'owner_operational_focus': owner_operational_focus,
@@ -160,6 +169,7 @@ def build_dev_workspace_snapshot():
         'dev_operational_focus': [
             {
                 'label': 'Comece pelo rastro recente',
+                'chip_label': 'Auditoria',
                 'summary': f"{technical_metrics['eventos_24h']} evento(s) nas últimas 24h mostram se a investigação deve começar no agora ou no histórico amplo.",
                 'pill_class': 'warning' if technical_metrics['eventos_24h'] > 0 else 'success',
                 'href': '#dev-audit-board',
@@ -167,6 +177,7 @@ def build_dev_workspace_snapshot():
             },
             {
                 'label': 'Depois valide a cobertura de acesso',
+                'chip_label': 'Fronteiras',
                 'summary': f"{technical_metrics['usuarios_com_papel']} usuário(s) com papel ajudam a medir se a fronteira operacional continua coerente.",
                 'pill_class': 'info',
                 'href': '#dev-boundary-board',
@@ -174,6 +185,7 @@ def build_dev_workspace_snapshot():
             },
             {
                 'label': 'Feche com leitura sistêmica',
+                'chip_label': 'Rastros',
                 'summary': f"{technical_metrics['eventos_auditados']} rastro(s) auditado(s) sustentam manutenção, investigação e prova operacional sem virar chute técnico.",
                 'pill_class': 'accent',
                 'href': '#dev-read-board',
@@ -250,6 +262,7 @@ def build_manager_workspace_snapshot():
         'manager_operational_focus': [
             {
                 'label': 'Comece pela entrada que pode esfriar',
+                'chip_label': 'Triagem',
                 'summary': f'{len(pending_intakes)} entrada(s) já chegaram e pedem triagem antes de virarem fila morta.',
                 'count': len(pending_intakes),
                 'pill_class': 'warning' if len(pending_intakes) > 0 else 'success',
@@ -258,6 +271,7 @@ def build_manager_workspace_snapshot():
             },
             {
                 'label': 'Depois limpe vínculos quebrados',
+                'chip_label': 'Vínculos',
                 'summary': f'{len(unlinked_whatsapp)} contato(s) sem aluno e {len(payments_without_enrollment)} cobrança(s) sem matrícula ainda escondem atrito estrutural.',
                 'count': len(unlinked_whatsapp) + len(payments_without_enrollment),
                 'pill_class': 'info' if len(unlinked_whatsapp) or len(payments_without_enrollment) else 'success',
@@ -266,6 +280,7 @@ def build_manager_workspace_snapshot():
             },
             {
                 'label': 'Feche com cobrança em risco',
+                'chip_label': 'Cobranças',
                 'summary': f'{len(financial_alerts)} alerta(s) já mostram onde retenção e caixa podem pressionar se ninguém agir agora.',
                 'count': len(financial_alerts),
                 'pill_class': 'warning' if len(financial_alerts) > 0 else 'accent',
@@ -296,6 +311,7 @@ def build_coach_workspace_snapshot(*, today):
         'coach_operational_focus': [
             {
                 'label': 'Comece pela agenda de hoje',
+                'chip_label': 'Turmas',
                 'summary': f'{len(sessions)} aula(s) definem o turno e mostram se o coach entra em dia cheio ou leitura leve.',
                 'count': len(sessions),
                 'pill_class': 'info' if len(sessions) > 0 else 'success',
@@ -304,6 +320,7 @@ def build_coach_workspace_snapshot(*, today):
             },
             {
                 'label': 'Depois veja onde já há presença real',
+                'chip_label': 'Presença',
                 'summary': f'{sessions_with_students} turma(s) já têm lista ativa e {total_attendances} presença(s) para registrar sem ruído administrativo.',
                 'count': sessions_with_students,
                 'pill_class': 'accent',
@@ -312,6 +329,7 @@ def build_coach_workspace_snapshot(*, today):
             },
             {
                 'label': 'Feche com ocorrência técnica',
+                'chip_label': 'Ocorrências',
                 'summary': f'{len(BehaviorCategory.choices)} categoria(s) cobrem o registro técnico sem misturar treino com financeiro ou recepção.',
                 'count': len(BehaviorCategory.choices),
                 'pill_class': 'warning',
@@ -415,6 +433,7 @@ def build_reception_workspace_snapshot(*, today):
         'reception_focus': [
             {
                 'label': 'Comece por quem acabou de chegar',
+                'chip_label': 'Chegada',
                 'summary': (
                     f'{first_intake.full_name} abre a fila e mostra o melhor ponto para acolher, localizar e converter sem esfriar o atendimento.'
                     if first_intake else
@@ -427,6 +446,7 @@ def build_reception_workspace_snapshot(*, today):
             },
             {
                 'label': 'Depois resolva o caixa curto',
+                'chip_label': 'Cobranças',
                 'summary': (
                     f'{first_payment.student.full_name} aparece primeiro na fila e ajuda a validar se a cobranca esta clara o suficiente para ser resolvida no balcao.'
                     if first_payment else
@@ -439,6 +459,7 @@ def build_reception_workspace_snapshot(*, today):
             },
             {
                 'label': 'Feche orientando a proxima aula',
+                'chip_label': 'Aulas',
                 'summary': (
                     f'{next_session.title} e a proxima aula visivel para responder horario, coach e duvida rapida sem abrir gestao de agenda.'
                     if next_session else

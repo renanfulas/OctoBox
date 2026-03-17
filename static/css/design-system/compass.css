@@ -1,749 +1,258 @@
 /*
-ARQUIVO: page compass e pulse bar.
+ARQUIVO: page compass — barra contextual compacta.
 
 POR QUE ELE EXISTE:
-- Isola o contexto de página (título, stats) e a barra de atalhos operacionais (pulse).
+- Mostra onde o usuario esta (eyebrow + titulo) e os atalhos
+  operacionais (pulse chips) numa unica linha.
 
 O QUE ESTE ARQUIVO FAZ:
-1. .page-compass com título, subtítulo, tags e stats.
-2. Compass-pulse: faixa de chips na base do compass.
-3. Pulse chips com variantes (priority, pending, next-action).
-4. Animação hover: badge numérico colapsa e hint expande.
+1. .page-compass: faixa horizontal, ~44px, flex, sticky abaixo da topbar.
+2. .compass-eyebrow-pill: badge do contexto da secao.
+3. .page-compass-title: titulo do escopo atual.
+4. .compass-pulse: chips inline alinhados a direita.
+5. Variantes de cor por .pulse-priority / .pulse-pending / .pulse-next-action.
 
 PONTOS CRITICOS:
-- Hover agora funciona como aprimoramento em ponteiro fino; em touch/mobile o hint fica visível por padrão.
-- Breakpoint 640px reduz padding do compass.
-- Page compass segue contrato de duas linhas maximas para titulo e copy.
+- A barra e global — mudancas aqui afetam todas as paginas.
+- Em mobile (<=640px) colapsa para duas linhas (contexto + chips).
 */
 
+/* ── Compass bar ── */
+
 .page-compass {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(240px, 292px);
-    gap: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
     margin-bottom: var(--section-gap);
-    padding: clamp(14px, 1.35vw, 18px) clamp(14px, 1.35vw, 18px) 0;
-    border-radius: 22px;
+    padding: 6px clamp(12px, 1.2vw, 16px);
+    border-radius: var(--radius-card);
     border: 1px solid var(--line);
-    background:
-        radial-gradient(circle at top right, rgba(41, 103, 163, 0.08), transparent 28%),
-        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.06), transparent 22%),
-        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(245, 249, 253, 0.98));
+    background: var(--surface);
     box-shadow: var(--shadow-soft);
-    backdrop-filter: blur(14px);
     position: relative;
     z-index: 1;
-    overflow: visible;
 }
 
-.page-compass-main {
-    display: grid;
-    gap: 4px;
-    min-width: 0;
-    align-content: start;
-    justify-items: start;
-    text-align: left;
-}
+/* ── Context: eyebrow + title ── */
 
-.page-compass-main > div:first-child {
-    display: grid;
-    gap: 6px;
-    max-width: 620px;
-    justify-items: start;
-}
-
-.page-compass-actions {
-    display: none;
-}
-
-.page-compass-title {
-    margin: 0;
-    max-width: 16ch;
-    font-size: clamp(1.44rem, 2.1vw, 2rem);
-    line-height: 1.02;
-    letter-spacing: -0.04em;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    overflow: hidden;
-}
-
-.page-compass-copy {
-    margin: 0;
-    max-width: 52ch;
-    color: var(--muted);
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
-    line-clamp: 1;
-    overflow: hidden;
-}
-
-.page-compass-tags {
+.page-compass-context {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
     gap: 10px;
-}
-
-.page-compass-stats {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-    width: min(100%, 292px);
     min-width: 0;
-    max-width: 292px;
-    align-content: start;
-    align-self: start;
-    justify-self: end;
-    padding: 10px 12px;
-    border: 1px solid rgba(52, 71, 70, 0.1);
-    border-radius: 16px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(246, 249, 253, 0.42));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.46);
+    flex-shrink: 0;
 }
 
-.page-compass-stat {
+.compass-eyebrow-pill {
     display: inline-flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 1px;
-    padding: 6px 10px;
-    min-height: 40px;
-    white-space: nowrap;
-    text-align: center;
-    border-radius: 0;
-    border: 0;
-    background: transparent;
-    box-shadow: none;
-}
-
-.page-compass-stat + .page-compass-stat {
-    border-left: 1px solid rgba(52, 71, 70, 0.12);
-}
-
-.page-compass-stat-label {
-    display: block;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--brand) 10%, transparent);
+    color: var(--brand);
     font-size: 0.58rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    font-weight: 700;
-    white-space: nowrap;
-}
-
-.page-compass-stat-value {
-    display: block;
-    margin-top: 0;
-    font-size: 0.88rem;
-    line-height: 1.02;
-    letter-spacing: -0.03em;
-    white-space: nowrap;
-}
-
-/* ── Pulse bar ── */
-
-.compass-pulse {
-    --pulse-gap: 6px;
-    --pulse-chip-padding: 7px 10px;
-    --pulse-chip-min-height: 30px;
-    --pulse-hint-width: clamp(180px, 18vw, 232px);
-    grid-column: 1 / -1;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    margin-top: 0;
-    padding: 10px 0 4px;
-    border-top: 1px solid rgba(52, 71, 70, 0.1);
-    position: relative;
-    z-index: 4;
-    isolation: auto;
-}
-
-.compass-pulse--dashboard,
-.compass-pulse--dashboard-reception {
-    --pulse-chip-min-height: 30px;
-}
-
-.compass-pulse--students,
-.compass-pulse--student-form {
-    --pulse-chip-min-height: 30px;
-}
-
-.compass-pulse--finance,
-.compass-pulse--finance-plan-form {
-    --pulse-chip-min-height: 31px;
-}
-
-.compass-pulse--class-grid {
-    --pulse-chip-min-height: 30px;
-}
-
-.compass-pulse--operations-owner {
-    --pulse-chip-min-height: 30px;
-}
-
-.compass-pulse--operations-manager {
-    --pulse-chip-min-height: 31px;
-}
-
-.compass-pulse--operations-coach {
-    --pulse-chip-min-height: 30px;
-}
-
-.compass-pulse--operations-reception,
-.compass-pulse--operations-reception-preview {
-    --pulse-chip-min-height: 31px;
-}
-
-.compass-pulse--access,
-.compass-pulse--system-map,
-.compass-pulse--admin {
-    --pulse-chip-min-height: 30px;
-}
-
-.pulse-chip {
-    position: relative;
-    z-index: 1;
-    display: inline-grid;
-    grid-template-columns: auto;
-    grid-template-areas:
-        "head";
-    column-gap: 0;
-    row-gap: 0;
-    align-items: center;
-    align-content: center;
-    width: fit-content;
-    max-width: min(100%, 100%);
-    min-height: var(--pulse-chip-min-height);
-    padding: var(--pulse-chip-padding);
-    border-radius: 16px;
-    border: 1px solid transparent;
-    text-decoration: none;
-    line-height: 1;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    overflow: visible;
-    isolation: isolate;
-    transition: transform 0.18s ease, box-shadow 0.22s ease, border-color 0.22s ease, background-color 0.22s ease, padding 0.22s ease;
-}
-
-.pulse-chip + .pulse-chip {
-    margin-left: 0;
-}
-
-body[data-theme="dark"] .page-compass {
-    background:
-        radial-gradient(circle at top right, rgba(41, 103, 163, 0.12), transparent 28%),
-        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.08), transparent 22%),
-        linear-gradient(145deg, rgba(20, 32, 46, 0.98), rgba(12, 20, 30, 0.98));
-}
-
-body[data-theme="dark"] .page-compass-stats {
-    border-color: rgba(163, 194, 224, 0.16);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(7, 14, 22, 0.12));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-.pulse-chip::after {
-    display: none;
-}
-
-.pulse-chip:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.10);
-}
-
-.pulse-chip:active {
-    transform: scale(0.99);
-}
-
-.pulse-chip--finance,
-.pulse-chip--finance-plan-form {
-    backdrop-filter: blur(6px);
-}
-
-.pulse-head {
-    grid-area: head;
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    width: fit-content;
-    min-width: 0;
-}
-
-.pulse-label {
-    display: block;
-    min-width: 0;
-    font-size: 0.5rem;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     line-height: 1;
     white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.page-compass-title {
+    margin: 0;
+    font-size: clamp(0.92rem, 1.2vw, 1.1rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Pulse chips ── */
+
+.compass-pulse {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.pulse-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    text-decoration: none;
+    line-height: 1;
+    white-space: nowrap;
+    transition: transform 0.15s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.pulse-label {
+    font-size: 0.56rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1;
 }
 
 .pulse-number {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 11px;
-    width: auto;
-    height: 11px;
-    padding: 0 3px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 4px;
     border-radius: 999px;
-    border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
     background: rgba(255, 255, 255, 0.92);
-    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
-    font-size: 0.44rem;
+    border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+    font-size: 0.5rem;
     font-weight: 900;
     font-variant-numeric: tabular-nums;
     line-height: 1;
     text-align: center;
     flex-shrink: 0;
-    transition: transform 0.2s ease, box-shadow 0.22s ease, background-color 0.22s ease, border-color 0.22s ease;
 }
 
 .pulse-chip:not(.has-count) .pulse-number {
     display: none;
 }
 
-.pulse-hint {
-    display: block;
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 0;
-    top: auto;
-    z-index: 80;
-    width: var(--pulse-hint-width);
-    min-width: 0;
-    max-width: var(--pulse-hint-width);
-    height: auto;
-    border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
-    border-radius: 16px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 245, 239, 0.98));
-    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.12);
-    opacity: 0;
-    overflow: hidden;
-    pointer-events: none;
-    contain: paint;
-    transform: translateY(6px);
-    transition: max-width 0.24s ease, opacity 0.18s ease, transform 0.18s ease;
-}
-
-.pulse-hint-copy {
-    display: block;
-    height: auto;
-    padding: 7px 9px;
-    min-width: 0;
-    color: color-mix(in srgb, var(--ink) 86%, transparent);
-    font-size: 0.62rem;
-    font-weight: 600;
-    line-height: 1.28;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    opacity: 0;
-    transform: translateY(4px);
-    transition: opacity 0.16s ease 0.05s, transform 0.18s ease 0.05s;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-}
+/* ── Chip tones ── */
 
 .pulse-priority {
     color: #8d2b1a;
-    border-color: rgba(184, 92, 56, 0.18);
-    background: linear-gradient(180deg, rgba(255, 241, 236, 0.98), rgba(255, 229, 220, 0.92));
-    box-shadow: 0 12px 26px rgba(184, 92, 56, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.48);
+    border-color: rgba(234, 88, 12, 0.18);
+    background: rgba(234, 88, 12, 0.08);
 }
 
 .pulse-pending {
     color: #235a86;
-    border-color: rgba(41, 103, 163, 0.16);
-    background: linear-gradient(180deg, rgba(243, 248, 255, 0.98), rgba(233, 243, 255, 0.92));
+    border-color: rgba(37, 99, 235, 0.16);
+    background: rgba(37, 99, 235, 0.06);
 }
 
 .pulse-next-action {
-    color: color-mix(in srgb, var(--ink) 76%, transparent);
-    border-color: rgba(98, 127, 161, 0.12);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(246, 249, 252, 0.88));
+    color: color-mix(in srgb, var(--ink) 72%, transparent);
+    border-color: var(--line);
+    background: var(--bg);
 }
 
-body[data-theme="dark"] .page-compass {
-    background:
-        radial-gradient(circle at top right, rgba(184, 92, 56, 0.2), transparent 34%),
-        radial-gradient(circle at bottom left, rgba(40, 92, 142, 0.18), transparent 26%),
-        linear-gradient(145deg, rgba(18, 27, 36, 0.94), rgba(27, 37, 49, 0.96));
-    border-color: rgba(199, 186, 167, 0.14);
-    box-shadow: var(--shadow-soft);
+.pulse-clear {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #059669;
+    padding: 4px 0;
 }
 
-body[data-theme="dark"] .page-compass-stat {
-    background: transparent;
-    border-color: transparent;
-    box-shadow: none;
-}
-
-body[data-theme="dark"] .page-compass-stats {
-    background: rgba(255, 255, 255, 0.03);
-    border-color: rgba(199, 186, 167, 0.12);
-}
-
-body[data-theme="dark"] .page-compass-stat + .page-compass-stat {
-    border-left-color: rgba(199, 186, 167, 0.14);
-}
-
-body[data-theme="dark"] .compass-pulse {
-    border-top-color: rgba(199, 186, 167, 0.14);
-}
-
-body[data-theme="dark"] .pulse-chip {
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-body[data-theme="dark"] .pulse-number {
-    background: rgba(12, 18, 26, 0.82);
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
-}
-
-body[data-theme="dark"] .pulse-hint-copy {
-    color: color-mix(in srgb, var(--ink) 90%, transparent);
-}
-
-body[data-theme="dark"] .pulse-hint {
-    border-color: rgba(199, 186, 167, 0.16);
-    background: linear-gradient(180deg, rgba(24, 34, 47, 0.98), rgba(17, 25, 35, 0.98));
-    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
-}
-
-body[data-theme="dark"] .pulse-priority {
-    color: #ffd8ce;
-    border-color: rgba(248, 136, 107, 0.22);
-    background: linear-gradient(180deg, rgba(95, 34, 24, 0.64), rgba(52, 18, 13, 0.4));
-}
-
-body[data-theme="dark"] .pulse-pending {
-    color: #d7ebff;
-    border-color: rgba(89, 156, 221, 0.22);
-    background: linear-gradient(180deg, rgba(24, 54, 90, 0.62), rgba(13, 28, 47, 0.38));
-}
-
-body[data-theme="dark"] .pulse-next-action {
-    color: #dbe5f0;
-    border-color: rgba(163, 194, 224, 0.16);
-    background: linear-gradient(180deg, rgba(33, 46, 61, 0.58), rgba(18, 27, 38, 0.36));
-}
+/* ── Hover (pointer devices only) ── */
 
 @media (hover: hover) and (pointer: fine) {
     .pulse-chip:hover,
     .pulse-chip:focus-visible {
         transform: translateY(-1px);
-        z-index: 40;
-    }
-
-    .pulse-chip:hover .pulse-number,
-    .pulse-chip:focus-visible .pulse-number {
-        transform: scale(1.04);
-        background: rgba(255, 255, 255, 0.98);
-        box-shadow: 0 10px 18px rgba(15, 23, 42, 0.12);
-    }
-
-    .pulse-chip:hover .pulse-hint,
-    .pulse-chip:focus-visible .pulse-hint {
-        max-width: var(--pulse-hint-width);
-        opacity: 1;
-        transform: translateY(0);
-        pointer-events: auto;
-    }
-
-    .pulse-chip:hover .pulse-hint-copy,
-    .pulse-chip:focus-visible .pulse-hint-copy {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    .pulse-priority:hover,
-    .pulse-priority:focus-visible,
-    .pulse-pending:hover,
-    .pulse-pending:focus-visible,
-    .pulse-next-action:hover,
-    .pulse-next-action:focus-visible {
         box-shadow: var(--shadow-soft);
     }
-}
 
-@media (hover: none), (pointer: coarse) {
-    .page-compass-stats {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-        padding: 0;
-        border: 0;
-        border-radius: 0;
-        background: transparent;
-        box-shadow: none;
+    .pulse-chip:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.10);
     }
 
-    .page-compass-stat {
-        display: block;
-        padding: 10px 12px 11px;
-        border-radius: 15px;
-        border: 1px solid rgba(112, 96, 81, 0.12);
-        background: rgba(255, 255, 255, 0.5);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.44);
+    .pulse-chip:active {
+        transform: scale(0.98);
     }
 
-    .page-compass-stat + .page-compass-stat {
-        border-left: 1px solid rgba(112, 96, 81, 0.12);
-    }
-
-    .page-compass-stat span,
-    .page-compass-stat strong {
-        display: block;
-    }
-
-    .page-compass-stat strong {
-        margin-top: 4px;
-    }
-
-    .pulse-chip {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-areas:
-            "head"
-            "hint hint";
-        width: 100%;
-        max-width: none;
-        gap: 8px 10px;
-        padding: 9px 11px;
-        border-radius: 18px;
-        border: 1px solid rgba(112, 96, 81, 0.14);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58), 0 3px 10px rgba(191, 161, 129, 0.04);
-    }
-
-    .pulse-chip + .pulse-chip {
-        margin-left: 0;
-        padding-left: 11px;
-    }
-
-    .pulse-chip + .pulse-chip::before {
-        display: none;
-    }
-
-    .pulse-hint {
-        position: static;
-        width: 100%;
-        min-width: 0;
-        max-width: none;
-        height: auto;
-        border: 0;
-        border-radius: 0;
-        background: transparent;
-        box-shadow: none;
-        opacity: 1;
-        pointer-events: auto;
-        transform: translateY(0);
-        contain: initial;
-    }
-
-    .pulse-hint-copy {
-        padding: 10px 0 0;
-        border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
-        border-left: 0;
-        border-right: 0;
-        border-bottom: 0;
-        border-radius: 0;
-        background: transparent;
-        box-shadow: none;
-        height: auto;
-        font-size: 0.72rem;
-        font-weight: 500;
-        line-height: 1.45;
-        opacity: 1;
-        transform: none;
-        white-space: normal;
-        text-overflow: clip;
+    .pulse-chip:hover .pulse-number {
+        background: rgba(255, 255, 255, 1);
+        box-shadow: 0 4px 8px rgba(15, 23, 42, 0.08);
     }
 }
 
-.pulse-clear {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #059669;
-    padding: 5px 0;
+/* ── Dark theme ── */
+
+body[data-theme="dark"] .page-compass {
+    background: var(--surface);
+    border-color: var(--line);
+    box-shadow: var(--shadow-soft);
 }
 
-@media (min-width: 961px) {
-    .page-compass-main {
-        justify-items: start;
-        text-align: left;
-    }
-
-    .page-compass-main > div:first-child {
-        margin-inline: 0;
-    }
-
-    .page-compass-copy,
-    .page-compass-tags {
-        margin-inline: 0;
-    }
-
-    .page-compass-tags {
-        justify-content: flex-start;
-    }
-
-    .page-compass-stats {
-        justify-self: end;
-        justify-content: center;
-    }
-
-    .page-compass-stat {
-        justify-content: center;
-        text-align: center;
-    }
-
-    .compass-pulse {
-        --pulse-chip-padding: 3px 8px;
-        --pulse-chip-min-height: 26px;
-        --pulse-hint-width: clamp(190px, 18vw, 250px);
-        padding-top: 6px;
-        padding-bottom: 4px;
-    }
-
-    .pulse-chip + .pulse-chip {
-        margin-left: 5px;
-        padding-left: 12px;
-    }
-
-    .pulse-label {
-        font-size: 0.56rem;
-        letter-spacing: 0.09em;
-    }
-
-    .pulse-number {
-        min-width: 12px;
-        height: 12px;
-        padding: 0 4px;
-        font-size: 0.48rem;
-    }
-
-    .pulse-hint-copy {
-        font-size: 0.66rem;
-        line-height: 1.32;
-    }
+body[data-theme="dark"] .compass-eyebrow-pill {
+    background: color-mix(in srgb, var(--brand) 14%, transparent);
+    color: color-mix(in srgb, var(--brand) 80%, white);
 }
 
-/* ---------- Responsive ---------- */
-@media (max-width: 1180px) {
-    .compass-pulse {
-        gap: 8px;
-    }
+body[data-theme="dark"] .pulse-number {
+    background: rgba(12, 18, 26, 0.82);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
-@media (max-width: 960px) {
-    .page-compass {
-        grid-template-columns: 1fr;
-    }
-
-    .page-compass-actions {
-        display: none;
-    }
-
-    .page-compass-stats {
-        width: 100%;
-        min-width: 0;
-        justify-self: stretch;
-    }
-
-    .compass-pulse {
-        gap: 8px;
-    }
+body[data-theme="dark"] .pulse-priority {
+    color: #ffd8ce;
+    border-color: rgba(234, 88, 12, 0.22);
+    background: rgba(234, 88, 12, 0.12);
 }
+
+body[data-theme="dark"] .pulse-pending {
+    color: #d7ebff;
+    border-color: rgba(37, 99, 235, 0.22);
+    background: rgba(37, 99, 235, 0.1);
+}
+
+body[data-theme="dark"] .pulse-next-action {
+    color: #dbe5f0;
+    border-color: var(--line);
+    background: var(--surface);
+}
+
+/* ── Responsive ── */
 
 @media (max-width: 760px) {
-    .compass-pulse {
-        display: grid;
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 640px) {
     .page-compass {
-        padding: 18px;
-    }
-
-    .page-compass-copy {
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-    }
-
-    .page-compass-stats {
-        grid-template-columns: 1fr;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px 12px;
     }
 
     .compass-pulse {
-        gap: 10px;
-    }
-
-    .pulse-chip {
-        min-height: 0;
-    }
-
-    .pulse-head {
-        gap: 10px;
-    }
-
-    .pulse-number {
-        min-width: 32px;
-        width: 32px;
-        height: 32px;
-        font-size: 0.76rem;
-    }
-
-    .pulse-label {
-        white-space: normal;
-    }
-
-    .pulse-hint-copy {
-        font-size: 0.8rem;
-        line-height: 1.45;
+        margin-left: 0;
+        flex-wrap: wrap;
+        width: 100%;
     }
 }
 
 @media (max-width: 480px) {
     .page-compass {
-        padding: 16px;
-        gap: 16px;
+        padding: 8px 10px;
+        gap: 6px;
     }
 
-    .page-compass-copy {
-        margin-top: 8px;
-        line-height: 1.55;
+    .page-compass-title {
+        font-size: 0.88rem;
     }
 
     .compass-pulse {
-        margin-top: 10px;
-        padding-top: 14px;
-        padding-bottom: 4px;
+        gap: 4px;
     }
 
     .pulse-chip {
-        gap: 8px;
-        padding: 12px;
+        padding: 4px 8px;
     }
 
+    .pulse-label {
+        font-size: 0.5rem;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .pulse-chip,
-    .pulse-number,
-    .pulse-hint {
+    .pulse-number {
         transition: none;
     }
 }

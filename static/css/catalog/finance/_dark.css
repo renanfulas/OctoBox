@@ -1,0 +1,118 @@
+/*
+ARQUIVO: overrides de dark mode genérico do financeiro.
+
+POR QUE ELE EXISTE:
+- Centraliza todos os ajustes body[data-theme="dark"] que NÃO pertencem à assinatura.
+- Inclui dark mode de boards, command cards, focus cards e o bloco bulk.
+
+PONTOS CRITICOS:
+- Nunca duplicar seletores que já estejam em _signature.css (assinatura dark).
+*/
+
+/* ── Board sections + command/focus dark ── */
+
+body[data-theme="dark"] .finance-board-filter,
+body[data-theme="dark"] .finance-board-rail,
+body[data-theme="dark"] .finance-board-queue,
+body[data-theme="dark"] .finance-board-trend,
+body[data-theme="dark"] .finance-board-trend-side,
+body[data-theme="dark"] .finance-board-portfolio,
+body[data-theme="dark"] .finance-command-card,
+body[data-theme="dark"] .finance-focus-card {
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .finance-command-card:nth-child(1) {
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .finance-command-card:nth-child(2) {
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .finance-command-card:nth-child(3) {
+    background: var(--surface);
+}
+
+/* ── Bulk dark mode ── */
+
+body[data-theme="dark"] .finance-shell .operation-hero,
+body[data-theme="dark"] .finance-shell .operation-hero-panel,
+body[data-theme="dark"] .finance-shell .table-card,
+body[data-theme="dark"] .finance-shell .card,
+body[data-theme="dark"] .finance-shell .finance-action-card,
+body[data-theme="dark"] .finance-shell .finance-alert-card,
+body[data-theme="dark"] .finance-shell .finance-action-message,
+body[data-theme="dark"] .finance-shell .finance-ops-metric-card,
+body[data-theme="dark"] .finance-shell .finance-plan-card,
+body[data-theme="dark"] .finance-shell .finance-radar-chip,
+body[data-theme="dark"] .finance-shell .finance-plan-focus-item,
+body[data-theme="dark"] .finance-shell .finance-summary-chip,
+body[data-theme="dark"] .finance-shell .finance-alert-stat,
+body[data-theme="dark"] .finance-shell .finance-chart-column,
+body[data-theme="dark"] .finance-shell .finance-data-chip,
+body[data-theme="dark"] .finance-shell .finance-movement-item,
+body[data-theme="dark"] .finance-shell .finance-mix-card,
+body[data-theme="dark"] .finance-shell .finance-plan-stat,
+body[data-theme="dark"] .finance-shell .finance-guide-card,
+body[data-theme="dark"] .finance-shell .finance-guide-note,
+body[data-theme="dark"] .finance-shell .finance-filter-rule-card,
+body[data-theme="dark"] .finance-shell .finance-section-intro {
+    color: var(--ink);
+    border-color: rgba(199, 186, 167, 0.14);
+    background: var(--surface);
+    box-shadow: 0 20px 42px rgba(0, 0, 0, 0.22);
+}
+
+body[data-theme="dark"] .finance-shell .finance-action-card,
+body[data-theme="dark"] .finance-shell .finance-alert-card,
+body[data-theme="dark"] .finance-shell .finance-plan-card,
+body[data-theme="dark"] .finance-shell .finance-radar-chip,
+body[data-theme="dark"] .finance-shell .finance-ops-metric-card,
+body[data-theme="dark"] .finance-shell .finance-plan-focus-item {
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .finance-shell .finance-action-message {
+    background: var(--surface);
+    border-color: rgba(214, 164, 112, 0.18);
+}
+
+body[data-theme="dark"] .finance-shell .button.secondary {
+    color: rgba(245, 239, 228, 0.94);
+    border-color: rgba(199, 186, 167, 0.18);
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .finance-shell .button.secondary:hover {
+    color: #fff8ef;
+    border-color: rgba(214, 164, 112, 0.3);
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .finance-shell .finance-inline-currency,
+body[data-theme="dark"] .finance-shell .history-header,
+body[data-theme="dark"] .finance-shell .metric,
+body[data-theme="dark"] .finance-shell .operation-card-title,
+body[data-theme="dark"] .finance-shell .operation-card-copy,
+body[data-theme="dark"] .finance-shell .body-copy strong {
+    color: var(--ink);
+}
+
+body[data-theme="dark"] .finance-shell .orange-glow {
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .finance-shell .green-glow {
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .finance-shell .blue-glow,
+body[data-theme="dark"] .finance-shell .info-card {
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .finance-shell .metric-spark,
+body[data-theme="dark"] .finance-shell .metric-pulse {
+    opacity: 0.45;
+}

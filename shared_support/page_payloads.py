@@ -36,34 +36,13 @@ def build_page_assets(*, css=None, js=None):
 
 PAGE_HERO_CONTENT_RULES = {
     'max_primary_actions': 3,
-    'max_side_stats': 4,
-    'max_side_grid_items': 4,
     'max_title_lines': 2,
     'max_copy_lines': 2,
-    'max_panel_copy_lines': 2,
 }
 
 
 def _limit_collection(items, *, max_items):
     return list(items or [])[:max_items]
-
-
-def _normalize_hero_side(side):
-    normalized = dict(side or {})
-
-    if normalized.get('stats'):
-        normalized['stats'] = _limit_collection(
-            normalized.get('stats'),
-            max_items=PAGE_HERO_CONTENT_RULES['max_side_stats'],
-        )
-
-    if normalized.get('items'):
-        normalized['items'] = _limit_collection(
-            normalized.get('items'),
-            max_items=PAGE_HERO_CONTENT_RULES['max_side_grid_items'],
-        )
-
-    return normalized
 
 
 def build_page_hero(
@@ -72,7 +51,6 @@ def build_page_hero(
     title,
     copy,
     actions=None,
-    side=None,
     aria_label=None,
     classes=None,
     heading_level='h2',
@@ -86,7 +64,6 @@ def build_page_hero(
         'title': title,
         'copy': copy,
         'actions': _limit_collection(actions, max_items=PAGE_HERO_CONTENT_RULES['max_primary_actions']),
-        'side': _normalize_hero_side(side),
         'aria_label': aria_label or title,
         'classes': classes or [],
         'heading_level': heading_level,

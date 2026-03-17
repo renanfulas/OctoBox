@@ -203,7 +203,7 @@ def build_system_map_page():
                 'static/css/design-system.css',
                 'static/css/catalog/shared.css',
                 'static/css/catalog/students.css',
-                'static/css/catalog/finance.css',
+                'static/css/catalog/finance/',
                 'static/css/catalog/class-grid.css',
             ],
             'reading_principles': [

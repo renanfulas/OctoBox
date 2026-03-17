@@ -1,0 +1,247 @@
+/*
+ARQUIVO: tema de assinatura visual do financeiro (copper/teal/ink).
+
+POR QUE ELE EXISTE:
+- Isola toda a camada de "signature theme" que dá identidade visual ao financeiro.
+- Variáveis, hero signature, card signatures, e dark mode da assinatura.
+
+PONTOS CRITICOS:
+- Este arquivo DEVE ser carregado DEPOIS dos demais para que a camada
+  de assinatura sobrescreva corretamente os estilos base.
+*/
+
+/* ── Variáveis de assinatura ── */
+
+.finance-shell {
+    --finance-signature-ink: #132132;
+    --finance-signature-teal: #0f766e;
+    --finance-signature-cyan: #2967a3;
+    --finance-signature-copper: #c46734;
+    --finance-signature-line: rgba(19, 33, 50, 0.1);
+    --finance-signature-shadow: rgba(19, 33, 50, 0.12);
+}
+
+/* ── Hero signature ── */
+
+.finance-shell .finance-hero {
+    border-color: var(--finance-signature-line);
+    background: var(--surface);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.88),
+        0 26px 56px rgba(19, 33, 50, 0.1);
+}
+
+.finance-shell .finance-hero::before {
+    width: 6px;
+    background: var(--finance-signature-copper);
+}
+
+.finance-shell .finance-hero::after {
+    inset: auto -7% -26% auto;
+    width: 300px;
+    height: 300px;
+    background: transparent;
+}
+
+.finance-shell .finance-hero .eyebrow,
+.finance-shell .finance-hero .hero-side-stat span {
+    color: rgba(19, 33, 50, 0.58);
+}
+
+.finance-shell .finance-hero :is(h1, h2),
+.finance-shell .finance-metric-card .metric,
+.finance-shell .finance-ops-metric-card .metric,
+.finance-shell .finance-action-copy strong {
+    color: var(--finance-signature-ink);
+}
+
+.finance-shell .finance-hero .operation-hero-copy,
+.finance-shell .finance-metric-card .card-copy,
+.finance-shell .finance-metric-card .meta-text-sm,
+.finance-shell .finance-action-body .meta-text-sm,
+.finance-shell .finance-summary-chip p,
+.finance-shell .finance-data-chip p {
+    color: rgba(19, 33, 50, 0.72);
+}
+
+/* ── Buttons signature ── */
+
+.finance-shell .finance-hero .actions .button:not(.secondary),
+.finance-shell .finance-card-actions-compact .button:not(.secondary),
+.finance-shell .finance-support-actions .button:not(.secondary) {
+    border-color: rgba(15, 118, 110, 0.3);
+    background: var(--finance-signature-teal);
+    box-shadow: 0 18px 30px rgba(15, 118, 110, 0.22);
+}
+
+.finance-shell .finance-hero .actions .button.secondary,
+.finance-shell .finance-card-actions-compact .button.secondary,
+.finance-shell .finance-support-actions .button.secondary {
+    border-color: rgba(19, 33, 50, 0.1);
+    background: var(--surface);
+    color: var(--finance-signature-ink);
+}
+
+/* ── Hero panel signature (dark panel inside hero) ── */
+
+.finance-shell .finance-hero .operation-hero-panel,
+.finance-shell .finance-hero-panel.operation-hero-panel {
+    border-color: rgba(15, 118, 110, 0.18);
+    background: var(--finance-signature-ink);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 22px 44px rgba(19, 33, 50, 0.18);
+}
+
+.finance-shell .finance-hero .operation-hero-panel .eyebrow,
+.finance-shell .finance-hero .operation-hero-panel .operation-card-copy,
+.finance-shell .finance-hero .operation-hero-panel .hero-side-stat span,
+.finance-shell .finance-hero .operation-hero-panel .hero-side-stat strong {
+    color: rgba(245, 249, 252, 0.92);
+}
+
+.finance-shell .finance-hero .hero-side-stat {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ── Card signatures (metric, ops, filter-summary, radar, action) ── */
+
+.finance-shell .finance-metric-card,
+.finance-shell .finance-ops-metric-card,
+.finance-shell .finance-filter-summary-card,
+.finance-shell .finance-radar-card,
+.finance-shell .finance-action-card {
+    position: relative;
+    overflow: hidden;
+    border-color: var(--finance-signature-line);
+    background: var(--surface);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 18px 38px rgba(19, 33, 50, 0.08);
+}
+
+.finance-shell .finance-metric-card::before,
+.finance-shell .finance-ops-summary-card::before,
+.finance-shell .finance-radar-card::before,
+.finance-shell .finance-action-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 5px;
+    background: var(--finance-signature-copper);
+}
+
+.finance-shell .finance-metric-card::after,
+.finance-shell .finance-action-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -34px -42px auto;
+    width: 150px;
+    height: 150px;
+    border-radius: 999px;
+    background: transparent;
+    pointer-events: none;
+}
+
+.finance-shell .finance-metric-card.orange-glow {
+    --finance-card-aura: rgba(196, 103, 52, 0.18);
+}
+
+.finance-shell .finance-metric-card.green-glow {
+    --finance-card-aura: rgba(15, 118, 110, 0.18);
+}
+
+.finance-shell .finance-metric-card.blue-glow {
+    --finance-card-aura: rgba(41, 103, 163, 0.18);
+}
+
+.finance-shell .finance-ops-summary-card {
+    background: var(--surface);
+}
+
+.finance-shell .finance-radar-card {
+    background: var(--surface);
+}
+
+/* ── Chip/stat/message signatures ── */
+
+.finance-shell .finance-summary-chip,
+.finance-shell .finance-data-chip,
+.finance-shell .finance-alert-stat,
+.finance-shell .finance-action-message {
+    border-color: rgba(19, 33, 50, 0.08);
+    background: var(--surface);
+}
+
+.finance-shell .finance-action-message {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+/* ── Dark mode signature ── */
+
+body[data-theme="dark"] .finance-shell {
+    --finance-signature-line: rgba(144, 181, 205, 0.16);
+    --finance-signature-shadow: rgba(0, 0, 0, 0.34);
+}
+
+body[data-theme="dark"] .finance-shell .finance-hero {
+    border-color: rgba(144, 181, 205, 0.16);
+    background: var(--surface);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 28px 56px rgba(0, 0, 0, 0.32);
+}
+
+body[data-theme="dark"] .finance-shell .finance-hero .eyebrow,
+body[data-theme="dark"] .finance-shell .finance-hero .operation-hero-copy,
+body[data-theme="dark"] .finance-shell .finance-metric-card .card-copy,
+body[data-theme="dark"] .finance-shell .finance-metric-card .meta-text-sm,
+body[data-theme="dark"] .finance-shell .finance-action-body .meta-text-sm,
+body[data-theme="dark"] .finance-shell .finance-summary-chip p,
+body[data-theme="dark"] .finance-shell .finance-data-chip p,
+body[data-theme="dark"] .finance-shell .finance-hero .hero-side-stat span {
+    color: rgba(226, 236, 244, 0.72);
+}
+
+body[data-theme="dark"] .finance-shell .finance-hero :is(h1, h2),
+body[data-theme="dark"] .finance-shell .finance-metric-card .metric,
+body[data-theme="dark"] .finance-shell .finance-ops-metric-card .metric,
+body[data-theme="dark"] .finance-shell .finance-action-copy strong {
+    color: rgba(245, 249, 252, 0.96);
+}
+
+body[data-theme="dark"] .finance-shell .finance-hero .actions .button.secondary,
+body[data-theme="dark"] .finance-shell .finance-card-actions-compact .button.secondary,
+body[data-theme="dark"] .finance-shell .finance-support-actions .button.secondary {
+    border-color: rgba(144, 181, 205, 0.18);
+    background: var(--surface);
+    color: rgba(245, 249, 252, 0.9);
+}
+
+body[data-theme="dark"] .finance-shell .finance-hero .operation-hero-panel,
+body[data-theme="dark"] .finance-shell .finance-hero-panel.operation-hero-panel {
+    border-color: rgba(41, 103, 163, 0.22);
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .finance-shell .finance-metric-card,
+body[data-theme="dark"] .finance-shell .finance-ops-metric-card,
+body[data-theme="dark"] .finance-shell .finance-filter-summary-card,
+body[data-theme="dark"] .finance-shell .finance-radar-card,
+body[data-theme="dark"] .finance-shell .finance-action-card {
+    border-color: rgba(144, 181, 205, 0.16);
+    background: var(--surface);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 20px 40px rgba(0, 0, 0, 0.28);
+}
+
+body[data-theme="dark"] .finance-shell .finance-summary-chip,
+body[data-theme="dark"] .finance-shell .finance-data-chip,
+body[data-theme="dark"] .finance-shell .finance-alert-stat,
+body[data-theme="dark"] .finance-shell .finance-action-message {
+    border-color: rgba(144, 181, 205, 0.14);
+    background: var(--surface);
+}

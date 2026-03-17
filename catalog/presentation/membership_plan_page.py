@@ -19,6 +19,7 @@ def _build_membership_plan_focus(plan):
     return [
         {
             'label': 'Comece pelo coracao da oferta',
+            'chip_label': 'Plano',
             'summary': 'Nome, valor e ciclo precisam continuar legiveis para venda, cobranca e carteira sem depender de explicacao oral.',
             'pill_class': 'accent',
             'href': '#plan-form-core',
@@ -26,6 +27,7 @@ def _build_membership_plan_focus(plan):
         },
         {
             'label': 'Depois valide a entrega',
+            'chip_label': 'Comercial',
             'summary': 'A descricao comercial deve reduzir ambiguidade para recepcao, manager e leitura futura do proprio plano.',
             'pill_class': 'info',
             'href': '#plan-form-delivery',
@@ -33,6 +35,7 @@ def _build_membership_plan_focus(plan):
         },
         {
             'label': 'Feche com impacto na carteira',
+            'chip_label': 'Carteira',
             'summary': 'Status, ritmo semanal e leitura rapida precisam deixar claro se o plano fortalece a carteira ou so ocupa espaco visual.',
             'pill_class': 'warning' if plan.active else 'info',
             'href': '#plan-form-summary',
@@ -71,18 +74,6 @@ def build_membership_plan_page(*, form, plan, current_role_slug):
             {'label': 'Ver leitura rapida', 'href': '#plan-form-summary', 'kind': 'secondary'},
             {'label': 'Voltar para financeiro', 'href': reverse('finance-center'), 'kind': 'secondary'},
         ],
-        side={
-            'kind': 'stat-grid',
-            'eyebrow': 'Leitura instantanea',
-            'copy': 'Antes de salvar, confirme venda, cobranca e clareza do plano.',
-            'items': [
-                {'label': 'Status', 'value': plan_snapshot['status_label']},
-                {'label': 'Valor', 'value': plan_snapshot['price_display_short']},
-                {'label': 'Ciclo', 'value': plan_snapshot['billing_cycle_label_lower']},
-                {'label': 'Aulas', 'value': plan_snapshot['sessions_per_week']},
-            ],
-            'stack': True,
-        },
         aria_label='Plano comercial',
         classes=['finance-hero', 'finance-plan-page-hero'],
         heading_level='h1',
@@ -137,5 +128,16 @@ def build_membership_plan_page(*, form, plan, current_role_slug):
                 'admin': reverse('admin:boxcore_membershipplan_change', args=[plan.id]) if current_role_slug in (ROLE_OWNER, ROLE_DEV) else None,
             },
         },
-        assets=build_catalog_assets(css=['css/catalog/finance.css'], include_catalog_shared=True),
+        assets=build_catalog_assets(css=[
+            'css/catalog/finance/_shell.css',
+            'css/catalog/finance/_hero.css',
+            'css/catalog/finance/_metrics.css',
+            'css/catalog/finance/_cards.css',
+            'css/catalog/finance/_boards.css',
+            'css/catalog/finance/_plan-page.css',
+            'css/catalog/finance/_movements.css',
+            'css/catalog/finance/_dark.css',
+            'css/catalog/finance/_responsive.css',
+            'css/catalog/finance/_signature.css',
+        ], include_catalog_shared=True),
     )

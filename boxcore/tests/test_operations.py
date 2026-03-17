@@ -371,7 +371,6 @@ class OperationWorkspaceTests(TestCase):
         response = self.client.get(reverse('owner-workspace'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Resumo rapido')
         self.assertContains(response, 'Caixa vencido: R$ 299,90')
         self.assertContains(response, '1 cobranca(s) estao atrasadas e pedem contato.')
 

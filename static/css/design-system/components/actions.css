@@ -27,50 +27,47 @@ POR QUE ELE EXISTE:
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    border-radius: 999px;
-    padding: 13px 20px;
-    min-height: 48px;
-    border: 1px solid transparent;
-    background: linear-gradient(145deg, #d1733e, var(--brand) 42%, rgba(15, 118, 110, 0.96));
-    color: #fffdf8;
-    font-weight: 700;
+    border-radius: 8px;
+    padding: 10px 18px;
+    min-height: 40px;
+    border: none;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.875rem;
     line-height: 1.2;
     text-align: center;
-    box-shadow: 0 16px 28px rgba(19, 33, 42, 0.18);
-    transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
     cursor: pointer;
 }
 
 .button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 20px 34px rgba(19, 33, 42, 0.22);
-    filter: saturate(1.06);
+    box-shadow: var(--shadow-lift);
+    background: var(--brand-dark);
 }
 
 .button:focus-visible {
     outline: none;
-    border-color: rgba(255, 255, 255, 0.55);
-    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.18), 0 20px 34px rgba(19, 33, 42, 0.22);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3), var(--shadow-soft);
 }
 
 .button.secondary {
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(247, 250, 253, 0.4)),
-        color-mix(in srgb, var(--surface-strong) 90%, transparent);
-    color: var(--brand-dark);
-    border-color: var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--line-strong);
     box-shadow: none;
 }
 
 .button.secondary:hover {
-    border-color: rgba(15, 118, 110, 0.26);
-    background: rgba(255, 255, 255, 0.96);
+    border-color: var(--brand);
+    color: var(--brand);
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .button.secondary {
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
-        color-mix(in srgb, var(--surface-strong) 94%, transparent);
+    background: var(--surface);
     color: var(--ink);
     border-color: var(--line-strong);
 }
@@ -102,4 +99,14 @@ body[data-theme="dark"] .button.secondary {
     .button.secondary {
         width: 100%;
     }
+}
+
+/* --- Button Motion Consistency --- */
+.button {
+    transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard), background var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard), color var(--motion-base) var(--ease-standard);
+}
+
+.button:active {
+    transform: translateY(0) scale(0.985);
+    transition-duration: var(--motion-fast);
 }

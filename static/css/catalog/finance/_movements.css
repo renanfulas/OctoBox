@@ -1,0 +1,31 @@
+/*
+ARQUIVO: estilos de movimentações financeiras.
+
+POR QUE ELE EXISTE:
+- Isola o painel, lista e items de movimentos recentes.
+*/
+
+.finance-movements-panel {
+    grid-column: 1 / -1;
+    padding-bottom: 22px;
+}
+
+.finance-movements-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+    grid-auto-rows: 1fr;
+}
+
+.finance-movement-item {
+    padding: 16px 18px;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: 8px;
+    align-content: start;
+    align-items: start;
+    border-radius: 20px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(255, 255, 255, 0.76);
+}

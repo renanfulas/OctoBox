@@ -97,6 +97,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
     operational_focus = [
         {
             'label': 'Comece pelo nucleo do cadastro',
+            'chip_label': 'Cadastro',
             'summary': 'Nome completo e WhatsApp ja destravam quase todo o fluxo. O restante so entra quando melhorar decisao, vinculo ou cobranca.',
             'pill_class': 'accent',
             'href': '#student-form-essential',
@@ -104,6 +105,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
         },
         {
             'label': 'Use o intake para reduzir atrito',
+            'chip_label': 'Perfil',
             'summary': (
                 f'Esta edicao ja nasceu de {selected_intake.full_name} e pode seguir com conversao guiada.'
                 if selected_intake else
@@ -115,6 +117,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
         },
         {
             'label': 'Feche com plano e cobranca',
+            'chip_label': 'Plano',
             'summary': (
                 f'{latest_enrollment.plan.name} ja esta ligado ao aluno e {len(recent_payments)} cobranca(s) recente(s) ajudam a ler o financeiro sem sair desta tela.'
                 if latest_enrollment else
@@ -145,18 +148,6 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             {'label': 'Ver plano e cobranca', 'href': '#student-form-plan', 'kind': 'secondary'},
             {'label': 'Voltar para alunos', 'href': '/alunos/', 'kind': 'secondary'},
         ],
-        side={
-            'kind': 'stat-grid',
-            'eyebrow': 'Leitura instantanea',
-            'copy': 'Mostra se e cadastro, conversao de lead ou ajuste de vinculo.',
-            'items': [
-                {'label': 'Modo', 'value': 'edicao' if student_object else 'cadastro'},
-                {'label': 'Intake', 'value': 'ligado' if selected_intake else 'livre'},
-                {'label': 'Plano atual', 'value': 'ativo' if latest_enrollment else 'pendente'},
-                {'label': 'Pagamentos', 'value': len(recent_payments)},
-            ],
-            'stack': True,
-        },
         aria_label='Ficha do aluno',
         classes=['catalog-hero', 'student-hero', 'student-form-hero'],
     )

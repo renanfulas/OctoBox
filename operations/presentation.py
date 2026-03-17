@@ -18,25 +18,25 @@ def _build_owner_hero_content(snapshot):
 
     if primary_key == 'intakes':
         return {
-            'title': 'Abra as entradas.',
+            'title': 'Entre pela fila de novas entradas.',
             'copy': (
-                'Tem gente esperando resposta agora.'
+                'Existe demanda esperando resposta agora.'
                 if metrics.get('pending_intakes')
                 else 'A fila de entradas esta limpa agora.'
             ),
         }
     if primary_key == 'payments':
         return {
-            'title': 'Veja as cobrancas.',
+            'title': 'Proteja a receita antes do resto.',
             'copy': (
-                'Tem cobranca atrasada pedindo contato agora.'
+                'Ha cobranca atrasada pedindo contato agora.'
                 if metrics.get('overdue_payments')
                 else 'As cobrancas atrasadas nao pedem acao agora.'
             ),
         }
     return {
-        'title': 'Confirme a base.',
-        'copy': 'Veja se WhatsApp, historico e estrutura continuam no lugar.',
+        'title': 'Confirme a estrutura que sustenta o dia.',
+        'copy': 'Veja se WhatsApp, historico e estrutura continuam coerentes.',
     }
 
 
@@ -49,7 +49,7 @@ def _build_operation_workspace_hero(page_key, snapshot):
         owner_actions = [
             {
                 'label': owner_primary_focus.get('href_label', 'Abrir agora'),
-                'href': owner_primary_focus.get('href', '#owner-growth-board'),
+                'href': owner_primary_focus.get('href', '/entradas/'),
             },
             *[
                 {'label': item['href_label'], 'href': item['href'], 'kind': 'secondary'}
@@ -58,17 +58,11 @@ def _build_operation_workspace_hero(page_key, snapshot):
         ]
     hero_map = {
         'operations-owner': build_page_hero(
-            eyebrow='Agora',
+            eyebrow='Comando do dia',
             title=owner_hero['title'],
             copy=owner_hero['copy'],
             actions=owner_actions,
-            side={
-                'kind': 'stats-panel',
-                'eyebrow': 'Resumo rapido',
-                'copy': 'Quatro numeros para saber se o dia esta sob controle.',
-                'stats': snapshot.get('hero_stats'),
-            },
-            aria_label='Panorama do dono',
+            aria_label='Comando do dia do owner',
         ),
         'operations-manager': build_page_hero(
             eyebrow='Centro do manager',
@@ -79,12 +73,6 @@ def _build_operation_workspace_hero(page_key, snapshot):
                 {'label': 'Ver entradas', 'href': '#manager-intake-board', 'kind': 'secondary'},
                 {'label': 'Ver vinculos pendentes', 'href': '#manager-link-board', 'kind': 'secondary'},
             ],
-            side={
-                'kind': 'stats-panel',
-                'eyebrow': 'Fila operacional',
-                'copy': 'Pontos que pedem ação antes que a rotina trave.',
-                'stats': snapshot.get('hero_stats'),
-            },
             aria_label='Panorama da gerencia',
         ),
         'operations-coach': build_page_hero(
@@ -94,12 +82,6 @@ def _build_operation_workspace_hero(page_key, snapshot):
             actions=[
                 {'label': 'Ver aulas do dia', 'href': '#coach-sessions-board'},
             ],
-            side={
-                'kind': 'stats-panel',
-                'eyebrow': 'Turno de hoje',
-                'copy': 'Agenda e rotina do turno.',
-                'stats': snapshot.get('hero_stats'),
-            },
             aria_label='Panorama do coach',
         ),
         'operations-dev': build_page_hero(
@@ -110,12 +92,6 @@ def _build_operation_workspace_hero(page_key, snapshot):
                 {'label': 'Ver eventos recentes', 'href': '#dev-audit-board'},
                 {'label': 'Abrir mapa do sistema', 'href': '/mapa-sistema/', 'kind': 'secondary'},
             ],
-            side={
-                'kind': 'stats-panel',
-                'eyebrow': 'Telemetria rápida',
-                'copy': 'Volume de rastros e cobertura por papel.',
-                'stats': snapshot.get('hero_stats'),
-            },
             aria_label='Panorama de desenvolvimento',
         ),
         'operations-reception': build_page_hero(
@@ -127,14 +103,7 @@ def _build_operation_workspace_hero(page_key, snapshot):
                 {'label': 'Ver entradas', 'href': '#reception-intake-board', 'kind': 'secondary', 'data_action': 'jump-reception-intakes'},
                 {'label': 'Ver grade em leitura', 'href': '#reception-class-grid-board', 'kind': 'secondary', 'data_action': 'jump-reception-class-grid'},
             ],
-            side={
-                'kind': 'stats-panel',
-                'eyebrow': 'Pulso do balcão',
-                'copy': 'Decida se o turno pede acolhimento, caixa curto ou orientação de agenda.',
-                'stats': snapshot.get('hero_stats'),
-                'data_panel': 'reception-pulse-panel',
-            },
-            aria_label='Panorama da recepção',
+            aria_label='Panorama da recepcao',
             classes=['reception-hero'],
             data_panel='reception-hero',
             actions_slot='reception-jump-links',

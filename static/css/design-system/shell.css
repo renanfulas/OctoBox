@@ -35,9 +35,7 @@ PONTOS CRITICOS:
     position: absolute;
     inset: 8px 0 0;
     border-radius: 36px;
-    background:
-        radial-gradient(circle at top right, rgba(41, 103, 163, 0.08), transparent 24%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.02) 24%);
+    background: transparent;
     pointer-events: none;
 }
 
@@ -75,4 +73,27 @@ PONTOS CRITICOS:
         inset: 0;
         border-radius: 28px;
     }
+}
+
+/* --- Grid Utility Consistency --- */
+.grid-12 {
+    display: grid;
+    grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+    gap: var(--grid-gap);
+}
+
+.grid-span-4 {
+    grid-column: span 4;
+}
+
+.grid-span-6 {
+    grid-column: span 6;
+}
+
+.grid-span-8 {
+    grid-column: span 8;
+}
+
+.grid-span-12 {
+    grid-column: 1 / -1;
 }

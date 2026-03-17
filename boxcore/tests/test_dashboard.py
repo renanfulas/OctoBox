@@ -1,17 +1,17 @@
-"""
+﻿"""
 ARQUIVO: testes do dashboard.
 
 POR QUE ELE EXISTE:
-- Garante que o painel principal continue acessível e renderizando o básico.
+- Garante que o painel principal continue acessivel e com o contrato visual e funcional esperado.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Testa proteção por login.
-2. Testa renderização do painel autenticado.
-
-PONTOS CRITICOS:
-- Se esses testes falharem, pode ter quebrado rota, template ou contexto do dashboard.
+1. Testa protecao por login.
+2. Testa renderizacao do resumo rapido, metricas e agenda.
+3. Testa links vivos do presenter e regressao de anchors removidas.
+4. Mantem smoke de status das aulas e rate limit.
 """
 
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -22,8 +22,9 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from communications.models import WhatsAppContact
 from access.roles import ROLE_COACH, ROLE_RECEPTION
-from communications.models import WhatsAppContact, WhatsAppMessageLog
+from dashboard.presentation import _build_dashboard_execution_focus
 from finance.models import Enrollment, MembershipPlan, Payment, PaymentMethod, PaymentStatus
 from operations.models import Attendance, ClassSession, SessionStatus
 from students.models import Student, StudentStatus
@@ -58,22 +59,35 @@ class DashboardViewTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
 
-    def test_dashboard_renders_for_authenticated_user(self):
+    def test_dashboard_renders_summary_strip_metrics_and_sessions_for_authenticated_user(self):
         self.client.force_login(self.user)
 
         response = self.client.get(reverse('dashboard'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Seu box em tres decisoes.')
+        self.assertContains(response, 'Seu box em alta performance.')
         self.assertContains(response, 'Owner')
-        self.assertContains(response, 'Prioridade')
-        self.assertContains(response, 'Pendente')
-        self.assertContains(response, 'Próxima ação')
-        self.assertContains(response, 'href="#dashboard-finance-board"')
-        self.assertContains(response, 'href="/entradas/#intake-queue-board"')
-        self.assertContains(response, 'href="#dashboard-sessions-board"')
-        self.assertContains(response, 'Abrir aulas do dia')
-        self.assertNotContains(response, 'href="/operacao/coach/"')
+        self.assertContains(response, 'Leitura rapida')
+        self.assertContains(response, 'class="dashboard-glance-strip dashboard-glance-strip--summary"', html=False)
+        self.assertContains(response, 'class="dashboard-glance-card dashboard-glance-card--summary is-finance"', html=False)
+        self.assertContains(response, 'class="dashboard-glance-card dashboard-glance-card--summary is-base"', html=False)
+        self.assertContains(response, 'class="dashboard-glance-card dashboard-glance-card--summary is-risk"', html=False)
+        self.assertContains(response, 'Urgencia')
+        self.assertContains(response, 'Emergencia')
+        self.assertContains(response, 'Risco')
+        self.assertContains(response, 'Sem pendencia financeira critica no recorte atual', html=False)
+        self.assertContains(response, 'Nenhuma pendencia emergente ligada a retencao ou experiencia aparece no recorte atual', html=False)
+        self.assertContains(response, 'Sem sinal forte de desorganizacao no recorte imediato', html=False)
+        self.assertContains(response, 'href="/financeiro/"', html=False)
+        self.assertContains(response, 'href="/alunos/"', html=False)
+        self.assertContains(response, 'href="#dashboard-sessions-board"', html=False)
+        self.assertContains(response, 'Agenda do turno')
+        self.assertContains(response, 'class="dashboard-support-grid"', html=False)
+        content = response.content.decode('utf-8')
+        self.assertLess(content.index('Receita realizada'), content.index('Cobrancas em atraso'))
+        self.assertLess(content.index('Cobrancas em atraso'), content.index('Entradas pendentes'))
+        self.assertNotContains(response, '#dashboard-finance-board')
+        self.assertNotContains(response, '#dashboard-risk-board')
 
     def test_dashboard_adapts_actions_for_reception_role(self):
         self.client.force_login(self.reception_user)
@@ -81,49 +95,84 @@ class DashboardViewTests(TestCase):
         response = self.client.get(reverse('dashboard'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Comece por chegada, agenda e cobrança curta sem sobrecarregar o balcão.')
-        self.assertContains(response, 'Abrir balcao da recepcao')
+        self.assertContains(response, 'Chegada, agenda e caixa curto em um painel rapido, energico e imediatamente util para o balcao.')
+        self.assertContains(response, 'href="/alunos/novo/"', html=False)
         self.assertContains(response, '/operacao/recepcao/#reception-payment-board')
-        self.assertNotContains(response, 'Abrir financeiro')
-        self.assertContains(response, 'Resumo imediato')
+        self.assertContains(response, 'Abrir cobrancas do balcao')
+        self.assertContains(response, 'class="dashboard-glance-strip dashboard-glance-strip--summary"', html=False)
+        self.assertNotContains(response, '#dashboard-finance-board')
 
-    def test_dashboard_keeps_presence_quick_action_for_coach_role(self):
+    def test_dashboard_keeps_sessions_shortcut_for_coach_role(self):
         self.client.force_login(self.coach_user)
 
         response = self.client.get(reverse('dashboard'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Marcar presenca')
-        self.assertContains(response, 'href="/operacao/coach/"')
+        self.assertContains(response, 'Leitura rapida')
+        self.assertContains(response, 'href="#dashboard-sessions-board"', html=False)
+        self.assertNotContains(response, '/operacao/recepcao/#reception-payment-board')
 
-    def test_dashboard_exposes_whatsapp_quick_action_on_finance_board(self):
+    def test_owner_execution_focus_targets_only_live_destinations(self):
+        next_session = {'object': SimpleNamespace(title='Cross 19h15')}
+        next_payment_alert = SimpleNamespace(student=SimpleNamespace(full_name='Bruna Ativa'))
+        highest_risk_student = SimpleNamespace(full_name='Caio Menezes', total_absences=2)
+
+        focus = _build_dashboard_execution_focus(
+            'owner',
+            next_session=next_session,
+            next_payment_alert=next_payment_alert,
+            highest_risk_student=highest_risk_student,
+            actionable_payment_alerts_count=2,
+        )
+
+        self.assertEqual(focus[0]['href'], '/financeiro/')
+        self.assertEqual(focus[0]['href_label'], 'Abrir financeiro')
+        self.assertEqual(focus[1]['href'], '#dashboard-sessions-board')
+        self.assertEqual(focus[2]['href'], '/alunos/')
+        self.assertEqual(focus[2]['href_label'], 'Abrir alunos em atencao')
+
+    def test_reception_execution_focus_keeps_payment_board_and_live_student_target(self):
+        next_payment_alert = SimpleNamespace(student=SimpleNamespace(full_name='Rafa Balcao'))
+
+        focus = _build_dashboard_execution_focus(
+            ROLE_RECEPTION,
+            next_session=None,
+            next_payment_alert=next_payment_alert,
+            highest_risk_student=None,
+            actionable_payment_alerts_count=1,
+        )
+
+        self.assertEqual(focus[0]['href'], '/operacao/recepcao/#reception-payment-board')
+        self.assertEqual(focus[1]['href'], '#dashboard-sessions-board')
+        self.assertEqual(focus[2]['href'], '/alunos/')
+        self.assertEqual(focus[2]['href_label'], 'Abrir alunos que pedem cuidado')
+
+    def test_dashboard_keeps_routine_session_out_of_emergency_card(self):
         self.client.force_login(self.user)
-        student = Student.objects.create(full_name='Bruna Lima', phone='(11) 98888-7777')
-        enrollment = Enrollment.objects.create(student=student, plan=MembershipPlan.objects.create(name='Plano Whats', price='199.90'))
-        Payment.objects.create(
-            student=student,
-            enrollment=enrollment,
-            due_date=timezone.localdate() - timezone.timedelta(days=2),
-            amount='199.90',
-            status=PaymentStatus.PENDING,
-            method=PaymentMethod.PIX,
+        today = timezone.localdate()
+        ClassSession.objects.create(
+            title='Gymnastics 19h',
+            coach=self.user,
+            scheduled_at=timezone.make_aware(
+                timezone.datetime.combine(today, timezone.datetime.strptime('19:00', '%H:%M').time()),
+                timezone.get_current_timezone(),
+            ),
+            duration_minutes=60,
+            capacity=18,
+            status=SessionStatus.SCHEDULED,
         )
 
         response = self.client.get(reverse('dashboard'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Quem cobrar agora')
-        self.assertContains(response, 'Cobrar hoje.')
-        self.assertContains(response, 'Ação')
-        self.assertContains(response, 'Sem contato recente')
-        self.assertContains(response, 'Abrir WhatsApp')
-        self.assertContains(response, 'name="open_in_whatsapp" value="1"', html=False)
+        self.assertContains(response, 'Nenhuma pendencia emergente ligada a retencao ou experiencia aparece no recorte atual', html=False)
+        self.assertContains(response, 'Entradas pendentes')
 
     def test_dashboard_priority_counts_only_actionable_financial_alerts(self):
         self.client.force_login(self.user)
         actionable_student = Student.objects.create(full_name='Bruna Ativa', phone='5511988887777', status=StudentStatus.ACTIVE)
         actionable_enrollment = Enrollment.objects.create(student=actionable_student, plan=MembershipPlan.objects.create(name='Plano Prioridade', price='199.90'))
-        actionable_payment = Payment.objects.create(
+        Payment.objects.create(
             student=actionable_student,
             enrollment=actionable_enrollment,
             due_date=timezone.localdate() - timezone.timedelta(days=2),
@@ -143,133 +192,21 @@ class DashboardViewTests(TestCase):
         )
         WhatsAppContact.objects.create(
             phone=blocked_student.phone,
+            display_name='Lia Bloqueada',
             linked_student=blocked_student,
-            last_outbound_at=timezone.now() - timezone.timedelta(hours=1),
-        )
-        inactive_student = Student.objects.create(full_name='Nina Inativa', phone='5511966665555', status=StudentStatus.INACTIVE)
-        inactive_enrollment = Enrollment.objects.create(student=inactive_student, plan=MembershipPlan.objects.create(name='Plano Inativo', price='179.90'))
-        Payment.objects.create(
-            student=inactive_student,
-            enrollment=inactive_enrollment,
-            due_date=timezone.localdate() - timezone.timedelta(days=4),
-            amount='179.90',
-            status=PaymentStatus.PENDING,
-            method=PaymentMethod.PIX,
+            last_outbound_at=timezone.now(),
         )
 
         response = self.client.get(reverse('dashboard'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'aria-label="Prioridade: 1. Abrir cobrancas em atraso"', html=False)
+        self.assertContains(response, 'aria-label="Cobrancas: 1. Abrir financeiro"', html=False)
+        self.assertContains(response, 'Urgencia')
+        self.assertContains(response, 'class="dashboard-glance-card dashboard-glance-card--summary is-finance"', html=False)
         self.assertContains(response, 'Bruna Ativa')
-        self.assertContains(response, 'Lia Bloqueada')
-        self.assertContains(response, '2 alerta(s)')
-
-    def test_dashboard_priority_resolves_after_whatsapp_touch_reopens_after_window_and_expires_for_inactive_student(self):
-        self.client.force_login(self.user)
-        student = Student.objects.create(full_name='Bruna Ciclo', phone='5511955554444', status=StudentStatus.ACTIVE)
-        enrollment = Enrollment.objects.create(student=student, plan=MembershipPlan.objects.create(name='Plano Ciclo', price='189.90'))
-        payment = Payment.objects.create(
-            student=student,
-            enrollment=enrollment,
-            due_date=timezone.localdate() - timezone.timedelta(days=2),
-            amount='189.90',
-            status=PaymentStatus.PENDING,
-            method=PaymentMethod.PIX,
-        )
-
-        first_response = self.client.get(reverse('dashboard'))
-        action_response = self.client.post(
-            reverse('finance-communication-action'),
-            data={
-                'action_kind': 'overdue',
-                'student_id': student.id,
-                'payment_id': payment.id,
-                'open_in_whatsapp': '1',
-            },
-        )
-        blocked_response = self.client.get(reverse('dashboard'))
-
-        self.assertEqual(first_response.status_code, 200)
-        self.assertContains(first_response, 'aria-label="Prioridade: 1.', html=False)
-        self.assertContains(first_response, 'Abrir WhatsApp')
-        self.assertEqual(action_response.status_code, 302)
-        self.assertTrue(action_response['Location'].startswith(f'https://wa.me/{student.phone}?text='))
-        self.assertTrue(WhatsAppMessageLog.objects.filter(contact__phone=student.phone, direction='outbound').exists())
-        self.assertEqual(blocked_response.status_code, 200)
-        self.assertContains(blocked_response, 'Janela bloqueada')
-        self.assertNotContains(blocked_response, 'aria-label="Prioridade: 1.', html=False)
-        self.assertNotContains(blocked_response, 'data-action="open-dashboard-finance-whatsapp"')
-
-        contact = WhatsAppContact.objects.get(linked_student=student)
-        contact.last_outbound_at = timezone.now() - timezone.timedelta(hours=25)
-        contact.save(update_fields=['last_outbound_at', 'updated_at'])
-
-        reopened_response = self.client.get(reverse('dashboard'))
-
-        self.assertEqual(reopened_response.status_code, 200)
-        self.assertContains(reopened_response, 'aria-label="Prioridade: 1.', html=False)
-        self.assertContains(reopened_response, 'Abrir WhatsApp')
-
-        student.status = StudentStatus.INACTIVE
-        student.save(update_fields=['status', 'updated_at'])
-
-        expired_response = self.client.get(reverse('dashboard'))
-
-        self.assertEqual(expired_response.status_code, 200)
-        self.assertNotContains(expired_response, 'aria-label="Prioridade: 1.', html=False)
-        self.assertContains(expired_response, 'Nenhum pagamento atrasado')
-        self.assertNotContains(expired_response, 'data-action="open-dashboard-finance-whatsapp"')
-
-    def test_dashboard_shows_contact_block_state_on_finance_board(self):
-        self.client.force_login(self.user)
-        student = Student.objects.create(full_name='Marina Whats', phone='(11) 96666-2222')
-        enrollment = Enrollment.objects.create(student=student, plan=MembershipPlan.objects.create(name='Plano Trava', price='219.90'))
-        Payment.objects.create(
-            student=student,
-            enrollment=enrollment,
-            due_date=timezone.localdate() - timezone.timedelta(days=3),
-            amount='219.90',
-            status=PaymentStatus.PENDING,
-            method=PaymentMethod.PIX,
-        )
-        WhatsAppContact.objects.create(
-            phone='5511966662222',
-            linked_student=student,
-            last_outbound_at=timezone.now() - timezone.timedelta(hours=1),
-        )
-
-        response = self.client.get(reverse('dashboard'))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Janela bloqueada')
-        self.assertContains(response, 'Bloqueado agora')
-        self.assertNotContains(response, 'data-action="open-dashboard-finance-whatsapp"')
-
-    def test_dashboard_hides_finance_whatsapp_action_for_read_only_roles(self):
-        dev_user = get_user_model().objects.create_user(
-            username='dev-dashboard',
-            email='dev-dashboard@example.com',
-            password='senha-forte-123',
-        )
-        dev_user.groups.add(Group.objects.get(name='DEV'))
-        student = Student.objects.create(full_name='Rita Dev', phone='(11) 97777-6666')
-        enrollment = Enrollment.objects.create(student=student, plan=MembershipPlan.objects.create(name='Plano Dev', price='199.90'))
-        Payment.objects.create(
-            student=student,
-            enrollment=enrollment,
-            due_date=timezone.localdate() - timezone.timedelta(days=2),
-            amount='199.90',
-            status=PaymentStatus.PENDING,
-            method=PaymentMethod.PIX,
-        )
-        self.client.force_login(dev_user)
-
-        response = self.client.get(reverse('dashboard'))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Sem permissao para contato')
-        self.assertNotContains(response, 'Abrir WhatsApp')
+        self.assertNotContains(response, 'aria-label="Cobrancas: 2. Abrir financeiro"', html=False)
+        self.assertContains(response, 'Abrir financeiro')
+        self.assertNotContains(response, '#dashboard-finance-board')
 
     @override_settings(DASHBOARD_RATE_LIMIT_MAX_REQUESTS=1, DASHBOARD_RATE_LIMIT_WINDOW_SECONDS=60)
     def test_dashboard_blocks_short_burst_attempts(self):
@@ -311,6 +248,8 @@ class DashboardViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Em andamento')
+        self.assertContains(response, 'Em aula agora')
+        self.assertContains(response, 'class="dashboard-session-card dashboard-session-card--featured is-primary"', html=False)
         self.assertContains(response, '1/10')
         session.refresh_from_db()
         self.assertEqual(session.status, SessionStatus.SCHEDULED)
@@ -343,7 +282,21 @@ class DashboardViewTests(TestCase):
             response = self.client.get(reverse('dashboard'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Finalizada')
-        self.assertContains(response, '1/12')
+        self.assertNotContains(response, 'WOD 08h final')
+        self.assertContains(response, 'Nenhuma aula cadastrada ainda')
         session.refresh_from_db()
         self.assertEqual(session.status, SessionStatus.COMPLETED)
+
+
+
+
+
+
+
+
+
+
+
+
+
+

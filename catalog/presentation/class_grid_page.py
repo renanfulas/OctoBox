@@ -38,16 +38,20 @@ def _build_operational_focus(*, today_schedule, grouped_sessions, monthly_calend
     return [
         {
             'title': 'Comece pelo ritmo de hoje',
+            'chip_label': 'Hoje',
             'summary': (
                 f"{len(today_sessions)} aula(s) entram no dia e {today_pressure_count} horario(s) ja pedem olho na lotacao."
                 if today_schedule else
                 'Nao ha aula marcada hoje, entao vale revisar o restante da janela para nao descobrir vazios tarde demais.'
             ),
+            'count': len(today_sessions) if today_schedule else None,
             'action_label': 'Abrir agenda de hoje',
             'action_href': '#today-board',
+            'href': '#today-board',
         },
         {
             'title': 'Depois leia o pico da janela',
+            'chip_label': 'Semana',
             'summary': (
                 f"O maior volume da janela cai em {busiest_day['date'].strftime('%d/%m')} com {len(busiest_day['sessions'])} aula(s)."
                 if busiest_day else
@@ -55,9 +59,11 @@ def _build_operational_focus(*, today_schedule, grouped_sessions, monthly_calend
             ),
             'action_label': 'Ver visao semanal',
             'action_href': '#weekly-board',
+            'href': '#weekly-board',
         },
         {
             'title': 'Feche com o ajuste do mes',
+            'chip_label': 'Planejar',
             'summary': (
                 f"O mes tem {busy_days} dia(s) com agenda carregada e {free_days} dia(s) livres para redistribuir a grade."
                 if can_manage_classes else
@@ -65,6 +71,7 @@ def _build_operational_focus(*, today_schedule, grouped_sessions, monthly_calend
             ),
             'action_label': 'Abrir mapa do mes' if not can_manage_classes else 'Revisar mes e planner',
             'action_href': '#monthly-board' if not can_manage_classes else '#planner-board',
+            'href': '#monthly-board' if not can_manage_classes else '#planner-board',
         },
     ]
 
@@ -96,22 +103,6 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
                 {'label': 'Ajustar recorrencia', 'href': '#planner-board', 'kind': 'secondary'},
             ] if can_manage_classes else []),
         ],
-        side={
-            'kind': 'stat-grid',
-            'eyebrow': 'Leitura instantânea',
-            'copy': 'Mostra se o dia pede ajuste, reforco ou acompanhamento.',
-            'items': [
-                {'label': 'Aulas hoje', 'value': len(snapshot['today_schedule']['sessions']) if snapshot['today_schedule'] else 0},
-                {'label': 'Dias na agenda', 'value': len(snapshot['grouped_sessions'])},
-                {'label': 'Janela', 'value': '14 dias'},
-                {'label': 'Modo', 'value': 'gestao' if can_manage_classes else 'consulta'},
-            ],
-            'stack': True,
-            'actions': ([
-                {'label': 'Abrir admin completo', 'href': admin_changelist_url('boxcore', 'classsession'), 'kind': 'secondary', 'class_name': 'button-sm'},
-            ] if can_open_class_admin else []),
-            'actions_class': 'actions-tight',
-        },
         aria_label='Panorama da grade',
         classes=['class-grid-hero'],
     )

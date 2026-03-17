@@ -126,7 +126,7 @@ class FinanceCenterTests(TestCase):
 
     def test_finance_movements_css_preserves_full_width_board_and_card_grid(self):
         finance_css = (
-            Path(__file__).resolve().parents[2] / 'static' / 'css' / 'catalog' / 'finance.css'
+            Path(__file__).resolve().parents[2] / 'static' / 'css' / 'catalog' / 'finance' / '_movements.css'
         ).read_text(encoding='utf-8')
 
         self.assertIn('.finance-movements-panel {\n    grid-column: 1 / -1;', finance_css)

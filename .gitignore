@@ -56,6 +56,10 @@ backups/
 
 # Artefatos temporarios de revisao local
 tmp-*-cookies.txt
+/test-*.txt
+/tmp-*.txt
+/.tmp-*.log
+/static/css/**/*.bak
 
 # Manifestos reservados para marcos futuros
 docs/*-manifesto.local.md

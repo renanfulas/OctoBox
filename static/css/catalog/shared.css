@@ -19,11 +19,7 @@ PONTOS CRITICOS:
 }
 
 .catalog-hero {
-    background:
-    radial-gradient(circle at top right, rgba(184, 92, 56, 0.18), transparent 34%),
-    radial-gradient(circle at bottom left, rgba(40, 92, 142, 0.12), transparent 28%),
-    linear-gradient(145deg, rgba(255, 251, 245, 0.94), rgba(241, 236, 226, 0.94)),
-        var(--surface);
+    background: var(--surface);
 }
 
 .student-form-scene {
@@ -31,7 +27,7 @@ PONTOS CRITICOS:
 }
 
 .student-form-hero .operation-hero-panel {
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(255, 247, 237, 0.96));
+    background: var(--surface);
 }
 
 .student-form-focus-card,
@@ -80,11 +76,7 @@ PONTOS CRITICOS:
 }
 
 .catalog-hero.operation-hero {
-    background:
-        radial-gradient(circle at top right, rgba(40, 92, 142, 0.14), transparent 32%),
-        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.1), transparent 28%),
-        linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(241, 247, 252, 0.96)),
-        var(--surface);
+    background: var(--surface);
 }
 
 .catalog-hero.operation-hero .actions .button {
@@ -93,11 +85,7 @@ PONTOS CRITICOS:
 }
 
 body[data-theme="dark"] .catalog-hero.operation-hero {
-    background:
-        radial-gradient(circle at top right, rgba(41, 103, 163, 0.2), transparent 30%),
-        radial-gradient(circle at bottom left, rgba(14, 124, 134, 0.12), transparent 24%),
-        linear-gradient(145deg, rgba(18, 28, 40, 0.96), rgba(11, 19, 29, 0.98)),
-        var(--surface);
+    background: var(--surface);
 }
 
 .student-financial-overview-card {
@@ -267,7 +255,7 @@ body[data-theme="dark"] .catalog-hero.operation-hero {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(120deg, rgba(255, 255, 255, 0.18), transparent 35%, transparent 65%, rgba(255, 255, 255, 0.08));
+    background: transparent;
     pointer-events: none;
 }
 
@@ -279,25 +267,19 @@ body[data-theme="dark"] .catalog-hero.operation-hero {
 
 .primary-glow,
 .orange-glow {
-    background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.82), transparent 24%),
-        linear-gradient(145deg, rgba(248, 243, 238, 0.98), rgba(255, 255, 255, 0.98));
+    background: var(--surface);
     border-color: rgba(215, 157, 116, 0.24);
 }
 
 .secondary-glow,
 .green-glow {
-    background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.82), transparent 24%),
-        linear-gradient(145deg, rgba(241, 247, 245, 0.98), rgba(255, 255, 255, 0.98));
+    background: var(--surface);
     border-color: rgba(113, 176, 161, 0.22);
 }
 
 .blue-glow,
 .info-card {
-    background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.82), transparent 24%),
-        linear-gradient(145deg, rgba(241, 245, 252, 0.98), rgba(255, 255, 255, 0.98));
+    background: var(--surface);
     border-color: rgba(122, 153, 198, 0.24);
 }
 
@@ -309,8 +291,8 @@ body[data-theme="dark"] .catalog-hero.operation-hero {
     width: 84px;
     height: 84px;
     border-radius: 999px;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.16), transparent 70%);
-    animation: catalogPulse 3s ease-in-out infinite;
+    background: transparent;
+    display: none;
 }
 
 .metric-pulse {
@@ -318,28 +300,26 @@ body[data-theme="dark"] .catalog-hero.operation-hero {
     bottom: -24px;
     width: 92px;
     height: 92px;
-    background: radial-gradient(circle, rgba(249, 115, 22, 0.16), transparent 70%);
+    background: transparent;
 }
 
 .quick-hero-card {
-    background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.84), transparent 24%),
-    linear-gradient(145deg, rgba(247, 243, 239, 0.96), rgba(255, 255, 255, 0.98));
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .orange-glow,
 body[data-theme="dark"] .primary-glow {
-    background: linear-gradient(145deg, rgba(71, 54, 42, 0.76), rgba(18, 28, 40, 0.98));
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .green-glow,
 body[data-theme="dark"] .secondary-glow {
-    background: linear-gradient(145deg, rgba(38, 63, 58, 0.76), rgba(18, 28, 40, 0.98));
+    background: var(--surface);
 }
 
 body[data-theme="dark"] .blue-glow,
 body[data-theme="dark"] .info-card {
-    background: linear-gradient(145deg, rgba(42, 55, 76, 0.8), rgba(18, 28, 40, 0.98));
+    background: var(--surface);
 }
 
 .intake-grid {
@@ -350,9 +330,9 @@ body[data-theme="dark"] .info-card {
 
 .intake-card {
     padding: 18px;
-    border-radius: 22px;
+    border-radius: var(--radius-panel);
     border: 1px solid var(--line);
-    background: linear-gradient(155deg, rgba(255, 255, 255, 0.78), rgba(244, 237, 226, 0.9));
+    background: var(--surface);
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 16px;
@@ -387,14 +367,14 @@ body[data-theme="dark"] .info-card {
 }
 
 .student-priority-panel {
-    background: linear-gradient(145deg, rgba(184, 92, 56, 0.14), rgba(255, 255, 255, 0.95));
+    background: var(--surface);
 }
 
 .priority-student-card {
     padding: 18px;
-    border-radius: 22px;
+    border-radius: var(--radius-panel);
     border: 1px solid var(--line);
-    background: linear-gradient(155deg, rgba(255, 255, 255, 0.82), rgba(244, 237, 226, 0.92));
+    background: var(--surface);
     display: grid;
     gap: 12px;
 }
@@ -438,9 +418,9 @@ body[data-theme="dark"] .info-card {
 
 .plan-card {
     padding: 18px;
-    border-radius: 22px;
+    border-radius: var(--radius-panel);
     border: 1px solid var(--line);
-    background: linear-gradient(155deg, rgba(255, 255, 255, 0.8), rgba(244, 237, 226, 0.92));
+    background: var(--surface);
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
@@ -482,36 +462,36 @@ body[data-theme="dark"] .info-card {
     width: var(--bar-width, 0%);
     height: 100%;
     border-radius: 999px;
-    background: linear-gradient(90deg, var(--brand), var(--accent));
+    background: var(--brand);
     transition: width 0.25s ease;
 }
 
 .mix-bar-fill.growth {
-    background: linear-gradient(90deg, #1f6a5d, #3c9f83);
+    background: var(--accent);
 }
 
 .mix-bar-fill.churn {
-    background: linear-gradient(90deg, #a84434, #cf735f);
+    background: var(--danger);
 }
 
 .mix-bar-fill.class-occupancy-available {
-    background: linear-gradient(90deg, #1f6a5d, #3c9f83);
+    background: var(--accent);
 }
 
 .mix-bar-fill.class-occupancy-medium {
-    background: linear-gradient(90deg, #d4a107, #eab308);
+    background: #eab308;
 }
 
 .mix-bar-fill.class-occupancy-high {
-    background: linear-gradient(90deg, #ea580c, #f59e0b);
+    background: var(--danger);
 }
 
 .mix-bar-fill.class-occupancy-critical {
-    background: linear-gradient(90deg, #b91c1c, #ef4444);
+    background: #b91c1c;
 }
 
 .mix-bar-fill.class-occupancy-closed {
-    background: repeating-linear-gradient(-45deg, #9ca3af 0 10px, #4b5563 10px 20px);
+    background: #6b7280;
 }
 
 .chart-grid {
@@ -539,9 +519,9 @@ body[data-theme="dark"] .info-card {
     align-items: end;
     justify-content: center;
     padding: 0 8px;
-    border-radius: 18px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(112, 96, 81, 0.04));
-    border: 1px solid rgba(112, 96, 81, 0.08);
+    border-radius: var(--radius-panel);
+    background: var(--bg);
+    border: 1px solid var(--line);
 }
 
 .chart-bar {
@@ -553,8 +533,8 @@ body[data-theme="dark"] .info-card {
 }
 
 .chart-bar.revenue {
-    background: linear-gradient(180deg, rgba(47, 122, 100, 0.92), rgba(184, 92, 56, 0.82));
-    box-shadow: 0 16px 24px rgba(47, 122, 100, 0.18);
+    background: var(--brand);
+    box-shadow: 0 16px 24px rgba(37, 99, 235, 0.18);
 }
 
 .chart-column:hover .chart-bar {
@@ -564,9 +544,9 @@ body[data-theme="dark"] .info-card {
 .delta-row,
 .history-entry {
     padding: 14px 16px;
-    border-radius: 18px;
+    border-radius: var(--radius-panel);
     border: 1px solid var(--line);
-    background: linear-gradient(155deg, rgba(255, 255, 255, 0.74), rgba(244, 237, 226, 0.9));
+    background: var(--surface);
     transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
 }
 

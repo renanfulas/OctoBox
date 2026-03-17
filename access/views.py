@@ -53,6 +53,7 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
         context['access_operational_focus'] = [
             {
                 'label': 'Comece pelo seu proprio escopo',
+                'chip_label': 'Papel',
                 'summary': f'O papel {current_role.label} precisa ficar claro primeiro, para a leitura desta tela nao virar teoria solta sem utilidade operacional.',
                 'pill_class': 'accent',
                 'href': '#access-current-role',
@@ -60,6 +61,7 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
             },
             {
                 'label': 'Depois compare as fronteiras',
+                'chip_label': 'Fronteiras',
                 'summary': f'{len(role_definitions)} papel(is) ja desenham quem decide crescimento, manutencao, administracao e rotina tecnica sem mistura indevida.',
                 'pill_class': 'info',
                 'href': '#access-role-map',
@@ -67,6 +69,7 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
             },
             {
                 'label': 'Feche com a governanca pratica',
+                'chip_label': 'Governança',
                 'summary': 'Grupos e permissoes devem sustentar o desenho do produto, nunca obrigar a operacao a adivinhar limite por tentativa e erro.',
                 'pill_class': 'warning',
                 'href': '#access-governance-board',
@@ -84,12 +87,6 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
                     {'label': 'Gerenciar grupos', 'href': admin_changelist_url('auth', 'group'), 'kind': 'secondary'},
                 ] if user_can_access_admin(self.request.user) else []),
             ],
-            side={
-                'kind': 'stats-panel',
-                'eyebrow': 'Leitura instantânea',
-                'copy': 'Papel ativo e governança atual.',
-                'stats': context['hero_stats'],
-            },
             aria_label='Panorama de acessos',
         )
         context['governance_points'] = [

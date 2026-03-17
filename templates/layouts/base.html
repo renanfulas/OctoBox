@@ -66,20 +66,17 @@ PONTOS CRITICOS:
                     <button class="sidebar-toggle" type="button" id="sidebar-toggle" data-ui="sidebar-toggle" aria-expanded="false" aria-controls="page-body">Menu</button>
                     <form class="global-search" method="get" action="{{ global_search_action }}" role="combobox" aria-expanded="false" aria-haspopup="listbox" aria-owns="search-autocomplete-list" aria-controls="search-autocomplete-list search-autocomplete-status" data-ui="global-search-form" data-panel="global-search" data-autocomplete-url="/api/v1/students/autocomplete/">
                         <label class="visually-hidden" for="global-search-input">Buscar aluno ou WhatsApp</label>
-                        <input id="global-search-input" type="search" name="query" placeholder="Nome, WhatsApp ou CPF" maxlength="150" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-autocomplete="list" aria-controls="search-autocomplete-list" aria-describedby="search-autocomplete-status" data-ui="global-search-input">
+                        <input id="global-search-input" type="search" name="query" placeholder="Buscar aluno, telefone ou CPF" maxlength="150" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-autocomplete="list" aria-controls="search-autocomplete-list" aria-describedby="search-autocomplete-status" data-ui="global-search-input">
                         <ul id="search-autocomplete-list" class="search-autocomplete-list" role="listbox" aria-label="Resultados da busca" hidden data-ui="global-search-results"></ul>
                         <p id="search-autocomplete-status" class="search-status visually-hidden" aria-live="polite" data-ui="global-search-status"></p>
                     </form>
                 </div>
                 <div class="topbar-right" data-slot="topbar-right">
-                    {% if topbar_quick_actions %}
                     <div class="topbar-quick-actions" data-slot="topbar-quick-actions" aria-label="Acoes rapidas globais">
-                        <span class="topbar-quick-label">Ação rápida</span>
-                        {% for action in topbar_quick_actions %}
-                        <a class="topbar-quick-link topbar-quick-link--{{ action.tone|default:'neutral' }}" href="{{ action.href }}" data-priority-level="{{ action.tone|default:'neutral' }}"{% if action.data_action %} data-action="{{ action.data_action }}"{% endif %}>+ {{ action.label }}</a>
+                        {% for link in topbar_quick_links %}
+                        <a class="topbar-quick-link topbar-quick-link--{{ link.kind }}" href="{{ link.href }}" data-priority-level="{{ link.kind }}" data-action="{{ link.action }}">{{ link.label }}</a>
                         {% endfor %}
                     </div>
-                    {% endif %}
                     <div class="topbar-alerts" data-slot="topbar-alerts">
                         <a class="alert-chip danger{% if shell_counts.overdue_payments %} has-volume{% else %} is-zero{% endif %}" href="{{ topbar_alert_links.finance }}" data-ui="topbar-finance-alert" data-action="open-finance-alerts" data-count-kind="overdue-payments" data-count-value="{{ shell_counts.overdue_payments }}" aria-label="{{ shell_counts.overdue_payments }} {% if shell_counts.overdue_payments == 1 %}vencimento{% else %}vencimentos{% endif %}">
                             {% if shell_counts.overdue_payments %}

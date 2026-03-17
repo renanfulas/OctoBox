@@ -5,9 +5,9 @@ POR QUE ELE EXISTE:
 - Entrega uma área prática para operação de aula e presença.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Mostra aulas do dia.
-2. Lista alunos por aula.
-3. Permite registrar check-in, check-out e falta.
+1. Mostra a ordem curta do turno.
+2. Deixa as turmas como cena principal.
+3. Empurra os números para a camada analítica abaixo.
 
 PONTOS CRITICOS:
 - Os botões alteram o estado real da presença.
@@ -18,8 +18,9 @@ PONTOS CRITICOS:
 {% with page=operation_page %}
 <div class="operation-shell coach-scene">
     {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
-    {% include "operations/includes/coach_metrics_section.html" %}
+    {% include "includes/ui/focus_sequence.html" with eyebrow="Compasso do turno" title="Leia o dia como cabine de operação" copy="Abra a agenda, registre presença e feche ocorrência sem cair em manutenção de dados." items=page.data.coach_operational_focus pill_label="Ritmo do coach" pill_class="accent" class_name="coach-focus-lane" panel_id="coach-command-lane" %}
     {% include "operations/includes/coach_sessions_section.html" %}
+    {% include "operations/includes/coach_metrics_section.html" %}
 </div>
 {% endwith %}
 {% endblock %}
