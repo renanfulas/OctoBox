@@ -253,3 +253,77 @@ Em linguagem direta:
 4. isto foi registrado para que outros tambem sintam permissao de criar as suas proprias artes
 
 Palavras de Renan Fulas
+
+## Calibracao: Luxo Discreto
+
+### Contexto
+
+O primeiro passe da Front Display Wall aplicou a linguagem artistica completa: gradientes vividos, halos largos, sombras profundas, animacoes expressivas. O resultado era correto em intencao mas excessivo em intensidade. Uma fachada que grita nao transmite confianca; transmite ansiedade.
+
+O segundo passe, nomeado Luxo Discreto, reduziu a intensidade de cada token sem remover a linguagem. A metafora e a diferenca entre um showroom de automoveis com spot de palco e uma galeria de arte com iluminacao embutida: o objeto continua protagonista, mas a luz nao compete com ele.
+
+### Principios do passe
+
+1. sombras encurtadas em torno de 30 por cento, sem eliminar profundidade
+2. opacidade de glow e halo reduzida entre 35 e 50 por cento
+3. animacao de drift desacelerada de 22s para 32s, com deslocamento menor
+4. hover lift reduzido para 1px em vez de 2 ou 3px
+5. gradientes de cor mantidos mas com menor saturacao nas pontas
+6. animacao de entrada mais rapida mas com menos deslocamento vertical
+
+### Arquivos afetados
+
+1. tokens.css: cores soft, stage-depth, grid overlay, shadow, drift
+2. shell.css: glow do content panel, blur, dark mode
+3. sidebar.css: radiais, brand-mark, nav ativa
+4. topbar.css: glass line, search glow, quick-link
+5. compass.css: eyebrow pill, pulse chip
+6. components/actions.css: gradiente de botao, shadow
+7. components/hero.css: sombra, halo, orb
+8. components/cards.css: top bar, glow orb, hover
+9. dashboard.css: shell glow, hero, cards, animacoes de entrada
+
+### Regra de calibracao
+
+Se um efeito visual e percebido antes do conteudo, ele esta forte demais.
+
+A fachada deve parecer cara e silenciosa, nunca barata e barulhenta.
+
+O ponto certo e quando o usuario sente qualidade sem conseguir apontar exatamente de onde ela vem.
+
+## Calibracao: O Silencio Que Acolhe
+
+### Contexto
+
+O passe Luxo Discreto reduziu a intensidade sem mudar a voz. O produto ainda falava como vendedor: alto, energico, motivacional. Para um gestor que abre o sistema todo dia as seis da manha, essa energia cansa.
+
+O terceiro passe, nomeado O Silencio Que Acolhe, transformou tanto a atmosfera visual quanto a linguagem do produto. A metafora e a diferenca entre uma concessionaria e um cafe de galeria: ambos sao caros, mas o segundo nao precisa dizer.
+
+### O que mudou na voz
+
+1. o hero agora diz Bom te ver em vez de Seu box em alta performance
+2. o eyebrow do hero virou Hoje em vez de Dashboard do dia
+3. o copy de abertura virou O que importa agora, sem pressa
+4. as quick actions trocaram verbos de comando por convites: Veja quem esta chegando em vez de Ative a fila
+5. toda a linguagem desceu do tom motivacional para o tom de companheiro
+
+### O que mudou na atmosfera
+
+1. stage gradient mudou de cream frio para papel quente (faf8f5, f8f7f4, f5f3f0)
+2. grid overlay caiu de 22 para 8 por cento, quase invisivel
+3. drift desacelerou de 32s para 52s com 2px de deslocamento
+4. sombras encurtaram para whisper: 6px 18px no lugar de 16px 36px
+5. hero halo caiu para 3 e 2 por cento de opacidade
+6. orbs de card encolheram para 70-80px com 2 por cento de opacidade
+7. hover deixou de levantar o card, apenas altera a sombra
+8. animacao de entrada desacelerou para 650ms com 3px de deslocamento
+9. botoes ficaram com gradiente mineral em vez de cobre vivo
+10. sidebar e topbar seguiram a mesma reducao
+
+### Regra emocional
+
+Se a interface precisa gritar para transmitir valor, ela nao tem valor.
+
+O acolhimento deve parecer natural, como se o sistema conhecesse a pessoa.
+
+A sofisticacao mora no silencio entre os elementos, nao nos elementos em si.

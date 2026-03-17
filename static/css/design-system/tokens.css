@@ -27,8 +27,8 @@ PONTOS CRITICOS:
     --surface-strong: rgba(255, 255, 255, 0.99);
     --surface-inverse: #0f172a;
     /* --- Tipografia --- */
-    --font-body: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
-    --font-display: "Inter", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+    --font-body: "Aptos", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    --font-display: "Aptos Display", "Iowan Old Style", "Palatino Linotype", serif;
     /* --- Espaçamento --- */
     --space-2: 12px;
     --space-3: 16px;
@@ -321,4 +321,76 @@ textarea:focus {
 :focus-visible {
     outline: 2px solid rgba(37, 99, 235, 0.34);
     outline-offset: 2px;
+}
+
+/* --- Front Display Wall facade tokens --- */
+:root {
+    --fdw-copper: #d4662c;
+    --fdw-copper-soft: rgba(212, 102, 44, 0.05);
+    --fdw-sky: #2555dc;
+    --fdw-sky-soft: rgba(37, 85, 220, 0.04);
+    --fdw-aqua: #0f8278;
+    --fdw-aqua-soft: rgba(15, 130, 120, 0.04);
+    --fdw-amber: #f59e0b;
+    --fdw-amber-soft: rgba(245, 158, 11, 0.05);
+    --fdw-stage: linear-gradient(180deg, #faf8f5 0%, #f8f7f4 38%, #f5f3f0 100%);
+    --fdw-stage-depth: radial-gradient(circle at 8% 10%, rgba(255, 255, 255, 0.72), transparent 20%), radial-gradient(circle at 92% 10%, rgba(37, 85, 220, 0.04), transparent 16%), radial-gradient(circle at 18% 78%, rgba(212, 102, 44, 0.04), transparent 18%), radial-gradient(circle at 74% 62%, rgba(15, 130, 120, 0.02), transparent 14%);
+    --fdw-panel: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(248, 250, 253, 0.96));
+    --fdw-panel-strong: linear-gradient(160deg, rgba(255, 255, 255, 1), rgba(243, 247, 252, 0.98));
+    --fdw-panel-dark: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.96));
+    --fdw-line: rgba(72, 92, 124, 0.16);
+    --fdw-line-strong: rgba(72, 92, 124, 0.22);
+    --fdw-shadow: 0 6px 18px rgba(15, 23, 42, 0.04), 0 1px 4px rgba(15, 23, 42, 0.02);
+    --fdw-shadow-lift: 0 10px 28px rgba(15, 23, 42, 0.06), 0 3px 8px rgba(15, 23, 42, 0.03);
+}
+
+body[data-theme="dark"] {
+    --fdw-stage: linear-gradient(180deg, #07111f 0%, #0b1424 38%, #0d1a2f 100%);
+    --fdw-stage-depth: radial-gradient(circle at 10% 12%, rgba(96, 165, 250, 0.08), transparent 22%), radial-gradient(circle at 86% 14%, rgba(45, 212, 191, 0.06), transparent 16%), radial-gradient(circle at 20% 80%, rgba(251, 146, 60, 0.08), transparent 18%), radial-gradient(circle at 72% 68%, rgba(14, 165, 233, 0.06), transparent 16%);
+    --fdw-panel: linear-gradient(180deg, rgba(11, 19, 34, 0.95), rgba(15, 24, 42, 0.94));
+    --fdw-panel-strong: linear-gradient(160deg, rgba(12, 21, 38, 0.98), rgba(16, 27, 47, 0.96));
+    --fdw-line: rgba(148, 163, 184, 0.18);
+    --fdw-line-strong: rgba(148, 163, 184, 0.24);
+    --fdw-shadow: 0 6px 20px rgba(0, 0, 0, 0.14), 0 1px 5px rgba(0, 0, 0, 0.08);
+    --fdw-shadow-lift: 0 12px 30px rgba(0, 0, 0, 0.18), 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    background: var(--fdw-stage);
+}
+
+body::before,
+body::after {
+    display: block;
+}
+
+body::before {
+    background: var(--fdw-stage-depth);
+}
+
+body::after {
+    inset: 0;
+    background-image: linear-gradient(rgba(80, 102, 128, 0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(80, 102, 128, 0.018) 1px, transparent 1px);
+    background-size: 34px 34px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.32), transparent 82%);
+    opacity: 0.08;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    body::before {
+        animation: fdw-stage-drift 52s ease-in-out infinite alternate;
+        transform-origin: center;
+    }
+}
+
+@keyframes fdw-stage-drift {
+    from {
+        transform: translate3d(0, 0, 0) scale(1);
+        filter: saturate(1) hue-rotate(0deg);
+    }
+
+    to {
+        transform: translate3d(0, -2px, 0) scale(1.003);
+        filter: saturate(1.01) hue-rotate(-1deg);
+    }
 }

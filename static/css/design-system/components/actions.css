@@ -110,3 +110,29 @@ body[data-theme="dark"] .button.secondary {
     transform: translateY(0) scale(0.985);
     transition-duration: var(--motion-fast);
 }
+
+/* --- Front Display Wall facade actions pass --- */
+.button {
+    background: linear-gradient(135deg, #b87a54, #c98960);
+    border: 1px solid rgba(196, 91, 45, 0.18);
+    box-shadow: 0 10px 18px rgba(196, 91, 45, 0.12);
+}
+
+.button:hover {
+    background: linear-gradient(135deg, #b85b2f, #cb6227);
+}
+
+.button.secondary {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.86));
+    border-color: rgba(80, 102, 128, 0.16);
+}
+
+.button.secondary:hover {
+    border-color: rgba(29, 78, 216, 0.22);
+    color: var(--fdw-sky);
+}
+
+body[data-theme="dark"] .button.secondary {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(148, 163, 184, 0.16);
+}

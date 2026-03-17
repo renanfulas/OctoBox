@@ -736,3 +736,100 @@ body[data-theme="dark"] .topbar-quick-link--secondary:focus-visible {
         display: none;
     }
 }
+
+/* --- Front Display Wall facade topbar pass --- */
+.topbar {
+    top: 10px;
+    margin-bottom: clamp(18px, 1.8vw, 26px);
+    padding: 12px 14px;
+    border-radius: 22px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.54)), var(--fdw-panel);
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    box-shadow: var(--fdw-shadow);
+    backdrop-filter: blur(18px);
+}
+
+body[data-theme="dark"] .topbar {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)), var(--fdw-panel);
+    border-color: rgba(148, 163, 184, 0.12);
+}
+
+.global-search {
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.58));
+    border-color: rgba(80, 102, 128, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 3px 8px rgba(15, 23, 42, 0.02);
+}
+
+.topbar-quick-actions {
+    padding: 3px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.54);
+    border: 1px solid rgba(80, 102, 128, 0.08);
+}
+
+.topbar-quick-link {
+    min-height: 30px;
+    padding: 6px 12px;
+}
+
+.topbar-quick-link--primary {
+    background: linear-gradient(135deg, var(--fdw-copper), #ea580c);
+    box-shadow: 0 10px 18px rgba(196, 91, 45, 0.18);
+}
+
+.topbar-quick-link--secondary {
+    color: var(--fdw-sky);
+    border-color: rgba(29, 78, 216, 0.16);
+}
+
+.alert-chip {
+    background: rgba(255, 255, 255, 0.4);
+    border-color: rgba(80, 102, 128, 0.08);
+}
+
+.alert-chip.has-volume {
+    background: linear-gradient(180deg, rgba(255, 247, 237, 0.94), rgba(255, 255, 255, 0.88));
+}
+
+.alert-chip.danger.has-volume {
+    background: linear-gradient(180deg, rgba(254, 242, 242, 0.96), rgba(255, 255, 255, 0.88));
+}
+
+.sidebar-toggle,
+.theme-toggle {
+    border-radius: 12px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48);
+}
+
+@media (max-width: 900px) {
+    .topbar {
+        top: 0;
+        border-radius: 18px;
+    }
+}
+
+
+/* --- Front Display Wall artistic topbar pass --- */
+.topbar::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.28), transparent 42%, rgba(255, 255, 255, 0.16));
+    pointer-events: none;
+}
+
+.global-search {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.62)), var(--surface);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.66), 0 3px 8px rgba(15, 23, 42, 0.02);
+}
+
+.topbar-quick-link--primary {
+    box-shadow: 0 3px 8px rgba(212, 102, 44, 0.08);
+}
+
+.alert-chip {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.32));
+}
+

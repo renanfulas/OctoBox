@@ -21,7 +21,7 @@ PONTOS CRITICOS:
     background: var(--sidebar-bg);
     color: var(--sidebar-ink);
     border: none;
-    border-radius: 16px;
+    border-radius: 14px;
     box-shadow: var(--shadow-xl);
     overflow-y: auto;
     overflow-x: hidden;
@@ -283,3 +283,103 @@ PONTOS CRITICOS:
     color: #fff;
     background: rgba(37, 99, 235, 0.22);
 }
+
+/* --- Front Display Wall facade sidebar pass --- */
+.sidebar {
+    background: linear-gradient(180deg, rgba(8, 16, 30, 0.98), rgba(12, 22, 40, 0.97) 54%, rgba(7, 41, 62, 0.94));
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    box-shadow: var(--fdw-shadow-lift);
+}
+
+.sidebar::before,
+.sidebar::after {
+    display: block;
+    content: "";
+    position: absolute;
+    pointer-events: none;
+}
+
+.sidebar::before {
+    inset: 0;
+    background: radial-gradient(circle at top left, rgba(96, 165, 250, 0.22), transparent 26%), radial-gradient(circle at 82% 18%, rgba(45, 212, 191, 0.14), transparent 24%);
+}
+
+.sidebar::after {
+    inset: auto -18% -10% auto;
+    width: 180px;
+    height: 180px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(251, 146, 60, 0.18), transparent 70%);
+}
+
+.brand-mark {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: linear-gradient(145deg, var(--fdw-copper), var(--fdw-sky));
+    box-shadow: 0 16px 28px rgba(9, 14, 24, 0.28);
+}
+
+.brand {
+    letter-spacing: -0.03em;
+}
+
+.tagline {
+    max-width: 22ch;
+    color: rgba(226, 232, 240, 0.76);
+}
+
+.sidebar-meta {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+    border-color: rgba(148, 163, 184, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.sidebar-highlight {
+    background: linear-gradient(135deg, rgba(29, 78, 216, 0.18), rgba(15, 118, 110, 0.16));
+    border-color: rgba(96, 165, 250, 0.08);
+}
+
+.nav-link {
+    backdrop-filter: blur(10px);
+}
+
+.nav-link:hover,
+.nav-link:focus-visible {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
+}
+
+.nav-link.is-active {
+    background: linear-gradient(90deg, rgba(29, 78, 216, 0.28), rgba(15, 118, 110, 0.2));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 18px rgba(7, 16, 30, 0.22);
+}
+
+
+/* --- Front Display Wall artistic facade pass --- */
+.sidebar::before {
+    background: radial-gradient(circle at top left, rgba(96, 165, 250, 0.08), transparent 22%), radial-gradient(circle at 82% 18%, rgba(45, 212, 191, 0.04), transparent 20%), linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%);
+}
+
+.sidebar::after {
+    width: 110px;
+    height: 110px;
+    background: radial-gradient(circle, rgba(251, 146, 60, 0.06), transparent 70%);
+}
+
+.brand-mark {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    box-shadow: 0 6px 14px rgba(9, 14, 24, 0.14);
+}
+
+.sidebar-meta {
+    padding: 13px;
+    border-radius: 14px;
+}
+
+.nav-link.is-active {
+    background: linear-gradient(90deg, rgba(212, 102, 44, 0.04), rgba(37, 85, 220, 0.03)), color-mix(in srgb, var(--sidebar-active) 76%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+

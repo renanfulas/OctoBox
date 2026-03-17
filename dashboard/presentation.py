@@ -1,4 +1,4 @@
-﻿"""
+"""
 ARQUIVO: presentation do dashboard principal.
 
 POR QUE ELE EXISTE:
@@ -15,21 +15,21 @@ from shared_support.page_payloads import build_page_assets, build_page_hero, bui
 
 DASHBOARD_QUICK_ACTIONS = [
     {
-        'eyebrow': 'Fila principal',
-        'title': 'Rota de entradas',
-        'copy': 'Ative a fila de novos contatos e veja onde a energia comercial ainda pode virar matricula.',
+        'eyebrow': 'Quem chega',
+        'title': 'Novas entradas',
+        'copy': 'Tem gente chegando. Vou te mostrar onde ainda da pra criar vinculo.',
         'href': '/entradas/',
     },
     {
-        'eyebrow': 'Agenda viva',
-        'title': 'Turmas em movimento',
-        'copy': 'Entre na grade do dia para sentir o ritmo das turmas, ocupacao e resposta do time.',
+        'eyebrow': 'Agenda',
+        'title': 'As turmas do dia',
+        'copy': 'A agenda esta aqui. Eu cuido da leitura, voce decide o passo.',
         'href': '/grade-aulas/',
     },
     {
-        'eyebrow': 'Caixa e receita',
-        'title': 'Sprint de receita',
-        'copy': 'Va direto para caixa, atrasos e receita realizada em uma leitura de performance do negocio.',
+        'eyebrow': 'Caixa',
+        'title': 'Receita e saude',
+        'copy': 'Separei o que entrou e o que ainda pede cuidado. Voce vai saber o que fazer.',
         'href': '/financeiro/',
     },
 ]
@@ -39,19 +39,19 @@ COACH_DASHBOARD_QUICK_ACTIONS = [
     {
         'eyebrow': 'Fila principal',
         'title': 'Rota de entradas',
-        'copy': 'Veja o que ainda esta em conversa para antecipar impacto no turno, na turma e no acolhimento.',
+        'copy': 'Tem gente nova na porta. Vou te mostrar como isso muda o turno.',
         'href': '/entradas/',
     },
     {
-        'eyebrow': 'Execucao do turno',
-        'title': 'Marcar presenca',
-        'copy': 'Entre na rotina do coach para registrar presenca e manter a turma com ritmo e energia.',
+        'eyebrow': 'Presenca',
+        'title': 'Registrar turma',
+        'copy': 'Sua turma esta esperando. Comece por aqui e eu acompanho contigo.',
         'href': '/operacao/coach/',
     },
     {
         'eyebrow': 'Agenda viva',
         'title': 'Turmas em movimento',
-        'copy': 'Abra a agenda para revisar o turno e conferir a composicao das turmas em andamento.',
+        'copy': 'Montei a composicao das turmas pra voce. So confirmar e seguir.',
         'href': '/grade-aulas/',
     },
 ]
@@ -59,21 +59,21 @@ COACH_DASHBOARD_QUICK_ACTIONS = [
 
 RECEPTION_DASHBOARD_QUICK_ACTIONS = [
     {
-        'eyebrow': 'Atendimento',
-        'title': 'Novo aluno no balcao',
-        'copy': 'Abra o fluxo de cadastro curto para transformar chegada em ficha pronta sem perder ritmo no balcao.',
+        'eyebrow': 'Chegada',
+        'title': 'Novo aluno',
+        'copy': 'Alguem chegou. Vou te guiar pra ficha ficar pronta rapido.',
         'href': '/alunos/novo/',
     },
     {
-        'eyebrow': 'Caixa curto',
-        'title': 'Cobrancas do balcao',
-        'copy': 'Va direto para a fila operacional e resolva o caixa curto no calor do atendimento.',
+        'eyebrow': 'Caixa',
+        'title': 'Cobrancas do dia',
+        'copy': 'Separei o que precisa sair agora. Pode confiar, esta tudo aqui.',
         'href': '/operacao/recepcao/#reception-payment-board',
     },
     {
         'eyebrow': 'Agenda viva',
         'title': 'Grade do turno',
-        'copy': 'Abra a agenda para responder horario, coach e ocupacao sem cair na gestao completa da grade.',
+        'copy': 'Organizei horario, coach e vagas pra voce responder com seguranca.',
         'href': '/grade-aulas/',
     },
 ]
@@ -94,9 +94,9 @@ def _build_dashboard_hero_actions(role_slug):
 
 def _build_dashboard_hero_copy(role_slug):
     if role_slug == ROLE_RECEPTION:
-        return 'Chegada, agenda e caixa curto em um painel rapido, energico e imediatamente util para o balcao.'
+        return 'Estou aqui com voce. Vamos cuidar do balcao juntos.'
 
-    return 'Receita, agenda e presenca em um pulso unico para decidir com clareza e energia.'
+    return 'Estou junto contigo. Vamos olhar o que importa hoje.'
 
 
 def _build_dashboard_quick_actions(role_slug):
@@ -112,21 +112,21 @@ def _can_register_finance_whatsapp(role_slug):
 
 
 def _build_dashboard_execution_focus(role_slug, *, next_session, next_payment_alert, highest_risk_student, actionable_payment_alerts_count):
-    finance_label = 'Comece pela fila que bate antes'
+    finance_label = 'Cuido do caixa contigo. Comece por aqui'
     finance_summary = (
-        f'{actionable_payment_alerts_count} cobranca(s) pedem acao agora. {next_payment_alert.student.full_name} e o primeiro caso para abrir a rodada antes que o atraso cresca.'
+        f'{actionable_payment_alerts_count} cobranca(s) pedem contato. {next_payment_alert.student.full_name} e o melhor ponto pra comecar. Voce consegue resolver isso.'
         if next_payment_alert else
-        'Nenhuma cobranca com contato liberado pede acao imediata agora.'
+        'Nenhuma cobranca critica agora. O caixa esta bem e voce pode respirar.'
     )
     finance_href = '/financeiro/'
     finance_href_label = 'Abrir financeiro'
 
     if role_slug == ROLE_RECEPTION:
-        finance_label = 'Comece pela cobranca que cabe no balcao'
+        finance_label = 'Essa cobranca cabe no seu turno. Vamos juntos'
         finance_summary = (
-            f'{actionable_payment_alerts_count} cobranca(s) pedem acao agora. {next_payment_alert.student.full_name} e o primeiro caso e pode pedir abordagem de balcao hoje.'
+            f'{actionable_payment_alerts_count} cobranca(s) pedem sua atencao. {next_payment_alert.student.full_name} e quem mais precisa de voce agora.'
             if next_payment_alert else
-            'Nenhuma cobranca com contato liberado pressiona o caixa curto agora.'
+            'O caixa curto esta tranquilo. Voce esta dando conta.'
         )
         finance_href = '/operacao/recepcao/#reception-payment-board'
         finance_href_label = 'Abrir cobrancas do balcao'
@@ -142,24 +142,24 @@ def _build_dashboard_execution_focus(role_slug, *, next_session, next_payment_al
             'href_label': finance_href_label,
         },
         {
-            'label': 'Depois confirme a agenda de hoje',
+            'label': 'A agenda esta pronta pra voce conferir',
             'chip_label': 'Aulas',
             'summary': (
-                f"{next_session['object'].title} e a proxima aula e ja mostra o que vai ocupar equipe, coach e recepcao."
+                f"{next_session['object'].title} e a proxima. Deixei tudo organizado pra voce so confirmar."
                 if next_session else
-                'Sem aulas proximas neste recorte, a agenda nao e o ponto mais sensivel desta rodada.'
+                'Sem aulas no radar agora. Aproveita esse respiro, voce merece.'
             ),
             'pill_class': 'info' if next_session else 'accent',
             'href': '#dashboard-sessions-board',
             'href_label': 'Abrir agenda do dia',
         },
         {
-            'label': 'Feche com o risco de perda' if role_slug != ROLE_RECEPTION else 'Feche com quem pede acolhimento',
+            'label': 'Tem alguem que precisa de voce' if role_slug != ROLE_RECEPTION else 'Feche com quem pede acolhimento',
             'chip_label': 'Risco' if role_slug != ROLE_RECEPTION else 'Retencao',
             'summary': (
-                f'{highest_risk_student.full_name} lidera o risco atual com {highest_risk_student.total_absences} falta(s) e merece contato antes de esfriar de vez.'
+                f'{highest_risk_student.full_name} sumiu um pouco com {highest_risk_student.total_absences} falta(s). Um contato seu pode trazer de volta. Voce consegue.'
                 if highest_risk_student else
-                ('Sem sinais fortes de perda neste momento, entao a base nao pede leitura de retencao agora.' if role_slug != ROLE_RECEPTION else 'Nenhum aluno aparece com sinal claro de esfriamento agora.')
+                ('A base esta firme. Ninguem mostra sinal de esfriamento. Voce esta cuidando bem.' if role_slug != ROLE_RECEPTION else 'Ninguem precisa de resgate agora. O balcao esta acolhendo bem.')
             ),
             'pill_class': 'warning' if highest_risk_student else 'success',
             'href': '/alunos/',
@@ -192,9 +192,9 @@ def _build_dashboard_priority_cards(
             'value': actionable_payment_alerts_count,
             'indicator': 'Caixa' if role_slug == ROLE_RECEPTION else 'Urgente',
             'copy': (
-                f'{primary_payment_alert.student.full_name} pode receber contato agora. Essa e a pendencia que mais encosta no caixa do box hoje.'
+                f'{primary_payment_alert.student.full_name} esta esperando contato. Eu te guio: comece por aqui e o caixa agradece.'
                 if role_slug != ROLE_RECEPTION else
-                f'{primary_payment_alert.student.full_name} cabe em abordagem de balcao agora. Essa e a pendencia mais quente para proteger o caixa curto.'
+                f'{primary_payment_alert.student.full_name} precisa do seu cuidado agora. Uma abordagem sua faz toda a diferenca.'
             ),
         }
     elif overdue_count > 0 and primary_payment_alert:
@@ -206,9 +206,9 @@ def _build_dashboard_priority_cards(
             'value': overdue_count,
             'indicator': 'Controle',
             'copy': (
-                f'{primary_payment_alert.student.full_name} abre a fila de cobrancas mapeadas. O dinheiro ainda nao esta perdido, mas a leitura precisa acontecer agora.'
+                f'{primary_payment_alert.student.full_name} abre a fila. O dinheiro ainda esta ai, so precisa de voce. Vamos resolver juntos.'
                 if role_slug != ROLE_RECEPTION else
-                f'{primary_payment_alert.student.full_name} abre a fila curta de cobrancas. O caixa ainda respira, mas ja pede leitura de balcao.'
+                f'{primary_payment_alert.student.full_name} abre a fila curta. O caixa respira, mas uma olhada sua agora faz diferenca.'
             ),
         }
     else:
@@ -220,9 +220,9 @@ def _build_dashboard_priority_cards(
             'value': 0,
             'indicator': 'Estavel',
             'copy': (
-                'Sem pendencia financeira critica no recorte atual. O caixa pede rotina, nao resposta imediata.'
+                'Caixa limpo. Voce esta no controle. Pode seguir com tranquilidade.'
                 if role_slug != ROLE_RECEPTION else
-                'Sem cobranca curta critica no recorte atual. O caixa do balcao esta sob controle agora.'
+                'Tudo certo no caixa do balcao. Voce esta mandando bem.'
             ),
         }
 
@@ -243,9 +243,9 @@ def _build_dashboard_priority_cards(
             'value': highest_risk_student.total_absences,
             'indicator': 'Retencao' if role_slug != ROLE_RECEPTION else 'Cuidado',
             'copy': (
-                f'{highest_risk_student.full_name} ja soma {highest_risk_student.total_absences} falta(s). Isso ainda nao bate o caixa agora, mas aproxima perda de receita se ficar sem abordagem.'
+                f'{highest_risk_student.full_name} sumiu um pouco, {highest_risk_student.total_absences} falta(s). Uma mensagem sua pode ser o que faltava pra voltar.'
                 if role_slug != ROLE_RECEPTION else
-                f'{highest_risk_student.full_name} ja soma {highest_risk_student.total_absences} falta(s). Sem acolhimento rapido, o balcao sente a perda de vinculo antes do caixa perceber.'
+                f'{highest_risk_student.full_name} precisa sentir que alguem notou, {highest_risk_student.total_absences} falta(s). Seu acolhimento pode mudar tudo.'
             ),
         }
     elif pressured_session:
@@ -258,9 +258,9 @@ def _build_dashboard_priority_cards(
             'value': pressured_session['occupancy_percent'] or len(upcoming_sessions),
             'indicator': 'Turno',
             'copy': (
-                f"{pressured_session['object'].title} ja esta em andamento e pressiona equipe, experiencia e resposta do turno."
+                f"{pressured_session['object'].title} esta acontecendo agora. Eu cuido da leitura, voce cuida da equipe."
                 if pressured_session['status_label'] == 'Em andamento' else
-                f"{pressured_session['object'].title} comeca as {starts_at_label} em pressao operacional real. Vale entrar na agenda antes que a experiencia degrade."
+                f"{pressured_session['object'].title} comeca as {starts_at_label} e precisa de atencao. Vou te levar pra agenda."
             ),
         }
     else:
@@ -271,7 +271,7 @@ def _build_dashboard_priority_cards(
             'kicker': 'Emergencia',
             'value': 0,
             'indicator': 'Estavel',
-            'copy': 'Nenhuma pendencia emergente ligada a retencao ou experiencia aparece no recorte atual.',
+            'copy': 'Tudo tranquilo na retencao. A comunidade esta bem e voce pode focar no que quiser.',
         }
 
     occurrences_count = metrics['occurrences_this_month']
@@ -284,9 +284,9 @@ def _build_dashboard_priority_cards(
             'value': occurrences_count,
             'indicator': 'Rotina',
             'copy': (
-                f'{occurrences_count} ocorrencia(s) ja apareceram no mes e {highest_risk_student.full_name} soma {highest_risk_student.total_absences} falta(s). Vale organizar a base antes do ruido virar evasao.'
+                f'{occurrences_count} ocorrencia(s) no mes e {highest_risk_student.full_name} com {highest_risk_student.total_absences} falta(s). Eu organizo os dados, voce decide a acao. Juntos resolvemos.'
                 if role_slug != ROLE_RECEPTION else
-                f'{occurrences_count} ocorrencia(s) ja apareceram no mes e {highest_risk_student.full_name} pede acolhimento. Vale organizar a rotina antes do balcao absorver o caos.'
+                f'{occurrences_count} ocorrencia(s) no mes e {highest_risk_student.full_name} pede acolhimento. Eu te mostro por onde comecar.'
             ),
         }
     elif occurrences_count > 0:
@@ -297,7 +297,7 @@ def _build_dashboard_priority_cards(
             'kicker': 'Risco',
             'value': occurrences_count,
             'indicator': 'Rotina',
-            'copy': 'As ocorrencias do mes mostram que a rotina esta pedindo mais organizacao antes que o ruido vire retrabalho.',
+            'copy': 'Algumas ocorrencias apareceram. Vou te ajudar a organizar antes que vire problema.',
         }
     else:
         risk_card = {
@@ -307,7 +307,7 @@ def _build_dashboard_priority_cards(
             'kicker': 'Risco',
             'value': 0,
             'indicator': 'Estavel',
-            'copy': 'Sem sinal forte de desorganizacao no recorte imediato. A rotina do box esta respirando com previsibilidade.',
+            'copy': 'Rotina limpa. O box esta funcionando bem e voce pode confiar no ritmo.',
         }
 
     return [urgency_card, emergency_card, risk_card]
@@ -340,11 +340,11 @@ def build_dashboard_page(*, request_user, role_slug, snapshot):
     )
     pending_focus = {
         'href': '/operacao/recepcao/#reception-intake-board' if role_slug == ROLE_RECEPTION else '/entradas/#intake-queue-board',
-        'summary': 'Abrir o que segue pendente de entrada, vinculo ou acolhimento antes de esfriar.',
+        'summary': 'Tem gente esperando um retorno seu. Vou te levar ate la.',
     }
     hero = build_page_hero(
-        eyebrow='Dashboard do dia',
-        title='Seu box em alta performance.',
+        eyebrow='Hoje',
+        title='Bom te ver.',
         copy=_build_dashboard_hero_copy(role_slug),
         actions=_build_dashboard_hero_actions(role_slug),
         aria_label='Panorama do dia',
@@ -357,7 +357,7 @@ def build_dashboard_page(*, request_user, role_slug, snapshot):
         context={
             'page_key': 'dashboard',
             'title': 'Dashboard do box',
-            'subtitle': 'Negocio e comunidade em uma leitura clara, energica e pronta para acao.',
+            'subtitle': 'Tudo o que voce precisa, no tempo certo.',
             'mode': 'reception' if role_slug == ROLE_RECEPTION else 'default',
             'role_slug': role_slug,
         },

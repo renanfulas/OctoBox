@@ -224,3 +224,75 @@ body[data-theme="dark"] .hero {
         grid-template-columns: 1fr;
     }
 }
+
+/* --- Front Display Wall facade hero pass --- */
+.hero {
+    --hero-surface: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 252, 0.98));
+    --hero-border: rgba(255, 255, 255, 0.68);
+    --hero-shadow: var(--fdw-shadow-lift);
+    --hero-rail: linear-gradient(180deg, var(--fdw-copper), var(--fdw-sky));
+    --hero-halo: radial-gradient(circle at 100% 100%, rgba(29, 78, 216, 0.05), rgba(29, 78, 216, 0));
+    --hero-panel-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(248, 250, 252, 0.88));
+    --hero-panel-border: rgba(80, 102, 128, 0.12);
+    --hero-panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76), 0 10px 22px rgba(15, 23, 42, 0.06);
+    --hero-badge-surface: linear-gradient(135deg, rgba(196, 91, 45, 0.04), rgba(29, 78, 216, 0.04));
+    --hero-badge-border: rgba(80, 102, 128, 0.1);
+    --hero-badge-ink: var(--ink-soft);
+}
+
+.hero {
+    isolation: isolate;
+}
+
+.hero::after {
+    width: 280px;
+    height: 280px;
+}
+
+.hero::before {
+    width: 5px;
+}
+
+.hero :is(h1, h2) {
+    letter-spacing: -0.06em;
+    max-width: 11ch;
+}
+
+.hero .operation-hero-panel {
+    backdrop-filter: blur(12px);
+}
+
+body[data-theme="dark"] .hero {
+    --hero-surface: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(14, 25, 44, 0.96));
+    --hero-border: rgba(148, 163, 184, 0.14);
+    --hero-panel-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+    --hero-panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 14px 30px rgba(0, 0, 0, 0.2);
+}
+
+
+/* --- Front Display Wall artistic hero pass --- */
+.hero {
+    --hero-surface: linear-gradient(145deg, rgba(255, 255, 255, 0.99), rgba(250, 248, 245, 0.98));
+    --hero-shadow: 0 4px 12px rgba(15, 23, 42, 0.03), 0 1px 3px rgba(15, 23, 42, 0.02);
+    --hero-halo: radial-gradient(circle at 100% 100%, rgba(37, 85, 220, 0.03), rgba(37, 85, 220, 0)), radial-gradient(circle at 0% 100%, rgba(212, 102, 44, 0.02), transparent 58%);
+}
+
+.hero::after {
+    width: 140px;
+    height: 140px;
+    opacity: 0.2;
+}
+
+.hero :is(h1, h2) {
+    max-width: 10ch;
+    line-height: 0.92;
+}
+
+.hero .operation-hero-copy {
+    font-size: 1rem;
+}
+
+body[data-theme="dark"] .hero {
+    --hero-surface: linear-gradient(145deg, rgba(11, 20, 35, 0.98), rgba(14, 25, 44, 0.96));
+}
+

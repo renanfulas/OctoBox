@@ -1,4 +1,4 @@
-﻿/*
+/*
 ARQUIVO: estilos especificos do dashboard.
 
 POR QUE ELE EXISTE:
@@ -19,35 +19,6 @@ O QUE ESTE ARQUIVO FAZ:
 
 body[data-shell-scope="dashboard"] .content {
     padding-top: 4px;
-}
-
-body[data-shell-scope="dashboard"] .topbar {
-    margin-bottom: 10px;
-    padding: 8px 0 10px;
-    background: transparent;
-    border-bottom: 0;
-}
-
-body[data-shell-scope="dashboard"] .page-compass {
-    min-height: 0;
-    margin-bottom: 10px;
-    padding: 4px 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-}
-
-body[data-shell-scope="dashboard"] .page-compass-context {
-    gap: 8px;
-}
-
-body[data-shell-scope="dashboard"] .compass-pulse {
-    gap: 4px;
-}
-
-body[data-shell-scope="dashboard"] .pulse-chip {
-    padding: 3px 8px;
 }
 
 .dashboard-shell::before,
@@ -441,12 +412,26 @@ body[data-shell-scope="dashboard"] .pulse-chip {
 
 .dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card {
     background:
-        radial-gradient(circle at top right, rgba(249, 115, 22, 0.12), transparent 28%),
-        linear-gradient(160deg, rgba(255, 250, 245, 0.98), rgba(255, 255, 255, 0.98));
-    border-color: rgba(249, 115, 22, 0.18);
+        radial-gradient(circle at top right, rgba(249, 115, 22, 0.08), transparent 24%),
+        radial-gradient(circle at left bottom, rgba(245, 158, 11, 0.05), transparent 26%),
+        linear-gradient(160deg, rgba(255, 252, 248, 0.98), rgba(255, 255, 255, 0.98));
+    border-color: rgba(217, 119, 6, 0.16);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.9),
-        0 16px 28px rgba(249, 115, 22, 0.08);
+        inset 0 1px 0 rgba(255, 255, 255, 0.88),
+        0 12px 24px rgba(217, 119, 6, 0.05);
+}
+
+.dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card .card-value {
+    color: rgb(180, 83, 9);
+}
+
+.dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card .card-kicker {
+    background: rgba(245, 158, 11, 0.12);
+    color: rgb(146, 64, 14);
+}
+
+.dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card .card-copy {
+    color: rgb(120, 53, 15);
 }
 
 .dashboard-instagram-metrics {
@@ -454,17 +439,72 @@ body[data-shell-scope="dashboard"] .pulse-chip {
     gap: 14px;
 }
 
+.dashboard-metrics-cluster .dashboard-kpi-card {
+    position: relative;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    border-radius: 24px;
+    overflow: hidden;
+    --kpi-good-surface: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(255, 255, 255, 0.78));
+    --kpi-good-border: rgba(16, 185, 129, 0.24);
+    --kpi-bad-surface: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(255, 255, 255, 0.78));
+    --kpi-bad-border: rgba(249, 115, 22, 0.24);
+    --kpi-neutral-surface: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(255, 255, 255, 0.78));
+    --kpi-neutral-border: rgba(56, 189, 248, 0.24);
+}
+
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber {
+    --kpi-good-surface: linear-gradient(135deg, rgba(245, 158, 11, 0.14), rgba(16, 185, 129, 0.08));
+    --kpi-good-border: rgba(180, 83, 9, 0.24);
+    --kpi-bad-surface: linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(249, 115, 22, 0.09));
+    --kpi-bad-border: rgba(194, 65, 12, 0.24);
+    --kpi-neutral-surface: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(56, 189, 248, 0.08));
+    --kpi-neutral-border: rgba(180, 83, 9, 0.22);
+}
+
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-red {
+    --kpi-good-surface: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(16, 185, 129, 0.08));
+    --kpi-good-border: rgba(220, 38, 38, 0.24);
+    --kpi-bad-surface: linear-gradient(135deg, rgba(254, 226, 226, 0.92), rgba(249, 115, 22, 0.08));
+    --kpi-bad-border: rgba(220, 38, 38, 0.24);
+    --kpi-neutral-surface: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(56, 189, 248, 0.05));
+    --kpi-neutral-border: rgba(220, 38, 38, 0.14);
+}
+
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-blue {
+    --kpi-good-surface: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(16, 185, 129, 0.08));
+    --kpi-good-border: rgba(37, 99, 235, 0.22);
+    --kpi-bad-surface: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(249, 115, 22, 0.08));
+    --kpi-bad-border: rgba(37, 99, 235, 0.22);
+    --kpi-neutral-surface: linear-gradient(135deg, rgba(59, 130, 246, 0.14), rgba(125, 211, 252, 0.1));
+    --kpi-neutral-border: rgba(37, 99, 235, 0.24);
+}
+
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-green {
+    --kpi-good-surface: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(45, 212, 191, 0.09));
+    --kpi-good-border: rgba(5, 150, 105, 0.24);
+    --kpi-bad-surface: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(249, 115, 22, 0.08));
+    --kpi-bad-border: rgba(5, 150, 105, 0.22);
+    --kpi-neutral-surface: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(56, 189, 248, 0.05));
+    --kpi-neutral-border: rgba(5, 150, 105, 0.14);
+}
+
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-slate {
+    --kpi-good-surface: linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(16, 185, 129, 0.08));
+    --kpi-good-border: rgba(15, 118, 110, 0.22);
+    --kpi-bad-surface: linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(249, 115, 22, 0.08));
+    --kpi-bad-border: rgba(15, 118, 110, 0.22);
+    --kpi-neutral-surface: linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(56, 189, 248, 0.08));
+    --kpi-neutral-border: rgba(15, 118, 110, 0.22);
+}
+
 .dashboard-instagram-metrics .dashboard-kpi-card {
     position: relative;
     min-height: clamp(176px, 18vw, 208px);
-    display: grid;
-    grid-template-rows: 1fr auto;
     padding: 18px 18px 16px;
-    border-radius: 24px;
-    overflow: hidden;
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card::before {
+.dashboard-metrics-cluster .dashboard-kpi-card::before {
     content: "";
     position: absolute;
     inset: 0 auto auto 0;
@@ -473,43 +513,43 @@ body[data-shell-scope="dashboard"] .pulse-chip {
     opacity: 0.95;
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card.kpi-amber::before {
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber::before {
     background: linear-gradient(90deg, rgba(249, 115, 22, 1), rgba(251, 146, 60, 0.88));
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card.kpi-blue::before {
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-blue::before {
     background: linear-gradient(90deg, rgba(59, 130, 246, 0.96), rgba(14, 165, 233, 0.86));
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card.kpi-red::before {
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-red::before {
     background: linear-gradient(90deg, rgba(239, 68, 68, 0.98), rgba(249, 115, 22, 0.88));
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card.kpi-green::before {
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-green::before {
     background: linear-gradient(90deg, rgba(16, 185, 129, 0.98), rgba(45, 212, 191, 0.84));
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card.kpi-slate::before {
-    background: linear-gradient(90deg, rgba(71, 85, 105, 0.96), rgba(100, 116, 139, 0.82));
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-slate::before {
+    background: linear-gradient(90deg, rgba(15, 118, 110, 0.92), rgba(20, 184, 166, 0.78));
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card .card-body-metric {
+.dashboard-metrics-cluster .dashboard-kpi-card .card-body-metric {
     height: 100%;
     display: grid;
     grid-template-rows: auto 1fr;
     gap: 12px;
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card .card-value-stack {
+.dashboard-metrics-cluster .dashboard-kpi-card .card-value-stack {
     gap: 8px;
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card .card-label {
+.dashboard-metrics-cluster .dashboard-kpi-card .card-label {
     color: var(--muted-strong);
     letter-spacing: 0.1em;
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card .card-kicker {
+.dashboard-metrics-cluster .dashboard-kpi-card .card-kicker {
     margin: 0;
     width: fit-content;
     padding: 3px 9px;
@@ -519,7 +559,7 @@ body[data-shell-scope="dashboard"] .pulse-chip {
     letter-spacing: 0.08em;
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card .card-value-row {
+.dashboard-metrics-cluster .dashboard-kpi-card .card-value-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -527,13 +567,13 @@ body[data-shell-scope="dashboard"] .pulse-chip {
     flex-wrap: wrap;
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card .card-value {
+.dashboard-metrics-cluster .dashboard-kpi-card .card-value {
     font-size: clamp(2rem, 3.1vw, 3rem);
     line-height: 0.92;
     letter-spacing: -0.06em;
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card .card-signal {
+.dashboard-metrics-cluster .dashboard-kpi-card .card-signal {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -547,46 +587,49 @@ body[data-shell-scope="dashboard"] .pulse-chip {
     text-transform: uppercase;
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card .card-signal-dot {
+.dashboard-metrics-cluster .dashboard-kpi-card .card-signal-dot {
     width: 8px;
     height: 8px;
     border-radius: 999px;
     background: currentColor;
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card .card-signal.is-good {
+.dashboard-metrics-cluster .dashboard-kpi-card .card-signal.is-good {
     color: #10b981;
-    background: rgba(16, 185, 129, 0.08);
+    border-color: var(--kpi-good-border);
+    background: var(--kpi-good-surface);
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card .card-signal.is-bad {
+.dashboard-metrics-cluster .dashboard-kpi-card .card-signal.is-bad {
     color: #f97316;
-    background: rgba(249, 115, 22, 0.08);
+    border-color: var(--kpi-bad-border);
+    background: var(--kpi-bad-surface);
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card .card-signal.is-neutral {
+.dashboard-metrics-cluster .dashboard-kpi-card .card-signal.is-neutral {
     color: #38bdf8;
-    background: rgba(56, 189, 248, 0.08);
+    border-color: var(--kpi-neutral-border);
+    background: var(--kpi-neutral-surface);
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card .card-copy {
+.dashboard-metrics-cluster .dashboard-kpi-card .card-copy {
     max-width: 26ch;
     font-size: 0.88rem;
     line-height: 1.46;
     color: var(--muted-strong);
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card .card-content {
+.dashboard-metrics-cluster .dashboard-kpi-card .card-content {
     align-content: end;
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card .card-footer {
+.dashboard-metrics-cluster .dashboard-kpi-card .card-footer {
     margin-top: 12px;
     padding-top: 10px;
     border-top: 1px solid rgba(148, 163, 184, 0.12);
 }
 
-.dashboard-instagram-metrics .dashboard-kpi-card .card-action {
+.dashboard-metrics-cluster .dashboard-kpi-card .card-action {
     background: rgba(255, 255, 255, 0.52);
 }
 
@@ -976,16 +1019,16 @@ body[data-theme="dark"] .dashboard-session-occupancy-label {
     color: rgba(226, 232, 240, 0.68);
 }
 
-body[data-theme="dark"] .dashboard-instagram-metrics .dashboard-kpi-card .card-kicker {
+body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-kicker {
     background: rgba(255, 255, 255, 0.08);
     color: var(--text);
 }
 
-body[data-theme="dark"] .dashboard-instagram-metrics .dashboard-kpi-card .card-copy {
+body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-copy {
     color: rgba(226, 232, 240, 0.88);
 }
 
-body[data-theme="dark"] .dashboard-instagram-metrics .dashboard-kpi-card .card-action {
+body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-action {
     background: rgba(255, 255, 255, 0.08);
 }
 
@@ -1205,11 +1248,6 @@ body[data-shell-scope="dashboard"] .topbar {
     padding: var(--dashboard-rhythm-2) 0 var(--dashboard-rhythm-3);
 }
 
-body[data-shell-scope="dashboard"] .page-compass {
-    margin-bottom: var(--dashboard-rhythm-2);
-    padding: 0;
-}
-
 .dashboard-shell,
 .dashboard-instagram-main,
 .dashboard-summary-zone,
@@ -1316,4 +1354,311 @@ body[data-shell-scope="dashboard"] .page-compass {
 
 
 
+
+
+/* --- Front Display Wall facade dashboard pass --- */
+.dashboard-shell::before {
+    background: radial-gradient(circle at top right, rgba(196, 91, 45, 0.16), transparent 22%), radial-gradient(circle at 12% 34%, rgba(29, 78, 216, 0.14), transparent 20%), radial-gradient(circle at 52% 0%, rgba(255, 255, 255, 0.62), transparent 28%);
+}
+
+.dashboard-shell::after {
+    border-radius: 32px;
+    background: linear-gradient(180deg, rgba(255, 247, 240, 0.78), rgba(255, 247, 240, 0)), linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent 58%);
+}
+
+.dashboard-hero {
+    border-color: rgba(255, 255, 255, 0.76);
+    background: radial-gradient(circle at top right, rgba(196, 91, 45, 0.18), transparent 30%), radial-gradient(circle at bottom left, rgba(29, 78, 216, 0.16), transparent 24%), linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 252, 0.98)), var(--surface);
+    box-shadow: var(--fdw-shadow-lift);
+}
+
+.dashboard-glance-card,
+.dashboard-side-card {
+    background: var(--fdw-panel-strong);
+    border-color: var(--fdw-line);
+    box-shadow: var(--fdw-shadow);
+}
+
+.dashboard-instagram-metrics .dashboard-kpi-card {
+    box-shadow: var(--fdw-shadow);
+}
+
+body[data-theme="dark"] .dashboard-hero,
+body[data-theme="dark"] .dashboard-glance-card,
+body[data-theme="dark"] .dashboard-side-card,
+body[data-theme="dark"] .dashboard-instagram-metrics .dashboard-kpi-card {
+    box-shadow: var(--fdw-shadow);
+}
+
+/* --- Front Display Wall dashboard chrome pass --- */
+body[data-shell-scope="dashboard"] .topbar {
+    margin-bottom: 13px;
+    padding: 10px 14px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.38)), var(--fdw-panel);
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    border-radius: 18px;
+    box-shadow: var(--fdw-shadow);
+    backdrop-filter: blur(18px);
+}
+
+body[data-theme="dark"][data-shell-scope="dashboard"] .topbar {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)), var(--fdw-panel);
+    border-color: rgba(148, 163, 184, 0.12);
+}
+
+
+/* --- Front Display Wall artistic dashboard pass --- */
+.dashboard-shell::before {
+    background: radial-gradient(circle at top right, rgba(212, 102, 44, 0.04), transparent 16%), radial-gradient(circle at 12% 34%, rgba(37, 85, 220, 0.03), transparent 14%), radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.36), transparent 20%), radial-gradient(circle at 80% 72%, rgba(15, 130, 120, 0.02), transparent 14%);
+}
+
+.dashboard-shell::after {
+    background: linear-gradient(180deg, rgba(255, 248, 242, 0.36), rgba(255, 248, 242, 0)), linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent 58%);
+}
+
+.dashboard-hero {
+    min-height: 200px;
+    border-color: rgba(255, 255, 255, 0.74);
+    background: radial-gradient(circle at top right, rgba(212, 102, 44, 0.03), transparent 22%), radial-gradient(circle at bottom left, rgba(37, 85, 220, 0.02), transparent 18%), linear-gradient(145deg, rgba(255, 255, 255, 0.99), rgba(250, 248, 245, 0.98)), var(--surface);
+}
+
+.dashboard-hero::after {
+    width: 24%;
+    background: linear-gradient(125deg, rgba(255, 255, 255, 0.06), transparent 46%);
+}
+
+.dashboard-glance-card,
+.dashboard-side-card,
+.dashboard-support-card,
+.dashboard-instagram-metrics .dashboard-kpi-card {
+    box-shadow: var(--fdw-shadow);
+}
+
+.dashboard-glance-card::after,
+.dashboard-support-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -30px -42px auto;
+    width: 70px;
+    height: 70px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(37, 85, 220, 0.02), transparent 72%);
+    pointer-events: none;
+}
+
+.dashboard-glance-card:hover,
+.dashboard-support-card:hover,
+.dashboard-instagram-metrics .dashboard-kpi-card:hover {
+    transform: translateY(0);
+    box-shadow: var(--fdw-shadow-lift);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    body[data-shell-scope="dashboard"] .topbar,
+    body[data-shell-scope="dashboard"] .page-compass,
+    .dashboard-hero,
+    .dashboard-glance-card,
+    .dashboard-instagram-metrics .dashboard-kpi-card,
+    .dashboard-side-card {
+        animation: fdw-rise-in 650ms var(--ease-standard) both;
+    }
+
+    .dashboard-glance-card:nth-child(2),
+    .dashboard-instagram-metrics .dashboard-kpi-card:nth-child(2) {
+        animation-delay: 60ms;
+    }
+
+    .dashboard-glance-card:nth-child(3),
+    .dashboard-instagram-metrics .dashboard-kpi-card:nth-child(3) {
+        animation-delay: 120ms;
+    }
+}
+
+@keyframes fdw-rise-in {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 3px, 0);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+
+/* ============================================================
+   COLOR MAP: Linguagem cromatica integrada do dashboard
+   -------------------------------------------------------
+   Principio: cada familia de cor tem UM significado semantico.
+   Nenhuma cor aparece "por acaso" — ela sempre comunica algo.
+
+   Copper  (#c2410c) -> Dinheiro: receita, caixa, fluxo financeiro
+   Ember   (#dc2626) -> Alerta financeiro: cobrancas, divida ativa
+   Sky     (#2563eb) -> Pipeline e fluxo: entradas, sessoes, agenda
+   Emerald (#059669) -> Comunidade e presenca: base viva, retencao
+   Amber   (#d97706) -> Atencao moderada: risco, ocorrencias
+   Aqua    (#0f766e) -> Pulso operacional: aproveitamento, ritmo
+   ============================================================ */
+
+/* --- Glance cards: a superficie sussurra o dominio --- */
+.dashboard-glance-card.is-finance {
+    background: linear-gradient(160deg, rgba(255, 247, 240, 0.98), rgba(254, 243, 235, 0.97));
+}
+
+.dashboard-glance-card.is-base {
+    background: linear-gradient(160deg, rgba(236, 253, 245, 0.98), rgba(240, 253, 250, 0.97));
+}
+
+.dashboard-glance-card.is-risk {
+    background: linear-gradient(160deg, rgba(255, 251, 235, 0.98), rgba(254, 249, 230, 0.97));
+}
+
+.dashboard-glance-card.is-sessions {
+    background: linear-gradient(160deg, rgba(239, 246, 255, 0.98), rgba(235, 244, 254, 0.97));
+}
+
+/* --- Glance ::before: copper vs amber claramente diferenciados --- */
+.dashboard-glance-card.is-finance::before {
+    background: linear-gradient(90deg, rgba(194, 65, 12, 0.94), rgba(234, 88, 12, 0.84));
+}
+
+.dashboard-glance-card.is-risk::before {
+    background: linear-gradient(90deg, rgba(217, 119, 6, 0.94), rgba(245, 158, 11, 0.84));
+}
+
+.dashboard-glance-card.is-sessions::before {
+    background: linear-gradient(90deg, rgba(37, 99, 235, 0.92), rgba(14, 165, 233, 0.82));
+}
+
+/* --- Indicator pills: amber dourado separado do copper --- */
+.dashboard-glance-indicator.is-finance {
+    color: rgb(180, 52, 8);
+    background: rgba(194, 65, 12, 0.1);
+}
+
+.dashboard-glance-indicator.is-risk {
+    color: rgb(161, 98, 7);
+    background: rgba(217, 119, 6, 0.1);
+}
+
+/* --- KPI lead primary: refinado para copper (dinheiro) --- */
+.dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card {
+    background:
+        radial-gradient(circle at top right, rgba(212, 102, 44, 0.07), transparent 24%),
+        radial-gradient(circle at left bottom, rgba(194, 65, 12, 0.04), transparent 26%),
+        linear-gradient(160deg, rgba(255, 252, 248, 0.98), rgba(255, 255, 255, 0.98));
+    border-color: rgba(194, 65, 12, 0.14);
+}
+
+.dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card .card-value {
+    color: rgb(194, 65, 12);
+}
+
+.dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card .card-kicker {
+    background: rgba(212, 102, 44, 0.1);
+    color: rgb(154, 52, 18);
+}
+
+.dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card .card-copy {
+    color: rgb(124, 45, 18);
+}
+
+/* --- KPI card: kpi-emerald (comunidade — pessoas, nao dinheiro) --- */
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-emerald {
+    --kpi-good-surface: linear-gradient(135deg, rgba(5, 150, 105, 0.14), rgba(52, 211, 153, 0.09));
+    --kpi-good-border: rgba(4, 120, 87, 0.24);
+    --kpi-bad-surface: linear-gradient(135deg, rgba(5, 150, 105, 0.1), rgba(249, 115, 22, 0.08));
+    --kpi-bad-border: rgba(4, 120, 87, 0.22);
+    --kpi-neutral-surface: linear-gradient(135deg, rgba(5, 150, 105, 0.1), rgba(56, 189, 248, 0.06));
+    --kpi-neutral-border: rgba(4, 120, 87, 0.18);
+}
+
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-emerald::before {
+    background: linear-gradient(90deg, rgba(5, 150, 105, 0.96), rgba(52, 211, 153, 0.84));
+}
+
+/* --- Dark mode: superficies adaptadas por dominio --- */
+body[data-theme="dark"] .dashboard-glance-card.is-finance {
+    background: linear-gradient(160deg, rgba(30, 20, 14, 0.98), rgba(24, 16, 10, 0.97));
+}
+
+body[data-theme="dark"] .dashboard-glance-card.is-base {
+    background: linear-gradient(160deg, rgba(12, 28, 22, 0.98), rgba(10, 24, 18, 0.97));
+}
+
+body[data-theme="dark"] .dashboard-glance-card.is-risk {
+    background: linear-gradient(160deg, rgba(28, 22, 10, 0.98), rgba(24, 18, 8, 0.97));
+}
+
+body[data-theme="dark"] .dashboard-glance-card.is-sessions {
+    background: linear-gradient(160deg, rgba(12, 18, 30, 0.98), rgba(10, 16, 28, 0.97));
+}
+
+body[data-theme="dark"] .dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card {
+    background:
+        radial-gradient(circle at top right, rgba(212, 102, 44, 0.12), transparent 24%),
+        radial-gradient(circle at left bottom, rgba(194, 65, 12, 0.06), transparent 26%),
+        linear-gradient(160deg, rgba(18, 14, 10, 0.98), rgba(12, 10, 8, 0.98));
+    border-color: rgba(212, 102, 44, 0.18);
+}
+
+body[data-theme="dark"] .dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card .card-value {
+    color: rgb(251, 146, 60);
+}
+
+body[data-theme="dark"] .dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card .card-kicker {
+    background: rgba(212, 102, 44, 0.14);
+    color: rgba(251, 146, 60, 0.88);
+}
+
+body[data-theme="dark"] .dashboard-kpi-slot--lead.is-primary .dashboard-kpi-card .card-copy {
+    color: rgba(251, 191, 146, 0.82);
+}
+
+/* ============================================================
+   EXPERIMENTAL: Compact glance cards + smart topline wrap
+   Para reverter, delete tudo daqui ate o fim do arquivo.
+   ============================================================ */
+
+/* -- Smart wrap: 2 colunas antes de colapsar para 1 -- */
+@media (max-width: 1140px) and (min-width: 961px) {
+    .dashboard-summary-topline {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .dashboard-summary-topline > :first-child {
+        grid-column: 1 / -1;
+    }
+}
+
+/* -- Glance cards: mais compactos e arredondados -- */
+.dashboard-glance-card {
+    border-radius: 22px;
+    gap: 8px;
+}
+
+.dashboard-glance-card--summary {
+    min-height: 148px;
+    padding: 13px 15px;
+}
+
+.dashboard-glance-value {
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+}
+
+.dashboard-glance-copy {
+    font-size: 0.84rem;
+    line-height: 1.42;
+}
+
+.dashboard-glance-kicker {
+    font-size: 0.66rem;
+}
+
+.dashboard-glance-indicator {
+    min-height: 24px;
+    padding: 4px 9px;
+    font-size: 0.62rem;
+}
 
