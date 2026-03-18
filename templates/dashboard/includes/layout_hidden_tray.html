@@ -1,0 +1,10 @@
+<div class="dashboard-layout-hidden-tray{% if not page.data.dashboard_layout.hidden_blocks %} is-empty{% endif %}" data-dashboard-hidden-tray>
+    <p class="dashboard-layout-hidden-title">Blocos ocultos</p>
+    <div class="dashboard-layout-hidden-list" data-dashboard-hidden-list>
+        {% for block in page.data.dashboard_layout.hidden_blocks %}
+        <button class="button secondary dashboard-layout-hidden-chip" type="button" data-restore-block="{{ block.id }}">Restaurar {{ block.label }}</button>
+        {% empty %}
+        <p class="dashboard-layout-hidden-empty" data-dashboard-hidden-empty>Nenhum bloco oculto.</p>
+        {% endfor %}
+    </div>
+</div>

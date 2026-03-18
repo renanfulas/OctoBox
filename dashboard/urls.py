@@ -13,8 +13,9 @@ PONTOS CRITICOS:
 
 from django.urls import path
 
-from .dashboard_views import DashboardView
+from .dashboard_views import DashboardLayoutPreferenceView, DashboardView
 
 urlpatterns = [
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
+    path('dashboard/layout/', DashboardLayoutPreferenceView.as_view(), name='dashboard-layout-update'),
 ]

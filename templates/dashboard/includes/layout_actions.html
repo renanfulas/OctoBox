@@ -1,0 +1,15 @@
+<div class="dashboard-layout-actions">
+    {% if block.collapsible %}
+    <button class="button secondary dashboard-layout-action" type="button" data-toggle-collapse aria-expanded="{% if block.is_collapsed %}false{% else %}true{% endif %}">{% if block.is_collapsed %}Expandir{% else %}Recolher{% endif %}</button>
+    {% endif %}
+    {% if block.removable %}
+    <button class="button secondary dashboard-layout-action" type="button" data-hide-block>Ocultar</button>
+    {% endif %}
+    <button class="button secondary dashboard-layout-action" type="button" data-move-direction="up">Subir</button>
+    <button class="button secondary dashboard-layout-action" type="button" data-move-direction="down">Descer</button>
+    {% for allowed_slot in block.allowed_slots %}
+    <button class="button secondary dashboard-layout-action" type="button" data-move-slot="{{ allowed_slot }}"{% if allowed_slot == block.slot %} hidden{% endif %}>
+        {% if allowed_slot == 'main_primary' %}Mover para principal{% elif allowed_slot == 'right_rail' %}Mover para apoio{% else %}Mover{% endif %}
+    </button>
+    {% endfor %}
+</div>

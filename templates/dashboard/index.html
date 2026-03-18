@@ -18,129 +18,33 @@ PONTOS CRITICOS:
 
 {% block content %}
 {% with page=dashboard_page %}
-<div class="scene-stack dashboard-shell" data-page="dashboard" data-screen="dashboard" data-slot="page-root">
-    {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
+<div class="scene-stack dashboard-shell" data-page="dashboard" data-screen="dashboard" data-slot="page-root" data-dashboard-layout-version="{{ page.data.dashboard_layout.version }}">
+    {% for block in page.data.dashboard_layout.slots.hero %}
+    {% include block.template with block=block page=page %}
+    {% endfor %}
 
-    <section class="dashboard-instagram-layout" aria-label="Painel principal do dashboard" data-slot="workspace">
-        <div class="dashboard-instagram-main">
-            <section class="layout-block dashboard-summary-zone" aria-label="Leitura rapida do box">
-                <div class="dashboard-summary-shell">
-                        <div class="dashboard-summary-topline">
-                        {% with primary_card=page.data.dashboard_priority_cards.0 %}
-                        <section class="dashboard-glance-strip dashboard-glance-strip--summary" aria-label="Resumo visual do dia" data-slot="glance-strip">
-                            <a class="dashboard-glance-card dashboard-glance-card--summary {{ primary_card.card_class }}" href="{{ primary_card.href }}">
-                                <span class="dashboard-glance-kicker">Emergência</span>
-                                <div class="dashboard-glance-value-row">
-                                    <strong class="dashboard-glance-value">{{ primary_card.value }}</strong>
-                                    <span class="dashboard-glance-indicator {{ primary_card.indicator_class }}">{{ primary_card.indicator }}</span>
-                                </div>
-                                <p class="dashboard-glance-copy">{{ primary_card.copy|smart_break }}</p>
-                            </a>
-                        </section>
-                        {% endwith %}
+    {% include "dashboard/includes/layout_toolbar.html" with page=page %}
 
-                        <section class="dashboard-support-grid" aria-label="Radar de apoio">
-                            {% for card in page.data.dashboard_priority_cards|slice:"1:" %}
-                            <a class="dashboard-glance-card dashboard-glance-card--summary {{ card.card_class }}" href="{{ card.href }}">
-                                {% if forloop.first %}
-                                    <span class="dashboard-glance-kicker">Urgente</span>
-                                {% else %}
-                                    <span class="dashboard-glance-kicker">{{ card.kicker }}</span>
-                                {% endif %}
-                                <div class="dashboard-glance-value-row">
-                                    <strong class="dashboard-glance-value">{{ card.value }}</strong>
-                                    <span class="dashboard-glance-indicator {{ card.indicator_class }}">{{ card.indicator }}</span>
-                                </div>
-                                <p class="dashboard-glance-copy">{{ card.copy|smart_break }}</p>
-                            </a>
-                            {% endfor %}
-                        </section>
-
-                        <a class="visually-hidden" href="#dashboard-sessions-board">Abrir agenda do dia</a>
-                        <span class="visually-hidden">
-                            {% for payment in page.data.payment_alerts %}
-                            {% if payment.dashboard_requires_whatsapp_followup %}{{ payment.student.full_name }} {% endif %}
-                            {% endfor %}
-                        </span>
-                    </div>
-
-                    <div class="dashboard-metrics-cluster" data-slot="metrics-cluster">
-                        <section class="dashboard-metrics-lead" aria-label="Pulso curto do box">
-                            {% for card in page.data.metric_cards|slice:":2" %}
-                            <div class="dashboard-kpi-slot dashboard-kpi-slot--lead{% if forloop.first %} is-primary{% endif %}">
-                                {% include "includes/ui/metric_card.html" with card=card compact=True %}
-                            </div>
-                            {% endfor %}
-                        </section>
-
-                        <section class="panel-grid dashboard-instagram-metrics dashboard-instagram-metrics--support" aria-label="Numeros principais do box" data-slot="metrics" data-panel="dashboard-metrics">
-                            {% for card in page.data.metric_cards|slice:"2:" %}
-                            {% include "includes/ui/metric_card.html" with card=card compact=True %}
-                            {% endfor %}
-                        </section>
-                    </div>
-                </div>
-            </section>
+    <section class="dashboard-instagram-layout" aria-label="Painel principal do dashboard" data-slot="workspace" data-dashboard-workspace>
+        <div class="dashboard-instagram-main" data-dashboard-slot="main-primary" data-dashboard-slot-id="main_primary">
+            {% for block in page.data.dashboard_layout.slots.main_primary %}
+            {% include "dashboard/includes/layout_panel.html" with block=block page=page %}
+            {% endfor %}
         </div>
 
-        <aside class="dashboard-instagram-side">
-            <article class="table-card layout-panel layout-panel--stack dashboard-table-card dashboard-side-card dashboard-side-card-sticky card-decor-topstripe card-decor-glow" id="dashboard-sessions-board" data-panel="dashboard-sessions-board">
-                {% include "includes/ui/operation_card_head.html" with eyebrow="Agenda de apoio" title="Agenda do turno" copy="Linha do turno para sustentar a decisao principal sem competir com o painel central." pill_label=page.data.upcoming_sessions|length|add:" aula(s)" pill_class="info" %}
-                {% if page.data.upcoming_sessions %}
-                {% with featured_session=page.data.upcoming_sessions|first %}
-                <div class="dashboard-session-stack is-premium">
-                    <article class="dashboard-session-card dashboard-session-card--featured is-primary">
-                        <div class="dashboard-session-feature-head">
-                            <div>
-                                <p class="dashboard-session-kicker">{{ featured_session.dashboard_kicker }}</p>
-                                <strong>{{ featured_session.object.title }}</strong>
-                            </div>
-                            <div class="dashboard-session-time">{{ featured_session.starts_at|date:"H:i" }}</div>
-                        </div>
-                        <div class="dashboard-session-feature-meta-row">
-                            <p>{{ featured_session.coach_name }}</p>
-                            <p class="dashboard-session-window">ate {{ featured_session.ends_at|date:"H:i" }}</p>
-                        </div>
-                        <p class="dashboard-session-note">{{ featured_session.occupancy_note }}</p>
-                        <div class="dashboard-session-progress" aria-hidden="true">
-                            <span class="dashboard-session-progress-fill{% if featured_session.occupancy_fill_class %} {{ featured_session.occupancy_fill_class }}{% endif %}" style="width: {{ featured_session.occupancy_percent }}%"></span>
-                        </div>
-                        <div class="dashboard-session-meta dashboard-session-meta--inline">
-                            <span class="pill{% if featured_session.status_pill_class %} {{ featured_session.status_pill_class }}{% endif %}">{{ featured_session.status_label }}</span>
-                            <span class="pill{% if featured_session.occupancy_pill_class %} {{ featured_session.occupancy_pill_class }}{% endif %}">{{ featured_session.occupied_slots }}/{{ featured_session.capacity }}</span>
-                            <span class="dashboard-session-occupancy-label">{{ featured_session.occupancy_label }}</span>
-                        </div>
-                    </article>
-
-                    {% if page.data.upcoming_sessions|length > 1 %}
-                    <div class="dashboard-session-queue" aria-label="Fila curta da agenda">
-                        {% for session in page.data.upcoming_sessions|slice:"1:" %}
-                        <article class="dashboard-session-card dashboard-session-card--compact">
-                            <div class="dashboard-session-time-block">
-                                <div class="dashboard-session-time">{{ session.starts_at|date:"H:i" }}</div>
-                                <p class="dashboard-session-window">ate {{ session.ends_at|date:"H:i" }}</p>
-                            </div>
-                            <div class="dashboard-session-body">
-                                <p class="dashboard-session-kicker">{{ session.dashboard_kicker }}</p>
-                                <strong>{{ session.object.title }}</strong>
-                                <p>{{ session.coach_name }}</p>
-                            </div>
-                            <div class="dashboard-session-meta">
-                                <span class="pill{% if session.status_pill_class %} {{ session.status_pill_class }}{% endif %}">{{ session.status_label }}</span>
-                                <span class="pill{% if session.occupancy_pill_class %} {{ session.occupancy_pill_class }}{% endif %}">{{ session.occupied_slots }}/{{ session.capacity }}</span>
-                            </div>
-                        </article>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </div>
-                {% endwith %}
-                {% else %}
-                {% include "includes/ui/state_empty.html" with compact=True eyebrow="Agenda de apoio" title="Nenhuma aula cadastrada ainda" copy="A agenda principal ainda nao tem turma pronta para movimentar recepcao e coach neste recorte." badge="Dia leve" badge_class="info" %}
-                {% endif %}
-            </article>
+        <aside class="dashboard-instagram-side" data-dashboard-slot="right-rail" data-dashboard-slot-id="right_rail">
+            <span id="dashboard" class="visually-hidden" aria-hidden="true"></span>
+            {% for block in page.data.dashboard_layout.slots.right_rail %}
+            {% include "dashboard/includes/layout_panel.html" with block=block page=page %}
+            {% endfor %}
         </aside>
     </section>
+
+    <div class="dashboard-layout-hidden-pool" data-dashboard-hidden-pool hidden>
+        {% for block in page.data.dashboard_layout.hidden_blocks %}
+        {% include "dashboard/includes/layout_panel.html" with block=block page=page %}
+        {% endfor %}
+    </div>
 </div>
 {% endwith %}
 {% endblock %}
