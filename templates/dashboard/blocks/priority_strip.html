@@ -1,0 +1,28 @@
+<section class="layout-block dashboard-summary-zone" aria-label="Leitura rapida do box" data-dashboard-block="{{ block.id }}" data-dashboard-slot="{{ block.slot }}">
+    <div class="dashboard-summary-shell">
+        <div class="dashboard-summary-topline">
+            {% with primary_card=page.data.dashboard_priority_cards.0 %}
+            <section class="dashboard-glance-strip dashboard-glance-strip--summary" aria-label="Resumo visual do dia" data-slot="glance-strip">
+                {% include "includes/ui/dashboard_glance_card.html" with card=primary_card kicker="Emergência" %}
+            </section>
+            {% endwith %}
+
+            <section class="dashboard-support-grid" aria-label="Radar de apoio">
+                {% for card in page.data.dashboard_priority_cards|slice:"1:" %}
+                {% if forloop.first %}
+                {% include "includes/ui/dashboard_glance_card.html" with card=card kicker="Urgente" %}
+                {% else %}
+                {% include "includes/ui/dashboard_glance_card.html" with card=card %}
+                {% endif %}
+                {% endfor %}
+            </section>
+
+            <a class="visually-hidden" href="#dashboard-sessions-board">Abrir agenda do dia</a>
+            <span class="visually-hidden">
+                {% for payment in page.data.payment_alerts %}
+                {% if payment.dashboard_requires_whatsapp_followup %}{{ payment.student.full_name }} {% endif %}
+                {% endfor %}
+            </span>
+        </div>
+    </div>
+</section>

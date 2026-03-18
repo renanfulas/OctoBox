@@ -111,6 +111,239 @@ def _can_register_finance_whatsapp(role_slug):
     return role_slug in {ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION}
 
 
+def _build_dashboard_layout(role_slug):
+    del role_slug
+
+    slot_contract = [
+        {
+            'id': 'hero',
+            'label': 'Abertura',
+            'description': 'Recebe o manifesto operacional do dia e as acoes principais.',
+            'allows_reorder': False,
+        },
+        {
+            'id': 'main_primary',
+            'label': 'Leitura principal',
+            'description': 'Agrupa o painel central do dashboard com resumo rapido e metricas.',
+            'allows_reorder': True,
+        },
+        {
+            'id': 'right_rail',
+            'label': 'Trilho de apoio',
+            'description': 'Sustenta a decisao principal com agenda e leitura lateral.',
+            'allows_reorder': True,
+        },
+    ]
+
+    block_registry = [
+        {
+            'id': 'hero',
+            'label': 'Hero',
+            'slot': 'hero',
+            'allowed_slots': ['hero'],
+            'default_order': 10,
+            'template': 'dashboard/blocks/hero.html',
+            'movable': False,
+            'collapsible': False,
+            'removable': False,
+        },
+        {
+            'id': 'priority_strip',
+            'label': 'Prioridades',
+            'slot': 'main_primary',
+            'allowed_slots': ['main_primary', 'right_rail'],
+            'default_order': 10,
+            'template': 'dashboard/blocks/priority_strip.html',
+            'movable': True,
+            'collapsible': False,
+            'removable': True,
+        },
+        {
+            'id': 'metrics_cluster',
+            'label': 'Metricas',
+            'slot': 'main_primary',
+            'allowed_slots': ['main_primary', 'right_rail'],
+            'default_order': 20,
+            'template': 'dashboard/blocks/metrics_cluster.html',
+            'movable': True,
+            'collapsible': False,
+            'removable': True,
+        },
+        {
+            'id': 'sessions_board',
+            'label': 'Agenda',
+            'slot': 'right_rail',
+            'allowed_slots': ['right_rail', 'main_primary'],
+            'default_order': 10,
+            'template': 'dashboard/blocks/sessions_board.html',
+            'movable': True,
+            'collapsible': True,
+            'removable': False,
+        },
+    ]
+
+    layout_state = _normalize_dashboard_layout_state(
+        None,
+        slot_contract=slot_contract,
+        block_registry=block_registry,
+    )
+    slots = _build_dashboard_slots(
+        slot_contract=slot_contract,
+        block_registry=block_registry,
+        layout_state=layout_state,
+    )
+    hidden_blocks = _build_dashboard_hidden_blocks(
+        block_registry=block_registry,
+        layout_state=layout_state,
+    )
+
+    return {
+        'version': 'v2',
+        'slot_contract': slot_contract,
+        'block_registry': block_registry,
+        'layout_state': layout_state,
+        'slots': slots,
+        'hidden_blocks': hidden_blocks,
+    }
+
+
+def _build_dashboard_default_layout_state(*, slot_contract, block_registry):
+    default_state = {slot['id']: [] for slot in slot_contract}
+    for block in sorted(block_registry, key=lambda item: item['default_order']):
+        default_state[block['slot']].append(block['id'])
+    return default_state
+
+
+def _normalize_dashboard_layout_state(layout_state, *, slot_contract, block_registry):
+    slot_ids = [slot['id'] for slot in slot_contract]
+    block_by_id = {block['id']: block for block in block_registry}
+    collapsible_block_ids = {
+        block['id']
+        for block in block_registry
+        if block.get('collapsible')
+    }
+    removable_block_ids = {
+        block['id']
+        for block in block_registry
+        if block.get('removable')
+    }
+    normalized_slots = {slot_id: [] for slot_id in slot_ids}
+    raw_slots = layout_state.get('slots') if isinstance(layout_state, dict) else None
+    raw_collapsed_blocks = layout_state.get('collapsed_blocks') if isinstance(layout_state, dict) else None
+    raw_hidden_blocks = layout_state.get('hidden_blocks') if isinstance(layout_state, dict) else None
+    normalized_hidden_blocks = []
+    seen = set()
+
+    if isinstance(raw_hidden_blocks, list):
+        for block_id in raw_hidden_blocks:
+            if block_id not in removable_block_ids:
+                continue
+            if block_id in normalized_hidden_blocks:
+                continue
+            normalized_hidden_blocks.append(block_id)
+
+    if isinstance(raw_slots, dict):
+        for slot_id in slot_ids:
+            candidate_ids = raw_slots.get(slot_id)
+            if not isinstance(candidate_ids, list):
+                continue
+            for block_id in candidate_ids:
+                if block_id in seen or block_id not in block_by_id:
+                    continue
+                if block_id in normalized_hidden_blocks:
+                    continue
+                if slot_id not in block_by_id[block_id]['allowed_slots']:
+                    continue
+                normalized_slots[slot_id].append(block_id)
+                seen.add(block_id)
+
+    default_state = _build_dashboard_default_layout_state(slot_contract=slot_contract, block_registry=block_registry)
+    for slot_id in slot_ids:
+        for block_id in default_state[slot_id]:
+            if block_id in seen:
+                continue
+            if block_id in normalized_hidden_blocks:
+                continue
+            normalized_slots[slot_id].append(block_id)
+            seen.add(block_id)
+
+    normalized_collapsed_blocks = []
+    if isinstance(raw_collapsed_blocks, list):
+        for block_id in raw_collapsed_blocks:
+            if block_id not in collapsible_block_ids:
+                continue
+            if block_id not in seen:
+                continue
+            if block_id in normalized_collapsed_blocks:
+                continue
+            normalized_collapsed_blocks.append(block_id)
+
+    return {
+        'slots': normalized_slots,
+        'collapsed_blocks': normalized_collapsed_blocks,
+        'hidden_blocks': normalized_hidden_blocks,
+    }
+
+
+def _decorate_dashboard_block(block, *, slot_id, layout_state, is_hidden=False):
+    decorated = dict(block)
+    decorated['default_slot'] = block['slot']
+    decorated['slot'] = slot_id
+    decorated['is_collapsed'] = decorated['id'] in layout_state.get('collapsed_blocks', [])
+    decorated['is_hidden'] = is_hidden
+    return decorated
+
+
+def _build_dashboard_slots(*, slot_contract, block_registry, layout_state):
+    block_by_id = {block['id']: block for block in block_registry}
+    slots = {slot['id']: [] for slot in slot_contract}
+    for slot in slot_contract:
+        for block_id in layout_state['slots'][slot['id']]:
+            slots[slot['id']].append(
+                _decorate_dashboard_block(
+                    block_by_id[block_id],
+                    slot_id=slot['id'],
+                    layout_state=layout_state,
+                )
+            )
+    return slots
+
+
+def _build_dashboard_hidden_blocks(*, block_registry, layout_state):
+    block_by_id = {block['id']: block for block in block_registry}
+    hidden_blocks = []
+    for block_id in layout_state.get('hidden_blocks', []):
+        hidden_blocks.append(
+            _decorate_dashboard_block(
+                block_by_id[block_id],
+                slot_id=block_by_id[block_id]['slot'],
+                layout_state=layout_state,
+                is_hidden=True,
+            )
+        )
+    return hidden_blocks
+
+
+def build_dashboard_layout(role_slug, *, stored_layout_state=None):
+    layout = _build_dashboard_layout(role_slug)
+    layout_state = _normalize_dashboard_layout_state(
+        stored_layout_state,
+        slot_contract=layout['slot_contract'],
+        block_registry=layout['block_registry'],
+    )
+    layout['layout_state'] = layout_state
+    layout['slots'] = _build_dashboard_slots(
+        slot_contract=layout['slot_contract'],
+        block_registry=layout['block_registry'],
+        layout_state=layout_state,
+    )
+    layout['hidden_blocks'] = _build_dashboard_hidden_blocks(
+        block_registry=layout['block_registry'],
+        layout_state=layout_state,
+    )
+    return layout
+
+
 def _build_dashboard_execution_focus(role_slug, *, next_session, next_payment_alert, highest_risk_student, actionable_payment_alerts_count):
     finance_label = 'Cuido do caixa contigo. Comece por aqui'
     finance_summary = (
@@ -313,7 +546,7 @@ def _build_dashboard_priority_cards(
     return [emergency_card, urgency_card, risk_card]
 
 
-def build_dashboard_page(*, request_user, role_slug, snapshot):
+def build_dashboard_page(*, request_user, role_slug, snapshot, stored_layout_state=None):
     upcoming_sessions = list(snapshot['upcoming_sessions'])
     student_health = list(snapshot['student_health'])
     payment_alerts = list(snapshot['payment_alerts'])
@@ -352,6 +585,7 @@ def build_dashboard_page(*, request_user, role_slug, snapshot):
         data_slot='hero',
         data_panel='dashboard-hero',
     )
+    dashboard_layout = build_dashboard_layout(role_slug, stored_layout_state=stored_layout_state)
 
     return build_page_payload(
         context={
@@ -371,12 +605,28 @@ def build_dashboard_page(*, request_user, role_slug, snapshot):
         data={
             **snapshot,
             'hero': hero,
+            'dashboard_layout': dashboard_layout,
             'dashboard_role_mode': 'reception' if role_slug == ROLE_RECEPTION else 'default',
             'dashboard_can_register_finance_whatsapp': _can_register_finance_whatsapp(role_slug),
             'dashboard_quick_actions': _build_dashboard_quick_actions(role_slug),
             'dashboard_execution_focus': execution_focus,
             'dashboard_priority_cards': priority_cards,
         },
-        assets=build_page_assets(css=['css/design-system/operations.css', 'css/design-system/dashboard.css', 'css/design-system/neon.css']),
+        behavior={
+            'dashboard_layout_save_url': '/dashboard/layout/',
+            'dashboard_layout_version': dashboard_layout['version'],
+        },
+        assets=build_page_assets(
+            css=[
+                'css/design-system/operations.css',
+                'css/design-system/dashboard.css',
+                'css/design-system/components/dashboard/layout.css',
+                'css/design-system/neon.css',
+            ],
+            js=[
+                'js/pages/dashboard-layout-controller.js',
+                'js/pages/dashboard.js',
+            ],
+        ),
     )
 

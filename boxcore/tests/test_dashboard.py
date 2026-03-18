@@ -11,6 +11,7 @@ O QUE ESTE ARQUIVO FAZ:
 4. Mantem smoke de status das aulas e rate limit.
 """
 
+import json
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -23,8 +24,9 @@ from django.urls import reverse
 from django.utils import timezone
 
 from communications.models import WhatsAppContact
-from access.roles import ROLE_COACH, ROLE_RECEPTION
-from dashboard.presentation import _build_dashboard_execution_focus
+from access.roles import ROLE_COACH, ROLE_OWNER, ROLE_RECEPTION
+from dashboard.models import DashboardLayoutPreference
+from dashboard.presentation import _build_dashboard_execution_focus, _build_dashboard_layout
 from finance.models import Enrollment, MembershipPlan, Payment, PaymentMethod, PaymentStatus
 from operations.models import Attendance, ClassSession, SessionStatus
 from students.models import Student, StudentStatus
@@ -80,8 +82,21 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, 'Rotina limpa.<br>O box esta funcionando bem', html=False)
         self.assertContains(response, 'href="/financeiro/"', html=False)
         self.assertContains(response, 'href="/alunos/"', html=False)
+        self.assertContains(response, 'id="dashboard"', html=False)
+        self.assertContains(response, 'data-dashboard-layout-version="v2"', html=False)
+        self.assertContains(response, 'data-dashboard-slot="main-primary"', html=False)
+        self.assertContains(response, 'data-dashboard-slot="right-rail"', html=False)
+        self.assertContains(response, 'data-dashboard-block="priority_strip"', html=False)
+        self.assertContains(response, 'data-dashboard-block="metrics_cluster"', html=False)
+        self.assertContains(response, 'data-dashboard-block="sessions_board"', html=False)
+        self.assertContains(response, 'Organize o painel do seu jeito')
         self.assertContains(response, 'href="#dashboard-sessions-board"', html=False)
         self.assertContains(response, 'Agenda do turno')
+        self.assertContains(
+            response,
+            'class="table-card layout-panel layout-panel--stack dashboard-table-card dashboard-side-card dashboard-support-card dashboard-side-card-sticky"',
+            html=False,
+        )
         self.assertContains(response, 'class="dashboard-support-grid"', html=False)
         content = response.content.decode('utf-8')
         self.assertLess(content.index('Receita realizada'), content.index('Cobrancas em atraso'))
@@ -131,6 +146,31 @@ class DashboardViewTests(TestCase):
         self.assertEqual(focus[2]['href'], '/alunos/')
         self.assertEqual(focus[2]['href_label'], 'Abrir alunos em atencao')
 
+    def test_dashboard_layout_schema_exposes_slots_and_blocks(self):
+        layout = _build_dashboard_layout('owner')
+
+        self.assertEqual(layout['version'], 'v2')
+        self.assertEqual([slot['id'] for slot in layout['slot_contract']], ['hero', 'main_primary', 'right_rail'])
+        self.assertEqual([block['id'] for block in layout['slots']['hero']], ['hero'])
+        self.assertEqual([block['id'] for block in layout['slots']['main_primary']], ['priority_strip', 'metrics_cluster'])
+        self.assertEqual([block['id'] for block in layout['slots']['right_rail']], ['sessions_board'])
+        self.assertEqual(layout['layout_state']['collapsed_blocks'], [])
+        self.assertEqual(layout['layout_state']['hidden_blocks'], [])
+        self.assertEqual(layout['slots']['main_primary'][0]['template'], 'dashboard/blocks/priority_strip.html')
+        self.assertEqual(layout['slots']['main_primary'][0]['allowed_slots'], ['main_primary', 'right_rail'])
+        self.assertEqual(layout['slots']['main_primary'][0]['default_order'], 10)
+        self.assertTrue(layout['slots']['main_primary'][0]['removable'])
+        self.assertEqual(layout['slots']['main_primary'][1]['template'], 'dashboard/blocks/metrics_cluster.html')
+        self.assertEqual(layout['slots']['main_primary'][1]['allowed_slots'], ['main_primary', 'right_rail'])
+        self.assertEqual(layout['slots']['main_primary'][1]['default_order'], 20)
+        self.assertTrue(layout['slots']['main_primary'][1]['removable'])
+        self.assertEqual(layout['slots']['right_rail'][0]['allowed_slots'], ['right_rail', 'main_primary'])
+        self.assertEqual(layout['slots']['right_rail'][0]['default_order'], 10)
+        self.assertTrue(layout['slots']['right_rail'][0]['collapsible'])
+        self.assertFalse(layout['slots']['right_rail'][0]['is_collapsed'])
+        self.assertFalse(layout['slots']['right_rail'][0]['removable'])
+        self.assertEqual([block['id'] for block in layout['hidden_blocks']], [])
+
     def test_reception_execution_focus_keeps_payment_board_and_live_student_target(self):
         next_payment_alert = SimpleNamespace(student=SimpleNamespace(full_name='Rafa Balcao'))
 
@@ -146,6 +186,102 @@ class DashboardViewTests(TestCase):
         self.assertEqual(focus[1]['href'], '#dashboard-sessions-board')
         self.assertEqual(focus[2]['href'], '/alunos/')
         self.assertEqual(focus[2]['href_label'], 'Abrir alunos que pedem cuidado')
+
+    def test_dashboard_layout_update_persists_user_preference(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('dashboard-layout-update'),
+            data=json.dumps(
+                {
+                    'slots': {
+                        'main_primary': ['metrics_cluster'],
+                        'right_rail': ['sessions_board'],
+                    },
+                    'collapsed_blocks': ['sessions_board'],
+                    'hidden_blocks': ['priority_strip'],
+                }
+            ),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        preference = DashboardLayoutPreference.objects.get(user=self.user, role_slug=ROLE_OWNER)
+        self.assertEqual(
+            preference.layout['slots'],
+            {
+                'hero': ['hero'],
+                'main_primary': ['metrics_cluster'],
+                'right_rail': ['sessions_board'],
+            },
+        )
+        self.assertEqual(preference.layout['collapsed_blocks'], ['sessions_board'])
+        self.assertEqual(preference.layout['hidden_blocks'], ['priority_strip'])
+
+        rendered = self.client.get(reverse('dashboard'))
+        self.assertContains(rendered, 'data-dashboard-collapsed="true"', html=False)
+        self.assertContains(rendered, 'data-dashboard-hidden="true"', html=False)
+        self.assertContains(rendered, 'Restaurar Prioridades')
+
+    def test_dashboard_layout_update_rejects_invalid_block_set(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('dashboard-layout-update'),
+            data=json.dumps(
+                {
+                    'slots': {
+                        'main_primary': ['priority_strip'],
+                        'right_rail': ['sessions_board'],
+                    },
+                    'collapsed_blocks': [],
+                    'hidden_blocks': [],
+                }
+            ),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_dashboard_layout_update_rejects_invalid_collapsed_block(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('dashboard-layout-update'),
+            data=json.dumps(
+                {
+                    'slots': {
+                        'main_primary': ['priority_strip', 'metrics_cluster'],
+                        'right_rail': ['sessions_board'],
+                    },
+                    'collapsed_blocks': ['metrics_cluster'],
+                    'hidden_blocks': [],
+                }
+            ),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_dashboard_layout_update_rejects_invalid_hidden_block(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('dashboard-layout-update'),
+            data=json.dumps(
+                {
+                    'slots': {
+                        'main_primary': ['priority_strip', 'metrics_cluster'],
+                        'right_rail': ['sessions_board'],
+                    },
+                    'collapsed_blocks': [],
+                    'hidden_blocks': ['sessions_board'],
+                }
+            ),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
 
     def test_dashboard_keeps_routine_session_out_of_emergency_card(self):
         self.client.force_login(self.user)
