@@ -1,0 +1,15 @@
+<article class="dashboard-session-card dashboard-session-card--compact">
+    <div class="dashboard-session-time-block">
+        <div class="dashboard-session-time">{{ session.starts_at|date:"H:i" }}</div>
+        <p class="dashboard-session-window">ate {{ session.ends_at|date:"H:i" }}</p>
+    </div>
+    <div class="dashboard-session-body">
+        <p class="dashboard-session-kicker">{{ session.dashboard_kicker }}</p>
+        <strong>{{ session.object.title }}</strong>
+        <p>{{ session.coach_name }}</p>
+    </div>
+    <div class="dashboard-session-meta">
+        <span class="pill{% if session.status_pill_class %} {{ session.status_pill_class }}{% endif %}">{{ session.status_label }}</span>
+        <span class="pill{% if session.occupancy_pill_class %} {{ session.occupancy_pill_class }}{% endif %}">{{ session.occupied_slots }}/{{ session.capacity }}</span>
+    </div>
+</article>

@@ -1,0 +1,21 @@
+<article class="reception-grade-card" data-panel="reception-class-session-card">
+    <div>
+        <p class="eyebrow">Aula visivel</p>
+        <h3 class="operation-card-title">{{ session.title }}</h3>
+        <p class="meta-text-sm">{{ session.scheduled_at|date:"d/m/Y H:i" }}</p>
+        {% if session.notes %}<p class="meta-text">{{ session.notes }}</p>{% endif %}
+    </div>
+    <div class="reception-grade-stats">
+        <div class="finance-alert-stat">
+            <span class="operation-mini-label">Presencas</span>
+            <strong>{{ session.attendances.all|length }}</strong>
+        </div>
+        <div class="finance-alert-stat">
+            <span class="operation-mini-label">Uso no balcao</span>
+            <strong>Orientacao rapida</strong>
+        </div>
+    </div>
+    <div class="actions actions-tight">
+        <a class="button secondary button-sm" href="/grade-aulas/" data-action="open-full-class-grid">Abrir grade completa</a>
+    </div>
+</article>

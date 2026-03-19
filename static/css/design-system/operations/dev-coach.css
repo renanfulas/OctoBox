@@ -1,0 +1,10 @@
+/*
+ARQUIVO: manifesto interno das superfícies de dev e coach.
+
+POR QUE ELE EXISTE:
+- separa a superfície técnica de dev da superfície operacional do coach.
+- mantém dev-coach.css como ponto único de import para operations.css.
+*/
+
+@import url("./dev-coach/dev.css");
+@import url("./dev-coach/coach.css");

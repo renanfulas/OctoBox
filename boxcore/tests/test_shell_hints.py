@@ -187,18 +187,20 @@ class ShellHintBuilderUnitTests(UnitTestCase):
 
         self.assertIn('function celebrateCountDrop(kind, previousCount, currentCount) {', shell_js)
         self.assertIn('if (previousCount <= currentCount) {', shell_js)
-        self.assertIn("var celebrationStorageKey = 'octobox-shell-counts:' + shellUserId;", shell_js)
-        self.assertIn('sessionStorage.getItem(celebrationStorageKey)', shell_js)
-        self.assertIn('sessionStorage.setItem(celebrationStorageKey, JSON.stringify(currentCounts));', shell_js)
+        self.assertIn("const celebrationStorageKey = 'octobox-shell-counts:' + shellUserId;", shell_js)
+        self.assertIn('function readStorage(storage, key) {', shell_js)
+        self.assertIn('function writeStorage(storage, key, value) {', shell_js)
+        self.assertIn("previousCounts = JSON.parse(readStorage(window.sessionStorage, celebrationStorageKey) || 'null');", shell_js)
+        self.assertIn('writeStorage(window.sessionStorage, celebrationStorageKey, JSON.stringify(currentCounts));', shell_js)
         self.assertIn("celebrateCountDrop('overdue-payments', previousCounts.overduePayments || 0, currentCounts.overduePayments);", shell_js)
         self.assertIn("celebrateCountDrop('pending-intakes', previousCounts.pendingIntakes || 0, currentCounts.pendingIntakes);", shell_js)
         self.assertIn("eyebrow: 'Parabens 🎉'", shell_js)
         self.assertIn("copy: delta === 1", shell_js)
-        self.assertIn("? 'Um vencimento saiu da pressao. Bom avanço.'", shell_js)
-        self.assertIn(": delta + ' vencimentos sairam da pressao. Bom avanço.'", shell_js)
+        self.assertIn("'Um vencimento saiu da pressao. Bom avanço.'", shell_js)
+        self.assertIn("delta + ' vencimentos sairam da pressao. Bom avanço.'", shell_js)
         self.assertIn("eyebrow: 'Boa 👏'", shell_js)
-        self.assertIn("? 'Um intake saiu da fila. Bom avanço.'", shell_js)
-        self.assertIn(": delta + ' intakes sairam da fila. Bom avanço.'", shell_js)
+        self.assertIn("'Um intake saiu da fila. Bom avanço.'", shell_js)
+        self.assertIn("delta + ' intakes sairam da fila. Bom avanço.'", shell_js)
 
     def test_shell_theme_toggle_preserves_visual_state_contract(self):
         shell_js = (Path(__file__).resolve().parents[2] / 'static' / 'js' / 'core' / 'shell.js').read_text(
@@ -213,6 +215,8 @@ class ShellHintBuilderUnitTests(UnitTestCase):
 
         self.assertIn('theme-toggle-icon', base_html)
         self.assertIn('theme-toggle-label', base_html)
+        self.assertIn('topbar-manifesto', base_html)
+        self.assertIn('Produto vivo. Controle legivel. Acao imediata.', base_html)
         self.assertIn('visually-hidden', base_html)
         self.assertIn("themeToggle.setAttribute('data-theme-state', isDark ? 'dark' : 'light');", shell_js)
         self.assertIn("var themeIcon = isDark ? '☾' : '☼';", shell_js)
@@ -220,13 +224,17 @@ class ShellHintBuilderUnitTests(UnitTestCase):
         self.assertIn('.theme-toggle[data-theme-state="light"] {', topbar_css)
         self.assertIn('.theme-toggle[data-theme-state="dark"] {', topbar_css)
         self.assertIn('.theme-toggle-icon {', topbar_css)
+        self.assertIn('.topbar-manifesto {', topbar_css)
 
     def test_compass_and_hero_css_preserve_two_line_reading_rule(self):
         compass_css = (
             Path(__file__).resolve().parents[2] / 'static' / 'css' / 'design-system' / 'compass.css'
         ).read_text(encoding='utf-8')
         operations_css = (
-            Path(__file__).resolve().parents[2] / 'static' / 'css' / 'design-system' / 'operations.css'
+            Path(__file__).resolve().parents[2] / 'static' / 'css' / 'design-system' / 'operations' / 'core.css'
+        ).read_text(encoding='utf-8')
+        operations_refinements_css = (
+            Path(__file__).resolve().parents[2] / 'static' / 'css' / 'design-system' / 'operations' / 'refinements' / 'hero.css'
         ).read_text(encoding='utf-8')
 
         self.assertIn('.page-compass-title {', compass_css)
@@ -234,6 +242,8 @@ class ShellHintBuilderUnitTests(UnitTestCase):
         self.assertIn('.operation-hero-main h2 {', operations_css)
         self.assertIn('.operation-hero-panel .operation-card-copy {', operations_css)
         self.assertIn('-webkit-line-clamp: 2;', operations_css)
+        self.assertIn('.operation-hero:has(.operation-hero-side),', operations_refinements_css)
+        self.assertIn('.operation-hero:has(> .operation-hero-panel) {', operations_refinements_css)
 
     def test_topbar_css_preserves_warning_danger_and_zero_state_contract(self):
         topbar_css = (
@@ -249,6 +259,16 @@ class ShellHintBuilderUnitTests(UnitTestCase):
         self.assertIn('.alert-chip.is-zero .alert-dot,', topbar_css)
         self.assertIn('.alert-chip.danger.is-zero .alert-dot {', topbar_css)
         self.assertIn('display: none;', topbar_css)
+        self.assertNotIn('top: 10px;', topbar_css)
+
+    def test_shell_topbar_does_not_force_scroll_to_top(self):
+        shell_js = (Path(__file__).resolve().parents[2] / 'static' / 'js' / 'core' / 'shell.js').read_text(
+            encoding='utf-8'
+        )
+
+        self.assertNotIn('function shouldIgnoreTopbarScrollClick(target) {', shell_js)
+        self.assertNotIn('function scrollPageToTop() {', shell_js)
+        self.assertNotIn("topbar.addEventListener('click'", shell_js)
 
 
 class ShellHintIntegrationTests(TestCase):

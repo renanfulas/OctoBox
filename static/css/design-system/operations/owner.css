@@ -1,0 +1,15 @@
+/*
+ARQUIVO: manifesto interno da superfície do owner.
+
+POR QUE ELE EXISTE:
+- reduz o antigo módulo pesado do owner em submódulos por responsabilidade.
+- mantém um único ponto de import para operations.css.
+
+PONTOS CRITICOS:
+- a ordem dos imports preserva a cascade do owner.
+- novos ajustes devem entrar no submódulo correto.
+*/
+
+@import url("./owner/scene.css");
+@import url("./owner/notion.css");
+@import url("./owner/simple.css");

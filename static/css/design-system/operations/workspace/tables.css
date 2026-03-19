@@ -1,0 +1,37 @@
+/*
+ARQUIVO: estruturas compartilhadas de tabelas e guides operacionais.
+*/
+
+.operation-table-wrap {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    margin: 0 -4px;
+    padding: 0 4px 4px;
+}
+
+.operation-table-wrap table {
+    min-width: 680px;
+}
+
+.operation-table-card table {
+    margin-top: 4px;
+}
+
+.operation-table-guide-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.operation-table-guide-card {
+    display: grid;
+    gap: 14px;
+    background: var(--surface);
+}
+
+.operation-table-guide-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}

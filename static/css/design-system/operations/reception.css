@@ -1,0 +1,12 @@
+/*
+ARQUIVO: manifesto interno das superfícies da recepção.
+
+POR QUE ELE EXISTE:
+- separa hero/cena, atalhos, cobrança e grade em módulos menores.
+- mantém reception.css como ponto único de import para operations.css.
+*/
+
+@import url("./reception/scene.css");
+@import url("./reception/command.css");
+@import url("./reception/payment.css");
+@import url("./reception/class-grid.css");

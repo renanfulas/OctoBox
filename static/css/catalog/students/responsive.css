@@ -1,0 +1,63 @@
+/*
+ARQUIVO: responsividade e movimento reduzido das telas de alunos.
+
+POR QUE ELE EXISTE:
+- concentra os colapsos de layout e ajustes móveis de alunos.
+- mantém os painéis base livres de media queries horizontais.
+*/
+
+@media (max-width: 960px) {
+    .student-focus-item,
+    .student-compact-layout,
+    .intake-card {
+        grid-template-columns: 1fr;
+    }
+
+    .student-scene .metric-card {
+        min-height: 146px;
+    }
+
+    .student-priority-badges {
+        justify-items: start;
+    }
+
+    .priority-student-card .row-between-md {
+        grid-template-columns: 1fr;
+    }
+
+    .student-focus-actions {
+        justify-items: stretch;
+    }
+
+    .student-utility-actions {
+        align-items: stretch;
+        justify-content: stretch;
+    }
+
+    .student-filter-actions-secondary {
+        justify-content: stretch;
+    }
+}
+
+@media (max-width: 640px) {
+    .student-data-panel {
+        padding-inline: 20px;
+    }
+
+    .student-utility-actions {
+        flex-direction: column;
+    }
+
+    .student-data-panel th,
+    .student-data-panel td {
+        padding: 10px 8px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .student-row,
+    .priority-student-card,
+    .student-focus-item {
+        transition: none;
+    }
+}

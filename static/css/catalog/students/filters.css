@@ -1,0 +1,42 @@
+/*
+ARQUIVO: filtro e utilidades da base de alunos.
+
+POR QUE ELE EXISTE:
+- concentra a área de busca, recorte e ações auxiliares da tela.
+- mantém o comportamento de formulário separado dos painéis de leitura.
+*/
+
+.student-filter-card {
+    background: var(--surface);
+}
+
+.student-filter-card .form-stack {
+    gap: 12px;
+}
+
+.student-filter-card .field-grid-200 {
+    gap: 10px;
+}
+
+.student-filter-card .operation-card-head {
+    margin-bottom: 12px;
+}
+
+.student-filter-actions-primary {
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.student-utility-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.student-filter-actions-secondary {
+    justify-content: flex-end;
+}

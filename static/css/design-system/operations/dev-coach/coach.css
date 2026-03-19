@@ -1,0 +1,109 @@
+/*
+ARQUIVO: superfície operacional do coach.
+*/
+
+.coach-scene {
+    --operation-hero-padding: 18px 20px;
+    --operation-hero-main-gap: 10px;
+    --operation-hero-stack-gap: 6px;
+    --operation-hero-stack-max-width: 560px;
+    --operation-hero-copy-max-width: 39ch;
+    --operation-hero-actions-gap: 6px;
+    --operation-hero-actions-max-width: 520px;
+    --operation-hero-button-min-height: 34px;
+    --operation-hero-button-padding: 7px 12px;
+    --operation-hero-side-width: min(100%, 300px);
+    --operation-hero-panel-padding: 12px 14px;
+    --operation-mini-grid-gap: 6px;
+    --operation-mini-grid-margin-top: 10px;
+    --operation-mini-stat-padding: 7px 8px;
+    gap: calc(var(--section-gap) - 2px);
+}
+
+.coach-scene .operation-metric-grid {
+    gap: 14px;
+}
+
+.coach-scene .operation-kpi-card {
+    min-height: 150px;
+    padding: 16px 18px;
+}
+
+.coach-scene .operation-kpi-card .card-copy {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.coach-sessions-board {
+    gap: 16px;
+}
+
+.coach-session-card .operation-session-head {
+    gap: 12px;
+    padding: 20px 22px 0;
+}
+
+.coach-session-card .operation-session-title {
+    font-size: 1.12rem;
+}
+
+.coach-session-card .operation-session-meta {
+    margin-top: 6px;
+    line-height: 1.45;
+}
+
+.coach-session-card .operation-session-badges {
+    gap: 8px;
+}
+
+.coach-session-card .operation-session-body {
+    padding: 16px 22px 22px;
+}
+
+.coach-session-card .operation-inline-actions {
+    gap: 6px;
+    align-items: stretch;
+}
+
+.coach-session-card .operation-inline-actions .button {
+    min-height: 32px;
+    padding: 6px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+}
+
+.coach-session-card .operation-table-wrap table {
+    min-width: 640px;
+}
+
+.coach-session-card th,
+.coach-session-card td {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.coach-note-form {
+    gap: 6px;
+}
+
+.coach-note-form select,
+.coach-note-form textarea {
+    font-size: 0.88rem;
+}
+
+.coach-note-form textarea {
+    margin-top: 6px;
+    min-height: 60px;
+}
+
+.coach-note-form .actions {
+    margin-top: 6px;
+}
+
+.coach-note-form .actions .button {
+    min-height: 32px;
+    padding: 6px 11px;
+}

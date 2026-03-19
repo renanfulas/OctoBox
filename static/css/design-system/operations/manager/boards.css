@@ -1,0 +1,63 @@
+/*
+ARQUIVO: densidade e leitura dos boards do manager.
+*/
+
+.manager-main-grid {
+    gap: 16px;
+}
+
+.manager-priority-card,
+.manager-secondary-card {
+    min-width: 0;
+}
+
+.manager-priority-card .operation-card-head,
+.manager-secondary-card .operation-card-head {
+    margin-bottom: 8px;
+}
+
+.manager-priority-card .operation-card-copy,
+.manager-secondary-card .operation-card-copy {
+    max-width: 36ch;
+}
+
+.manager-priority-card .operation-table-wrap,
+.manager-secondary-card .operation-table-wrap {
+    margin: 0 -2px;
+    padding: 0 2px 2px;
+}
+
+.manager-priority-card .operation-table-wrap table,
+.manager-secondary-card .operation-table-wrap table {
+    min-width: 640px;
+}
+
+.manager-priority-card th,
+.manager-priority-card td,
+.manager-secondary-card th,
+.manager-secondary-card td {
+    padding-top: 9px;
+    padding-bottom: 9px;
+}
+
+.manager-priority-card th,
+.manager-secondary-card th {
+    font-size: 0.72rem;
+}
+
+.manager-priority-card .pill,
+.manager-secondary-card .pill {
+    padding: 5px 9px;
+}
+
+.manager-priority-card .button,
+.manager-secondary-card .button {
+    min-height: 32px;
+    padding: 6px 10px;
+    border-radius: 12px;
+    font-size: 0.86rem;
+}
+
+.manager-secondary-card {
+    align-content: start;
+}

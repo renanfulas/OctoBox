@@ -126,6 +126,17 @@ def _build_dashboard_metric_cards(metrics, *, pending_intakes_count, today_sched
             'eyebrow': 'Receita realizada',
             'kicker': 'O que realmente chegou',
             'display_value': _format_currency(current_revenue),
+            'is_jumbo': True,
+            'data_action': 'blink-sidebar-financeiro',
+            'sparkline_data': [
+                {'percent': 25, 'label': '6 dias atrás: R$ 850,00'},
+                {'percent': 40, 'label': '5 dias atrás: R$ 1.360,00'},
+                {'percent': 30, 'label': '4 dias atrás: R$ 1.020,00'},
+                {'percent': 55, 'label': '3 dias atrás: R$ 1.870,00'},
+                {'percent': 45, 'label': '2 dias atrás: R$ 1.530,00'},
+                {'percent': 80, 'label': 'Ontem: R$ 2.720,00'},
+                {'percent': 100, 'label': 'Hoje: Cerca de R$ 3.400,00'},
+            ],
             'change': _build_delta_badge(
                 current_revenue,
                 previous_revenue,
@@ -133,23 +144,23 @@ def _build_dashboard_metric_cards(metrics, *, pending_intakes_count, today_sched
                 formatter=_format_currency,
                 semantic='positive',
             ),
-            'note': 'Esse e o dinheiro real que entrou. Eu te mostro onde esta indo bem e onde precisa de atencao.',
+            'note': 'Esse é o dinheiro real que entrou. Eu te mostro onde está indo bem e onde precisa de atenção.',
             'hide_footer': True,
         },
         {
             'card_class': 'dashboard-kpi-card kpi-red is-panel',
-            'eyebrow': 'Cobrancas em atraso',
-            'kicker': 'Precisa do seu olhar',
+            'eyebrow': 'Cobranças em atraso',
+            'kicker': 'Tudo Certo' if metrics['overdue_payments'] == 0 else 'Precisa do seu olhar',
             'display_value': metrics['overdue_payments'],
             'change': _build_delta_badge(metrics['overdue_payments'], metrics['overdue_payments_previous_day'], label='desde ontem', semantic='negative'),
             'data_action': 'blink-topbar-finance',
-            'note': 'Cada cobranca aqui ainda tem chance. Vou te ajudar a priorizar quem abordar primeiro.',
+            'note': 'Cada cobrança aqui ainda tem chance. Vou te ajudar a priorizar quem abordar primeiro.',
             'hide_footer': True,
         },
         {
             'card_class': 'dashboard-kpi-card kpi-blue is-ribbon',
             'eyebrow': 'Entradas pendentes',
-            'kicker': 'Esperando por voce',
+            'kicker': 'Pessoas que procuraram seu Box',
             'display_value': pending_intakes_count,
             'data_action': 'blink-topbar-intake',
             'signal': {
@@ -171,16 +182,17 @@ def _build_dashboard_metric_cards(metrics, *, pending_intakes_count, today_sched
                 'label': 'ocupacao media',
             },
             'data_action': 'blink-board-sessions',
-            'note': 'Cuide da lotação para o seu Coach possa entregar uma aula melhor para os alunos.',
+            'note': 'Cuide da lotação para que seu Coach possa entregar uma aula melhor para os alunos.',
             'hide_footer': True,
         },
         {
             'card_class': 'dashboard-kpi-card kpi-green is-rail',
-            'eyebrow': 'Presenca no mes',
+            'eyebrow': 'Presença no mês',
             'kicker': 'Compromisso que voltou',
             'display_value': metrics['attendance_this_month'],
+            'data_action': 'blink-sidebar-alunos',
             'change': _build_delta_badge(metrics['attendance_this_month'], metrics['attendance_previous_month'], label='vs mes anterior', semantic='positive'),
-            'note': 'Cada presenca e uma pessoa que escolheu voltar. Voce esta construindo algo que importa.',
+            'note': 'Cada presença é uma pessoa que escolheu voltar. Você está construindo algo que importa.',
             'hide_footer': True,
         },
         {
@@ -188,8 +200,9 @@ def _build_dashboard_metric_cards(metrics, *, pending_intakes_count, today_sched
             'eyebrow': 'Comunidade ativa',
             'kicker': 'Sua comunidade viva',
             'display_value': metrics['active_students'],
+            'data_action': 'blink-sidebar-alunos',
             'signal': {'tone': 'good', 'value': 'Base viva', 'label': 'comunidade ativa'},
-            'note': 'Essa e a sua comunidade. Cada pessoa aqui confia no que voce esta construindo.',
+            'note': 'Essa é a sua comunidade. Cada pessoa aqui confia no que você está construindo.',
             'hide_footer': True,
         },
     ]
@@ -201,7 +214,7 @@ def _decorate_dashboard_sessions(serialized_sessions):
         elif session['booking_closed']:
             session['dashboard_kicker'] = 'Reservas fechadas'
         elif index == 0:
-            session['dashboard_kicker'] = 'Proxima aula'
+            session['dashboard_kicker'] = 'Próxima aula'
         elif session['occupancy_percent'] >= 90:
             session['dashboard_kicker'] = 'Turma quase lotada'
         else:
@@ -243,7 +256,7 @@ def _build_dashboard_payment_alert_snapshot(*, overdue_payments_queryset):
         })
 
     total_count = qs.count()
-    total_label = f"{total_count} cobranca(s)" if total_count else 'Nenhuma cobranca'
+    total_label = f"{total_count} cobrança(s)" if total_count else 'Nenhuma cobrança'
 
     return {
         'payment_alerts': payment_alerts,
@@ -266,9 +279,9 @@ def _build_dashboard_glance_summary(*, metrics, role_slug, upcoming_sessions, pa
             'value': count,
             'indicator': 'Caixa' if role_slug == ROLE_RECEPTION else 'Urgente',
             'copy': (
-                f'{count} cobranca(s) prontas pra contato. Eu separei pra voce. Comece por aqui e o dia flui melhor.'
+                f'{count} cobrança(s) prontas para contato. Eu separei para você. Comece por aqui e o dia flui melhor.'
                 if role_slug != ROLE_RECEPTION else
-                f'{count} cobranca(s) cabem agora no seu turno. Uma por uma, voce resolve. Estou aqui contigo.'
+                f'{count} cobrança(s) cabem agora no seu turno. Uma por uma, você resolve. Estou aqui contigo.'
             ),
         }
 
@@ -277,9 +290,9 @@ def _build_dashboard_glance_summary(*, metrics, role_slug, upcoming_sessions, pa
         starts_at_label = timezone.localtime(primary_session['starts_at']).strftime('%H:%M')
         indicator = primary_session['status_label'] if primary_session['status_label'] == 'Em andamento' else primary_session['occupancy_label']
         copy = (
-            f"{primary_session['object'].title} esta rodando agora. Eu cuido do painel, voce cuida do salao."
+            f"{primary_session['object'].title} está rodando agora. Eu cuido do painel, você cuida do salão."
             if primary_session['status_label'] == 'Em andamento' else
-            f"{primary_session['object'].title} comeca as {starts_at_label}. Preparei tudo pra voce so conferir."
+            f"{primary_session['object'].title} começa às {starts_at_label}. Preparei tudo para você só conferir."
         )
         return {
             'href': '#dashboard-sessions-board',
@@ -298,7 +311,7 @@ def _build_dashboard_glance_summary(*, metrics, role_slug, upcoming_sessions, pa
         'kicker': 'Base em foco',
         'value': metrics['active_students'],
         'indicator': 'Comunidade',
-        'copy': 'Sem urgencias agora. O melhor presente que voce pode dar pro box e cuidar de quem ja esta aqui.',
+        'copy': 'Sem urgências agora. O melhor presente que você pode dar para o box é cuidar de quem já está aqui.',
     }
 
 def build_dashboard_snapshot(*, today, month_start, role_slug=''):
@@ -420,12 +433,12 @@ def build_dashboard_snapshot(*, today, month_start, role_slug=''):
     if metrics['overdue_payments'] > 0:
         operational_focus.append(
             {
-                'label': 'Caixa curto pede acao agora' if role_slug == ROLE_RECEPTION else 'Cobranca pede acao agora',
-                'chip_label': 'Cobrancas' if role_slug != ROLE_RECEPTION else 'Caixa',
+                'label': 'Caixa curto pede ação agora' if role_slug == ROLE_RECEPTION else 'Cobrança pede ação agora',
+                'chip_label': 'Cobranças' if role_slug != ROLE_RECEPTION else 'Caixa',
                 'summary': (
-                    f"{metrics['overdue_payments']} pagamento(s) ja passaram do vencimento e podem pedir abordagem de balcao ainda hoje."
+                    f"{metrics['overdue_payments']} pagamento(s) já passaram do vencimento e podem pedir abordagem de balcão ainda hoje."
                     if role_slug == ROLE_RECEPTION else
-                    f"{metrics['overdue_payments']} pagamento(s) ja passaram do vencimento e pedem contato antes de virarem evasao."
+                    f"{metrics['overdue_payments']} pagamento(s) já passaram do vencimento e pedem contato antes de virarem evasão."
                 ),
                 'pill_class': 'warning',
                 'href': finance_focus_href,
@@ -435,9 +448,9 @@ def build_dashboard_snapshot(*, today, month_start, role_slug=''):
     else:
         operational_focus.append(
             {
-                'label': 'Caixa curto esta sob controle' if role_slug == ROLE_RECEPTION else 'Cobranca esta sob controle',
-                'chip_label': 'Cobrancas' if role_slug != ROLE_RECEPTION else 'Caixa',
-                'summary': 'Nenhum atraso critico apareceu no recorte de hoje.' if role_slug != ROLE_RECEPTION else 'Nenhuma cobranca curta critica apareceu no recorte de hoje.',
+                'label': 'Caixa curto está sob controle' if role_slug == ROLE_RECEPTION else 'Cobrança está sob controle',
+                'chip_label': 'Cobranças' if role_slug != ROLE_RECEPTION else 'Caixa',
+                'summary': 'Nenhum atraso crítico apareceu no recorte de hoje.' if role_slug != ROLE_RECEPTION else 'Nenhuma cobrança curta crítica apareceu no recorte de hoje.',
                 'pill_class': 'success',
                 'href': finance_focus_href,
                 'href_label': finance_review_label,
@@ -447,9 +460,9 @@ def build_dashboard_snapshot(*, today, month_start, role_slug=''):
     if metrics['sessions_today'] > 0:
         operational_focus.append(
             {
-                'label': 'Agenda do dia esta viva',
+                'label': 'Agenda do dia está viva',
                 'chip_label': 'Aulas',
-                'summary': f"{metrics['sessions_today']} aula(s) pedem leitura rapida de coach, ocupacao e recepcao.",
+                'summary': f"{metrics['sessions_today']} aula(s) pedem leitura rápida de coach, ocupação e recepção.",
                 'pill_class': 'info',
                 'href': '/grade-aulas/',
                 'href_label': 'Ver grade',
@@ -458,9 +471,9 @@ def build_dashboard_snapshot(*, today, month_start, role_slug=''):
     else:
         operational_focus.append(
             {
-                'label': 'Agenda do dia esta leve',
+                'label': 'Agenda do dia está leve',
                 'chip_label': 'Aulas',
-                'summary': 'Nao ha aulas previstas hoje, entao o foco pode cair mais em base e financeiro.',
+                'summary': 'Não há aulas previstas hoje, então o foco pode cair mais em base e financeiro.',
                 'pill_class': 'accent',
                 'href': '/grade-aulas/',
                 'href_label': 'Abrir aulas',
@@ -473,9 +486,9 @@ def build_dashboard_snapshot(*, today, month_start, role_slug=''):
                 'label': 'Base ativa exige acompanhamento',
                 'chip_label': 'Base',
                 'summary': (
-                    f"{metrics['active_students']} aluno(s) sustentam a Recepcao e pedem leitura de ficha, risco e proxima abordagem."
+                    f"{metrics['active_students']} aluno(s) sustentam a Recepção e pedem leitura de ficha, risco e próxima abordagem."
                     if role_slug == ROLE_RECEPTION else
-                    f"{metrics['active_students']} aluno(s) sustentam a operacao e pedem leitura de presenca, risco e retencao."
+                    f"{metrics['active_students']} aluno(s) sustentam a operação e pedem leitura de presença, risco e retenção."
                 ),
                 'pill_class': 'accent',
                 'href': '/alunos/',
@@ -490,7 +503,7 @@ def build_dashboard_snapshot(*, today, month_start, role_slug=''):
         payment_alert_snapshot = {
             'payment_alerts': [],
             'payment_alerts_total_count': total_count,
-            'payment_alerts_total_label': f"{total_count} cobranca(s)" if total_count else 'Nenhuma cobranca',
+            'payment_alerts_total_label': f"{total_count} cobrança(s)" if total_count else 'Nenhuma cobrança',
             'actionable_payment_alerts_count': total_count,
             'next_actionable_payment_alert': None,
         }

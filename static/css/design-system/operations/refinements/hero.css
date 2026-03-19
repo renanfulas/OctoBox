@@ -1,0 +1,133 @@
+/*
+ARQUIVO: refinamentos finais do hero operacional.
+
+POR QUE ELE EXISTE:
+- concentra o passe de densidade, proporção e overflow dos heros.
+- mantém o contrato visual do hero separado da base funcional.
+*/
+
+.operation-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: var(--operation-hero-gap, 18px);
+    min-height: var(--operation-hero-min-height, 252px);
+    padding: var(--operation-hero-padding, clamp(18px, 1.8vw, 22px));
+}
+
+.operation-hero:has(.operation-hero-side),
+.operation-hero:has(> .operation-hero-panel) {
+    grid-template-columns: minmax(0, 1fr) minmax(var(--operation-hero-side-min-width, 280px), var(--operation-hero-side-max-width, 308px));
+}
+
+.operation-hero-main {
+    display: grid;
+    grid-template-columns: var(--operation-hero-main-columns, minmax(0, 1fr));
+    align-items: var(--operation-hero-main-align-items, stretch);
+    gap: var(--operation-hero-main-gap, 12px);
+    min-height: 100%;
+    align-content: var(--operation-hero-main-align-content, space-between);
+    position: var(--operation-hero-main-position, static);
+    z-index: var(--operation-hero-main-z-index, auto);
+}
+
+.operation-hero-main > div:first-child {
+    gap: var(--operation-hero-stack-gap, 8px);
+    max-width: var(--operation-hero-stack-max-width, 560px);
+}
+
+.operation-hero-main h1,
+.operation-hero-main h2 {
+    max-width: var(--operation-hero-heading-max-width, 12ch);
+    font-size: var(--operation-hero-heading-size, clamp(2rem, 3.2vw, 2.8rem));
+    line-height: var(--operation-hero-heading-line-height, 0.96);
+    letter-spacing: var(--operation-hero-heading-letter-spacing, -0.05em);
+}
+
+.operation-hero-copy {
+    max-width: var(--operation-hero-copy-max-width, 40ch);
+    font-size: var(--operation-hero-copy-size, 0.99rem);
+    line-height: var(--operation-hero-copy-line-height, 1.48);
+}
+
+.operation-hero .actions {
+    display: var(--operation-hero-actions-display, flex);
+    align-self: var(--operation-hero-actions-align-self, auto);
+    justify-self: var(--operation-hero-actions-justify-self, auto);
+    gap: var(--operation-hero-actions-gap, 8px);
+    max-width: var(--operation-hero-actions-max-width, 560px);
+    padding: var(--operation-hero-actions-padding, 0);
+    border-radius: var(--operation-hero-actions-radius, 0);
+    background: var(--operation-hero-actions-surface, transparent);
+    border: var(--operation-hero-actions-border, 0 solid transparent);
+    box-shadow: var(--operation-hero-actions-shadow, none);
+}
+
+.operation-hero .actions .button {
+    min-height: var(--operation-hero-button-min-height, 36px);
+    padding: var(--operation-hero-button-padding, 8px 13px);
+    border-radius: var(--operation-hero-button-radius, 14px);
+}
+
+.operation-hero-side {
+    width: var(--operation-hero-side-width, 100%);
+    min-width: 0;
+    min-height: 100%;
+}
+
+.operation-hero-panel {
+    display: grid;
+    align-content: space-between;
+    min-height: 100%;
+    padding: var(--operation-hero-panel-padding, 14px 16px);
+    border-radius: var(--radius-card);
+    background: var(--bg);
+}
+
+.operation-mini-grid {
+    gap: var(--operation-mini-grid-gap, 8px);
+    margin-top: var(--operation-mini-grid-margin-top, 10px);
+}
+
+.operation-mini-stat {
+    padding: var(--operation-mini-stat-padding, 8px 10px);
+}
+
+body[data-theme="dark"] .operation-hero-panel {
+    border-color: var(--line);
+    background: var(--surface);
+    box-shadow: none;
+}
+
+body[data-theme="dark"] .operation-hero-main h1,
+body[data-theme="dark"] .operation-hero-main h2 {
+    color: #f8fafc;
+}
+
+body[data-theme="dark"] .operation-hero-copy {
+    color: rgba(226, 232, 240, 0.75);
+}
+
+body[data-theme="dark"] .operation-mini-stat {
+    border-color: var(--line);
+    background: var(--surface);
+}
+
+.operation-hero .actions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+}
+
+.operation-hero .actions::-webkit-scrollbar {
+    display: none;
+}
+
+@media (max-width: 960px) {
+    .operation-hero .actions {
+        flex-wrap: wrap;
+        overflow: visible;
+    }
+}
+

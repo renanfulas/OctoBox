@@ -190,15 +190,12 @@ POR QUE ELE EXISTE:
 
 .finance-support-card {
     padding: 18px;
+    background: var(--surface);
 }
 
 .finance-support-rail-card {
     display: grid;
     align-content: start;
-}
-
-.finance-ops-summary-card {
-    background: var(--surface);
 }
 
 .finance-support-card .operation-card-head {
@@ -220,14 +217,6 @@ POR QUE ELE EXISTE:
 }
 
 /* ── Filter summary & radar ── */
-
-.finance-filter-summary-card {
-    background: var(--surface);
-}
-
-.finance-radar-card {
-    background: var(--surface);
-}
 
 .finance-radar-chip {
     background: rgba(255, 255, 255, 0.86);

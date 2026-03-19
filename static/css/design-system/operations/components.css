@@ -1,0 +1,10 @@
+/*
+ARQUIVO: manifesto interno dos componentes visuais operacionais.
+
+POR QUE ELE EXISTE:
+- distribui KPIs e card-shells compartilhados em submódulos menores.
+- evita que components.css volte a acumular regra concreta demais.
+*/
+
+@import url("./components/kpi.css");
+@import url("./components/card-shell.css");

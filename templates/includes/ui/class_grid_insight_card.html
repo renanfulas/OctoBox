@@ -1,0 +1,26 @@
+<article class="table-card class-grid-insight-card no-margin">
+    <div class="card-body card-body-list class-grid-insight-card-body">
+        <div class="card-head-main-stack">
+            <p class="eyebrow">{{ title }}</p>
+        </div>
+        <div class="card-content">
+            <ul class="capability-list card-list">
+                {% if source == "focus" %}
+                    {% for item in page.data.class_focus %}
+                    <li class="card-list-item">{{ item }}</li>
+                    {% endfor %}
+                {% elif source == "operations" %}
+                    <li class="card-list-item">Se uma aula estiver perto da capacidade, a equipe ja consegue agir antes do gargalo.</li>
+                    <li class="card-list-item">Use os horarios e a ocupacao para alinhar coach, recepcao e rotina de presenca.</li>
+                    <li class="card-list-item">Atalho do admin disponivel no topo.</li>
+                {% elif source == "recurrence" %}
+                    <li class="card-list-item">Nome padrao para a turma, como WOD 07h ou Funcional 18h.</li>
+                    <li class="card-list-item">Marque os dias da semana e um intervalo enxuto, como 4 semanas por vez.</li>
+                    <li class="card-list-item">Observacoes para orientar sobre lotacao, material ou check-in.</li>
+                    <li class="card-list-item">Sistema pula slots ja existentes para evitar duplicidade.</li>
+                    <li class="card-list-item">Limite: 12 aulas por dia, 70 por semana, 150 por mes.</li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</article>

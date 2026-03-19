@@ -1,0 +1,297 @@
+/*
+ARQUIVO: calendarios e modal mensal da grade.
+
+POR QUE ELE EXISTE:
+- concentra visoes semanal e mensal, incluindo chips, estados e modal expandido.
+- deixa o workspace livre para cuidar apenas da organizacao dos paineis.
+*/
+
+.monthly-preview-button {
+    width: 100%;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+}
+
+.monthly-preview-button:hover .monthly-day-card,
+.monthly-preview-button:focus-visible .monthly-day-card {
+    border-color: rgba(16, 185, 129, 0.28);
+    box-shadow: var(--shadow-soft);
+}
+
+.monthly-preview-button:focus-visible {
+    outline: 2px solid rgba(16, 185, 129, 0.35);
+    outline-offset: 8px;
+    border-radius: 24px;
+}
+
+.monthly-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.monthly-calendar-grid + .monthly-calendar-grid {
+    margin-top: 10px;
+}
+
+.monthly-calendar-head {
+    margin-bottom: 10px;
+}
+
+.monthly-calendar-head span {
+    text-transform: uppercase;
+    font-size: 0.76rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.monthly-calendar-head-preview {
+    margin-bottom: 8px;
+}
+
+.monthly-calendar-grid-preview + .monthly-calendar-grid-preview {
+    margin-top: 8px;
+}
+
+.weekly-day-card-body,
+.weekly-session-chip-body,
+.monthly-day-card-body {
+    height: 100%;
+}
+
+.monthly-day-card {
+    min-height: 128px;
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.82);
+    padding: 10px;
+    display: grid;
+    gap: 8px;
+}
+
+.monthly-day-card.is-today {
+    border-color: rgba(249, 115, 22, 0.3);
+    box-shadow: inset 0 0 0 1px rgba(249, 115, 22, 0.16);
+}
+
+.monthly-day-card.is-muted {
+    opacity: 0.55;
+}
+
+.monthly-day-card.is-busy {
+    border-color: rgba(59, 130, 246, 0.24);
+    background: rgba(59, 130, 246, 0.07);
+}
+
+.monthly-day-card.is-loaded {
+    border-color: rgba(239, 68, 68, 0.22);
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.monthly-day-card.is-preview {
+    min-height: 92px;
+    padding: 8px;
+    gap: 6px;
+}
+
+.monthly-day-card-expanded {
+    min-height: 150px;
+}
+
+.monthly-day-card-body-preview {
+    gap: 6px;
+}
+
+.monthly-day-body {
+    display: grid;
+    gap: 5px;
+    align-content: start;
+}
+
+.monthly-day-head-main,
+.weekly-day-head-main {
+    gap: 2px;
+}
+
+.monthly-session-chip {
+    display: grid;
+    gap: 2px;
+    padding: 7px 9px;
+    border-radius: 12px;
+    background: rgba(22, 33, 31, 0.05);
+}
+
+.monthly-session-chip-body {
+    display: grid;
+    gap: 2px;
+}
+
+.monthly-session-chip strong,
+.monthly-session-chip span {
+    display: block;
+}
+
+.monthly-session-chip span {
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.monthly-session-chip-preview {
+    padding: 6px 8px;
+}
+
+.monthly-session-chip-preview strong,
+.monthly-session-chip-preview span {
+    font-size: 0.78rem;
+}
+
+.class-monthly-modal {
+    width: min(96vw, 1480px);
+    max-width: none;
+    height: min(92vh, 980px);
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.class-monthly-modal::backdrop {
+    background: rgba(15, 23, 42, 0.62);
+    backdrop-filter: blur(6px);
+}
+
+.class-monthly-modal-panel {
+    height: 100%;
+    overflow: auto;
+    border-radius: 28px;
+    padding: 24px;
+    background: var(--surface);
+    box-shadow: var(--shadow-lift);
+}
+
+.class-monthly-modal-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding-bottom: 12px;
+    background: var(--surface);
+}
+
+.weekly-calendar-section + .weekly-calendar-section {
+    margin-top: 20px;
+}
+
+.weekly-calendar-header {
+    margin-bottom: 12px;
+    padding: 0 2px;
+}
+
+.weekly-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.weekly-day-card {
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: var(--surface);
+    padding: 14px;
+    display: grid;
+    gap: 12px;
+    min-height: 194px;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+}
+
+.weekly-day-card.is-today {
+    border-color: rgba(184, 92, 56, 0.3);
+    box-shadow: var(--shadow-soft);
+    background: rgba(255, 247, 237, 0.94);
+}
+
+.weekly-day-card.is-muted {
+    opacity: 0.58;
+}
+
+.weekly-day-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: start;
+}
+
+.weekly-day-head strong {
+    font-size: 1.15rem;
+}
+
+.weekly-day-body {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+}
+
+.weekly-session-chip {
+    padding: 10px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.weekly-session-chip-content {
+    gap: 4px;
+}
+
+.weekly-session-chip.is-info {
+    border-color: rgba(59, 130, 246, 0.18);
+    background: rgba(59, 130, 246, 0.07);
+}
+
+.weekly-session-chip.is-warning {
+    border-color: rgba(239, 68, 68, 0.18);
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.weekly-session-chip.is-class-occupancy-closed,
+.weekly-session-chip.is-booking-closed {
+    border-color: rgba(71, 85, 105, 0.5);
+    background: rgba(31, 41, 55, 0.96);
+    color: #f8fafc;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.weekly-session-chip.is-class-occupancy-closed .class-grid-meta,
+.weekly-session-chip.is-booking-closed .class-grid-meta {
+    color: rgba(226, 232, 240, 0.8);
+}
+
+.class-chip-actions {
+    margin-top: 8px;
+}
+
+.class-chip-actions form {
+    display: inline-flex;
+}
+
+.weekly-session-chip .card-footer {
+    margin-top: 2px;
+}
+
+.weekly-session-top {
+    align-items: center;
+}
+
+.weekly-session-title {
+    margin: 8px 0 4px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.weekly-empty-state {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.6;
+}

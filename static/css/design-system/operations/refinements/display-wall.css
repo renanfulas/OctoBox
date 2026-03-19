@@ -1,0 +1,290 @@
+/*
+ARQUIVO: refinamentos de hierarquia e composição dos workspaces.
+
+POR QUE ELE EXISTE:
+- concentra a camada final de prioridade visual para manager, coach e recepção.
+- mantém os passes Front Display Wall fora dos módulos estruturais.
+*/
+
+/* --- Front Display Wall: composicao agressiva dos workspaces --- */
+
+.manager-focus-lane,
+.coach-focus-lane,
+.reception-focus-lane {
+    margin-top: -2px;
+}
+
+.manager-main-grid {
+    grid-template-columns: minmax(0, 1.04fr) minmax(320px, 0.96fr);
+    grid-template-areas:
+        "intake intake"
+        "enrollment finance"
+        "link finance";
+    align-items: start;
+}
+
+#manager-intake-board {
+    grid-area: intake;
+}
+
+#manager-enrollment-link-board {
+    grid-area: enrollment;
+}
+
+#manager-link-board {
+    grid-area: link;
+}
+
+#manager-finance-board {
+    grid-area: finance;
+}
+
+.manager-main-grid .manager-priority-card,
+.manager-main-grid .manager-secondary-card {
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--line);
+}
+
+.manager-main-grid .manager-priority-card {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 252, 0.98));
+    box-shadow: var(--shadow-soft);
+}
+
+.manager-main-grid .manager-secondary-card {
+    background: color-mix(in srgb, var(--surface) 92%, white);
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.07);
+}
+
+.manager-main-grid .manager-priority-card::before,
+.manager-main-grid .manager-secondary-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 3px;
+    background: var(--line-strong);
+}
+
+.manager-main-grid .manager-priority-card::before {
+    height: 4px;
+}
+
+.manager-main-grid .manager-secondary-card::before {
+    opacity: 0.9;
+}
+
+.manager-main-grid #manager-intake-board::before {
+    background: var(--danger);
+}
+
+.manager-main-grid #manager-enrollment-link-board::before {
+    background: var(--warning);
+}
+
+.manager-main-grid #manager-link-board::before {
+    background: var(--brand);
+}
+
+.manager-main-grid #manager-finance-board::before {
+    background: var(--danger);
+}
+
+.manager-main-grid #manager-intake-board {
+    box-shadow: 0 26px 56px rgba(15, 23, 42, 0.12);
+}
+
+.manager-main-grid #manager-intake-board .operation-card-title {
+    max-width: 20ch;
+}
+
+.manager-main-grid #manager-enrollment-link-board .operation-card-title,
+.manager-main-grid #manager-finance-board .operation-card-title {
+    max-width: 24ch;
+}
+
+.manager-main-grid #manager-link-board {
+    align-self: start;
+}
+
+.reception-main-grid {
+    grid-template-columns: minmax(0, 1.18fr) minmax(320px, 0.82fr);
+    grid-template-areas: "intake payment";
+}
+
+.reception-support-grid {
+    grid-template-columns: minmax(0, 1.12fr) minmax(280px, 0.88fr);
+    grid-template-areas: "grid shortcuts";
+}
+
+#reception-intake-board {
+    grid-area: intake;
+}
+
+#reception-payment-board {
+    grid-area: payment;
+}
+
+#reception-class-grid-board {
+    grid-area: grid;
+}
+
+.reception-command-card {
+    grid-area: shortcuts;
+}
+
+.reception-command-card,
+.reception-grid-board,
+.reception-payment-board,
+#reception-intake-board {
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--line);
+}
+
+.reception-priority-card {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.99), rgba(246, 249, 252, 0.98));
+    box-shadow: 0 24px 54px rgba(15, 23, 42, 0.1);
+}
+
+.reception-secondary-card,
+.reception-support-card {
+    background: color-mix(in srgb, var(--surface) 94%, white);
+    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.07);
+}
+
+.reception-command-card {
+    align-content: start;
+}
+
+.reception-grid-board::before,
+.reception-payment-board::before,
+#reception-intake-board::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 3px;
+}
+
+#reception-intake-board::before {
+    height: 4px;
+    background: var(--brand);
+}
+
+.reception-payment-board::before {
+    background: var(--danger);
+}
+
+.reception-grid-board::before {
+    background: var(--line-strong);
+}
+
+#reception-intake-board .operation-card-title {
+    max-width: 20ch;
+}
+
+#reception-payment-board .operation-card-title,
+#reception-class-grid-board .operation-card-title {
+    max-width: 24ch;
+}
+
+.owner-next-steps .owner-step-card:first-child {
+    background: linear-gradient(160deg, color-mix(in srgb, var(--brand) 8%, white), var(--surface));
+    border-color: color-mix(in srgb, var(--brand) 22%, transparent);
+    box-shadow: var(--shadow-soft);
+}
+
+@media (max-width: 960px) {
+    .manager-main-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "intake"
+            "finance"
+            "enrollment"
+            "link";
+    }
+
+    .reception-main-grid,
+    .reception-support-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- operations-refine-pass --- */
+.manager-focus-lane,
+.coach-focus-lane,
+.reception-focus-lane,
+.owner-next-steps {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-panel);
+    padding: 18px;
+    border: 1px solid var(--line);
+}
+
+.manager-focus-lane::before,
+.coach-focus-lane::before,
+.reception-focus-lane::before,
+.owner-next-steps::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 3px;
+    background: var(--brand);
+}
+
+.manager-focus-lane,
+.coach-focus-lane,
+.reception-focus-lane,
+.owner-next-steps {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(246, 248, 251, 0.98));
+    box-shadow: var(--shadow-soft);
+}
+
+.manager-focus-lane .fdw-focus-list,
+.coach-focus-lane .fdw-focus-list,
+.reception-focus-lane .fdw-focus-list {
+    gap: 12px;
+}
+
+.manager-main-grid .manager-priority-card,
+.manager-main-grid .manager-secondary-card,
+.reception-main-grid > *,
+.reception-support-grid > *,
+.coach-session-card,
+.owner-step-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.coach-session-card {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(246, 248, 251, 0.98));
+}
+
+.reception-command-card .actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.reception-command-card .button {
+    width: 100%;
+}
+
+body[data-theme="dark"] .manager-focus-lane,
+body[data-theme="dark"] .coach-focus-lane,
+body[data-theme="dark"] .reception-focus-lane,
+body[data-theme="dark"] .coach-session-card,
+body[data-theme="dark"] .owner-next-steps {
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .reception-priority-card,
+body[data-theme="dark"] .reception-secondary-card,
+body[data-theme="dark"] .reception-support-card {
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .manager-main-grid .manager-priority-card,
+body[data-theme="dark"] .manager-main-grid .manager-secondary-card {
+    background: var(--surface);
+}

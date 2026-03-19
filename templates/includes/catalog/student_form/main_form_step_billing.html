@@ -4,46 +4,12 @@ ARQUIVO: passo de cobranca da ficha do aluno.
 <details id="student-form-billing" open class="disclosure-panel disclosure-panel-warm student-form-step student-form-step-disclosure">
     <summary>Passo 5: cobranca e confirmacao</summary>
     <div class="stack-16 section-gap-top-xs student-form-step-body">
-        <div class="field-grid-220">
-            <label>
-                <span class="field-label">{{ form.billing_strategy.label }}</span>
-                {{ form.billing_strategy }}
-                {% for error in form.billing_strategy.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
-            </label>
-            <label>
-                <span class="field-label">{{ form.initial_payment_amount.label }}</span>
-                {{ form.initial_payment_amount }}
-                {% for error in form.initial_payment_amount.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
-            </label>
-            <label>
-                <span class="field-label">{{ form.payment_method.label }}</span>
-                {{ form.payment_method }}
-                {% for error in form.payment_method.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
-            </label>
-            <label>
-                <span class="field-label">{{ form.confirm_payment_now.label }}</span>
-                {{ form.confirm_payment_now }}
-                {% for error in form.confirm_payment_now.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
-            </label>
-        </div>
-        <div id="installment-selector-shell" class="installment-shell student-form-installment-shell">
-            <div class="field-grid-220 align-start">
-                <label>
-                    <span class="field-label">Parcelamento</span>
-                    <select id="installment-selector"></select>
-                </label>
-                <div>
-                    <span class="field-label">Resumo do parcelamento</span>
-                    <div id="installment-preview" class="installment-preview">Escolha a quantidade de parcelas.</div>
-                </div>
-            </div>
-        </div>
+        {% include "includes/catalog/student_form/billing_fields.html" with form=form %}
+        {% include "includes/catalog/student_form/billing_installment_shell.html" %}
         {{ form.payment_due_date.as_hidden }}
         {{ form.payment_reference.as_hidden }}
         {{ form.installment_total.as_hidden }}
         {{ form.recurrence_cycles.as_hidden }}
-        <div class="note-panel note-panel-cream text-muted student-form-step-note">
-            Quando um plano e conectado, a cobranca pode nascer como parcela unica, parcelada ou recorrente. Se voce confirmar agora, so a primeira ja entra como paga com o metodo escolhido.
-        </div>
+        {% include "includes/catalog/student_form/billing_note.html" %}
     </div>
 </details>

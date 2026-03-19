@@ -22,18 +22,6 @@ body[data-theme="dark"] .finance-focus-card {
     background: var(--surface);
 }
 
-body[data-theme="dark"] .finance-command-card:nth-child(1) {
-    background: var(--surface);
-}
-
-body[data-theme="dark"] .finance-command-card:nth-child(2) {
-    background: var(--surface);
-}
-
-body[data-theme="dark"] .finance-command-card:nth-child(3) {
-    background: var(--surface);
-}
-
 /* ── Bulk dark mode ── */
 
 body[data-theme="dark"] .finance-shell .operation-hero,

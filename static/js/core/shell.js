@@ -156,21 +156,6 @@ POR QUE ELE EXISTE:
     writeStorage(window.sessionStorage, celebrationStorageKey, JSON.stringify(currentCounts));
   }
 
-  function shouldIgnoreTopbarScrollClick(target) {
-    if (!target) {
-      return false;
-    }
-
-    return Boolean(target.closest('form, a, button, input, label, select, textarea, summary, [role="button"], [role="link"], [role="option"]'));
-  }
-
-  function scrollPageToTop() {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  }
-
   function syncThemeUi() {
     if (!themeToggle) {
       return;
@@ -217,10 +202,28 @@ POR QUE ELE EXISTE:
     syncSidebarUi();
   }
 
+  function resolveLegacyHash(hash) {
+    if (body.dataset.shellScope === 'dashboard' && hash === '#dashboard') {
+      return '#dashboard-sessions-board';
+    }
+
+    return hash;
+  }
+
   function revealHashTarget() {
     var hash = window.location.hash;
     if (!hash || hash === '#') {
       return;
+    }
+
+    var resolvedHash = resolveLegacyHash(hash);
+    if (resolvedHash !== hash) {
+      try {
+        window.history.replaceState(null, '', resolvedHash);
+      } catch (error) {
+        window.location.hash = resolvedHash;
+      }
+      hash = resolvedHash;
     }
 
     var target = null;
@@ -289,20 +292,9 @@ POR QUE ELE EXISTE:
       closeSidebar();
     });
   }
-
-  if (topbar) {
-    topbar.addEventListener('click', function(event) {
-      if (shouldIgnoreTopbarScrollClick(event.target)) {
-        return;
-      }
-
-      scrollPageToTop();
-    });
-  }
-
-  // Handle blink actions from metric cards (topbar and board targets)
+  // Handle blink actions from metric cards (topbar, board, and sidebar targets)
   document.addEventListener('click', function(event) {
-    var trigger = event.target.closest('[data-action^="blink-topbar-"], [data-action^="blink-board-"]');
+    var trigger = event.target.closest('[data-action^="blink-topbar-"], [data-action^="blink-board-"], [data-action^="blink-sidebar-"]');
     if (!trigger) {
       return;
     }
@@ -332,6 +324,26 @@ POR QUE ELE EXISTE:
     if (action.indexOf('blink-board-') === 0) {
       var bkind = action.replace(/^blink-board-/, '');
       if (!bkind) {
+        return;
+      }
+
+      // Special case: sessions board uses a DOM overlay approach
+      // so we never touch the element itself (avoids sticky/layout glitches)
+      if (bkind === 'sessions') {
+        var sessionsBoard = document.querySelector('#dashboard-sessions-board');
+        if (!sessionsBoard) { return; }
+        var rect = sessionsBoard.getBoundingClientRect();
+        var neonOverlay = document.createElement('div');
+        neonOverlay.className = 'sessions-board-neon-overlay';
+        neonOverlay.style.top = rect.top + 'px';
+        neonOverlay.style.left = rect.left + 'px';
+        neonOverlay.style.width = rect.width + 'px';
+        neonOverlay.style.height = rect.height + 'px';
+        neonOverlay.style.animation = 'sessionsBoardNeonBlink 1.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards';
+        document.body.appendChild(neonOverlay);
+        window.setTimeout(function() {
+          neonOverlay.remove();
+        }, 1400);
         return;
       }
       var bid = '#dashboard-' + bkind + '-board';
@@ -370,6 +382,35 @@ POR QUE ELE EXISTE:
           applyTarget.classList.remove('neon-quiet');
         }
       }, boardNeonDuration + quietExtra);
+      return;
+    }
+
+    // blink-sidebar-<kind> -> a[href="/<kind>/"] in the sidebar or nav
+    if (action.indexOf('blink-sidebar-') === 0) {
+      event.preventDefault();
+      
+      var sKind = action.replace(/^blink-sidebar-/, '');
+      if (!sKind) return;
+      
+      var sSelector = 'a[href^="/' + sKind + '/"]';
+      var targetLink = document.querySelector('.sidebar ' + sSelector) || 
+                       document.querySelector(sSelector);
+
+      if (targetLink) {
+        var neonDuration = 1000;
+        var blinkClass = (sKind === 'financeiro') ? 'blink-danger' : 'blink';
+        
+        targetLink.classList.add(blinkClass);
+        
+        // Ensure sidebar is open on mobile if closed
+        if (!document.body.classList.contains('sidebar-is-open') && window.innerWidth <= 1024) {
+          document.body.classList.add('sidebar-is-open');
+        }
+        
+        window.setTimeout(function() {
+          targetLink.classList.remove(blinkClass);
+        }, neonDuration + 120);
+      }
       return;
     }
   });

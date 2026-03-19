@@ -1,12 +1,5 @@
 <article class="table-card operation-table-card manager-secondary-card" id="manager-link-board">
-    <div class="operation-card-head">
-        <div>
-            <p class="eyebrow">Contatos de WhatsApp sem vínculo</p>
-            <h2 class="operation-card-title">Conversas prontas para conexão</h2>
-            <p class="operation-card-copy">Confira nome, resolva vínculo.</p>
-        </div>
-        <span class="pill">{{ page.data.unlinked_whatsapp|length }} contato(s)</span>
-    </div>
+    {% include "includes/ui/operation_card_head.html" with eyebrow="Contatos de WhatsApp sem vínculo" title="Conversas prontas para conexão" copy="Confira nome, resolva vínculo." pill_label=page.data.unlinked_whatsapp|length|add:" contato(s)" %}
     <div class="operation-table-wrap">
         <table>
             <thead>
@@ -19,12 +12,7 @@
             </thead>
             <tbody>
                 {% for contact in page.data.unlinked_whatsapp %}
-                <tr>
-                    <td>{{ contact.display_name|default:"Sem nome" }}</td>
-                    <td>{{ contact.phone }}</td>
-                    <td><span class="pill info">{{ contact.get_status_display }}</span></td>
-                    <td>{% if contact.display_name %}<span class="pill accent">Vincular aluno</span>{% else %}<span class="pill warning">Identificar contato</span>{% endif %}</td>
-                </tr>
+                {% include "operations/includes/manager_link_row.html" with contact=contact %}
                 {% empty %}
                 <tr><td colspan="4" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="WhatsApp sem vinculo" title="Nenhum contato pendente" copy="Nao ha conversa solta exigindo identificacao ou conexao com aluno agora." badge="Inbox organizado" badge_class="info" %}</td></tr>
                 {% endfor %}

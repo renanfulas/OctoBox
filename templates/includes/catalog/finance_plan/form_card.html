@@ -1,0 +1,63 @@
+<article class="table-card finance-plan-edit-card" data-panel="finance-plan-edit-form">
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="finance-plan-form-stack">
+            {% if page.data.form.errors %}
+            <div class="note-panel note-panel-danger finance-plan-feedback-card">
+                <p class="eyebrow">Revise antes de salvar</p>
+                <p class="meta-text no-margin">A pagina destacou os campos com problema para voce corrigir sem adivinhar onde o fluxo quebrou.</p>
+            </div>
+            {% endif %}
+
+            <div id="plan-form-core" class="finance-plan-field-grid">
+                <label>
+                    <span class="field-label">{{ page.data.form.name.label }}</span>
+                    {{ page.data.form.name }}
+                    {% for error in page.data.form.name.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                </label>
+                <label>
+                    <span class="field-label">{{ page.data.form.price.label }}</span>
+                    {{ page.data.form.price }}
+                    {% for error in page.data.form.price.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                </label>
+                <label>
+                    <span class="field-label">{{ page.data.form.billing_cycle.label }}</span>
+                    {{ page.data.form.billing_cycle }}
+                    {% for error in page.data.form.billing_cycle.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                </label>
+                <label>
+                    <span class="field-label">{{ page.data.form.sessions_per_week.label }}</span>
+                    {{ page.data.form.sessions_per_week }}
+                    {% for error in page.data.form.sessions_per_week.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                </label>
+                <label>
+                    <span class="field-label">{{ page.data.form.active.label }}</span>
+                    {{ page.data.form.active }}
+                    {% for error in page.data.form.active.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                </label>
+            </div>
+            <label id="plan-form-delivery">
+                <span class="field-label">{{ page.data.form.description.label }}</span>
+                {{ page.data.form.description }}
+                {% for error in page.data.form.description.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+            </label>
+            {% if page.data.form.non_field_errors %}
+            <div class="note-panel note-panel-danger finance-plan-feedback-card">
+                {% for error in page.data.form.non_field_errors %}
+                <div>{{ error }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div class="note-panel note-panel-success-soft finance-plan-feedback-card">
+                <p class="eyebrow">O que esta decisao deve deixar claro</p>
+                <p class="meta-text no-margin">Quando o plano estiver bem editado, recepção, financeiro e leitura de carteira devem entender a proposta sem traduzir nome, preço ou entrega no improviso.</p>
+            </div>
+            <div class="actions finance-plan-actions-flat">
+                <button class="button" type="submit">Salvar ajustes</button>
+                {% if page.actions.secondary.admin %}
+                <a class="button secondary" href="{{ page.actions.secondary.admin }}">Editar no admin</a>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</article>

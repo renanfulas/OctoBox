@@ -1,0 +1,11 @@
+<tr>
+    <td>
+        <strong>{{ intake.full_name }}</strong>
+        <p class="meta-text-sm">{{ intake.phone }}{% if intake.email %} | {{ intake.email }}{% endif %}</p>
+    </td>
+    <td>{{ intake.get_source_display }}</td>
+    <td><span class="pill info">{{ intake.get_status_display }}</span></td>
+    <td>
+        <a class="button secondary button-sm" href="/alunos/novo/?intake={{ intake.id }}#student-form-essential" data-action="open-intake-registration">Abrir cadastro</a>
+    </td>
+</tr>

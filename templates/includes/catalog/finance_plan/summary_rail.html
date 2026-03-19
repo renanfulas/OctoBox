@@ -1,0 +1,18 @@
+<article class="table-card finance-plan-support-card finance-plan-summary-rail" data-panel="finance-plan-summary-rail">
+    <div class="operation-card-head">
+        <div>
+            <p class="eyebrow">Leitura de impacto</p>
+            <h2 class="operation-card-title">O plano precisa continuar explicando a si mesmo</h2>
+        </div>
+        <span class="pill info">Resumo vivo</span>
+    </div>
+    <div class="finance-summary-grid finance-plan-summary-grid">
+        {% for item in page.data.plan_form_summary_cards %}
+        <article class="finance-summary-chip finance-plan-summary-chip">
+            <span class="operation-mini-label">{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+            <p>{{ item.summary }}</p>
+        </article>
+        {% endfor %}
+    </div>
+</article>

@@ -1,0 +1,459 @@
+/*
+ARQUIVO: utilitários visuais compartilhados do catálogo.
+
+POR QUE ELE EXISTE:
+- reúne tipografia, grids, cards genéricos, gráficos, notas e disclosure panels.
+- sustenta a base visual comum das telas de catálogo fora do overview financeiro.
+*/
+
+.body-copy {
+    line-height: 1.6;
+}
+
+.text-muted {
+    color: var(--muted);
+}
+
+.section-title {
+    margin: 0 0 10px;
+    font-size: 1.6rem;
+}
+
+.section-title-sm {
+    margin: 0 0 12px;
+    font-size: 1.55rem;
+}
+
+.field-label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.form-error {
+    display: block;
+    margin-top: 6px;
+    color: var(--danger);
+}
+
+.field-grid-200,
+.field-grid-220,
+.field-grid-240 {
+    display: grid;
+}
+
+.field-grid-200 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+}
+
+.field-grid-220 {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.field-grid-240 {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.glass-panel,
+.finance-glass-panel {
+    position: relative;
+    overflow: hidden;
+}
+
+.glass-panel,
+.finance-glass-panel,
+.student-priority-panel,
+.plan-card,
+.priority-student-card,
+.intake-card,
+.delta-row,
+.history-entry {
+    backdrop-filter: blur(14px);
+}
+
+.glass-panel::after,
+.finance-glass-panel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    pointer-events: none;
+}
+
+.metric-card,
+.finance-metric-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.primary-glow,
+.orange-glow,
+.secondary-glow,
+.green-glow,
+.blue-glow,
+.info-card {
+    background: var(--surface);
+}
+
+.primary-glow,
+.orange-glow {
+    border-color: rgba(215, 157, 116, 0.24);
+}
+
+.secondary-glow,
+.green-glow {
+    border-color: rgba(113, 176, 161, 0.22);
+}
+
+.blue-glow,
+.info-card {
+    border-color: rgba(122, 153, 198, 0.24);
+}
+
+.metric-pulse,
+.metric-spark {
+    position: absolute;
+    right: -18px;
+    bottom: -18px;
+    width: 84px;
+    height: 84px;
+    border-radius: 999px;
+    background: transparent;
+    display: none;
+}
+
+.metric-pulse {
+    right: -24px;
+    bottom: -24px;
+    width: 92px;
+    height: 92px;
+}
+
+.student-priority-panel {
+    background: var(--surface);
+}
+
+.intake-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+}
+
+.intake-card,
+.priority-student-card,
+.plan-card,
+.delta-row,
+.history-entry {
+    padding: 18px;
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.intake-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: center;
+}
+
+.intake-card:hover,
+.plan-card:hover,
+.history-entry:hover,
+.delta-row:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+    border-color: rgba(249, 115, 22, 0.18);
+}
+
+.student-table-wrap table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.student-row {
+    transition: background 0.16s ease, transform 0.16s ease;
+}
+
+.student-row:hover {
+    background: rgba(249, 115, 22, 0.06);
+}
+
+.student-compact-layout {
+    grid-template-columns: 1.15fr 0.85fr;
+    align-items: start;
+}
+
+.student-priority-badges {
+    justify-items: end;
+}
+
+.student-section-head {
+    margin-bottom: 16px;
+}
+
+.student-table-wrap td {
+    vertical-align: top;
+}
+
+.student-table-wrap strong,
+.plan-stats strong,
+.plan-stats span {
+    display: block;
+}
+
+.row-between,
+.row-between-sm,
+.row-between-md {
+    display: flex;
+    justify-content: space-between;
+}
+
+.row-between,
+.row-between-sm {
+    gap: 12px;
+}
+
+.row-between {
+    align-items: start;
+}
+
+.row-between-sm {
+    margin-bottom: 8px;
+}
+
+.row-between-md {
+    gap: 16px;
+    align-items: start;
+}
+
+.plan-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.plan-stats span,
+.meta-text,
+.meta-text-sm,
+.chart-column span,
+.delta-label {
+    color: var(--muted);
+}
+
+.meta-text {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.meta-text-sm {
+    margin: 4px 0;
+}
+
+.mix-bar-track {
+    height: 12px;
+    border-radius: 999px;
+    background: rgba(22, 33, 31, 0.08);
+    overflow: hidden;
+}
+
+.mix-bar-fill {
+    width: var(--bar-width, 0%);
+    height: 100%;
+    border-radius: 999px;
+    background: var(--brand);
+    transition: width 0.25s ease;
+}
+
+.mix-bar-fill.growth,
+.mix-bar-fill.class-occupancy-available {
+    background: var(--accent);
+}
+
+.mix-bar-fill.churn,
+.mix-bar-fill.class-occupancy-high {
+    background: var(--danger);
+}
+
+.mix-bar-fill.class-occupancy-medium {
+    background: #eab308;
+}
+
+.mix-bar-fill.class-occupancy-critical {
+    background: #b91c1c;
+}
+
+.mix-bar-fill.class-occupancy-closed {
+    background: #6b7280;
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--chart-columns, 1), minmax(0, 1fr));
+    gap: 14px;
+    align-items: end;
+    min-height: 260px;
+}
+
+.chart-column {
+    display: grid;
+    gap: 8px;
+    text-align: center;
+}
+
+.chart-column span {
+    font-size: 0.88rem;
+}
+
+.chart-bar-wrap {
+    height: 190px;
+    display: flex;
+    align-items: end;
+    justify-content: center;
+    padding: 0 8px;
+    border-radius: var(--radius-panel);
+    background: var(--bg);
+    border: 1px solid var(--line);
+}
+
+.chart-bar {
+    width: 100%;
+    height: var(--bar-height, 10px);
+    min-height: 10px;
+    border-radius: 16px 16px 8px 8px;
+    transition: height 0.25s ease, transform 0.18s ease;
+}
+
+.chart-bar.revenue {
+    background: var(--brand);
+    box-shadow: 0 16px 24px rgba(37, 99, 235, 0.18);
+}
+
+.chart-column:hover .chart-bar {
+    transform: translateY(-3px);
+}
+
+.delta-track-group,
+.history-stack {
+    display: grid;
+    gap: 12px;
+}
+
+.delta-label {
+    margin-bottom: 6px;
+    font-size: 0.86rem;
+}
+
+.timeline-row {
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    gap: 12px;
+    align-items: start;
+}
+
+.timeline-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    margin-top: 6px;
+    background: var(--brand);
+    box-shadow: 0 0 0 5px rgba(184, 92, 56, 0.12);
+}
+
+.note-panel {
+    padding: 16px 18px;
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    line-height: 1.6;
+    background: rgba(255, 255, 255, 0.68);
+}
+
+.note-panel-success {
+    background: rgba(47, 122, 100, 0.08);
+    border-color: rgba(47, 122, 100, 0.12);
+}
+
+.note-panel-warm {
+    background: rgba(184, 92, 56, 0.1);
+    border-color: rgba(184, 92, 56, 0.16);
+}
+
+.note-panel-cream {
+    background: rgba(255, 252, 247, 0.92);
+    border-color: rgba(184, 92, 56, 0.16);
+}
+
+.note-panel-success-soft {
+    background: rgba(250, 255, 252, 0.92);
+    border-color: rgba(47, 122, 100, 0.14);
+}
+
+.note-panel-danger {
+    background: rgba(168, 68, 52, 0.08);
+    border-color: rgba(168, 68, 52, 0.18);
+    color: var(--danger);
+}
+
+.disclosure-panel {
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.48);
+}
+
+.disclosure-panel summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.disclosure-panel summary::marker {
+    color: var(--brand);
+}
+
+.disclosure-panel-success {
+    background: rgba(31, 106, 93, 0.06);
+}
+
+.disclosure-panel-warm {
+    background: rgba(201, 111, 36, 0.08);
+}
+
+.installment-shell {
+    display: none;
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(255, 253, 248, 0.92);
+    border: 1px solid rgba(201, 111, 36, 0.18);
+}
+
+.installment-preview {
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.85);
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+}
+
+.history-header {
+    margin-bottom: 8px;
+}
+
+@keyframes catalogPulse {
+    0%,
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 0.7;
+    }
+
+    50% {
+        transform: scale(1.08) translateY(-4px);
+        opacity: 1;
+    }
+}

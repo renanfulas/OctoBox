@@ -1,0 +1,169 @@
+/*
+ARQUIVO: cobrança operacional da recepção.
+*/
+
+.reception-payment-board,
+.reception-preview-payment-board {
+    background: var(--surface);
+}
+
+.reception-payment-grid,
+.reception-preview-payment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 14px;
+}
+
+.reception-payment-card,
+.reception-preview-payment-card {
+    display: grid;
+    grid-template-rows: auto auto auto 1fr auto;
+    gap: 10px;
+    padding: 14px;
+    border-radius: var(--radius-card);
+    border: 1px solid rgba(234, 88, 12, 0.14);
+    background: var(--surface);
+}
+
+.reception-payment-card .finance-action-copy,
+.reception-preview-payment-card .finance-action-copy {
+    display: grid;
+    gap: 3px;
+}
+
+.reception-payment-card .finance-action-copy .meta-text-sm,
+.reception-preview-payment-card .finance-action-copy .meta-text-sm {
+    line-height: 1.35;
+}
+
+.reception-payment-card .pill,
+.reception-preview-payment-card .pill {
+    padding: 5px 9px;
+}
+
+.reception-payment-meta,
+.reception-preview-payment-meta {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.reception-payment-meta .finance-alert-stat,
+.reception-preview-payment-meta .finance-alert-stat {
+    padding: 9px 10px;
+}
+
+.reception-payment-meta .finance-alert-stat strong,
+.reception-preview-payment-meta .finance-alert-stat strong {
+    line-height: 1.15;
+}
+
+.reception-payment-card .finance-action-message,
+.reception-preview-payment-card .finance-action-message {
+    padding: 10px 12px;
+}
+
+.reception-payment-card .finance-action-message .meta-text,
+.reception-preview-payment-card .finance-action-message .meta-text {
+    margin-top: 4px;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.reception-payment-form,
+.reception-preview-payment-form {
+    display: grid;
+    gap: 8px;
+    padding-top: 0;
+}
+
+.reception-payment-form-primary {
+    gap: 8px;
+}
+
+.reception-payment-actions-primary {
+    padding-top: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.reception-payment-actions .button,
+.reception-preview-payment-actions .button {
+    min-height: 32px;
+    padding: 6px 10px;
+    border-radius: 12px;
+    font-size: 0.84rem;
+}
+
+.reception-payment-form .field-label,
+.reception-preview-payment-form .field-label {
+    margin-bottom: 4px;
+    font-size: 0.72rem;
+}
+
+.reception-payment-form input,
+.reception-payment-form select,
+.reception-preview-payment-form input,
+.reception-preview-payment-form select {
+    min-height: 38px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.reception-payment-advanced {
+    display: grid;
+    gap: 6px;
+    padding: 6px 8px 0;
+    border-top: 1px dashed rgba(148, 163, 184, 0.22);
+}
+
+.reception-payment-advanced summary {
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--brand-dark);
+    list-style: none;
+}
+
+.reception-payment-advanced summary::-webkit-details-marker {
+    display: none;
+}
+
+.reception-payment-advanced summary::after {
+    content: 'Mostrar';
+    margin-left: 8px;
+    font-size: 0.74rem;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.reception-payment-advanced[open] summary::after {
+    content: 'Ocultar';
+}
+
+.reception-payment-form-secondary {
+    padding-top: 0;
+}
+
+.reception-payment-actions,
+.reception-preview-payment-actions {
+    align-items: stretch;
+}
+
+.reception-payment-form-secondary .field-label,
+.reception-preview-payment-form-secondary .field-label {
+    margin-bottom: 4px;
+}
+
+.reception-payment-board .operation-card-head,
+.reception-preview-payment-board .operation-card-head {
+    margin-bottom: 10px;
+}
+
+.reception-payment-board .operation-card-copy,
+.reception-preview-payment-board .operation-card-copy {
+    max-width: 38ch;
+}

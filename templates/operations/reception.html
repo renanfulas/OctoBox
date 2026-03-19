@@ -24,13 +24,13 @@ PONTOS CRITICOS:
     {% include "includes/ui/focus_sequence.html" with eyebrow="Compasso do balcão" title="A recepção decide em três passagens curtas" copy="Chegada, cobrança e orientação de aula em sequência limpa para não travar o atendimento." items=page.data.reception_focus pill_label="Atendimento vivo" pill_class="accent" class_name="reception-focus-lane" panel_id="reception-command-lane" %}
 
     <section class="layout-grid operation-grid-wide align-start reception-main-grid" aria-label="Cobranca e entradas" data-slot="reception-main-grid">
-        {% include "operations/includes/reception_payment_board.html" %}
         {% include "operations/includes/reception_intake_board.html" %}
+        {% include "operations/includes/reception_payment_board.html" %}
     </section>
 
     <section class="layout-grid align-start reception-support-grid" aria-label="Apoio do balcão" data-slot="reception-support-grid">
-        {% include "operations/includes/reception_shortcuts_panel.html" %}
         {% include "operations/includes/reception_class_grid_board.html" %}
+        {% include "operations/includes/reception_shortcuts_panel.html" %}
     </section>
 
     {% include "operations/includes/reception_metrics_section.html" %}

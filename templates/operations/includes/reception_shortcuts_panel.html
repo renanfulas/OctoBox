@@ -4,19 +4,11 @@ ARQUIVO: atalhos curtos da Recepcao.
 POR QUE ELE EXISTE:
 - concentra os destinos de fluxo curto sem misturar com cobranca e intake.
 -->
-
-    <article class="table-card operation-table-card reception-command-card" data-panel="reception-shortcuts">
-        <div class="operation-card-head">
-            <div>
-                <p class="eyebrow">Atalhos de atendimento</p>
-                <h2 class="operation-card-title">Atalhos de atendimento</h2>
-                <p class="operation-card-copy">Destinos de fluxo curto sem sair do compasso.</p>
-            </div>
-            <span class="pill info">Fluxo curto</span>
-        </div>
-        <div class="actions actions-tight">
-            <a class="button secondary" href="/alunos/" data-action="open-students-directory">Abrir alunos</a>
-            <a class="button secondary" href="/alunos/novo/#student-form-essential" data-action="open-student-registration">Novo aluno</a>
-            <a class="button secondary" href="/grade-aulas/" data-action="open-class-grid">Abrir aulas</a>
-        </div>
-    </article>
+<article class="table-card operation-table-card reception-command-card reception-support-card" data-panel="reception-shortcuts">
+    {% include "includes/ui/operation_card_head.html" with eyebrow="Atalhos de atendimento" title="Atalhos de atendimento" copy="Destinos de fluxo curto sem sair do compasso." pill_label="Fluxo curto" pill_class="info" %}
+    <div class="actions actions-tight">
+        {% include "operations/includes/reception_shortcut_link.html" with href="/alunos/" data_action="open-students-directory" label="Abrir alunos" %}
+        {% include "operations/includes/reception_shortcut_link.html" with href="/alunos/novo/#student-form-essential" data_action="open-student-registration" label="Novo aluno" %}
+        {% include "operations/includes/reception_shortcut_link.html" with href="/grade-aulas/" data_action="open-class-grid" label="Abrir aulas" %}
+    </div>
+</article>

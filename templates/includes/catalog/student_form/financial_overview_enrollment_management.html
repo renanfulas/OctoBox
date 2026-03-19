@@ -2,7 +2,7 @@
 ARQUIVO: gestao formal da matricula do aluno.
 -->
 {% if page.data.enrollment_management_form %}
-<article class="table-card section-gap-top-sm" id="student-enrollment-management">
+<article class="table-card section-gap-top-sm student-financial-action-card student-financial-action-card-secondary" id="student-enrollment-management">
     <p class="eyebrow">Gestao formal da matricula</p>
     <form method="post" action="/alunos/{{ page.data.student_object.id }}/matricula/acao/" class="form-stack">
         {% csrf_token %}
@@ -17,10 +17,7 @@ ARQUIVO: gestao formal da matricula do aluno.
                 {{ page.data.enrollment_management_form.reason }}
             </label>
         </div>
-        <div class="actions actions-tight">
-            <button class="button secondary" type="submit" name="action" value="cancel-enrollment">Cancelar matricula</button>
-            <button class="button" type="submit" name="action" value="reactivate-enrollment">Reativar matricula</button>
-        </div>
+        {% include "includes/catalog/student_form/financial_overview_enrollment_actions.html" %}
     </form>
 </article>
 {% endif %}

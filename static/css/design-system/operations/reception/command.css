@@ -1,0 +1,39 @@
+/*
+ARQUIVO: atalhos e cards de apoio da recepção.
+*/
+
+.reception-command-card,
+.reception-preview-command-card {
+    background: var(--surface);
+}
+
+.reception-command-card .operation-card-head,
+.reception-preview-command-card .operation-card-head {
+    margin-bottom: 10px;
+}
+
+.reception-command-card .operation-card-copy,
+.reception-preview-command-card .operation-card-copy {
+    max-width: 34ch;
+}
+
+.reception-command-card .actions,
+.reception-preview-command-card .actions {
+    gap: 8px;
+}
+
+.reception-command-card .button,
+.reception-preview-command-card .button {
+    min-height: 34px;
+    padding: 7px 12px;
+}
+
+.reception-command-card {
+    height: 100%;
+    align-content: space-between;
+}
+
+.reception-preview-lock-note {
+    background: var(--bg);
+    border: 1px dashed var(--line-strong);
+}

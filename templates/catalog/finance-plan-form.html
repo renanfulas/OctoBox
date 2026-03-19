@@ -19,118 +19,13 @@ PONTOS CRITICOS:
 {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
 
 <section class="layout-grid finance-plan-support-grid align-start" data-slot="context">
-    <article class="table-card finance-plan-support-card" data-panel="finance-plan-guardrails">
-        <p class="eyebrow">Como decidir sem espalhar a leitura</p>
-        <ul class="capability-list">
-            {% for item in page.data.plan_form_guardrails %}
-            <li>{{ item }}</li>
-            {% endfor %}
-        </ul>
-    </article>
-
-    <article class="table-card finance-plan-support-card finance-plan-summary-rail" data-panel="finance-plan-summary-rail">
-        <div class="operation-card-head">
-            <div>
-                <p class="eyebrow">Leitura de impacto</p>
-                <h2 class="operation-card-title">O plano precisa continuar explicando a si mesmo</h2>
-            </div>
-            <span class="pill info">Resumo vivo</span>
-        </div>
-        <div class="finance-summary-grid finance-plan-summary-grid">
-            {% for item in page.data.plan_form_summary_cards %}
-            <article class="finance-summary-chip finance-plan-summary-chip">
-                <span class="operation-mini-label">{{ item.label }}</span>
-                <strong>{{ item.value }}</strong>
-                <p>{{ item.summary }}</p>
-            </article>
-            {% endfor %}
-        </div>
-    </article>
+    {% include "includes/catalog/finance_plan/guardrails.html" with page=page %}
+    {% include "includes/catalog/finance_plan/summary_rail.html" with page=page %}
 </section>
 
 <section class="layout-grid finance-plan-layout-grid" data-slot="workspace">
-    <article class="table-card finance-plan-edit-card" data-panel="finance-plan-edit-form">
-        <form method="post" novalidate>
-            {% csrf_token %}
-            <div class="finance-plan-form-stack">
-                {% if page.data.form.errors %}
-                <div class="note-panel note-panel-danger finance-plan-feedback-card">
-                    <p class="eyebrow">Revise antes de salvar</p>
-                    <p class="meta-text no-margin">A pagina destacou os campos com problema para voce corrigir sem adivinhar onde o fluxo quebrou.</p>
-                </div>
-                {% endif %}
-
-                <div id="plan-form-core" class="finance-plan-field-grid">
-                    <label>
-                        <span class="field-label">{{ page.data.form.name.label }}</span>
-                        {{ page.data.form.name }}
-                        {% for error in page.data.form.name.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
-                    </label>
-                    <label>
-                        <span class="field-label">{{ page.data.form.price.label }}</span>
-                        {{ page.data.form.price }}
-                        {% for error in page.data.form.price.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
-                    </label>
-                    <label>
-                        <span class="field-label">{{ page.data.form.billing_cycle.label }}</span>
-                        {{ page.data.form.billing_cycle }}
-                        {% for error in page.data.form.billing_cycle.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
-                    </label>
-                    <label>
-                        <span class="field-label">{{ page.data.form.sessions_per_week.label }}</span>
-                        {{ page.data.form.sessions_per_week }}
-                        {% for error in page.data.form.sessions_per_week.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
-                    </label>
-                    <label>
-                        <span class="field-label">{{ page.data.form.active.label }}</span>
-                        {{ page.data.form.active }}
-                        {% for error in page.data.form.active.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
-                    </label>
-                </div>
-                <label id="plan-form-delivery">
-                    <span class="field-label">{{ page.data.form.description.label }}</span>
-                    {{ page.data.form.description }}
-                    {% for error in page.data.form.description.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
-                </label>
-                {% if page.data.form.non_field_errors %}
-                <div class="note-panel note-panel-danger finance-plan-feedback-card">
-                    {% for error in page.data.form.non_field_errors %}
-                    <div>{{ error }}</div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-                <div class="note-panel note-panel-success-soft finance-plan-feedback-card">
-                    <p class="eyebrow">O que esta decisao deve deixar claro</p>
-                    <p class="meta-text no-margin">Quando o plano estiver bem editado, recepção, financeiro e leitura de carteira devem entender a proposta sem traduzir nome, preço ou entrega no improviso.</p>
-                </div>
-                <div class="actions finance-plan-actions-flat">
-                    <button class="button" type="submit">Salvar ajustes</button>
-                    {% if page.actions.secondary.admin %}
-                    <a class="button secondary" href="{{ page.actions.secondary.admin }}">Editar no admin</a>
-                    {% endif %}
-                </div>
-            </div>
-        </form>
-    </article>
-
-    <article class="table-card finance-plan-summary-card" id="plan-form-summary" data-panel="finance-plan-summary">
-        <p class="eyebrow">Leitura rápida do plano</p>
-        <h2 class="finance-plan-title">{{ page.data.plan.name }}</h2>
-        <p class="finance-plan-meta">Valor atual: {{ page.data.plan.price_display_full }}</p>
-        <p class="finance-plan-meta">Ciclo: {{ page.data.plan.billing_cycle_label }}</p>
-        <p class="finance-plan-meta finance-plan-meta-spaced">Aulas por semana: {{ page.data.plan.sessions_per_week }}</p>
-        <div class="note-panel note-panel-success-soft finance-plan-note">
-            {% if page.data.plan.description %}
-            <p class="meta-text no-margin">{{ page.data.plan.description }}</p>
-            {% else %}
-            <p class="meta-text no-margin">Este plano ainda não tem descrição comercial. Vale preencher para reduzir ambiguidade entre recepção, venda e cobrança.</p>
-            {% endif %}
-        </div>
-        <div class="actions finance-plan-actions-flat">
-            <a class="button secondary" href="{{ page.actions.secondary.finance_center }}">Ver portfolio</a>
-            <a class="button secondary" href="{{ page.actions.secondary.students }}">Ver alunos</a>
-        </div>
-    </article>
+    {% include "includes/catalog/finance_plan/form_card.html" with page=page %}
+    {% include "includes/catalog/finance_plan/plan_summary.html" with page=page %}
 </section>
 </div>
 {% endwith %}

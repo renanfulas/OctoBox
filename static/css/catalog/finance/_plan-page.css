@@ -28,10 +28,6 @@ POR QUE ELE EXISTE:
     background: var(--surface);
 }
 
-.finance-plan-summary-rail {
-    background: var(--surface);
-}
-
 .finance-plan-summary-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }

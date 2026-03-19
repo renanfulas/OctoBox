@@ -1,0 +1,105 @@
+/*
+ARQUIVO: overrides dark do tema notion do owner.
+
+POR QUE ELE EXISTE:
+- concentra as adaptações do tema notion para dark mode.
+- mantém a cena base livre de condicionais de tema.
+*/
+
+body[data-theme="dark"] .owner-notion-shell {
+    --owner-notion-ink: #f3f4f6;
+    --owner-notion-muted: rgba(209, 213, 219, 0.72);
+    --owner-notion-line: rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="dark"] .owner-notion-shell .operation-hero {
+    border-color: var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+}
+
+body[data-theme="dark"] .owner-notion-shell .operation-hero::before {
+    background: var(--brand);
+}
+
+body[data-theme="dark"] .owner-notion-shell .operation-hero .actions .button:not(.secondary) {
+    border-color: var(--brand);
+    background: var(--brand);
+    color: #fff;
+}
+
+body[data-theme="dark"] .owner-notion-shell .operation-hero .actions .button.secondary {
+    border-color: var(--owner-notion-line);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(243, 244, 246, 0.92);
+}
+
+body[data-theme="dark"] .owner-notion-shell .operation-hero-panel,
+body[data-theme="dark"] .owner-notion-shell .owner-focus-card,
+body[data-theme="dark"] .owner-notion-shell .owner-command-card,
+body[data-theme="dark"] .owner-notion-shell .owner-proof-card,
+body[data-theme="dark"] .owner-notion-shell .owner-metric-grid .operation-kpi-card,
+body[data-theme="dark"] .owner-notion-shell .owner-summary-card,
+body[data-theme="dark"] .owner-notion-shell .owner-summary-card-structure,
+body[data-theme="dark"] .owner-notion-shell .owner-summary-card-priority {
+    border-color: var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+}
+
+body[data-theme="dark"] .owner-notion-shell .owner-focus-item,
+body[data-theme="dark"] .owner-notion-shell .owner-command-item,
+body[data-theme="dark"] .owner-notion-shell .owner-proof-item {
+    border-color: var(--line);
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .owner-notion-shell .owner-command-intro {
+    background: var(--ink);
+    box-shadow: var(--shadow-soft);
+}
+
+body[data-theme="dark"] .owner-notion-shell .owner-command-kicker {
+    color: rgba(209, 213, 219, 0.64);
+}
+
+body[data-theme="dark"] .owner-notion-shell .owner-command-item--primary .owner-command-index {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="dark"] .owner-notion-shell .owner-command-index {
+    border-color: var(--line);
+    background: var(--bg);
+    color: var(--ink);
+}
+
+body[data-theme="dark"] .owner-notion-shell .owner-command-copy p:last-child,
+body[data-theme="dark"] .owner-notion-shell .owner-proof-copy,
+body[data-theme="dark"] .owner-notion-shell .owner-proof-label {
+    color: var(--owner-notion-muted);
+}
+
+body[data-theme="dark"] .owner-notion-shell .owner-proof-value,
+body[data-theme="dark"] .owner-notion-shell .owner-proof-link {
+    color: var(--owner-notion-ink);
+}
+
+body[data-theme="dark"] .owner-notion-shell .owner-command-actions .button.secondary,
+body[data-theme="dark"] .owner-notion-shell .owner-focus-actions .button.secondary {
+    border-color: var(--owner-notion-line);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"] .owner-notion-shell .operation-mini-stat,
+body[data-theme="dark"] .owner-notion-shell .owner-summary-card .capability-list li {
+    border-color: var(--line);
+    background: var(--bg);
+}
+
+body[data-theme="dark"] .owner-notion-shell .owner-summary-card-structure::before,
+body[data-theme="dark"] .owner-notion-shell .owner-summary-card-priority::before,
+body[data-theme="dark"] .owner-notion-shell .owner-summary-card .operation-card-head,
+body[data-theme="dark"] .owner-notion-shell .owner-summary-card .card-head {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+    background: transparent;
+}

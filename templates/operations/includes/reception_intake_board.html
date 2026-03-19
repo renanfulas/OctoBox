@@ -4,15 +4,8 @@ ARQUIVO: handoff de entradas para a Recepcao.
 POR QUE ELE EXISTE:
 - mantém intake e cadastro rápido em um bloco próprio.
 -->
-<article class="table-card operation-table-card" id="reception-intake-board" data-panel="reception-intake-board">
-    <div class="operation-card-head">
-        <div>
-            <p class="eyebrow">Fila de entrada</p>
-            <h2 class="operation-card-title">Quem pode virar ficha agora</h2>
-            <p class="operation-card-copy">Localizar, entender a origem e abrir cadastro com pouco atrito.</p>
-        </div>
-        <span class="pill info">{{ page.data.reception_intakes|length }} entrada(s)</span>
-    </div>
+<article class="table-card operation-table-card reception-priority-card" id="reception-intake-board" data-panel="reception-intake-board">
+    {% include "includes/ui/operation_card_head.html" with eyebrow="Fila de entrada" title="Quem pode virar ficha agora" copy="Localizar, entender a origem e abrir cadastro com pouco atrito." pill_label=page.data.reception_intakes|length|stringformat:"s"|add:" entrada(s)" pill_class="info" %}
     <div class="operation-table-wrap">
         <table>
             <thead>
@@ -25,17 +18,7 @@ POR QUE ELE EXISTE:
             </thead>
             <tbody>
                 {% for intake in page.data.reception_intakes %}
-                <tr>
-                    <td>
-                        <strong>{{ intake.full_name }}</strong>
-                        <p class="meta-text-sm">{{ intake.phone }}{% if intake.email %} | {{ intake.email }}{% endif %}</p>
-                    </td>
-                    <td>{{ intake.get_source_display }}</td>
-                    <td><span class="pill info">{{ intake.get_status_display }}</span></td>
-                    <td>
-                        <a class="button secondary button-sm" href="/alunos/novo/?intake={{ intake.id }}#student-form-essential" data-action="open-intake-registration">Abrir cadastro</a>
-                    </td>
-                </tr>
+                {% include "operations/includes/reception_intake_row.html" with intake=intake %}
                 {% empty %}
                 <tr><td colspan="4" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Fila de entrada" title="Nenhuma chegada aguardando conversao" copy="O balcao nao tem novo contato pendente neste recorte." badge="Fluxo limpo" badge_class="accent" %}</td></tr>
                 {% endfor %}

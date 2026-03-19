@@ -1,4 +1,4 @@
-﻿"""
+"""
 ARQUIVO: contexto global de navegacao por papel.
 
 POR QUE ELE EXISTE:
@@ -25,6 +25,7 @@ from django.conf import settings
 from access.admin import admin_changelist_url, admin_index_url, user_can_access_admin
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
 from access.shell_actions import build_default_shell_action_buttons, get_shell_counts, resolve_shell_scope
+from shared_support.static_assets import resolve_runtime_css_paths
 
 
 _ASSET_VERSION_CACHE = {
@@ -229,10 +230,11 @@ def role_navigation(request):
         'current_role': role,
         'sidebar_navigation': sidebar_navigation,
         'global_search_action': '/alunos/',
+        'shell_core_stylesheets': resolve_runtime_css_paths(['css/design-system.css']),
         'static_asset_version': _build_static_asset_version(),
         'topbar_alert_links': _build_topbar_alert_links(role_slug),
         'topbar_quick_links': [
-            {'label': '+ Novo aluno', 'href': '/alunos/novo/#student-form-essential', 'kind': 'primary', 'action': 'open-topbar-student-quick-create'},
+            {'label': '+ Aluno', 'href': '/alunos/novo/#student-form-essential', 'kind': 'secondary', 'action': 'open-topbar-student-quick-create'},
             {'label': '+ Entrada', 'href': '/entradas/', 'kind': 'secondary', 'action': 'open-topbar-intake-center'},
         ],
         'shell_page_context': _build_shell_page_context(request.path, role, sidebar_navigation, shell_counts),

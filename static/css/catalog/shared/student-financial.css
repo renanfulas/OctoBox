@@ -1,0 +1,183 @@
+/*
+ARQUIVO: overview financeiro compartilhado da ficha de aluno.
+
+POR QUE ELE EXISTE:
+- concentra a superfície financeira usada na ficha do aluno.
+- isola cards, grids e ações do overview sem misturar com utilitários do catálogo.
+*/
+
+body[data-theme="dark"] .student-financial-overview-card .student-financial-metric-card,
+body[data-theme="dark"] .student-financial-overview-card .student-financial-plan-card,
+body[data-theme="dark"] .student-financial-overview-card .student-financial-history-table-card,
+body[data-theme="dark"] .student-financial-action-card,
+body[data-theme="dark"] .student-financial-history-card {
+    background: var(--surface);
+}
+
+.student-financial-overview-card {
+    display: grid;
+    gap: 14px;
+}
+
+.student-financial-overview-summary {
+    max-width: 64ch;
+}
+
+.student-financial-overview-primary {
+    display: grid;
+    gap: 12px;
+    padding: 2px 2px 0;
+}
+
+.student-financial-overview-action-grid {
+    grid-template-columns: minmax(0, 1.12fr) minmax(280px, 0.88fr);
+    gap: 12px;
+    align-items: start;
+}
+
+.student-financial-overview-action-slot,
+.student-financial-overview-history-slot {
+    min-width: 0;
+}
+
+.student-financial-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.student-financial-metric-card {
+    min-height: 124px;
+    padding: 14px 16px;
+}
+
+.student-financial-status-grid {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: 12px;
+}
+
+.student-financial-plan-card,
+.student-financial-history-table-card {
+    min-height: 100%;
+}
+
+.student-financial-overview-card .student-financial-metric-card,
+.student-financial-overview-card .student-financial-plan-card,
+.student-financial-overview-card .student-financial-history-table-card,
+.student-financial-action-card,
+.student-financial-history-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--line);
+}
+
+.student-financial-overview-card .student-financial-metric-card::before,
+.student-financial-overview-card .student-financial-plan-card::before,
+.student-financial-overview-card .student-financial-history-table-card::before,
+.student-financial-action-card::before,
+.student-financial-history-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 3px;
+    background: var(--line-strong);
+}
+
+.student-financial-overview-card .student-financial-metric-card,
+.student-financial-overview-card .student-financial-plan-card,
+.student-financial-overview-card .student-financial-history-table-card,
+.student-financial-action-card-primary {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.99), rgba(246, 249, 252, 0.98));
+    box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
+}
+
+.student-financial-action-card-secondary,
+.student-financial-history-card {
+    background: color-mix(in srgb, var(--surface) 95%, white);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+}
+
+.student-financial-overview-card .student-financial-metric-card::before,
+.student-financial-overview-card .student-financial-plan-card::before {
+    background: var(--brand);
+}
+
+.student-financial-overview-card .student-financial-history-table-card::before,
+.student-financial-action-card-primary::before {
+    background: var(--warning);
+}
+
+.student-financial-action-card-secondary::before,
+.student-financial-history-card::before {
+    background: var(--line-strong);
+}
+
+.student-financial-action-card .eyebrow,
+.student-financial-history-card .eyebrow {
+    margin-bottom: 2px;
+}
+
+.student-financial-history-table-wrap {
+    margin-top: 8px;
+    padding: 6px 6px 4px;
+    border-radius: 18px;
+}
+
+.student-financial-history-table-card th,
+.student-financial-history-table-card td {
+    padding: 9px 7px;
+}
+
+.student-financial-history-table-card th {
+    font-size: 0.72rem;
+}
+
+.student-financial-history-table-card td {
+    vertical-align: top;
+}
+
+.student-payment-management-card {
+    display: grid;
+    gap: 10px;
+}
+
+.student-payment-management-form {
+    gap: 12px;
+}
+
+.student-payment-management-form textarea {
+    min-height: 80px;
+}
+
+.student-payment-management-actions {
+    display: grid;
+    gap: 6px;
+}
+
+.student-payment-management-actions-primary,
+.student-payment-management-actions-secondary {
+    margin-top: 0;
+}
+
+.student-payment-management-actions-primary,
+.student-payment-management-actions-secondary {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.student-payment-management-actions-secondary {
+    padding-top: 6px;
+    border-top: 1px solid rgba(112, 96, 81, 0.12);
+}
+
+.student-payment-management-actions-primary .button {
+    min-height: 34px;
+    padding: 7px 12px;
+}
+
+.student-payment-management-actions-secondary .button {
+    min-height: 33px;
+    padding: 6px 10px;
+    font-size: 0.84rem;
+}
