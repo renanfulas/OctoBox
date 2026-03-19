@@ -1,0 +1,30 @@
+/*
+ARQUIVO: manifesto público da superfície financeira do catálogo.
+
+POR QUE ELE EXISTE:
+- mantém um único entrypoint estável carregado em runtime.
+- preserva a ordem atual da cascade enquanto distribui a implementação em submódulos.
+
+ORDEM DA CASCADE:
+1. shell
+2. hero
+3. métricas
+4. cards
+5. boards
+6. página de plano
+7. movimentos
+8. dark mode
+9. responsividade
+10. assinatura visual
+*/
+
+@import url("./finance/_shell.css");
+@import url("./finance/_hero.css");
+@import url("./finance/_metrics.css");
+@import url("./finance/_cards.css");
+@import url("./finance/_boards.css");
+@import url("./finance/_plan-page.css");
+@import url("./finance/_movements.css");
+@import url("./finance/_dark.css");
+@import url("./finance/_responsive.css");
+@import url("./finance/_signature.css");

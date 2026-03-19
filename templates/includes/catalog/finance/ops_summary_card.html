@@ -1,0 +1,8 @@
+<article class="table-card finance-glass-panel finance-support-card finance-support-rail-card finance-ops-summary-card">
+    {% include "includes/ui/operation_card_head.html" with eyebrow="Regua operacional em numeros" title="Acao imediata" pill_label=page.data.operational_queue|length|add:": caso(s)" pill_class="accent" %}
+    <div class="finance-ops-grid">
+        {% for label, value in page.data.operational_metrics.items %}
+        {% include "includes/catalog/finance/ops_metric_card.html" with label=label value=value %}
+        {% endfor %}
+    </div>
+</article>

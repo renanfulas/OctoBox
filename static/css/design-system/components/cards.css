@@ -476,12 +476,14 @@ body[data-theme="dark"] .fdw-focus-card.is-primary {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08), var(--shadow-soft);
 }
 
-/* --- Front Display Wall facade cards pass --- */
+/* --- Front Display Wall facade cards pass (Plates Concept) --- */
 .card,
 .table-card {
-    border-color: var(--fdw-line);
-    background: var(--fdw-panel);
-    box-shadow: var(--fdw-shadow);
+    border-radius: 24px;
+    border-color: color-mix(in srgb, var(--fdw-line) 40%, transparent);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(251, 253, 255, 0.3)), var(--fdw-panel);
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.03), 0 4px 12px rgba(15, 23, 42, 0.01), inset 1px 1px 0 rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
 }
 
 .card::before,
@@ -560,5 +562,27 @@ body[data-theme="dark"] .table-card::after {
 .fdw-focus-card.is-primary {
     background: linear-gradient(160deg, rgba(255, 248, 242, 0.99), rgba(244, 248, 255, 0.99));
     border-color: rgba(212, 102, 44, 0.14);
+}
+
+/* --- Contextual Semantic Lines --- */
+.dashboard-glance-card.is-emergency::before,
+.card.is-emergency::before,
+.table-card.is-emergency::before {
+    background: var(--danger);
+    opacity: 0.9;
+}
+
+.dashboard-glance-card.is-warning::before,
+.card.is-warning::before,
+.table-card.is-warning::before {
+    background: var(--warning);
+    opacity: 0.9;
+}
+
+.dashboard-glance-card.is-success::before,
+.card.is-success::before,
+.table-card.is-success::before {
+    background: var(--success);
+    opacity: 0.9;
 }
 

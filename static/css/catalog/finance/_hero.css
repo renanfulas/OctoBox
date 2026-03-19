@@ -71,11 +71,6 @@ POR QUE ELE EXISTE:
 
 .finance-shell .operation-hero-main > div:first-child {
     gap: 8px;
-    max-width: 560px;
-}
-
-.finance-shell .operation-hero-copy {
-    max-width: 40ch;
 }
 
 .finance-shell .operation-hero .actions {
@@ -107,7 +102,6 @@ body[data-theme="dark"] .finance-hero-panel.operation-hero-panel {
 
 .finance-shell .operation-mini-grid {
     gap: 8px;
-    margin-top: 10px;
 }
 
 .finance-shell .operation-mini-stat {

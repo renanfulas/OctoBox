@@ -1,0 +1,72 @@
+/*
+ARQUIVO: cena base e hero da recepção.
+*/
+
+.reception-scene,
+.reception-preview-scene {
+    --operation-hero-padding: 18px 20px;
+    --operation-hero-main-gap: 10px;
+    --operation-hero-stack-gap: 6px;
+    --operation-hero-stack-max-width: 560px;
+    --operation-hero-copy-max-width: 40ch;
+    --operation-hero-actions-gap: 6px;
+    --operation-hero-actions-max-width: 540px;
+    --operation-hero-button-min-height: 34px;
+    --operation-hero-button-padding: 7px 12px;
+    --operation-hero-side-width: min(100%, 304px);
+    --operation-hero-panel-padding: 12px 14px;
+    --operation-mini-grid-gap: 6px;
+    --operation-mini-grid-margin-top: 10px;
+    --operation-mini-stat-padding: 7px 8px;
+    gap: calc(var(--section-gap) - 2px);
+}
+
+.reception-scene .operation-metric-grid,
+.reception-preview-scene .operation-metric-grid {
+    gap: 14px;
+}
+
+.reception-scene .operation-kpi-card,
+.reception-preview-scene .operation-kpi-card {
+    min-height: 150px;
+    padding: 16px 18px;
+}
+
+.reception-scene .operation-kpi-card .card-copy,
+.reception-preview-scene .operation-kpi-card .card-copy {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.reception-hero,
+.reception-preview-hero {
+    background: var(--surface);
+}
+
+.reception-hero .operation-hero-panel,
+.reception-preview-hero .operation-hero-panel {
+    background: var(--bg);
+}
+
+.reception-sidecard,
+.reception-preview-sidecard {
+    display: grid;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.reception-main-grid {
+    gap: 16px;
+}
+
+.reception-support-grid {
+    grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+    gap: 16px;
+}
+
+.reception-support-grid > * {
+    min-width: 0;
+}

@@ -1,0 +1,118 @@
+/*
+ARQUIVO: KPIs compartilhados das superfícies operacionais.
+*/
+
+.operation-kpi-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 174px;
+}
+
+.operation-kpi-card::after {
+    display: none;
+}
+
+.operation-kpi-card.owner-amber {
+    background: var(--surface);
+    border-color: rgba(234, 88, 12, 0.16);
+}
+
+.operation-kpi-card.owner-blue {
+    background: var(--surface);
+    border-color: rgba(37, 99, 235, 0.16);
+}
+
+.operation-kpi-card.owner-green {
+    background: var(--surface);
+    border-color: rgba(16, 185, 129, 0.16);
+}
+
+.operation-kpi-card.owner-slate {
+    background: var(--surface);
+    border-color: var(--line-strong);
+}
+
+.operation-kpi-card.manager-coral {
+    background: var(--surface);
+    border-color: rgba(239, 68, 68, 0.16);
+}
+
+.operation-kpi-card.manager-sky {
+    background: var(--surface);
+    border-color: rgba(37, 99, 235, 0.16);
+}
+
+.operation-kpi-card.manager-gold {
+    background: var(--surface);
+    border-color: rgba(234, 88, 12, 0.16);
+}
+
+.operation-kpi-card.manager-steel {
+    background: var(--surface);
+    border-color: var(--line-strong);
+}
+
+.operation-kpi-card.coach-mint {
+    background: var(--surface);
+    border-color: rgba(16, 185, 129, 0.16);
+}
+
+.operation-kpi-card.coach-indigo {
+    background: var(--surface);
+    border-color: rgba(37, 99, 235, 0.16);
+}
+
+.operation-kpi-card.coach-orange {
+    background: var(--surface);
+    border-color: rgba(234, 88, 12, 0.16);
+}
+
+.operation-kpi-card.dev-steel {
+    background: var(--surface);
+    border-color: var(--line-strong);
+}
+
+.operation-kpi-card.dev-cyan {
+    background: var(--surface);
+    border-color: rgba(37, 99, 235, 0.16);
+}
+
+.operation-kpi-card.dev-emerald {
+    background: var(--surface);
+    border-color: rgba(16, 185, 129, 0.16);
+}
+
+body[data-theme="dark"] .operation-kpi-card.owner-amber,
+body[data-theme="dark"] .operation-kpi-card.coach-orange {
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .operation-kpi-card.owner-blue,
+body[data-theme="dark"] .operation-kpi-card.manager-sky,
+body[data-theme="dark"] .operation-kpi-card.dev-cyan {
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .operation-kpi-card.owner-green,
+body[data-theme="dark"] .operation-kpi-card.coach-mint,
+body[data-theme="dark"] .operation-kpi-card.dev-emerald {
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .operation-kpi-card.owner-slate,
+body[data-theme="dark"] .operation-kpi-card.manager-steel,
+body[data-theme="dark"] .operation-kpi-card.dev-steel {
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .operation-kpi-card.manager-coral {
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .operation-kpi-card.manager-gold {
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .operation-kpi-card.coach-indigo {
+    background: var(--surface);
+}

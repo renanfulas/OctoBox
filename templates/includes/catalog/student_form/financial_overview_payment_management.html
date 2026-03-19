@@ -2,7 +2,7 @@
 ARQUIVO: gestao da cobranca atual do aluno.
 -->
 {% if page.data.payment_management_form %}
-<article class="table-card section-gap-top-sm student-payment-management-card" id="student-payment-management">
+<article class="table-card section-gap-top-sm student-payment-management-card student-financial-action-card student-financial-action-card-primary" id="student-payment-management">
     <p class="eyebrow">Gestao da cobranca atual</p>
     <form method="post" action="/alunos/{{ page.data.student_object.id }}/financeiro/acao/" class="form-stack student-payment-management-form">
         {% csrf_token %}
@@ -30,17 +30,8 @@ ARQUIVO: gestao da cobranca atual do aluno.
             {{ page.data.payment_management_form.notes }}
         </label>
         <div class="student-payment-management-actions">
-            <div class="actions actions-tight student-payment-management-actions-primary">
-                <button class="button" type="submit" name="action" value="update-payment">Salvar cobranca</button>
-                <button class="button secondary" type="submit" name="action" value="mark-paid">Confirmar pagamento</button>
-            </div>
-            {% if page.capabilities.can_manage_student_payments_full %}
-            <div class="actions actions-tight student-payment-management-actions-secondary">
-                <button class="button secondary" type="submit" name="action" value="refund-payment">Estornar</button>
-                <button class="button secondary" type="submit" name="action" value="cancel-payment">Cancelar</button>
-                <button class="button secondary" type="submit" name="action" value="regenerate-payment">Regenerar</button>
-            </div>
-            {% endif %}
+            {% include "includes/catalog/student_form/payment_management_primary_actions.html" %}
+            {% include "includes/catalog/student_form/payment_management_secondary_actions.html" with page=page %}
         </div>
     </form>
 </article>

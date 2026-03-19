@@ -1,0 +1,16 @@
+/*
+ARQUIVO: manifesto interno dos refinamentos operacionais.
+
+POR QUE ELE EXISTE:
+- distribui refinamentos tardios e responsividade em módulos menores.
+- evita que refinements.css volte a virar um monólito transversal.
+
+PONTOS CRITICOS:
+- a ordem dos imports preserva os overrides finais.
+- novos ajustes devem entrar no submódulo correspondente.
+*/
+
+@import url("./refinements/owner-simple.css");
+@import url("./refinements/responsive.css");
+@import url("./refinements/hero.css");
+@import url("./refinements/display-wall.css");

@@ -1,0 +1,59 @@
+/*
+ARQUIVO: cards e formulários de sessão operacionais compartilhados.
+*/
+
+.operation-session-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.operation-session-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 26px 26px 0;
+}
+
+.operation-session-title {
+    margin: 0;
+    font-size: 1.22rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+}
+
+.operation-session-meta {
+    margin: 8px 0 0;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.operation-session-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.operation-session-body {
+    padding: 20px 26px 26px;
+}
+
+.operation-inline-actions {
+    margin-top: 0;
+}
+
+.operation-note-form select,
+.operation-note-form textarea {
+    width: 100%;
+}
+
+.operation-note-form textarea {
+    margin-top: 8px;
+    min-height: 78px;
+    resize: vertical;
+}
+
+.operation-note-form .actions {
+    margin-top: 8px;
+}

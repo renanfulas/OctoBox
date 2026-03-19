@@ -12,6 +12,7 @@ O QUE ESTE ARQUIVO FAZ:
 from django.test import SimpleTestCase
 
 from shared_support.page_payloads import PAGE_HERO_CONTENT_RULES, attach_page_payload, build_page_assets, build_page_hero, build_page_payload
+from shared_support.static_assets import resolve_runtime_css_paths
 
 
 class PageHeroContractTests(SimpleTestCase):
@@ -77,4 +78,16 @@ class PagePayloadBridgeContractTests(SimpleTestCase):
             result['current_page_assets']['js'],
             ['js/shared/base.js', 'js/pages/student-form.js'],
         )
+        self.assertEqual(
+            result['current_page_assets']['css_runtime'],
+            resolve_runtime_css_paths(['css/shared/base.css', 'css/catalog/students.css']),
+        )
         self.assertEqual(result['page_assets'], result['current_page_assets'])
+
+    def test_resolve_runtime_css_paths_expands_manifest_imports(self):
+        resolved = resolve_runtime_css_paths(['css/design-system.css'])
+
+        self.assertIn('css/design-system/tokens.css', resolved)
+        self.assertIn('css/design-system/compass.css', resolved)
+        self.assertIn('css/design-system/components/hero.css', resolved)
+        self.assertNotIn('css/design-system.css', resolved)

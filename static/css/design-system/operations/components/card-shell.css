@@ -1,0 +1,46 @@
+/*
+ARQUIVO: cabeçalhos de card e grids base compartilhados.
+*/
+
+.operation-card-head,
+.card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+
+.operation-card-title,
+.card-title {
+    margin: 0;
+    font-size: 1.04rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.operation-card-copy,
+.card-copy {
+    margin: 4px 0 0;
+    color: var(--muted);
+    line-height: 1.5;
+    max-width: 58ch;
+    font-size: 0.9rem;
+}
+
+.operation-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.operation-metric-grid {
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.operation-grid-wide {
+    grid-template-columns: 1fr;
+}
+
+.operation-span-full {
+    grid-column: 1 / -1;
+}

@@ -33,14 +33,6 @@ PONTOS CRITICOS:
     align-self: end;
 }
 
-.finance-command-card:nth-child(2) {
-    background: var(--surface);
-}
-
-.finance-command-card:nth-child(3) {
-    background: var(--surface);
-}
-
 .finance-focus-card {
     background: var(--surface);
 }
@@ -179,6 +171,7 @@ PONTOS CRITICOS:
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 4;
+    line-clamp: 4;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -383,6 +376,7 @@ PONTOS CRITICOS:
 .finance-plan-description-compact {
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     line-height: 1.5;

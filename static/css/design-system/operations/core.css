@@ -1,0 +1,180 @@
+/*
+ARQUIVO: base compartilhada das superfícies operacionais.
+
+POR QUE ELE EXISTE:
+- concentra os contratos mínimos de shell e hero operacionais.
+- preserva o núcleo visual reaproveitado por operations, onboarding, access e partes do dashboard.
+
+PONTOS CRITICOS:
+- regras de hero e clamps de duas linhas vivem aqui porque sustentam o contrato visual validado por teste.
+- KPIs, card-heads e grids base compartilhados vivem em modules irmãos deste diretório.
+*/
+
+.operation-shell {
+    display: grid;
+    gap: var(--section-gap);
+}
+
+.operation-shell .panel-grid,
+.operation-shell .quick-grid,
+.operation-shell .layout-grid {
+    align-items: stretch;
+}
+
+.operation-hero {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-soft);
+}
+
+body[data-theme="dark"] .operation-hero {
+    background: var(--surface);
+    border-color: var(--line);
+}
+
+.operation-hero-main {
+    display: grid;
+    gap: 14px;
+    flex: 1 1 auto;
+}
+
+.operation-hero-main > div:first-child {
+    display: grid;
+    gap: 8px;
+    max-width: 680px;
+}
+
+.operation-hero-copy {
+    max-width: 52ch;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+}
+
+.operation-hero-main h2 {
+    max-width: 18ch;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+}
+
+.operation-hero-main h1 {
+    max-width: 18ch;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+}
+
+.operation-hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.operation-hero-side {
+    width: min(100%, 320px);
+    display: grid;
+    align-content: start;
+}
+
+.operation-hero-panel {
+    position: relative;
+    padding: 14px 16px;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--line);
+    background: var(--bg);
+    overflow: hidden;
+}
+
+.operation-hero-panel .operation-card-copy {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+}
+
+@media (max-width: 1180px) {
+    .operation-hero-main > div:first-child {
+        max-width: 760px;
+    }
+
+    .operation-hero-main h1,
+    .operation-hero-main h2 {
+        max-width: 20ch;
+        font-size: clamp(1.9rem, 3vw, 2.3rem);
+    }
+
+    .operation-hero-side {
+        width: min(100%, 292px);
+    }
+}
+
+.operation-hero-panel::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--brand);
+}
+
+body[data-theme="dark"] .operation-hero-panel::after,
+body[data-theme="dark"] .operation-hero-main::after,
+body[data-theme="dark"] .operation-hero::after {
+    display: none;
+}
+
+.operation-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.operation-mini-stat {
+    padding: 8px 9px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+}
+
+.operation-mini-label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.operation-mini-value {
+    display: block;
+    margin-top: 5px;
+    font-size: 1.18rem;
+    line-height: 1.05;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+}
+
+.operation-hero .actions {
+    margin-top: 0;
+    gap: 8px;
+    max-width: 580px;
+    align-items: flex-start;
+}
+
+.operation-hero .actions .button {
+    min-height: 36px;
+    padding: 8px 13px;
+    border-radius: 8px;
+    font-size: 0.92rem;
+}
+

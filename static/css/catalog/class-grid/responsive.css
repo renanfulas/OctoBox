@@ -1,0 +1,260 @@
+/*
+ARQUIVO: responsividade e movimento reduzido da grade.
+
+POR QUE ELE EXISTE:
+- concentra colapsos de layout e ajustes moveis da grade de aulas.
+- fecha a cascade da tela com media queries e contratos de motion.
+*/
+
+@media (max-width: 1240px) {
+    .weekly-calendar-section {
+        overflow-x: auto;
+        padding-bottom: 6px;
+        scrollbar-gutter: stable both-edges;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+
+    .weekly-calendar-grid {
+        min-width: 1540px;
+        grid-template-columns: repeat(7, minmax(200px, 1fr));
+    }
+}
+
+@media (max-width: 960px) {
+    .class-grid-insight-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .class-grid-panel-head {
+        flex-direction: column;
+    }
+
+    .class-grid-head-badges {
+        justify-content: start;
+    }
+
+    .class-planner-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .monthly-calendar-grid,
+    .weekly-calendar-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .class-grid-workspace-head {
+        align-items: start;
+    }
+
+    .class-grid-workspace-head .actions {
+        width: 100%;
+    }
+
+    .class-grid-workspace-head .button,
+    .class-grid-workspace-head .pill {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .class-grid-grab-handle {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .weekly-day-card,
+    .monthly-day-card {
+        min-height: unset;
+    }
+
+    .class-monthly-modal {
+        width: 98vw;
+        height: 94vh;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .class-grid-workspace-panel,
+    .monthly-day-card,
+    .weekly-day-card,
+    .weekly-session-chip,
+    .class-grid-grab-handle {
+        transition: none;
+    }
+
+    .class-monthly-modal::backdrop {
+        backdrop-filter: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .class-grid-mobile-kicker {
+        display: block;
+    }
+
+    .class-day-header {
+        flex-direction: column;
+    }
+
+    .class-grid-insight-card {
+        padding: 18px;
+    }
+
+    .class-grid-workspace-stack {
+        gap: 12px;
+    }
+
+    .class-grid-workspace-panel {
+        border-radius: 24px;
+    }
+
+    .class-grid-panel-head {
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    .class-grid-panel-title {
+        gap: 12px;
+    }
+
+    .class-grid-head-badges {
+        width: 100%;
+        gap: 10px;
+    }
+
+    .class-grid-head-badges .pill,
+    .class-grid-head-badges .button,
+    .class-grid-head-badges .class-grid-grab-handle {
+        flex: 1 1 100%;
+        justify-content: center;
+    }
+
+    .weekly-calendar-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .weekly-calendar-section + .weekly-calendar-section {
+        margin-top: 16px;
+    }
+
+    .weekly-calendar-header {
+        margin-bottom: 10px;
+        padding: 0;
+    }
+
+    .weekly-calendar-header .pill {
+        display: none;
+    }
+
+    .weekly-day-card {
+        padding: 14px;
+        gap: 12px;
+        border-radius: 20px;
+    }
+
+    .weekly-day-head {
+        align-items: center;
+    }
+
+    .weekly-day-head strong {
+        font-size: 1.05rem;
+    }
+
+    .weekly-day-body {
+        gap: 8px;
+    }
+
+    .weekly-session-chip {
+        padding: 10px 12px;
+        border-radius: 14px;
+    }
+
+    .weekly-session-top {
+        align-items: start;
+    }
+
+    .weekly-session-title {
+        margin-top: 6px;
+        font-size: 0.98rem;
+    }
+
+    .class-chip-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .class-chip-actions .button,
+    .class-chip-actions form,
+    .class-chip-actions form .button {
+        width: 100%;
+    }
+
+    .monthly-preview-button {
+        text-align: inherit;
+    }
+
+    .monthly-calendar-head {
+        display: none;
+    }
+
+    .monthly-calendar-grid,
+    .monthly-calendar-grid-preview {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin-top: 0;
+    }
+
+    .monthly-calendar-grid + .monthly-calendar-grid,
+    .monthly-calendar-grid-preview + .monthly-calendar-grid-preview {
+        margin-top: 8px;
+    }
+
+    .monthly-day-card {
+        min-height: 0;
+        padding: 12px 14px;
+        gap: 8px;
+        border-radius: 16px;
+    }
+
+    .monthly-day-card.is-preview.is-empty:not(.is-today) {
+        display: none;
+    }
+
+    .monthly-day-head {
+        align-items: center;
+    }
+
+    .monthly-day-head > div {
+        display: grid;
+        gap: 2px;
+    }
+
+    .monthly-day-body {
+        gap: 5px;
+    }
+
+    .monthly-session-chip,
+    .monthly-session-chip-preview {
+        padding: 8px 10px;
+        border-radius: 12px;
+    }
+
+    .class-grid-row td {
+        display: block;
+        padding: 10px 0;
+    }
+
+    .class-grid-row td:first-child {
+        padding-top: 0;
+    }
+
+    .class-grid-row td:last-child {
+        padding-bottom: 0;
+    }
+
+    .class-occupancy-stack {
+        min-width: 0;
+    }
+}

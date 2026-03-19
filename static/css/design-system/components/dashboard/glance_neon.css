@@ -1,0 +1,94 @@
+/*
+ARQUIVO: estados de alerta e neon dos glance cards.
+
+POR QUE ELE EXISTE:
+- Centraliza a lógica de animação pulsante severa (emergência, risco) e emissão de luz neon.
+- Protege o arquivo base de ficar poluído com keyframes e regras massivas de box-shadow.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Define keyframes base e dark-mode de pulso de box-shadow neon.
+2. Aplica as regras ativadoras na interface (`.is-actionable`).
+3. Modifica as cores estruturais do card de acordo com a variante do alerta.
+4. Transforma os indicadores para harmonizar com a variante Neon e modo noturno.
+
+PONTOS CRITICOS:
+- O arquivo DEVE vir DEPOIS de `glance_cards.css` na cadeia de `@import` para sobrescrever as marcações base.
+*/
+
+/* ─── Animação base de pulso ──────────────────────────────────── */
+@keyframes neon-pulse-glance {
+    0% {
+        box-shadow: 0 0 0 transparent, inset 0 0 0 transparent;
+    }
+    100% {
+        box-shadow:
+            0 0 16px rgba(var(--neon-default-rgb), 0.25),
+            inset 0 0 8px rgba(var(--neon-default-rgb), 0.12);
+    }
+}
+
+@keyframes neon-pulse-glance-dark {
+    0% {
+        box-shadow: 0 0 0 transparent, inset 0 0 0 transparent;
+    }
+    100% {
+        box-shadow:
+            0 0 24px rgba(var(--neon-default-rgb), 0.45),
+            inset 0 0 12px rgba(var(--neon-default-rgb), 0.25);
+    }
+}
+
+/* ─── Classe base actionable ──────────────────────────────────── */
+.dashboard-glance-card.is-actionable {
+    animation: neon-pulse-glance 2.5s infinite alternate ease-in-out;
+}
+
+body[data-theme="dark"] .dashboard-glance-card.is-actionable {
+    animation-name: neon-pulse-glance-dark;
+}
+
+/* ─── Variantes de cor por severidade ─────────────────────────── */
+
+/* Emergência — Vermelho */
+.dashboard-glance-card.is-actionable.is-emergency {
+    --neon-default-rgb: 239, 68, 68;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.dashboard-glance-card.is-actionable.is-emergency::before {
+    background: linear-gradient(90deg, #f87171, #ef4444);
+}
+
+/* Urgente — Âmbar */
+.dashboard-glance-card.is-actionable.is-warning {
+    --neon-default-rgb: 245, 158, 11;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.dashboard-glance-card.is-actionable.is-warning::before {
+    background: linear-gradient(90deg, #fbbf24, #f59e0b);
+}
+
+/* Risco — Azul */
+.dashboard-glance-card.is-actionable.is-risk {
+    --neon-default-rgb: 59, 130, 246;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.dashboard-glance-card.is-actionable.is-risk::before {
+    background: linear-gradient(90deg, #60a5fa, #3b82f6);
+}
+
+/* ─── Indicator colorido no estado actionable ─────────────────── */
+.dashboard-glance-card.is-actionable .dashboard-glance-indicator {
+    color: rgb(var(--neon-default-rgb));
+    background: rgba(var(--neon-default-rgb), 0.1);
+    border-color: rgba(var(--neon-default-rgb), 0.2);
+}
+
+body[data-theme="dark"] .dashboard-glance-card.is-actionable .dashboard-glance-indicator {
+    color: inherit; /* Dark mode preserva legibilidade */
+    background: rgba(var(--neon-default-rgb), 0.25);
+    border-color: rgba(var(--neon-default-rgb), 0.4);
+    box-shadow: 0 0 8px rgba(var(--neon-default-rgb), 0.3);
+}

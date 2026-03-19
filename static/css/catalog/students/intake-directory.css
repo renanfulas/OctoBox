@@ -1,0 +1,80 @@
+/*
+ARQUIVO: intake e diretório da base de alunos.
+
+POR QUE ELE EXISTE:
+- concentra os painéis de intake, diretório e suas densidades locais.
+- mantém a leitura da base e da fila separada do hero e dos filtros.
+*/
+
+.student-queue-panel,
+.student-data-panel {
+    min-height: 100%;
+}
+
+.student-queue-panel {
+    background: var(--surface);
+}
+
+.student-queue-panel .intake-grid {
+    gap: 8px;
+}
+
+.student-queue-panel .intake-card {
+    padding: 12px 14px;
+    gap: 10px;
+}
+
+.student-intake-card-body .card-content {
+    gap: 6px;
+}
+
+.student-intake-card-body {
+    gap: 10px;
+}
+
+.student-intake-card-footer {
+    padding-top: 0;
+}
+
+.student-queue-panel .intake-card .actions .button {
+    min-height: 34px;
+    padding: 7px 11px;
+}
+
+.student-data-panel {
+    overflow: hidden;
+}
+
+.student-table-scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-gutter: stable both-edges;
+    -webkit-overflow-scrolling: touch;
+}
+
+.student-table-scroll table {
+    min-width: 760px;
+}
+
+.student-data-panel .operation-card-head {
+    margin-bottom: 12px;
+}
+
+.student-data-panel th,
+.student-data-panel td {
+    padding: 10px 9px;
+}
+
+.student-data-panel th {
+    font-size: 0.72rem;
+}
+
+.student-data-panel td .actions {
+    gap: 6px;
+}
+
+.student-data-panel td .button {
+    min-height: 32px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+}

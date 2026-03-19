@@ -1,0 +1,17 @@
+/*
+ARQUIVO: manifesto interno da superfície owner simple.
+
+POR QUE ELE EXISTE:
+- reduz a superfície active do owner em submódulos por responsabilidade.
+- mantém simple.css como ponto único de import dentro de owner.css.
+
+PONTOS CRITICOS:
+- a ordem preserva a cascade da superfície simple: shell -> passos/painéis -> métricas -> dark.
+- refinamentos tardios continuam em operations/refinements/owner-simple.css.
+*/
+
+@import url("./simple/scene.css");
+@import url("./simple/next-steps.css");
+@import url("./simple/panels.css");
+@import url("./simple/metrics.css");
+@import url("./simple/dark.css");

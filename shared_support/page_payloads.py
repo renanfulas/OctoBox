@@ -6,6 +6,8 @@ POR QUE ELE EXISTE:
 - reduz duplicacao de bridge legado entre payload namespaced e templates ainda em migracao.
 """
 
+from shared_support.static_assets import resolve_runtime_css_paths
+
 
 def _merge_asset_lists(existing, incoming):
     merged = list(existing or [])
@@ -84,6 +86,7 @@ def attach_page_payload(context, *, payload_key, payload, include_sections=None)
         'css': _merge_asset_lists(current_page_assets.get('css'), payload_assets.get('css')),
         'js': _merge_asset_lists(current_page_assets.get('js'), payload_assets.get('js')),
     }
+    current_page_assets['css_runtime'] = resolve_runtime_css_paths(current_page_assets.get('css'))
     context['current_page_assets'] = current_page_assets
     context['page_assets'] = current_page_assets
 

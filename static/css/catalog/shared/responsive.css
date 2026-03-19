@@ -1,0 +1,66 @@
+/*
+ARQUIVO: responsividade compartilhada do catálogo.
+
+POR QUE ELE EXISTE:
+- concentra os colapsos de layout e ajustes móveis do catálogo.
+- evita espalhar media queries transversais pelos módulos base.
+*/
+
+@media (max-width: 960px) {
+    .student-compact-layout,
+    .intake-card,
+    .student-financial-overview-action-grid,
+    .student-financial-metrics,
+    .student-financial-status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .student-payment-management-actions-primary,
+    .student-payment-management-actions-secondary {
+        flex-wrap: wrap;
+    }
+
+    .student-priority-badges {
+        justify-items: start;
+    }
+}
+
+@media (max-width: 720px) {
+    .row-between,
+    .row-between-sm,
+    .row-between-md {
+        flex-direction: column;
+    }
+
+    .student-section-head {
+        gap: 10px;
+    }
+
+    .student-form-main-card {
+        padding-top: 16px;
+        padding-bottom: 16px;
+    }
+
+    .student-form-step-disclosure,
+    .student-form-step-essential {
+        padding: 14px 14px;
+    }
+
+    .student-form-step-body {
+        gap: 10px;
+    }
+
+    .student-financial-metric-card {
+        min-height: 116px;
+    }
+
+    .student-financial-history-table-wrap {
+        padding: 6px 6px 4px;
+    }
+
+    .student-payment-management-actions-primary,
+    .student-payment-management-actions-secondary {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+}

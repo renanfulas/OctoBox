@@ -1,0 +1,18 @@
+<article class="table-card finance-plan-summary-card" id="plan-form-summary" data-panel="finance-plan-summary">
+    <p class="eyebrow">Leitura rápida do plano</p>
+    <h2 class="finance-plan-title">{{ page.data.plan.name }}</h2>
+    <p class="finance-plan-meta">Valor atual: {{ page.data.plan.price_display_full }}</p>
+    <p class="finance-plan-meta">Ciclo: {{ page.data.plan.billing_cycle_label }}</p>
+    <p class="finance-plan-meta finance-plan-meta-spaced">Aulas por semana: {{ page.data.plan.sessions_per_week }}</p>
+    <div class="note-panel note-panel-success-soft finance-plan-note">
+        {% if page.data.plan.description %}
+        <p class="meta-text no-margin">{{ page.data.plan.description }}</p>
+        {% else %}
+        <p class="meta-text no-margin">Este plano ainda não tem descrição comercial. Vale preencher para reduzir ambiguidade entre recepção, venda e cobrança.</p>
+        {% endif %}
+    </div>
+    <div class="actions finance-plan-actions-flat">
+        <a class="button secondary" href="{{ page.actions.secondary.finance_center }}">Ver portfolio</a>
+        <a class="button secondary" href="{{ page.actions.secondary.students }}">Ver alunos</a>
+    </div>
+</article>

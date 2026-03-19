@@ -1,0 +1,57 @@
+/*
+ARQUIVO: cards de foco, execução e empty state operacionais.
+*/
+
+.operation-empty-card {
+    background: var(--surface);
+}
+
+.operation-focus-card {
+    background: var(--surface);
+}
+
+.operation-execution-card {
+    background: var(--bg);
+}
+
+.operation-focus-list {
+    display: grid;
+    gap: 14px;
+}
+
+.operation-focus-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 0;
+    border-top: 1px solid rgba(136, 150, 176, 0.14);
+}
+
+.operation-focus-item:first-child {
+    border-top: 0;
+    padding-top: 4px;
+}
+
+.operation-focus-copy p:last-child {
+    margin: 8px 0 0;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 56ch;
+}
+
+.operation-focus-actions {
+    display: grid;
+    gap: 10px;
+    justify-items: end;
+}
+
+body[data-theme="dark"] .operation-empty-card,
+body[data-theme="dark"] .operation-focus-card,
+body[data-theme="dark"] .operation-execution-card {
+    background: var(--surface);
+}
+
+body[data-theme="dark"] .operation-focus-item {
+    border-top-color: rgba(176, 201, 232, 0.12);
+}

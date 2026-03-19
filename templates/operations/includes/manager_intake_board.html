@@ -1,12 +1,5 @@
-<article class="table-card operation-table-card manager-secondary-card" id="manager-intake-board">
-    <div class="operation-card-head">
-        <div>
-            <p class="eyebrow">Fila de entrada de alunos</p>
-            <h2 class="operation-card-title">Quem chegou e pede encaminhamento</h2>
-            <p class="operation-card-copy">Primeira linha destrava a fila.</p>
-        </div>
-        <span class="pill info">{{ page.data.pending_intakes|length }} item(ns)</span>
-    </div>
+<article class="table-card operation-table-card operation-span-full manager-priority-card" id="manager-intake-board">
+    {% include "includes/ui/operation_card_head.html" with eyebrow="Fila de entrada de alunos" title="Quem chegou e pede encaminhamento" copy="Primeira linha destrava a fila." pill_label=page.data.pending_intakes|length|add:" item(ns)" pill_class="info" %}
     <div class="operation-table-wrap">
         <table>
             <thead>
@@ -20,13 +13,7 @@
             </thead>
             <tbody>
                 {% for intake in page.data.pending_intakes %}
-                <tr>
-                    <td>{{ intake.full_name }}</td>
-                    <td>{{ intake.phone }}</td>
-                    <td>{{ intake.get_source_display }}</td>
-                    <td><span class="pill info">{{ intake.get_status_display }}</span></td>
-                    <td>{% if forloop.first %}<span class="pill warning">Comece aqui</span>{% else %}<span class="pill">Acompanhar</span>{% endif %}</td>
-                </tr>
+                {% include "operations/includes/manager_intake_row.html" with intake=intake is_priority=forloop.first %}
                 {% empty %}
                 <tr><td colspan="5" class="table-empty-cell">{% include "includes/ui/state_empty.html" with compact=True eyebrow="Fila de entrada" title="Nenhuma entrada pendente" copy="A triagem inicial nao tem novo contato aguardando encaminhamento agora." badge="Base limpa" badge_class="accent" %}</td></tr>
                 {% endfor %}

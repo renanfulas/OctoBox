@@ -1,0 +1,11 @@
+/*
+ARQUIVO: manifesto interno dos componentes de workspace operacional.
+
+POR QUE ELE EXISTE:
+- distribui estruturas compartilhadas de board em submódulos menores.
+- evita que workspace.css volte a misturar sessão, foco e tabela no mesmo bloco.
+*/
+
+@import url("./workspace/tables.css");
+@import url("./workspace/sessions.css");
+@import url("./workspace/focus.css");

@@ -1,12 +1,12 @@
 {% load dashboard_filters %}
-<article class="card{% if compact %} metric-card-compact{% endif %} {{ card.card_class }}{% if card.status_hint %} status-{{ card.status_hint }}{% endif %}" data-panel="metric-card" data-slot="metric-card"{% if card.data_action %} data-action="{{ card.data_action }}" data-no-pointer="true"{% endif %}>
+<article class="card{% if compact %} metric-card-compact{% endif %} {{ card.card_class }}{% if card.status_hint %} status-{{ card.status_hint }}{% endif %}{% if card.data_action %} has-action cursor-pointer{% endif %}" data-panel="metric-card" data-slot="metric-card"{% if card.data_action %} data-action="{{ card.data_action }}"{% endif %}>
     <div class="card-body card-body-metric">
         <div class="card-value-stack">
             <p class="eyebrow card-label">{{ card.eyebrow }}</p>
             {% if card.kicker %}
             <p class="card-kicker">{{ card.kicker }}</p>
             {% endif %}
-            <div class="card-value-row">
+            <div class="card-value-row{% if card.is_jumbo %} is-jumbo{% endif %}">
                 <p class="metric card-value">
                     {% if card.change %}
                         {% if card.change.is_small %}
@@ -41,6 +41,13 @@
                 </div>
                 {% endif %}
             </div>
+            {% if card.sparkline_data %}
+            <div class="dashboard-kpi-sparkline" aria-label="Representação visual do progresso semanal">
+                {% for point in card.sparkline_data %}
+                <div class="spark-bar{% if forloop.last %} is-today{% endif %}" style="height: {{ point.percent }}%;" title="{{ point.label }}"></div>
+                {% endfor %}
+            </div>
+            {% endif %}
             {% if card.submetric %}
             <p class="meta-text-sm card-meta">{{ card.submetric.label }}: {{ card.submetric.value }}</p>
             {% endif %}

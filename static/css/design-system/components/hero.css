@@ -17,6 +17,27 @@ PONTOS CRITICOS:
     --hero-ink: var(--ink);
     --hero-copy: var(--muted);
     --hero-eyebrow: color-mix(in srgb, var(--brand) 70%, var(--ink) 30%);
+    --hero-gap: 18px;
+    --hero-padding: clamp(18px, 1.8vw, 26px);
+    --hero-radius: var(--radius-shell);
+    --hero-before-inset: 0 auto 0 0;
+    --hero-before-width: 4px;
+    --hero-before-height: auto;
+    --hero-before-radius: 0;
+    --hero-before-opacity: 0.88;
+    --hero-before-background: var(--hero-rail);
+    --hero-after-inset: auto -8% -30% auto;
+    --hero-after-width: 220px;
+    --hero-after-height: 220px;
+    --hero-after-opacity: 1;
+    --hero-after-background: var(--hero-halo);
+    --hero-heading-size: clamp(1.68rem, 2.7vw, 2.45rem);
+    --hero-heading-line-height: 0.98;
+    --hero-heading-letter-spacing: -0.04em;
+    --hero-heading-max-width: none;
+    --hero-copy-size: inherit;
+    --hero-panel-backdrop-filter: none;
+    --hero-isolation: auto;
     --hero-side-width: min(100%, 320px);
     --hero-panel-surface: var(--bg);
     --hero-panel-border: var(--line);
@@ -32,16 +53,17 @@ PONTOS CRITICOS:
     --hero-pulse-border: color-mix(in srgb, var(--brand) 12%, transparent);
     display: flex;
     justify-content: space-between;
-    gap: 18px;
+    gap: var(--hero-gap);
     align-items: stretch;
     margin-bottom: 0;
-    padding: clamp(18px, 1.8vw, 26px);
-    border-radius: var(--radius-shell);
+    padding: var(--hero-padding);
+    border-radius: var(--hero-radius);
     background: var(--hero-surface);
     border: 1px solid var(--hero-border);
     box-shadow: var(--hero-shadow);
     position: relative;
     overflow: hidden;
+    isolation: var(--hero-isolation);
 }
 
 .hero > div:first-child,
@@ -53,27 +75,31 @@ PONTOS CRITICOS:
 .hero::after {
     content: "";
     position: absolute;
-    inset: auto -8% -30% auto;
-    width: 220px;
-    height: 220px;
-    background: var(--hero-halo);
+    inset: var(--hero-after-inset);
+    width: var(--hero-after-width);
+    height: var(--hero-after-height);
+    background: var(--hero-after-background);
+    opacity: var(--hero-after-opacity);
     pointer-events: none;
 }
 
 .hero::before {
     content: "";
     position: absolute;
-    inset: 0 auto 0 0;
-    width: 4px;
-    background: var(--hero-rail);
-    opacity: 0.88;
+    inset: var(--hero-before-inset);
+    width: var(--hero-before-width);
+    height: var(--hero-before-height);
+    border-radius: var(--hero-before-radius);
+    background: var(--hero-before-background);
+    opacity: var(--hero-before-opacity);
 }
 
 .hero :is(h1, h2) {
     margin: 0 0 4px;
-    font-size: clamp(1.68rem, 2.7vw, 2.45rem);
-    line-height: 0.98;
-    letter-spacing: -0.04em;
+    max-width: var(--hero-heading-max-width);
+    font-size: var(--hero-heading-size);
+    line-height: var(--hero-heading-line-height);
+    letter-spacing: var(--hero-heading-letter-spacing);
     color: var(--hero-ink);
 }
 
@@ -85,6 +111,7 @@ PONTOS CRITICOS:
 .hero p {
     margin: 0;
     max-width: 58ch;
+    font-size: var(--hero-copy-size);
     color: var(--hero-copy);
     line-height: 1.54;
 }
@@ -106,6 +133,7 @@ PONTOS CRITICOS:
     border: 1px solid var(--hero-panel-border);
     box-shadow: var(--hero-panel-shadow);
     color: var(--hero-panel-ink);
+    backdrop-filter: var(--hero-panel-backdrop-filter);
 }
 
 .hero .operation-hero-panel .operation-card-copy {
@@ -238,28 +266,13 @@ body[data-theme="dark"] .hero {
     --hero-badge-surface: linear-gradient(135deg, rgba(196, 91, 45, 0.04), rgba(29, 78, 216, 0.04));
     --hero-badge-border: rgba(80, 102, 128, 0.1);
     --hero-badge-ink: var(--ink-soft);
-}
-
-.hero {
-    isolation: isolate;
-}
-
-.hero::after {
-    width: 280px;
-    height: 280px;
-}
-
-.hero::before {
-    width: 5px;
-}
-
-.hero :is(h1, h2) {
-    letter-spacing: -0.06em;
-    max-width: 11ch;
-}
-
-.hero .operation-hero-panel {
-    backdrop-filter: blur(12px);
+    --hero-after-width: 280px;
+    --hero-after-height: 280px;
+    --hero-before-width: 5px;
+    --hero-heading-letter-spacing: -0.06em;
+    --hero-heading-max-width: 11ch;
+    --hero-panel-backdrop-filter: blur(12px);
+    --hero-isolation: isolate;
 }
 
 body[data-theme="dark"] .hero {
@@ -275,21 +288,12 @@ body[data-theme="dark"] .hero {
     --hero-surface: linear-gradient(145deg, rgba(255, 255, 255, 0.99), rgba(250, 248, 245, 0.98));
     --hero-shadow: 0 4px 12px rgba(15, 23, 42, 0.03), 0 1px 3px rgba(15, 23, 42, 0.02);
     --hero-halo: radial-gradient(circle at 100% 100%, rgba(37, 85, 220, 0.03), rgba(37, 85, 220, 0)), radial-gradient(circle at 0% 100%, rgba(212, 102, 44, 0.02), transparent 58%);
-}
-
-.hero::after {
-    width: 140px;
-    height: 140px;
-    opacity: 0.2;
-}
-
-.hero :is(h1, h2) {
-    max-width: 10ch;
-    line-height: 0.92;
-}
-
-.hero .operation-hero-copy {
-    font-size: 1rem;
+    --hero-after-width: 140px;
+    --hero-after-height: 140px;
+    --hero-after-opacity: 0.2;
+    --hero-heading-max-width: 10ch;
+    --hero-heading-line-height: 0.92;
+    --hero-copy-size: 1rem;
 }
 
 body[data-theme="dark"] .hero {

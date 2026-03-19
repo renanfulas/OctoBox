@@ -1,0 +1,10 @@
+/*
+ARQUIVO: manifesto interno da superfície do manager.
+
+POR QUE ELE EXISTE:
+- separa ajustes de cena dos ajustes de densidade dos boards.
+- mantém manager.css como ponto único de import para operations.css.
+*/
+
+@import url("./manager/scene.css");
+@import url("./manager/boards.css");

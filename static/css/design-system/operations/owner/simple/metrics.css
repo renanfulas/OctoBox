@@ -1,0 +1,39 @@
+/*
+ARQUIVO: grade de métricas do owner simple.
+
+POR QUE ELE EXISTE:
+- concentra a versão expanded da metric-grid para a superfície simple.
+- mantém aqui os estados semânticos dos KPI cards.
+*/
+
+.owner-simple-shell .owner-metric-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.owner-simple-shell .owner-metric-grid .operation-kpi-card {
+    min-height: 150px;
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+    grid-column: auto;
+}
+
+.owner-simple-shell .owner-metric-grid .operation-kpi-card:first-child,
+.owner-simple-shell .owner-metric-grid .operation-kpi-card:last-child {
+    grid-column: auto;
+    min-height: 150px;
+}
+
+.owner-simple-shell .owner-metric-grid .operation-kpi-card.status-clean {
+    border-left: 3px solid var(--accent);
+}
+
+.owner-simple-shell .owner-metric-grid .operation-kpi-card.status-attention {
+    border-left: 3px solid var(--danger);
+}
+
+.owner-simple-shell .owner-metric-grid .operation-kpi-card.status-neutral {
+    border-left: 3px solid var(--line-strong);
+}

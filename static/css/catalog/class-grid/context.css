@@ -1,0 +1,94 @@
+/*
+ARQUIVO: contexto inicial e leitura guiada da grade.
+
+POR QUE ELE EXISTE:
+- agrupa metricas, insights e foco inicial da tela.
+- mantem os painéis introdutorios separados do workspace operacional.
+*/
+
+.class-grid-insight-card-body,
+.class-grid-focus-card-body {
+    height: 100%;
+}
+
+.class-grid-insight-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    align-items: stretch;
+}
+
+.class-grid-insight-card {
+    height: 100%;
+}
+
+.class-grid-insight-card .card-content {
+    gap: 10px;
+}
+
+.class-grid-quick-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.class-grid-focus-card {
+    display: grid;
+    gap: 12px;
+    background: var(--surface);
+}
+
+.class-grid-focus-content {
+    gap: 12px;
+}
+
+.class-grid-focus-head {
+    align-items: start;
+    gap: 12px;
+}
+
+.class-grid-focus-list {
+    display: grid;
+    gap: 8px;
+}
+
+.class-grid-focus-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+    padding: 12px 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(40, 92, 142, 0.12);
+    background: rgba(255, 255, 255, 0.84);
+}
+
+.class-grid-focus-copy {
+    display: grid;
+    gap: 4px;
+}
+
+.class-grid-focus-copy h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.class-grid-focus-copy p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.class-grid-focus-actions {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    flex-shrink: 0;
+}
+
+.class-grid-scene [data-panel="class-grid-context-panels"] > section + section {
+    margin-top: 14px;
+}
+
+.class-grid-scene [data-panel="class-grid-context-panels"] .table-card.section-gap {
+    padding-top: 22px;
+    padding-bottom: 22px;
+}

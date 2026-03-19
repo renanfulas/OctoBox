@@ -1,0 +1,315 @@
+/*
+ARQUIVO: estrutura passiva e estática dos glance cards no topo do dashboard.
+
+POR QUE ELE EXISTE:
+- Isola a estrutura visual estática e de comportamento passivo dos "glance cards" no topo do Dashboard.
+- Liberta o layout base da página da responsabilidade de gerir o grid desses minicards.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Trata tipografia e alinhamento do eyebrow, kicker, e métricas principais.
+2. Define a grade e geometria inter-cards.
+3. Gerencia o comportamento hover e `is-tranquil` (quando a métrica está zerada ou positiva).
+4. Implementa o Dark Mode base das proporções.
+
+PONTOS CRITICOS:
+- NÃO deve conter comportamentos de pilar de Neon (esses moram em `glance_neon.css`).
+- NÃO deve conter os constraints de tela inteira (esses moram em `summary.css`).
+*/
+
+/* ─── Estrutura base ───────────────────────────────────────────── */
+.dashboard-glance-card {
+    position: relative;
+    display: grid;
+    align-content: start;
+    border-radius: var(--dashboard-fib-4, 21px);
+    gap: var(--dashboard-fib-2, 8px);
+    padding: var(--dashboard-rhythm-3);
+    color: inherit;
+    text-decoration: none;
+    border: 1px solid var(--fdw-line);
+    overflow: hidden;
+    background: var(--fdw-panel-strong);
+    border-color: var(--fdw-line);
+    box-shadow: var(--fdw-shadow);
+    transition:
+        transform var(--motion-base) var(--ease-standard),
+        border-color var(--motion-base) var(--ease-standard),
+        box-shadow var(--motion-base) var(--ease-standard);
+}
+
+.dashboard-glance-card--summary {
+    min-height: 148px;
+    padding: 13px 15px;
+    min-height: 144px;
+    grid-template-rows: auto auto 1fr;
+    align-content: start;
+}
+
+/* ─── Top stripe (cor por variante) ───────────────────────────── */
+.dashboard-glance-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 3px;
+    /* default azul — sobrescrito por variantes abaixo */
+    background: linear-gradient(90deg, rgba(14, 165, 233, 0.92), rgba(37, 99, 235, 0.82));
+}
+
+.dashboard-glance-card.is-base::before {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.98), rgba(234, 88, 12, 0.9));
+}
+
+.dashboard-glance-card.is-risk::before {
+    background: linear-gradient(90deg, rgba(6, 78, 59, 0.98), rgba(4, 62, 48, 0.9));
+}
+
+/* ─── Hover ────────────────────────────────────────────────────── */
+.dashboard-glance-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(37, 99, 235, 0.16);
+    box-shadow: var(--fdw-shadow-lift);
+}
+
+/* ─── Tipografia interna ────────────────────────────────────────── */
+.dashboard-glance-kicker {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.dashboard-glance-value-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--dashboard-fib-2, 8px);
+    flex-wrap: wrap;
+}
+
+.dashboard-glance-value {
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    line-height: 0.92;
+    letter-spacing: -0.05em;
+}
+
+.dashboard-glance-copy {
+    margin: 0;
+    max-width: 34ch;
+    font-size: 0.84rem;
+    line-height: 1.42;
+    color: var(--muted);
+}
+
+.dashboard-glance-strip {
+    gap: var(--dashboard-rhythm-3);
+}
+
+/* ─── Indicator (badge de status) ─────────────────────────────── */
+.dashboard-glance-indicator {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+}
+
+/* Variantes estáticas do indicator (não dependem de actionable) */
+.dashboard-glance-indicator.is-sessions {
+    color: var(--brand);
+    background: rgba(37, 99, 235, 0.08);
+}
+
+.dashboard-glance-indicator.is-finance {
+    color: rgb(185, 28, 28);
+    background: rgba(220, 38, 38, 0.12);
+}
+
+.dashboard-glance-indicator.is-base {
+    color: rgb(180, 83, 9);
+    background: rgba(245, 158, 11, 0.12);
+}
+
+.dashboard-glance-indicator.is-risk {
+    color: rgb(6, 78, 59);
+    background: rgba(6, 78, 59, 0.12);
+}
+
+/* ─── Estado Tranquil (resolvido) ─────────────────────────────── */
+.dashboard-glance-card.is-tranquil {
+    opacity: 0.75;
+    background: var(--surface) !important;
+    border-color: var(--line) !important;
+    pointer-events: none;   /* não há ação disponível — não é clicável */
+    cursor: default;
+}
+
+.dashboard-glance-card.is-tranquil::before {
+    display: none !important;
+}
+
+.dashboard-glance-card.is-tranquil:hover {
+    opacity: 0.95;
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.dashboard-glance-card.is-tranquil .dashboard-glance-indicator {
+    color: #059669; /* emerald-600 */
+    background: rgba(16, 185, 129, 0.1);
+    border-color: transparent;
+}
+
+/* ─── Dark mode (base) ────────────────────────────────────────── */
+body[data-theme="dark"] .dashboard-glance-card {
+    border-color: rgba(148, 163, 184, 0.16);
+    background: linear-gradient(160deg, rgba(18, 32, 49, 0.96), rgba(13, 22, 36, 0.98));
+    box-shadow: var(--fdw-shadow);
+}
+
+body[data-theme="dark"] .dashboard-glance-copy {
+    color: rgba(226, 232, 240, 0.68);
+}
+
+body[data-theme="dark"] .dashboard-glance-card.is-tranquil .dashboard-glance-indicator {
+    color: #34d399; /* emerald-400 */
+    background: rgba(16, 185, 129, 0.15);
+}
+
+/* ─── Helper: support grid ─────────────────────────────────────── */
+.dashboard-support-grid {
+    display: contents;
+    min-width: 0;
+}
+
+@media (max-width: 960px) {
+    .dashboard-support-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        align-content: start;
+    }
+
+    .dashboard-glance-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .dashboard-glance-strip {
+        width: 100%;
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-glance-card--summary .dashboard-glance-copy {
+        max-width: 100%;
+    }
+}
+
+/* ─── Animação de entrada ──────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+    .dashboard-glance-card {
+        animation: fdw-rise-in 650ms var(--ease-standard) both;
+    }
+
+    .dashboard-glance-card:nth-child(2) {
+        animation-delay: 60ms;
+    }
+
+    .dashboard-glance-card:nth-child(3) {
+        animation-delay: 120ms;
+    }
+}
+
+/* ─── Estado All-Clear: todos os 3 cards zerados ─────────────────
+   Detectado via :has() — sem JS, sem classes extras.
+   Quando Emergência + Urgente + Risco estão todos em is-tranquil:
+   1. A topline equaliza as colunas (1:1:1 em vez de 21:13:8)
+   2. Os cards ganham fundo verde suave harmonioso
+   3. Opacidade vai a 100% — state positivo, não apagado
+   4. Hover gentil: sem subir, só brilho verde
+──────────────────────────────────────────────────────────────────── */
+
+/* Topline equaliza colunas quando glance-strip tem só cards tranquil */
+.dashboard-summary-topline:has(
+    .dashboard-glance-strip .dashboard-glance-card.is-tranquil
+):has(
+    .dashboard-support-grid .dashboard-glance-card.is-tranquil
+) {
+    grid-template-columns: minmax(0, 21fr) minmax(0, 13fr) minmax(0, 8fr);
+}
+
+/* Quando TODOS os cards do priority strip são tranquil */
+.dashboard-summary-topline:has(
+    .dashboard-glance-strip .dashboard-glance-card--summary.is-tranquil
+):has(
+    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:first-child
+):has(
+    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:last-child
+) {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+/* Cards all-clear: verde suave e opacity total */
+.dashboard-summary-topline:has(
+    .dashboard-glance-strip .dashboard-glance-card--summary.is-tranquil
+):has(
+    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:first-child
+):has(
+    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:last-child
+) .dashboard-glance-card.is-tranquil {
+    opacity: 1;
+    background: linear-gradient(160deg,
+        rgba(16, 185, 129, 0.06),
+        var(--fdw-panel-strong)
+    ) !important;
+    border-color: rgba(16, 185, 129, 0.18) !important;
+    transition:
+        background var(--motion-base) var(--ease-standard),
+        border-color var(--motion-base) var(--ease-standard);
+}
+
+/* Hover all-clear: gentil, sem subir */
+.dashboard-summary-topline:has(
+    .dashboard-glance-strip .dashboard-glance-card--summary.is-tranquil
+):has(
+    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:first-child
+):has(
+    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:last-child
+) .dashboard-glance-card.is-tranquil:hover {
+    transform: none;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+/* Top stripe verde no all-clear */
+.dashboard-summary-topline:has(
+    .dashboard-glance-strip .dashboard-glance-card--summary.is-tranquil
+):has(
+    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:first-child
+):has(
+    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:last-child
+) .dashboard-glance-card.is-tranquil::before {
+    display: block !important;
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.5), rgba(5, 150, 105, 0.3)) !important;
+}
+
+/* Dark mode all-clear */
+body[data-theme="dark"] .dashboard-summary-topline:has(
+    .dashboard-glance-strip .dashboard-glance-card--summary.is-tranquil
+):has(
+    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:first-child
+):has(
+    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:last-child
+) .dashboard-glance-card.is-tranquil {
+    background: linear-gradient(160deg,
+        rgba(16, 185, 129, 0.08),
+        rgba(13, 22, 36, 0.98)
+    ) !important;
+    border-color: rgba(16, 185, 129, 0.16) !important;
+}

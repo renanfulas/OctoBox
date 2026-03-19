@@ -1,0 +1,137 @@
+/*
+ARQUIVO: responsividade transversal das superfícies operacionais.
+
+POR QUE ELE EXISTE:
+- reúne colapsos de grid e ajustes móveis compartilhados.
+- evita espalhar media queries horizontais pelos módulos de persona.
+*/
+
+@media (max-width: 1280px) {
+    .operation-grid-wide,
+    .reception-support-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 1600px) {
+    .operation-grid-wide {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 1180px) {
+    .operation-grid-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 960px) {
+    .operation-focus-item {
+        grid-template-columns: 1fr;
+    }
+
+    .operation-focus-actions {
+        justify-items: stretch;
+    }
+
+    .operation-shell {
+        gap: 18px;
+    }
+
+    .operation-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .operation-hero-side {
+        width: 100%;
+    }
+
+    .operation-grid-3,
+    .operation-grid-wide {
+        grid-template-columns: 1fr;
+    }
+
+    .operation-table-guide-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .operation-session-head {
+        flex-direction: column;
+    }
+
+    .operation-session-badges {
+        justify-content: flex-start;
+    }
+
+    .operation-card-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .reception-payment-meta,
+    .reception-preview-payment-meta,
+    .reception-grade-stats,
+    .reception-preview-grade-stats,
+    .reception-command-card .actions {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .operation-card-head,
+    .operation-table-guide-head {
+        grid-template-columns: 1fr;
+        display: grid;
+    }
+
+    .reception-payment-grid,
+    .reception-preview-payment-grid,
+    .reception-grade-grid,
+    .reception-preview-grade-grid,
+    .reception-payment-actions-primary,
+    .reception-preview-payment-actions-primary {
+        grid-template-columns: 1fr;
+    }
+
+    .operation-mini-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .operation-table-wrap {
+        margin: 0 -6px;
+        padding: 0 6px 2px;
+    }
+
+    .operation-table-wrap table {
+        min-width: 560px;
+    }
+
+    .operation-inline-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .operation-inline-actions form,
+    .operation-note-form .actions .button,
+    .operation-hero .actions .button {
+        width: 100%;
+    }
+
+    .operation-hero-tags .pill {
+        width: fit-content;
+        max-width: 100%;
+    }
+
+    .operation-session-head,
+    .operation-session-body,
+    .operation-hero-panel {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .operation-hero-panel {
+        padding-top: 22px;
+        padding-bottom: 22px;
+        border-radius: 22px;
+    }
+}

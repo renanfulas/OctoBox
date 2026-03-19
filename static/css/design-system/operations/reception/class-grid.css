@@ -1,0 +1,42 @@
+/*
+ARQUIVO: grade de aulas e leitura rápida da recepção.
+*/
+
+.reception-grid-board,
+.reception-preview-grid-board {
+    background: var(--surface);
+}
+
+.reception-grid-board .operation-card-head,
+.reception-preview-grid-board .operation-card-head {
+    margin-bottom: 10px;
+}
+
+.reception-grid-board .operation-card-copy,
+.reception-preview-grid-board .operation-card-copy {
+    max-width: 38ch;
+}
+
+.reception-grade-grid,
+.reception-preview-grade-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.reception-grade-card,
+.reception-preview-grade-card {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border-radius: var(--radius-card);
+    border: 1px solid rgba(37, 99, 235, 0.14);
+    background: var(--surface);
+}
+
+.reception-grade-stats,
+.reception-preview-grade-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}

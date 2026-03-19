@@ -1,0 +1,71 @@
+/*
+ARQUIVO: cena base e hero da grade de aulas.
+
+POR QUE ELE EXISTE:
+- concentra o shell visual da tela e o contrato do hero.
+- separa a abertura da grade do restante dos paineis contextuais e do workspace.
+*/
+
+.class-grid-metric-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.class-grid-metric-card-body {
+    height: 100%;
+}
+
+.class-grid-scene {
+    gap: calc(var(--section-gap) - 2px);
+}
+
+.class-grid-hero {
+    background: var(--surface);
+}
+
+.class-grid-hero.operation-hero {
+    gap: 18px;
+    min-height: 252px;
+    padding: clamp(18px, 1.8vw, 22px);
+}
+
+.class-grid-hero.operation-hero .operation-hero-main {
+    gap: 12px;
+}
+
+.class-grid-hero.operation-hero .operation-hero-main > div:first-child {
+    gap: 8px;
+    max-width: 560px;
+}
+
+.class-grid-hero.operation-hero .operation-hero-copy {
+    max-width: 40ch;
+}
+
+.class-grid-hero.operation-hero .actions {
+    gap: 8px;
+    max-width: 560px;
+}
+
+.class-grid-hero.operation-hero .actions .button {
+    min-height: 36px;
+    padding: 8px 13px;
+}
+
+.class-grid-hero.operation-hero .operation-hero-side {
+    width: 100%;
+}
+
+.class-grid-hero.operation-hero .operation-hero-panel {
+    padding: 14px 16px;
+    background: var(--surface);
+}
+
+.class-grid-hero.operation-hero .operation-mini-grid {
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.class-grid-hero.operation-hero .operation-mini-stat {
+    padding: 8px 10px;
+}

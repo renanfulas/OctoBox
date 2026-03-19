@@ -4,61 +4,8 @@
     --neon-default-rgb: 9, 42, 95; /* RGB fallback for broader browser support */
 }
 
-/* Base positioning so glow (box-shadow) can extend outside the board */
-#dashboard-sessions-board {
-    position: relative;
-    overflow: visible;
-    z-index: 0; /* ensure stacking for animated shadow */
-}
 
-/* Blink animation: animate box-shadow briefly and return to no outline. */
-#dashboard-sessions-board.neon-blink {
-    animation: neon-pulse-shadow 1000ms ease 1 forwards;
-}
 
-@keyframes neon-pulse-shadow {
-    0% {
-        box-shadow: none;
-    }
-    30% {
-        box-shadow: 0 0 34px rgba(var(--neon-default-rgb), 0.36), 0 0 12px rgba(var(--neon-default-rgb), 0.18), inset 0 0 18px rgba(var(--neon-default-rgb), 0.10);
-    }
-    100% {
-        box-shadow: none;
-    }
-}
-
-/* Ensure the board's content doesn't transform or change opacity when blinking.
-   Only the box-shadow should be animated. */
-#dashboard-sessions-board.neon-blink {
-    transform: none !important;
-    opacity: 1 !important;
-}
-
-/* Prevent descendant animations/transitions that could cause the card to "blink" visually. */
-#dashboard-sessions-board.neon-blink * {
-    animation: none !important;
-    transition-property: none !important;
-}
-
-/* Quiet mode: suppress any transforms, transitions or opacity changes on the
-   board and its descendants while active. This prevents visual "jank" from
-   other page animations when the neon blink runs. */
-#dashboard-sessions-board.neon-quiet {
-    transform: none !important;
-    opacity: 1 !important;
-    transition: none !important;
-}
-
-#dashboard-sessions-board.neon-quiet * {
-    animation: none !important;
-    transition-property: none !important;
-}
-
-/* Ensure any stray pseudo elements don't interfere */
-/* (Allow dashboard card pseudo-elements; utilities will opt-in) */
-
-/* (Override for the article pseudo-element removed per request.) */
 
 /* Narrow safety overrides: neutralize pseudo-elements for cards inside the dashboard side column
    This avoids touching global pseudo-elements used elsewhere (sidebar, hero, tokens). */
@@ -74,9 +21,10 @@ aside.dashboard-instagram-side .dashboard-table-card::after {
     background: transparent !important;
 }
 
-/* Utility: top stripe for cards (opt-in via class) */
+/* Precisa de !important para sobrescrever o bloco de segurança do aside acima */
 .card-decor-topstripe::before {
-        content: "";
+        content: "" !important;
+        display: block !important;
         position: absolute;
         inset: 0 auto auto 0;
         width: 100%;
@@ -107,11 +55,3 @@ aside.dashboard-instagram-side .dashboard-table-card::after {
         box-shadow: 0 0 14px color-mix(in srgb, var(--neon-default) 18%, transparent), inset 0 0 8px color-mix(in srgb, var(--neon-default) 6%, transparent);
     }
 }
-
-/* Utility: ensure the sessions board can show its glow (avoid clipping on inner panels) */
-#dashboard-sessions-board {
-    overflow: visible;
-}
-
-/* Sidebar neon/blink rules removed per request */
-
