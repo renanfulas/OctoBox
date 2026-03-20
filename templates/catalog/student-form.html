@@ -18,16 +18,24 @@ PONTOS CRITICOS:
 
 {% block content %}
 {% with page=student_form_page %}
-<div class="operation-shell catalog-scene student-form-scene" data-page="student-form" data-screen="catalog-student-form" data-slot="page-root">
-<div data-panel="student-form-hero">
-{% include "includes/catalog/student_form/hero.html" with page=page %}
-</div>
-<div data-panel="student-form-main-workflow">
-{% include "includes/catalog/student_form/main_form.html" with page=page %}
-</div>
-<div data-panel="student-form-financial-overview">
-{% include "includes/catalog/student_form/financial_overview.html" with page=page %}
-</div>
+<div class="operation-shell student-form-shell workspace-shell" data-page="student-form" data-screen="catalog-student" data-slot="page-root">
+    <div data-panel="student-form-hero">
+        {% include "includes/catalog/student_form/plans/hero.html" with page=page %}
+    </div>
+
+    <section class="workspace-grid-layout" aria-label="Area de trabalho do aluno" data-slot="workspace" data-panel="student-workspace">
+        <div class="workspace-grid-main stack-16">
+            <div class="workspace-panel">
+                {% include "includes/catalog/student_form/main_form/main_form.html" with form=student_form %}
+            </div>
+        </div>
+        
+        <aside class="workspace-grid-side stack-16">
+            <div class="workspace-panel">
+                {% include "includes/catalog/student_form/financial/financial_overview.html" with student=page.data.student %}
+            </div>
+        </aside>
+    </section>
 
 </div>
 {% endwith %}

@@ -1,0 +1,37 @@
+<!--
+ARQUIVO: filtros da Central de Intake.
+
+POR QUE ELE EXISTE:
+- isola o recorte da fila para manter o template principal curto.
+-->
+<section class="table-card layout-panel layout-panel--stack glass-panel section-gap intake-filter-card" aria-label="Busca e filtros da central de intake" data-slot="filters" data-panel="intake-filters">
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Busca e recorte da fila" title="Filtre a central sem perder a ordem operacional" copy="O intake continua dono da fila; o filtro so ajuda a recortar o que voce precisa agir agora." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
+    <form method="get" class="form-stack" data-action="filter-intakes">
+        <div class="field-grid-200">
+            <label>
+                <span class="field-label">{{ page.data.filter_form.query.label }}</span>
+                {{ page.data.filter_form.query }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.filter_form.status.label }}</span>
+                {{ page.data.filter_form.status }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.filter_form.source.label }}</span>
+                {{ page.data.filter_form.source }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.filter_form.semantic_stage.label }}</span>
+                {{ page.data.filter_form.semantic_stage }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.filter_form.assignment.label }}</span>
+                {{ page.data.filter_form.assignment }}
+            </label>
+        </div>
+        <div class="actions actions-tight">
+            <button class="button" type="submit" data-action="apply-intake-filters">Aplicar filtros</button>
+            <a class="button secondary" href="/entradas/" data-action="clear-intake-filters">Limpar</a>
+        </div>
+    </form>
+</section>

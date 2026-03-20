@@ -1,0 +1,17 @@
+<!--
+ARQUIVO: area principal do Manager.
+
+POR QUE ELE EXISTE:
+- centraliza os quatro paines operacionais da gerencia em um include unico.
+-->
+    <section class="workspace-grid-layout" aria-label="Painel de controle" data-slot="workspace" data-panel="manager-board">
+        <div class="workspace-grid-main">
+            <div class="workspace-panel" data-panel="manager-intake-section">{% include "operations/includes/manager/manager_intake_board.html" %}</div>
+            <div class="workspace-panel" data-panel="manager-finance-section">{% include "operations/includes/manager/manager_finance_board.html" %}</div>
+        </div>
+        
+        <aside class="workspace-grid-side">
+            <div class="workspace-panel" data-panel="manager-enrollment-section">{% include "operations/includes/manager/manager_enrollment_link_board.html" %}</div>
+            <div class="workspace-panel" data-panel="manager-links-section">{% include "operations/includes/manager/manager_link_board.html" %}</div>
+        </aside>
+    </section>

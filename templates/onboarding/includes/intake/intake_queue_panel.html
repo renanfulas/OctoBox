@@ -1,0 +1,67 @@
+<!--
+ARQUIVO: fila principal da Central de Intake.
+
+POR QUE ELE EXISTE:
+- concentra a triagem operacional e o handoff de conversao em um bloco proprio.
+-->
+<section class="table-card layout-panel layout-panel--stack glass-panel section-gap intake-queue-panel" id="intake-queue-board" aria-label="Fila principal de intake" data-panel="intake-queue-board">
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Fila pronta para leitura e conversao" title="Entradas provisorias no ponto de acao" copy="Triagem, atribuicao e conversao saem daqui sem depender da tela de alunos para orientar a fila." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
+    <div class="intake-grid">
+        {% for item in page.data.queue_items %}
+        {% with intake=item.object semantic=item.semantic_state conversion=item.conversion permissions=item.action_permissions %}
+        <div class="intake-card intake-card--detailed" data-panel="intake-queue-card">
+            <div class="card-body intake-card-body">
+                <div class="stack-8 intake-card-main">
+                    <div class="row-between-md intake-card-header">
+                        <div class="card-head-main-stack">
+                            <strong>{{ intake.full_name }}</strong>
+                            <p class="meta-text-sm">{{ intake.phone }}{% if intake.email %} | {{ intake.email }}{% endif %}</p>
+                        </div>
+                        <div class="stack-8 student-priority-badges card-head-aside">
+                            <span class="pill">{{ semantic.entity_label }}</span>
+                            <span class="pill info">{{ semantic.semantic_label }}</span>
+                            <span class="pill info">{{ intake.get_source_display }}</span>
+                            <span class="pill{% if intake.status == 'reviewing' %} warning{% elif intake.status == 'matched' %} success{% endif %}">{{ intake.get_status_display }}</span>
+                        </div>
+                    </div>
+                    <div class="card-content intake-card-content">
+                        <div class="intake-meta-list">
+                            <p class="meta-text">Chegou em {{ intake.created_at|date:"d/m/Y H:i" }}.</p>
+                            <p class="meta-text">{% if intake.assigned_to %}Responsavel atual: {{ intake.assigned_to.get_full_name|default:intake.assigned_to.username }}.{% else %}Ainda sem responsavel definido.{% endif %}</p>
+                            <p class="meta-text">{{ semantic.note }}</p>
+                            <p class="meta-text">{{ conversion.reason }}</p>
+                            {% if intake.notes %}<p class="meta-text">{{ intake.notes|truncatechars:180 }}</p>{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer intake-card-footer">
+                <div class="actions actions-tight intake-card-actions">
+                    {% if page.capabilities.can_work_queue %}
+                    <form method="post" class="intake-action-form" data-action="intake-queue-actions">
+                        {% csrf_token %}
+                        <input type="hidden" name="intake_id" value="{{ intake.id }}">
+                        <input type="hidden" name="return_query" value="{{ request.GET.urlencode }}">
+                        {% if permissions.can_assign_to_me %}<button class="button secondary" type="submit" name="action" value="assign-to-me">Assumir</button>{% endif %}
+                        {% if permissions.can_start_review %}<button class="button secondary" type="submit" name="action" value="start-review">Iniciar triagem</button>{% endif %}
+                        {% if permissions.can_mark_matched %}<button class="button secondary" type="submit" name="action" value="mark-matched">Pronto para conversao</button>{% endif %}
+                        {% if permissions.can_clear_assignee %}<button class="button secondary" type="submit" name="action" value="clear-assignee">Limpar responsavel</button>{% endif %}
+                        {% if permissions.can_approve %}<button class="button secondary" type="submit" name="action" value="approve-intake">Aprovar</button>{% endif %}
+                        {% if permissions.can_reject %}<button class="button secondary" type="submit" name="action" value="reject-intake">Rejeitar</button>{% endif %}
+                    </form>
+                    {% endif %}
+                    {% if page.capabilities.can_manage_students and conversion.can_convert %}
+                    <a class="button" href="/alunos/novo/?intake={{ intake.id }}#student-form-essential" data-action="convert-intake-to-student">{{ conversion.action_label }}</a>
+                    {% else %}
+                    <span class="pill intake-conversion-pill">{{ conversion.action_label }}</span>
+                    {% endif %}
+                    <a class="button secondary" href="/alunos/" data-action="open-students-directory-from-intake">Abrir base de alunos</a>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        {% empty %}
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Fila principal" title="Nenhuma entrada provisoria pede triagem agora" copy="A fila de intake esta limpa neste recorte e a conversao nao depende de pendencia aberta." badge="Fila limpa" badge_class="success" %}
+        {% endfor %}
+    </div>
+</section>

@@ -17,7 +17,14 @@ from django.urls import path
 
 from .action_views import AttendanceActionView, PaymentEnrollmentLinkView, ReceptionPaymentActionView, TechnicalBehaviorNoteCreateView
 from .base_views import RoleOperationRedirectView
-from .workspace_views import CoachWorkspaceView, DevWorkspaceView, ManagerWorkspaceView, OwnerWorkspaceView, ReceptionWorkspaceView
+from .workspace_views import (
+    CoachWorkspaceView,
+    DevWorkspaceView,
+    ManagerWorkspaceView,
+    OwnerWorkspaceView,
+    ReceptionWorkspaceView,
+    WhatsAppWorkspaceView,
+)
 
 urlpatterns = [
     path('operacao/', RoleOperationRedirectView.as_view(), name='role-operations'),
@@ -26,6 +33,7 @@ urlpatterns = [
     path('operacao/manager/', ManagerWorkspaceView.as_view(), name='manager-workspace'),
     path('operacao/recepcao/', ReceptionWorkspaceView.as_view(), name='reception-workspace'),
     path('operacao/coach/', CoachWorkspaceView.as_view(), name='coach-workspace'),
+    path('operacao/whatsapp/', WhatsAppWorkspaceView.as_view(), name='whatsapp-workspace'),
     path('operacao/recepcao/pagamento/<int:payment_id>/acao/', ReceptionPaymentActionView.as_view(), name='reception-payment-action'),
     path('operacao/pagamento/<int:payment_id>/vincular-matricula/', PaymentEnrollmentLinkView.as_view(), name='payment-enrollment-link'),
     path('operacao/aluno/<int:student_id>/ocorrencia-tecnica/', TechnicalBehaviorNoteCreateView.as_view(), name='technical-behavior-note-create'),

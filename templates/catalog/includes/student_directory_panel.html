@@ -4,9 +4,11 @@ ARQUIVO: diretorio principal de alunos.
 POR QUE ELE EXISTE:
 - isola a tabela principal da base para facilitar manutencao e leitura.
 -->
-<section class="table-card layout-panel layout-panel--stack glass-panel student-table-wrap student-data-panel" id="student-directory-board" aria-label="Diretorio de alunos" data-panel="students-directory-board">
-    {% include "includes/ui/operation_card_head.html" with eyebrow="Base principal de alunos" title="Diretorio com leitura operacional" copy="Lista enxuta com foco em contato, plano, financeiro e ação." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
-    <div class="student-table-scroll" data-slot="students-table-scroll">
+<section id="tab-students-directory" class="card glass-panel student-data-panel" aria-label="Diretorio de alunos" data-panel="students-directory-board" style="max-width: 100%; min-width: 0; overflow-x: auto !important;">
+    <div class="card-head" style="margin-bottom: var(--workspace-fib-4);">
+        <h3 class="card-title">Base principal de alunos</h3>
+    </div>
+    <div class="student-table-scroll" data-slot="students-table-scroll" style="max-width: 100%; overflow-x: auto;">
         <table>
             <thead>
                 <tr>
@@ -31,7 +33,7 @@ POR QUE ELE EXISTE:
                     </td>
                     <td>
                         <div class="stack-8">
-                            {% if student.latest_plan_name %}<strong>{{ student.latest_plan_name }}</strong>{% else %}<strong>Sem plano conectado</strong>{% endif %}
+                            {% if student.latest_plan_name %}<strong>{{ student.latest_plan_name }}</strong>{% endif %}
                             {% if student.latest_enrollment_status %}<span class="pill">{{ student.latest_enrollment_status }}</span>{% else %}<span class="pill">Sem matricula</span>{% endif %}
                         </div>
                     </td>
@@ -56,12 +58,9 @@ POR QUE ELE EXISTE:
                     </td>
                     <td>{{ student.updated_at|date:"d/m/Y H:i" }}</td>
                     <td>
-                        <div class="actions actions-tight">
+                        <div class="actions actions-tight" style="justify-content: center;">
                             {% if page.capabilities.can_manage_students %}
                             <a class="button secondary" href="/alunos/{{ student.id }}/editar/#student-financial-overview" data-action="open-student-form">Abrir ficha</a>
-                            {% endif %}
-                            {% if page.capabilities.can_open_student_admin %}
-                            <a class="button secondary" href="{% url 'admin:boxcore_student_change' student.id %}" data-action="open-student-admin">Admin</a>
                             {% endif %}
                         </div>
                     </td>
@@ -69,11 +68,55 @@ POR QUE ELE EXISTE:
                 {% empty %}
                 <tr>
                     <td colspan="6" class="table-empty-cell">
-                        {% include "includes/ui/state_empty.html" with compact=True eyebrow="Base principal" title="Nenhum aluno encontrado neste recorte" copy="Ajuste a busca ou os filtros para ampliar a leitura da base principal." badge="Sem resultados" badge_class="info" %}
+                        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Base principal" title="Nenhum aluno encontrado neste recorte" copy="Ajuste a busca ou os filtros para ampliar a leitura da base principal." badge="Sem resultados" badge_class="info" %}
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
+    {% if page.data.students.has_other_pages %}
+    <nav class="table-pagination" aria-label="Navegação de alunos">
+        <ul class="pagination-list">
+            {% if page.data.students.has_previous %}
+            <li>
+                <a href="?page={{ page.data.students.previous_page_number }}&{{ page.data.base_query_string }}" class="pagination-action" aria-label="Anterior">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </a>
+            </li>
+            {% else %}
+            <li>
+                <span class="pagination-action disabled">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </span>
+            </li>
+            {% endif %}
+
+            {% for num in page.data.students.paginator.page_range %}
+            <li>
+                {% if page.data.students.number == num %}
+                <span class="pagination-num is-current">{{ num }}</span>
+                {% else %}
+                <a href="?page={{ num }}&{{ page.data.base_query_string }}" class="pagination-num">{{ num }}</a>
+                {% endif %}
+            </li>
+            {% endfor %}
+
+            {% if page.data.students.has_next %}
+            <li>
+                <a href="?page={{ page.data.students.next_page_number }}&{{ page.data.base_query_string }}" class="pagination-action" aria-label="Próxima">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </a>
+            </li>
+            {% else %}
+            <li>
+                <span class="pagination-action disabled">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </span>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
 </section>

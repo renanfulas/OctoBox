@@ -18,10 +18,12 @@ PONTOS CRITICOS:
 @import url("./components/layout-blocks.css");
 @import url("./components/cards.css");
 @import url("./components/tables.css");
+@import url("./components/pagination.css");
 @import url("./components/pills.css");
 @import url("./components/actions.css");
 @import url("./components/states.css");
 @import url("./components/quick-cards.css");
+@import url("./components/interactive-tabs.css");
 @import url("./components/dashboard/summary.css");        /* layout estrutural */
 @import url("./components/dashboard/glance_cards.css");   /* glance: visual base */
 @import url("./components/dashboard/glance_neon.css");    /* glance: neon/actionable */

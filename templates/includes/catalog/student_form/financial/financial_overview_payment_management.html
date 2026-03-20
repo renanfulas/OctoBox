@@ -1,0 +1,38 @@
+<!--
+ARQUIVO: gestao da cobranca atual do aluno.
+-->
+{% if page.data.payment_management_form %}
+<article class="table-card section-gap-top-sm student-payment-management-card student-financial-action-card student-financial-action-card-primary" id="student-payment-management">
+    <p class="eyebrow">Gestao da cobranca atual</p>
+    <form method="post" action="/alunos/{{ page.data.student_object.id }}/financeiro/acao/" class="form-stack student-payment-management-form">
+        {% csrf_token %}
+        {{ page.data.payment_management_form.payment_id }}
+        <div class="field-grid-220">
+            <label>
+                <span class="field-label">{{ page.data.payment_management_form.amount.label }}</span>
+                {{ page.data.payment_management_form.amount }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.payment_management_form.due_date.label }}</span>
+                {{ page.data.payment_management_form.due_date }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.payment_management_form.method.label }}</span>
+                {{ page.data.payment_management_form.method }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.payment_management_form.reference.label }}</span>
+                {{ page.data.payment_management_form.reference }}
+            </label>
+        </div>
+        <label>
+            <span class="field-label">{{ page.data.payment_management_form.notes.label }}</span>
+            {{ page.data.payment_management_form.notes }}
+        </label>
+        <div class="student-payment-management-actions">
+            {% include "includes/catalog/student_form/payments/payment_management_primary_actions.html" %}
+            {% include "includes/catalog/student_form/payments/payment_management_secondary_actions.html" with page=page %}
+        </div>
+    </form>
+</article>
+{% endif %}

@@ -7,17 +7,6 @@ POR QUE ELE EXISTE:
 */
 
 .owner-scene {
-    --operation-hero-padding: 18px 20px;
-    --operation-hero-main-gap: 10px;
-    --operation-hero-stack-gap: 6px;
-    --operation-hero-stack-max-width: 560px;
-    --operation-hero-copy-max-width: 40ch;
-    --operation-hero-actions-gap: 6px;
-    --operation-hero-actions-max-width: 520px;
-    --operation-hero-button-min-height: 34px;
-    --operation-hero-button-padding: 7px 12px;
-    --operation-hero-side-width: min(100%, 300px);
-    --operation-hero-panel-padding: 12px 14px;
     --operation-mini-grid-gap: 6px;
     --operation-mini-grid-margin-top: 10px;
     --operation-mini-stat-padding: 7px 8px;
@@ -31,19 +20,4 @@ POR QUE ELE EXISTE:
     overflow: hidden;
 }
 
-.owner-metric-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-}
-
-.owner-metric-grid .operation-kpi-card {
-    min-height: 172px;
-    padding: 20px 19px 18px;
-    border-radius: 24px;
-}
-
-.owner-metric-grid .operation-kpi-card:first-child,
-.owner-metric-grid .operation-kpi-card:last-child {
-    grid-column: 1 / -1;
-    min-height: 186px;
-}
+/* Layout centralizado e unificado no bundles do design system */

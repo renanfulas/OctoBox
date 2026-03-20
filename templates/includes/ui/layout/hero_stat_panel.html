@@ -1,0 +1,29 @@
+<article class="operation-hero-panel{% if panel.card_class %} {{ panel.card_class }}{% endif %}">
+    <div class="operation-hero-panel-head">
+        <p class="eyebrow card-label">{{ panel.eyebrow }}</p>
+        {% if panel.badge.label %}
+        <span class="operation-hero-badge{% if panel.badge.class_name %} {{ panel.badge.class_name }}{% endif %}">{{ panel.badge.label }}</span>
+        {% endif %}
+    </div>
+    <p class="operation-card-copy card-copy">{{ panel.copy }}</p>
+    {% if panel.kicker %}
+    <p class="operation-hero-kicker">{{ panel.kicker }}</p>
+    {% endif %}
+    {% if panel.stats %}
+    <div class="operation-mini-grid">
+        {% for stat in panel.stats %}
+        <div class="operation-mini-stat">
+            <span class="operation-mini-label">{{ stat.label }}</span>
+            <span class="operation-mini-value">{{ stat.value }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if panel.actions %}
+    <div class="actions card-actions{% if panel.actions_class %} {{ panel.actions_class }}{% endif %}">
+        {% for action in panel.actions %}
+        <a class="button card-action{% if action.kind == 'secondary' %} secondary{% endif %}{% if action.class_name %} {{ action.class_name }}{% endif %}" href="{{ action.href }}"{% if action.data_action %} data-action="{{ action.data_action }}"{% endif %}>{{ action.label }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</article>

@@ -1,0 +1,36 @@
+/*
+ARQUIVO: tabs iterativas e modulares.
+
+POR QUE ELE EXISTE:
+- Cria o estado base oculto e o rever para paineis modulares acionados por KPI cards em telas tipo Single Page (ex: Alunos).
+*/
+
+.interactive-tab-container {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.interactive-tab-container > * {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.interactive-tab-container > *:not(.is-tab-active) {
+    display: none !important;
+}
+
+.interactive-tab-container > *.is-tab-active {
+    animation: fadeInTab 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInTab {
+    0% {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

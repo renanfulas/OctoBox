@@ -127,4 +127,37 @@ def build_finance_pulse(finance_metrics):
     }
 
 
-__all__ = ['build_finance_metrics', 'build_finance_pulse']
+def build_finance_interactive_kpis(finance_metrics):
+    return [
+        {
+            'eyebrow': 'Raio-X Financeiro',
+            'display_value': f"R$ {_format_currency_br(finance_metrics['Receita recebida no mes']['value'])}",
+            'note': 'Movimentos, entradas, saidas e graficos de tendencia financeira.',
+            'data_action': 'open-tab-finance-movements',
+            'card_class': 'kpi-emerald',
+        },
+        {
+            'eyebrow': 'Handoff de Cobranca',
+            'display_value': f"R$ {_format_currency_br(finance_metrics['Receita que ainda nao entrou']['value'])}",
+            'note': 'Fila automatica e regua ativa contra a inadimplencia e atrasos.',
+            'data_action': 'open-tab-finance-queue',
+            'card_class': 'kpi-red' if finance_metrics['Alunos com atraso ativo']['value'] > 0 else 'kpi-blue',
+        },
+        {
+            'eyebrow': 'Motor de Carteira',
+            'display_value': str(finance_metrics['Novos contratos no mes']['value']),
+            'note': 'Portfolio de planos, mix de base e concentracao de receita.',
+            'data_action': 'open-tab-finance-portfolio',
+            'card_class': 'kpi-slate',
+        },
+        {
+            'eyebrow': 'Filtros & Exportacao',
+            'display_value': 'Recortes',
+            'note': 'Acesse os controles globais para isolar status, datas e planilhas.',
+            'data_action': 'open-tab-finance-filters',
+            'card_class': 'kpi-cyan',
+        },
+    ]
+
+
+__all__ = ['build_finance_metrics', 'build_finance_pulse', 'build_finance_interactive_kpis']

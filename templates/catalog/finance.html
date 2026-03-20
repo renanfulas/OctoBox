@@ -17,28 +17,53 @@ PONTOS CRITICOS:
 -->
 {% extends "layouts/base.html" %}
 {% load l10n %}
+{% load static %}
 
 {% block content %}
 {% with page=finance_center_page %}
-<div class="operation-shell finance-shell" data-page="finance" data-screen="catalog-finance" data-slot="page-root">
+<div class="operation-shell finance-shell workspace-shell" data-page="finance" data-screen="catalog-finance" data-slot="page-root">
     <div data-panel="finance-hero">
-    {% include "includes/catalog/finance/hero.html" with page=page %}
+    {% include "includes/catalog/finance/views/hero.html" with page=page %}
     </div>
-    <div data-panel="finance-metrics-strip">
-    {% include "includes/catalog/finance/metrics_strip.html" %}
+    <div class="owner-metrics-panel section-gap" data-panel="finance-interactive-kpis">
+        <section class="panel-grid operation-metric-grid owner-metric-grid interactive-tab-triggers" aria-label="Navegacao principal financeira">
+            {% for card in page.data.interactive_kpis %}
+            {% include "includes/ui/shared/metric_card.html" with card=card compact=True extra_classes="dashboard-kpi-card is-ledger "|add:card.card_class %}
+            {% endfor %}
+        </section>
     </div>
 
-    <section class="finance-board" aria-label="Painel de controle financeiro" data-slot="workspace" data-panel="finance-board">
-        <div data-panel="finance-priority-rail-section">{% include "includes/catalog/finance/priority_rail.html" %}</div>
-        <div data-panel="finance-queue-board-section">{% include "includes/catalog/finance/queue_board.html" %}</div>
-        <div data-panel="finance-control-board-section">{% include "includes/catalog/finance/control_board.html" %}</div>
-        <div data-panel="finance-support-rail-section">{% include "includes/catalog/finance/support_rail.html" %}</div>
-        <div data-panel="finance-trend-boards-section">{% include "includes/catalog/finance/trend_boards.html" %}</div>
-        <div data-panel="finance-plan-engine-section">{% include "includes/catalog/finance/plan_engine.html" %}</div>
-        <div data-panel="finance-portfolio-mix-section">{% include "includes/catalog/finance/portfolio_and_mix.html" %}</div>
-        <div data-panel="finance-movements-section">{% include "includes/catalog/finance/movements.html" %}</div>
+    <div class="interactive-tab-container">
+        <!-- Tab 1: Raio-X Financeiro -->
+        <div class="stack-16 is-tab-active" id="tab-finance-movements" aria-label="Raio-X Financeiro">
+            {% include "includes/catalog/finance/views/movements.html" %}
+            {% include "includes/catalog/finance/boards/trend_boards.html" %}
+        </div>
 
-    </section>
+        <!-- Tab 2: Handoff de Cobranca -->
+        <div class="stack-16" id="tab-finance-queue" aria-label="Handoff de Cobranca">
+            {% include "includes/catalog/finance/views/priority_rail.html" %}
+            {% include "includes/catalog/finance/boards/queue_board.html" %}
+        </div>
+
+        <!-- Tab 3: Motor de Carteira -->
+        <div class="stack-16" id="tab-finance-portfolio" aria-label="Motor de Carteira">
+            {% include "includes/catalog/finance/boards/portfolio_board.html" %}
+            {% include "includes/catalog/finance/boards/mix_board.html" %}
+            {% if page.capabilities.can_manage_finance %}
+            {% include "includes/catalog/finance/engine/plan_engine.html" %}
+            {% endif %}
+        </div>
+
+        <!-- Tab 4: Filtros & Exportacao -->
+        <div class="stack-16" id="tab-finance-filters" aria-label="Filtros e Exportacao">
+            {% include "includes/catalog/finance/boards/control_board.html" %}
+        </div>
+    </div>
 </div>
 {% endwith %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/pages/interactive_tabs.js' %}?v={{ static_asset_version }}"></script>
 {% endblock %}

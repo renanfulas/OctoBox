@@ -1,6 +1,0 @@
-<tr>
-    <td>{{ contact.display_name|default:"Sem nome" }}</td>
-    <td>{{ contact.phone }}</td>
-    <td><span class="pill info">{{ contact.get_status_display }}</span></td>
-    <td>{% if contact.display_name %}<span class="pill accent">Vincular aluno</span>{% else %}<span class="pill warning">Identificar contato</span>{% endif %}</td>
-</tr>

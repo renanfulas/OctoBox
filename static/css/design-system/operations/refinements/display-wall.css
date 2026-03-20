@@ -187,12 +187,6 @@ POR QUE ELE EXISTE:
     max-width: 24ch;
 }
 
-.owner-next-steps .owner-step-card:first-child {
-    background: linear-gradient(160deg, color-mix(in srgb, var(--brand) 8%, white), var(--surface));
-    border-color: color-mix(in srgb, var(--brand) 22%, transparent);
-    box-shadow: var(--shadow-soft);
-}
-
 @media (max-width: 960px) {
     .manager-main-grid {
         grid-template-columns: 1fr;
@@ -212,8 +206,7 @@ POR QUE ELE EXISTE:
 /* --- operations-refine-pass --- */
 .manager-focus-lane,
 .coach-focus-lane,
-.reception-focus-lane,
-.owner-next-steps {
+.reception-focus-lane {
     position: relative;
     overflow: hidden;
     border-radius: var(--radius-panel);
@@ -223,8 +216,7 @@ POR QUE ELE EXISTE:
 
 .manager-focus-lane::before,
 .coach-focus-lane::before,
-.reception-focus-lane::before,
-.owner-next-steps::before {
+.reception-focus-lane::before {
     content: "";
     position: absolute;
     inset: 0 auto auto 0;
@@ -235,8 +227,7 @@ POR QUE ELE EXISTE:
 
 .manager-focus-lane,
 .coach-focus-lane,
-.reception-focus-lane,
-.owner-next-steps {
+.reception-focus-lane {
     background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(246, 248, 251, 0.98));
     box-shadow: var(--shadow-soft);
 }
@@ -251,8 +242,7 @@ POR QUE ELE EXISTE:
 .manager-main-grid .manager-secondary-card,
 .reception-main-grid > *,
 .reception-support-grid > *,
-.coach-session-card,
-.owner-step-card {
+.coach-session-card {
     position: relative;
     overflow: hidden;
 }
@@ -273,8 +263,7 @@ POR QUE ELE EXISTE:
 body[data-theme="dark"] .manager-focus-lane,
 body[data-theme="dark"] .coach-focus-lane,
 body[data-theme="dark"] .reception-focus-lane,
-body[data-theme="dark"] .coach-session-card,
-body[data-theme="dark"] .owner-next-steps {
+body[data-theme="dark"] .coach-session-card {
     background: var(--surface);
 }
 

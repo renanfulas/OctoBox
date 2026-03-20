@@ -16,7 +16,7 @@ PONTOS CRITICOS:
 {% block content %}
 {% with page=finance_plan_page %}
 <div class="operation-shell finance-shell finance-plan-page" data-page="finance-plan-form" data-screen="catalog-finance-plan-form" data-slot="page-root">
-{% include "includes/ui/page_hero.html" with hero=page.data.hero %}
+{% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
 <section class="layout-grid finance-plan-support-grid align-start" data-slot="context">
     {% include "includes/catalog/finance_plan/guardrails.html" with page=page %}

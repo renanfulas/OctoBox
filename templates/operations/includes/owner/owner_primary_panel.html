@@ -1,0 +1,44 @@
+<!--
+ARQUIVO: painel principal do Owner.
+
+POR QUE ELE EXISTE:
+- concentra o primeiro passo e os proximos passos da tela em um bloco curto.
+
+PONTO CRITICO:
+- deve continuar pequeno; se crescer, perde a funcao de comando rapido.
+-->
+<article class="table-card owner-panel owner-primary-panel" data-panel="owner-primary-panel">
+    {% with primary_focus=page.data.owner_operational_focus|first %}
+    {% if primary_focus.key == 'intakes' %}
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Leitura principal" title="Entre pela fila que traz nova receita." copy="Existe demanda esperando resposta agora." pill_label="Agora" pill_class="accent" %}
+    {% elif primary_focus.key == 'payments' %}
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Leitura principal" title="Proteja a receita antes do restante." copy="Ha cobranca atrasada pedindo contato agora." pill_label="Agora" pill_class="accent" %}
+    {% else %}
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Leitura principal" title="Confirme a estrutura que sustenta o box." copy="Veja se WhatsApp, historico e estrutura continuam coerentes." pill_label="Agora" pill_class="accent" %}
+    {% endif %}
+    <div class="owner-primary-spotlight">
+        <div class="owner-primary-copy">
+            <p class="eyebrow">Movimento que lidera o dia</p>
+            <h3 class="owner-primary-title">{{ primary_focus.label }}</h3>
+            <p class="owner-primary-text">{{ primary_focus.summary }}</p>
+        </div>
+        <div class="owner-primary-actions">
+            <span class="pill{% if primary_focus.pill_class %} {{ primary_focus.pill_class }}{% endif %}">{% if primary_focus.count or primary_focus.count == 0 %}{{ primary_focus.count }}{% else %}Ler{% endif %}</span>
+            <a class="button" href="{{ primary_focus.href }}">{{ primary_focus.href_label }}</a>
+        </div>
+    </div>
+    {% endwith %}
+    <div class="owner-secondary-list" aria-label="Proximos passos">
+        {% for item in page.data.owner_operational_focus|slice:"1:" %}
+        <a class="owner-secondary-item" href="{{ item.href }}">
+            <span class="owner-secondary-step">{{ forloop.counter|stringformat:"02d" }}</span>
+            <span class="owner-secondary-body">
+                <span class="owner-secondary-kicker">Proxima leitura</span>
+                <strong>{{ item.label }}</strong>
+                <span>{{ item.summary }}</span>
+            </span>
+            <span class="pill{% if item.pill_class %} {{ item.pill_class }}{% endif %}">{% if item.count or item.count == 0 %}{{ item.count }}{% else %}Ler{% endif %}</span>
+        </a>
+        {% endfor %}
+    </div>
+</article>

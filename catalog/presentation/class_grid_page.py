@@ -93,9 +93,9 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
     ]
     shell_action_buttons = build_shell_action_buttons_from_focus(focus=operational_focus, scope='class-grid')
     hero = build_page_hero(
-        eyebrow='Centro de ritmo das aulas',
-        title='Grade de aulas',
-        copy='Agenda, lotacao e ajuste de janela numa leitura curta.',
+        eyebrow='Aulas',
+        title='Grade de aulas.',
+        copy='Acompanhe a agenda, lotação e o ritmo das turmas.',
         actions=[
             {'label': 'Ler o dia primeiro', 'href': '#today-board'},
             {'label': 'Ver pico da janela', 'href': '#weekly-board', 'kind': 'secondary'},
@@ -104,7 +104,7 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
             ] if can_manage_classes else []),
         ],
         aria_label='Panorama da grade',
-        classes=['class-grid-hero'],
+        classes=['operation-hero', 'class-grid-hero'],
     )
 
     payload = build_catalog_page_payload(
@@ -152,7 +152,7 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
         },
         assets=build_catalog_assets(
             css=['css/catalog/class-grid.css'],
-            js=['js/pages/class-grid.js'],
+            js=['js/pages/class-grid/class-grid.js'],
             include_catalog_shared=True,
         ),
     )

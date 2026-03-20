@@ -1,0 +1,114 @@
+/* 
+   ARQUIVO: Estilos do Menu de Perfil (iOS-style).
+   POR QUE ELE EXISTE: Transforma o perfil da Topbar em um menu interativo e elegante.
+*/
+
+.profile-menu-container {
+    position: relative;
+}
+
+.topbar-profile {
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+    padding: 4px 8px;
+    border-radius: 12px;
+}
+
+.topbar-profile:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.topbar-profile:active {
+    transform: scale(0.98);
+}
+
+/* O Menu em si */
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 220px;
+    background: rgba(255, 255, 255, 0.85); /* Vidro claro */
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    padding: 8px;
+    z-index: 1000;
+    
+    /* Estado inicial (escondido) */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px) scale(0.95);
+    transform-origin: top right;
+    transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
+                transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
+                visibility 0.2s;
+}
+
+.profile-dropdown.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+/* Modo Escuro */
+[data-theme="dark"] .profile-dropdown {
+    background: rgba(28, 28, 30, 0.8); /* iOS Dark Material */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-menu-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.profile-menu-item {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    font-size: 15px;
+    font-weight: 400;
+    color: #1c1c1e;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: background 0.2s ease;
+    text-align: left;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+[data-theme="dark"] .profile-menu-item {
+    color: #f2f2f7;
+}
+
+.profile-menu-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .profile-menu-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Divisor iOS */
+.profile-menu-divider {
+    height: 1px;
+    background: rgba(0, 0, 0, 0.1);
+    margin: 6px 4px;
+}
+
+[data-theme="dark"] .profile-menu-divider {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Item de Logout (Vermelho no estilo iOS) */
+.profile-menu-item.is-danger {
+    color: #ff3b30;
+}
+
+.profile-menu-item.is-danger:hover {
+    background: rgba(255, 59, 48, 0.1);
+}

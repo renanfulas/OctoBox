@@ -1,0 +1,5 @@
+<div class="topbar-quick-actions" data-slot="topbar-quick-actions" aria-label="Acoes rapidas globais">
+    {% for link in topbar_quick_links %}
+    <a class="topbar-quick-link topbar-quick-link--{{ link.kind }}" href="{{ link.href }}" data-priority-level="{{ link.kind }}" data-action="{{ link.action }}">{{ link.label }}</a>
+    {% endfor %}
+</div>

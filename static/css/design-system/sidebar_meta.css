@@ -36,6 +36,7 @@ PONTOS CRITICOS:
 .sidebar-role {
     color: var(--sidebar-muted);
     font-size: 0.8rem;
+    word-break: break-all;
 }
 
 .sidebar-highlight {

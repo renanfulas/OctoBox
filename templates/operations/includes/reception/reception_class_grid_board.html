@@ -1,0 +1,18 @@
+<!--
+ARQUIVO: grade resumida da Recepcao.
+
+POR QUE ELE EXISTE:
+- isola a leitura de aulas para manter a tela principal escaneavel.
+-->
+<section class="table-card operation-table-card reception-grid-board reception-support-card" id="reception-class-grid-board" aria-label="Grade de aulas da recepcao" data-panel="reception-class-grid-board">
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Grade em leitura" title="Próximas aulas para orientar no balcão" copy="Horário, coach e contexto para a rotina do turno." pill_label="Leitura apenas" pill_class="info" %}
+    <div class="reception-grade-grid">
+        {% for session in page.data.reception_sessions %}
+        {% include "operations/includes/reception/reception_class_session_card.html" with session=session %}
+        {% empty %}
+        <div class="table-card operation-empty-card">
+            {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Grade em leitura" title="Nenhuma aula futura encontrada" copy="O recorte atual nao tem aula futura para orientar o balcao." badge="Agenda leve" badge_class="info" %}
+        </div>
+        {% endfor %}
+    </div>
+</section>

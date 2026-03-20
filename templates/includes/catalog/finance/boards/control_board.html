@@ -1,0 +1,55 @@
+<!--
+ARQUIVO: recorte ativo e filtros do financeiro.
+-->
+<section class="card glass-panel finance-support-card finance-support-card-tight finance-filter-summary-card" id="finance-control-board" data-panel="finance-control-summary">
+    <div class="card-head">
+        <h3 class="card-title">Exportacao do Recorte Ativo</h3>
+        <span class="badge badge-subtle info">Contexto visivel</span>
+    </div>
+    <div class="finance-guide-note">
+        <p class="meta-text no-margin">Confirme o recorte de filtragem atual antes de extrair os numeros para PDF ou planilhas executivas.</p>
+    </div>
+    <div class="finance-summary-grid">
+        {% for item in page.data.finance_filter_summary %}
+        {% include "includes/ui/finance/finance_snapshot_chip.html" with item=item chip_class="finance-summary-chip" %}
+        {% endfor %}
+    </div>
+    <div class="actions actions-tight finance-support-actions">
+        <a class="button secondary" href="{{ page.actions.finance_export_links.csv }}" data-action="export-finance-csv">Exportar CSV</a>
+        <a class="button secondary" href="{{ page.actions.finance_export_links.pdf }}" data-action="export-finance-pdf">Exportar PDF</a>
+    </div>
+</section>
+
+<section class="card glass-panel finance-board-filter" data-panel="finance-filter-form">
+    <div class="card-head">
+        <h3 class="card-title">Filtros da Leitura Financeira</h3>
+        <span class="badge badge-subtle info">Leitura ativa</span>
+    </div>
+    <div class="finance-guide-note">
+        <p class="meta-text no-margin">Recorte e isole assinaturas na base por janela de tempo, plano nativo, status comercial e instrumento de pagamento.</p>
+    </div>
+    <form method="get" class="form-stack" data-action="filter-finance">
+        <div class="field-grid-200">
+            <label>
+                <span class="field-label">{{ page.data.finance_filter_form.months.label }}</span>
+                {{ page.data.finance_filter_form.months }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.finance_filter_form.plan.label }}</span>
+                {{ page.data.finance_filter_form.plan }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.finance_filter_form.payment_status.label }}</span>
+                {{ page.data.finance_filter_form.payment_status }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.finance_filter_form.payment_method.label }}</span>
+                {{ page.data.finance_filter_form.payment_method }}
+            </label>
+        </div>
+        <div class="actions actions-tight">
+            <button class="button" type="submit" data-action="apply-finance-filters">Aplicar filtros</button>
+            <a class="button secondary" href="/financeiro/" data-action="clear-finance-filters">Limpar</a>
+        </div>
+    </form>
+</article>

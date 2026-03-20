@@ -1,0 +1,15 @@
+<!--
+ARQUIVO: selecao de dias do planejador recorrente.
+-->
+<div>
+    <span class="field-label">{{ page.data.schedule_form.weekdays.label }}</span>
+    <div class="weekday-picker">
+        {% for checkbox in page.data.schedule_form.weekdays %}
+        <label class="weekday-option">
+            {{ checkbox.tag }}
+            <span>{{ checkbox.choice_label }}</span>
+        </label>
+        {% endfor %}
+    </div>
+    {% for error in page.data.schedule_form.weekdays.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+</div>

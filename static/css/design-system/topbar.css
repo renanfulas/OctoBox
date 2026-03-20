@@ -16,13 +16,23 @@ PONTOS CRITICOS:
 */
 
 .topbar {
+    /* --- Fibonacci Sizing System ---
+       fib-5=5  fib-6=8  fib-7=13  fib-8=21  fib-9=34  fib-10=55  fib-11=89
+    */
+    --topbar-h: 89px !important;                /* fib-11 */
+    --topbar-item-h: 34px !important;           /* fib-9  */
+    --topbar-profile-h: 55px !important;        /* fib-10 */
+    --topbar-padding-block: 13px !important;    /* fib-7  */
+    --topbar-padding-inline: 21px !important;   /* fib-8  */
+    --topbar-gap: 8px !important;               /* fib-6  */
+    --topbar-left-gap: 8px !important;          /* fib-6  */
+    --topbar-right-gap: 8px !important;         /* fib-6  */
+    --topbar-item-pad-y: 0px !important;
+    --topbar-item-pad-x: 13px !important;       /* fib-7  */
     --topbar-position: sticky;
     --topbar-top: 16px;
-    --topbar-gap: 12px;
-    --topbar-margin-bottom: clamp(18px, 1.8vw, 26px);
-    --topbar-padding-block: 12px;
-    --topbar-padding-inline: 14px;
-    --topbar-radius: 22px;
+    --topbar-radius: 21px;           /* fib-8  — border-radius da topbar */
+    --topbar-margin-bottom: 13px;
     --topbar-surface: rgba(253, 254, 255, 0.64);
     --topbar-border-color: rgba(255, 255, 255, 0.52);
     --topbar-shadow: 0 8px 24px rgba(15, 23, 42, 0.03), 0 2px 8px rgba(15, 23, 42, 0.02);
@@ -31,9 +41,7 @@ PONTOS CRITICOS:
     --topbar-overlay-width: 0;
     --topbar-overlay-height: 0;
     --topbar-overlay-background: transparent;
-    --topbar-left-gap: 10px;
-    --topbar-right-gap: 10px;
-    --topbar-search-radius: 18px;
+    --topbar-search-radius: 17px;
     --topbar-search-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.62)), var(--surface);
     --topbar-search-border-color: rgba(80, 102, 128, 0.12);
     --topbar-search-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.66), 0 3px 8px rgba(15, 23, 42, 0.02);
@@ -46,12 +54,11 @@ PONTOS CRITICOS:
     --topbar-profile-surface: var(--surface);
     --topbar-profile-border-color: var(--line);
     --topbar-profile-shadow: none;
-    --topbar-actions-cluster-padding: 3px;
+    --topbar-actions-cluster-padding: 0;
     --topbar-actions-cluster-radius: 999px;
-    --topbar-actions-cluster-surface: rgba(255, 255, 255, 0.54);
-    --topbar-actions-cluster-border-color: rgba(80, 102, 128, 0.08);
-    --topbar-actions-cluster-shadow: none;
-    --topbar-toggle-radius: 12px;
+    --topbar-actions-cluster-surface: transparent;
+    --topbar-actions-cluster-border-color: transparent;
+    --topbar-toggle-radius: 10px;
     --topbar-toggle-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48);
     --theme-toggle-light-surface: var(--surface);
     --theme-toggle-light-border: rgba(37, 99, 235, 0.2);
@@ -61,13 +68,14 @@ PONTOS CRITICOS:
     --theme-toggle-dark-border: rgba(111, 214, 201, 0.14);
     --theme-toggle-dark-ink: #d7f1ea;
     position: var(--topbar-position);
-    top: var(--topbar-top);
+    top: 16px !important;
     z-index: 12;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas: "left right";
     align-items: center;
     gap: var(--topbar-gap);
+    min-height: var(--topbar-h);
     margin-bottom: var(--topbar-margin-bottom);
     padding: var(--topbar-padding-block) var(--topbar-padding-inline);
     border-radius: var(--topbar-radius);
@@ -82,6 +90,9 @@ PONTOS CRITICOS:
 body[data-theme="dark"] .topbar {
     --topbar-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)), var(--fdw-panel);
     --topbar-border-color: rgba(148, 163, 184, 0.12);
+    --topbar-search-surface: rgba(15, 23, 42, 0.4);
+    --topbar-search-border-color: rgba(148, 163, 184, 0.16);
+    --topbar-search-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
     --topbar-manifesto-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
     --topbar-manifesto-border-color: rgba(148, 163, 184, 0.14);
     --topbar-manifesto-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -170,37 +181,46 @@ body[data-theme="dark"] .alert-chip.danger.has-volume:focus-visible {
 .topbar-right {
     grid-area: right;
     justify-content: flex-end;
+    align-items: center;
     gap: var(--topbar-right-gap);
     min-width: 0;
+    flex-shrink: 1;
 }
 
 .sidebar-toggle,
 .theme-toggle {
-    border: 1px solid var(--line);
-    background: var(--surface);
-    color: var(--ink);
-    border-radius: var(--topbar-toggle-radius);
-    padding: 8px 10px;
-    cursor: pointer;
-    font: inherit;
-    transition: background 0.12s ease;
-    box-shadow: var(--topbar-toggle-shadow);
-}
-
-.theme-toggle {
-    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
+    width: var(--topbar-item-h);    /* 34px (fib-9) */
+    height: var(--topbar-item-h);   /* 34px (fib-9) */
+    min-width: var(--topbar-item-h);
     padding: 0;
-    font-weight: 600;
-    line-height: 1;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--muted);
+    border-radius: 10px;
+    cursor: pointer;
+    font: inherit;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--topbar-toggle-shadow);
+    position: relative;
     overflow: hidden;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
-    transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.22s ease, border-color 0.22s ease, color 0.22s ease;
+}
+
+.theme-toggle:hover,
+.sidebar-toggle:hover {
+    background: var(--surface-strong);
+    border-color: var(--line-strong);
+    color: var(--ink);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-soft);
+}
+
+body[data-theme="dark"] .theme-toggle,
+body[data-theme="dark"] .sidebar-toggle {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
 }
 
 .theme-toggle::before {
@@ -223,46 +243,18 @@ body[data-theme="dark"] .alert-chip.danger.has-volume:focus-visible {
     height: 100%;
     border-radius: 999px;
     font-size: 0.78rem;
-    letter-spacing: -0.04em;
     transform: rotate(0deg) scale(1);
     transition: transform 0.24s ease, opacity 0.18s ease, color 0.22s ease;
 }
 
-.theme-toggle-label {
-    min-width: 0;
-}
-
-.theme-toggle[data-theme-state="light"] {
-    background: var(--theme-toggle-light-surface);
-    border-color: var(--theme-toggle-light-border);
-    color: var(--theme-toggle-light-ink);
-    box-shadow: var(--theme-toggle-light-shadow);
-}
-
-.theme-toggle[data-theme-state="light"]::before {
-    opacity: 0.34;
-}
-
 .theme-toggle[data-theme-state="light"] .theme-toggle-icon {
-    background: var(--bg);
-    text-shadow: 0 0 0.01px currentColor;
-}
-
-.theme-toggle[data-theme-state="dark"] {
-    background: var(--theme-toggle-dark-surface);
-    border-color: var(--theme-toggle-dark-border);
-    color: var(--theme-toggle-dark-ink);
+    background: transparent;
 }
 
 .theme-toggle[data-theme-state="dark"] .theme-toggle-icon {
-    background: rgba(37, 99, 235, 0.14);
+    background: rgba(37, 99, 235, 0.14); /* Blue glow - Theme Sync */
+    color: #60a5fa;
     transform: rotate(-18deg) scale(0.94);
-}
-
-.sidebar-toggle:hover,
-.theme-toggle:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-soft);
 }
 
 .theme-toggle:focus-visible {
@@ -388,7 +380,7 @@ body[data-theme="dark"] .global-search {
     }
 
     .alert-chip {
-        padding: 5px 10px;
+        padding: 0 var(--topbar-item-pad-x, 13px);
         font-size: 0.78rem;
     }
 
@@ -489,46 +481,50 @@ body[data-theme="dark"] .global-search {
 .topbar-quick-actions {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: var(--topbar-actions-cluster-padding);
-    border-radius: var(--topbar-actions-cluster-radius);
-    background: var(--topbar-actions-cluster-surface);
-    border: 1px solid var(--topbar-actions-cluster-border-color);
-    box-shadow: var(--topbar-actions-cluster-shadow);
+    gap: 8px; /* Fibonacci #5/6 range for better breathing room without the container */
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
 }
 
 .topbar-quick-link {
     display: inline-flex;
     align-items: center;
-    padding: 5px 12px;
+    justify-content: center;
+    height: var(--topbar-item-h) !important; /* 34px fib-9 */
+    min-height: var(--topbar-item-h) !important;
+    padding: 0 var(--topbar-item-pad-x, 13px);
     border-radius: 999px;
     font-size: 0.78rem;
     font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
+    line-height: 1;
     transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
 }
 
 .topbar-quick-link--primary {
-    background: var(--accent, #2563eb);
+    background: #2563eb; /* Blue 600 - Theme Sync */
     color: #fff;
     border: 1px solid transparent;
 }
 
 .topbar-quick-link--primary:hover,
 .topbar-quick-link--primary:focus-visible {
-    background: var(--accent-hover, #1d4ed8);
+    background: #1d4ed8;
 }
 
 .topbar-quick-link--secondary {
     background: transparent;
-    color: var(--accent, #2563eb);
-    border: 1px solid var(--accent, #2563eb);
+    color: #2563eb;
+    border: 1px solid rgba(37, 99, 235, 0.28);
 }
 
 .topbar-quick-link--secondary:hover,
 .topbar-quick-link--secondary:focus-visible {
-    background: rgba(37, 99, 235, 0.06);
+    background: rgba(37, 99, 235, 0.05);
+    border-color: #2563eb;
 }
 
 body[data-theme="dark"] .topbar-quick-link--primary {
@@ -536,20 +532,34 @@ body[data-theme="dark"] .topbar-quick-link--primary {
 }
 
 body[data-theme="dark"] .topbar-quick-link--primary:hover,
-body[data-theme="dark"] .topbar-quick-link--primary:focus-visible {
-    background: var(--accent-hover, #2563eb);
+body[data-theme="dark"] .topbar-quick-link--primary {
+    background: #3b82f6; /* More vibrant sky-blue for dark mode */
 }
 
 body[data-theme="dark"] .topbar-quick-link--secondary {
-    background: rgba(255, 255, 255, 0.06);
-    color: #e2e8f0;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: transparent;
+    color: #60a5fa; /* Light Blue 400 for better dark mode legibility */
+    border: 1px solid rgba(96, 165, 250, 0.34);
 }
 
 body[data-theme="dark"] .topbar-quick-link--secondary:hover,
 body[data-theme="dark"] .topbar-quick-link--secondary:focus-visible {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(96, 165, 250, 0.08);
+    border-color: #60a5fa;
+    color: #93c5fd;
+}
+
+/* Fallback for visually-hidden in case cards.css is not mounted */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 /* ---------- Alert chips ---------- */
@@ -557,13 +567,16 @@ body[data-theme="dark"] .topbar-quick-link--secondary:focus-visible {
 .alert-chip {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    min-height: var(--topbar-item-h); /* 34px fib-9 */
     gap: 5px;
-    padding: 5px 10px;
+    padding: 0 var(--topbar-item-pad-x, 13px);
     border-radius: 999px;
     background: transparent;
     border: 1px solid var(--line);
     color: var(--muted);
     font-size: 0.78rem;
+    line-height: 1;
     text-decoration: none;
     transition: background 0.14s ease, border-color 0.14s ease;
 }
@@ -872,35 +885,7 @@ body[data-theme="dark"] .topbar-quick-link--secondary:focus-visible {
     }
 }
 
-/* --- Front Display Wall facade topbar pass --- */
-
-.topbar-quick-link {
-    min-height: 30px;
-    padding: 6px 12px;
-}
-
-.topbar-quick-link--primary {
-    background: linear-gradient(135deg, var(--fdw-copper), #ea580c);
-    box-shadow: 0 3px 8px rgba(212, 102, 44, 0.08);
-}
-
-.topbar-quick-link--secondary {
-    color: var(--fdw-sky);
-    border-color: rgba(29, 78, 216, 0.16);
-}
-
-.alert-chip {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.32));
-    border-color: rgba(80, 102, 128, 0.08);
-}
-
-.alert-chip.has-volume {
-    background: linear-gradient(180deg, rgba(255, 247, 237, 0.94), rgba(255, 255, 255, 0.88));
-}
-
-.alert-chip.danger.has-volume {
-    background: linear-gradient(180deg, rgba(254, 242, 242, 0.96), rgba(255, 255, 255, 0.88));
-}
+/* Removido o bloco Front Display Wall facade para evitar conflitos com o Design System Fibonacci */
 
 @media (max-width: 900px) {
     .topbar {

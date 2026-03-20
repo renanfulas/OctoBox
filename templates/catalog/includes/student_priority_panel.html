@@ -4,9 +4,9 @@ ARQUIVO: fila curta de prioridade da base.
 POR QUE ELE EXISTE:
 - separa a triagem imediata do restante do diretorio.
 -->
-<section class="layout-block layout-block--split student-compact-layout section-gap" id="student-priority-board" aria-label="Painel de prioridade" data-slot="students-priority-board">
+<section id="tab-students-priority" class="layout-block layout-block--split student-compact-layout section-gap" aria-label="Painel de prioridade" data-slot="students-priority-board">
     <article class="table-card layout-panel layout-panel--stack student-priority-panel" data-panel="students-priority-board">
-        {% include "includes/ui/operation_card_head.html" with eyebrow="Quem pede ação agora" title="Fila curta de triagem" copy="Leads esfriando, planos travados e atrasos que já merecem abordagem." title_class="operation-card-title section-title-sm" %}
+        {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Quem pede ação agora" title="Fila curta de triagem" copy="Leads esfriando, planos travados e atrasos que já merecem abordagem." title_class="operation-card-title section-title-sm" %}
         <div class="stack-14">
             {% for student in page.data.priority_students %}
             <article class="priority-student-card" data-panel="priority-student-card">
@@ -38,7 +38,7 @@ POR QUE ELE EXISTE:
                 </div>
             </article>
             {% empty %}
-            {% include "includes/ui/state_empty.html" with compact=True eyebrow="Triagem imediata" title="Nenhum aluno exigindo triagem agora" copy="O recorte atual nao mostra lead esfriando, plano travado ou atraso pressionando atendimento." badge="Fila limpa" badge_class="accent" %}
+            {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Triagem imediata" title="Nenhum aluno exigindo triagem agora" copy="O recorte atual nao mostra lead esfriando, plano travado ou atraso pressionando atendimento." badge="Fila limpa" badge_class="accent" %}
             {% endfor %}
         </div>
     </article>

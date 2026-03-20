@@ -55,17 +55,29 @@ class StudentDirectoryView(CatalogBaseView):
         student_count = students.count()
         current_role_slug = base_context['current_role'].slug
         context['students'] = students
+        
+        from django.core.paginator import Paginator
+        paginator = Paginator(students, 15)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        query_params = self.request.GET.copy()
+        if 'page' in query_params:
+            del query_params['page']
+        base_query_string = query_params.urlencode()
+        
         export_links = {
             'csv': f"{reverse('student-directory-export', args=['csv'])}?{self.request.GET.urlencode()}",
             'pdf': f"{reverse('student-directory-export', args=['pdf'])}?{self.request.GET.urlencode()}",
         }
         page_payload = build_student_directory_page(
             student_count=student_count,
-            students=students[:24],
+            students=page_obj,
             student_filter_form=snapshot['filter_form'],
             snapshot=snapshot,
             current_role_slug=current_role_slug,
             export_links=export_links,
+            base_query_string=base_query_string,
         )
         return attach_catalog_page_payload(
             context,

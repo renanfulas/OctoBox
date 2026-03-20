@@ -47,29 +47,14 @@ body[data-theme="dark"] .operation-hero {
 
 .operation-hero-copy {
     max-width: 52ch;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    overflow: hidden;
 }
 
 .operation-hero-main h2 {
-    max-width: 18ch;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    overflow: hidden;
+    max-width: none;
 }
 
 .operation-hero-main h1 {
-    max-width: 18ch;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    overflow: hidden;
+    max-width: none;
 }
 
 .operation-hero-tags {
@@ -165,10 +150,9 @@ body[data-theme="dark"] .operation-hero::after {
 }
 
 .operation-hero .actions {
-    margin-top: 0;
-    gap: 8px;
-    max-width: 580px;
-    align-items: flex-start;
+    margin-top: var(--operation-hero-actions-gap, 0);
+    max-width: var(--operation-hero-actions-max-width, 580px);
+    align-items: var(--operation-hero-actions-align-items, flex-start);
 }
 
 .operation-hero .actions .button {

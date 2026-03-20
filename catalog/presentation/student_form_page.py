@@ -149,7 +149,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             {'label': 'Voltar para alunos', 'href': '/alunos/', 'kind': 'secondary'},
         ],
         aria_label='Ficha do aluno',
-        classes=['catalog-hero', 'student-hero', 'student-form-hero'],
+        classes=['operation-hero', 'catalog-hero', 'student-hero', 'student-form-hero'],
     )
 
     return build_catalog_page_payload(
@@ -208,7 +208,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
         },
         assets=build_catalog_assets(
             css=['css/catalog/students.css'],
-            js=['js/pages/student-form.js'],
+            js=['js/pages/students/student-form.js'],
             include_catalog_shared=True,
         ),
     )

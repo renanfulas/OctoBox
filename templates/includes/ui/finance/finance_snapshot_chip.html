@@ -1,0 +1,17 @@
+<!--
+ARQUIVO: chip reutilizavel de snapshot financeiro.
+
+POR QUE ELE EXISTE:
+- concentra a leitura curta de label, valor e resumo usada em varios pontos do centro financeiro.
+-->
+<article class="{% if chip_class %}{{ chip_class }}{% endif %}">
+    <div class="card-body finance-chip-body">
+        <div class="card-value-stack finance-chip-value-stack">
+            <span class="operation-mini-label">{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+        </div>
+        <div class="card-content finance-chip-content">
+            <p>{{ item.summary }}</p>
+        </div>
+    </div>
+</article>

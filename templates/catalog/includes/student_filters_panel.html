@@ -4,8 +4,11 @@ ARQUIVO: filtros da pagina de alunos.
 POR QUE ELE EXISTE:
 - isola busca, recorte e utilitarios em um bloco facil de manter.
 -->
-<section class="table-card layout-panel layout-panel--stack glass-panel section-gap student-filter-card" aria-label="Busca e filtros" data-slot="filters" data-panel="students-filters">
-    {% include "includes/ui/operation_card_head.html" with eyebrow="Busca e recorte comercial" title="Filtre a base sem perder a prioridade" copy="Busca e filtros para estreitar a leitura. A prioridade continua sendo triagem e próxima ação." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
+<section id="tab-students-filters" class="card glass-panel student-filter-card" aria-label="Busca e filtros" data-slot="filters" data-panel="students-filters" style="padding: 55px 32px;">
+    <div class="card-head-stacked" style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 13px;">
+        <h3 class="card-title">Filtre a base</h3>
+        <p class="meta-text-sm" style="color: var(--muted); margin-top: 4px;">Busca e recortes comerciais para estreitar a leitura.</p>
+    </div>
     <form method="get" class="form-stack" data-action="filter-students">
         <div class="field-grid-200">
             <label>
@@ -26,21 +29,8 @@ POR QUE ELE EXISTE:
             </label>
         </div>
         <div class="actions actions-tight student-filter-actions-primary">
-            <button class="button" type="submit" data-action="apply-student-filters">Aplicar filtros</button>
-            <a class="button secondary" href="/alunos/" data-action="clear-student-filters">Limpar</a>
+            <button class="button button-pill" type="submit" data-action="apply-student-filters">Aplicar filtros</button>
+            <a href="{% url 'student-directory' %}?keep_open=true" class="button button-outline button-pill" style="color: var(--slate-700); border-color: var(--line);">Limpar filtros</a>
         </div>
     </form>
-    <div class="student-utility-actions">
-        {% if page.capabilities.can_manage_students %}
-        <a class="button" href="/alunos/novo/#student-form-essential" data-action="open-student-quick-create">Abrir cadastro rapido</a>
-        {% endif %}
-        <div class="actions actions-tight student-filter-actions-secondary">
-            {% if page.capabilities.can_export_students %}
-            <a class="button secondary" href="{{ page.actions.student_export_links.pdf }}" data-action="export-students-pdf">Exportar PDF</a>
-            {% endif %}
-            {% if page.capabilities.can_open_student_admin %}
-            <a class="button secondary" href="{% url 'admin:boxcore_student_add' %}" data-action="open-student-admin-create">Abrir no admin</a>
-            {% endif %}
-        </div>
-    </div>
 </section>

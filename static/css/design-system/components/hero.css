@@ -96,7 +96,7 @@ PONTOS CRITICOS:
 
 .hero :is(h1, h2) {
     margin: 0 0 4px;
-    max-width: var(--hero-heading-max-width);
+    max-width: none;
     font-size: var(--hero-heading-size);
     line-height: var(--hero-heading-line-height);
     letter-spacing: var(--hero-heading-letter-spacing);
@@ -270,7 +270,7 @@ body[data-theme="dark"] .hero {
     --hero-after-height: 280px;
     --hero-before-width: 5px;
     --hero-heading-letter-spacing: -0.06em;
-    --hero-heading-max-width: 11ch;
+    --hero-heading-max-width: none;
     --hero-panel-backdrop-filter: blur(12px);
     --hero-isolation: isolate;
 }
@@ -291,7 +291,7 @@ body[data-theme="dark"] .hero {
     --hero-after-width: 140px;
     --hero-after-height: 140px;
     --hero-after-opacity: 0.2;
-    --hero-heading-max-width: 10ch;
+    --hero-heading-max-width: none;
     --hero-heading-line-height: 0.92;
     --hero-copy-size: 1rem;
 }

@@ -1,0 +1,8 @@
+<article class="table-card finance-glass-panel finance-board-trend-side">
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Churn e crescimento" title="Ativacoes x cancelamentos" title_class="section-title-sm" copy="Mede acumulo real versus giro de base." copy_class="body-copy text-muted section-gap-top-xs no-margin" %}
+    <div class="stack-14 finance-trend-stack">
+        {% for item in page.data.monthly_comparison %}
+        {% include "includes/catalog/finance/cards/delta_row.html" with item=item page=page %}
+        {% endfor %}
+    </div>
+</article>

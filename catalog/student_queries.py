@@ -88,38 +88,36 @@ def build_student_directory_snapshot(params=None):
 	return {
 		'students': students,
 		'filter_form': filter_form,
-		'metrics': {
-			'Base cadastrada': {
-				'value': total_students,
-				'note': 'Pessoas ja registradas para atendimento e acompanhamento.',
+		'interactive_kpis': [
+			{
+				'eyebrow': 'Busca e recorte comercial',
+				'display_value': f'{total_students} registros',
+				'note': 'Filtre a base, encontre alunos específicos ou exporte relatórios.',
+				'data_action': 'open-tab-students-filters',
+				'tone_class': 'kpi-slate',
 			},
-			'Alunos ativos': {
-				'value': active_students,
-				'note': 'Base que ja deveria estar rodando com presenca e cobranca ativas.',
+			{
+				'eyebrow': 'Quem pede ação agora',
+				'display_value': len(priority_students),
+				'note': 'Alunos ou leads aguardando retomada, renovação ou cobrança.',
+				'data_action': 'open-tab-students-priority',
+				'tone_class': 'kpi-amber' if len(priority_students) > 0 else 'kpi-green',
 			},
-			'Leads em aberto': {
-				'value': lead_students,
-				'note': 'Contatos que ainda pedem conversao ou fechamento.',
+			{
+				'eyebrow': 'Handoff para intake',
+				'display_value': pending_intakes_count,
+				'note': 'Fila de leads quentes e cadastros provisórios aguardando conversão.',
+				'data_action': 'open-tab-students-intake',
+				'tone_class': 'kpi-blue' if pending_intakes_count > 0 else 'kpi-slate',
 			},
-			'Com plano ativo': {
-				'value': students_with_active_plan,
-				'note': 'Alunos com matricula ativa neste recorte.',
+			{
+				'eyebrow': 'Base principal de alunos',
+				'display_value': active_students,
+				'note': 'Acesso e edição ao diretório completo de membros ativos.',
+				'data_action': 'open-tab-students-directory',
+				'tone_class': 'kpi-slate',
 			},
-		},
-		'funnel': {
-			'Entradas para converter': {
-				'value': pending_intakes_count,
-				'note': 'Leads e entradas provisorias pedindo acao rapida da recepcao.',
-			},
-			'Financeiro em atraso': {
-				'value': overdue_students,
-				'note': 'Alunos que pedem contato financeiro ou revisao de rotina.',
-			},
-			'Sem plano ativo': {
-				'value': max(total_students - students_with_active_plan, 0),
-				'note': 'Base que exige leitura comercial, ajuste de plano ou reativacao.',
-			},
-		},
+		],
 		'priority_students': priority_students,
 		'intake_queue': intake_queue,
 	}

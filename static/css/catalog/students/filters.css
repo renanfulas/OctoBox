@@ -6,37 +6,43 @@ POR QUE ELE EXISTE:
 - mantém o comportamento de formulário separado dos painéis de leitura.
 */
 
-.student-filter-card {
+.card.student-filter-card {
     background: var(--surface);
+    padding: 13px 32px !important;
+    margin-bottom: var(--workspace-fib-4);
 }
 
 .student-filter-card .form-stack {
-    gap: 12px;
+    gap: var(--workspace-fib-4);
 }
 
 .student-filter-card .field-grid-200 {
-    gap: 10px;
+    gap: var(--workspace-fib-4);
+}
+
+.student-filter-card label {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.student-filter-card .field-label {
+    margin-bottom: 8px;
+}
+
+.student-filter-card input,
+.student-filter-card select {
+    text-align: center;
+    text-align-last: center; /* For select elements */
 }
 
 .student-filter-card .operation-card-head {
-    margin-bottom: 12px;
+    margin-bottom: var(--workspace-fib-4);
 }
 
 .student-filter-actions-primary {
-    justify-content: flex-start;
-    gap: 8px;
+    margin-top: 13px;
+    justify-content: center;
 }
-
-.student-utility-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(148, 163, 184, 0.16);
-}
-
-.student-filter-actions-secondary {
-    justify-content: flex-end;
-}
+

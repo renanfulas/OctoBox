@@ -1,0 +1,14 @@
+<!--
+ARQUIVO: atalhos curtos da Recepcao.
+
+POR QUE ELE EXISTE:
+- concentra os destinos de fluxo curto sem misturar com cobranca e intake.
+-->
+<article class="table-card operation-table-card reception-command-card reception-support-card" data-panel="reception-shortcuts">
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Atalhos de atendimento" title="Atalhos de atendimento" copy="Destinos de fluxo curto sem sair do compasso." pill_label="Fluxo curto" pill_class="info" %}
+    <div class="actions actions-tight">
+        {% include "operations/includes/reception/reception_shortcut_link.html" with href="/alunos/" data_action="open-students-directory" label="Abrir alunos" %}
+        {% include "operations/includes/reception/reception_shortcut_link.html" with href="/alunos/novo/#student-form-essential" data_action="open-student-registration" label="Novo aluno" %}
+        {% include "operations/includes/reception/reception_shortcut_link.html" with href="/grade-aulas/" data_action="open-class-grid" label="Abrir aulas" %}
+    </div>
+</article>

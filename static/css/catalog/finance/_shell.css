@@ -35,85 +35,25 @@ POR QUE ELE EXISTE:
 }
 
 .finance-board {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: calc(var(--section-gap) - 2px);
-    align-items: start;
-}
-
-.finance-board > * {
-    min-width: 0;
-}
-
-.finance-board > [data-panel$='-section'] {
-    display: contents;
-}
-
-.finance-board > [data-panel$='-section'] > * {
-    min-width: 0;
-}
-
-.finance-board > section {
-    grid-column: 1 / -1;
+    display: contents; /* Modulo convertido para .workspace-grid-layout */
 }
 
 .finance-board-filter {
-    grid-column: span 7;
     background: var(--surface);
 }
 
-.finance-filter-summary-card {
-    grid-column: span 5;
-}
-
-.finance-board-support-rail {
-    grid-column: span 3;
-}
-
-.finance-board-support-rail > * {
-    min-width: 0;
-}
-
 .finance-board-rail {
-    grid-column: span 7;
     background: var(--surface);
 }
 
 .finance-board-queue {
-    grid-column: span 5;
     background: var(--surface);
-}
-
-.finance-board-trend {
-    grid-column: span 7;
-}
-
-.finance-board-plan {
-    grid-column: 1 / -1;
-}
-
-.finance-board-trend-side,
-.finance-board-plan-support {
-    grid-column: span 5;
-}
-
-.finance-board-portfolio {
-    grid-column: span 8;
 }
 
 .finance-board-trend,
 .finance-board-trend-side,
 .finance-board-portfolio {
     background: var(--surface);
-}
-
-.finance-board-mix-side {
-    grid-column: span 4;
-}
-
-.finance-board-mix,
-.finance-board-mix-support {
-    min-width: 0;
 }
 
 .finance-side-stack {

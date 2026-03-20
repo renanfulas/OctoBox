@@ -7,7 +7,7 @@ POR QUE ELE EXISTE:
 
 .panel-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
     gap: var(--section-gap);
     margin-bottom: 0;
 }
@@ -486,8 +486,7 @@ body[data-theme="dark"] .fdw-focus-card.is-primary {
     backdrop-filter: blur(8px);
 }
 
-.card::before,
-.table-card::before {
+.card::before {
     display: block;
     content: "";
     position: absolute;
@@ -535,8 +534,7 @@ body[data-theme="dark"] .table-card::after {
 
 
 /* --- Front Display Wall artistic cards pass --- */
-.card::before,
-.table-card::before {
+.card::before {
     height: 2px;
     background: linear-gradient(90deg, rgba(212, 102, 44, 0.4), rgba(37, 85, 220, 0.3));
 }

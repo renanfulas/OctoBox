@@ -15,19 +15,37 @@ PONTOS CRITICOS:
 
 {% block content %}
 {% with page=intake_center_page %}
-<div class="scene-stack operation-shell catalog-scene intake-scene" data-page="intake-center" data-screen="onboarding-intake-center" data-slot="page-root">
-{% include "includes/ui/page_hero.html" with hero=page.data.hero %}
+<div class="operation-shell onboarding-scene intake-center-scene workspace-shell" data-page="intake-center" data-screen="onboarding-intake" data-slot="page-root">
+    <div data-panel="intake-hero">
+        {% if page.data.hero %}
+        {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+        {% endif %}
+    </div>
 
-{% include "onboarding/includes/intake_filters_panel.html" %}
+    <div data-panel="intake-filters">
+        {% include "onboarding/includes/intake/intake_filters_panel.html" with form=page.data.filter_form %}
+    </div>
 
-{% include "onboarding/includes/intake_metrics_section.html" %}
+    <div data-panel="intake-metrics">
+        {% include "onboarding/includes/intake/intake_metrics_section.html" with metrics=page.data.funnel_metrics %}
+    </div>
 
-<section class="layout-block layout-block--split intake-compact-layout section-gap" aria-label="Leituras da central de intake" data-slot="summary">
-    {% include "onboarding/includes/intake_source_board.html" %}
-    {% include "onboarding/includes/intake_conversion_board.html" %}
-</section>
-
-{% include "onboarding/includes/intake_queue_panel.html" %}
+    <section class="workspace-grid-layout" aria-label="Painel de leads" data-slot="workspace">
+        <div class="workspace-grid-main">
+            <div class="workspace-panel" data-panel="intake-queue-section">
+                {% include "onboarding/includes/intake/intake_queue_panel.html" %}
+            </div>
+        </div>
+        
+        <aside class="workspace-grid-side">
+            <div class="workspace-panel" data-panel="intake-source-section">
+                {% include "onboarding/includes/intake/intake_source_board.html" %}
+            </div>
+            <div class="workspace-panel" data-panel="intake-conversion-section">
+                {% include "onboarding/includes/intake/intake_conversion_board.html" %}
+            </div>
+        </aside>
+    </section>
 </div>
 {% endwith %}
 {% endblock %}

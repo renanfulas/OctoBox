@@ -1,0 +1,77 @@
+{% load dashboard_filters %}
+<article class="card{% if compact %} metric-card-compact{% endif %} {{ card.card_class }} {{ extra_classes }}{% if card.status_hint %} status-{{ card.status_hint }}{% endif %}{% if card.data_action %} has-action cursor-pointer{% endif %}" data-panel="metric-card" data-slot="metric-card"{% if card.data_action %} data-action="{{ card.data_action }}"{% endif %}>
+    <div class="card-body card-body-metric">
+        <div class="card-value-stack">
+            <p class="eyebrow card-label">{{ card.eyebrow }}</p>
+            {% if card.kicker %}
+            <p class="card-kicker">{{ card.kicker }}</p>
+            {% endif %}
+            <div class="card-value-row{% if card.is_jumbo %} is-jumbo{% endif %}">
+                <p class="metric card-value">
+                    {% if card.change %}
+                        {% if card.change.is_small %}
+                            <span class="metric-number is-warning">{{ card.display_value }}</span>
+                        {% elif card.change.tone == 'good' %}
+                            <span class="metric-number is-good">{{ card.display_value }}</span>
+                        {% elif card.change.tone == 'bad' %}
+                            <span class="metric-number is-bad">{{ card.display_value }}</span>
+                        {% else %}
+                            <span class="metric-number">{{ card.display_value }}</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="metric-number">{{ card.display_value }}</span>
+                    {% endif %}
+                </p>
+                {% if card.change %}
+                <div class="card-signal{% if card.change.tone %} is-{{ card.change.tone }}{% endif %}"{% if card.change.label %} title="{{ card.change.label }}"{% endif %}>
+                    <span class="card-signal-dot" aria-hidden="true"></span>
+                    <span class="card-signal-value">
+                        {% if card.change.tone == 'good' %}
+                            <span class="signal-arrow is-good" aria-hidden="true">▲</span>
+                        {% elif card.change.tone == 'bad' %}
+                            <span class="signal-arrow is-bad" aria-hidden="true">▼</span>
+                        {% endif %}
+                        {{ card.change.value }}
+                    </span>
+                </div>
+                {% elif card.signal %}
+                <div class="card-signal{% if card.signal.tone %} is-{{ card.signal.tone }}{% endif %}"{% if card.signal.label %} title="{{ card.signal.label }}"{% endif %}>
+                    <span class="card-signal-dot" aria-hidden="true"></span>
+                    <span class="card-signal-value">{{ card.signal.value }}</span>
+                </div>
+                {% endif %}
+            </div>
+            {% if card.sparkline_data %}
+            <div class="dashboard-kpi-sparkline" aria-label="Representação visual do progresso semanal">
+                {% for point in card.sparkline_data %}
+                <div class="spark-bar{% if forloop.last %} is-today{% endif %}" style="height: {{ point.percent }}%;" title="{{ point.label }}"></div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% if card.submetric %}
+            <p class="meta-text-sm card-meta">{{ card.submetric.label }}: {{ card.submetric.value }}</p>
+            {% endif %}
+        </div>
+        <div class="card-content">
+            <p class="metric-note card-copy">{{ card.note|smart_break }}</p>
+        </div>
+    </div>
+    {% if not card.hide_footer %}
+        {% if card.footer_pill_label or card.footer_action_label %}
+    <div class="card-footer">
+        <div class="actions card-actions">
+            {% if card.footer_pill_label %}
+            <span class="pill card-action{% if card.footer_pill_class %} {{ card.footer_pill_class }}{% endif %}">{{ card.footer_pill_label }}</span>
+            {% endif %}
+            {% if card.footer_action_label and card.footer_action_href %}
+            <a class="button secondary button-sm" href="{{ card.footer_action_href }}">{{ card.footer_action_label }}</a>
+            {% endif %}
+        </div>
+    </div>
+        {% elif card.show_accent_bar %}
+    <div class="card-footer">
+        <div class="accent-bar"></div>
+    </div>
+        {% endif %}
+    {% endif %}
+</article>
