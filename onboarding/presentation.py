@@ -31,7 +31,7 @@ def build_intake_center_page(*, snapshot, current_role_slug):
     if can_manage_students and first_convertible_item is not None:
         hero_actions.append(
             {
-                'label': 'Converter primeiro da fila',
+                'label': 'Converter primeiro',
                 'href': f"/alunos/novo/?intake={first_convertible_item['object'].id}#student-form-essential",
                 'data_action': 'convert-first-intake',
             }
@@ -39,7 +39,7 @@ def build_intake_center_page(*, snapshot, current_role_slug):
     elif can_manage_students:
         hero_actions.append(
             {
-                'label': 'Abrir cadastro rapido',
+                'label': 'Nova entrada',
                 'href': '/alunos/novo/#student-form-essential',
                 'data_action': 'open-student-quick-create',
             }
@@ -63,12 +63,12 @@ def build_intake_center_page(*, snapshot, current_role_slug):
         )
 
     hero = build_page_hero(
-        eyebrow='Central de entrada',
-        title='Triagem e conversao antes do aluno definitivo.',
-        copy='Aqui vivem as entradas provisórias que ainda pedem dono, leitura e proximo passo.',
+        eyebrow='Intake',
+        title='Novas vidas.',
+        copy='Receba, converse e converta quem chegou no seu Box.',
         actions=hero_actions,
         aria_label='Panorama da central de intake',
-        classes=['catalog-hero', 'intake-hero'],
+        classes=['operation-hero', 'catalog-hero', 'intake-hero'],
         data_slot='hero',
         data_panel='intake-hero',
         actions_slot='intake-hero-actions',

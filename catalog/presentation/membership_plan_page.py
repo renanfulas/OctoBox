@@ -66,16 +66,16 @@ def build_membership_plan_page(*, form, plan, current_role_slug):
     plan_focus = _build_membership_plan_focus(plan)
     plan_snapshot = _build_membership_plan_snapshot(plan)
     hero = build_page_hero(
-        eyebrow='Plano comercial',
-        title='Editar plano',
-        copy='Valor, ciclo e proposta sem sair do centro financeiro.',
+        eyebrow='Plano',
+        title='Detalhes do plano.',
+        copy='Altere valores, ciclos e a proposta comercial.',
         actions=[
             {'label': 'Editar nucleo', 'href': '#plan-form-core', 'kind': 'primary'},
             {'label': 'Ver leitura rapida', 'href': '#plan-form-summary', 'kind': 'secondary'},
             {'label': 'Voltar para financeiro', 'href': reverse('finance-center'), 'kind': 'secondary'},
         ],
         aria_label='Plano comercial',
-        classes=['finance-hero', 'finance-plan-page-hero'],
+        classes=['operation-hero', 'finance-hero', 'finance-plan-page-hero'],
         heading_level='h1',
         data_slot='hero',
         data_panel='finance-plan-hero',

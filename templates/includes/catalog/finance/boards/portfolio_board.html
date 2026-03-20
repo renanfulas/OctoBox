@@ -1,0 +1,19 @@
+<!--
+ARQUIVO: portfolio comercial do financeiro.
+-->
+<section class="card glass-panel finance-board-portfolio" id="finance-portfolio-board" aria-label="Motor de Carteira">
+    <div class="card-head">
+        <h3 class="card-title">Portfolio de Produtos Ativos</h3>
+        <span class="badge badge-subtle">{{ page.data.plan_portfolio|length }} plano(s)</span>
+    </div>
+    <div class="finance-guide-note">
+        <p class="meta-text no-margin">Peso consolidado de cada oferta no engajamento da base e na formacao da receita.</p>
+    </div>
+    <div class="stack-16 finance-portfolio-list">
+        {% for plan in page.data.plan_portfolio %}
+        {% include "includes/ui/finance/finance_portfolio_plan_card.html" with plan=plan %}
+        {% empty %}
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Portfolio de planos" title="Nenhum plano cadastrado ainda" copy="Cadastre pelo menos uma oferta para enxergar carteira, mix e matriculas de forma legivel." badge="Estrutura inicial" badge_class="info" %}
+        {% endfor %}
+    </div>
+</article>

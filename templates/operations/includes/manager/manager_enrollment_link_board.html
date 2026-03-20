@@ -1,0 +1,23 @@
+<article class="table-card operation-table-card manager-priority-card" id="manager-enrollment-link-board">
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Pagamentos sem vínculo de matrícula" title="Estrutura antes de leitura financeira" copy="Resolva vencimentos mais próximos primeiro." pill_label=page.data.payments_without_enrollment|length|add:" pendência(s)" pill_class="accent" %}
+    <div class="operation-table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">Aluno</th>
+                    <th scope="col">Vencimento</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Leitura rápida</th>
+                    <th scope="col">Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in page.data.payments_without_enrollment %}
+                {% include "operations/includes/manager/manager_enrollment_link_row.html" with payment=payment is_priority=forloop.first %}
+                {% empty %}
+                <tr><td colspan="5" class="table-empty-cell">{% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Pagamentos sem matricula" title="Nenhum pagamento aguardando vinculo" copy="A estrutura financeira nao tem cobranca solta sem matricula ativa neste recorte." badge="Estrutura coerente" badge_class="accent" %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>

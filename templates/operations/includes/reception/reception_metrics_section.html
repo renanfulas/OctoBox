@@ -1,0 +1,11 @@
+<!--
+ARQUIVO: faixa de metricas da Recepcao.
+
+POR QUE ELE EXISTE:
+- isola a abertura numerica da tela para manter o template principal curto.
+-->
+<section class="panel-grid operation-metric-grid" aria-label="Metricas operacionais" data-slot="reception-metric-grid">
+    {% for card in page.data.metric_cards %}
+    {% include "includes/ui/shared/metric_card.html" with card=card %}
+    {% endfor %}
+</section>

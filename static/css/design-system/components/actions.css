@@ -66,6 +66,18 @@ POR QUE ELE EXISTE:
     background: var(--surface);
 }
 
+.button.ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid transparent;
+    box-shadow: none;
+}
+
+.button.ghost:hover {
+    color: var(--ink);
+    background: var(--surface-muted);
+}
+
 body[data-theme="dark"] .button.secondary {
     background: var(--surface);
     color: var(--ink);
@@ -135,4 +147,8 @@ body[data-theme="dark"] .button.secondary {
 body[data-theme="dark"] .button.secondary {
     background: rgba(255, 255, 255, 0.04);
     border-color: rgba(148, 163, 184, 0.16);
+}
+
+.button-pill {
+    border-radius: 9999px !important;
 }

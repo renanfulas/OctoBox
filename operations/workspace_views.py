@@ -141,3 +141,15 @@ class ReceptionWorkspaceView(OperationBaseView):
         )
         attach_page_payload(context, payload_key='operation_page', payload=payload)
         return context
+
+
+class WhatsAppWorkspaceView(OperationBaseView):
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_DEV, ROLE_COACH, ROLE_RECEPTION)
+    template_name = 'operations/whatsapp_placeholder.html'
+    page_title = 'Mensagens'
+    page_subtitle = 'Central de comunicação e relacionamento com seus alunos.'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_base_context())
+        return context

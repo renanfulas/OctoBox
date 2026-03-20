@@ -23,7 +23,7 @@ PONTOS CRITICOS:
     align-content: start;
     border-radius: var(--dashboard-fib-4, 21px);
     gap: var(--dashboard-fib-2, 8px);
-    padding: var(--dashboard-rhythm-3);
+    padding: var(--dashboard-fib-4, 21px); /* fib-4 transition */
     color: inherit;
     text-decoration: none;
     border: 1px solid var(--fdw-line);
@@ -38,9 +38,8 @@ PONTOS CRITICOS:
 }
 
 .dashboard-glance-card--summary {
-    min-height: 148px;
-    padding: 13px 15px;
-    min-height: 144px;
+    min-height: 144px; /* Strictly Fibonacci #12 */
+    padding: var(--dashboard-fib-4, 21px);
     grid-template-rows: auto auto 1fr;
     align-content: start;
 }
@@ -89,16 +88,16 @@ PONTOS CRITICOS:
 }
 
 .dashboard-glance-value {
-    font-size: clamp(1.8rem, 3vw, 2.5rem);
-    line-height: 0.92;
+    font-size: clamp(1.8rem, 2.8vw, 2.2rem); /* Slightly smaller to fit 144px */
+    line-height: 0.9;
     letter-spacing: -0.05em;
 }
 
 .dashboard-glance-copy {
     margin: 0;
     max-width: 34ch;
-    font-size: 0.84rem;
-    line-height: 1.42;
+    font-size: 0.82rem; /* Fibonacci nudge */
+    line-height: 1.35;
     color: var(--muted);
 }
 
@@ -151,9 +150,12 @@ PONTOS CRITICOS:
     cursor: default;
 }
 
+/* Faixa de status mantida visível mesmo em estado tranquilo */
+/*
 .dashboard-glance-card.is-tranquil::before {
     display: none !important;
 }
+*/
 
 .dashboard-glance-card.is-tranquil:hover {
     opacity: 0.95;
@@ -183,10 +185,10 @@ body[data-theme="dark"] .dashboard-glance-card.is-tranquil .dashboard-glance-ind
     background: rgba(16, 185, 129, 0.15);
 }
 
-/* ─── Helper: support grid ─────────────────────────────────────── */
-.dashboard-support-grid {
+/* Legacy wrappers removed - Handled by direct topline grid */
+.dashboard-support-grid,
+.dashboard-glance-strip {
     display: contents;
-    min-width: 0;
 }
 
 @media (max-width: 960px) {

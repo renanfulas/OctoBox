@@ -1,0 +1,21 @@
+{
+  "venvPath": "c:/Users/renan/OneDrive/Documents/OctoBOX",
+  "venv": ".venv",
+  "pythonVersion": "3.11",
+  "include": [
+    ".",
+    "OctoBox"
+  ],
+  "extraPaths": [
+    ".",
+    "OctoBox"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    ".venv"
+  ],
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none",
+  "typeCheckingMode": "basic"
+}

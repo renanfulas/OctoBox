@@ -1,0 +1,11 @@
+<div class="state-empty{% if compact %} is-compact{% endif %}{% if class_name %} {{ class_name }}{% endif %}">
+    <div class="state-empty-head">
+        <div>
+            {% if eyebrow %}<p class="eyebrow">{{ eyebrow }}</p>{% endif %}
+            <h3 class="state-empty-title">{{ title|default:"Nada pendente agora" }}</h3>
+            {% if copy %}<p class="state-empty-copy">{{ copy }}</p>{% endif %}
+        </div>
+        {% if badge %}<span class="pill{% if badge_class %} {{ badge_class }}{% endif %}">{{ badge }}</span>{% endif %}
+    </div>
+    {% if hint %}<p class="state-empty-hint">{{ hint }}</p>{% endif %}
+</div>

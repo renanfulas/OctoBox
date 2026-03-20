@@ -58,7 +58,7 @@ def _build_static_asset_version():
         return getattr(settings, 'STATIC_ASSET_VERSION', '1')
 
     now = time.monotonic()
-    ttl_seconds = getattr(settings, 'STATIC_ASSET_SCAN_TTL_SECONDS', 30)
+    ttl_seconds = 1 if settings.DEBUG else 30
     if now - _ASSET_VERSION_CACHE['checked_at'] < ttl_seconds:
         return _ASSET_VERSION_CACHE['value']
 
@@ -87,14 +87,14 @@ def _build_shell_page_context(current_path, role, navigation, alerts):
     scope = resolve_shell_scope(current_path=current_path, role_slug=role_slug)
     section_map = [
         {'prefix': '/dashboard/', 'eyebrow': 'Painel', 'title': 'Dashboard', 'scope': 'dashboard'},
-        {'prefix': '/entradas/', 'eyebrow': 'Entradas', 'title': 'Central de Intake', 'scope': 'intake-center'},
-        {'prefix': '/alunos/', 'eyebrow': 'Alunos', 'title': 'Alunos', 'scope': 'students'},
-        {'prefix': '/financeiro/', 'eyebrow': 'Financeiro', 'title': 'Financeiro', 'scope': 'finance'},
-        {'prefix': '/grade-aulas/', 'eyebrow': 'Aulas', 'title': 'Grade de aulas', 'scope': 'class-grid'},
-        {'prefix': '/operacao/', 'eyebrow': 'Operacao', 'title': active_label, 'scope': 'operations-owner'},
+        {'prefix': '/entradas/', 'eyebrow': 'Triagem', 'title': 'Fila de Entradas', 'scope': 'intake-center'},
+        {'prefix': '/alunos/', 'eyebrow': 'Gestão', 'title': 'Diretório de Alunos', 'scope': 'students'},
+        {'prefix': '/financeiro/', 'eyebrow': 'Gestão', 'title': 'Centro Financeiro', 'scope': 'finance'},
+        {'prefix': '/grade-aulas/', 'eyebrow': 'Grade', 'title': 'Agenda de Aulas', 'scope': 'class-grid'},
+        {'prefix': '/operacao/', 'eyebrow': 'Operação', 'title': 'Painel Operacional', 'scope': 'operations-owner'},
         {'prefix': '/acessos/', 'eyebrow': 'Acessos', 'title': 'Papéis e acessos', 'scope': 'access'},
         {'prefix': '/mapa-sistema/', 'eyebrow': 'Sistema', 'title': 'Mapa do sistema', 'scope': 'system-map'},
-        {'prefix': '/configuracoes-operacionais/', 'eyebrow': 'Config', 'title': 'Configuracoes operacionais', 'scope': 'operational-settings'},
+        {'prefix': '/configuracoes-operacionais/', 'eyebrow': 'Config', 'title': 'Configurações operacionais', 'scope': 'operational-settings'},
         {'prefix': f"/{settings.ADMIN_URL_PATH}", 'eyebrow': 'Admin', 'title': active_label, 'scope': 'admin'},
     ]
     section = next((item for item in section_map if current_path.startswith(item['prefix'])), None)
@@ -102,7 +102,7 @@ def _build_shell_page_context(current_path, role, navigation, alerts):
         section = {'eyebrow': 'OctoBox', 'title': active_label, 'scope': 'generic'}
 
     if current_path.startswith('/dashboard/') and role_slug == ROLE_RECEPTION:
-        section = {**section, 'eyebrow': 'Recepcao'}
+        section = {**section, 'eyebrow': 'Recepção'}
 
     return {
         **section,
@@ -116,31 +116,23 @@ def _build_navigation(role_slug, current_path=''):
     admin_home = admin_index_url()
     base_links = [
         {'label': 'Dashboard', 'href': '/dashboard/', 'icon': 'DB'},
-        {'label': 'Minha operacao', 'href': '/operacao/', 'icon': 'OP'},
+        {'label': 'Minha operação', 'href': '/operacao/', 'icon': 'OP'},
         {'label': 'Alunos', 'href': '/alunos/', 'icon': 'AL'},
         {'label': 'Financeiro', 'href': '/financeiro/', 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER), 'icon': 'FI'},
         {'label': 'Entradas', 'href': '/entradas/', 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION), 'icon': 'EN'},
         {'label': 'Grade de aulas', 'href': '/grade-aulas/', 'icon': 'AU'},
-        {'label': 'Papéis e acessos', 'href': '/acessos/', 'icon': 'AC'},
-        {'label': 'Mapa do sistema', 'href': '/mapa-sistema/', 'icon': 'MP'},
     ]
 
     role_links = {
         ROLE_OWNER: [
-            {'label': 'Config. operacionais', 'href': '/configuracoes-operacionais/', 'icon': 'CF'},
-            {'label': 'Admin Django', 'href': admin_home, 'icon': 'AD'},
-            {'label': 'Auditoria', 'href': admin_changelist_url('boxcore', 'auditevent'), 'icon': 'AT'},
+            {'label': 'WhatsApp', 'href': '/operacao/whatsapp/', 'icon': 'WA'},
         ],
-        ROLE_DEV: [
-            {'label': 'Config. operacionais', 'href': '/configuracoes-operacionais/', 'icon': 'CF'},
-            {'label': 'Auditoria', 'href': admin_changelist_url('boxcore', 'auditevent'), 'icon': 'AT'},
-            {'label': 'Admin Django', 'href': admin_home, 'icon': 'AD'},
-        ],
+        ROLE_DEV: [],
         ROLE_MANAGER: [
-            {'label': 'WhatsApp', 'href': '/operacao/manager/#manager-link-board', 'icon': 'WA'},
+            {'label': 'WhatsApp', 'href': '/operacao/whatsapp/', 'icon': 'WA'},
         ],
         ROLE_COACH: [
-            {'label': 'Ocorrencias', 'href': '/operacao/coach/#coach-boundary-board', 'icon': 'OC'},
+            {'label': 'Ocorrências', 'href': '/operacao/coach/#coach-boundary-board', 'icon': 'OC'},
         ],
         ROLE_RECEPTION: [],
     }
@@ -173,7 +165,7 @@ def _build_navigation(role_slug, current_path=''):
         'CF': '⚙️',
         'AD': '🧩',
         'AT': '🔍',
-        'WA': '💬',
+        'WA': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="20" height="20" style="fill: #25D366;"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.1-16.4-14.6-27.4-32.7-30.6-38.2-3.2-5.6-.3-8.6 2.4-11.4 2.5-2.5 5.5-6.5 8.3-9.8 2.8-3.3 3.7-5.6 5.5-9.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.8 23.5 9.2 31.5 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.7z"/></svg>',
         'OC': '🚨',
     }
 
@@ -211,6 +203,7 @@ def role_navigation(request):
     role = get_user_role(request.user)
     role_slug = getattr(role, 'slug', '')
     sidebar_navigation = []
+    profile_navigation = []
     shell_counts = {
         'overdue_payments': 0,
         'overdue_students': 0,
@@ -224,11 +217,23 @@ def role_navigation(request):
     if request.user.is_authenticated:
         shell_counts = get_shell_counts()
         sidebar_navigation = _build_navigation(role_slug, request.path)
+        
+        # Build Profile Navigation (Administrative/Legacy links)
+        admin_home = admin_index_url()
+        if role_slug in (ROLE_OWNER, ROLE_DEV):
+            profile_navigation = [
+                {'label': 'Papéis e acessos', 'href': '/acessos/'},
+                {'label': 'Config. operacionais', 'href': '/configuracoes-operacionais/'},
+                {'label': 'Auditoria', 'href': admin_changelist_url('boxcore', 'auditevent')},
+                {'label': 'Admin Django', 'href': admin_home},
+                {'label': 'Mapa do sistema', 'href': '/mapa-sistema/'},
+            ]
 
     return {
         'can_access_admin': user_can_access_admin(request.user),
         'current_role': role,
         'sidebar_navigation': sidebar_navigation,
+        'profile_navigation': profile_navigation,
         'global_search_action': '/alunos/',
         'shell_core_stylesheets': resolve_runtime_css_paths(['css/design-system.css']),
         'static_asset_version': _build_static_asset_version(),

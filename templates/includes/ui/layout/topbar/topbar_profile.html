@@ -1,0 +1,28 @@
+<div class="profile-menu-container">
+    <div class="topbar-profile" data-slot="topbar-profile">
+        <div class="avatar" aria-hidden="true">
+            <span class="avatar-core"></span>
+            <span class="avatar-glow"></span>
+        </div>
+        <div class="profile-meta" style="pointer-events: none;">
+            <strong>{{ user.get_full_name|default:user.username }}</strong>
+            <span>{{ current_role.label|default:"Sem papel definido" }}</span>
+        </div>
+    </div>
+    <div class="profile-dropdown" role="menu" aria-label="Menu de perfil">
+        <div class="profile-menu-list">
+            {% for item in profile_navigation %}
+            <a href="{{ item.href }}" class="profile-menu-item" role="menuitem">{{ item.label }}</a>
+            {% endfor %}
+            
+            {% if profile_navigation %}
+            <div class="profile-menu-divider"></div>
+            {% endif %}
+            
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="profile-menu-item is-danger" role="menuitem">Sair</button>
+            </form>
+        </div>
+    </div>
+</div>

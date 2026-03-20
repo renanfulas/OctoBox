@@ -1,0 +1,19 @@
+<!--
+ARQUIVO: fila financeira com cobrancas ativas.
+-->
+<section class="card glass-panel finance-board-queue" id="finance-queue-board" data-panel="finance-queue-board" aria-label="Fila Automatica">
+    <div class="card-head">
+        <h3 class="card-title">Fila de Atrasos e Pendencias</h3>
+        <span class="badge badge-subtle warning">{{ page.data.financial_alerts|length }} alerta(s)</span>
+    </div>
+    <div class="finance-guide-note">
+        <p class="meta-text no-margin">Leitura das cobrancas que estao ativamente pressionando o fluxo de caixa ou pedindo contencao na base.</p>
+    </div>
+    <div class="stack-14 finance-alert-list finance-alert-list-compact" data-slot="finance-alert-list">
+        {% for payment in page.data.financial_alerts %}
+        {% include "includes/ui/finance/finance_alert_item.html" with payment=payment %}
+        {% empty %}
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Fila financeira" title="Nenhuma pendencia financeira no momento" copy="A carteira nao tem cobranca pressionando caixa ou retencao neste recorte." badge="Carteira estabilizada" badge_class="accent" %}
+        {% endfor %}
+    </div>
+</article>

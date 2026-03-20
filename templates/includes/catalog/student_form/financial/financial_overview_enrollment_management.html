@@ -1,0 +1,23 @@
+<!--
+ARQUIVO: gestao formal da matricula do aluno.
+-->
+{% if page.data.enrollment_management_form %}
+<article class="table-card section-gap-top-sm student-financial-action-card student-financial-action-card-secondary" id="student-enrollment-management">
+    <p class="eyebrow">Gestao formal da matricula</p>
+    <form method="post" action="/alunos/{{ page.data.student_object.id }}/matricula/acao/" class="form-stack">
+        {% csrf_token %}
+        {{ page.data.enrollment_management_form.enrollment_id }}
+        <div class="field-grid-220">
+            <label>
+                <span class="field-label">{{ page.data.enrollment_management_form.action_date.label }}</span>
+                {{ page.data.enrollment_management_form.action_date }}
+            </label>
+            <label>
+                <span class="field-label">{{ page.data.enrollment_management_form.reason.label }}</span>
+                {{ page.data.enrollment_management_form.reason }}
+            </label>
+        </div>
+        {% include "includes/catalog/student_form/financial/financial_overview_enrollment_actions.html" %}
+    </form>
+</article>
+{% endif %}

@@ -1,20 +1,20 @@
 <article class="table-card layout-panel layout-panel--stack dashboard-table-card dashboard-side-card dashboard-support-card dashboard-side-card-sticky" id="dashboard-sessions-board" data-panel="dashboard-sessions-board" data-dashboard-block="{{ block.id }}" data-dashboard-slot="{{ block.slot }}">
-    {% include "includes/ui/operation_card_head.html" with eyebrow="Agenda de apoio" title="Agenda do turno" copy="Linha do turno para sustentar a decisao principal sem competir com o painel central." pill_label=page.data.upcoming_sessions|length|add:" aula(s)" pill_class="info" %}
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Agenda de apoio" title="Agenda do turno" copy="Linha do turno para sustentar a decisao principal sem competir com o painel central." pill_label=page.data.upcoming_sessions|length|add:" aula(s)" pill_class="info" %}
     {% if page.data.upcoming_sessions %}
     {% with featured_session=page.data.upcoming_sessions|first %}
     <div class="dashboard-session-stack is-premium">
-        {% include "includes/ui/dashboard_session_featured_card.html" with featured_session=featured_session %}
+        {% include "includes/ui/dashboard/dashboard_session_featured_card.html" with featured_session=featured_session %}
 
         {% if page.data.upcoming_sessions|length > 1 %}
         <div class="dashboard-session-queue" aria-label="Fila curta da agenda">
             {% for session in page.data.upcoming_sessions|slice:"1:" %}
-            {% include "includes/ui/dashboard_session_queue_card.html" with session=session %}
+            {% include "includes/ui/dashboard/dashboard_session_queue_card.html" with session=session %}
             {% endfor %}
         </div>
         {% endif %}
     </div>
     {% endwith %}
     {% else %}
-    {% include "includes/ui/state_empty.html" with compact=True eyebrow="Agenda de apoio" title="Nenhuma aula cadastrada ainda" copy="A agenda principal ainda nao tem turma pronta para movimentar recepcao e coach neste recorte." badge="Dia leve" badge_class="info" %}
+    {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Agenda de apoio" title="Nenhuma aula cadastrada ainda" copy="A agenda principal ainda nao tem turma pronta para movimentar recepcao e coach neste recorte." badge="Dia leve" badge_class="info" %}
     {% endif %}
 </article>

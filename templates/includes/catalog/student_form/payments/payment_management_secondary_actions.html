@@ -1,0 +1,7 @@
+{% if page.capabilities.can_manage_student_payments_full %}
+<div class="actions actions-tight student-payment-management-actions-secondary">
+    <button class="button secondary" type="submit" name="action" value="refund-payment">Estornar</button>
+    <button class="button secondary" type="submit" name="action" value="cancel-payment">Cancelar</button>
+    <button class="button secondary" type="submit" name="action" value="regenerate-payment">Regenerar</button>
+</div>
+{% endif %}

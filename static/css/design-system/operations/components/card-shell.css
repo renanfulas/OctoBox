@@ -34,7 +34,7 @@ ARQUIVO: cabeçalhos de card e grids base compartilhados.
 }
 
 .operation-metric-grid {
-    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
 }
 
 .operation-grid-wide {

@@ -1,0 +1,26 @@
+<!--
+ARQUIVO: historico recente de movimentos financeiros.
+-->
+<section class="card glass-panel finance-movements-panel" id="finance-movements-board" aria-label="Raio-X de Movimentacoes">
+    <div class="card-head">
+        <h3 class="card-title">Raio-X de Movimentacoes</h3>
+        <span class="badge badge-subtle info">{{ page.data.recent_movements|length }} reg(s)</span>
+    </div>
+    <div class="finance-guide-note">
+        <p class="meta-text no-margin">Fluxo mapeado de entradas, saidas e mudancas de plano no recorte ativo.</p>
+    </div>
+    <div class="stack-14 finance-movements-list">
+        {% for movement in page.data.recent_movements %}
+        <div class="timeline-row finance-movement-item">
+            <div class="timeline-dot"></div>
+            <div>
+                <strong>{{ movement.student.full_name }}</strong>
+                <p class="meta-text-sm">{{ movement.plan.name }} | {{ movement.get_status_display }}</p>
+                <p class="meta-text">Inicio em {{ movement.start_date|date:"d/m/Y" }}{% if movement.end_date %} | Fim em {{ movement.end_date|date:"d/m/Y" }}{% endif %}</p>
+            </div>
+        </div>
+        {% empty %}
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Movimentos recentes" title="Nenhum movimento de matricula registrado ainda" copy="A carteira ainda nao acumulou entradas, saidas ou reposicionamentos para leitura historica." badge="Historico em formacao" badge_class="info" %}
+        {% endfor %}
+    </div>
+</section>

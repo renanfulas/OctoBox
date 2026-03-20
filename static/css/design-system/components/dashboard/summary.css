@@ -64,7 +64,7 @@ FIBONACCI RHYTHM:
     grid-template-columns: 1fr;
     align-items: start;
     container-type: inline-size;
-    gap: 13px; /* fib-3 */
+    gap: var(--dashboard-fib-4, 21px); /* fib-4 transition */
 }
 
 /* ─── Topline (faixa de KPIs + Glance cards) ──────────────────── */
@@ -73,7 +73,7 @@ FIBONACCI RHYTHM:
     grid-template-columns: minmax(0, 21fr) minmax(0, 13fr) minmax(0, 8fr);
     grid-auto-rows: 1fr;
     align-items: stretch;
-    gap: 13px; /* fib-3 — entre os cards do topline */
+    gap: var(--dashboard-fib-4, 21px); /* fib-4 transition — entre os cards do topline */
 }
 
 .dashboard-summary-topline > * {

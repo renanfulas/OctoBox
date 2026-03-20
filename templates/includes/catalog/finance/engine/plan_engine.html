@@ -1,0 +1,25 @@
+<!--
+ARQUIVO: formulario de cadastro de planos da central financeira.
+-->
+<section class="card glass-panel finance-board-plan" id="cadastro-plano" data-panel="finance-plan-engine">
+    <div class="card-head">
+        <h3 class="card-title">Motor de Planos: Cadastre uma nova oferta</h3>
+        <span class="badge badge-subtle info">Novos produtos</span>
+    </div>
+    <div class="finance-guide-note">
+        <p class="meta-text no-margin">Proposta, entrega e ativacao. O plano precisa ser legivel antes de ser adicionado a carteira comercial do seu box.</p>
+    </div>
+    {% if page.capabilities.can_manage_finance %}
+    <form method="post" novalidate class="finance-plan-form" data-action="submit-finance-plan-form">
+        {% csrf_token %}
+        <div class="form-stack finance-plan-form-stack" data-slot="finance-plan-form-fields">
+            {% include "includes/catalog/finance/engine/plan_engine_feedback.html" %}
+            {% include "includes/catalog/finance/engine/plan_engine_core_fields.html" %}
+            {% include "includes/catalog/finance/engine/plan_engine_description.html" %}
+            {% include "includes/catalog/finance/engine/plan_engine_actions.html" %}
+        </div>
+    </form>
+    {% else %}
+    <p class="meta-text">Seu papel atual pode ler o financeiro, mas nao pode cadastrar planos por esta tela.</p>
+    {% endif %}
+</article>

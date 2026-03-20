@@ -123,19 +123,20 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         scope='finance',
     )
     hero_actions = [
-        {'label': 'Ver regua', 'href': '#finance-priority-board', 'kind': 'primary'},
-        {'label': 'Ver fila financeira', 'href': '#finance-queue-board', 'kind': 'secondary'},
-        {'label': 'Ver carteira', 'href': '#finance-portfolio-board', 'kind': 'secondary'},
+        {'label': 'Ver regua', 'href': '#finance-priority-board', 'kind': 'primary', 'data_action': 'open-tab-finance-priority'},
+        {'label': 'Ver fila financeira', 'href': '#finance-queue-board', 'kind': 'secondary', 'data_action': 'open-tab-finance-queue'},
     ]
     if can_manage_finance:
-        hero_actions.append({'label': 'Cadastrar plano', 'href': '#cadastro-plano', 'kind': 'secondary'})
+        hero_actions.append({'label': 'Cadastrar plano', 'href': '#cadastro-plano', 'kind': 'secondary', 'data_action': 'open-tab-finance-portfolio'})
+    else:
+        hero_actions.append({'label': 'Ver carteira', 'href': '#finance-portfolio-board', 'kind': 'secondary', 'data_action': 'open-tab-finance-portfolio'})
     hero = build_page_hero(
-        eyebrow='Centro financeiro',
-        title='Financeiro',
-        copy='Caixa, pressao e proxima acao sem leitura cansativa.',
+        eyebrow='Caixa',
+        title='Seu saldo.',
+        copy='Controle receitas, mensalidades atrasadas e o pulso financeiro.',
         actions=hero_actions,
         aria_label='Panorama financeiro',
-        classes=['finance-hero'],
+        classes=['operation-hero', 'finance-hero'],
     )
 
     return build_catalog_page_payload(
@@ -155,6 +156,7 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
             'finance_filter_form': filter_form,
             'finance_metrics': snapshot['finance_metrics'],
             'finance_pulse': finance_pulse,
+            'interactive_kpis': snapshot.get('interactive_kpis', []),
             'plan_portfolio': plan_portfolio,
             'plan_mix': snapshot['plan_mix'],
             'monthly_comparison': snapshot['monthly_comparison'],

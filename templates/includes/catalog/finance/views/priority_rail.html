@@ -1,0 +1,19 @@
+<!--
+ARQUIVO: regua prioritaria de cobranca e retencao.
+-->
+<section class="card glass-panel finance-board-rail" id="finance-priority-board" aria-label="Regua Ativa">
+    <div class="card-head">
+        <h3 class="card-title">Regua Ativa: Quem pede contato agora</h3>
+        <span class="badge badge-subtle warning">{{ page.data.operational_queue|length }} acao(oes)</span>
+    </div>
+    <div class="finance-guide-note">
+        <p class="meta-text no-margin">Pressao operacional viva. Sinal financeiro pendente convertido em tarefa assistida direta para nao virar ruido estrutural.</p>
+    </div>
+    <div class="stack-14 finance-action-list finance-action-list-compact">
+        {% for item in page.data.operational_queue %}
+        {% include "includes/ui/finance/finance_action_item.html" with item=item %}
+        {% empty %}
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Regua operacional" title="Nenhuma acao semiassistida pendente" copy="Nao ha contato financeiro ou de retencao aguardando disparo assistido agora." badge="Fila limpa" badge_class="accent" %}
+        {% endfor %}
+    </div>
+</article>

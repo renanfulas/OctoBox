@@ -1,0 +1,18 @@
+<!--
+ARQUIVO: metricas da grade.
+-->
+<section class="panel-grid" aria-label="Metricas da grade">
+    {% for label, item in page.data.class_metrics.items %}
+    <article class="card class-grid-metric-card {% cycle 'orange-glow' 'blue-glow' 'green-glow' 'orange-glow' 'blue-glow' 'green-glow' %}">
+        <div class="card-body card-body-metric class-grid-metric-card-body">
+            <div class="card-value-stack">
+                <p class="eyebrow card-label">{{ label }}</p>
+                <p class="metric card-value">{{ item.value }}</p>
+            </div>
+            <div class="card-content">
+                <p class="metric-note card-copy">{{ item.note }}</p>
+            </div>
+        </div>
+    </article>
+    {% endfor %}
+</section>

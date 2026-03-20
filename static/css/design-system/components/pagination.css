@@ -1,0 +1,60 @@
+/*
+ARQUIVO: design system base para componentes de paginacao.
+
+POR QUE ELE EXISTE:
+- Fornece estilizacao flexivel para as listas de navegacao com numero exato de telas (offset) como o Catalogo de Alunos.
+*/
+
+.table-pagination {
+    display: flex;
+    justify-content: center;
+    padding: var(--workspace-fib-5);
+    border-top: 1px solid var(--border-light);
+}
+
+.pagination-list {
+    display: flex;
+    align-items: center;
+    gap: var(--workspace-fib-3);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.pagination-action,
+.pagination-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    border-radius: var(--workspace-fib-3);
+    color: var(--slate-600);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.pagination-action:hover:not(.disabled),
+.pagination-num:hover:not(.is-current) {
+    background-color: var(--slate-100);
+    color: var(--slate-900);
+}
+
+body[data-theme="dark"] .pagination-action:hover:not(.disabled),
+body[data-theme="dark"] .pagination-num:hover:not(.is-current) {
+    background-color: var(--slate-800);
+    color: var(--slate-100);
+}
+
+.pagination-num.is-current {
+    background-color: var(--brand);
+    color: var(--workspace-bg);
+    box-shadow: var(--shadow-soft);
+}
+
+.pagination-action.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}

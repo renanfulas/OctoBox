@@ -1,7 +1,0 @@
-<tr>
-    <td>{{ payment.student.full_name }}</td>
-    <td>{{ payment.due_date|date:"d/m/Y" }}</td>
-    <td><span class="pill{% if payment.status == 'overdue' or payment.status == 'pending' %} warning{% else %} info{% endif %}">{{ payment.get_status_display }}</span></td>
-    <td>R$ {{ payment.amount|floatformat:2 }}</td>
-    <td>{% if is_priority %}<span class="pill warning">Agir agora</span>{% else %}<span class="pill">Monitorar</span>{% endif %}</td>
-</tr>

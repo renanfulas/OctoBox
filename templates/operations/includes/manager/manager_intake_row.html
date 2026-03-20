@@ -1,0 +1,7 @@
+<tr>
+    <td>{{ intake.full_name }}</td>
+    <td>{{ intake.phone }}</td>
+    <td>{{ intake.get_source_display }}</td>
+    <td><span class="pill info">{{ intake.get_status_display }}</span></td>
+    <td>{% if is_priority %}<span class="pill warning">Comece aqui</span>{% else %}<span class="pill">Acompanhar</span>{% endif %}</td>
+</tr>

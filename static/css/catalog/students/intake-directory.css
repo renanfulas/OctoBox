@@ -63,6 +63,8 @@ POR QUE ELE EXISTE:
 .student-data-panel th,
 .student-data-panel td {
     padding: 10px 9px;
+    text-align: center;
+    vertical-align: middle;
 }
 
 .student-data-panel th {
@@ -71,6 +73,7 @@ POR QUE ELE EXISTE:
 
 .student-data-panel td .actions {
     gap: 6px;
+    justify-content: center;
 }
 
 .student-data-panel td .button {

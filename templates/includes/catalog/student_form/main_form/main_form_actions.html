@@ -1,0 +1,17 @@
+<!--
+ARQUIVO: erros globais e acoes finais da ficha do aluno.
+-->
+{% if form.non_field_errors %}
+<div class="note-panel note-panel-danger">
+    {% for error in form.non_field_errors %}
+    <div>{{ error }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="actions actions-tight">
+    <button class="button" type="submit">{% if page_mode == 'create' %}Salvar aluno{% else %}Salvar ajustes{% endif %}</button>
+    {% if student_object and can_open_student_admin %}
+    <a class="button secondary" href="{% url 'admin:boxcore_student_change' student_object.id %}">Editar no admin</a>
+    {% endif %}
+</div>

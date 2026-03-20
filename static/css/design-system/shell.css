@@ -20,6 +20,7 @@ PONTOS CRITICOS:
     grid-template-columns: 320px minmax(0, 1fr);
     gap: 18px;
     padding: 18px;
+    scrollbar-gutter: stable;
 }
 
 .content {
@@ -104,7 +105,7 @@ PONTOS CRITICOS:
 }
 
 .content {
-    padding: 8px 12px 34px 0;
+    padding: 8px 8px 34px 8px; /* Simétrico: 8px em ambos os lados para fit perfeito */
 }
 
 .content::before {

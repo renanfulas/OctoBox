@@ -1,21 +1,17 @@
-<section class="layout-block dashboard-summary-zone" aria-label="Leitura rapida do box" data-dashboard-block="{{ block.id }}" data-dashboard-slot="{{ block.slot }}">
+<section class="layout-block dashboard-summary-zone" aria-label="Leitura rápida do box" data-dashboard-block="{{ block.id }}" data-dashboard-slot="{{ block.slot }}">
     <div class="dashboard-summary-shell">
         <div class="dashboard-summary-topline">
             {% with primary_card=page.data.dashboard_priority_cards.0 %}
-            <section class="dashboard-glance-strip dashboard-glance-strip--summary" aria-label="Resumo visual do dia" data-slot="glance-strip">
-                {% include "includes/ui/dashboard_glance_card.html" with card=primary_card kicker="Emergência" %}
-            </section>
+                {% include "includes/ui/dashboard/dashboard_glance_card.html" with card=primary_card kicker="Emergência" %}
             {% endwith %}
 
-            <section class="dashboard-support-grid" aria-label="Radar de apoio">
-                {% for card in page.data.dashboard_priority_cards|slice:"1:" %}
+            {% for card in page.data.dashboard_priority_cards|slice:"1:3" %}
                 {% if forloop.first %}
-                {% include "includes/ui/dashboard_glance_card.html" with card=card kicker="Urgente" %}
+                    {% include "includes/ui/dashboard/dashboard_glance_card.html" with card=card kicker="Urgente" %}
                 {% else %}
-                {% include "includes/ui/dashboard_glance_card.html" with card=card %}
+                    {% include "includes/ui/dashboard/dashboard_glance_card.html" with card=card kicker="Risco" %}
                 {% endif %}
-                {% endfor %}
-            </section>
+            {% endfor %}
 
             <a class="visually-hidden" href="#dashboard-sessions-board">Abrir agenda do dia</a>
             <span class="visually-hidden">

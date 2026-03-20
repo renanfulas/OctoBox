@@ -62,32 +62,4 @@ POR QUE ELE EXISTE:
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
-
-.student-hero.operation-hero {
-    gap: 18px;
-    min-height: 252px;
-    padding: clamp(18px, 1.8vw, 22px);
-}
-
-.student-hero.operation-hero .operation-hero-main > div:first-child {
-    gap: 8px;
-}
-
-.student-hero.operation-hero h2 {
-    max-width: 12ch;
-    font-size: clamp(2rem, 3.2vw, 2.8rem);
-    line-height: 0.96;
-}
-
-.student-hero.operation-hero .actions {
-    gap: 8px;
-}
-
-.student-hero.operation-hero .actions .button {
-    min-height: 36px;
-    padding: 8px 13px;
-}
-
-.student-hero.operation-hero .operation-hero-panel {
-    padding: 14px 16px;
-}
+

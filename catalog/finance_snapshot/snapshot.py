@@ -18,7 +18,7 @@ from finance.models import PaymentStatus
 from ..forms import FinanceFilterForm
 from .base import build_finance_base
 from .comparison import build_comparison_peaks, build_monthly_comparison
-from .metrics import build_finance_metrics, build_finance_pulse
+from .metrics import build_finance_interactive_kpis, build_finance_metrics, build_finance_pulse
 from .portfolio import build_plan_mix, build_plan_portfolio
 
 
@@ -44,6 +44,7 @@ def build_finance_snapshot(params=None):
         'plans': plans,
         'finance_metrics': finance_metrics,
         'finance_pulse': build_finance_pulse(finance_metrics),
+        'interactive_kpis': build_finance_interactive_kpis(finance_metrics),
         'plan_portfolio': plan_portfolio,
         'plan_mix': build_plan_mix(plan_portfolio),
         'monthly_comparison': monthly_comparison,

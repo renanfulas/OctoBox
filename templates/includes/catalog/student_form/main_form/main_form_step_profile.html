@@ -1,0 +1,36 @@
+<!--
+ARQUIVO: passo de perfil da ficha do aluno.
+-->
+<details id="student-form-profile" class="disclosure-panel student-form-step student-form-step-disclosure"{% if form.intake_record.errors or form.status.errors or form.email.errors or form.gender.errors or form.birth_date.errors %} open{% endif %}>
+    <summary>Passo 2: perfil do aluno</summary>
+    <div class="stack-16 section-gap-top-xs student-form-step-body">
+        <div class="field-grid-220">
+            <label>
+                <span class="field-label">{{ form.intake_record.label }}</span>
+                {{ form.intake_record }}
+                {% if form.intake_record.help_text %}<small class="meta-text">{{ form.intake_record.help_text }}</small>{% endif %}
+                {% for error in form.intake_record.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+            </label>
+            <label>
+                <span class="field-label">{{ form.status.label }}</span>
+                {{ form.status }}
+                {% for error in form.status.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+            </label>
+            <label>
+                <span class="field-label">{{ form.email.label }}</span>
+                {{ form.email }}
+                {% for error in form.email.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+            </label>
+            <label>
+                <span class="field-label">{{ form.gender.label }}</span>
+                {{ form.gender }}
+                {% for error in form.gender.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+            </label>
+            <label>
+                <span class="field-label">{{ form.birth_date.label }}</span>
+                {{ form.birth_date }}
+                {% for error in form.birth_date.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+            </label>
+        </div>
+    </div>
+</details>

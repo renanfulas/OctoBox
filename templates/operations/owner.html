@@ -17,13 +17,12 @@ PONTOS CRITICOS:
 
 {% block content %}
 {% with page=operation_page %}
-<div class="operation-shell owner-scene owner-simple-shell">
-    {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
+<div class="operation-shell owner-scene owner-simple-shell workspace-shell">
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
-    <section class="owner-workspace" aria-label="Painel principal do owner">
-        {% include "operations/includes/owner_next_steps.html" %}
-        {% include "operations/includes/owner_metrics_section.html" %}
-    </section>
+    <div class="owner-metrics-panel">
+        {% include "operations/includes/owner/owner_metrics_section.html" %}
+    </div>
 </div>
 {% endwith %}
 {% endblock %}

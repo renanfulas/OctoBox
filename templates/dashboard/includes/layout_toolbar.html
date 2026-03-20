@@ -1,13 +1,8 @@
-<section class="layout-panel dashboard-layout-toolbar{% if page.data.dashboard_layout.hidden_blocks %} has-hidden-blocks{% endif %}" data-dashboard-layout-toolbar aria-label="Organizacao do dashboard">
-    <div>
-        <p class="eyebrow">Workspace livre</p>
-        <h2 class="dashboard-layout-toolbar-title">Organize o painel do seu jeito</h2>
-        <p class="dashboard-layout-toolbar-copy">Arraste os blocos, mova entre coluna principal e trilho de apoio, esconda o que nao precisa agora e o sistema salva seu arranjo automaticamente.</p>
-    </div>
-    <div class="actions">
-        <button class="button secondary" type="button" id="toggle-dashboard-layout" aria-pressed="false">Organizar painel</button>
-        <button class="button secondary" type="button" id="reset-dashboard-layout">Restaurar padrao</button>
+<div class="dashboard-layout-toolbar{% if page.data.dashboard_layout.hidden_blocks %} has-hidden-blocks{% endif %}" data-dashboard-layout-toolbar aria-label="Organização do dashboard">
+    <div class="actions actions-tight">
+        <button class="button ghost" type="button" id="toggle-dashboard-layout" aria-pressed="false">Organizar painel</button>
+        <button class="button ghost" type="button" id="reset-dashboard-layout" style="display: none;">Restaurar padrão</button>
     </div>
     <p class="dashboard-layout-status visually-hidden" id="dashboard-layout-status" aria-live="polite"></p>
     {% include "dashboard/includes/layout_hidden_tray.html" with page=page %}
-</section>
+</div>

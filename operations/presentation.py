@@ -18,25 +18,17 @@ def _build_owner_hero_content(snapshot):
 
     if primary_key == 'intakes':
         return {
-            'title': 'Entre pela fila de novas entradas.',
-            'copy': (
-                'Existe demanda esperando resposta agora.'
-                if metrics.get('pending_intakes')
-                else 'A fila de entradas esta limpa agora.'
-            ),
+            'title': 'Novas entradas.',
+            'copy': 'Existe demanda esperando resposta agora.' if metrics.get('pending_intakes') else 'A fila de entradas está limpa hoje.',
         }
     if primary_key == 'payments':
         return {
-            'title': 'Proteja a receita antes do resto.',
-            'copy': (
-                'Ha cobranca atrasada pedindo contato agora.'
-                if metrics.get('overdue_payments')
-                else 'As cobrancas atrasadas nao pedem acao agora.'
-            ),
+            'title': 'Seu caixa.',
+            'copy': 'Há cobrança atrasada pedindo contato agora.' if metrics.get('overdue_payments') else 'As cobranças estão sob controle.',
         }
     return {
-        'title': 'Confirme a estrutura que sustenta o dia.',
-        'copy': 'Veja se WhatsApp, historico e estrutura continuam coerentes.',
+        'title': 'Operação ativa.',
+        'copy': 'Confirme a estrutura ou responda novas demandas.',
     }
 
 
@@ -58,16 +50,16 @@ def _build_operation_workspace_hero(page_key, snapshot):
         ]
     hero_map = {
         'operations-owner': build_page_hero(
-            eyebrow='Comando do dia',
+            eyebrow='Comando',
             title=owner_hero['title'],
             copy=owner_hero['copy'],
             actions=owner_actions,
             aria_label='Comando do dia do owner',
         ),
         'operations-manager': build_page_hero(
-            eyebrow='Centro do manager',
-            title='Triagem, vínculo e cobrança, nessa ordem.',
-            copy='Triagem, vinculo e cobranca na ordem que destrava a fila.',
+            eyebrow='Gerência',
+            title='Fila e fluxos.',
+            copy='Resolva pendências, vínculos e cobranças abertas.',
             actions=[
                 {'label': 'Ver alertas financeiros', 'href': '#manager-finance-board'},
                 {'label': 'Ver entradas', 'href': '#manager-intake-board', 'kind': 'secondary'},
@@ -76,9 +68,9 @@ def _build_operation_workspace_hero(page_key, snapshot):
             aria_label='Panorama da gerencia',
         ),
         'operations-coach': build_page_hero(
-            eyebrow='Rotina do coach',
-            title='Abra o dia, registre presença, feche a turma.',
-            copy='Agenda, presenca e ocorrencia sem perder o compasso do turno.',
+            eyebrow='Coach',
+            title='Sua turma.',
+            copy='Registre presenças e feche o diário do treino.',
             actions=[
                 {'label': 'Ver aulas do dia', 'href': '#coach-sessions-board'},
             ],
@@ -95,16 +87,16 @@ def _build_operation_workspace_hero(page_key, snapshot):
             aria_label='Panorama de desenvolvimento',
         ),
         'operations-reception': build_page_hero(
-            eyebrow='Centro da recepcao',
-            title='Quem chegou, qual aula importa e qual cobrança cabe no balcão.',
-            copy='Chegada, aula e caixa curto no compasso do balcao.',
+            eyebrow='Recepção',
+            title='Seu balcão.',
+            copy='Acompanhe chegadas e acerte pagamentos curtos.',
             actions=[
                 {'label': 'Ver cobranca curta', 'href': '#reception-payment-board', 'data_action': 'jump-reception-payments'},
                 {'label': 'Ver entradas', 'href': '#reception-intake-board', 'kind': 'secondary', 'data_action': 'jump-reception-intakes'},
                 {'label': 'Ver grade em leitura', 'href': '#reception-class-grid-board', 'kind': 'secondary', 'data_action': 'jump-reception-class-grid'},
             ],
             aria_label='Panorama da recepcao',
-            classes=['reception-hero'],
+            classes=['operation-hero', 'reception-hero'],
             data_panel='reception-hero',
             actions_slot='reception-jump-links',
         ),

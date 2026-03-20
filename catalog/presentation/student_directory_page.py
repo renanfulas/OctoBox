@@ -13,7 +13,7 @@ from shared_support.page_payloads import build_page_hero
 from .shared import build_catalog_assets, build_catalog_page_payload
 
 
-def build_student_directory_page(*, student_count, students, student_filter_form, snapshot, current_role_slug, export_links):
+def build_student_directory_page(*, student_count, students, student_filter_form, snapshot, current_role_slug, export_links, base_query_string):
     can_manage_students = current_role_slug in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
     can_export_students = current_role_slug in (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER)
     can_open_student_admin = current_role_slug in (ROLE_OWNER, ROLE_DEV)
@@ -66,12 +66,12 @@ def build_student_directory_page(*, student_count, students, student_filter_form
     ]
     shell_action_buttons = build_shell_action_buttons_from_focus(focus=operational_focus, scope='students')
     hero = build_page_hero(
-        eyebrow='Mesa de atendimento',
-        title='Encontre, entenda e aja sem travar.',
-        copy='Triagem, pendencia e proxima acao sem caca visual.',
+        eyebrow='Alunos',
+        title='Sua base.',
+        copy='Gerencie cadastros, acessos e pendências.',
         actions=hero_actions,
         aria_label='Panorama de alunos',
-        classes=['catalog-hero', 'student-hero'],
+        classes=['operation-hero', 'catalog-hero', 'student-hero'],
         data_slot='hero',
         data_panel='students-hero',
         actions_slot='students-hero-actions',
@@ -91,9 +91,9 @@ def build_student_directory_page(*, student_count, students, student_filter_form
         data={
             'hero': hero,
             'students': students,
+            'base_query_string': base_query_string,
             'student_filter_form': student_filter_form,
-            'student_metrics': snapshot['metrics'],
-            'student_funnel': snapshot['funnel'],
+            'interactive_kpis': snapshot.get('interactive_kpis', {}),
             'priority_students': priority_students,
             'intake_queue': intake_queue,
         },

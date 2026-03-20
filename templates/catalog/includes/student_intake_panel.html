@@ -4,8 +4,8 @@ ARQUIVO: handoff de intake dentro da base de alunos.
 POR QUE ELE EXISTE:
 - deixa claro que a fila principal vive na central propria, sem misturar com o diretorio.
 -->
-<section class="table-card layout-panel layout-panel--stack glass-panel section-gap student-queue-panel" id="student-intake-board" aria-label="Fila de intake" data-panel="students-intake-board">
-    {% include "includes/ui/operation_card_head.html" with eyebrow="Handoff para a central propria de intake" title="A fila principal agora mora na Central de Intake" copy="Use Alunos para base e ficha definitiva. A triagem canonica da entrada segue na central propria." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
+<section id="tab-students-intake" class="table-card layout-panel layout-panel--stack glass-panel section-gap student-queue-panel" aria-label="Fila de intake" data-panel="students-intake-board">
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Handoff para a central propria de intake" title="A fila principal agora mora na Central de Intake" copy="Use Alunos para base e ficha definitiva. A triagem canonica da entrada segue na central propria." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
     <div class="actions actions-tight">
         <a class="button" href="/entradas/#intake-queue-board" data-action="open-intake-center">Abrir central de intake</a>
         {% if page.capabilities.can_manage_students %}
@@ -34,7 +34,7 @@ POR QUE ELE EXISTE:
             </div>
         </div>
         {% empty %}
-        {% include "includes/ui/state_empty.html" with compact=True eyebrow="Central de intake" title="Nenhuma entrada provisoria aguardando conversao" copy="A fila principal esta limpa neste momento; use a central propria para acompanhar novas chegadas." badge="Conversao em dia" badge_class="info" %}
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Central de intake" title="Nenhuma entrada provisoria aguardando conversao" copy="A fila principal esta limpa neste momento; use a central propria para acompanhar novas chegadas." badge="Conversao em dia" badge_class="info" %}
         {% endfor %}
     </div>
 </section>

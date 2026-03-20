@@ -1,0 +1,15 @@
+<!--
+ARQUIVO: passo de cobranca da ficha do aluno.
+-->
+<details id="student-form-billing" open class="disclosure-panel disclosure-panel-warm student-form-step student-form-step-disclosure">
+    <summary>Passo 5: cobranca e confirmacao</summary>
+    <div class="stack-16 section-gap-top-xs student-form-step-body">
+        {% include "includes/catalog/student_form/billing/billing_fields.html" with form=form %}
+        {% include "includes/catalog/student_form/billing/billing_installment_shell.html" %}
+        {{ form.payment_due_date.as_hidden }}
+        {{ form.payment_reference.as_hidden }}
+        {{ form.installment_total.as_hidden }}
+        {{ form.recurrence_cycles.as_hidden }}
+        {% include "includes/catalog/student_form/billing/billing_note.html" %}
+    </div>
+</details>

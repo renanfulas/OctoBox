@@ -1,6 +1,0 @@
-<tr>
-    <td>{{ payment.due_date|date:"d/m/Y" }}</td>
-    <td>R$ {{ payment.amount|floatformat:2 }}</td>
-    <td>{{ payment.get_status_display }}</td>
-    <td>{{ payment.get_method_display }}</td>
-</tr>

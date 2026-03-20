@@ -1,0 +1,16 @@
+<div class="topbar-alerts" data-slot="topbar-alerts">
+    <a class="alert-chip danger{% if shell_counts.overdue_payments %} has-volume{% else %} is-zero{% endif %}" href="{{ topbar_alert_links.finance }}" data-ui="topbar-finance-alert" data-action="open-finance-alerts" data-count-kind="overdue-payments" data-count-value="{{ shell_counts.overdue_payments }}" aria-label="{{ shell_counts.overdue_payments }} {% if shell_counts.overdue_payments == 1 %}vencimento{% else %}vencimentos{% endif %}">
+        {% if shell_counts.overdue_payments %}
+        <span class="alert-dot"></span>
+        {% else %}
+        {% endif %}
+        <span><strong>{{ shell_counts.overdue_payments }}</strong> {% if shell_counts.overdue_payments == 1 %}vencimento{% else %}vencimentos{% endif %}</span>
+    </a>
+    <a class="alert-chip{% if shell_counts.pending_intakes %} has-volume{% else %} is-zero{% endif %}" href="{{ topbar_alert_links.intakes }}" data-ui="topbar-intake-alert" data-action="open-intake-alerts" data-count-kind="pending-intakes" data-count-value="{{ shell_counts.pending_intakes }}" aria-label="{{ shell_counts.pending_intakes }} {% if shell_counts.pending_intakes == 1 %}entrada pendente{% else %}entradas pendentes{% endif %}">
+        {% if shell_counts.pending_intakes %}
+        <span class="alert-dot"></span>
+        {% else %}
+        {% endif %}
+        <span><strong>{{ shell_counts.pending_intakes }}</strong> {% if shell_counts.pending_intakes == 1 %}entrada{% else %}entradas{% endif %}</span>
+    </a>
+</div>

@@ -21,7 +21,7 @@ PONTOS CRITICOS:
 
 {% block content %}
 <div class="operation-shell">
-    {% include "includes/ui/page_hero.html" with hero=access_hero %}
+    {% include "includes/ui/layout/page_hero.html" with hero=access_hero %}
 
     <section class="table-card operation-focus-card" aria-label="Foco de leitura de acesso">
         <div class="operation-card-head">
@@ -50,10 +50,10 @@ PONTOS CRITICOS:
 
     <section class="layout-grid align-start" aria-label="Escopo e governanca">
         <div id="access-current-role">
-            {% include "includes/ui/info_list_card.html" with eyebrow="Escopo do papel ativo" title="Como este usuario deveria operar" copy="O que pertence ao seu papel." pill_label=current_role.label pill_class="info" items=role_capabilities empty_text="Defina um grupo de acesso para este usuario." %}
+            {% include "includes/ui/shared/info_list_card.html" with eyebrow="Escopo do papel ativo" title="Como este usuario deveria operar" copy="O que pertence ao seu papel." pill_label=current_role.label pill_class="info" items=role_capabilities empty_text="Defina um grupo de acesso para este usuario." %}
         </div>
         <div id="access-governance-board">
-            {% include "includes/ui/info_list_card.html" with card_class="operation-empty-card" eyebrow="Governanca pratica" title="O que esta tela precisa impedir" copy="Bloquear mistura de responsabilidade." pill_label="Limites claros" pill_class="accent" items=governance_points %}
+            {% include "includes/ui/shared/info_list_card.html" with card_class="operation-empty-card" eyebrow="Governanca pratica" title="O que esta tela precisa impedir" copy="Bloquear mistura de responsabilidade." pill_label="Limites claros" pill_class="accent" items=governance_points %}
         </div>
     </section>
 

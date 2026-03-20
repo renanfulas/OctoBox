@@ -1,0 +1,8 @@
+<article class="table-card finance-glass-panel finance-board-trend" id="finance-trend-board">
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Tendencia mensal" title="Receita real recebida nos ultimos 6 meses" title_class="section-title-sm" copy="Mostra se o caixa realmente subiu." copy_class="body-copy text-muted section-gap-top-xs no-margin" %}
+    <div class="chart-grid revenue-chart" style="--chart-columns: {{ page.data.monthly_comparison|length|default:1 }};">
+        {% for item in page.data.monthly_comparison %}
+        {% include "includes/catalog/finance/cards/revenue_chart_column.html" with item=item page=page %}
+        {% endfor %}
+    </div>
+</article>

@@ -1,0 +1,26 @@
+<section class="hero operation-hero{% for class_name in hero.classes %} {{ class_name }}{% endfor %}" aria-label="{{ hero.aria_label }}"{% if hero.data_slot %} data-slot="{{ hero.data_slot }}"{% endif %}{% if hero.data_panel %} data-panel="{{ hero.data_panel }}"{% endif %}>
+    <div class="operation-hero-main">
+        <div>
+            <p class="eyebrow">{{ hero.eyebrow }}</p>
+            {% if hero.heading_level == 'h1' %}
+            <h1 data-max-lines="{{ hero.contract.max_title_lines }}">{{ hero.title }}</h1>
+            {% else %}
+            <h2 data-max-lines="{{ hero.contract.max_title_lines }}">{{ hero.title }}</h2>
+            {% endif %}
+            <p class="operation-hero-copy" data-max-lines="{{ hero.contract.max_copy_lines }}">{{ hero.copy }}</p>
+        </div>
+        {% if hero.actions %}
+        <div class="actions"{% if hero.actions_slot %} data-slot="{{ hero.actions_slot }}"{% endif %}>
+            {% for action in hero.actions %}
+            <a class="button{% if action.kind == 'secondary' %} secondary{% endif %}{% if action.class_name %} {{ class_name }}{% endif %}" href="{{ action.href }}"{% if action.data_action %} data-action="{{ action.data_action }}"{% endif %}>{{ action.label }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if nested_include %}
+        <div class="operation-hero-nested-panel">
+            {% include nested_include %}
+        </div>
+        {% endif %}
+    </div>
+</section>

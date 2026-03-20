@@ -1,0 +1,46 @@
+<!--
+ARQUIVO: card reutilizavel de acao financeira.
+
+POR QUE ELE EXISTE:
+- concentra a estrutura repetida das acoes semiassistidas de cobranca e retencao.
+-->
+<article class="history-entry finance-action-card finance-action-card-compact">
+    <div class="card-body finance-action-card-body">
+        <div class="row-between history-header finance-action-head">
+            <div class="finance-action-copy card-head-main-stack">
+                <strong>{{ item.title }}</strong>
+                <p class="meta-text-sm">{{ item.summary }}</p>
+            </div>
+            <span class="pill{% if item.pill_class %} {{ item.pill_class }}{% endif %}">{{ item.pill }}</span>
+        </div>
+        <div class="card-content finance-action-body">
+            {% include "includes/ui/states/state_notice.html" with tone="warning" compact=True eyebrow="Proxima abordagem" title="Mensagem pronta para contato" copy=item.suggested_message class_name="finance-action-message finance-action-message-compact" %}
+            <div class="stack-4 finance-action-meta-list">
+                <p class="meta-text-sm">{{ item.whatsapp_last_contact_label }}</p>
+                {% if item.whatsapp_next_available_label %}<p class="meta-text-sm">{{ item.whatsapp_next_available_label }}</p>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="card-footer">
+        <div class="actions actions-tight finance-card-actions-compact">
+            {% if item.whatsapp_href %}
+            {% if item.whatsapp_repeat_blocked %}
+            <button class="button" type="button" disabled aria-disabled="true">WhatsApp bloqueado agora</button>
+            {% else %}
+            <form method="post" action="/financeiro/comunicacao/acao/" target="_blank" class="actions actions-tight finance-card-actions-compact">
+                {% csrf_token %}
+                <input type="hidden" name="action_kind" value="{{ item.kind }}">
+                <input type="hidden" name="student_id" value="{{ item.student.id }}">
+                {% if item.payment %}<input type="hidden" name="payment_id" value="{{ item.payment.id }}">{% endif %}
+                {% if item.enrollment %}<input type="hidden" name="enrollment_id" value="{{ item.enrollment.id }}">{% endif %}
+                <input type="hidden" name="open_in_whatsapp" value="1">
+                <button class="button" type="submit" data-action="open-finance-whatsapp">Registrar e abrir WhatsApp</button>
+            </form>
+            {% endif %}
+            {% else %}
+            <span class="meta-text-sm">Aluno sem WhatsApp valido para contato rapido.</span>
+            {% endif %}
+            <a class="button secondary" href="/alunos/{{ item.student.id }}/editar/#student-financial-overview">Abrir ficha do aluno</a>
+        </div>
+    </div>
+</article>

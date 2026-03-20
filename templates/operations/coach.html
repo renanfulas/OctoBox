@@ -16,11 +16,17 @@ PONTOS CRITICOS:
 
 {% block content %}
 {% with page=operation_page %}
-<div class="operation-shell coach-scene">
-    {% include "includes/ui/page_hero.html" with hero=page.data.hero %}
-    {% include "includes/ui/focus_sequence.html" with eyebrow="Compasso do turno" title="Leia o dia como cabine de operação" copy="Abra a agenda, registre presença e feche ocorrência sem cair em manutenção de dados." items=page.data.coach_operational_focus pill_label="Ritmo do coach" pill_class="accent" class_name="coach-focus-lane" panel_id="coach-command-lane" %}
-    {% include "operations/includes/coach_sessions_section.html" %}
-    {% include "operations/includes/coach_metrics_section.html" %}
+<div class="operation-shell coach-scene workspace-shell">
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    {% include "includes/ui/shared/focus_sequence.html" with eyebrow="Compasso do turno" title="Leia o dia como cabine de operação" copy="Abra a agenda, registre presença e feche ocorrência sem cair em manutenção de dados." items=page.data.coach_operational_focus pill_label="Ritmo do coach" pill_class="accent" class_name="coach-focus-lane" panel_id="coach-command-lane" %}
+    <section class="workspace-grid-layout" aria-label="Painel de turnos" data-slot="workspace">
+        <div class="workspace-grid-main">
+            <div class="workspace-panel">{% include "operations/includes/coach/coach_sessions_section.html" %}</div>
+        </div>
+        <aside class="workspace-grid-side">
+            <div class="workspace-panel">{% include "operations/includes/coach/coach_metrics_section.html" %}</div>
+        </aside>
+    </section>
 </div>
 {% endwith %}
 {% endblock %}

@@ -27,6 +27,7 @@ PONTOS CRITICOS:
     {% for stylesheet in shell_core_stylesheets %}
     <link rel="stylesheet" href="{% static stylesheet %}?v={{ static_asset_version }}">
     {% endfor %}
+    <link rel="stylesheet" href="{% static 'css/design-system/components/topbar_profile_menu.css' %}?v={{ static_asset_version }}">
     <link rel="icon" href="{% static 'images/favicon.svg' %}?v={{ static_asset_version }}" type="image/svg+xml">
     {% if current_page_assets.css_runtime %}
     {% for stylesheet in current_page_assets.css_runtime %}
@@ -67,59 +68,23 @@ PONTOS CRITICOS:
 <body data-theme="light" data-shell-scope="{{ shell_page_context.scope|default:'generic' }}" data-page="shell" data-ui="shell-body"{% if user.is_authenticated %} data-shell-user-id="{{ user.id }}"{% endif %}>
     <a class="skip-link" href="#page-body">Pular para o conteudo</a>
     <div class="shell" data-slot="shell-root">
-        {% include "includes/ui/shell_sidebar.html" %}
+        {% include "includes/ui/layout/shell_sidebar.html" %}
         <button class="sidebar-backdrop" type="button" id="sidebar-backdrop" data-ui="sidebar-backdrop" aria-label="Fechar menu lateral"></button>
         <main class="content" data-slot="content">
             {% if user.is_authenticated %}
             <header class="topbar" data-slot="topbar" data-ui="topbar" style="cursor: pointer;" onclick="if(!event.target.closest('a, button, input, form, .topbar-profile')) window.scrollTo({top: 0, behavior: 'smooth'})">
                 <div class="topbar-left" data-slot="topbar-left">
                     <button class="sidebar-toggle" type="button" id="sidebar-toggle" data-ui="sidebar-toggle" aria-expanded="false" aria-controls="page-body">Menu</button>
-                    <form class="global-search" method="get" action="{{ global_search_action }}" role="combobox" aria-expanded="false" aria-haspopup="listbox" aria-owns="search-autocomplete-list" aria-controls="search-autocomplete-list search-autocomplete-status" data-ui="global-search-form" data-panel="global-search" data-autocomplete-url="/api/v1/students/autocomplete/">
-                        <label class="visually-hidden" for="global-search-input">Buscar aluno ou WhatsApp</label>
-                        <input id="global-search-input" type="search" name="query" placeholder="Buscar aluno, telefone ou CPF" maxlength="150" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-autocomplete="list" aria-controls="search-autocomplete-list" aria-describedby="search-autocomplete-status" data-ui="global-search-input">
-                        <ul id="search-autocomplete-list" class="search-autocomplete-list" role="listbox" aria-label="Resultados da busca" hidden data-ui="global-search-results"></ul>
-                        <p id="search-autocomplete-status" class="search-status visually-hidden" aria-live="polite" data-ui="global-search-status"></p>
-                    </form>
+                    {% include "includes/ui/layout/topbar/topbar_search.html" %}
                 </div>
                 <div class="topbar-right" data-slot="topbar-right">
-                    <div class="topbar-quick-actions" data-slot="topbar-quick-actions" aria-label="Acoes rapidas globais">
-                        {% for link in topbar_quick_links %}
-                        <a class="topbar-quick-link topbar-quick-link--{{ link.kind }}" href="{{ link.href }}" data-priority-level="{{ link.kind }}" data-action="{{ link.action }}">{{ link.label }}</a>
-                        {% endfor %}
-                    </div>
-                    <div class="topbar-alerts" data-slot="topbar-alerts">
-                        <a class="alert-chip danger{% if shell_counts.overdue_payments %} has-volume{% else %} is-zero{% endif %}" href="{{ topbar_alert_links.finance }}" data-ui="topbar-finance-alert" data-action="open-finance-alerts" data-count-kind="overdue-payments" data-count-value="{{ shell_counts.overdue_payments }}" aria-label="{{ shell_counts.overdue_payments }} {% if shell_counts.overdue_payments == 1 %}vencimento{% else %}vencimentos{% endif %}">
-                            {% if shell_counts.overdue_payments %}
-                            <span class="alert-dot"></span>
-                            {% else %}
-                            {% endif %}
-                            <span><strong>{{ shell_counts.overdue_payments }}</strong> {% if shell_counts.overdue_payments == 1 %}vencimento{% else %}vencimentos{% endif %}</span>
-                        </a>
-                        <a class="alert-chip{% if shell_counts.pending_intakes %} has-volume{% else %} is-zero{% endif %}" href="{{ topbar_alert_links.intakes }}" data-ui="topbar-intake-alert" data-action="open-intake-alerts" data-count-kind="pending-intakes" data-count-value="{{ shell_counts.pending_intakes }}" aria-label="{{ shell_counts.pending_intakes }} {% if shell_counts.pending_intakes == 1 %}entrada pendente{% else %}entradas pendentes{% endif %}">
-                            {% if shell_counts.pending_intakes %}
-                            <span class="alert-dot"></span>
-                            {% else %}
-                            {% endif %}
-                            <span><strong>{{ shell_counts.pending_intakes }}</strong> {% if shell_counts.pending_intakes == 1 %}entrada{% else %}entradas{% endif %}</span>
-                        </a>
-                    </div>
-                    <button class="theme-toggle" type="button" id="theme-toggle" data-ui="theme-toggle" data-theme-state="light" aria-pressed="false" aria-label="Ativar tema escuro" title="Ativar tema escuro">
-                        <span class="theme-toggle-icon" aria-hidden="true">☼</span>
-                        <span class="theme-toggle-label visually-hidden">Claro</span>
-                    </button>
-                    <div class="topbar-profile" data-slot="topbar-profile">
-                        <div class="avatar" aria-hidden="true">
-                            <span class="avatar-core"></span>
-                            <span class="avatar-glow"></span>
-                        </div>
-                        <div class="profile-meta">
-                            <strong>{{ user.get_full_name|default:user.username }}</strong>
-                            <span>{{ current_role.label|default:"Sem papel definido" }}</span>
-                        </div>
-                    </div>
+                    {% include "includes/ui/layout/topbar/topbar_actions.html" %}
+                    {% include "includes/ui/layout/topbar/topbar_alerts.html" %}
+                    {% include "includes/ui/layout/topbar/topbar_theme_toggle.html" %}
+                    {% include "includes/ui/layout/topbar/topbar_profile.html" %}
                 </div>
             </header>
-            {% include "includes/ui/page_compass.html" %}
+            {% include "includes/ui/layout/page_compass.html" %}
             {% endif %}
             <div class="page-body" id="page-body" data-slot="page-body">
                 {% if messages %}
@@ -127,13 +92,13 @@ PONTOS CRITICOS:
                     {% for message in messages %}
                     <div class="message {{ message.tags }}" role="alert">
                         {% if 'success' in message.tags %}
-                        {% include "includes/ui/state_notice.html" with tone="success" compact=True eyebrow="Fluxo concluido" title="Confirmacao registrada" copy=message class_name="message-notice" %}
+                        {% include "includes/ui/states/state_notice.html" with tone="success" compact=True eyebrow="Fluxo concluido" title="Confirmacao registrada" copy=message class_name="message-notice" %}
                         {% elif 'error' in message.tags %}
-                        {% include "includes/ui/state_notice.html" with tone="danger" compact=True eyebrow="Intervencao necessaria" title="Algo pediu revisao" copy=message class_name="message-notice" %}
+                        {% include "includes/ui/states/state_notice.html" with tone="danger" compact=True eyebrow="Intervencao necessaria" title="Algo pediu revisao" copy=message class_name="message-notice" %}
                         {% elif 'warning' in message.tags %}
-                        {% include "includes/ui/state_notice.html" with tone="warning" compact=True eyebrow="Atencao operacional" title="Revise antes de seguir" copy=message class_name="message-notice" %}
+                        {% include "includes/ui/states/state_notice.html" with tone="warning" compact=True eyebrow="Atencao operacional" title="Revise antes de seguir" copy=message class_name="message-notice" %}
                         {% else %}
-                        {% include "includes/ui/state_notice.html" with tone="info" compact=True eyebrow="Atualizacao do sistema" title="Leitura confirmada" copy=message class_name="message-notice" %}
+                        {% include "includes/ui/states/state_notice.html" with tone="info" compact=True eyebrow="Atualizacao do sistema" title="Leitura confirmada" copy=message class_name="message-notice" %}
                         {% endif %}
                     </div>
                     {% endfor %}
@@ -153,5 +118,6 @@ PONTOS CRITICOS:
     <script src="{% static 'js/core/shell.js' %}?v={{ static_asset_version }}"></script>
     <script src="{% static 'js/core/forms.js' %}?v={{ static_asset_version }}"></script>
     <script src="{% static 'js/core/search.js' %}?v={{ static_asset_version }}"></script>
+    <script src="{% static 'js/core/profile_menu.js' %}?v={{ static_asset_version }}"></script>
 </body>
 </html>
