@@ -16,6 +16,8 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
+from guide.models import OperationalRuntimeSetting
+
 
 class GuideViewTests(TestCase):
     def setUp(self):
@@ -48,5 +50,16 @@ class GuideViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Configuracoes operacionais')
-        self.assertContains(response, 'OPERATIONAL_WHATSAPP_REPEAT_BLOCK_HOURS')
-        self.assertContains(response, 'Financeiro: regua de cobranca e retencao.')
+        self.assertContains(response, 'Salvar bloqueio do WhatsApp')
+        self.assertContains(response, 'Criar perfis de acesso')
+
+    def test_operational_settings_can_update_whatsapp_repeat_window(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('operational-settings'), {'repeat_block_hours': '12'})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            OperationalRuntimeSetting.objects.get(key='whatsapp_repeat_block_hours').value,
+            '12',
+        )

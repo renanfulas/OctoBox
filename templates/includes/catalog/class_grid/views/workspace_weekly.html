@@ -1,8 +1,13 @@
 <!--
 ARQUIVO: painel semanal da grade.
 -->
-<section class="table-card class-weekly-board class-grid-workspace-panel" id="weekly-board" data-panel-id="weekly-board" data-panel="class-grid-weekly-board" draggable="true">
-    {% include "includes/ui/class_grid/class_grid_panel_head.html" with eyebrow="Visao semanal" title="Calendario das proximas duas semanas" pill_label="14 dias em destaque" pill_class="info" handle_aria="Arrastar janela da visao semanal" %}
+<section class="card glass-panel class-weekly-board" id="weekly-board" data-panel="class-grid-weekly-board">
+    <div class="card-head">
+        <div class="card-head-main">
+            <h2 class="card-title">Visão Semanal</h2>
+            <p class="card-copy">Calendário das próximas duas semanas com sessões e ocupação.</p>
+        </div>
+    </div>
 
     {% for week in page.data.weekly_calendar|slice:":2" %}
     <section class="weekly-calendar-section" data-panel="class-grid-weekly-section">

@@ -2,7 +2,7 @@
 ARQUIVO: planejador recorrente da grade.
 -->
 <section class="table-card class-grid-planner-panel class-grid-workspace-panel" id="planner-board" data-panel-id="planner-board" data-panel="class-grid-planner" draggable="true">
-    {% include "includes/ui/class_grid/class_grid_panel_head.html" with eyebrow="Planejador recorrente" title="Monte a grade sem depender do admin toda hora" summary="Defina nome, coach, horario, periodo e dias da semana. O sistema gera a recorrencia e evita duplicidade." pill_label="Planejamento rapido" pill_class="info" handle_aria="Arrastar janela do planejador recorrente" %}
+    {% include "includes/ui/class_grid/class_grid_panel_head.html" with eyebrow="Planejador recorrente" title="Monte a grade sem depender do admin toda hora" summary="Defina nome, coach, horário, período e dias da semana. O sistema gera a recorrência e evita duplicidade." pill_label="Planejamento rápido" pill_class="info" handle_aria="Arrastar janela do planejador recorrente" %}
     {% if page.capabilities.can_manage_classes %}
     <form method="post" class="form-stack-lg section-gap-top-xs" novalidate data-class-grid-planner data-action="submit-class-grid-planner">
         {% csrf_token %}
@@ -14,6 +14,6 @@ ARQUIVO: planejador recorrente da grade.
             {% include "includes/catalog/class_grid/planner/workspace_planner_notes_and_actions.html" %}
     </form>
     {% else %}
-    <p class="class-day-summary">Seu papel atual pode consultar a grade e acompanhar a ocupacao, mas a criacao de aulas continua reservada a owner e manager.</p>
+    <p class="class-day-summary">Seu papel atual pode consultar a grade e acompanhar a ocupação, mas a criação de aulas continua reservada a owner e manager.</p>
     {% endif %}
 </section>

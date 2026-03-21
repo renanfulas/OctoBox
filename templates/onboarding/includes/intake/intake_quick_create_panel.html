@@ -1,0 +1,54 @@
+<!--
+ARQUIVO: formulario rapido para novas entradas na Central de Intake.
+
+POR QUE ELE EXISTE:
+- permite cadastrar lead e intake sem sair da mesma pagina.
+-->
+<section class="card glass-panel intake-create-card" aria-label="Cadastro rapido de entrada">
+    <div class="card-head">
+        <div class="card-head-main">
+            <h2 class="card-title">{% if entry_kind == 'lead' %}Novo Lead{% else %}Novo Intake{% endif %}</h2>
+            <p class="card-copy">
+                {% if entry_kind == 'lead' %}
+                Registre um contato novo para entrar imediatamente na fila comercial do sistema.
+                {% else %}
+                Registre uma entrada mais madura para seguir a mesma fila operacional sem sair desta tela.
+                {% endif %}
+            </p>
+        </div>
+        <div class="card-head-aside">
+            <span class="pill {% if entry_kind == 'lead' %}accent{% else %}info{% endif %}">{% if entry_kind == 'lead' %}Lead{% else %}Intake{% endif %}</span>
+        </div>
+    </div>
+    <form method="post" class="form-stack intake-create-form">
+        {% csrf_token %}
+        <input type="hidden" name="form_kind" value="quick-create">
+        <input type="hidden" name="entry_kind" value="{{ entry_kind }}">
+        <div class="field-grid-200">
+            <label>
+                <span class="field-label">{{ form.full_name.label }}</span>
+                {{ form.full_name }}
+                {{ form.full_name.errors }}
+            </label>
+            <label>
+                <span class="field-label">{{ form.phone.label }}</span>
+                {{ form.phone }}
+                {{ form.phone.errors }}
+            </label>
+            <label>
+                <span class="field-label">{{ form.email.label }}</span>
+                {{ form.email }}
+                {{ form.email.errors }}
+            </label>
+            <label>
+                <span class="field-label">{{ form.source.label }}</span>
+                {{ form.source }}
+                {{ form.source.errors }}
+            </label>
+        </div>
+        <div class="actions actions-tight intake-create-actions">
+            <button class="button" type="submit">Salvar {% if entry_kind == 'lead' %}lead{% else %}intake{% endif %}</button>
+            <a class="button secondary" href="#tab-intake-queue" data-action="open-tab-intake-queue">Voltar para fila</a>
+        </div>
+    </form>
+</section>

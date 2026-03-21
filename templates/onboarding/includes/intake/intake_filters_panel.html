@@ -4,8 +4,13 @@ ARQUIVO: filtros da Central de Intake.
 POR QUE ELE EXISTE:
 - isola o recorte da fila para manter o template principal curto.
 -->
-<section class="table-card layout-panel layout-panel--stack glass-panel section-gap intake-filter-card" aria-label="Busca e filtros da central de intake" data-slot="filters" data-panel="intake-filters">
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Busca e recorte da fila" title="Filtre a central sem perder a ordem operacional" copy="O intake continua dono da fila; o filtro so ajuda a recortar o que voce precisa agir agora." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
+<section class="card glass-panel intake-filter-card" aria-label="Busca e filtros da central de intake" data-slot="filters" data-panel="intake-filters">
+    <div class="card-head">
+        <div class="card-head-main">
+            <h2 class="card-title">Motor de Busca e Foco</h2>
+            <p class="card-copy">Filtre seus leads, veja apenas o de urgência ou separe por qual recepcionista está lidando com qual pessoa.</p>
+        </div>
+    </div>
     <form method="get" class="form-stack" data-action="filter-intakes">
         <div class="field-grid-200">
             <label>

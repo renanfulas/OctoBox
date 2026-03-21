@@ -1,5 +1,6 @@
 {% load dashboard_filters %}
-<article class="card{% if compact %} metric-card-compact{% endif %} {{ card.card_class }} {{ extra_classes }}{% if card.status_hint %} status-{{ card.status_hint }}{% endif %}{% if card.data_action %} has-action cursor-pointer{% endif %}" data-panel="metric-card" data-slot="metric-card"{% if card.data_action %} data-action="{{ card.data_action }}"{% endif %}>
+{% if card.href %}<a href="{{ card.href }}" class="metric-card-link" style="text-decoration:none;color:inherit;display:block;cursor:pointer;">{% endif %}
+<article class="card{% if compact %} metric-card-compact{% endif %} {{ card.card_class }} {{ extra_classes }}{% if card.status_hint %} status-{{ card.status_hint }}{% endif %}{% if card.data_action %} has-action cursor-pointer{% endif %}{% if card.href %} has-href{% endif %}" data-panel="metric-card" data-slot="metric-card"{% if card.data_action %} data-action="{{ card.data_action }}"{% endif %}>
     <div class="card-body card-body-metric">
         <div class="card-value-stack">
             <p class="eyebrow card-label">{{ card.eyebrow }}</p>
@@ -75,3 +76,4 @@
         {% endif %}
     {% endif %}
 </article>
+{% if card.href %}</a>{% endif %}

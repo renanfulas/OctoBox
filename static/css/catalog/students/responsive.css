@@ -37,6 +37,43 @@ POR QUE ELE EXISTE:
     .student-filter-actions-secondary {
         justify-content: stretch;
     }
+
+    .student-filter-card {
+        padding-inline: 20px !important;
+    }
+
+    .student-filter-card .field-grid-200 {
+        grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+    }
+
+    .student-inline-summary {
+        display: grid;
+    }
+
+    .student-cell--updated,
+    .student-cell--actions,
+    .student-directory-table thead th:nth-child(5),
+    .student-directory-table thead th:nth-child(6) {
+        display: none;
+    }
+
+    .student-table-scroll table {
+        width: 100%;
+        min-width: 0;
+        table-layout: auto;
+    }
+
+    .student-data-panel th,
+    .student-data-panel td {
+        padding: 12px 8px;
+    }
+
+    .student-cell-stack,
+    .student-row-actions {
+        justify-items: start;
+        justify-content: flex-start;
+        text-align: left;
+    }
 }
 
 @media (max-width: 640px) {
@@ -44,13 +81,96 @@ POR QUE ELE EXISTE:
         padding-inline: 20px;
     }
 
+    .student-filter-card {
+        padding-inline: 16px !important;
+    }
+
     .student-utility-actions {
         flex-direction: column;
+    }
+
+    .student-table-scroll {
+        overflow-x: visible;
+    }
+
+    .student-table-scroll table {
+        min-width: 0;
+        display: block;
+    }
+
+    .student-directory-table thead {
+        display: none;
+    }
+
+    .student-directory-table tbody {
+        display: grid;
+        gap: 13px;
+    }
+
+    .student-directory-table tbody tr {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 13px 16px;
+        padding: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.76);
+        box-shadow: 0 18px 32px rgba(15, 23, 42, 0.04);
+    }
+
+    .student-directory-table tbody tr + tr {
+        border-top: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .student-directory-table td {
+        display: grid;
+        gap: 6px;
+        padding: 0;
+        border: 0;
+        align-content: start;
+        justify-items: start;
+        text-align: left;
+    }
+
+    .student-directory-table td::before {
+        content: attr(data-label);
+        font-size: 0.66rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .student-directory-table .student-cell--student {
+        grid-column: 1 / -1;
+    }
+
+    .student-inline-summary {
+        display: none;
+    }
+
+    .student-directory-table .student-cell--updated,
+    .student-directory-table .student-cell--actions {
+        display: grid;
+    }
+
+    .student-directory-table .student-cell--actions {
+        grid-column: 1 / -1;
+    }
+
+    .student-directory-table .student-cell--actions .button {
+        width: 100%;
     }
 
     .student-data-panel th,
     .student-data-panel td {
         padding: 10px 8px;
+    }
+}
+
+@media (max-width: 520px) {
+    .student-directory-table tbody tr {
+        grid-template-columns: 1fr;
     }
 }
 

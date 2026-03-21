@@ -1,0 +1,45 @@
+<!--
+ARQUIVO: modal expandido da visão semanal.
+
+POR QUE ELE EXISTE:
+- abre a grade semanal em tela cheia para leitura confortável.
+- permite foco em um dia específico quando clicado diretamente.
+-->
+<dialog class="class-monthly-modal" id="class-weekly-modal" data-panel="class-grid-weekly-modal" aria-labelledby="class-weekly-modal-title">
+    <div class="class-monthly-modal-panel" data-slot="class-grid-weekly-modal-panel">
+        <div class="class-day-header class-monthly-modal-head">
+            <div>
+                <p class="eyebrow">Visão semanal expandida</p>
+                <h2 class="section-title-sm" id="class-weekly-modal-title">Grade completa</h2>
+                <p class="class-day-summary">Visualize as aulas de cada dia com mais espaço e detalhes.</p>
+            </div>
+            <div class="actions actions-tight" data-slot="class-grid-weekly-modal-actions">
+                <span class="pill info">Tela cheia</span>
+                <button class="button secondary" type="button" id="close-weekly-modal" data-action="close-weekly-modal">Fechar</button>
+            </div>
+        </div>
+
+        <!-- Conteúdo alternável: grade completa OU dia único -->
+        <div id="weekly-modal-full-view">
+            {% for week in page.data.weekly_calendar|slice:":2" %}
+            <section class="weekly-calendar-section" data-panel="class-grid-weekly-modal-section">
+                <div class="row-between-md weekly-calendar-header">
+                    <div>
+                        <p class="eyebrow">{{ week.label }}</p>
+                    </div>
+                    <span class="pill info">Seg a Dom</span>
+                </div>
+                <div class="weekly-calendar-grid weekly-modal-expanded-grid">
+                    {% for day in week.days %}
+                    {% include "includes/ui/class_grid/class_grid_weekly_day_card.html" with day=day page=page %}
+                    {% endfor %}
+                </div>
+            </section>
+            {% endfor %}
+        </div>
+
+        <div id="weekly-modal-day-view" style="display: none;">
+            <!-- Preenchido via JS ao clicar num dia específico -->
+        </div>
+    </div>
+</dialog>

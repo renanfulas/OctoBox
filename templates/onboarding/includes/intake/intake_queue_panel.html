@@ -4,8 +4,13 @@ ARQUIVO: fila principal da Central de Intake.
 POR QUE ELE EXISTE:
 - concentra a triagem operacional e o handoff de conversao em um bloco proprio.
 -->
-<section class="table-card layout-panel layout-panel--stack glass-panel section-gap intake-queue-panel" id="intake-queue-board" aria-label="Fila principal de intake" data-panel="intake-queue-board">
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Fila pronta para leitura e conversao" title="Entradas provisorias no ponto de acao" copy="Triagem, atribuicao e conversao saem daqui sem depender da tela de alunos para orientar a fila." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
+<section class="card glass-panel intake-data-panel" id="intake-queue-board" aria-label="Fila principal de intake" data-panel="intake-queue-board">
+    <div class="card-head">
+        <div class="card-head-main">
+            <h2 class="card-title">Triagem de Leads: Quem chegou no Box</h2>
+            <p class="card-copy">Contatos novos aguardando seu primeiro atendimento ou direcionamento.</p>
+        </div>
+    </div>
     <div class="intake-grid">
         {% for item in page.data.queue_items %}
         {% with intake=item.object semantic=item.semantic_state conversion=item.conversion permissions=item.action_permissions %}

@@ -15,14 +15,14 @@ POR QUE ELE EXISTE:
         </div>
         <div class="card-content finance-plan-card-content">
             <div class="plan-stats finance-plan-stats">
-                {% include "includes/ui/finance/finance_plan_stat.html" with value=plan.active_enrollments label="matriculas ativas" %}
+                {% include "includes/ui/finance/finance_plan_stat.html" with value=plan.active_enrollments label="matrículas ativas" %}
                 {% include "includes/ui/finance/finance_plan_stat.html" with value=plan.pending_enrollments label="pendentes" %}
                 <article class="finance-plan-stat finance-plan-stat-currency">
                     <strong class="finance-inline-currency">R$ {{ plan.revenue_this_month|floatformat:2 }}</strong>
-                    <span>recebido no mes</span>
+                    <span>recebido no mês</span>
                 </article>
             </div>
-            <p class="body-copy text-muted finance-plan-description-compact">{% if plan.description %}{{ plan.description }}{% else %}Sem descricao comercial ainda.{% endif %}</p>
+            <p class="body-copy text-muted finance-plan-description-compact">{% if plan.description %}{{ plan.description }}{% else %}Sem descrição comercial ainda.{% endif %}</p>
         </div>
     </div>
     <div class="card-footer">

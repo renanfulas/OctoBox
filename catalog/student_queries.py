@@ -91,7 +91,7 @@ def build_student_directory_snapshot(params=None):
 		'interactive_kpis': [
 			{
 				'eyebrow': 'Busca e recorte comercial',
-				'display_value': f'{total_students} registros',
+				'display_value': f'{total_students} Registros',
 				'note': 'Filtre a base, encontre alunos específicos ou exporte relatórios.',
 				'data_action': 'open-tab-students-filters',
 				'tone_class': 'kpi-slate',

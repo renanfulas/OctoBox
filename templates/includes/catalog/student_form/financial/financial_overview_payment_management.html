@@ -2,31 +2,37 @@
 ARQUIVO: gestao da cobranca atual do aluno.
 -->
 {% if page.data.payment_management_form %}
-<article class="table-card section-gap-top-sm student-payment-management-card student-financial-action-card student-financial-action-card-primary" id="student-payment-management">
-    <p class="eyebrow">Gestao da cobranca atual</p>
+<article class="card student-payment-management-card" id="student-payment-management" style="border-top: 4px solid #16a34a; background-color: var(--surface-000);">
+    <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-100);">
+        <h3 class="section-title-sm" style="color: #16a34a; display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            Faturamento e Cobrança
+        </h3>
+        <p class="meta-text" style="color: var(--text-500);">Preencha os dados abaixo para faturar a cobrança.</p>
+    </div>
     <form method="post" action="/alunos/{{ page.data.student_object.id }}/financeiro/acao/" class="form-stack student-payment-management-form">
         {% csrf_token %}
         {{ page.data.payment_management_form.payment_id }}
         <div class="field-grid-220">
             <label>
-                <span class="field-label">{{ page.data.payment_management_form.amount.label }}</span>
+                <span class="field-label">Valor da cobrança</span>
                 {{ page.data.payment_management_form.amount }}
             </label>
             <label>
-                <span class="field-label">{{ page.data.payment_management_form.due_date.label }}</span>
+                <span class="field-label">Vencimento</span>
                 {{ page.data.payment_management_form.due_date }}
             </label>
             <label>
-                <span class="field-label">{{ page.data.payment_management_form.method.label }}</span>
+                <span class="field-label">Método</span>
                 {{ page.data.payment_management_form.method }}
             </label>
             <label>
-                <span class="field-label">{{ page.data.payment_management_form.reference.label }}</span>
+                <span class="field-label">Referência</span>
                 {{ page.data.payment_management_form.reference }}
             </label>
         </div>
         <label>
-            <span class="field-label">{{ page.data.payment_management_form.notes.label }}</span>
+            <span class="field-label">Observação curta para a cobrança</span>
             {{ page.data.payment_management_form.notes }}
         </label>
         <div class="student-payment-management-actions">

@@ -45,21 +45,12 @@ def build_intake_center_page(*, snapshot, current_role_slug):
             }
         )
 
-    hero_actions.append(
-        {'label': 'Abrir alunos', 'href': '/alunos/', 'kind': 'secondary', 'data_action': 'open-students-directory'}
-    )
-
-    if current_role_slug == ROLE_RECEPTION:
+    if can_manage_students:
         hero_actions.append(
-            {'label': 'Abrir recepcao', 'href': '/operacao/recepcao/', 'kind': 'secondary', 'data_action': 'open-reception-workspace'}
+            {'label': 'Novo Lead', 'href': '#tab-intake-create-lead', 'kind': 'secondary', 'data_action': 'open-tab-intake-create-lead'}
         )
-    elif current_role_slug == ROLE_MANAGER:
         hero_actions.append(
-            {'label': 'Abrir operacao', 'href': '/operacao/manager/', 'kind': 'secondary', 'data_action': 'open-manager-workspace'}
-        )
-    elif current_role_slug == ROLE_OWNER:
-        hero_actions.append(
-            {'label': 'Abrir operacao', 'href': '/operacao/', 'kind': 'secondary', 'data_action': 'open-owner-workspace'}
+            {'label': 'Novo Intake', 'href': '#tab-intake-create-intake', 'kind': 'secondary', 'data_action': 'open-tab-intake-create-intake'}
         )
 
     hero = build_page_hero(
@@ -68,7 +59,7 @@ def build_intake_center_page(*, snapshot, current_role_slug):
         copy='Receba, converse e converta quem chegou no seu Box.',
         actions=hero_actions,
         aria_label='Panorama da central de intake',
-        classes=['operation-hero', 'catalog-hero', 'intake-hero'],
+        classes=['operation-hero'],
         data_slot='hero',
         data_panel='intake-hero',
         actions_slot='intake-hero-actions',
@@ -78,7 +69,7 @@ def build_intake_center_page(*, snapshot, current_role_slug):
         context={
             'page_key': 'intake-center',
             'title': 'Central de Intake',
-            'subtitle': 'Entradas provisórias, triagem e conversao num ponto proprio.',
+            'subtitle': 'Entradas provisórias, triagem e conversão num ponto próprio.',
             'mode': 'workspace',
             'role_slug': current_role_slug,
         },
@@ -99,7 +90,8 @@ def build_intake_center_page(*, snapshot, current_role_slug):
             'can_work_queue': can_work_queue,
         },
         assets=build_page_assets(
-            css=['css/design-system/operations.css', 'css/catalog/students.css', 'css/onboarding/intakes.css']
+            css=['css/design-system/operations.css', 'css/catalog/students.css', 'css/onboarding/intakes.css'],
+            js=['js/pages/interactive_tabs.js']
         ),
     )
 

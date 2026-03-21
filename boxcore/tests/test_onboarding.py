@@ -65,12 +65,58 @@ class IntakeCenterViewTests(TestCase):
         response = self.client.get(reverse('intake-center'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Triagem e conversao antes do aluno definitivo.')
+        self.assertContains(response, 'Regras de Conversão e Evolução')
         self.assertContains(response, 'id="intake-queue-board"')
         self.assertContains(response, 'Lead Central')
         self.assertContains(response, 'Lead aberto')
         self.assertContains(response, 'Triar antes de converter')
         self.assertContains(response, f'/alunos/novo/?intake={self.convertible_intake.id}#student-form-essential')
+        self.assertContains(response, 'Novo Lead')
+        self.assertContains(response, 'Novo Intake')
+
+    def test_owner_can_create_lead_inside_intake_center(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('intake-center'),
+            data={
+                'form_kind': 'quick-create',
+                'entry_kind': 'lead',
+                'lead-create-full_name': 'Lead Hero',
+                'lead-create-phone': '5511998887777',
+                'lead-create-email': 'lead.hero@example.com',
+                'lead-create-source': 'manual',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        created_entry = StudentIntake.objects.get(full_name='Lead Hero')
+        self.assertEqual(created_entry.status, IntakeStatus.NEW)
+        self.assertEqual(created_entry.raw_payload.get('entry_kind'), 'lead')
+        self.assertContains(response, 'Lead cadastrado com sucesso na Central de Intake.')
+
+    def test_owner_can_create_intake_inside_intake_center(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('intake-center'),
+            data={
+                'form_kind': 'quick-create',
+                'entry_kind': 'intake',
+                'intake-create-full_name': 'Intake Hero',
+                'intake-create-phone': '5511991112222',
+                'intake-create-email': 'intake.hero@example.com',
+                'intake-create-source': 'whatsapp',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        created_entry = StudentIntake.objects.get(full_name='Intake Hero')
+        self.assertEqual(created_entry.status, IntakeStatus.NEW)
+        self.assertEqual(created_entry.raw_payload.get('entry_kind'), 'intake')
+        self.assertContains(response, 'Intake cadastrado com sucesso na Central de Intake.')
 
     def test_intake_center_filters_queue_by_status(self):
         self.client.force_login(self.user)

@@ -33,22 +33,22 @@ def build_finance_filter_summary(filter_form):
         {
             'label': 'Janela atual',
             'value': months_choices.get(months_value, '6 meses'),
-            'summary': 'Define o horizonte da leitura gerencial antes de comparar caixa e retencao.',
+            'summary': 'Define o horizonte da leitura gerencial antes de comparar caixa e retenção.',
         },
         {
             'label': 'Plano em foco',
             'value': selected_plan.name if selected_plan else 'Todos os planos',
-            'summary': 'Mostra se o recorte esta amplo ou se ja esta olhando uma carteira especifica.',
+            'summary': 'Mostra se o recorte está amplo ou se já está olhando uma carteira específica.',
         },
         {
             'label': 'Status financeiro',
             'value': status_choices.get(payment_status, 'Todos'),
-            'summary': 'Ajuda a separar leitura total de leitura de pressao operacional.',
+            'summary': 'Ajuda a separar leitura total de leitura de pressão operacional.',
         },
         {
-            'label': 'Metodo de pagamento',
+            'label': 'Método de pagamento',
             'value': method_choices.get(payment_method, 'Todos'),
-            'summary': 'Util quando a analise precisa isolar comportamento de recebimento.',
+            'summary': 'Útil quando a análise precisa isolar comportamento de recebimento.',
         },
     ]
 
@@ -67,30 +67,30 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         priority_label = f'{pressure_total} sinal(is) agora'
     else:
         priority_badge = 'success'
-        priority_label = 'Pressao controlada'
+        priority_label = 'Pressão controlada'
 
     finance_right_rail_snapshot = [
         {
-            'label': 'Pressao combinada',
+            'label': 'Pressão combinada',
             'value': pressure_total,
-            'summary': 'Soma contato assistido com fila financeira no recorte atual.',
+            'summary': 'Soma contato assistido com fila financeira no período atual.',
         },
         {
             'label': 'Em aberto',
             'value': f"R$ {finance_pulse['open']:.2f}",
-            'summary': 'Mostra o volume que ainda pede conversao em caixa.',
+            'summary': 'Mostra o volume que ainda pede conversão em caixa.',
         },
         {
             'label': 'Alunos em atraso',
             'value': finance_pulse['overdue_students'],
-            'summary': 'Ajuda a medir se a pressao e pontual ou ja alcancou a base.',
+            'summary': 'Ajuda a medir se a pressão é pontual ou já alcançou a base.',
         },
     ]
     operational_focus = [
         {
-            'label': 'Cobranca pede contato',
+            'label': 'Cobrança pede contato',
             'chip_label': 'Cobranças',
-            'summary': f'{len(operational_queue)} caso(s) ja tem abordagem sugerida e nao deveriam esperar outra leitura para virar acao.',
+            'summary': f'{len(operational_queue)} caso(s) já tem abordagem sugerida e não deveria esperar outra leitura para virar ação.',
             'count': len(operational_queue),
             'pill_class': 'warning' if len(operational_queue) > 0 else 'success',
             'href': '#finance-rail-board',
@@ -99,7 +99,7 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         {
             'label': 'Fila pressionando caixa',
             'chip_label': 'Fila',
-            'summary': f'{len(financial_alerts)} cobranca(s) ja aparecem como pendencia ou atraso no recorte atual.',
+            'summary': f'{len(financial_alerts)} cobrança(s) já aparecem como pendência ou atraso no período atual.',
             'count': len(financial_alerts),
             'pill_class': 'warning' if len(financial_alerts) > 0 else 'info',
             'href': '#finance-queue-board',
@@ -111,14 +111,14 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
             'summary': f"Recebido: R$ {finance_pulse['received']:.2f} | Em aberto: R$ {finance_pulse['open']:.2f}.",
             'pill_class': 'accent',
             'href': '#finance-trend-board',
-            'href_label': 'Ver tendencia',
+            'href_label': 'Ver tendência',
         },
     ]
     shell_action_buttons = build_shell_action_buttons_from_focus(
         focus=operational_focus,
         next_action={
             'href': '#finance-portfolio-board',
-            'summary': 'Depois da pressao viva, desca para a carteira e leia a proxima acao estrutural do financeiro.',
+            'summary': 'Depois da pressão viva, desça para a carteira e leia a próxima ação estrutural do financeiro.',
         },
         scope='finance',
     )
@@ -136,14 +136,14 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         copy='Controle receitas, mensalidades atrasadas e o pulso financeiro.',
         actions=hero_actions,
         aria_label='Panorama financeiro',
-        classes=['operation-hero', 'finance-hero'],
+        classes=['operation-hero'],
     )
 
     return build_catalog_page_payload(
         context={
             'page_key': 'finance-center',
             'title': 'Financeiro',
-            'subtitle': 'Planos, receita, retencao e sinais operacionais num so painel.',
+            'subtitle': 'Planos, receita, retenção e sinais operacionais num só painel.',
             'mode': 'management' if can_manage_finance else 'read-only',
             'role_slug': current_role_slug,
         },

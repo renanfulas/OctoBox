@@ -1,16 +1,17 @@
 <!--
 ARQUIVO: status e metricas do overview financeiro do aluno.
 -->
-<section class="panel-grid section-gap-top-xs student-financial-metrics" aria-label="Metricas financeiras">
-    {% for label, value in page.data.financial_overview.metrics.items %}
-    <article class="card student-financial-metric-card">
-        <p class="eyebrow">{{ label|cut:"_"|title }}</p>
-        <p class="metric">{{ value }}</p>
+<section class="panel-grid section-gap-top-xs student-financial-metrics" aria-label="Metricas financeiras" style="grid-template-columns: repeat(3, 1fr);">
+    <article class="card student-financial-metric-card" style="background: var(--surface-000);">
+        <p class="eyebrow" style="color: var(--text-500);">Matrículas Ativas</p>
+        <p class="metric" style="color: var(--primary-600);">{{ page.data.financial_overview.metrics.matriculas_ativas|default:"0" }}</p>
     </article>
-    {% endfor %}
+    <article class="card student-financial-metric-card" style="background: var(--surface-000);">
+        <p class="eyebrow" style="color: var(--text-500);">Pagamentos Pendentes</p>
+        <p class="metric" style="color: var(--primary-600);">{{ page.data.financial_overview.metrics.pagamentos_pendentes|default:"0" }}</p>
+    </article>
+    <article class="card student-financial-metric-card" style="background: var(--surface-000);">
+        <p class="eyebrow" style="color: var(--text-500);">Pagamentos Atrasados</p>
+        <p class="metric" style="color: var(--primary-600);">{{ page.data.financial_overview.metrics.pagamentos_atrasados|default:"0" }}</p>
+    </article>
 </section>
-
-<div class="layout-grid align-start section-gap-top student-financial-status-grid">
-    {% include "includes/catalog/student_form/financial/financial_overview_current_plan_card.html" with page=page %}
-    {% include "includes/catalog/student_form/financial/financial_overview_recent_payments_card.html" with page=page %}
-</div>

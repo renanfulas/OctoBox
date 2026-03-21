@@ -4,8 +4,13 @@ ARQUIVO: leitura de origem da Central de Intake.
 POR QUE ELE EXISTE:
 - isola a quebra por canal para facilitar manutencao da leitura curta.
 -->
-<article class="table-card layout-panel layout-panel--stack glass-panel" id="intake-source-board" data-panel="intake-source-board">
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="De onde a fila esta vindo" title="Origens que abastecem a entrada" copy="Ajuda a separar problema de canal, captura ou triagem humana." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
+<article class="card glass-panel" id="intake-source-board" data-panel="intake-source-board">
+    <div class="card-head">
+        <div class="card-head-main">
+            <h2 class="card-title">Raio-X de Canais e Origens</h2>
+            <p class="card-copy">Analise de quais lugares (Insta, Portal, Balcão) sua demanda está vindo para isolar gargalos de captura.</p>
+        </div>
+    </div>
     <div class="intake-source-grid">
         {% for item in page.data.source_breakdown %}
         <article class="intake-mini-card" data-panel="intake-source-card">

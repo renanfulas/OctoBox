@@ -45,17 +45,95 @@ class AccessViewTests(TestCase):
         self.assertContains(response, 'Papéis e acessos')
         self.assertContains(response, 'DEV')
         self.assertContains(response, 'Recepcao')
+        self.assertNotContains(response, 'Editar e ativar perfis sem admin')
+
+    def test_access_overview_shows_management_panel_only_when_requested(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(f"{reverse('access-overview')}?manage_profiles=1")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Editar e ativar perfis sem admin')
+        self.assertContains(response, 'Ocultar')
 
     def test_authenticated_shell_renders_logout_as_post_form(self):
         self.client.force_login(self.user)
 
         response = self.client.get(reverse('access-overview'))
 
-        self.assertContains(response, 'class="sidebar-logout-form"')
         self.assertContains(response, 'method="post"')
         self.assertContains(response, 'action="{}"'.format(reverse('logout')))
         self.assertContains(response, 'csrfmiddlewaretoken')
-        self.assertContains(response, '<button class="nav-link nav-link-button" type="submit"><span class="nav-icon">🚪</span>Sair</button>', html=True)
+        self.assertContains(response, '<button type="submit" class="profile-menu-item is-danger" role="menuitem">Sair</button>', html=True)
+
+    def test_owner_can_create_access_profile_without_admin(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('access-overview'),
+            {
+                'full_name': 'Maria Operacao',
+                'username': 'maria.operacao',
+                'email': 'maria.operacao@example.com',
+                'password': 'SenhaTemporaria@123',
+                'role': ROLE_MANAGER,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        created_user = get_user_model().objects.get(username='maria.operacao')
+        self.assertEqual(created_user.first_name, 'Maria')
+        self.assertEqual(created_user.last_name, 'Operacao')
+        self.assertTrue(created_user.groups.filter(name=ROLE_MANAGER).exists())
+
+    def test_owner_can_update_access_profile_without_admin(self):
+        target_user = get_user_model().objects.create_user(
+            username='joao.time',
+            email='joao@old.example.com',
+            password='Senha@123',
+            first_name='Joao',
+            last_name='Time',
+        )
+        target_user.groups.add(Group.objects.create(name=ROLE_RECEPTION))
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('access-overview'),
+            {
+                'access_action': 'update',
+                'target_profile_id': str(target_user.id),
+                f'profile-{target_user.id}-full_name': 'Joao Gestor',
+                f'profile-{target_user.id}-email': 'joao@new.example.com',
+                f'profile-{target_user.id}-role': ROLE_MANAGER,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        target_user.refresh_from_db()
+        self.assertEqual(target_user.first_name, 'Joao')
+        self.assertEqual(target_user.last_name, 'Gestor')
+        self.assertEqual(target_user.email, 'joao@new.example.com')
+        self.assertTrue(target_user.groups.filter(name=ROLE_MANAGER).exists())
+
+    def test_owner_can_toggle_access_profile_status_without_admin(self):
+        target_user = get_user_model().objects.create_user(
+            username='ana.time',
+            email='ana@example.com',
+            password='Senha@123',
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('access-overview'),
+            {
+                'access_action': 'toggle_active',
+                'target_profile_id': str(target_user.id),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        target_user.refresh_from_db()
+        self.assertFalse(target_user.is_active)
 
 
 class BootstrapRolesCommandTests(TestCase):

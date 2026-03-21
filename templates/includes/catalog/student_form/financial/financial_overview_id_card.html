@@ -1,0 +1,27 @@
+<!--
+ARQUIVO: Cracha de Identificacao rapida na aba financeira.
+-->
+<article class="card glass-panel section-gap-top-xs student-id-cockpit-card" style="border-left: 4px solid var(--primary);">
+    <div class="card-head-stacked" style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin: 0; padding-bottom: 0; border: none;">
+        <div style="flex: 1; min-width: 200px; text-align: left;">
+            <p class="eyebrow" style="color: var(--text-500)">Atleta no balcão</p>
+            <h2 class="section-title" style="margin-bottom: 4px;">{{ page.data.student_object.full_name }}</h2>
+            <p class="meta-text" style="font-size: var(--text-md); font-weight: 500; color: var(--text-800);">
+                WhatsApp: {{ page.data.student_object.phone|default:"Nao informado" }} 
+                {% if page.data.student_object.cpf %}<span style="color: var(--text-400); margin: 0 8px;">|</span> CPF: {{ page.data.student_object.cpf }}{% endif %}
+            </p>
+        </div>
+        <div style="text-align: right;">
+            {% if page.data.financial_overview.latest_enrollment %}
+            <p class="eyebrow" style="color: var(--text-500)">Plano Vigente</p>
+            <h3 class="section-title-sm" style="color: var(--primary-600); margin-bottom: 4px;">{{ page.data.financial_overview.latest_enrollment.plan.name }}</h3>
+            <span class="status-badge status-{{ page.data.financial_overview.latest_enrollment.status }}" style="display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; text-transform: uppercase;">
+                {{ page.data.financial_overview.latest_enrollment.get_status_display }}
+            </span>
+            {% else %}
+            <p class="eyebrow" style="color: var(--text-500)">Plano Vigente</p>
+            <h3 class="section-title-sm" style="color: var(--text-400);">Sem matrícula</h3>
+            {% endif %}
+        </div>
+    </div>
+</article>

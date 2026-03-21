@@ -26,6 +26,18 @@ POR QUE ELE EXISTE:
     padding-top: 0;
 }
 
+.intake-create-card {
+    width: 100%;
+}
+
+.intake-create-form {
+    gap: 16px;
+}
+
+.intake-create-actions {
+    justify-content: flex-start;
+}
+
 [data-panel="intake-metrics"] {
     gap: 12px;
 }
@@ -133,6 +145,16 @@ POR QUE ELE EXISTE:
 @media (max-width: 720px) {
     .intake-source-grid {
         grid-template-columns: 1fr;
+    }
+
+    .intake-create-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .intake-create-actions .button {
+        width: 100%;
+        justify-content: center;
     }
 
     .intake-card-actions,

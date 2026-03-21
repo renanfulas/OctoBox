@@ -17,7 +17,7 @@ from django.db.models import Count, Q
 from django.utils import timezone
 
 from onboarding.facade import build_intake_queue_item
-from onboarding.forms import IntakeCenterFilterForm
+from onboarding.forms import IntakeCenterFilterForm, IntakeQuickCreateForm
 from onboarding.models import IntakeSource, IntakeStatus, StudentIntake
 
 
@@ -101,24 +101,36 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
     first_intake = queue[0] if queue else None
 
     return {
-        'metrics': {
-            'Fila pendente': {
-                'value': pending_count,
-                'note': 'Entradas que seguem novas ou em revisao e ainda pedem leitura humana.',
+        'interactive_kpis': [
+            {
+                'eyebrow': 'Triagem Inicial',
+                'display_value': str(pending_count),
+                'note': 'Leads aguardando primeiro contato, agendamento ou direcionamento basico no balcao.',
+                'data_action': 'open-tab-intake-queue',
+                'card_class': 'kpi-red' if pending_count > 0 else 'kpi-emerald',
             },
-            'Prontos para conversao': {
-                'value': matched_count,
-                'note': 'Casos ja triados o suficiente para abrir a ficha definitiva sem empurrar a decisao.',
+            {
+                'eyebrow': 'Motor de Conversao',
+                'display_value': str(matched_count),
+                'note': 'Pessoas aquecidas, triadas e prontas para criar a matricula e assinar o plano.',
+                'data_action': 'open-tab-intake-conversion',
+                'card_class': 'kpi-blue' if matched_count > 0 else 'kpi-slate',
             },
-            'Ja atribuidos': {
-                'value': assigned_count,
-                'note': 'Entradas que ja tem dono operacional e nao deveriam ficar anônimas no fluxo.',
+            {
+                'eyebrow': 'Termometro Comercial',
+                'display_value': str(created_today),
+                'note': 'Volume diario e grafico de canais (Insta, Site, Balcao) para avaliar a atracao de hoje.',
+                'data_action': 'open-tab-intake-source',
+                'card_class': 'kpi-slate',
             },
-            'Entradas hoje': {
-                'value': created_today,
-                'note': 'Volume do dia que ajuda a medir pressao de balcão, WhatsApp ou importacao.',
+            {
+                'eyebrow': 'Filtros & Busca',
+                'display_value': 'Recortes',
+                'note': 'Isole a fila buscando por nome, status especifico ou responsavel pelo atendimento.',
+                'data_action': 'open-tab-intake-filters',
+                'card_class': 'kpi-cyan',
             },
-        },
+        ],
         'hero_stats': [
             {'label': 'Pendentes', 'value': pending_count},
             {'label': 'Na fila', 'value': len(queue)},
@@ -152,6 +164,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
             },
         ],
         'filter_form': filter_form,
+        'create_form': IntakeQuickCreateForm(),
         'intake_queue': queue,
         'queue_items': queue_items,
         'first_intake': first_intake,

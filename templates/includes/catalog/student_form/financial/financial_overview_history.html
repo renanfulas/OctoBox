@@ -1,13 +1,13 @@
 <!--
 ARQUIVO: historico comercial do aluno.
 -->
-<article class="table-card section-gap-top-sm student-financial-history-card">
-    <p class="eyebrow">Historico de planos e trocas comerciais</p>
+<article class="card section-gap-top-sm student-financial-history-card" style="background: var(--surface-000);">
+    <h3 class="section-title-sm" style="margin-bottom: 16px; color: var(--text-800);">Linha do Tempo (Matrícula)</h3>
     <div class="history-stack">
         {% for enrollment in page.data.financial_overview.enrollment_history %}
         {% include "includes/catalog/student_form/financial/financial_overview_history_entry.html" with enrollment=enrollment %}
         {% empty %}
-        <p class="meta-text">Nenhum historico de plano registrado ainda.</p>
+        <p class="meta-text">Nenhum histórico de plano registrado ainda.</p>
         {% endfor %}
     </div>
 </article>

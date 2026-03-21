@@ -184,6 +184,23 @@ POR QUE ELE EXISTE:
     margin-top: 20px;
 }
 
+.weekly-calendar-section {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.weekly-modal-expanded-grid {
+    min-width: 0;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.weekly-day-card:hover {
+    border-color: rgba(249, 115, 22, 0.3);
+    box-shadow: var(--shadow-soft);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
 .weekly-calendar-header {
     margin-bottom: 12px;
     padding: 0 2px;
@@ -191,8 +208,9 @@ POR QUE ELE EXISTE:
 
 .weekly-calendar-grid {
     display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(160px, 1fr));
     gap: 10px;
+    min-width: 1180px;
 }
 
 .weekly-day-card {
@@ -203,6 +221,9 @@ POR QUE ELE EXISTE:
     display: grid;
     gap: 12px;
     min-height: 194px;
+    min-width: 0;
+    overflow: hidden;
+    word-break: break-word;
     box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
 }
 
@@ -231,10 +252,12 @@ POR QUE ELE EXISTE:
     display: grid;
     gap: 8px;
     align-content: start;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .weekly-session-chip {
-    padding: 10px;
+    padding: 14px;
     border-radius: 16px;
     border: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.96);
@@ -288,10 +311,32 @@ POR QUE ELE EXISTE:
     margin: 8px 0 4px;
     font-weight: 700;
     line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .weekly-empty-state {
     margin: 0;
     color: var(--muted);
     line-height: 1.6;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.weekly-empty-state .card-body {
+    overflow: hidden;
+    min-width: 0;
+}
+
+.weekly-empty-state .card-copy,
+.weekly-empty-state .state-empty-copy {
+    display: none;
+}
+
+.weekly-empty-state .card-title,
+.weekly-empty-state .state-empty-title {
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

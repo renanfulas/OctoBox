@@ -18,17 +18,17 @@ from .shared import build_catalog_assets, build_catalog_page_payload
 def _build_membership_plan_focus(plan):
     return [
         {
-            'label': 'Comece pelo coracao da oferta',
+            'label': 'Comece pelo coração da oferta',
             'chip_label': 'Plano',
-            'summary': 'Nome, valor e ciclo precisam continuar legiveis para venda, cobranca e carteira sem depender de explicacao oral.',
+            'summary': 'Nome, valor e ciclo precisam continuar legíveis para venda, cobrança e carteira sem depender de explicação oral.',
             'pill_class': 'accent',
             'href': '#plan-form-core',
-            'href_label': 'Editar nucleo',
+            'href_label': 'Editar núcleo',
         },
         {
             'label': 'Depois valide a entrega',
             'chip_label': 'Comercial',
-            'summary': 'A descricao comercial deve reduzir ambiguidade para recepcao, manager e leitura futura do proprio plano.',
+            'summary': 'A descrição comercial deve reduzir ambiguidade para recepção, manager e leitura futura do próprio plano.',
             'pill_class': 'info',
             'href': '#plan-form-delivery',
             'href_label': 'Revisar entrega',
@@ -36,7 +36,7 @@ def _build_membership_plan_focus(plan):
         {
             'label': 'Feche com impacto na carteira',
             'chip_label': 'Carteira',
-            'summary': 'Status, ritmo semanal e leitura rapida precisam deixar claro se o plano fortalece a carteira ou so ocupa espaco visual.',
+            'summary': 'Status, ritmo semanal e leitura rápida precisam deixar claro se o plano fortalece a carteira ou só ocupa espaço visual.',
             'pill_class': 'warning' if plan.active else 'info',
             'href': '#plan-form-summary',
             'href_label': 'Ler impacto',
@@ -70,12 +70,12 @@ def build_membership_plan_page(*, form, plan, current_role_slug):
         title='Detalhes do plano.',
         copy='Altere valores, ciclos e a proposta comercial.',
         actions=[
-            {'label': 'Editar nucleo', 'href': '#plan-form-core', 'kind': 'primary'},
-            {'label': 'Ver leitura rapida', 'href': '#plan-form-summary', 'kind': 'secondary'},
+            {'label': 'Editar núcleo', 'href': '#plan-form-core', 'kind': 'primary'},
+            {'label': 'Ver leitura rápida', 'href': '#plan-form-summary', 'kind': 'secondary'},
             {'label': 'Voltar para financeiro', 'href': reverse('finance-center'), 'kind': 'secondary'},
         ],
         aria_label='Plano comercial',
-        classes=['operation-hero', 'finance-hero', 'finance-plan-page-hero'],
+        classes=['operation-hero'],
         heading_level='h1',
         data_slot='hero',
         data_panel='finance-plan-hero',
@@ -95,15 +95,15 @@ def build_membership_plan_page(*, form, plan, current_role_slug):
             'form': form,
             'plan': plan_snapshot,
             'plan_form_guardrails': [
-                'Plano bom precisa ser claro para vender, cobrar e explicar sem traducao improvisada.',
+                'Plano bom precisa ser claro para vender, cobrar e explicar sem tradução improvisada.',
                 'Valor e ciclo devem parecer consistentes com a entrega prometida e com o tipo de aluno que a carteira quer reter.',
-                'Se a descricao ficar vaga, a recepcao e o financeiro acabam preenchendo a lacuna no improviso.',
+                'Se a descrição ficar vaga, a recepção e o financeiro acabam preenchendo a lacuna no improviso.',
             ],
             'plan_form_summary_cards': [
                 {
                     'label': 'Status comercial',
                     'value': plan_snapshot['status_summary'],
-                    'summary': 'Mostra se o plano segue disponivel para compor carteira e novas vendas.',
+                    'summary': 'Mostra se o plano segue disponível para compor carteira e novas vendas.',
                 },
                 {
                     'label': 'Ritmo semanal',
@@ -113,7 +113,7 @@ def build_membership_plan_page(*, form, plan, current_role_slug):
                 {
                     'label': 'Entrega comercial',
                     'value': plan_snapshot['delivery_status_label'],
-                    'summary': 'Evita que a equipe dependa de memoria oral para explicar o plano.',
+                    'summary': 'Evita que a equipe dependa de memória oral para explicar o plano.',
                 },
             ],
         },

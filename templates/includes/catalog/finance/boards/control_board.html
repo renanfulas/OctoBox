@@ -1,34 +1,17 @@
 <!--
 ARQUIVO: recorte ativo e filtros do financeiro.
 -->
-<section class="card glass-panel finance-support-card finance-support-card-tight finance-filter-summary-card" id="finance-control-board" data-panel="finance-control-summary">
-    <div class="card-head">
-        <h3 class="card-title">Exportacao do Recorte Ativo</h3>
-        <span class="badge badge-subtle info">Contexto visivel</span>
-    </div>
-    <div class="finance-guide-note">
-        <p class="meta-text no-margin">Confirme o recorte de filtragem atual antes de extrair os numeros para PDF ou planilhas executivas.</p>
-    </div>
-    <div class="finance-summary-grid">
-        {% for item in page.data.finance_filter_summary %}
-        {% include "includes/ui/finance/finance_snapshot_chip.html" with item=item chip_class="finance-summary-chip" %}
-        {% endfor %}
-    </div>
-    <div class="actions actions-tight finance-support-actions">
-        <a class="button secondary" href="{{ page.actions.finance_export_links.csv }}" data-action="export-finance-csv">Exportar CSV</a>
-        <a class="button secondary" href="{{ page.actions.finance_export_links.pdf }}" data-action="export-finance-pdf">Exportar PDF</a>
-    </div>
-</section>
 
+<!-- Filtros da Leitura (em cima) -->
 <section class="card glass-panel finance-board-filter" data-panel="finance-filter-form">
     <div class="card-head">
         <h3 class="card-title">Filtros da Leitura Financeira</h3>
         <span class="badge badge-subtle info">Leitura ativa</span>
     </div>
     <div class="finance-guide-note">
-        <p class="meta-text no-margin">Recorte e isole assinaturas na base por janela de tempo, plano nativo, status comercial e instrumento de pagamento.</p>
+        <p class="meta-text no-margin">Recorte e isole assinaturas por janela de tempo, plano, status e método de pagamento.</p>
     </div>
-    <form method="get" class="form-stack" data-action="filter-finance">
+    <form method="get" class="form-stack" data-action="filter-finance" id="finance-filter-form">
         <div class="field-grid-200">
             <label>
                 <span class="field-label">{{ page.data.finance_filter_form.months.label }}</span>
@@ -52,4 +35,62 @@ ARQUIVO: recorte ativo e filtros do financeiro.
             <a class="button secondary" href="/financeiro/" data-action="clear-finance-filters">Limpar</a>
         </div>
     </form>
-</article>
+</section>
+
+<!-- Exportação do Recorte (embaixo, título dinâmico) -->
+<section class="card glass-panel finance-support-card finance-support-card-tight finance-filter-summary-card" id="finance-control-board" data-panel="finance-control-summary">
+    <div class="card-head">
+        <h3 class="card-title" id="finance-export-title">Exportação do Recorte Ativo</h3>
+        <span class="badge badge-subtle info">Contexto visível</span>
+    </div>
+    <div class="finance-guide-note">
+        <p class="meta-text no-margin" id="finance-export-description">Confirme o recorte de filtragem antes de extrair os números para PDF ou planilha.</p>
+    </div>
+    <div class="actions actions-tight finance-support-actions">
+        <a class="button secondary" href="{{ page.actions.finance_export_links.csv }}" data-action="export-finance-csv">Exportar CSV</a>
+        <a class="button secondary" href="{{ page.actions.finance_export_links.pdf }}" data-action="export-finance-pdf">Exportar PDF</a>
+    </div>
+</section>
+
+<script>
+(function() {
+    var form = document.getElementById('finance-filter-form');
+    var exportTitle = document.getElementById('finance-export-title');
+    var exportDesc = document.getElementById('finance-export-description');
+    if (!form || !exportTitle) return;
+
+    var filterLabels = {
+        'months': { '1': '1 mês', '3': '3 meses', '6': '6 meses', '12': '12 meses' },
+    };
+
+    function getSelectedLabel(selectEl) {
+        if (!selectEl || !selectEl.selectedIndex || selectEl.selectedIndex <= 0) return null;
+        return selectEl.options[selectEl.selectedIndex].text;
+    }
+
+    function updateExportTitle() {
+        var parts = [];
+        var selects = form.querySelectorAll('select');
+        selects.forEach(function(sel) {
+            var label = getSelectedLabel(sel);
+            if (label && label !== '---------' && label !== 'Todos' && label !== '') {
+                parts.push(label);
+            }
+        });
+
+        if (parts.length > 0) {
+            exportTitle.textContent = 'Exportar: ' + parts.join(' · ');
+            exportDesc.textContent = 'O arquivo exportado conterá exatamente o recorte filtrado acima.';
+        } else {
+            exportTitle.textContent = 'Exportação do Recorte Ativo';
+            exportDesc.textContent = 'Confirme o recorte de filtragem antes de extrair os números para PDF ou planilha.';
+        }
+    }
+
+    // Atualiza ao mudar qualquer filtro
+    form.addEventListener('change', updateExportTitle);
+
+    // Roda na carga se já houver filtros na URL
+    updateExportTitle();
+})();
+</script>
