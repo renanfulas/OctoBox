@@ -217,7 +217,7 @@ def role_navigation(request):
     if request.user.is_authenticated:
         shell_counts = get_shell_counts()
         sidebar_navigation = _build_navigation(role_slug, request.path)
-        
+
         # Build Profile Navigation (Administrative/Legacy links)
         admin_home = admin_index_url()
         if role_slug in (ROLE_OWNER, ROLE_DEV):
