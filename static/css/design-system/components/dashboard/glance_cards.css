@@ -143,9 +143,17 @@ PONTOS CRITICOS:
 
 /* ─── Estado Tranquil (resolvido) ─────────────────────────────── */
 .dashboard-glance-card.is-tranquil {
-    opacity: 0.75;
-    background: var(--surface) !important;
-    border-color: var(--line) !important;
+    opacity: 1;
+    background: linear-gradient(
+        160deg,
+        rgba(236, 253, 245, 0.98),
+        rgba(209, 250, 229, 0.78) 56%,
+        var(--fdw-panel-strong) 100%
+    ) !important;
+    border-color: rgba(16, 185, 129, 0.24) !important;
+    box-shadow:
+        0 18px 36px rgba(5, 150, 105, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.65);
     pointer-events: none;   /* não há ação disponível — não é clicável */
     cursor: default;
 }
@@ -158,15 +166,35 @@ PONTOS CRITICOS:
 */
 
 .dashboard-glance-card.is-tranquil:hover {
-    opacity: 0.95;
     transform: translateY(0);
-    box-shadow: none;
+    box-shadow:
+        0 18px 36px rgba(5, 150, 105, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.dashboard-glance-card.is-tranquil::before {
+    height: 4px;
+    background: linear-gradient(
+        90deg,
+        rgba(110, 231, 183, 0.96),
+        rgba(16, 185, 129, 0.88) 52%,
+        rgba(5, 150, 105, 0.62)
+    );
+    box-shadow: 0 0 18px rgba(16, 185, 129, 0.22);
+}
+
+.dashboard-glance-card.is-tranquil .dashboard-glance-kicker {
+    color: rgba(6, 95, 70, 0.78);
+}
+
+.dashboard-glance-card.is-tranquil .dashboard-glance-copy {
+    color: rgba(6, 78, 59, 0.72);
 }
 
 .dashboard-glance-card.is-tranquil .dashboard-glance-indicator {
     color: #059669; /* emerald-600 */
-    background: rgba(16, 185, 129, 0.1);
-    border-color: transparent;
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.14);
 }
 
 /* ─── Dark mode (base) ────────────────────────────────────────── */
@@ -180,9 +208,41 @@ body[data-theme="dark"] .dashboard-glance-copy {
     color: rgba(226, 232, 240, 0.68);
 }
 
+body[data-theme="dark"] .dashboard-glance-card.is-tranquil {
+    background: linear-gradient(
+        160deg,
+        rgba(6, 78, 59, 0.68),
+        rgba(6, 95, 70, 0.42) 56%,
+        rgba(15, 23, 42, 0.96) 100%
+    ) !important;
+    border-color: rgba(52, 211, 153, 0.24) !important;
+    box-shadow:
+        0 18px 40px rgba(16, 185, 129, 0.12),
+        inset 0 1px 0 rgba(167, 243, 208, 0.08);
+}
+
+body[data-theme="dark"] .dashboard-glance-card.is-tranquil::before {
+    background: linear-gradient(
+        90deg,
+        rgba(110, 231, 183, 0.92),
+        rgba(52, 211, 153, 0.82) 52%,
+        rgba(16, 185, 129, 0.56)
+    );
+    box-shadow: 0 0 22px rgba(52, 211, 153, 0.18);
+}
+
+body[data-theme="dark"] .dashboard-glance-card.is-tranquil .dashboard-glance-kicker {
+    color: rgba(167, 243, 208, 0.82);
+}
+
+body[data-theme="dark"] .dashboard-glance-card.is-tranquil .dashboard-glance-copy {
+    color: rgba(209, 250, 229, 0.72);
+}
+
 body[data-theme="dark"] .dashboard-glance-card.is-tranquil .dashboard-glance-indicator {
     color: #34d399; /* emerald-400 */
     background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(52, 211, 153, 0.18);
 }
 
 /* Legacy wrappers removed - Handled by direct topline grid */
@@ -238,80 +298,53 @@ body[data-theme="dark"] .dashboard-glance-card.is-tranquil .dashboard-glance-ind
    4. Hover gentil: sem subir, só brilho verde
 ──────────────────────────────────────────────────────────────────── */
 
-/* Topline equaliza colunas quando glance-strip tem só cards tranquil */
-.dashboard-summary-topline:has(
-    .dashboard-glance-strip .dashboard-glance-card.is-tranquil
-):has(
-    .dashboard-support-grid .dashboard-glance-card.is-tranquil
-) {
-    grid-template-columns: minmax(0, 21fr) minmax(0, 13fr) minmax(0, 8fr);
-}
-
-/* Quando TODOS os cards do priority strip são tranquil */
-.dashboard-summary-topline:has(
-    .dashboard-glance-strip .dashboard-glance-card--summary.is-tranquil
-):has(
-    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:first-child
-):has(
-    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:last-child
-) {
+/* Quando Emergência + Urgente + Risco estão zerados no topline */
+.dashboard-summary-topline:has(> .dashboard-glance-card--summary.is-tranquil:nth-child(1)):has(> .dashboard-glance-card--summary.is-tranquil:nth-child(2)):has(> .dashboard-glance-card--summary.is-tranquil:nth-child(3)) {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
 /* Cards all-clear: verde suave e opacity total */
-.dashboard-summary-topline:has(
-    .dashboard-glance-strip .dashboard-glance-card--summary.is-tranquil
-):has(
-    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:first-child
-):has(
-    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:last-child
-) .dashboard-glance-card.is-tranquil {
+.dashboard-summary-topline:has(> .dashboard-glance-card--summary.is-tranquil:nth-child(1)):has(> .dashboard-glance-card--summary.is-tranquil:nth-child(2)):has(> .dashboard-glance-card--summary.is-tranquil:nth-child(3)) .dashboard-glance-card.is-tranquil {
     opacity: 1;
     background: linear-gradient(160deg,
-        rgba(16, 185, 129, 0.06),
+        rgba(167, 243, 208, 0.42),
+        rgba(110, 231, 183, 0.18) 52%,
         var(--fdw-panel-strong)
     ) !important;
-    border-color: rgba(16, 185, 129, 0.18) !important;
+    border-color: rgba(16, 185, 129, 0.22) !important;
+    box-shadow:
+        0 22px 44px rgba(16, 185, 129, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.82);
     transition:
         background var(--motion-base) var(--ease-standard),
-        border-color var(--motion-base) var(--ease-standard);
+        border-color var(--motion-base) var(--ease-standard),
+        box-shadow var(--motion-base) var(--ease-standard);
 }
 
 /* Hover all-clear: gentil, sem subir */
-.dashboard-summary-topline:has(
-    .dashboard-glance-strip .dashboard-glance-card--summary.is-tranquil
-):has(
-    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:first-child
-):has(
-    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:last-child
-) .dashboard-glance-card.is-tranquil:hover {
+.dashboard-summary-topline:has(> .dashboard-glance-card--summary.is-tranquil:nth-child(1)):has(> .dashboard-glance-card--summary.is-tranquil:nth-child(2)):has(> .dashboard-glance-card--summary.is-tranquil:nth-child(3)) .dashboard-glance-card.is-tranquil:hover {
     transform: none;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    box-shadow:
+        0 0 0 2px rgba(16, 185, 129, 0.18),
+        0 18px 40px rgba(16, 185, 129, 0.14);
 }
 
 /* Top stripe verde no all-clear */
-.dashboard-summary-topline:has(
-    .dashboard-glance-strip .dashboard-glance-card--summary.is-tranquil
-):has(
-    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:first-child
-):has(
-    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:last-child
-) .dashboard-glance-card.is-tranquil::before {
+.dashboard-summary-topline:has(> .dashboard-glance-card--summary.is-tranquil:nth-child(1)):has(> .dashboard-glance-card--summary.is-tranquil:nth-child(2)):has(> .dashboard-glance-card--summary.is-tranquil:nth-child(3)) .dashboard-glance-card.is-tranquil::before {
     display: block !important;
-    background: linear-gradient(90deg, rgba(16, 185, 129, 0.5), rgba(5, 150, 105, 0.3)) !important;
+    background: linear-gradient(90deg, rgba(167, 243, 208, 0.98), rgba(16, 185, 129, 0.9) 52%, rgba(5, 150, 105, 0.58)) !important;
+    box-shadow: 0 0 24px rgba(16, 185, 129, 0.2);
 }
 
 /* Dark mode all-clear */
-body[data-theme="dark"] .dashboard-summary-topline:has(
-    .dashboard-glance-strip .dashboard-glance-card--summary.is-tranquil
-):has(
-    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:first-child
-):has(
-    .dashboard-support-grid .dashboard-glance-card--summary.is-tranquil:last-child
-) .dashboard-glance-card.is-tranquil {
+body[data-theme="dark"] .dashboard-summary-topline:has(> .dashboard-glance-card--summary.is-tranquil:nth-child(1)):has(> .dashboard-glance-card--summary.is-tranquil:nth-child(2)):has(> .dashboard-glance-card--summary.is-tranquil:nth-child(3)) .dashboard-glance-card.is-tranquil {
     background: linear-gradient(160deg,
-        rgba(16, 185, 129, 0.08),
+        rgba(6, 95, 70, 0.72),
+        rgba(6, 78, 59, 0.52) 52%,
         rgba(13, 22, 36, 0.98)
     ) !important;
-    border-color: rgba(16, 185, 129, 0.16) !important;
+    border-color: rgba(52, 211, 153, 0.22) !important;
+    box-shadow:
+        0 22px 48px rgba(16, 185, 129, 0.16),
+        inset 0 1px 0 rgba(167, 243, 208, 0.1);
 }

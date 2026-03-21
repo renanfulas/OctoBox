@@ -1,6 +1,8 @@
 <tr>
-    <td>{{ payment.due_date|date:"d/m/Y" }}</td>
-    <td>R$ {{ payment.amount|floatformat:2 }}</td>
-    <td>{{ payment.get_status_display }}</td>
-    <td>{{ payment.get_method_display }}</td>
+    <td style="color: var(--text-600);">{{ payment.due_date|date:"d/m/Y" }}</td>
+    <td style="font-weight: 500; color: var(--text-800);">R$ {{ payment.amount|floatformat:2 }}</td>
+    <td style="font-weight: 600; color: {% if payment.status == 'paid' %}#16a34a{% elif payment.status == 'overdue' %}#dc2626{% elif payment.status == 'pending' %}#ca8a04{% else %}var(--text-600){% endif %};">
+        {{ payment.get_status_display|upper }}
+    </td>
+    <td style="color: var(--text-500);">{{ payment.get_method_display }}</td>
 </tr>

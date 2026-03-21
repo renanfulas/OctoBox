@@ -1,18 +1,20 @@
 <!--
 ARQUIVO: metricas da grade.
 -->
-<section class="panel-grid" aria-label="Metricas da grade">
-    {% for label, item in page.data.class_metrics.items %}
-    <article class="card class-grid-metric-card {% cycle 'orange-glow' 'blue-glow' 'green-glow' 'orange-glow' 'blue-glow' 'green-glow' %}">
-        <div class="card-body card-body-metric class-grid-metric-card-body">
-            <div class="card-value-stack">
-                <p class="eyebrow card-label">{{ label }}</p>
-                <p class="metric card-value">{{ item.value }}</p>
+<div class="owner-metrics-panel section-gap" data-panel="class-grid-metrics">
+    <section class="panel-grid operation-metric-grid owner-metric-grid" aria-label="Metricas da grade">
+        {% for label, item in page.data.class_metrics.items %}
+        <article class="card dashboard-kpi-card is-ledger glass-panel">
+            <div class="card-body card-body-metric">
+                <div class="card-value-stack">
+                    <p class="eyebrow card-label">{{ label }}</p>
+                    <p class="metric card-value"><span class="metric-number">{{ item.value }}</span></p>
+                </div>
+                <div class="card-content">
+                    <p class="metric-note card-copy">{{ item.note }}</p>
+                </div>
             </div>
-            <div class="card-content">
-                <p class="metric-note card-copy">{{ item.note }}</p>
-            </div>
-        </div>
-    </article>
-    {% endfor %}
-</section>
+        </article>
+        {% endfor %}
+    </section>
+</div>

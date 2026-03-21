@@ -5,7 +5,6 @@ POR QUE ELE EXISTE:
 - publica a casca HTTP de financeiro, exportacoes, planos e comunicacao no app catalog.
 """
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404
@@ -29,6 +28,7 @@ from catalog.services.operational_queue import build_operational_queue_metrics, 
 from finance.models import MembershipPlan
 from reporting.application.catalog_reports import build_finance_report
 from reporting.infrastructure import build_report_response
+from shared_support.operational_settings import get_operational_whatsapp_repeat_block_hours
 
 from .catalog_base_views import CatalogBaseView
 
@@ -118,7 +118,7 @@ class FinanceCommunicationActionView(LoginRequiredMixin, RoleRequiredMixin, View
             enrollment_id=form.cleaned_data.get('enrollment_id'),
         )
         if result['blocked']:
-            repeat_block_hours = max(0, int(getattr(settings, 'OPERATIONAL_WHATSAPP_REPEAT_BLOCK_HOURS', 24)))
+            repeat_block_hours = get_operational_whatsapp_repeat_block_hours()
             if repeat_block_hours:
                 messages.warning(request, f'Contato de WhatsApp ja registrado nas ultimas {repeat_block_hours}h para {result["student"].full_name}. Aguarde a proxima janela antes de repetir a mesma acao.')
             else:

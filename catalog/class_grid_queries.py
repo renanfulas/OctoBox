@@ -96,7 +96,7 @@ def build_class_grid_snapshot(today, params=None):
 			{
 				'date': day,
 				'sessions': day_sessions,
-				'summary': f"{len(day_sessions)} aula(s), {total_occupied} reserva(s) e {max(total_capacity - total_occupied, 0)} vaga(s) restante(s).",
+				'summary': f"{len(day_sessions)} aula(s), {total_occupied} reserva(s) e {max(total_capacity - total_occupied, 0)} vaga(s) disponível(eis).",
 			}
 		)
 
@@ -162,27 +162,27 @@ def build_class_grid_snapshot(today, params=None):
 		'class_metrics': {
 			'Aulas previstas': {
 				'value': total_sessions,
-				'note': f'Recorte de {MONTH_LABELS[start_date.month - 1].lower()} aplicado na agenda.',
+				'note': f'Total de aulas em {MONTH_LABELS[start_date.month - 1].lower()}.',
 			},
 			'Dias com agenda': {
 				'value': len(grouped_month_days),
-				'note': 'Dias com pelo menos uma aula cadastrada.',
+				'note': 'Dias com pelo menos uma aula programada.',
 			},
 			'Reservas confirmadas': {
 				'value': total_occupied,
-				'note': 'Soma das reservas registradas neste recorte.',
+				'note': 'Total de reservas no período.',
 			},
 			'Aulas lotadas': {
 				'value': sum(1 for session in month_sessions if session.occupied_slots >= session.capacity),
-				'note': 'Turmas que ja atingiram a capacidade maxima.',
+				'note': 'Turmas que atingiram a capacidade máxima.',
 			},
-			'Maior concentracao': {
+			'Maior concentração': {
 				'value': busiest_day['date'].strftime('%d/%m') if busiest_day else '-',
-				'note': f"{len(busiest_day['sessions'])} aula(s) no dia mais carregado." if busiest_day else 'Nenhum dia com agenda cadastrada.',
+				'note': f"{len(busiest_day['sessions'])} aula(s) no dia mais cheio." if busiest_day else 'Nenhum dia com aula neste mês.',
 			},
 			'Capacidade aberta': {
 				'value': max(total_capacity - total_occupied, 0),
-				'note': 'Vagas ainda disponiveis na grade deste recorte.',
+				'note': 'Vagas disponíveis na grade deste período.',
 			},
 		},
 	}

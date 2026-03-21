@@ -2,12 +2,13 @@
 
 from datetime import timedelta
 
-from django.conf import settings
 from django.utils import timezone
+
+from shared_support.operational_settings import get_operational_whatsapp_repeat_block_hours
 
 
 def build_whatsapp_contact_state(contact):
-    repeat_block_hours = max(0, int(getattr(settings, 'OPERATIONAL_WHATSAPP_REPEAT_BLOCK_HOURS', 24)))
+    repeat_block_hours = get_operational_whatsapp_repeat_block_hours()
     if contact is None or contact.last_outbound_at is None:
         return {
             'whatsapp_last_contact_label': 'Nenhum contato operacional recente registrado.',

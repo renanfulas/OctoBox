@@ -1,19 +1,19 @@
 <!--
-ARQUIVO: regua prioritaria de cobranca e retencao.
+ARQUIVO: régua prioritária de cobrança e retenção.
 -->
-<section class="card glass-panel finance-board-rail" id="finance-priority-board" aria-label="Regua Ativa">
+<section class="card glass-panel finance-board-rail" id="finance-priority-board" aria-label="Régua Ativa">
     <div class="card-head">
-        <h3 class="card-title">Regua Ativa: Quem pede contato agora</h3>
-        <span class="badge badge-subtle warning">{{ page.data.operational_queue|length }} acao(oes)</span>
+        <h3 class="card-title">Régua Ativa: Quem pede contato agora</h3>
+        <span class="badge badge-subtle warning">{{ page.data.operational_queue|length }} ação(ões)</span>
     </div>
     <div class="finance-guide-note">
-        <p class="meta-text no-margin">Pressao operacional viva. Sinal financeiro pendente convertido em tarefa assistida direta para nao virar ruido estrutural.</p>
+        <p class="meta-text no-margin">Pressão operacional viva. Sinal financeiro pendente convertido em tarefa assistida direta para não virar ruído estrutural.</p>
     </div>
     <div class="stack-14 finance-action-list finance-action-list-compact">
         {% for item in page.data.operational_queue %}
         {% include "includes/ui/finance/finance_action_item.html" with item=item %}
         {% empty %}
-        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Regua operacional" title="Nenhuma acao semiassistida pendente" copy="Nao ha contato financeiro ou de retencao aguardando disparo assistido agora." badge="Fila limpa" badge_class="accent" %}
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Régua operacional" title="Nenhuma ação semiassistida pendente" copy="Não há contato financeiro ou de retenção aguardando disparo assistido agora." badge="Fila limpa" badge_class="accent" %}
         {% endfor %}
     </div>
-</article>
+</section>

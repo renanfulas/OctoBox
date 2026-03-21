@@ -479,4 +479,90 @@ POR QUE ELE EXISTE:
       dialog.close();
     }
   });
+
+  /* ────────────────────────────────────────────────
+     Visão semanal – modal de tela cheia
+     ──────────────────────────────────────────────── */
+  var weeklyDialog = document.getElementById('class-weekly-modal');
+  var weeklyCloseButton = document.getElementById('close-weekly-modal');
+  var weeklyFullView = document.getElementById('weekly-modal-full-view');
+  var weeklyDayView = document.getElementById('weekly-modal-day-view');
+  var weeklyModalTitle = document.getElementById('class-weekly-modal-title');
+  var weeklyBoard = document.getElementById('weekly-board');
+
+  function openWeeklyModal(mode, dayCard) {
+    if (!weeklyDialog || !weeklyDialog.showModal) return;
+
+    if (mode === 'day' && dayCard) {
+      // Modo dia: esconde grade completa, mostra o dia clicado
+      if (weeklyFullView) weeklyFullView.style.display = 'none';
+      if (weeklyDayView) {
+        weeklyDayView.style.display = 'block';
+        weeklyDayView.innerHTML = '<div class="weekly-calendar-grid" style="grid-template-columns: 1fr; min-width: 0; max-width: 640px; margin: 0 auto;">' + dayCard.outerHTML + '</div>';
+        // Remove o cursor pointer do clone dentro do modal
+        var clone = weeklyDayView.querySelector('.weekly-day-card');
+        if (clone) {
+          clone.style.cursor = 'default';
+          clone.style.minHeight = 'auto';
+        }
+      }
+      var dayLabel = dayCard.querySelector('.eyebrow');
+      var dayDate = dayCard.querySelector('strong');
+      if (weeklyModalTitle) {
+        weeklyModalTitle.textContent = (dayLabel ? dayLabel.textContent : '') + ' ' + (dayDate ? dayDate.textContent : '');
+      }
+    } else {
+      // Modo completo: mostra grade inteira
+      if (weeklyFullView) weeklyFullView.style.display = 'block';
+      if (weeklyDayView) weeklyDayView.style.display = 'none';
+      if (weeklyModalTitle) weeklyModalTitle.textContent = 'Grade completa';
+    }
+
+    weeklyDialog.showModal();
+  }
+
+  // Clique no header da visão semanal → abre grade completa
+  if (weeklyBoard) {
+    var weeklyHead = weeklyBoard.querySelector('.card-head');
+    if (weeklyHead) {
+      weeklyHead.style.cursor = 'pointer';
+      weeklyHead.addEventListener('click', function(event) {
+        // Não interceptar cliques em botões/links dentro do header
+        if (event.target.closest('a, button')) return;
+        openWeeklyModal('full');
+      });
+    }
+  }
+
+  // Clique em qualquer day card na visão semanal → abre aquele dia
+  document.querySelectorAll('#weekly-board [data-day-date]').forEach(function(card) {
+    card.addEventListener('click', function(event) {
+      // Não interceptar cliques em botões/links (Editar, Excluir)
+      if (event.target.closest('a, button, form')) return;
+      openWeeklyModal('day', card);
+    });
+    card.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openWeeklyModal('day', card);
+      }
+    });
+  });
+
+  // Fechar o modal semanal
+  if (weeklyCloseButton) {
+    weeklyCloseButton.addEventListener('click', function() {
+      weeklyDialog.close();
+    });
+  }
+
+  if (weeklyDialog) {
+    weeklyDialog.addEventListener('click', function(event) {
+      var panel = weeklyDialog.querySelector('.class-monthly-modal-panel');
+      if (panel && !panel.contains(event.target)) {
+        weeklyDialog.close();
+      }
+    });
+  }
+
 }());

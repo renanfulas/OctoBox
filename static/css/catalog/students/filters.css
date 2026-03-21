@@ -8,16 +8,31 @@ POR QUE ELE EXISTE:
 
 .card.student-filter-card {
     background: var(--surface);
-    padding: 13px 32px !important;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding: 21px 24px !important;
     margin-bottom: var(--workspace-fib-4);
+    overflow: clip;
+}
+
+.student-filter-card-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 13px;
 }
 
 .student-filter-card .form-stack {
     gap: var(--workspace-fib-4);
+    min-width: 0;
 }
 
 .student-filter-card .field-grid-200 {
+    grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
     gap: var(--workspace-fib-4);
+    min-width: 0;
 }
 
 .student-filter-card label {
@@ -25,6 +40,7 @@ POR QUE ELE EXISTE:
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-width: 0;
 }
 
 .student-filter-card .field-label {
@@ -33,6 +49,9 @@ POR QUE ELE EXISTE:
 
 .student-filter-card input,
 .student-filter-card select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     text-align: center;
     text-align-last: center; /* For select elements */
 }
@@ -43,6 +62,12 @@ POR QUE ELE EXISTE:
 
 .student-filter-actions-primary {
     margin-top: 13px;
+    flex-wrap: wrap;
     justify-content: center;
 }
-
+
+.student-filter-reset {
+    color: var(--slate-700);
+    border-color: var(--line);
+}
+

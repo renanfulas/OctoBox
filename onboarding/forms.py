@@ -56,6 +56,27 @@ class IntakeCenterFilterForm(forms.Form):
         apply_text_input_attrs(self.fields['query'], placeholder='Ex.: Fernanda, 1199..., lead@box.com', maxlength=150)
 
 
+from onboarding.model_definitions import StudentIntake
+
+
+class IntakeQuickCreateForm(forms.ModelForm):
+    class Meta:
+        model = StudentIntake
+        fields = ['full_name', 'phone', 'email', 'source']
+        labels = {
+            'full_name': 'Nome completo',
+            'phone': 'WhatsApp',
+            'email': 'E-mail',
+            'source': 'Origem',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        apply_text_input_attrs(self.fields['full_name'], placeholder='Nome completo')
+        apply_text_input_attrs(self.fields['phone'], placeholder='WhatsApp principal (com DDD)')
+        apply_text_input_attrs(self.fields['email'], placeholder='E-mail (opcional)')
+
+
 class IntakeQueueActionForm(forms.Form):
     intake_id = forms.IntegerField()
     action = forms.ChoiceField(choices=INTAKE_ACTION_CHOICES)
@@ -65,6 +86,7 @@ class IntakeQueueActionForm(forms.Form):
 __all__ = [
     'INTAKE_ACTION_CHOICES',
     'IntakeCenterFilterForm',
+    'IntakeQuickCreateForm',
     'IntakeQueueActionForm',
     'SEMANTIC_STAGE_CHOICES',
 ]

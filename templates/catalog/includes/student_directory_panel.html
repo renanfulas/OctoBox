@@ -4,12 +4,12 @@ ARQUIVO: diretorio principal de alunos.
 POR QUE ELE EXISTE:
 - isola a tabela principal da base para facilitar manutencao e leitura.
 -->
-<section id="tab-students-directory" class="card glass-panel student-data-panel" aria-label="Diretorio de alunos" data-panel="students-directory-board" style="max-width: 100%; min-width: 0; overflow-x: auto !important;">
-    <div class="card-head" style="margin-bottom: var(--workspace-fib-4);">
+<section id="tab-students-directory" class="card glass-panel student-data-panel{% if not page.data.students.has_other_pages %} is-fit-content{% endif %}" aria-label="Diretorio de alunos" data-panel="students-directory-board">
+    <div class="card-head student-directory-head">
         <h3 class="card-title">Base principal de alunos</h3>
     </div>
-    <div class="student-table-scroll" data-slot="students-table-scroll" style="max-width: 100%; overflow-x: auto;">
-        <table>
+    <div class="student-table-scroll" data-slot="students-table-scroll">
+        <table class="student-directory-table">
             <thead>
                 <tr>
                     <th scope="col">Aluno</th>
@@ -23,22 +23,40 @@ POR QUE ELE EXISTE:
             <tbody>
                 {% for student in page.data.students %}
                 <tr class="student-row" data-panel="student-row">
-                    <td>
-                        <strong>{{ student.full_name }}</strong>
-                        <p class="meta-text-sm">{{ student.get_status_display }}</p>
+                    <td class="student-cell student-cell--student" data-label="Aluno">
+                        <div class="student-cell-stack student-cell-stack--identity">
+                            <strong class="student-name">{{ student.full_name }}</strong>
+                            <p class="meta-text-sm">{{ student.get_status_display }}</p>
+                            <dl class="student-inline-summary" aria-label="Resumo da linha">
+                                <div class="student-inline-summary-item">
+                                    <dt>Atualizado</dt>
+                                    <dd>{{ student.updated_at|date:"d/m/Y H:i" }}</dd>
+                                </div>
+                                {% if page.capabilities.can_manage_students %}
+                                <div class="student-inline-summary-item student-inline-summary-item--action">
+                                    <dt>Ação</dt>
+                                    <dd>
+                                        <a class="button secondary student-inline-action" href="/alunos/{{ student.id }}/editar/#student-financial-overview" data-action="open-student-form">Abrir ficha</a>
+                                    </dd>
+                                </div>
+                                {% endif %}
+                            </dl>
+                        </div>
                     </td>
-                    <td>
-                        <strong>{{ student.phone }}</strong>
-                        <p class="meta-text-sm">{% if student.email %}{{ student.email }}{% else %}Sem e-mail informado{% endif %}</p>
+                    <td class="student-cell student-cell--contact" data-label="Contato">
+                        <div class="student-cell-stack">
+                            <strong>{{ student.phone }}</strong>
+                            <p class="meta-text-sm">{% if student.email %}{{ student.email }}{% else %}Sem e-mail informado{% endif %}</p>
+                        </div>
                     </td>
-                    <td>
-                        <div class="stack-8">
+                    <td class="student-cell student-cell--commercial" data-label="Comercial">
+                        <div class="stack-8 student-cell-stack">
                             {% if student.latest_plan_name %}<strong>{{ student.latest_plan_name }}</strong>{% endif %}
                             {% if student.latest_enrollment_status %}<span class="pill">{{ student.latest_enrollment_status }}</span>{% else %}<span class="pill">Sem matricula</span>{% endif %}
                         </div>
                     </td>
-                    <td>
-                        <div class="stack-8">
+                    <td class="student-cell student-cell--finance" data-label="Financeiro">
+                        <div class="stack-8 student-cell-stack">
                             {% if student.operational_payment_status == 'overdue' %}
                             <span class="pill warning">Em atraso</span>
                             {% elif student.operational_payment_status == 'pending' %}
@@ -52,13 +70,15 @@ POR QUE ELE EXISTE:
                             {% elif student.operational_payment_status %}
                             <span class="pill info">{{ student.operational_payment_status }}</span>
                             {% else %}
-                            <span class="pill">Sem cobranca</span>
+                            <span class="pill">Sem cobrança</span>
                             {% endif %}
                         </div>
                     </td>
-                    <td>{{ student.updated_at|date:"d/m/Y H:i" }}</td>
-                    <td>
-                        <div class="actions actions-tight" style="justify-content: center;">
+                    <td class="student-cell student-cell--updated" data-label="Atualizado">
+                        <span class="student-updated-at">{{ student.updated_at|date:"d/m/Y H:i" }}</span>
+                    </td>
+                    <td class="student-cell student-cell--actions" data-label="Ações">
+                        <div class="actions actions-tight student-row-actions">
                             {% if page.capabilities.can_manage_students %}
                             <a class="button secondary" href="/alunos/{{ student.id }}/editar/#student-financial-overview" data-action="open-student-form">Abrir ficha</a>
                             {% endif %}

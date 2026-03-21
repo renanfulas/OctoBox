@@ -22,9 +22,10 @@ from django.views.generic import TemplateView
 
 from access.permissions import RoleRequiredMixin
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
+from onboarding.models import IntakeStatus
 from shared_support.page_payloads import attach_page_payload
 
-from .forms import IntakeQueueActionForm
+from .forms import IntakeQueueActionForm, IntakeQuickCreateForm
 from .facade import run_intake_queue_action
 from .presentation import build_intake_center_page
 from .queries import build_intake_center_snapshot
@@ -33,6 +34,10 @@ from .queries import build_intake_center_snapshot
 class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
     allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION)
     template_name = 'onboarding/intake_center.html'
+
+    PANEL_QUEUE = 'tab-intake-queue'
+    PANEL_CREATE_LEAD = 'tab-intake-create-lead'
+    PANEL_CREATE_INTAKE = 'tab-intake-create-intake'
 
     def _get_current_role(self):
         return get_user_role(self.request.user)
@@ -44,6 +49,29 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
         if self.request.method == 'POST':
             return self.request.POST.copy()
         return self.request.GET
+
+    def _get_active_panel(self):
+        panel = self.request.GET.get('panel', '').strip()
+        allowed_panels = {
+            self.PANEL_QUEUE,
+            'tab-intake-conversion',
+            'tab-intake-source',
+            'tab-intake-filters',
+            self.PANEL_CREATE_LEAD,
+            self.PANEL_CREATE_INTAKE,
+        }
+        return panel if panel in allowed_panels else self.PANEL_QUEUE
+
+    def _get_create_form_prefix(self, entry_kind):
+        return 'lead-create' if entry_kind == 'lead' else 'intake-create'
+
+    def _build_create_form(self, *, entry_kind, bound_data=None):
+        prefix = self._get_create_form_prefix(entry_kind)
+        return IntakeQuickCreateForm(bound_data, prefix=prefix) if bound_data is not None else IntakeQuickCreateForm(prefix=prefix)
+
+    def _get_quick_create_success_url(self, entry_kind):
+        panel = self.PANEL_CREATE_LEAD if entry_kind == 'lead' else self.PANEL_CREATE_INTAKE
+        return f"{reverse('intake-center')}?panel={panel}"
 
     def _build_snapshot(self):
         params = self.request.GET if self.request.method == 'GET' else self.request.POST
@@ -66,10 +94,43 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
             current_role_slug=getattr(current_role, 'slug', ''),
         )
         attach_page_payload(context, payload_key='intake_center_page', payload=page_payload)
+        context['active_intake_panel'] = kwargs.get('active_panel') or self._get_active_panel()
+        context['lead_create_form'] = kwargs.get('lead_create_form') or self._build_create_form(entry_kind='lead')
+        context['intake_create_form'] = kwargs.get('intake_create_form') or self._build_create_form(entry_kind='intake')
         return context
 
     def post(self, request, *args, **kwargs):
         role_slug = self._get_current_role_slug()
+        if request.POST.get('form_kind') == 'quick-create':
+            if role_slug not in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION):
+                messages.error(request, 'Seu papel atual pode consultar a central, mas nao cadastrar entradas por esta tela.')
+                return redirect(reverse('intake-center'))
+
+            entry_kind = request.POST.get('entry_kind', 'lead').strip().lower()
+            if entry_kind not in ('lead', 'intake'):
+                entry_kind = 'lead'
+
+            form = self._build_create_form(entry_kind=entry_kind, bound_data=request.POST)
+            if not form.is_valid():
+                context_kwargs = {
+                    'active_panel': self.PANEL_CREATE_LEAD if entry_kind == 'lead' else self.PANEL_CREATE_INTAKE,
+                    'lead_create_form': form if entry_kind == 'lead' else self._build_create_form(entry_kind='lead'),
+                    'intake_create_form': form if entry_kind == 'intake' else self._build_create_form(entry_kind='intake'),
+                }
+                return self.render_to_response(self.get_context_data(**context_kwargs))
+
+            with transaction.atomic():
+                created_entry = form.save(commit=False)
+                created_entry.status = IntakeStatus.NEW
+                created_entry.raw_payload = {
+                    **(created_entry.raw_payload or {}),
+                    'entry_kind': entry_kind,
+                }
+                created_entry.save()
+
+            messages.success(request, f'{entry_kind.capitalize()} cadastrado com sucesso na Central de Intake.')
+            return redirect(self._get_quick_create_success_url(entry_kind))
+
         if role_slug not in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION):
             messages.error(request, 'Seu papel atual pode consultar a central, mas nao executar a fila por esta tela.')
             return redirect(self._get_success_url())

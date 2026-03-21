@@ -1,5 +1,5 @@
-<article class="table-card no-margin student-financial-history-table-card">
-    <p class="eyebrow">Historico financeiro recente</p>
+<article class="card no-margin student-financial-history-table-card" style="background: var(--surface-000);">
+    <h3 class="section-title-sm" style="margin-bottom: 16px; color: var(--text-800);">Últimos Pagamentos</h3>
     {% if page.data.financial_overview.payments %}
     <div class="operation-table-wrap student-financial-history-table-wrap">
         <table>
@@ -8,7 +8,7 @@
                     <th scope="col">Vencimento</th>
                     <th scope="col">Valor</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Metodo</th>
+                    <th scope="col">Método</th>
                 </tr>
             </thead>
             <tbody>

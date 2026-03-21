@@ -1,28 +1,27 @@
 <!--
-ARQUIVO: workspace principal da grade com paineis reorganizaveis.
+ARQUIVO: workspace principal da grade em layout continuo.
+
+POR QUE ELE EXISTE:
+- organiza a leitura estrategica da operacao de aulas em blocos empilhados.
+- cada secao responde uma pergunta operacional (hoje, semana, mes, planejar).
 -->
-<section class="class-grid-workspace section-gap workspace-shell" aria-label="Area de trabalho da grade" data-slot="class-grid-workspace-section">
-    <div class="row-between-md class-grid-workspace-head">
-        <div>
-            <p class="eyebrow">Workspace da grade</p>
-            <h2 class="section-title-sm">Organize os paineis do seu jeito</h2>
-            <p class="class-day-summary">Arraste cada janela pela alca para reorganizar os blocos. A ordem fica salva neste navegador.</p>
-        </div>
-        <div class="actions actions-tight" data-slot="class-grid-workspace-actions">
-            <span class="pill info">Ordem personalizada</span>
-            <button class="button secondary" type="button" id="reset-class-grid-layout" data-action="reset-class-grid-layout">Voltar para a ordem padrao</button>
-        </div>
+<section class="section-gap" aria-label="Area de trabalho da grade" data-slot="class-grid-workspace-section">
+    <!-- Secao 1: Agenda de Hoje -->
+    <div class="section-gap">
+        {% include "includes/catalog/class_grid/today/workspace_today.html" %}
     </div>
 
-    <div class="workspace-grid-layout" id="class-grid-workspace" data-storage-key="octobox-class-grid-layout-v3" data-slot="class-grid-workspace-stack">
-        <div class="workspace-grid-main" data-grid-slot="main">
-            <div class="workspace-panel">{% include "includes/catalog/class_grid/today/workspace_today.html" %}</div>
-            <div class="workspace-panel">{% include "includes/catalog/class_grid/views/workspace_weekly.html" %}</div>
-            <div class="workspace-panel">{% include "includes/catalog/class_grid/planner/workspace_planner.html" %}</div>
-        </div>
-        <aside class="workspace-grid-side" data-grid-slot="side">
-            <div class="workspace-panel">{% include "includes/catalog/class_grid/views/workspace_monthly_preview.html" %}</div>
-            <div class="workspace-panel">{% include "includes/catalog/class_grid/quick_edit/workspace_quick_edit.html" %}</div>
-        </aside>
+    <!-- Secao 2: Semanal + Mensal lado a lado -->
+    <div class="layout-grid section-gap" style="grid-template-columns: 2fr 1fr; align-items: start; gap: 16px;">
+        <div>{% include "includes/catalog/class_grid/views/workspace_weekly.html" %}</div>
+        <div>{% include "includes/catalog/class_grid/views/workspace_monthly_preview.html" %}</div>
     </div>
+
+    <!-- Secao 3: Planner -->
+    <div class="section-gap">
+        {% include "includes/catalog/class_grid/planner/workspace_planner.html" %}
+    </div>
+
+    <!-- Secao 4: Edicao Rapida -->
+    {% include "includes/catalog/class_grid/quick_edit/workspace_quick_edit.html" %}
 </section>

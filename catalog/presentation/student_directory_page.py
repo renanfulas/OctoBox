@@ -26,15 +26,6 @@ def build_student_directory_page(*, student_count, students, student_filter_form
             {'label': 'Novo aluno', 'href': '/alunos/novo/#student-form-essential', 'data_action': 'open-student-create'}
         )
 
-    hero_actions.append(
-        {'label': 'Ver prioridades', 'href': '#student-priority-board', 'kind': 'secondary', 'data_action': 'jump-student-priorities'}
-    )
-
-    if can_export_students:
-        hero_actions.append(
-            {'label': 'Exportar CSV', 'href': export_links['csv'], 'kind': 'secondary', 'data_action': 'export-students-csv'}
-        )
-
     operational_focus = [
         {
             'label': 'Triagem imediata',
@@ -71,7 +62,7 @@ def build_student_directory_page(*, student_count, students, student_filter_form
         copy='Gerencie cadastros, acessos e pendências.',
         actions=hero_actions,
         aria_label='Panorama de alunos',
-        classes=['operation-hero', 'catalog-hero', 'student-hero'],
+        classes=['operation-hero'],
         data_slot='hero',
         data_panel='students-hero',
         actions_slot='students-hero-actions',

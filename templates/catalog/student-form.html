@@ -23,19 +23,15 @@ PONTOS CRITICOS:
         {% include "includes/catalog/student_form/plans/hero.html" with page=page %}
     </div>
 
-    <section class="workspace-grid-layout" aria-label="Area de trabalho do aluno" data-slot="workspace" data-panel="student-workspace">
-        <div class="workspace-grid-main stack-16">
-            <div class="workspace-panel">
-                {% include "includes/catalog/student_form/main_form/main_form.html" with form=student_form %}
-            </div>
+    <div class="interactive-tab-container" data-panel="student-workspace">
+        <div class="stack-16 is-tab-active" id="tab-student-form-essential" data-panel="student-form-essential">
+            {% include "includes/catalog/student_form/main_form/main_form.html" with form=student_form %}
         </div>
         
-        <aside class="workspace-grid-side stack-16">
-            <div class="workspace-panel">
-                {% include "includes/catalog/student_form/financial/financial_overview.html" with student=page.data.student %}
-            </div>
-        </aside>
-    </section>
+        <div class="stack-16" id="tab-student-form-financial" data-panel="student-form-financial">
+            {% include "includes/catalog/student_form/financial/financial_overview.html" with student=page.data.student %}
+        </div>
+    </div>
 
 </div>
 {% endwith %}

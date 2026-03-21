@@ -1,26 +1,46 @@
 <!--
 ARQUIVO: resumo financeiro da ficha do aluno.
 -->
-<section class="table-card student-financial-overview-card" id="student-financial-overview" aria-label="Resumo financeiro do aluno" data-slot="student-financial-overview" data-panel="student-financial-overview">
-    <p class="eyebrow">Plano, status e tramite financeiro</p>
-    <p class="meta-text student-financial-overview-summary">{{ page.data.financial_overview.summary }}</p>
-
+<div class="stack-24 student-financial-cockpit" id="student-financial-overview" aria-label="Cockpit financeiro do aluno" data-slot="student-financial-overview" data-panel="student-financial-overview">
     {% if page.data.financial_overview.has_student %}
+    
+    <!-- 1. Cracha do Atleta (ID Header) -->
+    {% include "includes/catalog/student_form/financial/financial_overview_id_card.html" with page=page %}
+
+    <!-- 2. Numeros Chave -->
     <div class="student-financial-overview-primary" data-panel="student-financial-status">
         {% include "includes/catalog/student_form/financial/financial_overview_status.html" with page=page %}
     </div>
-    <div class="layout-grid align-start student-financial-overview-action-grid" data-panel="student-financial-actions">
+
+    <!-- 3. Ilhas de Acao Rapida -->
+    <div class="layout-grid align-start" style="grid-template-columns: minmax(auto, 1fr) minmax(auto, 1fr); gap: 24px;" data-panel="student-financial-actions">
+        <!-- Ilha 1: Faturar / Pagamentos (Verde) -->
         <div class="student-financial-overview-action-slot" data-panel="student-financial-payment-management">
             {% include "includes/catalog/student_form/financial/financial_overview_payment_management.html" with page=page %}
         </div>
+        <!-- Ilha 2: Manutencao de Matricula (Alerta) -->
         <div class="student-financial-overview-action-slot" data-panel="student-financial-enrollment-management">
             {% include "includes/catalog/student_form/financial/financial_overview_enrollment_management.html" with page=page %}
         </div>
     </div>
-    <div class="student-financial-overview-history-slot" data-panel="student-financial-history">
-        {% include "includes/catalog/student_form/financial/financial_overview_history.html" with page=page %}
+
+    <!-- 4. Historico Completo -->
+    <div class="layout-grid align-start" style="grid-template-columns: minmax(auto, 60%) minmax(auto, 40%); gap: 24px;" data-panel="student-financial-history">
+        <!-- Tabela de Pagamentos (Maior peso visual) -->
+        <div class="student-financial-overview-history-slot">
+            {% include "includes/catalog/student_form/financial/financial_overview_recent_payments_card.html" with page=page %}
+        </div>
+        <!-- Historico de Planos (Menor peso) -->
+        <div class="student-financial-overview-history-slot">
+            {% include "includes/catalog/student_form/financial/financial_overview_history.html" with page=page %}
+        </div>
     </div>
+    
     {% else %}
-    <p class="meta-text">Esta camada aparece assim que o aluno for salvo pela primeira vez.</p>
+    <article class="table-card student-financial-overview-card">
+        <p class="eyebrow">Plano, status e trâmite financeiro</p>
+        <p class="meta-text student-financial-overview-summary">{{ page.data.financial_overview.summary }}</p>
+        <p class="meta-text">Esta camada aparece assim que o atleta for salvo pela primeira vez.</p>
+    </article>
     {% endif %}
-</section>
+</div>

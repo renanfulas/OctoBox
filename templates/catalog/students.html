@@ -19,21 +19,22 @@ PONTOS CRITICOS:
 
 {% block content %}
 {% with page=student_directory_page %}
-<div class="scene-stack operation-shell catalog-scene student-scene" data-page="students" data-screen="catalog-students" data-slot="page-root">
-{% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+<div class="scene-stack operation-shell catalog-scene student-scene" data-page="students" data-screen="catalog-students"
+    data-slot="page-root">
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
-{% include "catalog/includes/student_interactive_kpis.html" %}
+    {% include "catalog/includes/student_interactive_kpis.html" %}
 
-<div class="interactive-tab-container">
+    <div class="interactive-tab-container">
 
-{% include "catalog/includes/student_filters_panel.html" %}
+        {% include "catalog/includes/student_filters_panel.html" %}
 
-{% include "catalog/includes/student_priority_panel.html" %}
+        {% include "catalog/includes/student_priority_panel.html" %}
 
-{% include "catalog/includes/student_intake_panel.html" %}
+        {% include "catalog/includes/student_intake_panel.html" %}
 
-{% include "catalog/includes/student_directory_panel.html" %}
-</div>
+        {% include "catalog/includes/student_directory_panel.html" %}
+    </div>
 </div>
 {% endwith %}
 {% endblock %}

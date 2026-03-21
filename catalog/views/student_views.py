@@ -35,6 +35,7 @@ from .catalog_base_views import CatalogBaseView
 STUDENT_FORM_ESSENTIAL_FRAGMENT = 'student-form-essential'
 STUDENT_FINANCIAL_FRAGMENT = 'student-financial-overview'
 STUDENT_DIRECTORY_FRAGMENT = 'student-directory-board'
+STUDENT_DIRECTORY_PAGE_SIZE = 15
 
 
 def _append_fragment(url, fragment):
@@ -57,7 +58,7 @@ class StudentDirectoryView(CatalogBaseView):
         context['students'] = students
         
         from django.core.paginator import Paginator
-        paginator = Paginator(students, 15)
+        paginator = Paginator(students, STUDENT_DIRECTORY_PAGE_SIZE)
         page_number = self.request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 

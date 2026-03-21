@@ -4,8 +4,13 @@ ARQUIVO: regras de conversao da Central de Intake.
 POR QUE ELE EXISTE:
 - preserva a explicacao semantica da fronteira entre intake e aluno.
 -->
-<article class="table-card layout-panel layout-panel--stack glass-panel" id="intake-conversion-board" data-panel="intake-conversion-board">
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="O que esta sendo triado aqui" title="Intake ainda nao e aluno" copy="Esta central cuida da entrada provisoria; a ficha do aluno so abre quando a conversao fizer sentido." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
+<article class="card glass-panel" id="intake-conversion-board" data-panel="intake-conversion-board">
+    <div class="card-head">
+        <div class="card-head-main">
+            <h2 class="card-title">Regras de Conversão e Evolução</h2>
+            <p class="card-copy">Entenda de forma clara quando um contato abandona a provisória e vira aluno definitivo na base.</p>
+        </div>
+    </div>
     <div class="stack-14">
         {% for item in page.data.conversion_rules %}
         <article class="intake-rule-card" data-panel="intake-rule-card">
