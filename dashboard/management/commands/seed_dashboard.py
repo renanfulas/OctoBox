@@ -15,12 +15,12 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         self.stdout.write("Iniciando Seed Profundo no OctoBOX...")
-        
+
         user = User.objects.first()
         if not user:
             user = User.objects.create_user('admin', email='admin@octobox.com', password='password123', first_name='Oto', last_name='Owner')
             self.stdout.write(f"Usuario criado: {user.email}")
-        
+
         now = timezone.now()
 
         self.stdout.write("Gerando Alunos...")
@@ -33,18 +33,18 @@ class Command(BaseCommand):
         self.stdout.write("Gerando Pagamentos (Financeiro)...")
         for i, s in enumerate(students[:5]):
             Payment.objects.get_or_create(
-                student=s, 
+                student=s,
                 defaults={
-                    'amount': 299.90, 'status': PaymentStatus.OVERDUE, 
+                    'amount': 299.90, 'status': PaymentStatus.OVERDUE,
                     'due_date': now.date() - timedelta(days=5),
                 }
             )
-            
+
         for i, s in enumerate(students[5:10]):
             Payment.objects.get_or_create(
-                student=s, 
+                student=s,
                 defaults={
-                    'amount': 299.90, 'status': PaymentStatus.PAID, 
+                    'amount': 299.90, 'status': PaymentStatus.PAID,
                     'due_date': now.date() - timedelta(days=2),
                     'paid_at': now,
                 }
@@ -54,7 +54,7 @@ class Command(BaseCommand):
         ClassSession.objects.get_or_create(title="Treino WOD Manha", scheduled_at=now + timedelta(hours=1), defaults={'duration_minutes': 60})
         ClassSession.objects.get_or_create(title="CrossFit LPO", scheduled_at=now + timedelta(hours=4), defaults={'duration_minutes': 60})
         ClassSession.objects.get_or_create(title="Treino Livre / Open Box", scheduled_at=now + timedelta(hours=6), defaults={'duration_minutes': 60})
-        
+
         # Gerar sessões passadas para constar no gráfico de presença
         ClassSession.objects.get_or_create(title="WOD Matinal Ontem", scheduled_at=now - timedelta(days=1, hours=2), defaults={'duration_minutes': 60})
 

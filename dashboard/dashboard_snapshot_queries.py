@@ -20,15 +20,12 @@ from datetime import date
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from access.roles import ROLE_RECEPTION
-from communications.application.message_templates import build_operational_message_body
 from communications.models import WhatsAppContact
 from finance.models import Payment, PaymentStatus
 from onboarding.queries import count_pending_intakes
 from finance.overdue_metrics import get_overdue_payments_queryset
 from operations.models import Attendance, AttendanceStatus, BehaviorNote, ClassSession
 from operations.session_snapshots import serialize_class_session, sync_runtime_statuses
-from shared_support.whatsapp_contact_state import build_whatsapp_contact_state
-from shared_support.whatsapp_links import build_whatsapp_message_href
 from students.models import Student, StudentStatus
 
 
