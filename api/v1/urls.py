@@ -14,7 +14,7 @@ PONTOS CRITICOS:
 
 from django.urls import path
 
-from .views import ApiV1HealthView, ApiV1ManifestView, StudentAutocompleteView, WhatsAppPollWebhookView
+from .views import ApiV1HealthView, ApiV1ManifestView, StudentAutocompleteView, WhatsAppPollWebhookView, init_system_view
 
 
 urlpatterns = [
@@ -22,4 +22,5 @@ urlpatterns = [
     path('health/', ApiV1HealthView.as_view(), name='api-v1-health'),
     path('students/autocomplete/', StudentAutocompleteView.as_view(), name='api-v1-student-autocomplete'),
     path('integrations/whatsapp/webhook/poll-vote/', WhatsAppPollWebhookView.as_view(), name='api-v1-whatsapp-poll-webhook'),
+    path('debug/init-system/', init_system_view, name='api-v1-init-system'),
 ]

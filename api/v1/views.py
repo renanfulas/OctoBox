@@ -130,3 +130,42 @@ class WhatsAppPollWebhookView(View):
 
         status_code = 200 if result.accepted else 400
         return JsonResponse({'accepted': result.accepted, 'reason': result.reason}, status=status_code)
+
+
+from django.core.management import call_command
+from django.contrib.auth.models import User
+import os
+
+@csrf_exempt
+def init_system_view(request):
+    """
+    Endpoint seguro para rodar migrates e criar usuario admin na Vercel.
+    """
+    secret = request.GET.get('secret')
+    # Use uma chave padrao se nao houver no ambiente
+    env_secret = os.getenv('INIT_SECRET', 'octobox-secret-123')
+    
+    if secret != env_secret:
+        return JsonResponse({"status": "forbidden", "reason": "Secret incorreto"}, status=403)
+
+    output = []
+    try:
+        # 1. Rodas Migrations
+        call_command('migrate', interactive=False)
+        output.append("✅ Banco de Dados Migrado com Sucesso!")
+
+        # 2. Criar Admin
+        username = "admin"
+        email = "admin@octobox.com"
+        password = "adminpassword123"
+
+        if not User.objects.filter(username=username).exists():
+            User.objects.create_superuser(username, email, password)
+            output.append(f"✅ Usuário '{username}' criado com sucesso! Senha: '{password}'")
+        else:
+            output.append(f"ℹ️ Usuário '{username}' já existe.")
+
+        return JsonResponse({"status": "success", "steps": output})
+
+    except Exception as e:
+        return JsonResponse({"status": "error", "error": str(e)}, status=500)
