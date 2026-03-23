@@ -1,9 +1,3 @@
-<!--
-ARQUIVO: card reutilizavel de acao financeira.
-
-POR QUE ELE EXISTE:
-- concentra a estrutura repetida das acoes semiassistidas de cobranca e retencao.
--->
 <article class="history-entry finance-action-card finance-action-card-compact">
     <div class="card-body finance-action-card-body">
         <div class="row-between history-header finance-action-head">
@@ -38,6 +32,15 @@ POR QUE ELE EXISTE:
             </form>
             {% endif %}
             {% else %}
+<!--
+ARQUIVO: finance_action_item.html
+POR QUE ELE EXISTE:
+- Concentra a estrutura repetida das ações semiassistidas de cobrança e retenção.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza o card de ação financeira, com botões e mensagens de contato.
+PONTOS CRITICOS:
+- Depende do objeto 'item' e de permissões de WhatsApp.
+-->
             <span class="meta-text-sm">Aluno sem WhatsApp valido para contato rapido.</span>
             {% endif %}
             <a class="button secondary" href="/alunos/{{ item.student.id }}/editar/#student-financial-overview">Abrir ficha do aluno</a>

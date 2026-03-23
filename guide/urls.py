@@ -13,9 +13,10 @@ PONTOS CRITICOS:
 
 from django.urls import path
 
-from .views import OperationalSettingsView, SystemMapView
+from .views import OperationalSettingsView, SystemMapView, OperationalSettingsAutoImportApiView
 
 urlpatterns = [
     path('mapa-sistema/', SystemMapView.as_view(), name='system-map'),
     path('configuracoes-operacionais/', OperationalSettingsView.as_view(), name='operational-settings'),
+    path('configuracoes-operacionais/api/importar/', OperationalSettingsAutoImportApiView.as_view(), name='operational-settings-api-import'),
 ]

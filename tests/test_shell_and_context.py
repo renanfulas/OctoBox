@@ -1,3 +1,16 @@
+"""
+ARQUIVO: testes de contexto e ações do shell.
+
+POR QUE ELE EXISTE:
+- Garante que o contexto do shell e as ações principais estejam corretas para diferentes rotas e papéis.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Testa a resolução do escopo do shell para diferentes caminhos e papéis.
+2. Testa a construção dos botões de ação do shell a partir de contadores e foco.
+
+PONTOS CRÍTICOS:
+- Mudanças aqui podem afetar a navegação e a experiência do usuário em áreas críticas do sistema.
+"""
 from django.test import TestCase, RequestFactory
 
 from access import context_processors

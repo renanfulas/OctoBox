@@ -1,15 +1,24 @@
+<!--
+ARQUIVO: metrics_cluster.html
+POR QUE ELE EXISTE:
+- Exibe o cluster de métricas do dashboard.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza os cards de métricas principais e secundárias.
+PONTOS CRITICOS:
+- Depende de page.data.metric_cards e block.
+-->
 <section class="dashboard-metrics-cluster" aria-label="Pulso de performance do box" data-dashboard-block="{{ block.id }}" data-dashboard-slot="{{ block.slot }}">
     <section class="dashboard-metrics-lead" aria-label="Pulso curto do box">
         {% for card in page.data.metric_cards|slice:":2" %}
         <div class="dashboard-kpi-slot dashboard-kpi-slot--lead{% if forloop.first %} is-primary{% endif %}">
-            {% include "includes/ui/shared/metric_card.html" with card=card compact=True %}
+            {% include "includes/ui/shared/metric_card.html" with card=card compact=True extra_classes="dashboard-kpi-card" %}
         </div>
         {% endfor %}
     </section>
 
     <section class="panel-grid dashboard-instagram-metrics dashboard-instagram-metrics--support" aria-label="Números principais do box" data-slot="metrics" data-panel="dashboard-metrics">
         {% for card in page.data.metric_cards|slice:"2:" %}
-        {% include "includes/ui/shared/metric_card.html" with card=card compact=True %}
+        {% include "includes/ui/shared/metric_card.html" with card=card compact=True extra_classes="dashboard-kpi-card" %}
         {% endfor %}
     </section>
 </section>

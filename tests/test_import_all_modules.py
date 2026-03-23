@@ -1,3 +1,16 @@
+"""
+ARQUIVO: teste de importação de todos os módulos do projeto.
+
+POR QUE ELE EXISTE:
+- Garante que todos os módulos do projeto possam ser importados sem erro, protegendo contra regressões de import.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Percorre todos os módulos do projeto e tenta importá-los.
+2. Reporta falhas de importação para facilitar manutenção e refatoração.
+
+PONTOS CRÍTICOS:
+- Falhas aqui indicam problemas de dependência ou erros de importação que podem quebrar o deploy ou testes.
+"""
 import os
 import sys
 import pkgutil

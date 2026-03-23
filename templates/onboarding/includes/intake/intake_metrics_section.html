@@ -4,6 +4,19 @@ ARQUIVO: metricas da Central de Intake.
 POR QUE ELE EXISTE:
 - separa o pulso numerico da fila do restante da tela.
 -->
+<!--
+ARQUIVO: métricas da Central de Intake.
+
+POR QUE ELE EXISTE:
+- Separa o pulso numérico da fila do restante da tela.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Exibe métricas principais da central de intake.
+2. Mostra cards de métrica para cada indicador.
+
+PONTOS CRITICOS:
+- Depende do contexto de metrics.
+-->
 <section class="layout-block layout-block--rail panel-grid" aria-label="Metricas da central de intake" data-slot="metrics" data-panel="intake-metrics">
     {% for label, item in page.data.metrics.items %}
     <article class="card metric-card primary-glow">

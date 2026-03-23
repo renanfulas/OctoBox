@@ -4,7 +4,7 @@
             <strong>{{ item.student_name }}</strong>
             <p class="meta-text-sm">{{ item.plan_name }}</p>
         </div>
-        <span class="pill {{ item.status_class }}">{{ item.status_label }}</span>
+            <span class="pill {{ item.status_class }}">{{ item.status_label }}</span>
     </div>
     <div class="finance-alert-grid reception-payment-meta">
         <div class="finance-alert-stat">
@@ -42,9 +42,30 @@
                 </select>
             </label>
         </div>
-        <div class="actions actions-tight finance-card-actions-compact reception-payment-actions reception-payment-actions-primary">
+        <div class="actions actions-tight finance-card-actions-compact reception-payment-actions reception-payment-actions-primary" style="display: flex; align-items: center; width: 100%;">
             <button class="button" type="submit" name="action" value="mark-paid" data-action="confirm-reception-payment">Confirmar pagamento</button>
-            <a class="button secondary" href="{{ item.student_href }}#student-financial-overview" data-action="open-student-financial-overview">Abrir ficha do aluno</a>
+            <a class="button secondary" href="{{ item.student_href }}#student-financial-overview" data-action="open-student-financial-overview">Abrir ficha</a>
+            
+            {% if item.clean_phone %}
+                {% if current_role.slug|lower == 'recepcao' and item.is_reception_blocked %}
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto;">
+                        <span class="button secondary button-sm disabled" onmouseover="this.nextElementSibling.style.opacity = '1'" onmouseout="this.nextElementSibling.style.opacity = '0'">
+                            🔒 Zap
+                        </span>
+                        <small style="font-size: 9px; color: #ba3030; font-weight: 600; margin-top: 2px; opacity: 0; transition: opacity 0.2s; pointer-events: none;">Reportar ao Gerente ou Dono</small>
+                    </div>
+                {% else %}
+                    {% if item.is_whatsapp_locked %}
+                    <span class="button secondary button-sm disabled" style="margin-left: auto;" title="Bloqueado por {{ item.repeat_block_hours }}h">
+                        🔒 Zap
+                    </span>
+                    {% else %}
+                    <a href="#" onclick="fetch('/financeiro/comunicacao/acao/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }, body: 'action_kind=overdue&student_id={{ item.student_id }}&payment_id={{ item.payment_id }}' }); window.open(`https://wa.me/{{ item.clean_phone }}?text=` + encodeURIComponent(`Oi, {{ item.student_name }}! Aqui é a {{ user.first_name }} do Cross.\n\nTudo bem por aí?\n\nPassando só pra dar um toque: vi que ficou uma mensalidade em aberto aqui (pode ter escapado na correria mesmo, acontece!).\n{% if item.is_late_10_days %}\nPra não correr risco de bloquear o acesso nos treinos, que tal regularizar?\n{% endif %}\nSe quiser resolver agora, te mando a chave PIX na hora.\nOu, se preferir, a gente acerta tranquilo no seu próximo treino.\n\nQualquer coisa é só chamar, tá?\nA gente curte muito ter você treinando com a gente!`), '_blank'); return false;" class="button secondary button-sm" style="margin-left: auto;" title="Enviar mensagem de cobrança no WhatsApp">
+                        🟢 Zap
+                    </a>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
         </div>
         <details class="reception-payment-advanced">
             <summary>Ajuste opcional</summary>

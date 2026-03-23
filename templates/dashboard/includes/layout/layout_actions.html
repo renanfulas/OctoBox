@@ -1,3 +1,12 @@
+<!--
+ARQUIVO: layout_actions.html
+POR QUE ELE EXISTE:
+- Exibe os botões de ação para manipulação dos blocos do dashboard.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza botões para expandir, recolher, ocultar, mover e trocar slots dos blocos.
+PONTOS CRITICOS:
+- Depende do contexto do bloco.
+-->
 <div class="dashboard-layout-actions">
     {% if block.collapsible %}
     <button class="button secondary dashboard-layout-action" type="button" data-toggle-collapse aria-expanded="{% if block.is_collapsed %}false{% else %}true{% endif %}">{% if block.is_collapsed %}Expandir{% else %}Recolher{% endif %}</button>

@@ -1,10 +1,13 @@
-<!--
-ARQUIVO: estatistica reutilizavel de plano.
-
-POR QUE ELE EXISTE:
-- evita repetir o mesmo bloco de valor e legenda dentro do portfolio financeiro.
--->
 <article class="finance-plan-stat{% if extra_class %} {{ extra_class }}{% endif %}">
     <strong{% if value_class %} class="{{ value_class }}"{% endif %}>{{ value }}</strong>
     <span>{{ label }}</span>
 </article>
+<!--
+ARQUIVO: finance_plan_stat.html
+POR QUE ELE EXISTE:
+- Evita repetir o mesmo bloco de valor e legenda dentro do portfólio financeiro.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza o bloco de valor e legenda de um plano.
+PONTOS CRITICOS:
+- Depende dos parâmetros value, label e classes opcionais.
+-->

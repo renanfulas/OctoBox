@@ -17,6 +17,9 @@ PONTOS CRITICOS:
 
 from .base import *  # noqa: F401,F403
 from .base import MIDDLEWARE, env_bool, env_str
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
 
 DEBUG = env_bool('DJANGO_DEBUG', False)
 
@@ -50,3 +53,12 @@ SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 X_FRAME_OPTIONS = 'DENY'
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
+
+sentry_dsn = env_str('SENTRY_DSN')
+if sentry_dsn:
+    sentry_sdk.init(
+        dsn=sentry_dsn,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=env_bool('SENTRY_TRACES_SAMPLE_RATE', 0.2),
+        send_default_pii=True
+    )

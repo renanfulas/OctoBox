@@ -1,3 +1,16 @@
+<!--
+ARQUIVO: coluna de gráfico de receita mensal do financeiro.
+
+POR QUE ELE EXISTE:
+- Exibe barra de receita mensal no gráfico de tendência.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Mostra barra proporcional à receita do mês.
+2. Exibe label e valor formatado.
+
+PONTOS CRITICOS:
+- Depende de item e page.data.comparison_peaks.
+-->
 <div class="chart-column finance-chart-column">
     <div class="chart-bar-wrap">
         <div class="chart-bar revenue" style="--bar-height: {% widthratio item.revenue page.data.comparison_peaks.max_revenue 100 %}%;"></div>

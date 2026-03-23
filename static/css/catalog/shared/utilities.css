@@ -206,6 +206,8 @@ POR QUE ELE EXISTE:
     display: block;
 }
 
+
+
 .row-between,
 .row-between-sm,
 .row-between-md {
@@ -456,4 +458,15 @@ POR QUE ELE EXISTE:
         transform: scale(1.08) translateY(-4px);
         opacity: 1;
     }
+}
+
+body[data-theme="dark"] .note-panel,
+body[data-theme="dark"] .note-panel-cream,
+body[data-theme="dark"] .note-panel-success-soft,
+body[data-theme="dark"] .disclosure-panel,
+body[data-theme="dark"] .installment-shell,
+body[data-theme="dark"] .installment-preview {
+    background: rgba(15, 23, 42, 0.38) !important;
+    border-color: var(--line);
+    box-shadow: none;
 }

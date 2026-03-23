@@ -112,7 +112,7 @@ class OperationWorkspaceTests(TestCase):
         response = self.client.get(reverse('reception-workspace'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Centro da recepcao')
+        self.assertContains(response, 'Seu balcão.')
         self.assertContains(response, 'href="#reception-intake-board"')
         self.assertContains(response, 'href="#reception-payment-board"')
         self.assertContains(response, 'href="#reception-class-grid-board"')
@@ -372,7 +372,7 @@ class OperationWorkspaceTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Caixa vencido: R$ 299,90')
-        self.assertContains(response, '1 cobranca(s) estao atrasadas e pedem contato.')
+        self.assertContains(response, 'Há cobrança atrasada pedindo contato agora.')
 
     def test_dev_can_access_dev_workspace(self):
         self.client.force_login(self.dev)

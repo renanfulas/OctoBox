@@ -1,3 +1,17 @@
+"""
+ARQUIVO: script para identificar e registrar os maiores elementos visuais da página.
+
+POR QUE ELE EXISTE:
+- Auxilia na análise de layout e performance, identificando elementos que mais ocupam espaço na tela.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Usa Playwright para navegar até a página alvo.
+2. Avalia todos os elementos visíveis e calcula área ocupada.
+3. Salva os maiores elementos em um arquivo JSON para análise posterior.
+
+PONTOS CRÍTICOS:
+- Mudanças podem afetar a precisão da análise de layout e performance.
+"""
 from playwright.sync_api import sync_playwright
 import json
 

@@ -31,11 +31,18 @@ POR QUE ELE EXISTE:
     gap: 14px;
 }
 
+
 .state-empty-title,
 .state-notice-title {
     margin: 0;
     font-size: 1rem;
     line-height: 1.35;
+    color: var(--ink);
+}
+
+body[data-theme="dark"] .state-empty-title,
+body[data-theme="dark"] .state-notice-title {
+    color: var(--ink) !important;
 }
 
 .state-empty-copy,

@@ -4,6 +4,15 @@ ARQUIVO: observacoes e erros gerais da edicao rapida.
 POR QUE ELE EXISTE:
 - separa o bloco textual da sessao para ajustes de copy e feedback sem ruir o restante do formulario.
 -->
+<!--
+ARQUIVO: workspace_quick_edit_notes.html
+POR QUE ELE EXISTE:
+- Separa o bloco textual da sessão para ajustes de copy e feedback sem ruir o restante do formulário.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza o campo de observações e exibe erros gerais do formulário.
+PONTOS CRITICOS:
+- Depende de page.data.session_edit_form.notes e non_field_errors.
+-->
 <label>
     <span class="field-label">{{ page.data.session_edit_form.notes.label }}</span>
     {{ page.data.session_edit_form.notes }}

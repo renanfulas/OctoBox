@@ -416,6 +416,13 @@ def _build_dashboard_priority_cards(
     primary_payment_alert = next_payment_alert or (payment_alerts[0] if payment_alerts else None)
     overdue_count = metrics['overdue_payments']
 
+    student_name = 'Alguém'
+    if primary_payment_alert:
+        if isinstance(primary_payment_alert, dict):
+            student_name = primary_payment_alert.get('student_full_name') or 'Alguém'
+        else:
+            student_name = primary_payment_alert.student.full_name if hasattr(primary_payment_alert, 'student') else 'Alguém'
+
     if actionable_payment_alerts_count > 0 and primary_payment_alert:
         emergency_card = {
             'href': finance_href,
@@ -425,9 +432,9 @@ def _build_dashboard_priority_cards(
             'value': actionable_payment_alerts_count,
             'indicator': 'Caixa' if role_slug == ROLE_RECEPTION else 'Urgente',
             'copy': (
-                f'{primary_payment_alert.student.full_name} está esperando contato. Eu te guio: comece por aqui e o caixa agradece.'
+                f'{student_name} está esperando contato. Eu te guio: comece por aqui e o caixa agradece.'
                 if role_slug != ROLE_RECEPTION else
-                f'{primary_payment_alert.student.full_name} precisa do seu cuidado agora. Uma abordagem sua faz toda a diferença.'
+                f'{student_name} precisa do seu cuidado agora. Uma abordagem sua faz toda a diferença.'
             ),
         }
     elif overdue_count > 0 and primary_payment_alert:
@@ -439,9 +446,9 @@ def _build_dashboard_priority_cards(
             'value': overdue_count,
             'indicator': 'Controle',
             'copy': (
-                f'{primary_payment_alert.student.full_name} abre a fila. O dinheiro ainda está aí, só precisa de você. Vamos resolver juntos.'
+                f'{student_name} abre a fila. O dinheiro ainda está aí, só precisa de você. Vamos resolver juntos.'
                 if role_slug != ROLE_RECEPTION else
-                f'{primary_payment_alert.student.full_name} abre a fila curta. O caixa respira, mas uma olhada sua agora faz diferença.'
+                f'{student_name} abre a fila curta. O caixa respira, mas uma olhada sua agora faz diferença.'
             ),
         }
     else:
@@ -620,6 +627,8 @@ def build_dashboard_page(*, request_user, role_slug, snapshot, stored_layout_sta
             css=[
                 'css/design-system/operations.css',
                 'css/design-system/dashboard.css',
+                'css/design-system/components/dashboard/glance_cards.css',
+                'css/design-system/components/dashboard/glance_neon.css',
                 'css/design-system/components/dashboard/layout.css',
                 'css/design-system/neon.css',
             ],

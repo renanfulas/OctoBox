@@ -1,3 +1,12 @@
+<!--
+ARQUIVO: layout_hidden_tray.html
+POR QUE ELE EXISTE:
+- Exibe a área de blocos ocultos do dashboard.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza lista de blocos ocultos e botões para restaurar.
+PONTOS CRITICOS:
+- Depende de page.data.dashboard_layout.hidden_blocks.
+-->
 <div class="dashboard-layout-hidden-tray{% if not page.data.dashboard_layout.hidden_blocks %} is-empty{% endif %}" data-dashboard-hidden-tray>
     <p class="dashboard-layout-hidden-title">Blocos ocultos</p>
     <div class="dashboard-layout-hidden-list" data-dashboard-hidden-list>

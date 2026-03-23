@@ -20,14 +20,16 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import TemplateView
 
-from access.roles import get_user_role
+from access.permissions.mixins import RoleRequiredMixin
+from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, get_user_role
 from shared_support.page_payloads import attach_page_payload
 from .models import DashboardLayoutPreference
 from .presentation import build_dashboard_layout, build_dashboard_page
 from .dashboard_snapshot_queries import build_dashboard_snapshot
 
 
-class DashboardView(LoginRequiredMixin, TemplateView):
+class DashboardView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
+    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER)
     template_name = 'dashboard/index.html'
 
     def get_context_data(self, **kwargs):
@@ -49,7 +51,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class DashboardLayoutPreferenceView(LoginRequiredMixin, View):
+class DashboardLayoutPreferenceView(LoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER)
     http_method_names = ['post']
 
     def post(self, request, *args, **kwargs):

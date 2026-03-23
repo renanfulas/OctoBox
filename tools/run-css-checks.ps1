@@ -1,14 +1,17 @@
 <#
-Run CSS linter + format helper for Windows (PowerShell).
+ARQUIVO: utilitário PowerShell para lint e format de CSS no Windows.
 
-Behavior:
-- If `npm` is available it runs `npm run lint:css` then `npm run format:css`.
-- If `npm` is missing and `docker` is available it runs the same commands
-  inside a temporary `node:lts` container (mounts the repo into /work).
-- Otherwise it prints installation instructions.
+POR QUE ELE EXISTE:
+- Permite rodar lint e formatador de CSS em ambiente Windows, mesmo sem npm local, usando fallback Docker.
 
-Usage: open PowerShell in the repo root and run:
-  .\tools\run-css-checks.ps1
+O QUE ESTE ARQUIVO FAZ:
+1. Detecta se npm está disponível e executa lint/format CSS via scripts npm.
+2. Se npm não está disponível, tenta rodar os comandos em um container Docker node:lts.
+3. Exibe instruções de instalação caso nenhum método esteja disponível.
+
+PONTOS CRÍTICOS:
+- Falhas aqui podem impedir a padronização visual do CSS do projeto em ambientes Windows.
+- Mudanças podem impactar pipelines de CI e desenvolvedores sem npm local.
 #>
 
 Set-StrictMode -Version Latest

@@ -1,3 +1,14 @@
+/* Contraste para placeholder em darkmode */
+input::placeholder, textarea::placeholder {
+    color: var(--muted);
+    opacity: 1;
+}
+
+body[data-theme="dark"] input::placeholder,
+body[data-theme="dark"] textarea::placeholder {
+    color: var(--ink);
+    opacity: 0.85;
+}
 /*
 ARQUIVO: tokens e reset global do design system.
 

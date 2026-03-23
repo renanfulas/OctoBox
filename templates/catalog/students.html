@@ -23,17 +23,17 @@ PONTOS CRITICOS:
     data-slot="page-root">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
-    {% include "catalog/includes/student_interactive_kpis.html" %}
+    {% include "catalog/includes/student/student_interactive_kpis.html" %}
 
     <div class="interactive-tab-container">
 
-        {% include "catalog/includes/student_filters_panel.html" %}
+        {% include "catalog/includes/student/student_filters_panel.html" %}
 
-        {% include "catalog/includes/student_priority_panel.html" %}
+        {% include "catalog/includes/student/student_priority_panel.html" %}
 
-        {% include "catalog/includes/student_intake_panel.html" %}
+        {% include "catalog/includes/student/student_intake_panel.html" %}
 
-        {% include "catalog/includes/student_directory_panel.html" %}
+        {% include "catalog/includes/student/student_directory_panel.html" %}
     </div>
 </div>
 {% endwith %}

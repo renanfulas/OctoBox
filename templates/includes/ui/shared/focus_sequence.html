@@ -1,3 +1,21 @@
+<!--
+ARQUIVO: focus_sequence.html
+POR QUE ELE EXISTE:
+- Exibe sequência de foco para navegação assistida.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza elementos de navegação por tabulação/foco.
+PONTOS CRITICOS:
+- Usado para acessibilidade e navegação por teclado.
+-->
+<!--
+ARQUIVO: focus_sequence.html
+POR QUE ELE EXISTE:
+- Exibe a sequência de foco operacional do dia.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza cards de foco com índice, resumo e ação.
+PONTOS CRITICOS:
+- Depende dos parâmetros items, eyebrow, title, copy, etc.
+-->
 <section class="table-card fdw-focus-lane{% if class_name %} {{ class_name }}{% endif %}"{% if panel_id %} id="{{ panel_id }}"{% endif %}>
     {% include "includes/ui/layout/operation_card_head.html" with eyebrow=eyebrow title=title copy=copy pill_label=pill_label pill_class=pill_class %}
     <div class="fdw-focus-list">

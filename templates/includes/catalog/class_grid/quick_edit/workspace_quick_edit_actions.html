@@ -2,9 +2,16 @@
 ARQUIVO: acoes finais da edicao rapida.
 
 POR QUE ELE EXISTE:
-- mantem a saida operacional do painel isolada para futuros ajustes de CTA.
--->
 <div class="actions actions-tight">
+<!--
+ARQUIVO: workspace_quick_edit_actions.html
+POR QUE ELE EXISTE:
+- Mantém a saída operacional do painel isolada para futuros ajustes de CTA.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza os botões de ação do painel de edição rápida.
+PONTOS CRITICOS:
+- Depende do contexto de formulário e query string.
+-->
     <button class="button" type="submit">Salvar ajustes</button>
     <a class="button secondary" href="{% if page.behavior.current_query_string %}/grade-aulas/?{{ page.behavior.current_query_string }}{% else %}/grade-aulas/{% endif %}">Fechar edicao</a>
 </div>

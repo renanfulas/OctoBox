@@ -2,9 +2,16 @@
 ARQUIVO: campos principais da edicao rapida da grade.
 
 POR QUE ELE EXISTE:
-- concentra os campos estruturais que normalmente mudam juntos na edicao da sessao.
--->
 <div class="field-grid-220">
+<!--
+ARQUIVO: workspace_quick_edit_core_fields.html
+POR QUE ELE EXISTE:
+- Concentra os campos estruturais que normalmente mudam juntos na edição da sessão.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza os campos principais do formulário de edição rápida.
+PONTOS CRITICOS:
+- Depende de page.data.session_edit_form.
+-->
     <label>
         <span class="field-label">{{ page.data.session_edit_form.title.label }}</span>
         {{ page.data.session_edit_form.title }}

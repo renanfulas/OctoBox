@@ -1,8 +1,17 @@
+<!--
+ARQUIVO: layout_toolbar.html
+POR QUE ELE EXISTE:
+- Exibe a barra de ferramentas de organização do dashboard.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza botões para organizar e restaurar o layout, além de incluir a área de blocos ocultos.
+PONTOS CRITICOS:
+- Depende de page.data.dashboard_layout.hidden_blocks.
+-->
 <div class="dashboard-layout-toolbar{% if page.data.dashboard_layout.hidden_blocks %} has-hidden-blocks{% endif %}" data-dashboard-layout-toolbar aria-label="Organização do dashboard">
     <div class="actions actions-tight">
         <button class="button ghost" type="button" id="toggle-dashboard-layout" aria-pressed="false">Organizar painel</button>
         <button class="button ghost" type="button" id="reset-dashboard-layout" style="display: none;">Restaurar padrão</button>
     </div>
     <p class="dashboard-layout-status visually-hidden" id="dashboard-layout-status" aria-live="polite"></p>
-    {% include "dashboard/includes/layout_hidden_tray.html" with page=page %}
+    {% include "dashboard/includes/layout/layout_hidden_tray.html" with page=page %}
 </div>

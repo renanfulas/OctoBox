@@ -1,3 +1,12 @@
+<!--
+ARQUIVO: dashboard_glance_card.html
+POR QUE ELE EXISTE:
+- Exibe um card de resumo rápido de prioridade no dashboard.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza valores, indicadores e texto de contexto para alertas e prioridades.
+PONTOS CRITICOS:
+- Depende do objeto 'card' e do parâmetro 'kicker'.
+-->
 {% load dashboard_filters %}
 {% with display_kicker=kicker|default:card.kicker %}
 <a class="dashboard-glance-card dashboard-glance-card--summary {{ card.card_class }}{% if 'Emergência' in display_kicker %} is-emergency{% elif 'Urgente' in display_kicker %} is-warning{% elif 'Risco' in display_kicker %} is-risk{% endif %}{% if card.value > 0 %} is-actionable{% else %} is-tranquil{% endif %}" href="{{ card.href }}">

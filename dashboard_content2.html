@@ -1,33 +1,14 @@
 ﻿<!--
 ARQUIVO: tela principal do dashboard.
-
 POR QUE ELE EXISTE:
-- Mostra de forma rapida o estado geral do box.
-
+- Mostra de forma rápida o estado geral do box.
 O QUE ESTE ARQUIVO FAZ:
 1. Abre com a leitura curta prioritária do dia.
-2. Mantem metricas como camada seguinte de entendimento.
+2. Mantém métricas como camada seguinte de entendimento.
 3. Deixa a agenda como trilho de apoio, sem competir com a abertura.
-
 PONTOS CRITICOS:
 - Depende fortemente do contexto montado em dashboard/views.py.
 - Se nomes de chaves do contexto mudarem, a tela quebra visualmente.
--->
-<!--
-ARQUIVO: layout base do front-end autenticado.
-
-POR QUE ELE EXISTE:
-- Reune a estrutura visual comum do sistema: sidebar, navegacao, topbar e design system compartilhado.
-
-O QUE ESTE ARQUIVO FAZ:
-1. Define a casca visual principal do app.
-2. Carrega os CSS centrais do design system e dos componentes do catalogo.
-3. Mostra informacoes do usuario logado.
-4. Renderiza a navegacao principal conforme o papel efetivo do usuario.
-
-PONTOS CRITICOS:
-- Esse template afeta praticamente todas as telas autenticadas.
-- Se o context processor de navegacao falhar, a sidebar perde coerencia com as permissoes reais.
 -->
 
 <!DOCTYPE html>
@@ -421,12 +402,7 @@ PONTOS CRITICOS:
 
         <aside class="dashboard-instagram-side">
             <article class="table-card layout-panel layout-panel--stack dashboard-table-card dashboard-side-card dashboard-side-card-sticky card-decor-topstripe card-decor-glow" id="dashboard-sessions-board" data-panel="dashboard-sessions-board">
-                <!--
-ARQUIVO: cabecalho reutilizavel de cards operacionais.
-
-POR QUE ELE EXISTE:
-- evita repetir a mesma moldura visual de titulo, copy e pill nos paineis de leitura operacional.
--->
+                <!-- Cabeçalho removido: metadados já presentes no início do arquivo -->
 <div class="operation-card-head card-head">
     <div class="card-head-main card-head-main-stack">
         <p class="eyebrow card-label">Agenda de apoio</p>

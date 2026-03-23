@@ -1,3 +1,12 @@
+<!--
+ARQUIVO: quick_action_card.html
+POR QUE ELE EXISTE:
+- Exibe ações rápidas em formato de card.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza botões de ação, ícones, labels e link de ação rápida.
+PONTOS CRITICOS:
+- Depende dos parâmetros actions, icons, labels, action e seus atributos.
+-->
 <a class="quick-card dashboard-quick-card" href="{{ action.href }}" data-panel="quick-action-card" data-action="open-quick-action">
     <p class="eyebrow card-label">{{ action.eyebrow }}</p>
     <strong class="card-title">{{ action.title }}</strong>

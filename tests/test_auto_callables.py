@@ -1,3 +1,16 @@
+"""
+ARQUIVO: teste de execução automática de callables simples.
+
+POR QUE ELE EXISTE:
+- Garante que funções simples do projeto possam ser chamadas sem erro, protegendo contra bugs silenciosos em utilitários e helpers.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Percorre todos os módulos e tenta executar funções públicas sem argumentos.
+2. Ignora funções privadas e módulos de teste/virtualenv.
+
+PONTOS CRÍTICOS:
+- Falhas aqui podem indicar problemas de inicialização ou dependências ocultas em funções utilitárias.
+"""
 import os
 import sys
 import pkgutil

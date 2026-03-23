@@ -1,9 +1,3 @@
-<!--
-ARQUIVO: card reutilizavel de dia no calendario mensal expandido.
-
-POR QUE ELE EXISTE:
-- concentra a leitura do dia mensal completo para o modal expandido.
--->
 <article class="monthly-day-card monthly-day-card-expanded{% if day.is_today %} is-today{% endif %}{% if not day.is_in_month %} is-muted{% endif %}{% if day.session_count %} has-sessions{% else %} is-empty{% endif %}{% if day.session_count >= 12 %} is-loaded{% elif day.session_count >= 8 %} is-busy{% endif %}" data-panel="class-grid-monthly-day-card">
     <div class="card-body monthly-day-card-body">
         <div class="row-between-sm monthly-day-head card-head">
@@ -33,3 +27,12 @@ POR QUE ELE EXISTE:
         </div>
     </div>
 </article>
+<!--
+ARQUIVO: class_grid_monthly_day_card.html
+POR QUE ELE EXISTE:
+- Concentra a leitura do dia mensal completo para o modal expandido.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza o card de um dia no calendário mensal, mostrando sessões e estado do dia.
+PONTOS CRITICOS:
+- Depende do objeto 'day' e suas propriedades.
+-->

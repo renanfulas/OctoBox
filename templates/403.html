@@ -1,0 +1,27 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="scene-stack operation-shell centered-content" data-page="error-403" data-screen="error-access">
+    <div class="card glass-panel auth-card error-card alert-slate" style="max-width: 480px; margin: 80px auto; text-align: center; padding: 40px; box-shadow: var(--shadow-lift);">
+        <div class="error-badge warning" style="font-size: 3.5rem; margin-bottom: 20px; animation: pulse 2s infinite;">⚠️</div>
+        <h1 class="section-title" style="color: var(--warning); margin-bottom: 15px;">Acesso Negado</h1>
+        <p class="meta-text" style="font-size: 1.2rem; color: var(--foreground); line-height: 1.6; font-weight: 600;">
+            Ei! Você está sendo rastreado e não tem permissão de acessar essa página.
+        </p>
+        <p class="meta-text-sm" style="margin-top: 20px; color: var(--muted);">
+            Sua tentativa de acesso foi registrada. Se você acha que isso é um erro, entre em contato com o administrador do Box.
+        </p>
+        <div class="actions" style="margin-top: 35px; justify-content: center;">
+            <a href="/" class="button">Voltar para Segurança</a>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.8; }
+}
+</style>
+{% endblock %}

@@ -1,9 +1,3 @@
-<!--
-ARQUIVO: cabecalho reutilizavel de cards operacionais.
-
-POR QUE ELE EXISTE:
-- evita repetir a mesma moldura visual de titulo, copy e pill nos paineis de leitura operacional.
--->
 <div class="operation-card-head card-head">
     <div class="card-head-main card-head-main-stack">
         <p class="eyebrow card-label">{{ eyebrow }}</p>
@@ -24,3 +18,12 @@ POR QUE ELE EXISTE:
     </div>
     {% endif %}
 </div>
+<!--
+ARQUIVO: operation_card_head.html
+POR QUE ELE EXISTE:
+- Evita repetir a mesma moldura visual de título, copy e pill nos painéis de leitura operacional.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza o cabeçalho de cards operacionais, com título, copy e badge.
+PONTOS CRITICOS:
+- Depende dos parâmetros de contexto (eyebrow, title, copy, etc).
+-->

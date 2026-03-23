@@ -42,7 +42,7 @@ th {
 }
 
 td {
-    color: rgba(15, 23, 42, 0.88);
+    color: var(--ink);
     line-height: 1.5;
 }
 

@@ -444,6 +444,11 @@ body[data-theme="dark"] .fdw-focus-card.is-primary {
     background: linear-gradient(160deg, color-mix(in srgb, var(--brand) 16%, transparent), var(--surface));
 }
 
+body[data-theme="dark"] .fdw-focus-card {
+    background: var(--surface);
+    border-color: var(--line);
+}
+
 @media (max-width: 720px) {
     .fdw-focus-list {
         grid-template-columns: 1fr;
@@ -564,23 +569,84 @@ body[data-theme="dark"] .table-card::after {
 
 /* --- Contextual Semantic Lines --- */
 .dashboard-glance-card.is-emergency::before,
-.card.is-emergency::before,
-.table-card.is-emergency::before {
+.card-decor-topstripe.is-emergency::before {
     background: var(--danger);
     opacity: 0.9;
 }
 
 .dashboard-glance-card.is-warning::before,
-.card.is-warning::before,
-.table-card.is-warning::before {
+.card-decor-topstripe.is-warning::before {
     background: var(--warning);
     opacity: 0.9;
 }
 
 .dashboard-glance-card.is-success::before,
-.card.is-success::before,
-.table-card.is-success::before {
+.card-decor-topstripe.is-success::before {
     background: var(--success);
     opacity: 0.9;
 }
 
+/* --- Dark Mode Overrides for Artistic / Decorative Passes --- */
+body[data-theme="dark"] .card,
+body[data-theme="dark"] .table-card {
+    background: var(--surface) !important;
+    border-color: var(--line) !important;
+    box-shadow: var(--shadow-soft) !important;
+}
+
+body[data-theme="dark"] .fdw-focus-card {
+    background: var(--surface) !important;
+    border-color: var(--line) !important;
+    box-shadow: none !important;
+}
+
+body[data-theme="dark"] .fdw-focus-card.is-primary {
+    background: linear-gradient(160deg, color-mix(in srgb, var(--brand) 16%, transparent), var(--surface)) !important;
+    border-color: color-mix(in srgb, var(--brand) 22%, transparent) !important;
+}
+
+/* --- Visual Estético: Sombras iOS Flutuantes --- */
+
+/* 1. Sombra na Estrutura da Página */
+.content::before {
+    box-shadow: 6px 6px 24px rgba(15, 23, 42, 0.06), 2px 2px 8px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* 2. Sombra nos Cards Padrão, Tabela e Status (Light e Dark) */
+.card,
+.table-card,
+.dashboard-glance-card,
+body[data-theme="dark"] .card,
+body[data-theme="dark"] .table-card,
+body[data-theme="dark"] .dashboard-glance-card {
+    box-shadow: 6px 6px 18px rgba(15, 23, 42, 0.05), 1px 1px 6px rgba(15, 23, 42, 0.03) !important;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+/* 3. Efeito de Elevação (Hover) */
+.card:hover,
+.table-card:hover,
+.dashboard-glance-card:hover,
+body[data-theme="dark"] .card:hover,
+body[data-theme="dark"] .table-card:hover,
+body[data-theme="dark"] .dashboard-glance-card:hover {
+    transform: translate(-1px, -1px) !important;
+    box-shadow: 7px 7px 20px rgba(15, 23, 42, 0.06), 2px 2px 8px rgba(15, 23, 42, 0.03) !important;
+}
+
+/* --- Exceção: Grade de Aulas / Agenda (Telas Grandes) --- */
+/* Remove o deslocamento diagonal de 6px em visualizações desktop */
+
+@media (min-width: 1024px) {
+    .class-grid-scene .card,
+    .class-grid-scene .table-card,
+    .class-grid-scene .dashboard-glance-card {
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 1px 4px rgba(15, 23, 42, 0.02) !important;
+        transform: none !important;
+    }
+
+    .class-grid-scene .card:hover,
+    .class-grid-scene .table-card:hover {
+        transform: translateY(-2px) !important; /* Levanta para cima padrão, sem diagonal */
+    }
+}

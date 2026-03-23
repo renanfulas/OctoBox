@@ -376,8 +376,34 @@ def _build_reception_workspace_core(*, today):
     first_payment = payment_queue[0] if payment_queue else None
     next_session = next_sessions[0] if next_sessions else None
 
-    reception_payment_queue = [
-        {
+    from django.utils import timezone
+    from datetime import timedelta
+    from shared_support.operational_settings import get_operational_whatsapp_repeat_block_hours
+    from communications.model_definitions.whatsapp import WhatsAppMessageLog, MessageDirection
+    
+    repeat_block_hours = get_operational_whatsapp_repeat_block_hours()
+    
+    reception_payment_queue = []
+    for payment in payment_queue:
+        days_overdue = max((today - payment.due_date).days, 0)
+        clean_phone = "".join(filter(str.isdigit, payment.student.phone or ''))
+        if clean_phone and not clean_phone.startswith('55'):
+            clean_phone = f'55{clean_phone}'
+            
+        is_whatsapp_locked = False
+        sent_count = 0
+        if clean_phone:
+            base_logs = WhatsAppMessageLog.objects.filter(
+                contact__linked_student_id=payment.student.id,
+                direction=MessageDirection.OUTBOUND
+            )
+            sent_count = base_logs.count()
+            if repeat_block_hours > 0:
+                is_whatsapp_locked = base_logs.filter(
+                    created_at__gte=timezone.now() - timedelta(hours=repeat_block_hours)
+                ).exists()
+
+        reception_payment_queue.append({
             'payment_id': payment.id,
             'student_id': payment.student.id,
             'student_name': payment.student.full_name,
@@ -392,9 +418,12 @@ def _build_reception_workspace_core(*, today):
             'notes': payment.notes,
             'reason': _build_reception_payment_reason(payment, today=today),
             'student_href': f'/alunos/{payment.student.id}/editar/',
-        }
-        for payment in payment_queue
-    ]
+            'clean_phone': clean_phone,
+            'is_late_10_days': days_overdue >= 10,
+            'is_whatsapp_locked': is_whatsapp_locked,
+            'is_reception_blocked': sent_count >= 2,
+            'repeat_block_hours': repeat_block_hours,
+        })
 
     return {
         'pending_intakes': pending_intakes,

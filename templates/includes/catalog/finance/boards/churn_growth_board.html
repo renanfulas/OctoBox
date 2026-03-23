@@ -1,3 +1,16 @@
+<!--
+ARQUIVO: painel de churn e crescimento do financeiro.
+
+POR QUE ELE EXISTE:
+- Mostra ativações e cancelamentos mensais para análise de giro de base.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Exibe comparação mensal de ativações e churn.
+2. Usa delta_row para cada item do período.
+
+PONTOS CRITICOS:
+- Depende do contexto de monthly_comparison.
+-->
 <article class="table-card finance-glass-panel finance-board-trend-side">
     {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Churn e crescimento" title="Ativacoes x cancelamentos" title_class="section-title-sm" copy="Mede acumulo real versus giro de base." copy_class="body-copy text-muted section-gap-top-xs no-margin" %}
     <div class="stack-14 finance-trend-stack">

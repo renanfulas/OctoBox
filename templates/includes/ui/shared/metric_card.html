@@ -1,3 +1,12 @@
+<!--
+ARQUIVO: metric_card.html
+POR QUE ELE EXISTE:
+- Exibe métricas resumidas em formato de card.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza valor, label, ícone, variação, sinais e indicadores de métrica.
+PONTOS CRITICOS:
+- Depende dos parâmetros value, label, icon, variation, card e parâmetros opcionais.
+-->
 {% load dashboard_filters %}
 {% if card.href %}<a href="{{ card.href }}" class="metric-card-link" style="text-decoration:none;color:inherit;display:block;cursor:pointer;">{% endif %}
 <article class="card{% if compact %} metric-card-compact{% endif %} {{ card.card_class }} {{ extra_classes }}{% if card.status_hint %} status-{{ card.status_hint }}{% endif %}{% if card.data_action %} has-action cursor-pointer{% endif %}{% if card.href %} has-href{% endif %}" data-panel="metric-card" data-slot="metric-card"{% if card.data_action %} data-action="{{ card.data_action }}"{% endif %}>

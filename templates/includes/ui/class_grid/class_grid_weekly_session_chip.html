@@ -1,9 +1,3 @@
-<!--
-ARQUIVO: chip reutilizavel de sessao semanal da grade.
-
-POR QUE ELE EXISTE:
-- concentra a leitura curta de uma sessao dentro da visao semanal.
--->
 <article class="weekly-session-chip{% if item.occupancy_pill_class %} is-{{ item.occupancy_pill_class }}{% endif %}{% if item.booking_closed %} is-booking-closed{% endif %}" data-panel="class-grid-weekly-session-chip">
     <div class="card-body weekly-session-chip-body">
         <div class="row-between-sm weekly-session-top">
@@ -32,3 +26,12 @@ POR QUE ELE EXISTE:
         {% endif %}
     </div>
 </article>
+<!--
+ARQUIVO: class_grid_weekly_session_chip.html
+POR QUE ELE EXISTE:
+- Concentra a leitura curta de uma sessão dentro da visão semanal.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza o chip de uma sessão semanal, mostrando horários, coach e ocupação.
+PONTOS CRITICOS:
+- Depende do objeto 'item' e do contexto de page.
+-->

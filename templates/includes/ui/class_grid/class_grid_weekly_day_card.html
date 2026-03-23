@@ -1,9 +1,3 @@
-<!--
-ARQUIVO: card reutilizavel de dia na visao semanal da grade.
-
-POR QUE ELE EXISTE:
-- evita concentrar a composicao de cada dia semanal dentro do painel maior.
--->
 <article class="weekly-day-card{% if day.is_today %} is-today{% endif %}{% if not day.is_in_window %} is-muted{% endif %}{% if day.sessions %} has-sessions{% endif %}" data-panel="class-grid-weekly-day-card" data-day-date="{{ day.date|date:'Y-m-d' }}" style="cursor: pointer;" role="button" tabindex="0" aria-label="Ver aulas de {{ day.weekday_label }} {{ day.date|date:'d/m' }}">
     <div class="card-body weekly-day-card-body">
         <div class="weekly-day-head card-head">
@@ -26,3 +20,12 @@ POR QUE ELE EXISTE:
         </div>
     </div>
 </article>
+<!--
+ARQUIVO: class_grid_weekly_day_card.html
+POR QUE ELE EXISTE:
+- Evita concentrar a composição de cada dia semanal dentro do painel maior.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza o card de um dia na visão semanal, mostrando sessões ou estado livre.
+PONTOS CRITICOS:
+- Depende do objeto 'day' e suas propriedades.
+-->

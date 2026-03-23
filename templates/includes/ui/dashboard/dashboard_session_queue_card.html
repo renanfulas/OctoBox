@@ -1,3 +1,12 @@
+<!--
+ARQUIVO: dashboard_session_queue_card.html
+POR QUE ELE EXISTE:
+- Exibe um card compacto de sessão na fila do dashboard.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza informações resumidas de sessões na fila, incluindo horários, coach e ocupação.
+PONTOS CRITICOS:
+- Depende do objeto 'session'.
+-->
 <article class="dashboard-session-card dashboard-session-card--compact">
     <div class="dashboard-session-time-block">
         <div class="dashboard-session-time">{{ session.starts_at|date:"H:i" }}</div>

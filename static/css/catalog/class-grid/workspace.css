@@ -185,6 +185,11 @@ POR QUE ELE EXISTE:
     color: var(--ink);
 }
 
+body[data-theme="dark"] .weekday-option {
+    background: var(--surface);
+    border-color: var(--line);
+}
+
 .weekday-option input,
 .class-grid-checkbox input {
     margin: 0;
@@ -195,4 +200,16 @@ POR QUE ELE EXISTE:
     gap: 10px;
     align-items: center;
     color: var(--muted);
+}
+
+/* --- Dark Mode Absolute Overrides --- */
+body[data-theme="dark"] .weekday-option {
+    background: var(--surface) !important;
+    border-color: var(--line) !important;
+    color: var(--ink) !important;
+}
+
+body[data-theme="dark"] .class-grid-grab-handle {
+    background: var(--surface) !important;
+    border-color: var(--line) !important;
 }

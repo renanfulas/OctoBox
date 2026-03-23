@@ -99,6 +99,20 @@ POR QUE ELE EXISTE:
 .student-name,
 .student-updated-at {
     display: block;
+    color: var(--ink);
+}
+
+body[data-theme="dark"] .student-name,
+body[data-theme="dark"] .student-updated-at {
+    color: var(--ink) !important;
+}
+
+body[data-theme="dark"] .student-cell-stack,
+body[data-theme="dark"] .student-cell-stack strong,
+body[data-theme="dark"] .student-directory-table td,
+body[data-theme="dark"] .student-name,
+body[data-theme="dark"] .student-data-panel td strong {
+    color: #f1f1f1 !important;
 }
 
 .student-inline-summary {

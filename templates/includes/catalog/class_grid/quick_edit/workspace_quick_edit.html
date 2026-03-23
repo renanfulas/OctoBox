@@ -1,6 +1,3 @@
-<!--
-ARQUIVO: painel de edicao rapida da grade.
--->
 {% if page.data.selected_session and page.data.session_edit_form %}
 <section class="table-card class-session-edit-panel class-grid-workspace-panel" id="edicao-aula" data-panel-id="quick-edit-board" data-panel="class-grid-quick-edit" draggable="true">
     {% include "includes/ui/class_grid/class_grid_panel_head.html" with eyebrow="Edicao rapida da aula" title="Ajuste "|add:page.data.selected_session.title|add:" sem sair da agenda" pill_label="Ajuste rapido" pill_class="info" header_class="" handle_aria="Arrastar janela da edicao rapida" %}
@@ -15,3 +12,13 @@ ARQUIVO: painel de edicao rapida da grade.
     </form>
 </section>
 {% endif %}
+<!--
+ARQUIVO: workspace_quick_edit.html
+POR QUE ELE EXISTE:
+- Permite edição rápida de uma sessão da grade sem sair da agenda.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza o painel de edição rápida da grade, incluindo campos principais, observações e ações finais.
+PONTOS CRITICOS:
+- Depende de page.data.selected_session e page.data.session_edit_form.
+- Inclui subcomponentes para campos, notas e ações.
+-->
