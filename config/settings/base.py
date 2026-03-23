@@ -85,6 +85,14 @@ def build_database_config(default_sqlite_path):
     database_url = env_str('DATABASE_URL')
     if database_url:
         return dj_database_url.parse(database_url, conn_max_age=int(os.getenv('DB_CONN_MAX_AGE', '60')), ssl_require=env_bool('DB_SSL_REQUIRE', False))
+    
+    # Na Vercel, o único diretório com permissão de escrita é o /tmp/
+    if os.getenv('VERCEL'):
+        return {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': '/tmp/db.sqlite3',
+        }
+
     return {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': default_sqlite_path,
