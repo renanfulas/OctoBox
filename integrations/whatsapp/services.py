@@ -15,7 +15,8 @@ PONTOS CRITICOS:
 
 from communications.facade import run_register_inbound_whatsapp_message
 
-from .contracts import WhatsAppInboundMessage, WhatsAppWebhookProcessingResult
+from .contracts import WhatsAppInboundMessage, WhatsAppInboundPollVote, WhatsAppWebhookProcessingResult
+from .poll_processor import process_poll_vote_webhook as run_process_poll_vote_webhook
 
 
 def register_inbound_whatsapp_message(*, inbound_message: WhatsAppInboundMessage):
@@ -26,3 +27,11 @@ def register_inbound_whatsapp_message(*, inbound_message: WhatsAppInboundMessage
         contact_id=result.contact_id,
         message_log_id=result.message_log_id,
     )
+
+
+def process_poll_vote_webhook(*, poll_vote: WhatsAppInboundPollVote) -> WhatsAppWebhookProcessingResult:
+    """
+    Processa um voto de enquete do WhatsApp para registrar presenca.
+    """
+    # Encaminha para o processador dedicado
+    return run_process_poll_vote_webhook(poll_vote=poll_vote)
