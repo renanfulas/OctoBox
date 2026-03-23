@@ -135,6 +135,16 @@ if render_external_hostname:
     if render_origin not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append(render_origin)
 
+# Suporte automático para Vercel
+if os.getenv('VERCEL'):
+    if '.vercel.app' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append('.vercel.app')
+    vercel_url = env_str('VERCEL_URL')
+    if vercel_url:
+        vercel_origin = f'https://{vercel_url}'
+        if vercel_origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(vercel_origin)
+
 DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
