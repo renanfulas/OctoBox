@@ -41,8 +41,18 @@ POR QUE ELE EXISTE:
     if (!value) {
       return 0;
     }
-    var normalizedValue = String(value).replace(/\./g, '').replace(',', '.');
-    var parsedValue = Number(normalizedValue);
+    var strValue = String(value).trim();
+    // Se tem ponto e vírgula (ex: 1.250,50), remove os pontos e troca a vírgula por ponto
+    if (strValue.includes('.') && strValue.includes(',')) {
+      strValue = strValue.replace(/\./g, '').replace(',', '.');
+    }
+    // Se tem só vírgula (ex: 100,50), troca por ponto
+    else if (strValue.includes(',')) {
+      strValue = strValue.replace(',', '.');
+    }
+    // Se tem só ponto (ex: 100.50), já está no padrão do JavaScript! Não removemos o ponto.
+    
+    var parsedValue = Number(strValue);
     return Number.isFinite(parsedValue) ? parsedValue : 0;
   }
 
