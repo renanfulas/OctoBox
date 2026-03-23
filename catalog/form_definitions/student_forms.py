@@ -135,7 +135,7 @@ class StudentQuickForm(forms.ModelForm):
             'notes',
         ]
         widgets = {
-            'birth_date': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+            'birth_date': forms.DateInput(attrs={'type': 'text'}, format='%d/%m/%Y'),
             'notes': forms.Textarea(attrs={'rows': 4}),
         }
 
@@ -145,9 +145,13 @@ class StudentQuickForm(forms.ModelForm):
         self.fields['phone'].label = 'WhatsApp'
         self.fields['phone'].help_text = 'Use o numero principal de contato do aluno.'
         self.fields['status'].label = 'Status inicial'
+        self.fields['status'].choices = [
+            choice for choice in StudentStatus.choices 
+            if choice[0] in (StudentStatus.LEAD, StudentStatus.ACTIVE)
+        ]
         self.fields['email'].label = 'E-mail'
         self.fields['gender'].label = 'Genero'
-        self.fields['birth_date'].label = 'Nascimento'
+        self.fields['birth_date'].label = 'Nascimento (dd/mm/aaaa)'
         self.fields['health_issue_status'].label = 'Algum problema de saude?'
         self.fields['cpf'].label = 'CPF do aluno'
         self.fields['notes'].label = 'Descreva o problema, se houver'
@@ -170,7 +174,7 @@ class StudentQuickForm(forms.ModelForm):
         apply_text_input_attrs(self.fields['full_name'], placeholder='Ex.: Mariana Souza', maxlength=150, autocomplete='name')
         apply_phone_input_attrs(self.fields['phone'], placeholder='Ex.: 5511999999999')
         apply_text_input_attrs(self.fields['email'], placeholder='Opcional neste momento', maxlength=254, autocomplete='email')
-        apply_date_input_attrs(self.fields['birth_date'], placeholder='dd/mm/aaaa')
+        apply_date_input_attrs(self.fields['birth_date'], placeholder='dd/mm/aaaa', maxlength=10, pattern=r'\d{2}/\d{2}/\d{4}')
         apply_cpf_input_attrs(self.fields['cpf'], placeholder='Ex.: 123.456.789-00')
         apply_text_input_attrs(self.fields['notes'], placeholder='Descreva o problema de saude ou deixe em branco.')
         apply_text_input_attrs(self.fields['payment_reference'], placeholder='Ex.: PIX-MAR-2026', maxlength=100)
@@ -214,14 +218,35 @@ class StudentQuickForm(forms.ModelForm):
             self.fields['intake_record'].initial = linked_intake
 
     def clean_phone(self):
-        return normalize_phone_number(self.cleaned_data.get('phone'))
+        phone = normalize_phone_number(self.cleaned_data.get('phone'))
+        if not phone:
+            return ''
+        student_id = self.instance.pk if self.instance else None
+        if Student.objects.filter(phone=phone).exclude(pk=student_id).exists():
+            raise forms.ValidationError('Já existe um aluno cadastrado com este WhatsApp.')
+        return phone
 
     def clean_cpf(self):
         raw_cpf = ''.join(character for character in (self.cleaned_data.get('cpf') or '') if character.isdigit())
         if not raw_cpf:
             return ''
-        if len(raw_cpf) != 11:
+        
+        # 1. Validar CPF Dígito Verificador
+        if len(raw_cpf) != 11 or raw_cpf == raw_cpf[0]*11:
             raise forms.ValidationError('Informe um CPF valido com 11 digitos.')
+        
+        # Algoritmo de validação de CPF
+        for i in range(9, 11):
+            val = sum(int(raw_cpf[num]) * ((i+1) - num) for num in range(0, i))
+            digit = ((val * 10) % 11) % 10
+            if digit != int(raw_cpf[i]):
+                raise forms.ValidationError('CPF inválido (Dígito verificador incorreto).')
+
+        # 2. Validar Duplicidade
+        student_id = self.instance.pk if self.instance else None
+        if Student.objects.filter(cpf=f'{raw_cpf[:3]}.{raw_cpf[3:6]}.{raw_cpf[6:9]}-{raw_cpf[9:]}').exclude(pk=student_id).exists() or Student.objects.filter(cpf=raw_cpf).exclude(pk=student_id).exists():
+            raise forms.ValidationError('Já existe um aluno cadastrado com este CPF.')
+
         return f'{raw_cpf[:3]}.{raw_cpf[3:6]}.{raw_cpf[6:9]}-{raw_cpf[9:]}'
 
     def clean(self):
@@ -251,7 +276,7 @@ class StudentQuickForm(forms.ModelForm):
 class PaymentManagementForm(forms.Form):
     payment_id = forms.IntegerField(widget=forms.HiddenInput)
     amount = forms.DecimalField(decimal_places=2, max_digits=10, min_value=0, label='Valor da cobranca')
-    due_date = forms.DateField(label='Vencimento', input_formats=['%d/%m/%Y', '%Y-%m-%d'], widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'))
+    due_date = forms.DateField(label='Vencimento', input_formats=['%d/%m/%Y', '%Y-%m-%d'], widget=forms.DateInput(attrs={'type': 'text'}, format='%d/%m/%Y'))
     method = forms.ChoiceField(choices=PaymentMethod.choices, label='Metodo')
     reference = forms.CharField(required=False, label='Referencia')
     notes = forms.CharField(required=False, label='Observacoes', widget=forms.Textarea(attrs={'rows': 3}))
@@ -265,7 +290,7 @@ class PaymentManagementForm(forms.Form):
             kwargs['data'] = self._normalize_bound_data(kwargs['data'])
         super().__init__(*args, **kwargs)
         apply_currency_input_attrs(self.fields['amount'], placeholder='Ex.: 289.90')
-        apply_date_input_attrs(self.fields['due_date'], placeholder='dd/mm/aaaa')
+        apply_date_input_attrs(self.fields['due_date'], placeholder='dd/mm/aaaa', maxlength=10, pattern=r'\d{2}/\d{2}/\d{4}')
         apply_text_input_attrs(self.fields['reference'], placeholder='Ex.: PIX-MAR-2026', maxlength=100)
         apply_text_input_attrs(self.fields['notes'], placeholder='Observacao curta para a cobranca.')
 
@@ -302,14 +327,14 @@ class ReceptionPaymentManagementForm(forms.Form):
 
     payment_id = forms.IntegerField(widget=forms.HiddenInput)
     action = forms.ChoiceField(choices=ACTION_CHOICES)
-    due_date = forms.DateField(label='Vencimento', input_formats=['%d/%m/%Y', '%Y-%m-%d'], widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'))
+    due_date = forms.DateField(label='Vencimento', input_formats=['%d/%m/%Y', '%Y-%m-%d'], widget=forms.DateInput(attrs={'type': 'text'}, format='%d/%m/%Y'))
     method = forms.ChoiceField(choices=PaymentMethod.choices, label='Metodo')
     reference = forms.CharField(required=False, label='Referencia')
     notes = forms.CharField(required=False, label='Observacoes')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        apply_date_input_attrs(self.fields['due_date'], placeholder='dd/mm/aaaa')
+        apply_date_input_attrs(self.fields['due_date'], placeholder='dd/mm/aaaa', maxlength=10, pattern=r'\d{2}/\d{2}/\d{4}')
         apply_text_input_attrs(self.fields['reference'], placeholder='Ex.: PIX-MAR-2026', maxlength=100)
         apply_text_input_attrs(self.fields['notes'], placeholder='Observacao curta para a cobranca.', maxlength=255)
 

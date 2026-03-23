@@ -2,7 +2,7 @@
 ARQUIVO: gestao formal da matricula do aluno.
 -->
 {% if page.data.enrollment_management_form %}
-<article class="card student-financial-action-card" id="student-enrollment-management" style="border-top: 4px solid #ca8a04; background-color: var(--surface-000);">
+<div class="student-financial-action-inner" id="student-enrollment-management">
     <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-100);">
         <h3 class="section-title-sm" style="color: #ca8a04; display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
@@ -25,9 +25,9 @@ ARQUIVO: gestao formal da matricula do aluno.
         </div>
         {% include "includes/catalog/student_form/financial/financial_overview_enrollment_actions.html" %}
     </form>
-</article>
+</div>
 {% else %}
-<article class="card student-financial-action-card" id="student-enrollment-management" style="border-top: 4px solid #ca8a04; background-color: var(--surface-000);">
+<div class="student-financial-action-inner" id="student-enrollment-management">
     <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-100);">
         <h3 class="section-title-sm" style="color: #ca8a04; display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
@@ -38,5 +38,5 @@ ARQUIVO: gestao formal da matricula do aluno.
     <div style="display: flex; align-items: center; justify-content: center; min-height: 100px;">
         <p class="meta-text" style="color: var(--text-500); text-align: center;">O atleta não possui plano ativo para manutenção.</p>
     </div>
-</article>
+</div>
 {% endif %}

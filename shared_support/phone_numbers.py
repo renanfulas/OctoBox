@@ -15,6 +15,9 @@ PONTOS CRITICOS:
 
 def normalize_phone_number(raw_value):
     digits = ''.join(character for character in str(raw_value or '') if character.isdigit())
+    # Se começa com 55 e tem tamanho de número completo com DDI (mais de 11 dígitos)
+    if digits.startswith('55') and len(digits) > 11:
+        return digits[2:]
     return digits
 
 

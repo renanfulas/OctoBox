@@ -2,7 +2,7 @@
 ARQUIVO: gestao da cobranca atual do aluno.
 -->
 {% if page.data.payment_management_form %}
-<article class="card student-payment-management-card" id="student-payment-management" style="border-top: 4px solid #16a34a; background-color: var(--surface-000);">
+<div class="student-payment-management-inner" id="student-payment-management">
     <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-100);">
         <h3 class="section-title-sm" style="color: #16a34a; display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
@@ -40,5 +40,5 @@ ARQUIVO: gestao da cobranca atual do aluno.
             {% include "includes/catalog/student_form/payments/payment_management_secondary_actions.html" with page=page %}
         </div>
     </form>
-</article>
+</div>
 {% endif %}
