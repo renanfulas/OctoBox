@@ -43,3 +43,12 @@ class WhatsAppWebhookProcessingResult:
     reason: str = ''
     contact_id: int | None = None
     message_log_id: int | None = None
+
+
+@dataclass(slots=True)
+class WhatsAppInboundPollVote:
+    phone: str           # +55119...
+    poll_title: str      # ex: "Check in - 23.MAR"
+    option_voted: str    # ex: "18h" ou "19h"
+    external_id: str = '' # id do voto ou da mensagem
+    raw_payload: dict[str, Any] = field(default_factory=dict)
