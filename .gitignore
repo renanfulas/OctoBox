@@ -10,6 +10,7 @@
 ##
 ## PONTOS CRITICOS:
 ## - Se uma regra sensivel sair daqui, arquivos locais podem vazar para o repositorio.
+## 
 
 # Ambientes virtuais
 .venv/
@@ -63,3 +64,27 @@ tmp-*-cookies.txt
 
 # Manifestos reservados para marcos futuros
 docs/*-manifesto.local.md
+
+# --- Limpeza Local (Artefatos de Scrapes/Dumps) ---
+.agents/
+.coverage
+.coverage.*
+playwright_capture/
+*.csv
+*headers*.txt
+*status*.txt
+*authed.html
+response_*.html
+debug_*.html
+all_git_files.txt
+coverage_report.txt
+csrf_token.txt
+largest_elements*.json
+lcp*.json
+link_check_results.json
+link_fix_suggestions.json
+login_response.html
+playwright_debug.log
+static_css_check.css
+response_home.html
+127.0.0.1

@@ -19,12 +19,16 @@ POR QUE ELE EXISTE:
 }
 
 .student-queue-panel .intake-grid {
-    gap: 8px;
+    gap: 12px;
 }
 
 .student-queue-panel .intake-card {
-    padding: 12px 14px;
-    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    gap: 14px;
+    background: rgba(255, 255, 255, 0.85);
 }
 
 .student-intake-card-body .card-content {
@@ -36,7 +40,9 @@ POR QUE ELE EXISTE:
 }
 
 .student-intake-card-footer {
-    padding-top: 0;
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+    margin-top: auto;
 }
 
 .student-queue-panel .intake-card .actions .button {

@@ -1,10 +1,43 @@
 <!--
 ARQUIVO: resumo financeiro da ficha do aluno.
 -->
+<style>
+.slide-over-panel {
+    position: fixed; top: 0; right: -500px; width: 480px; max-width: 90%; height: 100vh;
+    background: var(--surface-000); box-shadow: -5px 0 25px rgba(0,0,0,0.15); z-index: 9999;
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); overflow-y: auto; padding: 32px 24px;
+    border-left: 1px solid var(--border-100);
+}
+.slide-over-panel.is-active { right: 0 !important; }
+.slide-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(1px); z-index: 9998;
+    opacity: 0; visibility: hidden; transition: all 0.2s ease;
+}
+.slide-overlay.is-active { opacity: 1; visibility: visible; }
+.drawer-close-btn {
+    position: absolute; top: 20px; right: 20px; background: none; border: none;
+    cursor: pointer; color: var(--text-400); font-size: 20px; z-index: 10;
+}
+</style>
+
+<script>
+function openDrawer(id) {
+    document.getElementById('drawer-overlay').classList.add('is-active');
+    document.getElementById(id).classList.add('is-active');
+}
+function closeAllDrawers() {
+    document.getElementById('drawer-overlay').classList.remove('is-active');
+    document.querySelectorAll('.slide-over-panel').forEach(el => el.classList.remove('is-active'));
+}
+</script>
+
 <div class="stack-24 student-financial-cockpit" id="student-financial-overview" aria-label="Cockpit financeiro do aluno" data-slot="student-financial-overview" data-panel="student-financial-overview">
+    <div class="slide-overlay" id="drawer-overlay" onclick="closeAllDrawers()"></div>
+
     {% if page.data.financial_overview.has_student %}
     
-    <!-- 1. Cracha do Atleta (ID Header) -->
+    <!-- 1. Cracha do Atleta -->
     {% include "includes/catalog/student_form/financial/financial_overview_id_card.html" with page=page %}
 
     <!-- 2. Numeros Chave -->
@@ -12,16 +45,17 @@ ARQUIVO: resumo financeiro da ficha do aluno.
         {% include "includes/catalog/student_form/financial/financial_overview_status.html" with page=page %}
     </div>
 
-    <!-- 3. Ilhas de Acao Rapida -->
-    <div class="layout-grid align-start" style="grid-template-columns: minmax(auto, 1fr) minmax(auto, 1fr); gap: 24px;" data-panel="student-financial-actions">
-        <!-- Ilha 1: Faturar / Pagamentos (Verde) -->
-        <div class="student-financial-overview-action-slot" data-panel="student-financial-payment-management">
-            {% include "includes/catalog/student_form/financial/financial_overview_payment_management.html" with page=page %}
-        </div>
-        <!-- Ilha 2: Manutencao de Matricula (Alerta) -->
-        <div class="student-financial-overview-action-slot" data-panel="student-financial-enrollment-management">
-            {% include "includes/catalog/student_form/financial/financial_overview_enrollment_management.html" with page=page %}
-        </div>
+    <!-- 3. Ilhas de Acao Rapida (Deslizam da direita) -->
+    <!-- Ilha 1: Faturar / Pagamentos -->
+    <div class="slide-over-panel" id="financial-payment-management-slot">
+        <button class="drawer-close-btn" onclick="closeAllDrawers()">✕</button>
+        {% include "includes/catalog/student_form/financial/financial_overview_payment_management.html" with page=page %}
+    </div>
+    
+    <!-- Ilha 2: Manutencao de Matricula -->
+    <div class="slide-over-panel" id="financial-enrollment-management-slot">
+        <button class="drawer-close-btn" onclick="closeAllDrawers()">✕</button>
+        {% include "includes/catalog/student_form/financial/financial_overview_enrollment_management.html" with page=page %}
     </div>
 
     <!-- 4. Historico Completo -->
