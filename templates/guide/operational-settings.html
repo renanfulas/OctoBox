@@ -50,6 +50,30 @@ POR QUE ELE EXISTE:
             <a class="button secondary" href="{{ page.data.access_overview_href }}">Criar perfis de acesso</a>
         </div>
     </article>
+    <article class="table-card" id="operational-settings-import">
+        <p class="eyebrow">Importar Contatos</p>
+        <h3>Listas Externas</h3>
+        <p class="system-map-copy">Suba uma lista para rodar a higienização de telefone e criar leads automáticos (Leads) no OctoBOX.</p>
+        <form method="post" enctype="multipart/form-data" class="form-stack section-gap-top-sm" style="--form-gap: 12px;">
+            {% csrf_token %}
+            <label>
+                <span class="field-label">Origem da Lista</span>
+                <select name="source_platform" style="width: 100%;">
+                    <option value="whatsapp">Lista do WhatsApp (CSV)</option>
+                    <option value="tecnofit">Exportação Tecnofit (CSV)</option>
+                    <option value="nextfit">Exportação Nextfit (CSV)</option>
+                    <option value="ios_vcard">VCF - iPhone (.vcf)</option>
+                </select>
+            </label>
+            <label>
+                <span class="field-label">Arquivo de Contatos (.csv ou .vcf)</span>
+                <input type="file" name="contacts_file" accept=".csv, .vcf, .vcard, text/vcard" required style="border: 1px dashed var(--line); padding: 10px; border-radius: var(--radius-base); width: 100%; background: var(--canvas);">
+            </label>
+            <div class="actions actions-tight section-gap-top-xs">
+                <button class="button" type="submit" style="width: 100%; justify-content: center;">Iniciar Importação Inteligente</button>
+            </div>
+        </form>
+    </article>
 </section>
 {% endwith %}
 {% endblock %}

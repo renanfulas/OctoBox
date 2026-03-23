@@ -99,13 +99,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (hasFilter) {
             var filtersTrigger = document.querySelector('[data-action="open-tab-students-filters"]');
             if (filtersTrigger) {
-                // O usuario pediu que abra abaixo dele, entao podemos ou rolar a tela ou nao.
-                // Como ja houve recarregamento, focar com scroll e excelente de UX.
-                filtersTrigger.dataset.noScroll = "true"; // Sem scroll brusco inicial usando true se nao quiser o pulo automatico 
-                
-                // Mas vou permitir o display sem pulo ou com o pulo se eu remover isso. 
-                // Optar por revelar os filtros de forma limpa, ja que a pagina acabou de carregar.
+                filtersTrigger.dataset.noScroll = "true"; 
                 filtersTrigger.click();
+            }
+        } else if (params.has('page')) {
+            var directoryTrigger = document.querySelector('[data-action="open-tab-students-directory"]');
+            if (directoryTrigger) {
+                directoryTrigger.dataset.noScroll = "true"; 
+                directoryTrigger.click();
             }
         }
     }

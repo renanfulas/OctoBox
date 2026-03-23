@@ -1,9 +1,18 @@
+<!--
+ARQUIVO: layout_panel.html
+POR QUE ELE EXISTE:
+- Exibe o painel de layout de um bloco do dashboard.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza o painel com controles, corpo e template do bloco.
+PONTOS CRITICOS:
+- Depende do contexto do bloco e inclui subcomponentes.
+-->
 <div class="dashboard-layout-panel{% if block.is_collapsed %} is-collapsed{% endif %}{% if block.is_hidden %} is-hidden{% endif %}" data-panel-id="{{ block.id }}" data-dashboard-block-id="{{ block.id }}" data-dashboard-label="{{ block.label }}" data-dashboard-default-slot="{{ block.default_slot }}" data-dashboard-current-slot="{{ block.slot }}" data-dashboard-allowed-slots="{{ block.allowed_slots|join:',' }}" data-dashboard-collapsed="{% if block.is_collapsed %}true{% else %}false{% endif %}" data-dashboard-hidden="{% if block.is_hidden %}true{% else %}false{% endif %}" data-dashboard-removable="{% if block.removable %}true{% else %}false{% endif %}" draggable="true">
     {% if block.movable %}
     <div class="dashboard-layout-chrome" aria-label="Controles do bloco {{ block.label }}">
         <span class="dashboard-layout-badge">{{ block.label }}</span>
         <button class="button secondary dashboard-layout-handle" type="button" data-drag-handle aria-label="Mover {{ block.label }}">Mover</button>
-        {% include "dashboard/includes/layout_actions.html" with block=block %}
+        {% include "dashboard/includes/layout/layout_actions.html" with block=block %}
     </div>
     {% endif %}
     <div class="dashboard-layout-body" data-dashboard-body>

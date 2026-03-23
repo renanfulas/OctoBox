@@ -1,5 +1,12 @@
 <!--
-ARQUIVO: painel da agenda de hoje.
+ARQUIVO: workspace_today.html
+POR QUE ELE EXISTE:
+- Exibe o painel da agenda de aulas do dia atual.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza a tabela de sessões do dia, incluindo cabeçalho, resumo e chamada de linhas.
+PONTOS CRITICOS:
+- Depende de page.data.today_schedule.
+- Inclui workspace_today_row.html para cada sessão.
 -->
 {% if page.data.today_schedule %}
 <section class="card glass-panel" id="today-board" data-panel="class-grid-today-board">

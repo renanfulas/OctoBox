@@ -1,1 +1,10 @@
+<!--
+ARQUIVO: hero.html
+POR QUE ELE EXISTE:
+- Exibe o bloco hero do dashboard, geralmente com informações de destaque.
+O QUE ESTE ARQUIVO FAZ:
+- Inclui o componente page_hero com dados do contexto.
+PONTOS CRITICOS:
+- Depende de page.data.hero.
+-->
 {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}

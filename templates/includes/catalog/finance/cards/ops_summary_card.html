@@ -1,3 +1,16 @@
+<!--
+ARQUIVO: card de resumo operacional do financeiro.
+
+POR QUE ELE EXISTE:
+- Mostra resumo de métricas operacionais em grid.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Exibe várias métricas via ops_metric_card.
+2. Usa operation_card_head para contexto.
+
+PONTOS CRITICOS:
+- Depende de operational_metrics e operation_card_head.
+-->
 <article class="table-card finance-glass-panel finance-support-card finance-support-rail-card finance-ops-summary-card">
     {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Regua operacional em numeros" title="Acao imediata" pill_label=page.data.operational_queue|length|add:": caso(s)" pill_class="accent" %}
     <div class="finance-ops-grid">

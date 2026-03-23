@@ -565,4 +565,33 @@ POR QUE ELE EXISTE:
     });
   }
 
+  /* ────────────────────────────────────────────────
+     Click em botões de foco operacional (Abrir Modais)
+     ──────────────────────────────────────────────── */
+  document.querySelectorAll('.class-grid-focus-actions a').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      var href = btn.getAttribute('href');
+
+      if (href === '#today-board') {
+        e.preventDefault();
+        var todayCard = document.querySelector('#weekly-board .weekly-day-card.is-today');
+        if (todayCard && typeof openWeeklyModal === 'function') {
+          openWeeklyModal('day', todayCard);
+        } else if (typeof openWeeklyModal === 'function') {
+          openWeeklyModal('full');
+        }
+      } else if (href === '#weekly-board') {
+        e.preventDefault();
+        if (typeof openWeeklyModal === 'function') {
+          openWeeklyModal('full');
+        }
+      } else if (href === '#monthly-board' || href === '#planner-board') {
+        e.preventDefault();
+        if (dialog && typeof dialog.showModal === 'function') {
+           dialog.showModal();
+        }
+      }
+    });
+  });
+
 }());

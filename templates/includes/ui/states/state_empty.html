@@ -1,3 +1,12 @@
+<!--
+ARQUIVO: state_empty.html
+POR QUE ELE EXISTE:
+- Exibe o estado vazio para listas, painéis ou cards.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza título, cópia, badge e dicas para estados sem conteúdo.
+PONTOS CRITICOS:
+- Depende dos parâmetros title, copy, badge, etc.
+-->
 <div class="state-empty{% if compact %} is-compact{% endif %}{% if class_name %} {{ class_name }}{% endif %}">
     <div class="state-empty-head">
         <div>

@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """
-Quick CSS linter: syntax sanity checks implemented in Python.
+ARQUIVO: linter rápido de CSS em Python.
 
-Checks performed (best-effort):
-- unbalanced braces `{` / `}`
-- unclosed block comments `/* ... */`
-- unbalanced parentheses `(` / `)` and brackets `[` / `]`
-- unbalanced quotes (single/double)
+POR QUE ELE EXISTE:
+- Permite checar rapidamente erros de sintaxe em CSS quando stylelint/npm não estão disponíveis.
 
-This is not a replacement for stylelint but helps catch common syntax mistakes
-that break builds when `npm`/`stylelint` aren't available.
+O QUE ESTE ARQUIVO FAZ:
+1. Procura por chaves, parênteses, colchetes e aspas desbalanceados.
+2. Detecta comentários de bloco não fechados.
+3. Ajuda a evitar que erros simples quebrem o build.
+
+PONTOS CRÍTICOS:
+- Não substitui o stylelint, serve apenas como verificação rápida.
+- Mudanças podem afetar a detecção de erros de sintaxe em pipelines sem npm.
 """
 from pathlib import Path
 import sys

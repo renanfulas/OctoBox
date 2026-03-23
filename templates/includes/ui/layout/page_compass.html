@@ -1,3 +1,12 @@
+<!--
+ARQUIVO: page_compass.html
+POR QUE ELE EXISTE:
+- Exibe o componente de contexto e atalhos da página.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza o título, contexto e atalhos operacionais da página.
+PONTOS CRITICOS:
+- Depende de shell_page_context e shell_action_buttons.
+-->
 <section class="page-compass" aria-label="Contexto da pagina" data-slot="page-compass" data-ui="page-compass">
     <div class="page-compass-context">
         <span class="compass-eyebrow-pill">{{ shell_page_context.eyebrow }}</span>

@@ -115,7 +115,7 @@ def _build_shell_page_context(current_path, role, navigation, alerts):
 def _build_navigation(role_slug, current_path=''):
     admin_home = admin_index_url()
     base_links = [
-        {'label': 'Dashboard', 'href': '/dashboard/', 'icon': 'DB'},
+        {'label': 'Dashboard', 'href': '/dashboard/', 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER), 'icon': 'DB'},
         {'label': 'Minha operação', 'href': '/operacao/', 'icon': 'OP'},
         {'label': 'Alunos', 'href': '/alunos/', 'icon': 'AL'},
         {'label': 'Financeiro', 'href': '/financeiro/', 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER), 'icon': 'FI'},

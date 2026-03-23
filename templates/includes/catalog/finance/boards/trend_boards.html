@@ -1,5 +1,18 @@
 <!--
 ARQUIVO: blocos de tendencia e churn do financeiro.
 -->
+<!--
+ARQUIVO: bloco de tendência e churn do financeiro.
+
+POR QUE ELE EXISTE:
+- Agrupa os painéis de receita e churn para visualização conjunta.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Inclui os painéis de receita e churn.
+2. Ajuda a comparar tendência de caixa e giro de base.
+
+PONTOS CRITICOS:
+- Depende dos includes de revenue_chart_board e churn_growth_board.
+-->
 {% include "includes/catalog/finance/boards/revenue_chart_board.html" with page=page %}
 {% include "includes/catalog/finance/boards/churn_growth_board.html" with page=page %}

@@ -1,3 +1,18 @@
+"""
+ARQUIVO: script de captura de LCP com Playwright.
+
+POR QUE ELE EXISTE:
+- Permite capturar e analisar o Largest Contentful Paint (LCP) de uma página local para análise de performance.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Inicia o navegador Chromium via Playwright.
+2. Injeta um PerformanceObserver para capturar eventos de LCP.
+3. Salva o trace e os dados de LCP em arquivos locais.
+
+PONTOS CRÍTICOS:
+- Mudanças podem afetar a precisão da medição de LCP.
+- Exige que o servidor local esteja rodando e acessível.
+"""
 from playwright.sync_api import sync_playwright
 import json
 

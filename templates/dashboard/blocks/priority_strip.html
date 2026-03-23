@@ -1,3 +1,12 @@
+<!--
+ARQUIVO: priority_strip.html
+POR QUE ELE EXISTE:
+- Exibe o bloco de prioridades rápidas do dashboard.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza cards de prioridade e alertas de pagamento.
+PONTOS CRITICOS:
+- Depende de page.data.dashboard_priority_cards e page.data.payment_alerts.
+-->
 <section class="layout-block dashboard-summary-zone" aria-label="Leitura rápida do box" data-dashboard-block="{{ block.id }}" data-dashboard-slot="{{ block.slot }}">
     <div class="dashboard-summary-shell">
         <div class="dashboard-summary-topline">

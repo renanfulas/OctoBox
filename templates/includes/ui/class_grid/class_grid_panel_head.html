@@ -1,9 +1,3 @@
-<!--
-ARQUIVO: cabecalho reutilizavel dos paineis da grade.
-
-POR QUE ELE EXISTE:
-- concentra o padrao visual de titulo, resumo, badges, acao opcional e alca de arraste.
--->
 <div class="class-grid-panel-head" data-slot="class-grid-panel-head">
     <div class="{{ header_class|default:'class-day-header class-grid-panel-title' }}" data-slot="class-grid-panel-title">
         <div>
@@ -22,9 +16,15 @@ POR QUE ELE EXISTE:
             {% if button_label %}
             <button class="{{ button_class|default:'button secondary' }}" type="button"{% if button_id %} id="{{ button_id }}"{% endif %} data-action="class-grid-panel-button">{{ button_label }}</button>
             {% endif %}
-            {% if handle_aria %}
-            <button class="class-grid-grab-handle" type="button" data-drag-handle data-action="drag-class-grid-panel" aria-label="{{ handle_aria }}">Mover painel</button>
-            {% endif %}
         </div>
     </div>
 </div>
+<!--
+ARQUIVO: class_grid_panel_head.html
+POR QUE ELE EXISTE:
+- Concentra o padrão visual de título, resumo, badges, ação opcional e alça de arraste dos painéis da grade.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza o cabeçalho dos painéis da grade, com opções de personalização.
+PONTOS CRITICOS:
+- Depende dos parâmetros de contexto (eyebrow, title, summary, etc).
+-->

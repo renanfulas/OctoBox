@@ -62,6 +62,11 @@ POR QUE ELE EXISTE:
     background: rgba(255, 255, 255, 0.84);
 }
 
+body[data-theme="dark"] .class-grid-focus-item {
+    background: var(--surface);
+    border-color: var(--line);
+}
+
 .class-grid-focus-copy {
     display: grid;
     gap: 4px;

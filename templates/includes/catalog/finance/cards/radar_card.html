@@ -1,3 +1,16 @@
+<!--
+ARQUIVO: card de radar de prioridade do financeiro.
+
+POR QUE ELE EXISTE:
+- Mostra prioridades práticas do recorte financeiro.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Exibe snapshot de prioridades via chips.
+2. Usa operation_card_head para contexto.
+
+PONTOS CRITICOS:
+- Depende de finance_right_rail_snapshot.
+-->
 <article class="table-card finance-glass-panel finance-support-card finance-support-card-tight finance-support-rail-card finance-radar-card">
     {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Radar do recorte" title="Onde concentrar energia agora" copy="Prioridade pratica do recorte atual." pill_label=page.data.finance_right_rail_priority_label pill_class=page.data.finance_right_rail_priority_badge %}
     <div class="finance-data-cluster finance-radar-cluster">

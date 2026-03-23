@@ -1,3 +1,17 @@
+"""
+ARQUIVO: script para identificar maiores elementos do dashboard autenticado.
+
+POR QUE ELE EXISTE:
+- Permite analisar o layout e performance do dashboard após login, identificando elementos que mais ocupam espaço.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Usa Playwright para acessar o dashboard autenticado.
+2. Injeta PerformanceObserver para capturar LCP.
+3. Salva os maiores elementos em JSON para análise.
+
+PONTOS CRÍTICOS:
+- Mudanças podem afetar a análise de performance e layout autenticado.
+"""
 from playwright.sync_api import sync_playwright
 import json
 

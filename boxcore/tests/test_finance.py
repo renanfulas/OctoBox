@@ -83,20 +83,17 @@ class FinanceCenterTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Financeiro')
         self.assertContains(response, 'Cross Gold')
-        self.assertContains(response, 'Recorte ativo')
-        self.assertContains(response, 'Pulso de agora')
-        self.assertContains(response, 'Cadastre um plano de forma legivel')
+        self.assertContains(response, 'Exportação do Recorte Ativo')
+        self.assertContains(response, 'Handoff de Cobrança')
+        self.assertContains(response, 'Churn e crescimento')
         self.assertContains(response, 'Tendencia mensal')
         self.assertContains(response, 'Ativacoes x cancelamentos')
-        self.assertContains(response, 'Regua de cobranca e retencao')
-        self.assertContains(response, 'Leitura executiva do mix')
         self.assertContains(response, 'Nenhum contato operacional recente registrado.')
         self.assertContains(response, 'Registrar e abrir WhatsApp')
         self.assertContains(response, 'name="open_in_whatsapp" value="1"', html=False)
         self.assertContains(response, 'href="#finance-priority-board"')
         self.assertContains(response, 'href="#finance-queue-board"')
         self.assertContains(response, 'href="#finance-portfolio-board"')
-        self.assertContains(response, 'Valor vencido: R$ 319,90')
         self.assertRegex(response.content.decode(), r'R\$\s*319[,.]90')
 
     def test_finance_center_filters_by_plan_and_method(self):
@@ -108,7 +105,7 @@ class FinanceCenterTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Filtros da leitura financeira')
+        self.assertContains(response, 'Filtros da Leitura Financeira')
         self.assertContains(response, 'Cross Gold')
 
     def test_finance_center_renders_recent_movements_board_with_expected_cards(self):

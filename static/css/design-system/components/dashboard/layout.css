@@ -134,6 +134,16 @@
     transform: rotate(1deg);
 }
 
+body[data-theme="dark"] .dashboard-layout-chrome {
+    background: var(--surface);
+    border-color: var(--line);
+}
+
+body[data-theme="dark"] .dashboard-layout-panel.is-collapsed {
+    background: var(--surface);
+    border-color: var(--line);
+}
+
 @media (max-width: 960px) {
     .dashboard-layout-toolbar {
         grid-template-columns: 1fr;

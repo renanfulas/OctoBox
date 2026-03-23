@@ -29,6 +29,10 @@ from students.domain import (
 )
 from students.infrastructure.django_audit import DjangoStudentActionAudit
 from students.infrastructure.django_clock import DjangoClockPort
+from students.infrastructure.django_enrollments import (
+    cancel_student_enrollment_command,
+    reactivate_student_enrollment_command,
+)
 from students.infrastructure.django_payments import execute_student_payment_regeneration_command
 from students.application.commands import StudentPaymentRegenerationCommand
 

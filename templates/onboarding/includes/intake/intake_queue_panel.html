@@ -4,11 +4,24 @@ ARQUIVO: fila principal da Central de Intake.
 POR QUE ELE EXISTE:
 - concentra a triagem operacional e o handoff de conversao em um bloco proprio.
 -->
+<!--
+ARQUIVO: fila principal da Central de Intake.
+
+POR QUE ELE EXISTE:
+- Concentra a triagem operacional e o handoff de conversão em um bloco próprio.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Exibe a fila de contatos aguardando atendimento.
+2. Mostra cards detalhados para cada intake.
+
+PONTOS CRITICOS:
+- Depende do contexto de queue_items.
+-->
 <section class="card glass-panel intake-data-panel" id="intake-queue-board" aria-label="Fila principal de intake" data-panel="intake-queue-board">
     <div class="card-head">
         <div class="card-head-main">
-            <h2 class="card-title">Triagem de Leads: Quem chegou no Box</h2>
-            <p class="card-copy">Contatos novos aguardando seu primeiro atendimento ou direcionamento.</p>
+            <h2 class="card-title">Novos Contatos: Quem quer treinar no Box</h2>
+            <p class="card-copy">Pessoas que procuraram o Box. Atenda e dê as boas-vindas para convertê-las em alunos!</p>
         </div>
     </div>
     <div class="intake-grid">
@@ -31,8 +44,8 @@ POR QUE ELE EXISTE:
                     </div>
                     <div class="card-content intake-card-content">
                         <div class="intake-meta-list">
-                            <p class="meta-text">Chegou em {{ intake.created_at|date:"d/m/Y H:i" }}.</p>
-                            <p class="meta-text">{% if intake.assigned_to %}Responsavel atual: {{ intake.assigned_to.get_full_name|default:intake.assigned_to.username }}.{% else %}Ainda sem responsavel definido.{% endif %}</p>
+                            <p class="meta-text">🕒 Chegou em {{ intake.created_at|date:"d/m/Y H:i" }}</p>
+                            <p class="meta-text">👥 {% if intake.assigned_to %}Por conta de: {{ intake.assigned_to.get_full_name|default:intake.assigned_to.username }}{% else %}Aguardando atendimento{% endif %}</p>
                             <p class="meta-text">{{ semantic.note }}</p>
                             <p class="meta-text">{{ conversion.reason }}</p>
                             {% if intake.notes %}<p class="meta-text">{{ intake.notes|truncatechars:180 }}</p>{% endif %}
@@ -47,12 +60,10 @@ POR QUE ELE EXISTE:
                         {% csrf_token %}
                         <input type="hidden" name="intake_id" value="{{ intake.id }}">
                         <input type="hidden" name="return_query" value="{{ request.GET.urlencode }}">
-                        {% if permissions.can_assign_to_me %}<button class="button secondary" type="submit" name="action" value="assign-to-me">Assumir</button>{% endif %}
-                        {% if permissions.can_start_review %}<button class="button secondary" type="submit" name="action" value="start-review">Iniciar triagem</button>{% endif %}
-                        {% if permissions.can_mark_matched %}<button class="button secondary" type="submit" name="action" value="mark-matched">Pronto para conversao</button>{% endif %}
-                        {% if permissions.can_clear_assignee %}<button class="button secondary" type="submit" name="action" value="clear-assignee">Limpar responsavel</button>{% endif %}
-                        {% if permissions.can_approve %}<button class="button secondary" type="submit" name="action" value="approve-intake">Aprovar</button>{% endif %}
-                        {% if permissions.can_reject %}<button class="button secondary" type="submit" name="action" value="reject-intake">Rejeitar</button>{% endif %}
+                        {% if permissions.can_assign_to_me and intake.assigned_to_id != user.id %}<button class="button secondary" type="submit" name="action" value="assign-to-me">Atender</button>{% endif %}
+                        {% if permissions.can_start_review %}<button class="button secondary" type="submit" name="action" value="start-review">Conversar</button>{% endif %}
+                        {% if permissions.can_mark_matched %}<button class="button secondary" type="submit" name="action" value="mark-matched">Aprovar Triage</button>{% endif %}
+                        {% if permissions.can_reject %}<button class="button secondary" type="submit" name="action" value="reject-intake">Recusar</button>{% endif %}
                     </form>
                     {% endif %}
                     {% if page.capabilities.can_manage_students and conversion.can_convert %}
@@ -60,7 +71,6 @@ POR QUE ELE EXISTE:
                     {% else %}
                     <span class="pill intake-conversion-pill">{{ conversion.action_label }}</span>
                     {% endif %}
-                    <a class="button secondary" href="/alunos/" data-action="open-students-directory-from-intake">Abrir base de alunos</a>
                 </div>
             </div>
         </div>

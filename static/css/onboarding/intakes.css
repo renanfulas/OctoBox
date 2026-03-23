@@ -61,6 +61,13 @@ POR QUE ELE EXISTE:
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
 }
 
+body[data-theme="dark"] .intake-mini-card,
+body[data-theme="dark"] .intake-rule-card {
+    background: var(--surface);
+    border-color: var(--line);
+    box-shadow: none;
+}
+
 .intake-metric-body,
 .intake-mini-card-body,
 .intake-rule-card-body,

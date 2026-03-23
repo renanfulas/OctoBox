@@ -1,3 +1,12 @@
+<!--
+ARQUIVO: hero_stat_panel.html
+POR QUE ELE EXISTE:
+- Exibe o painel hero de estatísticas operacionais.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza estatísticas, badges, cópia e ações do painel hero.
+PONTOS CRITICOS:
+- Depende do objeto 'panel' e seus atributos.
+-->
 <article class="operation-hero-panel{% if panel.card_class %} {{ panel.card_class }}{% endif %}">
     <div class="operation-hero-panel-head">
         <p class="eyebrow card-label">{{ panel.eyebrow }}</p>

@@ -75,11 +75,15 @@ PONTOS CRITICOS:
             <header class="topbar" data-slot="topbar" data-ui="topbar" style="cursor: pointer;" onclick="if(!event.target.closest('a, button, input, form, .topbar-profile')) window.scrollTo({top: 0, behavior: 'smooth'})">
                 <div class="topbar-left" data-slot="topbar-left">
                     <button class="sidebar-toggle" type="button" id="sidebar-toggle" data-ui="sidebar-toggle" aria-expanded="false" aria-controls="page-body">Menu</button>
+                    {% if current_role.slug != 'Coach' %}
                     {% include "includes/ui/layout/topbar/topbar_search.html" %}
+                    {% endif %}
                 </div>
                 <div class="topbar-right" data-slot="topbar-right">
+                    {% if current_role.slug != 'Coach' %}
                     {% include "includes/ui/layout/topbar/topbar_actions.html" %}
                     {% include "includes/ui/layout/topbar/topbar_alerts.html" %}
+                    {% endif %}
                     {% include "includes/ui/layout/topbar/topbar_theme_toggle.html" %}
                     {% include "includes/ui/layout/topbar/topbar_profile.html" %}
                 </div>

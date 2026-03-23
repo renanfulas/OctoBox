@@ -25,6 +25,7 @@ from shared_support.page_payloads import attach_page_payload
 from shared_support.operational_settings import set_operational_whatsapp_repeat_block_hours
 
 from .presentation import build_operational_settings_page, build_system_map_page
+from operations.services.contact_importer import import_contacts_from_stream
 
 
 class SystemMapView(LoginRequiredMixin, TemplateView):
@@ -40,12 +41,68 @@ class SystemMapView(LoginRequiredMixin, TemplateView):
         )
         return context
 
+import json
+from django.http import JsonResponse
+from django.views import View
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from operations.services.contact_importer import import_contacts_from_list
+
+@method_decorator(csrf_exempt, name='dispatch')
+class OperationalSettingsAutoImportApiView(LoginRequiredMixin, View):
+    """
+    Endpoint para ingestão de contatos via JSON (Automação WhatsApp).
+    """
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Não autenticado'}, status=401)
+            
+        try:
+            data = json.loads(request.body)
+            # Suporta {'contacts': [...]} ou [...] direto
+            contact_list = data.get('contacts', []) if isinstance(data, dict) else data
+            source = data.get('source_platform', 'whatsapp') if isinstance(data, dict) else 'whatsapp'
+            
+            if not isinstance(contact_list, list):
+                return JsonResponse({'error': 'Formato inválido. Esperava uma lista.'}, status=400)
+                
+            report = import_contacts_from_list(contact_list, source_platform=source, actor=request.user)
+            return JsonResponse(report)
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'JSON Inválido'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
 
 class OperationalSettingsView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
     allowed_roles = (ROLE_OWNER, ROLE_DEV)
     template_name = 'guide/operational-settings.html'
 
     def post(self, request, *args, **kwargs):
+        # 1. Importação de Contatos
+        if 'contacts_file' in request.FILES:
+            file_obj = request.FILES['contacts_file']
+            source = request.POST.get('source_platform', 'whatsapp')
+            report = import_contacts_from_stream(file_obj.file, source_platform=source, actor=request.user)
+            
+            if report['success'] > 0:
+                messages.success(request, f"{report['success']} contatos importados com sucesso.")
+            if report['duplicates'] > 0:
+                messages.warning(request, f"{report['duplicates']} contatos já existiam no banco e foram ignorados.")
+            if report['errors'] > 0:
+                error_list = report['details'][:3]
+                error_msg = f"Houve {report['errors']} erros de processamento: " + "; ".join(error_list)
+                if len(report['details']) > 3:
+                     error_msg += f" (...mais {len(report['details']) - 3} falhas)"
+                messages.error(request, error_msg)
+                
+            if report['success'] == 0 and report['duplicates'] == 0 and report['errors'] == 0:
+                messages.info(request, "Nenhum contato encontrado para processar no arquivo.")
+                
+            return redirect('operational-settings')
+
+        # 2. Bloqueio do WhatsApp (original)
         raw_value = request.POST.get('repeat_block_hours', '')
         try:
             set_operational_whatsapp_repeat_block_hours(hours=raw_value, actor=request.user)

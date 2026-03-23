@@ -1,3 +1,12 @@
+<!--
+ARQUIVO: state_notice.html
+POR QUE ELE EXISTE:
+- Exibe avisos, alertas e mensagens de status.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza título, cópia, badge e dicas para estados de aviso.
+PONTOS CRITICOS:
+- Depende dos parâmetros tone, title, copy, badge, etc.
+-->
 <div class="state-notice state-notice-{{ tone|default:'info' }}{% if compact %} is-compact{% endif %}{% if class_name %} {{ class_name }}{% endif %}" role="status">
     <div class="state-notice-head">
         <div>

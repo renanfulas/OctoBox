@@ -1,6 +1,19 @@
 <!--
 ARQUIVO: metricas da grade.
 -->
+<!--
+ARQUIVO: métricas da grade de aulas.
+
+POR QUE ELE EXISTE:
+- Exibe indicadores-chave da grade para leitura rápida.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Mostra métricas principais da grade.
+2. Usa operation-metric-grid para visualização.
+
+PONTOS CRITICOS:
+- Depende de class_metrics no contexto.
+-->
 <div class="owner-metrics-panel section-gap" data-panel="class-grid-metrics">
     <section class="panel-grid operation-metric-grid owner-metric-grid" aria-label="Metricas da grade">
         {% for label, item in page.data.class_metrics.items %}

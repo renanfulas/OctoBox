@@ -1,3 +1,17 @@
+"""
+ARQUIVO: login automatizado e captura de métricas com Playwright e requests.
+
+POR QUE ELE EXISTE:
+- Permite autenticar via requests, transferir sessão para o Playwright e capturar métricas do dashboard autenticado.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Realiza login via requests e obtém o token CSRF.
+2. Transfere o cookie de sessão para o navegador Playwright.
+3. Permite capturar traces e métricas autenticadas do dashboard.
+
+PONTOS CRITICOS:
+- Mudanças podem quebrar o fluxo de login automatizado ou a captura de métricas autenticadas.
+"""
 import requests
 import re
 from playwright.sync_api import sync_playwright

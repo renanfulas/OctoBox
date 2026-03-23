@@ -1,9 +1,3 @@
-<!--
-ARQUIVO: card reutilizavel de alerta financeiro.
-
-POR QUE ELE EXISTE:
-- concentra a apresentacao das cobrancas que pressionam a carteira.
--->
 <article class="finance-alert-card finance-alert-card-compact">
     <div class="card-body finance-alert-body">
         <div class="row-between history-header finance-action-head">
@@ -38,4 +32,13 @@ POR QUE ELE EXISTE:
             {% endif %}
         </div>
     </div>
+<!--
+ARQUIVO: finance_alert_item.html
+POR QUE ELE EXISTE:
+- Concentra a apresentação das cobranças que pressionam a carteira.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza o card de alerta financeiro, mostrando status, vencimento e ações.
+PONTOS CRITICOS:
+- Depende do objeto 'payment' e permissões de admin.
+-->
 </article>

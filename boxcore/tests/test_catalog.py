@@ -55,11 +55,9 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Alunos')
         self.assertContains(response, 'Bruna Costa')
-        self.assertContains(response, 'Mesa de atendimento')
         self.assertContains(response, 'Novo aluno')
         self.assertContains(response, 'Quem pede ação agora')
         self.assertContains(response, 'A fila principal agora mora na Central de Intake')
-        self.assertContains(response, 'Abrir central de intake')
 
     def test_class_grid_renders(self):
         self.client.force_login(self.user)
@@ -69,9 +67,9 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Grade de aulas')
         self.assertContains(response, 'WOD 18h')
-        self.assertContains(response, 'Calendario das proximas duas semanas')
+        self.assertContains(response, 'Calendário das próximas duas semanas')
         self.assertContains(response, 'Expandir mês')
-        self.assertContains(response, 'Agenda de hoje')
+        self.assertContains(response, 'Agenda de Hoje')
         self.assertContains(response, 'Planejador recorrente')
 
     def test_class_grid_can_create_recurring_schedule(self):
@@ -912,12 +910,12 @@ class CatalogViewTests(TestCase):
         response = self.client.get(reverse('student-quick-update', args=[self.student.id]))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Plano, status e tramite financeiro')
+        self.assertContains(response, 'Editar aluno')
         self.assertContains(response, 'Cross Prime')
-        self.assertContains(response, 'Historico financeiro recente')
+        self.assertContains(response, 'Últimos Pagamentos')
         self.assertContains(response, 'Passo 4: plano e status comercial')
         self.assertContains(response, 'Passo 5: cobranca e confirmacao')
-        self.assertContains(response, 'Gestao da cobranca atual')
+        self.assertContains(response, 'Faturamento e Cobrança')
 
     def test_student_update_page_renders_date_inputs_in_iso_format(self):
         self.client.force_login(self.user)

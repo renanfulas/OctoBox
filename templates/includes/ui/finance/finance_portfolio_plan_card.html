@@ -1,9 +1,3 @@
-<!--
-ARQUIVO: card reutilizavel de plano no portfolio financeiro.
-
-POR QUE ELE EXISTE:
-- concentra a leitura comercial de um plano dentro do portfolio.
--->
 <div class="plan-card finance-plan-card finance-plan-card-compact">
     <div class="card-body finance-plan-card-body">
         <div class="row-between-md finance-plan-head">
@@ -33,4 +27,13 @@ POR QUE ELE EXISTE:
             {% endif %}
         </div>
     </div>
+<!--
+ARQUIVO: finance_portfolio_plan_card.html
+POR QUE ELE EXISTE:
+- Concentra a leitura comercial de um plano dentro do portfólio financeiro.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza o card de um plano, mostrando nome, preço, status e estatísticas.
+PONTOS CRITICOS:
+- Depende do objeto 'plan' e permissões de admin.
+-->
 </div>

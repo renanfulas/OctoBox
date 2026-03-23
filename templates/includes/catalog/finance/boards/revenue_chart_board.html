@@ -1,3 +1,16 @@
+<!--
+ARQUIVO: painel de tendência de receita do financeiro.
+
+POR QUE ELE EXISTE:
+- Mostra a receita real recebida nos últimos 6 meses.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Exibe gráfico de barras de receita mensal.
+2. Ajuda a visualizar tendência de caixa.
+
+PONTOS CRITICOS:
+- Depende do contexto de monthly_comparison.
+-->
 <article class="table-card finance-glass-panel finance-board-trend" id="finance-trend-board">
     {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Tendencia mensal" title="Receita real recebida nos ultimos 6 meses" title_class="section-title-sm" copy="Mostra se o caixa realmente subiu." copy_class="body-copy text-muted section-gap-top-xs no-margin" %}
     <div class="chart-grid revenue-chart" style="--chart-columns: {{ page.data.monthly_comparison|length|default:1 }};">

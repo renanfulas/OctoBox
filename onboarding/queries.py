@@ -134,33 +134,33 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         'hero_stats': [
             {'label': 'Pendentes', 'value': pending_count},
             {'label': 'Na fila', 'value': len(queue)},
-            {'label': 'Atribuidos', 'value': assigned_count},
+            {'label': 'Atribuídos', 'value': assigned_count},
             {'label': 'Hoje', 'value': created_today},
         ],
         'source_breakdown': [
             {
                 'label': dict(IntakeSource.choices)[choice],
                 'value': source_counts.get(choice, 0),
-                'note': 'Mostra o peso real deste canal na fila atual.',
+                'note': 'Mostra quantos contatos vieram por aqui.',
             }
             for choice, _label in IntakeSource.choices
         ],
         'conversion_rules': [
             {
-                'title': 'Intake e entrada provisoria',
-                'copy': 'Aqui fica quem chegou ao sistema, mas ainda nao virou aluno definitivo nem deveria disputar espaco com a base principal.',
+                'title': '1. O que é um Contato?',
+                'copy': 'É quem procurou o Box, mas ainda não é aluno. Ele fica nesta lista para você atender sem misturar com quem já treina.',
             },
             {
-                'title': 'Aluno nasce na conversao',
-                'copy': 'A ficha do aluno abre quando a triagem estiver madura o suficiente para registrar pessoa, plano e cobranca sem retrabalho.',
+                'title': '2. Quando vira Aluno?',
+                'copy': 'Quando você conversa com a pessoa e ela decide entrar. Aí você clica em "Converter" e abre o cadastro oficial.',
             },
             {
-                'title': 'Operacao consome a fila, nao a possui',
-                'copy': 'Recepcao e gerencia continuam vendo recortes operacionais, mas a leitura canonica da fila mora nesta central.',
+                'title': '3. Como funciona a Fila?',
+                'copy': 'Os novos contatos chegam e ficam aguardando. Assim que você clica em "Atender", o contato fica sob seus cuidados.',
             },
             {
-                'title': 'Lead e leitura comercial, intake e registro operacional',
-                'copy': 'Lead aberto aqui virou uma leitura de temperatura comercial sobre o intake, nao o proprio registro tecnico de entrada.',
+                'title': '4. Organização do Atendimento',
+                'copy': 'Você atende, tira as dúvidas e faz a matrícula. Fica tudo num lugar só para garantir que ninguém saia sem resposta!',
             },
         ],
         'filter_form': filter_form,
