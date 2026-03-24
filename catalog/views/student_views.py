@@ -281,6 +281,9 @@ class StudentEnrollmentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
         enrollment = get_object_or_404(Enrollment, pk=form.cleaned_data['enrollment_id'], student=student)
+        if form.cleaned_data['action'] == 'cancel-enrollment' and enrollment.status != 'active':
+            messages.error(request, 'Esta matricula já se encontra inativa ou cancelada.')
+            return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
         handle_student_enrollment_action(
             actor=request.user,
             student=student,
