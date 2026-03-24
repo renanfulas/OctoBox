@@ -1,44 +1,162 @@
-<!--
-ARQUIVO: gestao da cobranca atual do aluno.
--->
+<!-- ARQUIVO: gestao da cobranca atual do aluno (DEDICADO STRIPE CHECKOUT). -->
 {% if page.data.payment_management_form %}
-<div class="student-payment-management-inner" id="student-payment-management">
-    <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-100);">
-        <h3 class="section-title-sm" style="color: #16a34a; display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-            Faturamento e Cobrança
-        </h3>
-        <p class="meta-text" style="color: var(--text-500);">Preencha os dados abaixo para faturar a cobrança.</p>
+<div class="stripe-checkout-drawer" style="display: flex; flex-direction: column; gap: 16px; font-family: system-ui, -apple-system, sans-serif; text-align: left;">
+
+    <!-- 1. Header: Identificação Rápida -->
+    <div style="display: flex; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb;">
+        <!-- Avatar fallback -->
+        <div style="width: 44px; height: 44px; border-radius: 50%; background: #e0e7ff; color: #4338ca; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">
+            {{ page.data.student_object.full_name|slice:":1"|upper }}
+        </div>
+        <div>
+            <h4 style="margin: 0; font-size: 0.95rem; color: #111827; font-weight: 600;">{{ page.data.student_object.full_name }}</h4>
+            <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                {% if page.data.financial_overview.latest_enrollment %}
+                <span style="display: inline-block; padding: 1px 4px; border-radius: 4px; font-size: 9px; font-weight: 700; background: #d1fae5; color: #065f46;">
+                    {{ page.data.financial_overview.latest_enrollment.get_status_display }}
+                </span>
+                <span style="color: #6b7280; font-size: 0.7rem;">| {{ page.data.financial_overview.latest_enrollment.plan.name }}</span>
+                {% else %}
+                <span style="display: inline-block; padding: 1px 4px; border-radius: 4px; font-size: 9px; font-weight: 700; background: #f3f4f6; color: #374151;">Sem Matrícula</span>
+                {% endif %}
+            </div>
+        </div>
     </div>
-    <form method="post" action="/alunos/{{ page.data.student_object.id }}/financeiro/acao/" class="form-stack student-payment-management-form">
+
+    <!-- 2. Form -->
+    <form method="post" id="stripe-payment-form" action="/alunos/{{ page.data.student_object.id }}/financeiro/acao/" class="form-stack" style="display: flex; flex-direction: column; gap: 16px;">
         {% csrf_token %}
         {{ page.data.payment_management_form.payment_id }}
-        <div class="field-grid-220">
-            <label>
-                <span class="field-label">Valor da cobrança</span>
-                {{ page.data.payment_management_form.amount }}
-            </label>
-            <label>
-                <span class="field-label">Vencimento</span>
-                {{ page.data.payment_management_form.due_date }}
-            </label>
-            <label>
-                <span class="field-label">Método</span>
-                {{ page.data.payment_management_form.method }}
-            </label>
-            <label>
-                <span class="field-label">Referência</span>
-                {{ page.data.payment_management_form.reference }}
-            </label>
+
+        <!-- Campos Obrigatórios mas Ocultos (Metodo) -->
+        <div style="display: none;">
+            {{ page.data.payment_management_form.method }}
         </div>
-        <label>
-            <span class="field-label">Observação curta para a cobrança</span>
-            {{ page.data.payment_management_form.notes }}
-        </label>
-        <div class="student-payment-management-actions">
-            {% include "includes/catalog/student_form/payments/payment_management_primary_actions.html" %}
-            {% include "includes/catalog/student_form/payments/payment_management_secondary_actions.html" with page=page %}
+
+        <!-- 3. Resumo da Cobrança (BIG TOTAL EDITAVEL) -->
+        <div style="text-align: center; background: #f9fafb; padding: 16px; border-radius: 12px; border: 1px solid #f3f4f6;">
+            <p style="font-size: 0.75rem; color: #6b7280; margin-bottom: 6px; font-weight: 500;">Valor Total a Cobrar (R$)</p>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                <span style="font-size: 1.5rem; font-weight: 600; color: #374151;">R$</span>
+                <div style="max-width: 140px;">
+                    <!-- Input do Django editavel inline -->
+                    {{ page.data.payment_management_form.amount }}
+                </div>
+            </div>
         </div>
+
+        <!-- 4. Resumo Detalhado do Pedido (Itemized Summary) -->
+        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <p style="font-size: 0.7rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">Detalhes do Faturamento</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                    <span style="color: #6b7280;">Item:</span>
+                    <span style="font-weight: 600; color: #111827;">{{ page.data.payment_management_form.instance.enrollment.plan.name|default:"Faturamento Avulso" }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                    <span style="color: #6b7280;">Parcela:</span>
+                    <span style="font-weight: 600; color: #111827;">{{ page.data.payment_management_form.instance.installment_number|default:"1" }} de {{ page.data.payment_management_form.instance.installment_total|default:"1" }}</span>
+                </div>
+                
+                <div style="border-top: 1px dashed #e5e7eb; margin: 2px 0;"></div>
+                
+                <!-- Vencimento Input Inline -->
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                    <span style="color: #6b7280; font-weight: 500;">Vencimento:</span>
+                    <div style="max-width: 130px;">
+                        {{ page.data.payment_management_form.due_date }}
+                    </div>
+                </div>
+
+                <!-- Referência Input Inline -->
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin-top: 2px;">
+                    <span style="color: #6b7280; font-weight: 500;">Referência:</span>
+                    <div style="max-width: 130px;">
+                        {{ page.data.payment_management_form.reference }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Obs curta -->
+        <div>
+             <span style="display:block; font-size: 0.75rem; font-weight: 600; color: #374151; margin-bottom: 4px;">Observação</span>
+             {{ page.data.payment_management_form.notes }}
+        </div>
+
+        <!-- 6. Botões de Ação Rápida -->
+        <div>
+            <p style="font-size: 0.8rem; font-weight: 700; color: #111827; margin-bottom: 8px;">Pagar com 1-Clique:</p>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                <button type="button" class="stripe-btn" style="background: #ffffff; border: 1px solid #e5e7eb; padding: 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 0.8rem; color: #111827;" onclick="submitStripeForm('credit_card', this)">
+                    <span>💳</span><span>Cartão</span>
+                </button>
+                <button type="button" class="stripe-btn" style="background: #ffffff; border: 1px solid #e5e7eb; padding: 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 0.8rem; color: #111827;" onclick="submitStripeForm('pix', this)">
+                    <span>📱</span><span>Pix</span>
+                </button>
+                <button type="button" class="stripe-btn" style="background: #ffffff; border: 1px solid #e5e7eb; padding: 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 0.8rem; color: #111827;" onclick="submitStripeForm('cash', this)">
+                    <span>💵</span><span>Dinheiro</span>
+                </button>
+                <button type="button" class="stripe-btn" style="background: #ffffff; border: 1px solid #e5e7eb; padding: 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 0.8rem; color: #111827;" onclick="submitStripeForm('debit_card', this)">
+                    <span>🏦</span><span>Débito</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="stripe-status-message" style="display: none; text-align: center; padding: 10px; background: #fef3c7; color: #d97706; border-radius: 8px; font-size: 0.8rem; font-weight: 600;"></div>
+
     </form>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Estiliza o valor como um input grande e limpo do Stripe
+        var amountInput = document.querySelector('#stripe-payment-form [name="amount"]');
+        if (amountInput) {
+            amountInput.style.cssText = 'font-size: 2rem; font-weight: 800; border: none; background: none; text-align: center; color: #111827; padding: 0; outline: none; width: 100%; box-shadow: none;';
+            amountInput.placeholder = '0.00';
+            
+            // Foca o input para facilitar a edição rápida
+            setTimeout(() => amountInput.focus(), 300);
+        }
+
+        // Estiliza campos secundarios inline para encaixarem na tabela
+        var inlineInputs = document.querySelectorAll('#stripe-payment-form [name="due_date"], #stripe-payment-form [name="reference"]');
+        inlineInputs.forEach(input => {
+            input.style.cssText = 'font-size: 0.78rem; font-weight: 600; border: 1px solid transparent; background: #f9fafb; text-align: right; color: #111827; padding: 4px; border-radius: 4px; width: 100%; outline: none; transition: border-color 0.1s;';
+            input.addEventListener('focus', () => input.style.borderColor = '#4338ca');
+            input.addEventListener('blur', () => input.style.borderColor = 'transparent');
+        });
+    });
+
+    function submitStripeForm(val, btn) {
+        var form = document.getElementById('stripe-payment-form');
+        var methodField = document.querySelector('#stripe-payment-form [name="method"]');
+        var statusMsg = document.getElementById('stripe-status-message');
+
+        if (methodField) { methodField.value = val; }
+
+        document.querySelectorAll('.stripe-btn').forEach(b => {
+             b.style.opacity = '0.4'; b.style.pointerEvents = 'none';
+        });
+        btn.style.opacity = '1'; btn.style.borderColor = '#4338ca'; btn.style.background = '#f5f3ff';
+
+        statusMsg.style.display = 'block';
+        statusMsg.textContent = '⏳ Processando ' + btn.textContent.trim() + '...';
+
+        var actionInput = document.createElement('input');
+        actionInput.type = 'hidden'; actionInput.name = 'action'; actionInput.value = 'mark-paid'; 
+        form.appendChild(actionInput);
+
+        form.submit();
+    }
+    </script>
+
+    <style>
+    .stripe-btn { transition: all 0.15s ease-in-out; }
+    .stripe-btn:hover { background: #f9fafb !important; border-color: #d1d5db !important; transform: translateY(-1px); }
+    .stripe-btn:active { transform: translateY(0); }
+    </style>
+
 </div>
 {% endif %}

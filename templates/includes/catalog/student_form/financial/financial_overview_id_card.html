@@ -1,28 +1,51 @@
-<!--
-ARQUIVO: Cracha de Identificacao rapida na aba financeira.
--->
-<article class="card glass-panel section-gap-top-xs student-id-cockpit-card" style="border-left: 4px solid var(--primary);">
-    <div class="card-head-stacked" style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin: 0; padding-bottom: 0; border: none;">
-        <div style="flex: 1; min-width: 200px; text-align: left;">
-            <p class="eyebrow" style="color: var(--text-500)">Atleta no balcão</p>
-            <h2 class="section-title" style="margin-bottom: 4px;">{{ page.data.student_object.full_name }}</h2>
-            <p class="meta-text" style="font-size: var(--text-md); font-weight: 500; color: var(--text-800);">
-                WhatsApp: {{ page.data.student_object.phone|default:"Nao informado" }} 
-                {% if page.data.student_object.cpf %}<span style="color: var(--text-400); margin: 0 8px;">|</span> CPF: {{ page.data.student_object.cpf }}{% endif %}
+<!-- ARQUIVO: Ficha de Assinatura/Contrato acoplada na aba financeira. -->
+<article class="card glass-panel section-gap-top-xs student-id-cockpit-card" style="border-left: 4px solid var(--primary); padding: 18px; margin-bottom: 20px; background: var(--surface-000);">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        
+        <!-- Bloco 1: Identificação Aluno -->
+        <div style="flex: 1; min-width: 220px; text-align: left;">
+            <p style="font-size: 0.73rem; font-weight: 700; color: var(--text-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Atleta no balcão</p>
+            <h2 class="section-title" style="margin-bottom: 4px; font-size: 1.35rem; color: var(--text-800);">{{ page.data.student_object.full_name }}</h2>
+            <p style="font-size: 0.82rem; font-weight: 500; color: var(--text-600); display: flex; align-items: center; gap: 8px;">
+                <span>📱 {{ page.data.student_object.phone|default:"Sem telefone" }}</span>
+                {% if page.data.student_object.cpf %}<span>| 🪪 CPF: {{ page.data.student_object.cpf }}</span>{% endif %}
             </p>
         </div>
-        <div style="text-align: right;">
+
+        <!-- Bloco 2: Detalhes da Assinatura (Casado) -->
+        <div style="flex: 1.2; min-width: 260px; background: rgba(22, 163, 74, 0.03); padding: 14px; border-radius: 10px; border: 1px solid rgba(22, 163, 74, 0.08);">
             {% if page.data.financial_overview.latest_enrollment %}
-            <p class="eyebrow" style="color: var(--text-500)">Plano Vigente</p>
-            <h3 class="section-title-sm" style="color: var(--primary-600); margin-bottom: 4px;">{{ page.data.financial_overview.latest_enrollment.plan.name }}</h3>
-            <span class="status-badge status-{{ page.data.financial_overview.latest_enrollment.status }}" style="display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; text-transform: uppercase;">
-                {{ page.data.financial_overview.latest_enrollment.get_status_display }}
-            </span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                <div>
+                    <p style="font-size: 0.68rem; font-weight: 700; color: var(--text-400); text-transform: uppercase;">Plano Contratado</p>
+                    <h3 style="margin: 1px 0 0; font-size: 1rem; color: #166534; font-weight: 800;">{{ page.data.financial_overview.latest_enrollment.plan.name }}</h3>
+                </div>
+                <!-- Status Badge -->
+                <span style="display: inline-block; padding: 3px 6px; border-radius: 4px; font-weight: 800; font-size: 9px; text-transform: uppercase; background: {% if page.data.financial_overview.latest_enrollment.status == 'active' %}#d1fae5; color: #065f46;{% else %}#fee2e2; color: #991b1b;{% endif %}">
+                    {{ page.data.financial_overview.latest_enrollment.get_status_display }}
+                </span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px dashed #e5e7eb; padding-top: 10px; margin-bottom: 10px;">
+                <div>
+                    <p style="font-size: 0.65rem; color: var(--text-500); margin-bottom: 1px;">Adquiriu em</p>
+                    <p style="font-size: 0.8rem; font-weight: 700; color: var(--text-800);">{{ page.data.financial_overview.latest_enrollment.start_date|date:"d/m/Y" }}</p>
+                </div>
+                <div>
+                    <p style="font-size: 0.65rem; color: var(--text-500); margin-bottom: 1px;">Vigência / Renovação</p>
+                    <p style="font-size: 0.8rem; font-weight: 700; color: #166534;">
+                        {{ page.data.financial_overview.latest_enrollment.end_date|date:"d/m/Y"|default:"Recorrente" }}
+                    </p>
+                </div>
+            </div>
             {% else %}
-            <p class="eyebrow" style="color: var(--text-500)">Plano Vigente</p>
-            <h3 class="section-title-sm" style="color: var(--text-400);">Sem matrícula</h3>
+            <div style="text-align: center; padding: 10px 0;">
+                <p style="font-size: 0.78rem; color: var(--text-500); font-weight: 500;">O aluno não possui plano ativo vinculado.</p>
+            </div>
             {% endif %}
-            <button class="button secondary" style="margin-top: 12px; font-size: 0.82rem; padding: 6px 12px; display: block; width: 100%; text-align: center; border-radius: 6px; font-weight: 500;" onclick="openDrawer('financial-enrollment-management-slot')">⚙️ Gerenciar Matrícula</button>
+            
+            <button class="button secondary" style="margin-top: 4px; font-size: 0.78rem; padding: 6px 12px; display: block; width: 100%; text-align: center; border-radius: 6px; font-weight: 600; background: #fff; border-color: #d1d5db;" onclick="openDrawer('financial-enrollment-management-slot')">⚙️ Manutenção de Matrícula</button>
         </div>
+
     </div>
 </article>
