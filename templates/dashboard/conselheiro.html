@@ -1,0 +1,26 @@
+{% extends "layouts/base.html" %}
+{% load dashboard_filters %}
+
+{% block content %}
+<div class="scene-stack dashboard-shell workspace-shell" data-page="advisor-dashboard" data-screen="advisor">
+    
+    <!-- Component 1: Narrative Engine -->
+    {% include "dashboard/blocks/advisor_narrative.html" %}
+
+    <section class="workspace-grid-layout" aria-label="Painel de Conselhos" style="margin-top: 48px;">
+        <div class="workspace-grid-main">
+            <!-- Component 2: Churn Radar & Operational Focus -->
+            {% include "dashboard/blocks/advisor_churn_radar.html" %}
+        </div>
+
+        <aside class="workspace-grid-side">
+            <!-- Component 3: Gamification Sprint -->
+            {% include "dashboard/blocks/advisor_sprint.html" %}
+        </aside>
+    </section>
+
+    <!-- Component 4: The Soul Module (Modal) -->
+    {% include "dashboard/blocks/advisor_manifesto_modal.html" %}
+
+</div>
+{% endblock %}

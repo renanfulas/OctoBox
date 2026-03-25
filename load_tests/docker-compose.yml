@@ -1,0 +1,41 @@
+version: '3.7'
+
+services:
+  influxdb:
+    image: influxdb:1.8
+    container_name: octobox_influxdb
+    ports:
+      - '8086:8086'
+    environment:
+      - INFLUXDB_DB=k6
+      - INFLUXDB_HTTP_AUTH_ENABLED=false
+    volumes:
+      - influxdb:/var/lib/influxdb
+
+  grafana:
+    image: grafana/grafana:9.0.0
+    container_name: octobox_grafana
+    depends_on:
+      - influxdb
+    ports:
+      - '3000:3000'
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+  k6:
+    image: loadimpact/k6
+    container_name: octobox_k6
+    volumes:
+      - ./:/scripts
+    working_dir: /scripts
+    entrypoint: ["/bin/sh","-c"]
+    command: "sleep infinity"
+
+volumes:
+  influxdb:
+  grafana-storage:

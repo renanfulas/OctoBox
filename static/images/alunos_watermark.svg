@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" fill="none">
+  <!-- ID Badge Left -->
+  <g transform="translate(480, 50)" opacity="0.08" fill="#ffffff">
+    <rect x="0" y="0" width="180" height="240" rx="16" stroke="#ffffff" stroke-width="12" fill="none"/>
+    <circle cx="90" cy="80" r="35" />
+    <path d="M30 200 C30 150 150 150 150 200" stroke="#ffffff" stroke-width="12" stroke-linecap="round"/>
+    <rect x="60" y="-15" width="60" height="30" rx="8" />
+  </g>
+
+  <!-- User Back Left -->
+  <g transform="translate(180, 110)" opacity="0.07" fill="#ffffff">
+    <circle cx="80" cy="50" r="45" />
+    <path d="M0 240 C0 150 160 150 160 240" />
+  </g>
+  
+  <!-- User Front Center -->
+  <g transform="translate(250, 60)" opacity="0.12" fill="#ffffff">
+    <circle cx="100" cy="70" r="60" />
+    <path d="M0 320 C0 190 200 190 200 320" />
+  </g>
+</svg>

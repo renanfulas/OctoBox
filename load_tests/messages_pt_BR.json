@@ -1,0 +1,33 @@
+{
+  "field_required": "Campo obrigatório — por favor preencha antes de continuar.",
+  "invalid_format": "Formato inválido. Use o formato: AAAA-MM-DD.",
+  "out_of_range": "Valor fora do permitido (min 1, max 999).",
+  "invalid_email": "E-mail inválido — verifique se não há espaços ou caracteres extras.",
+  "placeholder_brief": "Descreva brevemente o caso (máx. 280 caracteres).",
+  "helper_search_terms": "Use termos claros para facilitar buscas futuras. Ex.: ‘pagamento - atraso’.",
+  "advanced_tooltip": "Opção avançada — altere somente se souber o impacto.",
+  "saved_success": "Salvo com sucesso.",
+  "import_partial": "Import concluído — {imported} registros importados, {errors} com erro. [Ver relatório]",
+  "export_ready": "Export concluído — arquivo disponível para download.",
+  "generic_error": "Não foi possível completar a operação. Tente novamente. Se o problema persistir, contate o suporte.",
+  "field_error": "Falha ao salvar: verifique o campo '{field}' — formato inválido.",
+  "permission_error": "Ação não permitida: você não tem permissão para editar este item. Solicite acesso ao Owner.",
+  "webhook_fail": "Falha na entrega (Webhook): recebemos resposta {status}. Tentando nova tentativa em {delay}s.",
+  "bulk_confirm": "Você está prestes a aplicar esta ação em {count} itens. Deseja continuar?",
+  "bulk_partial": "Ação concluída com {success}/{total} êxitos. {failed} falharam — [Baixar relatório de falhas]",
+  "import_before": "Arraste ou selecione CSV. Recomendado: colunas A,B,C com cabeçalhos.",
+  "import_progress": "Importando — {lines} linhas ({pct}% concluído).",
+  "snapshot_create": "Criar snapshot agora — irá capturar o estado atual (inclui dados e configurações).",
+  "snapshot_in_progress": "Criando snapshot (fase {step}/3) — progresso: {pct}% — estimativa: ~{eta}min.",
+  "snapshot_restore_conflict": "Restore interrompido: diferença de schema detectada. Execute a migração recomendada antes de restaurar.",
+  "webhook_received": "Evento recebido — processamento em fila.",
+  "webhook_duplicate": "Evento duplicado ignorado (ID: {id}).",
+  "mobile_expand": "Toque para ver mais detalhes",
+  "quick_note": "+ Nota rápida",
+  "internal_error_trace": "Erro interno: {error} — Trace ID: {trace}. Contacte suporte com esse ID.",
+  "retry_exhausted": "Entrega falhou após {retries} tentativas. Verifique endpoint remoto e logs de integração.",
+  "generic_before_after": {
+    "before_something_wrong": "Algo deu errado.",
+    "after_something_wrong": "Não foi possível salvar. Verifique se todos os campos obrigatórios estão preenchidos e tente novamente."
+  }
+}

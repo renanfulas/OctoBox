@@ -1,0 +1,35 @@
+name: Load Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      host:
+        description: 'Host da aplicação (ex: http://127.0.0.1:8000)'
+        required: true
+        default: 'http://127.0.0.1:8000'
+      user:
+        description: 'Usuário de teste'
+        required: true
+        default: 'admin'
+      pass:
+        description: 'Senha de teste'
+        required: true
+        default: 'admin'
+
+jobs:
+  run-k6:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run k6 (docker)
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/scripts -e HOST=${{ github.event.inputs.host }} -e TEST_USER=${{ github.event.inputs.user }} -e TEST_PASS=${{ github.event.inputs.pass }} loadimpact/k6 run --summary-export=/scripts/load_tests/summary_k6.json /scripts/load_tests/k6_suite.js
+
+      - name: Upload k6 summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-summary
+          path: load_tests/summary_k6.json

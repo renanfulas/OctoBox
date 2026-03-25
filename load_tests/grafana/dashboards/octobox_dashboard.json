@@ -1,0 +1,28 @@
+{
+  "annotations": {"list": []},
+  "panels": [
+    {
+      "type": "graph",
+      "title": "HTTP Request Duration (p95)",
+      "targets": [{"expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "format": "time_series"}]
+    },
+    {
+      "type": "graph",
+      "title": "Error Rate",
+      "targets": [{"expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))", "format": "time_series"}]
+    },
+    {
+      "type": "graph",
+      "title": "Throughput (req/s)",
+      "targets": [{"expr": "sum(rate(http_requests_total[1m]))", "format": "time_series"}]
+    },
+    {
+      "type": "graph",
+      "title": "DB Connections",
+      "targets": [{"expr": "pg_stat_activity_count", "format": "time_series"}]
+    }
+  ],
+  "title": "OctoBOX - Load Test Overview",
+  "schemaVersion": 16,
+  "version": 1
+}

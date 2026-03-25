@@ -1,0 +1,24 @@
+<article class="dashboard-session-card dashboard-session-card--featured is-primary">
+    <div class="dashboard-session-feature-head">
+        <div>
+            <p class="dashboard-session-kicker">AULA VISIVEL</p>
+            <strong>{{ featured_session.title }}</strong>
+        </div>
+        <div class="dashboard-session-time">{{ featured_session.scheduled_at|date:"H:i" }}</div>
+    </div>
+    <div class="dashboard-session-feature-meta-row" style="gap: 1rem; align-items: center;">
+        <p class="text-muted text-truncate" style="max-width: 60%; font-size: 0.875rem;" title="{{ featured_session.notes }}">
+            {% if featured_session.notes %}{{ featured_session.notes|truncatechars:35 }}{% else %}Sem nota de operação{% endif %}
+        </p>
+        <p class="dashboard-session-window" style="margin-left: auto;">no balcão</p>
+    </div>
+    <p class="meta-text-sm" style="margin-top: 0.5rem; color: var(--text-muted);">Orientação rápida e marcação de presença.</p>
+    <div class="dashboard-session-progress" aria-hidden="true" style="margin-top: 0.75rem;">
+        <span class="dashboard-session-progress-fill bg-success" style="width: 50%"></span>
+    </div>
+    <div class="dashboard-session-meta dashboard-session-meta--inline">
+        <span class="pill outline">Em leitura</span>
+        <span class="pill ghost">{{ featured_session.attendances.all|length }} presenças</span>
+        <span class="dashboard-session-occupancy-label">neste turno</span>
+    </div>
+</article>
