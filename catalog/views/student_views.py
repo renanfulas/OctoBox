@@ -27,6 +27,7 @@ from finance.models import Enrollment, Payment
 from onboarding.models import StudentIntake
 from reporting.application.catalog_reports import build_student_directory_report
 from reporting.infrastructure import build_report_response
+from shared_support.security import check_export_quota
 from students.models import Student
 
 from .catalog_base_views import CatalogBaseView
@@ -263,6 +264,11 @@ class StudentDirectoryExportView(LoginRequiredMixin, RoleRequiredMixin, View):
     allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER)
 
     def get(self, request, report_format, *args, **kwargs):
+        allowed, count = check_export_quota(user_id=request.user.id, scope=f'student-directory-{report_format}')
+        if not allowed:
+            messages.warning(request, 'Cota de exportacao semanal atingida para este relatorio. O OctoBox limita exportacoes pesadas a 2 registros por semana para manter a performance do motor.')
+            return redirect('student-directory')
+
         students = build_student_directory_snapshot(request.GET)['students']
         try:
             return build_report_response(build_student_directory_report(students=students, report_format=report_format))

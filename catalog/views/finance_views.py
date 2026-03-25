@@ -29,6 +29,7 @@ from finance.models import MembershipPlan
 from reporting.application.catalog_reports import build_finance_report
 from reporting.infrastructure import build_report_response
 from shared_support.operational_settings import get_operational_whatsapp_repeat_block_hours
+from shared_support.security import check_export_quota
 
 from .catalog_base_views import CatalogBaseView
 
@@ -93,6 +94,11 @@ class FinanceReportExportView(LoginRequiredMixin, RoleRequiredMixin, View):
     allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER)
 
     def get(self, request, report_format, *args, **kwargs):
+        allowed, count = check_export_quota(user_id=request.user.id, scope=f'finance-report-{report_format}')
+        if not allowed:
+            messages.warning(request, 'Cota de exportacao semanal atingida para este relatorio financeiro. O OctoBox reserva o motor para operacoes criticas, limitando exportacoes pesadas a 2 por semana.')
+            return redirect('finance-center')
+
         snapshot = build_finance_snapshot(request.GET)
         try:
             return build_report_response(build_finance_report(snapshot=snapshot, report_format=report_format))

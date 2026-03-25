@@ -239,4 +239,26 @@ class RequestSecurityMiddleware:
         return None
 
 
-__all__ = ['RequestSecurityMiddleware']
+def check_export_quota(*, user_id: int, scope: str, limit: int = 2) -> tuple[bool, int]:
+    """
+    Verifica se o usuário pode realizar uma exportação no escopo (ex: 'annual').
+    Cota padrão: 2 exportações por janela de 7 dias (604800 segundos).
+    Retorna (permitido, contagem_atual).
+    """
+    cache_key = f'export_quota:{user_id}:{scope}'
+    current_count = cache.get(cache_key, 0)
+    window = 604800  # 7 dias
+
+    if current_count >= limit:
+        SECURITY_LOGGER.warning('export_quota_exceeded user_id=%s scope=%s count=%s', user_id, scope, current_count)
+        return False, int(current_count)
+
+    if current_count == 0:
+        cache.set(cache_key, 1, timeout=window)
+    else:
+        cache.incr(cache_key)
+
+    return True, int(current_count) + 1
+
+
+__all__ = ['RequestSecurityMiddleware', 'check_export_quota']
