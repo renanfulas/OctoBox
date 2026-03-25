@@ -11,9 +11,12 @@ POR QUE ELE EXISTE:
     </div>
     <form method="get" class="form-stack" data-action="filter-students">
         <div class="field-grid-200">
-            <label>
-                <span class="field-label">{{ page.data.student_filter_form.query.label }}</span>
-                {{ page.data.student_filter_form.query }}
+            <label class="search-field-wrapper" style="position: relative;">
+                <span class="field-label" style="font-weight: 700; color: var(--accent);">{{ page.data.student_filter_form.query.label }}</span>
+                <div class="neon-input-container">
+                    {{ page.data.student_filter_form.query }}
+                    <div class="search-glow"></div>
+                </div>
             </label>
             <label>
                 <span class="field-label">{{ page.data.student_filter_form.student_status.label }}</span>

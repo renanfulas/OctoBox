@@ -71,3 +71,52 @@ POR QUE ELE EXISTE:
     border-color: var(--line);
 }
 
+
+.neon-input-container {
+    position: relative;
+    border-radius: 12px;
+    background: rgba(var(--surface-rgb), 0.5);
+    border: 1px solid var(--line);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    width: 100%;
+}
+
+.neon-input-container:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.3), 0 0 40px rgba(var(--accent-rgb), 0.1);
+    transform: translateY(-1px);
+}
+
+.search-glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: 12px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    background: radial-gradient(circle at center, rgba(var(--accent-rgb), 0.15) 0%, transparent 70%);
+}
+
+.neon-input-container:focus-within .search-glow {
+    opacity: 1;
+}
+
+.neon-input-container input {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 12px 16px !important;
+    color: var(--foreground) !important;
+    width: 100%;
+    outline: none;
+    text-align: center;
+}
+
+.search-field-wrapper .field-label {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.75rem;
+    margin-bottom: 10px;
+    opacity: 0.8;
+}

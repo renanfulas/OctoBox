@@ -94,7 +94,8 @@ class WhatsAppMessageLog(TimeStampedModel):
         default=MessageKind.TEXT,
     )
     body = models.TextField(blank=True)
-    external_message_id = models.CharField(max_length=120, blank=True)
+    external_message_id = models.CharField(max_length=120, blank=True, db_index=True)
+    webhook_fingerprint = models.CharField(max_length=128, blank=True, db_index=True)
     delivered_at = models.DateTimeField(null=True, blank=True)
     raw_payload = models.JSONField(blank=True, default=dict)
 
@@ -106,6 +107,11 @@ class WhatsAppMessageLog(TimeStampedModel):
                 fields=['external_message_id'],
                 condition=~models.Q(external_message_id=''),
                 name='unique_non_blank_whatsapp_external_message_id',
+            ),
+            models.UniqueConstraint(
+                fields=['webhook_fingerprint'],
+                condition=~models.Q(webhook_fingerprint=''),
+                name='unique_non_blank_whatsapp_webhook_fingerprint',
             )
         ]
 

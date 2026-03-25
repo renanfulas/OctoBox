@@ -14,9 +14,11 @@ PONTOS CRITICOS:
 """
 
 from datetime import timedelta
+from django.conf import settings
 import calendar
 from datetime import date
 
+from django.core.cache import cache
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from access.roles import ROLE_RECEPTION
@@ -312,6 +314,20 @@ def _build_dashboard_glance_summary(*, metrics, role_slug, upcoming_sessions, pa
     }
 
 def build_dashboard_snapshot(*, today, month_start, role_slug=''):
+    """
+    Retorna um snapshot do dashboard com cache de curton prazo (60s por padrao).
+    O cache e particionado por role_slug, data e inicio do mes.
+    """
+    cache_key = f"dashboard_snapshot:{role_slug}:{today.isoformat()}:{month_start.isoformat()}"
+    ttl = getattr(settings, 'SHELL_COUNTS_CACHE_TTL_SECONDS', 60)
+
+    def _calculate():
+        return _build_dashboard_snapshot_raw(today=today, month_start=month_start, role_slug=role_slug)
+
+    return cache.get_or_set(cache_key, _calculate, timeout=ttl)
+
+
+def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
     previous_day = today - timedelta(days=1)
     previous_month_end = month_start - timedelta(days=1)
     previous_month_start = previous_month_end.replace(day=1)

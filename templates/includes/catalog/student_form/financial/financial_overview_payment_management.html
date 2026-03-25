@@ -89,16 +89,16 @@
         <div>
             <p style="font-size: 0.8rem; font-weight: 700; color: #111827; margin-bottom: 8px;">Pagar com 1-Clique:</p>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
-                <button type="button" class="stripe-btn" style="background: #ffffff; border: 1px solid #e5e7eb; padding: 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 0.8rem; color: #111827;" onclick="submitStripeForm('credit_card', this)">
+                <button type="button" class="stripe-btn stripe-btn-card" style="background: #ffffff; border: 1px solid #e5e7eb; padding: 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 0.8rem; color: #111827;" onclick="submitStripeForm('credit_card', this)">
                     <span>💳</span><span>Cartão</span>
                 </button>
-                <button type="button" class="stripe-btn" style="background: #ffffff; border: 1px solid #e5e7eb; padding: 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 0.8rem; color: #111827;" onclick="submitStripeForm('pix', this)">
+                <button type="button" class="stripe-btn stripe-btn-pix" style="background: #ffffff; border: 1px solid #e5e7eb; padding: 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 0.8rem; color: #111827;" onclick="submitStripeForm('pix', this)">
                     <span>📱</span><span>Pix</span>
                 </button>
-                <button type="button" class="stripe-btn" style="background: #ffffff; border: 1px solid #e5e7eb; padding: 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 0.8rem; color: #111827;" onclick="submitStripeForm('cash', this)">
+                <button type="button" class="stripe-btn stripe-btn-cash" style="background: #ffffff; border: 1px solid #e5e7eb; padding: 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 0.8rem; color: #111827;" onclick="submitStripeForm('cash', this)">
                     <span>💵</span><span>Dinheiro</span>
                 </button>
-                <button type="button" class="stripe-btn" style="background: #ffffff; border: 1px solid #e5e7eb; padding: 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 0.8rem; color: #111827;" onclick="submitStripeForm('debit_card', this)">
+                <button type="button" class="stripe-btn stripe-btn-debit" style="background: #ffffff; border: 1px solid #e5e7eb; padding: 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 0.8rem; color: #111827;" onclick="submitStripeForm('debit_card', this)">
                     <span>🏦</span><span>Débito</span>
                 </button>
             </div>
@@ -153,9 +153,18 @@
     </script>
 
     <style>
-    .stripe-btn { transition: all 0.15s ease-in-out; }
-    .stripe-btn:hover { background: #f9fafb !important; border-color: #d1d5db !important; transform: translateY(-1px); }
+    .stripe-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .stripe-btn:hover { background: #f9fafb !important; border-color: #d1d5db !important; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.08); }
     .stripe-btn:active { transform: translateY(0); }
+    
+    .stripe-btn-pix { background: #ecfdf5 !important; border-color: #10b981 !important; color: #064e3b !important; }
+    .stripe-btn-pix:hover { background: #d1fae5 !important; border-color: #059669 !important; }
+    
+    .stripe-btn-card { background: #eff6ff !important; border-color: #3b82f6 !important; color: #1e3a8a !important; }
+    .stripe-btn-card:hover { background: #dbeafe !important; border-color: #2563eb !important; }
+    
+    .stripe-btn-cash { background: #fffbeb !important; border-color: #f59e0b !important; color: #78350f !important; }
+    .stripe-btn-cash:hover { background: #fef3c7 !important; border-color: #d97706 !important; }
     </style>
 
 </div>

@@ -21,10 +21,9 @@ class StudentImporter:
             with open(file_path, encoding='utf-8-sig', newline='') as csv_file:
                 reader = csv.DictReader(csv_file, delimiter=delimiter)
                 
-                # Cache existing phones in a set for O(1) lookups
-                # For 1M+ records, this might be large (~30-50MB), which is acceptable.
-                # If memory is even tighter, we could use a Bloom Filter or batch-check.
-                existing_phones = set(Student.objects.values_list('phone', flat=True))
+                # Cache existing phones in a dict mapping phone -> id for O(1) lookups and bulk_update support.
+                # For 1M+ records, this set is ~40-60MB. We use .iterator() to keep memory lean during fetch.
+                existing_student_map = {p: i for p, i in Student.objects.values_list('phone', 'id').iterator()}
                 
                 to_create = []
                 to_update = []
@@ -48,13 +47,16 @@ class StudentImporter:
                         'notes': (row.get('notes') or '').strip(),
                     }
 
-                    if phone in existing_phones:
-                        s = Student(phone=phone, **student_data)
+                    if phone in existing_student_map:
+                        # CRITICAL FIX: Attach the ID so bulk_update works
+                        s = Student(id=existing_student_map[phone], phone=phone, **student_data)
                         to_update.append(s)
                     else:
                         s = Student(phone=phone, **student_data)
                         to_create.append(s)
-                        existing_phones.add(phone)
+                        # Avoid adding to existing_student_map here to prevent duplicates in the same batch
+                        # But we add it to a local 'currently_processing' if needed. 
+                        # However, Student model has unique phone constraint usually.
 
                     if len(to_create) >= self.batch_size:
                         Student.objects.bulk_create(to_create)
@@ -63,6 +65,7 @@ class StudentImporter:
 
                     if len(to_update) >= self.batch_size:
                         update_fields = ['full_name', 'email', 'gender', 'birth_date', 'health_issue_status', 'cpf', 'status', 'notes']
+                        # bulk_update now works because s.id is set
                         Student.objects.bulk_update(to_update, update_fields)
                         updated_count += len(to_update)
                         to_update = []

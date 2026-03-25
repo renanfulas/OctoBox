@@ -308,10 +308,10 @@ class PaymentManagementForm(forms.Form):
 
 class StudentPaymentActionForm(forms.Form):
     ACTION_CHOICES = (
-        ('update-payment', 'Salvar cobranca'),
-        ('mark-paid', 'Confirmar pagamento'),
-        ('refund-payment', 'Estornar pagamento'),
-        ('cancel-payment', 'Cancelar cobranca'),
+        ('update-payment', 'Salvar Ajustes (Vencimento/Valor)'),
+        ('mark-paid', 'Confirmar Recebimento (Pago)'),
+        ('refund-payment', 'Estornar Pagamento'),
+        ('cancel-payment', 'Cancelar Cobranca (Inativar)'),
         ('regenerate-payment', 'Regenerar cobranca'),
     )
 
@@ -321,8 +321,8 @@ class StudentPaymentActionForm(forms.Form):
 
 class ReceptionPaymentManagementForm(forms.Form):
     ACTION_CHOICES = (
-        ('update-payment', 'Salvar ajuste curto'),
-        ('mark-paid', 'Confirmar pagamento'),
+        ('update-payment', 'Salvar Ajuste Rápido'),
+        ('mark-paid', 'Confirmar Recebimento Agora'),
     )
 
     payment_id = forms.IntegerField(widget=forms.HiddenInput)

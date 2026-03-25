@@ -19,13 +19,27 @@ from django.utils import timezone
 from operations.model_definitions import Attendance, AttendanceStatus, ClassSession
 from students.model_definitions import Student
 
+from .models import WebhookEvent, WebhookDeliveryStatus
 from .contracts import WhatsAppInboundPollVote, WhatsAppWebhookProcessingResult
 
 
 def process_poll_vote_webhook(*, poll_vote: WhatsAppInboundPollVote) -> WhatsAppWebhookProcessingResult:
     """
     Processa um voto de enquete do WhatsApp para registrar presenca.
+    Deduplicacao baseada no event_id da Evolution API.
     """
+    # 0. Idempotencia (EPIC 8 / EPIC 12)
+    event_id = getattr(poll_vote, 'event_id', None)
+    if event_id:
+        webhook_event, created = WebhookEvent.objects.get_or_create(
+            event_id=event_id,
+            defaults={'provider': 'evolution', 'payload': {'poll_vote': str(poll_vote)}}
+        )
+        if not created and webhook_event.status == WebhookDeliveryStatus.PROCESSED:
+            return WhatsAppWebhookProcessingResult(accepted=True, reason="Ignore: Evento ja processado (Idempotencia)")
+    else:
+        webhook_event = None
+
     # 1. Buscar Aluno pelo Telefone
     clean_phone = ''.join(filter(str.isdigit, poll_vote.phone))
     student = (
@@ -70,4 +84,9 @@ def process_poll_vote_webhook(*, poll_vote: WhatsAppInboundPollVote) -> WhatsApp
     )
 
     reason = "Presenca criada via WhatsApp Poll" if created else "Presenca atualizada para Check-in via WhatsApp Poll"
+    
+    if webhook_event:
+        webhook_event.status = WebhookDeliveryStatus.PROCESSED
+        webhook_event.save(update_fields=['status'])
+
     return WhatsAppWebhookProcessingResult(accepted=True, reason=reason)

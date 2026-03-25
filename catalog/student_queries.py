@@ -52,18 +52,20 @@ def build_student_directory_snapshot(params=None):
 
 		if query:
 			normalized_query = query.lower()
-			students = students.filter(
-				Q(full_name__icontains=query)
-				| Q(phone__icontains=query)
-				| Q(cpf__icontains=query)
-				| Q(email__icontains=query)
-				| Q(enrollments__plan__name__icontains=query)
-				| Q(enrollments__id__iexact=query)
-				| Q(payments__id__iexact=query)
-				| Q(status__icontains=normalized_query)
-				| Q(enrollments__status__icontains=normalized_query)
-				| Q(payments__status__icontains=normalized_query)
-			).distinct()
+			clean_digits = ''.join(filter(str.isdigit, query))
+			
+			query_filter = Q(full_name__icontains=query) | Q(email__icontains=query)
+			
+			if clean_digits:
+				query_filter |= Q(phone__icontains=clean_digits)
+				query_filter |= Q(whatsapp__icontains=clean_digits)
+				query_filter |= Q(cpf__icontains=clean_digits)
+			
+			# Plan and status search
+			query_filter |= Q(enrollments__plan__name__icontains=query)
+			query_filter |= Q(status__icontains=normalized_query)
+			
+			students = students.filter(query_filter).distinct()
 		if student_status:
 			students = students.filter(status=student_status)
 		if commercial_status:

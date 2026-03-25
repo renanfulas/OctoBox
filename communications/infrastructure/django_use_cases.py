@@ -35,6 +35,7 @@ from communications.domain import (
 )
 from communications.infrastructure.django_inbound_idempotency import (
     build_duplicate_inbound_result,
+    calculate_webhook_fingerprint,
     create_inbound_message_with_idempotency,
     find_existing_inbound_message,
 )
@@ -92,7 +93,11 @@ class DjangoInboundWhatsAppMessagePort(InboundWhatsAppMessagePort):
         if not normalized_phone:
             return InboundWhatsAppMessageResult(accepted=False, reason='missing-phone')
 
-        existing_message = find_existing_inbound_message(external_message_id=command.external_message_id)
+        webhook_fingerprint = calculate_webhook_fingerprint(command.raw_payload or {})
+        existing_message = find_existing_inbound_message(
+            external_message_id=command.external_message_id,
+            webhook_fingerprint=webhook_fingerprint
+        )
         if existing_message is not None:
             return build_duplicate_inbound_result(existing_message)
 
@@ -136,12 +141,14 @@ class DjangoInboundWhatsAppMessagePort(InboundWhatsAppMessagePort):
 
         message_log, duplicate_result = create_inbound_message_with_idempotency(
             external_message_id=command.external_message_id,
+            webhook_fingerprint=webhook_fingerprint,
             create_message=lambda: WhatsAppMessageLog.objects.create(
                 contact=contact,
                 direction=MessageDirection.INBOUND,
                 kind=command.message_kind,
                 body=command.body,
                 external_message_id=command.external_message_id,
+                webhook_fingerprint=webhook_fingerprint,
                 raw_payload=sanitize_whatsapp_payload(command.raw_payload or {}),
             ),
         )

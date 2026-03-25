@@ -12,7 +12,8 @@ class WebhookEvent(TimeStampedModel):
     FIX 2: Webhook Idempotency & Backoff Engine.
     Prevents Evolution API (or any provider) from creating duplicate asynchronous queues.
     """
-    event_id = models.CharField(max_length=255, unique=True, db_index=True)
+    event_id = models.CharField(max_length=255, unique=True, db_index=True, null=True, blank=True)
+    webhook_fingerprint = models.CharField(max_length=64, unique=True, db_index=True, null=True, blank=True)
     provider = models.CharField(max_length=50)
     payload = models.JSONField()
     
@@ -27,7 +28,8 @@ class WebhookEvent(TimeStampedModel):
     class Meta:
         db_table = 'whatsapp_webhook_event'
         indexes = [
-            models.Index(fields=['status', 'next_retry_at'])
+            models.Index(fields=['status', 'next_retry_at']),
+            models.Index(fields=['webhook_fingerprint']),
         ]
 
     def increment_retry_with_backoff(self):
