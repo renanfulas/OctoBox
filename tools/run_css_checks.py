@@ -47,9 +47,10 @@ def main() -> int:
     if has_cmd('docker'):
         print('[run_css_checks] npm not found — docker detected, using node:lts container')
         mount = str(repo_root).replace('\\', '/')
+        # Use discrete command execution to avoid shell injection (Epic 8)
         docker_cmd = [
             'docker', 'run', '--rm', '-v', f"{mount}:/work", '-w', '/work',
-            'node:lts', 'bash', '-lc', 'npm ci --silent && npm run lint:css && npm run format:css'
+            'node:lts', 'bash', '-c', 'npm ci --silent && npm run lint:css && npm run format:css'
         ]
         return run(docker_cmd, repo_root)
 

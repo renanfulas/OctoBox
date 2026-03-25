@@ -14,6 +14,7 @@ PONTOS CRITICOS:
 """
 import requests
 import re
+import os
 from playwright.sync_api import sync_playwright
 import json
 
@@ -21,8 +22,8 @@ BASE = "http://127.0.0.1:8000"
 LOGIN = BASE + "/login/"
 DASH = BASE + "/dashboard/"
 
-USER = "renan"
-PASS = "abc"
+USER = os.getenv('OCTOBOX_TEST_USER', 'renan')
+PASS = os.getenv('OCTOBOX_TEST_PASS', 'abc')
 TRACE = "trace_dashboard_requests.zip"
 LCP = "lcp_dashboard_requests.json"
 OUT = "largest_elements_dashboard_requests.json"

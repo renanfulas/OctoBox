@@ -100,6 +100,12 @@ class WhatsAppPollWebhookView(View):
     """
 
     def post(self, request, *args, **kwargs):
+        # 🛡️ Token-based security for incoming webhooks (Epic 8)
+        provided_token = request.headers.get('X-OctoBox-Webhook-Token')
+        expected_token = os.getenv('WHATSAPP_WEBHOOK_SECRET')
+        if expected_token and provided_token != expected_token:
+            return JsonResponse({'accepted': False, 'reason': 'Unauthorized'}, status=401)
+
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
@@ -141,6 +147,9 @@ def init_system_view(request):
     """
     Endpoint seguro para rodar migrates e criar usuario admin na Vercel.
     """
+    if os.getenv('DJANGO_ENV') == 'production':
+        return JsonResponse({"status": "forbidden", "reason": "Init system disabled in production"}, status=403)
+
     secret = request.GET.get('secret')
     # Use uma chave padrao se nao houver no ambiente
     env_secret = os.getenv('INIT_SECRET', 'octobox-secret-123')
