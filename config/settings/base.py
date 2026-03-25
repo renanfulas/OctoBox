@@ -246,8 +246,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [path for path in [BASE_DIR / 'static'] if path.exists()]
-SHELL_COUNTS_CACHE_TTL_SECONDS = env_int('SHELL_COUNTS_CACHE_TTL_SECONDS', 60)
-STATIC_ASSET_SCAN_TTL_SECONDS = env_int('STATIC_ASSET_SCAN_TTL_SECONDS', 30)
+# 🚀 Cache Estratégico (Epic 8 Performance)
+# Aumentamos o TTL para 5 minutos (300s) para evitar recomputações frequentes de contagens pesadas no shell.
+SHELL_COUNTS_CACHE_TTL_SECONDS = env_int('SHELL_COUNTS_CACHE_TTL_SECONDS', 300)
+STATIC_ASSET_SCAN_TTL_SECONDS = env_int('STATIC_ASSET_SCAN_TTL_SECONDS', 300)
 STATIC_ASSET_VERSION = env_str('STATIC_ASSET_VERSION', env_str('RENDER_GIT_COMMIT', '1'))
 ADMIN_URL_PATH = f"{env_str('DJANGO_ADMIN_URL_PATH', 'painel-interno').strip('/')}/"
 LOGIN_RATE_LIMIT_WINDOW_SECONDS = env_int('LOGIN_RATE_LIMIT_WINDOW_SECONDS', 300)

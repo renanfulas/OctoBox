@@ -93,11 +93,26 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
     source_counts = dict(
         queue_queryset.values_list('source').annotate(total=Count('id'))
     )
-    pending_count = count_pending_intakes()
+    # 🚀 Agregacao atomica (Epic 8 Performance) - Consolida 4 contagens em 1 única query.
+    summary = StudentIntake.objects.aggregate(
+        pending_total=Count('id', filter=Q(status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING], linked_student__isnull=True)),
+        created_today=Count('id', filter=Q(created_at__date=today)),
+        # Usamos o queue_queryset original para as metricas da fila filtrada
+        matched_in_queue=Count('id', filter=Q(
+            id__in=queue_queryset.values('id'), 
+            status=IntakeStatus.MATCHED
+        )),
+        assigned_in_queue=Count('id', filter=Q(
+            id__in=queue_queryset.values('id'),
+            assigned_to__isnull=False
+        ))
+    )
+
+    pending_count = summary['pending_total']
+    matched_count = summary['matched_in_queue']
+    assigned_count = summary['assigned_in_queue']
+    created_today = summary['created_today']
     visible_queue_count = len(queue_items)
-    matched_count = queue_queryset.filter(status=IntakeStatus.MATCHED).count()
-    assigned_count = queue_queryset.exclude(assigned_to__isnull=True).count()
-    created_today = StudentIntake.objects.filter(created_at__date=today).count()
     first_intake = queue[0] if queue else None
 
     return {

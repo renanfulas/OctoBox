@@ -28,3 +28,10 @@ SECURE_HSTS_PRELOAD = False
 SECURE_REFERRER_POLICY = 'same-origin'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
+
+# 🚀 Ferramenta de Observabilidade (Epic 8 Performance)
+# Permite ver queries em tempo real e identificar gargalos no ambiente local.
+if env_bool('ENABLE_DEBUG_TOOLBAR', True):
+    INSTALLED_APPS += ['debug_toolbar']
+    MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware'] + MIDDLEWARE
+    INTERNAL_IPS = ['127.0.0.1']
