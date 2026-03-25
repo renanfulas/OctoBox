@@ -101,10 +101,11 @@ class WhatsAppPollWebhookView(View):
 
     def post(self, request, *args, **kwargs):
         # 🛡️ Token-based security for incoming webhooks (Epic 8)
+        # Falha fechada: Se o servidor não tiver o segredo configurado, negamos o acesso.
         provided_token = request.headers.get('X-OctoBox-Webhook-Token')
         expected_token = os.getenv('WHATSAPP_WEBHOOK_SECRET')
-        if expected_token and provided_token != expected_token:
-            return JsonResponse({'accepted': False, 'reason': 'Unauthorized'}, status=401)
+        if not expected_token or provided_token != expected_token:
+            return JsonResponse({'accepted': False, 'reason': 'Unauthorized Configuration or Token'}, status=401)
 
         try:
             data = json.loads(request.body)

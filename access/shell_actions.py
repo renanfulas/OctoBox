@@ -74,6 +74,7 @@ def _build_action(kind, default_label, default_target_label, source, *, scope='g
 
 def get_shell_counts(*, use_cache=True):
     """Retorna os counts globais para os pulse chips com cache curto para aliviar o shell."""
+    from django.db.models import Count, Q
     from django.utils import timezone
     from finance.models import Enrollment, EnrollmentStatus, Payment
     from operations.models import ClassSession
@@ -88,13 +89,21 @@ def get_shell_counts(*, use_cache=True):
 
     overdue_payments = get_overdue_payments_queryset(Payment.objects.all(), today=today)
 
+    # 🚀 Otimização de Performance (Epic 8)
+    # Combinamos contagens da mesma tabela em uma única query para reduzir a 
+    # rajada de acesso (Stampede) quando o cache expira.
+    student_summary = Student.objects.aggregate(
+        active=Count('id', filter=Q(status=StudentStatus.ACTIVE)),
+        lead=Count('id', filter=Q(status=StudentStatus.LEAD))
+    )
+
     counts = {
         'overdue_payments': overdue_payments.count(),
         'overdue_students': count_overdue_students(Payment.objects.all(), today=today),
         'pending_intakes': count_pending_intakes(),
-        'sessions_today': ClassSession.objects.filter(scheduled_at__date=timezone.localdate()).count(),
-        'active_students': Student.objects.filter(status=StudentStatus.ACTIVE).count(),
-        'lead_students': Student.objects.filter(status=StudentStatus.LEAD).count(),
+        'sessions_today': ClassSession.objects.filter(scheduled_at__date=today).count(),
+        'active_students': student_summary['active'],
+        'lead_students': student_summary['lead'],
         'active_enrollments': Enrollment.objects.filter(status=EnrollmentStatus.ACTIVE).count(),
     }
 

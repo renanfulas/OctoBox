@@ -32,6 +32,8 @@ WRITE_PATH_PREFIXES = (
     '/alunos/',
     '/financeiro/',
     '/grade-aulas/',
+    '/api/',     # Cobertura para Ingestão e Webhooks
+    '/guide/',   # Cobertura para Configurações Operacionais
 )
 EXPORT_PATH_RULES = (
     ('/alunos/exportar/', 'student-directory-export'),
