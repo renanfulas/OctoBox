@@ -99,7 +99,9 @@ def get_shell_counts(*, use_cache=True):
     }
 
     if use_cache:
-        cache.set(cache_key, counts, timeout=getattr(settings, 'SHELL_COUNTS_CACHE_TTL_SECONDS', 15))
+        # EPIC 9: Cache estendido para `SHELL_COUNTS_CACHE_TTL_SECONDS` (configuravel em settings)
+        ttl = getattr(settings, 'SHELL_COUNTS_CACHE_TTL_SECONDS', 60)
+        cache.set(cache_key, counts, timeout=ttl)
 
     return counts
 
