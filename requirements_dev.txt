@@ -1,0 +1,8 @@
+# OctoBox Dev Requirements (Epic 8 Performance & Security)
+pip-audit
+bandit
+safety
+detect-secrets
+pre-commit
+django-debug-toolbar
+k6
