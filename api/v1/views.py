@@ -150,12 +150,16 @@ def init_system_view(request):
     if os.getenv('DJANGO_ENV') == 'production':
         return JsonResponse({"status": "forbidden", "reason": "Init system disabled in production"}, status=403)
 
+    # 🚀 Segurança de Elite (Epic 8 Hardening)
+    # Exige que FEATURE_INIT_ENABLED seja 'true' explicitamente (Padrão: False/Bloqueado)
+    if os.getenv('FEATURE_INIT_ENABLED') != 'true':
+        return JsonResponse({"status": "forbidden", "reason": "Init system is strictly disabled by policy."}, status=403)
+
     secret = request.GET.get('secret')
-    # Use uma chave padrao se nao houver no ambiente
-    env_secret = os.getenv('INIT_SECRET', 'octobox-secret-123')
+    env_secret = os.getenv('INIT_SECRET')
     
-    if secret != env_secret:
-        return JsonResponse({"status": "forbidden", "reason": "Secret incorreto"}, status=403)
+    if not env_secret or secret != env_secret:
+        return JsonResponse({"status": "forbidden", "reason": "Secret incorreto ou não configurado no servidor."}, status=403)
 
     output = []
     try:

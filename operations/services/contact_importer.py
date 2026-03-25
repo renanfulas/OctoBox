@@ -48,7 +48,7 @@ def check_duplicate_lead(phone, email=None):
 def import_contacts_from_list(contact_list, source_platform='whatsapp', actor=None):
     """
     Importa contatos a partir de uma lista de dicionários (JSON ou processados).
-    Deduplica e higieniza no processo.
+    Deduplica e higieniza no processo usando Batch Processing (Epic 8 Performance).
     """
     report = {'success': 0, 'duplicates': 0, 'errors': 0, 'details': []}
     
@@ -60,6 +60,11 @@ def import_contacts_from_list(contact_list, source_platform='whatsapp', actor=No
     }
     db_source = source_map.get(source_platform, IntakeSource.IMPORT)
 
+    # 🚀 Otimização de Performance (Epic 8)
+    # 1. Pre-fetch de dados existentes para evitar N+1 queries no loop
+    existing_phones = set(StudentIntake.objects.values_list('phone', flat=True))
+    existing_emails = set(StudentIntake.objects.exclude(email='').values_list('email', flat=True))
+
     # Mapeamento Inteligente (Sinônimos Globais)
     SINONIMOS = {
         'name': ['Nome', 'Name', 'saved_name', 'public_name', 'Contato', 'First Name', 'Contact'],
@@ -67,7 +72,6 @@ def import_contacts_from_list(contact_list, source_platform='whatsapp', actor=No
         'email': ['Email', 'E-mail', 'Mail']
     }
 
-    # Estrutura padrão por plataforma (Mapeamento de preferência)
     header_maps = {
         'whatsapp': {'name': 'Nome', 'phone': 'Telefone', 'email': 'Email'},
         'tecnofit': {'name': 'Nome', 'phone': 'Celular', 'email': 'E-mail'},
@@ -75,16 +79,16 @@ def import_contacts_from_list(contact_list, source_platform='whatsapp', actor=No
     }
     mapping = header_maps.get(source_platform, header_maps['whatsapp'])
 
-    # Concatena a preferência da plataforma com os sinônimos gerais
     search_name = [mapping['name']] + SINONIMOS['name']
     search_phone = [mapping['phone']] + SINONIMOS['phone']
     search_email = [mapping['email']] + SINONIMOS['email']
 
+    to_create = []
+    
     for row_idx, row in enumerate(contact_list, start=1):
         name = ""
         phone = ""
         try:
-            # Extração Fuzzy: pega o primeiro que der match e tiver conteúdo
             name = next((str(row[k]) for k in search_name if k in row and row[k]), "")
             phone = next((str(row[k]) for k in search_phone if k in row and row[k]), "")
             email = next((str(row[k]) for k in search_email if k in row and row[k]), "")
@@ -104,25 +108,38 @@ def import_contacts_from_list(contact_list, source_platform='whatsapp', actor=No
             if not name:
                 name = f"Contato Importado ({cleaned_phone[-4:]})"
 
-            if check_duplicate_lead(phone=cleaned_phone, email=email):
+            # Check duplicatas no SET em memória (O(1)) em vez do Banco (N queries)
+            if cleaned_phone in existing_phones or (email and email in existing_emails):
                 report['duplicates'] += 1
                 continue
 
-            with transaction.atomic():
-                StudentIntake.objects.create(
+            # Adiciona ao buffer para criação em lote
+            to_create.append(
+                StudentIntake(
                     full_name=name,
                     phone=cleaned_phone,
                     email=email,
                     source=db_source,
                     status=IntakeStatus.NEW,
                     assigned_to=actor,
-                    notes=f"Importado via {source_platform.upper()} de forma automatizada."
+                    notes=f"Importado via {source_platform.upper()} (Batch Process)."
                 )
-                report['success'] += 1
+            )
+            
+            # Marcamos como existente para evitar duplicatas dentro da própria lista de importação
+            existing_phones.add(cleaned_phone)
+            if email:
+                existing_emails.add(email)
 
         except Exception as e:
             report['errors'] += 1
             report['details'].append(f"Item {row_idx} ({name or 'Sem Nome'}): {str(e)}")
+
+    # 2. Bulk Create (Executa uma única query para o lote inteiro)
+    if to_create:
+        with transaction.atomic():
+            StudentIntake.objects.bulk_create(to_create, batch_size=500)
+            report['success'] = len(to_create)
 
     return report
 

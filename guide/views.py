@@ -14,6 +14,8 @@ PONTOS CRITICOS:
 - a estrutura exibida aqui deve acompanhar a organizacao real do projeto.
 """
 
+import json
+import os
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
@@ -41,21 +43,23 @@ class SystemMapView(LoginRequiredMixin, TemplateView):
         )
         return context
 
-import json
 from django.http import JsonResponse
 from django.views import View
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
 from operations.services.contact_importer import import_contacts_from_list
 
-@method_decorator(csrf_exempt, name='dispatch')
-class OperationalSettingsAutoImportApiView(LoginRequiredMixin, View):
+class OperationalSettingsAutoImportApiView(View):  # Removido LoginRequiredMixin por ser API Token
     """
     Endpoint para ingestão de contatos via JSON (Automação WhatsApp).
+    Usa OCTOBOX_INTERNAL_API_TOKEN para segurança em vez de sessão/CSRF.
     """
     def post(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return JsonResponse({'error': 'Não autenticado'}, status=401)
+        # 🚀 Segurança de Elite (Epic 8 Hardening)
+        # Em vez de depender de sessão (vulnerável a CSRF), usamos um Token Bearer fixo.
+        auth_header = request.headers.get('Authorization', '')
+        allowed_token = os.getenv('OCTOBOX_INTERNAL_API_TOKEN')
+
+        if not allowed_token or auth_header != f"Bearer {allowed_token}":
+            return JsonResponse({'error': 'Acesso negado. Token inválido ou ausente.'}, status=403)
             
         try:
             data = json.loads(request.body)
@@ -66,7 +70,11 @@ class OperationalSettingsAutoImportApiView(LoginRequiredMixin, View):
             if not isinstance(contact_list, list):
                 return JsonResponse({'error': 'Formato inválido. Esperava uma lista.'}, status=400)
                 
-            report = import_contacts_from_list(contact_list, source_platform=source, actor=request.user)
+            # Como a API agora é externa via Token, usamos o primeiro SuperUser ou None se não houver
+            from django.contrib.auth.models import User
+            actor = User.objects.filter(is_superuser=True).first()
+            
+            report = import_contacts_from_list(contact_list, source_platform=source, actor=actor)
             return JsonResponse(report)
             
         except json.JSONDecodeError:
