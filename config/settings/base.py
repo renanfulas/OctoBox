@@ -122,7 +122,11 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'role-operations'
 LOGOUT_REDIRECT_URL = 'login'
 
-SECRET_KEY = env_str('DJANGO_SECRET_KEY', 'dev-only-secret-key-change-me')
+# Mandatory SECRET_KEY check (Epic 8 Security Hardening)
+SECRET_KEY = env_str('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured('DJANGO_SECRET_KEY deve ser definida como variavel de ambiente.')
 
 ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS')
@@ -181,6 +185,7 @@ LOCAL_APPS = [
 INSTALLED_APPS = [*DJANGO_APPS, *LOCAL_APPS]
 
 MIDDLEWARE = [
+    'integrations.middleware.WebhookIdempotencyMiddleware',
     'monitoring.prometheus_middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -241,7 +246,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [path for path in [BASE_DIR / 'static'] if path.exists()]
-SHELL_COUNTS_CACHE_TTL_SECONDS = env_int('SHELL_COUNTS_CACHE_TTL_SECONDS', 15)
+SHELL_COUNTS_CACHE_TTL_SECONDS = env_int('SHELL_COUNTS_CACHE_TTL_SECONDS', 60)
 STATIC_ASSET_SCAN_TTL_SECONDS = env_int('STATIC_ASSET_SCAN_TTL_SECONDS', 30)
 STATIC_ASSET_VERSION = env_str('STATIC_ASSET_VERSION', env_str('RENDER_GIT_COMMIT', '1'))
 ADMIN_URL_PATH = f"{env_str('DJANGO_ADMIN_URL_PATH', 'painel-interno').strip('/')}/"
@@ -267,8 +272,8 @@ SECURITY_LOG_LEVEL = env_str('SECURITY_LOG_LEVEL', 'WARNING')
 
 # Forçar DEBUG para loggers de segurança (modo depuração solicitado).
 EFFECTIVE_SECURITY_LOG_LEVEL = 'DEBUG' if is_local_runtime_mode() else SECURITY_LOG_LEVEL
-DATA_UPLOAD_MAX_MEMORY_SIZE = env_int('DATA_UPLOAD_MAX_MEMORY_SIZE', 262144)
-FILE_UPLOAD_MAX_MEMORY_SIZE = env_int('FILE_UPLOAD_MAX_MEMORY_SIZE', 262144)
+DATA_UPLOAD_MAX_MEMORY_SIZE = env_int('DATA_UPLOAD_MAX_MEMORY_SIZE', 15728640)
+FILE_UPLOAD_MAX_MEMORY_SIZE = env_int('FILE_UPLOAD_MAX_MEMORY_SIZE', 15728640)
 DATA_UPLOAD_MAX_NUMBER_FIELDS = env_int('DATA_UPLOAD_MAX_NUMBER_FIELDS', 200)
 
 CACHES = {
