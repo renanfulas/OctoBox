@@ -181,6 +181,7 @@ LOCAL_APPS = [
 INSTALLED_APPS = [*DJANGO_APPS, *LOCAL_APPS]
 
 MIDDLEWARE = [
+    'monitoring.prometheus_middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

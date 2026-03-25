@@ -17,6 +17,7 @@ from django.conf import settings
 from django.urls import include, path
 
 from access.admin import install_admin_site_gate
+from monitoring.prometheus_middleware import metrics_view
 
 
 install_admin_site_gate()
@@ -29,5 +30,6 @@ urlpatterns = [
     path('', include('catalog.urls')),
     path('', include('guide.urls')),
     path('', include('operations.urls')),
+    path('metrics/', metrics_view),
     path(settings.ADMIN_URL_PATH, admin.site.urls),
 ]
