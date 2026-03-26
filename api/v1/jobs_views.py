@@ -2,11 +2,35 @@ import logging
 from django.http import JsonResponse
 from django.views import View
 from operations.tasks import run_csv_contact_import_job, run_csv_student_import_job
-from operations.models import AsyncJob
+from jobs.models import AsyncJob
 
 logger = logging.getLogger(__name__)
 
-from api.v1.views import RoleRequiredMixin, ROLE_OWNER, ROLE_MANAGER
+from access.permissions.mixins import RoleRequiredMixin
+from access.roles import ROLE_OWNER, ROLE_MANAGER
+
+class SecureExportDownloadView(RoleRequiredMixin, View):
+    """
+    Endpoint seguro para download de relatorios (Epic 8 Hardening).
+    Evita exposição de CSVs via MEDIA_URL público.
+    """
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
+
+    def get(self, request, filename, *args, **kwargs):
+        import os
+        from django.conf import settings
+        from django.http import FileResponse, Http404
+
+        # Prevenção contra Path Traversal
+        safe_filename = os.path.basename(filename)
+        file_path = os.path.join(settings.MEDIA_ROOT, 'exports', safe_filename)
+
+        if not os.path.exists(file_path):
+            raise Http404("Arquivo não encontrado ou expirado.")
+
+        response = FileResponse(open(file_path, 'rb'))
+        response['Content-Disposition'] = f'attachment; filename="{safe_filename}"'
+        return response
 
 class AsyncImportJobView(RoleRequiredMixin, View):
     """

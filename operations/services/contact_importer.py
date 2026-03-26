@@ -1,8 +1,14 @@
 import csv
 import io
 import re
+import os
 from django.db import transaction
 from onboarding.models import StudentIntake, IntakeSource, IntakeStatus
+from shared_support.validators import validate_file_security
+
+# 🚀 Segurança de Elite (Ghost Hardening): Resource Exhaustion Limit
+# Evita que arquivos gigantes (bombas de CSV) derrubem o servidor.
+MAX_IMPORT_FILE_SIZE = 50 * 1024 * 1024  # 50MB (Suficiente para ~500k contatos)
 
 def clean_phone_number(phone_str):
     """
@@ -33,6 +39,25 @@ def clean_phone_number(phone_str):
         
     return digits
 
+def sanitize_csv_formula(value):
+    """
+    Previne injeção de fórmulas em planilhas (Excel/Google Sheets).
+    Se o valor começar com caracteres que acionam fórmulas (=, +, -, @),
+    adiciona uma aspa simples (') no início para neutralizar.
+    """
+    if not value or not isinstance(value, str):
+        return value
+    
+    # Caracteres perigosos que acionam execução de fórmulas em planilhas
+    DANGEROUS_PREFIXES = ('=', '+', '-', '@', '\t', '\r')
+    
+    if value.startswith(DANGEROUS_PREFIXES):
+        # A aspa simples é o padrão da indústria para dizer ao Excel: 
+        # "Isso é apenas texto, não execute".
+        return f"'{value}"
+    
+    return value
+
 def check_duplicate_lead(phone, email=None):
     """
     Verifica se o contato já existe no StudentIntake para evitar spam.
@@ -60,10 +85,19 @@ def import_contacts_from_list(contact_list, source_platform='whatsapp', actor=No
     }
     db_source = source_map.get(source_platform, IntakeSource.IMPORT)
 
-    # 🚀 Otimização de Performance (Epic 8)
-    # 1. Pre-fetch de dados existentes para evitar N+1 queries no loop
-    existing_phones = set(StudentIntake.objects.values_list('phone', flat=True))
-    existing_emails = set(StudentIntake.objects.exclude(email='').values_list('email', flat=True))
+    # 🚀 Otimização Game Dev (Latency Zero): Memory Safety
+    # Em vez de carregar 1 milhão de telefones, buscamos apenas os que estão nesta lista.
+    all_phones_to_check = []
+    all_emails_to_check = []
+    for row in contact_list:
+        p = next((str(row[k]) for k in search_phone if k in row and row[k]), "")
+        e = next((str(row[k]) for k in search_email if k in row and row[k]), "")
+        cp = clean_phone_number(p)
+        if cp: all_phones_to_check.append(cp)
+        if e: all_emails_to_check.append(e.strip())
+
+    existing_phones = set(StudentIntake.objects.filter(phone__in=all_phones_to_check).values_list('phone', flat=True))
+    existing_emails = set(StudentIntake.objects.filter(email__in=all_emails_to_check).exclude(email='').values_list('email', flat=True))
 
     # Mapeamento Inteligente (Sinônimos Globais)
     SINONIMOS = {
@@ -95,6 +129,12 @@ def import_contacts_from_list(contact_list, source_platform='whatsapp', actor=No
 
             name = name.strip() if name else ""
             email = email.strip() if email else ""
+
+            # 🚀 Higienização contra Injeção de Fórmulas (Epic 8 Security)
+            # Protege o Owner quando ele exportar esses dados para o Excel futuramente.
+            name = sanitize_csv_formula(name)
+            email = sanitize_csv_formula(email)
+            
             cleaned_phone = clean_phone_number(phone)
 
             if not name and not cleaned_phone:
@@ -183,7 +223,27 @@ def import_contacts_from_stream(file_stream, source_platform='whatsapp', actor=N
     """
     Lê o stream de um arquivo CSV ou VCF e importa os contatos.
     """
+    # 🚀 Segurança de Elite (Fintech Hardening): MIME & Size Validation
+    # Proteção contra ataques de spoofing e exaustão de recursos.
+    if hasattr(file_stream, 'name'):
+        temp_path = file_stream.name
+        # CSV e VCard permitidos
+        allowed_mimes = ['text/csv', 'text/vcard', 'text/x-vcard', 'text/plain']
+        try:
+            validate_file_security(temp_path, max_size_mb=15, allowed_mimes=allowed_mimes)
+        except Exception as e:
+            return {'success': 0, 'duplicates': 0, 'errors': 1, 'details': [str(e)]}
+
     try:
+        # 🚀 Segurança de Elite (Ghost Hardening): Prevent Memory Exhaustion
+        file_stream.seek(0, os.SEEK_END)
+        total_size = file_stream.tell()
+        file_stream.seek(0)
+
+        if total_size > MAX_IMPORT_FILE_SIZE:
+             message = f"Arquivo muito grande ({total_size // (1024*1024)}MB). Limite de {MAX_IMPORT_FILE_SIZE // (1024*1024)}MB."
+             return {'success': 0, 'duplicates': 0, 'errors': 1, 'details': [message]}
+
         raw_bytes = file_stream.read()
         try:
             decoded_content = raw_bytes.decode('utf-8-sig')

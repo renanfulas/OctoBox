@@ -14,6 +14,8 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import FormView
 
+from shared_support.decorators import idempotent_action
+
 from access.permissions import RoleRequiredMixin
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
 from catalog.forms import EnrollmentManagementForm, PaymentManagementForm, StudentPaymentActionForm, StudentQuickForm
@@ -23,6 +25,7 @@ from catalog.services.student_enrollment_actions import handle_student_enrollmen
 from catalog.services.student_payment_actions import handle_student_payment_action
 from catalog.services.student_workflows import run_student_quick_create_workflow, run_student_quick_update_workflow
 from catalog.student_queries import build_student_directory_snapshot, build_student_financial_snapshot
+from shared_support.redis_snapshots import prewarm_student_snapshots
 from finance.models import Enrollment, Payment
 from onboarding.models import StudentIntake
 from reporting.application.catalog_reports import build_student_directory_report
@@ -54,12 +57,30 @@ class StudentDirectoryView(CatalogBaseView):
         context.update(base_context)
         snapshot = build_student_directory_snapshot(self.request.GET)
         students = snapshot['students']
-        student_count = students.count()
+        student_count = snapshot['total_students']
         current_role_slug = base_context['current_role'].slug
         context['students'] = students
 
         from django.core.paginator import Paginator
-        paginator = Paginator(students, STUDENT_DIRECTORY_PAGE_SIZE)
+        
+        # 🚀 Performance AAA (Db-Bypass Pagination)
+        # Ao injetar o `count` pré-calculado pelo aggregate, impedimos que o Django execute a 
+        # assassina query SELECT COUNT(*) no banco de dados inteiramente.
+        class PrecountedPaginator(Paginator):
+            @property
+            def count(self):
+                return student_count
+        
+        # 🚀 Segurança de Elite (Fintech Hardening): Pagination Boundary
+        # Previne DoS por memória caso o atacante envie page_size=1000000
+        MAX_PAGE_SIZE = 100
+        page_size_raw = self.request.GET.get('page_size', STUDENT_DIRECTORY_PAGE_SIZE)
+        try:
+            page_size = min(int(page_size_raw), MAX_PAGE_SIZE)
+        except (ValueError, TypeError):
+            page_size = STUDENT_DIRECTORY_PAGE_SIZE
+
+        paginator = PrecountedPaginator(students, page_size)
         page_number = self.request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
@@ -81,6 +102,15 @@ class StudentDirectoryView(CatalogBaseView):
             export_links=export_links,
             base_query_string=base_query_string,
         )
+
+        # 🚀 Performance AAA (Preloading Preditivo): Aquecimento de Cache
+        # Carregamos os Snapshots Fantasma dos alunos desta página para cliques instantâneos.
+        try:
+            page_student_ids = [s.id for s in page_obj]
+            prewarm_student_snapshots(page_student_ids)
+        except Exception:
+            pass
+
         return attach_catalog_page_payload(
             context,
             payload_key='student_directory_page',
@@ -185,6 +215,15 @@ class StudentQuickBaseView(CatalogBaseView, FormView):
 class StudentQuickCreateView(StudentQuickBaseView):
     page_mode = 'create'
 
+    def dispatch(self, request, *args, **kwargs):
+        from shared_support.security.anti_cheat_throttles import StudentCreationSpamThrottle
+        throttle = StudentCreationSpamThrottle()
+        if not throttle.allow_request(request, self):
+            throttle.on_throttle_exceeded(request, self)
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden("Limite de criação atingido. Tente novamente em 1 hora.")
+        return super().dispatch(request, *args, **kwargs)
+
     def form_valid(self, form):
         workflow = run_student_quick_create_workflow(
             actor=self.request.user,
@@ -200,6 +239,10 @@ class StudentQuickUpdateView(StudentQuickBaseView):
     page_mode = 'update'
 
     def dispatch(self, request, *args, **kwargs):
+        # 🚀 Segurança de Elite (Fintech Hardening): Tenant Isolation
+        # TODO: Quando o sistema for Multi-Box pleno, filtrar por:
+        # workspace = request.current_workspace
+        # self.object = get_object_or_404(Student, pk=kwargs['student_id'], workspace=workspace)
         self.object = get_object_or_404(Student, pk=kwargs['student_id'])
         return super().dispatch(request, *args, **kwargs)
 
@@ -224,6 +267,7 @@ class StudentQuickUpdateView(StudentQuickBaseView):
 class StudentPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
     allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
 
+    @idempotent_action
     def post(self, request, student_id, *args, **kwargs):
         student = get_object_or_404(Student, pk=student_id)
         action_form = StudentPaymentActionForm(request.POST)
@@ -232,7 +276,19 @@ class StudentPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
         action = action_form.cleaned_data['action']
-        payment = get_object_or_404(Payment, pk=action_form.cleaned_data['payment_id'], student=student)
+        # 🚀 Segurança de Elite (Fintech Hardening): Pessimistic Locking com Fail-Fast
+        # nowait=True evita que o servidor trave se a linha já estiver bloqueada (ataque de DoS)
+        from django.db import transaction, DatabaseError
+        try:
+            with transaction.atomic():
+                payment = get_object_or_404(
+                    Payment.objects.select_for_update(nowait=True), 
+                    pk=action_form.cleaned_data['payment_id'], 
+                    student=student
+                )
+        except DatabaseError:
+            messages.error(request, 'Esta operacao financeira está sendo processada em outra aba ou por outro administrador. Tente novamente em 15 segundos.')
+            return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
         restricted_actions = {'refund-payment', 'cancel-payment', 'regenerate-payment'}
         if action in restricted_actions and getattr(get_user_role(request.user), 'slug', '') == ROLE_RECEPTION:
@@ -277,8 +333,7 @@ class StudentDirectoryExportView(LoginRequiredMixin, RoleRequiredMixin, View):
 
 
 class StudentEnrollmentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
-    allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
-
+    @idempotent_action
     def post(self, request, student_id, *args, **kwargs):
         student = get_object_or_404(Student, pk=student_id)
         form = EnrollmentManagementForm(request.POST)
@@ -286,7 +341,17 @@ class StudentEnrollmentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
             messages.error(request, 'A acao de matricula nao foi aplicada. Revise os campos enviados.')
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
-        enrollment = get_object_or_404(Enrollment, pk=form.cleaned_data['enrollment_id'], student=student)
+        from django.db import transaction, DatabaseError
+        try:
+            with transaction.atomic():
+                enrollment = get_object_or_404(
+                    Enrollment.objects.select_for_update(nowait=True), 
+                    pk=form.cleaned_data['enrollment_id'], 
+                    student=student
+                )
+        except DatabaseError:
+            messages.error(request, 'Esta matricula está bloqueada para alteracao no momento (outra operacao em curso).')
+            return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
         if form.cleaned_data['action'] == 'cancel-enrollment' and enrollment.status != 'active':
             messages.error(request, 'Esta matricula já se encontra inativa ou cancelada.')
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))

@@ -20,7 +20,7 @@ def build_student_directory_report(*, students, report_format):
             'format': 'csv',
             'filename': 'relatorio-alunos.csv',
             'headers': ['Nome', 'WhatsApp', 'CPF', 'Status do aluno', 'Status comercial', 'Status financeiro', 'Plano atual'],
-            'rows': [
+            'rows': (
                 [
                     student.full_name,
                     student.phone,
@@ -30,8 +30,8 @@ def build_student_directory_report(*, students, report_format):
                     student.latest_payment_status or '-',
                     student.latest_plan_name or '-',
                 ]
-                for student in students
-            ],
+                for student in students.iterator(chunk_size=1000)
+            ),
         }
 
     if report_format == 'pdf':

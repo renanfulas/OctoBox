@@ -24,16 +24,31 @@ from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse
 
+from .security.honeypot_service import trigger_honeypot_for_ip, trigger_honeypot_for_user
+
 
 SECURITY_LOGGER = getLogger('octobox.security')
 WRITE_METHODS = {'POST', 'PUT', 'PATCH', 'DELETE'}
 WRITE_PATH_PREFIXES = (
-    '/operacao/',
-    '/alunos/',
+    '/operations/',
+    '/catalog/',
+    '/students/',
     '/financeiro/',
     '/grade-aulas/',
-    '/api/',     # Cobertura para Ingestão e Webhooks
-    '/guide/',   # Cobertura para Configurações Operacionais
+    '/api/',     
+    '/guide/',   
+)
+
+# 🍯 Armadilhas para detecção automática de scanners
+MALICIOUS_PATH_PATTERNS = (
+    '/.env',
+    '/wp-admin',
+    '/config.php',
+    '/.git/',
+    '/cgi-bin/',
+    '/etc/passwd',
+    '/phpmyadmin',
+    '/xmlrpc.php',
 )
 EXPORT_PATH_RULES = (
     ('/alunos/exportar/', 'student-directory-export'),
@@ -49,6 +64,7 @@ HEAVY_READ_PATH_RULES = (
     ('/operacao/manager/', 'operations-manager-read'),
     ('/operacao/coach/', 'operations-coach-read'),
     ('/operacao/recepcao/', 'operations-reception-read'),
+    ('/alunos/', 'student-detail-read'), # Rota individual de aluno
 )
 
 
@@ -155,7 +171,21 @@ class RequestSecurityMiddleware:
         blocked_response = self._block_when_needed(request)
         if blocked_response is not None:
             return blocked_response
-        return self.get_response(request)
+        response = self.get_response(request)
+        
+        # 🚀 Segurança de Elite (Epic 8 Hardening): Content Security Policy (CSP)
+        # Protege contra XSS, Clickjacking e injeção de dados externos.
+        csp_policy = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "img-src 'self' data: https://*; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "frame-ancestors 'none'; "
+            "object-src 'none';"
+        )
+        response['Content-Security-Policy'] = csp_policy
+        return response
 
     def _block_when_needed(self, request):
         client_ip = _get_client_ip(request)
@@ -165,6 +195,19 @@ class RequestSecurityMiddleware:
         ]
         if _ip_matches_patterns(client_ip, blocked_patterns):
             return _build_blocked_response(client_ip)
+
+        # 🚀 SEGURANÇA AAA: 'SLEEP MODE' DE PERFORMANCE
+        # Se a rota começa com nossos prefixos oficiais, o Honeypot entra em 'Sleep' (Ignora escaneamento)
+        # Isso economiza 100% da CPU de detecção para caminhos legítimos.
+        path = request.path.lower()
+        is_official_path = any(path.startswith(prefix) for prefix in (WRITE_PATH_PREFIXES + ('/static/', '/login/', '/admin/')))
+        
+        if not is_official_path:
+            # 🍯 Sensores Acordados: Detecção de Scanner Artístico (Auto-Honeypot)
+            if any(pattern in path for pattern in MALICIOUS_PATH_PATTERNS):
+                SECURITY_LOGGER.warning('honeypot_auto_trigger_path_scan client_ip=%s path=%s', client_ip, path)
+                trigger_honeypot_for_ip(client_ip)
+                return None
 
         rule = self._resolve_rule(request)
         if rule is None:
@@ -182,6 +225,11 @@ class RequestSecurityMiddleware:
             return None
 
         _log_rate_limit_event(scope=rule.scope, request=request, client_ip=client_ip, retry_after=retry_after)
+
+        # 🍯 Gatilho de Abuso em Admin (Auto-Honeypot para o Usuário)
+        if not allowed and rule.scope == 'admin' and request.user.is_authenticated:
+            SECURITY_LOGGER.warning('honeypot_auto_trigger_admin_abuse user_id=%s', request.user.id)
+            trigger_honeypot_for_user(request.user.id)
 
         response = HttpResponse('Muitas requisicoes em pouco tempo. Aguarde antes de tentar novamente.', status=429)
         response['Retry-After'] = str(retry_after)
@@ -237,6 +285,15 @@ class RequestSecurityMiddleware:
                         limit=limit,
                         window_seconds=window_seconds,
                     )
+
+            # 🛡️ Blindagem de Elite: Anti-Scraping Visual (Data Exfiltration)
+            # Detectamos se alguém está abrindo perfis individuais rápido demais.
+            if path.startswith('/alunos/') and '/editar/' not in path and '/financeiro/' not in path:
+                 return RateLimitRule(
+                    scope='anti-exfiltration',
+                    limit=settings.ANTI_EXFILTRATION_MAX_REQUESTS,
+                    window_seconds=settings.ANTI_EXFILTRATION_WINDOW_SECONDS,
+                )
 
         return None
 

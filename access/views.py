@@ -1,4 +1,4 @@
-﻿"""
+"""
 ARQUIVO: views do modulo de acesso.
 
 POR QUE ELE EXISTE:
@@ -59,6 +59,26 @@ def _split_full_name(full_name):
 def _build_full_name(user):
     full_name = user.get_full_name().strip()
     return full_name or user.username
+
+
+from django.contrib.auth.views import LoginView
+from .forms import AccessAuthenticationForm
+from shared_support.security.anti_cheat_throttles import LoginBruteForceThrottle
+
+class ThrottledLoginView(LoginView):
+    template_name = 'access/login.html'
+    authentication_form = AccessAuthenticationForm
+
+    def post(self, request, *args, **kwargs):
+        # A interceptação L7 foca apenas em ações de POST para contar tentativa de login, 
+        # impedindo botneteadores de credential stuffing. 
+        throttle = LoginBruteForceThrottle()
+        if not throttle.allow_request(request, self):
+            throttle.on_throttle_exceeded(request, self)
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden("Múltiplas requisições suspeitas. Conta temporariamente bloqueada (Cooldown: 10 min).")
+            
+        return super().post(request, *args, **kwargs)
 
 
 class HomeRedirectView(TemplateView):

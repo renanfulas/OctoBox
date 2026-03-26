@@ -1,28 +1,20 @@
-"""
-ARQUIVO: script para identificar maiores elementos do dashboard autenticado.
-
-POR QUE ELE EXISTE:
-- Permite analisar o layout e performance do dashboard após login, identificando elementos que mais ocupam espaço.
-
-O QUE ESTE ARQUIVO FAZ:
-1. Usa Playwright para acessar o dashboard autenticado.
-2. Injeta PerformanceObserver para capturar LCP.
-3. Salva os maiores elementos em JSON para análise.
-
-PONTOS CRÍTICOS:
-- Mudanças podem afetar a análise de performance e layout autenticado.
-"""
-from playwright.sync_api import sync_playwright
+import os
 import json
+import logging
+from playwright.sync_api import sync_playwright
+
+logger = logging.getLogger('octobox.tools')
 
 BASE = "http://127.0.0.1:8000"
 DASH = BASE + "/dashboard/"
 OUT = "largest_elements_dashboard.json"
-USER = "renan"
-PASS = "abc"
+
+# 🚀 Segurança de Elite: Credenciais via variáveis de ambiente (Audit B105)
+USER = os.environ.get("OCTOBOX_TEST_USER", "admin")
+PASS = os.environ.get("OCTOBOX_TEST_PASS", "")
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(headless=False)
+    browser = p.chromium.launch(headless=True)
     context = browser.new_context(viewport={'width':1280,'height':800})
     page = context.new_page()
 
@@ -66,8 +58,8 @@ with sync_playwright() as p:
         }""", {"user": USER, "pwd": PASS})
         try:
             page.wait_for_url('**/dashboard/**', timeout=20000)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Redirecionamento não detectado: {e}")
 
     page.goto(DASH, wait_until='load', timeout=30000)
     page.wait_for_timeout(1500)

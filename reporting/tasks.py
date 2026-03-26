@@ -11,9 +11,16 @@ except ImportError:
     # Fallback para ambientes sem Celery (Epic 7 Resilience)
     def shared_task(*args, **kwargs):
         def decorator(func):
+            # 🚀 Resiliência (Epic 8): Alerta de Performance
+            import os
+            if os.getenv('DJANGO_RUNTIME_MODE') == 'production':
+                 # Em produção, não podemos aceitar que o sistema rode tarefas pesadas síncronas.
+                 # Isso travaria o servidor para todos os outros usuários.
+                 raise RuntimeError("BROKER_URL não configurada. Tarefas assíncronas bloqueadas em produção.")
+                 
             def wrapper(*wargs, **wkwargs):
                 return func(*wargs, **wkwargs)
-            wrapper.delay = func # Mock delay para não quebrar chamadas .delay()
+            wrapper.delay = func 
             return wrapper
         return decorator
 
@@ -22,7 +29,12 @@ from reporting.application.catalog_reports import build_student_directory_report
 
 logger = logging.getLogger('octobox.reporting.tasks')
 
-@shared_task(bind=True)
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_kwargs={'max_retries': 3}
+)
 def run_student_directory_export_task(self, query_params, report_format, actor_id=None, job_id=None):
     """
     EPIC 13 (Enterprise Scale): Motor de exportação assíncrona para 1M+ registros.
@@ -54,9 +66,12 @@ def run_student_directory_export_task(self, query_params, report_format, actor_i
         export_dir = os.path.join(settings.MEDIA_ROOT, 'exports')
         os.makedirs(export_dir, exist_ok=True)
         
-        # Nome único para o arquivo
+        # 🚀 Segurança de Elite (Epic 8 Hardening): Sanitização Rigorosa
+        # Remove caracteres que podem causar Path Traversal ou Injeção.
+        import re
+        safe_filename = re.sub(r'[^a-zA-Z0-9_\-]', '', report_payload['filename'].replace('.csv', '').replace('.pdf', ''))
+        
         timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
-        safe_filename = report_payload['filename'].replace('.csv', '').replace('.pdf', '')
         filename = f"{safe_filename}_{timestamp}.{report_format}"
         file_path = os.path.join(export_dir, filename)
         
@@ -73,7 +88,9 @@ def run_student_directory_export_task(self, query_params, report_format, actor_i
             with open(file_path, 'w') as f:
                 f.write("PDF Export not yet implemented for 1M+ background tasks.")
 
-        file_url = f"{settings.MEDIA_URL}exports/{filename}"
+        # 🚀 Segurança de Elite (Epic 8 Hardening)
+        # Protegendo o link de Export contra o público:
+        file_url = f"/api/v1/exports/download/{filename}"
         
         if job:
             result = {
@@ -121,8 +138,11 @@ def run_finance_report_export_task(self, query_params, report_format, actor_id=N
         export_dir = os.path.join(settings.MEDIA_ROOT, 'exports')
         os.makedirs(export_dir, exist_ok=True)
         
+        # 🚀 Segurança de Elite (Epic 8 Hardening): Sanitização Rigorosa
+        import re
+        safe_filename = re.sub(r'[^a-zA-Z0-9_\-]', '', report_payload['filename'].replace('.csv', '').replace('.pdf', ''))
+        
         timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
-        safe_filename = report_payload['filename'].replace('.csv', '').replace('.pdf', '')
         filename = f"{safe_filename}_{timestamp}.{report_format}"
         file_path = os.path.join(export_dir, filename)
         
@@ -136,7 +156,8 @@ def run_finance_report_export_task(self, query_params, report_format, actor_id=N
             with open(file_path, 'w') as f:
                 f.write("PDF Export not yet implemented for 1M+ background tasks.")
 
-        file_url = f"{settings.MEDIA_URL}exports/{filename}"
+        # 🚀 Segurança de Elite (Epic 8 Hardening): Proxy Autenticado
+        file_url = f"/api/v1/exports/download/{filename}"
         
         if job:
             result = {'file_url': file_url, 'filename': filename, 'format': report_format}

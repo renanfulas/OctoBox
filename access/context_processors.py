@@ -31,8 +31,8 @@ from shared_support.static_assets import resolve_runtime_css_paths
 _ASSET_VERSION_CACHE = {
     'checked_at': 0.0,
     'value': '1',
+    'boot_calculated': False,
 }
-
 
 def _calculate_static_asset_version():
     static_root = settings.BASE_DIR / 'static'
@@ -52,14 +52,20 @@ def _calculate_static_asset_version():
 
     return str(max(mtimes, default=1))
 
-
 def _build_static_asset_version():
     if not settings.DEBUG:
-        return getattr(settings, 'STATIC_ASSET_VERSION', '1')
+        # 🚀 PERFORMANCE AAA: Boot-time Asset Cache
+        # Em produção, o CSS/JS não muda sozinho.
+        # Varremos os arquivos do HD exatas UMA vez no ciclo de vida da worker.
+        if not _ASSET_VERSION_CACHE['boot_calculated']:
+            _ASSET_VERSION_CACHE['value'] = getattr(settings, 'STATIC_ASSET_VERSION', _calculate_static_asset_version())
+            _ASSET_VERSION_CACHE['boot_calculated'] = True
+        return _ASSET_VERSION_CACHE['value']
 
+    # Em modo de desenvolvimento (DEBUG=True), verificamos a cada 1 segundo
+    # para permitir Live-Reload fluido sem ter que reiniciar o Gunicorn/Runserver.
     now = time.monotonic()
-    ttl_seconds = 1 if settings.DEBUG else 30
-    if now - _ASSET_VERSION_CACHE['checked_at'] < ttl_seconds:
+    if now - _ASSET_VERSION_CACHE['checked_at'] < 1:
         return _ASSET_VERSION_CACHE['value']
 
     _ASSET_VERSION_CACHE['value'] = _calculate_static_asset_version()

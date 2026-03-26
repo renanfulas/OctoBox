@@ -53,13 +53,25 @@ class OperationalSettingsAutoImportApiView(View):  # Removido LoginRequiredMixin
     Usa OCTOBOX_INTERNAL_API_TOKEN para segurança em vez de sessão/CSRF.
     """
     def post(self, request, *args, **kwargs):
-        # 🚀 Segurança de Elite (Epic 8 Hardening)
-        # Em vez de depender de sessão (vulnerável a CSRF), usamos um Token Bearer fixo.
+        # 🚀 Segurança de Elite (Ghost Hardening): Constant Time Compare
+        from django.utils.crypto import constant_time_compare
+        
         auth_header = request.headers.get('Authorization', '')
         allowed_token = os.getenv('OCTOBOX_INTERNAL_API_TOKEN')
 
-        if not allowed_token or auth_header != f"Bearer {allowed_token}":
+        is_token_valid = allowed_token and constant_time_compare(auth_header, f"Bearer {allowed_token}")
+
+        if not is_token_valid:
             return JsonResponse({'error': 'Acesso negado. Token inválido ou ausente.'}, status=403)
+            
+        # 🚀 Segurança de Elite (Epic 8 Hardening): IP Allowlist
+        # Se a variável OCTOBOX_INTERNAL_API_IPS existir, verificamos o Range
+        client_ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '')).split(',')[0].strip()
+        allowed_ips = os.getenv('OCTOBOX_INTERNAL_API_IPS')
+        if allowed_ips:
+            safe_ips = [ip.strip() for ip in allowed_ips.split(',') if ip.strip()]
+            if client_ip not in safe_ips:
+                return JsonResponse({'error': f'Acesso negado. IP ({client_ip}) não autorizado por política.'}, status=403)
             
         try:
             data = json.loads(request.body)

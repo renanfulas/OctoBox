@@ -108,9 +108,12 @@ def get_shell_counts(*, use_cache=True):
     }
 
     if use_cache:
-        # EPIC 9: Cache estendido para `SHELL_COUNTS_CACHE_TTL_SECONDS` (configuravel em settings)
+        # EPIC 9: Cache estendido com Jitter (Anti-Stampede)
+        # 🚀 OTIMIZAÇÃO MAXIMA: Ao aplicar variação no TTL, evitamos que milhares de requests 
+        # quebrem o cache no mesmo exato milissegundo, dissipando a carga no Postgres.
+        from shared_support.performance import get_cache_ttl_with_jitter
         ttl = getattr(settings, 'SHELL_COUNTS_CACHE_TTL_SECONDS', 60)
-        cache.set(cache_key, counts, timeout=ttl)
+        cache.set(cache_key, counts, timeout=get_cache_ttl_with_jitter(ttl))
 
     return counts
 

@@ -11,13 +11,18 @@ except ImportError:
         return decorator
 from operations.services.contact_importer import import_contacts_from_stream
 from operations.services.student_importer import StudentImporter
-from operations.models import AsyncJob
+from jobs.models import AsyncJob
 import io
 import logging
 
 logger = logging.getLogger('octobox.jobs')
 
-@shared_task(bind=True)
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=30,
+    retry_kwargs={'max_retries': 3}
+)
 def run_csv_contact_import_job(self, file_path, actor_id=None, job_id=None):
     """
     FIX 4 (Performance): Async Native Jobs with streaming file access.
@@ -28,7 +33,8 @@ def run_csv_contact_import_job(self, file_path, actor_id=None, job_id=None):
         job = AsyncJob.objects.filter(pk=job_id).first()
     
     if job:
-        job.start()
+        if not job.start():
+            return {"status": "already_running"}
 
     try:
         # EPIC 9: Abrir arquivo em modo stream diretamente do disco
@@ -52,7 +58,12 @@ def run_csv_contact_import_job(self, file_path, actor_id=None, job_id=None):
             job.fail(error=e)
         raise e
 
-@shared_task(bind=True)
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=60,
+    retry_kwargs={'max_retries': 3}
+)
 def run_csv_student_import_job(self, file_path, actor_id=None, job_id=None):
     """
     EPIC 9: Async Student Import with Bulk Operations
@@ -63,7 +74,8 @@ def run_csv_student_import_job(self, file_path, actor_id=None, job_id=None):
         job = AsyncJob.objects.filter(pk=job_id).first()
     
     if job:
-        job.start()
+        if not job.start():
+            return {"status": "already_running"}
 
     try:
         importer = StudentImporter()

@@ -97,6 +97,7 @@ class Enrollment(TimeStampedModel):
         max_length=16,
         choices=EnrollmentStatus.choices,
         default=EnrollmentStatus.ACTIVE,
+        db_index=True,
     )
     notes = models.TextField(blank=True)
 
@@ -121,7 +122,7 @@ class Payment(TimeStampedModel):
         blank=True,
         related_name='payments',
     )
-    due_date = models.DateField()
+    due_date = models.DateField(db_index=True)
     paid_at = models.DateTimeField(null=True, blank=True)
     amount = models.DecimalField(
         max_digits=10,
@@ -132,6 +133,7 @@ class Payment(TimeStampedModel):
         max_length=16,
         choices=PaymentStatus.choices,
         default=PaymentStatus.PENDING,
+        db_index=True,
     )
     method = models.CharField(
         max_length=16,
@@ -143,6 +145,7 @@ class Payment(TimeStampedModel):
     installment_total = models.PositiveSmallIntegerField(default=1)
     reference = models.CharField(max_length=100, blank=True)
     notes = models.TextField(blank=True)
+    version = models.PositiveIntegerField(default=0, help_text="Controle de concorrência otimista")
 
     class Meta:
         app_label = HISTORICAL_BOXCORE_APP_LABEL

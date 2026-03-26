@@ -2,6 +2,7 @@ import csv
 import logging
 from datetime import date
 from shared_support.phone_numbers import normalize_phone_number
+from shared_support.validators import validate_file_security
 from students.models import HealthIssueStatus, Student, StudentGender, StudentStatus
 
 logger = logging.getLogger('octobox.students')
@@ -17,6 +18,9 @@ class StudentImporter:
         details = []
 
         try:
+            # 🚀 Segurança de Elite (Fintech Hardening): MIME & Size Validation
+            validate_file_security(file_path, max_size_mb=15, allowed_mimes=['text/csv', 'text/plain'])
+
             # EPIC 9: Streaming read with utf-8-sig to handle Windows/Excel encoding
             with open(file_path, encoding='utf-8-sig', newline='') as csv_file:
                 reader = csv.DictReader(csv_file, delimiter=delimiter)

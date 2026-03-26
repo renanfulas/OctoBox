@@ -99,6 +99,8 @@ def build_database_config(default_sqlite_path):
     }
 
 
+from django.core.exceptions import ImproperlyConfigured
+
 def build_cache_config():
     cache_url = env_str('REDIS_URL') or env_str('CACHE_URL')
     if cache_url:
@@ -108,9 +110,17 @@ def build_cache_config():
             'OPTIONS': {
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
                 'IGNORE_EXCEPTIONS': env_bool('CACHE_IGNORE_EXCEPTIONS', True),
+                # 🚀 Segurança de Elite (Ghost Hardening): Insecure Deserialization
+                # Usamos JSON em vez do padrão (Pickle) para evitar execução de código remoto
+                # caso o servidor Redis venha a ser comprometido.
+                'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
             },
             'KEY_PREFIX': env_str('CACHE_KEY_PREFIX', 'octobox'),
         }
+
+    # 🚀 Performance de Elite (Epic 8): Garante Redis em Produção
+    if not is_local_runtime_mode():
+         raise ImproperlyConfigured('REDIS_URL obrigatoria para Cache em Producao/Homologacao.')
 
     return {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
@@ -122,6 +132,15 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'role-operations'
 LOGOUT_REDIRECT_URL = 'login'
 
+# 🚀 Segurança de Elite (Fintech Hardening): Session Lifecycle
+# Sessão expira em 30 minutos de inatividade para evitar sessões órfãs.
+SESSION_COOKIE_AGE = 1800  # 30 minutos
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# 🚀 Performance AAA (Ghost Session): Sessões 100% na RAM em vez de disco/SQL
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
+
 # Mandatory SECRET_KEY check (Epic 8 Security Hardening)
 SECRET_KEY = env_str('DJANGO_SECRET_KEY')
 if not SECRET_KEY:
@@ -131,23 +150,22 @@ if not SECRET_KEY:
 ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS')
 
-if is_local_runtime_mode():
-    for local_host in local_private_network_hosts():
-        if local_host not in ALLOWED_HOSTS:
-            ALLOWED_HOSTS.append(local_host)
-        local_origin = f'http://{local_host}:8000'
-        if local_origin not in CSRF_TRUSTED_ORIGINS:
-            CSRF_TRUSTED_ORIGINS.append(local_origin)
-
-render_external_hostname = env_str('RENDER_EXTERNAL_HOSTNAME')
-if render_external_hostname:
-    if render_external_hostname not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(render_external_hostname)
-    render_origin = f'https://{render_external_hostname}'
-    if render_origin not in CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS.append(render_origin)
-
 # Suporte automático para Vercel
+if os.getenv('VERCEL'):
+    verc_url = os.getenv('VERCEL_URL')
+    if verc_url:
+        if verc_url not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(verc_url)
+        verc_origin = f'https://{verc_url}'
+        if verc_origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(verc_origin)
+
+# 🚀 Segurança de Elite (Ghost Hardening): CSRF Fail-Safe
+if not is_local_runtime_mode() and not CSRF_TRUSTED_ORIGINS:
+     # Em produção, a ausência de CSRF_TRUSTED_ORIGINS bloqueará todos os POSTs (403 Forbidden).
+     # Isso é um erro comum de configuração que "quebra" o sistema no deploy.
+     import logging
+     logging.getLogger('django.security').warning("CSRF_TRUSTED_ORIGINS vazia em Produção. POSTs podem falhar.")
 if os.getenv('VERCEL'):
     if '.vercel.app' not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append('.vercel.app')
@@ -193,6 +211,8 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'shared_support.security.honeypot_middleware.HoneypotMiddleware',
+    'shared_support.security.fingerprint_middleware.SessionFingerprintMiddleware',
     'shared_support.security.RequestSecurityMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -258,8 +278,10 @@ ADMIN_RATE_LIMIT_WINDOW_SECONDS = env_int('ADMIN_RATE_LIMIT_WINDOW_SECONDS', 300
 ADMIN_RATE_LIMIT_MAX_REQUESTS = env_int('ADMIN_RATE_LIMIT_MAX_REQUESTS', 12)
 WRITE_RATE_LIMIT_WINDOW_SECONDS = env_int('WRITE_RATE_LIMIT_WINDOW_SECONDS', 60)
 WRITE_RATE_LIMIT_MAX_REQUESTS = env_int('WRITE_RATE_LIMIT_MAX_REQUESTS', 30)
-EXPORT_RATE_LIMIT_WINDOW_SECONDS = env_int('EXPORT_RATE_LIMIT_WINDOW_SECONDS', 300)
-EXPORT_RATE_LIMIT_MAX_REQUESTS = env_int('EXPORT_RATE_LIMIT_MAX_REQUESTS', 12)
+EXPORT_RATE_LIMIT_WINDOW_SECONDS = env_int('EXPORT_RATE_LIMIT_WINDOW_SECONDS', 3600)  # 1 hora
+EXPORT_RATE_LIMIT_MAX_REQUESTS = env_int('EXPORT_RATE_LIMIT_MAX_REQUESTS', 2)
+ANTI_EXFILTRATION_WINDOW_SECONDS = env_int('ANTI_EXFILTRATION_WINDOW_SECONDS', 300)
+ANTI_EXFILTRATION_MAX_REQUESTS = env_int('ANTI_EXFILTRATION_MAX_REQUESTS', 60)
 DASHBOARD_RATE_LIMIT_WINDOW_SECONDS = env_int('DASHBOARD_RATE_LIMIT_WINDOW_SECONDS', 60)
 DASHBOARD_RATE_LIMIT_MAX_REQUESTS = env_int('DASHBOARD_RATE_LIMIT_MAX_REQUESTS', 45)
 OPERATIONAL_WHATSAPP_REPEAT_BLOCK_HOURS = env_int('OPERATIONAL_WHATSAPP_REPEAT_BLOCK_HOURS', 24)
@@ -277,6 +299,16 @@ EFFECTIVE_SECURITY_LOG_LEVEL = 'DEBUG' if is_local_runtime_mode() else SECURITY_
 DATA_UPLOAD_MAX_MEMORY_SIZE = env_int('DATA_UPLOAD_MAX_MEMORY_SIZE', 15728640)
 FILE_UPLOAD_MAX_MEMORY_SIZE = env_int('FILE_UPLOAD_MAX_MEMORY_SIZE', 15728640)
 DATA_UPLOAD_MAX_NUMBER_FIELDS = env_int('DATA_UPLOAD_MAX_NUMBER_FIELDS', 200)
+
+# 🔒 Segurança Institucional White Hat (Bug Bounty Fixes)
+# Força o browser do cliente a nunca se conectar com HTTP por 1 ano (prevenindo mitm_downgrade)
+SECURE_HSTS_SECONDS = 31536000 
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+# Ocultar o Header Type (previne que atacantes explorem sniff de arquivos para XSS)
+SECURE_CONTENT_TYPE_NOSNIFF = True
+# Se estivermos rodando no ambiente Vercel Host/Production, ativar o SSL Redirect Hard.
+SECURE_SSL_REDIRECT = env_bool('ENFORCE_SSL', False)
 
 CACHES = {
     'default': build_cache_config()
@@ -299,6 +331,11 @@ LOGGING = {
         'octobox.access': {
             'handlers': ['console'],
             'level': EFFECTIVE_SECURITY_LOG_LEVEL,
+            'propagate': False,
+        },
+        'octobox.security.honeypot': {
+            'handlers': ['console'],
+            'level': 'WARNING',
             'propagate': False,
         },
     },

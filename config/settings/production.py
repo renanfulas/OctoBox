@@ -23,6 +23,11 @@ from sentry_sdk.integrations.django import DjangoIntegration
 
 DEBUG = env_bool('DJANGO_DEBUG', False)
 
+# 🚀 Segurança de Elite: Isolamento de Host (Previne Host Header Injection)
+ALLOWED_HOSTS = env_str('DJANGO_ALLOWED_HOSTS', 'octobox.app,www.octobox.app').split(',')
+
+CSRF_TRUSTED_ORIGINS = [f"https://{host.strip()}" for host in ALLOWED_HOSTS if host.strip()]
+
 _configured_secret_key = env_str('DJANGO_SECRET_KEY')
 if not _configured_secret_key or _configured_secret_key == 'dev-only-secret-key-change-me':
     raise RuntimeError('DJANGO_SECRET_KEY forte e obrigatoria em homologacao/producao.')
@@ -61,5 +66,5 @@ if sentry_dsn:
         dsn=sentry_dsn,
         integrations=[DjangoIntegration()],
         traces_sample_rate=env_bool('SENTRY_TRACES_SAMPLE_RATE', 0.2),
-        send_default_pii=True
+        send_default_pii=False  # 🚀 Segurança (Epic 8): LGPD enforced
     )

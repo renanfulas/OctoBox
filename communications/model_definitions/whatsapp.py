@@ -17,6 +17,7 @@ PONTOS CRITICOS:
 from django.db import models
 
 from model_support.base import TimeStampedModel
+from shared_support.crypto_fields import EncryptedCharField, EncryptedTextField
 
 
 HISTORICAL_BOXCORE_APP_LABEL = 'boxcore'
@@ -43,7 +44,7 @@ class MessageKind(models.TextChoices):
 
 
 class WhatsAppContact(TimeStampedModel):
-    phone = models.CharField(max_length=20, unique=True)
+    phone = EncryptedCharField(max_length=255, unique=True)
     external_contact_id = models.CharField(max_length=120, blank=True)
     display_name = models.CharField(max_length=150, blank=True)
     linked_student = models.ForeignKey(
@@ -93,7 +94,7 @@ class WhatsAppMessageLog(TimeStampedModel):
         choices=MessageKind.choices,
         default=MessageKind.TEXT,
     )
-    body = models.TextField(blank=True)
+    body = EncryptedTextField(blank=True)
     external_message_id = models.CharField(max_length=120, blank=True, db_index=True)
     webhook_fingerprint = models.CharField(max_length=128, blank=True, db_index=True)
     delivered_at = models.DateTimeField(null=True, blank=True)

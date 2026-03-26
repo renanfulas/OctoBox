@@ -18,6 +18,7 @@ from django.conf import settings
 from django.db import models
 
 from model_support.base import TimeStampedModel
+from shared_support.crypto_fields import EncryptedCharField
 
 
 HISTORICAL_BOXCORE_APP_LABEL = 'boxcore'
@@ -40,9 +41,9 @@ class IntakeStatus(models.TextChoices):
 
 
 class StudentIntake(TimeStampedModel):
-    full_name = models.CharField(max_length=150)
-    phone = models.CharField(max_length=20)
-    email = models.EmailField(blank=True)
+    full_name = models.CharField(max_length=150, db_index=True)
+    phone = EncryptedCharField(max_length=255, db_index=True)
+    email = EncryptedCharField(max_length=255, blank=True, db_index=True)
     source = models.CharField(
         max_length=16,
         choices=IntakeSource.choices,
@@ -52,6 +53,7 @@ class StudentIntake(TimeStampedModel):
         max_length=16,
         choices=IntakeStatus.choices,
         default=IntakeStatus.NEW,
+        db_index=True,
     )
     linked_student = models.ForeignKey(
         HISTORICAL_BOXCORE_STUDENT_MODEL,

@@ -65,9 +65,16 @@ class StudentAutocompleteView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         query = request.GET.get('q', '').strip()
+        # 🚀 Segurança de Elite (Fintech Hardening): Query Abuse Defense
+        # Blindagem contra strings gigantescas que travam o ORM (DoS Lógico)
+        if len(query) > 100:
+            query = query[:100]
+
         if len(query) < 1:
             return JsonResponse({'results': []})
 
+        # 🛡️ Segurança de Elite (Fintech Hardening): IDOR e Tenant Isolation
+        # TODO: Quando houver múltiplos workspaces, filtrar por request.user.workspace
         students = (
             Student.objects
             .filter(

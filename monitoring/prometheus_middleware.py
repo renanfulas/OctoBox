@@ -41,5 +41,24 @@ from django.views.decorators.http import require_http_methods
 
 @require_http_methods(["GET"])
 def metrics_view(request):
+    import os
+    # 🚀 Segurança de Elite (Ghost Hardening): Constant Time Compare
+    from django.utils.crypto import constant_time_compare
+    
+    token = os.getenv('PROMETHEUS_METRICS_TOKEN')
+    auth_header = request.headers.get('Authorization', '')
+    
+    is_token_valid = token and constant_time_compare(auth_header, f"Bearer {token}")
+    
+    # Se o token estiver configurado, exigimos Bearer Token.
+    # Caso contrário, permitimos apenas acesso local (localhost).
+    is_local = request.META.get('REMOTE_ADDR') in ['127.0.0.1', '::1']
+    
+    if token:
+        if not is_token_valid:
+            return HttpResponse("Unauthorized", status=401)
+    elif not is_local:
+        return HttpResponse("Forbidden: Metrics accessible only via local or token.", status=403)
+
     data = generate_latest()
     return HttpResponse(data, content_type=CONTENT_TYPE_LATEST)

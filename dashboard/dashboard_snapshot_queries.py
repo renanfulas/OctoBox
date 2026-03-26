@@ -21,6 +21,8 @@ from datetime import date
 from django.core.cache import cache
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
+from shared_support.performance import get_cache_ttl_with_jitter
+from shared_support.redis_snapshots import prewarm_student_snapshots
 from access.roles import ROLE_RECEPTION
 from communications.models import WhatsAppContact
 from finance.models import Payment, PaymentStatus
@@ -222,36 +224,44 @@ def _decorate_dashboard_sessions(serialized_sessions):
 
 
 def _build_dashboard_payment_alert_snapshot(*, overdue_payments_queryset):
-    qs = overdue_payments_queryset.order_by('due_date')
+    # 🚀 Performance de Elite (Ghost Audit): Otimização N+1
+    # Pré-carregamos o contato de WhatsApp mais recente para cada estudante da lista
+    # para evitar 10+ queries extras no loop.
+    qs = overdue_payments_queryset.select_related('student').order_by('due_date')
+    top_10_payments = list(qs[:10])
+    student_ids = [p.student.id for p in top_10_payments if p.student]
+    
+    contacts_map = {}
+    if student_ids:
+        latest_contacts = WhatsAppContact.objects.filter(
+            linked_student_id__in=student_ids
+        ).order_by('linked_student_id', '-last_outbound_at').distinct('linked_student_id')
+        contacts_map = {c.linked_student_id: c for c in latest_contacts}
+
     payment_alerts = []
     actionable_count = 0
     next_actionable_instance = None
 
-    for p in qs[:10]:
-        student = getattr(p, 'student', None)
-        # determine if this payment still requires an actionable touch
-        contact = None
-        try:
-            contact = WhatsAppContact.objects.filter(linked_student=student).order_by('-last_outbound_at').first()
-        except Exception:
-            contact = None
+    for p in top_10_payments:
+        student = p.student
+        contact = contacts_map.get(student.id) if student else None
 
         # If we've recently had an outbound attempt (last_outbound_at exists), consider it non-actionable
-        is_actionable = not (contact and getattr(contact, 'last_outbound_at', None))
+        is_actionable = not (contact and contact.last_outbound_at)
         if is_actionable:
             actionable_count += 1
             if next_actionable_instance is None:
                 next_actionable_instance = p
 
         payment_alerts.append({
-            'id': getattr(p, 'id', None),
+            'id': p.id,
             'student': student,
-            'student_full_name': getattr(student, 'full_name', None),
-            'due_date': getattr(p, 'due_date', None),
-            'amount': getattr(p, 'amount', None),
+            'student_full_name': student.full_name if student else 'Estagiário/Anônimo',
+            'due_date': p.due_date,
+            'amount': p.amount,
             'href': '/financeiro/',
             'is_actionable': is_actionable,
-            'dashboard_requires_whatsapp_followup': bool(contact and getattr(contact, 'last_outbound_at', None)),
+            'dashboard_requires_whatsapp_followup': not is_actionable,
         })
 
     total_count = qs.count()
@@ -320,11 +330,14 @@ def build_dashboard_snapshot(*, today, month_start, role_slug=''):
     """
     cache_key = f"dashboard_snapshot:{role_slug}:{today.isoformat()}:{month_start.isoformat()}"
     ttl = getattr(settings, 'SHELL_COUNTS_CACHE_TTL_SECONDS', 60)
+    # 🚀 Performance de Elite (Ghost Hardening): Cache Jitter
+    # Evita que todos os dashboards de todos os usuários expirem no mesmo segundo.
+    jittered_ttl = get_cache_ttl_with_jitter(ttl)
 
     def _calculate():
         return _build_dashboard_snapshot_raw(today=today, month_start=month_start, role_slug=role_slug)
 
-    return cache.get_or_set(cache_key, _calculate, timeout=ttl)
+    return cache.get_or_set(cache_key, _calculate, timeout=jittered_ttl)
 
 
 def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
@@ -332,20 +345,56 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
     previous_month_end = month_start - timedelta(days=1)
     previous_month_start = previous_month_end.replace(day=1)
 
-    active_students = Student.objects.filter(status=StudentStatus.ACTIVE)
+    # 🚀 Otimização Game Dev (Latency Zero): Agregação por Modelo
+    # Em vez de 11 counts/sums individuais, agora fazemos 4 queries agrupadas.
+    
     sessions_today = ClassSession.objects.filter(scheduled_at__date=today)
-    sessions_previous_day = ClassSession.objects.filter(scheduled_at__date=previous_day)
-    overdue_payments = get_overdue_payments_queryset(Payment.objects.all(), today=today)
-    overdue_payments_previous_day = get_overdue_payments_queryset(Payment.objects.all(), today=previous_day)
-    monthly_attendance = Attendance.objects.filter(
-        session__scheduled_at__date__gte=month_start,
-        status__in=[AttendanceStatus.CHECKED_IN, AttendanceStatus.CHECKED_OUT],
+    
+    student_metrics = Student.objects.aggregate(
+        active_count=Count('id', filter=Q(status=StudentStatus.ACTIVE))
     )
-    previous_month_attendance = Attendance.objects.filter(
-        session__scheduled_at__date__gte=previous_month_start,
-        session__scheduled_at__date__lt=month_start,
-        status__in=[AttendanceStatus.CHECKED_IN, AttendanceStatus.CHECKED_OUT],
+
+    session_metrics = ClassSession.objects.aggregate(
+        today_count=Count('id', filter=Q(scheduled_at__date=today)),
+        prev_day_count=Count('id', filter=Q(scheduled_at__date=previous_day))
     )
+
+    payment_overdue_qs = get_overdue_payments_queryset(Payment.objects.all(), today=today)
+    payment_overdue_prev_qs = get_overdue_payments_queryset(Payment.objects.all(), today=previous_day)
+    
+    payment_metrics = Payment.objects.aggregate(
+        overdue_count=Count('id', filter=Q(id__in=payment_overdue_qs.values('id'))),
+        overdue_prev_count=Count('id', filter=Q(id__in=payment_overdue_prev_qs.values('id'))),
+        monthly_paid=Sum('amount', filter=Q(status=PaymentStatus.PAID, due_date__gte=month_start)),
+        monthly_paid_prev=Sum('amount', filter=Q(status=PaymentStatus.PAID, due_date__gte=previous_month_start, due_date__lt=month_start))
+    )
+
+    attendance_metrics = Attendance.objects.filter(
+        status__in=[AttendanceStatus.CHECKED_IN, AttendanceStatus.CHECKED_OUT]
+    ).aggregate(
+        this_month=Count('id', filter=Q(session__scheduled_at__date__gte=month_start)),
+        prev_month=Count('id', filter=Q(session__scheduled_at__date__gte=previous_month_start, session__scheduled_at__date__lt=month_start))
+    )
+
+    note_metrics = BehaviorNote.objects.aggregate(
+        this_month=Count('id', filter=Q(happened_at__date__gte=month_start)),
+        prev_month=Count('id', filter=Q(happened_at__date__gte=previous_month_start, happened_at__date__lt=month_start))
+    )
+
+    metrics = {
+        'active_students': student_metrics['active_count'],
+        'sessions_today': session_metrics['today_count'],
+        'sessions_previous_day': session_metrics['prev_day_count'],
+        'overdue_payments': payment_metrics['overdue_count'],
+        'overdue_payments_previous_day': payment_metrics['overdue_prev_count'],
+        'attendance_this_month': attendance_metrics['this_month'],
+        'attendance_previous_month': attendance_metrics['prev_month'],
+        'monthly_revenue_paid': payment_metrics['monthly_paid'] or 0,
+        'monthly_revenue_paid_previous': payment_metrics['monthly_paid_prev'] or 0,
+        'occurrences_this_month': note_metrics['this_month'],
+        'occurrences_previous_month': note_metrics['prev_month'],
+    }
+
     current_time = timezone.localtime()
     upcoming_session_objects = list(
         ClassSession.objects.filter(scheduled_at__date__gte=today)
@@ -354,32 +403,6 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
         .order_by('scheduled_at')[:5]
     )
     sync_runtime_statuses(upcoming_session_objects, now=current_time)
-
-    metrics = {
-        'active_students': active_students.count(),
-        'sessions_today': sessions_today.count(),
-        'sessions_previous_day': sessions_previous_day.count(),
-        'overdue_payments': overdue_payments.count(),
-        'overdue_payments_previous_day': overdue_payments_previous_day.count(),
-        'attendance_this_month': monthly_attendance.count(),
-        'attendance_previous_month': previous_month_attendance.count(),
-        'monthly_revenue_paid': Payment.objects.filter(
-            status=PaymentStatus.PAID,
-            due_date__gte=month_start,
-        ).aggregate(total=Sum('amount'))['total'] or 0,
-        'monthly_revenue_paid_previous': Payment.objects.filter(
-            status=PaymentStatus.PAID,
-            due_date__gte=previous_month_start,
-            due_date__lt=month_start,
-        ).aggregate(total=Sum('amount'))['total'] or 0,
-        'occurrences_this_month': BehaviorNote.objects.filter(
-            happened_at__date__gte=month_start,
-        ).count(),
-        'occurrences_previous_month': BehaviorNote.objects.filter(
-            happened_at__date__gte=previous_month_start,
-            happened_at__date__lt=month_start,
-        ).count(),
-    }
 
     # --- Weekly revenue computation ---
     def _last_day_of_month(year, month):
@@ -526,13 +549,19 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
     ]
     upcoming_sessions = _decorate_dashboard_sessions(serialized_sessions)
     pending_intakes_count = count_pending_intakes()
-    today_sessions_with_load = sessions_today.annotate(occupied_slots=Count('attendances'))
-    today_schedule_capacity = sum(session.capacity for session in today_sessions_with_load)
-    today_schedule_occupied = sum(session.occupied_slots for session in today_sessions_with_load)
+    # 🚀 Otimização Game Dev (Latency Zero): Agregação de Ocupação e Saúde
+    capacity_metrics = sessions_today.annotate(occupied_slots=Count('attendances')).aggregate(
+        total_capacity=Sum('capacity'),
+        total_occupied=Sum('occupied_slots')
+    )
+    
+    today_schedule_capacity = capacity_metrics['total_capacity'] or 0
+    today_schedule_occupied = capacity_metrics['total_occupied'] or 0
     today_schedule_occupancy_percent = (
         (today_schedule_occupied / today_schedule_capacity) * 100
         if today_schedule_capacity else 0
     )
+
     student_health_queryset = Student.objects.annotate(
         total_attendances=Count(
             'attendances',
@@ -543,8 +572,28 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
             filter=Q(attendances__status=AttendanceStatus.ABSENT),
         ),
     )
-    students_at_risk_count = student_health_queryset.filter(total_absences__gte=1).count()
+    # Buscamos a contagem e os top 8 em uma tacada só (quase)
+    health_metrics = student_health_queryset.aggregate(at_risk=Count('id', filter=Q(total_absences__gte=1)))
+    students_at_risk_count = health_metrics['at_risk']
     student_health = student_health_queryset.order_by('-total_absences', '-total_attendances', 'full_name')[:8]
+
+    # 🚀 Performance AAA (Preloading Preditivo): Aquecimento de Cache
+    # Carregamos os alunos em evidência para que o próximo clique seja instatâneo.
+    try:
+        hot_students = set()
+        # Alunos com alertas de pagamento
+        if 'payment_alert_snapshot' in locals():
+            alert_student_ids = [p['student'].id for p in payment_alert_snapshot['payment_alerts'] if p.get('student')]
+            hot_students.update(alert_student_ids)
+        
+        # Alunos da saúde da base (em risco)
+        health_student_ids = [s.id for s in student_health]
+        hot_students.update(health_student_ids)
+
+        if hot_students:
+            prewarm_student_snapshots(list(hot_students))
+    except Exception:
+        pass
 
     return {
         'metrics': metrics,

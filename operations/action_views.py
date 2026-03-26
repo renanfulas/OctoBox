@@ -46,7 +46,11 @@ def _append_fragment_to_url(url, fragment):
 
 def _redirect_back(request, *, fallback_url, fragment=''):
     target_url = request.META.get('HTTP_REFERER', fallback_url)
-    if not url_has_allowed_host_and_scheme(target_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+    # 🚀 Segurança de Elite (Ghost Hardening): Host Header Protection
+    # Em vez de confiar no Host vindo do Request (que pode ser envenenado),
+    # usamos o ALLOWED_HOSTS configurado no servidor.
+    allowed_hosts = set(getattr(settings, 'ALLOWED_HOSTS', []))
+    if not url_has_allowed_host_and_scheme(target_url, allowed_hosts=allowed_hosts, require_https=request.is_secure()):
         target_url = fallback_url
     return HttpResponseRedirect(_append_fragment_to_url(target_url, fragment))
 

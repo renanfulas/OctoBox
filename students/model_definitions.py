@@ -17,6 +17,7 @@ PONTOS CRITICOS:
 from django.db import models
 
 from model_support.base import TimeStampedModel
+from shared_support.crypto_fields import EncryptedCharField
 
 
 HISTORICAL_BOXCORE_APP_LABEL = 'boxcore'
@@ -40,17 +41,18 @@ class HealthIssueStatus(models.TextChoices):
 
 
 class Student(TimeStampedModel):
-    full_name = models.CharField(max_length=150)
-    phone = models.CharField(max_length=20, unique=True, verbose_name='WhatsApp')
-    email = models.EmailField(blank=True)
+    full_name = models.CharField(max_length=150, db_index=True)
+    phone = EncryptedCharField(max_length=255, unique=True, verbose_name='WhatsApp')
+    email = models.EmailField(blank=True, db_index=True)
     gender = models.CharField(max_length=16, choices=StudentGender.choices, blank=True)
     birth_date = models.DateField(null=True, blank=True)
     health_issue_status = models.CharField(max_length=8, choices=HealthIssueStatus.choices, blank=True)
-    cpf = models.CharField(max_length=14, blank=True)
+    cpf = EncryptedCharField(max_length=255, blank=True)
     status = models.CharField(
         max_length=16,
         choices=StudentStatus.choices,
         default=StudentStatus.ACTIVE,
+        db_index=True,
     )
     notes = models.TextField(blank=True)
 

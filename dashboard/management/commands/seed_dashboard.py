@@ -18,8 +18,17 @@ class Command(BaseCommand):
 
         user = User.objects.first()
         if not user:
-            user = User.objects.create_user('admin', email='admin@octobox.com', password='password123', first_name='Oto', last_name='Owner')
-            self.stdout.write(f"Usuario criado: {user.email}")
+            import os
+            # 🚀 Segurança de Elite (Epic 8): Seed dinâmico
+            admin_pass = os.getenv('OCTOBOX_SEED_ADMIN_PASS')
+            if not admin_pass:
+                # Se não houver varíavel, gera senha aleatória forte e imprime.
+                admin_pass = User.objects.make_random_password(length=14)
+                
+            user = User.objects.create_superuser('admin', email='admin@octobox.com', password=admin_pass, first_name='Oto', last_name='Owner')
+            self.stdout.write(f"Usuario criado dinamicamente. Email: {user.email}")
+            if not os.getenv('OCTOBOX_SEED_ADMIN_PASS'):
+                self.stdout.write(self.style.WARNING(f"⚠️ SENHA GERADA (Guarde em segurança): {admin_pass}"))
 
         now = timezone.now()
 
