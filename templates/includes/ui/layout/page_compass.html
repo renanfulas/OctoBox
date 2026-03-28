@@ -9,10 +9,10 @@ PONTOS CRITICOS:
 -->
 <section class="page-compass" aria-label="Contexto da pagina" data-slot="page-compass" data-ui="page-compass">
     <div class="page-compass-context">
-        <span class="compass-eyebrow-pill">{{ shell_page_context.eyebrow }}</span>
-        <h1 class="page-compass-title">{{ shell_page_context.title|default:page_title }}</h1>
+        <span class="compass-eyebrow-pill">{% if shell_page_context.eyebrow %}{{ shell_page_context.eyebrow }}{% else %}OctoBox{% endif %}</span>
+        <h1 class="page-compass-title">{% if shell_page_context.title %}{{ shell_page_context.title }}{% elif page_title %}{{ page_title }}{% else %}Control{% endif %}</h1>
     </div>
-    {% if shell_action_buttons %}
+    {% if shell_page_context and shell_action_buttons %}
     <nav class="compass-pulse compass-pulse--{{ shell_page_context.scope|default:'generic' }}" data-compass-scope="{{ shell_page_context.scope|default:'generic' }}" data-ui="shell-action-pulse" aria-label="Atalhos operacionais">
         {% for item in shell_action_buttons %}
         <a class="pulse-chip pulse-chip--{{ shell_page_context.scope|default:'generic' }} pulse-{{ item.kind }}{% if item.count %} has-count{% endif %}" href="{{ item.href }}" data-priority-level="{% if item.kind == 'priority' %}primary{% elif item.kind == 'pending' %}secondary{% else %}neutral{% endif %}" aria-label="{{ item.label }}{% if item.count %}: {{ item.count }}{% endif %}. {{ item.target_label }}" title="{{ item.target_label }}">

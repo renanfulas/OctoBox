@@ -292,6 +292,17 @@ POR QUE ELE EXISTE:
       closeSidebar();
     });
   }
+
+  // Topbar scroll-to-top (replaces inline onclick from base.html)
+  if (topbar) {
+    topbar.style.cursor = 'pointer';
+    topbar.addEventListener('click', function(event) {
+      if (!event.target.closest('a, button, input, form, .topbar-profile')) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  }
+
   // Handle blink actions from metric cards (topbar, board, and sidebar targets)
   document.addEventListener('click', function(event) {
     var trigger = event.target.closest('[data-action^="blink-topbar-"], [data-action^="blink-board-"], [data-action^="blink-sidebar-"]');
@@ -385,14 +396,14 @@ POR QUE ELE EXISTE:
       return;
     }
 
-    // blink-sidebar-<kind> -> a[href="/<kind>/"] in the sidebar or nav
+    // blink-sidebar-<kind> -> a[data-nav-key="<kind>"] in the sidebar or nav
     if (action.indexOf('blink-sidebar-') === 0) {
       event.preventDefault();
       
       var sKind = action.replace(/^blink-sidebar-/, '');
       if (!sKind) return;
       
-      var sSelector = 'a[href^="/' + sKind + '/"]';
+      var sSelector = '[data-nav-key="' + sKind + '"]';
       var targetLink = document.querySelector('.sidebar ' + sSelector) || 
                        document.querySelector(sSelector);
 
@@ -403,8 +414,8 @@ POR QUE ELE EXISTE:
         targetLink.classList.add(blinkClass);
         
         // Ensure sidebar is open on mobile if closed
-        if (!document.body.classList.contains('sidebar-is-open') && window.innerWidth <= 1024) {
-          document.body.classList.add('sidebar-is-open');
+        if (!document.body.classList.contains('sidebar-open') && window.innerWidth <= 1024) {
+          document.body.classList.add('sidebar-open');
         }
         
         window.setTimeout(function() {
