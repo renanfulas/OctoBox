@@ -31,23 +31,47 @@ class Command(BaseCommand):
         size_mb = os.path.getsize(snapshot_path) / (1024*1024)
         self.stdout.write(self.style.SUCCESS(f'----> ETA Calculado: {size_mb * 0.5:.1f} segundos'))
 
-        self.stdout.write(self.style.NOTICE('[2/3] Executando Schema Validation (Dry-Run de Migrations)...'))
+        self.stdout.write(self.style.NOTICE('[2/3] Executando Schema Validation (Drift Analysis)...'))
         
         try:
-            # Roda as migrations atuais com check-only verificando pendências
-            result = subprocess.run(
-                ["python", "manage.py", "makemigrations", "--check", "--dry-run"],
-                capture_output=True, text=True
-            )
+            # Precisa extrair temporariamente o SQLite para analise
+            temp_dir = os.path.join(settings.BASE_DIR, 'tmp_restore_check')
+            os.makedirs(temp_dir, exist_ok=True)
+            temp_db = os.path.join(temp_dir, 'db.sqlite3')
             
-            if result.returncode != 0:
+            with zipfile.ZipFile(snapshot_path, 'r') as zip_ref:
+                # Localiza e extrai apenas o sqlite3
+                db_filename = next((name for name in zip_ref.namelist() if name.endswith('.sqlite3')), None)
+                if not db_filename:
+                    raise CommandError("Nenhum banco SQLite encontrado dentro do Snapshot.")
+                
+                with open(temp_db, 'wb') as f_out:
+                    f_out.write(zip_ref.read(db_filename))
+
+            # Roda as migrations atuais com check-only verificando pendências
+            from shared_support.schema_drift import detect_schema_drift
+            
+            drift = detect_schema_drift(temp_db)
+            is_valid = not drift['ghost_in_snapshot']
+            
+            if not is_valid:
                 self.stdout.write(self.style.ERROR('ALERTA: SCHEMA DRIFT DETECTADO!'))
-                self.stdout.write(self.style.WARNING('O Banco contido no Snapshot está defasado em relação ao código atual.'))
+                self.stdout.write(self.style.WARNING(f"GHOST MIGRATIONS (Banco mais novo que o código): {drift['ghost_in_snapshot']}"))
+                self.stdout.write(self.style.WARNING('O Banco contido no Snapshot está no futuro em relação ao código atual.'))
                 
                 if not force:
-                    raise CommandError("Restore abortado. O Snapshot requer que migrações sejam aplicadas APÓS a leitura. Use --force.")
+                    # Limpa
+                    os.remove(temp_db)
+                    os.rmdir(temp_dir)
+                    raise CommandError("Restore abortado. O Snapshot requer ferramentas/models que não estão no seu projeto. Use --force para ignorar.")
             else:
-                 self.stdout.write(self.style.SUCCESS('Schema perfeitamente alinhado.'))
+                 self.stdout.write(self.style.SUCCESS('Schema alinhado sem Ghost Migrations.'))
+                 if drift['missing_in_snapshot']:
+                     self.stdout.write(self.style.NOTICE(f"Existem {len(drift['missing_in_snapshot'])} migrações a aplicar no final."))
+                 
+            # Limpa temp
+            os.remove(temp_db)
+            os.rmdir(temp_dir)
                  
         except Exception as e:
             if not force:
