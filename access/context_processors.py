@@ -25,7 +25,9 @@ from django.conf import settings
 from access.admin import admin_changelist_url, admin_index_url, user_can_access_admin
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
 from access.shell_actions import build_default_shell_action_buttons, get_shell_counts, resolve_shell_scope
+from access.navigation_contracts import get_navigation_contract
 from shared_support.static_assets import resolve_runtime_css_paths
+from django.urls import reverse
 
 
 _ASSET_VERSION_CACHE = {
@@ -73,41 +75,41 @@ def _build_static_asset_version():
     return _ASSET_VERSION_CACHE['value']
 
 
-def _pick_active_href(current_path, links):
-    current_path = current_path or '/'
-    matches = []
-
-    for item in links:
-        href = item['href']
-        if current_path == href or current_path.startswith(href):
-            matches.append(href)
-
-    return max(matches, key=len, default='')
+def _pick_active_nav_key(current_view_name):
+    contract = get_navigation_contract(current_view_name)
+    return contract.get('nav_key', '')
 
 
-def _build_shell_page_context(current_path, role, navigation, alerts):
-    active_item = next((item for item in navigation if item['is_active']), None)
+def _build_shell_page_context(current_view_name, current_path, role, navigation, alerts):
+    contract = get_navigation_contract(current_view_name)
+    nav_key = contract.get('nav_key')
+    
+    active_item = next((item for item in navigation if item.get('nav_key') == nav_key), None)
     active_label = active_item['label'] if active_item else 'OctoBox Control'
     role_label = getattr(role, 'label', 'Sem papel definido')
     role_slug = getattr(role, 'slug', '')
-    scope = resolve_shell_scope(current_path=current_path, role_slug=role_slug)
-    section_map = [
-        {'prefix': '/dashboard/', 'eyebrow': 'Painel', 'title': 'Dashboard', 'scope': 'dashboard'},
-        {'prefix': '/entradas/', 'eyebrow': 'Triagem', 'title': 'Fila de Entradas', 'scope': 'intake-center'},
-        {'prefix': '/alunos/', 'eyebrow': 'Gestão', 'title': 'Diretório de Alunos', 'scope': 'students'},
-        {'prefix': '/financeiro/', 'eyebrow': 'Gestão', 'title': 'Centro Financeiro', 'scope': 'finance'},
-        {'prefix': '/grade-aulas/', 'eyebrow': 'Grade', 'title': 'Agenda de Aulas', 'scope': 'class-grid'},
-        {'prefix': '/operacao/', 'eyebrow': 'Operação', 'title': 'Painel Operacional', 'scope': 'operations-owner'},
-        {'prefix': '/acessos/', 'eyebrow': 'Acessos', 'title': 'Papéis e acessos', 'scope': 'access'},
-        {'prefix': '/mapa-sistema/', 'eyebrow': 'Sistema', 'title': 'Mapa do sistema', 'scope': 'system-map'},
-        {'prefix': '/configuracoes-operacionais/', 'eyebrow': 'Config', 'title': 'Configurações operacionais', 'scope': 'operational-settings'},
-        {'prefix': f"/{settings.ADMIN_URL_PATH}", 'eyebrow': 'Admin', 'title': active_label, 'scope': 'admin'},
-    ]
-    section = next((item for item in section_map if current_path.startswith(item['prefix'])), None)
-    if section is None:
-        section = {'eyebrow': 'OctoBox', 'title': active_label, 'scope': 'generic'}
+    
+    scope = resolve_shell_scope(view_name=current_view_name, role_slug=role_slug, fallback_path=current_path)
+    
+    section_map = {
+        'dashboard': {'eyebrow': 'Painel', 'title': 'Dashboard'},
+        'intake-center': {'eyebrow': 'Triagem', 'title': 'Fila de Entradas'},
+        'students': {'eyebrow': 'Gestão', 'title': 'Diretório de Alunos'},
+        'finance': {'eyebrow': 'Gestão', 'title': 'Centro Financeiro'},
+        'class-grid': {'eyebrow': 'Grade', 'title': 'Agenda de Aulas'},
+        'operations-owner': {'eyebrow': 'Operação', 'title': 'Painel Operacional'},
+        'access': {'eyebrow': 'Acessos', 'title': 'Papéis e acessos'},
+        'system-map': {'eyebrow': 'Sistema', 'title': 'Mapa do sistema'},
+        'operational-settings': {'eyebrow': 'Config', 'title': 'Configurações operacionais'},
+        'admin': {'eyebrow': 'Admin', 'title': active_label},
+    }
+    
+    # Generic resolution if not mapped directly
+    section = section_map.get(scope)
+    if not section:
+        section = {'eyebrow': 'OctoBox', 'title': active_label}
 
-    if current_path.startswith('/dashboard/') and role_slug == ROLE_RECEPTION:
+    if scope == 'dashboard' and role_slug == ROLE_RECEPTION:
         section = {**section, 'eyebrow': 'Recepção'}
 
     return {
@@ -118,27 +120,26 @@ def _build_shell_page_context(current_path, role, navigation, alerts):
     }
 
 
-def _build_navigation(role_slug, current_path=''):
-    admin_home = admin_index_url()
+def _build_navigation(role_slug, current_view_name):
     base_links = [
-        {'label': 'Dashboard', 'href': '/dashboard/', 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER), 'icon': 'DB'},
-        {'label': 'Minha operação', 'href': '/operacao/', 'icon': 'OP'},
-        {'label': 'Alunos', 'href': '/alunos/', 'icon': 'AL'},
-        {'label': 'Financeiro', 'href': '/financeiro/', 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER), 'icon': 'FI'},
-        {'label': 'Entradas', 'href': '/entradas/', 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION), 'icon': 'EN'},
-        {'label': 'Grade de aulas', 'href': '/grade-aulas/', 'icon': 'AU'},
+        {'nav_key': 'dashboard', 'label': 'Dashboard', 'href': reverse('dashboard'), 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER), 'icon': 'DB'},
+        {'nav_key': 'operacao', 'label': 'Minha operação', 'href': reverse('role-operations'), 'icon': 'OP'},
+        {'nav_key': 'alunos', 'label': 'Alunos', 'href': reverse('student-directory'), 'icon': 'AL'},
+        {'nav_key': 'financeiro', 'label': 'Financeiro', 'href': reverse('finance-center'), 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER), 'icon': 'FI'},
+        {'nav_key': 'entradas', 'label': 'Entradas', 'href': reverse('intake-center'), 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION), 'icon': 'EN'},
+        {'nav_key': 'grade-aulas', 'label': 'Grade de aulas', 'href': reverse('class-grid'), 'icon': 'AU'},
     ]
 
     role_links = {
         ROLE_OWNER: [
-            {'label': 'WhatsApp', 'href': '/operacao/whatsapp/', 'icon': 'WA'},
+            {'nav_key': 'whatsapp', 'label': 'WhatsApp', 'href': reverse('whatsapp-workspace'), 'icon': 'WA'},
         ],
         ROLE_DEV: [],
         ROLE_MANAGER: [
-            {'label': 'WhatsApp', 'href': '/operacao/whatsapp/', 'icon': 'WA'},
+            {'nav_key': 'whatsapp', 'label': 'WhatsApp', 'href': reverse('whatsapp-workspace'), 'icon': 'WA'},
         ],
         ROLE_COACH: [
-            {'label': 'Ocorrências', 'href': '/operacao/coach/#coach-boundary-board', 'icon': 'OC'},
+            {'nav_key': 'operacao', 'label': 'Ocorrências', 'href': reverse('role-operations') + '#coach-boundary-board', 'icon': 'OC'},
         ],
         ROLE_RECEPTION: [],
     }
@@ -177,14 +178,14 @@ def _build_navigation(role_slug, current_path=''):
 
     for item in links:
         code = item.get('icon', '')
-        # prefer mapped emoji, fall back to existing icon text
         item['icon'] = emoji_map.get(code, code)
-    active_href = _pick_active_href(current_path, links)
+        
+    active_nav_key = _pick_active_nav_key(current_view_name)
 
     return [
         {
             **item,
-            'is_active': item['href'] == active_href,
+            'is_active': item.get('nav_key') == active_nav_key,
         }
         for item in links
     ]
@@ -192,16 +193,16 @@ def _build_navigation(role_slug, current_path=''):
 
 def _build_topbar_alert_links(role_slug):
     finance_href_map = {
-        ROLE_OWNER: '/financeiro/',
-        ROLE_DEV: '/financeiro/',
-        ROLE_MANAGER: '/financeiro/',
-        ROLE_RECEPTION: '/operacao/recepcao/#reception-payment-board',
-        ROLE_COACH: '/financeiro/',
+        ROLE_OWNER: reverse('finance-center'),
+        ROLE_DEV: reverse('finance-center'),
+        ROLE_MANAGER: reverse('finance-center'),
+        ROLE_RECEPTION: reverse('reception-workspace') + '#reception-payment-board',
+        ROLE_COACH: reverse('finance-center'),
     }
 
     return {
-        'finance': finance_href_map.get(role_slug, '/financeiro/'),
-        'intakes': '/entradas/',
+        'finance': finance_href_map.get(role_slug, reverse('finance-center')),
+        'intakes': reverse('intake-center'),
     }
 
 
@@ -219,20 +220,21 @@ def role_navigation(request):
         'lead_students': 0,
         'active_enrollments': 0,
     }
+    
+    view_name = getattr(request.resolver_match, 'view_name', '') if hasattr(request, 'resolver_match') else ''
 
     if request.user.is_authenticated:
         shell_counts = get_shell_counts()
-        sidebar_navigation = _build_navigation(role_slug, request.path)
+        sidebar_navigation = _build_navigation(role_slug, current_view_name=view_name)
 
-        # Build Profile Navigation (Administrative/Legacy links)
         admin_home = admin_index_url()
         if role_slug in (ROLE_OWNER, ROLE_DEV):
             profile_navigation = [
-                {'label': 'Papéis e acessos', 'href': '/acessos/'},
-                {'label': 'Config. operacionais', 'href': '/configuracoes-operacionais/'},
+                {'label': 'Papéis e acessos', 'href': reverse('access-overview')},
+                {'label': 'Config. operacionais', 'href': reverse('operational-settings')},
                 {'label': 'Auditoria', 'href': admin_changelist_url('boxcore', 'auditevent')},
                 {'label': 'Admin Django', 'href': admin_home},
-                {'label': 'Mapa do sistema', 'href': '/mapa-sistema/'},
+                {'label': 'Mapa do sistema', 'href': reverse('system-map')},
             ]
 
     return {
@@ -240,17 +242,18 @@ def role_navigation(request):
         'current_role': role,
         'sidebar_navigation': sidebar_navigation,
         'profile_navigation': profile_navigation,
-        'global_search_action': '/alunos/',
+        'global_search_action': reverse('student-directory'),
         'shell_core_stylesheets': resolve_runtime_css_paths(['css/design-system.css']),
         'static_asset_version': _build_static_asset_version(),
         'topbar_alert_links': _build_topbar_alert_links(role_slug),
         'topbar_quick_links': [
-            {'label': '+ Aluno', 'href': '/alunos/novo/#student-form-essential', 'kind': 'secondary', 'action': 'open-topbar-student-quick-create'},
-            {'label': '+ Entrada', 'href': '/entradas/', 'kind': 'secondary', 'action': 'open-topbar-intake-center'},
+            {'label': '+ Aluno', 'href': reverse('student-quick-create') + '#student-form-essential', 'kind': 'secondary', 'action': 'open-topbar-student-quick-create'},
+            {'label': '+ Entrada', 'href': reverse('intake-center'), 'kind': 'secondary', 'action': 'open-topbar-intake-center'},
         ],
-        'shell_page_context': _build_shell_page_context(request.path, role, sidebar_navigation, shell_counts),
+        'shell_page_context': _build_shell_page_context(view_name, request.path, role, sidebar_navigation, shell_counts),
         'shell_counts': shell_counts,
         'shell_action_buttons': build_default_shell_action_buttons(
+            view_name=view_name,
             current_path=request.path,
             role_slug=role_slug,
             overdue_payments=shell_counts['overdue_payments'],

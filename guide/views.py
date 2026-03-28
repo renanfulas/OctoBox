@@ -43,10 +43,13 @@ class SystemMapView(LoginRequiredMixin, TemplateView):
         )
         return context
 
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.views import View
 from operations.services.contact_importer import import_contacts_from_list
 
+@method_decorator(csrf_exempt, name='dispatch')
 class OperationalSettingsAutoImportApiView(View):  # Removido LoginRequiredMixin por ser API Token
     """
     Endpoint para ingestão de contatos via JSON (Automação WhatsApp).

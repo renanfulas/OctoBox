@@ -233,10 +233,15 @@ def _build_dashboard_payment_alert_snapshot(*, overdue_payments_queryset):
     
     contacts_map = {}
     if student_ids:
-        latest_contacts = WhatsAppContact.objects.filter(
+        # 🧪 Compatibilidade V4.1 (SQLite & Postgres): Deduplicação Determinística em memória
+        # Ordenamos por estudante e data, depois guardamos apenas o mais recente no mapa.
+        latest_contacts_qs = WhatsAppContact.objects.filter(
             linked_student_id__in=student_ids
-        ).order_by('linked_student_id', '-last_outbound_at').distinct('linked_student_id')
-        contacts_map = {c.linked_student_id: c for c in latest_contacts}
+        ).order_by('linked_student_id', '-last_outbound_at', '-id')
+        
+        for contact in latest_contacts_qs:
+            if contact.linked_student_id not in contacts_map:
+                contacts_map[contact.linked_student_id] = contact
 
     payment_alerts = []
     actionable_count = 0
@@ -359,12 +364,12 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
         prev_day_count=Count('id', filter=Q(scheduled_at__date=previous_day))
     )
 
-    payment_overdue_qs = get_overdue_payments_queryset(Payment.objects.all(), today=today)
-    payment_overdue_prev_qs = get_overdue_payments_queryset(Payment.objects.all(), today=previous_day)
+    overdue_payments = get_overdue_payments_queryset(Payment.objects.all(), today=today)
+    overdue_payments_prev = get_overdue_payments_queryset(Payment.objects.all(), today=previous_day)
     
     payment_metrics = Payment.objects.aggregate(
-        overdue_count=Count('id', filter=Q(id__in=payment_overdue_qs.values('id'))),
-        overdue_prev_count=Count('id', filter=Q(id__in=payment_overdue_prev_qs.values('id'))),
+        overdue_count=Count('id', filter=Q(id__in=overdue_payments.values('id'))),
+        overdue_prev_count=Count('id', filter=Q(id__in=overdue_payments_prev.values('id'))),
         monthly_paid=Sum('amount', filter=Q(status=PaymentStatus.PAID, due_date__gte=month_start)),
         monthly_paid_prev=Sum('amount', filter=Q(status=PaymentStatus.PAID, due_date__gte=previous_month_start, due_date__lt=month_start))
     )
@@ -405,49 +410,34 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
     sync_runtime_statuses(upcoming_session_objects, now=current_time)
 
     # --- Weekly revenue computation ---
-    def _last_day_of_month(year, month):
-        return calendar.monthrange(year, month)[1]
-
-    def _revenue_for_month_week(year, month, week_index):
-        # week_index: 1 => days 1-7, 2 => 8-14, etc.
-        start_day = 1 + (week_index - 1) * 7
-        last_day = _last_day_of_month(year, month)
-        end_day = min(start_day + 6, last_day)
-        start_date = date(year, month, start_day)
-        end_date = date(year, month, end_day)
-        total = Payment.objects.filter(
-            status=PaymentStatus.PAID,
-            due_date__date__gte=start_date,
-            due_date__date__lte=end_date,
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        return total
-
     # determine current week index in the current month
     week_index = (today.day - 1) // 7 + 1
-    this_year = today.year
-    this_month = today.month
-    # previous month/year
-    prev_month_date = (month_start - timedelta(days=1))
-    prev_year = prev_month_date.year
-    prev_month = prev_month_date.month
+    
+    def _get_week_range(year, month, w_idx):
+        start_day = 1 + (w_idx - 1) * 7
+        last_day = calendar.monthrange(year, month)[1]
+        if start_day > last_day: return None, None
+        end_day = min(start_day + 6, last_day)
+        return date(year, month, start_day), date(year, month, end_day)
 
-    try:
-        weekly_total = _revenue_for_month_week(this_year, this_month, week_index)
-    except Exception:
-        weekly_total = 0
-
-    # Primary previous candidate: previous week in same month (if exists)
+    curr_start, curr_end = _get_week_range(today.year, today.month, week_index)
+    
+    # Pre-calculating comparison week range
     if week_index > 1:
-        try:
-            previous_week_total = _revenue_for_month_week(this_year, this_month, week_index - 1)
-        except Exception:
-            previous_week_total = 0
+        prev_start, prev_end = _get_week_range(today.year, today.month, week_index - 1)
     else:
-        # week_index == 1 -> compare with same week index in previous month
-        try:
-            previous_week_total = _revenue_for_month_week(prev_year, prev_month, 1)
-        except Exception:
-            previous_week_total = 0
+        prev_month_date = (month_start - timedelta(days=1))
+        prev_start, prev_end = _get_week_range(prev_month_date.year, prev_month_date.month, 1)
+
+    # 🚀 Performance de Elite (Ghost Hardening): Multi-Period Aggregation
+    # Uma única viagem ao banco para buscar todos os períodos necessários.
+    revenue_metrics = Payment.objects.filter(status=PaymentStatus.PAID).aggregate(
+        curr_week=Sum('amount', filter=Q(due_date__gte=curr_start, due_date__lte=curr_end)),
+        prev_week=Sum('amount', filter=Q(due_date__gte=prev_start, due_date__lte=prev_end))
+    )
+    
+    weekly_total = revenue_metrics['curr_week'] or 0
+    previous_week_total = revenue_metrics['prev_week'] or 0
 
     # Fallback: if previous is zero, try same week index in previous month
     if previous_week_total == 0:
