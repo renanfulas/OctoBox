@@ -19,12 +19,12 @@ env/
 
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
-*.py[cod]
+*$py.class
 
-# Django / banco local
+# Django / runtime local
 db.sqlite3
 *.sqlite3
 media/
@@ -42,6 +42,9 @@ staticfiles/
 htmlcov/
 .mypy_cache/
 .ruff_cache/
+.hypothesis/
+.pyre/
+.benchmarks/
 
 # Editor / sistema operacional
 .vscode/
@@ -51,40 +54,69 @@ Thumbs.db
 
 # Logs
 *.log
+/server_log.txt
 
-# Backups locais
+# Backups locais e sobras de merge
 backups/
+*.bak
+*.orig
+*.rej
+
+# Tooling local de agentes
+.agents/
+/ .agents/
+/prompts/
+/figma/
 
 # Artefatos temporarios de revisao local
 tmp-*-cookies.txt
 /test-*.txt
+/test_output*.txt
+/test_results*.txt
+/test_*_output*.txt
 /tmp-*.txt
 /.tmp-*.log
+/response*.html
+/debug_*.html
+/reception_error.html
+/coverage_report.txt
+/csrf_token.txt
+/all_git_files.txt
+/largest_elements*.json
+/lcp*.json
+/link_check_results.json
+/link_fix_suggestions.json
+/login_response.html
+/response_home.html
+/playwright_capture/
+/playwright_debug.log
+/static_css_check.css
+/127.0.0.1
 /static/css/**/*.bak
 
 # Manifestos reservados para marcos futuros
 docs/*-manifesto.local.md
 
 # --- Limpeza Local (Artefatos de Scrapes/Dumps) ---
-.agents/
-.coverage
-.coverage.*
-playwright_capture/
-*.csv
 *headers*.txt
 *status*.txt
 *authed.html
 response_*.html
 debug_*.html
-all_git_files.txt
-coverage_report.txt
-csrf_token.txt
-largest_elements*.json
-lcp*.json
-link_check_results.json
-link_fix_suggestions.json
-login_response.html
-playwright_debug.log
-static_css_check.css
-response_home.html
-127.0.0.1
+
+# Scripts locais de depuracao descartaveis
+/debug_*.py
+/test_login_error.py
+
+# Arquivos pessoais, rascunhos e diagnosticos fora do app
+/repair_ghost_comments.py
+/sanitize_ghost_writing.py
+/ui_alignment_diagnostic.md
+/ux_diagnostic_report.md
+/white_hat_bug_bounty_report_v3.md
+/Programando-em-alto-nível1.py
+/Programando-em-alto-nível2.py
+/Programando-em-alto-nível4.yaml
+/.github/renan_prompter.instructions.md
+/.github/agents/Debugger.agent.md
+/.github/agents/UI Payment.agent.md
