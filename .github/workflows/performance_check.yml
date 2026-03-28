@@ -52,7 +52,16 @@ jobs:
         pip install -r requirements.txt
         pip install pytest pytest-django pytest-benchmark
 
-    - name: 4. Populate Test Database for CI
+    - name: 4. Apply Migrations for CI
+      run: |
+        python manage.py migrate --settings=config.settings.test --noinput
+      env:
+        DJANGO_SECRET_KEY: 'a-dummy-secret-key-for-ci'
+        PHONE_BLIND_INDEX_KEY: 'ci-only-blind-index-key'
+        DATABASE_URL: postgres://user:password@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379
+
+    - name: 5. Populate Test Database for CI
       run: |
         python manage.py populate_test_db --scale=load --settings=config.settings.test
       env:
@@ -61,7 +70,7 @@ jobs:
         DATABASE_URL: postgres://user:password@localhost:5432/test_db
         REDIS_URL: redis://localhost:6379
 
-    - name: 5. Run Integrity & Performance Tests (SIE & DPA)
+    - name: 6. Run Integrity & Performance Tests (SIE & DPA)
       run: |
         python -m pytest tests/test_performance.py -q
       env:
