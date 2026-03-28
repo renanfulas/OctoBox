@@ -84,7 +84,20 @@ class DjangoInboundWhatsAppMessagePort(InboundWhatsAppMessagePort):
                     notes=notes,
                 )
             except IntegrityError:
-                contact = WhatsAppContact.objects.select_for_update().get(phone=normalized_phone)
+                identity = resolve_whatsapp_channel_identity(
+                    phone=normalized_phone,
+                    external_contact_id=external_contact_id,
+                )
+                contact = _lock_contact(identity.contact)
+                if contact is None and student is not None:
+                    contact = (
+                        WhatsAppContact.objects.select_for_update()
+                        .filter(linked_student=student)
+                        .order_by('-last_outbound_at', '-last_inbound_at', '-id')
+                        .first()
+                    )
+                if contact is None:
+                    raise
         return contact
 
     @transaction.atomic
@@ -178,6 +191,17 @@ class DjangoOperationalMessagePort(OperationalMessagePort):
         identity = resolve_whatsapp_channel_identity(phone=normalized_phone)
         contact = identity.contact
         created = False
+        if contact is None:
+            # O telefone do contato e do aluno usa criptografia na persistencia,
+            # entao o lookup por igualdade no campo nao e confiavel para
+            # reencontrar o mesmo registro outbound. Como este fluxo ja conhece
+            # o aluno, reutilizamos primeiro o contato vinculado a ele.
+            contact = (
+                WhatsAppContact.objects.select_for_update()
+                .filter(linked_student=student)
+                .order_by('-last_outbound_at', '-last_inbound_at', '-id')
+                .first()
+            )
         if contact is not None:
             contact = WhatsAppContact.objects.select_for_update().get(pk=contact.pk)
         else:
@@ -222,17 +246,22 @@ class DjangoOperationalMessagePort(OperationalMessagePort):
         duplicate_message = None
         repeat_block_threshold = self._repeat_block_threshold()
         if repeat_block_threshold is not None:
-            duplicate_message = (
+            # Filtramos por metadados e data para performance, mas comparamos body em Python 
+            # devido à criptografia não-determinística do campo (Fernet).
+            candidates = (
                 WhatsAppMessageLog.objects.filter(
                     contact=contact,
                     direction=MessageDirection.OUTBOUND,
                     kind=MessageKind.SYSTEM,
                     delivered_at__gte=repeat_block_threshold,
-                    body=body,
                 )
                 .order_by('-delivered_at', '-id')
-                .first()
             )
+            for candidate in candidates:
+                if candidate.body == body:
+                    duplicate_message = candidate
+                    break
+
         if duplicate_message is not None:
             return OperationalMessageResult(
                 student_id=student.id,
