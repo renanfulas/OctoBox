@@ -16,8 +16,14 @@ PONTOS CRITICOS:
 import os
 
 environment = os.getenv('DJANGO_ENV', 'development').strip().lower()
+explicit_settings_module = os.getenv('DJANGO_SETTINGS_MODULE', '').strip().lower()
 
-if environment in {'production', 'staging', 'homolog', 'homologation'}:
-    from .production import *  # noqa: F401,F403
-else:
-    from .development import *  # noqa: F401,F403
+# Quando o chamador aponta para um submodulo especifico, como
+# `config.settings.test`, o import desse pacote acontece antes do submodulo.
+# Nesse caso nao devemos carregar development/production aqui, para nao
+# interferir no modulo explicito escolhido.
+if explicit_settings_module in {'', __name__.lower()}:
+    if environment in {'production', 'staging', 'homolog', 'homologation'}:
+        from .production import *  # noqa: F401,F403
+    else:
+        from .development import *  # noqa: F401,F403
