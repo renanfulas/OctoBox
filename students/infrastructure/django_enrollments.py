@@ -13,6 +13,7 @@ PONTOS CRITICOS:
 - Este arquivo concentra ORM e transação do domínio comercial de matrícula.
 """
 
+from decimal import Decimal
 from django.db import transaction
 
 from students.application.commands import StudentEnrollmentActionCommand, StudentEnrollmentSyncCommand
@@ -125,6 +126,25 @@ class DjangoStudentEnrollmentWorkflowPort(StudentEnrollmentWorkflowPort):
                 movement=decision.movement,
             )
 
+        # === INÍCIO CANCEL & REPLACE / PRO-RATA ===
+        
+        # 1. Obter base de cálculo para Pro-Rata
+        last_paid = latest_enrollment.payments.filter(status=PaymentStatus.PAID).order_by('-due_date').first()
+        period_start = last_paid.due_date if last_paid else latest_enrollment.start_date
+        previous_price = getattr(latest_enrollment.plan, 'price', Decimal('0.00'))
+        
+        from students.domain.enrollment_sync import calculate_prorata_credit
+        prorata_decision = calculate_prorata_credit(
+            previous_price=previous_price,
+            selected_price=selected_plan.price,
+            period_start_date=period_start,
+            today=self.clock.today(),
+            billing_cycle_days=30,  # Fixo em mês comercial (30 dias)
+        )
+
+        # 2. Padrão Stripe: Anular pendências antigas da matrícula anterior
+        latest_enrollment.payments.filter(status=PaymentStatus.PENDING).update(status=PaymentStatus.CANCELED)
+
         latest_enrollment.status = EnrollmentStatus.EXPIRED
         latest_enrollment.end_date = self.clock.today()
         latest_enrollment.notes = append_enrollment_note(
@@ -140,21 +160,34 @@ class DjangoStudentEnrollmentWorkflowPort(StudentEnrollmentWorkflowPort):
             start_date=self.clock.today(),
             notes=decision.new_enrollment_note,
         )
+
+        # 3. Montar a cobrança do novo plano
+        amount_to_charge = prorata_decision.new_charge_amount
+        note_to_add = decision.payment_note or ''
+        if prorata_decision.note:
+            note_to_add += "\n" + prorata_decision.note
+
+        confirm_now = command.confirm_payment_now
+        # Se 0.00 e precisar de review, deixa pending e adiciona flag gerencial
+        if prorata_decision.needs_manager_review:
+            confirm_now = False
+
         payment_result = execute_student_payment_schedule_command(
             StudentPaymentScheduleCommand(
                 student_id=student.id,
                 enrollment_id=enrollment.id,
                 due_date=sync_defaults.due_date,
                 payment_method=sync_defaults.payment_method,
-                confirm_payment_now=command.confirm_payment_now,
-                note=decision.payment_note or '',
-                amount=sync_defaults.base_amount,
+                confirm_payment_now=confirm_now,
+                note=note_to_add,
+                amount=amount_to_charge,
                 reference=command.payment_reference,
                 billing_strategy=sync_defaults.billing_strategy,
                 installment_total=sync_defaults.installment_total,
                 recurrence_cycles=sync_defaults.recurrence_cycles,
             )
         )
+        # === FIM CANCEL & REPLACE / PRO-RATA ===
         return EnrollmentSyncRecord(
             enrollment_id=enrollment.id,
             payment_id=payment_result.payment_id,

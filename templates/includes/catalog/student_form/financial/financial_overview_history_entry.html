@@ -1,8 +1,9 @@
-<div class="history-entry">
-    <div class="row-between history-header">
-        <strong>{{ enrollment.plan.name }}</strong>
-        <span class="pill{% if enrollment.status == 'expired' or enrollment.status == 'canceled' %} warning{% endif %}">{{ enrollment.get_status_display }}</span>
+<div class="history-entry section-gap-bottom-xs" style="border-bottom: 1px dashed var(--border-100); padding-bottom: 12px;">
+    <div class="row-between-md align-center" style="margin-bottom: 4px;">
+        <strong style="font-size: 0.9rem; color: var(--text-800);">{{ enrollment.plan.name }}</strong>
+        <span class="pill outline {% if enrollment.status == 'active' %}success{% else %}secondary{% endif %}" style="font-size: 9px; padding: 1px 6px;">{{ enrollment.get_status_display }}</span>
     </div>
-    <p class="meta-text-sm">Inicio em {{ enrollment.start_date|date:"d/m/Y" }}{% if enrollment.end_date %} | Fim em {{ enrollment.end_date|date:"d/m/Y" }}{% endif %}</p>
-    {% if enrollment.notes %}<p class="meta-text">{{ enrollment.notes }}</p>{% endif %}
+    <p class="meta-text-xs">
+        De {{ enrollment.start_date|date:"d/m/Y" }} {% if enrollment.end_date %}até {{ enrollment.end_date|date:"d/m/Y" }}{% else %}(Recorrente){% endif %}
+    </p>
 </div>

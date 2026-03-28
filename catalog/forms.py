@@ -23,6 +23,7 @@ from .form_definitions import (
     ReceptionPaymentManagementForm,
     StudentPaymentActionForm,
     StudentDirectoryFilterForm,
+    StudentExpressForm,
     StudentQuickForm,
 )
 
@@ -38,5 +39,6 @@ __all__ = [
     'ReceptionPaymentManagementForm',
     'StudentPaymentActionForm',
     'StudentDirectoryFilterForm',
+    'StudentExpressForm',
     'StudentQuickForm',
-]
+]

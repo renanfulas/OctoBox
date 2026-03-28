@@ -2,6 +2,7 @@ import os
 os.environ.setdefault('DJANGO_ENV', 'development')
 os.environ.setdefault('DJANGO_SECRET_KEY', 'test-only-secret-key')
 os.environ.setdefault('PHONE_BLIND_INDEX_KEY', 'test-only-blind-index-key')
+os.environ.setdefault('ENABLE_DEBUG_TOOLBAR', 'false')
 from .development import *
 
 # Força o uso de Cache em memória para os testes de telemetria

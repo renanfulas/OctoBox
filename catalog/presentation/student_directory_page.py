@@ -8,6 +8,8 @@ POR QUE ELE EXISTE:
 
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from access.shell_actions import build_shell_action_buttons_from_focus
+from access.navigation_contracts import get_shell_route_url
+from django.urls import reverse
 from shared_support.page_payloads import build_page_hero
 
 from .shared import build_catalog_assets, build_catalog_page_payload
@@ -23,7 +25,7 @@ def build_student_directory_page(*, student_count, students, student_filter_form
 
     if can_manage_students:
         hero_actions.append(
-            {'label': 'Novo aluno', 'href': '/alunos/novo/#student-form-essential', 'data_action': 'open-student-create'}
+            {'label': 'Novo aluno', 'href': f"{reverse('student-quick-create')}#student-form-essential", 'data_action': 'open-student-create'}
         )
 
     operational_focus = [
@@ -42,7 +44,7 @@ def build_student_directory_page(*, student_count, students, student_filter_form
             'summary': f'{len(intake_queue)} entrada(s) provisoria(s) ja podem virar aluno com pouco atrito.',
             'count': len(intake_queue),
             'pill_class': 'info' if len(intake_queue) > 0 else 'accent',
-            'href': '/entradas/#intake-queue-board',
+            'href': get_shell_route_url('intake', fragment='intake-queue-board'),
             'href_label': 'Abrir central de intake',
         },
         {

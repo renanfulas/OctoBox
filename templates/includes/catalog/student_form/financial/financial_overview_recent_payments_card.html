@@ -1,7 +1,7 @@
-<article class="card no-margin student-financial-history-table-card" style="background: var(--surface-000);">
-    <h3 class="section-title-sm" style="margin-bottom: 16px; color: var(--text-800); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+<article class="card no-margin student-financial-history-table-card bg-surface-000">
+    <h3 class="section-title-sm recent-payments-header">
     Últimos Pagamentos
-    <button class="button" style="background-color: #16a34a; border-color: #16a34a; font-size: 0.85rem; padding: 6px 14px; color: white; border-radius: 6px; font-weight: 500;" onclick="openDrawer('financial-payment-management-slot')">+ Registrar Pagamento</button>
+    <button class="button primary-action" data-action="open-drawer" data-drawer-id="financial-payment-management-slot">+ Registrar Pagamento</button>
 </h3>
     {% if page.data.financial_overview.payments %}
     <div class="operation-table-wrap student-financial-history-table-wrap">
@@ -12,6 +12,7 @@
                     <th scope="col">Valor</th>
                     <th scope="col">Status</th>
                     <th scope="col">Método</th>
+                    <th scope="col">Ações</th>
                 </tr>
             </thead>
             <tbody>

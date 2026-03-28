@@ -10,18 +10,28 @@ from django.conf import settings
 
 _CSS_IMPORT_RE = re.compile(r'@import\s+url\(["\'](?P<path>[^"\']+\.css)["\']\)')
 
+_CSS_EXPANSION_CACHE = {}
+
 
 def resolve_runtime_css_paths(stylesheet_paths):
+    if not stylesheet_paths:
+        return []
+
+    cache_key = tuple(stylesheet_paths)
+    if cache_key in _CSS_EXPANSION_CACHE:
+        return _CSS_EXPANSION_CACHE[cache_key]
+
     resolved_paths = []
     seen_paths = set()
 
-    for stylesheet_path in stylesheet_paths or []:
+    for stylesheet_path in stylesheet_paths:
         for runtime_path in _expand_css_manifest(_normalize_asset_path(stylesheet_path), stack=()):
             if runtime_path in seen_paths:
                 continue
             seen_paths.add(runtime_path)
             resolved_paths.append(runtime_path)
 
+    _CSS_EXPANSION_CACHE[cache_key] = resolved_paths
     return resolved_paths
 
 

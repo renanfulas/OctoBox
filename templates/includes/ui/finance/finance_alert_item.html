@@ -26,7 +26,7 @@
     </div>
     <div class="card-footer">
         <div class="actions actions-tight finance-card-actions-compact">
-            <a class="button secondary" href="/alunos/{{ payment.student.id }}/editar/#student-financial-overview">Abrir ficha do aluno</a>
+            <a class="button secondary" href="{% url 'student-quick-update' payment.student.id %}#student-financial-overview">Abrir ficha do aluno</a>
             {% if can_access_admin %}
             <a class="button secondary" href="{% url 'admin:boxcore_payment_change' payment.id %}">Ver pagamento no admin</a>
             {% endif %}

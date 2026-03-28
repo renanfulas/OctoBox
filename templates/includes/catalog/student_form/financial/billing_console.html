@@ -1,0 +1,79 @@
+<!-- Student Billing Console - Elite SaaS Standard -->
+<div class="elite-drawer" id="billing-console-root">
+    <div class="elite-drawer__header">
+        <div class="stack-4">
+            <h2 class="section-title">Console de Cobrança 🦁</h2>
+            <p class="meta-text">Controle total sobre pagamentos e prazos.</p>
+        </div>
+    </div>
+
+    <div class="elite-drawer__body">
+        <!-- Quick Stats -->
+        <div class="row-between-md glass-panel elite-panel--compact section-gap-bottom-xs">
+            <div class="stack-4">
+                <p class="meta-text-sm uppercase">Atrasados</p>
+                <strong class="text-danger text-xl">{{ page.data.financial_overview.metrics.pagamentos_atrasados }}</strong>
+            </div>
+            <div class="stack-4">
+                <p class="meta-text-sm uppercase">Próximos</p>
+                <strong class="text-info text-xl">{{ page.data.financial_overview.metrics.pagamentos_pendentes }}</strong>
+            </div>
+            <div class="stack-4">
+                <p class="meta-text-sm uppercase">Status</p>
+                <span class="pill outline {{ page.data.financial_overview.fidalgometro.code }}">{{ page.data.financial_overview.fidalgometro.label }}</span>
+            </div>
+        </div>
+
+        <!-- Payment Timeline -->
+        <div class="stack-16 section-gap-top">
+            <h3 class="field-label">Linha do Tempo de Cobranças</h3>
+            <div class="elite-timeline">
+                {% for payment in page.data.financial_overview.payments %}
+                <div class="elite-timeline__item elite-timeline__item--{{ payment.status }}">
+                    <div class="elite-timeline__marker"></div>
+                    <div class="timeline-content card glass-panel">
+                        <div class="row-between-md">
+                            <div class="stack-4">
+                                <strong class="font-bold">R$ {{ payment.amount|floatformat:2 }}</strong>
+                                <p class="meta-text-sm">Vencimento: {{ payment.due_date|date:"d/m/Y" }}</p>
+                            </div>
+                            <div class="actions actions-tight">
+                                {% if payment.status == 'paid' %}
+                                    <button class="elite-button-icon tertiary" data-action="edit-payment" data-payment-id="{{ payment.id }}" title="Ver Comprovante / Detalhes">📄</button>
+                                {% else %}
+                                    {% if payment.is_next_actionable %}
+                                        {% if payment.status == 'overdue' %}
+                                        <button class="button danger-soft elite-button-sm" data-action="edit-payment" data-payment-id="{{ payment.id }}">
+                                            RECEBER 🔥
+                                        </button>
+                                        {% else %}
+                                        <button class="button success-soft elite-button-sm" data-action="edit-payment" data-payment-id="{{ payment.id }}">
+                                            RECEBER 💰
+                                        </button>
+                                        {% endif %}
+                                    {% endif %}
+                                    <button class="elite-button-icon" data-action="edit-payment" data-payment-id="{{ payment.id }}" title="Editar Vencimento">📅</button>
+                                    <button class="elite-button-icon" data-action="split-payment" data-payment-id="{{ payment.id }}" title="Parcelar">✂️</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="meta-text">Nenhuma cobrança encontrada para este aluno.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="elite-drawer__footer">
+        <div class="stack-8">
+            <button class="button success elite-button-full" data-action="vacation-freeze">
+                <span>Marcar Férias / Congelar 🏖️</span>
+            </button>
+            <button class="button secondary elite-button-full" data-action="close-drawers">
+                <span>Fechar Console</span>
+            </button>
+        </div>
+    </div>
+</div>

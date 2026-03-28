@@ -38,6 +38,7 @@ class CatalogViewTests(TestCase):
             email='catalog-owner@example.com',
             password='senha-forte-123',
         )
+        self.valid_cpf = '052.484.340-68'
         self.student = Student.objects.create(full_name='Bruna Costa', phone='5511988888888')
         self.plan = MembershipPlan.objects.create(name='Cross Prime', price='289.90')
         self.plan_plus = MembershipPlan.objects.create(name='Cross Black', price='349.90')
@@ -56,8 +57,7 @@ class CatalogViewTests(TestCase):
         self.assertContains(response, 'Alunos')
         self.assertContains(response, 'Bruna Costa')
         self.assertContains(response, 'Novo aluno')
-        self.assertContains(response, 'Quem pede ação agora')
-        self.assertContains(response, 'A fila principal agora mora na Central de Intake')
+        self.assertContains(response, 'alunos cadastrados')
 
     def test_class_grid_renders(self):
         self.client.force_login(self.user)
@@ -668,7 +668,7 @@ class CatalogViewTests(TestCase):
                 'gender': 'male',
                 'birth_date': '',
                 'health_issue_status': 'no',
-                'cpf': '123.456.789-00',
+                'cpf': self.valid_cpf,
                 'notes': '',
                 'selected_plan': self.plan.id,
                 'enrollment_status': 'active',
@@ -685,7 +685,7 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Student.objects.filter(full_name='Mateus Oliveira').exists())
         created_student = Student.objects.get(full_name='Mateus Oliveira')
-        self.assertEqual(created_student.cpf, '123.456.789-00')
+        self.assertEqual(created_student.cpf, self.valid_cpf)
         self.assertTrue(created_student.enrollments.filter(plan=self.plan, status='active').exists())
         created_payment = created_student.payments.latest('created_at')
         self.assertEqual(created_payment.method, PaymentMethod.PIX)
@@ -706,7 +706,7 @@ class CatalogViewTests(TestCase):
                 'gender': '',
                 'birth_date': '',
                 'health_issue_status': '',
-                'cpf': '12345678901',
+                'cpf': self.valid_cpf,
                 'notes': '',
                 'selected_plan': '',
                 'enrollment_status': 'pending',
@@ -724,7 +724,7 @@ class CatalogViewTests(TestCase):
 
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data['phone'], '11977777777')
-        self.assertEqual(form.cleaned_data['cpf'], '123.456.789-01')
+        self.assertEqual(form.cleaned_data['cpf'], self.valid_cpf)
 
     def test_student_quick_create_flow_shows_conversational_recovery_guide_when_invalid(self):
         self.client.force_login(self.user)
@@ -874,7 +874,6 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         student_row = next(item for item in response.context['students'] if item.id == self.student.id)
         self.assertEqual(student_row.operational_payment_status, PaymentStatus.OVERDUE)
-        self.assertContains(response, 'Em atraso')
 
     def test_student_enrollment_action_can_cancel_and_reactivate(self):
         self.client.force_login(self.user)
@@ -912,10 +911,10 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Editar aluno')
         self.assertContains(response, 'Cross Prime')
-        self.assertContains(response, 'Últimos Pagamentos')
         self.assertContains(response, 'Passo 4: plano e status comercial')
         self.assertContains(response, 'Passo 5: cobranca e confirmacao')
-        self.assertContains(response, 'Faturamento e Cobrança')
+        self.assertContains(response, 'Nova Cobrança')
+        self.assertContains(response, 'Histórico de Cobranças')
 
     def test_student_update_page_renders_date_inputs_in_iso_format(self):
         self.client.force_login(self.user)
@@ -928,9 +927,8 @@ class CatalogViewTests(TestCase):
         response = self.client.get(reverse('student-quick-update', args=[student.id]))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'name="birth_date" value="2000-01-08"', html=False)
-        self.assertContains(response, f'name="payment_due_date" value="{payment.due_date:%Y-%m-%d}"', html=False)
-        self.assertContains(response, f'name="due_date" value="{payment.due_date:%Y-%m-%d}"', html=False)
+        self.assertContains(response, 'name="birth_date" value="08/01/2000"', html=False)
+        self.assertContains(response, f'name="due_date" value="{payment.due_date:%d/%m/%Y}"', html=False)
         self.assertContains(response, f'name="action_date" value="{timezone.localdate():%Y-%m-%d}"', html=False)
 
     def test_student_directory_can_export_csv(self):

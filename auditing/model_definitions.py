@@ -40,6 +40,10 @@ class AuditEvent(TimeStampedModel):
 
     class Meta:
         app_label = HISTORICAL_BOXCORE_APP_LABEL
+        # Histórico: a tabela original foi criada como parte do app `boxcore`.
+        # Para manter compatibilidade com bancos existentes, usamos explicitamente
+        # o mesmo nome de tabela usado nas migrations históricas.
+        db_table = 'boxcore_auditevent'
         ordering = ['-created_at']
 
     def __str__(self):

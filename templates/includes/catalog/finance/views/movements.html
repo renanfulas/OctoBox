@@ -1,26 +1,43 @@
 <!--
 ARQUIVO: histórico recente de movimentos financeiros.
 -->
-<section class="card glass-panel finance-movements-panel" id="finance-movements-board" aria-label="Raio-X de Movimentações">
-    <div class="card-head">
-        <h3 class="card-title">Raio-X de Movimentações</h3>
-        <span class="badge badge-subtle info">{{ page.data.recent_movements|length }} reg(s)</span>
+<section class="glass-panel-elite finance-movements-panel p-4" id="finance-movements-board" aria-label="Raio-X de Movimentações">
+    <div class="flex-between items-center mb-4">
+        <div>
+            <h3 class="text-elite-bright" style="font-size: 1.1rem; font-weight: 600;">Raio-X de Movimentações</h3>
+            <p class="text-xs text-elite-muted">Fluxo de contratos e reposicionamentos em tempo real.</p>
+        </div>
+        <span class="pill pill-surface-low text-xs text-bold info">{{ page.data.recent_movements|length }} reg(s)</span>
     </div>
-    <div class="finance-guide-note">
-        <p class="meta-text no-margin">Fluxo mapeado de entradas, saídas e mudanças de plano no período ativo.</p>
-    </div>
-    <div class="stack-14 finance-movements-list">
+
+    <div class="stack-8 finance-movements-list">
         {% for movement in page.data.recent_movements %}
-        <div class="timeline-row finance-movement-item">
-            <div class="timeline-dot"></div>
-            <div>
-                <strong>{{ movement.student.full_name }}</strong>
-                <p class="meta-text-sm">{{ movement.plan.name }} | {{ movement.get_status_display }}</p>
-                <p class="meta-text">Início em {{ movement.start_date|date:"d/m/Y" }}{% if movement.end_date %} | Fim em {{ movement.end_date|date:"d/m/Y" }}{% endif %}</p>
+        <div class="elite-ledger-row p-3 rounded-surface flex-between items-center">
+            <div class="flex-row items-center gap-3">
+                <div class="flex-center" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(99, 102, 241, 0.1); color: var(--elite-accent); font-size: 14px;">
+                    {{ movement.student.full_name|slice:":1"|upper }}
+                </div>
+                <div class="stack-2">
+                    <strong class="text-sm text-elite-bright">{{ movement.student.full_name }}</strong>
+                    <div class="flex-row items-center gap-2">
+                        <span class="text-xs text-elite-muted">{{ movement.plan.name }}</span>
+                        <span class="text-xs" style="color: var(--elite-accent);">●</span>
+                        <span class="text-xs text-bold {% if movement.status == 'active' %}text-success{% else %}text-elite-muted{% endif %}">
+                            {{ movement.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-right stack-2">
+                <p class="text-xs text-elite-muted">{{ movement.start_date|date:"d/m/Y" }}</p>
+                {% if movement.end_date %}
+                <p class="text-xs italic text-dimmed">Até {{ movement.end_date|date:"d/m/Y" }}</p>
+                {% endif %}
             </div>
         </div>
         {% empty %}
-        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Movimentos recentes" title="Nenhum movimento de matrícula registrado ainda" copy="A carteira ainda não acumulou entradas, saídas ou reposicionamentos para leitura histórica." badge="Histórico em formação" badge_class="info" %}
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Movimentos recentes" title="Nenhum movimento registrado" copy="Aguardando as primeiras atividades de matrícula." badge="Vazio" badge_class="info" %}
         {% endfor %}
     </div>
 </section>

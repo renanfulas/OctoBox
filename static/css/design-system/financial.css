@@ -1,0 +1,215 @@
+/* 
+ARQUIVO: modulo financeiro (Neon Genesis / Phase 14).
+Descricao: Centraliza os estilos do cockpit financeiro do aluno.
+*/
+
+/* --- Topbar de Comando --- */
+.elite-financial-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    margin-bottom: var(--space-4);
+    box-shadow: var(--shadow-soft);
+}
+
+.elite-search-wrapper {
+    position: relative;
+    flex: 1;
+    max-width: 480px;
+}
+
+.elite-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.5;
+}
+
+.elite-search-input {
+    min-height: 42px;
+    padding-left: 40px;
+    border-radius: 10px;
+    background: var(--bg-depth);
+    border: 1px solid transparent;
+    width: 100%;
+}
+
+.elite-search-input:focus {
+    background: var(--surface);
+    border-color: var(--brand);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 8%, transparent);
+}
+
+.elite-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.elite-notification-pill-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    padding: 0 var(--space-3);
+}
+
+.elite-ping-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.elite-ping-dot.orange { 
+    background: var(--elite-accent); 
+    box-shadow: 0 0 8px rgba(255, 140, 0, 0.4); 
+}
+
+.elite-avatar-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+/* --- ID Hero Card --- */
+.elite-id-card-hero {
+    padding: var(--space-4) var(--space-5);
+    border-radius: 16px;
+    background: var(--surface);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--space-5);
+}
+
+.elite-id-card-hero__inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-5);
+}
+
+.elite-id-card-hero__identity {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.elite-avatar-large {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--elite-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.elite-id-card-hero__stats {
+    display: flex;
+    gap: var(--space-5);
+    align-items: center;
+}
+
+.elite-mini-stat-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.elite-mini-stat-box__label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.elite-mini-stat-box__value {
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+}
+
+/* --- KPI Grid --- */
+.elite-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-5);
+    margin-top: var(--space-4);
+}
+
+.elite-kpi-card {
+    background: var(--surface);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
+    padding: var(--space-4);
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+}
+
+.elite-kpi-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--brand);
+    opacity: 0.8;
+}
+
+.elite-kpi-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.elite-kpi-card__label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.elite-kpi-card__value {
+    margin: var(--space-2) 0 4px;
+    font-size: 1.85rem;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    color: var(--ink);
+}
+
+.elite-kpi-card__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.78rem;
+}
+
+@media (max-width: 1280px) {
+    .elite-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+    .elite-kpi-grid { grid-template-columns: 1fr; }
+    .elite-id-card-hero__inner { flex-direction: column; align-items: flex-start; }
+}

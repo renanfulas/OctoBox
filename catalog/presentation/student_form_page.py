@@ -8,6 +8,7 @@ POR QUE ELE EXISTE:
 
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
 from access.shell_actions import build_shell_action_buttons_from_focus
+from access.navigation_contracts import get_shell_route_url
 from shared_support.page_payloads import build_page_hero
 
 from .shared import build_catalog_assets, build_catalog_page_payload
@@ -146,7 +147,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
         actions=[
             {'label': 'Preencher essencial', 'href': '#student-form-essential', 'kind': 'primary', 'data_action': 'open-tab-student-form-essential'},
             {'label': 'Ver plano e cobrança', 'href': '#student-form-financial', 'kind': 'secondary', 'data_action': 'open-tab-student-form-financial'},
-            {'label': 'Voltar para alunos', 'href': '/alunos/', 'kind': 'secondary'},
+            {'label': 'Voltar para alunos', 'href': get_shell_route_url('students'), 'kind': 'secondary'},
         ],
         aria_label='Ficha do aluno',
         classes=['operation-hero'],
@@ -197,7 +198,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
                     'scroll_target': 'student-form-essential',
                 },
                 'active': {
-                    'close': ['student-form-profile', 'student-form-health', 'student-form-plan', 'student-form-billing'],
+                    'close': ['student-form-essential', 'student-form-profile', 'student-form-health', 'student-form-plan', 'student-form-billing'],
                     'scroll_target': 'student-financial-overview',
                 },
             },
@@ -207,8 +208,8 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'can_manage_student_payments_full': can_manage_student_payments_full,
         },
         assets=build_catalog_assets(
-            css=['css/catalog/students.css'],
-            js=['js/pages/students/student-form.js', 'js/pages/interactive_tabs.js'],
+            css=['css/catalog/students.css', 'css/catalog/student_form_stepper.css', 'css/design-system/financial.css'],
+            js=['js/pages/students/student-form.js', 'js/pages/students/student-form-stepper.js', 'js/pages/interactive_tabs.js', 'js/pages/finance/billing_console.js'],
             include_catalog_shared=True,
         ),
     )
