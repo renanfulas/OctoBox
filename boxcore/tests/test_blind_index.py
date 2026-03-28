@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.db import IntegrityError, transaction
 from students.models import Student
 from communications.models import WhatsAppContact
 from onboarding.models import StudentIntake
@@ -92,38 +93,23 @@ class BlindIndexTests(TestCase):
         identity_post = resolve_whatsapp_channel_identity(phone=phone)
         self.assertEqual(identity_post.student.full_name, "Legacy")
 
-    def test_identity_resolution_detects_ambiguity(self):
-        """Validar que a resolucao nao associa ninguem se houver ambiguidade no indice."""
-        phone = "11977776666"
-        
-        # Criar registros duplicados (antes da constraint de banco)
-        s1 = Student.objects.create(full_name="Student 1", phone=phone)
-        s2 = Student.objects.create(full_name="Student 2", phone=phone)
-        # Garantir que possuem o mesmo indice
-        self.assertEqual(s1.phone_lookup_index, s2.phone_lookup_index)
-        
-        # Ao tentar resolver, deve logar CRITICAL e retornar None para evitar falso positivo
-        with self.assertLogs('integrations.whatsapp.identity', level='CRITICAL') as cm:
-            identity = resolve_whatsapp_channel_identity(phone=phone)
-            self.assertIsNone(identity.student)
-            
-        self.assertIn("AMBIGUIDADE: Multiplos Student", cm.output[0])
+    def test_student_lookup_index_constraint_blocks_duplicates(self):
+        """Student agora deve bloquear duplicidade de indice pesquisavel no banco."""
+        student_one = Student.objects.create(full_name="Student 1", phone="11977776660")
+        student_two = Student.objects.create(full_name="Student 2", phone="11977776661")
 
-    def test_audit_command_gatekeeper(self):
-        """Validar que o comando de auditoria detecta erros e retorna exit code 1."""
-        phone = "11955554444"
-        
-        # Caso 1: Duplicata
-        Student.objects.create(full_name="Dup 1", phone=phone)
-        Student.objects.create(full_name="Dup 2", phone=phone)
-        
-        out = StringIO()
-        # call_command com audit_blind_index deve levantar SystemExit(1)
-        with self.assertRaises(SystemExit) as cm:
-            call_command('audit_blind_index', stdout=out)
-        
-        self.assertEqual(cm.exception.code, 1)
-        self.assertIn("Duplicatas encontradas em Student", out.getvalue())
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Student.objects.filter(id=student_two.id).update(phone_lookup_index=student_one.phone_lookup_index)
+
+    def test_whatsapp_contact_lookup_index_constraint_blocks_duplicates(self):
+        """WhatsAppContact tambem deve bloquear duplicidade de indice pesquisavel no banco."""
+        contact_one = WhatsAppContact.objects.create(phone="11955554440", display_name="Contact 1")
+        contact_two = WhatsAppContact.objects.create(phone="11955554441", display_name="Contact 2")
+
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                WhatsAppContact.objects.filter(id=contact_two.id).update(phone_lookup_index=contact_one.phone_lookup_index)
 
     def test_audit_command_detects_drift(self):
         """Validar que a auditoria detecta quando o indice nao bate com o telefone atual."""
