@@ -10,7 +10,9 @@ ARQUIVO: erros globais e acoes finais da ficha do aluno.
 {% endif %}
 
 <div class="actions actions-tight">
-    <button class="button" type="submit">{% if page_mode == 'create' %}Salvar aluno{% else %}Salvar ajustes{% endif %}</button>
+    <button class="button secondary" type="button" data-action="prev-step" style="display: none;">Voltar</button>
+    <button class="button" type="button" data-action="next-step">Próximo: Plano e Pagamento</button>
+    <button class="button" type="submit" style="display: none;">{% if page_mode == 'create' %}Finalizar cadastro{% else %}Salvar ajustes{% endif %}</button>
     {% if student_object and can_open_student_admin %}
     <a class="button secondary" href="{% url 'admin:boxcore_student_change' student_object.id %}">Editar no admin</a>
     {% endif %}

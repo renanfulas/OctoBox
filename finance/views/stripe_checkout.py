@@ -14,7 +14,7 @@ O QUE ESTE ARQUIVO FAZ:
 
 import logging
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import get_object_or_400pass, redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator

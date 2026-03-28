@@ -13,10 +13,12 @@ POR QUE ELE EXISTE:
     try {
       pagePayload = JSON.parse(payloadElement.textContent || '{}');
     } catch (error) {
+      console.error("Payload error:", error);
       pagePayload = {};
     }
   }
 
+  var planPriceMap = pagePayload.plan_price_map || {};
   var planField = document.getElementById('id_selected_plan');
   var amountField = document.getElementById('id_initial_payment_amount');
   var planPriceField = document.getElementById('connected-plan-price');
@@ -25,7 +27,11 @@ POR QUE ELE EXISTE:
   var installmentSelectorShell = document.getElementById('installment-selector-shell');
   var installmentSelector = document.getElementById('installment-selector');
   var installmentPreview = document.getElementById('installment-preview');
-  var planPriceMap = pagePayload.plan_price_map || {};
+  var planSwapStatus = document.getElementById('plan-swap-status');
+  var priceDeltaIndicator = document.getElementById('price-delta-indicator');
+  
+  var initialPlanId = planField ? planField.value : null;
+  var initialPrice = (planField && planPriceMap) ? parseAmount(planPriceMap[initialPlanId]) : 0;
   var focusSections = pagePayload.focus_sections || {};
   var currencyFormatter = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -126,11 +132,36 @@ POR QUE ELE EXISTE:
     }
 
     var selectedPlanId = planField.value;
-    var selectedPrice = planPriceMap[selectedPlanId] || '';
-    planPriceField.value = selectedPrice ? 'R$ ' + selectedPrice : '--';
+    var rawPrice = planPriceMap[selectedPlanId] || '';
+    var selectedPrice = parseAmount(rawPrice);
+    
+    planPriceField.value = rawPrice ? formatCurrency(selectedPrice) : '--';
 
-    if (selectedPrice) {
-      amountField.value = selectedPrice;
+    if (rawPrice) {
+      amountField.value = rawPrice;
+    }
+
+    // Lógica de Swap Status (Fase 18)
+    if (planSwapStatus && priceDeltaIndicator) {
+      if (!selectedPlanId || selectedPlanId === initialPlanId) {
+        planSwapStatus.style.display = 'none';
+        priceDeltaIndicator.style.display = 'none';
+      } else {
+        var delta = selectedPrice - initialPrice;
+        planSwapStatus.style.display = 'flex';
+        priceDeltaIndicator.style.display = 'block';
+        
+        if (delta > 0) {
+          planSwapStatus.innerHTML = '<span class="pill neon-tone-orange text-xs text-bold">🚀 UPGRADE</span>';
+          priceDeltaIndicator.innerHTML = '<span class="text-premium">+' + formatCurrency(delta) + '</span>';
+        } else if (delta < 0) {
+          planSwapStatus.innerHTML = '<span class="pill neon-tone-emerald text-xs text-bold">📉 DOWNGRADE</span>';
+          priceDeltaIndicator.innerHTML = '<span style="color: var(--danger);">-' + formatCurrency(Math.abs(delta)) + '</span>';
+        } else {
+          planSwapStatus.innerHTML = '<span class="pill text-xs text-bold" style="background: var(--surface-low);">⚖️ MESMO VALOR</span>';
+          priceDeltaIndicator.style.display = 'none';
+        }
+      }
     }
 
     syncBillingStrategyState();

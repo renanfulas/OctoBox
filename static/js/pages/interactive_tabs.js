@@ -29,8 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (cardGridToggle) {
                     var currentCardToggle = this.closest('.card') || this;
                     currentCardToggle.classList.remove('is-selected-tab');
-                    currentCardToggle.style.borderColor = '';
-                    currentCardToggle.style.boxShadow = '';
                 }
                 return;
             }
@@ -60,14 +58,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 var allCards = cardGrid.querySelectorAll('.card');
                 allCards.forEach(function(c) {
                     c.classList.remove('is-selected-tab');
-                    c.style.borderColor = '';
-                    c.style.boxShadow = '';
                 });
                 
                 var currentCard = this.closest('.card') || this;
                 currentCard.classList.add('is-selected-tab');
-                currentCard.style.borderColor = 'var(--brand)';
-                currentCard.style.boxShadow = 'var(--shadow-lift)';
             }
             
             // Scroll suave compensando a altura da topbar fixa (ex: 80px)

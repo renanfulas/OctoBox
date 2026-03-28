@@ -1,0 +1,53 @@
+<!-- REBIRTH: Elite Ledger (Phase 21 - Stripe Mastery) -->
+<div class="card elite-glass-card overflow-hidden" id="stripe-ledger-root" style="border-radius: 16px; border: 1px solid rgba(0,0,0,0.08); background: #fff;">
+    <div class="table-responsive">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-muted-soft/40">
+                    <th class="px-6 py-3 text-[10px] uppercase tracking-wider text-dimmed font-bold border-b border-soft">Data</th>
+                    <th class="px-6 py-3 text-[10px] uppercase tracking-wider text-dimmed font-bold border-b border-soft">Descrição / Método</th>
+                    <th class="px-6 py-3 text-[10px] uppercase tracking-wider text-dimmed font-bold border-b border-soft text-right">Valor</th>
+                    <th class="px-6 py-3 text-[10px] uppercase tracking-wider text-dimmed font-bold border-b border-soft text-center">Status</th>
+                    <th class="px-6 py-3 border-b border-soft"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-soft">
+                {% for payment in page.data.financial_overview.payments %}
+                <tr class="hover:bg-muted-soft/30 transition-colors group">
+                    <td class="px-6 py-4 text-xs text-ink font-medium">{{ payment.due_date|date:"d M, Y" }}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-muted-soft flex items-center justify-center text-dimmed">
+                                {% if payment.method == 'pix' %}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M7 7h.01M17 7h.01M17 17h.01M7 17h.01"/></svg>
+                                {% elif payment.method == 'credit_card' %}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                                {% else %}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-ink">Cobrança: {{ payment.enrollment.plan.name|default:"Mensalidade" }}</div>
+                                <div class="text-[10px] text-dimmed">{{ payment.get_method_display }} {% if payment.reference %}• {{ payment.reference|truncatechars:8 }}{% endif %}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="text-xs font-bold text-ink font-mono">R$ {{ payment.amount|floatformat:2 }}</div>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="pill-modern {% if payment.status == 'paid' %}pill-modern-green{% elif payment.status == 'overdue' %}pill-modern-red{% else %}pill-modern-orange{% endif %}">
+                            {{ payment.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button class="w-8 h-8 rounded-full border border-soft flex items-center justify-center text-dimmed hover:text-ink hover:bg-white hover:border-dimmed transition-all opacity-0 group-hover:opacity-100" data-action="edit-payment" data-payment-id="{{ payment.id }}">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

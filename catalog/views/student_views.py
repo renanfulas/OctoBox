@@ -3,11 +3,24 @@ ARQUIVO: views da area de alunos do catalogo.
 
 POR QUE ELE EXISTE:
 - publica a casca HTTP de diretorio, cadastro leve e acoes da ficha no app catalog.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Diretorio de alunos com paginacao e preaquecimento de cache.
+2. Formulario leve de cadastro e edicao de aluno.
+3. Acoes de pagamento e matricula na ficha do aluno.
+4. Lock de edicao com hierarquia de papeis (Owner > Manager > Recep > Coach).
+5. Endpoints de heartbeat e polling de lock para o frontend.
+
+PONTOS CRITICOS:
+- O lock usa Redis. Se Redis cair, o sistema degrada de forma segura (sem lock, aceita a edicao).
+- Dev nao participa do lock operacional: ve a ficha sem adquirir lock.
 """
+
+import json
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -15,15 +28,21 @@ from django.views import View
 from django.views.generic import FormView
 
 from shared_support.decorators import idempotent_action
+from shared_support.editing_locks import (
+    acquire_student_lock,
+    get_student_lock_status,
+    refresh_student_lock,
+    release_student_lock,
+)
 
 from access.permissions import RoleRequiredMixin
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
-from catalog.forms import EnrollmentManagementForm, PaymentManagementForm, StudentPaymentActionForm, StudentQuickForm
+from catalog.forms import EnrollmentManagementForm, PaymentManagementForm, StudentPaymentActionForm, StudentQuickForm, StudentExpressForm
 from catalog.presentation import build_student_directory_page, build_student_form_page
 from catalog.presentation.shared import attach_catalog_page_payload
 from catalog.services.student_enrollment_actions import handle_student_enrollment_action
 from catalog.services.student_payment_actions import handle_student_payment_action
-from catalog.services.student_workflows import run_student_quick_create_workflow, run_student_quick_update_workflow
+from catalog.services.student_workflows import run_student_quick_create_workflow, run_student_quick_update_workflow, run_student_express_create_workflow
 from catalog.student_queries import build_student_directory_snapshot, build_student_financial_snapshot
 from shared_support.redis_snapshots import prewarm_student_snapshots
 from finance.models import Enrollment, Payment
@@ -156,10 +175,17 @@ class StudentQuickBaseView(CatalogBaseView, FormView):
     def get_payment_management_form(self):
         if not self.object:
             return None
+        from django.utils import timezone
         latest_payment = self.object.payments.order_by('-due_date', '-created_at').first()
         if latest_payment is None:
-            return None
+            # Estado "Nova Cobrança": sem payment vinculado
+            return PaymentManagementForm(initial={
+                'amount': '',
+                'due_date': timezone.localdate().strftime('%d/%m/%Y'),
+            })
+        
         return PaymentManagementForm(
+            instance=latest_payment,
             initial={
                 'payment_id': latest_payment.id,
                 'amount': latest_payment.amount,
@@ -235,16 +261,84 @@ class StudentQuickCreateView(StudentQuickBaseView):
         return super().form_valid(form)
 
 
+class StudentExpressCreateView(CatalogBaseView, FormView):
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
+    form_class = StudentExpressForm
+    template_name = 'catalog/student-express-form.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        from shared_support.security.anti_cheat_throttles import StudentCreationSpamThrottle
+        throttle = StudentCreationSpamThrottle()
+        if not throttle.allow_request(request, self):
+            throttle.on_throttle_exceeded(request, self)
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden("Limite de criação atingido. Tente novamente em 1 hora.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        workflow = run_student_express_create_workflow(
+            actor=self.request.user,
+            form=form,
+        )
+        student = workflow['student']
+        messages.success(self.request, f'Cadastro Expresso: {student.full_name} pronto para vinculação financeira!')
+        return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        base_context = self.get_base_context()
+        context.update(base_context)
+        
+        page_payload = {
+            'data': {
+                'hero': {
+                    'title': 'Checkout Rápido (Balcão)',
+                    'subtitle': 'Nome e Zap para fechar a venda agora.',
+                    'icon': 'zap',
+                    'back_url': reverse('student-directory')
+                }
+            }
+        }
+        return attach_catalog_page_payload(
+            context,
+            payload_key='student_express_page',
+            payload=page_payload,
+            include_sections=('context', 'shell'),
+        )
+
+
 class StudentQuickUpdateView(StudentQuickBaseView):
     page_mode = 'update'
+    _lock_holder = None  # Detentor do lock quando este usuario nao consegue adquirir
 
     def dispatch(self, request, *args, **kwargs):
         # 🚀 Segurança de Elite (Fintech Hardening): Tenant Isolation
-        # TODO: Quando o sistema for Multi-Box pleno, filtrar por:
-        # workspace = request.current_workspace
-        # self.object = get_object_or_404(Student, pk=kwargs['student_id'], workspace=workspace)
+        # TODO: Quando o sistema for Multi-Box pleno, filtrar por workspace.
         self.object = get_object_or_404(Student, pk=kwargs['student_id'])
+
+        # --- Lock de edicao com hierarquia de papeis ---
+        # Dev nao participa do lock: ve a ficha sem adquirir nem bloquear.
+        role = get_user_role(request.user)
+        role_slug = getattr(role, 'slug', None)
+
+        if role_slug and role_slug != ROLE_DEV:
+            lock_result = acquire_student_lock(self.object.id, request.user, role_slug)
+            if not lock_result.acquired:
+                # Armazena o detentor para o template exibir o banner contextual.
+                self._lock_holder = lock_result.holder
+
         return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Injeta informacao do lock no contexto para o template renderizar o banner.
+        if self._lock_holder:
+            context['student_lock_holder'] = self._lock_holder
+            context['student_lock_is_blocked'] = True
+        else:
+            context['student_lock_is_blocked'] = False
+        context['student_id_for_lock'] = self.object.id
+        return context
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -252,6 +346,23 @@ class StudentQuickUpdateView(StudentQuickBaseView):
         return kwargs
 
     def form_valid(self, form):
+        # Revalida o lock antes de persistir. Se outro usuario de maior prioridade
+        # tomou o lock enquanto este usuario estava preenchendo, rejeita a gravacao.
+        role = get_user_role(self.request.user)
+        role_slug = getattr(role, 'slug', None)
+
+        if role_slug and role_slug != ROLE_DEV:
+            current_lock = get_student_lock_status(self.object.id)
+            if current_lock and current_lock.get('user_id') != self.request.user.id:
+                holder = current_lock
+                messages.error(
+                    self.request,
+                    f"{holder.get('user_display', 'Outro usuário')} ({holder.get('role_label', '')}) "
+                    f"assumiu a edição deste aluno enquanto você preenchia. "
+                    f"Suas alterações não foram salvas. Fale com ele para coordenar."
+                )
+                return redirect(_append_fragment(reverse('student-quick-update', args=[self.object.id]), STUDENT_FORM_ESSENTIAL_FRAGMENT))
+
         changed_fields = list(form.changed_data)
         workflow = run_student_quick_update_workflow(
             actor=self.request.user,
@@ -260,6 +371,11 @@ class StudentQuickUpdateView(StudentQuickBaseView):
             selected_intake=self.get_selected_intake(),
         )
         self.object = workflow['student']
+
+        # Libera o lock apos salvar com sucesso.
+        if role_slug and role_slug != ROLE_DEV:
+            release_student_lock(self.object.id, self.request.user.id)
+
         messages.success(self.request, f'Cadastro de {self.object.full_name} atualizado com sucesso.')
         return redirect(self.get_success_url())
 
@@ -276,6 +392,23 @@ class StudentPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
         action = action_form.cleaned_data['action']
+        
+        # --- FLUXO 1: CRIACAO AVULSA (1-Clique Balcao) ---
+        if action == 'create-payment':
+            # Nao tentar dar lock em payment existente
+            from catalog.services.student_payment_actions import handle_student_payment_creation
+            new_payment = handle_student_payment_creation(
+                actor=request.user,
+                student=student,
+                payload=request.POST
+            )
+            if new_payment:
+                messages.success(request, 'Cobranca avulsa criada e recebimento confirmado via Balcao.')
+            else:
+                messages.error(request, 'Erro ao criar cobranca avulsa.')
+            return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
+
+        # --- FLUXO 2: ATUALIZACAO/RECEBIMENTO DE EXISTENTE ---
         # 🚀 Segurança de Elite (Fintech Hardening): Pessimistic Locking com Fail-Fast
         # nowait=True evita que o servidor trave se a linha já estiver bloqueada (ataque de DoS)
         from django.db import transaction, DatabaseError
@@ -333,6 +466,8 @@ class StudentDirectoryExportView(LoginRequiredMixin, RoleRequiredMixin, View):
 
 
 class StudentEnrollmentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
+
     @idempotent_action
     def post(self, request, student_id, *args, **kwargs):
         student = get_object_or_404(Student, pk=student_id)
@@ -365,3 +500,229 @@ class StudentEnrollmentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
         )
 
         return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
+
+
+class StudentLockHeartbeatView(LoginRequiredMixin, View):
+    """
+    Heartbeat do lock de edicao.
+
+    Chamado pelo JS a cada 5s enquanto o usuario esta com a ficha aberta.
+    Renova o TTL do lock para evitar expiracao por inatividade.
+    Retorna JSON com status do lock atual.
+    """
+
+    def post(self, request, student_id, *args, **kwargs):
+        student = get_object_or_404(Student, pk=student_id)
+        role = get_user_role(request.user)
+        role_slug = getattr(role, 'slug', None)
+
+        if not role_slug or role_slug == 'Dev':
+            return JsonResponse({'status': 'dev_bypass'})
+
+        refreshed = refresh_student_lock(student.id, request.user.id)
+
+        if refreshed:
+            return JsonResponse({'status': 'active', 'holder': 'self'})
+
+        # Lock pode ter expirado ou sido tomado por outro usuario
+        current = get_student_lock_status(student.id)
+        if current:
+            return JsonResponse({
+                'status': 'stolen',
+                'holder': {
+                    'user_display': current.get('user_display', ''),
+                    'role_label': current.get('role_label', ''),
+                }
+            })
+
+        # Lock expirou: tenta readquirir
+        lock_result = acquire_student_lock(student.id, request.user, role_slug)
+        if lock_result.acquired:
+            return JsonResponse({'status': 'reacquired'})
+
+        holder = lock_result.holder or {}
+        return JsonResponse({
+            'status': 'blocked',
+            'holder': {
+                'user_display': holder.get('user_display', ''),
+                'role_label': holder.get('role_label', ''),
+            }
+        })
+
+
+class StudentLockStatusView(LoginRequiredMixin, View):
+    """
+    Consulta de status do lock para polling do frontend.
+
+    GET: retorna se este usuario ainda detém o lock.
+    Nao renova o TTL — apenas informa o estado atual.
+    """
+
+    def get(self, request, student_id, *args, **kwargs):
+        student = get_object_or_404(Student, pk=student_id)
+        current = get_student_lock_status(student.id)
+
+        if not current:
+            return JsonResponse({'status': 'free'})
+
+        if current.get('user_id') == request.user.id:
+            return JsonResponse({'status': 'owner'})
+
+        return JsonResponse({
+            'status': 'blocked',
+            'holder': {
+                'user_display': current.get('user_display', ''),
+                'role_label': current.get('role_label', ''),
+            }
+        })
+
+
+class StudentBulkActionView(LoginRequiredMixin, RoleRequiredMixin, View):
+    """
+    Executa acoes em massa (bulk) na listagem de alunos.
+    Suporta partial-commit: falhas pontuais geram relatorio em vez de quebrar todo o loto.
+    """
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
+
+    @idempotent_action
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('bulk_action')
+        student_ids = request.POST.getlist('selected_students')
+
+        if not action or not student_ids:
+            messages.warning(request, "Nenhuma acao ou aluno selecionado.")
+            return redirect('student-directory')
+
+        students = Student.objects.filter(id__in=student_ids)
+
+        if not students.exists():
+            messages.warning(request, "Os alunos selecionados nao foram encontrados.")
+            return redirect('student-directory')
+
+        from shared_support.bulk_executor import execute_bulk_action
+
+        # Definicao dinamica da acao baseada no form submetido
+        def apply_action(student: Student):
+            from students.models import StudentStatus
+            
+            # TODO: validar permissoes e regras de negocio
+            if action == 'mark_inactive':
+                if student.status == StudentStatus.INACTIVE:
+                    raise Exception(f"{student.full_name} ja esta inativo.")
+                student.status = StudentStatus.INACTIVE
+                student.save(update_fields=['status', 'updated_at'])
+            
+            elif action == 'mark_active':
+                if student.status == StudentStatus.ACTIVE:
+                    raise Exception(f"{student.full_name} ja esta ativo.")
+                student.status = StudentStatus.ACTIVE
+                student.save(update_fields=['status', 'updated_at'])
+            else:
+                raise ValueError("Acao de lote desconhecida ou nao implementada.")
+
+        # Executa as transacoes de forma independente (partial commit)
+        results = execute_bulk_action(students, apply_action)
+
+        sucessos = len(results['success'])
+        falhas = len(results['failed'])
+
+        if sucessos > 0:
+            messages.success(request, f"{sucessos} aluno(s) processado(s) com sucesso na acao: {action}.")
+            
+        if falhas > 0:
+            error_msgs = []
+            for fail in results['failed']:
+                # max 3 errors no toast
+                if len(error_msgs) < 3:
+                     # limit error message length
+                     error_msgs.append(f"[{fail['item'].full_name}: {str(fail['error'])[:50]}]")
+            
+            error_details = ' '.join(error_msgs)
+            if falhas > 3:
+                error_details += f" ... e mais {falhas - 3} itens."
+                
+            messages.error(request, f"{falhas} falha(s) ignoradas: {error_details}")
+
+        return redirect('student-directory')
+
+
+class StudentImportView(LoginRequiredMixin, RoleRequiredMixin, View):
+    """
+    Inicia o job de importacao assincrona de alunos ou exibe a tela de form (se houvesse).
+    """
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
+
+    def post(self, request, *args, **kwargs):
+        from shared_support.background_jobs import create_job, submit_background_job
+        # Normalmente leriamos o CSV de request.FILES, mas como e um prototipo/hub para 
+        # provar o async e o partial commit, vamos mocar a logica do job.
+        
+        csv_file = request.FILES.get('import_file')
+        if not csv_file:
+            messages.error(request, 'Nenhum arquivo CSV enviado.')
+            return redirect('student-directory')
+            
+        # Simula a leitura e determinacao do total de itens no CSV
+        linhas = csv_file.read().decode('utf-8').splitlines()
+        total = len(linhas) - 1 if len(linhas) > 1 else 0
+        
+        if total <= 0:
+            messages.warning(request, 'O arquivo parece vazio ou não tem cabeçalho.')
+            return redirect('student-directory')
+
+        job_id = create_job('import_students', total_items=total, metadata={'filename': csv_file.name})
+        
+        # A funcao que vai rodar em background.
+        def process_csv_chunk(job_id, linhas_dados):
+            import time
+            for i, linha in enumerate(linhas_dados):
+                # time sleep para simular o processo DB pesado (100ms)
+                time.sleep(0.1)
+                
+                # Simula falha proposital para testar a engine se a linha contiver 'erro'
+                if 'erro' in linha.lower():
+                    from shared_support.background_jobs import update_job_progress
+                    update_job_progress(job_id, 1, failed_item={'line': i+2, 'error': f'Dados invalidos ou ja existentes: linha "{linha[:20]}..."'})
+                else:
+                    from shared_support.background_jobs import update_job_progress
+                    update_job_progress(job_id, 1)
+
+        submit_background_job(process_csv_chunk, job_id, linhas[1:])
+        
+        # Redireciona para a UI de progresso
+        return redirect('student-import-progress', job_id=job_id)
+
+
+class StudentImportProgressView(LoginRequiredMixin, RoleRequiredMixin, View):
+    """
+    Tela de acompanhamento de operacoes pesadas como Importacao.
+    Possui GET para a view visual e GET ?json=1 para o polling.
+    """
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
+
+    def get(self, request, job_id, *args, **kwargs):
+        from shared_support.background_jobs import get_job_status
+        job_data = get_job_status(job_id)
+        
+        if not job_data:
+            if request.GET.get('json'):
+                return JsonResponse({'status': 'not_found'}, status=404)
+            messages.error(request, 'Processo não encontrado ou já expirou.')
+            return redirect('student-directory')
+
+        if request.GET.get('json'):
+            return JsonResponse({'job': job_data})
+            
+        # Retorna a UX visual do job (polling de tela)
+        # O Base Context (shell lateral, menu, current role, current widget)
+        # seria anexado via attach_catalog_page_payload como views nativas.
+        context = {
+            'job': job_data,
+        }
+        
+        if hasattr(self, 'get_base_context'):
+            context.update(self.get_base_context())
+
+        return render(request, 'catalog/import-progress.html', context)
+
+

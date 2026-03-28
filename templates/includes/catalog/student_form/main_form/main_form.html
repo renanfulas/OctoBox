@@ -10,11 +10,38 @@ ARQUIVO: formulario principal da ficha do aluno.
             {% csrf_token %}
             <div class="form-stack-lg student-form-steps" data-slot="student-form-steps">
                 {% include "includes/catalog/student_form/main_form/main_form_recovery.html" %}
-                {% include "includes/catalog/student_form/main_form/main_form_step_essential.html" %}
-                {% include "includes/catalog/student_form/main_form/main_form_step_profile.html" %}
-                {% include "includes/catalog/student_form/main_form/main_form_step_health.html" %}
-                {% include "includes/catalog/student_form/main_form/main_form_step_plan.html" %}
-                {% include "includes/catalog/student_form/main_form/main_form_step_billing.html" %}
+                
+                <!-- Stepper UI -->
+                <nav class="student-form-stepper" aria-label="Passos do cadastro">
+                    <div class="stepper-item active" id="stepper-1">
+                        <div class="stepper-circle">1</div>
+                        <span class="stepper-label">Identificação</span>
+                        <div class="stepper-line"></div>
+                    </div>
+                    <div class="stepper-item" id="stepper-2">
+                        <div class="stepper-circle">2</div>
+                        <span class="stepper-label">Plano e Pagamento</span>
+                        <div class="stepper-line"></div>
+                    </div>
+                </nav>
+
+                <!-- Step 1: Identificação -->
+                <div class="step-container active" data-step="1">
+                    <div class="stack-16">
+                        {% include "includes/catalog/student_form/main_form/main_form_step_essential.html" %}
+                        {% include "includes/catalog/student_form/main_form/main_form_step_profile.html" %}
+                        {% include "includes/catalog/student_form/main_form/main_form_step_health.html" %}
+                    </div>
+                </div>
+
+                <!-- Step 2: Plano e Pagamento -->
+                <div class="step-container" data-step="2">
+                    <div class="stack-16">
+                        {% include "includes/catalog/student_form/main_form/main_form_step_plan.html" %}
+                        {% include "includes/catalog/student_form/main_form/main_form_step_billing.html" %}
+                    </div>
+                </div>
+
                 {% include "includes/catalog/student_form/main_form/main_form_actions.html" %}
             </div>
         </form>

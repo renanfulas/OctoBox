@@ -16,9 +16,22 @@ PONTOS CRITICOS:
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from access.shell_actions import build_shell_action_buttons_from_focus
 from shared_support.page_payloads import build_page_assets, build_page_hero, build_page_payload
+from finance.models import MembershipPlan
 
 
 def build_intake_center_page(*, snapshot, current_role_slug):
+    # Fetch active plans for the quick conversion drawer
+    plans = MembershipPlan.objects.filter(active=True).values('id', 'name', 'price')
+    plan_list = [
+        {
+            'id': p['id'],
+            'name': p['name'],
+            'price': float(p['price']),
+        }
+        for p in plans
+    ]
+    plan_price_map = {str(p['id']): p['price'] for p in plan_list}
+
     can_manage_students = current_role_slug in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
     can_resolve_queue = current_role_slug in (ROLE_OWNER, ROLE_MANAGER)
     can_work_queue = current_role_slug in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
@@ -82,6 +95,8 @@ def build_intake_center_page(*, snapshot, current_role_slug):
         data={
             **snapshot,
             'hero': hero,
+            'available_plans': plan_list,
+            'plan_price_map': plan_price_map,
         },
         capabilities={
             'can_resolve_queue': can_resolve_queue,
@@ -90,8 +105,8 @@ def build_intake_center_page(*, snapshot, current_role_slug):
             'can_work_queue': can_work_queue,
         },
         assets=build_page_assets(
-            css=['css/design-system/operations.css', 'css/catalog/students.css', 'css/onboarding/intakes.css'],
-            js=['js/pages/interactive_tabs.js']
+            css=['css/design-system/operations.css', 'css/catalog/students.css', 'css/onboarding/intakes.css', 'css/onboarding/conversion_drawer.css'],
+            js=['js/pages/interactive_tabs.js', 'js/pages/onboarding/conversion_drawer.js']
         ),
     )
 

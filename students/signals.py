@@ -10,6 +10,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.apps import apps
 from students.models import Student
+from finance.models import Enrollment, Payment
 from shared_support.redis_snapshots import update_student_snapshot, invalidate_student_snapshot
 
 @receiver(post_save, sender=Student)
@@ -17,13 +18,13 @@ def student_ghost_sync_on_save(sender, instance, **kwargs):
     """Sincroniza quando o cadastro principal do aluno mudar."""
     update_student_snapshot(instance.id)
 
-@receiver(post_save, sender='finance.Enrollment')
+@receiver(post_save, sender=Enrollment)
 def enrollment_ghost_sync_on_save(sender, instance, **kwargs):
     """Sincroniza quando o plano ou status comercial mudar."""
     if instance.student_id:
         update_student_snapshot(instance.student_id)
 
-@receiver(post_save, sender='finance.Payment')
+@receiver(post_save, sender=Payment)
 def payment_ghost_sync_on_save(sender, instance, **kwargs):
     """Sincroniza quando houver mudancas financeiras (pagamento vs atraso)."""
     if instance.student_id:

@@ -1,0 +1,59 @@
+<!-- Conversion Drawer Template -->
+<div class="conversion-drawer-overlay"></div>
+<div class="conversion-drawer shadow-300" id="conversion-drawer">
+    {% csrf_token %}
+    <div class="drawer-header">
+        <div class="stack-4">
+            <h2 class="section-title">Matrícula Expressa 🚀</h2>
+            <p class="meta-text">Converta o contato em aluno em segundos.</p>
+        </div>
+        <button class="drawer-close" aria-label="Fechar">&times;</button>
+    </div>
+
+    <div class="drawer-body">
+        <!-- Student Info (ReadOnly Summary) -->
+        <div class="card no-margin glass-panel p-4 mb-6">
+            <div class="stack-4">
+                <strong id="drawer-student-name" class="text-base font-bold text-ink">---</strong>
+                <p id="drawer-student-phone" class="meta-text-sm">---</p>
+            </div>
+        </div>
+
+        <!-- Plan Selection -->
+        <div class="stack-16">
+            <h3 class="field-label uppercase tracking-wider">Escolha o Plano</h3>
+            <div class="stack-12">
+                {% for plan in page.data.available_plans %}
+                <div class="drawer-plan-card" data-plan-id="{{ plan.id }}" onclick="selectDrawerPlan('{{ plan.id }}')">
+                    <div class="row-between-md">
+                        <strong class="font-medium">{{ plan.name }}</strong>
+                        <span class="font-bold text-accent">R$ {{ plan.price|floatformat:2 }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Safety Badges -->
+        <div class="drawer-security-badges section-gap-top-xs">
+            <div class="flex-row items-center gap-2 text-xs text-dimmed">
+                <span class="pill outline success text-2xs p-1">🔒 AES-256 ENCRYPTED</span>
+                <span class="pill outline info text-2xs p-1">💳 STRIPE VERIFIED</span>
+            </div>
+        </div>
+
+        <div class="stack-16 section-gap-top-xs">
+            <h3 class="field-label uppercase tracking-wider">Vencimento padrão</h3>
+            <p class="meta-text-sm">O vencimento será definido para hoje automaticamente.</p>
+        </div>
+    </div>
+
+    <div class="drawer-footer">
+        <button class="button bg-accent" onclick="submitExpressConversion('pix')" disabled id="btn-submit-pix">
+            <span>Gerar Matrícula e Link 🚀</span>
+        </button>
+        <button class="button secondary" onclick="submitExpressConversion('card')" disabled id="btn-submit-card">
+            <span>Matricular e Receber Presencial</span>
+        </button>
+    </div>
+</div>

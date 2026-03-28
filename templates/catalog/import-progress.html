@@ -1,0 +1,125 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="operation-shell p-6 max-w-4xl mx-auto mt-10">
+    <div class="glass-panel rounded-xl border-soft p-8">
+        <header class="mb-8 text-center">
+            <h1 class="text-2xl font-bold text-ink mb-2">Processando Importação</h1>
+            <p class="text-sm text-dimmed">Arquivo: <strong>{{ job.metadata.filename|default:"Alunos" }}</strong></p>
+        </header>
+
+        <div id="progress-container" class="stack-6">
+            <div class="flex-row items-center justify-between text-sm font-semibold mb-2">
+                <span id="progress-status-label" class="text-indigo-600">
+                    {% if job.status == 'pending' %}Aguardando início...{% elif job.status == 'running' %}Validando e salvando...{% else %}Finalizado{% endif %}
+                </span>
+                <span id="progress-percentage-label" class="text-ink">0%</span>
+            </div>
+
+            <div class="w-full bg-slate-100 rounded-full h-3 mb-4 overflow-hidden shadow-inner">
+                <div id="progress-bar" class="bg-indigo-500 h-3 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 text-center">
+                <div class="bg-white rounded-lg p-4 border border-soft">
+                    <span class="block text-2xl font-bold text-ink" id="processed-count">0</span>
+                    <span class="text-xs text-dimmed uppercase tracking-wide">Linhas Processadas</span>
+                </div>
+                <div class="bg-white rounded-lg p-4 border border-red-100">
+                    <span class="block text-2xl font-bold text-red-500" id="failed-count">0</span>
+                    <span class="text-xs text-dimmed uppercase tracking-wide">Falhas Isoladas</span>
+                </div>
+            </div>
+            
+            <div id="completion-actions" class="hidden mt-8 text-center">
+                <div class="p-4 bg-green-50 border border-green-200 rounded-lg mb-6">
+                    <h3 class="text-green-800 font-bold mb-1">Importação Finalizada!</h3>
+                    <p class="text-green-700 text-sm">A rotina assíncrona foi concluída.</p>
+                </div>
+                <a href="{% url 'student-directory' %}" class="button button-primary bg-accent px-8">Voltar para Alunos</a>
+            </div>
+
+            <div id="error-report-container" class="hidden mt-6">
+                <h4 class="text-sm font-bold text-red-600 mb-2 flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    Relatório de Falhas no Lote (Partial Commit Ativo)
+                </h4>
+                <div class="bg-red-50 rounded-lg p-4 max-h-48 overflow-y-auto border border-red-100">
+                    <ul id="error-list" class="space-y-2 text-xs text-red-700 font-mono">
+                        <!-- Errors injected via JS -->
+                    </ul>
+                </div>
+                <p class="text-2xs text-dimmed mt-2">* As linhas sem erro acima foram salvas com sucesso no banco de dados.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const jobId = '{{ job.id }}';
+        const progressApiUrl = `?json=1`;
+        
+        const progressBar = document.getElementById('progress-bar');
+        const percentageLabel = document.getElementById('progress-percentage-label');
+        const statusLabel = document.getElementById('progress-status-label');
+        const processedCount = document.getElementById('processed-count');
+        const failedCount = document.getElementById('failed-count');
+        
+        const completionActions = document.getElementById('completion-actions');
+        const errorContainer = document.getElementById('error-report-container');
+        const errorList = document.getElementById('error-list');
+
+        let pollingInterval;
+
+        function updateUI(data) {
+            const job = data.job;
+            const progress = job.progress || 0;
+            const total = job.total || 1;
+            const percentage = Math.min(Math.round((progress / total) * 100), 100);
+            
+            progressBar.style.width = `${percentage}%`;
+            percentageLabel.textContent = `${percentage}%`;
+            processedCount.textContent = `${progress} / ${total}`;
+            
+            const failures = job.failed_items || [];
+            failedCount.textContent = failures.length;
+
+            if (job.status === 'completed' || job.status === 'failed') {
+                clearInterval(pollingInterval);
+                statusLabel.textContent = job.status === 'completed' ? 'Concluído' : 'Falha Fatal';
+                statusLabel.className = job.status === 'completed' ? 'text-green-600 font-bold' : 'text-red-600 font-bold';
+                progressBar.classList.remove('bg-indigo-500');
+                progressBar.classList.add(job.status === 'completed' ? 'bg-green-500' : 'bg-red-500');
+                
+                completionActions.classList.remove('hidden');
+
+                if (failures.length > 0) {
+                    errorContainer.classList.remove('hidden');
+                    errorList.innerHTML = failures.map(f => `<li>Linha ${f.line}: ${f.error}</li>`).join('');
+                }
+            } else {
+                statusLabel.textContent = 'Processando lote em background...';
+            }
+        }
+
+        function pollProgress() {
+            fetch(progressApiUrl)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.job) {
+                        updateUI(data);
+                    }
+                })
+                .catch(err => console.error("Polling error:", err));
+        }
+
+        // Poll every 1 second
+        pollingInterval = setInterval(pollProgress, 1000);
+        pollProgress(); // initial
+    });
+</script>
+{% endblock %}

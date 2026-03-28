@@ -15,6 +15,7 @@ PONTOS CRITICOS:
 """
 
 import json
+import os
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
@@ -22,9 +23,12 @@ from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+from django.urls import reverse
 
+from finance.models import Payment, PaymentStatus
 from integrations.whatsapp.contracts import WhatsAppInboundPollVote
 from integrations.whatsapp.services import process_poll_vote_webhook
+from integrations.stripe.services import create_checkout_session
 from students.models import Student
 
 
@@ -35,9 +39,9 @@ class ApiV1ManifestView(View):
                 'version': 'v1',
                 'status': 'active',
                 'resources': {
-                    'health': '/api/v1/health/',
-                    'student_autocomplete': '/api/v1/students/autocomplete/',
-                    'whatsapp_poll_webhook': '/api/v1/integrations/whatsapp/webhook/poll-vote/',
+                    'health': reverse('api-v1-health'),
+                    'student_autocomplete': reverse('api-v1-student-autocomplete'),
+                    'whatsapp_poll_webhook': reverse('api-v1-whatsapp-poll-webhook'),
                 },
                 'scope': [
                     'foundation',
@@ -92,7 +96,7 @@ class StudentAutocompleteView(LoginRequiredMixin, View):
                 'phone': s.phone,
                 'status': s.get_status_display(),
                 'status_raw': s.status,
-                'url': f'/alunos/{s.id}/editar/',
+                'url': reverse('student-quick-update', args=[s.id]),
             }
             for s in students
         ]
@@ -145,10 +149,8 @@ class WhatsAppPollWebhookView(View):
         status_code = 200 if result.accepted else 400
         return JsonResponse({'accepted': result.accepted, 'reason': result.reason}, status=status_code)
 
-
 from django.core.management import call_command
 from django.contrib.auth.models import User
-import os
 
 @csrf_exempt
 def init_system_view(request):
@@ -190,3 +192,23 @@ def init_system_view(request):
 
     except Exception as e:
         return JsonResponse({"status": "error", "error": str(e)}, status=500)
+from finance.models import Payment
+from integrations.stripe.services import create_checkout_session
+
+
+class PaymentLinkView(LoginRequiredMixin, View):
+    """Gera um link de checkout do Stripe para compartilhamento manual."""
+
+    def get(self, request, payment_id, *args, **kwargs):
+        payment = Payment.objects.filter(pk=payment_id).first()
+        if not payment:
+            return JsonResponse({'error': 'Payment not found'}, status=404)
+
+        if payment.status == PaymentStatus.PAID:
+            return JsonResponse({'error': 'Payment already paid'}, status=400)
+
+        try:
+            url = create_checkout_session(payment, request)
+            return JsonResponse({'url': url})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)

@@ -1,16 +1,15 @@
-<!--
-ARQUIVO: gestao formal da matricula do aluno.
--->
-{% if page.data.enrollment_management_form %}
-<div class="student-financial-action-inner" id="student-enrollment-management">
-    <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-100);">
-        <h3 class="section-title-sm" style="color: #ca8a04; display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+<!-- ARQUIVO: gestao formal da matricula do aluno. -->
+<div class="elite-panel" id="student-enrollment-management">
+    <div class="pb-3 mb-2 elite-divider-dashed">
+        <h3 class="flex-row items-center gap-2 font-bold" style="color: #ca8a04;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="12" x2="12" y2="16"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
             Manutenção da Matrícula
         </h3>
-        <p class="meta-text" style="color: var(--text-500);">Ações exclusivas para o vínculo deste atleta.</p>
+        <p class="meta-text elite-text-dimmed">Ações exclusivas para o vínculo deste atleta.</p>
     </div>
-    <form method="post" action="/alunos/{{ page.data.student_object.id }}/matricula/acao/" class="form-stack">
+
+    {% if page.data.enrollment_management_form %}
+    <form method="post" action="{% url 'student-enrollment-action' page.data.student_object.id %}" class="form-stack">
         {% csrf_token %}
         {{ page.data.enrollment_management_form.enrollment_id }}
         <div class="field-grid-220">
@@ -25,18 +24,9 @@ ARQUIVO: gestao formal da matricula do aluno.
         </div>
         {% include "includes/catalog/student_form/financial/financial_overview_enrollment_actions.html" %}
     </form>
-</div>
-{% else %}
-<div class="student-financial-action-inner" id="student-enrollment-management">
-    <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-100);">
-        <h3 class="section-title-sm" style="color: #ca8a04; display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-            Manutenção da Matrícula
-        </h3>
-        <p class="meta-text" style="color: var(--text-500);">Ações exclusivas para o vínculo deste atleta.</p>
+    {% else %}
+    <div class="flex-center min-h-200">
+        <p class="meta-text elite-text-dimmed text-center">O atleta não possui plano ativo para manutenção.</p>
     </div>
-    <div style="display: flex; align-items: center; justify-content: center; min-height: 100px;">
-        <p class="meta-text" style="color: var(--text-500); text-align: center;">O atleta não possui plano ativo para manutenção.</p>
-    </div>
+    {% endif %}
 </div>
-{% endif %}

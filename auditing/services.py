@@ -14,9 +14,8 @@ PONTOS CRITICOS:
 """
 
 from django.apps import apps
-from reporting.infrastructure.celery_app import app as celery_app
+# from reporting.infrastructure.celery_app import app as celery_app
 
-@celery_app.task(name='auditing.tasks.async_log_audit_event')
 def async_log_audit_event(actor_id, action, target_model, target_id, target_label, description, metadata):
     from django.contrib.auth.models import User
     from auditing.models import AuditEvent
@@ -59,6 +58,7 @@ def log_audit_event(*, actor=None, action, target=None, description='', metadata
         # Fallback síncrono
         from auditing.models import AuditEvent
         from auditing.scrubber import PIIScrubber
+        from access.roles import get_user_role
         role = get_user_role(actor) if actor is not None else None
         return AuditEvent.objects.create(
             actor=actor,
@@ -71,8 +71,8 @@ def log_audit_event(*, actor=None, action, target=None, description='', metadata
             metadata=PIIScrubber.sanitize(metadata or {}),
         )
     else:
-        # 🚀 Performance de Elite (Ghost Audit): Auditoria Assíncrona
-        async_log_audit_event.delay(
+        # 🚀 Performance de Elite (Ghost Audit): Auditoria Assíncrona (Sincronizada para Testes)
+        async_log_audit_event(
             actor_id=actor_id,
             action=action,
             target_model=target_model,

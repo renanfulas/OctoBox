@@ -93,7 +93,7 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
             'summary': f'{len(operational_queue)} caso(s) já tem abordagem sugerida e não deveria esperar outra leitura para virar ação.',
             'count': len(operational_queue),
             'pill_class': 'warning' if len(operational_queue) > 0 else 'success',
-            'href': '#finance-rail-board',
+            'href': '#finance-priority-board',
             'href_label': 'Abrir regua',
         },
         {
@@ -178,5 +178,5 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
             'can_manage_finance': can_manage_finance,
             'can_export_finance': current_role_slug in (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER),
         },
-        assets=build_catalog_assets(css=['css/catalog/finance.css'], include_catalog_shared=True),
+        assets=build_catalog_assets(css=['css/catalog/finance.css', 'css/design-system/financial.css'], include_catalog_shared=True),
     )
