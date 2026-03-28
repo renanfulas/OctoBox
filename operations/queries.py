@@ -296,9 +296,14 @@ def build_manager_workspace_snapshot():
 
 
 def build_coach_workspace_snapshot(*, today):
-    sessions = ClassSession.objects.filter(scheduled_at__date=today).prefetch_related('attendances__student').order_by('scheduled_at')
-    total_attendances = sum(session.attendances.count() for session in sessions)
-    sessions_with_students = sum(1 for session in sessions if session.attendances.count() > 0)
+    sessions = (
+        ClassSession.objects.filter(scheduled_at__date=today)
+        .prefetch_related('attendances__student')
+        .annotate(attendance_cnt=Count('attendances'))
+        .order_by('scheduled_at')
+    )
+    total_attendances = sum(session.attendance_cnt for session in sessions)
+    sessions_with_students = sum(1 for session in sessions if session.attendance_cnt > 0)
     return {
         'sessions_today': sessions,
         'hero_stats': [
@@ -383,6 +388,26 @@ def _build_reception_workspace_core(*, today):
     
     repeat_block_hours = get_operational_whatsapp_repeat_block_hours()
     
+    # 🚀 Performance AAA (Ghost Hardening): Bulk WhatsApp Log Pre-fetch
+    # Buscamos todos os logs relevantes da fila inteira em uma tacada só.
+    student_ids = [p.student_id for p in payment_queue]
+    recent_cutoff = timezone.now() - timedelta(hours=repeat_block_hours) if repeat_block_hours > 0 else None
+    
+    all_outbound_logs = list(WhatsAppMessageLog.objects.filter(
+        contact__linked_student_id__in=student_ids,
+        direction=MessageDirection.OUTBOUND
+    ).values('contact__linked_student_id', 'created_at'))
+    
+    # Agrupamos por aluno para busca O(1) no loop
+    log_stats_map = {}
+    for log in all_outbound_logs:
+        s_id = log['contact__linked_student_id']
+        if s_id not in log_stats_map:
+            log_stats_map[s_id] = {'total': 0, 'recent': 0}
+        log_stats_map[s_id]['total'] += 1
+        if recent_cutoff and log['created_at'] >= recent_cutoff:
+            log_stats_map[s_id]['recent'] += 1
+
     reception_payment_queue = []
     for payment in payment_queue:
         days_overdue = max((today - payment.due_date).days, 0)
@@ -393,15 +418,9 @@ def _build_reception_workspace_core(*, today):
         is_whatsapp_locked = False
         sent_count = 0
         if clean_phone:
-            base_logs = WhatsAppMessageLog.objects.filter(
-                contact__linked_student_id=payment.student.id,
-                direction=MessageDirection.OUTBOUND
-            )
-            sent_count = base_logs.count()
-            if repeat_block_hours > 0:
-                is_whatsapp_locked = base_logs.filter(
-                    created_at__gte=timezone.now() - timedelta(hours=repeat_block_hours)
-                ).exists()
+            stats = log_stats_map.get(payment.student.id, {'total': 0, 'recent': 0})
+            sent_count = stats['total']
+            is_whatsapp_locked = stats['recent'] > 0
 
         reception_payment_queue.append({
             'payment_id': payment.id,

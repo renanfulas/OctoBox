@@ -68,3 +68,8 @@ if sentry_dsn:
         traces_sample_rate=env_bool('SENTRY_TRACES_SAMPLE_RATE', 0.2),
         send_default_pii=False  # 🚀 Segurança (Epic 8): LGPD enforced
     )
+
+# 🚀 Performance de Elite (Epic 8): Garante Redis em Produção
+if not DEBUG and not env_str('REDIS_URL') and not env_str('CACHE_URL'):
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured('REDIS_URL obrigatoria para Cache em Producao/Homologacao.')

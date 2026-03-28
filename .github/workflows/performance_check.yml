@@ -1,0 +1,71 @@
+# .github/workflows/ci_checks.yml
+
+name: OctoBox CI Checks (Performance & Integrity)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    # Define os serviços de dependência (banco de dados e cache)
+    services:
+      postgres:
+        image: postgres:13
+        # Opções de saúde para garantir que o postgres esteja pronto antes dos testes
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:6
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: 1. Checkout Code
+      uses: actions/checkout@v3
+
+    - name: 2. Set up Python Environment
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: 3. Install Dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pytest pytest-django pytest-benchmark
+
+    - name: 4. Populate Test Database for CI
+      run: |
+        python manage.py populate_test_db --scale=load --settings=config.settings.test
+      env:
+        DJANGO_SECRET_KEY: 'a-dummy-secret-key-for-ci'
+        PHONE_BLIND_INDEX_KEY: 'ci-only-blind-index-key'
+        DATABASE_URL: postgres://user:password@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379
+
+    - name: 5. Run Integrity & Performance Tests (SIE & DPA)
+      run: |
+        python -m pytest tests/test_performance.py -q
+      env:
+        DJANGO_SECRET_KEY: 'a-dummy-secret-key-for-ci'
+        PHONE_BLIND_INDEX_KEY: 'ci-only-blind-index-key'
+        DATABASE_URL: postgres://user:password@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379

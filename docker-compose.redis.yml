@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  octobox_redis:
+    image: redis:7-alpine
+    container_name: octobox_redis_local
+    ports:
+      - "6380:6379"
+    restart: always
