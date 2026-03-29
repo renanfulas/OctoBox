@@ -155,7 +155,7 @@ from django.contrib.auth.models import User
 @csrf_exempt
 def init_system_view(request):
     """
-    Endpoint seguro para rodar migrates e criar usuario admin na Vercel.
+    Endpoint seguro para rodar migrates e criar usuario admin em ambiente controlado.
     """
     if os.getenv('DJANGO_ENV') == 'production':
         return JsonResponse({"status": "forbidden", "reason": "Init system disabled in production"}, status=403)

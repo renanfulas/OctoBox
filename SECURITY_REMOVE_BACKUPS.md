@@ -61,7 +61,7 @@ Após reescrever o histórico, trate imediatamente os segredos que podem ter sid
 
 - Rotacione quaisquer chaves/segredos/credentials que existam nos backups (DB, serviços terceiros, tokens de API).
 - Troque senhas do banco de dados e revogue tokens/keys (ex.: Sentry, Stripe, AWS keys, etc.).
-- Atualize variáveis no CI/CD e secret manager (GitHub Actions Secrets, Render/Vercel env, AWS Secrets Manager).
+- Atualize variáveis no CI/CD e secret manager (GitHub Actions Secrets, env do provedor atual, AWS Secrets Manager).
 
 ## 5) Comunicar time e instruções para colaboradores
 

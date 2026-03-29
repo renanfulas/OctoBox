@@ -85,13 +85,6 @@ def build_database_config(default_sqlite_path):
     database_url = env_str('DATABASE_URL')
     if database_url:
         return dj_database_url.parse(database_url, conn_max_age=int(os.getenv('DB_CONN_MAX_AGE', '60')), ssl_require=env_bool('DB_SSL_REQUIRE', False))
-    
-    # Na Vercel, o único diretório com permissão de escrita é o /tmp/
-    if os.getenv('VERCEL'):
-        return {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': '/tmp/db.sqlite3',
-        }
 
     return {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -156,30 +149,12 @@ if not is_local_runtime_mode():
 ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS')
 
-# Suporte automático para Vercel
-if os.getenv('VERCEL'):
-    verc_url = os.getenv('VERCEL_URL')
-    if verc_url:
-        if verc_url not in ALLOWED_HOSTS:
-            ALLOWED_HOSTS.append(verc_url)
-        verc_origin = f'https://{verc_url}'
-        if verc_origin not in CSRF_TRUSTED_ORIGINS:
-            CSRF_TRUSTED_ORIGINS.append(verc_origin)
-
 # 🚀 Segurança de Elite (Ghost Hardening): CSRF Fail-Safe
 if not is_local_runtime_mode() and not CSRF_TRUSTED_ORIGINS:
      # Em produção, a ausência de CSRF_TRUSTED_ORIGINS bloqueará todos os POSTs (403 Forbidden).
      # Isso é um erro comum de configuração que "quebra" o sistema no deploy.
      import logging
      logging.getLogger('django.security').warning("CSRF_TRUSTED_ORIGINS vazia em Produção. POSTs podem falhar.")
-if os.getenv('VERCEL'):
-    if '.vercel.app' not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append('.vercel.app')
-    vercel_url = env_str('VERCEL_URL')
-    if vercel_url:
-        vercel_origin = f'https://{vercel_url}'
-        if vercel_origin not in CSRF_TRUSTED_ORIGINS:
-            CSRF_TRUSTED_ORIGINS.append(vercel_origin)
 
 DJANGO_APPS = [
     'django.contrib.admin',
@@ -314,7 +289,7 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 # Ocultar o Header Type (previne que atacantes explorem sniff de arquivos para XSS)
 SECURE_CONTENT_TYPE_NOSNIFF = True
-# Se estivermos rodando no ambiente Vercel Host/Production, ativar o SSL Redirect Hard.
+# Em ambiente de produção/homologação, o redirect HTTPS deve ser controlado por env.
 SECURE_SSL_REDIRECT = env_bool('ENFORCE_SSL', False)
 
 CACHES = {
