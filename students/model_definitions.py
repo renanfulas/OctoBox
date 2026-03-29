@@ -60,6 +60,13 @@ class Student(TimeStampedModel):
     class Meta:
         app_label = HISTORICAL_BOXCORE_APP_LABEL
         ordering = ['full_name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['phone_lookup_index'],
+                condition=~models.Q(phone_lookup_index=''),
+                name='unique_non_blank_student_phone_lookup_index',
+            )
+        ]
 
     def __str__(self):
         return self.full_name

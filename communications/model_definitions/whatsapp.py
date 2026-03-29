@@ -72,6 +72,11 @@ class WhatsAppContact(TimeStampedModel):
                 fields=['external_contact_id'],
                 condition=~models.Q(external_contact_id=''),
                 name='unique_non_blank_whatsapp_external_contact_id',
+            ),
+            models.UniqueConstraint(
+                fields=['phone_lookup_index'],
+                condition=~models.Q(phone_lookup_index=''),
+                name='unique_non_blank_whatsapp_phone_lookup_index',
             )
         ]
 
