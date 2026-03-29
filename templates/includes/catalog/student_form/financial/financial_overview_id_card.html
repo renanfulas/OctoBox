@@ -1,51 +1,64 @@
-<!-- ARQUIVO: Ficha de Assinatura/Contrato acoplada na aba financeira. -->
-<article class="card glass-panel section-gap-top-xs student-id-cockpit-card" style="border-left: 4px solid var(--primary); padding: 18px; margin-bottom: 20px; background: var(--surface-000);">
-    <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
-        
-        <!-- Bloco 1: Identificação Aluno -->
-        <div style="flex: 1; min-width: 220px; text-align: left;">
-            <p style="font-size: 0.73rem; font-weight: 700; color: var(--text-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Atleta no balcão</p>
-            <h2 class="section-title" style="margin-bottom: 4px; font-size: 1.35rem; color: var(--text-800);">{{ page.data.student_object.full_name }}</h2>
-            <p style="font-size: 0.82rem; font-weight: 500; color: var(--text-600); display: flex; align-items: center; gap: 8px;">
-                <span>📱 {{ page.data.student_object.phone|default:"Sem telefone" }}</span>
-                {% if page.data.student_object.cpf %}<span>| 🪪 CPF: {{ page.data.student_object.cpf }}</span>{% endif %}
-            </p>
+<!-- 
+REBIRTH: ID Card de Elite (Phase 12 - Figma Vision) 
+Implementação do cabeçalho de alta fidelidade com Avatar e Grid de Métricas.
+-->
+<article class="card elite-glass-card px-6 py-5 mb-5" style="border-radius: 16px; border: 1px solid rgba(0,0,0,0.08); background: #fff;">
+    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+        <!-- Identity Block -->
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 999px; display: flex; align-items: center; justify-content: center; text-white; font-weight: 700; font-size: 18px; color: white; background: var(--elite-orange-grad);">
+                {{ page.data.student_object.full_name|slice:":1" }}
+            </div>
+            <div>
+                <h1 style="font-size: 1.125rem; font-weight: 700; color: #030213; margin: 0; line-height: 1.2;">{{ page.data.student_object.full_name }}</h1>
+                <p style="font-size: 0.75rem; color: #94a3b8; font-family: monospace; margin: 2px 0 0 0;">ID: {{ page.data.student_object.id|truncatechars:20 }}</p>
+            </div>
         </div>
 
-        <!-- Bloco 2: Detalhes da Assinatura (Casado) -->
-        <div style="flex: 1.2; min-width: 260px; background: rgba(22, 163, 74, 0.03); padding: 14px; border-radius: 10px; border: 1px solid rgba(22, 163, 74, 0.08);">
-            {% if page.data.financial_overview.latest_enrollment %}
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                <div>
-                    <p style="font-size: 0.68rem; font-weight: 700; color: var(--text-400); text-transform: uppercase;">Plano Contratado</p>
-                    <h3 style="margin: 1px 0 0; font-size: 1rem; color: #166534; font-weight: 800;">{{ page.data.financial_overview.latest_enrollment.plan.name }}</h3>
-                </div>
-                <!-- Status Badge -->
-                <span style="display: inline-block; padding: 3px 6px; border-radius: 4px; font-weight: 800; font-size: 9px; text-transform: uppercase; background: {% if page.data.financial_overview.latest_enrollment.status == 'active' %}#d1fae5; color: #065f46;{% else %}#fee2e2; color: #991b1b;{% endif %}">
-                    {{ page.data.financial_overview.latest_enrollment.get_status_display }}
+        <!-- Horizontal Metrics Block -->
+        <div style="display: flex; align-items: center; gap: 40px;">
+            <div style="text-align: center;">
+                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Status do Plano</div>
+                <span class="pill-modern pill-modern-gray" style="font-size: 10px;">
+                    ● {{ page.data.financial_overview.latest_enrollment.get_status_display|default:"Sem Plano" }}
                 </span>
             </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px dashed #e5e7eb; padding-top: 10px; margin-bottom: 10px;">
-                <div>
-                    <p style="font-size: 0.65rem; color: var(--text-500); margin-bottom: 1px;">Adquiriu em</p>
-                    <p style="font-size: 0.8rem; font-weight: 700; color: var(--text-800);">{{ page.data.financial_overview.latest_enrollment.start_date|date:"d/m/Y" }}</p>
-                </div>
-                <div>
-                    <p style="font-size: 0.65rem; color: var(--text-500); margin-bottom: 1px;">Vigência / Renovação</p>
-                    <p style="font-size: 0.8rem; font-weight: 700; color: #166534;">
-                        {{ page.data.financial_overview.latest_enrollment.end_date|date:"d/m/Y"|default:"Recorrente" }}
-                    </p>
-                </div>
+            <div style="text-align: center;">
+                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Atrasos</div>
+                <div style="font-size: 1.125rem; font-weight: 700; color: #dc2626;">{{ page.data.financial_overview.metrics.pagamentos_atrasados|default:"0" }}</div>
             </div>
-            {% else %}
-            <div style="text-align: center; padding: 10px 0;">
-                <p style="font-size: 0.78rem; color: var(--text-500); font-weight: 500;">O aluno não possui plano ativo vinculado.</p>
+            <div style="text-align: center;">
+                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Pendentes</div>
+                <div style="font-size: 1.125rem; font-weight: 700; color: #d97706;">{{ page.data.financial_overview.metrics.pagamentos_pendentes|default:"0" }}</div>
             </div>
-            {% endif %}
-            
-            <button class="button secondary" style="margin-top: 4px; font-size: 0.78rem; padding: 6px 12px; display: block; width: 100%; text-align: center; border-radius: 6px; font-weight: 600; background: #fff; border-color: #d1d5db;" onclick="openDrawer('financial-enrollment-management-slot')">⚙️ Manutenção de Matrícula</button>
+            <div style="text-align: center;">
+                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Total pago</div>
+                <div style="font-size: 1.125rem; font-weight: 700; color: #059669;">R$ {{ page.data.financial_overview.metrics.total_recebido|default:"0" }}</div>
+            </div>
         </div>
-
     </div>
 </article>
+
+<style>
+/* --- Phase 13: Modern SaaS ID Hero --- */
+.elite-id-card-hero {
+    padding: var(--space-4) var(--space-5);
+    border-radius: 16px;
+    background: var(--surface);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.elite-avatar-large {
+    width: 64px;
+    height: 64px;
+    background: var(--elite-accent);
+}
+
+.elite-heading-carbon {
+    color: var(--ink);
+}
+
+.elite-mini-stat-box__value {
+    color: var(--ink);
+}
+</style>

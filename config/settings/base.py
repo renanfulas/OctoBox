@@ -144,8 +144,14 @@ SESSION_CACHE_ALIAS = 'default'
 # Mandatory SECRET_KEY check (Epic 8 Security Hardening)
 SECRET_KEY = env_str('DJANGO_SECRET_KEY')
 if not SECRET_KEY:
-    from django.core.exceptions import ImproperlyConfigured
     raise ImproperlyConfigured('DJANGO_SECRET_KEY deve ser definida como variavel de ambiente.')
+
+PHONE_BLIND_INDEX_KEY = env_str('PHONE_BLIND_INDEX_KEY', 'dev-default-blind-index-key')
+
+# 🚀 Segurança de Elite (Hardening): Chave de Blind Index
+if not is_local_runtime_mode():
+    if PHONE_BLIND_INDEX_KEY == 'dev-default-blind-index-key' or not PHONE_BLIND_INDEX_KEY:
+        raise ImproperlyConfigured("PHONE_BLIND_INDEX_KEY não configurada ou usando valor padrão em Produção.")
 
 ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS')
@@ -198,6 +204,7 @@ LOCAL_APPS = [
     'operations.apps.OperationsConfig',
     'students.apps.StudentsConfig',
     'boxcore.apps.BoxcoreConfig',
+    'shared_support.apps.SharedSupportConfig',
 ]
 
 INSTALLED_APPS = [*DJANGO_APPS, *LOCAL_APPS]

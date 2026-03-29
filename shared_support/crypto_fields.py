@@ -15,6 +15,8 @@ PONTOS CRITICOS:
 """
 
 import base64
+import hashlib
+import hmac
 import logging
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
@@ -137,3 +139,28 @@ class EncryptedTextField(models.TextField):
         except Exception as e:
             logger.error(f"Falha de decifragem PII em load (Text): {e}")
             return value
+
+
+def generate_blind_index(value, *, key=None):
+    """
+    Gera um hash determinístico (Blind Index) para permitir busca por igualdade
+    em campos que estão criptografados.
+    """
+    if not value:
+        return ""
+
+    if key is None:
+        key = getattr(settings, 'PHONE_BLIND_INDEX_KEY', '')
+
+    if not key:
+        return ""
+
+    # Import local para evitar circular dependency
+    from shared_support.phone_numbers import normalize_phone_number
+    normalized = normalize_phone_number(value)
+
+    key_bytes = force_bytes(key)
+    msg_bytes = force_bytes(normalized)
+
+    h = hmac.new(key_bytes, msg_bytes, hashlib.sha256).hexdigest()
+    return f"v1:{h}"

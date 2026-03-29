@@ -94,6 +94,8 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'href="#finance-priority-board"')
         self.assertContains(response, 'href="#finance-queue-board"')
         self.assertContains(response, 'href="#finance-portfolio-board"')
+        self.assertContains(response, f'href="{reverse("membership-plan-quick-update", args=[self.plan.id])}"')
+        self.assertContains(response, f'href="{reverse("student-quick-update", args=[self.student.id])}#student-financial-overview"')
         self.assertRegex(response.content.decode(), r'R\$\s*319[,.]90')
 
     def test_finance_center_filters_by_plan_and_method(self):
@@ -117,7 +119,7 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'id="finance-movements-board"')
         self.assertContains(response, 'finance-movements-panel')
         self.assertContains(response, 'finance-movements-list')
-        self.assertContains(response, 'class="timeline-row finance-movement-item"', count=2)
+        self.assertContains(response, 'class="elite-ledger-row p-3 rounded-surface flex-between items-center"', count=2)
         self.assertContains(response, 'Paula Nunes')
         self.assertContains(response, 'Rafa Souza')
 

@@ -67,6 +67,7 @@ backups/
 / .agents/
 /prompts/
 /figma/
+/OctoBox/
 
 # Artefatos temporarios de revisao local
 tmp-*-cookies.txt

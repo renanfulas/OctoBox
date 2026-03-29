@@ -1,13 +1,34 @@
-<div class="field-grid-220">
-    <label>
+    <div class="flex-1">
         <span class="field-label">{{ form.selected_plan.label }}</span>
-        {{ form.selected_plan }}
-        {% if form.selected_plan.help_text %}<small class="meta-text">{{ form.selected_plan.help_text }}</small>{% endif %}
+        
+        <!-- Hidden Original Select -->
+        <div class="d-none">
+            {{ form.selected_plan }}
+        </div>
+
+        <!-- Visual Plan Cards -->
+        <div class="plan-cards-container grid-plans gap-3 mt-2">
+            {% for choice_id, choice_label in form.selected_plan.field.choices %}
+                {% if choice_id %}
+                <div class="plan-card p-4 border-soft rounded-lg cursor-pointer transition-all bg-muted-soft hover:bg-surface" data-plan-id="{{ choice_id }}" data-action="select-plan">
+                    <div class="font-semibold text-sm mb-1">{{ choice_label }}</div>
+                    <div class="plan-card-price text-lg font-bold text-accent">
+                        <!-- Price will be populated or stay simple -->
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        {% if form.selected_plan.help_text %}<small class="meta-text block mt-2">{{ form.selected_plan.help_text }}</small>{% endif %}
         {% for error in form.selected_plan.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
-    </label>
+    </div>
     <label>
-        <span class="field-label">Valor do plano conectado</span>
-        <input id="connected-plan-price" type="text" value="--" readonly>
-        <small class="meta-text">Ao selecionar um plano, o valor da cobranca inicial acompanha esse valor automaticamente.</small>
+        <span class="field-label text-dimmed">Valor esperado</span>
+        <div class="flex-row items-center gap-2">
+            <input id="connected-plan-price" type="text" value="--" readonly class="text-bold text-premium w-120">
+            <div id="price-delta-indicator" class="text-xs text-bold d-none"></div>
+        </div>
+        <small class="meta-text text-xs">O valor da cobrança inicial acompanha o plano automaticamente.</small>
     </label>
 </div>

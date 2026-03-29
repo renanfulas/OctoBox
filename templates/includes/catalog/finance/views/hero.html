@@ -4,4 +4,29 @@ ARQUIVO: hero da central financeira.
 POR QUE ELE EXISTE:
 - concentra a abertura executiva da pagina em um bloco localizavel.
 -->
-{% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+<section class="glass-panel-elite finance-elite-hero-card flex-between items-center" aria-label="Resumo Financeiro de Elite">
+    <div class="stack-12">
+        <span class="pill pill-surface-low text-xs text-bold uppercase neon-glow-primary" style="letter-spacing: 1px; color: var(--elite-accent);">Recorte Executivo</span>
+        <h1 class="text-elite-bright" style="font-size: 1.25rem; font-weight: 500;">Saldo em Carteira</h1>
+        <p class="balance-large">R$ {{ page.data.finance_pulse.received|floatformat:2 }}</p>
+        <div class="flex-row items-center gap-3 mt-2">
+            <span class="text-xs text-elite-muted flex-row items-center gap-1">
+                <span class="text-success neon-glow-success">●</span> {{ page.data.finance_pulse.received_count }} Pagamentos recebidos
+            </span>
+            <span class="text-xs text-elite-muted flex-row items-center gap-1">
+                <span class="text-warning neon-glow-warning">●</span> R$ {{ page.data.finance_pulse.open|floatformat:2 }} Em aberto
+            </span>
+        </div>
+    </div>
+    
+    <div class="flex-col gap-2 items-end">
+        <div class="flex-row gap-2">
+            {% for action in page.data.hero.actions %}
+            <a href="{{ action.href }}" class="button button-{{ action.kind|default:'secondary' }} button-sm" data-action="{{ action.data_action }}">
+                {{ action.label }}
+            </a>
+            {% endfor %}
+        </div>
+        <p class="text-xs text-elite-muted mt-2">Última atualização: {% now "H:i" %}</p>
+    </div>
+</section>

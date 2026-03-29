@@ -13,9 +13,25 @@ def idempotent_action(view_func):
     Exige o header 'X-Idempotency-Key'.
     """
     @functools.wraps(view_func)
-    def wrapper(request, *args, **kwargs):
+    def wrapper(*args, **kwargs):
+        # Support both function-based views (request, ...) and
+        # class-based view methods (self, request, ...).
+        if len(args) == 0:
+            return view_func(*args, **kwargs)
+
+        # Locate the HttpRequest in args
+        if hasattr(args[0], 'method'):
+            request = args[0]
+            call_args = args[1:]
+        elif len(args) > 1 and hasattr(args[1], 'method'):
+            request = args[1]
+            call_args = args[2:]
+        else:
+            # Could not detect request object; delegate to original callable
+            return view_func(*args, **kwargs)
+
         if request.method not in ('POST', 'PATCH', 'PUT'):
-            return view_func(request, *args, **kwargs)
+            return view_func(*args, **kwargs)
 
         # 1. Recupera a chave do cabeçalho
         key = request.headers.get('X-Idempotency-Key')
@@ -23,7 +39,7 @@ def idempotent_action(view_func):
             # Em modo estrito de fraude, poderíamos bloquear. 
             # Por agora, apenas procedemos se não houver chave, 
             # mas o ideal para fintech é exigir.
-            return view_func(request, *args, **kwargs)
+            return view_func(*args, **kwargs)
 
         user = request.user if request.user.is_authenticated else None
 
@@ -49,7 +65,7 @@ def idempotent_action(view_func):
                         return Response(idemp_obj.response_data, status=idemp_obj.response_code)
 
             # 3. Executa a ação real se for nova
-            response = view_func(request, *args, **kwargs)
+            response = view_func(*args, **kwargs)
 
             # 4. Salva o resultado final para futuras repetições
             if response.status_code < 500: # Não salvamos erros de servidor (pode tentar de novo)

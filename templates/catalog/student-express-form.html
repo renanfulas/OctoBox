@@ -1,0 +1,59 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+{% with page=student_express_page %}
+<div class="operation-shell student-form-shell workspace-shell" data-page="student-form" data-screen="catalog-student" data-slot="page-root">
+    <div data-panel="student-form-hero">
+        {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    </div>
+
+    <section class="section-gap" aria-label="Formulario Expresso" data-slot="student-express-form-section">
+        <article class="table-card student-filter-card student-form-main-card" data-panel="student-form-main-card">
+            <form method="post" novalidate data-action="submit-student-form">
+                {% csrf_token %}
+                <div class="form-stack-lg student-form-steps">
+                    <!-- Unico Passo: Identificacao Basica -->
+                    <div class="step-container active" data-step="1">
+                        <div class="stack-16">
+                            <div class="note-panel note-panel-warm student-form-step">
+                                <p class="eyebrow">Apenas o Essencial</p>
+                                <div class="field-grid-240">
+                                    <label>
+                                        <span class="field-label">{{ form.full_name.label }}</span>
+                                        {{ form.full_name }}
+                                        {% for error in form.full_name.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                                    </label>
+                                    <label>
+                                        <span class="field-label">{{ form.phone.label }}</span>
+                                        {{ form.phone }}
+                                        {% for error in form.phone.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                                    </label>
+                                </div>
+                                <div class="field-grid-240" style="margin-top: 24px;">
+                                    <label>
+                                        <span class="field-label">{{ form.selected_plan.label }}</span>
+                                        {{ form.selected_plan }}
+                                        {% for error in form.selected_plan.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions student-form-actions align-right fade-in-up">
+                        <a href="{% url 'student-directory' %}" class="btn btn-ghost" aria-label="Cancelar">
+                            <i data-lucide="x" aria-hidden="true"></i>
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary" aria-label="Avancar para Pagamento">
+                            Avancar para Pagamento (1-Clique)
+                            <i data-lucide="arrow-right" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </article>
+    </section>
+</div>
+{% endwith %}
+{% endblock %}

@@ -14,12 +14,23 @@ def handle_finance_communication_action(*, actor, action_kind, student_id, payme
 		payment_id=payment_id,
 		enrollment_id=enrollment_id,
 	)
-	message = WhatsAppMessageLog.objects.get(pk=result.message_log_id)
+	
 	student = Student.objects.get(pk=result.student_id)
+	
+	# Se estiver bloqueado, não teremos log de mensagem novo para retornar
+	if result.blocked:
+		return {
+			'student': student,
+			'message': None,
+			'blocked': True,
+			'whatsapp_href': None,
+		}
+
+	message = WhatsAppMessageLog.objects.get(pk=result.message_log_id)
 	return {
 		'student': student,
 		'message': message,
-		'blocked': result.blocked,
+		'blocked': False,
 		'whatsapp_href': build_whatsapp_message_href(
 			phone=getattr(message.contact, 'phone', '') or getattr(student, 'phone', ''),
 			message=message.body,

@@ -10,15 +10,49 @@ O QUE ESTE ARQUIVO FAZ:
 3. Liga intake, plano, matricula e cobranca no mesmo fluxo.
 4. Exibe resumo financeiro e acoes de cobranca/matricula quando o aluno ja existe.
 5. Apoia o fluxo comercial com parcelamento, recorrencia e regras mais fortes de consistencia.
+6. Exibe banner de lock contextual quando outro usuario de maior prioridade esta editando.
 
 PONTOS CRITICOS:
-- Depende do contexto e dos formularios montados em boxcore/catalog/views.py.
+- Depende do contexto e dos formularios montados em catalog/views/student_views.py.
+- O lock de edicao usa Redis. Sem Redis, degrada de forma segura.
 -->
 {% extends "layouts/base.html" %}
 
 {% block content %}
 {% with page=student_form_page %}
-<div class="operation-shell student-form-shell workspace-shell" data-page="student-form" data-screen="catalog-student" data-slot="page-root">
+<div class="operation-shell student-form-shell workspace-shell" data-page="student-form" data-screen="catalog-student" data-slot="page-root"
+     {% if student_id_for_lock %}data-student-id="{{ student_id_for_lock }}"{% endif %}>
+
+    {# --- Banner de lock de edicao com hierarquia de papeis --- #}
+    {% if student_lock_holder %}
+    <div class="lock-banner lock-banner--blocked" id="student-lock-banner" role="alert" aria-live="polite">
+        <div class="lock-banner__icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+        </div>
+        <div class="lock-banner__message">
+            <strong>{{ student_lock_holder.user_display }} ({{ student_lock_holder.role_label }})</strong>
+            est&aacute; editando este aluno. Fale com ele para coordenar ou aguarde a ficha ser liberada.
+        </div>
+    </div>
+    {% endif %}
+
+    {# Banner injetado dinamicamente pelo JS quando o lock e tomado apos a pagina carregar #}
+    <div class="lock-banner lock-banner--stolen" id="student-lock-stolen-banner" role="alert" aria-live="assertive" style="display:none">
+        <div class="lock-banner__icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        </div>
+        <div class="lock-banner__message" id="student-lock-stolen-msg">
+            Outro usu&aacute;rio assumiu a edi&ccedil;&atilde;o deste aluno. Salvamentos ser&atilde;o rejeitados.
+        </div>
+    </div>
+
     <div data-panel="student-form-hero">
         {% include "includes/catalog/student_form/plans/hero.html" with page=page %}
     </div>
@@ -35,4 +69,8 @@ PONTOS CRITICOS:
 
 </div>
 {% endwith %}
+
+{% if student_id_for_lock %}
+<script src="/static/js/catalog/student_form_lock.js" defer></script>
+{% endif %}
 {% endblock %}

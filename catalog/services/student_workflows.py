@@ -51,6 +51,28 @@ def run_student_quick_create_workflow(*, actor, form, selected_intake=None):
 	return _build_legacy_workflow_result(result)
 
 
+def run_student_express_create_workflow(*, actor, form):
+	from django.utils import timezone
+	
+	cleaned_data = form.cleaned_data.copy()
+	# Preenchimento padrao rapido
+	cleaned_data['status'] = 'active'
+	cleaned_data['enrollment_status'] = 'pending'
+	cleaned_data['payment_method'] = 'pix'
+	cleaned_data['confirm_payment_now'] = False
+	cleaned_data['payment_due_date'] = timezone.localdate()
+	cleaned_data['billing_strategy'] = 'single'
+	cleaned_data['installment_total'] = 1
+	cleaned_data['recurrence_cycles'] = 1
+	
+	result = run_student_quick_create(
+		actor_id=getattr(actor, 'id', None),
+		cleaned_data=cleaned_data,
+		selected_intake_id=None,
+	)
+	return _build_legacy_workflow_result(result)
+
+
 def run_student_quick_update_workflow(*, actor, form, changed_fields, selected_intake=None):
 	student_id = getattr(getattr(form, 'instance', None), 'id', None)
 	if student_id is None and hasattr(form, 'save'):
@@ -69,6 +91,7 @@ def run_student_quick_update_workflow(*, actor, form, changed_fields, selected_i
 __all__ = [
 	'build_student_flow_payload',
 	'build_student_workflow_payload',
+	'run_student_express_create_workflow',
 	'run_student_quick_create_workflow',
 	'run_student_quick_update_workflow',
-]
+]

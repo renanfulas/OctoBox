@@ -1,8 +1,17 @@
 <tr>
-    <td style="color: var(--text-600);">{{ payment.due_date|date:"d/m/Y" }}</td>
-    <td style="font-weight: 500; color: var(--text-800);">R$ {{ payment.amount|floatformat:2 }}</td>
-    <td style="font-weight: 600; color: {% if payment.status == 'paid' %}#16a34a{% elif payment.status == 'overdue' %}#dc2626{% elif payment.status == 'pending' %}#ca8a04{% else %}var(--text-600){% endif %};">
+    <td class="text-muted">{{ payment.due_date|date:"d/m/Y" }}</td>
+    <td class="font-medium text-ink">{{ payment.amount|floatformat:2 }}</td>
+    <td class="font-semibold status-{{ payment.status }}">
         {{ payment.get_status_display|upper }}
     </td>
-    <td style="color: var(--text-500);">{{ payment.get_method_display }}</td>
+    <td class="text-dimmed">{{ payment.get_method_display }}</td>
+    <td>
+        {% if payment.status != 'paid' %}
+        <button class="payment-link-btn js-generate-payment-link" data-payment-id="{{ payment.id }}">
+            <span>Copiar Link 🔗</span>
+        </button>
+        {% else %}
+        <span class="meta-text text-xs">Liquidado</span>
+        {% endif %}
+    </td>
 </tr>

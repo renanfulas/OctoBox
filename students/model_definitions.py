@@ -43,6 +43,7 @@ class HealthIssueStatus(models.TextChoices):
 class Student(TimeStampedModel):
     full_name = models.CharField(max_length=150, db_index=True)
     phone = EncryptedCharField(max_length=255, unique=True, verbose_name='WhatsApp')
+    phone_lookup_index = models.CharField(max_length=128, db_index=True, blank=True, default='')
     email = models.EmailField(blank=True, db_index=True)
     gender = models.CharField(max_length=16, choices=StudentGender.choices, blank=True)
     birth_date = models.DateField(null=True, blank=True)
@@ -59,9 +60,25 @@ class Student(TimeStampedModel):
     class Meta:
         app_label = HISTORICAL_BOXCORE_APP_LABEL
         ordering = ['full_name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['phone_lookup_index'],
+                condition=~models.Q(phone_lookup_index=''),
+                name='unique_non_blank_student_phone_lookup_index',
+            )
+        ]
 
     def __str__(self):
         return self.full_name
+
+    def save(self, *args, **kwargs):
+        from shared_support.crypto_fields import generate_blind_index
+        # Dual-Write: Sincroniza o índice determinístico com o telefone criptografado.
+        if self.phone:
+            self.phone_lookup_index = generate_blind_index(self.phone)
+        else:
+            self.phone_lookup_index = ""
+        super().save(*args, **kwargs)
 
 
 __all__ = [

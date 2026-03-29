@@ -14,6 +14,8 @@ PONTOS CRITICOS:
 """
 
 from dataclasses import dataclass
+from decimal import Decimal
+from datetime import date
 
 
 def describe_plan_change(*, previous_price, selected_price):
@@ -63,9 +65,55 @@ def build_enrollment_sync_decision(*, has_current_enrollment: bool, same_plan: b
     )
 
 
+@dataclass(frozen=True, slots=True)
+class ProrataCreditDecision:
+    credit_amount: Decimal
+    new_charge_amount: Decimal
+    needs_manager_review: bool
+    note: str
+
+
+def calculate_prorata_credit(*, previous_price: Decimal, selected_price: Decimal, period_start_date: date, today: date, billing_cycle_days: int = 30) -> ProrataCreditDecision:
+    # 1. Dias passados (limitados a no máximo billing_cycle_days caso esteja atrasado mas de alguma forma rodando pro-rata)
+    days_used = min(max((today - period_start_date).days, 0), billing_cycle_days)
+    
+    # 2. Custo diário do plano antigo
+    daily_cost = previous_price / Decimal(billing_cycle_days)
+    
+    # 3. Valor já utilizado (consumido) e o que sobra (crédito real)
+    value_used = daily_cost * Decimal(days_used)
+    credit_amount = max(previous_price - value_used, Decimal('0.00'))
+
+    # 4. Abater do novo plano
+    new_charge_amount = selected_price - credit_amount
+    needs_manager_review = False
+    
+    note_lines = [
+        f"Cancel & Replace (Padrão Stripe):",
+        f"- Valor antigo: R$ {previous_price:.2f}",
+        f"- Período utilizado: {days_used}/{billing_cycle_days} dias",
+        f"- Crédito obtido: R$ {credit_amount:.2f}",
+        f"- Novo valor (com abate): R$ {max(new_charge_amount, Decimal('0.00')):.2f}"
+    ]
+    
+    if new_charge_amount < 0:
+        new_charge_amount = Decimal('0.00')
+        needs_manager_review = True
+        note_lines.append(f"⚠️ Atenção (Downgrade): Gerou saldo credor para o cliente. Valor zerado e pendente de revisão gerencial.")
+
+    return ProrataCreditDecision(
+        credit_amount=credit_amount.quantize(Decimal('0.01')),
+        new_charge_amount=new_charge_amount.quantize(Decimal('0.01')),
+        needs_manager_review=needs_manager_review,
+        note='\n'.join(note_lines),
+    )
+
+
 __all__ = [
     'EnrollmentSyncDecision',
+    'ProrataCreditDecision',
     'append_enrollment_note',
     'build_enrollment_sync_decision',
+    'calculate_prorata_credit',
     'describe_plan_change',
 ]

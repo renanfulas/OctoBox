@@ -21,7 +21,7 @@
             {% if item.whatsapp_repeat_blocked %}
             <button class="button" type="button" disabled aria-disabled="true">WhatsApp bloqueado agora</button>
             {% else %}
-            <form method="post" action="/financeiro/comunicacao/acao/" target="_blank" class="actions actions-tight finance-card-actions-compact">
+            <form method="post" action="{% url 'finance-communication-action' %}" target="_blank" class="actions actions-tight finance-card-actions-compact">
                 {% csrf_token %}
                 <input type="hidden" name="action_kind" value="{{ item.kind }}">
                 <input type="hidden" name="student_id" value="{{ item.student.id }}">
@@ -43,7 +43,7 @@ PONTOS CRITICOS:
 -->
             <span class="meta-text-sm">Aluno sem WhatsApp valido para contato rapido.</span>
             {% endif %}
-            <a class="button secondary" href="/alunos/{{ item.student.id }}/editar/#student-financial-overview">Abrir ficha do aluno</a>
+            <a class="button secondary" href="{% url 'student-quick-update' item.student.id %}#student-financial-overview">Abrir ficha do aluno</a>
         </div>
     </div>
 </article>

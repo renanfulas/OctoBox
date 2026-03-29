@@ -18,7 +18,12 @@ POR QUE ELE EXISTE:
   var activeIndex = -1;
   var lastRequestId = 0;
   var activeRequestController = null;
-  var autocompleteUrl = form.getAttribute('data-autocomplete-url') || '/api/v1/students/autocomplete/';
+  var autocompleteUrl = form.getAttribute('data-autocomplete-url');
+  
+  if (!autocompleteUrl) {
+    console.warn('Busca global desabilitada: data-autocomplete-url não encontrado no DOM. Roteamento de fallback removido.');
+    return;
+  }
 
   function setStatus(message) {
     if (!status) {

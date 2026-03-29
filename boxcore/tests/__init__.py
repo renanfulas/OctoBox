@@ -23,7 +23,7 @@ from .test_integrations import WhatsAppIntegrationFoundationTests
 from .test_operations import OperationWorkspaceTests
 from .test_page_payloads import PageHeroContractTests, PagePayloadBridgeContractTests
 from .test_settings import SettingsHelperTests
-from .test_shell_hints import ShellHintBuilderUnitTests, ShellHintIntegrationTests
+from .test_shell_hints import ShellHintContractUnitTests, ShellHintIntegrationTests
 
 __all__ = [
     'AuditTrailTests',
@@ -40,6 +40,6 @@ __all__ = [
     'PageHeroContractTests',
     'PagePayloadBridgeContractTests',
     'SettingsHelperTests',
-    'ShellHintBuilderUnitTests',
+    'ShellHintContractUnitTests',
     'ShellHintIntegrationTests',
 ]

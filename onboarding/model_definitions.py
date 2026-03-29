@@ -43,6 +43,7 @@ class IntakeStatus(models.TextChoices):
 class StudentIntake(TimeStampedModel):
     full_name = models.CharField(max_length=150, db_index=True)
     phone = EncryptedCharField(max_length=255, db_index=True)
+    phone_lookup_index = models.CharField(max_length=128, db_index=True, blank=True, default='')
     email = EncryptedCharField(max_length=255, blank=True, db_index=True)
     source = models.CharField(
         max_length=16,
@@ -78,6 +79,15 @@ class StudentIntake(TimeStampedModel):
 
     def __str__(self):
         return f'{self.full_name} - {self.phone}'
+
+    def save(self, *args, **kwargs):
+        from shared_support.crypto_fields import generate_blind_index
+        # Dual-Write: Garante que o intake ja nasca ou seja atualizado com o indice de busca.
+        if self.phone:
+            self.phone_lookup_index = generate_blind_index(self.phone)
+        else:
+            self.phone_lookup_index = ""
+        super().save(*args, **kwargs)
 
 
 __all__ = [

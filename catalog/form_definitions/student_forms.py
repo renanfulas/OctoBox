@@ -273,8 +273,46 @@ class StudentQuickForm(forms.ModelForm):
         return cleaned_data
 
 
+class StudentExpressForm(forms.ModelForm):
+    selected_plan = forms.ModelChoiceField(
+        queryset=MembershipPlan.objects.none(),
+        required=False,
+        label='Vincular Plano Rapido',
+        empty_label='Apenas cadastrar',
+    )
+    initial_payment_amount = forms.DecimalField(
+        required=False,
+        min_value=0,
+        decimal_places=2,
+        max_digits=10,
+        label='Valor inicial (Opcional)',
+    )
+
+    class Meta:
+        model = Student
+        fields = ['full_name', 'phone']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['full_name'].label = 'Nome do aluno'
+        self.fields['phone'].label = 'WhatsApp'
+        self.fields['selected_plan'].queryset = MembershipPlan.objects.filter(active=True).order_by('price', 'name')
+        
+        apply_text_input_attrs(self.fields['full_name'], placeholder='Ex.: Carlos Lima', maxlength=150, autocomplete='name')
+        apply_phone_input_attrs(self.fields['phone'], placeholder='Ex.: (11) 99999-9999')
+        apply_currency_input_attrs(self.fields['initial_payment_amount'], placeholder='Ex.: 120.00')
+
+    def clean_phone(self):
+        phone = normalize_phone_number(self.cleaned_data.get('phone'))
+        if not phone:
+            return ''
+        if Student.objects.filter(phone=phone).exists():
+            raise forms.ValidationError('Ja existe aluno cadastrado com este numero.')
+        return phone
+
+
 class PaymentManagementForm(forms.Form):
-    payment_id = forms.IntegerField(widget=forms.HiddenInput)
+    payment_id = forms.IntegerField(widget=forms.HiddenInput, required=False)
     amount = forms.DecimalField(decimal_places=2, max_digits=10, min_value=0, label='Valor da cobranca')
     due_date = forms.DateField(label='Vencimento', input_formats=['%d/%m/%Y', '%Y-%m-%d'], widget=forms.DateInput(attrs={'type': 'text'}, format='%d/%m/%Y'))
     method = forms.ChoiceField(choices=PaymentMethod.choices, label='Metodo')
@@ -282,6 +320,7 @@ class PaymentManagementForm(forms.Form):
     notes = forms.CharField(required=False, label='Observacoes', widget=forms.Textarea(attrs={'rows': 3}))
 
     def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance', None)
         if args and args[0] is not None:
             args = list(args)
             args[0] = self._normalize_bound_data(args[0])
@@ -308,6 +347,7 @@ class PaymentManagementForm(forms.Form):
 
 class StudentPaymentActionForm(forms.Form):
     ACTION_CHOICES = (
+        ('create-payment', 'Nova Cobranca Avulsa'),
         ('update-payment', 'Salvar Ajustes (Vencimento/Valor)'),
         ('mark-paid', 'Confirmar Recebimento (Pago)'),
         ('refund-payment', 'Estornar Pagamento'),
@@ -315,7 +355,7 @@ class StudentPaymentActionForm(forms.Form):
         ('regenerate-payment', 'Regenerar cobranca'),
     )
 
-    payment_id = forms.IntegerField(widget=forms.HiddenInput, min_value=1)
+    payment_id = forms.IntegerField(widget=forms.HiddenInput, min_value=1, required=False)
     action = forms.ChoiceField(choices=ACTION_CHOICES)
 
 

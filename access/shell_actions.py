@@ -20,39 +20,37 @@ from django.core.cache import cache
 from access.roles import ROLE_DEV, ROLE_RECEPTION
 from finance.overdue_metrics import count_overdue_students, get_overdue_payments_queryset
 from onboarding.queries import count_pending_intakes
-
+from access.navigation_contracts import get_navigation_contract, get_shell_route_url
+from django.urls import reverse
 
 ADMIN_PATH_PREFIX = f"/{settings.ADMIN_URL_PATH}"
 
 
-def resolve_shell_scope(*, current_path, role_slug=None):
-    if current_path.startswith('/dashboard/'):
-        return 'dashboard-reception' if role_slug == ROLE_RECEPTION else 'dashboard'
-    if current_path.startswith('/entradas/'):
-        return 'intake-center'
-    if current_path.startswith('/alunos/'):
-        return 'student-form' if ('/novo/' in current_path or '/editar/' in current_path) else 'students'
-    if current_path.startswith('/financeiro/'):
-        return 'finance-plan-form' if '/planos/' in current_path else 'finance'
-    if current_path.startswith('/grade-aulas/'):
-        return 'class-grid'
-    if current_path.startswith('/operacao/recepcao/'):
+def resolve_shell_scope(*, view_name: str = '', role_slug: str = None, fallback_path: str = ''):
+    contract = get_navigation_contract(view_name)
+    scope = contract.get('scope', 'generic')
+    
+    if scope == 'dashboard' and role_slug == ROLE_RECEPTION:
+        return 'dashboard-reception'
+    
+    # Specific sub-scopes for operations based on view names
+    if view_name == 'reception-workspace':
         return 'operations-reception'
-    if current_path.startswith('/operacao/manager/'):
+    if view_name == 'manager-workspace':
         return 'operations-manager'
-    if current_path.startswith('/operacao/coach/'):
+    if view_name == 'coach-workspace':
         return 'operations-coach'
-    if current_path.startswith('/operacao/dev/'):
+    if view_name == 'dev-workspace':
         return 'operations-dev'
-    if current_path.startswith('/operacao/'):
+    if view_name == 'owner-workspace':
         return 'operations-owner'
-    if current_path.startswith('/acessos/'):
-        return 'access'
-    if current_path.startswith('/mapa-sistema/'):
-        return 'system-map'
-    if current_path.startswith(ADMIN_PATH_PREFIX):
+        
+    # LEGACY FALLBACK (V4.2): Mantemos a detecção por path para o Admin do Django 
+    # de forma intencional e temporária, até que o Admin seja totalmente desacoplado.
+    if fallback_path.startswith(ADMIN_PATH_PREFIX):
         return 'admin'
-    return 'generic'
+        
+    return scope
 
 
 def _build_action(kind, default_label, default_target_label, source, *, scope='generic'):
@@ -175,31 +173,31 @@ def attach_shell_action_buttons(context, *, focus=None, priority=None, pending=N
     return context
 
 
-def build_default_shell_action_buttons(*, current_path, role_slug, overdue_payments=0, pending_intakes=0, sessions_today=0):
+def build_default_shell_action_buttons(*, view_name='', current_path='', role_slug='', overdue_payments=0, pending_intakes=0, sessions_today=0):
     if role_slug == ROLE_DEV:
         return []
 
     op = overdue_payments
     pi = pending_intakes
     st = sessions_today
-    scope = resolve_shell_scope(current_path=current_path, role_slug=role_slug)
+    scope = resolve_shell_scope(view_name=view_name, role_slug=role_slug, fallback_path=current_path)
 
-    if current_path.startswith('/dashboard/'):
+    if scope in ('dashboard', 'dashboard-reception'):
         if role_slug == ROLE_RECEPTION:
             return build_shell_action_buttons(
-                priority={'label': 'Cobranças', 'href': '/operacao/recepcao/#reception-payment-board', 'target_label': 'Abrir cobranca curta', 'count': op},
-                pending={'label': 'Entradas', 'href': '/operacao/recepcao/#reception-intake-board', 'target_label': 'Ver entradas', 'count': pi},
-                next_action={'label': 'Aulas', 'href': '/grade-aulas/#today-board', 'target_label': 'Abrir agenda do turno', 'count': st},
+                priority={'label': 'Cobranças', 'href': get_shell_route_url('reception', fragment='reception-payment-board'), 'target_label': 'Abrir cobranca curta', 'count': op},
+                pending={'label': 'Entradas', 'href': get_shell_route_url('reception', fragment='reception-intake-board'), 'target_label': 'Ver entradas', 'count': pi},
+                next_action={'label': 'Aulas', 'href': reverse('class-grid') + '#today-board', 'target_label': 'Abrir agenda do turno', 'count': st},
                 scope=scope,
             )
         return build_shell_action_buttons(
-            priority={'label': 'Atrasos', 'href': '/financeiro/#finance-priority-board', 'target_label': 'Abrir financeiro', 'count': op},
-            pending={'label': 'Entradas', 'href': '/entradas/#intake-queue-board', 'target_label': 'Ver entradas', 'count': pi},
-            next_action={'label': 'Aulas', 'href': '/grade-aulas/#today-board', 'target_label': 'Abrir agenda do dia', 'count': st},
+            priority={'label': 'Atrasos', 'href': get_shell_route_url('finance', fragment='finance-priority-board'), 'target_label': 'Abrir financeiro', 'count': op},
+            pending={'label': 'Entradas', 'href': get_shell_route_url('intake', fragment='intake-queue-board'), 'target_label': 'Ver entradas', 'count': pi},
+            next_action={'label': 'Aulas', 'href': reverse('class-grid') + '#today-board', 'target_label': 'Abrir agenda do dia', 'count': st},
             scope=scope,
         )
 
-    if current_path.startswith('/entradas/'):
+    if scope == 'intake-center':
         return build_shell_action_buttons(
             priority={'label': 'Fila', 'href': '#intake-queue-board', 'target_label': 'Abrir fila principal', 'count': pi},
             pending={'label': 'Origens', 'href': '#intake-source-board', 'target_label': 'Ver origens'},
@@ -207,29 +205,31 @@ def build_default_shell_action_buttons(*, current_path, role_slug, overdue_payme
             scope=scope,
         )
 
-    if current_path.startswith('/alunos/'):
-        if '/novo/' in current_path or '/editar/' in current_path:
-            return build_shell_action_buttons(
-                priority={'label': 'Cadastro', 'href': '#student-form-essential', 'target_label': 'Abrir nucleo do cadastro'},
-                pending={'label': 'Perfil', 'href': '#student-form-profile', 'target_label': 'Ver vinculo e perfil'},
-                next_action={'label': 'Plano', 'href': '#student-form-plan', 'target_label': 'Ver plano e cobranca'},
-                scope=scope,
-            )
+    if scope == 'student-form':
+        return build_shell_action_buttons(
+            priority={'label': 'Cadastro', 'href': '#student-form-essential', 'target_label': 'Abrir nucleo do cadastro'},
+            pending={'label': 'Perfil', 'href': '#student-form-profile', 'target_label': 'Ver vinculo e perfil'},
+            next_action={'label': 'Plano', 'href': '#student-form-plan', 'target_label': 'Ver plano e cobranca'},
+            scope=scope,
+        )
+
+    if scope == 'students':
         return build_shell_action_buttons(
             priority={'label': 'Prioridades', 'href': '#student-priority-board', 'target_label': 'Abrir prioridades'},
-            pending={'label': 'Entradas', 'href': '/entradas/#intake-queue-board', 'target_label': 'Abrir central de intake', 'count': pi},
+            pending={'label': 'Entradas', 'href': get_shell_route_url('intake', fragment='intake-queue-board'), 'target_label': 'Abrir central de intake', 'count': pi},
             next_action={'label': 'Base', 'href': '#student-directory-board', 'target_label': 'Abrir base principal'},
             scope=scope,
         )
 
-    if current_path.startswith('/financeiro/'):
-        if '/planos/' in current_path:
-            return build_shell_action_buttons(
-                priority={'label': 'Plano', 'href': '#plan-form-core', 'target_label': 'Abrir nucleo do plano'},
-                pending={'label': 'Comercial', 'href': '#plan-form-delivery', 'target_label': 'Ver clareza comercial'},
-                next_action={'label': 'Carteira', 'href': '#plan-form-summary', 'target_label': 'Ver impacto na carteira'},
-                scope=scope,
-            )
+    if scope == 'finance-plan-form':
+        return build_shell_action_buttons(
+            priority={'label': 'Plano', 'href': '#plan-form-core', 'target_label': 'Abrir nucleo do plano'},
+            pending={'label': 'Comercial', 'href': '#plan-form-delivery', 'target_label': 'Ver clareza comercial'},
+            next_action={'label': 'Carteira', 'href': '#plan-form-summary', 'target_label': 'Ver impacto na carteira'},
+            scope=scope,
+        )
+
+    if scope == 'finance':
         return build_shell_action_buttons(
             priority={'label': 'Cobranças', 'href': '#finance-priority-board', 'target_label': 'Abrir pressao de cobranca', 'count': op},
             pending={'label': 'Fila', 'href': '#finance-queue-board', 'target_label': 'Ver fila de atrasados', 'count': op},
@@ -237,7 +237,7 @@ def build_default_shell_action_buttons(*, current_path, role_slug, overdue_payme
             scope=scope,
         )
 
-    if current_path.startswith('/grade-aulas/'):
+    if scope == 'class-grid':
         return build_shell_action_buttons(
             priority={'label': 'Hoje', 'href': '#today-board', 'target_label': 'Abrir aulas de hoje', 'count': st},
             pending={'label': 'Semana', 'href': '#weekly-board', 'target_label': 'Ver pico da semana'},
@@ -245,7 +245,7 @@ def build_default_shell_action_buttons(*, current_path, role_slug, overdue_payme
             scope=scope,
         )
 
-    if current_path.startswith('/operacao/recepcao/'):
+    if scope == 'operations-reception':
         return build_shell_action_buttons(
             priority={'label': 'Chegada', 'href': '#reception-intake-board', 'target_label': 'Ver chegada quente', 'count': pi},
             pending={'label': 'Cobranças', 'href': '#reception-payment-board', 'target_label': 'Abrir fila curta', 'count': op},
@@ -253,7 +253,7 @@ def build_default_shell_action_buttons(*, current_path, role_slug, overdue_payme
             scope=scope,
         )
 
-    if current_path.startswith('/operacao/manager/'):
+    if scope == 'operations-manager':
         return build_shell_action_buttons(
             priority={'label': 'Triagem', 'href': '#manager-intake-board', 'target_label': 'Ver triagem aberta', 'count': pi},
             pending={'label': 'Vínculos', 'href': '#manager-link-board', 'target_label': 'Ver vinculos pendentes'},
@@ -261,7 +261,7 @@ def build_default_shell_action_buttons(*, current_path, role_slug, overdue_payme
             scope=scope,
         )
 
-    if current_path.startswith('/operacao/coach/'):
+    if scope == 'operations-coach':
         return build_shell_action_buttons(
             priority={'label': 'Turmas', 'href': '#coach-sessions-board', 'target_label': 'Abrir turmas do turno', 'count': st},
             pending={'label': 'Presença', 'href': '#coach-sessions-board', 'target_label': 'Abrir presenca'},
@@ -269,23 +269,23 @@ def build_default_shell_action_buttons(*, current_path, role_slug, overdue_payme
             scope=scope,
         )
 
-    if current_path.startswith('/operacao/dev/'):
+    if scope == 'operations-dev':
         return build_shell_action_buttons(
             priority={'label': 'Auditoria', 'href': '#dev-audit-board', 'target_label': 'Abrir rastros recentes'},
-            pending={'label': 'Mapa', 'href': '/mapa-sistema/#system-reading-board', 'target_label': 'Ver mapa do sistema'},
-            next_action={'label': 'Fronteiras', 'href': '/acessos/#access-role-map', 'target_label': 'Ver fronteiras de acesso'},
+            pending={'label': 'Mapa', 'href': reverse('system-map') + '#system-reading-board', 'target_label': 'Ver mapa do sistema'},
+            next_action={'label': 'Fronteiras', 'href': reverse('access-overview') + '#access-role-map', 'target_label': 'Ver fronteiras de acesso'},
             scope=scope,
         )
 
-    if current_path.startswith('/operacao/'):
+    if scope == 'operations-owner':
         return build_shell_action_buttons(
-            priority={'label': 'Cobranças', 'href': '/financeiro/', 'target_label': 'Abrir cobranças', 'count': op},
-            pending={'label': 'Entradas', 'href': '/entradas/', 'target_label': 'Ver entradas', 'count': pi},
-            next_action={'label': 'Estrutura', 'href': '/alunos/', 'target_label': 'Abrir estrutura do box'},
+            priority={'label': 'Cobranças', 'href': get_shell_route_url('finance'), 'target_label': 'Abrir cobranças', 'count': op},
+            pending={'label': 'Entradas', 'href': get_shell_route_url('intake'), 'target_label': 'Ver entradas', 'count': pi},
+            next_action={'label': 'Estrutura', 'href': get_shell_route_url('students'), 'target_label': 'Abrir estrutura do box'},
             scope=scope,
         )
 
-    if current_path.startswith('/acessos/'):
+    if scope == 'access':
         return build_shell_action_buttons(
             priority={'label': 'Papel', 'href': '#access-current-role', 'target_label': 'Ver escopo do papel'},
             pending={'label': 'Fronteiras', 'href': '#access-role-map', 'target_label': 'Ver mapa de fronteiras'},
@@ -293,7 +293,7 @@ def build_default_shell_action_buttons(*, current_path, role_slug, overdue_payme
             scope=scope,
         )
 
-    if current_path.startswith('/mapa-sistema/'):
+    if scope == 'system-map':
         return build_shell_action_buttons(
             priority={'label': 'Fluxo', 'href': '#system-flow-board', 'target_label': 'Abrir fluxo macro'},
             pending={'label': 'Estudo', 'href': '#system-reading-board', 'target_label': 'Ver ordem de estudo'},
@@ -302,9 +302,9 @@ def build_default_shell_action_buttons(*, current_path, role_slug, overdue_payme
         )
 
     return build_shell_action_buttons(
-        priority={'href': '/dashboard/', 'target_label': 'Abrir panorama do dia'},
-        pending={'href': '/entradas/#intake-queue-board', 'target_label': 'Abrir fila pendente', 'count': pi},
-        next_action={'href': '/grade-aulas/#today-board', 'target_label': 'Abrir proxima acao', 'count': st},
+        priority={'href': get_shell_route_url('dashboard'), 'target_label': 'Abrir panorama do dia'},
+        pending={'href': get_shell_route_url('intake', fragment='intake-queue-board'), 'target_label': 'Abrir fila pendente', 'count': pi},
+        next_action={'href': reverse('class-grid') + '#today-board', 'target_label': 'Abrir proxima acao', 'count': st},
         scope=scope,
     )
 

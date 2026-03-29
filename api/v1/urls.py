@@ -14,7 +14,9 @@ PONTOS CRITICOS:
 
 from django.urls import path
 
-from .views import ApiV1HealthView, ApiV1ManifestView, StudentAutocompleteView, WhatsAppPollWebhookView, init_system_view
+from .views import ApiV1HealthView, ApiV1ManifestView, StudentAutocompleteView, WhatsAppPollWebhookView, init_system_view, PaymentLinkView
+from .onboarding_views import ExpressConvertView
+from .finance_views import StudentFreezeView
 from .jobs_views import SecureExportDownloadView
 
 
@@ -22,6 +24,9 @@ urlpatterns = [
     path('', ApiV1ManifestView.as_view(), name='api-v1-manifest'),
     path('health/', ApiV1HealthView.as_view(), name='api-v1-health'),
     path('students/autocomplete/', StudentAutocompleteView.as_view(), name='api-v1-student-autocomplete'),
+    path('finance/payment-link/<int:payment_id>/', PaymentLinkView.as_view(), name='api-v1-payment-link'),
+    path('finance/freeze-student/', StudentFreezeView.as_view(), name='api-v1-finance-freeze'),
+    path('onboarding/express-convert/', ExpressConvertView.as_view(), name='api-v1-express-convert'),
     path('integrations/whatsapp/webhook/poll-vote/', WhatsAppPollWebhookView.as_view(), name='api-v1-whatsapp-poll-webhook'),
     path('debug/init-system/', init_system_view, name='api-v1-init-system'),
     path('exports/download/<str:filename>', SecureExportDownloadView.as_view(), name='api-v1-secure-export-download'),

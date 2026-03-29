@@ -22,6 +22,7 @@ from .student_forms import (
     ReceptionPaymentManagementForm,
     StudentPaymentActionForm,
     StudentDirectoryFilterForm,
+    StudentExpressForm,
     StudentQuickForm,
 )
 

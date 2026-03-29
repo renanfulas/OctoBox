@@ -45,6 +45,7 @@ class MessageKind(models.TextChoices):
 
 class WhatsAppContact(TimeStampedModel):
     phone = EncryptedCharField(max_length=255, unique=True)
+    phone_lookup_index = models.CharField(max_length=128, db_index=True, blank=True, default='')
     external_contact_id = models.CharField(max_length=120, blank=True)
     display_name = models.CharField(max_length=150, blank=True)
     linked_student = models.ForeignKey(
@@ -71,11 +72,25 @@ class WhatsAppContact(TimeStampedModel):
                 fields=['external_contact_id'],
                 condition=~models.Q(external_contact_id=''),
                 name='unique_non_blank_whatsapp_external_contact_id',
+            ),
+            models.UniqueConstraint(
+                fields=['phone_lookup_index'],
+                condition=~models.Q(phone_lookup_index=''),
+                name='unique_non_blank_whatsapp_phone_lookup_index',
             )
         ]
 
     def __str__(self):
         return self.display_name or self.phone
+
+    def save(self, *args, **kwargs):
+        from shared_support.crypto_fields import generate_blind_index
+        # Dual-Write: Mantem o indice pesquisavel em sincronia com o PII criptografado.
+        if self.phone:
+            self.phone_lookup_index = generate_blind_index(self.phone)
+        else:
+            self.phone_lookup_index = ""
+        super().save(*args, **kwargs)
 
 
 class WhatsAppMessageLog(TimeStampedModel):

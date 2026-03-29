@@ -24,7 +24,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse
 
-from .security.honeypot_service import trigger_honeypot_for_ip, trigger_honeypot_for_user
+from .honeypot_service import trigger_honeypot_for_ip, trigger_honeypot_for_user
 
 
 SECURITY_LOGGER = getLogger('octobox.security')
