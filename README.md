@@ -50,13 +50,14 @@ Linha do tempo deste primeiro ciclo:
 
 ## Escopo atual
 
-- base de alunos com telefone principal legado, enquanto a identidade de canal comeca a ser separada em contatos de WhatsApp
+- base de alunos com telefone principal legado, mas com identidade de canal de WhatsApp ja endurecida por blind index pesquisavel
 - central de intake para leads e entradas provisiorias antes do cadastro definitivo, com payload estruturado para rastreio futuro
 - fluxo leve de cadastro e edicao de aluno com conversao de intake
 - conexao imediata entre aluno, plano, matricula e cobranca inicial
 - cobranca unica, parcelada ou recorrente a partir da ficha do aluno
 - acoes diretas na ficha do aluno para atualizar cobranca, marcar pagamento, cancelar, estornar, regenerar e reativar matricula
 - centro visual de financeiro com filtros por janela, plano, status e metodo
+- navegacao de shell e atalhos operacionais consolidados por contrato central de rotas
 - dashboard inicial para leitura rapida da operacao
 - aulas, presenca, check-in, check-out, faltas e ocorrencias operacionais
 - autenticacao propria com papeis owner, dev, manager, recepcao e coach
@@ -65,7 +66,11 @@ Linha do tempo deste primeiro ciclo:
 
 ## Estado operacional atual
 
-- branch atual fechada como beta assistido mergeavel com observacao operacional
+- pilha recente de endurecimento ja aterrissada na `main`
+- contrato de identidade WhatsApp com blind index, backfill historico e constraint de unicidade
+- contrato de navegacao do shell estabilizado nas superficies centrais
+- fluxo visual de alunos e financeiro atualizado e protegido por testes de catalogo e financeiro
+- workflow de CI para performance e integridade ja acompanha migrate, fixture loading e baseline de Postgres suportada
 - admin endurecido por caminho privado configuravel e gate centralizado por papel
 - throttle por escopo ativo para login, admin, writes, exports, dashboard, leituras pesadas e autocomplete
 - cache compartilhada opcional via Redis, com fallback local e degradacao segura quando o cache externo falhar
@@ -369,10 +374,12 @@ Observacao:
 
 - login, logout, mudancas no admin e acoes comerciais sensiveis ja alimentam a trilha de auditoria
 - para ambiente local, voce pode definir `DJANGO_SECRET_KEY` em um arquivo `.env` ou nas variaveis do sistema
+- para ambientes que usam identidade de canal WhatsApp, defina tambem `PHONE_BLIND_INDEX_KEY`
 - o projeto agora aceita `DJANGO_ENV=development` ou `DJANGO_ENV=production` para separar configuracao local de homologacao/producao
 - para homologacao/producao, o caminho recomendado e usar `DATABASE_URL` com PostgreSQL, `REDIS_URL` para cache compartilhada, rodar `collectstatic` e publicar atras de HTTPS
 - o caminho publico do admin deve ser definido por `DJANGO_ADMIN_URL_PATH`, nao por `/admin/`
 - para abrir o servidor na rede local, use a task `Run Django Server (LAN)` ou rode `python manage.py runserver 0.0.0.0:8000`
+- para CI ou homologacao com PostgreSQL, use Postgres 14 ou superior
 
 Guias novos:
 
