@@ -1,16 +1,16 @@
 <section class="elite-panel-grid student-financial-metrics section-gap-top-xs" aria-label="Metricas financeiras">
-    <article class="card glass-panel-elite elite-panel--compact student-financial-status-tile">
-        <p class="elite-hero__eyebrow elite-text-dimmed student-financial-status-tile__label">Matriculas ativas</p>
-        <p class="text-2xl font-extrabold student-financial-status-tile__value is-primary">{{ page.data.financial_overview.metrics.matriculas_ativas|default:"0" }}</p>
+    <article class="card student-financial-status-tile">
+        <p class="student-financial-status-tile__label">Matriculas ativas</p>
+        <p class="student-financial-status-tile__value is-primary">{{ page.data.financial_overview.metrics.matriculas_ativas|default:"0" }}</p>
     </article>
 
-    <article class="card glass-panel-elite elite-panel--compact student-financial-status-tile">
-        <p class="elite-hero__eyebrow elite-text-dimmed student-financial-status-tile__label">Pagamentos pendentes</p>
-        <p class="text-2xl font-extrabold student-financial-status-tile__value is-accent">{{ page.data.financial_overview.metrics.pagamentos_pendentes|default:"0" }}</p>
+    <article class="card student-financial-status-tile">
+        <p class="student-financial-status-tile__label">Pagamentos pendentes</p>
+        <p class="student-financial-status-tile__value is-accent">{{ page.data.financial_overview.metrics.pagamentos_pendentes|default:"0" }}</p>
     </article>
 
-    <article class="card glass-panel-elite elite-panel--compact student-financial-status-tile">
-        <p class="elite-hero__eyebrow elite-text-dimmed student-financial-status-tile__label">Pagamentos atrasados</p>
-        <p class="text-2xl font-extrabold student-financial-status-tile__value is-danger">{{ page.data.financial_overview.metrics.pagamentos_atrasados|default:"0" }}</p>
+    <article class="card student-financial-status-tile">
+        <p class="student-financial-status-tile__label">Pagamentos atrasados</p>
+        <p class="student-financial-status-tile__value is-danger">{{ page.data.financial_overview.metrics.pagamentos_atrasados|default:"0" }}</p>
     </article>
 </section>

@@ -1,32 +1,31 @@
 {% load static %}
-<header class="elite-financial-topbar">
-    
-    <!-- Busca Contextual -->
-    <div class="elite-search-wrapper">
-        <span class="elite-search-icon">🔍</span>
-        <input type="text" class="elite-search-input" placeholder="Buscar aluno, telefone ou CPF...">
+<header class="student-financial-topbar" aria-label="Comando contextual do financeiro">
+    <div class="student-financial-topbar-search">
+        <span class="student-financial-topbar-search-icon" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+        </span>
+        <input type="text" class="student-financial-topbar-search-input" placeholder="Buscar aluno, telefone ou CPF..." aria-label="Buscar aluno, telefone ou CPF">
     </div>
 
-    <!-- Ações Globais -->
-    <div class="elite-topbar-actions">
-        <button class="button secondary elite-button-sm">
+    <div class="student-financial-topbar-actions">
+        <button class="button secondary" type="button">
             <span>+ Aluno</span>
         </button>
-        <button class="button secondary elite-button-sm">
+        <button class="button secondary" type="button">
             <span>+ Entrada</span>
         </button>
-        
-        <!-- Notificações / Pills -->
-        <div class="elite-notification-pill-strip">
-            <span class="text-elite-muted">0 vencimentos</span>
-            <span class="elite-ping-dot orange"></span>
-            <span class="text-orange font-bold">9999 entradas</span>
+
+        <div class="student-financial-topbar-notice-strip" aria-label="Sinais rapidos do financeiro">
+            <span class="student-financial-topbar-notice-label">0 vencimentos</span>
+            <span class="student-financial-topbar-ping is-warning" aria-hidden="true"></span>
+            <span class="student-financial-topbar-notice-value">9999 entradas</span>
         </div>
 
-        <!-- Avatar do Usuário -->
-        <div class="elite-avatar-small">
+        <div class="student-financial-topbar-avatar" aria-label="Usuario atual">
             <span>A</span>
         </div>
     </div>
-
 </header>

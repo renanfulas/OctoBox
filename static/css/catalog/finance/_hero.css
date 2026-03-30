@@ -10,6 +10,14 @@ POR QUE ELE EXISTE:
     background: var(--surface);
 }
 
+.finance-hero .operation-hero-main > div:first-child {
+    max-width: 560px;
+}
+
+.finance-hero .operation-hero-copy {
+    max-width: 44ch;
+}
+
 /* Remove overrides that break the global operation-hero grid */
 
 .finance-shell .operation-hero-side {
@@ -18,6 +26,84 @@ POR QUE ELE EXISTE:
 
 .finance-shell .operation-hero-panel {
     padding: 12px 14px;
+}
+
+.finance-command-hero {
+    --finance-command-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 52%, transparent), transparent 26%),
+        linear-gradient(155deg, color-mix(in srgb, var(--theme-surface-strong) 84%, transparent), color-mix(in srgb, var(--theme-surface) 96%, transparent));
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 20px 22px;
+    background: var(--finance-command-surface);
+}
+
+.finance-command-hero-copy,
+.finance-command-hero-actions {
+    min-width: 0;
+}
+
+.finance-command-hero-copy {
+    flex: 1 1 360px;
+}
+
+.finance-command-hero-pill {
+    letter-spacing: 0.08em;
+    color: color-mix(in srgb, var(--theme-accent-support) 78%, white 22%);
+}
+
+.finance-command-hero-title {
+    margin: 0;
+    color: var(--ink);
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+}
+
+.finance-command-hero-balance {
+    margin: 0;
+}
+
+.finance-command-hero-metrics {
+    flex-wrap: wrap;
+}
+
+.finance-command-hero-metric {
+    color: var(--muted);
+}
+
+.finance-command-hero-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    display: inline-flex;
+}
+
+.finance-command-hero-dot--success {
+    background: color-mix(in srgb, var(--theme-accent-success) 82%, white 18%);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--theme-accent-success) 30%, transparent);
+}
+
+.finance-command-hero-dot--warning {
+    background: color-mix(in srgb, var(--theme-accent-warning) 84%, white 16%);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--theme-accent-warning) 28%, transparent);
+}
+
+.finance-command-hero-actions {
+    flex: 0 1 auto;
+}
+
+.finance-command-hero-action-row {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.finance-command-hero-update {
+    margin: 0;
+    color: var(--muted);
 }
 
 .finance-shell .operation-mini-grid {
@@ -30,3 +116,18 @@ POR QUE ELE EXISTE:
 }
 
 /* Replaced finance-hero background override to respect global theming */
+
+@media (max-width: 720px) {
+    .finance-command-hero {
+        padding: 18px;
+    }
+
+    .finance-command-hero-actions,
+    .finance-command-hero-action-row {
+        width: 100%;
+    }
+
+    .finance-command-hero-action-row .button {
+        flex: 1 1 100%;
+    }
+}

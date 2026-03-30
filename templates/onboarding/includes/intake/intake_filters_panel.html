@@ -18,6 +18,7 @@ PONTOS CRITICOS:
 - Depende do contexto de filter_form.
 -->
 <section class="card glass-panel intake-filter-card" aria-label="Busca e filtros da central de intake" data-slot="filters" data-panel="intake-filters">
+    {% url 'intake-center' as intake_center_url %}
     <div class="card-head">
         <div class="card-head-main">
             <h2 class="card-title">Motor de Busca e Foco</h2>
@@ -49,7 +50,7 @@ PONTOS CRITICOS:
         </div>
         <div class="actions actions-tight">
             <button class="button" type="submit" data-action="apply-intake-filters">Aplicar filtros</button>
-            <a class="button secondary" href="/entradas/" data-action="clear-intake-filters">Limpar</a>
+            <a class="button secondary" href="{{ intake_center_url }}" data-action="clear-intake-filters">Limpar</a>
         </div>
     </form>
 </section>

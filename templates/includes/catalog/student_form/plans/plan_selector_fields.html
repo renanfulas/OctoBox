@@ -27,7 +27,10 @@
         <span class="field-label text-dimmed">Valor esperado</span>
         <div class="flex-row items-center gap-2">
             <input id="connected-plan-price" type="text" value="--" readonly class="text-bold text-premium w-120">
-            <div id="price-delta-indicator" class="text-xs text-bold d-none"></div>
+            <span id="plan-swap-status" class="plan-swap-status" hidden>
+                <span id="plan-swap-pill" class="pill text-xs text-bold"></span>
+            </span>
+            <div id="price-delta-indicator" class="price-delta-indicator text-xs text-bold" hidden></div>
         </div>
         <small class="meta-text text-xs">O valor da cobrança inicial acompanha o plano automaticamente.</small>
     </label>

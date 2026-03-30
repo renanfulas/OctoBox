@@ -177,6 +177,24 @@ POR QUE ELE EXISTE:
     box-shadow: 0 0 10px var(--accent-primary-alpha) !important;
 }
 
+.plan-swap-status[hidden],
+.price-delta-indicator[hidden] {
+    display: none !important;
+}
+
+.plan-swap-status {
+    display: inline-flex;
+    align-items: center;
+}
+
+.price-delta-indicator.is-positive {
+    color: var(--brand);
+}
+
+.price-delta-indicator.is-negative {
+    color: var(--danger);
+}
+
 .student-table-wrap table tbody tr:last-child td {
     border-bottom: 0;
 }

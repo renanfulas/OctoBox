@@ -141,14 +141,14 @@
         methodField.value = methodValue;
       }
 
-      document.querySelectorAll('.elite-stripe-btn').forEach(function (button) {
-        button.classList.add('disabled');
-        button.classList.remove('active');
+      document.querySelectorAll('.student-payment-method-button').forEach(function (button) {
+        button.classList.add('is-disabled');
+        button.classList.remove('is-active');
         button.setAttribute('aria-disabled', 'true');
       });
 
-      submitStripeTrigger.classList.remove('disabled');
-      submitStripeTrigger.classList.add('active');
+      submitStripeTrigger.classList.remove('is-disabled');
+      submitStripeTrigger.classList.add('is-active');
       submitStripeTrigger.removeAttribute('aria-disabled');
 
       if (statusMsg) {

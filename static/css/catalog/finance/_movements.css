@@ -1,13 +1,48 @@
 /*
-ARQUIVO: estilos de movimentações financeiras.
+ARQUIVO: estilos de movimentacoes financeiras.
 
 POR QUE ELE EXISTE:
-- Isola o painel, lista e items de movimentos recentes.
+- isola o painel, a lista e os itens de movimentos recentes.
+- remove apresentacao inline da superficie residual de movimentos.
 */
 
 .finance-movements-panel {
+    --finance-movements-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 42%, transparent), transparent 28%),
+        linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-strong) 84%, transparent), color-mix(in srgb, var(--theme-surface) 96%, transparent));
     grid-column: 1 / -1;
-    padding-bottom: 22px;
+    padding: 20px 22px 22px;
+    background: var(--finance-movements-surface);
+}
+
+.finance-movements-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.finance-movements-copy {
+    min-width: 0;
+}
+
+.finance-movements-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.finance-movements-subtitle {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 0.84rem;
+    line-height: 1.55;
+}
+
+.finance-movements-count {
+    white-space: nowrap;
 }
 
 .finance-movements-list {
@@ -17,7 +52,8 @@ POR QUE ELE EXISTE:
     grid-auto-rows: 1fr;
 }
 
-.finance-movement-item {
+.finance-movement-item,
+.finance-movement-card {
     padding: 16px 18px;
     height: 100%;
     display: grid;
@@ -26,6 +62,71 @@ POR QUE ELE EXISTE:
     align-content: start;
     align-items: start;
     border-radius: 20px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.76);
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 76%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 72%, transparent);
+}
+
+.finance-movement-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+}
+
+.finance-movement-student {
+    color: var(--ink);
+    font-size: 0.94rem;
+    line-height: 1.25;
+}
+
+.finance-movement-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 64%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-support) 80%, white 20%);
+    font-size: 14px;
+}
+
+.finance-movement-meta {
+    flex-wrap: wrap;
+}
+
+.finance-movement-plan,
+.finance-movement-date {
+    color: var(--muted);
+}
+
+.finance-movement-status-muted {
+    color: var(--muted);
+}
+
+.finance-movement-separator {
+    color: color-mix(in srgb, var(--theme-accent-support) 74%, white 26%);
+}
+
+.finance-movement-dates {
+    min-width: 88px;
+}
+
+@media (max-width: 720px) {
+    .finance-movements-panel {
+        padding: 18px;
+    }
+
+    .finance-movements-head,
+    .finance-movement-card {
+        grid-template-columns: 1fr;
+    }
+
+    .finance-movements-head {
+        align-items: stretch;
+    }
+
+    .finance-movements-count {
+        align-self: flex-start;
+    }
+
+    .finance-movement-dates {
+        min-width: 0;
+        text-align: left;
+    }
 }

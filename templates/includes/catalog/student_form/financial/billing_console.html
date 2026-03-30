@@ -47,25 +47,25 @@ POR QUE ELE EXISTE:
                             </div>
                             <div class="actions actions-tight">
                                 {% if payment.status == 'paid' %}
-                                <button class="button secondary elite-button-sm" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}">
+                                <button class="button secondary student-financial-action-button student-financial-action-button--compact" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}">
                                     Ver detalhes
                                 </button>
                                 {% else %}
                                     {% if payment.is_next_actionable %}
                                         {% if payment.status == 'overdue' %}
-                                <button class="button danger-soft elite-button-sm" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}">
+                                <button class="button danger-soft student-financial-action-button student-financial-action-button--compact" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}">
                                     Receber agora
                                 </button>
                                         {% else %}
-                                <button class="button success-soft elite-button-sm" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}">
+                                <button class="button success-soft student-financial-action-button student-financial-action-button--compact" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}">
                                     Confirmar recebimento
                                 </button>
                                         {% endif %}
                                     {% endif %}
-                                <button class="button secondary elite-button-sm" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}">
+                                <button class="button secondary student-financial-action-button student-financial-action-button--compact" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}">
                                     Revisar vencimento
                                 </button>
-                                <button class="button secondary elite-button-sm" type="button" data-action="split-payment" data-payment-id="{{ payment.id }}">
+                                <button class="button secondary student-financial-action-button student-financial-action-button--compact" type="button" data-action="split-payment" data-payment-id="{{ payment.id }}">
                                     Parcelar
                                 </button>
                                 {% endif %}
@@ -82,10 +82,10 @@ POR QUE ELE EXISTE:
 
     <footer class="student-financial-drawer__footer">
         <div class="stack-8">
-            <button class="button success elite-button-full" type="button" data-action="vacation-freeze">
+            <button class="button success student-financial-action-button student-financial-action-button--full" type="button" data-action="vacation-freeze">
                 Marcar ferias ou congelar
             </button>
-            <button class="button secondary elite-button-full" type="button" data-action="close-drawers">
+            <button class="button secondary student-financial-action-button student-financial-action-button--full" type="button" data-action="close-drawers">
                 Fechar console
             </button>
         </div>
