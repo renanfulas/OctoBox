@@ -4,29 +4,31 @@ ARQUIVO: hero da central financeira.
 POR QUE ELE EXISTE:
 - concentra a abertura executiva da pagina em um bloco localizavel.
 -->
-<section class="glass-panel-elite finance-elite-hero-card flex-between items-center" aria-label="Resumo Financeiro de Elite">
-    <div class="stack-12">
-        <span class="pill pill-surface-low text-xs text-bold uppercase neon-glow-primary" style="letter-spacing: 1px; color: var(--elite-accent);">Recorte Executivo</span>
-        <h1 class="text-elite-bright" style="font-size: 1.25rem; font-weight: 500;">Saldo em Carteira</h1>
-        <p class="balance-large">R$ {{ page.data.finance_pulse.received|floatformat:2 }}</p>
-        <div class="flex-row items-center gap-3 mt-2">
-            <span class="text-xs text-elite-muted flex-row items-center gap-1">
-                <span class="text-success neon-glow-success">●</span> {{ page.data.finance_pulse.received_count }} Pagamentos recebidos
+<section class="card finance-command-hero flex-between items-center" aria-label="Resumo financeiro executivo">
+    <div class="stack-12 finance-command-hero-copy">
+        <span class="pill pill-surface-low text-xs text-bold uppercase finance-command-hero-pill">Recorte executivo</span>
+        <h1 class="finance-command-hero-title">Saldo em carteira</h1>
+        <p class="balance-large finance-command-hero-balance">R$ {{ page.data.finance_pulse.received|floatformat:2 }}</p>
+        <div class="flex-row items-center gap-3 mt-2 finance-command-hero-metrics">
+            <span class="text-xs finance-command-hero-metric flex-row items-center gap-1">
+                <span class="finance-command-hero-dot finance-command-hero-dot--success" aria-hidden="true"></span>
+                {{ page.data.finance_pulse.received_count }} pagamentos recebidos
             </span>
-            <span class="text-xs text-elite-muted flex-row items-center gap-1">
-                <span class="text-warning neon-glow-warning">●</span> R$ {{ page.data.finance_pulse.open|floatformat:2 }} Em aberto
+            <span class="text-xs finance-command-hero-metric flex-row items-center gap-1">
+                <span class="finance-command-hero-dot finance-command-hero-dot--warning" aria-hidden="true"></span>
+                R$ {{ page.data.finance_pulse.open|floatformat:2 }} em aberto
             </span>
         </div>
     </div>
-    
-    <div class="flex-col gap-2 items-end">
-        <div class="flex-row gap-2">
+
+    <div class="flex-col gap-2 items-end finance-command-hero-actions">
+        <div class="flex-row gap-2 finance-command-hero-action-row">
             {% for action in page.data.hero.actions %}
             <a href="{{ action.href }}" class="button button-{{ action.kind|default:'secondary' }} button-sm" data-action="{{ action.data_action }}">
                 {{ action.label }}
             </a>
             {% endfor %}
         </div>
-        <p class="text-xs text-elite-muted mt-2">Última atualização: {% now "H:i" %}</p>
+        <p class="text-xs finance-command-hero-update">Ultima atualizacao: {% now "H:i" %}</p>
     </div>
 </section>

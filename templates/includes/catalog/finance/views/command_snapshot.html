@@ -1,0 +1,35 @@
+<div class="front-command-snapshot front-command-snapshot--finance" data-panel="finance-command-snapshot">
+    <div class="front-command-grid">
+        {% for item in page.data.operational_focus %}
+        <article class="front-command-card" data-panel="finance-command-card">
+            <div class="front-command-card-head">
+                <span class="pill {{ item.pill_class|default:'accent' }}">{{ item.chip_label }}</span>
+                {% if item.count or item.count == 0 %}
+                <strong class="front-command-count">{{ item.count }}</strong>
+                {% endif %}
+            </div>
+            <div class="front-command-card-body">
+                <h3>{{ item.label }}</h3>
+                <p>{{ item.summary }}</p>
+            </div>
+            {% if item.href %}
+            <a class="front-command-link" href="{{ item.href }}" data-action="open-finance-command-focus">{{ item.href_label|default:'Abrir leitura' }}</a>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </div>
+    <div class="front-command-summary" data-panel="finance-filter-snapshot">
+        <div class="front-command-summary-head">
+            <span class="front-command-kicker">Recorte ativo</span>
+            <p class="front-command-copy">Use este resumo para lembrar qual lente esta guiando a leitura antes de descer para fila, carteira e filtros completos.</p>
+        </div>
+        <dl class="front-command-summary-grid">
+            {% for item in page.data.finance_filter_summary %}
+            <div class="front-command-summary-item">
+                <dt>{{ item.label }}</dt>
+                <dd>{{ item.value }}</dd>
+            </div>
+            {% endfor %}
+        </dl>
+    </div>
+</div>

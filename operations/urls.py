@@ -26,8 +26,11 @@ from .workspace_views import (
     WhatsAppWorkspaceView,
 )
 
+from .reports_views import ReportHubView
+
 urlpatterns = [
     path('operacao/', RoleOperationRedirectView.as_view(), name='role-operations'),
+    path('operacao/relatorios/', ReportHubView.as_view(), name='reports-hub'),
     path('operacao/owner/', OwnerWorkspaceView.as_view(), name='owner-workspace'),
     path('operacao/dev/', DevWorkspaceView.as_view(), name='dev-workspace'),
     path('operacao/manager/', ManagerWorkspaceView.as_view(), name='manager-workspace'),

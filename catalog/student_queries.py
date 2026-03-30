@@ -12,7 +12,7 @@ PONTOS CRITICOS:
 - mudancas aqui afetam listagens, busca comercial e leitura financeira por aluno.
 """
 
-from django.db.models import Case, CharField, Exists, OuterRef, Q, Subquery, Value, When
+from django.db.models import Case, CharField, Exists, OuterRef, Q, Subquery, Value, When, Sum, Count
 
 from django.utils import timezone
 from operations.models import Attendance
@@ -55,7 +55,7 @@ def compute_fidalgometro_score(student):
     return {'code': 'blue', 'label': 'Fiel & Ativo', 'detail': 'Pagamentos em dia e treinou recentemente.'}
 
 
-def build_student_directory_snapshot(params=None):
+def build_student_directory_snapshot(params=None, for_export=False):
 	latest_enrollment_status = Enrollment.objects.filter(student=OuterRef('pk')).order_by('-start_date', '-created_at').values('status')[:1]
 	latest_plan_name = Enrollment.objects.filter(student=OuterRef('pk')).order_by('-start_date', '-created_at').values('plan__name')[:1]
 	latest_payment_status = Payment.objects.filter(student=OuterRef('pk')).order_by('-due_date', '-created_at').values('status')[:1]
@@ -75,7 +75,25 @@ def build_student_directory_snapshot(params=None):
 			default=Subquery(latest_payment_status),
 			output_field=CharField(),
 		),
-	).defer('cpf', 'notes', 'health_issue_status', 'created_at', 'updated_at').order_by('full_name')
+	)
+	
+	if for_export:
+		last_check_in = Attendance.objects.filter(
+			student=OuterRef('pk'),
+			check_in_at__isnull=False,
+		).order_by('-check_in_at').values('check_in_at')[:1]
+		amount_paid_sum = Payment.objects.filter(student=OuterRef('pk'), status=PaymentStatus.PAID).order_by().values('student').annotate(total=Sum('amount')).values('total')
+		amount_open_sum = Payment.objects.filter(student=OuterRef('pk'), status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE]).order_by().values('student').annotate(total=Sum('amount')).values('total')
+		overdue_count = Payment.objects.filter(student=OuterRef('pk'), status=PaymentStatus.OVERDUE).order_by().values('student').annotate(c=Count('id')).values('c')
+		
+		students = students.annotate(
+			report_last_check_in=Subquery(last_check_in),
+			report_amount_paid=Subquery(amount_paid_sum),
+			report_amount_open=Subquery(amount_open_sum),
+			report_overdue_count=Subquery(overdue_count)
+		)
+
+	students = students.defer('cpf', 'notes', 'health_issue_status', 'created_at', 'updated_at').order_by('full_name')
 	filter_form = StudentDirectoryFilterForm(params or None)
 
 	if filter_form.is_valid():
@@ -108,7 +126,6 @@ def build_student_directory_snapshot(params=None):
 			students = students.filter(operational_payment_status=payment_status)
 
 	# 🚀 Performance AAA (Db-Bypass): Agregação Unificada de Elite
-	from django.db.models import Count
 	metrics = students.aggregate(
 		total=Count('id'),
 		em_dia=Count('id', filter=Q(status=StudentStatus.ACTIVE, operational_payment_status=PaymentStatus.PAID)),

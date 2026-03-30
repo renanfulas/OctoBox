@@ -1,0 +1,18 @@
+<div class="front-command-snapshot front-command-snapshot--reports" data-panel="reports-command-snapshot">
+    <div class="front-command-grid">
+        {% for item in report_hub_focus %}
+        <article class="front-command-card" data-panel="reports-command-card">
+            <div class="front-command-card-head">
+                <span class="pill {{ item.pill_class|default:'accent' }}">{{ item.chip_label }}</span>
+            </div>
+            <div class="front-command-card-body">
+                <h3>{{ item.label }}</h3>
+                <p>{{ item.summary }}</p>
+            </div>
+            {% if item.href %}
+            <a class="front-command-link" href="{{ item.href }}" data-action="open-report-focus">{{ item.href_label|default:'Abrir leitura' }}</a>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </div>
+</div>

@@ -2,152 +2,120 @@
 ARQUIVO: diretorio principal de alunos.
 
 POR QUE ELE EXISTE:
-- isola a tabela principal da base para facilitar manutencao e leitura.
+- isola a tabela principal da base para facilitar manutencao, leitura e confianca de interacao.
 -->
 <section id="tab-students-directory" class="student-data-panel" data-panel="students-directory-board">
     <form id="bulk-action-form" method="POST" action="{% url 'student-bulk-action' %}">
         {% csrf_token %}
-        
-        <!-- Barra flutuante de Bulk Action (visivel apenas com selecao) -->
-        <div id="bulk-action-bar" style="display: none;" class="flex-row items-center justify-between p-3 bg-muted border-b border-soft transition-all">
-            <span class="text-sm font-semibold text-ink"><span id="bulk-selected-count">0</span> aluno(s) selecionado(s) nesta página</span>
+        <p id="student-bulk-status" class="visually-hidden" aria-live="polite"></p>
+
+        <div id="bulk-action-bar" class="flex-row items-center justify-between p-3 bg-muted border-b border-soft transition-all student-bulk-action-bar" hidden aria-live="polite">
+            <span class="text-sm font-semibold text-ink"><span id="bulk-selected-count">0</span> aluno(s) selecionado(s) nesta pagina</span>
             <div class="flex-row items-center gap-2">
-                <select name="bulk_action" class="form-select text-sm py-1.5" required>
-                    <option value="">Escolha uma ação em lote...</option>
+                <select name="bulk_action" class="form-select text-sm py-1.5" required data-row-ignore-click>
+                    <option value="">Escolha uma acao em lote...</option>
                     <option value="mark_active">Ativar alunos</option>
                     <option value="mark_inactive">Inativar alunos</option>
                 </select>
-                <button type="submit" class="button button-primary bg-accent text-sm py-1.5 px-4" onclick="return confirm('Aplicar esta ação aos alunos selecionados? Falhas pontuais serão ignoradas.')">
+                <button type="submit" class="button button-primary bg-accent text-sm py-1.5 px-4" data-row-ignore-click>
                     Executar
                 </button>
             </div>
         </div>
 
         <div class="student-table-scroll" data-slot="students-table-scroll">
-            <table class="table-modern">
+            <table class="table-modern student-directory-table">
+                <caption class="visually-hidden">Diretorio principal de alunos com navegacao por teclado e selecao em lote.</caption>
                 <thead>
                     <tr>
-                        <th scope="col" style="width: 40px; text-align: center;">
-                            <input type="checkbox" id="bulk-select-all" class="cursor-pointer" title="Selecionar todos os alunos visíveis nesta página">
+                        <th scope="col" class="student-select-column">
+                            <input type="checkbox" id="bulk-select-all" class="cursor-pointer" title="Selecionar todos os alunos visiveis nesta pagina" aria-label="Selecionar todos os alunos visiveis nesta pagina">
                         </th>
                         <th scope="col">Aluno</th>
                         <th scope="col">Plano</th>
                         <th scope="col">Financeiro</th>
-                        <th scope="col">Última entrada</th>
+                        <th scope="col">Ultima entrada</th>
                         <th scope="col">Aluno desde</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for student in page.data.students %}
-                    <tr class="student-row hover:bg-muted-soft cursor-pointer transition-all" onclick="window.location='{% url 'student-quick-update' student.id %}#student-financial-overview'">
-                        <td style="text-align: center;" onclick="event.stopPropagation();">
-                            <input type="checkbox" name="selected_students" value="{{ student.id }}" class="bulk-select-item cursor-pointer">
+                    <tr class="student-row hover:bg-muted-soft cursor-pointer transition-all" data-student-row data-href="{% url 'student-quick-update' student.id %}#student-financial-overview" tabindex="0" role="link" aria-label="Abrir ficha de {{ student.full_name }}">
+                        <td class="student-cell student-cell--select" data-row-ignore-click>
+                            <input type="checkbox" name="selected_students" value="{{ student.id }}" class="bulk-select-item cursor-pointer" aria-label="Selecionar {{ student.full_name }}">
                         </td>
-                        <td class="flex-row items-center gap-3">
-                            <!-- Avatar -->
+                        <td class="flex-row items-center gap-3 student-cell student-cell--student" data-label="Aluno">
                             <div class="avatar-circle avatar-{% cycle 'orange' 'blue' 'purple' 'teal' 'pink' 'indigo' %}">
                                 {{ student.full_name|slice:":1"|upper }}
                             </div>
-                        <div class="flex-col">
-                            <strong class="text-sm font-semibold text-ink">{{ student.full_name }}</strong>
-                            <span class="text-xs text-dimmed">{{ student.phone }}</span>
-                        </div>
-                    </td>
-                    <td>
-                        <span class="pill outline info text-2xs p-1 px-3">{{ student.latest_plan_name|default:"--" }}</span>
-                    </td>
-                    <td>
-                        {% if student.operational_payment_status == 'overdue' %}
+                            <div class="flex-col">
+                                <strong class="text-sm font-semibold text-ink">{{ student.full_name }}</strong>
+                                <span class="text-xs text-dimmed">{{ student.phone }}</span>
+                                <span class="visually-hidden">Pressione Enter para abrir a ficha.</span>
+                            </div>
+                        </td>
+                        <td class="student-cell" data-label="Plano">
+                            <span class="pill outline info text-2xs p-1 px-3">{{ student.latest_plan_name|default:"--" }}</span>
+                        </td>
+                        <td class="student-cell" data-label="Financeiro">
+                            {% if student.operational_payment_status == 'overdue' %}
                             <div class="pill-modern pill-modern-red">
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                                 Atrasado
                             </div>
-                        {% elif student.operational_payment_status == 'pending' %}
+                            {% elif student.operational_payment_status == 'pending' %}
                             <div class="pill-modern pill-modern-orange">
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                                 Pendente
                             </div>
-                        {% elif student.operational_payment_status == 'paid' %}
+                            {% elif student.operational_payment_status == 'paid' %}
                             <div class="pill-modern pill-modern-green">
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                                 Em dia
                             </div>
-                        {% else %}
+                            {% else %}
                             <div class="pill-modern pill-modern-gray">
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                                 Inativo
                             </div>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <div class="flex-row items-center gap-2 text-xs text-dimmed">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-40"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                            {{ student.updated_at|timesince }}
-                        </div>
-                    </td>
-                    <td>
-                        <span class="text-xs text-dimmed">{{ student.created_at|date:"M Y" }}</span>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6" class="table-empty-cell p-10 text-center text-dimmed text-sm">
-                        Nenhum aluno encontrado para este filtro.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+                            {% endif %}
+                        </td>
+                        <td class="student-cell student-cell--updated" data-label="Ultima entrada">
+                            <div class="flex-row items-center gap-2 text-xs text-dimmed">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-40"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                                {{ student.updated_at|timesince }}
+                            </div>
+                        </td>
+                        <td class="student-cell" data-label="Aluno desde">
+                            <span class="text-xs text-dimmed">{{ student.created_at|date:"M Y" }}</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="table-empty-cell p-10 text-center text-dimmed text-sm">
+                            Nenhum aluno encontrado para este filtro.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </form>
 
-    <!-- Table Footer / Pagination -->
-    <footer class="p-4 flex-row items-center justify-between border-t border-soft">
+    <footer class="p-4 flex-row items-center justify-between border-t border-soft" aria-label="Paginacao do diretorio de alunos">
         <span class="text-xs text-dimmed">{{ page.data.students.start_index }} de {{ page.data.total_students }} alunos</span>
         <div class="flex-row items-center gap-2">
             {% if page.data.students.has_previous %}
-                <a href="?page={{ page.data.students.previous_page_number }}&{{ page.data.base_query_string }}" class="button button-outline button-pill text-xs px-4 py-1.5">Anterior</a>
+            <a href="?page={{ page.data.students.previous_page_number }}&{{ page.data.base_query_string }}" class="button button-outline button-pill text-xs px-4 py-1.5">Anterior</a>
             {% else %}
-                <span class="button button-outline button-pill text-xs px-4 py-1.5 opacity-40 cursor-not-allowed">Anterior</span>
+            <span class="button button-outline button-pill text-xs px-4 py-1.5 opacity-40 cursor-not-allowed">Anterior</span>
             {% endif %}
 
             {% if page.data.students.has_next %}
-                <a href="?page={{ page.data.students.next_page_number }}&{{ page.data.base_query_string }}" class="button button-outline button-pill text-xs px-4 py-1.5">Próximo</a>
+            <a href="?page={{ page.data.students.next_page_number }}&{{ page.data.base_query_string }}" class="button button-outline button-pill text-xs px-4 py-1.5">Proximo</a>
             {% else %}
-                <span class="button button-outline button-pill text-xs px-4 py-1.5 opacity-40 cursor-not-allowed">Próximo</span>
+            <span class="button button-outline button-pill text-xs px-4 py-1.5 opacity-40 cursor-not-allowed">Proximo</span>
             {% endif %}
         </div>
     </footer>
 </section>
-
-<script>
-    // JS Simples Inline para Bulk Select
-    document.addEventListener('DOMContentLoaded', function() {
-        const selectAll = document.getElementById('bulk-select-all');
-        const checkboxes = document.querySelectorAll('.bulk-select-item');
-        const actionBar = document.getElementById('bulk-action-bar');
-        const countSpan = document.getElementById('bulk-selected-count');
-
-        function updateActionBar() {
-            const checkedCount = document.querySelectorAll('.bulk-select-item:checked').length;
-            countSpan.textContent = checkedCount;
-            if (checkedCount > 0) {
-                actionBar.style.display = 'flex';
-            } else {
-                actionBar.style.display = 'none';
-            }
-            selectAll.checked = (checkedCount === checkboxes.length && checkboxes.length > 0);
-        }
-
-        if (selectAll) {
-            selectAll.addEventListener('change', function() {
-                checkboxes.forEach(cb => cb.checked = selectAll.checked);
-                updateActionBar();
-            });
-        }
-
-        checkboxes.forEach(cb => {
-            cb.addEventListener('change', updateActionBar);
-        });
-    });
-</script>

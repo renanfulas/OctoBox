@@ -19,16 +19,34 @@ def build_student_directory_report(*, students, report_format):
         return {
             'format': 'csv',
             'filename': 'relatorio-alunos.csv',
-            'headers': ['Nome', 'WhatsApp', 'CPF', 'Status do aluno', 'Status comercial', 'Status financeiro', 'Plano atual'],
+            'headers': [
+                'Nome',
+                'WhatsApp',
+                'Email',
+                'CPF',
+                'Status do aluno',
+                'Status comercial',
+                'Status financeiro',
+                'Plano atual',
+                'Valor Pago',
+                'Valor Pendente/Atrasado',
+                'Contagem Cobrancas Atrasadas',
+                'Ultimo Check-in',
+            ],
             'rows': (
                 [
                     student.full_name,
                     student.phone,
+                    student.email or '-',
                     student.cpf,
                     student.get_status_display(),
                     student.latest_enrollment_status or '-',
                     student.latest_payment_status or '-',
                     student.latest_plan_name or '-',
+                    round(student.report_amount_paid, 2) if hasattr(student, 'report_amount_paid') and student.report_amount_paid else 0.0,
+                    round(student.report_amount_open, 2) if hasattr(student, 'report_amount_open') and student.report_amount_open else 0.0,
+                    student.report_overdue_count if hasattr(student, 'report_overdue_count') and student.report_overdue_count else 0,
+                    student.report_last_check_in.strftime('%d/%m/%Y %H:%M') if hasattr(student, 'report_last_check_in') and student.report_last_check_in else '-',
                 ]
                 for student in students.iterator(chunk_size=1000)
             ),
@@ -54,6 +72,8 @@ def build_student_directory_report(*, students, report_format):
     raise ValueError('Formato de exportacao nao suportado.')
 
 
+from django.urls import reverse
+
 def build_finance_report(*, snapshot, report_format):
     payments = snapshot['payments']
     enrollments = snapshot['enrollments']
@@ -63,15 +83,18 @@ def build_finance_report(*, snapshot, report_format):
         return {
             'format': 'csv',
             'filename': 'relatorio-financeiro.csv',
-            'headers': ['Aluno', 'Plano', 'Vencimento', 'Valor', 'Status', 'Metodo'],
+            'headers': ['Aluno', 'Data de Vencimento', 'Valor', 'Status', 'Metodo', 'Competência', 'Parcelas', 'Pago Em', 'Link Checkout'],
             'rows': [
                 [
                     payment.student.full_name,
-                    payment.enrollment.plan.name if payment.enrollment else '-',
                     payment.due_date.strftime('%d/%m/%Y'),
                     payment.amount,
                     payment.get_status_display(),
                     payment.get_method_display(),
+                    payment.due_date.strftime('%m/%Y'),
+                    f"{payment.installment_number}/{payment.installment_total}" if payment.installment_total > 1 else "-",
+                    payment.paid_at.strftime('%d/%m/%Y %H:%M') if payment.paid_at else "-",
+                    reverse('finance-checkout-redirect', args=[payment.id]) if payment.status == 'PENDING' else "-",
                 ]
                 for payment in payments.order_by('due_date', 'student__full_name')[:300]
             ],

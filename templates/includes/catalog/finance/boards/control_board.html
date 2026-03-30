@@ -1,31 +1,24 @@
 <!--
 ARQUIVO: recorte ativo e filtros do financeiro.
+
+POR QUE ELE EXISTE:
+- mantem o recorte financeiro visivel e pronto para fechamento operacional sem puxar exportacao para o fluxo principal.
+
+O QUE ESTE ARQUIVO FAZ:
+1. exibe filtros da leitura financeira.
+2. resume o recorte ativo para contexto da operacao.
+3. atualiza o contexto de forma acessivel para teclado e leitura assistida.
 -->
 
-<!-- Filtros da Leitura (em cima) -->
 <section class="card glass-panel finance-board-filter" data-panel="finance-filter-form">
     <div class="card-head">
         <h3 class="card-title">Filtros da Leitura Financeira</h3>
         <span class="badge badge-subtle info">Leitura ativa</span>
     </div>
-    <!--
-    ARQUIVO: painel de controle e exportação do financeiro.
-
-    POR QUE ELE EXISTE:
-    - Permite exportar o recorte filtrado do financeiro em CSV ou PDF.
-
-    O QUE ESTE ARQUIVO FAZ:
-    1. Exibe botões de exportação para o recorte ativo.
-    2. Atualiza o título e descrição conforme filtros aplicados.
-    3. Garante contexto visual claro para exportação.
-
-    PONTOS CRITICOS:
-    - Depende dos filtros ativos e do contexto de exportação.
-    -->
     <div class="finance-guide-note">
-        <p class="meta-text no-margin">Recorte e isole assinaturas por janela de tempo, plano, status e método de pagamento.</p>
+        <p class="meta-text no-margin">Recorte e isole assinaturas por janela de tempo, plano, status e metodo de pagamento.</p>
     </div>
-    <form method="get" class="form-stack" data-action="filter-finance" id="finance-filter-form">
+    <form method="get" class="form-stack" data-action="filter-finance" id="finance-filter-form" aria-describedby="finance-summary-description finance-filter-status">
         <div class="field-grid-200">
             <label>
                 <span class="field-label">{{ page.data.finance_filter_form.months.label }}</span>
@@ -51,60 +44,13 @@ ARQUIVO: recorte ativo e filtros do financeiro.
     </form>
 </section>
 
-<!-- Exportação do Recorte (embaixo, título dinâmico) -->
-<section class="card glass-panel finance-support-card finance-support-card-tight finance-filter-summary-card" id="finance-control-board" data-panel="finance-control-summary">
+<section class="card glass-panel finance-support-card finance-support-card-tight finance-filter-summary-card" id="finance-control-board" data-panel="finance-control-summary" role="status" aria-live="polite" aria-atomic="true">
     <div class="card-head">
-        <h3 class="card-title" id="finance-export-title">Exportação do Recorte Ativo</h3>
-        <span class="badge badge-subtle info">Contexto visível</span>
+        <h3 class="card-title" id="finance-summary-title">Resumo do Recorte Ativo</h3>
+        <span class="badge badge-subtle info">Contexto visivel</span>
     </div>
     <div class="finance-guide-note">
-        <p class="meta-text no-margin" id="finance-export-description">Confirme o recorte de filtragem antes de extrair os números para PDF ou planilha.</p>
+        <p class="meta-text no-margin" id="finance-summary-description">Confirme o recorte antes de seguir com cobranca, leitura e fechamento operacional.</p>
     </div>
-    <div class="actions actions-tight finance-support-actions">
-        <a class="button secondary" href="{{ page.actions.finance_export_links.csv }}" data-action="export-finance-csv">Exportar CSV</a>
-        <a class="button secondary" href="{{ page.actions.finance_export_links.pdf }}" data-action="export-finance-pdf">Exportar PDF</a>
-    </div>
+    <p id="finance-filter-status" class="visually-hidden" aria-live="polite"></p>
 </section>
-
-<script>
-(function() {
-    var form = document.getElementById('finance-filter-form');
-    var exportTitle = document.getElementById('finance-export-title');
-    var exportDesc = document.getElementById('finance-export-description');
-    if (!form || !exportTitle) return;
-
-    var filterLabels = {
-        'months': { '1': '1 mês', '3': '3 meses', '6': '6 meses', '12': '12 meses' },
-    };
-
-    function getSelectedLabel(selectEl) {
-        if (!selectEl || !selectEl.selectedIndex || selectEl.selectedIndex <= 0) return null;
-        return selectEl.options[selectEl.selectedIndex].text;
-    }
-
-    function updateExportTitle() {
-        var parts = [];
-        var selects = form.querySelectorAll('select');
-        selects.forEach(function(sel) {
-            var label = getSelectedLabel(sel);
-            if (label && label !== '---------' && label !== 'Todos' && label !== '') {
-                parts.push(label);
-            }
-        });
-
-        if (parts.length > 0) {
-            exportTitle.textContent = 'Exportar: ' + parts.join(' · ');
-            exportDesc.textContent = 'O arquivo exportado conterá exatamente o recorte filtrado acima.';
-        } else {
-            exportTitle.textContent = 'Exportação do Recorte Ativo';
-            exportDesc.textContent = 'Confirme o recorte de filtragem antes de extrair os números para PDF ou planilha.';
-        }
-    }
-
-    // Atualiza ao mudar qualquer filtro
-    form.addEventListener('change', updateExportTitle);
-
-    // Roda na carga se já houver filtros na URL
-    updateExportTitle();
-})();
-</script>

@@ -1,0 +1,114 @@
+/*
+ARQUIVO: fachada visual da central de relatorios.
+
+POR QUE ELE EXISTE:
+- remove estilos inline da superficie de relatorios.
+- preserva a leitura da tela como camada tecnica controlada, sem ruido estrutural no template.
+*/
+
+.reports-hub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--section-gap);
+}
+
+.reports-hub-card {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.reports-hub-card > header,
+.reports-hub-card-body,
+.reports-hub-card-footer {
+    position: relative;
+    z-index: 1;
+}
+
+.reports-hub-card > header,
+.reports-hub-card-body {
+    padding: 22px 24px 0;
+}
+
+.reports-hub-card-footer {
+    margin-top: auto;
+    padding: 18px 24px 22px;
+    border-top: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, transparent);
+}
+
+.reports-hub-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    width: fit-content;
+    padding: 0 12px;
+    margin-bottom: 14px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 44%, var(--theme-surface-secondary) 56%);
+    color: var(--theme-text-primary);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.reports-hub-card-title {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--theme-text-primary);
+}
+
+.reports-hub-card-copy {
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.58;
+    color: var(--theme-text-secondary);
+}
+
+.reports-hub-card-body {
+    flex: 1;
+}
+
+.reports-hub-card-label {
+    margin: 0 0 10px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--theme-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+}
+
+.reports-hub-list {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 0.9rem;
+    line-height: 1.58;
+    color: var(--theme-text-secondary);
+    list-style-type: disc;
+    display: grid;
+    gap: 8px;
+}
+
+.reports-hub-footer-copy {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.56;
+    color: var(--theme-text-muted);
+}
+
+@media (max-width: 640px) {
+    .reports-hub-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .reports-hub-card > header,
+    .reports-hub-card-body,
+    .reports-hub-card-footer {
+        padding-inline: 18px;
+    }
+}

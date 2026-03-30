@@ -108,17 +108,12 @@ class StudentDirectoryView(CatalogBaseView):
             del query_params['page']
         base_query_string = query_params.urlencode()
 
-        export_links = {
-            'csv': f"{reverse('student-directory-export', args=['csv'])}?{self.request.GET.urlencode()}",
-            'pdf': f"{reverse('student-directory-export', args=['pdf'])}?{self.request.GET.urlencode()}",
-        }
         page_payload = build_student_directory_page(
             student_count=student_count,
             students=page_obj,
             student_filter_form=snapshot['filter_form'],
             snapshot=snapshot,
             current_role_slug=current_role_slug,
-            export_links=export_links,
             base_query_string=base_query_string,
         )
 
@@ -458,7 +453,7 @@ class StudentDirectoryExportView(LoginRequiredMixin, RoleRequiredMixin, View):
             messages.warning(request, 'Cota de exportacao semanal atingida para este relatorio. O OctoBox limita exportacoes pesadas a 2 registros por semana para manter a performance do motor.')
             return redirect('student-directory')
 
-        students = build_student_directory_snapshot(request.GET)['students']
+        students = build_student_directory_snapshot(request.GET, for_export=True)['students']
         try:
             return build_report_response(build_student_directory_report(students=students, report_format=report_format))
         except ValueError as exc:

@@ -1,0 +1,56 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/operations/reports-hub.css' %}?v={{ static_asset_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="scenic-canvas">
+    {% include "includes/ui/layout/page_hero.html" with hero=report_hub_hero nested_include="operations/includes/reports_hub/command_snapshot.html" %}
+
+    <div class="cards-grid reports-hub-grid">
+        <article class="card reports-hub-card" id="reports-commercial">
+            <header>
+                <div class="reports-hub-card-icon">Comercial</div>
+                <h3 class="reports-hub-card-title">Book Comercial guardado com criterio</h3>
+                <p class="reports-hub-card-copy">A camada comercial segue preservada para o fechamento, com foco em base, retencao e sinais que mexem com conversao.</p>
+            </header>
+
+            <div class="reports-hub-card-body">
+                <p class="reports-hub-card-label">Estado atual</p>
+                <ul class="reports-hub-list">
+                    <li>Pipeline tecnico preservado para o fechamento gerencial</li>
+                    <li>Leitura de base e retencao organizada fora do fluxo operacional</li>
+                    <li>UI principal protegida contra atalhos que tiram foco do atendimento</li>
+                </ul>
+            </div>
+
+            <footer class="reports-hub-card-footer">
+                <p class="reports-hub-footer-copy">Proximo passo: manter a experiencia principal limpa e reabrir a camada final de saida so quando o fechamento pedir isso.</p>
+            </footer>
+        </article>
+
+        <article class="card reports-hub-card" id="reports-finance">
+            <header>
+                <div class="reports-hub-card-icon">Financeiro</div>
+                <h3 class="reports-hub-card-title">Book Financeiro guardado para a hora certa</h3>
+                <p class="reports-hub-card-copy">A camada financeira fica organizada para leitura por competencia, metodo e movimento de caixa sem roubar atencao da operacao diaria.</p>
+            </header>
+
+            <div class="reports-hub-card-body">
+                <p class="reports-hub-card-label">Estado atual</p>
+                <ul class="reports-hub-list">
+                    <li>Infra de exportacao preservada sem comando exposto na fachada</li>
+                    <li>Recortes seguem visiveis no Financeiro para leitura e decisao</li>
+                    <li>Reativacao dos downloads fica reservada para o fechamento operacional</li>
+                </ul>
+            </div>
+
+            <footer class="reports-hub-card-footer">
+                <p class="reports-hub-footer-copy">Pense nesta central como cofre e nao como vitrine: o motor continua pronto, mas a alavanca so volta quando fizer sentido para o negocio.</p>
+            </footer>
+        </article>
+    </div>
+</div>
+{% endblock %}
