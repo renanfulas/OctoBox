@@ -81,10 +81,25 @@ Linha do tempo deste primeiro ciclo:
 Use os docs por nivel de pergunta:
 
 1. este README explica o produto, o estado atual e a direcao geral
-2. os docs em [docs/architecture](docs/architecture) definem tese, principios e rumo estrutural
-3. os docs em [docs/plans](docs/plans) definem frentes ativas e ordem de execucao
-4. o [docs/reference/reading-guide.md](docs/reference/reading-guide.md) serve para navegar no codigo e depurar a base, nao para definir direcao de produto
-5. os docs em [docs/rollout](docs/rollout) servem para publicacao, homologacao e operacao de campo
+2. o [docs/reference/documentation-authority-map.md](docs/reference/documentation-authority-map.md) diz qual doc vence quando houver conflito, idade ou ambiguidade
+3. os docs em [docs/architecture](docs/architecture) definem tese, principios e rumo estrutural
+4. os docs em [docs/plans](docs/plans) definem frentes ativas e ordem de execucao
+5. o [docs/reference/reading-guide.md](docs/reference/reading-guide.md) serve para navegar no codigo e depurar a base, nao para definir direcao de produto
+6. os docs em [docs/rollout](docs/rollout) servem para publicacao, homologacao e operacao de campo
+
+## Governanca OctoBox
+
+O projeto usa tres trilhos de governanca para nao virar uma obra onde cada pessoa olha um mapa diferente:
+
+1. documentacao e precedencia: [docs/reference/documentation-authority-map.md](docs/reference/documentation-authority-map.md)
+2. convencoes tecnicas e C.O.R.D.A.: [.specs/codebase/CONVENTIONS.md](.specs/codebase/CONVENTIONS.md)
+3. leitura tecnica do runtime: [docs/reference/reading-guide.md](docs/reference/reading-guide.md)
+
+Traducao pratica:
+
+1. `C.O.R.D.A.` significa `Contexto`, `Objetivo`, `Riscos`, `Direcao` e `Acoes`
+2. use esse framework quando estivermos fechando beta, priorizando UX ou decidindo entre polimento e correcao estrutural
+3. primeiro alinhamos o terreno, depois escolhemos a rota; isso evita passar verniz numa porta que ainda nao fecha direito
 
 ## Leitura rapida do produto
 
@@ -369,10 +384,13 @@ python manage.py bootstrap_roles
 5. Rode `python manage.py bootstrap_roles`.
 6. Crie um usuario administrativo com `python manage.py createsuperuser`.
 7. Suba o servidor com `python manage.py runserver`.
+8. Rode `python manage.py test` para usar automaticamente a trilha de configuracao de testes do projeto.
 
 Observacao:
 
 - login, logout, mudancas no admin e acoes comerciais sensiveis ja alimentam a trilha de auditoria
+- para ambiente local, o projeto le automaticamente `.env` quando ele existir
+- `python manage.py test` prefere `config.settings.test` e tambem aceita `.env.test` local como complemento opcional
 - para ambiente local, voce pode definir `DJANGO_SECRET_KEY` em um arquivo `.env` ou nas variaveis do sistema
 - para ambientes que usam identidade de canal WhatsApp, defina tambem `PHONE_BLIND_INDEX_KEY`
 - o projeto agora aceita `DJANGO_ENV=development` ou `DJANGO_ENV=production` para separar configuracao local de homologacao/producao

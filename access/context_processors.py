@@ -122,11 +122,12 @@ def _build_shell_page_context(current_view_name, current_path, role, navigation,
 
 def _build_navigation(role_slug, current_view_name):
     base_links = [
-        {'nav_key': 'dashboard', 'label': 'Dashboard', 'href': reverse('dashboard'), 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER), 'icon': 'DB'},
+        {'nav_key': 'dashboard', 'label': 'Dashboard', 'href': reverse('dashboard'), 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION, ROLE_COACH), 'icon': 'DB'},
         {'nav_key': 'operacao', 'label': 'Minha operação', 'href': reverse('role-operations'), 'icon': 'OP'},
         {'nav_key': 'alunos', 'label': 'Alunos', 'href': reverse('student-directory'), 'icon': 'AL'},
         {'nav_key': 'financeiro', 'label': 'Financeiro', 'href': reverse('finance-center'), 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER), 'icon': 'FI'},
         {'nav_key': 'entradas', 'label': 'Entradas', 'href': reverse('intake-center'), 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION), 'icon': 'EN'},
+        {'nav_key': 'relatorios', 'label': 'Relatórios', 'href': reverse('reports-hub'), 'roles': (ROLE_OWNER, ROLE_MANAGER), 'icon': 'AT'},
         {'nav_key': 'grade-aulas', 'label': 'Grade de aulas', 'href': reverse('class-grid'), 'icon': 'AU'},
     ]
 

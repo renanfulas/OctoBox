@@ -32,7 +32,8 @@ ROLE_PERMISSION_MAP = {
     ROLE_MANAGER: MANAGER_PERMISSIONS,
     ROLE_RECEPTION: RECEPTION_PERMISSIONS,
     ROLE_COACH: COACH_PERMISSIONS,
-    ROLE_HONEYPOT: HONEYPOT_PERMISSIONS,
+    # Honeypot usa capacidades narrativas de isolamento, nao permissoes reais de modelo.
+    ROLE_HONEYPOT: {},
 }
 
 _ROLE_CACHE_ATTR = '_octobox_cached_role'

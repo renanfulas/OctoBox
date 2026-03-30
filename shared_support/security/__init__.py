@@ -31,12 +31,17 @@ SECURITY_LOGGER = getLogger('octobox.security')
 WRITE_METHODS = {'POST', 'PUT', 'PATCH', 'DELETE'}
 WRITE_PATH_PREFIXES = (
     '/operations/',
+    '/operacao/',
     '/catalog/',
     '/students/',
+    '/alunos/',
     '/financeiro/',
     '/grade-aulas/',
+    '/entradas/',
     '/api/',     
     '/guide/',   
+    '/mapa-sistema/',
+    '/configuracoes-operacionais/',
 )
 
 # 🍯 Armadilhas para detecção automática de scanners

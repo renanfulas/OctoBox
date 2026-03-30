@@ -17,11 +17,28 @@ PONTOS CRITICOS:
 """
 import os
 import sys
+from pathlib import Path
+
+from config.env_loader import load_project_env
+
+
+BASE_DIR = Path(__file__).resolve().parent
+
+
+def _is_test_command(argv):
+    return len(argv) > 1 and argv[1].strip().lower() == 'test'
+
+
+def _default_settings_module(argv):
+    if _is_test_command(argv):
+        return 'config.settings.test'
+    return 'config.settings'
 
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+    load_project_env(BASE_DIR, include_test_file=_is_test_command(sys.argv))
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', _default_settings_module(sys.argv))
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

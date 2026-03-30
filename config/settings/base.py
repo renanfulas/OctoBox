@@ -21,8 +21,15 @@ import socket
 from pathlib import Path
 
 import dj_database_url
+from config.env_loader import load_project_env
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+ACTIVE_SETTINGS_MODULE = os.getenv('DJANGO_SETTINGS_MODULE', '').strip().lower()
+
+load_project_env(
+    BASE_DIR,
+    include_test_file=ACTIVE_SETTINGS_MODULE.endswith('.test') or bool(os.getenv('PYTEST_CURRENT_TEST')),
+)
 
 
 def env_bool(name, default=False):
@@ -135,9 +142,11 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'
 
 # Mandatory SECRET_KEY check (Epic 8 Security Hardening)
-SECRET_KEY = env_str('DJANGO_SECRET_KEY')
+SECRET_KEY = env_str('DJANGO_SECRET_KEY') or env_str('SECRET_KEY')
 if not SECRET_KEY:
-    raise ImproperlyConfigured('DJANGO_SECRET_KEY deve ser definida como variavel de ambiente.')
+    raise ImproperlyConfigured(
+        'DJANGO_SECRET_KEY deve ser definida como variavel de ambiente ou no arquivo .env.'
+    )
 
 PHONE_BLIND_INDEX_KEY = env_str('PHONE_BLIND_INDEX_KEY', 'dev-default-blind-index-key')
 

@@ -33,7 +33,16 @@
             {% if user.is_authenticated %}
             <header class="topbar" data-slot="topbar" data-ui="topbar">
                 <div class="topbar-left" data-slot="topbar-left">
-                    <button class="sidebar-toggle" type="button" id="sidebar-toggle" data-ui="sidebar-toggle" aria-expanded="false" aria-controls="page-body">Menu</button>
+                    <button class="sidebar-toggle" type="button" id="sidebar-toggle" data-ui="sidebar-toggle" aria-expanded="false" aria-controls="page-body" aria-label="Abrir menu lateral" title="Abrir menu lateral">
+                        <span class="sidebar-toggle-icon" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <path d="M4 7h16"/>
+                                <path d="M4 12h16"/>
+                                <path d="M4 17h16"/>
+                            </svg>
+                        </span>
+                        <span class="visually-hidden">Abrir menu lateral</span>
+                    </button>
                     {% if current_role.slug != 'Coach' %}
                     {% include "includes/ui/layout/topbar/topbar_search.html" %}
                     {% endif %}
