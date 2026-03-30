@@ -27,7 +27,7 @@ PONTOS CRITICOS:
     <div class="owner-metrics-panel section-gap" data-panel="intake-kpi-triggers">
         <section class="panel-grid operation-metric-grid owner-metric-grid interactive-tab-triggers" aria-label="Navegação principal de entradas">
             {% for metric in page.data.interactive_kpis %}
-            {% include "includes/ui/shared/metric_card.html" with card=metric compact=True extra_classes="dashboard-kpi-card is-ledger glass-panel " %}
+            {% include "includes/ui/shared/metric_card.html" with card=metric compact=True extra_classes="dashboard-kpi-card is-ledger " %}
             {% endfor %}
         </section>
     </div>

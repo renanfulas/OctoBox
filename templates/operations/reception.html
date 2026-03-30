@@ -39,3 +39,7 @@ PONTOS CRITICOS:
 </div>
 {% endwith %}
 {% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/pages/operations/reception-payment-card.js' %}?v={{ static_asset_version }}"></script>
+{% endblock %}

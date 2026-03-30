@@ -8,7 +8,7 @@ POR QUE ELE EXISTE:
     <section class="panel-grid operation-metric-grid owner-metric-grid interactive-tab-triggers"
         aria-label="Navegacao principal de alunos">
         {% for card in page.data.interactive_kpis %}
-        {% include "includes/ui/shared/metric_card.html" with card=card compact=True extra_classes="dashboard-kpi-card kpi-slate is-ledger glass-panel "|add:card.tone_class %}
+        {% include "includes/ui/shared/metric_card.html" with card=card compact=True extra_classes="dashboard-kpi-card kpi-slate is-ledger "|add:card.tone_class %}
         {% endfor %}
     </section>
 </div>

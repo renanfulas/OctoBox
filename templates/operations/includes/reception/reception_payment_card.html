@@ -1,10 +1,12 @@
 <article class="history-entry finance-action-card finance-action-card-compact reception-payment-card" data-panel="reception-payment-card">
+    {% url 'reception-payment-action' payment_id=item.payment_id as reception_payment_action_url %}
+    {% url 'finance-communication-action' as finance_communication_action_url %}
     <div class="row-between history-header finance-action-head">
         <div class="finance-action-copy">
             <strong>{{ item.student_name }}</strong>
             <p class="meta-text-sm">{{ item.plan_name }}</p>
         </div>
-            <span class="pill {{ item.status_class }}">{{ item.status_label }}</span>
+        <span class="pill {{ item.status_class }}">{{ item.status_label }}</span>
     </div>
     <div class="finance-alert-grid reception-payment-meta">
         <div class="finance-alert-stat">
@@ -25,7 +27,7 @@
         <p class="meta-text">{{ item.reason }}</p>
     </div>
     {% if page.capabilities.can_manage_reception_payments %}
-    <form method="post" action="/operacao/recepcao/pagamento/{{ item.payment_id }}/acao/" class="reception-payment-form" data-action="manage-reception-payment">
+    <form method="post" action="{{ reception_payment_action_url }}" class="reception-payment-form" data-action="manage-reception-payment">
         {% csrf_token %}
         <input type="hidden" name="payment_id" value="{{ item.payment_id }}">
         <div class="field-grid-220 reception-payment-form-primary">
@@ -42,27 +44,42 @@
                 </select>
             </label>
         </div>
-        <div class="actions actions-tight finance-card-actions-compact reception-payment-actions reception-payment-actions-primary" style="display: flex; align-items: center; width: 100%;">
+        <div class="actions actions-tight finance-card-actions-compact reception-payment-actions reception-payment-actions-primary">
             <button class="button" type="submit" name="action" value="mark-paid" data-action="confirm-reception-payment">Confirmar pagamento</button>
             <a class="button secondary" href="{{ item.student_href }}#student-financial-overview" data-action="open-student-financial-overview">Abrir ficha</a>
-            
+
             {% if item.clean_phone %}
                 {% if current_role.slug|lower == 'recepcao' and item.is_reception_blocked %}
-                    <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto;">
-                        <span class="button secondary button-sm disabled" onmouseover="this.nextElementSibling.style.opacity = '1'" onmouseout="this.nextElementSibling.style.opacity = '0'">
-                            🔒 Zap
-                        </span>
-                        <small style="font-size: 9px; color: #ba3030; font-weight: 600; margin-top: 2px; opacity: 0; transition: opacity 0.2s; pointer-events: none;">Reportar ao Gerente ou Dono</small>
-                    </div>
+                <div class="reception-payment-whatsapp-slot is-inline-hint" data-slot="reception-whatsapp">
+                    <span class="button secondary button-sm disabled reception-payment-whatsapp-button is-disabled" aria-disabled="true">
+                        Zap bloqueado
+                    </span>
+                    <small class="reception-payment-whatsapp-hint">Reportar ao gerente ou dono</small>
+                </div>
                 {% else %}
                     {% if item.is_whatsapp_locked %}
-                    <span class="button secondary button-sm disabled" style="margin-left: auto;" title="Bloqueado por {{ item.repeat_block_hours }}h">
-                        🔒 Zap
+                <div class="reception-payment-whatsapp-slot is-inline-hint" data-slot="reception-whatsapp">
+                    <span class="button secondary button-sm disabled reception-payment-whatsapp-button is-disabled" aria-disabled="true" title="Bloqueado por {{ item.repeat_block_hours }}h">
+                        Zap bloqueado
                     </span>
+                    <small class="reception-payment-whatsapp-hint">Aguarde a proxima janela de {{ item.repeat_block_hours }}h</small>
+                </div>
                     {% else %}
-                    <a href="#" onclick="fetch('/financeiro/comunicacao/acao/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }, body: 'action_kind=overdue&student_id={{ item.student_id }}&payment_id={{ item.payment_id }}' }); window.open(`https://wa.me/{{ item.clean_phone }}?text=` + encodeURIComponent(`Oi, {{ item.student_name }}! Aqui é a {{ user.first_name }} do Cross.\n\nTudo bem por aí?\n\nPassando só pra dar um toque: vi que ficou uma mensalidade em aberto aqui (pode ter escapado na correria mesmo, acontece!).\n{% if item.is_late_10_days %}\nPra não correr risco de bloquear o acesso nos treinos, que tal regularizar?\n{% endif %}\nSe quiser resolver agora, te mando a chave PIX na hora.\nOu, se preferir, a gente acerta tranquilo no seu próximo treino.\n\nQualquer coisa é só chamar, tá?\nA gente curte muito ter você treinando com a gente!`), '_blank'); return false;" class="button secondary button-sm" style="margin-left: auto;" title="Enviar mensagem de cobrança no WhatsApp">
-                        🟢 Zap
-                    </a>
+                <button
+                    type="button"
+                    class="button secondary button-sm reception-payment-whatsapp-button"
+                    data-action="launch-reception-whatsapp"
+                    data-communication-url="{{ finance_communication_action_url }}"
+                    data-action-kind="overdue"
+                    data-student-id="{{ item.student_id }}"
+                    data-payment-id="{{ item.payment_id }}"
+                    data-clean-phone="{{ item.clean_phone }}"
+                    data-student-name="{{ item.student_name }}"
+                    data-operator-name="{{ user.first_name|default:'Equipe' }}"
+                    data-is-late-10-days="{% if item.is_late_10_days %}1{% else %}0{% endif %}"
+                    title="Enviar mensagem de cobranca no WhatsApp">
+                    Enviar WhatsApp
+                </button>
                     {% endif %}
                 {% endif %}
             {% endif %}

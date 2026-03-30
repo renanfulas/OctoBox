@@ -10,7 +10,7 @@ ARQUIVO: cobrança operacional da recepção.
 .reception-payment-grid,
 .reception-preview-payment-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
     gap: 14px;
 }
 
@@ -85,9 +85,43 @@ ARQUIVO: cobrança operacional da recepção.
 
 .reception-payment-actions-primary {
     padding-top: 0;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    align-items: center;
+    width: 100%;
+    flex-wrap: wrap;
     gap: 8px;
+}
+
+.reception-payment-whatsapp-slot {
+    margin-left: auto;
+    display: grid;
+    justify-items: end;
+    gap: 2px;
+}
+
+.reception-payment-whatsapp-button {
+    white-space: nowrap;
+}
+
+.reception-payment-whatsapp-button.is-disabled {
+    pointer-events: none;
+}
+
+.reception-payment-whatsapp-hint {
+    margin: 0;
+    font-size: 0.62rem;
+    line-height: 1.2;
+    font-weight: 700;
+    color: #ba3030;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.reception-payment-whatsapp-slot:hover .reception-payment-whatsapp-hint,
+.reception-payment-whatsapp-slot:focus-within .reception-payment-whatsapp-hint,
+.reception-payment-whatsapp-slot.is-inline-hint .reception-payment-whatsapp-hint {
+    opacity: 1;
 }
 
 .reception-payment-actions .button,
@@ -166,4 +200,21 @@ ARQUIVO: cobrança operacional da recepção.
 .reception-payment-board .operation-card-copy,
 .reception-preview-payment-board .operation-card-copy {
     max-width: 38ch;
+}
+
+@media (max-width: 720px) {
+    .reception-payment-actions-primary {
+        align-items: stretch;
+    }
+
+    .reception-payment-actions-primary .button,
+    .reception-payment-actions-primary .reception-payment-whatsapp-button,
+    .reception-payment-actions-primary .reception-payment-whatsapp-slot {
+        width: 100%;
+    }
+
+    .reception-payment-whatsapp-slot {
+        margin-left: 0;
+        justify-items: stretch;
+    }
 }
