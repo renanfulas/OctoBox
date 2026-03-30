@@ -416,12 +416,16 @@ body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-act
 
 .dashboard-kpi-sparkline .spark-bar {
     flex: 1;
-    background: currentColor;
-    opacity: 0.15;
-    border-radius: 3px 3px 0 0;
     min-height: 3px;
+    display: block;
     cursor: pointer;
     transition: opacity 0.2s ease, transform 0.2s ease;
+    color: currentColor;
+    opacity: 0.15;
+}
+
+.dashboard-kpi-sparkline .spark-bar rect {
+    fill: currentColor;
 }
 
 .dashboard-kpi-sparkline .spark-bar:hover {

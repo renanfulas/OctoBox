@@ -18,3 +18,12 @@ def smart_break(value):
     text = str(value)
     result = _BREAK_PATTERN.sub('.<br>', text, count=1)
     return mark_safe(result)
+
+
+@register.filter(name='subtract')
+def subtract(value, arg):
+    """Subtrai valores numericos simples para uso em markup sem inline style."""
+    try:
+        return float(value) - float(arg)
+    except (TypeError, ValueError):
+        return value

@@ -1,11 +1,11 @@
 <!--
 ARQUIVO: metric_card.html
 POR QUE ELE EXISTE:
-- Exibe métricas resumidas em formato de card.
+- Exibe metricas resumidas em formato de card.
 O QUE ESTE ARQUIVO FAZ:
-- Renderiza valor, label, ícone, variação, sinais e indicadores de métrica.
+- Renderiza valor, label, icone, variacao, sinais e indicadores de metrica.
 PONTOS CRITICOS:
-- Depende dos parâmetros value, label, icon, variation, card e parâmetros opcionais.
+- Depende dos parametros value, label, icon, variation, card e parametros opcionais.
 -->
 {% load dashboard_filters %}
 {% if card.href %}<a href="{{ card.href }}" class="metric-card-link">{% endif %}
@@ -57,9 +57,11 @@ PONTOS CRITICOS:
                 {% endif %}
             </div>
             {% if card.sparkline_data %}
-            <div class="dashboard-kpi-sparkline" aria-label="Representação visual do progresso semanal">
+            <div class="dashboard-kpi-sparkline" aria-label="Representacao visual do progresso semanal">
                 {% for point in card.sparkline_data %}
-                <div class="spark-bar{% if forloop.last %} is-today{% endif %}" style="height: {{ point.percent }}%;" title="{{ point.label }}"></div>
+                <svg class="spark-bar{% if forloop.last %} is-today{% endif %}" viewBox="0 0 10 100" preserveAspectRatio="none" title="{{ point.label }}" aria-hidden="true" focusable="false">
+                    <rect x="0" y="{{ 100|subtract:point.percent }}" width="10" height="{{ point.percent }}" rx="2"></rect>
+                </svg>
                 {% endfor %}
             </div>
             {% endif %}
