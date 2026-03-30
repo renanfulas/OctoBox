@@ -11,15 +11,11 @@ PONTOS CRITICOS:
     <div class="dashboard-summary-shell">
         <div class="dashboard-summary-topline">
             {% with primary_card=page.data.dashboard_priority_cards.0 %}
-                {% include "includes/ui/dashboard/dashboard_glance_card.html" with card=primary_card kicker="Emergência" %}
+                {% include "includes/ui/dashboard/dashboard_glance_card.html" with card=primary_card %}
             {% endwith %}
 
             {% for card in page.data.dashboard_priority_cards|slice:"1:3" %}
-                {% if forloop.first %}
-                    {% include "includes/ui/dashboard/dashboard_glance_card.html" with card=card kicker="Urgente" %}
-                {% else %}
-                    {% include "includes/ui/dashboard/dashboard_glance_card.html" with card=card kicker="Risco" %}
-                {% endif %}
+                {% include "includes/ui/dashboard/dashboard_glance_card.html" with card=card %}
             {% endfor %}
 
             <a class="visually-hidden" href="#dashboard-sessions-board">Abrir agenda do dia</a>

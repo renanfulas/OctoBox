@@ -413,6 +413,14 @@ def _build_dashboard_priority_cards(
     primary_payment_alert = next_payment_alert or (payment_alerts[0] if payment_alerts else None)
     overdue_count = metrics['overdue_payments']
 
+    def build_priority_card(*, severity, value, **card):
+        return {
+            **card,
+            'severity': severity,
+            'is_actionable': value > 0,
+            'value': value,
+        }
+
     student_name = 'Alguém'
     if primary_payment_alert:
         if isinstance(primary_payment_alert, dict):
@@ -421,47 +429,50 @@ def _build_dashboard_priority_cards(
             student_name = primary_payment_alert.student.full_name if hasattr(primary_payment_alert, 'student') else 'Alguém'
 
     if actionable_payment_alerts_count > 0 and primary_payment_alert:
-        emergency_card = {
-            'href': finance_href,
-            'card_class': 'is-finance',
-            'indicator_class': 'is-finance',
-            'kicker': 'Emergência',
-            'value': actionable_payment_alerts_count,
-            'indicator': 'Caixa' if role_slug == ROLE_RECEPTION else 'Urgente',
-            'copy': (
+        emergency_card = build_priority_card(
+            severity='emergency',
+            value=actionable_payment_alerts_count,
+            href=finance_href,
+            card_class='is-finance',
+            indicator_class='is-finance',
+            kicker='Emergência',
+            indicator='Caixa' if role_slug == ROLE_RECEPTION else 'Urgente',
+            copy=(
                 f'{student_name} está esperando contato. Eu te guio: comece por aqui e o caixa agradece.'
                 if role_slug != ROLE_RECEPTION else
                 f'{student_name} precisa do seu cuidado agora. Uma abordagem sua faz toda a diferença.'
             ),
-        }
+        )
     elif overdue_count > 0 and primary_payment_alert:
-        emergency_card = {
-            'href': finance_href,
-            'card_class': 'is-finance',
-            'indicator_class': 'is-finance',
-            'kicker': 'Emergência',
-            'value': overdue_count,
-            'indicator': 'Controle',
-            'copy': (
+        emergency_card = build_priority_card(
+            severity='emergency',
+            value=overdue_count,
+            href=finance_href,
+            card_class='is-finance',
+            indicator_class='is-finance',
+            kicker='Emergência',
+            indicator='Controle',
+            copy=(
                 f'{student_name} abre a fila. O dinheiro ainda está aí, só precisa de você. Vamos resolver juntos.'
                 if role_slug != ROLE_RECEPTION else
                 f'{student_name} abre a fila curta. O caixa respira, mas uma olhada sua agora faz diferença.'
             ),
-        }
+        )
     else:
-        emergency_card = {
-            'href': finance_href,
-            'card_class': 'is-finance',
-            'indicator_class': 'is-finance',
-            'kicker': 'Emergência',
-            'value': 0,
-            'indicator': 'Estável',
-            'copy': (
+        emergency_card = build_priority_card(
+            severity='emergency',
+            value=0,
+            href=finance_href,
+            card_class='is-finance',
+            indicator_class='is-finance',
+            kicker='Emergência',
+            indicator='Estável',
+            copy=(
                 'Caixa limpo. Você está no controle. Pode seguir com tranquilidade.'
                 if role_slug != ROLE_RECEPTION else
                 'Tudo certo no caixa do balcão. Você está mandando bem.'
             ),
-        }
+        )
 
     pressured_session = next(
         (
@@ -472,81 +483,87 @@ def _build_dashboard_priority_cards(
     )
 
     if highest_risk_student and highest_risk_student.total_absences >= 1:
-        urgency_card = {
-            'href': get_shell_route_url('students'),
-            'card_class': 'is-base',
-            'indicator_class': 'is-base',
-            'kicker': 'Urgente',
-            'value': highest_risk_student.total_absences,
-            'indicator': 'Retenção' if role_slug != ROLE_RECEPTION else 'Cuidado',
-            'copy': (
+        urgency_card = build_priority_card(
+            severity='warning',
+            value=highest_risk_student.total_absences,
+            href=get_shell_route_url('students'),
+            card_class='is-base',
+            indicator_class='is-base',
+            kicker='Urgente',
+            indicator='Retenção' if role_slug != ROLE_RECEPTION else 'Cuidado',
+            copy=(
                 f'{highest_risk_student.full_name} sumiu um pouco, {highest_risk_student.total_absences} falta(s). Uma mensagem sua pode ser o que faltava pra voltar.'
                 if role_slug != ROLE_RECEPTION else
                 f'{highest_risk_student.full_name} precisa sentir que alguém notou, {highest_risk_student.total_absences} falta(s). Seu acolhimento pode mudar tudo.'
             ),
-        }
+        )
     elif pressured_session:
         starts_at = pressured_session.get('starts_at')
         starts_at_label = timezone.localtime(starts_at).strftime('%H:%M') if starts_at else '--:--'
-        urgency_card = {
-            'href': '#dashboard-sessions-board',
-            'card_class': 'is-sessions',
-            'indicator_class': 'is-sessions',
-            'kicker': 'Urgente',
-            'value': pressured_session['occupancy_percent'] or len(upcoming_sessions),
-            'indicator': 'Turno',
-            'copy': (
+        urgency_card = build_priority_card(
+            severity='warning',
+            value=pressured_session['occupancy_percent'] or len(upcoming_sessions),
+            href='#dashboard-sessions-board',
+            card_class='is-sessions',
+            indicator_class='is-sessions',
+            kicker='Urgente',
+            indicator='Turno',
+            copy=(
                 f"{pressured_session['object'].title} está acontecendo agora. Eu cuido da leitura, você cuida da equipe."
                 if pressured_session['status_label'] == 'Em andamento' else
                 f"{pressured_session['object'].title} começa às {starts_at_label} e precisa de atenção. Vou te levar pra agenda."
             ),
-        }
+        )
     else:
-        urgency_card = {
-            'href': get_shell_route_url('students'),
-            'card_class': 'is-base',
-            'indicator_class': 'is-base',
-            'kicker': 'Urgente',
-            'value': 0,
-            'indicator': 'Estável',
-            'copy': 'Tudo tranquilo na retenção. A comunidade está bem e você pode focar no que quiser.',
-        }
+        urgency_card = build_priority_card(
+            severity='warning',
+            value=0,
+            href=get_shell_route_url('students'),
+            card_class='is-base',
+            indicator_class='is-base',
+            kicker='Urgente',
+            indicator='Estável',
+            copy='Tudo tranquilo na retenção. A comunidade está bem e você pode focar no que quiser.',
+        )
 
     occurrences_count = metrics['occurrences_this_month']
     if occurrences_count > 0 and highest_risk_student:
-        risk_card = {
-            'href': get_shell_route_url('students'),
-            'card_class': 'is-risk',
-            'indicator_class': 'is-risk',
-            'kicker': 'Risco',
-            'value': occurrences_count,
-            'indicator': 'Rotina',
-            'copy': (
+        risk_card = build_priority_card(
+            severity='risk',
+            value=occurrences_count,
+            href=get_shell_route_url('students'),
+            card_class='is-risk',
+            indicator_class='is-risk',
+            kicker='Risco',
+            indicator='Rotina',
+            copy=(
                 f'{occurrences_count} ocorrência(s) no mês e {highest_risk_student.full_name} com {highest_risk_student.total_absences} falta(s). Eu organizo os dados, você decide a ação. Juntos resolvemos.'
                 if role_slug != ROLE_RECEPTION else
                 f'{occurrences_count} ocorrência(s) no mês e {highest_risk_student.full_name} pede acolhimento. Eu te mostro por onde começar.'
             ),
-        }
+        )
     elif occurrences_count > 0:
-        risk_card = {
-            'href': get_shell_route_url('students'),
-            'card_class': 'is-risk',
-            'indicator_class': 'is-risk',
-            'kicker': 'Risco',
-            'value': occurrences_count,
-            'indicator': 'Rotina',
-            'copy': 'Algumas ocorrências apareceram. Vou te ajudar a organizar antes que vire problema.',
-        }
+        risk_card = build_priority_card(
+            severity='risk',
+            value=occurrences_count,
+            href=get_shell_route_url('students'),
+            card_class='is-risk',
+            indicator_class='is-risk',
+            kicker='Risco',
+            indicator='Rotina',
+            copy='Algumas ocorrências apareceram. Vou te ajudar a organizar antes que vire problema.',
+        )
     else:
-        risk_card = {
-            'href': get_shell_route_url('students'),
-            'card_class': 'is-risk',
-            'indicator_class': 'is-risk',
-            'kicker': 'Risco',
-            'value': 0,
-            'indicator': 'Estável',
-            'copy': 'Rotina limpa. O box está funcionando bem e você pode confiar no ritmo.',
-        }
+        risk_card = build_priority_card(
+            severity='risk',
+            value=0,
+            href=get_shell_route_url('students'),
+            card_class='is-risk',
+            indicator_class='is-risk',
+            kicker='Risco',
+            indicator='Estável',
+            copy='Rotina limpa. O box está funcionando bem e você pode confiar no ritmo.',
+        )
 
     return [emergency_card, urgency_card, risk_card]
 

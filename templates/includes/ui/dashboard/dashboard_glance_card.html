@@ -9,7 +9,7 @@ PONTOS CRITICOS:
 -->
 {% load dashboard_filters %}
 {% with display_kicker=kicker|default:card.kicker %}
-<a class="dashboard-glance-card dashboard-glance-card--summary {{ card.card_class }}{% if 'Emergência' in display_kicker %} is-emergency{% elif 'Urgente' in display_kicker %} is-warning{% elif 'Risco' in display_kicker %} is-risk{% endif %}{% if card.value > 0 %} is-actionable{% else %} is-tranquil{% endif %}" href="{{ card.href }}">
+<a class="dashboard-glance-card dashboard-glance-card--summary {{ card.card_class }}{% if card.severity == 'emergency' %} is-emergency{% elif card.severity == 'warning' %} is-warning{% elif card.severity == 'risk' %} is-risk{% endif %}{% if card.is_actionable %} is-actionable{% else %} is-tranquil{% endif %}" href="{{ card.href }}">
     <span class="dashboard-glance-kicker">{{ display_kicker }}</span>
     <div class="dashboard-glance-value-row">
         <strong class="dashboard-glance-value">{{ card.value }}</strong>
