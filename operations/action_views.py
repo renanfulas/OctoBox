@@ -63,7 +63,7 @@ class PaymentEnrollmentLinkView(LoginRequiredMixin, RoleRequiredMixin, View):
     def post(self, request, payment_id, *args, **kwargs):
         get_object_or_404(Payment.objects.select_related('student'), pk=payment_id)
         run_link_payment_enrollment(actor_id=request.user.id, payment_id=payment_id)
-        return _redirect_back(request, fallback_url='/operacao/manager/')
+        return _redirect_back(request, fallback_url=reverse('manager-workspace'))
 
 
 class TechnicalBehaviorNoteCreateView(LoginRequiredMixin, RoleRequiredMixin, View):
@@ -74,14 +74,14 @@ class TechnicalBehaviorNoteCreateView(LoginRequiredMixin, RoleRequiredMixin, Vie
         form = TechnicalBehaviorNoteForm(request.POST)
         if not form.is_valid():
             messages.error(request, 'A ocorrencia tecnica nao foi registrada. Revise categoria e descricao curta.')
-            return _redirect_back(request, fallback_url='/operacao/coach/')
+            return _redirect_back(request, fallback_url=reverse('coach-workspace'))
         run_create_technical_behavior_note(
             actor_id=request.user.id,
             student_id=student_id,
             category=form.cleaned_data['category'],
             description=form.cleaned_data['description'],
         )
-        return _redirect_back(request, fallback_url='/operacao/coach/')
+        return _redirect_back(request, fallback_url=reverse('coach-workspace'))
 
 
 class AttendanceActionView(LoginRequiredMixin, RoleRequiredMixin, View):
@@ -92,14 +92,14 @@ class AttendanceActionView(LoginRequiredMixin, RoleRequiredMixin, View):
         get_object_or_404(Attendance.objects.select_related('session'), pk=attendance_id)
         if action not in self.allowed_actions:
             messages.error(request, 'A acao de presenca enviada nao e permitida nesse fluxo.')
-            return _redirect_back(request, fallback_url='/operacao/coach/')
+            return _redirect_back(request, fallback_url=reverse('coach-workspace'))
         if run_apply_attendance_action(
             actor_id=request.user.id,
             attendance_id=attendance_id,
             action=action,
         ) is None:
-            return _redirect_back(request, fallback_url='/operacao/coach/')
-        return _redirect_back(request, fallback_url='/operacao/coach/')
+            return _redirect_back(request, fallback_url=reverse('coach-workspace'))
+        return _redirect_back(request, fallback_url=reverse('coach-workspace'))
 
 
 class ReceptionPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
