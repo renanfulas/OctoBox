@@ -8,7 +8,7 @@
     <td>
         {% if payment.status != 'paid' %}
         <button class="payment-link-btn js-generate-payment-link" data-payment-id="{{ payment.id }}">
-            <span>Copiar Link 🔗</span>
+            <span data-payment-link-label>Copiar link</span>
         </button>
         {% else %}
         <span class="meta-text text-xs">Liquidado</span>

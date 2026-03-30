@@ -107,7 +107,7 @@ POR QUE ELE EXISTE:
     var totalAmount = parseAmount(amountField.value);
     var currentInstallmentTotal = Number(installmentTotalField.value || 1);
     var fragment = document.createDocumentFragment();
-    installmentSelector.innerHTML = '';
+    installmentSelector.replaceChildren();
 
     for (var index = 1; index <= 12; index += 1) {
       var option = document.createElement('option');
@@ -140,7 +140,7 @@ POR QUE ELE EXISTE:
     }
 
     var isInstallmentMode = billingStrategyField.value === 'installments';
-    installmentSelectorShell.style.display = isInstallmentMode ? 'block' : 'none';
+    setElementHidden(installmentSelectorShell, !isInstallmentMode);
 
     if (isInstallmentMode) {
       scheduleInstallmentRefresh();

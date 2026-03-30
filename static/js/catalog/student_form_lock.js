@@ -75,11 +75,22 @@
     setGuardedState(true);
 
     if (blockedBanner && holder) {
-      const message = blockedBanner.querySelector('.lock-banner__message');
-      if (message) {
-        const name = holder.user_display || 'Outro usuario';
-        const role = holder.role_label || '';
-        message.innerHTML = `<strong>${name} (${role})</strong> esta editando este aluno. Fale com ele para coordenar ou aguarde a ficha ser liberada.`;
+      const nameSlot = blockedBanner.querySelector('[data-lock-holder-name]');
+      const roleSlot = blockedBanner.querySelector('[data-lock-holder-role]');
+      const copySlot = blockedBanner.querySelector('[data-lock-holder-copy]');
+      const name = holder.user_display || 'Outro usuario';
+      const role = holder.role_label || '';
+
+      if (nameSlot) {
+        nameSlot.textContent = name;
+      }
+
+      if (roleSlot) {
+        roleSlot.textContent = role ? `(${role})` : '';
+      }
+
+      if (copySlot) {
+        copySlot.textContent = 'esta editando este aluno. Fale com ele para coordenar ou aguarde a ficha ser liberada.';
       }
     }
 

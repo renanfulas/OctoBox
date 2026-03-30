@@ -33,8 +33,11 @@ PONTOS CRITICOS:
             </svg>
         </div>
         <div class="lock-banner__message">
-            <strong>{{ student_lock_holder.user_display }} ({{ student_lock_holder.role_label }})</strong>
-            est&aacute; editando este aluno. Fale com ele para coordenar ou aguarde a ficha ser liberada.
+            <strong>
+                <span data-lock-holder-name>{{ student_lock_holder.user_display }}</span>
+                <span data-lock-holder-role>({{ student_lock_holder.role_label }})</span>
+            </strong>
+            <span data-lock-holder-copy>est&aacute; editando este aluno. Fale com ele para coordenar ou aguarde a ficha ser liberada.</span>
         </div>
     </div>
     {% endif %}

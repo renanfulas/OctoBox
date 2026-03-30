@@ -423,11 +423,15 @@ REGRA:
 }
 
 .installment-shell {
-    display: none;
+    display: block;
     padding: 16px;
     border-radius: 16px;
     background: rgba(255, 253, 248, 0.92);
     border: 1px solid rgba(201, 111, 36, 0.18);
+}
+
+.installment-shell[hidden] {
+    display: none;
 }
 
 .installment-preview {
@@ -438,6 +442,10 @@ REGRA:
     min-height: 48px;
     display: flex;
     align-items: center;
+}
+
+.import-progress-bar {
+    width: 0;
 }
 
 .history-header {

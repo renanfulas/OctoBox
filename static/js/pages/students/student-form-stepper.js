@@ -185,8 +185,15 @@ async function generatePaymentLink(paymentId) {
     const btn = document.querySelector(`[data-payment-id="${paymentId}"]`);
     if (!btn || btn.disabled) return;
 
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<span>Gerando...</span>';
+    const label = btn.querySelector('[data-payment-link-label]');
+    const originalText = label ? label.textContent : btn.textContent;
+
+    if (label) {
+        label.textContent = 'Gerando...';
+    } else {
+        btn.textContent = 'Gerando...';
+    }
+
     btn.disabled = true;
 
     try {
@@ -195,10 +202,18 @@ async function generatePaymentLink(paymentId) {
 
         if (data.url) {
             await navigator.clipboard.writeText(data.url);
-            btn.innerHTML = '<span>Link copiado!</span>';
+            if (label) {
+                label.textContent = 'Link copiado!';
+            } else {
+                btn.textContent = 'Link copiado!';
+            }
 
             setTimeout(() => {
-                btn.innerHTML = originalText;
+                if (label) {
+                    label.textContent = originalText;
+                } else {
+                    btn.textContent = originalText;
+                }
                 btn.disabled = false;
             }, 3000);
         } else {
@@ -206,9 +221,17 @@ async function generatePaymentLink(paymentId) {
         }
     } catch (err) {
         console.error('Erro ao gerar link:', err);
-        btn.innerHTML = '<span>Erro</span>';
+        if (label) {
+            label.textContent = 'Erro';
+        } else {
+            btn.textContent = 'Erro';
+        }
         setTimeout(() => {
-            btn.innerHTML = originalText;
+            if (label) {
+                label.textContent = originalText;
+            } else {
+                btn.textContent = originalText;
+            }
             btn.disabled = false;
         }, 3000);
     }
