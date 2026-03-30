@@ -3,6 +3,7 @@ dj-database-url==2.3.0
 gunicorn==23.0.0
 psycopg[binary]==3.2.13
 reportlab==4.4.1
+chardet<6
 whitenoise==6.9.0
 django-redis==5.4.0
 sentry-sdk==2.12.0
