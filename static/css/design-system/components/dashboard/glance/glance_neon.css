@@ -20,6 +20,7 @@ PONTOS CRITICOS:
     0% {
         box-shadow: 0 0 0 transparent, inset 0 0 0 transparent;
     }
+
     100% {
         box-shadow:
             0 0 16px rgba(var(--neon-default-rgb), 0.25),
@@ -31,6 +32,7 @@ PONTOS CRITICOS:
     0% {
         box-shadow: 0 0 0 transparent, inset 0 0 0 transparent;
     }
+
     100% {
         box-shadow:
             0 0 24px rgba(var(--neon-default-rgb), 0.45),
@@ -87,7 +89,8 @@ body[data-theme="dark"] .dashboard-glance-card.is-actionable {
 }
 
 body[data-theme="dark"] .dashboard-glance-card.is-actionable .dashboard-glance-indicator {
-    color: inherit; /* Dark mode preserva legibilidade */
+    color: inherit;
+    /* Dark mode preserva legibilidade */
     background: rgba(var(--neon-default-rgb), 0.25);
     border-color: rgba(var(--neon-default-rgb), 0.4);
     box-shadow: 0 0 8px rgba(var(--neon-default-rgb), 0.3);
