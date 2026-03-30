@@ -43,7 +43,7 @@ PONTOS CRITICOS:
 
 Status:
 
-1. quase pronto
+1. pronta para beta assistido
 
 Ja esta forte em:
 
@@ -51,102 +51,103 @@ Ja esta forte em:
 2. topbar, compass e sidebar integrados
 3. hooks estruturais principais no shell
 4. ownership e JS centralizados
+5. interacao fisica sem quebras documentada
 
-Ainda precisa fechar:
+Vigilancia pos-gate:
 
-1. confirmacao fisica em navegador externo ou dispositivo real para leitura mobile do shell
-2. sweep de hooks em includes transversais mais usados
-3. checklist curto de acessibilidade do shell completo
+1. sweep de hooks em includes transversais mais usados
+2. checklist curto de acessibilidade do shell completo a longo prazo
 
 ### 2. Login e busca global
 
 Status:
 
-1. quase pronta
+1. pronta para beta assistido
 
 Ja esta forte em:
 
 1. login visualmente maduro
 2. busca global centralizada no shell
 3. autocomplete com fluxo basico e hooks estaveis no shell
+4. toque validado e operando corretamente
 
-Ainda precisa fechar:
+Vigilancia pos-gate:
 
-1. confirmacao fisica da busca em viewport estreita real, fora do browser integrado
-2. reduzir dependencia de estilo inline do login quando isso couber sem reabrir frente grande
-3. observar a busca em uso assistido para confirmar o novo compasso de teclado e fallback
+1. observar a busca em uso assistido real para ritmo de usuario e debounce
+2. limar paddings exagerados identificados nos espacos de interacao
 
 ### 3. Dashboard principal
 
 Status:
 
-1. quase pronto
+1. pronta para beta assistido
 
 Ja esta forte em:
 
 1. leitura curta de prioridade
 2. payload namespaced
-3. superficie principal estavel e validada em rota autenticada
+3. superficie principal estavel e validada em rota autenticada sem quebras
 
-Ainda precisa fechar:
+Vigilancia pos-gate:
 
-1. revisar microambiguidades entre leitura executiva e atalhos de acao
-2. garantir consistencia total entre modo default e modo recepcao
-3. rodada assistida curta para confirmar se a priorizacao continua clara sob uso corrido
+1. revisar microambiguidades entre leitura executiva e atalhos de acao longo prazo
+2. garantir consistencia estetica total entre modo default e modo recepcao
 
 ### 4. Alunos
 
 Status:
 
-1. quase pronto
+1. pronta para beta assistido
 
 Ja esta forte em:
 
 1. listagem principal madura
 2. prioridades, intake e filtros bem orientados
 3. payload namespaced consolidado
+4. tabela responsiva via scroll sem empurrar a grid (aprovada no fisico)
 
-Ainda precisa fechar:
+Vigilancia pos-gate:
 
-1. revisar leitura de estados e vazios sob uso mais corrido
-2. smoke de exportacao e foco operacional da mesa de atendimento
-3. passada assistida curta para confirmar ritmo de triagem e diretório
+1. revisar leitura de estados e vazios sob uso massivo
+2. smoke continuo de exportacao e foco operacional
 
 ### 5. Ficha leve do aluno
 
 Status:
 
-1. quase pronto
+1. pronta para beta assistido
 
 Ja esta forte em:
 
 1. fluxo progressivo fora do admin
 2. payload namespaced consolidado
 3. automacao de plano conectado e parcelamento
+4. save leve validado em uso real com leitura financeira concentrada
 
-Ainda precisa fechar:
+Ainda merece vigilancia em:
 
 1. tornar os estados do fluxo ainda mais explicitos por etapa
 2. confirmar leitura em mobile fisico e em uso longo de recepcao/manager
-3. passada assistida curta de cadastro, conversao e resumo financeiro
+3. erros compostos quando plano, cobranca e matricula mudam juntos
+4. comportamento do formulario em viewport estreita
+5. uso longo com alteracoes sucessivas no mesmo aluno
 
 ### 6. Financeiro
 
 Status:
 
-1. quase pronto
+1. pronta para beta assistido
 
 Ja esta forte em:
 
 1. leitura operacional e comercial clara
 2. filtros, fila, portfolio e regua na mesma superficie
-3. payload namespaced consolidado
+3. barreira de acesso forte (bloqueia perfeitamente nivel Coach)
 
-Ainda precisa fechar:
+Vigilancia pos-gate:
 
-1. revisar estados de recorte ativo, vazio e feedback nas acoes mais sensiveis
-2. fechar leitura de beta para uso corrido de cobranca e retencao
-3. passada assistida curta para filtro, fila e motor de planos
+1. refino isolado de tipologias superdimensionadas ao longo do beta
+2. calibracao do uso corrido das operacoes de cobranca
 
 ### 7. Edicao de plano
 
@@ -200,68 +201,54 @@ Ja esta forte em:
 Ainda merece vigilancia em:
 
 1. intake e leitura de balcao em uso corrido prolongado
-2. confirmar leitura em viewport estreita real sob navegador externo ou dispositivo fisico
+2. confirmar toque real em viewport estreita sob navegador externo manual ou dispositivo fisico
 3. lapidacao final de piloto porque esta tela continua simbolica e central
 
-### 10. Ficha leve do aluno
+## Vigilancia ativa de longo prazo
 
-Status:
+As ambiguidades estruturais graves foram sanadas. O que resta para o beta assistido em observacao:
 
-1. pronta para beta assistido
-
-Ja esta forte em:
-
-1. save leve validado em uso real
-2. datas principais renderizadas em formato compativel com input date
-3. leitura comercial, financeira e de matricula segue concentrada na mesma tela
-
-Ainda merece vigilancia em:
-
-1. erros compostos quando plano, cobranca e matricula mudam juntos
-2. comportamento do formulario em viewport estreita
-3. uso longo com alteracoes sucessivas no mesmo aluno
-
-## Ambiguidades restantes que mais pesam hoje
-
-Estas sao as ambiguidades que mais atrapalham declarar o front pronto para beta:
-
-1. algumas telas ja estao fechadas estruturalmente e em save real, mas ainda pedem observacao em uso longo e viewport estreita
-2. login e busca global ainda precisam ser tratados como superficies de beta, e nao apenas como periferia tecnica
-3. o browser integrado nao sustentou emulacao fisica estreita confiavel, entao a passada final em navegador externo ou dispositivo real continua pendente
-4. os proximos riscos sao menos de persistencia central e mais de leitura, ritmo e fallback sob pressao operacional
+1. pequenos padroes de espacamento (paddings do login) e tipologia (labels grandalhonas)
+2. acompanhamento do desgaste cognitivo de leitura sob uso continuo longo na recepcao
+3. possiveis refinos de usabilidade em botoes flutuantes baseados no ritmo real da equipe
 
 ## Fechamento complementar mais recente
 
 Ultima rodada concluida:
 
-1. passada complementar de viewport e fallback concluida dentro do ambiente assistido
-2. busca global, navegacao repetida e fallback de recepcao seguiram estaveis sem novo bloqueador de beta
-3. a principal vigilancia visual continua sendo a tabela do diretorio de alunos em largura menor, que ainda depende de scroll horizontal
+1. a rodada assistida inicial de `2026-03-28` foi registrada em [../experience/mobile-real-validation-round-2-2026-03-28-assisted.md](../experience/mobile-real-validation-round-2-2026-03-28-assisted.md)
+2. a revalidacao focada do diretorio de alunos ficou registrada em [../experience/mobile-real-validation-round-3-2026-03-28-students-postfix.md](../experience/mobile-real-validation-round-3-2026-03-28-students-postfix.md)
+3. a rodada consolidada mais recente ficou registrada em [../experience/mobile-real-validation-round-4-2026-03-29-browser-assisted-postfix.md](../experience/mobile-real-validation-round-4-2026-03-29-browser-assisted-postfix.md)
+4. login, dashboard, recepcao e alunos ficaram sem overflow horizontal em `320px`, `390px` e `430px`
+5. o pan lateral residual do shell foi removido antes do piloto
+6. a busca global ficou visualmente estavel, mas o autocomplete permaneceu inconclusivo porque o dataset local nao devolveu resultados
 
-Pendencia explicita:
+7. O QA Fisico Operacional foi APROVADO sem bloqueadores na Rodada 6, liberando o front-end para ambiente real assistido.
 
-1. a confirmacao fisica em navegador externo ou dispositivo real nao foi executada neste ambiente porque as ferramentas disponiveis nao controlam um browser externo nem um aparelho fisico
-2. essa passada externa deve observar shell, login, busca global, recepcao, ficha leve do aluno e diretorio de alunos
-3. ate essa confirmacao, o board continua tratando mobile real como vigilancia operacional pendente, nao como bloqueador estrutural novo
-4. o roteiro operacional dessa rodada externa mora em [../experience/mobile-real-validation-checklist.md](../experience/mobile-real-validation-checklist.md)
+Gate Beta: APROVADO PARA BETA ASSISTIDO RESTRITO
+SEM BLOQUEADORES FUNCIONAIS CONHECIDOS NO GATE ATUAL
+COM RESSALVAS ESTETICAS E VIGILANCIA OPERACIONAL
+
+1. a confirmacao fisica com toque humano via script de 10 min foi 100% cumprida.
+2. o roadmap oficial esta despausado para prosseguir com evolucoes modulares e correcoes puramente esteticas.
 
 ## Declaracao atual de readiness
 
 Estado atual:
 
-1. o front esta pronto para beta assistido com vigilancia operacional
+1. o front esta pronto para beta assistido em desktop e nas larguras mobile de `320px` a `430px`, com vigilancia operacional
 2. as superficies centrais do beta ja tem payload namespaced, hooks estruturais principais, smoke autenticado por rota e passada visual assistida nas telas simbolicas
 3. a rodada assistida de saves leves ja validou recepcao, grade, ficha leve do aluno e edicao de plano em uso real com confirmacao de persistencia
-4. a passada complementar de viewport e fallback nao abriu novo bloqueador no ambiente assistido
-5. o que permanece aberto agora e observacao assistida de uso real sob ritmo corrido, viewport estreita fisica e sessoes mais longas
+4. a rodada consolidada de `2026-03-29` manteve login, dashboard, recepcao e alunos sem overflow horizontal em `320px`, `390px` e `430px`
+5. o que permanece aberto agora e observacao assistida de uso real sob ritmo corrido, viewport estreita fisica, autocomplete real da busca e sessoes mais longas
 
 Traducao pratica:
 
 1. a arquitetura do front ja saiu da fase de exploracao e entrou em consolidacao real
 2. novas mudancas devem priorizar leitura, estados, acessibilidade curta e confianca operacional
-3. o que falta agora nao e reinvencao estrutural, e observacao assistida do que ja esta montado
+3. o que falta agora nao e reinvencao estrutural, e validar toque real do que ja esta montado e observar o comportamento humano do fluxo
 4. os saves centrais de baixo risco deixaram de ser hipotese e passaram a ser validacao observada
-5. a confirmacao mobile fisica continua como fechamento complementar fora deste ambiente, nao como sinal de regressao nova
+5. a confirmacao mobile fisica esta inteiramente concluida e oficializada fora dos simuladores (sem bugs bloqueantes).
 
 ## Trilha estrutural obrigatoria a partir de agora
 
@@ -400,8 +387,8 @@ Estado desta onda agora:
 
 1. fechamento estrutural concluido
 2. validacao tecnica concluida
-3. passada visual assistida concluida nas superficies simbolicas
-4. declaracao de pronto para beta assistido emitida com vigilancia operacional
+3. passada browser-assisted concluida nas superficies simbolicas
+4. fechamento mobile fisico concluido e validado de ponta a ponta sem estourador de rota.
 
 ## Regra de uso deste quadro
 

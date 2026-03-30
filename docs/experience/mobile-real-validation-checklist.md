@@ -57,7 +57,7 @@ Estado da rodada:
 
 1. checklist organizado e pronto para execucao externa
 2. passada fisica ainda nao executada neste ambiente
-3. principal watchpoint conhecido: tabela do diretorio de alunos em largura menor
+3. principais watchpoints atuais: toque real do shell, autocomplete da busca global e leitura humana das superficies densas
 
 ## Matriz minima de execucao
 
@@ -103,7 +103,7 @@ Objetivo desta primeira rodada:
 
 1. confirmar se a casca principal continua utilizavel em largura fisica real
 2. confirmar se a busca global continua previsivel em toque e teclado
-3. confirmar se o watchpoint mais conhecido, a listagem de alunos, continua toleravel no celular
+3. confirmar se o diretorio de alunos continua claro e tocavel no celular mesmo sem overflow horizontal
 
 Modelo curto de retorno desta primeira rodada:
 
@@ -300,7 +300,6 @@ Resumo final curto:
 
 Esta rodada ja comeca com estes fatos conhecidos:
 
-1. a passada complementar de viewport e fallback no ambiente assistido nao abriu novo bloqueador estrutural
-2. shell, busca global e recepcao se mantiveram estaveis no ambiente disponivel
-3. a confirmacao fisica continua pendente por limitacao do browser integrado
-4. o primeiro ponto a observar no teste externo deve ser o diretorio de alunos em largura pequena
+1. a rodada browser-assisted consolidada de `2026-03-29` nao mostrou overflow horizontal em login, dashboard, recepcao e alunos
+2. a confirmacao fisica continua pendente por limitacao do browser integrado
+3. o primeiro ponto a observar no teste externo agora e o comportamento humano de toque, busca e leitura, nao mais vazamento lateral bruto

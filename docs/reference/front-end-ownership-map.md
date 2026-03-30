@@ -45,7 +45,7 @@ CSS estrutural do shell:
 
 1. [../../static/css/design-system/tokens.css](../../static/css/design-system/tokens.css)
 2. [../../static/css/design-system/shell.css](../../static/css/design-system/shell.css)
-3. [../../static/css/design-system/sidebar.css](../../static/css/design-system/sidebar.css)
+3. [../../static/css/design-system/sidebar/sidebar.css](../../static/css/design-system/sidebar/sidebar.css)
 4. [../../static/css/design-system/topbar.css](../../static/css/design-system/topbar.css)
 5. [../../static/css/design-system/compass.css](../../static/css/design-system/compass.css)
 6. [../../static/css/design-system/spacing.css](../../static/css/design-system/spacing.css)
@@ -143,7 +143,8 @@ Alunos:
 3. views: [../../catalog/views/student_views.py](../../catalog/views/student_views.py)
 4. presenters: [../../catalog/presentation/student_directory_page.py](../../catalog/presentation/student_directory_page.py) e [../../catalog/presentation/student_form_page.py](../../catalog/presentation/student_form_page.py)
 5. CSS: [../../static/css/catalog/students.css](../../static/css/catalog/students.css)
-6. JS da ficha: [../../static/js/pages/student-form.js](../../static/js/pages/student-form.js)
+6. JS da ficha: [../../static/js/pages/students/student-form.js](../../static/js/pages/students/student-form.js)
+7. stepper da ficha: [../../static/js/pages/students/student-form-stepper.js](../../static/js/pages/students/student-form-stepper.js)
 
 Financeiro:
 
@@ -159,7 +160,7 @@ Grade de aulas:
 2. view: [../../catalog/views/class_grid_views.py](../../catalog/views/class_grid_views.py)
 3. presenter: [../../catalog/presentation/class_grid_page.py](../../catalog/presentation/class_grid_page.py)
 4. CSS: [../../static/css/catalog/class-grid.css](../../static/css/catalog/class-grid.css)
-5. JS: [../../static/js/pages/class-grid.js](../../static/js/pages/class-grid.js)
+5. JS: [../../static/js/pages/class-grid/class-grid.js](../../static/js/pages/class-grid/class-grid.js)
 
 Operacao por papel:
 

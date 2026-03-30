@@ -710,12 +710,12 @@ Quando um mesmo subbloco visual reaparecer em varios includes da mesma area, ele
 
 Aplicacao pratica atual:
 
-1. [templates/includes/ui/operation_card_head.html](../../templates/includes/ui/operation_card_head.html) concentra o cabecalho recorrente dos cards operacionais do financeiro
-2. [templates/includes/ui/class_grid_panel_head.html](../../templates/includes/ui/class_grid_panel_head.html) concentra o cabecalho recorrente dos paineis arrastaveis da grade
-3. [templates/includes/ui/finance_action_item.html](../../templates/includes/ui/finance_action_item.html) concentra o card recorrente de acao semiassistida do financeiro
-4. [templates/includes/ui/finance_alert_item.html](../../templates/includes/ui/finance_alert_item.html) concentra o card recorrente de alerta financeiro
-5. [templates/includes/ui/finance_plan_stat.html](../../templates/includes/ui/finance_plan_stat.html) concentra o bloco curto de estatistica do portfolio de planos
-6. [templates/includes/ui/finance_snapshot_chip.html](../../templates/includes/ui/finance_snapshot_chip.html) concentra o chip de leitura curta usado no recorte ativo e no radar
+1. [templates/includes/ui/layout/operation_card_head.html](../../templates/includes/ui/layout/operation_card_head.html) concentra o cabecalho recorrente dos cards operacionais do financeiro
+2. [templates/includes/ui/class_grid/class_grid_panel_head.html](../../templates/includes/ui/class_grid/class_grid_panel_head.html) concentra o cabecalho recorrente dos paineis arrastaveis da grade
+3. [templates/includes/ui/finance/finance_action_item.html](../../templates/includes/ui/finance/finance_action_item.html) concentra o card recorrente de acao semiassistida do financeiro
+4. [templates/includes/ui/finance/finance_alert_item.html](../../templates/includes/ui/finance/finance_alert_item.html) concentra o card recorrente de alerta financeiro
+5. [templates/includes/ui/finance/finance_plan_stat.html](../../templates/includes/ui/finance/finance_plan_stat.html) concentra o bloco curto de estatistica do portfolio de planos
+6. [templates/includes/ui/finance/finance_snapshot_chip.html](../../templates/includes/ui/finance/finance_snapshot_chip.html) concentra o chip de leitura curta usado no recorte ativo e no radar
 
 ## Camada 3: componentes compartilhados
 

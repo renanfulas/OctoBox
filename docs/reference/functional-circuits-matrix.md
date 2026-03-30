@@ -107,7 +107,8 @@ Dono local:
 4. [templates/catalog/students.html](../../templates/catalog/students.html)
 5. [templates/catalog/student-form.html](../../templates/catalog/student-form.html)
 6. [static/css/catalog/students.css](../../static/css/catalog/students.css)
-7. [static/js/pages/student-form.js](../../static/js/pages/student-form.js)
+7. [static/js/pages/students/student-form.js](../../static/js/pages/students/student-form.js)
+8. [static/js/pages/students/student-form-stepper.js](../../static/js/pages/students/student-form-stepper.js)
 
 Contratos compartilhados:
 
@@ -162,7 +163,7 @@ Dono local:
 2. [catalog/presentation/class_grid_page.py](../../catalog/presentation/class_grid_page.py)
 3. [templates/catalog/class-grid.html](../../templates/catalog/class-grid.html)
 4. [static/css/catalog/class-grid.css](../../static/css/catalog/class-grid.css)
-5. [static/js/pages/class-grid.js](../../static/js/pages/class-grid.js)
+5. [static/js/pages/class-grid/class-grid.js](../../static/js/pages/class-grid/class-grid.js)
 
 Contratos compartilhados:
 

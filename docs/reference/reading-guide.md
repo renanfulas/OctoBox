@@ -34,8 +34,9 @@ Este guia acompanha a arquitetura atual do OctoBox Control. A base deixou de con
 Regra de uso deste documento:
 
 1. o [../../README.md](../../README.md) explica o produto e a direcao geral do repositorio
-2. este arquivo entra depois, quando a necessidade passa a ser leitura tecnica, depuracao e localizacao de ownership no codigo
-3. se houver conflito entre uma tese de produto e um atalho tecnico daqui, a tese oficial deve vencer e este guia precisa ser atualizado
+2. o [documentation-authority-map.md](documentation-authority-map.md) define qual doc vence quando houver conflito, idade ou ambiguidade
+3. este arquivo entra depois, quando a necessidade passa a ser leitura tecnica, depuracao e localizacao de ownership no codigo
+4. se houver conflito entre uma tese de produto e um atalho tecnico daqui, a tese oficial deve vencer e este guia precisa ser atualizado
 
 Leitura estrutural importante para esta fase:
 
