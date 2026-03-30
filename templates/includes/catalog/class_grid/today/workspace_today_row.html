@@ -37,7 +37,7 @@ PONTOS CRITICOS:
                 <span class="pill{% if item.occupancy_pill_class %} {{ item.occupancy_pill_class }}{% endif %}">{{ item.occupancy_label }}</span>
             </div>
             <div class="mix-bar-track">
-                <div class="mix-bar-fill{% if item.occupancy_fill_class %} {{ item.occupancy_fill_class }}{% endif %}" style="--bar-width: {{ item.occupancy_percent }}%;"></div>
+                <div class="mix-bar-fill{% if item.occupancy_fill_class %} {{ item.occupancy_fill_class }}{% endif %}" data-visual-width="{{ item.occupancy_percent }}"></div>
             </div>
             <p class="class-grid-meta">{{ item.occupancy_note }}</p>
         </div>

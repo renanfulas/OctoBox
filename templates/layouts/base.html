@@ -84,6 +84,7 @@
 
     <button class="sidebar-backdrop" type="button" id="sidebar-backdrop" data-ui="sidebar-backdrop" aria-label="Fechar menu lateral"></button>
 
+    <script src="{% static 'js/core/dynamic-visuals.js' %}?v={{ static_asset_version }}"></script>
     {% block extra_scripts %}{% endblock %}
     {% if current_page_behavior %}
     {{ current_page_behavior|json_script:"current-page-behavior" }}

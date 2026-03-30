@@ -13,7 +13,7 @@ PONTOS CRITICOS:
 -->
 <div class="chart-column finance-chart-column">
     <div class="chart-bar-wrap">
-        <div class="chart-bar revenue" style="--bar-height: {% widthratio item.revenue page.data.comparison_peaks.max_revenue 100 %}%;"></div>
+        <div class="chart-bar revenue" data-visual-height="{% widthratio item.revenue page.data.comparison_peaks.max_revenue 100 %}"></div>
     </div>
     <strong>{{ item.label }}</strong>
     <span class="finance-inline-currency finance-chart-value">R$ {{ item.revenue|floatformat:2 }}</span>

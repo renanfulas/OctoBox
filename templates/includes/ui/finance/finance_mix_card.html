@@ -6,7 +6,7 @@
         </div>
         <div class="card-content finance-mix-card-content">
             <div class="mix-bar-track">
-                <div class="mix-bar-fill" style="--bar-width: {{ item.width }}%;"></div>
+                <div class="mix-bar-fill" data-visual-width="{{ item.width }}"></div>
             </div>
             <p class="meta-text-sm finance-inline-currency">Receita recebida no mes: R$ {{ item.revenue_this_month|floatformat:2 }}</p>
         </div>

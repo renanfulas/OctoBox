@@ -1,54 +1,58 @@
 {% extends "layouts/base.html" %}
 {% load static %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/catalog/import-progress.css' %}?v={{ static_asset_version }}">
+{% endblock %}
+
 {% block content %}
-<div class="operation-shell p-6 max-w-4xl mx-auto mt-10" data-page="import-progress" data-progress-url="?json=1">
-    <div class="glass-panel rounded-xl border-soft p-8">
-        <header class="mb-8 text-center">
-            <h1 class="text-2xl font-bold text-ink mb-2">Processando Importacao</h1>
-            <p class="text-sm text-dimmed">Arquivo: <strong>{{ job.metadata.filename|default:"Alunos" }}</strong></p>
+<div class="operation-shell import-progress-shell" data-page="import-progress" data-progress-url="?json=1">
+    <div class="card import-progress-card">
+        <header class="import-progress-header">
+            <h1 class="import-progress-title">Processando Importacao</h1>
+            <p class="import-progress-subtitle">Arquivo: <strong>{{ job.metadata.filename|default:"Alunos" }}</strong></p>
         </header>
 
-        <div id="progress-container" class="stack-6">
-            <div class="flex-row items-center justify-between text-sm font-semibold mb-2">
-                <span id="progress-status-label" class="text-indigo-600">
+        <div id="progress-container" class="import-progress-stack">
+            <div class="import-progress-status-row">
+                <span id="progress-status-label" class="import-progress-status is-running">
                     {% if job.status == 'pending' %}Aguardando inicio...{% elif job.status == 'running' %}Validando e salvando...{% else %}Finalizado{% endif %}
                 </span>
-                <span id="progress-percentage-label" class="text-ink">0%</span>
+                <span id="progress-percentage-label" class="import-progress-percentage">0%</span>
             </div>
 
-            <div class="w-full bg-slate-100 rounded-full h-3 mb-4 overflow-hidden shadow-inner">
-                <div id="progress-bar" class="import-progress-bar bg-indigo-500 h-3 rounded-full transition-all duration-300 ease-out"></div>
+            <div class="import-progress-track">
+                <div id="progress-bar" class="import-progress-bar is-running" data-visual-width="0"></div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 text-center">
-                <div class="bg-white rounded-lg p-4 border border-soft">
-                    <span class="block text-2xl font-bold text-ink" id="processed-count">0</span>
-                    <span class="text-xs text-dimmed uppercase tracking-wide">Linhas processadas</span>
+            <div class="import-progress-metrics">
+                <div class="import-progress-metric-card">
+                    <span class="import-progress-metric-value" id="processed-count">0</span>
+                    <span class="import-progress-metric-label">Linhas processadas</span>
                 </div>
-                <div class="bg-white rounded-lg p-4 border border-red-100">
-                    <span class="block text-2xl font-bold text-red-500" id="failed-count">0</span>
-                    <span class="text-xs text-dimmed uppercase tracking-wide">Falhas isoladas</span>
+                <div class="import-progress-metric-card is-danger">
+                    <span class="import-progress-metric-value is-danger" id="failed-count">0</span>
+                    <span class="import-progress-metric-label">Falhas isoladas</span>
                 </div>
             </div>
 
-            <div id="completion-actions" class="hidden mt-8 text-center">
-                <div class="p-4 bg-green-50 border border-green-200 rounded-lg mb-6">
-                    <h3 class="text-green-800 font-bold mb-1">Importacao finalizada!</h3>
-                    <p class="text-green-700 text-sm">A rotina assincrona foi concluida.</p>
+            <div id="completion-actions" class="import-progress-completion" hidden>
+                <div class="notice-panel notice-panel--success import-progress-success-panel">
+                    <h3 class="notice-panel-title import-progress-success-title">Importacao finalizada!</h3>
+                    <p class="notice-panel-copy import-progress-success-copy">A rotina assincrona foi concluida e o lote ja pode ser revisado com calma.</p>
                 </div>
-                <a href="{% url 'student-directory' %}" class="button button-primary bg-accent px-8">Voltar para Alunos</a>
+                <a href="{% url 'student-directory' %}" class="button button-primary import-progress-return">Voltar para Alunos</a>
             </div>
 
-            <div id="error-report-container" class="hidden mt-6" hidden>
-                <h4 class="text-sm font-bold text-red-600 mb-2 flex items-center gap-2">
+            <div id="error-report-container" class="import-progress-errors" hidden>
+                <h4 class="import-progress-errors-title">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     Relatorio de falhas no lote (partial commit ativo)
                 </h4>
-                <div class="bg-red-50 rounded-lg p-4 max-h-48 overflow-y-auto border border-red-100">
-                    <ul id="error-list" class="space-y-2 text-xs text-red-700 font-mono"></ul>
+                <div class="import-progress-errors-card">
+                    <ul id="error-list" class="import-progress-error-list"></ul>
                 </div>
-                <p class="text-2xs text-dimmed mt-2">* As linhas sem erro acima foram salvas com sucesso no banco de dados.</p>
+                <p class="import-progress-errors-hint">As linhas sem erro acima foram salvas com sucesso no banco de dados.</p>
             </div>
         </div>
     </div>

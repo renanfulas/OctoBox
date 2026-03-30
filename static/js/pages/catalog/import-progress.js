@@ -15,6 +15,26 @@
     node.hidden = shouldHide;
   }
 
+  function setVisualWidth(node, value) {
+    if (!node) {
+      return;
+    }
+
+    node.dataset.visualWidth = String(value);
+    if (window.OctoDynamicVisuals && typeof window.OctoDynamicVisuals.applyElement === 'function') {
+      window.OctoDynamicVisuals.applyElement(node);
+    }
+  }
+
+  function setStatusTone(node, tone) {
+    if (!node) {
+      return;
+    }
+
+    node.classList.remove('is-running', 'is-success', 'is-danger');
+    node.classList.add(tone);
+  }
+
   function buildFailureItem(failure) {
     var item = document.createElement('li');
     var line = failure && failure.line ? failure.line : '?';
@@ -53,22 +73,23 @@
       var failures = Array.isArray(job.failed_items) ? job.failed_items : [];
       var isFinished = job.status === 'completed' || job.status === 'failed';
 
-      progressBar.style.width = percentage + '%';
+      setVisualWidth(progressBar, percentage);
       setText(percentageLabel, percentage + '%');
       setText(processedCount, progress + ' / ' + total);
       setText(failedCount, String(failures.length));
 
       if (!isFinished) {
         setText(statusLabel, 'Processando lote em background...');
+        setStatusTone(statusLabel, 'is-running');
+        setStatusTone(progressBar, 'is-running');
         return;
       }
 
       clearInterval(pollingInterval);
       setText(statusLabel, job.status === 'completed' ? 'Concluido' : 'Falha fatal');
-      statusLabel.className = job.status === 'completed' ? 'text-green-600 font-bold' : 'text-red-600 font-bold';
-      progressBar.classList.remove('bg-indigo-500');
-      progressBar.classList.add(job.status === 'completed' ? 'bg-green-500' : 'bg-red-500');
-      completionActions.classList.remove('hidden');
+      setStatusTone(statusLabel, job.status === 'completed' ? 'is-success' : 'is-danger');
+      setStatusTone(progressBar, job.status === 'completed' ? 'is-success' : 'is-danger');
+      setElementHidden(completionActions, false);
 
       if (!failures.length) {
         errorList.replaceChildren();

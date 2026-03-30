@@ -1,0 +1,210 @@
+/*
+ARQUIVO: acabamento local da tela de progresso de importacao.
+
+POR QUE ELE EXISTE:
+- da contrato visual proprio para a leitura de progresso e conclusao do lote.
+- evita que a tela dependa de utilitarios ocasionais para parecer produto final.
+*/
+
+.import-progress-shell {
+    width: min(100%, 860px);
+    margin: 40px auto 0;
+    padding: 24px;
+}
+
+.import-progress-card {
+    padding: 32px;
+}
+
+.import-progress-header {
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.import-progress-title {
+    margin-bottom: 8px;
+    font-size: clamp(1.8rem, 3.4vw, 2.35rem);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+}
+
+.import-progress-subtitle {
+    margin: 0;
+    color: var(--muted);
+}
+
+.import-progress-stack {
+    display: grid;
+    gap: 24px;
+}
+
+.import-progress-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.import-progress-status {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent-2);
+}
+
+.import-progress-status.is-success {
+    color: var(--success);
+}
+
+.import-progress-status.is-danger {
+    color: var(--danger);
+}
+
+.import-progress-percentage {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.import-progress-track {
+    height: 12px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.14);
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.12);
+}
+
+.import-progress-bar {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(37, 99, 235, 0.88), rgba(99, 102, 241, 0.92));
+    transition: width 0.3s ease, background 0.2s ease;
+}
+
+.import-progress-bar.is-success {
+    background: linear-gradient(90deg, rgba(47, 195, 157, 0.94), rgba(16, 185, 129, 0.9));
+}
+
+.import-progress-bar.is-danger {
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.96), rgba(249, 115, 22, 0.9));
+}
+
+.import-progress-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.import-progress-metric-card {
+    display: grid;
+    gap: 6px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.85);
+    text-align: center;
+}
+
+.import-progress-metric-card.is-danger {
+    border-color: color-mix(in srgb, var(--danger) 18%, var(--line) 82%);
+}
+
+.import-progress-metric-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--ink);
+}
+
+.import-progress-metric-value.is-danger {
+    color: var(--danger);
+}
+
+.import-progress-metric-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.import-progress-completion {
+    display: grid;
+    gap: 16px;
+    justify-items: center;
+    text-align: center;
+}
+
+.import-progress-success-panel {
+    width: min(100%, 520px);
+}
+
+.import-progress-success-title {
+    margin: 0;
+}
+
+.import-progress-success-copy {
+    margin-top: 4px;
+}
+
+.import-progress-errors {
+    display: grid;
+    gap: 10px;
+}
+
+.import-progress-errors-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--danger);
+}
+
+.import-progress-errors-card {
+    max-height: 192px;
+    overflow-y: auto;
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--danger) 16%, var(--line) 84%);
+    background: color-mix(in srgb, var(--danger) 6%, white 94%);
+}
+
+.import-progress-error-list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: #b91c1c;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.import-progress-errors-hint {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+@media (max-width: 720px) {
+    .import-progress-shell {
+        margin-top: 24px;
+        padding: 16px;
+    }
+
+    .import-progress-card {
+        padding: 24px;
+    }
+
+    .import-progress-status-row,
+    .import-progress-metrics {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .import-progress-status-row {
+        justify-items: start;
+    }
+}

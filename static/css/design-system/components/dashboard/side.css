@@ -462,6 +462,7 @@
 
 .dashboard-session-progress-fill {
     display: block;
+    width: var(--dynamic-visual-width, 0%);
     height: 100%;
     border-radius: inherit;
     background: linear-gradient(90deg, rgba(37, 99, 235, 0.88), rgba(14, 165, 233, 0.9));

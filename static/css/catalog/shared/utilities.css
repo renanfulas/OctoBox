@@ -289,7 +289,7 @@ POR QUE ELE EXISTE:
 }
 
 .mix-bar-fill {
-    width: var(--bar-width, 0%);
+    width: var(--dynamic-visual-width, var(--bar-width, 0%));
     height: 100%;
     border-radius: 999px;
     background: var(--brand);
@@ -320,7 +320,7 @@ POR QUE ELE EXISTE:
 
 .chart-grid {
     display: grid;
-    grid-template-columns: repeat(var(--chart-columns, 1), minmax(0, 1fr));
+    grid-template-columns: repeat(var(--dynamic-visual-columns, var(--chart-columns, 1)), minmax(0, 1fr));
     gap: 14px;
     align-items: end;
     min-height: 260px;
@@ -349,7 +349,7 @@ POR QUE ELE EXISTE:
 
 .chart-bar {
     width: 100%;
-    height: var(--bar-height, 10px);
+    height: var(--dynamic-visual-height, var(--bar-height, 10px));
     min-height: 10px;
     border-radius: 16px 16px 8px 8px;
     transition: height 0.25s ease, transform 0.18s ease;
@@ -445,7 +445,7 @@ REGRA:
 }
 
 .import-progress-bar {
-    width: 0;
+    width: var(--dynamic-visual-width, 0%);
 }
 
 .history-header {

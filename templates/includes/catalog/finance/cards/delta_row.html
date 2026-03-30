@@ -19,11 +19,11 @@ PONTOS CRITICOS:
     <div class="delta-track-group">
         <div>
             <div class="delta-label">Ativos</div>
-            <div class="mix-bar-track"><div class="mix-bar-fill growth" style="--bar-width: {% widthratio item.activations page.data.comparison_peaks.max_count 100 %}%;"></div></div>
+            <div class="mix-bar-track"><div class="mix-bar-fill growth" data-visual-width="{% widthratio item.activations page.data.comparison_peaks.max_count 100 %}"></div></div>
         </div>
         <div>
             <div class="delta-label">Cancelados</div>
-            <div class="mix-bar-track"><div class="mix-bar-fill churn" style="--bar-width: {% widthratio item.cancellations page.data.comparison_peaks.max_count 100 %}%;"></div></div>
+            <div class="mix-bar-track"><div class="mix-bar-fill churn" data-visual-width="{% widthratio item.cancellations page.data.comparison_peaks.max_count 100 %}"></div></div>
         </div>
     </div>
 </div>

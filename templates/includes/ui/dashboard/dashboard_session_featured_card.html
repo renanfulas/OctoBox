@@ -21,7 +21,7 @@ PONTOS CRITICOS:
     </div>
     <p class="dashboard-session-note">{{ featured_session.occupancy_note }}</p>
     <div class="dashboard-session-progress" aria-hidden="true">
-        <span class="dashboard-session-progress-fill{% if featured_session.occupancy_fill_class %} {{ featured_session.occupancy_fill_class }}{% endif %}" style="width: {{ featured_session.occupancy_percent }}%"></span>
+        <span class="dashboard-session-progress-fill{% if featured_session.occupancy_fill_class %} {{ featured_session.occupancy_fill_class }}{% endif %}" data-visual-width="{{ featured_session.occupancy_percent }}"></span>
     </div>
     <div class="dashboard-session-meta dashboard-session-meta--inline">
         <span class="pill{% if featured_session.status_pill_class %} {{ featured_session.status_pill_class }}{% endif %}">{{ featured_session.status_label }}</span>
