@@ -13,28 +13,18 @@ PONTOS CRITICOS:
 - Essa tela vira a origem canonica da fila de intake; links globais e handoffs dependem dela.
 """
 
+from django.urls import reverse
+
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from access.shell_actions import build_shell_action_buttons_from_focus
 from shared_support.page_payloads import build_page_assets, build_page_hero, build_page_payload
-from finance.models import MembershipPlan
 
 
 def build_intake_center_page(*, snapshot, current_role_slug):
-    # Fetch active plans for the quick conversion drawer
-    plans = MembershipPlan.objects.filter(active=True).values('id', 'name', 'price')
-    plan_list = [
-        {
-            'id': p['id'],
-            'name': p['name'],
-            'price': float(p['price']),
-        }
-        for p in plans
-    ]
-    plan_price_map = {str(p['id']): p['price'] for p in plan_list}
-
     can_manage_students = current_role_slug in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
     can_resolve_queue = current_role_slug in (ROLE_OWNER, ROLE_MANAGER)
     can_work_queue = current_role_slug in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
+    student_quick_create_url = reverse('student-quick-create')
     first_convertible_item = next(
         (item for item in snapshot.get('queue_items', []) if item['conversion']['can_convert']),
         None,
@@ -45,7 +35,7 @@ def build_intake_center_page(*, snapshot, current_role_slug):
         hero_actions.append(
             {
                 'label': 'Converter primeiro',
-                'href': f"/alunos/novo/?intake={first_convertible_item['object'].id}#student-form-essential",
+                'href': f"{student_quick_create_url}?intake={first_convertible_item['object'].id}#student-form-essential",
                 'data_action': 'convert-first-intake',
             }
         )
@@ -53,7 +43,7 @@ def build_intake_center_page(*, snapshot, current_role_slug):
         hero_actions.append(
             {
                 'label': 'Nova entrada',
-                'href': '/alunos/novo/#student-form-essential',
+                'href': f'{student_quick_create_url}#student-form-essential',
                 'data_action': 'open-student-quick-create',
             }
         )
@@ -95,8 +85,6 @@ def build_intake_center_page(*, snapshot, current_role_slug):
         data={
             **snapshot,
             'hero': hero,
-            'available_plans': plan_list,
-            'plan_price_map': plan_price_map,
         },
         capabilities={
             'can_resolve_queue': can_resolve_queue,
@@ -105,8 +93,8 @@ def build_intake_center_page(*, snapshot, current_role_slug):
             'can_work_queue': can_work_queue,
         },
         assets=build_page_assets(
-            css=['css/design-system/operations.css', 'css/catalog/students.css', 'css/onboarding/intakes.css', 'css/onboarding/conversion_drawer.css'],
-            js=['js/pages/interactive_tabs.js', 'js/pages/onboarding/conversion_drawer.js']
+            css=['css/design-system/operations.css', 'css/catalog/students.css', 'css/onboarding/intakes.css'],
+            js=['js/pages/interactive_tabs.js']
         ),
     )
 

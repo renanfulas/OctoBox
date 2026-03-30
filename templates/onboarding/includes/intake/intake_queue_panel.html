@@ -18,6 +18,7 @@ PONTOS CRITICOS:
 - Depende do contexto de queue_items.
 -->
 <section class="card glass-panel intake-data-panel" id="intake-queue-board" aria-label="Fila principal de intake" data-panel="intake-queue-board">
+    {% url 'student-quick-create' as student_quick_create_url %}
     <div class="card-head">
         <div class="card-head-main">
             <h2 class="card-title">Novos Contatos: Quem quer treinar no Box</h2>
@@ -67,7 +68,7 @@ PONTOS CRITICOS:
                     </form>
                     {% endif %}
                     {% if page.capabilities.can_manage_students and conversion.can_convert %}
-                    <a class="button" href="/alunos/novo/?intake={{ intake.id }}#student-form-essential" data-action="convert-intake-to-student">{{ conversion.action_label }}</a>
+                    <a class="button" href="{{ student_quick_create_url }}?intake={{ intake.id }}#student-form-essential" data-action="convert-intake-to-student">{{ conversion.action_label }}</a>
                     {% else %}
                     <span class="pill intake-conversion-pill">{{ conversion.action_label }}</span>
                     {% endif %}
