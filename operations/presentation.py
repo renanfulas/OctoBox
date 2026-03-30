@@ -6,6 +6,8 @@ POR QUE ELE EXISTE:
 - mantem a view HTTP curta e previsivel mesmo quando a tela ainda consome aliases legados.
 """
 
+from django.urls import reverse
+
 from access.shell_actions import build_shell_action_buttons_from_focus
 from shared_support.page_payloads import build_page_assets, build_page_hero, build_page_payload
 
@@ -41,7 +43,7 @@ def _build_operation_workspace_hero(page_key, snapshot):
         owner_actions = [
             {
                 'label': owner_primary_focus.get('href_label', 'Abrir agora'),
-                'href': owner_primary_focus.get('href', '/entradas/'),
+                'href': owner_primary_focus.get('href', reverse('intake-center')),
             },
             *[
                 {'label': item['href_label'], 'href': item['href'], 'kind': 'secondary'}
@@ -82,7 +84,7 @@ def _build_operation_workspace_hero(page_key, snapshot):
             copy='Rastro, fronteira e manutencao sem chute tecnico.',
             actions=[
                 {'label': 'Ver eventos recentes', 'href': '#dev-audit-board'},
-                {'label': 'Abrir mapa do sistema', 'href': '/mapa-sistema/', 'kind': 'secondary'},
+                {'label': 'Abrir mapa do sistema', 'href': reverse('system-map'), 'kind': 'secondary'},
             ],
             aria_label='Panorama de desenvolvimento',
         ),

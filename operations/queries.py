@@ -82,7 +82,7 @@ def build_owner_workspace_snapshot(*, today):
             ),
             count=headline_metrics['pending_intakes'],
             pill_class='danger' if headline_metrics['pending_intakes'] > 0 else 'success',
-            href='/entradas/',
+            href=reverse('intake-center'),
             href_label='Abrir entradas',
         ),
         'payments': _build_owner_focus_item(
@@ -96,7 +96,7 @@ def build_owner_workspace_snapshot(*, today):
             ),
             count=headline_metrics['overdue_payments'],
             pill_class='danger' if headline_metrics['overdue_payments'] > 0 else 'success',
-            href='/financeiro/',
+            href=reverse('finance-center'),
             href_label='Abrir cobrancas',
         ),
         'structure': _build_owner_focus_item(
@@ -108,7 +108,7 @@ def build_owner_workspace_snapshot(*, today):
             ),
             count=headline_metrics['whatsapp_contacts'],
             pill_class='success',
-            href='/alunos/',
+            href=reverse('student-directory'),
             href_label='Abrir estrutura',
         ),
     }
@@ -126,17 +126,17 @@ def build_owner_workspace_snapshot(*, today):
             {
                 **_build_metric_card('operation-kpi-card owner-amber', 'Total de alunos', headline_metrics['students'], 'Tamanho atual da base.'),
                 'status_hint': 'neutral',
-                'href': '/alunos/',
+                'href': reverse('student-directory'),
             },
             {
                 **_build_metric_card('operation-kpi-card owner-blue', 'Entradas abertas', headline_metrics['pending_intakes'], 'Pessoas que ainda esperam resposta.'),
                 'status_hint': 'clean' if headline_metrics['pending_intakes'] == 0 else 'attention',
-                'href': '/entradas/',
+                'href': reverse('intake-center'),
             },
             {
                 **_build_metric_card('operation-kpi-card owner-green', 'WhatsApp pronto', headline_metrics['whatsapp_contacts'], 'Contatos prontos para conversa.'),
                 'status_hint': 'neutral',
-                'href': '/operacao/whatsapp/',
+                'href': reverse('whatsapp-workspace'),
             },
             {
                 **_build_metric_card('operation-kpi-card owner-amber', 'Cobranças atrasadas', headline_metrics['overdue_payments'], 'Dinheiro que já deveria ter entrado.'),
@@ -145,7 +145,7 @@ def build_owner_workspace_snapshot(*, today):
                     'value': f"R$ {headline_metrics['overdue_amount']:.2f}".replace('.', ','),
                 },
                 'status_hint': 'clean' if headline_metrics['overdue_payments'] == 0 else 'attention',
-                'href': '/financeiro/',
+                'href': reverse('finance-center'),
             },
         ],
         'owner_operational_focus': owner_operational_focus,
