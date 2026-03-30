@@ -65,6 +65,10 @@ POR QUE ELE EXISTE:
     line-height: 1.5;
 }
 
+.student-express-plan-grid {
+    margin-top: 24px;
+}
+
 .student-form-installment-shell {
     padding: 10px 12px;
 }

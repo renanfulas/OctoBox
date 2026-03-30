@@ -40,6 +40,15 @@ ARQUIVO: cards de foco, execução e empty state operacionais.
     max-width: 56ch;
 }
 
+.operation-focus-copy--full {
+    width: 100%;
+}
+
+.operation-focus-head {
+    gap: 12px;
+    align-items: center;
+}
+
 .operation-focus-actions {
     display: grid;
     gap: 10px;
