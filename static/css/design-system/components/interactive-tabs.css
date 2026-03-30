@@ -24,6 +24,19 @@ POR QUE ELE EXISTE:
     animation: fadeInTab 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+.deferred-surface {
+    content-visibility: auto;
+    contain-intrinsic-size: 420px;
+}
+
+.deferred-surface--dense {
+    contain-intrinsic-size: 720px;
+}
+
+.deferred-surface--xl {
+    contain-intrinsic-size: 960px;
+}
+
 @keyframes fadeInTab {
     0% {
         opacity: 0;

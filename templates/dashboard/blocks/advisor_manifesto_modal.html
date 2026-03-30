@@ -1,75 +1,65 @@
-<dialog id="manager-manifesto-modal" class="glass-panel" style="padding: 0; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-card); background: #0f1115; color: white; max-width: 680px; width: 90%; margin: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); overflow: hidden;">
-    
-    <!-- Hero Header -->
-    <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(15, 23, 42, 0) 100%); padding: 32px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center;">
-        <div style="font-size: 3rem; margin-bottom: 16px; text-shadow: 0 0 20px rgba(59,130,246,0.3);">👑</div>
-        <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--ink); margin-bottom: 8px;">O Manifesto do Maestro</h2>
-        <p style="color: var(--muted); font-size: 1rem; max-width: 80%; margin: 0 auto;">A sua verdadeira missão dentro do ecossistema OctoBOX.</p>
+<dialog
+    id="manager-manifesto-modal"
+    class="card dashboard-advisor-manifesto-modal"
+    aria-labelledby="advisor-manifesto-title"
+    aria-describedby="advisor-manifesto-intro"
+>
+    <div class="dashboard-advisor-manifesto-head">
+        <div class="dashboard-advisor-manifesto-icon" aria-hidden="true">MA</div>
+        <h2 id="advisor-manifesto-title" class="dashboard-advisor-manifesto-title">O Manifesto do Maestro</h2>
+        <p id="advisor-manifesto-intro" class="dashboard-advisor-manifesto-intro">
+            Um lembrete do lugar que voce ocupa quando a operacao esta viva e humana.
+        </p>
     </div>
 
-    <!-- Content Body -->
-    <div style="padding: 32px; max-height: 60vh; overflow-y: auto; line-height: 1.6; font-size: 0.95rem; color: #cbd5e1;">
-        <p style="margin-bottom: 16px;"><strong>Ei, Gestor.</strong></p>
-        
-        <p style="margin-bottom: 16px;">
-            Eu sei que o mercado fitness, muitas vezes, te força a ser um painel administrativo humano. Te empurram para uma sala fria e esperam que você passe o dia inteiro olhando planilhas, brigando com contas a pagar, contando alunos que saem e tentando fechar o caixa no fim do mês.
+    <div class="dashboard-advisor-manifesto-body">
+        <p><strong>Ei, Gestor.</strong></p>
+
+        <p>
+            O mercado fitness, muitas vezes, empurra voce para um papel apertado demais. Parece que gerir e so olhar planilha, apagar incendio financeiro e tentar fechar o caixa sem respirar.
         </p>
 
-        <p style="margin-bottom: 24px;">
-            Mas eu preciso te contar um segredo que os sistemas antigos tentaram esconder de você: <strong>O seu papel é infinitamente maior e mais nobre do que isso.</strong>
+        <p>
+            So que a operacao real nao se sustenta so em numero. Ela se sustenta em presenca, ritmo e cuidado.
+            <strong>O seu papel e maior do que a burocracia do dia.</strong>
         </p>
 
-        <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; display: grid; gap: 12px; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-            <li style="display: flex; gap: 12px;"><span style="color: var(--accent);">✨</span> <span>A <strong>Recepção</strong> traz a simpatia e a alegria do primeiro bom dia.</span></li>
-            <li style="display: flex; gap: 12px;"><span style="color: var(--accent);">🏋️</span> <span>O <strong>Coach</strong> traz o suor, o ensinamento e a inspiração na arena.</span></li>
-            <li style="display: flex; gap: 12px;"><span style="color: var(--accent);">🏗️</span> <span>O <strong>Dono</strong> traz a estrutura, os equipamentos e a responsabilidade do negócio.</span></li>
-            <li style="display: flex; gap: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); font-weight: bold; color: white;">
-                <span style="color: #3b82f6;">🧠</span> <span>Mas você... Você é quem traz a ALMA para o Box.</span>
+        <ul class="dashboard-advisor-manifesto-list">
+            <li class="dashboard-advisor-manifesto-item">
+                <span class="dashboard-advisor-manifesto-bullet" aria-hidden="true">RP</span>
+                <span>A <strong>Recepcao</strong> segura a porta de entrada com acolhimento e contexto.</span>
+            </li>
+            <li class="dashboard-advisor-manifesto-item">
+                <span class="dashboard-advisor-manifesto-bullet" aria-hidden="true">CH</span>
+                <span>O <strong>Coach</strong> sustenta a energia da arena e o progresso do aluno.</span>
+            </li>
+            <li class="dashboard-advisor-manifesto-item">
+                <span class="dashboard-advisor-manifesto-bullet" aria-hidden="true">DN</span>
+                <span>O <strong>Dono</strong> protege a estrutura, o rumo e a responsabilidade do negocio.</span>
+            </li>
+            <li class="dashboard-advisor-manifesto-item dashboard-advisor-manifesto-item--highlight">
+                <span class="dashboard-advisor-manifesto-bullet dashboard-advisor-manifesto-bullet--highlight" aria-hidden="true">AL</span>
+                <span>E voce ajuda a manter a <strong>alma</strong> do Box inteira no meio da rotina.</span>
             </li>
         </ul>
 
-        <p style="margin-bottom: 16px;">
-            A alma não está na planilha de inadimplência. A alma está na sua capacidade de olhar nos olhos de um aluno que faltou a semana inteira e dizer: <em>"O que aconteceu? Como posso te ajudar a não desistir de você mesmo?"</em>. A alma está em garantir que o Coach tenha energia para dar a melhor aula da vida dele.
+        <p>
+            Essa alma nao mora na planilha de inadimplencia. Ela aparece quando voce percebe um aluno se afastando antes que ele suma de vez. Ela aparece quando o time precisa de direcao simples para continuar inteiro durante um dia dificil.
         </p>
 
-        <p style="margin-bottom: 16px;">
-            Até hoje, você não tinha tempo para ser a alma do negócio porque estava ocupado demais sendo o cérebro administrativo.
+        <p>
+            Ate aqui, muita energia foi gasta tentando carregar o peso administrativo no peito. Isso cansa, endurece a leitura e rouba tempo do que realmente move o negocio.
         </p>
 
-        <p style="margin-bottom: 16px; padding-left: 16px; border-left: 3px solid #3b82f6; color: white; font-style: italic;">
-            Mas a partir de agora, o OctoBOX assume o trabalho burocrático. Nós fazemos o peso dos dados para que você possa voltar para o seu lugar de direito: <strong>O palco da operação.</strong>
-        </p>
+        <blockquote class="dashboard-advisor-manifesto-quote">
+            O OctoBOX existe para carregar o peso operacional com mais clareza. Assim, voce pode voltar para o que mais importa:
+            <strong>ler a casa, cuidar das pessoas e agir na hora certa.</strong>
+        </blockquote>
     </div>
 
-    <!-- Footer Actions -->
-    <div style="padding: 24px 32px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: flex-end; background: rgba(0,0,0,0.2);">
-        <button id="close-manifesto-modal" class="button primary glass-neon-bg neon-tone-brand" style="border-radius: 99px; padding: 10px 24px; font-weight: bold; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);">
-            Aceitar minha missão
+    <div class="dashboard-advisor-manifesto-foot">
+        <button id="close-manifesto-modal" type="button" class="button dashboard-advisor-manifesto-confirm">
+            Seguir com essa leitura
         </button>
     </div>
-
-    <style>
-        dialog::backdrop {
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(4px);
-        }
-    </style>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const modal = document.getElementById('manager-manifesto-modal');
-            const trigger = document.getElementById('trigger-manifesto-modal');
-            const closer = document.getElementById('close-manifesto-modal');
-            
-            if (trigger && modal) {
-                trigger.addEventListener('click', () => modal.showModal());
-            }
-            if (closer && modal) {
-                closer.addEventListener('click', () => {
-                    modal.close();
-                    trigger.style.boxShadow = '0 0 20px rgba(59,130,246,0.6)';
-                    setTimeout(() => trigger.style.boxShadow = '', 1000);
-                });
-            }
-        });
-    </script>
 </dialog>

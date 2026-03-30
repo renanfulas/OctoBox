@@ -55,6 +55,10 @@ POR QUE ELE EXISTE:
     overflow: hidden;
 }
 
+.student-bulk-action-bar[hidden] {
+    display: none;
+}
+
 .student-data-panel.is-fit-content {
     min-height: 0;
     height: auto;
@@ -157,6 +161,12 @@ body[data-theme="dark"] .student-data-panel td strong {
     margin-bottom: 12px;
 }
 
+.student-select-column,
+.student-cell--select {
+    width: 40px;
+    text-align: center;
+}
+
 .student-data-panel th,
 .student-data-panel td {
     padding: 10px 9px;
@@ -172,6 +182,16 @@ body[data-theme="dark"] .student-data-panel td strong {
 
 .student-data-panel tbody tr + tr {
     border-top: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.student-row:focus-visible {
+    outline: 2px solid rgba(37, 99, 235, 0.34);
+    outline-offset: -2px;
+    background: rgba(255, 255, 255, 0.88);
+}
+
+.student-row:focus-within {
+    background: rgba(248, 250, 252, 0.86);
 }
 
 .student-data-panel td .actions {

@@ -1,4 +1,37 @@
 (function() {
+  function setupManifestoModal() {
+    var modal = document.getElementById('manager-manifesto-modal');
+    var trigger = document.getElementById('trigger-manifesto-modal');
+    var closer = document.getElementById('close-manifesto-modal');
+
+    if (!modal || !trigger || !closer || typeof modal.showModal !== 'function') {
+      return;
+    }
+
+    trigger.addEventListener('click', function() {
+      modal.showModal();
+    });
+
+    closer.addEventListener('click', function() {
+      modal.close();
+      trigger.focus();
+    });
+
+    modal.addEventListener('click', function(event) {
+      var rect = modal.getBoundingClientRect();
+      var clickedInside =
+        rect.top <= event.clientY &&
+        event.clientY <= rect.top + rect.height &&
+        rect.left <= event.clientX &&
+        event.clientX <= rect.left + rect.width;
+
+      if (!clickedInside) {
+        modal.close();
+        trigger.focus();
+      }
+    });
+  }
+
   function buildSuccessMarkup(actionName) {
     return (
       '<div class="dashboard-advisor-success">' +
@@ -52,4 +85,6 @@
       trigger.getAttribute('data-external-url')
     );
   });
+
+  setupManifestoModal();
 }());

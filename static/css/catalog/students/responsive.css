@@ -7,6 +7,24 @@ POR QUE ELE EXISTE:
 */
 
 @media (max-width: 960px) {
+    .student-toolbar-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .student-command-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .student-toolbar-import {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .student-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .student-focus-item,
     .student-compact-layout,
     .intake-card {
@@ -77,6 +95,67 @@ POR QUE ELE EXISTE:
 }
 
 @media (max-width: 640px) {
+    .student-toolbar-row {
+        gap: 10px;
+    }
+
+    .student-directory-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 16px;
+    }
+
+    .student-directory-actions {
+        width: 100%;
+        flex-wrap: wrap;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+
+    .student-directory-actions > * {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .student-directory-actions .button,
+    .student-directory-import label {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .student-filter-bar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .student-filter-primary {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        min-width: 0;
+    }
+
+    .student-filter-search {
+        width: 100%;
+        max-width: none;
+    }
+
+    .student-filter-pills {
+        flex-wrap: wrap;
+        min-width: 0;
+    }
+
+    .student-filter-pills > a {
+        flex: 1 1 calc(50% - 4px);
+        min-width: 0;
+        text-align: center;
+        white-space: normal;
+    }
+
+    .student-filter-toggle {
+        width: 100%;
+        justify-content: center;
+    }
+
     .student-data-panel {
         padding-inline: 20px;
     }
@@ -169,8 +248,18 @@ POR QUE ELE EXISTE:
 }
 
 @media (max-width: 520px) {
+    .student-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
     .student-directory-table tbody tr {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 360px) {
+    .student-filter-pills > a {
+        flex-basis: 100%;
     }
 }
 

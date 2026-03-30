@@ -10,6 +10,28 @@ document.addEventListener('DOMContentLoaded', function() {
     var triggers = document.querySelectorAll('[data-action^="open-tab-"]');
     if (!triggers.length) return;
 
+    function activateDefaultPanel(container) {
+        if (!container || container.querySelector('.is-tab-active')) {
+            return;
+        }
+
+        var firstPanel = container.firstElementChild;
+        if (!firstPanel || !firstPanel.id) {
+            return;
+        }
+
+        firstPanel.classList.add('is-tab-active');
+
+        var expectedAction = 'open-tab-' + firstPanel.id.replace(/^tab-/, '');
+        var linkedTrigger = document.querySelector('[data-action="' + expectedAction + '"]');
+        if (!linkedTrigger) {
+            return;
+        }
+
+        var triggerCard = linkedTrigger.closest('.card') || linkedTrigger;
+        triggerCard.classList.add('is-selected-tab');
+    }
+
     triggers.forEach(function(trigger) {
         trigger.addEventListener('click', function(e) {
             e.preventDefault();
@@ -83,6 +105,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 delete this.dataset.noScroll;
             }
         });
+    });
+
+    document.querySelectorAll('.interactive-tab-container').forEach(function(container) {
+        activateDefaultPanel(container);
     });
 
     // Auto-open filters if the URL contains filtering queries

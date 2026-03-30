@@ -1,215 +1,155 @@
-/* 
-ARQUIVO: modulo financeiro (Neon Genesis / Phase 14).
-Descricao: Centraliza os estilos do cockpit financeiro do aluno.
+/*
+ARQUIVO: suporte de design system para o workspace financeiro do aluno.
+
+POR QUE ELE EXISTE:
+- sustenta o trilho contextual financeiro residual que ainda e carregado pela ficha do aluno.
+- preserva uma pequena camada financeira compartilhada sem reabrir um tema paralelo.
+
+O QUE ESTE ARQUIVO FAZ:
+1. estiliza a topbar contextual do workspace financeiro com tokens canonicos.
+2. mantem apenas o trilho contextual canonico do workspace financeiro.
+
+PONTOS CRITICOS:
+- a topbar contextual ja esta migrada para o canon `student-financial-*`.
+- novas alteracoes nao devem reviver `elite-*` como naming vivo nem reintroduzir `--elite-*`.
 */
 
-/* --- Topbar de Comando --- */
-.elite-financial-topbar {
+/* --- Trilho contextual canonico do workspace financeiro --- */
+.student-financial-topbar {
+    --student-financial-topbar-surface: linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 96%, white), color-mix(in srgb, var(--theme-surface-panel) 98%, white));
+    --student-financial-topbar-border: color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    --student-financial-topbar-shadow: var(--theme-shadow-soft);
+    --student-financial-topbar-search-surface: color-mix(in srgb, var(--theme-bg-depth) 94%, white);
+    --student-financial-topbar-search-focus-ring: 0 0 0 4px color-mix(in srgb, var(--theme-accent-support) 16%, transparent);
+    --student-financial-topbar-signal: var(--theme-accent-warning);
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: var(--space-3) var(--space-4);
-    background: var(--surface);
+    background: var(--student-financial-topbar-surface);
     border-radius: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--student-financial-topbar-border);
     margin-bottom: var(--space-4);
-    box-shadow: var(--shadow-soft);
+    box-shadow: var(--student-financial-topbar-shadow);
+    gap: var(--space-4);
 }
 
-.elite-search-wrapper {
+.student-financial-topbar-search {
     position: relative;
     flex: 1;
     max-width: 480px;
 }
 
-.elite-search-icon {
+.student-financial-topbar-search-icon {
     position: absolute;
     left: 14px;
     top: 50%;
     transform: translateY(-50%);
     opacity: 0.5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.elite-search-input {
+.student-financial-topbar-search-input {
     min-height: 42px;
     padding-left: 40px;
     border-radius: 10px;
-    background: var(--bg-depth);
-    border: 1px solid transparent;
+    background: var(--student-financial-topbar-search-surface);
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 68%, transparent);
     width: 100%;
 }
 
-.elite-search-input:focus {
-    background: var(--surface);
-    border-color: var(--brand);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 8%, transparent);
+.student-financial-topbar-search-input:focus {
+    background: var(--theme-surface-strong);
+    border-color: var(--theme-accent-support);
+    box-shadow: var(--student-financial-topbar-search-focus-ring);
 }
 
-.elite-topbar-actions {
+.student-financial-topbar-actions {
     display: flex;
     align-items: center;
     gap: var(--space-3);
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
-.elite-notification-pill-strip {
+.student-financial-topbar-actions .button {
+    min-height: 34px;
+    padding: 7px 12px;
+}
+
+.student-financial-topbar-notice-strip {
     display: flex;
     align-items: center;
     gap: 8px;
     font-size: 0.82rem;
     padding: 0 var(--space-3);
+    min-height: 34px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 72%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-panel) 74%, transparent);
 }
 
-.elite-ping-dot {
+.student-financial-topbar-notice-label {
+    color: var(--muted);
+}
+
+.student-financial-topbar-notice-value {
+    color: var(--student-financial-topbar-signal);
+    font-weight: 700;
+}
+
+.student-financial-topbar-ping {
     width: 6px;
     height: 6px;
     border-radius: 50%;
 }
 
-.elite-ping-dot.orange { 
-    background: var(--elite-accent); 
-    box-shadow: 0 0 8px rgba(255, 140, 0, 0.4); 
+.student-financial-topbar-ping.is-warning {
+    background: var(--student-financial-topbar-signal);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--student-financial-topbar-signal) 42%, transparent);
 }
 
-.elite-avatar-small {
+.student-financial-topbar-avatar {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: var(--ink);
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-strong) 95%, white), color-mix(in srgb, var(--theme-surface-panel) 96%, white));
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.75rem;
     font-weight: 800;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
 }
 
-/* --- ID Hero Card --- */
-.elite-id-card-hero {
-    padding: var(--space-4) var(--space-5);
-    border-radius: 16px;
-    background: var(--surface);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    box-shadow: var(--shadow-sm);
-    margin-bottom: var(--space-5);
-}
+@media (max-width: 960px) {
+    .student-financial-topbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
 
-.elite-id-card-hero__inner {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--space-5);
-}
+    .student-financial-topbar-search,
+    .student-financial-topbar-actions {
+        max-width: none;
+        width: 100%;
+    }
 
-.elite-id-card-hero__identity {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
-}
-
-.elite-avatar-large {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: var(--elite-accent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.5rem;
-    font-weight: 800;
-}
-
-.elite-id-card-hero__stats {
-    display: flex;
-    gap: var(--space-5);
-    align-items: center;
-}
-
-.elite-mini-stat-box {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-}
-
-.elite-mini-stat-box__label {
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--muted);
-    font-weight: 700;
-}
-
-.elite-mini-stat-box__value {
-    font-size: 1.4rem;
-    font-weight: 900;
-    letter-spacing: -0.04em;
-    color: var(--ink);
-}
-
-/* --- KPI Grid --- */
-.elite-kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-5);
-    margin-top: var(--space-4);
-}
-
-.elite-kpi-card {
-    background: var(--surface);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 14px;
-    padding: var(--space-4);
-    min-height: 140px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--shadow-soft);
-}
-
-.elite-kpi-card::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: var(--brand);
-    opacity: 0.8;
-}
-
-.elite-kpi-card__head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-}
-
-.elite-kpi-card__label {
-    font-size: 0.85rem;
-    color: var(--muted);
-    font-weight: 600;
-}
-
-.elite-kpi-card__value {
-    margin: var(--space-2) 0 4px;
-    font-size: 1.85rem;
-    font-weight: 900;
-    letter-spacing: -0.05em;
-    color: var(--ink);
-}
-
-.elite-kpi-card__meta {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    font-size: 0.78rem;
-}
-
-@media (max-width: 1280px) {
-    .elite-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .student-financial-topbar-actions {
+        justify-content: flex-start;
+    }
 }
 
 @media (max-width: 640px) {
-    .elite-kpi-grid { grid-template-columns: 1fr; }
-    .elite-id-card-hero__inner { flex-direction: column; align-items: flex-start; }
+    .student-financial-topbar-actions .button {
+        width: auto;
+    }
+
+    .student-financial-topbar-notice-strip {
+        width: 100%;
+        justify-content: center;
+    }
 }

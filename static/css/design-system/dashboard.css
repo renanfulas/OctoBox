@@ -23,15 +23,15 @@ O QUE ESTE ARQUIVO FAZ:
     --dashboard-fib-ratio: 1.618;
     --dashboard-surface-radius: 18px;
     --dashboard-surface-border: rgba(80, 102, 128, 0.12);
-    --dashboard-surface-shadow: var(--fdw-shadow);
-    --dashboard-surface-shadow-lift: var(--fdw-shadow-lift);
+    --dashboard-surface-shadow: var(--theme-shadow-soft);
+    --dashboard-surface-shadow-lift: var(--theme-shadow-lift);
     --dashboard-support-surface:
-        radial-gradient(circle at top right, rgba(212, 102, 44, 0.028), transparent 28%),
-        radial-gradient(circle at bottom left, rgba(37, 85, 220, 0.022), transparent 22%),
-        linear-gradient(160deg, rgba(255, 255, 255, 1), rgba(243, 247, 252, 0.98));
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 22%, transparent), transparent 28%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 22%),
+        linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-panel) 96%, white), color-mix(in srgb, var(--theme-surface-strong) 94%, white));
     --dashboard-support-surface-dark:
-        radial-gradient(circle at top right, rgba(14, 165, 233, 0.12), transparent 28%),
-        linear-gradient(150deg, rgba(16, 24, 44, 0.98), rgba(11, 20, 36, 0.98));
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 52%, transparent), transparent 28%),
+        linear-gradient(150deg, color-mix(in srgb, var(--theme-surface-strong) 94%, transparent), color-mix(in srgb, var(--theme-surface) 98%, transparent));
     display: grid;
     gap: clamp(var(--dashboard-fib-3), 1.5vw, var(--dashboard-fib-4));
     position: relative;
@@ -69,10 +69,10 @@ body[data-shell-scope="dashboard"] .topbar {
 
 .dashboard-shell::before {
     background:
-        radial-gradient(circle at top right, rgba(212, 102, 44, 0.04), transparent 16%),
-        radial-gradient(circle at 12% 34%, rgba(37, 85, 220, 0.03), transparent 14%),
-        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.36), transparent 20%),
-        radial-gradient(circle at 80% 72%, rgba(15, 130, 120, 0.02), transparent 14%);
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 30%, transparent), transparent 16%),
+        radial-gradient(circle at 12% 34%, color-mix(in srgb, var(--theme-accent-support-alpha) 26%, transparent), transparent 14%),
+        radial-gradient(circle at 50% 0%, color-mix(in srgb, white 36%, transparent), transparent 20%),
+        radial-gradient(circle at 80% 72%, color-mix(in srgb, var(--theme-accent-success-alpha) 18%, transparent), transparent 14%);
 }
 
 .dashboard-shell::after {
@@ -80,17 +80,17 @@ body[data-shell-scope="dashboard"] .topbar {
     height: 377px;
     border-radius: var(--dashboard-fib-5);
     background:
-        linear-gradient(180deg, rgba(255, 248, 242, 0.36), rgba(255, 248, 242, 0)),
-        linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent 58%);
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-primary-alpha) 20%, transparent), transparent),
+        linear-gradient(135deg, color-mix(in srgb, white 10%, transparent), transparent 58%);
 }
 
 .dashboard-hero {
-    --hero-border: rgba(255, 255, 255, 0.74);
+    --hero-border: color-mix(in srgb, white 74%, transparent);
     --hero-radius: var(--dashboard-surface-radius);
     --hero-surface:
-        radial-gradient(circle at top right, rgba(212, 102, 44, 0.03), transparent 22%),
-        radial-gradient(circle at bottom left, rgba(37, 85, 220, 0.02), transparent 18%),
-        linear-gradient(145deg, rgba(255, 255, 255, 0.99), rgba(250, 248, 245, 0.98)),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 22%, transparent), transparent 22%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 18%),
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-panel) 98%, white), color-mix(in srgb, var(--theme-surface-strong) 96%, white)),
         var(--surface);
     --hero-shadow: var(--dashboard-surface-shadow-lift);
     --hero-before-inset: auto auto calc(var(--dashboard-fib-5) * -1) calc(var(--dashboard-fib-4) * -1);
@@ -98,48 +98,318 @@ body[data-shell-scope="dashboard"] .topbar {
     --hero-before-height: 233px;
     --hero-before-radius: 999px;
     --hero-before-opacity: 1;
-    --hero-before-background: radial-gradient(circle, rgba(37, 99, 235, 0.12), transparent 68%);
+    --hero-before-background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent-support-alpha) 52%, transparent), transparent 68%);
     --hero-after-inset: 0 0 auto auto;
     --hero-after-width: 18%;
     --hero-after-height: 100%;
     --hero-after-opacity: 1;
-    --hero-after-background: linear-gradient(125deg, rgba(255, 255, 255, 0.06), transparent 46%);
-    --hero-after-background: linear-gradient(125deg, rgba(255, 255, 255, 0.06), transparent 46%);
+    --hero-after-background: linear-gradient(125deg, color-mix(in srgb, white 6%, transparent), transparent 46%);
     position: relative;
     grid-template-columns: minmax(0, 1fr);
     justify-content: stretch;
 }
 
+.dashboard-advisor-narrative {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 40px;
+    margin-bottom: 48px;
+    overflow: hidden;
+}
+
+.dashboard-advisor-narrative-watermark,
+.dashboard-advisor-narrative-copy,
+.dashboard-advisor-narrative-actions {
+    position: relative;
+    z-index: 1;
+}
+
+.dashboard-advisor-narrative-watermark {
+    position: absolute;
+    inset: 0 auto 0 40px;
+    width: 140px;
+    opacity: 0.04;
+    pointer-events: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M10,80 L10,60 L30,40 L50,50 L70,20 L90,30" fill="none" stroke="%23000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><rect x="15" y="50" width="10" height="30" rx="2" fill="%23000"/><rect x="45" y="40" width="10" height="40" rx="2" fill="%23000"/><rect x="75" y="20" width="10" height="60" rx="2" fill="%23000"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center left;
+    background-size: contain;
+}
+
+.dashboard-advisor-narrative-copy {
+    flex: 1 1 500px;
+    max-width: 800px;
+}
+
+.dashboard-advisor-narrative-eyebrow {
+    margin-bottom: 16px;
+    color: color-mix(in srgb, var(--theme-accent-support) 82%, white 18%);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.dashboard-advisor-narrative-title {
+    margin: 0 0 12px;
+    color: var(--ink);
+    font-size: 2.25rem;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.dashboard-advisor-narrative-body {
+    max-width: 90%;
+    margin: 0;
+    color: var(--muted);
+    font-size: 1.05rem;
+    line-height: 1.6;
+}
+
+.dashboard-advisor-narrative-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+.dashboard-advisor-manifesto-trigger {
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-warning) 76%, white 24%), color-mix(in srgb, var(--theme-accent-primary) 64%, white 36%));
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--theme-accent-primary) 28%, transparent);
+}
+
+.dashboard-advisor-manifesto-trigger:hover,
+.dashboard-advisor-manifesto-trigger:focus-visible {
+    border-color: transparent;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-primary) 16%, transparent), 0 10px 24px color-mix(in srgb, var(--theme-accent-primary) 24%, transparent);
+}
+
+.dashboard-advisor-metric-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-surface-strong) 88%, transparent);
+    color: var(--ink);
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
+}
+
+.dashboard-advisor-metric-trend {
+    font-weight: 800;
+}
+
+.dashboard-advisor-metric-trend--up {
+    color: color-mix(in srgb, var(--theme-accent-success) 82%, white 18%);
+}
+
+.dashboard-advisor-metric-trend--down {
+    color: color-mix(in srgb, var(--theme-accent-warning) 82%, white 18%);
+}
+
+.dashboard-advisor-manifesto-modal {
+    width: min(680px, calc(100vw - 32px));
+    max-width: 680px;
+    margin: auto;
+    padding: 0;
+    overflow: hidden;
+    color: var(--ink);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 72%, transparent), transparent 28%),
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-strong) 92%, transparent), color-mix(in srgb, var(--theme-surface) 96%, transparent));
+    border-color: color-mix(in srgb, var(--theme-border-strong) 88%, transparent);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.dashboard-advisor-manifesto-modal::backdrop {
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.dashboard-advisor-manifesto-head,
+.dashboard-advisor-manifesto-body,
+.dashboard-advisor-manifesto-foot {
+    padding-inline: 32px;
+}
+
+.dashboard-advisor-manifesto-head {
+    padding-top: 32px;
+    padding-bottom: 28px;
+    text-align: center;
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border-soft) 70%, transparent);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-support-alpha) 62%, transparent), transparent 100%);
+}
+
+.dashboard-advisor-manifesto-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 16px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 76%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-support) 84%, white 16%);
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--theme-accent-support) 18%, transparent);
+}
+
+.dashboard-advisor-manifesto-title {
+    margin: 0 0 8px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+.dashboard-advisor-manifesto-intro {
+    max-width: 32ch;
+    margin: 0 auto;
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.dashboard-advisor-manifesto-body {
+    display: grid;
+    gap: 16px;
+    max-height: 60vh;
+    padding-top: 32px;
+    padding-bottom: 32px;
+    overflow-y: auto;
+    color: color-mix(in srgb, var(--ink) 86%, white 14%);
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+
+.dashboard-advisor-manifesto-body p,
+.dashboard-advisor-manifesto-body ul,
+.dashboard-advisor-manifesto-body blockquote {
+    margin: 0;
+}
+
+.dashboard-advisor-manifesto-list {
+    display: grid;
+    gap: 12px;
+    padding: 20px;
+    list-style: none;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 60%, transparent);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--theme-surface-secondary) 66%, transparent);
+}
+
+.dashboard-advisor-manifesto-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.dashboard-advisor-manifesto-item--highlight {
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px solid color-mix(in srgb, var(--theme-border-soft) 54%, transparent);
+    color: var(--ink);
+    font-weight: 700;
+}
+
+.dashboard-advisor-manifesto-bullet {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 60%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-primary) 78%, white 22%);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.dashboard-advisor-manifesto-bullet--highlight {
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 70%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-support) 84%, white 16%);
+}
+
+.dashboard-advisor-manifesto-quote {
+    padding-left: 16px;
+    border-left: 3px solid var(--theme-accent-support);
+    color: var(--ink);
+    font-style: italic;
+}
+
+.dashboard-advisor-manifesto-foot {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 24px;
+    padding-bottom: 24px;
+    border-top: 1px solid color-mix(in srgb, var(--theme-border-soft) 60%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-muted) 48%, transparent);
+}
+
+.dashboard-advisor-manifesto-confirm {
+    border-radius: 999px;
+    padding: 10px 24px;
+    font-weight: 700;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-support) 78%, white 22%), color-mix(in srgb, var(--theme-accent-primary) 72%, white 28%));
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 0 15px color-mix(in srgb, var(--theme-accent-support) 32%, transparent);
+}
+
+.dashboard-advisor-manifesto-confirm:hover,
+.dashboard-advisor-manifesto-confirm:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-support) 16%, transparent), 0 10px 24px color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
+}
+
 body[data-theme="dark"] .dashboard-shell::before {
     background:
-        radial-gradient(circle at top right, rgba(249, 115, 22, 0.12), transparent 20%),
-        radial-gradient(circle at 12% 34%, rgba(37, 99, 235, 0.1), transparent 18%),
-        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04), transparent 20%);
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent), transparent 20%),
+        radial-gradient(circle at 12% 34%, color-mix(in srgb, var(--theme-accent-support-alpha) 48%, transparent), transparent 18%),
+        radial-gradient(circle at 50% 0%, color-mix(in srgb, white 4%, transparent), transparent 20%);
 }
 
 body[data-theme="dark"] .dashboard-shell::after {
     background:
-        linear-gradient(180deg, rgba(15, 23, 42, 0.42), rgba(15, 23, 42, 0)),
-        linear-gradient(135deg, rgba(255, 255, 255, 0.04), transparent 58%);
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 42%, transparent), transparent),
+        linear-gradient(135deg, color-mix(in srgb, white 4%, transparent), transparent 58%);
 }
 
 body[data-theme="dark"] .dashboard-hero {
-    --hero-border: rgba(148, 163, 184, 0.16);
+    --hero-border: color-mix(in srgb, var(--theme-border-soft) 80%, transparent);
     --hero-surface:
-        radial-gradient(circle at top right, rgba(249, 115, 22, 0.18), transparent 30%),
-        radial-gradient(circle at bottom left, rgba(37, 99, 235, 0.14), transparent 24%),
-        linear-gradient(145deg, rgba(18, 28, 40, 0.97), rgba(10, 17, 27, 0.99)),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 72%, transparent), transparent 30%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 58%, transparent), transparent 24%),
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface) 99%, transparent)),
         var(--surface);
-    --hero-shadow: var(--fdw-shadow);
-    --hero-after-background: linear-gradient(125deg, rgba(255, 255, 255, 0.05), transparent 54%);
-    --operation-hero-actions-surface: rgba(255, 255, 255, 0.04);
-    --operation-hero-actions-border: 1px solid rgba(148, 163, 184, 0.12);
-    --operation-hero-actions-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --hero-shadow: var(--theme-shadow-soft);
+    --hero-after-background: linear-gradient(125deg, color-mix(in srgb, white 5%, transparent), transparent 54%);
+    --operation-hero-actions-surface: color-mix(in srgb, white 4%, transparent);
+    --operation-hero-actions-border: 1px solid color-mix(in srgb, var(--theme-border-soft) 72%, transparent);
+    --operation-hero-actions-shadow: inset 0 1px 0 color-mix(in srgb, white 4%, transparent);
 }
 
 body[data-theme="dark"] .dashboard-hero .actions .button.secondary {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(148, 163, 184, 0.16);
+    background: color-mix(in srgb, white 6%, transparent);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 84%, transparent);
     color: var(--ink);
 }
 
@@ -211,6 +481,16 @@ body[data-theme="dark"] .dashboard-hero .actions .button.secondary {
         --operation-hero-actions-max-width: 100%;
         --operation-hero-actions-padding: 3px;
     }
+
+    .dashboard-advisor-narrative-body {
+        max-width: 100%;
+    }
+
+    .dashboard-advisor-manifesto-head,
+    .dashboard-advisor-manifesto-body,
+    .dashboard-advisor-manifesto-foot {
+        padding-inline: 24px;
+    }
 }
 
 @media (max-width: 720px) {
@@ -224,8 +504,38 @@ body[data-theme="dark"] .dashboard-hero .actions .button.secondary {
         padding: var(--dashboard-rhythm-3);
     }
 
+    .dashboard-advisor-narrative {
+        padding: var(--dashboard-rhythm-3);
+        margin-bottom: 32px;
+    }
+
+    .dashboard-advisor-narrative-title {
+        font-size: clamp(1.95rem, 8vw, 2.25rem);
+    }
+
+    .dashboard-advisor-narrative-actions {
+        width: 100%;
+    }
+
+    .dashboard-advisor-manifesto-head,
+    .dashboard-advisor-manifesto-body,
+    .dashboard-advisor-manifesto-foot {
+        padding-inline: var(--dashboard-rhythm-3);
+    }
+
+    .dashboard-advisor-manifesto-foot {
+        justify-content: stretch;
+    }
+
     .dashboard-hero .actions .button {
         width: 100%;
+    }
+
+    .dashboard-advisor-manifesto-trigger,
+    .dashboard-advisor-metric-pill,
+    .dashboard-advisor-manifesto-confirm {
+        width: 100%;
+        justify-content: center;
     }
 }
 

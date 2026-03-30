@@ -1,38 +1,29 @@
-<section class="dashboard-hero" aria-label="Motor Narrativo do Gestor" style="position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 40px; margin-bottom: 48px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px;">
+<section class="dashboard-hero dashboard-advisor-narrative" aria-label="Motor narrativo do gestor">
+    <div class="dashboard-advisor-narrative-watermark" aria-hidden="true"></div>
 
-    <!-- Faint Watermark (Graphic) -->
-    <div style="position: absolute; left: 40px; top: 0; bottom: 0; width: 140px; opacity: 0.04; background-image: url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><path d=\'M10,80 L10,60 L30,40 L50,50 L70,20 L90,30\' fill=\'none\' stroke=\'%23000\' stroke-width=\'4\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/><rect x=\'15\' y=\'50\' width=\'10\' height=\'30\' rx=\'2\' fill=\'%23000\'/><rect x=\'45\' y=\'40\' width=\'10\' height=\'40\' rx=\'2\' fill=\'%23000\'/><rect x=\'75\' y=\'20\' width=\'10\' height=\'60\' rx=\'2\' fill=\'%23000\'/></svg>'); background-repeat: no-repeat; background-position: center left; background-size: contain; pointer-events: none; z-index: 1;"></div>
-
-    <!-- Content Left -->
-    <div style="position: relative; z-index: 10; flex: 1 1 500px; max-width: 800px;">
-        <p class="eyebrow" style="color: #2563eb; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px;">
-            Conselho Estratégico
+    <div class="dashboard-advisor-narrative-copy">
+        <p class="eyebrow dashboard-advisor-narrative-eyebrow">
+            Leitura do dia
         </p>
-        <h1 style="font-size: 2.25rem; line-height: 1.1; font-weight: 800; color: var(--ink); margin-bottom: 12px; letter-spacing: -0.02em;">
-            Bom dia, {{ user.first_name|default:"Maestro" }}. Foco na retenção.
+        <h1 class="dashboard-advisor-narrative-title">
+            Bom te ver, {{ user.first_name|default:"Maestro" }}.
         </h1>
-        <p style="font-size: 1.05rem; color: var(--muted); margin-bottom: 0; max-width: 90%;">
-            O faturamento está 2% abaixo do ritmo, mas temos 5 alunos excelentes com o plano vencendo esta semana. Que tal focarmos em renová-los hoje?
+        <p class="dashboard-advisor-narrative-body">
+            A retencao pede cuidado hoje. A receita caiu um pouco no ritmo da semana, mas ha cinco renovacoes com boa chance de conversa. Vale comecar por elas, sem pressa e sem ruido.
         </p>
     </div>
 
-    <!-- Buttons Right -->
-    <div style="position: relative; z-index: 10; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-        
-        <!-- Primary Action: Manifesto -->
-        <button type="button" class="button" id="trigger-manifesto-modal" style="background: #c58960; color: #ffffff; border: none; border-radius: 99px; padding: 12px 24px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(197, 137, 96, 0.3);">
-            Ler Manifesto
+    <div class="dashboard-advisor-narrative-actions">
+        <button type="button" class="button dashboard-advisor-manifesto-trigger" id="trigger-manifesto-modal">
+            Ler com calma
         </button>
 
-        <!-- Secondary Actions (Metrics modeled as pills) -->
-        <span style="background: var(--surface); border: 1px solid var(--border); color: var(--ink); border-radius: 99px; padding: 12px 20px; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 8px;">
-            <span style="color: #059669; font-weight: 800;">&uarr; 4%</span> Retenção
+        <span class="dashboard-advisor-metric-pill">
+            <span class="dashboard-advisor-metric-trend dashboard-advisor-metric-trend--up">&uarr; 4%</span> Retencao em alta
         </span>
 
-        <span style="background: var(--surface); border: 1px solid var(--border); color: var(--ink); border-radius: 99px; padding: 12px 20px; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 8px;">
-            <span style="color: #d97706; font-weight: 800;">&darr; 2%</span> Receita
+        <span class="dashboard-advisor-metric-pill">
+            <span class="dashboard-advisor-metric-trend dashboard-advisor-metric-trend--down">&darr; 2%</span> Receita abaixo do ritmo
         </span>
-        
     </div>
-
 </section>
