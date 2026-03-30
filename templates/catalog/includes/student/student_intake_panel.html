@@ -33,7 +33,7 @@ POR QUE ELE EXISTE:
                     <a class="button secondary" href="{{ intake_center_url }}#intake-queue-board" data-action="open-intake-center-from-preview">Ver fila completa</a>
                     {% endif %}
                     {% if page.capabilities.can_manage_students %}
-                    <a class="button" href="{% url 'student-quick-create' %}?intake={{ intake.id }}#student-form-essential" data-action="convert-intake-to-student">Converter em aluno</a>
+                    <a class="button" href="{% url 'student-quick-create' %}?intake={{ intake.id }}#student-form-essential" data-action="open-student-quick-create-from-intake">Converter em aluno</a>
                     {% endif %}
                 </div>
             </div>
