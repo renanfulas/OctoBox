@@ -21,6 +21,10 @@ PONTOS CRITICOS:
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
     <div class="owner-metrics-panel">
+        {% include "operations/includes/owner/owner_sequence_panel.html" %}
+    </div>
+
+    <div class="owner-metrics-panel">
         {% include "operations/includes/owner/owner_metrics_section.html" %}
     </div>
 </div>
