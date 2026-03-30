@@ -17,8 +17,10 @@ from urllib.parse import urlsplit, urlunsplit
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 
@@ -104,7 +106,12 @@ class ReceptionPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
     allowed_roles = (ROLE_OWNER, ROLE_RECEPTION)
 
     def post(self, request, payment_id, *args, **kwargs):
-        return _handle_reception_payment_action(request, payment_id=payment_id, fallback_url='/operacao/recepcao/', success_context='Recepcao')
+        return _handle_reception_payment_action(
+            request,
+            payment_id=payment_id,
+            fallback_url=reverse('reception-workspace'),
+            success_context='Recepcao',
+        )
 
 
 def _handle_reception_payment_action(request, *, payment_id, fallback_url, success_context):

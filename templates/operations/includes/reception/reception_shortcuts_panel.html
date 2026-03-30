@@ -5,10 +5,13 @@ POR QUE ELE EXISTE:
 - concentra os destinos de fluxo curto sem misturar com cobranca e intake.
 -->
 <article class="table-card operation-table-card reception-command-card reception-support-card" data-panel="reception-shortcuts">
+    {% url 'student-directory' as students_directory_url %}
+    {% url 'student-quick-create' as student_quick_create_url %}
+    {% url 'class-grid' as class_grid_url %}
     {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Atalhos de atendimento" title="Atalhos de atendimento" copy="Destinos de fluxo curto sem sair do compasso." pill_label="Fluxo curto" pill_class="info" %}
-    <div class="actions actions-tight">
-        {% include "operations/includes/reception/reception_shortcut_link.html" with href="/alunos/" data_action="open-students-directory" label="Abrir alunos" %}
-        {% include "operations/includes/reception/reception_shortcut_link.html" with href="/alunos/novo/#student-form-essential" data_action="open-student-registration" label="Novo aluno" %}
-        {% include "operations/includes/reception/reception_shortcut_link.html" with href="/grade-aulas/" data_action="open-class-grid" label="Abrir aulas" %}
+    <div class="actions actions-tight reception-shortcuts-actions">
+        {% include "operations/includes/reception/reception_shortcut_link.html" with href=students_directory_url data_action="open-students-directory" label="Abrir alunos" %}
+        {% include "operations/includes/reception/reception_shortcut_link.html" with href=student_quick_create_url|add:'#student-form-essential' data_action="open-student-registration" label="Novo aluno" %}
+        {% include "operations/includes/reception/reception_shortcut_link.html" with href=class_grid_url data_action="open-class-grid" label="Abrir aulas" %}
     </div>
 </article>

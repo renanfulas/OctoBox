@@ -22,10 +22,18 @@ ARQUIVO: atalhos e cards de apoio da recepção.
     gap: 8px;
 }
 
+.reception-shortcuts-actions {
+    align-items: stretch;
+}
+
 .reception-command-card .button,
 .reception-preview-command-card .button {
     min-height: 34px;
     padding: 7px 12px;
+}
+
+.reception-shortcut-link {
+    justify-content: center;
 }
 
 .reception-command-card {

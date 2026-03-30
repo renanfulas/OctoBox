@@ -34,6 +34,33 @@ ARQUIVO: grade de aulas e leitura rápida da recepção.
     background: var(--surface);
 }
 
+.reception-class-session-card {
+    min-height: 100%;
+    align-content: start;
+}
+
+.reception-class-session-copy {
+    display: grid;
+    gap: 6px;
+}
+
+.reception-class-session-time {
+    margin: 0;
+}
+
+.reception-class-session-notes {
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.reception-class-session-actions {
+    padding-top: 4px;
+}
+
 .reception-grade-stats,
 .reception-preview-grade-stats {
     display: grid;

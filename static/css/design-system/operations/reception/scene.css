@@ -62,6 +62,19 @@ ARQUIVO: cena base e hero da recepção.
     gap: 16px;
 }
 
+.reception-scene .workspace-grid-layout {
+    grid-template-columns: minmax(0, 1.05fr) minmax(min(320px, 100%), 0.95fr);
+    gap: 16px;
+}
+
+.reception-scene .workspace-grid-main,
+.reception-scene .workspace-grid-side {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+    min-width: 0;
+}
+
 .reception-support-grid {
     grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
     gap: 16px;
@@ -69,4 +82,20 @@ ARQUIVO: cena base e hero da recepção.
 
 .reception-support-grid > * {
     min-width: 0;
+}
+
+@media (max-width: 1024px) {
+    .reception-scene .workspace-grid-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .reception-scene .workspace-panel {
+        padding: 14px;
+    }
+
+    .reception-scene .operation-table-wrap table {
+        min-width: 520px;
+    }
 }

@@ -15,6 +15,8 @@ PONTOS CRITICOS:
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.db.models import Count
+from django.urls import reverse
 from django.utils import timezone
 
 from auditing.models import AuditEvent
@@ -422,6 +424,7 @@ def _build_reception_workspace_core(*, today):
             sent_count = stats['total']
             is_whatsapp_locked = stats['recent'] > 0
 
+        student_edit_href = reverse('student-quick-update', args=[payment.student.id])
         reception_payment_queue.append({
             'payment_id': payment.id,
             'student_id': payment.student.id,
@@ -436,7 +439,7 @@ def _build_reception_workspace_core(*, today):
             'reference': payment.reference,
             'notes': payment.notes,
             'reason': _build_reception_payment_reason(payment, today=today),
-            'student_href': f'/alunos/{payment.student.id}/editar/',
+            'student_href': student_edit_href,
             'clean_phone': clean_phone,
             'is_late_10_days': days_overdue >= 10,
             'is_whatsapp_locked': is_whatsapp_locked,
