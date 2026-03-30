@@ -87,7 +87,11 @@ PONTOS CRITICOS:
                 O workspace financeiro aparece assim que o aluno existir na base.
                 {% endif %}
             </p>
+            {% if page.behavior.financial_ready %}
             <a class="button secondary" href="#student-form-financial">Abrir financeiro</a>
+            {% else %}
+            <a class="button secondary" href="#student-form-essential">Fechar cadastro primeiro</a>
+            {% endif %}
         </article>
     </section>
 

@@ -15,7 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        var firstPanel = container.firstElementChild;
+        var requestedPanelId = container.dataset.defaultPanel;
+        var defaultPanel = requestedPanelId ? document.getElementById(requestedPanelId) : null;
+        var firstPanel = defaultPanel || container.firstElementChild;
         if (!firstPanel || !firstPanel.id) {
             return;
         }

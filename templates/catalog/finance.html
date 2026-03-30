@@ -30,7 +30,7 @@ PONTOS CRITICOS:
     <div class="owner-metrics-panel section-gap" data-panel="finance-interactive-kpis">
         <section class="panel-grid operation-metric-grid owner-metric-grid interactive-tab-triggers" aria-label="Navegacao principal financeira">
             {% for card in page.data.interactive_kpis %}
-                {% if forloop.first %}
+                {% if card.data_action == page.behavior.default_action %}
             {% include "includes/ui/shared/metric_card.html" with card=card compact=True extra_classes="dashboard-kpi-card is-ledger is-selected-tab "|add:card.card_class %}
                 {% else %}
             {% include "includes/ui/shared/metric_card.html" with card=card compact=True extra_classes="dashboard-kpi-card is-ledger "|add:card.card_class %}
@@ -39,18 +39,18 @@ PONTOS CRITICOS:
         </section>
     </div>
 
-    <div class="interactive-tab-container">
-        <div class="stack-16 is-tab-active deferred-surface deferred-surface--dense" id="tab-finance-movements" aria-label="Raio-X financeiro">
+    <div class="interactive-tab-container" data-default-panel="{{ page.behavior.default_panel }}">
+        <div class="stack-16 deferred-surface deferred-surface--dense{% if page.behavior.default_panel == 'tab-finance-movements' %} is-tab-active{% endif %}" id="tab-finance-movements" aria-label="Raio-X financeiro">
             {% include "includes/catalog/finance/views/movements.html" %}
             {% include "includes/catalog/finance/boards/trend_boards.html" %}
         </div>
 
-        <div class="stack-16 deferred-surface deferred-surface--dense" id="tab-finance-queue" aria-label="Handoff de cobranca">
+        <div class="stack-16 deferred-surface deferred-surface--dense{% if page.behavior.default_panel == 'tab-finance-queue' %} is-tab-active{% endif %}" id="tab-finance-queue" aria-label="Handoff de cobranca">
             {% include "includes/catalog/finance/views/priority_rail.html" %}
             {% include "includes/catalog/finance/boards/queue_board.html" %}
         </div>
 
-        <div class="stack-16 deferred-surface deferred-surface--xl" id="tab-finance-portfolio" aria-label="Motor de carteira">
+        <div class="stack-16 deferred-surface deferred-surface--xl{% if page.behavior.default_panel == 'tab-finance-portfolio' %} is-tab-active{% endif %}" id="tab-finance-portfolio" aria-label="Motor de carteira">
             {% include "includes/catalog/finance/boards/portfolio_board.html" %}
             {% include "includes/catalog/finance/boards/mix_board.html" %}
             {% if page.capabilities.can_manage_finance %}
@@ -58,7 +58,7 @@ PONTOS CRITICOS:
             {% endif %}
         </div>
 
-        <div class="stack-16 deferred-surface" id="tab-finance-filters" aria-label="Filtros e contexto">
+        <div class="stack-16 deferred-surface{% if page.behavior.default_panel == 'tab-finance-filters' %} is-tab-active{% endif %}" id="tab-finance-filters" aria-label="Filtros e contexto">
             {% include "includes/catalog/finance/boards/control_board.html" %}
         </div>
     </div>

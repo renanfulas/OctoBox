@@ -69,6 +69,13 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         priority_badge = 'success'
         priority_label = 'Pressao controlada'
 
+    if len(operational_queue) > 0 or len(financial_alerts) > 0:
+        default_panel = 'tab-finance-queue'
+        default_action = 'open-tab-finance-queue'
+    else:
+        default_panel = 'tab-finance-movements'
+        default_action = 'open-tab-finance-movements'
+
     finance_right_rail_snapshot = [
         {
             'label': 'Pressao combinada',
@@ -177,6 +184,10 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         },
         actions={
             'finance_export_links': export_links,
+        },
+        behavior={
+            'default_panel': default_panel,
+            'default_action': default_action,
         },
         capabilities={
             'can_manage_finance': can_manage_finance,

@@ -91,6 +91,7 @@ def build_student_form_recovery_guide(form):
 def build_student_form_page(*, form, student_object, selected_intake, financial_overview, page_mode, current_role_slug):
     latest_enrollment = financial_overview.get('latest_enrollment')
     recent_payments = financial_overview.get('payments', [])
+    financial_ready = financial_overview.get('has_student', False)
     can_open_student_admin = current_role_slug in (ROLE_OWNER, ROLE_DEV)
     can_manage_student_payments_full = current_role_slug in (ROLE_OWNER, ROLE_MANAGER)
     payment_management_form = financial_overview.get('payment_management_form')
@@ -146,7 +147,12 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
         ),
         actions=[
             {'label': 'Preencher essencial', 'href': '#student-form-essential', 'kind': 'primary', 'data_action': 'open-tab-student-form-essential'},
-            {'label': 'Ver plano e cobranca', 'href': '#student-form-financial', 'kind': 'secondary', 'data_action': 'open-tab-student-form-financial'},
+            {
+                'label': 'Ver plano e cobranca' if financial_ready else 'Fechar cadastro primeiro',
+                'href': '#student-form-financial' if financial_ready else '#student-form-essential',
+                'kind': 'secondary',
+                'data_action': 'open-tab-student-form-financial' if financial_ready else 'open-tab-student-form-essential',
+            },
             {'label': 'Voltar para alunos', 'href': get_shell_route_url('students'), 'kind': 'secondary'},
         ],
         aria_label='Ficha do aluno',
@@ -190,6 +196,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             },
         },
         behavior={
+            'financial_ready': financial_ready,
             'plan_price_map': plan_price_map,
             'focus_sections': {
                 'lead': {
