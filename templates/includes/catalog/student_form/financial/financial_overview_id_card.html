@@ -1,64 +1,33 @@
-<!-- 
-REBIRTH: ID Card de Elite (Phase 12 - Figma Vision) 
-Implementação do cabeçalho de alta fidelidade com Avatar e Grid de Métricas.
+<!--
+ARQUIVO: cartao de identidade financeira da ficha do aluno.
 -->
-<article class="card elite-glass-card px-6 py-5 mb-5" style="border-radius: 16px; border: 1px solid rgba(0,0,0,0.08); background: #fff;">
-    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-        <!-- Identity Block -->
-        <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="width: 48px; height: 48px; border-radius: 999px; display: flex; align-items: center; justify-content: center; text-white; font-weight: 700; font-size: 18px; color: white; background: var(--elite-orange-grad);">
-                {{ page.data.student_object.full_name|slice:":1" }}
-            </div>
-            <div>
-                <h1 style="font-size: 1.125rem; font-weight: 700; color: #030213; margin: 0; line-height: 1.2;">{{ page.data.student_object.full_name }}</h1>
-                <p style="font-size: 0.75rem; color: #94a3b8; font-family: monospace; margin: 2px 0 0 0;">ID: {{ page.data.student_object.id|truncatechars:20 }}</p>
-            </div>
+<article class="card elite-glass-card student-financial-id-card">
+    <div class="student-financial-id-card__identity">
+        <div class="student-financial-id-card__avatar" aria-hidden="true">
+            {{ page.data.student_object.full_name|slice:":1"|upper }}
         </div>
+        <div class="student-financial-id-card__meta">
+            <h3 class="section-title-sm">{{ page.data.student_object.full_name }}</h3>
+            <p class="meta-text">ID: {{ page.data.student_object.id|truncatechars:20 }}</p>
+        </div>
+    </div>
 
-        <!-- Horizontal Metrics Block -->
-        <div style="display: flex; align-items: center; gap: 40px;">
-            <div style="text-align: center;">
-                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Status do Plano</div>
-                <span class="pill-modern pill-modern-gray" style="font-size: 10px;">
-                    ● {{ page.data.financial_overview.latest_enrollment.get_status_display|default:"Sem Plano" }}
-                </span>
-            </div>
-            <div style="text-align: center;">
-                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Atrasos</div>
-                <div style="font-size: 1.125rem; font-weight: 700; color: #dc2626;">{{ page.data.financial_overview.metrics.pagamentos_atrasados|default:"0" }}</div>
-            </div>
-            <div style="text-align: center;">
-                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Pendentes</div>
-                <div style="font-size: 1.125rem; font-weight: 700; color: #d97706;">{{ page.data.financial_overview.metrics.pagamentos_pendentes|default:"0" }}</div>
-            </div>
-            <div style="text-align: center;">
-                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Total pago</div>
-                <div style="font-size: 1.125rem; font-weight: 700; color: #059669;">R$ {{ page.data.financial_overview.metrics.total_recebido|default:"0" }}</div>
-            </div>
+    <div class="student-financial-id-card__stats" aria-label="Resumo financeiro imediato">
+        <div class="student-financial-id-stat">
+            <span class="student-financial-id-stat__label">Status do plano</span>
+            <span class="pill">{{ page.data.financial_overview.latest_enrollment.get_status_display|default:"Sem plano" }}</span>
+        </div>
+        <div class="student-financial-id-stat">
+            <span class="student-financial-id-stat__label">Atrasos</span>
+            <strong class="student-financial-id-stat__value is-danger">{{ page.data.financial_overview.metrics.pagamentos_atrasados|default:"0" }}</strong>
+        </div>
+        <div class="student-financial-id-stat">
+            <span class="student-financial-id-stat__label">Pendentes</span>
+            <strong class="student-financial-id-stat__value is-warning">{{ page.data.financial_overview.metrics.pagamentos_pendentes|default:"0" }}</strong>
+        </div>
+        <div class="student-financial-id-stat">
+            <span class="student-financial-id-stat__label">Total pago</span>
+            <strong class="student-financial-id-stat__value is-success">R$ {{ page.data.financial_overview.metrics.total_recebido|default:"0" }}</strong>
         </div>
     </div>
 </article>
-
-<style>
-/* --- Phase 13: Modern SaaS ID Hero --- */
-.elite-id-card-hero {
-    padding: var(--space-4) var(--space-5);
-    border-radius: 16px;
-    background: var(--surface);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.elite-avatar-large {
-    width: 64px;
-    height: 64px;
-    background: var(--elite-accent);
-}
-
-.elite-heading-carbon {
-    color: var(--ink);
-}
-
-.elite-mini-stat-box__value {
-    color: var(--ink);
-}
-</style>

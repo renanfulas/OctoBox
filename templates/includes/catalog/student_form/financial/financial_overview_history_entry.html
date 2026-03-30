@@ -1,9 +1,9 @@
-<div class="history-entry section-gap-bottom-xs" style="border-bottom: 1px dashed var(--border-100); padding-bottom: 12px;">
-    <div class="row-between-md align-center" style="margin-bottom: 4px;">
-        <strong style="font-size: 0.9rem; color: var(--text-800);">{{ enrollment.plan.name }}</strong>
-        <span class="pill outline {% if enrollment.status == 'active' %}success{% else %}secondary{% endif %}" style="font-size: 9px; padding: 1px 6px;">{{ enrollment.get_status_display }}</span>
+<div class="student-financial-history-entry history-entry section-gap-bottom-xs">
+    <div class="student-financial-history-entry__head row-between-md align-center">
+        <strong class="student-financial-history-entry__title">{{ enrollment.plan.name }}</strong>
+        <span class="student-financial-history-entry__pill pill outline {% if enrollment.status == 'active' %}success{% else %}secondary{% endif %}">{{ enrollment.get_status_display }}</span>
     </div>
     <p class="meta-text-xs">
-        De {{ enrollment.start_date|date:"d/m/Y" }} {% if enrollment.end_date %}até {{ enrollment.end_date|date:"d/m/Y" }}{% else %}(Recorrente){% endif %}
+        De {{ enrollment.start_date|date:"d/m/Y" }} {% if enrollment.end_date %}ate {{ enrollment.end_date|date:"d/m/Y" }}{% else %}(Recorrente){% endif %}
     </p>
 </div>

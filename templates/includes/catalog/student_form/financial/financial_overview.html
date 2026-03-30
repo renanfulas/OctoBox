@@ -1,292 +1,135 @@
 <!--
-REBIRTH: Cockpit Financeiro de Elite (Phase 12 - Figma Vision)
-Estrutura modular de alta performance baseada no design do usuário.
+ARQUIVO: workspace financeiro da ficha do aluno.
+
+POR QUE ELE EXISTE:
+- concentra plano, cobranca, historico e acoes sensiveis sem tirar o operador da ficha.
+
+O QUE ESTE ARQUIVO FAZ:
+1. apresenta um topo de comando financeiro claro.
+2. organiza resumo, historico e acoes laterais em uma leitura mais guiada.
+3. preserva drawers e acoes existentes sem depender de script inline.
 -->
-
-<script>
-// Cockpit Financeiro - Centralized Event Delegation
-document.addEventListener('click', function(e) {
-    // 1. Drawer Management
-    const openDrawerTrigger = e.target.closest('[data-action="open-drawer"]');
-    if (openDrawerTrigger) {
-        const id = openDrawerTrigger.getAttribute('data-drawer-id');
-        if (id) {
-            document.getElementById('drawer-overlay').classList.add('is-active');
-            document.getElementById(id).classList.add('is-active');
-        }
-        return;
-    }
-
-    const closeDrawersTrigger = e.target.closest('[data-action="close-drawers"]');
-    if (closeDrawersTrigger) {
-        document.getElementById('drawer-overlay').classList.remove('is-active');
-        document.querySelectorAll('.slide-over-panel').forEach(el => el.classList.remove('is-active'));
-        return;
-    }
-
-    // 2. Stripe Payment Terminal
-    const submitStripeTrigger = e.target.closest('[data-action="submit-stripe"]');
-    if (submitStripeTrigger) {
-        const methodValue = submitStripeTrigger.getAttribute('data-method');
-        var form = document.getElementById('stripe-payment-form');
-        var methodField = document.querySelector('#stripe-payment-form [name="method"]');
-        var statusMsg = document.getElementById('stripe-status-message');
-
-        if (!form || !methodValue) return;
-        if (methodField) { methodField.value = methodValue; }
-
-        document.querySelectorAll('.elite-stripe-btn').forEach(b => { 
-            b.classList.add('disabled'); 
-            b.classList.remove('active'); 
-            b.setAttribute('aria-disabled','true'); 
-        });
-        submitStripeTrigger.classList.remove('disabled'); 
-        submitStripeTrigger.classList.add('active'); 
-        submitStripeTrigger.removeAttribute('aria-disabled');
-
-        statusMsg.style.display = 'block';
-        statusMsg.textContent = '⏳ Processando...';
-
-        form.submit();
-        return;
-    }
-
-    // 3. Billing Console Actions
-    const editPaymentTrigger = e.target.closest('[data-action="edit-payment"]');
-    if (editPaymentTrigger) {
-        const paymentId = editPaymentTrigger.getAttribute('data-payment-id');
-        if (typeof window.openEditPayment === 'function') {
-            window.openEditPayment(paymentId);
-        } else {
-            console.warn('openEditPayment not mounted yet for', paymentId);
-        }
-        return;
-    }
-
-    const splitPaymentTrigger = e.target.closest('[data-action="split-payment"]');
-    if (splitPaymentTrigger) {
-        const paymentId = splitPaymentTrigger.getAttribute('data-payment-id');
-        if (typeof window.openSplitPayment === 'function') {
-            window.openSplitPayment(paymentId);
-        } else {
-            console.warn('openSplitPayment not mounted yet for', paymentId);
-        }
-        return;
-    }
-
-    const vacationFreezeTrigger = e.target.closest('[data-action="vacation-freeze"]');
-    if (vacationFreezeTrigger) {
-        if (typeof window.openVacationFreeze === 'function') {
-            window.openVacationFreeze();
-        } else {
-            console.warn('openVacationFreeze not mounted yet');
-        }
-        return;
-    }
-});
-</script>
-
-<div class="stack-16 student-financial-cockpit-v2" id="student-financial-overview" style="background-color: var(--elite-bg-figma); padding: 24px;">
-    <div class="slide-overlay" id="drawer-overlay" data-action="close-drawers"></div>
+<div class="stack-16 student-financial-workspace" id="student-financial-overview" data-student-financial-workspace>
+    <div class="slide-overlay" id="drawer-overlay" data-action="close-drawers" aria-hidden="true"></div>
 
     {% if page.data.financial_overview.has_student %}
-    
-    <!-- 1. Breadcrumb -->
-    <div class="flex items-center gap-2 text-xs text-dimmed mb-4">
+    <nav class="student-financial-breadcrumb" aria-label="Caminho da ficha financeira">
         <span>Alunos</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-40"><polyline points="9 18 15 12 9 6"/></svg>
+        <span aria-hidden="true">&rsaquo;</span>
         <span>{{ page.data.student_object.full_name }}</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-40"><polyline points="9 18 15 12 9 6"/></svg>
-        <span class="font-semibold text-ink">Financeiro</span>
-    </div>
+        <span aria-hidden="true">&rsaquo;</span>
+        <strong>Financeiro</strong>
+    </nav>
 
-    <!-- 2. Hero Card -->
+    <section class="student-financial-command-strip">
+        <div class="student-financial-command-copy">
+            <p class="eyebrow">Financeiro do aluno</p>
+            <h2 class="section-title-sm">Onde vinculo, cobranca e historico pedem cuidado.</h2>
+            <p class="meta-text">Veja o que esta saudavel, o que ficou pendente e qual acao faz sentido agora.</p>
+        </div>
+        <div class="student-financial-command-actions">
+            <button class="button" type="button" data-action="open-drawer" data-drawer-id="financial-payment-management-slot" aria-controls="financial-payment-management-slot" aria-expanded="false">
+                Registrar cobranca
+            </button>
+            <button class="button secondary" type="button" data-action="open-drawer" data-drawer-id="financial-enrollment-management-slot" aria-controls="financial-enrollment-management-slot" aria-expanded="false">
+                Revisar vinculo
+            </button>
+        </div>
+    </section>
+
     {% include "includes/catalog/student_form/financial/financial_overview_id_card.html" with page=page %}
-
-    <!-- 3. KPI Grid -->
     {% include "includes/catalog/student_form/financial/financial_overview_kpis.html" with page=page %}
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        <!-- Main Area -->
-        <div class="lg:col-span-2 stack-16">
-            <button class="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-5 py-4 flex items-center justify-center gap-2 transition-all shadow-sm shadow-orange-200" data-action="open-drawer" data-drawer-id="financial-payment-management-slot">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                <span class="font-bold">Nova Cobrança</span>
-            </button>
-
-            <div class="card elite-glass-card overflow-hidden">
-                <header class="px-6 py-4 border-b border-soft flex items-center justify-between">
-                    <h3 class="text-sm font-bold text-ink">Histórico de Cobranças</h3>
-                    <div class="flex bg-muted-soft rounded-lg p-0.5 text-xs">
-                        <span class="px-3 py-1 bg-white shadow-sm rounded-md font-semibold">Todos</span>
-                        <span class="px-3 py-1 opacity-50">Pagos</span>
-                        <span class="px-3 py-1 opacity-50">Pendentes</span>
-                        <span class="px-3 py-1 opacity-50">Atrasados</span>
+    <div class="student-financial-layout">
+        <div class="student-financial-main stack-16">
+            <section class="card elite-glass-card overflow-hidden student-financial-panel">
+                <header class="student-financial-panel-head">
+                    <div>
+                        <p class="eyebrow">Historico</p>
+                        <h3 class="section-title-sm">Cobrancas registradas</h3>
+                    </div>
+                    <div class="student-financial-status-pills" aria-label="Leitura rapida do ledger">
+                        <span class="pill info">Todos</span>
+                        <span class="pill">Pagos</span>
+                        <span class="pill">Pendentes</span>
+                        <span class="pill warning">Atrasados</span>
                     </div>
                 </header>
                 {% include "includes/catalog/student_form/financial/stripe_elite_ledger.html" with page=page %}
-            </div>
+            </section>
         </div>
 
-        <!-- Sidebar -->
-        <div class="stack-20">
-            <div class="card elite-glass-card overflow-hidden">
-                <header class="px-5 py-4 border-b border-soft flex items-center justify-between">
-                    <h4 class="text-sm font-bold text-ink">Vínculos & Planos</h4>
-                    <button class="text-xs text-orange font-bold">+ Vincular</button>
+        <aside class="student-financial-sidebar stack-16" aria-label="Acoes e contexto financeiro">
+            <section class="card elite-glass-card overflow-hidden student-financial-side-panel">
+                <header class="student-financial-panel-head">
+                    <div>
+                        <p class="eyebrow">Vinculos</p>
+                        <h3 class="section-title-sm">Plano e matricula</h3>
+                    </div>
                 </header>
-                <div class="p-5 flex flex-col items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-muted-soft flex items-center justify-center opacity-40">🔄</div>
-                    <p class="text-xs text-dimmed text-center leading-relaxed">Nenhum plano vinculado ainda.</p>
+                <div class="student-financial-side-body">
+                    {% if page.data.financial_overview.latest_enrollment %}
+                    <p class="meta-text">O aluno ja tem um vinculo financeiro ativo para leitura e ajuste neste mesmo workspace.</p>
+                    <button class="button secondary" type="button" data-action="open-drawer" data-drawer-id="financial-enrollment-management-slot" aria-controls="financial-enrollment-management-slot" aria-expanded="false">
+                        Abrir vinculo atual
+                    </button>
+                    {% else %}
+                    <div class="student-financial-empty-state">
+                        <span class="student-financial-empty-icon" aria-hidden="true">+</span>
+                        <p class="meta-text">Nenhum plano vinculado ainda. Quando fizer sentido, abra o drawer de vinculo para conectar a jornada financeira.</p>
+                    </div>
+                    {% endif %}
                 </div>
-            </div>
+            </section>
 
-            <div class="card elite-glass-card overflow-hidden">
-                <header class="px-5 py-4 border-b border-soft">
-                    <h4 class="text-sm font-bold text-ink">Ações rápidas</h4>
+            <section class="card elite-glass-card overflow-hidden student-financial-side-panel">
+                <header class="student-financial-panel-head">
+                    <div>
+                        <p class="eyebrow">Proxima acao</p>
+                        <h3 class="section-title-sm">Acoes rapidas</h3>
+                    </div>
                 </header>
-                <div class="p-2 stack-4">
-                    <button class="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted-soft transition-colors text-xs text-dimmed group">
-                        <div class="w-7 h-7 rounded-lg bg-blue-soft flex items-center justify-center text-blue-700">⬇</div>
-                        <span class="flex-1 font-medium">Exportar extrato</span>
-                        <span>›</span>
+                <div class="student-financial-quick-actions">
+                    <button class="student-financial-quick-action" type="button" data-action="open-drawer" data-drawer-id="financial-payment-management-slot" aria-controls="financial-payment-management-slot" aria-expanded="false">
+                        <span class="student-financial-quick-action-icon" aria-hidden="true">+</span>
+                        <span>
+                            <strong>Nova cobranca</strong>
+                            <small>Ajuste valor, metodo e vencimento.</small>
+                        </span>
                     </button>
-                    <button class="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted-soft transition-colors text-xs text-dimmed group">
-                        <div class="w-7 h-7 rounded-lg bg-red-soft flex items-center justify-center text-red-700">!</div>
-                        <span class="flex-1 font-medium">Marcar atraso</span>
-                        <span>›</span>
+                    <button class="student-financial-quick-action" type="button" data-action="open-drawer" data-drawer-id="financial-billing-console-slot" aria-controls="financial-billing-console-slot" aria-expanded="false">
+                        <span class="student-financial-quick-action-icon" aria-hidden="true">&#8635;</span>
+                        <span>
+                            <strong>Console de cobranca</strong>
+                            <small>Editar, dividir ou conduzir o proximo passo.</small>
+                        </span>
                     </button>
                 </div>
-            </div>
-        </div>
+            </section>
+        </aside>
     </div>
 
-    <!-- Ilhas de Ação Rápida -->
-    <div class="slide-over-panel" id="financial-billing-console-slot">
-        <button class="drawer-close-btn" data-action="close-drawers">✕</button>
+    <div class="slide-over-panel" id="financial-billing-console-slot" role="dialog" aria-modal="true" aria-labelledby="financial-billing-console-title" aria-describedby="financial-billing-console-copy" aria-hidden="true" tabindex="-1">
+        <button class="drawer-close-btn" type="button" data-action="close-drawers" aria-label="Fechar console de cobranca">x</button>
         {% include "includes/catalog/student_form/financial/billing_console.html" with page=page %}
     </div>
 
-    <div class="slide-over-panel" id="financial-payment-management-slot">
-        <button class="drawer-close-btn" data-action="close-drawers">✕</button>
+    <div class="slide-over-panel" id="financial-payment-management-slot" role="dialog" aria-modal="true" aria-labelledby="financial-payment-management-title" aria-describedby="financial-payment-management-copy" aria-hidden="true" tabindex="-1">
+        <button class="drawer-close-btn" type="button" data-action="close-drawers" aria-label="Fechar painel de cobranca">x</button>
         {% include "includes/catalog/student_form/financial/financial_overview_payment_management.html" with page=page %}
     </div>
-    
-    <div class="slide-over-panel" id="financial-enrollment-management-slot">
-        <button class="drawer-close-btn" data-action="close-drawers">✕</button>
+
+    <div class="slide-over-panel" id="financial-enrollment-management-slot" role="dialog" aria-modal="true" aria-labelledby="financial-enrollment-management-title" aria-describedby="financial-enrollment-management-copy" aria-hidden="true" tabindex="-1">
+        <button class="drawer-close-btn" type="button" data-action="close-drawers" aria-label="Fechar painel de vinculo">x</button>
         {% include "includes/catalog/student_form/financial/financial_overview_enrollment_management.html" with page=page %}
     </div>
-
     {% else %}
-    <article class="card rounded-surface flex-col flex-center min-h-200 text-center" style="background: var(--bg-depth);">
+    <article class="card rounded-surface flex-col flex-center min-h-200 text-center student-financial-empty-shell">
         <div class="stack-8 flex-center">
-            <span class="text-2xl">📊</span>
-            <h3 class="section-title-sm">Estrutura Financeira</h3>
-            <p class="meta-text max-w-320">As métricas e o console de cobrança aparecerão aqui assim que o aluno for cadastrado.</p>
+            <span class="student-financial-empty-icon" aria-hidden="true">+</span>
+            <h3 class="section-title-sm">Estrutura financeira</h3>
+            <p class="meta-text max-w-320">As metricas e os paineis financeiros aparecem assim que o aluno for criado na base.</p>
         </div>
     </article>
     {% endif %}
 </div>
-
-<style>
-/* --- Elite Financial Cockpit V2 Styles (Phase 12) --- */
-.student-financial-cockpit-v2 {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-}
-
-.elite-universal-cta-container {
-    display: flex;
-    justify-content: center;
-    margin: var(--space-2) 0;
-}
-
-.elite-cta-button {
-    width: 100%;
-    min-height: 52px;
-    border-radius: 14px;
-    font-size: 1.1rem;
-    font-weight: 800;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.elite-cta-button.orange {
-    background: #FF6B00;
-    color: white;
-    box-shadow: 0 4px 14px rgba(255, 107, 0, 0.3);
-}
-
-.elite-cta-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 107, 0, 0.4);
-}
-
-.elite-section-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: var(--space-3);
-    padding: 0 var(--space-2);
-}
-
-.elite-heading-carbon-sm {
-    font-size: 1.25rem;
-    font-weight: 900;
-    letter-spacing: -0.04em;
-    margin: 0;
-}
-
-.elite-tabs-pill {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    font-size: 0.88rem;
-    font-weight: 600;
-}
-
-.elite-tabs-pill span {
-    color: var(--muted);
-    cursor: pointer;
-}
-
-.elite-tabs-pill span.active {
-    color: var(--text-900);
-}
-
-.elite-export-link {
-    color: var(--muted);
-    text-decoration: none;
-    font-size: 0.82rem;
-}
-
-.elite-card-body-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: var(--space-4) 0;
-    gap: var(--space-2);
-}
-
-.elite-empty-icon {
-    font-size: 2rem;
-    opacity: 0.2;
-}
-
-.elite-doc-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.88rem;
-}
-
-.elite-link-btn {
-    background: none;
-    border: none;
-    color: #FF6B00;
-    font-weight: 700;
-    font-size: 0.78rem;
-    cursor: pointer;
-}
-</style>

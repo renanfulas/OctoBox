@@ -4,6 +4,9 @@ ARQUIVO: passo de plano e status comercial da ficha do aluno.
 <details id="student-form-plan"{% if page_mode == 'create' or form.selected_plan.errors or form.enrollment_status.errors %} open{% endif %} class="disclosure-panel disclosure-panel-success student-form-step student-form-step-disclosure">
     <summary>Passo 4: plano e status comercial</summary>
     <div class="stack-16 section-gap-top-xs student-form-step-body">
+        <div class="student-form-step-intro">
+            <p class="meta-text">Agora o cadastro vira compromisso comercial. Escolha o plano certo e mantenha o status coerente com o momento do aluno.</p>
+        </div>
         {% include "includes/catalog/student_form/plans/plan_selector_fields.html" with form=form %}
         {{ form.enrollment_status.as_hidden }}
         {% include "includes/catalog/student_form/plans/plan_note.html" %}

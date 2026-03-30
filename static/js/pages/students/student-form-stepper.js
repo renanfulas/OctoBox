@@ -1,26 +1,53 @@
 /**
- * Student Form Stepper - SaaS Elite Standard
+ * Student Form Stepper
  * Handles the 2-step registration/update flow.
  */
 document.addEventListener('DOMContentLoaded', () => {
-    const steps = document.querySelectorAll('.step-container');
-    const stepperItems = document.querySelectorAll('.stepper-item');
-    const nextBtn = document.querySelector('[data-action="next-step"]');
-    const backBtn = document.querySelector('[data-action="prev-step"]');
-    const submitBtn = document.querySelector('[type="submit"]');
+    const formRoot = document.querySelector('[data-action="submit-student-form"]');
+    if (!formRoot) return;
+
+    const steps = formRoot.querySelectorAll('.step-container');
+    const stepperItems = formRoot.querySelectorAll('.stepper-item');
+    const nextBtn = formRoot.querySelector('[data-action="next-step"]');
+    const backBtn = formRoot.querySelector('[data-action="prev-step"]');
+    const submitBtn = formRoot.querySelector('[type="submit"]');
+    const stepStatus = formRoot.querySelector('[data-stepper-status]');
 
     if (!steps.length || !stepperItems.length) return;
 
     let currentStep = 0;
+
+    const stepMeta = [
+        {
+            nextLabel: 'Ir para plano e pagamento',
+            status: 'Etapa atual: identificacao. Confirme nome, contato e perfil antes de avancar.',
+        },
+        {
+            nextLabel: 'Continuar',
+            status: 'Etapa atual: plano e pagamento. Revise o fechamento comercial antes de salvar.',
+        },
+    ];
+
+    function focusCurrentStep() {
+        const activeStep = steps[currentStep];
+        if (!activeStep) return;
+
+        const focusTarget = activeStep.querySelector('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), summary');
+        if (focusTarget && typeof focusTarget.focus === 'function') {
+            focusTarget.focus();
+        }
+    }
 
     function updateSteps() {
         steps.forEach((step, index) => {
             if (index === currentStep) {
                 step.classList.add('active');
                 step.classList.remove('hidden');
+                step.setAttribute('aria-hidden', 'false');
             } else {
                 step.classList.remove('active');
                 step.classList.add('hidden');
+                step.setAttribute('aria-hidden', 'true');
             }
         });
 
@@ -28,46 +55,50 @@ document.addEventListener('DOMContentLoaded', () => {
             if (index === currentStep) {
                 item.classList.add('active');
                 item.classList.remove('completed');
+                item.setAttribute('aria-current', 'step');
             } else if (index < currentStep) {
                 item.classList.add('completed');
                 item.classList.remove('active');
+                item.removeAttribute('aria-current');
             } else {
                 item.classList.remove('active', 'completed');
+                item.removeAttribute('aria-current');
             }
         });
 
-        // Toggle buttons via hidden attribute (no inline .style.display)
-        if (currentStep === 0) {
-            backBtn.hidden = true;
-            nextBtn.hidden = false;
-            submitBtn.hidden = true;
-        } else if (currentStep === steps.length - 1) {
-            backBtn.hidden = false;
-            nextBtn.hidden = true;
-            submitBtn.hidden = false;
-        } else {
-            backBtn.hidden = false;
-            nextBtn.hidden = false;
-            submitBtn.hidden = true;
+        if (backBtn) {
+            backBtn.hidden = currentStep === 0;
+        }
+
+        if (nextBtn) {
+            nextBtn.hidden = currentStep === steps.length - 1;
+            nextBtn.textContent = stepMeta[currentStep]?.nextLabel || 'Continuar';
+        }
+
+        if (submitBtn) {
+            submitBtn.hidden = currentStep !== steps.length - 1;
+        }
+
+        if (stepStatus) {
+            stepStatus.textContent = stepMeta[currentStep]?.status || '';
         }
     }
 
     if (nextBtn) {
         nextBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            // Basic validation for Step 1
-            const nameInput = document.querySelector('input[name="full_name"]');
-            const phoneInput = document.querySelector('input[name="phone"]');
-            
+            const nameInput = formRoot.querySelector('input[name="full_name"]');
+
             if (nameInput && !nameInput.value) {
                 nameInput.focus();
                 nameInput.classList.add('is-invalid');
                 return;
             }
-            
+
             if (currentStep < steps.length - 1) {
                 currentStep++;
                 updateSteps();
+                focusCurrentStep();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         });
@@ -79,15 +110,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentStep > 0) {
                 currentStep--;
                 updateSteps();
+                focusCurrentStep();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         });
     }
 
-    // Initialize
     updateSteps();
 
-    // Event Delegation for Payment Link Generation
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.js-generate-payment-link');
         if (btn) {
@@ -100,26 +130,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-/**
- * Visual Plan Selector
- */
 function selectPlanCard(planId) {
     const select = document.getElementById('id_selected_plan');
     if (!select) return;
 
-    // Update select value
     select.value = planId;
-    
-    // Toggle active class on cards (no inline .style.*)
+
     document.querySelectorAll('.plan-card').forEach(card => {
         card.classList.toggle('is-selected-plan', card.getAttribute('data-plan-id') === planId);
     });
 
-    // Dispatch change event to trigger other UI updates (price calculation)
     select.dispatchEvent(new Event('change'));
 }
 
-// Event delegation: plan card selection via data-action
 document.addEventListener('click', (e) => {
     const planCard = e.target.closest('[data-action="select-plan"]');
     if (planCard) {
@@ -128,15 +151,13 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Handle initial selection if edit mode and populate prices
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Populate Prices
     const payloadElement = document.getElementById('current-page-behavior');
     if (payloadElement) {
         try {
             const pagePayload = JSON.parse(payloadElement.textContent || '{}');
             const planPriceMap = pagePayload.plan_price_map || {};
-            
+
             const currencyFormatter = new Intl.NumberFormat('pt-BR', {
                 style: 'currency',
                 currency: 'BRL'
@@ -154,16 +175,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 2. Initial Selection
     const select = document.getElementById('id_selected_plan');
     if (select && select.value) {
         selectPlanCard(select.value);
     }
 });
 
-/**
- * Payment Link Generator
- */
 async function generatePaymentLink(paymentId) {
     const btn = document.querySelector(`[data-payment-id="${paymentId}"]`);
     if (!btn || btn.disabled) return;
@@ -173,15 +190,13 @@ async function generatePaymentLink(paymentId) {
     btn.disabled = true;
 
     try {
-            const response = await fetch(`/api/v1/finance/payment-link/${paymentId}/`);
+        const response = await fetch(`/api/v1/finance/payment-link/${paymentId}/`);
         const data = await response.json();
 
         if (data.url) {
-            // Copy to clipboard
             await navigator.clipboard.writeText(data.url);
-            btn.innerHTML = '<span>Link Copiado! ✅</span>';
-            
-            // Show a temporary success message
+            btn.innerHTML = '<span>Link copiado!</span>';
+
             setTimeout(() => {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
@@ -191,13 +206,10 @@ async function generatePaymentLink(paymentId) {
         }
     } catch (err) {
         console.error('Erro ao gerar link:', err);
-        btn.innerHTML = '<span>Erro ❌</span>';
+        btn.innerHTML = '<span>Erro</span>';
         setTimeout(() => {
             btn.innerHTML = originalText;
             btn.disabled = false;
         }, 3000);
     }
 }
-
-// generatePaymentLink is already called via event delegation above (L91-100)
-// No window global needed.

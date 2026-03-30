@@ -1,23 +1,30 @@
-<!-- REBIRTH: Elite Ledger (Phase 21 - Stripe Mastery) -->
-<div class="card elite-glass-card overflow-hidden" id="stripe-ledger-root" style="border-radius: 16px; border: 1px solid rgba(0,0,0,0.08); background: #fff;">
+<!--
+ARQUIVO: ledger financeiro da ficha do aluno.
+
+POR QUE ELE EXISTE:
+- resume cobrancas registradas com leitura rapida e gatilho de acao quando necessario.
+-->
+<div class="card elite-glass-card student-financial-ledger" id="stripe-ledger-root">
+    {% if page.data.financial_overview.payments %}
     <div class="table-responsive">
-        <table class="w-full text-left border-collapse">
+        <table class="student-financial-ledger__table">
+            <caption class="visually-hidden">Historico de cobrancas do aluno com data, metodo, valor, status e acao para abrir detalhes.</caption>
             <thead>
-                <tr class="bg-muted-soft/40">
-                    <th class="px-6 py-3 text-[10px] uppercase tracking-wider text-dimmed font-bold border-b border-soft">Data</th>
-                    <th class="px-6 py-3 text-[10px] uppercase tracking-wider text-dimmed font-bold border-b border-soft">Descrição / Método</th>
-                    <th class="px-6 py-3 text-[10px] uppercase tracking-wider text-dimmed font-bold border-b border-soft text-right">Valor</th>
-                    <th class="px-6 py-3 text-[10px] uppercase tracking-wider text-dimmed font-bold border-b border-soft text-center">Status</th>
-                    <th class="px-6 py-3 border-b border-soft"></th>
+                <tr class="student-financial-ledger__head">
+                    <th scope="col">Data</th>
+                    <th scope="col">Descricao / metodo</th>
+                    <th scope="col" class="is-right">Valor</th>
+                    <th scope="col" class="is-center">Status</th>
+                    <th scope="col" class="is-right"><span class="visually-hidden">Acoes</span></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-soft">
+            <tbody>
                 {% for payment in page.data.financial_overview.payments %}
-                <tr class="hover:bg-muted-soft/30 transition-colors group">
-                    <td class="px-6 py-4 text-xs text-ink font-medium">{{ payment.due_date|date:"d M, Y" }}</td>
-                    <td class="px-6 py-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-muted-soft flex items-center justify-center text-dimmed">
+                <tr class="student-financial-ledger__row">
+                    <td class="student-financial-ledger__date">{{ payment.due_date|date:"d/m/Y" }}</td>
+                    <td>
+                        <div class="student-financial-ledger__description">
+                            <div class="student-financial-ledger__method-icon" aria-hidden="true">
                                 {% if payment.method == 'pix' %}
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M7 7h.01M17 7h.01M17 17h.01M7 17h.01"/></svg>
                                 {% elif payment.method == 'credit_card' %}
@@ -26,22 +33,23 @@
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                                 {% endif %}
                             </div>
-                            <div>
-                                <div class="text-xs font-bold text-ink">Cobrança: {{ payment.enrollment.plan.name|default:"Mensalidade" }}</div>
-                                <div class="text-[10px] text-dimmed">{{ payment.get_method_display }} {% if payment.reference %}• {{ payment.reference|truncatechars:8 }}{% endif %}</div>
+                            <div class="student-financial-ledger__copy">
+                                <strong>{{ payment.enrollment.plan.name|default:"Mensalidade" }}</strong>
+                                <span>
+                                    {{ payment.get_method_display }}
+                                    {% if payment.reference %}&bull; {{ payment.reference|truncatechars:8 }}{% endif %}
+                                </span>
                             </div>
                         </div>
                     </td>
-                    <td class="px-6 py-4 text-right">
-                        <div class="text-xs font-bold text-ink font-mono">R$ {{ payment.amount|floatformat:2 }}</div>
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                        <span class="pill-modern {% if payment.status == 'paid' %}pill-modern-green{% elif payment.status == 'overdue' %}pill-modern-red{% else %}pill-modern-orange{% endif %}">
+                    <td class="student-financial-ledger__amount is-right">R$ {{ payment.amount|floatformat:2 }}</td>
+                    <td class="is-center">
+                        <span class="pill {% if payment.status == 'paid' %}success{% elif payment.status == 'overdue' %}warning{% else %}info{% endif %}">
                             {{ payment.get_status_display }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 text-right">
-                        <button class="w-8 h-8 rounded-full border border-soft flex items-center justify-center text-dimmed hover:text-ink hover:bg-white hover:border-dimmed transition-all opacity-0 group-hover:opacity-100" data-action="edit-payment" data-payment-id="{{ payment.id }}">
+                    <td class="is-right">
+                        <button class="student-financial-ledger__action" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}" aria-label="Abrir detalhes da cobranca">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                         </button>
                     </td>
@@ -50,4 +58,7 @@
             </tbody>
         </table>
     </div>
+    {% else %}
+    {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Historico financeiro" title="Nenhuma cobranca registrada" copy="As cobrancas deste aluno vao aparecer aqui com leitura curta e contexto claro." badge="Vazio" badge_class="info" %}
+    {% endif %}
 </div>

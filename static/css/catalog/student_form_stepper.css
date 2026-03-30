@@ -3,11 +3,36 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 32px;
-    padding: 24px;
+    margin-bottom: 0;
+    padding: 20px 24px;
     background: var(--bg-100);
     border-radius: 12px;
     border: 1px solid var(--border-100);
+}
+
+.student-form-stepper-card {
+    display: grid;
+    gap: 18px;
+}
+
+.student-form-stepper-summary {
+    max-width: 64ch;
+}
+
+.student-form-intake-banner {
+    margin-bottom: var(--section-gap);
+}
+
+.student-form-actions {
+    align-items: center;
+}
+
+.student-form-actions .button:focus-visible,
+.student-form-actions a.button:focus-visible,
+.student-form-step-disclosure summary:focus-visible,
+.student-form-recovery-item a:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--accent-primary) 40%, transparent);
+    outline-offset: 3px;
 }
 
 .stepper-item {
@@ -16,7 +41,7 @@
     align-items: center;
     flex: 1;
     position: relative;
-    opacity: 0.5;
+    opacity: 0.58;
     transition: all 0.3s ease;
 }
 
@@ -54,6 +79,12 @@
     font-weight: 500;
 }
 
+.stepper-helper {
+    margin-top: 4px;
+    font-size: 0.72rem;
+    color: var(--text-500, var(--muted));
+}
+
 .stepper-line {
     position: absolute;
     top: 16px;
@@ -66,6 +97,35 @@
 
 .stepper-item:last-child .stepper-line {
     display: none;
+}
+
+.student-form-stepper-status {
+    margin: 0;
+}
+
+.student-form-step-intro {
+    display: grid;
+    gap: 6px;
+    max-width: 62ch;
+}
+
+.student-form-step-intro .meta-text {
+    margin: 0;
+}
+
+.student-form-recovery-panel {
+    display: grid;
+    gap: 10px;
+}
+
+.student-form-recovery-list {
+    gap: 10px;
+}
+
+.student-form-recovery-item {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.56);
 }
 
 .status-paid { color: #16a34a !important; }
@@ -106,4 +166,15 @@
 
 .payment-link-btn:hover {
     background: var(--accent-primary-alpha);
+}
+
+@media (max-width: 720px) {
+    .student-form-stepper {
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .stepper-helper {
+        text-align: center;
+    }
 }

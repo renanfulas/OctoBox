@@ -2,7 +2,7 @@
 ARQUIVO: banner de intake selecionado da ficha do aluno.
 -->
 {% if selected_intake %}
-<div class="note-panel note-panel-warm" style="margin-bottom: var(--section-gap);">
+<div class="note-panel note-panel-warm student-form-intake-banner">
     <p class="eyebrow">Lead selecionado para conversao</p>
     <p class="no-margin"><strong>{{ selected_intake.full_name }}</strong></p>
     <p class="meta-text">{{ selected_intake.phone }}{% if selected_intake.email %} | {{ selected_intake.email }}{% endif %} | {{ selected_intake.get_source_display }}</p>

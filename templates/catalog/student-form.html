@@ -40,7 +40,7 @@ PONTOS CRITICOS:
     {% endif %}
 
     {# Banner injetado dinamicamente pelo JS quando o lock e tomado apos a pagina carregar #}
-    <div class="lock-banner lock-banner--stolen" id="student-lock-stolen-banner" role="alert" aria-live="assertive" style="display:none">
+    <div class="lock-banner lock-banner--stolen" id="student-lock-stolen-banner" role="alert" aria-live="assertive" hidden>
         <div class="lock-banner__icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -52,10 +52,33 @@ PONTOS CRITICOS:
             Outro usu&aacute;rio assumiu a edi&ccedil;&atilde;o deste aluno. Salvamentos ser&atilde;o rejeitados.
         </div>
     </div>
+    <p class="visually-hidden" id="student-lock-live-status" aria-live="assertive" aria-atomic="true"></p>
 
     <div data-panel="student-form-hero">
         {% include "includes/catalog/student_form/plans/hero.html" with page=page %}
     </div>
+
+    <section class="student-workspace-map" aria-label="Mapa da ficha do aluno">
+        <article class="student-workspace-map-card is-current">
+            <p class="eyebrow">Cadastro</p>
+            <h2 class="section-title-sm">Comece pelo essencial.</h2>
+            <p class="meta-text">Nome, WhatsApp e contexto do aluno sustentam o resto da ficha sem ruido.</p>
+            <a class="button secondary" href="#student-form-essential">Abrir cadastro</a>
+        </article>
+
+        <article class="student-workspace-map-card{% if page.data.financial_overview.has_student %} is-ready{% else %} is-muted{% endif %}">
+            <p class="eyebrow">Financeiro</p>
+            <h2 class="section-title-sm">Cobranca e vinculo no mesmo lugar.</h2>
+            <p class="meta-text">
+                {% if page.data.financial_overview.has_student %}
+                Revise plano, historico e proxima acao sem sair da ficha.
+                {% else %}
+                O workspace financeiro aparece assim que o aluno existir na base.
+                {% endif %}
+            </p>
+            <a class="button secondary" href="#student-form-financial">Abrir financeiro</a>
+        </article>
+    </section>
 
     <div class="interactive-tab-container" data-panel="student-workspace">
         <div class="stack-16 is-tab-active" id="tab-student-form-essential" data-panel="student-form-essential">
@@ -69,8 +92,4 @@ PONTOS CRITICOS:
 
 </div>
 {% endwith %}
-
-{% if student_id_for_lock %}
-<script src="/static/js/catalog/student_form_lock.js" defer></script>
-{% endif %}
 {% endblock %}

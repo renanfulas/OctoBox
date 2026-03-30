@@ -120,14 +120,14 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'label': 'Feche com plano e cobranca',
             'chip_label': 'Plano',
             'summary': (
-                f'{latest_enrollment.plan.name} já está ligado ao aluno e {len(recent_payments)} cobrança(s) recente(s) ajudam a ler o financeiro sem sair desta tela.'
+                f'{latest_enrollment.plan.name} ja esta ligado ao aluno e {len(recent_payments)} cobranca(s) recente(s) ajudam a ler o financeiro sem sair desta tela.'
                 if latest_enrollment else
-                'Plano, status comercial e cobrança inicial ficam no mesmo fluxo para evitar ida e volta entre cadastro e financeiro.'
+                'Plano, status comercial e cobranca inicial ficam no mesmo fluxo para evitar ida e volta entre cadastro e financeiro.'
             ),
             'count': len(recent_payments),
             'pill_class': 'warning' if latest_enrollment else 'success',
             'href': '#student-form-plan',
-            'href_label': 'Ver plano e cobrança',
+            'href_label': 'Ver plano e cobranca',
         },
     ]
     shell_action_buttons = build_shell_action_buttons_from_focus(focus=operational_focus, scope='student-form')
@@ -140,13 +140,13 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
         eyebrow='Fluxo leve de cadastro',
         title='Cadastrar aluno' if page_mode == 'create' else 'Editar aluno',
         copy=(
-            'Essencial agora, plano e cobrança no mesmo fluxo.'
+            'Essencial agora, plano e cobranca no mesmo fluxo.'
             if page_mode == 'create'
-            else 'Ajuste cadastro, plano e cobrança sem cair no admin.'
+            else 'Ajuste cadastro, plano e cobranca sem cair no admin.'
         ),
         actions=[
             {'label': 'Preencher essencial', 'href': '#student-form-essential', 'kind': 'primary', 'data_action': 'open-tab-student-form-essential'},
-            {'label': 'Ver plano e cobrança', 'href': '#student-form-financial', 'kind': 'secondary', 'data_action': 'open-tab-student-form-financial'},
+            {'label': 'Ver plano e cobranca', 'href': '#student-form-financial', 'kind': 'secondary', 'data_action': 'open-tab-student-form-financial'},
             {'label': 'Voltar para alunos', 'href': get_shell_route_url('students'), 'kind': 'secondary'},
         ],
         aria_label='Ficha do aluno',
@@ -158,7 +158,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'page_key': 'student-form',
             'title': 'Cadastrar aluno' if page_mode == 'create' else 'Editar aluno',
             'subtitle': (
-                'Comece pelo essencial e complete o resto só se já fizer sentido agora.'
+                'Comece pelo essencial e complete o resto so se ja fizer sentido agora.'
                 if page_mode == 'create'
                 else 'Ajuste rapidamente o cadastro sem cair no admin bruto.'
             ),
@@ -209,7 +209,14 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
         },
         assets=build_catalog_assets(
             css=['css/catalog/students.css', 'css/catalog/student_form_stepper.css', 'css/design-system/financial.css'],
-            js=['js/pages/students/student-form.js', 'js/pages/students/student-form-stepper.js', 'js/pages/interactive_tabs.js', 'js/pages/finance/billing_console.js'],
+            js=[
+                'js/pages/students/student-form.js',
+                'js/pages/students/student-form-stepper.js',
+                'js/pages/interactive_tabs.js',
+                'js/pages/finance/billing_console.js',
+                'js/pages/finance/student-financial-workspace.js',
+                'js/catalog/student_form_lock.js',
+            ],
             include_catalog_shared=True,
         ),
     )

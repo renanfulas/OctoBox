@@ -1,38 +1,37 @@
-<!-- ARQUIVO: gestao da cobranca atual do aluno (DEDICADO STRIPE CHECKOUT). -->
-{% if page.data.payment_management_form %}
-<div class="elite-drawer text-left">
+<!--
+ARQUIVO: gestao da cobranca atual do aluno.
 
-    <!-- 1. Header: Identificação Rápida -->
-    <div class="elite-drawer__header pb-3 mb-2 divider-bottom">
-        <div class="flex-row items-center gap-2">
-            <!-- Avatar fallback -->
-            <div class="flex-center font-bold text-lg elite-avatar">
-                {{ page.data.student_object.full_name|slice:":1"|upper }}
-            </div>
-            <div>
-                <h4 class="font-bold text-sm mb-0">{{ page.data.student_object.full_name }}</h4>
-                <div class="flex-row items-center gap-1 mt-1">
+POR QUE ELE EXISTE:
+- concentra a criacao e o recebimento de cobranca com leitura curta e metodos diretos.
+-->
+{% if page.data.payment_management_form %}
+<div class="student-financial-drawer student-payment-management-card">
+    <header class="student-financial-drawer__header">
+            <div class="student-financial-drawer__identity">
+                <div class="student-financial-drawer__avatar" aria-hidden="true">
+                    {{ page.data.student_object.full_name|slice:":1"|upper }}
+                </div>
+                <div class="stack-2">
+                    <h3 class="section-title-sm" id="financial-payment-management-title">{{ page.data.student_object.full_name }}</h3>
+                    <p class="visually-hidden" id="financial-payment-management-copy">Painel de criacao ou recebimento de cobranca com valor, vencimento, referencia e metodo.</p>
+                    <div class="student-financial-drawer__identity-meta">
                     {% if page.data.financial_overview.latest_enrollment %}
-                    <span class="pill text-xs font-bold pill-surface-low">
-                        {{ page.data.financial_overview.latest_enrollment.get_status_display }}
-                    </span>
-                    <span class="text-elite-muted text-xs">| {{ page.data.financial_overview.latest_enrollment.plan.name }}</span>
+                    <span class="pill">{{ page.data.financial_overview.latest_enrollment.get_status_display }}</span>
+                    <span class="meta-text">{{ page.data.financial_overview.latest_enrollment.plan.name }}</span>
                     {% else %}
-                    <span class="pill text-xs font-bold surface-tonal">Sem Matrícula</span>
+                    <span class="pill info">Sem matricula</span>
                     {% endif %}
                 </div>
             </div>
         </div>
-    </div>
+    </header>
 
-    <!-- 2. Form Body -->
-    <div class="elite-drawer__body">
-        <form method="post" id="stripe-payment-form" action="{% url 'student-payment-action' page.data.student_object.id %}" class="flex-col gap-3">
+    <div class="student-financial-drawer__body">
+        <form method="post" id="stripe-payment-form" action="{% url 'student-payment-action' page.data.student_object.id %}" class="student-payment-management-form" aria-describedby="stripe-status-message">
             {% csrf_token %}
             {{ page.data.payment_management_form.payment_id }}
 
-            <!-- Campos Obrigatórios mas Ocultos (Metodo) -->
-            <div class="d-none">
+            <div hidden>
                 {{ page.data.payment_management_form.method }}
                 {% if page.data.payment_management_form.instance %}
                 <input type="hidden" name="action" value="mark-paid">
@@ -41,125 +40,99 @@
                 {% endif %}
             </div>
 
-            <!-- 3. Resumo da Cobrança (BIG TOTAL EDITAVEL) -->
-            <div class="elite-surface-tonal p-3 text-center rounded-surface">
-                <p class="text-xs text-elite-muted mb-1 font-bold uppercase">Valor total</p>
-                <div class="flex-center gap-1">
-                    <span class="text-xl font-bold text-elite-muted">R$</span>
-                    <div class="max-w-140">
-                        {% if page.data.payment_management_form.instance and page.data.payment_management_form.instance.status == 'paid' %}
-                            <span class="text-xl font-bold">{{ page.data.payment_management_form.instance.amount|floatformat:2 }}</span>
-                        {% else %}
-                            {{ page.data.payment_management_form.amount }}
-                        {% endif %}
-                    </div>
+            <section class="student-payment-management-total">
+                <p class="student-payment-management-total__label">Valor total</p>
+                <div class="student-payment-management-total__field">
+                    <span class="student-payment-management-total__currency">R$</span>
+                    {% if page.data.payment_management_form.instance and page.data.payment_management_form.instance.status == 'paid' %}
+                    <span class="student-payment-management-total__static">{{ page.data.payment_management_form.instance.amount|floatformat:2 }}</span>
+                    {% else %}
+                    {{ page.data.payment_management_form.amount }}
+                    {% endif %}
                 </div>
-            </div>
+            </section>
 
             {% if page.data.payment_management_form.instance and page.data.payment_management_form.instance.status == 'paid' %}
-                <div class="alert-success-soft p-3 rounded-surface flex-col gap-1 items-center">
-                    <span class="font-bold text-sm">✅ Pagamento Recebido</span>
-                    <p class="text-xs">Este item foi liquidado em {{ page.data.payment_management_form.instance.updated_at|date:"d/m/Y H:i" }}</p>
-                </div>
+            <div class="student-payment-management-paid-state">
+                <strong>Pagamento confirmado</strong>
+                <p>Este item foi liquidado em {{ page.data.payment_management_form.instance.updated_at|date:"d/m/Y H:i" }}.</p>
+            </div>
             {% endif %}
 
-            <!-- 4. Resumo Detalhado do Pedido (Itemized Summary) -->
-            <div class="glass-card glass-panel-elite p-3">
-                <p class="text-xs font-bold text-elite-muted uppercase mb-2 tracking-widest">Detalhes do Faturamento</p>
-                
-                <div class="flex-col gap-2">
-                    <div class="flex-between items-center text-sm">
-                        <span class="text-elite-muted">Item:</span>
-                        <span class="font-bold">
+            <section class="student-payment-management-summary">
+                <p class="eyebrow">Detalhes</p>
+                <div class="student-payment-management-summary__grid">
+                    <div class="student-payment-management-summary__row">
+                        <span>Item</span>
+                        <strong>
                             {% if page.data.payment_management_form.instance %}
-                                {{ page.data.payment_management_form.instance.enrollment.plan.name|default:"Faturamento Avulso" }}
+                                {{ page.data.payment_management_form.instance.enrollment.plan.name|default:"Faturamento avulso" }}
                             {% else %}
-                                Nova Cobrança Avulsa
+                                Nova cobranca avulsa
                             {% endif %}
-                        </span>
+                        </strong>
                     </div>
-                    
-                    <div class="divider-bottom opacity-10 my-2"></div>
-                    
-                    <div class="flex-between items-center text-sm">
-                        <span class="text-elite-muted font-bold">Vencimento:</span>
-                        <div class="max-w-130">
+
+                    <div class="student-payment-management-summary__row">
+                        <span>Vencimento</span>
+                        <div class="student-payment-management-summary__field">
                             {% if page.data.payment_management_form.instance and page.data.payment_management_form.instance.status == 'paid' %}
-                                <span class="font-bold">{{ page.data.payment_management_form.instance.due_date|date:"d/m/Y" }}</span>
+                            <strong>{{ page.data.payment_management_form.instance.due_date|date:"d/m/Y" }}</strong>
                             {% else %}
-                                {{ page.data.payment_management_form.due_date }}
+                            {{ page.data.payment_management_form.due_date }}
                             {% endif %}
                         </div>
                     </div>
 
-                    <div class="flex-between items-center text-sm mt-1">
-                        <span class="text-elite-muted font-bold">Referência:</span>
-                        <div class="max-w-130">
+                    <div class="student-payment-management-summary__row">
+                        <span>Referencia</span>
+                        <div class="student-payment-management-summary__field">
                             {% if page.data.payment_management_form.instance and page.data.payment_management_form.instance.status == 'paid' %}
-                                <span class="font-bold">{{ page.data.payment_management_form.instance.reference|default:"-" }}</span>
+                            <strong>{{ page.data.payment_management_form.instance.reference|default:"-" }}</strong>
                             {% else %}
-                                {{ page.data.payment_management_form.reference }}
+                            {{ page.data.payment_management_form.reference }}
                             {% endif %}
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- 5. Obs curta -->
-            <div>
-                 <span class="text-xs font-bold text-elite-muted mb-1 uppercase block">Observação</span>
-                 {% if page.data.payment_management_form.instance and page.data.payment_management_form.instance.status == 'paid' %}
-                    <p class="text-sm italic text-elite-muted">{{ page.data.payment_management_form.instance.notes|default:"Sem observações." }}</p>
-                 {% else %}
+            <section class="student-payment-management-notes">
+                <label>
+                    <span class="field-label">Observacao</span>
+                    {% if page.data.payment_management_form.instance and page.data.payment_management_form.instance.status == 'paid' %}
+                    <p class="meta-text">{{ page.data.payment_management_form.instance.notes|default:"Sem observacoes." }}</p>
+                    {% else %}
                     {{ page.data.payment_management_form.notes }}
-                 {% endif %}
-            </div>
+                    {% endif %}
+                </label>
+            </section>
 
-            <!-- 6. Botões de Ação Rápida -->
             {% if not page.data.payment_management_form.instance or page.data.payment_management_form.instance.status != 'paid' %}
-            <div>
-                <p class="text-sm font-bold mb-2">Pagar com 1-Clique:</p>
-                <div class="grid-2">
+            <section class="student-payment-methods">
+                <div class="stack-4">
+                    <p class="eyebrow">Receber agora</p>
+                    <h4 class="section-title-sm">Escolha o metodo</h4>
+                </div>
+                <div class="student-payment-methods__grid">
                     <button type="button" class="elite-stripe-btn elite-stripe-btn-card flex-center gap-2" data-action="submit-stripe" data-method="credit_card">
-                        <span>💳</span><span>Cartão</span>
+                        <span>Cartao</span>
                     </button>
                     <button type="button" class="elite-stripe-btn elite-stripe-btn-pix flex-center gap-2" data-action="submit-stripe" data-method="pix">
-                        <span>📱</span><span>Pix</span>
+                        <span>Pix</span>
                     </button>
                     <button type="button" class="elite-stripe-btn elite-stripe-btn-cash flex-center gap-2" data-action="submit-stripe" data-method="cash">
-                        <span>💵</span><span>Dinheiro</span>
+                        <span>Dinheiro</span>
                     </button>
                     <button type="button" class="elite-stripe-btn elite-stripe-btn-debit flex-center gap-2" data-action="submit-stripe" data-method="debit_card">
-                        <span>🏦</span><span>Débito</span>
+                        <span>Debito</span>
                     </button>
                 </div>
-            </div>
+            </section>
             {% endif %}
 
-            <div id="stripe-status-message" class="text-sm text-center py-2 d-none text-elite-accent"></div>
-
+            <div id="stripe-status-message" class="student-payment-management-status" role="status" aria-live="polite" aria-atomic="true" hidden></div>
         </form>
     </div>
-
-    <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Estiliza o valor como um input grande e limpo do Stripe
-        var amountInput = document.querySelector('#stripe-payment-form [name="amount"]');
-        if (amountInput) {
-            amountInput.classList.add('elite-payment-amount-input');
-            amountInput.placeholder = '0.00';
-
-            // Foca o input para facilitar a edição rápida
-            setTimeout(() => amountInput.focus(), 300);
-        }
-
-        // Estiliza campos secundarios inline para encaixarem na tabela
-        var inlineInputs = document.querySelectorAll('#stripe-payment-form [name="due_date"], #stripe-payment-form [name="reference"]');
-        inlineInputs.forEach(input => {
-            input.classList.add('input-tight'); // Usando classe base do sistema
-        });
-    });
-
-    </script>
 </div>
 {% endif %}

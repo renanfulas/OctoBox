@@ -4,6 +4,9 @@ ARQUIVO: passo de saude e identificacao da ficha do aluno.
 <details id="student-form-health" class="disclosure-panel student-form-step student-form-step-disclosure"{% if form.health_issue_status.errors or form.cpf.errors or form.notes.errors %} open{% endif %}>
     <summary>Passo 3: saude e identificacao</summary>
     <div class="stack-16 section-gap-top-xs student-form-step-body">
+        <div class="student-form-step-intro">
+            <p class="meta-text">Use este bloco para registrar alertas de saude e identificacao que nao podem ficar soltos no meio da operacao.</p>
+        </div>
         <div class="field-grid-220">
             <label>
                 <span class="field-label">{{ form.health_issue_status.label }}</span>

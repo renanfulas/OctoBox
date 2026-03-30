@@ -1,37 +1,45 @@
-<!-- Student Billing Console - Elite SaaS Standard -->
-<div class="elite-drawer" id="billing-console-root">
-    <div class="elite-drawer__header">
+<!--
+ARQUIVO: console de cobranca do aluno.
+
+POR QUE ELE EXISTE:
+- oferece uma leitura curta da timeline financeira e as acoes de cobranca sem tirar o operador da ficha.
+-->
+<div class="student-financial-drawer" id="billing-console-root">
+    <header class="student-financial-drawer__header">
         <div class="stack-4">
-            <h2 class="section-title">Console de Cobrança 🦁</h2>
-            <p class="meta-text">Controle total sobre pagamentos e prazos.</p>
+            <p class="eyebrow">Console de cobranca</p>
+            <h2 class="section-title" id="financial-billing-console-title">Onde a timeline pede decisao.</h2>
+            <p class="meta-text" id="financial-billing-console-copy">Veja o que atrasou, o que esta proximo e qual passo faz sentido agora.</p>
         </div>
-    </div>
+    </header>
 
-    <div class="elite-drawer__body">
-        <!-- Quick Stats -->
-        <div class="row-between-md glass-panel elite-panel--compact section-gap-bottom-xs">
-            <div class="stack-4">
-                <p class="meta-text-sm uppercase">Atrasados</p>
-                <strong class="text-danger text-xl">{{ page.data.financial_overview.metrics.pagamentos_atrasados }}</strong>
-            </div>
-            <div class="stack-4">
-                <p class="meta-text-sm uppercase">Próximos</p>
-                <strong class="text-info text-xl">{{ page.data.financial_overview.metrics.pagamentos_pendentes }}</strong>
-            </div>
-            <div class="stack-4">
-                <p class="meta-text-sm uppercase">Status</p>
+    <div class="student-financial-drawer__body">
+        <section class="student-financial-drawer-stats" aria-label="Resumo curto do console">
+            <article class="student-financial-drawer-stat">
+                <span class="student-financial-drawer-stat__label">Atrasados</span>
+                <strong class="student-financial-drawer-stat__value is-danger">{{ page.data.financial_overview.metrics.pagamentos_atrasados }}</strong>
+            </article>
+            <article class="student-financial-drawer-stat">
+                <span class="student-financial-drawer-stat__label">Proximos</span>
+                <strong class="student-financial-drawer-stat__value is-info">{{ page.data.financial_overview.metrics.pagamentos_pendentes }}</strong>
+            </article>
+            <article class="student-financial-drawer-stat">
+                <span class="student-financial-drawer-stat__label">Leitura</span>
                 <span class="pill outline {{ page.data.financial_overview.fidalgometro.code }}">{{ page.data.financial_overview.fidalgometro.label }}</span>
-            </div>
-        </div>
+            </article>
+        </section>
 
-        <!-- Payment Timeline -->
-        <div class="stack-16 section-gap-top">
-            <h3 class="field-label">Linha do Tempo de Cobranças</h3>
-            <div class="elite-timeline">
+        <section class="stack-16 section-gap-top">
+            <div class="stack-4">
+                <p class="eyebrow">Timeline</p>
+                <h3 class="section-title-sm">Cobrancas registradas</h3>
+            </div>
+
+            <div class="student-financial-timeline">
                 {% for payment in page.data.financial_overview.payments %}
-                <div class="elite-timeline__item elite-timeline__item--{{ payment.status }}">
-                    <div class="elite-timeline__marker"></div>
-                    <div class="timeline-content card glass-panel">
+                <article class="student-financial-timeline__item student-financial-timeline__item--{{ payment.status }}">
+                    <div class="student-financial-timeline__marker" aria-hidden="true"></div>
+                    <div class="card glass-panel student-financial-timeline__content">
                         <div class="row-between-md">
                             <div class="stack-4">
                                 <strong class="font-bold">R$ {{ payment.amount|floatformat:2 }}</strong>
@@ -39,41 +47,47 @@
                             </div>
                             <div class="actions actions-tight">
                                 {% if payment.status == 'paid' %}
-                                    <button class="elite-button-icon tertiary" data-action="edit-payment" data-payment-id="{{ payment.id }}" title="Ver Comprovante / Detalhes">📄</button>
+                                <button class="button secondary elite-button-sm" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}">
+                                    Ver detalhes
+                                </button>
                                 {% else %}
                                     {% if payment.is_next_actionable %}
                                         {% if payment.status == 'overdue' %}
-                                        <button class="button danger-soft elite-button-sm" data-action="edit-payment" data-payment-id="{{ payment.id }}">
-                                            RECEBER 🔥
-                                        </button>
+                                <button class="button danger-soft elite-button-sm" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}">
+                                    Receber agora
+                                </button>
                                         {% else %}
-                                        <button class="button success-soft elite-button-sm" data-action="edit-payment" data-payment-id="{{ payment.id }}">
-                                            RECEBER 💰
-                                        </button>
+                                <button class="button success-soft elite-button-sm" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}">
+                                    Confirmar recebimento
+                                </button>
                                         {% endif %}
                                     {% endif %}
-                                    <button class="elite-button-icon" data-action="edit-payment" data-payment-id="{{ payment.id }}" title="Editar Vencimento">📅</button>
-                                    <button class="elite-button-icon" data-action="split-payment" data-payment-id="{{ payment.id }}" title="Parcelar">✂️</button>
+                                <button class="button secondary elite-button-sm" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}">
+                                    Revisar vencimento
+                                </button>
+                                <button class="button secondary elite-button-sm" type="button" data-action="split-payment" data-payment-id="{{ payment.id }}">
+                                    Parcelar
+                                </button>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
-                </div>
+                </article>
                 {% empty %}
-                <p class="meta-text">Nenhuma cobrança encontrada para este aluno.</p>
+                {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Console de cobranca" title="Nenhuma cobranca encontrada" copy="Assim que a jornada financeira deste aluno ganhar historico, a timeline aparece aqui com contexto curto." badge="Vazio" badge_class="info" %}
                 {% endfor %}
             </div>
-        </div>
+        </section>
     </div>
 
-    <div class="elite-drawer__footer">
+    <footer class="student-financial-drawer__footer">
         <div class="stack-8">
-            <button class="button success elite-button-full" data-action="vacation-freeze">
-                <span>Marcar Férias / Congelar 🏖️</span>
+            <button class="button success elite-button-full" type="button" data-action="vacation-freeze">
+                Marcar ferias ou congelar
             </button>
-            <button class="button secondary elite-button-full" data-action="close-drawers">
-                <span>Fechar Console</span>
+            <button class="button secondary elite-button-full" type="button" data-action="close-drawers">
+                Fechar console
             </button>
         </div>
-    </div>
+    </footer>
 </div>

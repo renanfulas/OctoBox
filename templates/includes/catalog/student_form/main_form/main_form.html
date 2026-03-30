@@ -10,23 +10,35 @@ ARQUIVO: formulario principal da ficha do aluno.
             {% csrf_token %}
             <div class="form-stack-lg student-form-steps" data-slot="student-form-steps">
                 {% include "includes/catalog/student_form/main_form/main_form_recovery.html" %}
-                
-                <!-- Stepper UI -->
-                <nav class="student-form-stepper" aria-label="Passos do cadastro">
-                    <div class="stepper-item active" id="stepper-1">
-                        <div class="stepper-circle">1</div>
-                        <span class="stepper-label">Identificação</span>
-                        <div class="stepper-line"></div>
-                    </div>
-                    <div class="stepper-item" id="stepper-2">
-                        <div class="stepper-circle">2</div>
-                        <span class="stepper-label">Plano e Pagamento</span>
-                        <div class="stepper-line"></div>
-                    </div>
-                </nav>
 
-                <!-- Step 1: Identificação -->
-                <div class="step-container active" data-step="1">
+                <section class="student-form-stepper-card" aria-label="Mapa rapido do cadastro">
+                    <div class="student-form-stepper-summary">
+                        <p class="eyebrow">Ritmo do cadastro</p>
+                        <h2 class="section-title-sm">Primeiro identificamos. Depois fechamos plano e cobranca.</h2>
+                        <p class="meta-text">O formulario foi dividido em duas etapas para reduzir atrito e deixar a confirmacao final mais segura.</p>
+                    </div>
+
+                    <nav class="student-form-stepper" aria-label="Passos do cadastro">
+                        <div class="stepper-item active" id="stepper-1" aria-current="step">
+                            <div class="stepper-circle">1</div>
+                            <span class="stepper-label">Identificacao</span>
+                            <small class="stepper-helper">Cadastro base</small>
+                            <div class="stepper-line"></div>
+                        </div>
+                        <div class="stepper-item" id="stepper-2">
+                            <div class="stepper-circle">2</div>
+                            <span class="stepper-label">Plano e pagamento</span>
+                            <small class="stepper-helper">Fechamento comercial</small>
+                            <div class="stepper-line"></div>
+                        </div>
+                    </nav>
+
+                    <p class="student-form-stepper-status meta-text" id="student-form-stepper-status" data-stepper-status aria-live="polite">
+                        Etapa atual: identificacao. Confirme nome, contato e perfil antes de avancar.
+                    </p>
+                </section>
+
+                <div class="step-container active" id="student-form-step-panel-1" data-step="1" role="region" aria-labelledby="stepper-1">
                     <div class="stack-16">
                         {% include "includes/catalog/student_form/main_form/main_form_step_essential.html" %}
                         {% include "includes/catalog/student_form/main_form/main_form_step_profile.html" %}
@@ -34,8 +46,7 @@ ARQUIVO: formulario principal da ficha do aluno.
                     </div>
                 </div>
 
-                <!-- Step 2: Plano e Pagamento -->
-                <div class="step-container" data-step="2">
+                <div class="step-container" id="student-form-step-panel-2" data-step="2" role="region" aria-labelledby="stepper-2">
                     <div class="stack-16">
                         {% include "includes/catalog/student_form/main_form/main_form_step_plan.html" %}
                         {% include "includes/catalog/student_form/main_form/main_form_step_billing.html" %}

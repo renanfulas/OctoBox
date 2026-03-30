@@ -1,32 +1,36 @@
-<!-- ARQUIVO: gestao formal da matricula do aluno. -->
-<div class="elite-panel" id="student-enrollment-management">
-    <div class="pb-3 mb-2 elite-divider-dashed">
-        <h3 class="flex-row items-center gap-2 font-bold" style="color: #ca8a04;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="12" x2="12" y2="16"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-            Manutenção da Matrícula
-        </h3>
-        <p class="meta-text elite-text-dimmed">Ações exclusivas para o vínculo deste atleta.</p>
-    </div>
+<!--
+ARQUIVO: gestao formal da matricula do aluno.
+-->
+<div class="student-financial-drawer" id="student-enrollment-management">
+    <header class="student-financial-drawer__header">
+        <div class="stack-4">
+            <p class="eyebrow">Vinculo do aluno</p>
+            <h3 class="section-title" id="financial-enrollment-management-title">Manutencao da matricula</h3>
+            <p class="meta-text" id="financial-enrollment-management-copy">Ajuste data, motivo e a proxima acao do vinculo sem perder contexto.</p>
+        </div>
+    </header>
 
     {% if page.data.enrollment_management_form %}
-    <form method="post" action="{% url 'student-enrollment-action' page.data.student_object.id %}" class="form-stack">
-        {% csrf_token %}
-        {{ page.data.enrollment_management_form.enrollment_id }}
-        <div class="field-grid-220">
-            <label>
-                <span class="field-label">{{ page.data.enrollment_management_form.action_date.label }}</span>
-                {{ page.data.enrollment_management_form.action_date }}
-            </label>
-            <label>
-                <span class="field-label">{{ page.data.enrollment_management_form.reason.label }}</span>
-                {{ page.data.enrollment_management_form.reason }}
-            </label>
-        </div>
-        {% include "includes/catalog/student_form/financial/financial_overview_enrollment_actions.html" %}
-    </form>
+    <div class="student-financial-drawer__body">
+        <form method="post" action="{% url 'student-enrollment-action' page.data.student_object.id %}" class="form-stack student-enrollment-management-form">
+            {% csrf_token %}
+            {{ page.data.enrollment_management_form.enrollment_id }}
+            <div class="field-grid-220">
+                <label>
+                    <span class="field-label">{{ page.data.enrollment_management_form.action_date.label }}</span>
+                    {{ page.data.enrollment_management_form.action_date }}
+                </label>
+                <label>
+                    <span class="field-label">{{ page.data.enrollment_management_form.reason.label }}</span>
+                    {{ page.data.enrollment_management_form.reason }}
+                </label>
+            </div>
+            {% include "includes/catalog/student_form/financial/financial_overview_enrollment_actions.html" %}
+        </form>
+    </div>
     {% else %}
-    <div class="flex-center min-h-200">
-        <p class="meta-text elite-text-dimmed text-center">O atleta não possui plano ativo para manutenção.</p>
+    <div class="student-financial-drawer__body">
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Matricula" title="Nenhum vinculo ativo agora" copy="Assim que o aluno tiver um plano ativo, a manutencao da matricula aparece aqui com contexto claro." badge="Vazio" badge_class="info" %}
     </div>
     {% endif %}
 </div>

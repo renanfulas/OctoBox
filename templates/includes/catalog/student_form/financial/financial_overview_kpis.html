@@ -1,72 +1,40 @@
-<!-- 
-REBIRTH: KPI Grid de Elite (Fase 21 - Figma Absolute Parity) 
-Utiliza estilos inline forçados para garantir a paleta tonal SaaS.
+<!--
+ARQUIVO: grade de KPIs do workspace financeiro do aluno.
 -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
-    
-    <!-- Recebido (30 dias) -->
-    <div class="card elite-glass-card" style="padding: 20px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.08); background: #fff; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-            <span style="color: #94a3b8; font-size: 0.875rem; font-weight: 500;">Recebido (30 dias)</span>
-            <div style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #ecfdf5; color: #10b981;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-            </div>
+<section class="student-financial-kpi-grid" aria-label="Indicadores financeiros do aluno">
+    <article class="card elite-glass-card student-financial-kpi-card">
+        <div class="student-financial-kpi-card__head">
+            <span class="student-financial-kpi-card__label">Recebido</span>
+            <span class="student-financial-kpi-card__icon is-success" aria-hidden="true">&#8599;</span>
         </div>
-        <div>
-            <div style="font-size: 1.5rem; font-weight: 700; color: #030213; line-height: 1;">R$ {{ page.data.financial_overview.metrics.total_recebido|default:"0,00" }}</div>
-            <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px;">
-                <span style="padding: 2px 6px; border-radius: 4px; background: #ecfdf5; color: #10b981; font-size: 10px; font-weight: 700;">↑ 55%</span>
-                <span style="color: #94a3b8; font-size: 10px;">vs mês anterior</span>
-            </div>
-        </div>
-    </div>
+        <strong class="student-financial-kpi-card__value">R$ {{ page.data.financial_overview.metrics.total_recebido|default:"0,00" }}</strong>
+        <p class="student-financial-kpi-card__meta">Valor confirmado na jornada deste aluno.</p>
+    </article>
 
-    <!-- Pendente -->
-    <div class="card elite-glass-card" style="padding: 20px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.08); background: #fff; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-            <span style="color: #94a3b8; font-size: 0.875rem; font-weight: 500;">Pendente</span>
-            <div style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #fffbeb; color: #f59e0b;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            </div>
+    <article class="card elite-glass-card student-financial-kpi-card">
+        <div class="student-financial-kpi-card__head">
+            <span class="student-financial-kpi-card__label">Pendente</span>
+            <span class="student-financial-kpi-card__icon is-warning" aria-hidden="true">&#9719;</span>
         </div>
-        <div>
-            <div style="font-size: 1.5rem; font-weight: 700; color: #030213; line-height: 1;">R$ {{ page.data.financial_overview.metrics.total_pendente|default:"0,00" }}</div>
-            <div style="margin-top: 12px;">
-                <span style="color: #94a3b8; font-size: 10px;">Aguardando compensação</span>
-            </div>
-        </div>
-    </div>
+        <strong class="student-financial-kpi-card__value">R$ {{ page.data.financial_overview.metrics.total_pendente|default:"0,00" }}</strong>
+        <p class="student-financial-kpi-card__meta">Leituras aguardando compensacao ou confirmacao.</p>
+    </article>
 
-    <!-- Em atraso -->
-    <div class="card elite-glass-card" style="padding: 20px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.08); background: #fff; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-            <span style="color: #94a3b8; font-size: 0.875rem; font-weight: 500;">Em atraso</span>
-            <div style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #fef2f2; color: #ef4444;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            </div>
+    <article class="card elite-glass-card student-financial-kpi-card">
+        <div class="student-financial-kpi-card__head">
+            <span class="student-financial-kpi-card__label">Em atraso</span>
+            <span class="student-financial-kpi-card__icon is-danger" aria-hidden="true">!</span>
         </div>
-        <div>
-            <div style="font-size: 1.5rem; font-weight: 700; color: #030213; line-height: 1;">R$ {{ page.data.financial_overview.metrics.total_atrasado|default:"0,00" }}</div>
-            <div style="margin-top: 12px;">
-                <span style="color: #ef4444; font-size: 10px; font-weight: 700;">{{ page.data.financial_overview.metrics.pagamentos_atrasados|default:"0" }} cobrança atrasada</span>
-            </div>
-        </div>
-    </div>
+        <strong class="student-financial-kpi-card__value">R$ {{ page.data.financial_overview.metrics.total_atrasado|default:"0,00" }}</strong>
+        <p class="student-financial-kpi-card__meta">{{ page.data.financial_overview.metrics.pagamentos_atrasados|default:"0" }} cobranca(s) pedem leitura curta.</p>
+    </article>
 
-    <!-- Total histórico -->
-    <div class="card elite-glass-card" style="padding: 20px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.08); background: #fff; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-            <span style="color: #94a3b8; font-size: 0.875rem; font-weight: 500;">Total histórico</span>
-            <div style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #eff6ff; color: #3b82f6;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-            </div>
+    <article class="card elite-glass-card student-financial-kpi-card">
+        <div class="student-financial-kpi-card__head">
+            <span class="student-financial-kpi-card__label">Historico total</span>
+            <span class="student-financial-kpi-card__icon is-info" aria-hidden="true">&#9633;</span>
         </div>
-        <div>
-            <div style="font-size: 1.5rem; font-weight: 700; color: #030213; line-height: 1;">R$ {{ page.data.financial_overview.metrics.total_historico|default:"0,00" }}</div>
-            <div style="margin-top: 12px;">
-                <span style="color: #94a3b8; font-size: 10px;">{{ page.data.financial_overview.metrics.transacoes_totais|default:"0" }} transações</span>
-            </div>
-        </div>
-    </div>
-
-</div>
+        <strong class="student-financial-kpi-card__value">R$ {{ page.data.financial_overview.metrics.total_historico|default:"0,00" }}</strong>
+        <p class="student-financial-kpi-card__meta">{{ page.data.financial_overview.metrics.transacoes_totais|default:"0" }} transacao(oes) registradas.</p>
+    </article>
+</section>
