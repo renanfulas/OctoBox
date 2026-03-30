@@ -1,0 +1,24 @@
+/*
+ARQUIVO: refinamentos locais da tela operational-settings.
+*/
+
+.operational-settings-import-form {
+    --form-gap: 12px;
+}
+
+.operational-settings-field,
+.operational-settings-file-input {
+    width: 100%;
+}
+
+.operational-settings-file-input {
+    border: 1px dashed var(--line);
+    padding: 10px;
+    border-radius: var(--radius-base);
+    background: var(--canvas);
+}
+
+.operational-settings-submit {
+    width: 100%;
+    justify-content: center;
+}
