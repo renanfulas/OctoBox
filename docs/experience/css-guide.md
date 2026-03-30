@@ -39,6 +39,53 @@ Regra central:
 2. cada classe relevante precisa ter casa certa, responsabilidade clara e efeito previsivel.
 3. nenhum bloco importante deve depender de coincidencia de heranca para funcionar bem.
 
+## Canon do ultimo pintor
+
+Depois da unificacao do tema, este projeto passou a operar com uma regra simples:
+
+1. existe um pintor definitivo
+2. os pintores antigos viraram referencia historica
+3. nenhum arquivo novo pode voltar a criar uma autoridade visual paralela
+
+Traducao pratica:
+
+1. cor, sombra, borda e glow nascem dos tokens
+2. cards, hero, notice e topbar nascem dos hosts canonicos
+3. CSS local monta a pagina, mas nao reinventa a familia visual
+
+### Autoridades canonicas
+
+Estas sao as familias que mandam no tema:
+
+1. tokens semanticos: [static/css/design-system/tokens.css](../../static/css/design-system/tokens.css)
+2. card e table-card: [static/css/design-system/components/cards.css](../../static/css/design-system/components/cards.css)
+3. hero: [static/css/design-system/components/hero.css](../../static/css/design-system/components/hero.css)
+4. notice-panel e state-notice: [static/css/design-system/components/states.css](../../static/css/design-system/components/states.css)
+5. topbar: [static/css/design-system/topbar.css](../../static/css/design-system/topbar.css)
+
+### Legado permitido apenas como ponte
+
+Estas familias nao sao mais soberanas:
+
+1. `glass-panel`
+2. `finance-glass-panel`
+3. `note-panel*`
+4. `elite-glass-card`
+5. `glass-panel-elite`
+6. `ui-card`
+
+Elas podem aparecer durante migracoes controladas, mas nao podem mais:
+
+1. definir o container principal de uma superficie
+2. escolher a identidade visual de uma pagina
+3. competir com `card`, `hero`, `notice-panel` ou `topbar`
+
+Em linguagem simples:
+
+1. o balde oficial de tinta agora e um so
+2. os potes antigos podem ajudar em pequenos retoques
+3. mas nao podem mais escolher a cor da parede
+
 ## Mapa real do CSS
 
 Hoje a base esta organizada em uma entrada global e complementos por pagina:
@@ -77,13 +124,13 @@ define badges, pills e variacoes de status/ocupacao
 define botoes, barras de acao e listas de capacidade
 
 10. [static/css/design-system/components/states.css](../../static/css/design-system/components/states.css)
-define empty states, notices e mensagens
+define empty states, notices, `notice-panel` e mensagens
 
 11. [static/css/design-system/components/quick-cards.css](../../static/css/design-system/components/quick-cards.css)
 define quick cards e accent bars
 
 12. [static/css/catalog/shared.css](../../static/css/catalog/shared.css)
-define utilitarios, grids de formulario, blocos neutros, glass panels e bases compartilhadas do catalogo
+define utilitarios, grids de formulario e bases compartilhadas do catalogo sem autoridade de tema
 
 13. [static/css/catalog/students.css](../../static/css/catalog/students.css)
 define ajustes finais da area de alunos
@@ -107,9 +154,10 @@ Use esta regra:
 
 Traducao pratica:
 
-1. `glass-panel` e base compartilhada
+1. `card` e `table-card` sao base compartilhada canonicamente
 2. `finance-radar-card` e semantica local do financeiro
 3. `student-focus-card` e semantica local de alunos
+4. `glass-panel` pode decorar atmosfera, mas nao pode ser a estrutura-base
 
 ## Mapa rapido de ownership
 
@@ -120,11 +168,46 @@ Se a alteracao for visual e recorrente, o primeiro passo e cair no modulo certo.
 3. tabela, thead, tbody e empty cell: [static/css/design-system/components/tables.css](../../static/css/design-system/components/tables.css)
 4. pills de status, badges e ocupacao: [static/css/design-system/components/pills.css](../../static/css/design-system/components/pills.css)
 5. botoes, barras de acao e capability-list: [static/css/design-system/components/actions.css](../../static/css/design-system/components/actions.css)
-6. empty state, notice e mensagens: [static/css/design-system/components/states.css](../../static/css/design-system/components/states.css)
+6. empty state, `notice-panel`, `state-notice` e mensagens: [static/css/design-system/components/states.css](../../static/css/design-system/components/states.css)
 7. quick cards e accent bar: [static/css/design-system/components/quick-cards.css](../../static/css/design-system/components/quick-cards.css)
 8. estrutura operacional da pagina: [static/css/design-system/operations.css](../../static/css/design-system/operations.css)
 9. visual exclusivo do dashboard: [static/css/design-system/dashboard.css](../../static/css/design-system/dashboard.css)
 10. semantica local de catalogo: arquivos de [static/css/catalog](../../static/css/catalog)
+
+## Regra de soberania visual
+
+Esta e a regra mais importante do guide a partir de agora.
+
+### O que pode mandar
+
+So pode mandar na identidade visual:
+
+1. `tokens.css` para semantica de tema
+2. `cards.css` para surfaces e containers principais
+3. `hero.css` para faixas de comando
+4. `states.css` para notices, mensagens e estados vazios
+5. `topbar.css` para a shell rail
+
+### O que nao pode mandar
+
+Nao pode voltar a mandar:
+
+1. arquivo local de pagina redefinindo a familia de `card`
+2. `utilities.css` criando tema paralelo
+3. modulo local inventando outra `topbar`
+4. helper atmosferico decidindo estrutura base
+5. patch de emergencia com `!important` para ganhar no grito
+
+### Regra operacional
+
+Quando houver duvida, use esta escada:
+
+1. token semantico
+2. primitivo canonico
+3. classe semantica local
+4. helper neutro
+
+Nunca ao contrario.
 
 ## Regra de naming
 
@@ -174,6 +257,18 @@ Formula recomendada:
 1. base compartilhada para comportamento neutro
 2. classe local para papel do bloco
 3. modificador curto apenas quando houver variacao real
+
+Exemplo forte:
+
+1. `card student-directory-surface`
+2. `table-card manager-finance-board`
+3. `notice-panel notice-panel--warning`
+
+Exemplo fraco:
+
+1. `glass-panel rounded-xl border-soft`
+2. `ui-card reports-hub-card`
+3. `card glass-panel-elite`
 
 ## Como estruturar um arquivo CSS da area
 
@@ -278,6 +373,12 @@ Nao use utilitario como substituto de classe semantica quando:
 2. a largura, hierarquia ou papel dele precisam ser declarados no modulo local
 3. uma futura pessoa precisara encontrar aquele comportamento por nome de dominio
 
+Regra nova:
+
+1. utilitario pode ajudar espacamento e layout
+2. utilitario nao pode fundar a familia visual do bloco
+3. helper atmosferico nao pode substituir `card`, `hero` ou `notice-panel`
+
 ## Anti-padroes que este projeto deve evitar
 
 1. classe no template sem seletor nenhum no CSS relevante
@@ -287,6 +388,17 @@ Nao use utilitario como substituto de classe semantica quando:
 5. media query corrigindo estrutura que deveria nascer correta fora dela
 6. regra local escondida em shared sem motivo real
 7. CSS morto acumulado sem uso nem explicacao
+8. usar `glass-panel`, `ui-card` ou `note-panel` como autoridade estrutural nova
+9. topbar local com paleta e sombra independentes do tema
+10. `!important` para impor identidade visual em vez de corrigir a origem do conflito
+11. misturar duas familias base no mesmo bloco estrutural
+
+Exemplos que agora sao proibidos:
+
+1. `table-card glass-panel` para o mesmo papel estrutural
+2. `card ui-card`
+3. `topbar` com variaveis locais que contradizem `tokens.css`
+4. `note-panel` novo criado fora de [states.css](../../static/css/design-system/components/states.css)
 
 ## Checklist antes de subir alteracao de CSS
 
@@ -297,6 +409,9 @@ Nao use utilitario como substituto de classe semantica quando:
 5. desktop e mobile continuam previsiveis?
 6. botoes de uma mesma familia continuam alinhados no mesmo lugar mental?
 7. existe algum bloco competindo porque faltou espacamento ou porque a hierarquia da largura esta errada?
+8. este bloco esta nascendo de `card`, `table-card`, `hero`, `notice-panel` ou `topbar` quando deveria?
+9. algum helper legado esta mandando mais do que o host canonico?
+10. eu estou resolvendo o problema pela autoridade certa ou so vencendo a cascata no grito?
 
 ## Workflow de debug recomendado
 
@@ -314,6 +429,8 @@ Perguntas boas de debug:
 2. este card compete com o outro por excesso de informacao ou por falta de distribuicao no grid?
 3. esta classe deveria existir no shared ou ela e semantica demais para sair do modulo?
 4. o template esta usando um nome que o CSS nao conhece?
+5. quem esta mandando neste bloco: o host canonico ou um legado pendurado?
+6. este efeito visual nasceu dos tokens ou de uma cor solta copiada no impulso?
 
 ## Comandos uteis de verificacao
 
@@ -346,6 +463,19 @@ Isso significa:
 4. mas nada disso pode esconder prioridade, CTA ou recorte operacional
 
 Se um efeito visual deixa a leitura mais lenta, ele perdeu a funcao.
+
+## Contrato final do tema
+
+Se precisar da versao mais curta possivel, guarde isto:
+
+1. `tokens.css` manda nas decisoes semanticas
+2. `cards.css` manda nas surfaces
+3. `hero.css` manda no topo de pagina
+4. `states.css` manda em notice e mensagem
+5. `topbar.css` manda na shell rail
+6. CSS local compoe, nao reinventa
+7. legado so vive como ponte documentada
+8. novo pintor paralelo nao entra no predio
 
 ## Resumo operacional
 

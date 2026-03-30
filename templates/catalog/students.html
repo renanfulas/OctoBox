@@ -2,17 +2,15 @@
 ARQUIVO: pagina visual de alunos.
 
 POR QUE ELE EXISTE:
-- Entrega uma visao comercial e operacional da base principal sem depender do admin.
+- entrega uma visao comercial e operacional da base principal sem depender do admin.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Mostra metricas da base e do funil.
-2. Permite busca ampliada e filtros por status comercial e financeiro.
-3. Exibe a fila de intake pronta para conversao.
-4. Lista alunos com atalhos para operacao leve e admin.
-5. Oferece exportacao CSV/PDF da base filtrada.
+1. Mostra o panorama imediato da base.
+2. Explicita prioridades, intake e lista principal sem caca visual.
+3. Mantem a operacao diaria focada em triagem e atendimento.
 
 PONTOS CRITICOS:
-- Depende do contexto e das leituras montadas em boxcore/catalog/views/student_views.py.
+- depende do contexto e das leituras montadas em boxcore/catalog/views/student_views.py.
 -->
 {% extends "layouts/base.html" %}
 {% load static %}
@@ -20,45 +18,34 @@ PONTOS CRITICOS:
 {% block content %}
 {% with page=student_directory_page %}
 <div class="operation-shell catalog-scene student-scene p-6" data-page="students" data-screen="catalog-students" data-slot="page-root">
-    
-    <!-- Custom Header Mockup Style -->
-    <header class="flex-row items-center justify-between mb-8">
-        <div class="stack-4">
-            <h1 class="text-3xl font-bold text-ink">Alunos</h1>
-            <p class="text-sm text-dimmed">{{ page.data.total_students }} alunos cadastrados</p>
-        </div>
-        <div class="flex-row items-center gap-3">
-            <form action="{% url 'student-import' %}" method="POST" enctype="multipart/form-form-data" class="flex-row items-center gap-2 m-0" id="import-form">
-                {% csrf_token %}
-                <label class="button button-outline button-pill text-sm px-4 cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    Importar CSV
-                    <input type="file" name="import_file" class="hidden" accept=".csv" onchange="if(this.files.length > 0) document.getElementById('import-form').submit();">
-                </label>
-            </form>
-            <a href="{{ page.actions.student_export_links.csv }}" class="button button-outline button-pill text-sm px-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Exportar CSV
-            </a>
-            {% if page.capabilities.can_manage_students %}
-            <a href="{% url 'student-quick-create' %}#student-form-essential" class="button button-primary bg-accent button-pill text-sm px-4">
-                + Novo aluno
-            </a>
-            {% endif %}
-        </div>
-    </header>
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero nested_include="catalog/includes/student/student_command_snapshot.html" %}
 
-    <!-- KPI Row -->
-    <div class="owner-metrics-panel mb-8">
-        <section class="grid grid-cols-4 gap-6" aria-label="Navegacao principal de alunos">
+    <div class="student-toolbar-row">
+        <p class="student-toolbar-copy">{{ page.data.total_students }} aluno(s) sustentam a leitura atual desta base.</p>
+        <form action="{% url 'student-import' %}" method="POST" enctype="multipart/form-data" class="student-directory-import" id="import-form">
+            {% csrf_token %}
+            <label class="button secondary student-toolbar-import">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Atualizar base
+                <input type="file" name="import_file" id="student-import-file" class="hidden" accept=".csv">
+            </label>
+        </form>
+    </div>
+
+    <div class="student-command-layout">
+        {% include "catalog/includes/student/student_priority_panel.html" %}
+        {% include "catalog/includes/student/student_intake_panel.html" %}
+    </div>
+
+    <div class="owner-metrics-panel mb-8 deferred-surface">
+        <section class="student-kpi-grid" aria-label="Navegacao principal de alunos">
             {% for card in page.data.interactive_kpis %}
                 {% include "catalog/includes/student/student_metric_card.html" with card=card %}
             {% endfor %}
         </section>
     </div>
 
-    <!-- Unified Dashboard Container -->
-    <div class="glass-panel rounded-xl border-soft overflow-hidden">
+    <div class="card student-directory-surface deferred-surface deferred-surface--xl">
         {% include "catalog/includes/student/student_filters_panel.html" %}
         {% include "catalog/includes/student/student_directory_panel.html" %}
     </div>
@@ -68,4 +55,5 @@ PONTOS CRITICOS:
 
 {% block extra_scripts %}
 <script src="{% static 'js/pages/interactive_tabs.js' %}?v={{ static_asset_version }}"></script>
+<script src="{% static 'js/pages/students/student-directory.js' %}?v={{ static_asset_version }}"></script>
 {% endblock %}

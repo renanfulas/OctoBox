@@ -2,55 +2,58 @@
 ARQUIVO: componentes de hero compartilhados.
 
 POR QUE ELE EXISTE:
-- concentra a estrutura visual dos blocos hero usados nas superficies principais.
+- concentra a estrutura visual dos blocos hero usados nas superficies principais
+- define a gramática canônica de command banners
 
-PONTOS CRITICOS:
-- controla composicao, gradiente, estatisticas laterais e responsividade do header principal.
+REGRA:
+- este arquivo nao pode manter varios passes visuais concorrentes
+- `.hero` e a unica autoridade da familia
 */
 
 .hero {
-    --hero-surface: var(--surface);
-    --hero-border: var(--line);
-    --hero-shadow: var(--shadow-soft);
-    --hero-rail: var(--brand);
-    --hero-halo: radial-gradient(circle at 100% 100%, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0));
+    --hero-surface: var(--fdw-panel);
+    --hero-border: color-mix(in srgb, var(--line) 90%, transparent);
+    --hero-shadow: var(--shadow-lift);
+    --hero-rail: linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-primary) 92%, transparent), color-mix(in srgb, var(--theme-accent-support) 88%, transparent));
+    --hero-halo:
+        radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--theme-accent-support) 12%, transparent), transparent 70%),
+        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--theme-accent-primary) 10%, transparent), transparent 62%);
     --hero-ink: var(--ink);
     --hero-copy: var(--muted);
-    --hero-eyebrow: color-mix(in srgb, var(--brand) 70%, var(--ink) 30%);
-    --hero-gap: 18px;
-    --hero-padding: clamp(18px, 1.8vw, 26px);
+    --hero-eyebrow: color-mix(in srgb, var(--theme-accent-support) 62%, var(--ink) 38%);
+    --hero-gap: 20px;
+    --hero-padding: clamp(20px, 2vw, 30px);
     --hero-radius: var(--radius-shell);
     --hero-before-inset: 0 auto 0 0;
     --hero-before-width: 4px;
     --hero-before-height: auto;
     --hero-before-radius: 0;
-    --hero-before-opacity: 0.88;
+    --hero-before-opacity: 0.92;
     --hero-before-background: var(--hero-rail);
-    --hero-after-inset: auto -8% -30% auto;
+    --hero-after-inset: auto -6% -24% auto;
     --hero-after-width: 220px;
     --hero-after-height: 220px;
-    --hero-after-opacity: 1;
+    --hero-after-opacity: 0.9;
     --hero-after-background: var(--hero-halo);
-    --hero-heading-size: clamp(1.68rem, 2.7vw, 2.45rem);
-    --hero-heading-line-height: 0.98;
-    --hero-heading-letter-spacing: -0.04em;
-    --hero-heading-max-width: none;
-    --hero-copy-size: inherit;
-    --hero-panel-backdrop-filter: none;
-    --hero-isolation: auto;
-    --hero-side-width: min(100%, 320px);
-    --hero-panel-surface: var(--bg);
-    --hero-panel-border: var(--line);
-    --hero-panel-shadow: none;
+    --hero-heading-size: clamp(1.8rem, 2.8vw, 2.8rem);
+    --hero-heading-line-height: 0.94;
+    --hero-heading-letter-spacing: -0.06em;
+    --hero-copy-size: 1rem;
+    --hero-panel-backdrop-filter: blur(14px);
+    --hero-isolation: isolate;
+    --hero-side-width: min(100%, 340px);
+    --hero-panel-surface: color-mix(in srgb, var(--surface-strong) 76%, transparent);
+    --hero-panel-border: color-mix(in srgb, var(--line) 86%, transparent);
+    --hero-panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     --hero-panel-ink: var(--ink);
     --hero-panel-copy: var(--muted);
-    --hero-panel-stat-surface: var(--surface);
-    --hero-panel-stat-border: var(--line);
-    --hero-badge-surface: color-mix(in srgb, var(--brand) 10%, transparent);
-    --hero-badge-border: color-mix(in srgb, var(--brand) 18%, transparent);
-    --hero-badge-ink: var(--brand-dark);
-    --hero-pulse-surface: color-mix(in srgb, var(--brand) 5%, transparent);
-    --hero-pulse-border: color-mix(in srgb, var(--brand) 12%, transparent);
+    --hero-panel-stat-surface: color-mix(in srgb, var(--surface-strong) 68%, transparent);
+    --hero-panel-stat-border: color-mix(in srgb, var(--line) 86%, transparent);
+    --hero-badge-surface: color-mix(in srgb, var(--theme-accent-support) 10%, transparent);
+    --hero-badge-border: color-mix(in srgb, var(--theme-accent-support) 20%, transparent);
+    --hero-badge-ink: color-mix(in srgb, var(--theme-accent-support) 72%, var(--ink) 28%);
+    --hero-pulse-surface: color-mix(in srgb, var(--theme-accent-support) 6%, transparent);
+    --hero-pulse-border: color-mix(in srgb, var(--theme-accent-support) 14%, transparent);
     display: flex;
     justify-content: space-between;
     gap: var(--hero-gap);
@@ -134,6 +137,7 @@ PONTOS CRITICOS:
     box-shadow: var(--hero-panel-shadow);
     color: var(--hero-panel-ink);
     backdrop-filter: var(--hero-panel-backdrop-filter);
+    -webkit-backdrop-filter: var(--hero-panel-backdrop-filter);
 }
 
 .hero .operation-hero-panel .operation-card-copy {
@@ -154,7 +158,7 @@ PONTOS CRITICOS:
 
 .hero-side-stat {
     padding: 9px;
-    border-radius: 8px;
+    border-radius: 10px;
     border: 1px solid var(--hero-panel-stat-border);
     background: var(--hero-panel-stat-surface);
 }
@@ -207,12 +211,105 @@ PONTOS CRITICOS:
     color: var(--hero-panel-copy);
 }
 
-body[data-theme="dark"] .hero {
-    --hero-surface: var(--surface);
-    --hero-panel-surface: var(--surface-2, rgba(15, 23, 42, 0.72));
-    --hero-panel-border: var(--line);
-    --hero-panel-stat-surface: rgba(255, 255, 255, 0.04);
-    --hero-panel-stat-border: rgba(148, 163, 184, 0.18);
+.operation-hero-nested-panel {
+    margin-top: 18px;
+}
+
+.front-command-snapshot {
+    display: grid;
+    gap: 14px;
+}
+
+.front-command-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.front-command-card,
+.front-command-summary {
+    padding: 14px 15px;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
+    background: color-mix(in srgb, var(--surface-strong) 76%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.front-command-card {
+    display: grid;
+    gap: 10px;
+}
+
+.front-command-card-head,
+.front-command-summary-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.front-command-card-body {
+    display: grid;
+    gap: 6px;
+}
+
+.front-command-card-body h3,
+.front-command-summary-item dd {
+    margin: 0;
+    color: var(--ink);
+    font-size: 0.98rem;
+    line-height: 1.18;
+    letter-spacing: -0.03em;
+}
+
+.front-command-card-body p,
+.front-command-copy,
+.front-command-summary-item dt {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.84rem;
+    line-height: 1.48;
+}
+
+.front-command-kicker {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--brand);
+}
+
+.front-command-count {
+    font-size: 1.05rem;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+}
+
+.front-command-link {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--brand);
+    text-decoration: none;
+}
+
+.front-command-link:hover,
+.front-command-link:focus-visible {
+    text-decoration: underline;
+}
+
+.front-command-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+}
+
+.front-command-summary-item {
+    display: grid;
+    gap: 4px;
+    padding: 10px 0 0;
+    border-top: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
 }
 
 @media (max-width: 960px) {
@@ -226,8 +323,13 @@ body[data-theme="dark"] .hero {
         width: 100%;
     }
 
-    .hero-side-stat-grid {
+    .hero-side-stat-grid,
+    .front-command-summary-grid {
         grid-template-columns: 1fr 1fr;
+    }
+
+    .front-command-grid {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -243,60 +345,14 @@ body[data-theme="dark"] .hero {
         border-radius: 24px;
     }
 
-    .operation-hero-panel-head {
+    .operation-hero-panel-head,
+    .front-command-summary-head {
         align-items: flex-start;
         flex-direction: column;
     }
 
-    .hero-side-stat-grid {
+    .hero-side-stat-grid,
+    .front-command-summary-grid {
         grid-template-columns: 1fr;
     }
 }
-
-/* --- Front Display Wall facade hero pass --- */
-.hero {
-    --hero-surface: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 252, 0.98));
-    --hero-border: rgba(255, 255, 255, 0.68);
-    --hero-shadow: var(--fdw-shadow-lift);
-    --hero-rail: linear-gradient(180deg, var(--fdw-copper), var(--fdw-sky));
-    --hero-halo: radial-gradient(circle at 100% 100%, rgba(29, 78, 216, 0.05), rgba(29, 78, 216, 0));
-    --hero-panel-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(248, 250, 252, 0.88));
-    --hero-panel-border: rgba(80, 102, 128, 0.12);
-    --hero-panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76), 0 10px 22px rgba(15, 23, 42, 0.06);
-    --hero-badge-surface: linear-gradient(135deg, rgba(196, 91, 45, 0.04), rgba(29, 78, 216, 0.04));
-    --hero-badge-border: rgba(80, 102, 128, 0.1);
-    --hero-badge-ink: var(--ink-soft);
-    --hero-after-width: 280px;
-    --hero-after-height: 280px;
-    --hero-before-width: 5px;
-    --hero-heading-letter-spacing: -0.06em;
-    --hero-heading-max-width: none;
-    --hero-panel-backdrop-filter: blur(12px);
-    --hero-isolation: isolate;
-}
-
-body[data-theme="dark"] .hero {
-    --hero-surface: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(14, 25, 44, 0.96));
-    --hero-border: rgba(148, 163, 184, 0.14);
-    --hero-panel-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
-    --hero-panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 14px 30px rgba(0, 0, 0, 0.2);
-}
-
-
-/* --- Front Display Wall artistic hero pass --- */
-.hero {
-    --hero-surface: linear-gradient(145deg, rgba(255, 255, 255, 0.99), rgba(250, 248, 245, 0.98));
-    --hero-shadow: 0 4px 12px rgba(15, 23, 42, 0.03), 0 1px 3px rgba(15, 23, 42, 0.02);
-    --hero-halo: radial-gradient(circle at 100% 100%, rgba(37, 85, 220, 0.03), rgba(37, 85, 220, 0)), radial-gradient(circle at 0% 100%, rgba(212, 102, 44, 0.02), transparent 58%);
-    --hero-after-width: 140px;
-    --hero-after-height: 140px;
-    --hero-after-opacity: 0.2;
-    --hero-heading-max-width: none;
-    --hero-heading-line-height: 0.92;
-    --hero-copy-size: 1rem;
-}
-
-body[data-theme="dark"] .hero {
-    --hero-surface: linear-gradient(145deg, rgba(11, 20, 35, 0.98), rgba(14, 25, 44, 0.96));
-}
-

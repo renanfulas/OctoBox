@@ -10,6 +10,23 @@ POR QUE ELE EXISTE:
     gap: calc(var(--section-gap) - 2px);
 }
 
+.student-toolbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.student-toolbar-copy {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+}
+
+.student-toolbar-import {
+    white-space: nowrap;
+}
+
 .student-hero,
 .student-hero.operation-hero,
 .student-hero .operation-hero-panel {
@@ -42,9 +59,36 @@ POR QUE ELE EXISTE:
     padding: 7px 12px;
 }
 
+.student-command-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr);
+    gap: 18px;
+    align-items: start;
+}
+
 .student-scene .metric-card {
     min-height: 150px;
     padding: 14px 16px;
+}
+
+.student-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.student-kpi-grid > * {
+    min-width: 0;
+}
+
+.student-kpi-card {
+    min-height: 100%;
+}
+
+.student-directory-surface {
+    padding: 0;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--fdw-panel) 94%, transparent);
 }
 
 .student-metric-card-body {
@@ -62,4 +106,4 @@ POR QUE ELE EXISTE:
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
-
+

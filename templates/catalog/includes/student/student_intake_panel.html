@@ -4,11 +4,12 @@ ARQUIVO: handoff de intake dentro da base de alunos.
 POR QUE ELE EXISTE:
 - deixa claro que a fila principal vive na central propria, sem misturar com o diretorio.
 -->
-<section id="tab-students-intake" class="table-card layout-panel layout-panel--stack glass-panel section-gap student-queue-panel" aria-label="Fila de intake" data-panel="students-intake-board">
+<section id="tab-students-intake" class="table-card layout-panel layout-panel--stack section-gap student-queue-panel" aria-label="Fila de intake" data-panel="students-intake-board">
     {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Handoff para a central propria de intake" title="A fila principal agora mora na Central de Intake" copy="Use Alunos para base e ficha definitiva. A triagem canonica da entrada segue na central propria." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
+    {% url 'intake-center' as intake_center_url %}
     <div class="actions actions-tight">
         {% if page.capabilities.can_manage_students %}
-        <a class="button" href="{{ get_shell_route_url('intake', fragment='intake-queue-board') }}" data-action="open-intake-center">Abrir central de intake</a>
+        <a class="button" href="{{ intake_center_url }}#intake-queue-board" data-action="open-intake-center">Abrir central de intake</a>
         {% endif %}
         {% if page.capabilities.can_manage_students %}
         <a class="button secondary" href="{% url 'student-quick-create' %}#student-form-essential" data-action="open-student-quick-create-from-intake-handoff">Abrir cadastro rapido</a>
@@ -29,7 +30,7 @@ POR QUE ELE EXISTE:
             <div class="card-footer student-intake-card-footer">
                 <div class="actions actions-tight">
                     {% if page.capabilities.can_manage_students %}
-                    <a class="button secondary" href="{{ get_shell_route_url('intake', fragment='intake-queue-board') }}" data-action="open-intake-center-from-preview">Ver fila completa</a>
+                    <a class="button secondary" href="{{ intake_center_url }}#intake-queue-board" data-action="open-intake-center-from-preview">Ver fila completa</a>
                     {% endif %}
                     {% if page.capabilities.can_manage_students %}
                     <a class="button" href="{% url 'student-quick-create' %}?intake={{ intake.id }}#student-form-essential" data-action="convert-intake-to-student">Converter em aluno</a>

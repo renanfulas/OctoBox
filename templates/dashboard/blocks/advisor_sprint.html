@@ -1,29 +1,28 @@
-<article class="table-card dashboard-session-card glass-panel glass-neon-card neon-tone-brand">
-    <div class="fdw-focus-card-head" style="margin-bottom: var(--dashboard-fib-7);">
-        <span class="fdw-focus-index">🏁</span>
+<article class="table-card dashboard-focus-card dashboard-focus-card--brand">
+    <div class="fdw-focus-card-head dashboard-advisor-card-head">
+        <span class="fdw-focus-index dashboard-advisor-index">Meta</span>
         <div class="fdw-focus-meta">
-            <span class="fdw-focus-chip is-warning" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border-color: rgba(16, 185, 129, 0.3);">Sprint Semanal</span>
+            <span class="fdw-focus-chip is-warning dashboard-advisor-chip dashboard-advisor-chip--success">Sprint Semanal</span>
         </div>
     </div>
     <div class="fdw-focus-body">
         
-        <h3 style="font-size: 1.05rem; margin-bottom: 4px;">Missão: Fechar a torneira</h3>
-        <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 24px;">
+        <h3 class="dashboard-advisor-heading dashboard-advisor-heading--sm">Missao: Fechar a torneira</h3>
+        <p class="dashboard-advisor-subheading dashboard-advisor-subheading--spaced">
             Renovar 5 alunos atritados desta semana para garantir o alvo da receita.
         </p>
 
-        <!-- The Progress Bar (Neon Style) -->
-        <div style="margin-bottom: 12px;">
-            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; margin-bottom: 8px;">
+        <div class="dashboard-advisor-progress">
+            <div class="dashboard-advisor-progress-head">
                 <span>Progresso</span>
-                <span style="color: var(--accent);">3 / 5 (60%)</span>
+                <span class="dashboard-advisor-progress-value">3 / 5 (60%)</span>
             </div>
-            <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);">
-                <div style="width: 60%; height: 100%; background: var(--accent); border-radius: 99px; box-shadow: 0 0 10px var(--accent);"></div>
+            <div class="dashboard-advisor-progress-track">
+                <div class="dashboard-advisor-progress-fill dashboard-advisor-progress-fill--60"></div>
             </div>
         </div>
 
-        <button class="button" style="width: 100%; margin-top: 16px;">Ver Alvos Restantes</button>
+        <button class="button dashboard-advisor-cta dashboard-advisor-cta--full" type="button">Ver Alvos Restantes</button>
 
     </div>
 </article>

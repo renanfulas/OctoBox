@@ -1,118 +1,77 @@
-<article class="table-card dashboard-session-card glass-panel glass-neon-card neon-tone-danger">
-    <div class="fdw-focus-card-head" style="margin-bottom: var(--dashboard-fib-8);">
-        <div style="display: flex; gap: 12px; align-items: center;">
-            <span class="fdw-focus-index" style="color: var(--danger);">🚨</span>
+<article class="table-card dashboard-focus-card dashboard-focus-card--danger">
+    <div class="fdw-focus-card-head dashboard-advisor-card-head">
+        <div class="dashboard-advisor-title-group">
+            <span class="fdw-focus-index dashboard-advisor-index">Risco</span>
             <div>
-                <h2 style="font-size: 1.1rem; font-weight: 700;">Radar de Fuga (Termômetro de Cuidado)</h2>
-                <p style="font-size: 0.85rem; color: var(--muted);">Alunos com padrão de risco identificados. Abordagem humana recomendada.</p>
+                <h2 class="dashboard-advisor-heading">Radar de Fuga (Termometro de Cuidado)</h2>
+                <p class="dashboard-advisor-subheading">Alunos com padrao de risco identificados. Abordagem humana recomendada.</p>
             </div>
         </div>
     </div>
     
     <div class="fdw-focus-body">
-        <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 16px;">
+        <ul class="dashboard-advisor-list">
             
             <!-- Student Risk Item 1 -->
-            <li id="churn-item-ml" style="padding: 16px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); transition: all 0.4s ease; overflow: hidden;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div class="avatar" style="width: 40px; height: 40px; background: rgba(239, 68, 68, 0.2); color: #fca5a5; font-weight: bold; font-size: 0.9rem;">
+            <li id="churn-item-ml" class="dashboard-advisor-item">
+                <div class="dashboard-advisor-item-head">
+                    <div class="dashboard-advisor-person">
+                        <div class="avatar dashboard-advisor-avatar dashboard-advisor-avatar--danger">
                             ML
                         </div>
                         <div>
-                            <strong style="font-size: 1.05rem;">Marcos Leonardo</strong>
-                            <div style="font-size: 0.8rem; color: var(--muted); margin-top: 2px;">
-                                Faltou 5 dias seguidos • Mensal Trimestral
+                            <strong class="dashboard-advisor-person-name">Marcos Leonardo</strong>
+                            <div class="dashboard-advisor-person-meta">
+                                Faltou 5 dias seguidos | Mensal Trimestral
                             </div>
                         </div>
                     </div>
-                    <span class="pill-badge" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); color: #fbbf24; font-size: 0.7rem; padding: 4px 8px;">
+                    <span class="pill-badge dashboard-advisor-pill dashboard-advisor-pill--warning">
                         Vence em 7 dias
                     </span>
                 </div>
                 
-                <div style="padding: 12px; border-radius: 8px; background: rgba(59, 130, 246, 0.05); border-left: 3px solid #3b82f6;">
-                    <p style="font-size: 0.85rem; margin: 0; line-height: 1.4;">
-                        <strong style="color: #60a5fa;">💡 Dica do Conselheiro:</strong> Marcos treina sempre às 19h. Mande um WhatsApp perguntando se as reuniões de trabalho apertaram. Não mencione o plano financeiro ainda. O foco é resgate.
+                <div class="dashboard-advisor-insight">
+                    <p class="dashboard-advisor-insight-copy">
+                        <strong class="dashboard-advisor-insight-kicker">Dica do Conselheiro:</strong> Marcos treina sempre as 19h. Mande um WhatsApp perguntando se as reunioes de trabalho apertaram. Nao mencione o plano financeiro ainda. O foco e resgate.
                     </p>
                 </div>
                 
-                <div style="margin-top: 16px; display: flex; gap: 8px;">
-                    <button class="button quick-action-btn" style="flex: 1; background: #25D366; color: white; border-color: #25D366;" onclick="window.open('https://wa.me/?text=Eai Marcos! Sumiu cara, ta tudo corrido nas reuniões?', '_blank'); handleAdvisorAction('churn-item-ml', 'Áudio Enviado')">📝 WhatsApp</button>
-                    <button class="button quick-action-btn secondary" onclick="handleAdvisorAction('churn-item-ml', 'Contato Registrado')">Marcar como "Abordado"</button>
+                <div class="dashboard-advisor-actions">
+                    <button class="button quick-action-btn dashboard-advisor-cta dashboard-advisor-cta--whatsapp" type="button" data-advisor-action="resolve-item" data-advisor-item="churn-item-ml" data-advisor-result="Audio enviado" data-external-url="https://wa.me/?text=Eai Marcos! Sumiu cara, ta tudo corrido nas reunioes?">WhatsApp</button>
+                    <button class="button quick-action-btn secondary dashboard-advisor-cta" type="button" data-advisor-action="resolve-item" data-advisor-item="churn-item-ml" data-advisor-result="Contato registrado">Marcar como abordado</button>
                 </div>
             </li>
 
             <!-- Student Risk Item 2 -->
-            <li id="churn-item-cr" style="padding: 16px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); transition: all 0.4s ease; overflow: hidden;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div class="avatar" style="width: 40px; height: 40px; background: rgba(245, 158, 11, 0.2); color: #fbbf24; font-weight: bold; font-size: 0.9rem;">
+            <li id="churn-item-cr" class="dashboard-advisor-item">
+                <div class="dashboard-advisor-item-head">
+                    <div class="dashboard-advisor-person">
+                        <div class="avatar dashboard-advisor-avatar dashboard-advisor-avatar--warning">
                             CR
                         </div>
                         <div>
-                            <strong style="font-size: 1.05rem;">Camila Rodrigues</strong>
-                            <div style="font-size: 0.8rem; color: var(--muted); margin-top: 2px;">
-                                1x na semana (Antes: 4x) • Anual
+                            <strong class="dashboard-advisor-person-name">Camila Rodrigues</strong>
+                            <div class="dashboard-advisor-person-meta">
+                                1x na semana (Antes: 4x) | Anual
                             </div>
                         </div>
                     </div>
-                    <span class="pill-badge balance-pill-blue" style="font-size: 0.7rem; padding: 4px 8px;">
+                    <span class="pill-badge balance-pill-blue dashboard-advisor-pill">
                         Ativa
                     </span>
                 </div>
                 
-                <div style="padding: 12px; border-radius: 8px; background: rgba(59, 130, 246, 0.05); border-left: 3px solid #3b82f6;">
-                    <p style="font-size: 0.85rem; margin: 0; line-height: 1.4;">
-                        <strong style="color: #60a5fa;">💡 Dica do Conselheiro:</strong> Frequência despencou. O coach registrou "Dor no ombro" há 15 dias. Aborde pessoalmente amanhã para entender se a lesão piorou.
+                <div class="dashboard-advisor-insight">
+                    <p class="dashboard-advisor-insight-copy">
+                        <strong class="dashboard-advisor-insight-kicker">Dica do Conselheiro:</strong> Frequencia despencou. O coach registrou "Dor no ombro" ha 15 dias. Aborde pessoalmente amanha para entender se a lesao piorou.
                     </p>
                 </div>
-                <div style="margin-top: 16px; display: flex; gap: 8px;">
-                    <button class="button quick-action-btn" style="flex: 1;" onclick="handleAdvisorAction('churn-item-cr', 'Coach Avisado')">Avisar Coach do turno</button>
+                <div class="dashboard-advisor-actions">
+                    <button class="button quick-action-btn dashboard-advisor-cta" type="button" data-advisor-action="resolve-item" data-advisor-item="churn-item-cr" data-advisor-result="Coach avisado">Avisar coach do turno</button>
                 </div>
             </li>
 
         </ul>
     </div>
 </article>
-
-<script>
-function handleAdvisorAction(itemId, actionName) {
-    const el = document.getElementById(itemId);
-    if(!el) return;
-    
-    // Fix dimensions for smooth collapse later
-    el.style.height = el.offsetHeight + 'px';
-    
-    // Phase 1: Slide out
-    el.style.transform = 'translateX(20px)';
-    el.style.opacity = '0';
-    
-    setTimeout(() => {
-        // Phase 2: Show Success state (Dopamine hit)
-        el.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 24px 0; text-align: center;">
-                <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(34, 197, 94, 0.1); color: #22c55e; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-                <strong style="color: var(--ink); font-size: 1.1rem; letter-spacing: -0.01em;">Mandou bem, Maestro!</strong>
-                <span style="color: var(--muted); font-size: 0.9rem; margin-top: 4px;">Ação: ${actionName}</span>
-            </div>
-        `;
-        el.style.background = 'var(--surface)';
-        el.style.borderColor = 'rgba(34, 197, 94, 0.2)';
-        el.style.transform = 'translateX(0)';
-        el.style.opacity = '1';
-        
-        // Phase 3: Collapse and remove
-        setTimeout(() => {
-            el.style.height = '0px';
-            el.style.padding = '0px';
-            el.style.margin = '0px';
-            el.style.opacity = '0';
-            el.style.borderWidth = '0px';
-            setTimeout(() => el.remove(), 400);
-        }, 2500);
-    }, 400);
-}
-</script>

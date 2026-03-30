@@ -2,7 +2,12 @@
 ARQUIVO: grids e cards compartilhados.
 
 POR QUE ELE EXISTE:
-- concentra estruturas de painel e cards reutilizadas entre paginas operacionais e dashboards.
+- concentra estruturas de painel e cards reutilizadas entre paginas operacionais e dashboards
+- define a familia canonica de surfaces
+
+REGRA:
+- `.card` e `.table-card` pertencem a mesma familia
+- helpers atmosfericos podem decorar, mas nao redefinir o container base
 */
 
 .panel-grid {
@@ -14,47 +19,61 @@ POR QUE ELE EXISTE:
 
 .card,
 .table-card {
-    border: 1px solid var(--line);
-    border-radius: var(--radius-card);
-    background: var(--surface);
-    box-shadow: var(--shadow-soft);
-    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
     position: relative;
     overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+    border-radius: var(--radius-panel);
+    background: var(--fdw-panel);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    transition:
+        transform var(--motion-base) var(--ease-standard),
+        box-shadow var(--motion-base) var(--ease-standard),
+        border-color var(--motion-base) var(--ease-standard),
+        background var(--motion-base) var(--ease-standard);
+}
+
+.card::before,
+.table-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-primary) 48%, transparent), color-mix(in srgb, var(--theme-accent-support) 42%, transparent));
+    opacity: 0.72;
+    pointer-events: none;
+}
+
+.card::after,
+.table-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -28px -36px auto;
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent-support) 14%, transparent), transparent 72%);
+    opacity: 0.72;
+    pointer-events: none;
 }
 
 .card:hover,
 .table-card:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--theme-border-strong) 94%, transparent);
+    box-shadow: var(--shadow-lift);
+}
+
+.card:active,
+.table-card:active {
     transform: translateY(0);
-    box-shadow: var(--shadow-lift);
-    border-color: var(--line-strong);
 }
 
-.card::before,
-.table-card::before,
-.card::after,
-.table-card::after {
-    display: none;
-}
-
-body[data-theme="dark"] .card,
-body[data-theme="dark"] .table-card {
-    background: var(--surface);
-    border-color: var(--line);
-    box-shadow: var(--shadow-soft);
-}
-
-body[data-theme="dark"] .card:hover,
-body[data-theme="dark"] .table-card:hover {
-    border-color: var(--line-strong);
-    box-shadow: var(--shadow-lift);
-}
-
-body[data-theme="dark"] .card::before,
-body[data-theme="dark"] .table-card::before,
-body[data-theme="dark"] .card::after,
-body[data-theme="dark"] .table-card::after {
-    display: none;
+.card:focus-within,
+.table-card:focus-within {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 44%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-support) 10%, transparent), var(--shadow-soft);
 }
 
 .card {
@@ -83,17 +102,18 @@ body[data-theme="dark"] .table-card::after {
     margin-bottom: 12px;
 }
 
-.card-head-main {
+.card-head-main,
+.card-head-copy-wrap,
+.card-body,
+.card-value-stack,
+.card-content,
+.card-list-item {
     min-width: 0;
 }
 
 .card-head-main-stack {
     display: grid;
     gap: 0;
-}
-
-.card-head-copy-wrap {
-    min-width: 0;
 }
 
 .card-head-aside {
@@ -106,7 +126,7 @@ body[data-theme="dark"] .table-card::after {
     margin: 0;
     font-size: 1.08rem;
     font-weight: 800;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.04em;
     line-height: 1.14;
 }
 
@@ -129,17 +149,21 @@ body[data-theme="dark"] .table-card::after {
     font-size: 0.84rem;
 }
 
-.card-actions {
+.card-actions,
+.card-footer {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--responsive-cluster-gap);
 }
 
+.card-actions {
+    align-items: center;
+}
+
 .card-body {
     display: grid;
     gap: 12px;
-    min-width: 0;
 }
 
 .card-body-metric {
@@ -153,33 +177,20 @@ body[data-theme="dark"] .table-card::after {
 .card-value-stack {
     display: grid;
     gap: 4px;
-    min-width: 0;
 }
 
 .card-content {
     display: grid;
     gap: 10px;
-    min-width: 0;
 }
 
-.card-meta {
+.card-meta,
+.card-list {
     margin: 0;
 }
 
 .card-footer {
     margin-top: 12px;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--responsive-cluster-gap);
-}
-
-.card-list {
-    margin: 0;
-}
-
-.card-list-item {
-    min-width: 0;
 }
 
 .card-action {
@@ -208,44 +219,6 @@ body[data-theme="dark"] .table-card::after {
     border: 0;
 }
 
-@media (max-width: 960px) {
-    .panel-grid,
-    .layout-grid {
-        gap: 18px;
-    }
-
-    .layout-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .card-head > :last-child {
-        align-self: flex-start;
-    }
-}
-
-@media (max-width: 720px) {
-    .table-card,
-    .card,
-    .quick-card {
-        padding-left: 20px;
-        padding-right: 20px;
-        padding-top: 22px;
-        padding-bottom: 22px;
-        border-radius: 22px;
-    }
-}
-
-@media (max-width: 640px) {
-    .card,
-    .table-card,
-    .quick-card {
-        border-radius: 22px;
-    }
-}
-
-
-/* --- Front Display Wall: familias de decisao e mudanca --- */
-
 .metric-card-compact {
     padding: 16px 18px;
 }
@@ -268,7 +241,7 @@ body[data-theme="dark"] .table-card::after {
     padding: 6px 10px;
     border-radius: 999px;
     border: 1px solid var(--line);
-    background: var(--bg);
+    background: color-mix(in srgb, var(--surface-strong) 72%, transparent);
     font-size: 0.76rem;
     font-weight: 700;
     line-height: 1;
@@ -329,23 +302,27 @@ body[data-theme="dark"] .table-card::after {
     min-height: 100%;
     padding: 18px;
     border-radius: var(--radius-panel);
-    border: 1px solid var(--line);
-    background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-strong) 84%, transparent), color-mix(in srgb, var(--surface) 94%, transparent));
     color: inherit;
     text-decoration: none;
     box-shadow: var(--shadow-soft);
-    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+    transition:
+        transform var(--motion-base) var(--ease-standard),
+        box-shadow var(--motion-base) var(--ease-standard),
+        border-color var(--motion-base) var(--ease-standard),
+        background var(--motion-base) var(--ease-standard);
 }
 
 .fdw-focus-card:hover {
-    transform: translateY(0);
+    transform: translateY(-1px);
     box-shadow: var(--shadow-lift);
-    border-color: var(--brand);
+    border-color: color-mix(in srgb, var(--brand) 24%, transparent);
 }
 
 .fdw-focus-card.is-primary {
-    background: linear-gradient(160deg, color-mix(in srgb, var(--brand) 8%, white), var(--surface));
-    border-color: color-mix(in srgb, var(--brand) 22%, transparent);
+    background: linear-gradient(160deg, color-mix(in srgb, var(--theme-accent-primary) 8%, transparent), color-mix(in srgb, var(--surface-strong) 92%, transparent));
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 24%, transparent);
 }
 
 .fdw-focus-card-head,
@@ -366,7 +343,7 @@ body[data-theme="dark"] .table-card::after {
     padding: 0 10px;
     border-radius: 10px;
     border: 1px solid var(--line);
-    background: var(--bg);
+    background: color-mix(in srgb, var(--surface-strong) 78%, transparent);
     color: var(--brand);
     font-size: 0.72rem;
     font-weight: 800;
@@ -389,7 +366,7 @@ body[data-theme="dark"] .table-card::after {
     font-weight: 700;
     letter-spacing: 0.04em;
     border: 1px solid var(--line);
-    background: var(--bg);
+    background: color-mix(in srgb, var(--surface-strong) 72%, transparent);
     color: var(--ink-soft);
 }
 
@@ -440,134 +417,6 @@ body[data-theme="dark"] .table-card::after {
     font-weight: 700;
 }
 
-body[data-theme="dark"] .fdw-focus-card.is-primary {
-    background: linear-gradient(160deg, color-mix(in srgb, var(--brand) 16%, transparent), var(--surface));
-}
-
-body[data-theme="dark"] .fdw-focus-card {
-    background: var(--surface);
-    border-color: var(--line);
-}
-
-@media (max-width: 720px) {
-    .fdw-focus-list {
-        grid-template-columns: 1fr;
-    }
-
-    .fdw-focus-card {
-        padding: 16px;
-    }
-}
-
-/* --- Card Interaction Consistency --- */
-.card,
-.table-card {
-    transition: transform var(--motion-base) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard);
-}
-
-.card:hover,
-.table-card:hover {
-    transform: translateY(0);
-}
-
-.card:active,
-.table-card:active {
-    transform: translateY(0);
-}
-
-.card:focus-within,
-.table-card:focus-within {
-    border-color: var(--line-strong);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08), var(--shadow-soft);
-}
-
-/* --- Front Display Wall facade cards pass (Plates Concept) --- */
-.card,
-.table-card {
-    border-radius: 24px;
-    border-color: color-mix(in srgb, var(--fdw-line) 40%, transparent);
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(251, 253, 255, 0.3)), var(--fdw-panel);
-    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.03), 0 4px 12px rgba(15, 23, 42, 0.01), inset 1px 1px 0 rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(8px);
-}
-
-.card::before {
-    display: block;
-    content: "";
-    position: absolute;
-    inset: 0 auto auto 0;
-    width: 100%;
-    height: 2px;
-    background: linear-gradient(90deg, rgba(196, 91, 45, 0.82), rgba(29, 78, 216, 0.74));
-    opacity: 0.74;
-}
-
-.card::after,
-.table-card::after {
-    display: block;
-    content: "";
-    position: absolute;
-    inset: auto -38px -46px auto;
-    width: 140px;
-    height: 140px;
-    border-radius: 999px;
-    background: radial-gradient(circle, rgba(29, 78, 216, 0.08), transparent 72%);
-    pointer-events: none;
-}
-
-.card:hover,
-.table-card:hover {
-    box-shadow: var(--fdw-shadow-lift);
-    border-color: var(--fdw-line-strong);
-}
-
-body[data-theme="dark"] .card,
-body[data-theme="dark"] .table-card {
-    background: var(--fdw-panel);
-    border-color: var(--fdw-line);
-    box-shadow: var(--fdw-shadow);
-}
-
-body[data-theme="dark"] .card::after,
-body[data-theme="dark"] .table-card::after {
-    background: radial-gradient(circle, rgba(45, 212, 191, 0.08), transparent 72%);
-}
-
-.card-title {
-    letter-spacing: -0.04em;
-}
-
-
-/* --- Front Display Wall artistic cards pass --- */
-.card::before {
-    height: 2px;
-    background: linear-gradient(90deg, rgba(212, 102, 44, 0.4), rgba(37, 85, 220, 0.3));
-}
-
-.card::after,
-.table-card::after {
-    width: 80px;
-    height: 80px;
-    background: radial-gradient(circle, rgba(37, 85, 220, 0.02), transparent 72%);
-}
-
-.card:hover,
-.table-card:hover {
-    transform: translateY(0);
-}
-
-.fdw-focus-card {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 248, 252, 0.98));
-    border-color: rgba(72, 92, 124, 0.14);
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.72);
-}
-
-.fdw-focus-card.is-primary {
-    background: linear-gradient(160deg, rgba(255, 248, 242, 0.99), rgba(244, 248, 255, 0.99));
-    border-color: rgba(212, 102, 44, 0.14);
-}
-
-/* --- Contextual Semantic Lines --- */
 .dashboard-glance-card.is-emergency::before,
 .card-decor-topstripe.is-emergency::before {
     background: var(--danger);
@@ -586,67 +435,59 @@ body[data-theme="dark"] .table-card::after {
     opacity: 0.9;
 }
 
-/* --- Dark Mode Overrides for Artistic / Decorative Passes --- */
-body[data-theme="dark"] .card,
-body[data-theme="dark"] .table-card {
-    background: var(--surface) !important;
-    border-color: var(--line) !important;
-    box-shadow: var(--shadow-soft) !important;
+@media (max-width: 960px) {
+    .panel-grid,
+    .layout-grid {
+        gap: 18px;
+    }
+
+    .layout-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card-head > :last-child {
+        align-self: flex-start;
+    }
 }
 
-body[data-theme="dark"] .fdw-focus-card {
-    background: var(--surface) !important;
-    border-color: var(--line) !important;
-    box-shadow: none !important;
+@media (max-width: 720px) {
+    .table-card,
+    .card,
+    .quick-card {
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-top: 22px;
+        padding-bottom: 22px;
+        border-radius: 22px;
+    }
+
+    .fdw-focus-list {
+        grid-template-columns: 1fr;
+    }
+
+    .fdw-focus-card {
+        padding: 16px;
+    }
 }
 
-body[data-theme="dark"] .fdw-focus-card.is-primary {
-    background: linear-gradient(160deg, color-mix(in srgb, var(--brand) 16%, transparent), var(--surface)) !important;
-    border-color: color-mix(in srgb, var(--brand) 22%, transparent) !important;
+@media (max-width: 640px) {
+    .card,
+    .table-card,
+    .quick-card {
+        border-radius: 22px;
+    }
 }
-
-/* --- Visual Estético: Sombras iOS Flutuantes --- */
-
-/* 1. Sombra na Estrutura da Página */
-.content::before {
-    box-shadow: 6px 6px 24px rgba(15, 23, 42, 0.06), 2px 2px 8px rgba(15, 23, 42, 0.04) !important;
-}
-
-/* 2. Sombra nos Cards Padrão, Tabela e Status (Light e Dark) */
-.card,
-.table-card,
-.dashboard-glance-card,
-body[data-theme="dark"] .card,
-body[data-theme="dark"] .table-card,
-body[data-theme="dark"] .dashboard-glance-card {
-    box-shadow: 6px 6px 18px rgba(15, 23, 42, 0.05), 1px 1px 6px rgba(15, 23, 42, 0.03) !important;
-    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease !important;
-}
-
-/* 3. Efeito de Elevação (Hover) */
-.card:hover,
-.table-card:hover,
-.dashboard-glance-card:hover,
-body[data-theme="dark"] .card:hover,
-body[data-theme="dark"] .table-card:hover,
-body[data-theme="dark"] .dashboard-glance-card:hover {
-    transform: translate(-1px, -1px) !important;
-    box-shadow: 7px 7px 20px rgba(15, 23, 42, 0.06), 2px 2px 8px rgba(15, 23, 42, 0.03) !important;
-}
-
-/* --- Exceção: Grade de Aulas / Agenda (Telas Grandes) --- */
-/* Remove o deslocamento diagonal de 6px em visualizações desktop */
 
 @media (min-width: 1024px) {
     .class-grid-scene .card,
     .class-grid-scene .table-card,
     .class-grid-scene .dashboard-glance-card {
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 1px 4px rgba(15, 23, 42, 0.02) !important;
-        transform: none !important;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 1px 4px rgba(15, 23, 42, 0.02);
+        transform: none;
     }
 
     .class-grid-scene .card:hover,
     .class-grid-scene .table-card:hover {
-        transform: translateY(-2px) !important; /* Levanta para cima padrão, sem diagonal */
+        transform: translateY(-2px);
     }
 }

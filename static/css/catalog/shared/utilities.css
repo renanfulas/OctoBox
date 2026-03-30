@@ -373,39 +373,12 @@ POR QUE ELE EXISTE:
     box-shadow: 0 0 0 5px rgba(184, 92, 56, 0.12);
 }
 
-.note-panel {
-    padding: 16px 18px;
-    border-radius: 18px;
-    border: 1px solid var(--line);
-    line-height: 1.6;
-    background: rgba(255, 255, 255, 0.68);
-}
-
-.note-panel-success {
-    background: rgba(47, 122, 100, 0.08);
-    border-color: rgba(47, 122, 100, 0.12);
-}
-
-.note-panel-warm {
-    background: rgba(184, 92, 56, 0.1);
-    border-color: rgba(184, 92, 56, 0.16);
-}
-
-.note-panel-cream {
-    background: rgba(255, 252, 247, 0.92);
-    border-color: rgba(184, 92, 56, 0.16);
-}
-
-.note-panel-success-soft {
-    background: rgba(250, 255, 252, 0.92);
-    border-color: rgba(47, 122, 100, 0.14);
-}
-
-.note-panel-danger {
-    background: rgba(168, 68, 52, 0.08);
-    border-color: rgba(168, 68, 52, 0.18);
-    color: var(--danger);
-}
+/*
+REGRA:
+- `note-panel` deixou de ser autoridade visual local
+- a familia agora mora em `design-system/components/states.css`
+- utilitarios do catalogo so podem complementar layout, nao definir tema
+*/
 
 .disclosure-panel {
     border: 1px solid var(--line);
@@ -538,9 +511,6 @@ body[data-theme="dark"] .glass-card {
     box-shadow: 0 6px 16px rgba(249, 115, 22, 0.35);
 }
 
-body[data-theme="dark"] .note-panel,
-body[data-theme="dark"] .note-panel-cream,
-body[data-theme="dark"] .note-panel-success-soft,
 body[data-theme="dark"] .disclosure-panel,
 body[data-theme="dark"] .installment-shell,
 body[data-theme="dark"] .installment-preview {

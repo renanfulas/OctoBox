@@ -5,25 +5,40 @@ POR QUE ELE EXISTE:
 - isola feedbacks visuais do sistema para que mudancas em alertas nao afetem cards e tabelas.
 */
 
+:root {
+    --notice-surface: color-mix(in srgb, var(--theme-surface-panel) 88%, transparent);
+    --notice-surface-strong: color-mix(in srgb, var(--theme-surface-panel-strong) 90%, transparent);
+    --notice-border: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    --notice-shadow: var(--theme-shadow-soft);
+    --notice-title: var(--theme-text-primary);
+    --notice-copy: var(--theme-text-secondary);
+    --notice-rail: color-mix(in srgb, var(--theme-text-muted) 30%, transparent);
+}
+
 .state-empty,
-.state-notice {
+.notice-panel,
+.state-notice,
+.note-panel {
     display: grid;
     gap: 12px;
     padding: 16px 18px;
     border-radius: var(--radius-card);
-    border: 1px solid var(--line);
-    background: var(--surface);
-    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--notice-border);
+    background: var(--notice-surface);
+    box-shadow: var(--notice-shadow);
 }
 
 .state-empty.is-compact,
-.state-notice.is-compact {
+.notice-panel.is-compact,
+.state-notice.is-compact,
+.note-panel.is-compact {
     padding: 14px 16px;
     border-radius: 16px;
     gap: 10px;
 }
 
 .state-empty-head,
+.notice-panel-head,
 .state-notice-head {
     display: flex;
     justify-content: space-between;
@@ -33,87 +48,115 @@ POR QUE ELE EXISTE:
 
 
 .state-empty-title,
+.notice-panel-title,
 .state-notice-title {
     margin: 0;
     font-size: 1rem;
     line-height: 1.35;
-    color: var(--ink);
-}
-
-body[data-theme="dark"] .state-empty-title,
-body[data-theme="dark"] .state-notice-title {
-    color: var(--ink) !important;
+    color: var(--notice-title);
 }
 
 .state-empty-copy,
+.notice-panel-copy,
 .state-notice-copy,
 .state-empty-hint,
+.notice-panel-hint,
 .state-notice-hint {
     margin: 6px 0 0;
-    color: var(--muted);
+    color: var(--notice-copy);
     line-height: 1.6;
 }
 
 .state-empty-hint,
+.notice-panel-hint,
 .state-notice-hint {
     margin-top: 0;
     font-size: 0.95rem;
 }
 
 .state-empty {
-    border-color: var(--line);
-    background: var(--surface);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 95%, transparent);
+    background: color-mix(in srgb, var(--theme-surface) 92%, transparent);
 }
 
+.notice-panel,
 .state-notice {
     position: relative;
     overflow: hidden;
 }
 
+.notice-panel::before,
 .state-notice::before,
+.note-panel::before,
 .message::before {
     content: "";
     position: absolute;
     inset: 12px auto 12px 10px;
     width: 4px;
     border-radius: 999px;
-    background: rgba(148, 163, 184, 0.4);
+    background: var(--notice-rail);
 }
 
+.notice-panel--info,
 .state-notice-info {
-    border-color: rgba(37, 99, 235, 0.2);
-    background: var(--surface);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 28%, var(--theme-border-soft) 72%);
+    background: color-mix(in srgb, var(--theme-surface-panel) 82%, transparent);
 }
 
+.notice-panel--info::before,
 .state-notice-info::before {
-    background: var(--brand);
+    background: color-mix(in srgb, var(--theme-accent-support) 86%, white 14%);
 }
 
+.notice-panel--warning,
+.note-panel-warm,
+.note-panel-cream,
 .state-notice-warning {
-    border-color: rgba(245, 158, 11, 0.24);
-    background: var(--surface);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 30%, var(--theme-border-soft) 70%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 46%, var(--theme-surface-panel) 54%);
 }
 
+.notice-panel--warning::before,
+.note-panel-warm::before,
+.note-panel-cream::before,
 .state-notice-warning::before {
-    background: #f59e0b;
+    background: var(--theme-accent-warning);
 }
 
+.notice-panel--success,
+.note-panel-success,
+.note-panel-success-soft,
 .state-notice-success {
-    border-color: rgba(16, 185, 129, 0.22);
-    background: var(--surface);
+    border-color: color-mix(in srgb, var(--theme-accent-success) 28%, var(--theme-border-soft) 72%);
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 40%, var(--theme-surface-panel) 60%);
 }
 
+.notice-panel--success::before,
+.note-panel-success::before,
+.note-panel-success-soft::before,
 .state-notice-success::before {
-    background: var(--accent);
+    background: var(--theme-accent-success);
 }
 
+.notice-panel--danger,
+.note-panel-danger,
 .state-notice-danger {
-    border-color: rgba(234, 88, 12, 0.22);
-    background: var(--surface);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 28%, var(--theme-border-soft) 72%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 40%, var(--theme-surface-panel) 60%);
 }
 
+.notice-panel--danger::before,
+.note-panel-danger::before,
 .state-notice-danger::before {
-    background: var(--danger);
+    background: var(--theme-accent-danger);
+}
+
+.note-panel-cream {
+    color: var(--theme-text-secondary);
+}
+
+.note-panel-danger {
+    color: var(--theme-text-primary);
 }
 
 .message-stack {
@@ -126,71 +169,65 @@ body[data-theme="dark"] .state-notice-title {
     position: relative;
     padding: 15px 18px 15px 22px;
     border-radius: var(--radius-panel);
-    border: 1px solid var(--line);
-    background: var(--surface);
-    box-shadow: var(--shadow-soft);
-}
-
-body[data-theme="dark"] .state-empty,
-body[data-theme="dark"] .state-notice,
-body[data-theme="dark"] .message {
-    border-color: var(--line);
-    background: var(--surface);
-    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--notice-border);
+    background: var(--notice-surface);
+    box-shadow: var(--notice-shadow);
 }
 
 .message-notice {
     padding-left: 6px;
 }
 
-.message .state-notice {
+.message :is(.notice-panel, .state-notice, .note-panel) {
     padding-left: 10px;
     border: 0;
     background: transparent;
+    box-shadow: none;
 }
 
-.message .state-notice::before {
+.message :is(.notice-panel, .state-notice, .note-panel)::before {
     display: none;
 }
 
 .message.success {
-    border-color: rgba(16, 185, 129, 0.22);
-    background: var(--surface);
+    border-color: color-mix(in srgb, var(--theme-accent-success) 28%, var(--theme-border-soft) 72%);
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 40%, var(--theme-surface-panel) 60%);
 }
 
 .message.success::before {
-    background: var(--accent);
+    background: var(--theme-accent-success);
 }
 
 .message.error {
-    border-color: rgba(234, 88, 12, 0.22);
-    background: var(--surface);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 28%, var(--theme-border-soft) 72%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 40%, var(--theme-surface-panel) 60%);
 }
 
 .message.error::before {
-    background: var(--danger);
+    background: var(--theme-accent-danger);
 }
 
 .message.warning {
-    border-color: rgba(245, 158, 11, 0.24);
-    background: var(--surface);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 30%, var(--theme-border-soft) 70%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 46%, var(--theme-surface-panel) 54%);
 }
 
 .message.warning::before {
-    background: #f59e0b;
+    background: var(--theme-accent-warning);
 }
 
 .message.info {
-    border-color: rgba(37, 99, 235, 0.22);
-    background: var(--surface);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 28%, var(--theme-border-soft) 72%);
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 40%, var(--theme-surface-panel) 60%);
 }
 
 .message.info::before {
-    background: var(--brand);
+    background: var(--theme-accent-support);
 }
 
 @media (max-width: 720px) {
     .state-empty-head,
+    .notice-panel-head,
     .state-notice-head {
         flex-direction: column;
         align-items: stretch;

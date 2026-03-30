@@ -1,5 +1,6 @@
 {% extends "layouts/base.html" %}
 {% load dashboard_filters %}
+{% load static %}
 
 {% block content %}
 <div class="scene-stack dashboard-shell workspace-shell" data-page="advisor-dashboard" data-screen="advisor">
@@ -7,7 +8,7 @@
     <!-- Component 1: Narrative Engine -->
     {% include "dashboard/blocks/advisor_narrative.html" %}
 
-    <section class="workspace-grid-layout" aria-label="Painel de Conselhos" style="margin-top: 48px;">
+    <section class="workspace-grid-layout advisor-workspace-grid" aria-label="Painel de Conselhos">
         <div class="workspace-grid-main">
             <!-- Component 2: Churn Radar & Operational Focus -->
             {% include "dashboard/blocks/advisor_churn_radar.html" %}
@@ -23,4 +24,8 @@
     {% include "dashboard/blocks/advisor_manifesto_modal.html" %}
 
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/pages/dashboard/advisor-dashboard.js' %}?v={{ static_asset_version }}"></script>
 {% endblock %}
