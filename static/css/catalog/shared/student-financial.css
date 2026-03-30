@@ -189,6 +189,10 @@ body[data-theme="dark"] .student-financial-history-card {
     margin: 18px 0 16px;
 }
 
+.student-workspace-map-intro {
+    margin: 18px 0 0;
+}
+
 .student-workspace-map-card {
     display: grid;
     gap: 10px;

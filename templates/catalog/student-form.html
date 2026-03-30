@@ -61,16 +61,24 @@ PONTOS CRITICOS:
         {% include "includes/catalog/student_form/plans/hero.html" with page=page %}
     </div>
 
+    <section class="student-workspace-map-intro notice-panel notice-panel--info" aria-label="Ordem de leitura da ficha">
+        <p class="eyebrow">Sequencia curta</p>
+        <h2 class="section-title-sm">Cadastro primeiro. Financeiro depois.</h2>
+        <p class="meta-text">
+            Primeiro confirme identidade e contexto do aluno. Depois use a camada financeira para vinculo, cobranca e historico sem perder o fio da conversa.
+        </p>
+    </section>
+
     <section class="student-workspace-map" aria-label="Mapa da ficha do aluno">
         <article class="student-workspace-map-card is-current">
-            <p class="eyebrow">Cadastro</p>
+            <p class="eyebrow">01 Cadastro</p>
             <h2 class="section-title-sm">Comece pelo essencial.</h2>
             <p class="meta-text">Nome, WhatsApp e contexto do aluno sustentam o resto da ficha sem ruido.</p>
             <a class="button secondary" href="#student-form-essential">Abrir cadastro</a>
         </article>
 
         <article class="student-workspace-map-card{% if page.data.financial_overview.has_student %} is-ready{% else %} is-muted{% endif %}">
-            <p class="eyebrow">Financeiro</p>
+            <p class="eyebrow">02 Financeiro</p>
             <h2 class="section-title-sm">Cobranca e vinculo no mesmo lugar.</h2>
             <p class="meta-text">
                 {% if page.data.financial_overview.has_student %}

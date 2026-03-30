@@ -21,6 +21,12 @@ PONTOS CRITICOS:
 <div class="operation-shell finance-shell workspace-shell" data-page="finance" data-screen="catalog-finance" data-slot="page-root">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero nested_include="includes/catalog/finance/views/command_snapshot.html" %}
 
+    <section class="finance-section-intro finance-priority-intro" aria-label="Ordem de leitura do financeiro">
+        <p class="eyebrow">Trilha de decisao</p>
+        <h2 class="section-title-sm">Comece pelo caixa. Depois pressione a fila. So entao aprofunde carteira e filtros.</h2>
+        <p class="body-copy text-muted no-margin">Movimentos mostram o pulso real. Fila de cobranca mostra a tensao. Carteira e filtros entram depois para aprofundar, nao para roubar a abertura.</p>
+    </section>
+
     <div class="owner-metrics-panel section-gap" data-panel="finance-interactive-kpis">
         <section class="panel-grid operation-metric-grid owner-metric-grid interactive-tab-triggers" aria-label="Navegacao principal financeira">
             {% for card in page.data.interactive_kpis %}

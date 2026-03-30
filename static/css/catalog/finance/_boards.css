@@ -159,6 +159,11 @@ POR QUE ELE EXISTE:
     background: rgba(255, 255, 255, 0.62);
 }
 
+.finance-priority-intro {
+    display: grid;
+    gap: 6px;
+}
+
 /* ── Trend/movement guide & plan focus ── */
 
 .finance-trend-guide-grid {
