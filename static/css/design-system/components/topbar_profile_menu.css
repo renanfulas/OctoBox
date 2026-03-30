@@ -22,6 +22,10 @@
     transform: scale(0.98);
 }
 
+.profile-meta {
+    pointer-events: none;
+}
+
 /* O Menu em si */
 .profile-dropdown {
     position: absolute;
