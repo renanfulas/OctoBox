@@ -80,7 +80,6 @@
       window.open(externalUrl, '_blank', 'noopener');
     }
 
-    el.style.height = el.offsetHeight + 'px';
     el.classList.add('dashboard-advisor-item--processing');
 
     setTimeout(function() {

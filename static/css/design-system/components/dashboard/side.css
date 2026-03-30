@@ -103,6 +103,7 @@
 }
 
 .dashboard-advisor-item {
+    max-height: 420px;
     padding: 16px;
     border-radius: 12px;
     background: color-mix(in srgb, var(--theme-surface-secondary) 68%, transparent);
@@ -110,7 +111,7 @@
     transition:
         transform 0.4s ease,
         opacity 0.4s ease,
-        height 0.4s ease,
+        max-height 0.4s ease,
         padding 0.4s ease,
         margin 0.4s ease,
         border-width 0.4s ease,
@@ -310,7 +311,7 @@
 }
 
 .dashboard-advisor-item.dashboard-advisor-item--collapsed {
-    height: 0;
+    max-height: 0;
     padding: 0;
     margin: 0;
     opacity: 0;
