@@ -84,9 +84,13 @@
         return panel.dataset.dashboardHidden === 'true';
       });
 
-      hiddenList.innerHTML = '';
+      hiddenList.replaceChildren();
       if (!hiddenPanels.length) {
-        hiddenList.innerHTML = '<p class="dashboard-layout-hidden-empty" data-dashboard-hidden-empty>Nenhum bloco oculto.</p>';
+        var emptyState = document.createElement('p');
+        emptyState.className = 'dashboard-layout-hidden-empty';
+        emptyState.dataset.dashboardHiddenEmpty = 'true';
+        emptyState.textContent = 'Nenhum bloco oculto.';
+        hiddenList.appendChild(emptyState);
         if (toolbar) {
           toolbar.classList.remove('has-hidden-blocks');
         }
@@ -260,7 +264,7 @@
       toggleButton.textContent = isEditing ? 'Fechar organização' : 'Organizar painel';
       
       if (resetButton) {
-        resetButton.style.display = isEditing ? 'inline-flex' : 'none';
+        resetButton.hidden = !isEditing;
       }
       
       setStatus(isEditing ? 'Modo de organização ativo.' : 'Modo de organização fechado.');

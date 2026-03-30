@@ -33,17 +33,41 @@
   }
 
   function buildSuccessMarkup(actionName) {
-    return (
-      '<div class="dashboard-advisor-success">' +
-        '<div class="dashboard-advisor-success-icon" aria-hidden="true">' +
-          '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">' +
-            '<polyline points="20 6 9 17 4 12"></polyline>' +
-          '</svg>' +
-        '</div>' +
-        '<strong class="dashboard-advisor-success-title">Mandou bem, Maestro!</strong>' +
-        '<span class="dashboard-advisor-success-copy">Acao: ' + actionName + '</span>' +
-      '</div>'
-    );
+    var wrapper = document.createElement('div');
+    var icon = document.createElement('div');
+    var title = document.createElement('strong');
+    var copy = document.createElement('span');
+    var svgNamespace = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(svgNamespace, 'svg');
+    var polyline = document.createElementNS(svgNamespace, 'polyline');
+
+    wrapper.className = 'dashboard-advisor-success';
+    icon.className = 'dashboard-advisor-success-icon';
+    icon.setAttribute('aria-hidden', 'true');
+
+    svg.setAttribute('width', '24');
+    svg.setAttribute('height', '24');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '3');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    polyline.setAttribute('points', '20 6 9 17 4 12');
+
+    svg.appendChild(polyline);
+    icon.appendChild(svg);
+
+    title.className = 'dashboard-advisor-success-title';
+    title.textContent = 'Mandou bem, Maestro!';
+    copy.className = 'dashboard-advisor-success-copy';
+    copy.textContent = 'Acao: ' + actionName;
+
+    wrapper.appendChild(icon);
+    wrapper.appendChild(title);
+    wrapper.appendChild(copy);
+
+    return wrapper;
   }
 
   function resolveAdvisorItem(itemId, actionName, externalUrl) {
@@ -60,7 +84,7 @@
     el.classList.add('dashboard-advisor-item--processing');
 
     setTimeout(function() {
-      el.innerHTML = buildSuccessMarkup(actionName);
+      el.replaceChildren(buildSuccessMarkup(actionName));
       el.classList.remove('dashboard-advisor-item--processing');
       el.classList.add('dashboard-advisor-item--success');
 
