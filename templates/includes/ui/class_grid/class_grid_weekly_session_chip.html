@@ -10,9 +10,10 @@
             <p class="class-grid-meta">{{ item.occupied_slots }}/{{ item.capacity }} lugar(es)</p>
         </div>
         {% if page.capabilities.can_manage_classes %}
+        {% url 'class-grid' as class_grid_url %}
         <div class="card-footer class-chip-actions">
             <div class="actions actions-tight">
-                <a class="button secondary button-sm" href="/grade-aulas/?{% if page.behavior.current_query_string %}{{ page.behavior.current_query_string }}&{% endif %}edit_session={{ item.object.id }}#edicao-aula" data-action="open-class-grid-session-edit">Editar</a>
+                <a class="button secondary button-sm" href="{{ class_grid_url }}?{% if page.behavior.current_query_string %}{{ page.behavior.current_query_string }}&{% endif %}edit_session={{ item.object.id }}#edicao-aula" data-action="open-class-grid-session-edit">Editar</a>
                 <form method="post" data-action="delete-class-grid-session">
                     {% csrf_token %}
                     <input type="hidden" name="form_kind" value="session-action">

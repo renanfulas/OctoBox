@@ -489,22 +489,45 @@ POR QUE ELE EXISTE:
   var weeklyDayView = document.getElementById('weekly-modal-day-view');
   var weeklyModalTitle = document.getElementById('class-weekly-modal-title');
   var weeklyBoard = document.getElementById('weekly-board');
+  var weeklyDayGrid = weeklyDayView ? weeklyDayView.querySelector('[data-slot="class-grid-weekly-modal-day-grid"]') : null;
+
+  function setElementHidden(element, shouldHide) {
+    if (!element) {
+      return;
+    }
+
+    element.hidden = shouldHide;
+  }
+
+  function setWeeklyModalMode(mode) {
+    var isDayMode = mode === 'day';
+
+    setElementHidden(weeklyFullView, isDayMode);
+    setElementHidden(weeklyDayView, !isDayMode);
+  }
+
+  function resetWeeklyModalDayView() {
+    if (!weeklyDayGrid) {
+      return;
+    }
+
+    weeklyDayGrid.replaceChildren();
+  }
 
   function openWeeklyModal(mode, dayCard) {
     if (!weeklyDialog || !weeklyDialog.showModal) return;
 
     if (mode === 'day' && dayCard) {
       // Modo dia: esconde grade completa, mostra o dia clicado
-      if (weeklyFullView) weeklyFullView.style.display = 'none';
-      if (weeklyDayView) {
-        weeklyDayView.style.display = 'block';
-        weeklyDayView.innerHTML = '<div class="weekly-calendar-grid" style="grid-template-columns: 1fr; min-width: 0; max-width: 640px; margin: 0 auto;">' + dayCard.outerHTML + '</div>';
-        // Remove o cursor pointer do clone dentro do modal
-        var clone = weeklyDayView.querySelector('.weekly-day-card');
-        if (clone) {
-          clone.style.cursor = 'default';
-          clone.style.minHeight = 'auto';
-        }
+      setWeeklyModalMode('day');
+      resetWeeklyModalDayView();
+      if (weeklyDayGrid) {
+        var clone = dayCard.cloneNode(true);
+        clone.classList.add('is-modal-clone');
+        clone.classList.remove('is-interactive');
+        clone.removeAttribute('role');
+        clone.removeAttribute('tabindex');
+        weeklyDayGrid.appendChild(clone);
       }
       var dayLabel = dayCard.querySelector('.eyebrow');
       var dayDate = dayCard.querySelector('strong');
@@ -513,8 +536,8 @@ POR QUE ELE EXISTE:
       }
     } else {
       // Modo completo: mostra grade inteira
-      if (weeklyFullView) weeklyFullView.style.display = 'block';
-      if (weeklyDayView) weeklyDayView.style.display = 'none';
+      setWeeklyModalMode('full');
+      resetWeeklyModalDayView();
       if (weeklyModalTitle) weeklyModalTitle.textContent = 'Grade completa';
     }
 
@@ -523,13 +546,18 @@ POR QUE ELE EXISTE:
 
   // Clique no header da visão semanal → abre grade completa
   if (weeklyBoard) {
-    var weeklyHead = weeklyBoard.querySelector('.card-head');
+    var weeklyHead = weeklyBoard.querySelector('[data-action="open-weekly-modal-full"]');
     if (weeklyHead) {
-      weeklyHead.style.cursor = 'pointer';
       weeklyHead.addEventListener('click', function(event) {
         // Não interceptar cliques em botões/links dentro do header
         if (event.target.closest('a, button')) return;
         openWeeklyModal('full');
+      });
+      weeklyHead.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openWeeklyModal('full');
+        }
       });
     }
   }
@@ -552,6 +580,8 @@ POR QUE ELE EXISTE:
   // Fechar o modal semanal
   if (weeklyCloseButton) {
     weeklyCloseButton.addEventListener('click', function() {
+      setWeeklyModalMode('full');
+      resetWeeklyModalDayView();
       weeklyDialog.close();
     });
   }
@@ -560,7 +590,16 @@ POR QUE ELE EXISTE:
     weeklyDialog.addEventListener('click', function(event) {
       var panel = weeklyDialog.querySelector('.class-monthly-modal-panel');
       if (panel && !panel.contains(event.target)) {
+        setWeeklyModalMode('full');
+        resetWeeklyModalDayView();
         weeklyDialog.close();
+      }
+    });
+    weeklyDialog.addEventListener('close', function() {
+      setWeeklyModalMode('full');
+      resetWeeklyModalDayView();
+      if (weeklyModalTitle) {
+        weeklyModalTitle.textContent = 'Grade completa';
       }
     });
   }

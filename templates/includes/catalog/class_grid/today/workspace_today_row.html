@@ -12,8 +12,9 @@ PONTOS CRITICOS:
         <strong>{{ item.object.title }}</strong>
         <p class="class-grid-meta">{{ item.object.duration_minutes }} min de aula</p>
         {% if page.capabilities.can_manage_classes %}
+        {% url 'class-grid' as class_grid_url %}
         <div class="actions actions-tight class-chip-actions">
-            <a class="button secondary button-sm" href="/grade-aulas/?{% if page.behavior.current_query_string %}{{ page.behavior.current_query_string }}&{% endif %}edit_session={{ item.object.id }}#edicao-aula">Editar</a>
+            <a class="button secondary button-sm" href="{{ class_grid_url }}?{% if page.behavior.current_query_string %}{{ page.behavior.current_query_string }}&{% endif %}edit_session={{ item.object.id }}#edicao-aula">Editar</a>
         </div>
         {% endif %}
     </td>

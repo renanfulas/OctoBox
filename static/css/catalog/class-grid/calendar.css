@@ -195,15 +195,35 @@ POR QUE ELE EXISTE:
     grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
-.weekly-day-card:hover {
-    border-color: rgba(249, 115, 22, 0.3);
-    box-shadow: var(--shadow-soft);
-    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+.weekly-modal-view[hidden] {
+    display: none;
+}
+
+.weekly-modal-day-grid {
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.weekly-day-card.is-modal-clone {
+    cursor: default;
+    min-height: auto;
 }
 
 .weekly-calendar-header {
     margin-bottom: 12px;
     padding: 0 2px;
+}
+
+.weekly-board-head.is-interactive {
+    cursor: pointer;
+}
+
+.weekly-board-head.is-interactive:focus-visible {
+    outline: 2px solid rgba(249, 115, 22, 0.24);
+    outline-offset: 3px;
+    border-radius: 20px;
 }
 
 .weekly-calendar-grid {
@@ -225,6 +245,22 @@ POR QUE ELE EXISTE:
     overflow: hidden;
     word-break: break-word;
     box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.weekly-day-card.is-interactive {
+    cursor: pointer;
+}
+
+.weekly-day-card.is-interactive:hover,
+.weekly-day-card.is-interactive:focus-visible {
+    border-color: rgba(249, 115, 22, 0.3);
+    box-shadow: var(--shadow-soft);
+}
+
+.weekly-day-card.is-interactive:focus-visible {
+    outline: 2px solid rgba(249, 115, 22, 0.24);
+    outline-offset: 3px;
 }
 
 .weekly-day-card.is-today {

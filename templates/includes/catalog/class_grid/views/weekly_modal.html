@@ -1,17 +1,17 @@
 <!--
-ARQUIVO: modal expandido da visão semanal.
+ARQUIVO: modal expandido da visao semanal.
 
 POR QUE ELE EXISTE:
-- abre a grade semanal em tela cheia para leitura confortável.
-- permite foco em um dia específico quando clicado diretamente.
+- abre a grade semanal em tela cheia para leitura confortavel.
+- permite foco em um dia especifico quando clicado diretamente.
 -->
 <dialog class="class-monthly-modal" id="class-weekly-modal" data-panel="class-grid-weekly-modal" aria-labelledby="class-weekly-modal-title">
     <div class="class-monthly-modal-panel" data-slot="class-grid-weekly-modal-panel">
         <div class="class-day-header class-monthly-modal-head">
             <div>
-                <p class="eyebrow">Visão semanal expandida</p>
+                <p class="eyebrow">Visao semanal expandida</p>
                 <h2 class="section-title-sm" id="class-weekly-modal-title">Grade completa</h2>
-                <p class="class-day-summary">Visualize as aulas de cada dia com mais espaço e detalhes.</p>
+                <p class="class-day-summary">Visualize as aulas de cada dia com mais espaco e detalhes.</p>
             </div>
             <div class="actions actions-tight" data-slot="class-grid-weekly-modal-actions">
                 <span class="pill info">Tela cheia</span>
@@ -19,8 +19,7 @@ POR QUE ELE EXISTE:
             </div>
         </div>
 
-        <!-- Conteúdo alternável: grade completa OU dia único -->
-        <div id="weekly-modal-full-view">
+        <div class="weekly-modal-view" id="weekly-modal-full-view">
             {% for week in page.data.weekly_calendar|slice:":2" %}
             <section class="weekly-calendar-section" data-panel="class-grid-weekly-modal-section">
                 <div class="row-between-md weekly-calendar-header">
@@ -38,8 +37,10 @@ POR QUE ELE EXISTE:
             {% endfor %}
         </div>
 
-        <div id="weekly-modal-day-view" style="display: none;">
-            <!-- Preenchido via JS ao clicar num dia específico -->
+        <div class="weekly-modal-view weekly-modal-day-view" id="weekly-modal-day-view" hidden>
+            <div class="weekly-calendar-grid weekly-modal-day-grid" data-slot="class-grid-weekly-modal-day-grid">
+                <!-- Preenchido via JS ao clicar num dia especifico -->
+            </div>
         </div>
     </div>
 </dialog>
