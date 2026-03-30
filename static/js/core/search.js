@@ -34,7 +34,7 @@ POR QUE ELE EXISTE:
   }
 
   function clearList() {
-    list.innerHTML = '';
+    list.replaceChildren();
     input.removeAttribute('aria-activedescendant');
     activeIndex = -1;
   }
@@ -59,12 +59,6 @@ POR QUE ELE EXISTE:
     activeRequestController = null;
   }
 
-  function escapeHtml(text) {
-    var d = document.createElement('div');
-    d.textContent = text;
-    return d.innerHTML;
-  }
-
   function renderResults(results) {
     clearList();
     if (!results.length) {
@@ -75,13 +69,19 @@ POR QUE ELE EXISTE:
 
     results.forEach(function(item, index) {
       var li = document.createElement('li');
+      var name = document.createElement('span');
+      var meta = document.createElement('span');
       var destination = item.url + (item.status_raw === 'lead' ? '#focus=lead' : item.status_raw === 'active' ? '#focus=active' : '');
       li.setAttribute('role', 'option');
       li.setAttribute('data-url', destination);
       li.className = 'search-autocomplete-item';
       li.id = 'search-option-' + index;
-      li.innerHTML = '<span class="search-ac-name">' + escapeHtml(item.name) + '</span>' +
-        '<span class="search-ac-meta">' + escapeHtml(item.phone) + ' &middot; ' + escapeHtml(item.status) + '</span>';
+      name.className = 'search-ac-name';
+      name.textContent = item.name || '';
+      meta.className = 'search-ac-meta';
+      meta.textContent = (item.phone || '') + ' · ' + (item.status || '');
+      li.appendChild(name);
+      li.appendChild(meta);
       li.addEventListener('mousedown', function(event) {
         event.preventDefault();
         window.location.href = destination;
