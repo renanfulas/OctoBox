@@ -9,13 +9,7 @@ PONTO CRITICO:
 -->
 <article class="table-card owner-panel owner-primary-panel" data-panel="owner-primary-panel">
     {% with primary_focus=page.data.owner_operational_focus|first %}
-    {% if primary_focus.key == 'intakes' %}
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Leitura principal" title="Entre pela fila que traz nova receita." copy="Existe demanda esperando resposta agora." pill_label="Agora" pill_class="accent" %}
-    {% elif primary_focus.key == 'payments' %}
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Leitura principal" title="Proteja a receita antes do restante." copy="Ha cobranca atrasada pedindo contato agora." pill_label="Agora" pill_class="accent" %}
-    {% else %}
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Leitura principal" title="Confirme a estrutura que sustenta o box." copy="Veja se WhatsApp, historico e estrutura continuam coerentes." pill_label="Agora" pill_class="accent" %}
-    {% endif %}
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Leitura principal" title=page.data.owner_priority_context.title copy=page.data.owner_priority_context.copy pill_label=page.data.owner_priority_context.pill_label pill_class=page.data.owner_priority_context.pill_class %}
     <div class="owner-primary-spotlight">
         <div class="owner-primary-copy">
             <p class="eyebrow">Movimento que lidera o dia</p>

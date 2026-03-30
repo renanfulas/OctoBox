@@ -73,6 +73,7 @@ def build_finance_metrics(payments, enrollments):
                 'Receita recebida no mes',
                 {
                     'value': revenue_this_month,
+                    'count': paid_count,
                     'note': f'No mes anterior, entraram R$ {_format_currency_br(revenue_previous_month)}.',
                     'is_currency': True,
                 },
@@ -128,43 +129,113 @@ def build_finance_metrics(payments, enrollments):
 def build_finance_pulse(finance_metrics):
     return {
         'received': finance_metrics['Receita recebida no mes']['value'],
+        'received_count': finance_metrics['Receita recebida no mes'].get('count', 0),
         'open': finance_metrics['Receita que ainda nao entrou']['value'],
         'overdue_students': finance_metrics['Alunos com atraso ativo']['value'],
         'ticket': finance_metrics['Ticket medio recebido']['value'],
     }
 
 
-def build_finance_interactive_kpis(finance_metrics):
-    return [
-        {
+def build_finance_priority_context(finance_metrics):
+    overdue_students = finance_metrics['Alunos com atraso ativo']['value']
+    open_revenue = finance_metrics['Receita que ainda nao entrou']['value']
+    received_revenue = finance_metrics['Receita recebida no mes']['value']
+    new_contracts = finance_metrics['Novos contratos no mes']['value']
+
+    if overdue_students > 0:
+        return {
+            'dominant_key': 'queue',
+            'pill_class': 'warning',
+            'pill_label': 'Fila dominante',
+            'headline': 'A fila de cobranca pede a primeira leitura.',
+            'summary': 'Existe atraso ativo na base. Regua e fila merecem abrir antes da carteira e dos filtros.',
+            'default_action': 'open-tab-finance-queue',
+            'default_panel': 'tab-finance-queue',
+        }
+    if open_revenue > received_revenue and open_revenue > 0:
+        return {
+            'dominant_key': 'queue',
+            'pill_class': 'warning',
+            'pill_label': 'Caixa pressionado',
+            'headline': 'O dinheiro em aberto esta maior que o dinheiro convertido.',
+            'summary': 'Mesmo sem atraso dominante, a fila financeira esta puxando mais que os movimentos realizados.',
+            'default_action': 'open-tab-finance-queue',
+            'default_panel': 'tab-finance-queue',
+        }
+    if received_revenue > 0:
+        return {
+            'dominant_key': 'movements',
+            'pill_class': 'accent',
+            'pill_label': 'Caixa em leitura',
+            'headline': 'O caixa realizado volta a ser a melhor abertura.',
+            'summary': 'Sem pressao dominante na fila, movimentos e tendencia explicam melhor o momento financeiro.',
+            'default_action': 'open-tab-finance-movements',
+            'default_panel': 'tab-finance-movements',
+        }
+    return {
+        'dominant_key': 'portfolio',
+        'pill_class': 'info',
+        'pill_label': 'Carteira em foco',
+        'headline': 'Sem receita forte no recorte, a carteira vira o melhor ponto de leitura.',
+        'summary': 'Planos, mix e estrutura de carteira explicam mais do que movimentos curtos neste momento.',
+        'default_action': 'open-tab-finance-portfolio',
+        'default_panel': 'tab-finance-portfolio',
+    }
+
+
+def build_finance_interactive_kpis(finance_metrics, *, priority_context=None):
+    priority_context = priority_context or build_finance_priority_context(finance_metrics)
+    cards = {
+        'movements': {
             'eyebrow': 'Raio-X Financeiro',
             'display_value': f"R$ {_format_currency_br(finance_metrics['Receita recebida no mes']['value'])}",
-            'note': 'Movimentos, entradas, saidas e graficos de tendencia financeira.',
+            'note': (
+                'Movimentos, entradas, saidas e graficos de tendencia financeira.'
+                if priority_context['dominant_key'] != 'movements' else
+                'Esse e o melhor ponto de abertura agora: o caixa realizado explica o recorte sem ruido.'
+            ),
             'data_action': 'open-tab-finance-movements',
             'card_class': 'kpi-emerald',
         },
-        {
+        'queue': {
             'eyebrow': 'Handoff de Cobranca',
             'display_value': f"R$ {_format_currency_br(finance_metrics['Receita que ainda nao entrou']['value'])}",
-            'note': 'Fila automatica e regua ativa contra a inadimplencia e atrasos.',
+            'note': (
+                'Fila automatica e regua ativa contra a inadimplencia e atrasos.'
+                if priority_context['dominant_key'] != 'queue' else
+                'Essa e a primeira pressao do recorte agora: fila e regua pedem acao antes de aprofundar carteira.'
+            ),
             'data_action': 'open-tab-finance-queue',
             'card_class': 'kpi-red' if finance_metrics['Alunos com atraso ativo']['value'] > 0 else 'kpi-blue',
         },
-        {
+        'portfolio': {
             'eyebrow': 'Motor de Carteira',
             'display_value': str(finance_metrics['Novos contratos no mes']['value']),
-            'note': 'Portfolio de planos, mix de base e concentracao de receita.',
+            'note': (
+                'Portfolio de planos, mix de base e concentracao de receita.'
+                if priority_context['dominant_key'] != 'portfolio' else
+                'Carteira, mix e portfolio explicam melhor o momento do que a fila curta neste recorte.'
+            ),
             'data_action': 'open-tab-finance-portfolio',
             'card_class': 'kpi-slate',
         },
-        {
+        'filters': {
             'eyebrow': 'Filtros & Exportacao',
             'display_value': 'Recortes',
             'note': 'Acesse os controles globais para isolar status, datas e planilhas.',
             'data_action': 'open-tab-finance-filters',
             'card_class': 'kpi-cyan',
         },
-    ]
+    }
+
+    if priority_context['dominant_key'] == 'queue':
+        order = ['queue', 'movements', 'portfolio', 'filters']
+    elif priority_context['dominant_key'] == 'portfolio':
+        order = ['portfolio', 'movements', 'queue', 'filters']
+    else:
+        order = ['movements', 'queue', 'portfolio', 'filters']
+
+    return [cards[key] for key in order]
 
 
-__all__ = ['build_finance_metrics', 'build_finance_pulse', 'build_finance_interactive_kpis']
+__all__ = ['build_finance_metrics', 'build_finance_pulse', 'build_finance_priority_context', 'build_finance_interactive_kpis']

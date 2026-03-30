@@ -21,7 +21,7 @@
     <div class="front-command-summary" data-panel="finance-filter-snapshot">
         <div class="front-command-summary-head">
             <span class="front-command-kicker">Recorte ativo</span>
-            <p class="front-command-copy">Use este resumo para lembrar qual lente esta guiando a leitura antes de descer para fila, carteira e filtros completos.</p>
+            <p class="front-command-copy">{{ page.data.finance_priority_context.summary }}</p>
         </div>
         <dl class="front-command-summary-grid">
             {% for item in page.data.finance_filter_summary %}

@@ -57,6 +57,60 @@ def _build_owner_focus_item(*, key, label, summary, count, pill_class, href, hre
     }
 
 
+def _build_owner_priority_context(primary_focus):
+    primary_key = (primary_focus or {}).get('key')
+    if primary_key == 'intakes':
+        return {
+            'title': 'Entre pela fila que traz nova receita.',
+            'copy': 'Existe demanda esperando resposta agora.',
+            'pill_label': 'Agora',
+            'pill_class': 'accent',
+        }
+    if primary_key == 'payments':
+        return {
+            'title': 'Proteja a receita antes do restante.',
+            'copy': 'Ha cobranca atrasada pedindo contato agora.',
+            'pill_label': 'Agora',
+            'pill_class': 'accent',
+        }
+    return {
+        'title': 'Confirme a estrutura que sustenta o box.',
+        'copy': 'Veja se WhatsApp, historico e estrutura continuam coerentes.',
+        'pill_label': 'Agora',
+        'pill_class': 'accent',
+    }
+
+
+def _build_manager_priority_context(*, pending_intakes_count, unlinked_whatsapp_count, payments_without_enrollment_count, financial_alerts_count):
+    if pending_intakes_count > 0:
+        return {
+            'title': 'Triagem primeiro para nao deixar entrada esfriar.',
+            'copy': 'A fila comercial esta viva e merece abrir antes dos vinculos e do caixa.',
+            'pill_label': 'Triagem viva',
+            'pill_class': 'warning',
+        }
+    if (unlinked_whatsapp_count + payments_without_enrollment_count) > 0:
+        return {
+            'title': 'Limpe vinculos quebrados antes de aprofundar o caixa.',
+            'copy': 'Contato sem aluno e cobranca sem matricula escondem atrito estrutural que contamina o resto da leitura.',
+            'pill_label': 'Vinculos',
+            'pill_class': 'info',
+        }
+    if financial_alerts_count > 0:
+        return {
+            'title': 'O caixa ainda pede a ultima leitura do turno.',
+            'copy': 'Sem triagem ou vinculo pressionando mais forte, os alertas financeiros viram a camada dominante.',
+            'pill_label': 'Caixa',
+            'pill_class': 'warning',
+        }
+    return {
+        'title': 'A mesa esta limpa para leitura de manutencao.',
+        'copy': 'Sem pressao dominante, a gerencia pode validar a operacao com mais calma e menos reatividade.',
+        'pill_label': 'Estavel',
+        'pill_class': 'success',
+    }
+
+
 def build_owner_workspace_snapshot(*, today):
     communications_metrics = build_communications_headline_metrics(today=today)
     overdue_payments = get_overdue_payments_queryset(Payment.objects.all(), today=today)
@@ -119,6 +173,7 @@ def build_owner_workspace_snapshot(*, today):
     else:
         focus_order = ['structure', 'intakes', 'payments']
     owner_operational_focus = [focus_map[key] for key in focus_order]
+    owner_priority_context = _build_owner_priority_context(owner_operational_focus[0] if owner_operational_focus else None)
     return {
         'headline_metrics': headline_metrics,
         'classes_today': classes_today,
@@ -148,6 +203,7 @@ def build_owner_workspace_snapshot(*, today):
                 'href': reverse('finance-center'),
             },
         ],
+        'owner_priority_context': owner_priority_context,
         'owner_operational_focus': owner_operational_focus,
     }
 
@@ -248,11 +304,18 @@ def build_manager_workspace_snapshot():
         enrollment__isnull=True,
         status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE],
     ).order_by('due_date')[:8]
+    manager_priority_context = _build_manager_priority_context(
+        pending_intakes_count=len(pending_intakes),
+        unlinked_whatsapp_count=len(unlinked_whatsapp),
+        payments_without_enrollment_count=len(payments_without_enrollment),
+        financial_alerts_count=len(financial_alerts),
+    )
     return {
         'pending_intakes': pending_intakes,
         'unlinked_whatsapp': unlinked_whatsapp,
         'financial_alerts': financial_alerts,
         'payments_without_enrollment': payments_without_enrollment,
+        'manager_priority_context': manager_priority_context,
         'hero_stats': [
             _build_hero_stat('Entradas', len(pending_intakes)),
             _build_hero_stat('WhatsApp', len(unlinked_whatsapp)),

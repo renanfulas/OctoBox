@@ -59,28 +59,25 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
     plan_portfolio = snapshot['plan_portfolio']
     recent_movements = snapshot['recent_movements']
     finance_pulse = snapshot['finance_pulse']
+    finance_priority_context = snapshot['finance_priority_context']
     pressure_total = len(operational_queue) + len(financial_alerts)
     can_manage_finance = current_role_slug in (ROLE_OWNER, ROLE_MANAGER)
 
     if pressure_total > 0:
-        priority_badge = 'warning'
-        priority_label = f'{pressure_total} sinal(is) agora'
+        priority_badge = finance_priority_context['pill_class']
+        priority_label = finance_priority_context['pill_label']
     else:
         priority_badge = 'success'
         priority_label = 'Pressao controlada'
 
-    if len(operational_queue) > 0 or len(financial_alerts) > 0:
-        default_panel = 'tab-finance-queue'
-        default_action = 'open-tab-finance-queue'
-    else:
-        default_panel = 'tab-finance-movements'
-        default_action = 'open-tab-finance-movements'
+    default_panel = finance_priority_context['default_panel']
+    default_action = finance_priority_context['default_action']
 
     finance_right_rail_snapshot = [
         {
-            'label': 'Pressao combinada',
-            'value': pressure_total,
-            'summary': 'Soma contato assistido com fila financeira no periodo atual.',
+            'label': 'Leitura dominante',
+            'value': finance_priority_context['pill_label'],
+            'summary': finance_priority_context['summary'],
         },
         {
             'label': 'Em aberto',
@@ -96,9 +93,13 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
 
     operational_focus = [
         {
-            'label': 'Quem pede contato agora',
+            'label': 'Quem pede contato agora' if finance_priority_context['dominant_key'] == 'queue' else 'Onde a fila ainda pode virar caixa',
             'chip_label': 'Cobrancas',
-            'summary': f'{len(operational_queue)} caso(s) ja tem abordagem sugerida e nao deveriam esperar outra leitura para virar acao.',
+            'summary': (
+                f'{len(operational_queue)} caso(s) ja tem abordagem sugerida e nao deveriam esperar outra leitura para virar acao.'
+                if finance_priority_context['dominant_key'] == 'queue' else
+                f'{len(operational_queue)} caso(s) continuam prontos para acao, mas hoje dividem a abertura com leitura de caixa e carteira.'
+            ),
             'count': len(operational_queue),
             'pill_class': 'warning' if len(operational_queue) > 0 else 'success',
             'href': '#finance-priority-board',
@@ -141,8 +142,8 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
 
     hero = build_page_hero(
         eyebrow='Financeiro',
-        title='Onde o caixa pede cuidado hoje.',
-        copy='Leia a pressao do momento, confirme o recorte e avance para fila, tendencia ou carteira sem perder clareza.',
+        title=finance_priority_context['headline'],
+        copy='Leia a pressao do momento, confirme o recorte e avance para fila, tendencia ou carteira sem perder clareza.' if finance_priority_context['dominant_key'] != 'portfolio' else 'Carteira, mix e recorte pedem a primeira leitura antes de descer para fila e filtros.',
         actions=hero_actions,
         aria_label='Panorama financeiro',
         classes=['operation-hero', 'finance-hero'],
@@ -167,6 +168,7 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
             'finance_metrics': snapshot['finance_metrics'],
             'finance_pulse': finance_pulse,
             'interactive_kpis': snapshot.get('interactive_kpis', []),
+            'finance_priority_context': finance_priority_context,
             'operational_focus': operational_focus,
             'plan_portfolio': plan_portfolio,
             'plan_mix': snapshot['plan_mix'],
