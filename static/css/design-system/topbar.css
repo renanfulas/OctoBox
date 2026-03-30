@@ -548,6 +548,12 @@ REGRA:
     animation: shell-celebration-enter 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+.shell-celebration-toast.is-dismissing {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+    transition: opacity 220ms ease, transform 220ms ease;
+}
+
 .shell-celebration-toast::before {
     content: "";
     position: absolute;
@@ -582,6 +588,7 @@ REGRA:
 .shell-celebration-piece {
     --confetti-x: 0px;
     --confetti-rotate: 0deg;
+    --confetti-color: var(--theme-accent-success);
     position: absolute;
     top: 28px;
     left: 28px;
@@ -592,6 +599,118 @@ REGRA:
     opacity: 0;
     transform: translate3d(0, 0, 0) rotate(0deg) scale(0.8);
     animation: shell-confetti-burst 900ms ease-out forwards;
+}
+
+.shell-celebration-piece:nth-child(1) {
+    --confetti-x: 18px;
+    --confetti-rotate: 40deg;
+    --confetti-color: #10b981;
+    left: 28px;
+    animation-delay: 0ms;
+}
+
+.shell-celebration-piece:nth-child(2) {
+    --confetti-x: -25px;
+    --confetti-rotate: -52deg;
+    --confetti-color: #34d399;
+    left: 46px;
+    animation-delay: 18ms;
+}
+
+.shell-celebration-piece:nth-child(3) {
+    --confetti-x: 32px;
+    --confetti-rotate: 64deg;
+    --confetti-color: #f59e0b;
+    left: 64px;
+    animation-delay: 36ms;
+}
+
+.shell-celebration-piece:nth-child(4) {
+    --confetti-x: -39px;
+    --confetti-rotate: -76deg;
+    --confetti-color: #f97316;
+    left: 82px;
+    animation-delay: 54ms;
+}
+
+.shell-celebration-piece:nth-child(5) {
+    --confetti-x: 46px;
+    --confetti-rotate: 88deg;
+    --confetti-color: #3b82f6;
+    left: 28px;
+    animation-delay: 72ms;
+}
+
+.shell-celebration-piece:nth-child(6) {
+    --confetti-x: -53px;
+    --confetti-rotate: -100deg;
+    --confetti-color: #10b981;
+    left: 46px;
+    animation-delay: 90ms;
+}
+
+.shell-celebration-piece:nth-child(7) {
+    --confetti-x: 60px;
+    --confetti-rotate: 112deg;
+    --confetti-color: #34d399;
+    left: 64px;
+    animation-delay: 108ms;
+}
+
+.shell-celebration-piece:nth-child(8) {
+    --confetti-x: -67px;
+    --confetti-rotate: -124deg;
+    --confetti-color: #f59e0b;
+    left: 82px;
+    animation-delay: 126ms;
+}
+
+.shell-celebration-piece:nth-child(9) {
+    --confetti-x: 74px;
+    --confetti-rotate: 136deg;
+    --confetti-color: #f97316;
+    left: 28px;
+    animation-delay: 144ms;
+}
+
+.shell-celebration-piece:nth-child(10) {
+    --confetti-x: -81px;
+    --confetti-rotate: -148deg;
+    --confetti-color: #3b82f6;
+    left: 46px;
+    animation-delay: 162ms;
+}
+
+.shell-celebration-piece:nth-child(11) {
+    --confetti-x: 88px;
+    --confetti-rotate: 160deg;
+    --confetti-color: #10b981;
+    left: 64px;
+    animation-delay: 180ms;
+}
+
+.shell-celebration-piece:nth-child(12) {
+    --confetti-x: -95px;
+    --confetti-rotate: -172deg;
+    --confetti-color: #34d399;
+    left: 82px;
+    animation-delay: 198ms;
+}
+
+.shell-celebration-piece:nth-child(13) {
+    --confetti-x: 102px;
+    --confetti-rotate: 184deg;
+    --confetti-color: #f59e0b;
+    left: 28px;
+    animation-delay: 216ms;
+}
+
+.shell-celebration-piece:nth-child(14) {
+    --confetti-x: -109px;
+    --confetti-rotate: -196deg;
+    --confetti-color: #f97316;
+    left: 46px;
+    animation-delay: 234ms;
 }
 
 @keyframes shell-celebration-enter {
@@ -631,6 +750,10 @@ REGRA:
     background: var(--topbar-profile-surface);
     border: 1px solid var(--topbar-profile-border-color);
     box-shadow: var(--topbar-profile-shadow);
+}
+
+.topbar.is-shell-scroll-trigger {
+    cursor: pointer;
 }
 
 .avatar {

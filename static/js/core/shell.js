@@ -65,20 +65,11 @@ POR QUE ELE EXISTE:
 
   function emitConfettiBurst(container) {
     const burst = document.createElement('div');
-    const colors = ['#10b981', '#34d399', '#f59e0b', '#f97316', '#3b82f6'];
     burst.className = 'shell-celebration-burst';
 
     for (let index = 0; index < 14; index += 1) {
       const piece = document.createElement('span');
-      const direction = index % 2 === 0 ? 1 : -1;
-      const distance = 18 + (index * 7);
-      const rotation = direction * (40 + index * 12);
       piece.className = 'shell-celebration-piece';
-      piece.style.setProperty('--confetti-x', String(direction * distance) + 'px');
-      piece.style.setProperty('--confetti-rotate', String(rotation) + 'deg');
-      piece.style.setProperty('--confetti-color', colors[index % colors.length]);
-      piece.style.left = String(28 + (index % 4) * 18) + 'px';
-      piece.style.animationDelay = String(index * 18) + 'ms';
       burst.appendChild(piece);
     }
 
@@ -126,9 +117,7 @@ POR QUE ELE EXISTE:
     stack.appendChild(toast);
 
     window.setTimeout(function() {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateY(-8px) scale(0.98)';
-      toast.style.transition = 'opacity 220ms ease, transform 220ms ease';
+      toast.classList.add('is-dismissing');
       window.setTimeout(function() {
         toast.remove();
       }, 240);
@@ -295,7 +284,7 @@ POR QUE ELE EXISTE:
 
   // Topbar scroll-to-top (replaces inline onclick from base.html)
   if (topbar) {
-    topbar.style.cursor = 'pointer';
+    topbar.classList.add('is-shell-scroll-trigger');
     topbar.addEventListener('click', function(event) {
       if (!event.target.closest('a, button, input, form, .topbar-profile')) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -343,15 +332,10 @@ POR QUE ELE EXISTE:
       if (bkind === 'sessions') {
         var sessionsBoard = document.querySelector('#dashboard-sessions-board');
         if (!sessionsBoard) { return; }
-        var rect = sessionsBoard.getBoundingClientRect();
         var neonOverlay = document.createElement('div');
         neonOverlay.className = 'sessions-board-neon-overlay';
-        neonOverlay.style.top = rect.top + 'px';
-        neonOverlay.style.left = rect.left + 'px';
-        neonOverlay.style.width = rect.width + 'px';
-        neonOverlay.style.height = rect.height + 'px';
-        neonOverlay.style.animation = 'sessionsBoardNeonBlink 1.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards';
-        document.body.appendChild(neonOverlay);
+        neonOverlay.classList.add('is-active');
+        sessionsBoard.appendChild(neonOverlay);
         window.setTimeout(function() {
           neonOverlay.remove();
         }, 1400);
