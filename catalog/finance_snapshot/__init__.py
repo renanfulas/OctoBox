@@ -11,6 +11,6 @@ PONTOS CRITICOS:
 - a assinatura publica precisa continuar estavel para views e exportacoes.
 """
 
-from .snapshot import build_finance_snapshot
+from .snapshot import build_finance_flow_bridge, build_finance_snapshot
 
-__all__ = ['build_finance_snapshot']
+__all__ = ['build_finance_flow_bridge', 'build_finance_snapshot']

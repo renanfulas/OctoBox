@@ -51,50 +51,6 @@ def build_finance_filter_summary(filter_form):
             'summary': 'Util quando a analise precisa isolar comportamento de recebimento.',
         },
     ]
-
-
-def build_finance_flow_bridge(*, priority_context, operational_queue, financial_alerts):
-    dominant_key = priority_context['dominant_key']
-    assisted_count = len(operational_queue)
-    queue_count = len(financial_alerts)
-
-    if dominant_key == 'queue':
-        if assisted_count > 0:
-            return {
-                'eyebrow': 'Primeiro movimento',
-                'title': 'Abra a regua assistida antes de descer para a fila automatica.',
-                'copy': f'{assisted_count} caso(s) ja chegam com abordagem sugerida. Resolva essa camada primeiro e deixe a fila de {queue_count} alerta(s) para o que realmente sobrar de pressao.',
-                'href': '#finance-priority-board',
-                'href_label': 'Abrir regua ativa',
-                'data_action': 'open-tab-finance-queue',
-            }
-        return {
-            'eyebrow': 'Primeiro movimento',
-            'title': 'A fila automatica virou a primeira porta desta leitura.',
-            'copy': f'Nao ha regua assistida aberta agora. Entre direto na fila com {queue_count} alerta(s) e proteja o caixa antes de abrir carteira ou filtros.',
-            'href': '#finance-queue-board',
-            'href_label': 'Abrir fila financeira',
-            'data_action': 'open-tab-finance-queue',
-        }
-    if dominant_key == 'movements':
-        return {
-            'eyebrow': 'Primeiro movimento',
-            'title': 'Leia o caixa realizado e use a tendencia para escolher o proximo mergulho.',
-            'copy': 'Comece pelo raio-X financeiro, confirme movimentos recentes e so depois desca para fila ou carteira se o recorte pedir.',
-            'href': '#finance-movements-board',
-            'href_label': 'Abrir raio-X financeiro',
-            'data_action': 'open-tab-finance-movements',
-        }
-    return {
-        'eyebrow': 'Primeiro movimento',
-        'title': 'Comece pela carteira e deixe a fila para a segunda leitura.',
-        'copy': 'Sem pressao dominante na fila ou no caixa, portfolio e mix explicam melhor o momento antes de abrir filtros ou cobrancas.',
-        'href': '#finance-portfolio-board',
-        'href_label': 'Abrir carteira ativa',
-        'data_action': 'open-tab-finance-portfolio',
-    }
-
-
 def build_finance_center_page(*, snapshot, operational_queue, operational_metrics, export_links, current_role_slug, form):
     filter_form = snapshot['filter_form']
     financial_alerts = snapshot['financial_alerts']
@@ -114,11 +70,7 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
 
     default_panel = finance_priority_context['default_panel']
     default_action = finance_priority_context['default_action']
-    finance_flow_bridge = build_finance_flow_bridge(
-        priority_context=finance_priority_context,
-        operational_queue=operational_queue,
-        financial_alerts=financial_alerts,
-    )
+    finance_flow_bridge = snapshot.get('finance_flow_bridge')
 
     finance_right_rail_snapshot = [
         {
