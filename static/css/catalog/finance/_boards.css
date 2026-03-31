@@ -181,6 +181,21 @@ POR QUE ELE EXISTE:
     gap: 6px;
 }
 
+.finance-flow-bridge {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: center;
+}
+
+.finance-flow-bridge-copy {
+    min-width: 0;
+}
+
+.finance-flow-bridge-actions {
+    justify-content: flex-end;
+}
+
 /* ── Trend/movement guide & plan focus ── */
 
 .finance-trend-guide-grid {
@@ -308,4 +323,18 @@ body[data-theme="dark"] .finance-support-card {
 body[data-theme="dark"] .finance-radar-chip {
     background:
         linear-gradient(160deg, rgba(18, 29, 46, 0.88), rgba(13, 21, 34, 0.84));
+}
+
+@media (max-width: 720px) {
+    .finance-flow-bridge {
+        grid-template-columns: 1fr;
+    }
+
+    .finance-flow-bridge-actions {
+        justify-content: stretch;
+    }
+
+    .finance-flow-bridge-actions .button {
+        width: 100%;
+    }
 }

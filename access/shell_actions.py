@@ -67,6 +67,7 @@ def _build_action(kind, default_label, default_target_label, source, *, scope='g
             or default_target_label
         ),
         'href': source.get('href') or source.get('action_href') or '#page-body',
+        'data_action': source.get('data_action'),
     }
 
 
