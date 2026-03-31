@@ -68,7 +68,7 @@ def build_student_directory_page(*, student_count, students, student_filter_form
         copy='Veja quem merece leitura primeiro, quem ja pode avancar e onde agir sem ruido.',
         actions=hero_actions,
         aria_label='Panorama de alunos',
-        classes=['operation-hero', 'student-hero'],
+        classes=['student-hero'],
         heading_level='h1',
         data_slot='hero',
         data_panel='students-hero',

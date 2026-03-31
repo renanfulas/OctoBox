@@ -44,32 +44,40 @@ ARQUIVO: superfícies periféricas e estados isolados do produto.
 
 .whatsapp-placeholder-shell {
     padding: 40px;
-    display: flex;
-    justify-content: center;
+    display: grid;
+    justify-items: center;
     align-items: center;
     min-height: 70vh;
 }
 
 .whatsapp-placeholder-hero {
+    width: min(100%, 960px);
     margin-top: 40px;
-    text-align: center;
-}
-
-.whatsapp-placeholder-card {
-    display: inline-block;
-    max-width: 600px;
-    padding: 60px 40px;
+    text-align: left;
+    --operation-hero-main-columns: minmax(0, 1fr);
+    --operation-hero-main-align-items: stretch;
+    --operation-hero-stack-max-width: 100%;
+    --operation-hero-copy-max-width: 58ch;
+    --operation-hero-actions-justify-self: start;
+    --operation-hero-actions-max-width: 100%;
+    --operation-hero-actions-padding: 0;
+    --operation-hero-actions-border: 0 solid transparent;
+    --operation-hero-actions-shadow: none;
+    --operation-hero-actions-surface: transparent;
+    --operation-hero-panel-padding: 24px;
     border-radius: 24px;
-    background: var(--surface);
-    border: 1px solid var(--line);
     backdrop-filter: blur(12px);
     box-shadow: var(--shadow-lift);
+}
+
+.whatsapp-placeholder-hero .operation-hero-main {
+    max-width: 680px;
 }
 
 .whatsapp-placeholder-glow {
     width: 80px;
     height: 80px;
-    margin: 0 auto 24px;
+    margin: 0 0 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -83,40 +91,19 @@ ARQUIVO: superfícies periféricas e estados isolados do produto.
     fill: #25d366;
 }
 
-.whatsapp-placeholder-title {
-    margin-bottom: 16px;
-    font-size: 2.5rem;
-    font-weight: 800;
-    letter-spacing: -1px;
-    color: var(--ink);
+.whatsapp-placeholder-panel {
+    display: grid;
+    gap: 16px;
+    min-height: auto;
 }
 
-.whatsapp-placeholder-copy {
-    font-size: 1.125rem;
-    line-height: 1.6;
-    color: var(--muted);
+.whatsapp-placeholder-panel-copy {
+    display: grid;
+    gap: 10px;
 }
 
-.whatsapp-placeholder-actions {
-    margin-top: 40px;
-}
-
-.whatsapp-placeholder-back {
-    display: inline-block;
-    padding: 12px 24px;
-    border-radius: 12px;
-    border: 1px solid var(--line);
-    background: var(--bg-depth);
-    color: var(--ink);
-    text-decoration: none;
-    font-weight: 600;
-    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-}
-
-.whatsapp-placeholder-back:hover,
-.whatsapp-placeholder-back:focus-visible {
-    background: color-mix(in srgb, var(--theme-surface-secondary) 78%, transparent);
-    transform: translateY(-1px);
+.whatsapp-placeholder-panel .operation-card-copy {
+    max-width: 26ch;
 }
 
 .honeypot-screen {
@@ -228,7 +215,7 @@ ARQUIVO: superfícies periféricas e estados isolados do produto.
 
 @media (max-width: 720px) {
     .error-page-card,
-    .whatsapp-placeholder-card,
+    .whatsapp-placeholder-hero,
     .honeypot-message-box {
         margin-inline: auto;
         padding: 32px 24px;
@@ -238,7 +225,7 @@ ARQUIVO: superfícies periféricas e estados isolados do produto.
         padding: 24px;
     }
 
-    .whatsapp-placeholder-title,
+    .whatsapp-placeholder-hero :is(h1, h2),
     .honeypot-neon-text {
         font-size: 2rem;
     }

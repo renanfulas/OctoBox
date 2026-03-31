@@ -146,7 +146,7 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         copy='Leia a pressao do momento, confirme o recorte e avance para fila, tendencia ou carteira sem perder clareza.' if finance_priority_context['dominant_key'] != 'portfolio' else 'Carteira, mix e recorte pedem a primeira leitura antes de descer para fila e filtros.',
         actions=hero_actions,
         aria_label='Panorama financeiro',
-        classes=['operation-hero', 'finance-hero'],
+        classes=['finance-hero'],
         heading_level='h1',
     )
 

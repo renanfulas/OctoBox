@@ -75,7 +75,7 @@ def build_membership_plan_page(*, form, plan, current_role_slug):
             {'label': 'Voltar para financeiro', 'href': reverse('finance-center'), 'kind': 'secondary'},
         ],
         aria_label='Plano comercial',
-        classes=['operation-hero'],
+        classes=[],
         heading_level='h1',
         data_slot='hero',
         data_panel='finance-plan-hero',

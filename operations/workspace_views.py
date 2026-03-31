@@ -12,8 +12,9 @@ PONTOS CRITICOS:
 - qualquer regressao aqui afeta a experiencia operacional por papel.
 """
 
+from access.navigation_contracts import get_shell_route_url
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
-from shared_support.page_payloads import attach_page_payload
+from shared_support.page_payloads import attach_page_payload, build_page_hero
 
 from operations.facade import (
     build_coach_workspace_snapshot,
@@ -152,4 +153,20 @@ class WhatsAppWorkspaceView(OperationBaseView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
+        context['whatsapp_placeholder_hero'] = build_page_hero(
+            eyebrow='Mensagens',
+            title='Central de mensagens em construcao.',
+            copy='Estamos preparando a central de mensagens do seu box. Em breve, voce podera gerenciar todo o relacionamento com seus alunos diretamente por aqui.',
+            actions=[
+                {
+                    'label': 'Voltar ao Dashboard',
+                    'href': get_shell_route_url('dashboard'),
+                    'kind': 'secondary',
+                },
+            ],
+            aria_label='Panorama da central de mensagens',
+            classes=['whatsapp-placeholder-hero'],
+            heading_level='h1',
+            data_panel='whatsapp-placeholder-hero',
+        )
         return context

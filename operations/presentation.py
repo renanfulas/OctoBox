@@ -98,7 +98,7 @@ def _build_operation_workspace_hero(page_key, snapshot):
                 {'label': 'Ver grade em leitura', 'href': '#reception-class-grid-board', 'kind': 'secondary', 'data_action': 'jump-reception-class-grid'},
             ],
             aria_label='Panorama da recepcao',
-            classes=['operation-hero', 'reception-hero'],
+            classes=['reception-hero'],
             data_panel='reception-hero',
             actions_slot='reception-jump-links',
         ),

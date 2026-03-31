@@ -55,6 +55,74 @@ Contrato rapido do design system:
 
 1. [design-system-contract.md](design-system-contract.md)
 
+## Taxonomia oficial dos heroes
+
+Use esta classificacao antes de criar, refatorar ou diagnosticar qualquer hero.
+
+### Hero canonico de pagina
+
+Definicao:
+
+1. representa a abertura principal de uma tela
+2. nasce de payload semantico
+3. renderiza pelo host compartilhado
+
+Contrato oficial:
+
+1. helper: [../../shared_support/page_payloads.py](../../shared_support/page_payloads.py)
+2. template-base: [../../templates/includes/ui/layout/page_hero.html](../../templates/includes/ui/layout/page_hero.html)
+3. CSS compartilhado do hero: [../../static/css/design-system/components/hero.css](../../static/css/design-system/components/hero.css)
+4. refinamentos operacionais: [../../static/css/design-system/operations/refinements/hero.css](../../static/css/design-system/operations/refinements/hero.css)
+
+Regra:
+
+1. `operation-hero` pertence ao template-base, nao ao payload
+2. o payload pode enviar apenas classes variantes, como `finance-hero`, `student-hero`, `reception-hero` ou `reports-hub-hero`
+3. todo hero canonico novo deve passar por `build_page_hero(...)` + `page_hero.html`
+
+### Hero especial
+
+Definicao:
+
+1. bloco de abertura com funcao editorial, narrativa ou diagnostica propria
+2. pode ter markup proprio
+3. nao deve fingir ser hero canonico se nao respeita o contrato do host compartilhado
+
+Exemplos atuais:
+
+1. [../../templates/dashboard/blocks/advisor_narrative.html](../../templates/dashboard/blocks/advisor_narrative.html)
+2. [../../templates/guide/system-map.html](../../templates/guide/system-map.html)
+
+Regra:
+
+1. hero especial precisa de nome explicito e CSS claramente delimitado
+2. se a estrutura divergir do host canonico, ele deve ser tratado como especie propria
+
+Decisao atual:
+
+1. `dashboard-advisor-narrative` permanece hero especial legitimo do fluxo Conselheiro
+2. ele nao deve ser tratado como hero canonico do dashboard principal
+3. sua manutencao continua em:
+   [../../templates/dashboard/blocks/advisor_narrative.html](../../templates/dashboard/blocks/advisor_narrative.html),
+   [../../templates/dashboard/conselheiro.html](../../templates/dashboard/conselheiro.html) e
+   [../../static/css/design-system/dashboard.css](../../static/css/design-system/dashboard.css)
+4. novas paginas nao devem copiar esse markup como base de hero compartilhado
+
+### Hero legacy
+
+Definicao:
+
+1. bloco antigo ou improvisado que mistura familias visuais e nao respeita o contrato atual
+
+Exemplo atual:
+
+1. [../../templates/operations/whatsapp_placeholder.html](../../templates/operations/whatsapp_placeholder.html)
+
+Regra:
+
+1. hero legacy deve ser migrado para o host canonico ou substituido por um especial explicito
+2. nao criar novos heroes nesse formato
+
 ## Contrato de tela
 
 Heuristica curta do contrato semantico enxuto:

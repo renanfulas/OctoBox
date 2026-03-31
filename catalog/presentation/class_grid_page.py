@@ -104,7 +104,7 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
             ] if can_manage_classes else []),
         ],
         aria_label='Panorama da grade',
-        classes=['operation-hero'],
+        classes=[],
     )
 
     payload = build_catalog_page_payload(

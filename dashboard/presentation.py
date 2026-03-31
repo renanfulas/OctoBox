@@ -603,7 +603,7 @@ def build_dashboard_page(*, request_user, role_slug, snapshot, stored_layout_sta
         copy=_build_dashboard_hero_copy(role_slug),
         actions=_build_dashboard_hero_actions(role_slug),
         aria_label='Panorama do dia',
-        classes=['operation-hero'],
+        classes=[],
         data_slot='hero',
         data_panel='dashboard-hero',
     )

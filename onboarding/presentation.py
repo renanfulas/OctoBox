@@ -62,7 +62,7 @@ def build_intake_center_page(*, snapshot, current_role_slug):
         copy='Receba, converse e converta quem chegou no seu Box.',
         actions=hero_actions,
         aria_label='Panorama da central de intake',
-        classes=['operation-hero'],
+        classes=[],
         data_slot='hero',
         data_panel='intake-hero',
         actions_slot='intake-hero-actions',

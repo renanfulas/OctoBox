@@ -65,7 +65,7 @@ class ReportHubView(OperationBaseView, TemplateView):
                 {'label': 'Ver camada financeira', 'href': '#reports-finance', 'kind': 'secondary', 'data_action': 'jump-report-finance'},
             ],
             aria_label='Panorama da central de relatorios',
-            classes=['operation-hero', 'reports-hub-hero'],
+            classes=['reports-hub-hero'],
             heading_level='h1',
             data_panel='reports-hub-hero',
         )
