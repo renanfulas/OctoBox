@@ -22,16 +22,17 @@ O QUE ESTE ARQUIVO FAZ:
     --dashboard-fib-6: 55px;
     --dashboard-fib-ratio: 1.618;
     --dashboard-surface-radius: 18px;
-    --dashboard-surface-border: rgba(80, 102, 128, 0.12);
+    --dashboard-surface-border: rgba(96, 129, 166, 0.16);
     --dashboard-surface-shadow: var(--theme-shadow-soft);
     --dashboard-surface-shadow-lift: var(--theme-shadow-lift);
     --dashboard-support-surface:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 22%, transparent), transparent 28%),
-        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 22%),
-        linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-panel) 96%, white), color-mix(in srgb, var(--theme-surface-strong) 94%, white));
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 28%, transparent), transparent 26%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 22%, transparent), transparent 24%),
+        linear-gradient(155deg, color-mix(in srgb, var(--theme-surface-panel) 97%, white), color-mix(in srgb, var(--theme-surface-strong) 92%, white));
     --dashboard-support-surface-dark:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 52%, transparent), transparent 28%),
-        linear-gradient(150deg, color-mix(in srgb, var(--theme-surface-strong) 94%, transparent), color-mix(in srgb, var(--theme-surface) 98%, transparent));
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 56%, transparent), transparent 26%),
+        radial-gradient(circle at 14% 18%, rgba(0, 212, 255, 0.12), transparent 24%),
+        linear-gradient(152deg, rgba(12, 24, 40, 0.98), rgba(8, 16, 29, 0.98) 58%, rgba(7, 14, 24, 0.94));
     display: grid;
     gap: clamp(var(--dashboard-fib-3), 1.5vw, var(--dashboard-fib-4));
     position: relative;
@@ -52,9 +53,21 @@ body[data-shell-scope="dashboard"] .topbar {
     --topbar-padding-inline: 21px;
     --topbar-radius: 21px;
     --topbar-search-radius: 16px;
-    --topbar-surface: color-mix(in srgb, var(--theme-surface-panel) 88%, transparent);
-    --topbar-search-surface: color-mix(in srgb, var(--theme-surface-strong) 88%, transparent);
-    --topbar-profile-surface: color-mix(in srgb, var(--theme-surface-strong) 88%, transparent);
+    --topbar-surface:
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-panel) 82%, transparent), color-mix(in srgb, var(--theme-surface-strong) 76%, transparent));
+    --topbar-search-surface: color-mix(in srgb, var(--theme-surface-strong) 82%, transparent);
+    --topbar-profile-surface: color-mix(in srgb, var(--theme-surface-strong) 80%, transparent);
+    --topbar-border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 24%, var(--theme-border-soft) 76%);
+    --topbar-shadow:
+        0 18px 36px rgba(3, 8, 20, 0.18),
+        inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
+    --topbar-overlay-glow:
+        radial-gradient(circle at 92% 22%, color-mix(in srgb, var(--theme-accent-primary-alpha) 74%, transparent), transparent 52%),
+        radial-gradient(circle at 8% 76%, color-mix(in srgb, var(--theme-accent-support-alpha) 62%, transparent), transparent 50%);
+    --topbar-search-border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 20%, var(--theme-border-soft) 80%);
+    --topbar-search-shadow:
+        inset 0 1px 0 color-mix(in srgb, white 18%, transparent),
+        0 0 0 1px color-mix(in srgb, rgba(0, 212, 255, 0.08) 100%, transparent);
     --topbar-profile-radius: 16px;
 }
 
@@ -69,10 +82,10 @@ body[data-shell-scope="dashboard"] .topbar {
 
 .dashboard-shell::before {
     background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 30%, transparent), transparent 16%),
-        radial-gradient(circle at 12% 34%, color-mix(in srgb, var(--theme-accent-support-alpha) 26%, transparent), transparent 14%),
-        radial-gradient(circle at 50% 0%, color-mix(in srgb, white 36%, transparent), transparent 20%),
-        radial-gradient(circle at 80% 72%, color-mix(in srgb, var(--theme-accent-success-alpha) 18%, transparent), transparent 14%);
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 34%, transparent), transparent 15%),
+        radial-gradient(circle at 12% 34%, color-mix(in srgb, var(--theme-accent-support-alpha) 28%, transparent), transparent 13%),
+        radial-gradient(circle at 50% 0%, color-mix(in srgb, white 24%, transparent), transparent 18%),
+        radial-gradient(circle at 80% 72%, color-mix(in srgb, var(--theme-accent-success-alpha) 20%, transparent), transparent 13%);
 }
 
 .dashboard-shell::after {
@@ -80,19 +93,21 @@ body[data-shell-scope="dashboard"] .topbar {
     height: 377px;
     border-radius: var(--dashboard-fib-5);
     background:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-primary-alpha) 20%, transparent), transparent),
-        linear-gradient(135deg, color-mix(in srgb, white 10%, transparent), transparent 58%);
+        linear-gradient(180deg, color-mix(in srgb, rgba(0, 212, 255, 0.14) 100%, transparent), transparent),
+        linear-gradient(135deg, color-mix(in srgb, white 8%, transparent), transparent 54%);
 }
 
 .dashboard-hero {
-    --hero-border: color-mix(in srgb, white 74%, transparent);
+    --hero-border: color-mix(in srgb, rgba(148, 163, 184, 0.22) 100%, transparent);
     --hero-radius: var(--dashboard-surface-radius);
     --hero-surface:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 22%, transparent), transparent 22%),
-        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 18%),
-        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-panel) 98%, white), color-mix(in srgb, var(--theme-surface-strong) 96%, white)),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 26%, transparent), transparent 20%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 22%, transparent), transparent 18%),
+        linear-gradient(148deg, color-mix(in srgb, var(--theme-surface-panel) 98%, white), color-mix(in srgb, var(--theme-surface-strong) 92%, white)),
         var(--surface);
-    --hero-shadow: var(--dashboard-surface-shadow-lift);
+    --hero-shadow:
+        0 28px 54px rgba(15, 23, 42, 0.16),
+        inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
     --hero-before-inset: auto auto calc(var(--dashboard-fib-5) * -1) calc(var(--dashboard-fib-4) * -1);
     --hero-before-width: 233px;
     --hero-before-height: 233px;
@@ -115,8 +130,8 @@ body[data-shell-scope="dashboard"] .topbar {
     flex-wrap: wrap;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 24px;
-    padding: 40px;
+    gap: 28px;
+    padding: 44px;
     margin-bottom: 48px;
     overflow: hidden;
 }
@@ -132,7 +147,7 @@ body[data-shell-scope="dashboard"] .topbar {
     position: absolute;
     inset: 0 auto 0 40px;
     width: 140px;
-    opacity: 0.04;
+    opacity: 0.05;
     pointer-events: none;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M10,80 L10,60 L30,40 L50,50 L70,20 L90,30" fill="none" stroke="%23000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><rect x="15" y="50" width="10" height="30" rx="2" fill="%23000"/><rect x="45" y="40" width="10" height="40" rx="2" fill="%23000"/><rect x="75" y="20" width="10" height="60" rx="2" fill="%23000"/></svg>');
     background-repeat: no-repeat;
@@ -157,18 +172,18 @@ body[data-shell-scope="dashboard"] .topbar {
 .dashboard-advisor-narrative-title {
     margin: 0 0 12px;
     color: var(--ink);
-    font-size: 2.25rem;
+    font-size: clamp(2.35rem, 4vw, 2.9rem);
     font-weight: 800;
     line-height: 1.1;
     letter-spacing: -0.02em;
 }
 
 .dashboard-advisor-narrative-body {
-    max-width: 90%;
+    max-width: 78ch;
     margin: 0;
-    color: var(--muted);
-    font-size: 1.05rem;
-    line-height: 1.6;
+    color: color-mix(in srgb, var(--theme-text-secondary) 88%, white 12%);
+    font-size: 1.07rem;
+    line-height: 1.68;
 }
 
 .dashboard-advisor-narrative-actions {
@@ -186,7 +201,9 @@ body[data-shell-scope="dashboard"] .topbar {
     color: #ffffff;
     font-size: 0.9rem;
     font-weight: 600;
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--theme-accent-primary) 28%, transparent);
+    box-shadow:
+        0 10px 24px color-mix(in srgb, var(--theme-accent-primary) 22%, transparent),
+        inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
 }
 
 .dashboard-advisor-manifesto-trigger:hover,
@@ -202,11 +219,14 @@ body[data-shell-scope="dashboard"] .topbar {
     padding: 12px 20px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
     border-radius: 999px;
-    background: color-mix(in srgb, var(--theme-surface-strong) 88%, transparent);
+    background:
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-strong) 90%, transparent), color-mix(in srgb, var(--theme-surface-secondary) 84%, transparent));
     color: var(--ink);
     font-size: 0.85rem;
     font-weight: 600;
-    box-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, white 10%, transparent),
+        0 12px 24px rgba(15, 23, 42, 0.08);
 }
 
 .dashboard-advisor-metric-trend {

@@ -15,10 +15,13 @@
     gap: 16px;
     min-height: 100%;
     background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--dashboard-focus-accent-alpha) 78%, transparent), transparent 34%),
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-strong) 82%, transparent), color-mix(in srgb, var(--theme-surface) 94%, transparent));
-    border-color: color-mix(in srgb, var(--dashboard-focus-accent) 22%, var(--theme-border-soft) 78%);
-    box-shadow: var(--theme-shadow-soft);
+        radial-gradient(circle at top right, color-mix(in srgb, var(--dashboard-focus-accent-alpha) 72%, transparent), transparent 30%),
+        radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.05), transparent 26%),
+        linear-gradient(170deg, color-mix(in srgb, var(--theme-surface-strong) 86%, transparent), color-mix(in srgb, var(--theme-surface) 96%, transparent));
+    border-color: color-mix(in srgb, var(--dashboard-focus-accent) 26%, var(--theme-border-soft) 74%);
+    box-shadow:
+        0 22px 40px rgba(2, 8, 23, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .dashboard-focus-card--danger {
@@ -106,8 +109,9 @@
     max-height: 420px;
     padding: 16px;
     border-radius: 12px;
-    background: color-mix(in srgb, var(--theme-surface-secondary) 68%, transparent);
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
+    background:
+        linear-gradient(150deg, color-mix(in srgb, var(--theme-surface-secondary) 72%, transparent), color-mix(in srgb, var(--theme-surface-strong) 64%, transparent));
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, rgba(125, 211, 252, 0.14) 18%);
     transition:
         transform 0.4s ease,
         opacity 0.4s ease,
