@@ -519,8 +519,6 @@ body[data-theme="dark"] .dashboard-hero .actions .button.secondary {
     }
 
     .dashboard-hero {
-        --operation-hero-heading-max-width: 100%;
-        --operation-hero-heading-size: clamp(1.8rem, 9vw, 2.3rem);
         padding: var(--dashboard-rhythm-3);
     }
 
