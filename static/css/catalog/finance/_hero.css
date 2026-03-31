@@ -7,7 +7,9 @@ POR QUE ELE EXISTE:
 */
 
 .finance-hero-panel {
-    background: var(--surface);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 26%, transparent), transparent 28%),
+        linear-gradient(155deg, color-mix(in srgb, var(--theme-surface-panel) 98%, white), color-mix(in srgb, var(--theme-surface-strong) 94%, white));
 }
 
 .finance-hero .operation-hero-main > div:first-child {
@@ -30,8 +32,9 @@ POR QUE ELE EXISTE:
 
 .finance-command-hero {
     --finance-command-surface:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 52%, transparent), transparent 26%),
-        linear-gradient(155deg, color-mix(in srgb, var(--theme-surface-strong) 84%, transparent), color-mix(in srgb, var(--theme-surface) 96%, transparent));
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 46%, transparent), transparent 24%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent), transparent 26%),
+        linear-gradient(156deg, color-mix(in srgb, var(--theme-surface-strong) 90%, white), color-mix(in srgb, var(--theme-surface) 96%, white));
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -39,6 +42,10 @@ POR QUE ELE EXISTE:
     gap: 24px;
     padding: 20px 22px;
     background: var(--finance-command-surface);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-border-soft) 84%);
+    box-shadow:
+        0 20px 38px rgba(7, 14, 24, 0.08),
+        inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
 }
 
 .finance-command-hero-copy,
@@ -104,6 +111,23 @@ POR QUE ELE EXISTE:
 .finance-command-hero-update {
     margin: 0;
     color: var(--muted);
+}
+
+body[data-theme="dark"] .finance-hero-panel {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 34%, transparent), transparent 28%),
+        linear-gradient(156deg, rgba(13, 23, 37, 0.98), rgba(9, 16, 28, 0.97) 58%, rgba(7, 12, 22, 0.95));
+}
+
+body[data-theme="dark"] .finance-command-hero {
+    --finance-command-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 54%, transparent), transparent 26%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-primary-alpha) 24%, transparent), transparent 28%),
+        linear-gradient(156deg, rgba(13, 23, 37, 0.98), rgba(9, 16, 28, 0.97) 58%, rgba(7, 12, 22, 0.95));
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-border-soft) 80%);
+    box-shadow:
+        0 24px 44px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
 }
 
 .finance-shell .operation-mini-grid {
