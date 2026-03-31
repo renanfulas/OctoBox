@@ -250,7 +250,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             {'label': 'Voltar para alunos', 'href': get_shell_route_url('students'), 'kind': 'secondary'},
         ],
         aria_label='Ficha do aluno',
-        classes=[],
+        classes=['student-hero', 'student-form-hero'],
     )
 
     return build_catalog_page_payload(

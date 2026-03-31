@@ -20,7 +20,7 @@ PONTOS CRITICOS:
 
 {% block content %}
 {% with page=student_form_page %}
-<div class="operation-shell student-form-shell workspace-shell" data-page="student-form" data-screen="catalog-student" data-slot="page-root"
+<div class="operation-shell student-form-shell student-scene student-form-scene workspace-shell" data-page="student-form" data-screen="catalog-student" data-slot="page-root"
      {% if student_id_for_lock %}data-student-id="{{ student_id_for_lock }}"{% endif %}>
 
     {# --- Banner de lock de edicao com hierarquia de papeis --- #}
@@ -86,11 +86,11 @@ PONTOS CRITICOS:
     {% endwith %}
 
     <div class="interactive-tab-container" data-panel="student-workspace">
-        <div class="stack-16 is-tab-active" id="tab-student-form-essential" data-panel="student-form-essential">
+        <div class="stack-16 student-form-stage student-form-stage--essential is-tab-active" id="tab-student-form-essential" data-panel="student-form-essential">
             {% include "includes/catalog/student_form/main_form/main_form.html" with form=student_form %}
         </div>
         
-        <div class="stack-16" id="tab-student-form-financial" data-panel="student-form-financial">
+        <div class="stack-16 student-form-stage student-form-stage--financial" id="tab-student-form-financial" data-panel="student-form-financial">
             {% include "includes/catalog/student_form/financial/financial_overview.html" with student=page.data.student %}
         </div>
     </div>

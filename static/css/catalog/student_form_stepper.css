@@ -1,18 +1,123 @@
-/* Stepper UI - SaaS Elite Standard */
+/* Student Form premium precision expansion */
+
+.student-form-shell {
+    gap: calc(var(--section-gap) - 2px);
+}
+
+.student-form-hero.operation-hero,
+.student-form-hero .operation-hero-panel {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 28%, transparent), transparent 26%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, transparent), transparent 30%),
+        linear-gradient(156deg, color-mix(in srgb, var(--theme-surface-panel) 97%, white), color-mix(in srgb, var(--theme-surface-strong) 94%, white));
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
+    box-shadow:
+        0 22px 42px rgba(7, 14, 24, 0.08),
+        inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+}
+
+.student-form-hero .operation-hero-main > div:first-child {
+    max-width: 58ch;
+}
+
+.student-form-hero .operation-hero-copy {
+    max-width: 46ch;
+}
+
+.student-form-hero .actions {
+    gap: 8px;
+}
+
+.student-workspace-map-intro,
+.student-workspace-map-card,
+.student-form-main-card,
+.student-form-stepper-card {
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 12%, rgba(148, 163, 184, 0.16) 88%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
+        linear-gradient(160deg, rgba(251, 252, 255, 0.9), rgba(246, 248, 252, 0.82));
+    box-shadow:
+        0 18px 34px rgba(7, 14, 24, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.student-workspace-map-intro {
+    display: grid;
+    gap: 6px;
+    padding: 18px 20px;
+    border-radius: 22px;
+}
+
+.student-workspace-map {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.student-workspace-map-card {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    min-height: 100%;
+    padding: 18px 20px;
+    border-radius: 22px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.student-workspace-map-card:hover {
+    transform: translateY(-1px);
+    box-shadow:
+        0 24px 40px rgba(7, 14, 24, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.student-workspace-map-card.is-current {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 26%, var(--theme-border-soft) 74%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent), transparent 28%),
+        linear-gradient(160deg, rgba(252, 254, 255, 0.96), rgba(246, 249, 253, 0.86));
+}
+
+.student-workspace-map-card.is-ready {
+    border-color: color-mix(in srgb, var(--theme-accent-success-alpha) 24%, var(--theme-border-soft) 76%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-success-alpha) 18%, transparent), transparent 28%),
+        linear-gradient(160deg, rgba(249, 252, 250, 0.95), rgba(243, 248, 245, 0.86));
+}
+
+.student-workspace-map-card.is-muted {
+    opacity: 0.9;
+}
+
+.student-workspace-map-card .button {
+    justify-self: start;
+}
+
+.student-form-stage {
+    min-width: 0;
+}
+
+.student-form-stage--financial {
+    padding-top: 4px;
+}
+
 .student-form-stepper {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0;
     padding: 20px 24px;
-    background: var(--bg-100);
-    border-radius: 12px;
-    border: 1px solid var(--border-100);
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.72), rgba(247, 249, 252, 0.82));
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--border-100) 90%);
 }
 
 .student-form-stepper-card {
     display: grid;
     gap: 18px;
+    padding: 20px 22px;
+    border-radius: 22px;
 }
 
 .student-form-stepper-summary {
@@ -66,7 +171,9 @@
 .stepper-item.active .stepper-circle {
     background: var(--accent-primary);
     color: white;
-    box-shadow: 0 0 15px var(--accent-primary-alpha);
+    box-shadow:
+        0 0 0 6px color-mix(in srgb, var(--accent-primary-alpha) 24%, transparent),
+        0 0 20px var(--accent-primary-alpha);
 }
 
 .stepper-item.completed .stepper-circle {
@@ -101,6 +208,10 @@
 
 .student-form-stepper-status {
     margin: 0;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 9%, rgba(255, 255, 255, 0.54));
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary-alpha) 10%, rgba(148, 163, 184, 0.12) 90%);
 }
 
 .student-form-step-intro {
@@ -116,6 +227,15 @@
 .student-form-recovery-panel {
     display: grid;
     gap: 10px;
+    padding: 18px 20px;
+    border-radius: 22px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, rgba(148, 163, 184, 0.16) 86%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, transparent), transparent 28%),
+        linear-gradient(160deg, rgba(255, 250, 245, 0.94), rgba(250, 246, 241, 0.88));
+    box-shadow:
+        0 18px 34px rgba(7, 14, 24, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .student-form-recovery-list {
@@ -124,8 +244,9 @@
 
 .student-form-recovery-item {
     padding: 10px 12px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.56);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .student-form-recovery-item .no-margin {
@@ -139,11 +260,16 @@
     white-space: nowrap;
 }
 
+.student-form-recovery-item a {
+    color: var(--ink);
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 2px;
+}
+
 .status-paid { color: #16a34a !important; }
 .status-overdue { color: #dc2626 !important; }
 .status-pending { color: #ca8a04 !important; }
 
-/* Transitions */
 .step-container {
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
@@ -160,7 +286,19 @@
     transform: translateY(0);
 }
 
-/* Payment Link Button */
+.student-form-shell .student-financial-workspace {
+    padding-top: 4px;
+}
+
+.student-form-shell .student-financial-command-strip,
+.student-form-shell .student-financial-panel,
+.student-form-shell .student-financial-side-panel {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
+    box-shadow:
+        0 18px 34px rgba(7, 14, 24, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
 .payment-link-btn {
     display: flex;
     align-items: center;
@@ -179,9 +317,59 @@
     background: var(--accent-primary-alpha);
 }
 
+body[data-theme="dark"] .student-form-hero.operation-hero,
+body[data-theme="dark"] .student-form-hero .operation-hero-panel,
+body[data-theme="dark"] .student-workspace-map-intro,
+body[data-theme="dark"] .student-workspace-map-card,
+body[data-theme="dark"] .student-form-main-card,
+body[data-theme="dark"] .student-form-stepper-card,
+body[data-theme="dark"] .student-form-recovery-panel {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, rgba(148, 163, 184, 0.16) 80%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent), transparent 30%),
+        linear-gradient(160deg, rgba(15, 24, 39, 0.96), rgba(10, 17, 30, 0.95));
+    box-shadow:
+        0 24px 44px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"] .student-form-stepper {
+    background:
+        linear-gradient(160deg, rgba(18, 29, 46, 0.88), rgba(13, 21, 34, 0.84));
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, rgba(148, 163, 184, 0.14) 84%);
+}
+
+body[data-theme="dark"] .student-form-stepper-status {
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 12%, rgba(18, 29, 46, 0.64));
+    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, rgba(148, 163, 184, 0.14) 84%);
+}
+
+body[data-theme="dark"] .student-form-recovery-panel {
+    border-color: color-mix(in srgb, var(--theme-accent-warning-alpha) 22%, rgba(148, 163, 184, 0.16) 78%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 20%, transparent), transparent 28%),
+        linear-gradient(160deg, rgba(35, 24, 16, 0.9), rgba(23, 18, 13, 0.88));
+}
+
+body[data-theme="dark"] .student-form-recovery-item {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
 @media (max-width: 720px) {
+    .student-workspace-map {
+        grid-template-columns: 1fr;
+    }
+
     .student-form-stepper {
         gap: 16px;
+        padding: 16px;
+    }
+
+    .student-workspace-map-intro,
+    .student-workspace-map-card,
+    .student-form-stepper-card,
+    .student-form-recovery-panel {
         padding: 16px;
     }
 
