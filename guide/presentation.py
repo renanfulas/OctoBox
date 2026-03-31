@@ -7,7 +7,7 @@ POR QUE ELE EXISTE:
 """
 
 from access.shell_actions import build_shell_action_buttons_from_focus
-from shared_support.page_payloads import build_page_assets, build_page_payload
+from shared_support.page_payloads import build_page_assets, build_page_hero, build_page_payload
 from shared_support.operational_settings import get_operational_whatsapp_repeat_block_hours
 
 
@@ -28,6 +28,17 @@ def build_system_map_page():
             'shell_action_buttons': build_shell_action_buttons_from_focus(focus=system_map_focus, scope='system-map'),
         },
         data={
+            'hero': build_page_hero(
+                eyebrow='Leitura guiada',
+                title='Mapa do Sistema',
+                copy='Modulos, fronteiras e onde investigar bugs.',
+                actions=[
+                    {'label': 'Ver papeis', 'href': '/acessos/', 'kind': 'secondary'},
+                ],
+                aria_label='Panorama do mapa do sistema',
+                classes=['system-map-hero'],
+                data_panel='system-map-hero',
+            ),
             'system_flow': [
                 'Entrada do projeto pelo Django',
                 'Configuracao global, ambientes e rotas principais',
@@ -253,6 +264,17 @@ def build_operational_settings_page():
             ),
         },
         data={
+            'hero': build_page_hero(
+                eyebrow='Configuracao operacional',
+                title='Configuracoes operacionais',
+                copy='Ajuste rapido da janela do WhatsApp e dos perfis de acesso.',
+                actions=[
+                    {'label': 'Abrir acessos', 'href': '/acessos/#access-profile-create', 'kind': 'secondary'},
+                ],
+                aria_label='Janela operacional do WhatsApp',
+                classes=['system-map-hero'],
+                data_panel='operational-settings-hero',
+            ),
             'repeat_block_hours': repeat_block_hours,
             'repeat_block_mode_label': (
                 'Repeticao imediata liberada'

@@ -1,33 +1,24 @@
 <!--
-ARQUIVO: página interna Mapa do Sistema.
+ARQUIVO: pagina interna Mapa do Sistema.
 
 POR QUE ELE EXISTE:
-- Traduz a arquitetura do projeto para uma visão visual e navegável dentro do app.
+- Traduz a arquitetura do projeto para uma visao visual e navegavel dentro do app.
 
 O QUE ESTE ARQUIVO FAZ:
 1. Mostra o fluxo macro do sistema.
-2. Agrupa módulos por responsabilidade.
+2. Agrupa modulos por responsabilidade.
 3. Explica onde procurar bugs e como estudar o projeto.
-4. Mostra as fronteiras entre navegação, operação e dados.
+4. Mostra as fronteiras entre navegacao, operacao e dados.
 
 PONTOS CRITICOS:
 - Depende do contexto montado em guide/views.py.
-- Serve como espelho da organização real do projeto e deve acompanhar mudanças estruturais.
+- Serve como espelho da organizacao real do projeto e deve acompanhar mudancas estruturais.
 -->
 {% extends "layouts/base.html" %}
 
 {% block content %}
 {% with page=system_map_page %}
-<section class="hero system-map-hero" id="system-flow-board" aria-label="Panorama do mapa do sistema">
-    <div>
-        <h2>{{ page.context.title }}</h2>
-        <p>{{ page.context.subtitle }}</p>
-    </div>
-    <div class="actions">
-        <span class="pill">Leitura guiada</span>
-        <a class="button secondary" href="{{ page.actions.primary.roles }}">Ver papéis</a>
-    </div>
-</section>
+{% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
 <section class="table-card system-map-section" data-panel="system-flow-grid">
     <p class="eyebrow">Fluxo do produto</p>

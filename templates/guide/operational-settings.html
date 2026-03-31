@@ -14,16 +14,7 @@ POR QUE ELE EXISTE:
 
 {% block content %}
 {% with page=operational_settings_page %}
-<section class="hero system-map-hero" id="operational-settings-window" aria-label="Janela operacional do WhatsApp">
-    <div>
-        <h2>{{ page.context.title }}</h2>
-        <p>{{ page.context.subtitle }}</p>
-    </div>
-    <div class="actions">
-        <span class="pill">{{ page.data.repeat_block_mode_label }}</span>
-        <a class="button secondary" href="{{ page.data.access_overview_href }}">Abrir acessos</a>
-    </div>
-</section>
+{% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
 <section class="layout-grid system-map-section" aria-label="Acoes operacionais disponiveis">
     <article class="table-card">

@@ -16,22 +16,22 @@ POR QUE ELE EXISTE:
        FIBONACCI HERO STRUCTURE — FINAL AUTHORITY
        Garante que todos os heros operacionais tenham o compasso do dashboard.
     ───────────────────────────────────────────────────────────────────────── */
-    --operation-hero-gap: var(--workspace-fib-3, 13px);
+    --operation-hero-gap: clamp(var(--workspace-fib-3, 13px), 1.4vw, var(--workspace-fib-4, 21px));
     --operation-hero-padding: clamp(var(--workspace-fib-4, 21px), 1.8vw, var(--workspace-fib-5, 34px));
     --operation-hero-main-columns: minmax(0, 1fr) auto;
     --operation-hero-main-align-items: end;
     --operation-hero-main-position: relative;
     --operation-hero-main-z-index: 1;
-    --operation-hero-main-gap: var(--workspace-fib-3, 13px);
-    --operation-hero-stack-gap: var(--workspace-fib-2, 8px);
-    --operation-hero-stack-max-width: 760px; /* Expandido de 52ch para acomodar títulos grandes no layout fluido */
+    --operation-hero-main-gap: clamp(var(--workspace-fib-3, 13px), 1.2vw, var(--workspace-fib-4, 21px));
+    --operation-hero-stack-gap: 10px;
+    --operation-hero-stack-max-width: 44rem;
     --operation-hero-heading-max-width: 100%; /* Permite títulos longos em pt-BR sem truncar precocemente */
     --operation-hero-heading-size: clamp(2.15rem, 3.5vw, 3rem);
     --operation-hero-heading-line-height: 0.95;
     --operation-hero-heading-letter-spacing: -0.05em;
-    --operation-hero-copy-max-width: 46ch;
+    --operation-hero-copy-max-width: 54ch;
     --operation-hero-copy-size: 0.98rem;
-    --operation-hero-copy-line-height: 1.5;
+    --operation-hero-copy-line-height: 1.56;
     
     /* Configurações do pílula de ações laterais */
     --operation-hero-actions-display: inline-flex;
@@ -43,8 +43,9 @@ POR QUE ELE EXISTE:
     --operation-hero-actions-surface: rgba(255, 255, 255, 0.58);
     --operation-hero-actions-border: 1px solid rgba(80, 102, 128, 0.08);
     --operation-hero-actions-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
-    --operation-hero-button-min-height: 34px;
-    --operation-hero-button-padding: 7px 14px;
+    --operation-hero-actions-gap: 10px;
+    --operation-hero-button-min-height: 36px;
+    --operation-hero-button-padding: 8px 14px;
     --operation-hero-button-radius: 999px;
 
     /* Remove os enfeites de bordas verticais sujas deixadas pelos templates base */
@@ -69,6 +70,7 @@ body[data-theme="dark"] .operation-hero {
         --operation-hero-actions-justify-self: start;
         --operation-hero-actions-max-width: 100%;
         --operation-hero-actions-padding: 3px;
+        --operation-hero-heading-max-width: 100%;
     }
 }
 
@@ -90,8 +92,18 @@ body[data-theme="dark"] .operation-hero {
 }
 
 .operation-hero-main > div:first-child {
+    display: grid;
+    justify-items: start;
+    text-align: left;
     gap: var(--operation-hero-stack-gap, 8px);
     max-width: var(--operation-hero-stack-max-width, 560px);
+}
+
+.operation-hero-main .eyebrow {
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
 }
 
 .operation-hero-main h1,
@@ -103,6 +115,7 @@ body[data-theme="dark"] .operation-hero {
 }
 
 .operation-hero-copy {
+    margin-inline: 0;
     max-width: var(--operation-hero-copy-max-width, 40ch);
     font-size: var(--operation-hero-copy-size, 0.99rem);
     line-height: var(--operation-hero-copy-line-height, 1.48);
@@ -112,8 +125,11 @@ body[data-theme="dark"] .operation-hero {
     display: var(--operation-hero-actions-display, flex);
     align-self: var(--operation-hero-actions-align-self, auto);
     justify-self: var(--operation-hero-actions-justify-self, auto);
+    justify-content: flex-start;
+    align-items: flex-start;
     gap: var(--operation-hero-actions-gap, 8px);
     max-width: var(--operation-hero-actions-max-width, 560px);
+    margin-inline: 0;
     padding: var(--operation-hero-actions-padding, 0);
     border-radius: var(--operation-hero-actions-radius, 0);
     background: var(--operation-hero-actions-surface, transparent);
@@ -125,6 +141,8 @@ body[data-theme="dark"] .operation-hero {
     min-height: var(--operation-hero-button-min-height, 36px);
     padding: var(--operation-hero-button-padding, 8px 13px);
     border-radius: var(--operation-hero-button-radius, 14px);
+    font-size: 0.92rem;
+    font-weight: 700;
 }
 
 .operation-hero-side {
@@ -186,6 +204,14 @@ body[data-theme="dark"] .operation-mini-stat {
     .operation-hero .actions {
         flex-wrap: wrap;
         overflow: visible;
+    }
+}
+
+@media (max-width: 720px) {
+    .operation-hero {
+        --operation-hero-heading-size: clamp(1.8rem, 9vw, 2.3rem);
+        --operation-hero-copy-size: 0.95rem;
+        --operation-hero-stack-gap: 8px;
     }
 }
 
