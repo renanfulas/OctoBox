@@ -16,22 +16,22 @@ POR QUE ELE EXISTE:
        FIBONACCI HERO STRUCTURE — FINAL AUTHORITY
        Garante que todos os heros operacionais tenham o compasso do dashboard.
     ───────────────────────────────────────────────────────────────────────── */
-    --operation-hero-gap: clamp(var(--workspace-fib-3, 13px), 1.4vw, var(--workspace-fib-4, 21px));
+    --operation-hero-gap: var(--workspace-fib-3, 13px);
     --operation-hero-padding: clamp(var(--workspace-fib-4, 21px), 1.8vw, var(--workspace-fib-5, 34px));
     --operation-hero-main-columns: minmax(0, 1fr) auto;
     --operation-hero-main-align-items: end;
     --operation-hero-main-position: relative;
     --operation-hero-main-z-index: 1;
-    --operation-hero-main-gap: clamp(var(--workspace-fib-3, 13px), 1.2vw, var(--workspace-fib-4, 21px));
-    --operation-hero-stack-gap: 10px;
-    --operation-hero-stack-max-width: 44rem;
+    --operation-hero-main-gap: var(--workspace-fib-3, 13px);
+    --operation-hero-stack-gap: 8px;
+    --operation-hero-stack-max-width: 40rem;
     --operation-hero-heading-max-width: 100%; /* Permite títulos longos em pt-BR sem truncar precocemente */
     --operation-hero-heading-size: clamp(2.15rem, 3.5vw, 3rem);
     --operation-hero-heading-line-height: 0.95;
     --operation-hero-heading-letter-spacing: -0.05em;
-    --operation-hero-copy-max-width: 54ch;
+    --operation-hero-copy-max-width: 48ch;
     --operation-hero-copy-size: 0.98rem;
-    --operation-hero-copy-line-height: 1.56;
+    --operation-hero-copy-line-height: 1.54;
     
     /* Configurações do pílula de ações laterais */
     --operation-hero-actions-display: inline-flex;
@@ -43,9 +43,9 @@ POR QUE ELE EXISTE:
     --operation-hero-actions-surface: rgba(255, 255, 255, 0.58);
     --operation-hero-actions-border: 1px solid rgba(80, 102, 128, 0.08);
     --operation-hero-actions-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
-    --operation-hero-actions-gap: 10px;
-    --operation-hero-button-min-height: 36px;
-    --operation-hero-button-padding: 8px 14px;
+    --operation-hero-actions-gap: 8px;
+    --operation-hero-button-min-height: 34px;
+    --operation-hero-button-padding: 7px 14px;
     --operation-hero-button-radius: 999px;
 
     /* Remove os enfeites de bordas verticais sujas deixadas pelos templates base */
@@ -141,8 +141,6 @@ body[data-theme="dark"] .operation-hero {
     min-height: var(--operation-hero-button-min-height, 36px);
     padding: var(--operation-hero-button-padding, 8px 13px);
     border-radius: var(--operation-hero-button-radius, 14px);
-    font-size: 0.92rem;
-    font-weight: 700;
 }
 
 .operation-hero-side {
