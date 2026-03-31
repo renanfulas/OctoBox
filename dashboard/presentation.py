@@ -413,11 +413,13 @@ def _build_dashboard_priority_cards(
     primary_payment_alert = next_payment_alert or (payment_alerts[0] if payment_alerts else None)
     overdue_count = metrics['overdue_payments']
 
-    def build_priority_card(*, severity, value, **card):
+    def build_priority_card(*, severity, value, surface, href_label='Abrir prioridade', **card):
         return {
             **card,
             'severity': severity,
+            'surface': surface,
             'is_actionable': value > 0,
+            'href_label': href_label,
             'value': value,
         }
 
@@ -432,7 +434,9 @@ def _build_dashboard_priority_cards(
         emergency_card = build_priority_card(
             severity='emergency',
             value=actionable_payment_alerts_count,
+            surface='finance',
             href=finance_href,
+            href_label='Abrir financeiro',
             card_class='is-finance',
             indicator_class='is-finance',
             kicker='Emergência',
@@ -447,7 +451,9 @@ def _build_dashboard_priority_cards(
         emergency_card = build_priority_card(
             severity='emergency',
             value=overdue_count,
+            surface='finance',
             href=finance_href,
+            href_label='Abrir financeiro',
             card_class='is-finance',
             indicator_class='is-finance',
             kicker='Emergência',
@@ -462,7 +468,9 @@ def _build_dashboard_priority_cards(
         emergency_card = build_priority_card(
             severity='emergency',
             value=0,
+            surface='finance',
             href=finance_href,
+            href_label='Abrir financeiro',
             card_class='is-finance',
             indicator_class='is-finance',
             kicker='Emergência',
@@ -486,7 +494,9 @@ def _build_dashboard_priority_cards(
         urgency_card = build_priority_card(
             severity='warning',
             value=highest_risk_student.total_absences,
+            surface='students',
             href=get_shell_route_url('students'),
+            href_label='Abrir alunos em atencao',
             card_class='is-base',
             indicator_class='is-base',
             kicker='Urgente',
@@ -503,7 +513,9 @@ def _build_dashboard_priority_cards(
         urgency_card = build_priority_card(
             severity='warning',
             value=pressured_session['occupancy_percent'] or len(upcoming_sessions),
+            surface='sessions',
             href='#dashboard-sessions-board',
+            href_label='Abrir agenda do dia',
             card_class='is-sessions',
             indicator_class='is-sessions',
             kicker='Urgente',
@@ -518,7 +530,9 @@ def _build_dashboard_priority_cards(
         urgency_card = build_priority_card(
             severity='warning',
             value=0,
+            surface='students',
             href=get_shell_route_url('students'),
+            href_label='Abrir alunos',
             card_class='is-base',
             indicator_class='is-base',
             kicker='Urgente',
@@ -531,7 +545,9 @@ def _build_dashboard_priority_cards(
         risk_card = build_priority_card(
             severity='risk',
             value=occurrences_count,
+            surface='students',
             href=get_shell_route_url('students'),
+            href_label='Abrir alunos',
             card_class='is-risk',
             indicator_class='is-risk',
             kicker='Risco',
@@ -546,7 +562,9 @@ def _build_dashboard_priority_cards(
         risk_card = build_priority_card(
             severity='risk',
             value=occurrences_count,
+            surface='students',
             href=get_shell_route_url('students'),
+            href_label='Abrir alunos',
             card_class='is-risk',
             indicator_class='is-risk',
             kicker='Risco',
@@ -557,7 +575,9 @@ def _build_dashboard_priority_cards(
         risk_card = build_priority_card(
             severity='risk',
             value=0,
+            surface='students',
             href=get_shell_route_url('students'),
+            href_label='Abrir alunos',
             card_class='is-risk',
             indicator_class='is-risk',
             kicker='Risco',
@@ -566,6 +586,31 @@ def _build_dashboard_priority_cards(
         )
 
     return [emergency_card, urgency_card, risk_card]
+
+
+def _build_dashboard_priority_strip_context(priority_cards):
+    cards = list(priority_cards or [])
+    primary_card = cards[0] if cards else None
+    secondary_cards = cards[1:3]
+    secondary_card = secondary_cards[0] if secondary_cards else None
+
+    return {
+        'cards': cards,
+        'primary_card': primary_card,
+        'secondary_cards': secondary_cards,
+        'decision_entry_context': {
+            'entry_surface': (primary_card or {}).get('surface', ''),
+            'entry_href': (primary_card or {}).get('href', ''),
+            'entry_href_label': (primary_card or {}).get('href_label', 'Abrir prioridade'),
+            'entry_label': (primary_card or {}).get('kicker', ''),
+            'entry_reason': (primary_card or {}).get('copy', ''),
+            'secondary_surface': (secondary_card or {}).get('surface', ''),
+            'secondary_href': (secondary_card or {}).get('href', ''),
+            'secondary_href_label': (secondary_card or {}).get('href_label', 'Abrir proxima leitura'),
+            'secondary_label': (secondary_card or {}).get('kicker', ''),
+            'secondary_reason': (secondary_card or {}).get('copy', ''),
+        },
+    }
 
 
 def build_dashboard_page(*, request_user, role_slug, snapshot, stored_layout_state=None):
@@ -593,6 +638,7 @@ def build_dashboard_page(*, request_user, role_slug, snapshot, stored_layout_sta
         actionable_payment_alerts_count=actionable_payment_alerts_count,
         highest_risk_student=highest_risk_student,
     )
+    priority_strip = _build_dashboard_priority_strip_context(priority_cards)
     pending_focus = {
         'href': get_shell_route_url('reception', fragment='reception-intake-board') if role_slug == ROLE_RECEPTION else get_shell_route_url('intake', fragment='intake-queue-board'),
         'summary': 'Tem gente esperando um retorno seu. Vou te levar até lá.',
@@ -632,6 +678,7 @@ def build_dashboard_page(*, request_user, role_slug, snapshot, stored_layout_sta
             'dashboard_can_register_finance_whatsapp': _can_register_finance_whatsapp(role_slug),
             'dashboard_quick_actions': _build_dashboard_quick_actions(role_slug),
             'dashboard_execution_focus': execution_focus,
+            'dashboard_priority_strip': priority_strip,
             'dashboard_priority_cards': priority_cards,
         },
         behavior={
