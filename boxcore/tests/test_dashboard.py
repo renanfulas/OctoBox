@@ -104,18 +104,12 @@ class DashboardViewTests(TestCase):
         self.assertNotContains(response, '#dashboard-finance-board')
         self.assertNotContains(response, '#dashboard-risk-board')
 
-    def test_dashboard_adapts_actions_for_reception_role(self):
+    def test_dashboard_redirects_reception_to_workspace_contract(self):
         self.client.force_login(self.reception_user)
 
         response = self.client.get(reverse('dashboard'))
 
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Estou aqui com voce. Vamos cuidar do balcao juntos.')
-        self.assertContains(response, 'href="/alunos/novo/"', html=False)
-        self.assertContains(response, '/operacao/recepcao/#reception-payment-board')
-        self.assertContains(response, 'Abrir cobrancas do balcao')
-        self.assertContains(response, 'class="dashboard-glance-strip dashboard-glance-strip--summary"', html=False)
-        self.assertNotContains(response, '#dashboard-finance-board')
+        self.assertEqual(response.status_code, 403)
 
     def test_dashboard_keeps_sessions_shortcut_for_coach_role(self):
         self.client.force_login(self.coach_user)

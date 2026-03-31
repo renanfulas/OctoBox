@@ -21,7 +21,7 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from access.permissions.mixins import RoleRequiredMixin
-from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
+from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, get_user_role
 from shared_support.page_payloads import attach_page_payload
 from .models import DashboardLayoutPreference
 from .presentation import build_dashboard_layout, build_dashboard_page
@@ -29,7 +29,7 @@ from .dashboard_snapshot_queries import build_dashboard_snapshot
 
 
 class DashboardView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
-    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION, ROLE_COACH)
+    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_COACH)
     template_name = 'dashboard/index.html'
 
     def get_context_data(self, **kwargs):
@@ -52,7 +52,7 @@ class DashboardView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
 
 
 class DashboardLayoutPreferenceView(LoginRequiredMixin, RoleRequiredMixin, View):
-    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION, ROLE_COACH)
+    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_COACH)
     http_method_names = ['post']
 
     def post(self, request, *args, **kwargs):
