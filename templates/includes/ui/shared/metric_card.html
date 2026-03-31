@@ -59,8 +59,9 @@ PONTOS CRITICOS:
             {% if card.sparkline_data %}
             <div class="dashboard-kpi-sparkline" aria-label="Representacao visual do progresso semanal">
                 {% for point in card.sparkline_data %}
+                {% load l10n %}
                 <svg class="spark-bar{% if forloop.last %} is-today{% endif %}" viewBox="0 0 10 100" preserveAspectRatio="none" title="{{ point.label }}" aria-hidden="true" focusable="false">
-                    <rect x="0" y="{{ 100|subtract:point.percent }}" width="10" height="{{ point.percent }}" rx="2"></rect>
+                    <rect x="0" y="{{ 100|subtract:point.percent|unlocalize }}" width="10" height="{{ point.percent|unlocalize }}" rx="2"></rect>
                 </svg>
                 {% endfor %}
             </div>
