@@ -6,7 +6,7 @@ ARQUIVO: formulario principal da ficha do aluno.
     {% include "includes/catalog/student_form/main_form/main_form_intake_banner.html" %}
 
     <article class="table-card student-filter-card student-form-main-card" data-panel="student-form-main-card">
-        <form method="post" novalidate data-action="submit-student-form">
+        <form method="post" novalidate data-action="submit-student-form" data-initial-step="{{ page.behavior.student_form_initial_step|default:1 }}">
             {% csrf_token %}
             <div class="form-stack-lg student-form-steps" data-slot="student-form-steps">
                 {% include "includes/catalog/student_form/main_form/main_form_recovery.html" %}
@@ -15,7 +15,7 @@ ARQUIVO: formulario principal da ficha do aluno.
                     <div class="student-form-stepper-summary">
                         <p class="eyebrow">Ritmo do cadastro</p>
                         <h2 class="section-title-sm">Primeiro identificamos. Depois fechamos plano e cobranca.</h2>
-                        <p class="meta-text">O formulario foi dividido em duas etapas para reduzir atrito e deixar a confirmacao final mais segura.</p>
+                        <p class="meta-text">A ficha foi dividida em duas etapas para reduzir atrito e deixar mais claro qual porta abrir primeiro quando o fluxo trava.</p>
                     </div>
 
                     <nav class="student-form-stepper" aria-label="Passos do cadastro">

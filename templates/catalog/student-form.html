@@ -61,39 +61,29 @@ PONTOS CRITICOS:
         {% include "includes/catalog/student_form/plans/hero.html" with page=page %}
     </div>
 
+    {% with flow=page.data.student_form_flow_state %}
     <section class="student-workspace-map-intro notice-panel notice-panel--info" aria-label="Ordem de leitura da ficha">
         <p class="eyebrow">Sequencia curta</p>
-        <h2 class="section-title-sm">Cadastro primeiro. Financeiro depois.</h2>
-        <p class="meta-text">
-            Primeiro confirme identidade e contexto do aluno. Depois use a camada financeira para vinculo, cobranca e historico sem perder o fio da conversa.
-        </p>
+        <h2 class="section-title-sm">{{ flow.headline }}</h2>
+        <p class="meta-text">{{ flow.copy }}</p>
     </section>
 
     <section class="student-workspace-map" aria-label="Mapa da ficha do aluno">
-        <article class="student-workspace-map-card is-current">
+        <article class="student-workspace-map-card {{ flow.registration_card_class }}">
             <p class="eyebrow">01 Cadastro</p>
             <h2 class="section-title-sm">Comece pelo essencial.</h2>
             <p class="meta-text">Nome, WhatsApp e contexto do aluno sustentam o resto da ficha sem ruido.</p>
-            <a class="button secondary" href="#student-form-essential">Abrir cadastro</a>
+            <a class="button secondary" href="{{ flow.registration_href }}"{% if flow.registration_step %} data-step-target="{{ flow.registration_step }}"{% endif %}>{{ flow.registration_button_label }}</a>
         </article>
 
-        <article class="student-workspace-map-card{% if page.data.financial_overview.has_student %} is-ready{% else %} is-muted{% endif %}">
-            <p class="eyebrow">02 Financeiro</p>
-            <h2 class="section-title-sm">Cobranca e vinculo no mesmo lugar.</h2>
-            <p class="meta-text">
-                {% if page.data.financial_overview.has_student %}
-                Revise plano, historico e proxima acao sem sair da ficha.
-                {% else %}
-                O workspace financeiro aparece assim que o aluno existir na base.
-                {% endif %}
-            </p>
-            {% if page.behavior.financial_ready %}
-            <a class="button secondary" href="#student-form-financial">Abrir financeiro</a>
-            {% else %}
-            <a class="button secondary" href="#student-form-essential">Fechar cadastro primeiro</a>
-            {% endif %}
+        <article class="student-workspace-map-card {{ flow.commercial_card_class }}">
+            <p class="eyebrow">{{ flow.commercial_kicker }}</p>
+            <h2 class="section-title-sm">{{ flow.commercial_title }}</h2>
+            <p class="meta-text">{{ flow.commercial_copy }}</p>
+            <a class="button secondary" href="{{ flow.commercial_href }}"{% if flow.commercial_step %} data-step-target="{{ flow.commercial_step }}"{% endif %}{% if page.behavior.financial_ready and not flow.commercial_step %} data-action="open-tab-student-form-financial"{% endif %}>{{ flow.commercial_button_label }}</a>
         </article>
     </section>
+    {% endwith %}
 
     <div class="interactive-tab-container" data-panel="student-workspace">
         <div class="stack-16 is-tab-active" id="tab-student-form-essential" data-panel="student-form-essential">

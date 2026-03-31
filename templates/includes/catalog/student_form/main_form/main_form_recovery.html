@@ -9,7 +9,10 @@ ARQUIVO: bloco de recuperacao/intermediacao do formulario.
     <div class="stack-14 section-gap-top-xs student-form-recovery-list">
         {% for item in student_form_recovery_guide.items %}
         <div class="student-form-recovery-item">
-            <p class="no-margin"><strong><a href="{{ item.href }}">{{ item.label }}</a></strong></p>
+            <p class="no-margin">
+                <strong><a href="{{ item.href }}"{% if item.step %} data-step-target="{{ item.step }}"{% endif %}>{{ item.label }}</a></strong>
+                {% if item.step %}<span class="pill info student-form-recovery-pill">Etapa {{ item.step }}</span>{% endif %}
+            </p>
             <p class="meta-text">{{ item.summary }}</p>
         </div>
         {% endfor %}

@@ -128,6 +128,17 @@
     background: rgba(255, 255, 255, 0.56);
 }
 
+.student-form-recovery-item .no-margin {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.student-form-recovery-pill {
+    white-space: nowrap;
+}
+
 .status-paid { color: #16a34a !important; }
 .status-overdue { color: #dc2626 !important; }
 .status-pending { color: #ca8a04 !important; }

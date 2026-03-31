@@ -12,10 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const backBtn = formRoot.querySelector('[data-action="prev-step"]');
     const submitBtn = formRoot.querySelector('[type="submit"]');
     const stepStatus = formRoot.querySelector('[data-stepper-status]');
+    const initialStep = Math.max(1, Number.parseInt(formRoot.dataset.initialStep || '1', 10) || 1);
 
     if (!steps.length || !stepperItems.length) return;
 
-    let currentStep = 0;
+    let currentStep = Math.min(initialStep, steps.length) - 1;
 
     const stepMeta = [
         {
@@ -84,6 +85,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function jumpToStep(stepIndex) {
+        const normalized = Math.max(0, Math.min(stepIndex, steps.length - 1));
+        currentStep = normalized;
+        updateSteps();
+        focusCurrentStep();
+    }
+
     if (nextBtn) {
         nextBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -96,9 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (currentStep < steps.length - 1) {
-                currentStep++;
-                updateSteps();
-                focusCurrentStep();
+                jumpToStep(currentStep + 1);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         });
@@ -108,15 +114,27 @@ document.addEventListener('DOMContentLoaded', () => {
         backBtn.addEventListener('click', (e) => {
             e.preventDefault();
             if (currentStep > 0) {
-                currentStep--;
-                updateSteps();
-                focusCurrentStep();
+                jumpToStep(currentStep - 1);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         });
     }
 
     updateSteps();
+
+    document.addEventListener('click', (e) => {
+        const stepLink = e.target.closest('[data-step-target]');
+        if (!stepLink || !formRoot.contains(stepLink) && !document.querySelector('.student-workspace-map')?.contains(stepLink)) {
+            return;
+        }
+
+        const requestedStep = Number.parseInt(stepLink.getAttribute('data-step-target') || '1', 10);
+        if (!Number.isFinite(requestedStep) || requestedStep < 1) {
+            return;
+        }
+
+        jumpToStep(requestedStep - 1);
+    });
 
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.js-generate-payment-link');
