@@ -20,7 +20,7 @@ PONTOS CRITICOS:
     {% include "includes/ui/layout/operation_card_head.html" with eyebrow=eyebrow title=title copy=copy pill_label=pill_label pill_class=pill_class %}
     <div class="fdw-focus-list">
         {% for item in items %}
-        <a class="fdw-focus-card{% if forloop.first %} is-primary{% endif %}" href="{{ item.href }}">
+        <a class="fdw-focus-card{% if primary_href %}{% if item.href == primary_href %} is-primary{% endif %}{% elif forloop.first %} is-primary{% endif %}" href="{{ item.href }}">
             <div class="fdw-focus-card-head">
                 <span class="fdw-focus-index">{{ forloop.counter|stringformat:"02d" }}</span>
                 <div class="fdw-focus-meta">

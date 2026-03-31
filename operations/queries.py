@@ -57,6 +57,27 @@ def _build_owner_focus_item(*, key, label, summary, count, pill_class, href, hre
     }
 
 
+def _build_decision_entry_context(entry_item=None, secondary_item=None):
+    entry_item = entry_item or {}
+    secondary_item = secondary_item or {}
+    return {
+        'entry_key': entry_item.get('key', ''),
+        'entry_surface': entry_item.get('key', ''),
+        'entry_href': entry_item.get('href', ''),
+        'entry_href_label': entry_item.get('href_label', 'Abrir'),
+        'entry_label': entry_item.get('label', ''),
+        'entry_reason': entry_item.get('summary', ''),
+        'entry_count': entry_item.get('count'),
+        'entry_pill_class': entry_item.get('pill_class', 'accent'),
+        'secondary_key': secondary_item.get('key', ''),
+        'secondary_surface': secondary_item.get('key', ''),
+        'secondary_href': secondary_item.get('href', ''),
+        'secondary_href_label': secondary_item.get('href_label', 'Abrir'),
+        'secondary_label': secondary_item.get('label', ''),
+        'secondary_reason': secondary_item.get('summary', ''),
+    }
+
+
 def _build_owner_priority_context(primary_focus):
     primary_key = (primary_focus or {}).get('key')
     if primary_key == 'intakes':
@@ -174,6 +195,10 @@ def build_owner_workspace_snapshot(*, today):
         focus_order = ['structure', 'intakes', 'payments']
     owner_operational_focus = [focus_map[key] for key in focus_order]
     owner_priority_context = _build_owner_priority_context(owner_operational_focus[0] if owner_operational_focus else None)
+    owner_decision_entry_context = _build_decision_entry_context(
+        owner_operational_focus[0] if owner_operational_focus else None,
+        owner_operational_focus[1] if len(owner_operational_focus) > 1 else None,
+    )
     return {
         'headline_metrics': headline_metrics,
         'classes_today': classes_today,
@@ -204,7 +229,9 @@ def build_owner_workspace_snapshot(*, today):
             },
         ],
         'owner_priority_context': owner_priority_context,
+        'owner_decision_entry_context': owner_decision_entry_context,
         'owner_operational_focus': owner_operational_focus,
+        'owner_secondary_focus': owner_operational_focus[1:],
     }
 
 
@@ -310,12 +337,64 @@ def build_manager_workspace_snapshot():
         payments_without_enrollment_count=len(payments_without_enrollment),
         financial_alerts_count=len(financial_alerts),
     )
+    if len(pending_intakes) > 0:
+        manager_decision_entry_context = _build_decision_entry_context(
+            {
+                'href': '#manager-intake-board',
+                'href_label': 'Ver entradas',
+                'label': 'Comece pela entrada que pode esfriar',
+                'summary': f'{len(pending_intakes)} entrada(s) jÃ¡ chegaram e pedem triagem antes de virarem fila morta.',
+                'count': len(pending_intakes),
+                'pill_class': 'warning',
+            },
+            {
+                'href': '#manager-link-board',
+                'href_label': 'Ver vÃ­nculos pendentes',
+                'label': 'Depois limpe vÃ­nculos quebrados',
+                'summary': f'{len(unlinked_whatsapp)} contato(s) sem aluno e {len(payments_without_enrollment)} cobranÃ§a(s) sem matrÃ­cula ainda escondem atrito estrutural.',
+            },
+        )
+    elif (len(unlinked_whatsapp) + len(payments_without_enrollment)) > 0:
+        manager_decision_entry_context = _build_decision_entry_context(
+            {
+                'href': '#manager-link-board',
+                'href_label': 'Ver vÃ­nculos pendentes',
+                'label': 'Depois limpe vÃ­nculos quebrados',
+                'summary': f'{len(unlinked_whatsapp)} contato(s) sem aluno e {len(payments_without_enrollment)} cobranÃ§a(s) sem matrÃ­cula ainda escondem atrito estrutural.',
+                'count': len(unlinked_whatsapp) + len(payments_without_enrollment),
+                'pill_class': 'info',
+            },
+            {
+                'href': '#manager-finance-board',
+                'href_label': 'Ver alertas financeiros',
+                'label': 'Feche com cobranÃ§a em risco',
+                'summary': f'{len(financial_alerts)} alerta(s) jÃ¡ mostram onde retenÃ§Ã£o e caixa podem pressionar se ninguÃ©m agir agora.',
+            },
+        )
+    else:
+        manager_decision_entry_context = _build_decision_entry_context(
+            {
+                'href': '#manager-finance-board',
+                'href_label': 'Ver alertas financeiros',
+                'label': 'Feche com cobranÃ§a em risco',
+                'summary': f'{len(financial_alerts)} alerta(s) jÃ¡ mostram onde retenÃ§Ã£o e caixa podem pressionar se ninguÃ©m agir agora.',
+                'count': len(financial_alerts),
+                'pill_class': 'accent',
+            },
+            {
+                'href': '#manager-intake-board',
+                'href_label': 'Ver entradas',
+                'label': 'Comece pela entrada que pode esfriar',
+                'summary': f'{len(pending_intakes)} entrada(s) jÃ¡ chegaram e pedem triagem antes de virarem fila morta.',
+            },
+        )
     return {
         'pending_intakes': pending_intakes,
         'unlinked_whatsapp': unlinked_whatsapp,
         'financial_alerts': financial_alerts,
         'payments_without_enrollment': payments_without_enrollment,
         'manager_priority_context': manager_priority_context,
+        'manager_decision_entry_context': manager_decision_entry_context,
         'hero_stats': [
             _build_hero_stat('Entradas', len(pending_intakes)),
             _build_hero_stat('WhatsApp', len(unlinked_whatsapp)),
