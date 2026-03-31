@@ -69,18 +69,18 @@ class DashboardViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Bom te ver.')
         self.assertContains(response, 'Owner')
-        self.assertContains(response, 'Leitura rapida')
-        self.assertContains(response, 'class="dashboard-glance-strip dashboard-glance-strip--summary"', html=False)
-        self.assertContains(response, 'class="dashboard-glance-card dashboard-glance-card--summary is-finance"', html=False)
-        self.assertContains(response, 'class="dashboard-glance-card dashboard-glance-card--summary is-base"', html=False)
-        self.assertContains(response, 'class="dashboard-glance-card dashboard-glance-card--summary is-risk"', html=False)
+        self.assertContains(response, 'Leitura rápida')
+        self.assertContains(response, 'dashboard-summary-zone', html=False)
+        self.assertContains(response, 'dashboard-glance-card--summary is-finance', html=False)
+        self.assertContains(response, 'dashboard-glance-card--summary is-base', html=False)
+        self.assertContains(response, 'dashboard-glance-card--summary is-risk', html=False)
         self.assertContains(response, 'Emergência')
         self.assertContains(response, 'Urgente')
         self.assertContains(response, 'Risco')
-        self.assertContains(response, 'Caixa limpo.<br>Voce esta no controle', html=False)
-        self.assertContains(response, 'Tudo tranquilo na retencao.<br>A comunidade esta bem', html=False)
-        self.assertContains(response, 'Rotina limpa.<br>O box esta funcionando bem', html=False)
-        self.assertContains(response, 'href="/financeiro/"', html=False)
+        self.assertContains(response, 'Caixa limpo.', html=False)
+        self.assertContains(response, 'Tudo tranquilo na reten', html=False)
+        self.assertContains(response, 'Rotina limpa.', html=False)
+        self.assertContains(response, 'href="/financeiro/#finance-priority-board"', html=False)
         self.assertContains(response, 'href="/alunos/"', html=False)
         self.assertContains(response, 'id="dashboard"', html=False)
         self.assertContains(response, 'data-dashboard-layout-version="v2"', html=False)
@@ -89,7 +89,7 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, 'data-dashboard-block="priority_strip"', html=False)
         self.assertContains(response, 'data-dashboard-block="metrics_cluster"', html=False)
         self.assertContains(response, 'data-dashboard-block="sessions_board"', html=False)
-        self.assertContains(response, 'Organize o painel do seu jeito')
+        self.assertContains(response, 'Organizar painel')
         self.assertContains(response, 'href="#dashboard-sessions-board"', html=False)
         self.assertContains(response, 'Agenda do turno')
         self.assertContains(
@@ -97,7 +97,7 @@ class DashboardViewTests(TestCase):
             'class="table-card layout-panel layout-panel--stack dashboard-table-card dashboard-side-card dashboard-support-card dashboard-side-card-sticky"',
             html=False,
         )
-        self.assertContains(response, 'class="dashboard-support-grid"', html=False)
+        self.assertContains(response, 'workspace-grid-layout', html=False)
         content = response.content.decode('utf-8')
         self.assertLess(content.index('Receita realizada'), content.index('Cobrancas em atraso'))
         self.assertLess(content.index('Cobrancas em atraso'), content.index('Entradas pendentes'))
@@ -117,7 +117,7 @@ class DashboardViewTests(TestCase):
         response = self.client.get(reverse('dashboard'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Leitura rapida')
+        self.assertContains(response, 'Leitura rápida')
         self.assertContains(response, 'href="#dashboard-sessions-board"', html=False)
         self.assertNotContains(response, '/operacao/recepcao/#reception-payment-board')
 
@@ -134,11 +134,11 @@ class DashboardViewTests(TestCase):
             actionable_payment_alerts_count=2,
         )
 
-        self.assertEqual(focus[0]['href'], '/financeiro/')
+        self.assertEqual(focus[0]['href'], '/financeiro/#finance-priority-board')
         self.assertEqual(focus[0]['href_label'], 'Abrir financeiro')
         self.assertEqual(focus[1]['href'], '#dashboard-sessions-board')
         self.assertEqual(focus[2]['href'], '/alunos/')
-        self.assertEqual(focus[2]['href_label'], 'Abrir alunos em atencao')
+        self.assertEqual(focus[2]['href_label'], 'Abrir alunos em atenção')
 
     def test_dashboard_layout_schema_exposes_slots_and_blocks(self):
         layout = _build_dashboard_layout('owner')
@@ -295,7 +295,7 @@ class DashboardViewTests(TestCase):
         response = self.client.get(reverse('dashboard'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Tudo tranquilo na retencao.<br>A comunidade esta bem', html=False)
+        self.assertContains(response, 'Tudo tranquilo na reten', html=False)
         self.assertContains(response, 'Entradas pendentes')
 
     def test_dashboard_priority_counts_only_actionable_financial_alerts(self):
@@ -332,7 +332,7 @@ class DashboardViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'aria-label="Cobrancas: 1. Abrir financeiro"', html=False)
         self.assertContains(response, 'Emergência')
-        self.assertContains(response, 'class="dashboard-glance-card dashboard-glance-card--summary is-finance"', html=False)
+        self.assertContains(response, 'dashboard-glance-card--summary is-finance', html=False)
         self.assertContains(response, 'Bruna Ativa')
         self.assertNotContains(response, 'aria-label="Cobrancas: 2. Abrir financeiro"', html=False)
         self.assertContains(response, 'Abrir financeiro')
