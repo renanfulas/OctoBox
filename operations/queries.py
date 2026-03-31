@@ -351,7 +351,7 @@ def build_manager_workspace_snapshot():
                 'href': '#manager-link-board',
                 'href_label': 'Ver vÃ­nculos pendentes',
                 'label': 'Depois limpe vÃ­nculos quebrados',
-                'summary': f'{len(unlinked_whatsapp)} contato(s) sem aluno e {len(payments_without_enrollment)} cobranÃ§a(s) sem matrÃ­cula ainda escondem atrito estrutural.',
+                'summary': f'{len(unlinked_whatsapp)} contato(s) sem aluno e {len(payments_without_enrollment)} cobrança(s) sem matrícula ainda escondem atrito estrutural.',
             },
         )
     elif (len(unlinked_whatsapp) + len(payments_without_enrollment)) > 0:
@@ -360,7 +360,7 @@ def build_manager_workspace_snapshot():
                 'href': '#manager-link-board',
                 'href_label': 'Ver vÃ­nculos pendentes',
                 'label': 'Depois limpe vÃ­nculos quebrados',
-                'summary': f'{len(unlinked_whatsapp)} contato(s) sem aluno e {len(payments_without_enrollment)} cobranÃ§a(s) sem matrÃ­cula ainda escondem atrito estrutural.',
+                'summary': f'{len(unlinked_whatsapp)} contato(s) sem aluno e {len(payments_without_enrollment)} cobrança(s) sem matrícula ainda escondem atrito estrutural.',
                 'count': len(unlinked_whatsapp) + len(payments_without_enrollment),
                 'pill_class': 'info',
             },
@@ -368,7 +368,7 @@ def build_manager_workspace_snapshot():
                 'href': '#manager-finance-board',
                 'href_label': 'Ver alertas financeiros',
                 'label': 'Feche com cobranÃ§a em risco',
-                'summary': f'{len(financial_alerts)} alerta(s) jÃ¡ mostram onde retenÃ§Ã£o e caixa podem pressionar se ninguÃ©m agir agora.',
+                'summary': f'{len(financial_alerts)} alerta(s) já mostram onde retenção e caixa podem pressionar se ninguém agir agora.',
             },
         )
     else:
@@ -377,7 +377,7 @@ def build_manager_workspace_snapshot():
                 'href': '#manager-finance-board',
                 'href_label': 'Ver alertas financeiros',
                 'label': 'Feche com cobranÃ§a em risco',
-                'summary': f'{len(financial_alerts)} alerta(s) jÃ¡ mostram onde retenÃ§Ã£o e caixa podem pressionar se ninguÃ©m agir agora.',
+                'summary': f'{len(financial_alerts)} alerta(s) já mostram onde retenção e caixa podem pressionar se ninguém agir agora.',
                 'count': len(financial_alerts),
                 'pill_class': 'accent',
             },
@@ -448,6 +448,24 @@ def build_coach_workspace_snapshot(*, today):
     )
     total_attendances = sum(session.attendance_cnt for session in sessions)
     sessions_with_students = sum(1 for session in sessions if session.attendance_cnt > 0)
+    coach_decision_entry_context = _build_decision_entry_context(
+        {
+            'key': 'sessions',
+            'href': '#coach-sessions-board',
+            'href_label': 'Ver aulas do dia',
+            'label': 'Comece pela agenda de hoje',
+            'summary': f'{len(sessions)} aula(s) definem o turno e mostram se o coach entra em dia cheio ou leitura leve.',
+            'count': len(sessions),
+            'pill_class': 'info' if len(sessions) > 0 else 'success',
+        },
+        {
+            'key': 'boundaries',
+            'href': '#coach-boundary-board',
+            'href_label': 'Ver limites da area',
+            'label': 'Feche com ocorrencia tecnica',
+            'summary': f'{len(BehaviorCategory.choices)} categoria(s) cobrem o registro tecnico sem misturar treino com financeiro ou recepcao.',
+        },
+    )
     return {
         'sessions_today': sessions,
         'hero_stats': [
@@ -490,6 +508,7 @@ def build_coach_workspace_snapshot(*, today):
                 'href_label': 'Ver limites da área',
             },
         ],
+        'coach_decision_entry_context': coach_decision_entry_context,
         'behavior_categories': BehaviorCategory.choices,
     }
 
@@ -608,7 +627,7 @@ def _build_reception_workspace_core(*, today):
         'metric_cards': [
             _build_metric_card('operation-kpi-card manager-coral', 'Entradas prontas', len(pending_intakes), 'Contatos que a recepcao poderia transformar em aluno definitivo sem sair da cadencia de atendimento.'),
             _build_metric_card('operation-kpi-card manager-gold', 'Cobrancas curtas', len(payment_queue), 'Fila curta de caixa para resolver no balcao sem abrir o financeiro inteiro.'),
-            _build_metric_card('operation-kpi-card manager-sky', 'Base alcançada', active_students, 'Volume de alunos que ja sustenta busca rapida, RM visivel e atendimento orientado.'),
+            _build_metric_card('operation-kpi-card manager-sky', 'Base alcancada', active_students, 'Volume de alunos que ja sustenta busca rapida, RM visivel e atendimento orientado.'),
             _build_metric_card('operation-kpi-card coach-indigo', 'Proximas aulas', len(next_sessions), 'Leitura guiada da grade para orientar check-in e responder duvidas sem virar agenda tecnica.'),
         ],
         'payment_methods': list(PaymentMethod.choices),
@@ -623,6 +642,32 @@ def build_reception_workspace_snapshot(*, today):
     first_intake = data['first_intake']
     first_payment = data['first_payment']
     next_session = data['next_session']
+    reception_decision_entry_context = _build_decision_entry_context(
+        {
+            'key': 'intakes',
+            'href': '#reception-intake-board',
+            'href_label': 'Ver entradas',
+            'label': 'Comece por quem acabou de chegar',
+            'summary': (
+                f'{first_intake.full_name} abre a fila e mostra o melhor ponto para acolher, localizar e converter sem esfriar o atendimento.'
+                if first_intake else
+                'Sem entrada pendente agora, entao o balcao pode priorizar caixa curto e orientacao de aulas.'
+            ),
+            'count': len(data['intakes']),
+            'pill_class': 'warning' if first_intake else 'success',
+        },
+        {
+            'key': 'payments',
+            'href': '#reception-payment-board',
+            'href_label': 'Ver cobranca curta',
+            'label': 'Depois resolva o caixa curto',
+            'summary': (
+                f'{first_payment.student.full_name} aparece primeiro na fila e ajuda a validar se a cobranca esta clara o suficiente para ser resolvida no balcao.'
+                if first_payment else
+                'Sem cobranca curta em fila agora, entao o atendimento pode seguir sem pressao financeira imediata.'
+            ),
+        },
+    )
 
     return {
         'hero_stats': data['hero_stats'],
@@ -668,6 +713,7 @@ def build_reception_workspace_snapshot(*, today):
                 'href_label': 'Ver grade em leitura',
             },
         ],
+        'reception_decision_entry_context': reception_decision_entry_context,
         'reception_boundaries': [
             'A Recepcao acolhe, localiza, cadastra e encaminha sem assumir o papel do manager.',
             'A grade aqui continua em leitura apenas: orientar o balcao nao significa gerenciar agenda.',

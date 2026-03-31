@@ -139,14 +139,13 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
 
     hero_actions = [
         {'label': 'Abrir regua', 'href': '#finance-priority-board', 'kind': 'primary', 'data_action': 'open-tab-finance-queue'},
-        {'label': 'Ver fila financeira', 'href': '#finance-queue-board', 'kind': 'secondary', 'data_action': 'open-tab-finance-queue'},
         {'label': 'Ver carteira', 'href': '#finance-portfolio-board', 'kind': 'secondary', 'data_action': 'open-tab-finance-portfolio'},
     ]
 
     hero = build_page_hero(
         eyebrow='Financeiro',
         title=finance_priority_context['headline'],
-        copy='Leia a pressao do momento, confirme o recorte e avance para fila, tendencia ou carteira sem perder clareza.' if finance_priority_context['dominant_key'] != 'portfolio' else 'Carteira, mix e recorte pedem a primeira leitura antes de descer para fila e filtros.',
+        copy='Leia a pressao dominante e entre direto na proxima acao sem perder o recorte.' if finance_priority_context['dominant_key'] != 'portfolio' else 'Carteira e mix pedem a primeira leitura antes da fila operacional.',
         actions=hero_actions,
         aria_label='Panorama financeiro',
         classes=['finance-hero'],

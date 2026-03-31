@@ -231,6 +231,16 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
         latest_enrollment=latest_enrollment,
         page_mode=page_mode,
     )
+    student_form_handoff = None
+    if financial_ready:
+        enrollment_name = latest_enrollment.plan.name if latest_enrollment and getattr(latest_enrollment, 'plan', None) else 'o contexto financeiro do aluno'
+        student_form_handoff = {
+            'title': 'Fechamento pronto para descer ao financeiro',
+            'copy': f'Quando terminar esta etapa, abra o workspace financeiro para revisar {enrollment_name}, historico e proxima acao sem sair da ficha.',
+            'href': '#student-form-financial',
+            'href_label': 'Abrir financeiro agora',
+            'data_action': 'open-tab-student-form-financial',
+        }
     hero = build_page_hero(
         eyebrow='Fluxo leve de cadastro',
         title='Cadastrar aluno' if page_mode == 'create' else 'Editar aluno',
@@ -279,6 +289,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'enrollment_management_form': enrollment_management_form,
             'student_form_recovery_guide': recovery_guide,
             'student_form_flow_state': flow_state,
+            'student_form_handoff': student_form_handoff,
         },
         actions={
             'anchors': {

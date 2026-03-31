@@ -21,12 +21,6 @@ PONTOS CRITICOS:
 <div class="operation-shell finance-shell workspace-shell" data-page="finance" data-screen="catalog-finance" data-slot="page-root">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero nested_include="includes/catalog/finance/views/command_snapshot.html" %}
 
-    <section class="finance-section-intro finance-priority-intro" aria-label="Ordem de leitura do financeiro">
-        <p class="eyebrow">Trilha de decisao</p>
-        <h2 class="section-title-sm">{{ page.data.finance_priority_context.headline }}</h2>
-        <p class="body-copy text-muted no-margin">{{ page.data.finance_priority_context.summary }}</p>
-    </section>
-
     <section class="finance-section-intro finance-flow-bridge" aria-label="Primeiro movimento do financeiro">
         <div class="finance-flow-bridge-copy">
             <p class="eyebrow">{{ page.data.finance_flow_bridge.eyebrow }}</p>

@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const backBtn = formRoot.querySelector('[data-action="prev-step"]');
     const submitBtn = formRoot.querySelector('[type="submit"]');
     const stepStatus = formRoot.querySelector('[data-stepper-status]');
+    const handoffPanel = formRoot.querySelector('[data-student-form-handoff]');
     const initialStep = Math.max(1, Number.parseInt(formRoot.dataset.initialStep || '1', 10) || 1);
 
     if (!steps.length || !stepperItems.length) return;
@@ -78,6 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (submitBtn) {
             submitBtn.hidden = currentStep !== steps.length - 1;
+        }
+
+        if (handoffPanel) {
+            handoffPanel.hidden = currentStep !== steps.length - 1;
         }
 
         if (stepStatus) {

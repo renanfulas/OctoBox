@@ -299,6 +299,21 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
+.student-form-handoff {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 16px 18px;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 14%, rgba(148, 163, 184, 0.16) 86%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 28%),
+        linear-gradient(160deg, rgba(248, 251, 255, 0.94), rgba(243, 247, 252, 0.86));
+    box-shadow:
+        0 16px 28px rgba(7, 14, 24, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
 .payment-link-btn {
     display: flex;
     align-items: center;
@@ -354,6 +369,16 @@ body[data-theme="dark"] .student-form-recovery-panel {
 body[data-theme="dark"] .student-form-recovery-item {
     background: rgba(255, 255, 255, 0.04);
     border-color: rgba(255, 255, 255, 0.06);
+}
+
+body[data-theme="dark"] .student-form-handoff {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, rgba(148, 163, 184, 0.16) 80%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 22%, transparent), transparent 28%),
+        linear-gradient(160deg, rgba(14, 24, 38, 0.94), rgba(10, 18, 30, 0.92));
+    box-shadow:
+        0 22px 38px rgba(0, 0, 0, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 @media (max-width: 720px) {

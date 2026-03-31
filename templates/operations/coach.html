@@ -18,7 +18,7 @@ PONTOS CRITICOS:
 {% with page=operation_page %}
 <div class="operation-shell coach-scene workspace-shell">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
-    {% include "includes/ui/shared/focus_sequence.html" with eyebrow="Compasso do turno" title="Leia o dia como cabine de operação" copy="Abra a agenda, registre presença e feche ocorrência sem cair em manutenção de dados." items=page.data.coach_operational_focus pill_label="Ritmo do coach" pill_class="accent" class_name="coach-focus-lane" panel_id="coach-command-lane" %}
+    {% include "includes/ui/shared/focus_sequence.html" with eyebrow="Compasso do turno" title="Leia o dia como cabine de operacao" copy="Abra a agenda, registre presenca e feche ocorrencia sem cair em manutencao de dados." items=page.data.coach_operational_focus primary_href=page.data.coach_decision_entry_context.entry_href pill_label="Ritmo do coach" pill_class="accent" class_name="coach-focus-lane" panel_id="coach-command-lane" %}
     <section class="workspace-grid-layout" aria-label="Painel de turnos" data-slot="workspace">
         <div class="workspace-grid-main">
             <div class="workspace-panel">{% include "operations/includes/coach/coach_sessions_section.html" %}</div>

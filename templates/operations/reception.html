@@ -21,7 +21,7 @@ PONTOS CRITICOS:
 <div class="operation-shell reception-scene" data-page="reception" data-screen="operations-reception" data-slot="page-root">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
-    {% include "includes/ui/shared/focus_sequence.html" with eyebrow="Compasso do balcão" title="A recepção decide em três passagens curtas" copy="Chegada, cobrança e orientação de aula em sequência limpa para não travar o atendimento." items=page.data.reception_focus pill_label="Atendimento vivo" pill_class="accent" class_name="reception-focus-lane" panel_id="reception-command-lane" %}
+    {% include "includes/ui/shared/focus_sequence.html" with eyebrow="Compasso do balcao" title="A recepcao decide em tres passagens curtas" copy="Chegada, cobranca e orientacao de aula em sequencia limpa para nao travar o atendimento." items=page.data.reception_focus primary_href=page.data.reception_decision_entry_context.entry_href pill_label="Atendimento vivo" pill_class="accent" class_name="reception-focus-lane" panel_id="reception-command-lane" %}
 
     <section class="workspace-grid-layout" aria-label="Painel da recepção" data-slot="workspace" data-panel="reception-board">
         <div class="workspace-grid-main">
