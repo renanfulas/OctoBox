@@ -140,6 +140,77 @@ def _build_operation_workspace_hero(page_key, snapshot):
     return hero_map[page_key]
 
 
+def _build_reading_panel(*, eyebrow, title, copy, items, primary_href=None, pill_label=None, pill_class=None, class_name=None, panel_id=None):
+    return {
+        'eyebrow': eyebrow,
+        'title': title,
+        'copy': copy,
+        'items': list(items or []),
+        'primary_href': primary_href,
+        'pill_label': pill_label,
+        'pill_class': pill_class,
+        'class_name': class_name,
+        'panel_id': panel_id,
+    }
+
+
+def _build_operation_workspace_reading_panel(page_key, snapshot):
+    owner_priority_context = snapshot.get('owner_priority_context') or {}
+    owner_decision_entry_context = snapshot.get('owner_decision_entry_context') or {}
+    manager_priority_context = snapshot.get('manager_priority_context') or {}
+    manager_decision_entry_context = snapshot.get('manager_decision_entry_context') or {}
+    coach_decision_entry_context = snapshot.get('coach_decision_entry_context') or {}
+    reception_decision_entry_context = snapshot.get('reception_decision_entry_context') or {}
+
+    panel_map = {
+        'operations-owner': _build_reading_panel(
+            eyebrow='Painel de leitura',
+            title='Escolha a passagem que lidera o dia.',
+            copy='Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
+            items=snapshot.get('owner_operational_focus'),
+            primary_href=owner_decision_entry_context.get('entry_href'),
+            pill_label=owner_priority_context.get('pill_label'),
+            pill_class=owner_priority_context.get('pill_class'),
+            class_name='owner-reading-panel',
+            panel_id='owner-command-lane',
+        ),
+        'operations-manager': _build_reading_panel(
+            eyebrow='Painel de leitura',
+            title=manager_priority_context.get('title') or 'Mesa de triagem.',
+            copy='Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
+            items=snapshot.get('manager_operational_focus'),
+            primary_href=manager_decision_entry_context.get('entry_href'),
+            pill_label=manager_priority_context.get('pill_label'),
+            pill_class=manager_priority_context.get('pill_class'),
+            class_name='manager-focus-lane',
+            panel_id='manager-command-lane',
+        ),
+        'operations-coach': _build_reading_panel(
+            eyebrow='Painel de leitura',
+            title='Leia o turno em tres passagens curtas.',
+            copy='Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
+            items=snapshot.get('coach_operational_focus'),
+            primary_href=coach_decision_entry_context.get('entry_href'),
+            pill_label='Ritmo do coach',
+            pill_class='accent',
+            class_name='coach-focus-lane',
+            panel_id='coach-command-lane',
+        ),
+        'operations-reception': _build_reading_panel(
+            eyebrow='Painel de leitura',
+            title='A recepcao decide em tres passagens curtas.',
+            copy='Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
+            items=snapshot.get('reception_focus'),
+            primary_href=reception_decision_entry_context.get('entry_href'),
+            pill_label='Atendimento vivo',
+            pill_class='accent',
+            class_name='reception-focus-lane',
+            panel_id='reception-command-lane',
+        ),
+    }
+    return panel_map.get(page_key)
+
+
 def build_operation_workspace_page(*, page_key, title, subtitle, scope, snapshot, current_role_slug, focus_key, capabilities=None):
     focus = snapshot.get(focus_key) or []
     return build_page_payload(
@@ -156,6 +227,7 @@ def build_operation_workspace_page(*, page_key, title, subtitle, scope, snapshot
         data={
             **snapshot,
             'hero': _build_operation_workspace_hero(page_key, snapshot),
+            'reading_panel': _build_operation_workspace_reading_panel(page_key, snapshot),
         },
         capabilities=capabilities or {},
         assets=build_page_assets(css=['css/design-system/operations.css']),

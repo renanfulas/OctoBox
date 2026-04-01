@@ -18,7 +18,7 @@ PONTOS CRITICOS:
 {% with page=operation_page %}
 <div class="operation-shell manager-scene workspace-shell">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
-    {% include "includes/ui/shared/focus_sequence.html" with eyebrow="Mesa de triagem" title=page.data.manager_priority_context.title copy=page.data.manager_priority_context.copy items=page.data.manager_operational_focus primary_href=page.data.manager_decision_entry_context.entry_href pill_label=page.data.manager_priority_context.pill_label pill_class=page.data.manager_priority_context.pill_class class_name="manager-focus-lane" panel_id="manager-command-lane" %}
+    {% include "includes/ui/layout/page_reading_panel.html" with panel=page.data.reading_panel %}
     {% include "operations/includes/manager/manager_boards_section.html" %}
     {% include "operations/includes/manager/manager_metrics_section.html" %}
 </div>

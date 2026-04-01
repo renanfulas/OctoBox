@@ -16,6 +16,9 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende dos parâmetros items, eyebrow, title, copy, etc.
 -->
+{% if reading_panel %}
+    {% include "includes/ui/layout/page_reading_panel.html" with panel=reading_panel %}
+{% else %}
 <section class="table-card fdw-focus-lane{% if class_name %} {{ class_name }}{% endif %}"{% if panel_id %} id="{{ panel_id }}"{% endif %}>
     {% include "includes/ui/layout/operation_card_head.html" with eyebrow=eyebrow title=title copy=copy pill_label=pill_label pill_class=pill_class %}
     <div class="fdw-focus-list">
@@ -43,3 +46,4 @@ PONTOS CRITICOS:
         {% endfor %}
     </div>
 </section>
+{% endif %}
