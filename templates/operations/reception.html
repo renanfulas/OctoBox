@@ -5,12 +5,12 @@ POR QUE ELE EXISTE:
 - materializa a Recepcao como papel real do produto, sem empurra-la para manager ou financeiro completo.
 
 O QUE ESTE ARQUIVO FAZ:
-1. organiza chegada, caixa curto e grade em ordem de balcão.
-2. entrega a sequência curta de decisão da recepção.
-3. deixa métricas como profundidade, não como abertura fria.
+1. organiza chegada, caixa curto e grade em ordem de balcao.
+2. entrega a sequencia curta de decisao da recepcao.
+3. deixa metricas como profundidade, nao como abertura fria.
 
 PONTOS CRITICOS:
-- esta tela precisa continuar curta e humana; se crescer demais, vira manager disfarçado.
+- esta tela precisa continuar curta e humana; se crescer demais, vira manager disfarcado.
 - cobranca aqui e operacional, nao leitura gerencial de caixa.
 -->
 {% extends "layouts/base.html" %}
@@ -23,7 +23,7 @@ PONTOS CRITICOS:
 
     {% include "includes/ui/shared/focus_sequence.html" with eyebrow="Compasso do balcao" title="A recepcao decide em tres passagens curtas" copy="Chegada, cobranca e orientacao de aula em sequencia limpa para nao travar o atendimento." items=page.data.reception_focus primary_href=page.data.reception_decision_entry_context.entry_href pill_label="Atendimento vivo" pill_class="accent" class_name="reception-focus-lane" panel_id="reception-command-lane" %}
 
-    <section class="workspace-grid-layout" aria-label="Painel da recepção" data-slot="workspace" data-panel="reception-board">
+    <section class="workspace-grid-layout" aria-label="Painel da recepcao" data-slot="workspace" data-panel="reception-board">
         <div class="workspace-grid-main">
             <div class="workspace-panel" data-panel="reception-intake-section">{% include "operations/includes/reception/reception_intake_board.html" %}</div>
             <div class="workspace-panel" data-panel="reception-payment-section">{% include "operations/includes/reception/reception_payment_board.html" %}</div>
@@ -43,3 +43,4 @@ PONTOS CRITICOS:
 {% block extra_scripts %}
 <script src="{% static 'js/pages/operations/reception-payment-card.js' %}?v={{ static_asset_version }}"></script>
 {% endblock %}
+

@@ -19,11 +19,11 @@ ARQUIVO: erros globais e acoes finais da ficha do aluno.
 </div>
 {% if page.data.student_form_handoff %}
 <section class="student-form-handoff note-panel note-panel--info" data-student-form-handoff hidden aria-label="Proximo passo depois do fechamento">
-    <p class="eyebrow">Proxima sala</p>
+    <p class="eyebrow">Proxima acao oficial</p>
     <p class="no-margin"><strong>{{ page.data.student_form_handoff.title }}</strong></p>
     <p class="meta-text">{{ page.data.student_form_handoff.copy }}</p>
     <div class="actions actions-tight">
-        <a class="button secondary" href="{{ page.data.student_form_handoff.href }}" data-action="{{ page.data.student_form_handoff.data_action }}">{{ page.data.student_form_handoff.href_label }}</a>
+        <a class="button" href="{{ page.data.student_form_handoff.href }}" data-action="{{ page.data.student_form_handoff.data_action }}">{{ page.data.student_form_handoff.href_label }}</a>
     </div>
 </section>
 {% endif %}

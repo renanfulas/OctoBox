@@ -163,7 +163,7 @@ def build_owner_workspace_snapshot(*, today):
         'payments': _build_owner_focus_item(
             key='payments',
             label='Ver cobrancas',
-            chip_label='Cobranças',
+            chip_label='Cobrancas',
             summary=(
                 f"{headline_metrics['overdue_payments']} cobranca(s) estao atrasadas e pedem contato."
                 if headline_metrics['overdue_payments']
@@ -219,7 +219,7 @@ def build_owner_workspace_snapshot(*, today):
                 'href': reverse('whatsapp-workspace'),
             },
             {
-                **_build_metric_card('operation-kpi-card owner-amber', 'Cobranças atrasadas', headline_metrics['overdue_payments'], 'Dinheiro que já deveria ter entrado.'),
+                **_build_metric_card('operation-kpi-card owner-amber', 'Cobrancas atrasadas', headline_metrics['overdue_payments'], 'Dinheiro que ja deveria ter entrado.'),
                 'submetric': {
                     'label': 'Caixa vencido',
                     'value': f"R$ {headline_metrics['overdue_amount']:.2f}".replace('.', ','),
@@ -246,20 +246,20 @@ def build_dev_workspace_snapshot():
         'technical_metrics': technical_metrics,
         'hero_stats': [
             _build_hero_stat('Auditados', technical_metrics['eventos_auditados']),
-            _build_hero_stat('Últimas 24h', technical_metrics['eventos_24h']),
-            _build_hero_stat('Usuários', technical_metrics['usuarios_com_papel']),
+            _build_hero_stat('Ultimas 24h', technical_metrics['eventos_24h']),
+            _build_hero_stat('Usuarios', technical_metrics['usuarios_com_papel']),
             _build_hero_stat('Auditoria', len(recent_audit_events)),
         ],
         'metric_cards': [
-            _build_metric_card('operation-kpi-card dev-steel', 'Eventos auditados', technical_metrics['eventos_auditados'], 'Histórico total sensível disponível para investigação, leitura forense e prova operacional.'),
-            _build_metric_card('operation-kpi-card dev-cyan', 'Eventos nas últimas 24h', technical_metrics['eventos_24h'], 'Volume recente para avaliar movimentação real e detectar ondas anormais de alteração.'),
-            _build_metric_card('operation-kpi-card dev-emerald', 'Usuários com papel', technical_metrics['usuarios_com_papel'], 'Cobertura atual de contas com fronteira operacional definida no sistema.'),
+            _build_metric_card('operation-kpi-card dev-steel', 'Eventos auditados', technical_metrics['eventos_auditados'], 'Historico total sensivel disponivel para investigacao, leitura forense e prova operacional.'),
+            _build_metric_card('operation-kpi-card dev-cyan', 'Eventos nas ultimas 24h', technical_metrics['eventos_24h'], 'Volume recente para avaliar movimentacao real e detectar ondas anormais de alteracao.'),
+            _build_metric_card('operation-kpi-card dev-emerald', 'Usuarios com papel', technical_metrics['usuarios_com_papel'], 'Cobertura atual de contas com fronteira operacional definida no sistema.'),
         ],
         'dev_operational_focus': [
             {
                 'label': 'Comece pelo rastro recente',
                 'chip_label': 'Auditoria',
-                'summary': f"{technical_metrics['eventos_24h']} evento(s) nas últimas 24h mostram se a investigação deve começar no agora ou no histórico amplo.",
+                'summary': f"{technical_metrics['eventos_24h']} evento(s) nas ultimas 24h mostram se a investigacao deve comecar no agora ou no historico amplo.",
                 'pill_class': 'warning' if technical_metrics['eventos_24h'] > 0 else 'success',
                 'href': '#dev-audit-board',
                 'href_label': 'Ver eventos recentes',
@@ -267,15 +267,15 @@ def build_dev_workspace_snapshot():
             {
                 'label': 'Depois valide a cobertura de acesso',
                 'chip_label': 'Fronteiras',
-                'summary': f"{technical_metrics['usuarios_com_papel']} usuário(s) com papel ajudam a medir se a fronteira operacional continua coerente.",
+                'summary': f"{technical_metrics['usuarios_com_papel']} usuario(s) com papel ajudam a medir se a fronteira operacional continua coerente.",
                 'pill_class': 'info',
                 'href': '#dev-boundary-board',
                 'href_label': 'Ver fronteiras',
             },
             {
-                'label': 'Feche com leitura sistêmica',
+                'label': 'Feche com leitura sistemica',
                 'chip_label': 'Rastros',
-                'summary': f"{technical_metrics['eventos_auditados']} rastro(s) auditado(s) sustentam manutenção, investigação e prova operacional sem virar chute técnico.",
+                'summary': f"{technical_metrics['eventos_auditados']} rastro(s) auditado(s) sustentam manutencao, investigacao e prova operacional sem virar chute tecnico.",
                 'pill_class': 'accent',
                 'href': '#dev-read-board',
                 'href_label': 'Ver trilha curta',
@@ -283,14 +283,14 @@ def build_dev_workspace_snapshot():
         ],
         'recent_audit_events': recent_audit_events,
         'dev_boundaries': [
-            'DEV investiga e mantém o sistema, mas não assume rotina de manager ou coach.',
-            'O papel técnico deve operar com leitura ampla e escrita mínima, sempre com rastreabilidade.',
-            'Acesso GOD continua fora da rotina e deve nascer depois com regra de contingência.',
+            'DEV investiga e mantem o sistema, mas nao assume rotina de manager ou coach.',
+            'O papel tecnico deve operar com leitura ampla e escrita minima, sempre com rastreabilidade.',
+            'Acesso GOD continua fora da rotina e deve nascer depois com regra de contingencia.',
         ],
         'dev_reads': [
             'Mapa do sistema para entender arquitetura e fluxo.',
-            'Papéis e acessos para revisar fronteiras de permissão.',
-            'Trilha de auditoria para investigar ações sensíveis recentes.',
+            'Papeis e acessos para revisar fronteiras de permissao.',
+            'Trilha de auditoria para investigar acoes sensiveis recentes.',
         ],
         'dev_table_guides': [
             {
@@ -343,32 +343,32 @@ def build_manager_workspace_snapshot():
                 'href': '#manager-intake-board',
                 'href_label': 'Ver entradas',
                 'label': 'Comece pela entrada que pode esfriar',
-                'summary': f'{len(pending_intakes)} entrada(s) jÃ¡ chegaram e pedem triagem antes de virarem fila morta.',
+                'summary': f'{len(pending_intakes)} entrada(s) ja chegaram e pedem triagem antes de virarem fila morta.',
                 'count': len(pending_intakes),
                 'pill_class': 'warning',
             },
             {
                 'href': '#manager-link-board',
-                'href_label': 'Ver vÃ­nculos pendentes',
-                'label': 'Depois limpe vÃ­nculos quebrados',
-                'summary': f'{len(unlinked_whatsapp)} contato(s) sem aluno e {len(payments_without_enrollment)} cobrança(s) sem matrícula ainda escondem atrito estrutural.',
+                'href_label': 'Ver vinculos pendentes',
+                'label': 'Depois limpe vinculos quebrados',
+                'summary': f'{len(unlinked_whatsapp)} contato(s) sem aluno e {len(payments_without_enrollment)} cobranca(s) sem matricula ainda escondem atrito estrutural.',
             },
         )
     elif (len(unlinked_whatsapp) + len(payments_without_enrollment)) > 0:
         manager_decision_entry_context = _build_decision_entry_context(
             {
                 'href': '#manager-link-board',
-                'href_label': 'Ver vÃ­nculos pendentes',
-                'label': 'Depois limpe vÃ­nculos quebrados',
-                'summary': f'{len(unlinked_whatsapp)} contato(s) sem aluno e {len(payments_without_enrollment)} cobrança(s) sem matrícula ainda escondem atrito estrutural.',
+                'href_label': 'Ver vinculos pendentes',
+                'label': 'Depois limpe vinculos quebrados',
+                'summary': f'{len(unlinked_whatsapp)} contato(s) sem aluno e {len(payments_without_enrollment)} cobranca(s) sem matricula ainda escondem atrito estrutural.',
                 'count': len(unlinked_whatsapp) + len(payments_without_enrollment),
                 'pill_class': 'info',
             },
             {
                 'href': '#manager-finance-board',
                 'href_label': 'Ver alertas financeiros',
-                'label': 'Feche com cobranÃ§a em risco',
-                'summary': f'{len(financial_alerts)} alerta(s) já mostram onde retenção e caixa podem pressionar se ninguém agir agora.',
+                'label': 'Feche com cobranca em risco',
+                'summary': f'{len(financial_alerts)} alerta(s) ja mostram onde retencao e caixa podem pressionar se ninguem agir agora.',
             },
         )
     else:
@@ -376,8 +376,8 @@ def build_manager_workspace_snapshot():
             {
                 'href': '#manager-finance-board',
                 'href_label': 'Ver alertas financeiros',
-                'label': 'Feche com cobranÃ§a em risco',
-                'summary': f'{len(financial_alerts)} alerta(s) já mostram onde retenção e caixa podem pressionar se ninguém agir agora.',
+                'label': 'Feche com cobranca em risco',
+                'summary': f'{len(financial_alerts)} alerta(s) ja mostram onde retencao e caixa podem pressionar se ninguem agir agora.',
                 'count': len(financial_alerts),
                 'pill_class': 'accent',
             },
@@ -385,7 +385,7 @@ def build_manager_workspace_snapshot():
                 'href': '#manager-intake-board',
                 'href_label': 'Ver entradas',
                 'label': 'Comece pela entrada que pode esfriar',
-                'summary': f'{len(pending_intakes)} entrada(s) jÃ¡ chegaram e pedem triagem antes de virarem fila morta.',
+                'summary': f'{len(pending_intakes)} entrada(s) ja chegaram e pedem triagem antes de virarem fila morta.',
             },
         )
     return {
@@ -398,38 +398,38 @@ def build_manager_workspace_snapshot():
         'hero_stats': [
             _build_hero_stat('Entradas', len(pending_intakes)),
             _build_hero_stat('WhatsApp', len(unlinked_whatsapp)),
-            _build_hero_stat('Sem vínculo', len(payments_without_enrollment)),
+            _build_hero_stat('Sem vinculo', len(payments_without_enrollment)),
             _build_hero_stat('Alertas', len(financial_alerts)),
         ],
         'metric_cards': [
-            _build_metric_card('operation-kpi-card manager-coral', 'Entradas pendentes', len(pending_intakes), 'Pessoas que já chegaram ao sistema, mas ainda exigem triagem ou conversão.'),
-            _build_metric_card('operation-kpi-card manager-sky', 'Contatos sem vínculo', len(unlinked_whatsapp), 'Conversas abertas que ainda precisam ser conectadas ao aluno principal.'),
-            _build_metric_card('operation-kpi-card manager-gold', 'Pagamentos sem matrícula', len(payments_without_enrollment), 'Cobranças que podem contaminar leitura financeira enquanto não forem vinculadas.'),
-            _build_metric_card('operation-kpi-card manager-steel', 'Alertas financeiros', len(financial_alerts), 'Fila de inadimplência e pendências para agir antes de escalar o problema.'),
+            _build_metric_card('operation-kpi-card manager-coral', 'Entradas pendentes', len(pending_intakes), 'Pessoas que ja chegaram ao sistema, mas ainda exigem triagem ou conversao.'),
+            _build_metric_card('operation-kpi-card manager-sky', 'Contatos sem vinculo', len(unlinked_whatsapp), 'Conversas abertas que ainda precisam ser conectadas ao aluno principal.'),
+            _build_metric_card('operation-kpi-card manager-gold', 'Pagamentos sem matricula', len(payments_without_enrollment), 'Cobrancas que podem contaminar leitura financeira enquanto nao forem vinculadas.'),
+            _build_metric_card('operation-kpi-card manager-steel', 'Alertas financeiros', len(financial_alerts), 'Fila de inadimplencia e pendencias para agir antes de escalar o problema.'),
         ],
         'manager_operational_focus': [
             {
                 'label': 'Comece pela entrada que pode esfriar',
                 'chip_label': 'Triagem',
-                'summary': f'{len(pending_intakes)} entrada(s) já chegaram e pedem triagem antes de virarem fila morta.',
+                'summary': f'{len(pending_intakes)} entrada(s) ja chegaram e pedem triagem antes de virarem fila morta.',
                 'count': len(pending_intakes),
                 'pill_class': 'warning' if len(pending_intakes) > 0 else 'success',
                 'href': '#manager-intake-board',
                 'href_label': 'Ver entradas',
             },
             {
-                'label': 'Depois limpe vínculos quebrados',
-                'chip_label': 'Vínculos',
-                'summary': f'{len(unlinked_whatsapp)} contato(s) sem aluno e {len(payments_without_enrollment)} cobrança(s) sem matrícula ainda escondem atrito estrutural.',
+                'label': 'Depois limpe vinculos quebrados',
+                'chip_label': 'Vinculos',
+                'summary': f'{len(unlinked_whatsapp)} contato(s) sem aluno e {len(payments_without_enrollment)} cobranca(s) sem matricula ainda escondem atrito estrutural.',
                 'count': len(unlinked_whatsapp) + len(payments_without_enrollment),
                 'pill_class': 'info' if len(unlinked_whatsapp) or len(payments_without_enrollment) else 'success',
                 'href': '#manager-link-board',
-                'href_label': 'Ver vínculos pendentes',
+                'href_label': 'Ver vinculos pendentes',
             },
             {
-                'label': 'Feche com cobrança em risco',
-                'chip_label': 'Cobranças',
-                'summary': f'{len(financial_alerts)} alerta(s) já mostram onde retenção e caixa podem pressionar se ninguém agir agora.',
+                'label': 'Feche com cobranca em risco',
+                'chip_label': 'Cobrancas',
+                'summary': f'{len(financial_alerts)} alerta(s) ja mostram onde retencao e caixa podem pressionar se ninguem agir agora.',
                 'count': len(financial_alerts),
                 'pill_class': 'warning' if len(financial_alerts) > 0 else 'accent',
                 'href': '#manager-finance-board',
@@ -472,12 +472,12 @@ def build_coach_workspace_snapshot(*, today):
             _build_hero_stat('Aulas', len(sessions)),
             _build_hero_stat('Rotinas', 3),
             _build_hero_stat('Limites', 3),
-            _build_hero_stat('Ocorrências', len(BehaviorCategory.choices)),
+            _build_hero_stat('Ocorrencias', len(BehaviorCategory.choices)),
         ],
         'metric_cards': [
             _build_metric_card('operation-kpi-card coach-mint', 'Aulas do dia', len(sessions), 'Quantidade de turmas que o coach precisa enxergar e conduzir hoje.'),
-            _build_metric_card('operation-kpi-card coach-indigo', 'Guias de execução', 3, 'Passos operacionais para manter presença, saída e falta registradas corretamente.'),
-            _build_metric_card('operation-kpi-card coach-orange', 'Fronteiras do papel', 3, 'Lembrete visual do que pertence ao coach e do que continua fora desta área.'),
+            _build_metric_card('operation-kpi-card coach-indigo', 'Guias de execucao', 3, 'Passos operacionais para manter presenca, saida e falta registradas corretamente.'),
+            _build_metric_card('operation-kpi-card coach-orange', 'Fronteiras do papel', 3, 'Lembrete visual do que pertence ao coach e do que continua fora desta area.'),
         ],
         'coach_operational_focus': [
             {
@@ -490,22 +490,22 @@ def build_coach_workspace_snapshot(*, today):
                 'href_label': 'Ver aulas do dia',
             },
             {
-                'label': 'Depois veja onde já há presença real',
-                'chip_label': 'Presença',
-                'summary': f'{sessions_with_students} turma(s) já têm lista ativa e {total_attendances} presença(s) para registrar sem ruído administrativo.',
+                'label': 'Depois veja onde ja ha presenca real',
+                'chip_label': 'Presenca',
+                'summary': f'{sessions_with_students} turma(s) ja tem lista ativa e {total_attendances} presenca(s) para registrar sem ruido administrativo.',
                 'count': sessions_with_students,
                 'pill_class': 'accent',
                 'href': '#coach-sessions-board',
-                'href_label': 'Abrir rotina de presença',
+                'href_label': 'Abrir rotina de presenca',
             },
             {
-                'label': 'Feche com ocorrência técnica',
-                'chip_label': 'Ocorrências',
-                'summary': f'{len(BehaviorCategory.choices)} categoria(s) cobrem o registro técnico sem misturar treino com financeiro ou recepção.',
+                'label': 'Feche com ocorrencia tecnica',
+                'chip_label': 'Ocorrencias',
+                'summary': f'{len(BehaviorCategory.choices)} categoria(s) cobrem o registro tecnico sem misturar treino com financeiro ou recepcao.',
                 'count': len(BehaviorCategory.choices),
                 'pill_class': 'warning',
                 'href': '#coach-boundary-board',
-                'href_label': 'Ver limites da área',
+                'href_label': 'Ver limites da area',
             },
         ],
         'coach_decision_entry_context': coach_decision_entry_context,
@@ -551,8 +551,8 @@ def _build_reception_workspace_core(*, today):
     
     repeat_block_hours = get_operational_whatsapp_repeat_block_hours()
     
-    # 🚀 Performance AAA (Ghost Hardening): Bulk WhatsApp Log Pre-fetch
-    # Buscamos todos os logs relevantes da fila inteira em uma tacada só.
+    # AAA Performance AAA (Ghost Hardening): Bulk WhatsApp Log Pre-fetch
+    # Buscamos todos os logs relevantes da fila inteira em uma tacada so.
     student_ids = [p.student_id for p in payment_queue]
     recent_cutoff = timezone.now() - timedelta(hours=repeat_block_hours) if repeat_block_hours > 0 else None
     
@@ -688,7 +688,7 @@ def build_reception_workspace_snapshot(*, today):
             },
             {
                 'label': 'Depois resolva o caixa curto',
-                'chip_label': 'Cobranças',
+                'chip_label': 'Cobrancas',
                 'summary': (
                     f'{first_payment.student.full_name} aparece primeiro na fila e ajuda a validar se a cobranca esta clara o suficiente para ser resolvida no balcao.'
                     if first_payment else
@@ -733,3 +733,4 @@ __all__ = [
     'build_owner_workspace_snapshot',
     'build_reception_workspace_snapshot',
 ]
+

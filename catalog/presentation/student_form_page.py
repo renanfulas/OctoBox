@@ -159,7 +159,7 @@ def build_student_form_flow_state(*, financial_ready, recovery_guide, selected_i
 
     return {
         'headline': 'Cadastro primeiro. Plano e cobranca depois.',
-        'copy': intake_copy if page_mode == 'create' else 'Revise o nucleo do cadastro antes de mexer na camada comercial. Isso reduz ruído e evita voltar etapas depois.',
+        'copy': intake_copy if page_mode == 'create' else 'Revise o nucleo do cadastro antes de mexer na camada comercial. Isso reduz ruido e evita voltar etapas depois.',
         'registration_card_class': 'is-current',
         'registration_button_label': 'Abrir cadastro',
         'registration_href': '#student-form-essential',
@@ -235,10 +235,10 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
     if financial_ready:
         enrollment_name = latest_enrollment.plan.name if latest_enrollment and getattr(latest_enrollment, 'plan', None) else 'o contexto financeiro do aluno'
         student_form_handoff = {
-            'title': 'Fechamento pronto para descer ao financeiro',
-            'copy': f'Quando terminar esta etapa, abra o workspace financeiro para revisar {enrollment_name}, historico e proxima acao sem sair da ficha.',
+            'title': 'Fechamento pronto. A proxima acao oficial esta no financeiro.',
+            'copy': f'Assim que salvar esta etapa, desca para o workspace financeiro e revise {enrollment_name}, historico e proxima acao sem quebrar o contexto da ficha.',
             'href': '#student-form-financial',
-            'href_label': 'Abrir financeiro agora',
+            'href_label': 'Seguir para o financeiro',
             'data_action': 'open-tab-student-form-financial',
         }
     hero = build_page_hero(
@@ -334,3 +334,4 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             include_catalog_shared=True,
         ),
     )
+
