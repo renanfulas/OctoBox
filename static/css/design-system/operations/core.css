@@ -1,13 +1,13 @@
 /*
-ARQUIVO: base compartilhada das superfícies operacionais.
+ARQUIVO: base compartilhada das superficies operacionais.
 
 POR QUE ELE EXISTE:
-- concentra os contratos mínimos de shell e hero operacionais.
-- preserva o núcleo visual reaproveitado por operations, onboarding, access e partes do dashboard.
+- concentra os contratos minimos de shell e hero operacionais.
+- preserva o nucleo visual reaproveitado por operations, onboarding, access e partes do dashboard.
 
 PONTOS CRITICOS:
 - regras de hero e clamps de duas linhas vivem aqui porque sustentam o contrato visual validado por teste.
-- KPIs, card-heads e grids base compartilhados vivem em modules irmãos deste diretório.
+- KPIs, card-heads e grids base compartilhados vivem em modules irmaos deste diretorio.
 */
 
 .operation-shell {
@@ -42,15 +42,11 @@ body[data-theme="dark"] .operation-hero {
 .operation-hero-copy-block {
     display: grid;
     gap: 8px;
-    max-width: 680px;
+    max-width: var(--operation-hero-stack-max-width, 40rem);
 }
 
 .operation-hero-copy {
-    max-width: 52ch;
-}
-
-.operation-hero-title {
-    max-width: none;
+    max-width: var(--operation-hero-copy-max-width, 48ch);
 }
 
 .operation-hero-title {
@@ -87,15 +83,6 @@ body[data-theme="dark"] .operation-hero {
 }
 
 @media (max-width: 1180px) {
-    .operation-hero-copy-block {
-        max-width: 760px;
-    }
-
-    .operation-hero-title {
-        max-width: 20ch;
-        font-size: clamp(1.9rem, 3vw, 2.3rem);
-    }
-
     .operation-hero-side {
         width: min(100%, 292px);
     }
@@ -155,9 +142,9 @@ body[data-theme="dark"] .operation-hero::after {
 }
 
 .operation-hero-action-rail .button {
-    min-height: 36px;
-    padding: 8px 13px;
-    border-radius: 8px;
-    font-size: 0.92rem;
+    min-height: var(--operation-hero-button-min-height, 36px);
+    padding: var(--operation-hero-button-padding, 8px 13px);
+    border-radius: var(--operation-hero-button-radius, 999px);
+    font-size: var(--operation-hero-button-font-size, 0.92rem);
 }
 

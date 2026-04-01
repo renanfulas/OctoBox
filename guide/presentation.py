@@ -29,9 +29,9 @@ def build_system_map_page():
         },
         data={
             'hero': build_page_hero(
-                eyebrow='Leitura guiada',
-                title='Mapa do Sistema',
-                copy='Modulos, fronteiras e onde investigar bugs.',
+                eyebrow='Mapa',
+                title='Sistema em leitura.',
+                copy='Veja modulos, fronteiras e onde investigar sem ruido tecnico.',
                 actions=[
                     {'label': 'Ver papeis', 'href': '/acessos/', 'kind': 'secondary'},
                 ],
@@ -265,9 +265,9 @@ def build_operational_settings_page():
         },
         data={
             'hero': build_page_hero(
-                eyebrow='Configuracao operacional',
-                title='Configuracoes operacionais',
-                copy='Ajuste rapido da janela do WhatsApp e dos perfis de acesso.',
+                eyebrow='Configuracao',
+                title='Operacao configurada.',
+                copy='Ajuste janela, perfis e guardrails sem abrir um segundo caminho.',
                 actions=[
                     {'label': 'Abrir acessos', 'href': '/acessos/#access-profile-create', 'kind': 'secondary'},
                 ],

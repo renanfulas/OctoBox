@@ -242,12 +242,10 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'data_action': 'open-tab-student-form-financial',
         }
     hero = build_page_hero(
-        eyebrow='Fluxo leve de cadastro',
-        title='Cadastrar aluno' if page_mode == 'create' else 'Editar aluno',
+        eyebrow='Cadastro',
+        title='Ficha do aluno.',
         copy=(
-            'Essencial primeiro. Fechamento e financeiro depois.'
-            if page_mode == 'create'
-            else 'Ajuste cadastro, plano e cobranca em fluxo unico.'
+            'Abra o essencial, feche o comercial e desca para o financeiro sem retrabalho.'
         ),
         actions=[
             {'label': 'Abrir essencial', 'href': '#student-form-essential', 'kind': 'primary', 'data_action': 'open-tab-student-form-essential'},
@@ -257,7 +255,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
                 'kind': 'secondary',
                 'data_action': 'open-tab-student-form-financial' if financial_ready else 'open-tab-student-form-essential',
             },
-            {'label': 'Voltar para alunos', 'href': get_shell_route_url('students'), 'kind': 'secondary'},
+            {'label': 'Ver base', 'href': get_shell_route_url('students'), 'kind': 'secondary'},
         ],
         aria_label='Ficha do aluno',
         classes=['student-hero', 'student-form-hero'],

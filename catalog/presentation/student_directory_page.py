@@ -10,7 +10,7 @@ from access.navigation_contracts import get_shell_route_url
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from access.shell_actions import build_shell_action_buttons_from_focus
 from django.urls import reverse
-from shared_support.page_payloads import build_page_hero
+from shared_support.page_payloads import build_page_hero, build_page_reading_panel
 
 from .shared import build_catalog_assets, build_catalog_page_payload
 
@@ -62,15 +62,12 @@ def build_student_directory_page(*, student_count, students, student_filter_form
         )
 
     shell_action_buttons = build_shell_action_buttons_from_focus(focus=operational_focus, scope='students')
-    reading_panel = {
-        'eyebrow': 'Painel de leitura',
-        'title': 'Escolha a passagem que lidera a base.',
-        'copy': 'Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
-        'items': operational_focus,
-        'primary_href': operational_focus[0]['href'] if operational_focus else '',
-        'class_name': 'student-reading-panel',
-        'panel_id': 'students-reading-panel',
-    }
+    reading_panel = build_page_reading_panel(
+        items=operational_focus,
+        primary_href=operational_focus[0]['href'] if operational_focus else '',
+        class_name='student-reading-panel',
+        panel_id='students-reading-panel',
+    )
     hero = build_page_hero(
         eyebrow='Base',
         title='O que pede cuidado na sua base hoje.',

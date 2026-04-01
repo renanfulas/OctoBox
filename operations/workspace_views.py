@@ -14,7 +14,7 @@ PONTOS CRITICOS:
 
 from access.navigation_contracts import get_shell_route_url
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
-from shared_support.page_payloads import attach_page_payload, build_page_hero
+from shared_support.page_payloads import attach_page_payload, build_page_hero, build_page_reading_panel
 
 from operations.facade import (
     build_coach_workspace_snapshot,
@@ -31,7 +31,7 @@ from .base_views import OperationBaseView
 class OwnerWorkspaceView(OperationBaseView):
     allowed_roles = (ROLE_OWNER,)
     template_name = 'operations/owner.html'
-    page_title = 'Minha operação'
+    page_title = 'Minha operacao'
     page_subtitle = 'Crescimento, caixa e estrutura sem leitura longa.'
 
     def get_context_data(self, **kwargs):
@@ -54,7 +54,7 @@ class OwnerWorkspaceView(OperationBaseView):
 class DevWorkspaceView(OperationBaseView):
     allowed_roles = (ROLE_DEV,)
     template_name = 'operations/dev.html'
-    page_title = 'Minha operação'
+    page_title = 'Minha operacao'
     page_subtitle = 'Rastros, fronteiras e manutencao sem invadir a operacao.'
 
     def get_context_data(self, **kwargs):
@@ -77,7 +77,7 @@ class DevWorkspaceView(OperationBaseView):
 class ManagerWorkspaceView(OperationBaseView):
     allowed_roles = (ROLE_MANAGER,)
     template_name = 'operations/manager.html'
-    page_title = 'Minha operação'
+    page_title = 'Minha operacao'
     page_subtitle = 'Triagem, vinculo e cobranca em ordem curta.'
 
     def get_context_data(self, **kwargs):
@@ -100,7 +100,7 @@ class ManagerWorkspaceView(OperationBaseView):
 class CoachWorkspaceView(OperationBaseView):
     allowed_roles = (ROLE_COACH,)
     template_name = 'operations/coach.html'
-    page_title = 'Minha operação'
+    page_title = 'Minha operacao'
     page_subtitle = 'Aula, presenca e ocorrencia com leitura curta.'
 
     def get_context_data(self, **kwargs):
@@ -123,7 +123,7 @@ class CoachWorkspaceView(OperationBaseView):
 class ReceptionWorkspaceView(OperationBaseView):
     allowed_roles = (ROLE_OWNER, ROLE_RECEPTION)
     template_name = 'operations/reception.html'
-    page_title = 'Minha operação'
+    page_title = 'Minha operacao'
     page_subtitle = 'Chegada, agenda e cobranca curta no balcao.'
 
     def get_context_data(self, **kwargs):
@@ -148,18 +148,18 @@ class WhatsAppWorkspaceView(OperationBaseView):
     allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_DEV, ROLE_COACH, ROLE_RECEPTION)
     template_name = 'operations/whatsapp_placeholder.html'
     page_title = 'Mensagens'
-    page_subtitle = 'Central de comunicação e relacionamento com seus alunos.'
+    page_subtitle = 'Central de comunicacao e relacionamento com seus alunos.'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
         context['whatsapp_placeholder_hero'] = build_page_hero(
             eyebrow='Mensagens',
-            title='Central de mensagens em construcao.',
-            copy='Estamos preparando a central de mensagens do seu box. Em breve, voce podera gerenciar todo o relacionamento com seus alunos diretamente por aqui.',
+            title='Central em preparo.',
+            copy='Veja o que ja esta definido, o que ainda chega e para onde seguir sem ruido.',
             actions=[
                 {
-                    'label': 'Voltar ao Dashboard',
+                    'label': 'Abrir dashboard',
                     'href': get_shell_route_url('dashboard'),
                     'kind': 'secondary',
                 },
@@ -169,11 +169,8 @@ class WhatsAppWorkspaceView(OperationBaseView):
             heading_level='h1',
             data_panel='whatsapp-placeholder-hero',
         )
-        context['whatsapp_placeholder_reading_panel'] = {
-            'eyebrow': 'Painel de leitura',
-            'title': 'Veja o que esta pronto e o que ainda esta chegando.',
-            'copy': 'Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
-            'items': [
+        context['whatsapp_placeholder_reading_panel'] = build_page_reading_panel(
+            items=[
                 {
                     'chip_label': 'Estado',
                     'count': 1,
@@ -193,8 +190,8 @@ class WhatsAppWorkspaceView(OperationBaseView):
                     'href_label': 'Abrir alunos',
                 },
             ],
-            'primary_href': get_shell_route_url('dashboard'),
-            'class_name': 'whatsapp-placeholder-reading-panel',
-            'panel_id': 'whatsapp-placeholder-reading-panel',
-        }
+            primary_href=get_shell_route_url('dashboard'),
+            class_name='whatsapp-placeholder-reading-panel',
+            panel_id='whatsapp-placeholder-reading-panel',
+        )
         return context

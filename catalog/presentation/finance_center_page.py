@@ -8,7 +8,7 @@ POR QUE ELE EXISTE:
 
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
 from access.shell_actions import build_shell_action_buttons_from_focus
-from shared_support.page_payloads import build_page_hero
+from shared_support.page_payloads import build_page_hero, build_page_reading_panel
 
 from .shared import build_catalog_assets, build_catalog_page_payload
 
@@ -135,27 +135,32 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         scope='finance',
     )
 
-    reading_panel = {
-        'eyebrow': 'Painel de leitura',
-        'title': 'Escolha a passagem que lidera o financeiro.',
-        'copy': 'Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
-        'items': operational_focus,
-        'primary_href': operational_focus[0]['href'] if operational_focus else '',
-        'pill_label': finance_priority_context['pill_label'],
-        'pill_class': finance_priority_context['pill_class'],
-        'class_name': 'finance-reading-panel',
-        'panel_id': 'finance-reading-panel',
-    }
+    reading_panel = build_page_reading_panel(
+        items=operational_focus,
+        primary_href=operational_focus[0]['href'] if operational_focus else '',
+        pill_label=finance_priority_context['pill_label'],
+        pill_class=finance_priority_context['pill_class'],
+        class_name='finance-reading-panel',
+        panel_id='finance-reading-panel',
+    )
 
     hero_actions = [
-        {'label': 'Abrir regua', 'href': '#finance-priority-board', 'kind': 'primary', 'data_action': 'open-tab-finance-queue'},
+        {'label': 'Ver prioridades', 'href': '#finance-priority-board', 'kind': 'primary', 'data_action': 'open-tab-finance-queue'},
         {'label': 'Abrir carteira', 'href': '#finance-portfolio-board', 'kind': 'secondary', 'data_action': 'open-tab-finance-portfolio'},
     ]
 
+    dominant_key = finance_priority_context.get('dominant_key')
+    if dominant_key == 'portfolio':
+        hero_title = 'Carteira em leitura.'
+    elif dominant_key == 'queue':
+        hero_title = 'Fila financeira.'
+    else:
+        hero_title = 'Financeiro ativo.'
+
     hero = build_page_hero(
         eyebrow='Financeiro',
-        title=finance_priority_context['headline'],
-        copy='Abra a leitura dominante e desca para a proxima acao.' if finance_priority_context['dominant_key'] != 'portfolio' else 'Carteira e mix abrem a tela antes da fila operacional.',
+        title=hero_title,
+        copy='Veja a pressao dominante, abra a primeira passagem e desca sem ruido.',
         actions=hero_actions,
         aria_label='Panorama financeiro',
         classes=['finance-hero'],

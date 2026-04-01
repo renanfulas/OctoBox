@@ -9,7 +9,12 @@ POR QUE ELE EXISTE:
 from django.urls import reverse
 
 from access.shell_actions import build_shell_action_buttons_from_focus
-from shared_support.page_payloads import build_page_assets, build_page_hero, build_page_payload
+from shared_support.page_payloads import (
+    build_page_assets,
+    build_page_hero,
+    build_page_payload,
+    build_page_reading_panel,
+)
 
 
 def _build_hero_actions_from_entry_context(entry_context=None, *, tertiary_action=None):
@@ -96,22 +101,22 @@ def _build_operation_workspace_hero(page_key, snapshot):
         ),
         'operations-manager': build_page_hero(
             eyebrow='Gerencia',
-            title='Fila e vinculos.',
-            copy='Abra a entrada dominante e limpe o restante sem perder o caixa.',
+            title='Gerencia ativa.',
+            copy='Veja intake, vinculos e caixa sem perder o ritmo.',
             actions=_build_hero_actions_from_entry_context(snapshot.get('manager_decision_entry_context')),
             aria_label='Panorama da gerencia',
         ),
         'operations-coach': build_page_hero(
             eyebrow='Coach',
-            title='Turno em curso.',
-            copy='Abra a agenda, registre presenca e feche ocorrencia sem ruido.',
+            title='Turno ativo.',
+            copy='Veja agenda, presenca e ocorrencia sem ruido.',
             actions=_build_hero_actions_from_entry_context(snapshot.get('coach_decision_entry_context')),
             aria_label='Panorama do coach',
         ),
         'operations-dev': build_page_hero(
-            eyebrow='Leitura tecnica controlada',
-            title='Rastro recente, fronteira, sistema inteiro.',
-            copy='Rastro, fronteira e manutencao sem chute tecnico.',
+            eyebrow='Sistema',
+            title='Sistema em leitura.',
+            copy='Veja rastro, fronteira e manutencao sem chute tecnico.',
             actions=[
                 {'label': 'Ver eventos recentes', 'href': '#dev-audit-board'},
                 {'label': 'Abrir mapa do sistema', 'href': reverse('system-map'), 'kind': 'secondary'},
@@ -120,8 +125,8 @@ def _build_operation_workspace_hero(page_key, snapshot):
         ),
         'operations-reception': build_page_hero(
             eyebrow='Recepcao',
-            title='Balcao em fluxo.',
-            copy='Atenda chegada, cobranca curta e grade sem travar o balcao.',
+            title='Balcao ativo.',
+            copy='Veja chegada, caixa curto e grade sem travar o atendimento.',
             actions=_build_hero_actions_from_entry_context(
                 snapshot.get('reception_decision_entry_context'),
                 tertiary_action={
@@ -140,20 +145,6 @@ def _build_operation_workspace_hero(page_key, snapshot):
     return hero_map[page_key]
 
 
-def _build_reading_panel(*, eyebrow, title, copy, items, primary_href=None, pill_label=None, pill_class=None, class_name=None, panel_id=None):
-    return {
-        'eyebrow': eyebrow,
-        'title': title,
-        'copy': copy,
-        'items': list(items or []),
-        'primary_href': primary_href,
-        'pill_label': pill_label,
-        'pill_class': pill_class,
-        'class_name': class_name,
-        'panel_id': panel_id,
-    }
-
-
 def _build_operation_workspace_reading_panel(page_key, snapshot):
     owner_priority_context = snapshot.get('owner_priority_context') or {}
     owner_decision_entry_context = snapshot.get('owner_decision_entry_context') or {}
@@ -163,10 +154,7 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
     reception_decision_entry_context = snapshot.get('reception_decision_entry_context') or {}
 
     panel_map = {
-        'operations-owner': _build_reading_panel(
-            eyebrow='Painel de leitura',
-            title='Escolha a passagem que lidera o dia.',
-            copy='Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
+        'operations-owner': build_page_reading_panel(
             items=snapshot.get('owner_operational_focus'),
             primary_href=owner_decision_entry_context.get('entry_href'),
             pill_label=owner_priority_context.get('pill_label'),
@@ -174,10 +162,7 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
             class_name='owner-reading-panel',
             panel_id='owner-command-lane',
         ),
-        'operations-manager': _build_reading_panel(
-            eyebrow='Painel de leitura',
-            title=manager_priority_context.get('title') or 'Mesa de triagem.',
-            copy='Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
+        'operations-manager': build_page_reading_panel(
             items=snapshot.get('manager_operational_focus'),
             primary_href=manager_decision_entry_context.get('entry_href'),
             pill_label=manager_priority_context.get('pill_label'),
@@ -185,10 +170,7 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
             class_name='manager-focus-lane',
             panel_id='manager-command-lane',
         ),
-        'operations-coach': _build_reading_panel(
-            eyebrow='Painel de leitura',
-            title='Leia o turno em tres passagens curtas.',
-            copy='Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
+        'operations-coach': build_page_reading_panel(
             items=snapshot.get('coach_operational_focus'),
             primary_href=coach_decision_entry_context.get('entry_href'),
             pill_label='Ritmo do coach',
@@ -196,10 +178,7 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
             class_name='coach-focus-lane',
             panel_id='coach-command-lane',
         ),
-        'operations-reception': _build_reading_panel(
-            eyebrow='Painel de leitura',
-            title='A recepcao decide em tres passagens curtas.',
-            copy='Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
+        'operations-reception': build_page_reading_panel(
             items=snapshot.get('reception_focus'),
             primary_href=reception_decision_entry_context.get('entry_href'),
             pill_label='Atendimento vivo',

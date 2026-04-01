@@ -2,11 +2,11 @@
 ARQUIVO: views do modulo de acesso.
 
 POR QUE ELE EXISTE:
-- Concentra as telas e redirecionamentos ligados ao login e aos Papéis do sistema.
+- Concentra as telas e redirecionamentos ligados ao login e aos papeis do sistema.
 
 O QUE ESTE ARQUIVO FAZ:
 1. Redireciona a raiz para login ou dashboard.
-2. Monta a tela de visao geral de Papéis e capacidades.
+2. Monta a tela de visao geral de papeis e capacidades.
 
 PONTOS CRITICOS:
 - Alteracoes erradas nos redirecionamentos mudam o fluxo inicial do sistema.
@@ -25,7 +25,7 @@ from django.views.generic import TemplateView
 
 from access.admin import admin_changelist_url, user_can_access_admin
 from access.shell_actions import attach_shell_action_buttons
-from shared_support.page_payloads import build_page_hero
+from shared_support.page_payloads import build_page_hero, build_page_reading_panel
 from .forms import AccessProfileCreateForm, AccessProfileUpdateForm
 from .roles import ROLE_DEFINITIONS, ROLE_DEV, ROLE_OWNER, ROLE_PERMISSION_MAP, get_user_capabilities, get_user_role
 
@@ -70,13 +70,13 @@ class ThrottledLoginView(LoginView):
     authentication_form = AccessAuthenticationForm
 
     def post(self, request, *args, **kwargs):
-        # A interceptação L7 foca apenas em ações de POST para contar tentativa de login, 
+        # A interceptacao L7 foca apenas em acoes de POST para contar tentativa de login,
         # impedindo botneteadores de credential stuffing. 
         throttle = LoginBruteForceThrottle()
         if not throttle.allow_request(request, self):
             throttle.on_throttle_exceeded(request, self)
             from django.http import HttpResponseForbidden
-            return HttpResponseForbidden("Múltiplas requisições suspeitas. Conta temporariamente bloqueada (Cooldown: 10 min).")
+            return HttpResponseForbidden("Multiplas requisicoes suspeitas. Conta temporariamente bloqueada (Cooldown: 10 min).")
             
         return super().post(request, *args, **kwargs)
 
@@ -224,12 +224,12 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
         context['access_profiles_panel_open'] = access_profiles_panel_open
         context['profile_create_form'] = kwargs.get('profile_create_form') or AccessProfileCreateForm()
         context['access_profiles'] = self._build_access_profiles(forms_by_user_id=kwargs.get('forms_by_user_id'))
-        context['page_title'] = 'Papéis e acessos'
+        context['page_title'] = 'Papeis e acessos'
         context['page_subtitle'] = 'Quem decide o que e onde cada papel para.'
         context['hero_stats'] = [
             {'label': 'Papel atual', 'value': current_role.label},
             {'label': 'Capacidades do papel', 'value': len(role_capabilities)},
-            {'label': 'Papéis formais', 'value': len(role_definitions)},
+            {'label': 'Papeis formais', 'value': len(role_definitions)},
             {'label': 'Fronteira central', 'value': 'Governanca'},
         ]
         context['access_operational_focus'] = [
@@ -247,11 +247,11 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
                 'summary': f'{len(role_definitions)} papel(is) ja desenham quem decide crescimento, manutencao, administracao e rotina tecnica sem mistura indevida.',
                 'pill_class': 'info',
                 'href': '#access-role-map',
-                'href_label': 'Ver mapa de Papéis',
+                'href_label': 'Ver mapa de papeis',
             },
             {
-                'label': 'Feche com a governança prática',
-                'chip_label': 'Governança',
+                'label': 'Feche com a governanca pratica',
+                'chip_label': 'Governanca',
                 'summary': 'Grupos e permissoes devem sustentar o desenho do produto, nunca obrigar a operacao a adivinhar limite por tentativa e erro.',
                 'pill_class': 'warning',
                 'href': '#access-governance-board',
@@ -259,32 +259,29 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
             },
         ]
         context['access_hero'] = build_page_hero(
-            eyebrow='Fronteiras do sistema',
-            title='Quem age, quem não invade e onde cada papel começa.',
-            copy='Autoridade, fronteira e papel sem ambiguidade.',
+            eyebrow='Acessos',
+            title='Fronteiras em leitura.',
+            copy='Veja quem pode agir, onde cada papel comeca e o que pede cuidado agora.',
             actions=[
                 {'label': 'Ver meu escopo', 'href': '#access-current-role'},
-                {'label': 'Ver mapa de Papéis', 'href': '#access-role-map', 'kind': 'secondary'},
+                {'label': 'Ver fronteiras', 'href': '#access-role-map', 'kind': 'secondary'},
                 *([
                     {'label': 'Gerenciar grupos', 'href': admin_changelist_url('auth', 'group'), 'kind': 'secondary'},
                 ] if user_can_access_admin(self.request.user) else []),
             ],
             aria_label='Panorama de acessos',
         )
-        context['access_reading_panel'] = {
-            'eyebrow': 'Painel de leitura',
-            'title': 'Escolha a fronteira que precisa abrir primeiro.',
-            'copy': 'Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
-            'items': context['access_operational_focus'],
-            'primary_href': context['access_operational_focus'][0]['href'] if context['access_operational_focus'] else '',
-            'class_name': 'access-reading-panel',
-            'panel_id': 'access-reading-panel',
-        }
+        context['access_reading_panel'] = build_page_reading_panel(
+            items=context['access_operational_focus'],
+            primary_href=context['access_operational_focus'][0]['href'] if context['access_operational_focus'] else '',
+            class_name='access-reading-panel',
+            panel_id='access-reading-panel',
+        )
         context['governance_points'] = [
-            'Manager não vira coach por atalho.',
-            'Coach não carrega rotina financeira ou administrativa.',
-            'DEV investiga e mantém sem virar operador do box.',
-            'Owner enxerga amplitude sem dissolver fronteiras entre papéis.',
+            'Manager nao vira coach por atalho.',
+            'Coach nao carrega rotina financeira ou administrativa.',
+            'DEV investiga e mantem sem virar operador do box.',
+            'Owner enxerga amplitude sem dissolver fronteiras entre papeis.',
         ]
         context['group_admin_url'] = admin_changelist_url('auth', 'group') if user_can_access_admin(self.request.user) else ''
         attach_shell_action_buttons(context, focus=context['access_operational_focus'], scope='access')

@@ -1,19 +1,14 @@
 /*
-ARQUIVO: cena base compartilhada do catálogo.
+ARQUIVO: cena base compartilhada do catalogo.
 
 POR QUE ELE EXISTE:
 - concentra shell, hero e estrutura base da ficha de aluno.
-- mantém aqui apenas a leitura estrutural comum das telas de catálogo.
+- mantem aqui apenas a leitura estrutural comum das telas de catalogo.
 */
 
 .catalog-scene {
     display: grid;
     gap: var(--section-gap);
-}
-
-.catalog-hero,
-.catalog-hero.operation-hero {
-    background: var(--surface);
 }
 
 .student-form-scene {
@@ -73,11 +68,3 @@ POR QUE ELE EXISTE:
     padding: 10px 12px;
 }
 
-.catalog-hero.operation-hero .operation-hero-action-rail .button {
-    min-height: 36px;
-    padding: 8px 13px;
-}
-
-body[data-theme="dark"] .catalog-hero.operation-hero {
-    background: var(--surface);
-}

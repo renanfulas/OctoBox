@@ -14,7 +14,7 @@ from django.views.generic import TemplateView
 
 from access.roles import ROLE_MANAGER, ROLE_OWNER
 from operations.base_views import OperationBaseView
-from shared_support.page_payloads import build_page_hero
+from shared_support.page_payloads import build_page_hero, build_page_reading_panel
 
 
 class ReportHubView(OperationBaseView, TemplateView):
@@ -57,25 +57,22 @@ class ReportHubView(OperationBaseView, TemplateView):
             },
         ]
         context['report_hub_hero'] = build_page_hero(
-            eyebrow='Gestao',
-            title='A camada gerencial segue pronta, no tempo certo.',
-            copy='Esta central guarda o fechamento e os livros do negocio sem invadir a experiencia principal enquanto a fachada do produto ganha maturidade.',
+            eyebrow='Relatorios',
+            title='Camada gerencial.',
+            copy='Abra a frente certa sem misturar o cofre gerencial com a operacao diaria.',
             actions=[
-                {'label': 'Ver camada comercial', 'href': '#reports-commercial', 'kind': 'primary', 'data_action': 'jump-report-commercial'},
-                {'label': 'Ver camada financeira', 'href': '#reports-finance', 'kind': 'secondary', 'data_action': 'jump-report-finance'},
+                {'label': 'Ver comercial', 'href': '#reports-commercial', 'kind': 'primary', 'data_action': 'jump-report-commercial'},
+                {'label': 'Ver financeiro', 'href': '#reports-finance', 'kind': 'secondary', 'data_action': 'jump-report-finance'},
             ],
             aria_label='Panorama da central de relatorios',
             classes=['reports-hub-hero'],
             heading_level='h1',
             data_panel='reports-hub-hero',
         )
-        context['report_hub_reading_panel'] = {
-            'eyebrow': 'Painel de leitura',
-            'title': 'Escolha a camada que precisa abrir primeiro.',
-            'copy': 'Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
-            'items': context['report_hub_focus'],
-            'primary_href': context['report_hub_focus'][0]['href'] if context['report_hub_focus'] else '',
-            'class_name': 'reports-hub-reading-panel',
-            'panel_id': 'reports-hub-reading-panel',
-        }
+        context['report_hub_reading_panel'] = build_page_reading_panel(
+            items=context['report_hub_focus'],
+            primary_href=context['report_hub_focus'][0]['href'] if context['report_hub_focus'] else '',
+            class_name='reports-hub-reading-panel',
+            panel_id='reports-hub-reading-panel',
+        )
         return context

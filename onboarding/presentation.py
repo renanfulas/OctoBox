@@ -2,7 +2,7 @@
 ARQUIVO: presentation da Central de Intake.
 
 POR QUE ELE EXISTE:
-- Da uma superficie visual propria para entradas provisórias sem empurrar esse ownership para Alunos ou Operacao.
+- Da uma superficie visual propria para entradas provisorias sem empurrar esse ownership para Alunos ou Operacao.
 
 O QUE ESTE ARQUIVO FAZ:
 1. Monta o page payload da Central de Intake.
@@ -50,7 +50,7 @@ def build_intake_center_page(*, snapshot, current_role_slug):
 
     if can_manage_students:
         hero_actions.append(
-            {'label': 'Novo Lead', 'href': '#tab-intake-create-lead', 'kind': 'secondary', 'data_action': 'open-tab-intake-create-lead'}
+            {'label': 'Novo lead', 'href': '#tab-intake-create-lead', 'kind': 'secondary', 'data_action': 'open-tab-intake-create-lead'}
         )
         hero_actions.append(
             {'label': 'Novo Intake', 'href': '#tab-intake-create-intake', 'kind': 'secondary', 'data_action': 'open-tab-intake-create-intake'}
@@ -58,8 +58,8 @@ def build_intake_center_page(*, snapshot, current_role_slug):
 
     hero = build_page_hero(
         eyebrow='Intake',
-        title='Novas vidas.',
-        copy='Receba, converse e converta quem chegou no seu Box.',
+        title='Entradas em leitura.',
+        copy='Veja quem pede resposta agora, quem ja pode converter e onde agir sem ruido.',
         actions=hero_actions,
         aria_label='Panorama da central de intake',
         classes=[],
@@ -72,7 +72,7 @@ def build_intake_center_page(*, snapshot, current_role_slug):
         context={
             'page_key': 'intake-center',
             'title': 'Central de Intake',
-            'subtitle': 'Entradas provisórias, triagem e conversão num ponto próprio.',
+            'subtitle': 'Entradas provisorias, triagem e conversao num ponto proprio.',
             'mode': 'workspace',
             'role_slug': current_role_slug,
         },

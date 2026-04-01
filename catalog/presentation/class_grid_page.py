@@ -40,7 +40,7 @@ def _build_operational_focus(*, today_schedule, grouped_sessions, monthly_calend
             'title': 'Comece pelo ritmo de hoje',
             'chip_label': 'Hoje',
             'summary': (
-                f"{len(today_sessions)} aula(s) no dia e {today_pressure_count} horário(s) com lotação alta."
+                f"{len(today_sessions)} aula(s) no dia e {today_pressure_count} horario(s) com lotacao alta."
                 if today_schedule else
                 'Nenhuma aula marcada hoje. Revise a semana para evitar surpresas.'
             ),
@@ -57,19 +57,19 @@ def _build_operational_focus(*, today_schedule, grouped_sessions, monthly_calend
                 if busiest_day else
                 'Nenhum pico de agenda identificado na janela atual.'
             ),
-            'action_label': 'Ver visão semanal',
+            'action_label': 'Ver visao semanal',
             'action_href': '#weekly-board',
             'href': '#weekly-board',
         },
         {
-            'title': 'Ajuste o mês',
+            'title': 'Ajuste o mes',
             'chip_label': 'Planejar',
             'summary': (
                 f"{busy_days} dia(s) carregado(s) e {free_days} dia(s) livres para redistribuir."
                 if can_manage_classes else
-                f"{busy_days} dia(s) carregado(s) e {free_days} dia(s) livres no mês."
+                f"{busy_days} dia(s) carregado(s) e {free_days} dia(s) livres no mes."
             ),
-            'action_label': 'Ver mapa do mês' if not can_manage_classes else 'Revisar mês',
+            'action_label': 'Ver mapa do mes' if not can_manage_classes else 'Revisar mes',
             'action_href': '#monthly-board' if not can_manage_classes else '#planner-board',
             'href': '#monthly-board' if not can_manage_classes else '#planner-board',
         },
@@ -87,20 +87,20 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
         can_manage_classes=can_manage_classes,
     )
     class_focus = [
-        'Valide a agenda real da equipe de forma rápida e visual.',
-        'A grade mostra reservas, lotação e distribuição das aulas por dia.',
-        'Em caso de dúvida, comece por aqui antes de aprofundar em outros painéis.',
+        'Valide a agenda real da equipe de forma rapida e visual.',
+        'A grade mostra reservas, lotacao e distribuicao das aulas por dia.',
+        'Em caso de duvida, comece por aqui antes de aprofundar em outros paineis.',
     ]
     shell_action_buttons = build_shell_action_buttons_from_focus(focus=operational_focus, scope='class-grid')
     hero = build_page_hero(
         eyebrow='Aulas',
-        title='Grade de aulas.',
-        copy='Acompanhe agenda, lotação e ritmo das turmas num ponto só.',
+        title='Grade em leitura.',
+        copy='Veja o ritmo do dia, a pressao da semana e onde ajustar sem ruido.',
         actions=[
-            {'label': 'Hoje', 'href': '#today-board'},
-            {'label': 'Semana', 'href': '#weekly-board', 'kind': 'secondary'},
+            {'label': 'Ver hoje', 'href': '#today-board'},
+            {'label': 'Ver semana', 'href': '#weekly-board', 'kind': 'secondary'},
             *([
-                {'label': 'Planejar', 'href': '#planner-board', 'kind': 'secondary'},
+                {'label': 'Abrir planejamento', 'href': '#planner-board', 'kind': 'secondary'},
             ] if can_manage_classes else []),
         ],
         aria_label='Panorama da grade',

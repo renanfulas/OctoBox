@@ -1,5 +1,5 @@
 /*
-ARQUIVO: superfícies periféricas e estados isolados do produto.
+ARQUIVO: superficies perifericas e estados isolados do produto.
 */
 
 .error-page-shell {
@@ -43,35 +43,13 @@ ARQUIVO: superfícies periféricas e estados isolados do produto.
 }
 
 .whatsapp-placeholder-shell {
-    padding: 40px;
     display: grid;
-    justify-items: center;
-    align-items: center;
-    min-height: 70vh;
-}
-
-.whatsapp-placeholder-hero {
+    gap: var(--section-gap);
     width: min(100%, 960px);
-    margin-top: 40px;
-    text-align: left;
-    --operation-hero-main-columns: minmax(0, 1fr);
-    --operation-hero-main-align-items: stretch;
-    --operation-hero-stack-max-width: 100%;
-    --operation-hero-copy-max-width: 58ch;
-    --operation-hero-actions-justify-self: start;
-    --operation-hero-actions-max-width: 100%;
-    --operation-hero-actions-padding: 0;
-    --operation-hero-actions-border: 0 solid transparent;
-    --operation-hero-actions-shadow: none;
-    --operation-hero-actions-surface: transparent;
-    --operation-hero-panel-padding: 24px;
-    border-radius: 24px;
-    backdrop-filter: blur(12px);
-    box-shadow: var(--shadow-lift);
-}
-
-.whatsapp-placeholder-hero .operation-hero-main {
-    max-width: 680px;
+    margin: 0 auto;
+    padding: 40px;
+    align-content: start;
+    min-height: 70vh;
 }
 
 .whatsapp-placeholder-glow {
@@ -215,7 +193,6 @@ ARQUIVO: superfícies periféricas e estados isolados do produto.
 
 @media (max-width: 720px) {
     .error-page-card,
-    .whatsapp-placeholder-hero,
     .honeypot-message-box {
         margin-inline: auto;
         padding: 32px 24px;

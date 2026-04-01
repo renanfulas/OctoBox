@@ -1,5 +1,5 @@
 /*
-ARQUIVO: cena base e hero da recepção.
+ARQUIVO: cena base e hero da recepcao.
 */
 
 .reception-scene,
@@ -16,15 +16,6 @@ ARQUIVO: cena base e hero da recepção.
     --reception-premium-surface-dark:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 36%, transparent), transparent 30%),
         linear-gradient(156deg, rgba(12, 22, 36, 0.98), rgba(8, 15, 26, 0.97) 60%, rgba(7, 12, 22, 0.95));
-    --operation-hero-padding: 18px 20px;
-    --operation-hero-main-gap: 10px;
-    --operation-hero-stack-gap: 6px;
-    --operation-hero-stack-max-width: 560px;
-    --operation-hero-copy-max-width: 40ch;
-    --operation-hero-actions-gap: 6px;
-    --operation-hero-actions-max-width: 540px;
-    --operation-hero-button-min-height: 34px;
-    --operation-hero-button-padding: 7px 12px;
     --operation-hero-side-width: min(100%, 304px);
     --operation-hero-panel-padding: 12px 14px;
     --operation-mini-grid-gap: 6px;
@@ -68,19 +59,6 @@ ARQUIVO: cena base e hero da recepção.
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-}
-
-.reception-hero,
-.reception-preview-hero {
-    background: var(--reception-premium-surface);
-    border: 1px solid var(--reception-premium-border);
-    box-shadow: var(--reception-premium-shadow);
-}
-
-.reception-hero .operation-hero-panel,
-.reception-preview-hero .operation-hero-panel {
-    background: color-mix(in srgb, var(--theme-surface-panel) 92%, white);
-    box-shadow: inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
 }
 
 .reception-sidecard,
@@ -136,21 +114,6 @@ body[data-theme="dark"] .reception-preview-scene::before {
         radial-gradient(circle at 12% 12%, color-mix(in srgb, var(--theme-accent-primary-alpha) 28%, transparent), transparent 24%),
         radial-gradient(circle at 88% 10%, color-mix(in srgb, var(--theme-accent-support-alpha) 28%, transparent), transparent 24%),
         linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 72%);
-}
-
-body[data-theme="dark"] .reception-hero,
-body[data-theme="dark"] .reception-preview-hero {
-    background: var(--reception-premium-surface-dark);
-    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, var(--theme-border-soft) 82%);
-    box-shadow:
-        0 24px 48px rgba(0, 0, 0, 0.22),
-        inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
-}
-
-body[data-theme="dark"] .reception-hero .operation-hero-panel,
-body[data-theme="dark"] .reception-preview-hero .operation-hero-panel {
-    background: rgba(10, 17, 28, 0.82);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 body[data-theme="dark"] .reception-scene .workspace-panel,

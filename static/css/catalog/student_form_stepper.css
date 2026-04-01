@@ -4,30 +4,6 @@
     gap: calc(var(--section-gap) - 2px);
 }
 
-.student-form-hero.operation-hero,
-.student-form-hero .operation-hero-panel {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 28%, transparent), transparent 26%),
-        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, transparent), transparent 30%),
-        linear-gradient(156deg, color-mix(in srgb, var(--theme-surface-panel) 97%, white), color-mix(in srgb, var(--theme-surface-strong) 94%, white));
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
-    box-shadow:
-        0 22px 42px rgba(7, 14, 24, 0.08),
-        inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
-}
-
-.student-form-hero .operation-hero-copy-block {
-    max-width: 58ch;
-}
-
-.student-form-hero .operation-hero-copy {
-    max-width: 46ch;
-}
-
-.student-form-hero .operation-hero-action-rail {
-    gap: 8px;
-}
-
 .student-workspace-map-intro,
 .student-workspace-map-card,
 .student-form-main-card,
@@ -338,8 +314,6 @@
     background: var(--accent-primary-alpha);
 }
 
-body[data-theme="dark"] .student-form-hero.operation-hero,
-body[data-theme="dark"] .student-form-hero .operation-hero-panel,
 body[data-theme="dark"] .student-workspace-map-intro,
 body[data-theme="dark"] .student-workspace-map-card,
 body[data-theme="dark"] .student-form-main-card,

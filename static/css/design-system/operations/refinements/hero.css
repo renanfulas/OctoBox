@@ -2,51 +2,51 @@
 ARQUIVO: refinamentos finais do hero operacional.
 
 POR QUE ELE EXISTE:
-- concentra o passe de densidade, proporção e overflow dos heros.
-- mantém o contrato visual do hero separado da base funcional.
+- concentra o passe de densidade, proporcao e overflow dos heros.
+- mantem o contrato visual do hero separado da base funcional.
 */
 
 .operation-hero {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
-    min-height: var(--operation-hero-min-height, 178px);
+    min-height: var(--operation-hero-min-height, 184px);
     
-    /* ──────────────────────────────────────────────────────────────────────
-       FIBONACCI HERO STRUCTURE — FINAL AUTHORITY
+    /* FIBONACCI HERO STRUCTURE - FINAL AUTHORITY
        Garante que todos os heros operacionais tenham o compasso do dashboard.
-    ───────────────────────────────────────────────────────────────────────── */
+    */
     --operation-hero-gap: var(--workspace-fib-3, 13px);
-    --operation-hero-padding: clamp(var(--workspace-fib-4, 21px), 1.8vw, var(--workspace-fib-5, 34px));
+    --operation-hero-padding: clamp(21px, 1.8vw, 30px);
     --operation-hero-main-columns: minmax(0, 1fr) auto;
     --operation-hero-main-align-items: end;
     --operation-hero-main-position: relative;
     --operation-hero-main-z-index: 1;
-    --operation-hero-main-gap: var(--workspace-fib-3, 13px);
+    --operation-hero-main-gap: 14px;
     --operation-hero-stack-gap: 8px;
-    --operation-hero-stack-max-width: 40rem;
-    --operation-hero-heading-max-width: 100%; /* Permite títulos longos em pt-BR sem truncar precocemente */
-    --operation-hero-heading-size: clamp(2.15rem, 3.5vw, 3rem);
+    --operation-hero-stack-max-width: 39rem;
+    --operation-hero-heading-max-width: 15ch;
+    --operation-hero-heading-size: clamp(2.1rem, 3.3vw, 2.85rem);
     --operation-hero-heading-line-height: 0.95;
     --operation-hero-heading-letter-spacing: -0.05em;
-    --operation-hero-copy-max-width: 48ch;
+    --operation-hero-copy-max-width: 44ch;
     --operation-hero-copy-size: 0.98rem;
     --operation-hero-copy-line-height: 1.54;
     
-    /* Configurações do pílula de ações laterais */
+    /* Configuracoes da pilula de acoes laterais */
     --operation-hero-actions-display: inline-flex;
     --operation-hero-actions-align-self: end;
     --operation-hero-actions-justify-self: end;
     --operation-hero-actions-max-width: max-content;
-    --operation-hero-actions-padding: 3px 3px 2px;
+    --operation-hero-actions-padding: 3px;
     --operation-hero-actions-radius: 999px;
     --operation-hero-actions-surface: rgba(255, 255, 255, 0.58);
     --operation-hero-actions-border: 1px solid rgba(80, 102, 128, 0.08);
     --operation-hero-actions-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
     --operation-hero-actions-gap: 8px;
-    --operation-hero-button-min-height: 34px;
+    --operation-hero-button-min-height: 36px;
     --operation-hero-button-padding: 7px 14px;
     --operation-hero-button-radius: 999px;
+    --operation-hero-button-font-size: 0.92rem;
 
     /* Remove os enfeites de bordas verticais sujas deixadas pelos templates base */
     --hero-before-inset: auto;
@@ -107,7 +107,7 @@ body[data-theme="dark"] .operation-hero {
 }
 
 .operation-hero-title {
-    max-width: none;
+    max-width: var(--operation-hero-heading-max-width, 15ch);
     font-size: var(--operation-hero-heading-size, clamp(2rem, 3.2vw, 2.8rem));
     line-height: var(--operation-hero-heading-line-height, 0.96);
     letter-spacing: var(--operation-hero-heading-letter-spacing, -0.05em);
@@ -139,7 +139,8 @@ body[data-theme="dark"] .operation-hero {
 .operation-hero-action-rail .button {
     min-height: var(--operation-hero-button-min-height, 36px);
     padding: var(--operation-hero-button-padding, 8px 13px);
-    border-radius: var(--operation-hero-button-radius, 14px);
+    border-radius: var(--operation-hero-button-radius, 999px);
+    font-size: var(--operation-hero-button-font-size, 0.92rem);
 }
 
 .operation-hero-side {
@@ -206,6 +207,7 @@ body[data-theme="dark"] .operation-mini-stat {
 @media (max-width: 720px) {
     .operation-hero {
         --operation-hero-heading-size: clamp(1.8rem, 9vw, 2.3rem);
+        --operation-hero-heading-max-width: 100%;
         --operation-hero-copy-size: 0.95rem;
         --operation-hero-stack-gap: 8px;
         --operation-hero-actions-gap: 6px;

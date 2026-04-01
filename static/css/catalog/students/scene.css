@@ -2,8 +2,8 @@
 ARQUIVO: cena base e hero das telas de alunos.
 
 POR QUE ELE EXISTE:
-- concentra shell, hero e strip de métricas da superfície de alunos.
-- deixa filtros, prioridade e diretório em módulos separados.
+- concentra shell, hero e strip de metricas da superficie de alunos.
+- deixa filtros, prioridade e diretorio em modulos separados.
 */
 
 .student-scene {
@@ -12,38 +12,6 @@ POR QUE ELE EXISTE:
 
 .student-toolbar-import {
     white-space: nowrap;
-}
-
-.student-hero,
-.student-hero.operation-hero,
-.student-hero .operation-hero-panel {
-    background: var(--surface);
-}
-
-.student-hero .operation-hero-copy-block,
-.student-hero.operation-hero .operation-hero-copy-block {
-    max-width: 560px;
-}
-
-.student-hero .operation-hero-title {
-    max-width: 13ch;
-    font-size: clamp(2.05rem, 3.4vw, 2.9rem);
-    line-height: 1;
-}
-
-.student-hero .operation-hero-copy,
-.student-hero.operation-hero .operation-hero-copy {
-    max-width: 40ch;
-}
-
-.student-hero .operation-hero-action-rail {
-    max-width: 560px;
-    gap: 6px;
-}
-
-.student-hero .operation-hero-action-rail .button {
-    min-height: 33px;
-    padding: 7px 12px;
 }
 
 .student-command-layout {

@@ -42,6 +42,12 @@ PAGE_HERO_CONTENT_RULES = {
     'max_copy_lines': 2,
 }
 
+PAGE_READING_PANEL_RULES = {
+    'eyebrow': 'Painel de leitura',
+    'title': 'Veja o que pede atencao agora.',
+    'copy': 'Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
+}
+
 
 def _limit_collection(items, *, max_items):
     return list(items or [])[:max_items]
@@ -73,6 +79,31 @@ def build_page_hero(
         'data_panel': data_panel,
         'actions_slot': actions_slot,
         'contract': contract or dict(PAGE_HERO_CONTENT_RULES),
+    }
+
+
+def build_page_reading_panel(
+    *,
+    items,
+    primary_href='',
+    eyebrow=None,
+    title=None,
+    copy=None,
+    pill_label=None,
+    pill_class=None,
+    class_name=None,
+    panel_id=None,
+):
+    return {
+        'eyebrow': eyebrow or PAGE_READING_PANEL_RULES['eyebrow'],
+        'title': title or PAGE_READING_PANEL_RULES['title'],
+        'copy': copy or PAGE_READING_PANEL_RULES['copy'],
+        'items': list(items or []),
+        'primary_href': primary_href,
+        'pill_label': pill_label,
+        'pill_class': pill_class,
+        'class_name': class_name,
+        'panel_id': panel_id,
     }
 
 
