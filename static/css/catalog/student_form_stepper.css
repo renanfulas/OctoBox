@@ -39,15 +39,16 @@
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
         linear-gradient(160deg, rgba(251, 252, 255, 0.9), rgba(246, 248, 252, 0.82));
     box-shadow:
-        0 18px 34px rgba(7, 14, 24, 0.06),
-        inset 0 1px 0 rgba(255, 255, 255, 0.55);
+        0 12px 24px rgba(7, 14, 24, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.52);
 }
 
 .student-workspace-map-intro {
     display: grid;
     gap: 6px;
-    padding: 18px 20px;
+    padding: 16px 18px;
     border-radius: 22px;
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 8%, rgba(148, 163, 184, 0.16) 92%);
 }
 
 .student-workspace-map {
@@ -61,7 +62,7 @@
     align-content: start;
     gap: 12px;
     min-height: 100%;
-    padding: 18px 20px;
+    padding: 16px 18px;
     border-radius: 22px;
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
@@ -69,22 +70,22 @@
 .student-workspace-map-card:hover {
     transform: translateY(-1px);
     box-shadow:
-        0 24px 40px rgba(7, 14, 24, 0.08),
+        0 16px 28px rgba(7, 14, 24, 0.06),
         inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .student-workspace-map-card.is-current {
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 26%, var(--theme-border-soft) 74%);
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-border-soft) 82%);
     background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent), transparent 28%),
-        linear-gradient(160deg, rgba(252, 254, 255, 0.96), rgba(246, 249, 253, 0.86));
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 30%),
+        linear-gradient(160deg, rgba(252, 254, 255, 0.92), rgba(246, 249, 253, 0.84));
 }
 
 .student-workspace-map-card.is-ready {
-    border-color: color-mix(in srgb, var(--theme-accent-success-alpha) 24%, var(--theme-border-soft) 76%);
+    border-color: color-mix(in srgb, var(--theme-accent-success-alpha) 16%, var(--theme-border-soft) 84%);
     background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-success-alpha) 18%, transparent), transparent 28%),
-        linear-gradient(160deg, rgba(249, 252, 250, 0.95), rgba(243, 248, 245, 0.86));
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-success-alpha) 12%, transparent), transparent 30%),
+        linear-gradient(160deg, rgba(249, 252, 250, 0.92), rgba(243, 248, 245, 0.84));
 }
 
 .student-workspace-map-card.is-muted {
@@ -348,10 +349,10 @@ body[data-theme="dark"] .student-form-stepper-card,
 body[data-theme="dark"] .student-form-recovery-panel {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, rgba(148, 163, 184, 0.16) 80%);
     background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent), transparent 30%),
-        linear-gradient(160deg, rgba(15, 24, 39, 0.96), rgba(10, 17, 30, 0.95));
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 32%),
+        linear-gradient(160deg, rgba(15, 24, 39, 0.92), rgba(10, 17, 30, 0.9));
     box-shadow:
-        0 24px 44px rgba(0, 0, 0, 0.2),
+        0 18px 30px rgba(0, 0, 0, 0.16),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
