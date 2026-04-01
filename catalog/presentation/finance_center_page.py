@@ -70,8 +70,6 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
 
     default_panel = finance_priority_context['default_panel']
     default_action = finance_priority_context['default_action']
-    finance_flow_bridge = snapshot.get('finance_flow_bridge')
-
     finance_right_rail_snapshot = [
         {
             'label': 'Leitura dominante',
@@ -184,7 +182,6 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
             'finance_right_rail_priority_badge': priority_badge,
             'finance_right_rail_priority_label': priority_label,
             'finance_filter_summary': build_finance_filter_summary(filter_form),
-            'finance_flow_bridge': finance_flow_bridge,
             'form': form,
         },
         actions={

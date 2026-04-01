@@ -212,7 +212,11 @@ REGRA:
 }
 
 .operation-hero-nested-panel {
-    margin-top: 18px;
+    display: grid;
+    gap: 14px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
 }
 
 .front-command-snapshot {

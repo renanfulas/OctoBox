@@ -1,9 +1,9 @@
 <!--
 ARQUIVO: page_hero.html
 POR QUE ELE EXISTE:
-- Exibe o bloco hero genérico de páginas.
+- Exibe o bloco hero generico de paginas.
 O QUE ESTE ARQUIVO FAZ:
-- Renderiza título, cópia, ações e painel aninhado do hero.
+- Renderiza titulo, copia, acoes e painel aninhado do hero.
 PONTOS CRITICOS:
 - Depende do objeto 'hero' e seus atributos.
 -->
@@ -27,7 +27,7 @@ PONTOS CRITICOS:
         {% endif %}
 
         {% if nested_include %}
-        <div class="operation-hero-nested-panel">
+        <div class="operation-hero-nested-panel{% if nested_panel_class %} {{ nested_panel_class }}{% endif %}">
             {% include nested_include %}
         </div>
         {% endif %}

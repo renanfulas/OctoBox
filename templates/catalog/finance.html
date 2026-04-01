@@ -19,18 +19,7 @@ PONTOS CRITICOS:
 {% block content %}
 {% with page=finance_center_page %}
 <div class="operation-shell finance-shell workspace-shell" data-page="finance" data-screen="catalog-finance" data-slot="page-root">
-    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero nested_include="includes/catalog/finance/views/command_snapshot.html" %}
-
-    <section class="finance-section-intro finance-flow-bridge" aria-label="Primeiro movimento do financeiro">
-        <div class="finance-flow-bridge-copy">
-            <p class="eyebrow">{{ page.data.finance_flow_bridge.eyebrow }}</p>
-            <h2 class="section-title-sm">{{ page.data.finance_flow_bridge.title }}</h2>
-            <p class="body-copy text-muted no-margin">{{ page.data.finance_flow_bridge.copy }}</p>
-        </div>
-        <div class="actions actions-tight finance-flow-bridge-actions">
-            <a class="button" href="{{ page.data.finance_flow_bridge.href }}" data-action="{{ page.data.finance_flow_bridge.data_action }}">{{ page.data.finance_flow_bridge.href_label }}</a>
-        </div>
-    </section>
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero nested_include="includes/catalog/finance/views/command_snapshot.html" nested_panel_class="finance-hero-nested-panel" %}
 
     <div class="owner-metrics-panel section-gap" data-panel="finance-interactive-kpis">
         <section class="panel-grid operation-metric-grid owner-metric-grid interactive-tab-triggers" aria-label="Navegacao principal financeira">
