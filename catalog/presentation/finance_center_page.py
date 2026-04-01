@@ -135,6 +135,18 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         scope='finance',
     )
 
+    reading_panel = {
+        'eyebrow': 'Painel de leitura',
+        'title': 'Escolha a passagem que lidera o financeiro.',
+        'copy': 'Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
+        'items': operational_focus,
+        'primary_href': operational_focus[0]['href'] if operational_focus else '',
+        'pill_label': finance_priority_context['pill_label'],
+        'pill_class': finance_priority_context['pill_class'],
+        'class_name': 'finance-reading-panel',
+        'panel_id': 'finance-reading-panel',
+    }
+
     hero_actions = [
         {'label': 'Abrir regua', 'href': '#finance-priority-board', 'kind': 'primary', 'data_action': 'open-tab-finance-queue'},
         {'label': 'Abrir carteira', 'href': '#finance-portfolio-board', 'kind': 'secondary', 'data_action': 'open-tab-finance-portfolio'},
@@ -163,6 +175,7 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         },
         data={
             'hero': hero,
+            'reading_panel': reading_panel,
             'can_manage_finance': can_manage_finance,
             'finance_filter_form': filter_form,
             'finance_metrics': snapshot['finance_metrics'],

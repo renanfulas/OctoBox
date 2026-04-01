@@ -19,7 +19,8 @@ PONTOS CRITICOS:
 {% block content %}
 {% with page=finance_center_page %}
 <div class="operation-shell finance-shell workspace-shell" data-page="finance" data-screen="catalog-finance" data-slot="page-root">
-    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero nested_include="includes/catalog/finance/views/command_snapshot.html" nested_panel_class="finance-hero-nested-panel" %}
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    {% include "includes/ui/layout/page_reading_panel.html" with panel=page.data.reading_panel %}
 
     <div class="owner-metrics-panel section-gap" data-panel="finance-interactive-kpis">
         <section class="panel-grid operation-metric-grid owner-metric-grid interactive-tab-triggers" aria-label="Navegacao principal financeira">

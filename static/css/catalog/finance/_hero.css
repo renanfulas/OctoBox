@@ -20,12 +20,6 @@ POR QUE ELE EXISTE:
     max-width: 44ch;
 }
 
-.finance-hero-nested-panel {
-    margin-top: 14px;
-    padding-top: 12px;
-    border-top-color: color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-border-soft) 88%);
-}
-
 /* Remove overrides that break the global operation-hero grid */
 
 .finance-shell .operation-hero-side {

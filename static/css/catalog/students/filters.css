@@ -66,6 +66,14 @@ POR QUE ELE EXISTE:
     justify-content: center;
 }
 
+.student-filter-actions {
+    flex: 0 0 auto;
+}
+
+.student-filter-actions .student-directory-import {
+    margin: 0;
+}
+
 .student-filter-reset {
     color: var(--slate-700);
     border-color: var(--line);

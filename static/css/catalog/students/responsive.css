@@ -7,11 +7,6 @@ POR QUE ELE EXISTE:
 */
 
 @media (max-width: 960px) {
-    .student-toolbar-row {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
     .student-command-layout {
         grid-template-columns: 1fr;
     }
@@ -95,10 +90,6 @@ POR QUE ELE EXISTE:
 }
 
 @media (max-width: 640px) {
-    .student-toolbar-row {
-        gap: 10px;
-    }
-
     .student-directory-header {
         flex-direction: column !important;
         align-items: stretch !important;
@@ -154,6 +145,16 @@ POR QUE ELE EXISTE:
     .student-filter-toggle {
         width: 100%;
         justify-content: center;
+    }
+
+    .student-filter-actions {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .student-filter-actions > * {
+        width: 100%;
     }
 
     .student-data-panel {

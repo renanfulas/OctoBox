@@ -18,19 +18,8 @@ PONTOS CRITICOS:
 {% block content %}
 {% with page=student_directory_page %}
 <div class="operation-shell catalog-scene student-scene p-6" data-page="students" data-screen="catalog-students" data-slot="page-root">
-    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero nested_include="catalog/includes/student/student_command_snapshot.html" %}
-
-    <div class="student-toolbar-row">
-        <p class="student-toolbar-copy">{{ page.data.total_students }} aluno(s) sustentam a leitura atual desta base.</p>
-        <form action="{% url 'student-import' %}" method="POST" enctype="multipart/form-data" class="student-directory-import" id="import-form">
-            {% csrf_token %}
-            <label class="button secondary student-toolbar-import">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                Atualizar base
-                <input type="file" name="import_file" id="student-import-file" class="hidden" accept=".csv">
-            </label>
-        </form>
-    </div>
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    {% include "includes/ui/layout/page_reading_panel.html" with panel=page.data.reading_panel %}
 
     <div class="student-command-layout">
         {% include "catalog/includes/student/student_priority_panel.html" %}

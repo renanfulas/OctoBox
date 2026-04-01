@@ -62,6 +62,15 @@ def build_student_directory_page(*, student_count, students, student_filter_form
         )
 
     shell_action_buttons = build_shell_action_buttons_from_focus(focus=operational_focus, scope='students')
+    reading_panel = {
+        'eyebrow': 'Painel de leitura',
+        'title': 'Escolha a passagem que lidera a base.',
+        'copy': 'Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
+        'items': operational_focus,
+        'primary_href': operational_focus[0]['href'] if operational_focus else '',
+        'class_name': 'student-reading-panel',
+        'panel_id': 'students-reading-panel',
+    }
     hero = build_page_hero(
         eyebrow='Base',
         title='O que pede cuidado na sua base hoje.',
@@ -88,6 +97,7 @@ def build_student_directory_page(*, student_count, students, student_filter_form
         },
         data={
             'hero': hero,
+            'reading_panel': reading_panel,
             'students': students,
             'base_query_string': base_query_string,
             'student_filter_form': student_filter_form,
