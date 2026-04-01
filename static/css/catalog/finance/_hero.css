@@ -12,8 +12,7 @@ POR QUE ELE EXISTE:
         linear-gradient(155deg, color-mix(in srgb, var(--theme-surface-panel) 98%, white), color-mix(in srgb, var(--theme-surface-strong) 94%, white));
 }
 
-.finance-hero .operation-hero-copy-block,
-.finance-hero .operation-hero-main > div:first-child {
+.finance-hero .operation-hero-copy-block {
     max-width: 560px;
 }
 

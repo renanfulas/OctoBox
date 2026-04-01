@@ -91,7 +91,6 @@ body[data-theme="dark"] .operation-hero {
     z-index: var(--operation-hero-main-z-index, auto);
 }
 
-.operation-hero-main > div:first-child,
 .operation-hero-copy-block {
     display: grid;
     justify-items: start;
@@ -100,7 +99,6 @@ body[data-theme="dark"] .operation-hero {
     max-width: var(--operation-hero-stack-max-width, 560px);
 }
 
-.operation-hero-main .eyebrow,
 .operation-hero-eyebrow {
     font-size: 0.76rem;
     font-weight: 800;
@@ -108,8 +106,6 @@ body[data-theme="dark"] .operation-hero {
     text-transform: uppercase;
 }
 
-.operation-hero-main h1,
-.operation-hero-main h2,
 .operation-hero-title {
     max-width: none;
     font-size: var(--operation-hero-heading-size, clamp(2rem, 3.2vw, 2.8rem));
@@ -124,7 +120,6 @@ body[data-theme="dark"] .operation-hero {
     line-height: var(--operation-hero-copy-line-height, 1.48);
 }
 
-.operation-hero .actions,
 .operation-hero-action-rail {
     display: var(--operation-hero-actions-display, flex);
     align-self: var(--operation-hero-actions-align-self, auto);
@@ -141,7 +136,6 @@ body[data-theme="dark"] .operation-hero {
     box-shadow: var(--operation-hero-actions-shadow, none);
 }
 
-.operation-hero .actions .button,
 .operation-hero-action-rail .button {
     min-height: var(--operation-hero-button-min-height, 36px);
     padding: var(--operation-hero-button-padding, 8px 13px);
@@ -178,8 +172,7 @@ body[data-theme="dark"] .operation-hero-panel {
     box-shadow: none;
 }
 
-body[data-theme="dark"] .operation-hero-main h1,
-body[data-theme="dark"] .operation-hero-main h2 {
+body[data-theme="dark"] .operation-hero-title {
     color: #f8fafc;
 }
 
@@ -192,7 +185,6 @@ body[data-theme="dark"] .operation-mini-stat {
     background: var(--surface);
 }
 
-.operation-hero .actions,
 .operation-hero-action-rail {
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -200,13 +192,11 @@ body[data-theme="dark"] .operation-mini-stat {
     scrollbar-width: none;
 }
 
-.operation-hero .actions::-webkit-scrollbar,
 .operation-hero-action-rail::-webkit-scrollbar {
     display: none;
 }
 
 @media (max-width: 960px) {
-    .operation-hero .actions,
     .operation-hero-action-rail {
         flex-wrap: wrap;
         overflow: visible;
@@ -218,6 +208,11 @@ body[data-theme="dark"] .operation-mini-stat {
         --operation-hero-heading-size: clamp(1.8rem, 9vw, 2.3rem);
         --operation-hero-copy-size: 0.95rem;
         --operation-hero-stack-gap: 8px;
+        --operation-hero-actions-gap: 6px;
+        --operation-hero-actions-padding: 0;
+        --operation-hero-actions-surface: transparent;
+        --operation-hero-actions-border: 0 solid transparent;
+        --operation-hero-actions-shadow: none;
     }
 }
 

@@ -39,7 +39,6 @@ body[data-theme="dark"] .operation-hero {
     flex: 1 1 auto;
 }
 
-.operation-hero-main > div:first-child,
 .operation-hero-copy-block {
     display: grid;
     gap: 8px;
@@ -50,12 +49,10 @@ body[data-theme="dark"] .operation-hero {
     max-width: 52ch;
 }
 
-.operation-hero-main h2,
 .operation-hero-title {
     max-width: none;
 }
 
-.operation-hero-main h1,
 .operation-hero-title {
     max-width: none;
 }
@@ -90,13 +87,10 @@ body[data-theme="dark"] .operation-hero {
 }
 
 @media (max-width: 1180px) {
-    .operation-hero-main > div:first-child,
     .operation-hero-copy-block {
         max-width: 760px;
     }
 
-    .operation-hero-main h1,
-    .operation-hero-main h2,
     .operation-hero-title {
         max-width: 20ch;
         font-size: clamp(1.9rem, 3vw, 2.3rem);
@@ -154,14 +148,12 @@ body[data-theme="dark"] .operation-hero::after {
     color: var(--ink);
 }
 
-.operation-hero .actions,
 .operation-hero-action-rail {
     margin-top: var(--operation-hero-actions-gap, 0);
     max-width: var(--operation-hero-actions-max-width, 580px);
     align-items: var(--operation-hero-actions-align-items, flex-start);
 }
 
-.operation-hero .actions .button,
 .operation-hero-action-rail .button {
     min-height: 36px;
     padding: 8px 13px;

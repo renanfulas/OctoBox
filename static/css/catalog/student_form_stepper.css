@@ -16,8 +16,7 @@
         inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
 }
 
-.student-form-hero .operation-hero-copy-block,
-.student-form-hero .operation-hero-main > div:first-child {
+.student-form-hero .operation-hero-copy-block {
     max-width: 58ch;
 }
 
@@ -25,7 +24,6 @@
     max-width: 46ch;
 }
 
-.student-form-hero .actions,
 .student-form-hero .operation-hero-action-rail {
     gap: 8px;
 }

@@ -19,7 +19,7 @@ PONTOS CRITICOS:
             <p class="operation-hero-copy" data-max-lines="{{ hero.contract.max_copy_lines }}">{{ hero.copy }}</p>
         </div>
         {% if hero.actions %}
-        <div class="operation-hero-action-rail actions"{% if hero.actions_slot %} data-slot="{{ hero.actions_slot }}"{% endif %}>
+        <div class="operation-hero-action-rail"{% if hero.actions_slot %} data-slot="{{ hero.actions_slot }}"{% endif %}>
             {% for action in hero.actions %}
             <a class="button{% if action.kind == 'secondary' %} secondary{% endif %}{% if action.class_name %} {{ action.class_name }}{% endif %}" href="{{ action.href }}"{% if action.data_action %} data-action="{{ action.data_action }}"{% endif %}>{{ action.label }}</a>
             {% endfor %}
