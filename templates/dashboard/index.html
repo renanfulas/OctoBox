@@ -23,6 +23,8 @@ PONTOS CRITICOS:
     {% include block.template with block=block page=page %}
     {% endfor %}
 
+    {% include "includes/ui/layout/page_reading_panel.html" with panel=page.data.reading_panel %}
+
     {% include "dashboard/includes/layout/layout_toolbar.html" with page=page %}
 
     <section class="workspace-grid-layout" aria-label="Painel principal do dashboard" data-slot="workspace" data-dashboard-workspace>

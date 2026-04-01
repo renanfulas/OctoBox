@@ -169,4 +169,32 @@ class WhatsAppWorkspaceView(OperationBaseView):
             heading_level='h1',
             data_panel='whatsapp-placeholder-hero',
         )
+        context['whatsapp_placeholder_reading_panel'] = {
+            'eyebrow': 'Painel de leitura',
+            'title': 'Veja o que esta pronto e o que ainda esta chegando.',
+            'copy': 'Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
+            'items': [
+                {
+                    'chip_label': 'Estado',
+                    'count': 1,
+                    'label': 'Central ainda em construcao',
+                    'summary': 'A camada de mensagens ainda esta sendo preparada para virar ferramenta de operacao real sem virar improviso.',
+                    'pill_class': 'warning',
+                    'href': get_shell_route_url('dashboard'),
+                    'href_label': 'Voltar ao dashboard',
+                },
+                {
+                    'chip_label': 'Direcao',
+                    'count': 1,
+                    'label': 'Relacionamento vira um workspace proprio',
+                    'summary': 'A intencao aqui e concentrar relacionamento, historico e acao humana no mesmo lugar quando a frente abrir de verdade.',
+                    'pill_class': 'info',
+                    'href': get_shell_route_url('students'),
+                    'href_label': 'Abrir alunos',
+                },
+            ],
+            'primary_href': get_shell_route_url('dashboard'),
+            'class_name': 'whatsapp-placeholder-reading-panel',
+            'panel_id': 'whatsapp-placeholder-reading-panel',
+        }
         return context

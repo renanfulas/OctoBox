@@ -145,22 +145,11 @@ def _build_dashboard_layout(role_slug):
             'removable': False,
         },
         {
-            'id': 'priority_strip',
-            'label': 'Prioridades',
-            'slot': 'main_primary',
-            'allowed_slots': ['main_primary', 'right_rail'],
-            'default_order': 10,
-            'template': 'dashboard/blocks/priority_strip.html',
-            'movable': True,
-            'collapsible': False,
-            'removable': True,
-        },
-        {
             'id': 'metrics_cluster',
             'label': 'Métricas',
             'slot': 'main_primary',
             'allowed_slots': ['main_primary', 'right_rail'],
-            'default_order': 20,
+            'default_order': 10,
             'template': 'dashboard/blocks/metrics_cluster.html',
             'movable': True,
             'collapsible': False,
@@ -171,7 +160,7 @@ def _build_dashboard_layout(role_slug):
             'label': 'Agenda',
             'slot': 'right_rail',
             'allowed_slots': ['right_rail', 'main_primary'],
-            'default_order': 10,
+            'default_order': 20,
             'template': 'dashboard/blocks/sessions_board.html',
             'movable': True,
             'collapsible': True,
@@ -613,6 +602,33 @@ def _build_dashboard_priority_strip_context(priority_cards):
     }
 
 
+def _build_dashboard_reading_panel(priority_cards):
+    items = []
+    for card in list(priority_cards or [])[:3]:
+        items.append(
+            {
+                'chip_label': card.get('indicator') or card.get('kicker'),
+                'count': card.get('value'),
+                'label': card.get('kicker') or 'Leitura dominante',
+                'summary': card.get('copy', ''),
+                'pill_class': 'warning' if card.get('severity') in ('emergency', 'warning') else 'accent',
+                'href': card.get('href', '#dashboard'),
+                'href_label': card.get('href_label', 'Abrir leitura'),
+            }
+        )
+
+    primary_card = priority_cards[0] if priority_cards else {}
+    return {
+        'eyebrow': 'Painel de leitura',
+        'title': 'Escolha a passagem que lidera o box hoje.',
+        'copy': 'Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
+        'items': items,
+        'primary_href': primary_card.get('href', ''),
+        'class_name': 'dashboard-reading-panel',
+        'panel_id': 'dashboard-reading-panel',
+    }
+
+
 def build_dashboard_page(*, request_user, role_slug, snapshot, stored_layout_state=None):
     upcoming_sessions = list(snapshot['upcoming_sessions'])
     student_health = list(snapshot['student_health'])
@@ -673,6 +689,7 @@ def build_dashboard_page(*, request_user, role_slug, snapshot, stored_layout_sta
         data={
             **snapshot,
             'hero': hero,
+            'reading_panel': _build_dashboard_reading_panel(priority_cards),
             'dashboard_layout': dashboard_layout,
             'dashboard_role_mode': 'reception' if role_slug == ROLE_RECEPTION else 'default',
             'dashboard_can_register_finance_whatsapp': _can_register_finance_whatsapp(role_slug),

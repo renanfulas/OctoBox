@@ -1,11 +1,11 @@
 <!--
-ARQUIVO: tela de visão geral de papéis e acessos.
+ARQUIVO: tela de visao geral de papeis e acessos.
 
 POR QUE ELE EXISTE:
-- Ajuda a entender quem pode fazer o quê dentro do sistema.
+- Ajuda a entender quem pode fazer o que dentro do sistema.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Mostra o papel atual do usuário.
+1. Mostra o papel atual do usuario.
 2. Lista capacidades de cada papel.
 3. Serve como mapa funcional da hierarquia de acesso.
 
@@ -22,6 +22,7 @@ PONTOS CRITICOS:
 {% block content %}
 <div class="operation-shell">
     {% include "includes/ui/layout/page_hero.html" with hero=access_hero %}
+    {% include "includes/ui/layout/page_reading_panel.html" with panel=access_reading_panel %}
 
     {% if can_manage_access_profiles %}
     <section id="access-profile-create" class="table-card operation-focus-card" aria-label="Criacao rapida de perfis">
@@ -145,31 +146,6 @@ PONTOS CRITICOS:
     </section>
     {% endif %}
     {% endif %}
-
-    <section class="table-card operation-focus-card" aria-label="Foco de leitura de acesso">
-        <div class="operation-card-head">
-            <div>
-                <p class="eyebrow">Comece por aqui</p>
-                <h2 class="operation-card-title">Três leituras de acesso</h2>
-                <p class="operation-card-copy">Escopo próprio → fronteiras → governança.</p>
-            </div>
-            <span class="pill accent">Foco de leitura</span>
-        </div>
-        <div class="operation-focus-list">
-            {% for item in access_operational_focus %}
-            <article class="operation-focus-item">
-                <div class="operation-focus-copy">
-                    <p class="eyebrow">{{ item.label }}</p>
-                    <p>{{ item.summary }}</p>
-                </div>
-                <div class="operation-focus-actions">
-                    <span class="pill {{ item.pill_class }}">prioridade</span>
-                    <a class="button secondary" href="{{ item.href }}">{{ item.href_label }}</a>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-    </section>
 
     <section class="layout-grid align-start" aria-label="Escopo e governanca">
         <div id="access-current-role">

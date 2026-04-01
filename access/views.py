@@ -271,6 +271,15 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
             ],
             aria_label='Panorama de acessos',
         )
+        context['access_reading_panel'] = {
+            'eyebrow': 'Painel de leitura',
+            'title': 'Escolha a fronteira que precisa abrir primeiro.',
+            'copy': 'Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
+            'items': context['access_operational_focus'],
+            'primary_href': context['access_operational_focus'][0]['href'] if context['access_operational_focus'] else '',
+            'class_name': 'access-reading-panel',
+            'panel_id': 'access-reading-panel',
+        }
         context['governance_points'] = [
             'Manager não vira coach por atalho.',
             'Coach não carrega rotina financeira ou administrativa.',

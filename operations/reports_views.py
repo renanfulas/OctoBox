@@ -69,4 +69,13 @@ class ReportHubView(OperationBaseView, TemplateView):
             heading_level='h1',
             data_panel='reports-hub-hero',
         )
+        context['report_hub_reading_panel'] = {
+            'eyebrow': 'Painel de leitura',
+            'title': 'Escolha a camada que precisa abrir primeiro.',
+            'copy': 'Veja a pressao do momento, escolha o proximo passo e desca para a operacao sem ruido.',
+            'items': context['report_hub_focus'],
+            'primary_href': context['report_hub_focus'][0]['href'] if context['report_hub_focus'] else '',
+            'class_name': 'reports-hub-reading-panel',
+            'panel_id': 'reports-hub-reading-panel',
+        }
         return context

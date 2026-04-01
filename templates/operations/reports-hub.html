@@ -7,7 +7,8 @@
 
 {% block content %}
 <div class="scenic-canvas">
-    {% include "includes/ui/layout/page_hero.html" with hero=report_hub_hero nested_include="operations/includes/reports_hub/command_snapshot.html" %}
+    {% include "includes/ui/layout/page_hero.html" with hero=report_hub_hero %}
+    {% include "includes/ui/layout/page_reading_panel.html" with panel=report_hub_reading_panel %}
 
     <div class="cards-grid reports-hub-grid">
         <article class="card reports-hub-card" id="reports-commercial">
