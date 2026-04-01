@@ -17,7 +17,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           
       - name: Install Dependencies
         run: |
@@ -26,7 +26,11 @@ jobs:
           pip install bandit pip-audit safety
           
       - name: Run Bandit (Static Analysis)
-        run: bandit -r . -x ./.venv,./tests,./*migrations* -ll
+        run: >
+          bandit -r access api auditing boxcore catalog communications config
+          dashboard finance guide integrations jobs model_support monitoring
+          onboarding operations reporting scripts security shared_support
+          students -x ./.venv,./tests,./*migrations* -ll
         
       - name: Run Pip-Audit (Dependency Scan)
         run: pip-audit

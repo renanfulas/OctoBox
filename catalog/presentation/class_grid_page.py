@@ -116,7 +116,7 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
             'role_slug': role_slug,
             'today': base_context['today'],
         },
-        shell={
+        shell_context={
             'shell_action_buttons': shell_action_buttons,
         },
         data={

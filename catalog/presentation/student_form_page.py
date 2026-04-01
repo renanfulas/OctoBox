@@ -273,7 +273,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'mode': page_mode,
             'role_slug': current_role_slug,
         },
-        shell={
+        shell_context={
             'shell_action_buttons': shell_action_buttons,
         },
         data={

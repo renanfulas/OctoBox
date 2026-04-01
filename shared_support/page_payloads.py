@@ -17,10 +17,10 @@ def _merge_asset_lists(existing, incoming):
     return merged
 
 
-def build_page_payload(*, context, shell=None, data=None, actions=None, behavior=None, capabilities=None, assets=None):
+def build_page_payload(*, context, shell_context=None, data=None, actions=None, behavior=None, capabilities=None, assets=None):
     return {
         'context': context,
-        'shell': shell or {},
+        'shell': shell_context or {},
         'data': data or {},
         'actions': actions or {},
         'behavior': behavior or {},

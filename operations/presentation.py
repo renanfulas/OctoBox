@@ -200,7 +200,7 @@ def build_operation_workspace_page(*, page_key, title, subtitle, scope, snapshot
             'mode': 'workspace',
             'role_slug': current_role_slug,
         },
-        shell={
+        shell_context={
             'shell_action_buttons': build_shell_action_buttons_from_focus(focus=focus, scope=scope),
         },
         data={

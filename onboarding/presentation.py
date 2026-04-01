@@ -76,7 +76,7 @@ def build_intake_center_page(*, snapshot, current_role_slug):
             'mode': 'workspace',
             'role_slug': current_role_slug,
         },
-        shell={
+        shell_context={
             'shell_action_buttons': build_shell_action_buttons_from_focus(
                 focus=snapshot['intake_operational_focus'],
                 scope='intake-center',

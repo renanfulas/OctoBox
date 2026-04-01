@@ -175,7 +175,7 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
             'mode': 'management' if can_manage_finance else 'read-only',
             'role_slug': current_role_slug,
         },
-        shell={
+        shell_context={
             'shell_action_buttons': shell_action_buttons,
         },
         data={

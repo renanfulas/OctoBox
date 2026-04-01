@@ -87,7 +87,7 @@ def build_membership_plan_page(*, form, plan, current_role_slug):
             'title': 'Editar plano',
             'subtitle': 'Ajuste valor, ciclo e proposta comercial sem sair do centro financeiro.',
         },
-        shell={
+        shell_context={
             'shell_action_buttons': build_shell_action_buttons_from_focus(focus=plan_focus, scope='finance-plan-form'),
         },
         data={

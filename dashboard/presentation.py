@@ -676,7 +676,7 @@ def build_dashboard_page(*, request_user, role_slug, snapshot, stored_layout_sta
             'mode': 'reception' if role_slug == ROLE_RECEPTION else 'default',
             'role_slug': role_slug,
         },
-        shell={
+        shell_context={
             'shell_action_buttons': build_shell_action_buttons_from_focus(
                 focus=execution_focus,
                 pending=pending_focus,

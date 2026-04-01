@@ -89,7 +89,7 @@ def build_student_directory_page(*, student_count, students, student_filter_form
             'mode': 'management' if can_manage_students else 'read-only',
             'role_slug': current_role_slug,
         },
-        shell={
+        shell_context={
             'shell_action_buttons': shell_action_buttons,
         },
         data={

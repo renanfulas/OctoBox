@@ -1,7 +1,7 @@
 import re
 
 from django import template
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 
 register = template.Library()
 
@@ -16,8 +16,10 @@ def smart_break(value):
     if not value:
         return value
     text = str(value)
-    result = _BREAK_PATTERN.sub('.<br>', text, count=1)
-    return mark_safe(result)
+    parts = _BREAK_PATTERN.split(text, maxsplit=1)
+    if len(parts) == 2:
+        return format_html('{}.<br>{}', parts[0], parts[1])
+    return text
 
 
 @register.filter(name='subtract')

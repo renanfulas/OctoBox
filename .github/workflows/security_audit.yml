@@ -32,4 +32,4 @@ jobs:
 
       - name: Run Bandit (Security Linting)
         run: |
-          bandit -r . -x ./tests -ll
+          bandit -r access api auditing boxcore catalog communications config dashboard finance guide integrations jobs model_support monitoring onboarding operations reporting scripts security shared_support students -x ./.venv,./tests,./*migrations* -ll

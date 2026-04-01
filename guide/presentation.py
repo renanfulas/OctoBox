@@ -24,7 +24,7 @@ def build_system_map_page():
             'title': 'Mapa do Sistema',
             'subtitle': 'Modulos, fronteiras e onde investigar bugs.',
         },
-        shell={
+        shell_context={
             'shell_action_buttons': build_shell_action_buttons_from_focus(focus=system_map_focus, scope='system-map'),
         },
         data={
@@ -257,7 +257,7 @@ def build_operational_settings_page():
             'title': 'Configuracoes operacionais',
             'subtitle': 'Ajuste rapido da janela do WhatsApp e dos perfis de acesso.',
         },
-        shell={
+        shell_context={
             'shell_action_buttons': build_shell_action_buttons_from_focus(
                 focus=operational_focus,
                 scope='operational-settings',

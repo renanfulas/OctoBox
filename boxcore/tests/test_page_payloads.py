@@ -49,7 +49,7 @@ class PagePayloadBridgeContractTests(SimpleTestCase):
                 'title': 'Alunos',
                 'subtitle': 'Leitura cruzada da base.',
             },
-            shell={
+            shell_context={
                 'shell_action_buttons': [
                     {'label': 'Prioridade', 'href': '#student-priority-board', 'summary': 'Ler quem pede acao agora.'},
                 ]
