@@ -91,7 +91,8 @@ body[data-theme="dark"] .operation-hero {
     z-index: var(--operation-hero-main-z-index, auto);
 }
 
-.operation-hero-main > div:first-child {
+.operation-hero-main > div:first-child,
+.operation-hero-copy-block {
     display: grid;
     justify-items: start;
     text-align: left;
@@ -99,7 +100,8 @@ body[data-theme="dark"] .operation-hero {
     max-width: var(--operation-hero-stack-max-width, 560px);
 }
 
-.operation-hero-main .eyebrow {
+.operation-hero-main .eyebrow,
+.operation-hero-eyebrow {
     font-size: 0.76rem;
     font-weight: 800;
     letter-spacing: 0.12em;
@@ -107,7 +109,8 @@ body[data-theme="dark"] .operation-hero {
 }
 
 .operation-hero-main h1,
-.operation-hero-main h2 {
+.operation-hero-main h2,
+.operation-hero-title {
     max-width: none;
     font-size: var(--operation-hero-heading-size, clamp(2rem, 3.2vw, 2.8rem));
     line-height: var(--operation-hero-heading-line-height, 0.96);
@@ -121,7 +124,8 @@ body[data-theme="dark"] .operation-hero {
     line-height: var(--operation-hero-copy-line-height, 1.48);
 }
 
-.operation-hero .actions {
+.operation-hero .actions,
+.operation-hero-action-rail {
     display: var(--operation-hero-actions-display, flex);
     align-self: var(--operation-hero-actions-align-self, auto);
     justify-self: var(--operation-hero-actions-justify-self, auto);
@@ -137,7 +141,8 @@ body[data-theme="dark"] .operation-hero {
     box-shadow: var(--operation-hero-actions-shadow, none);
 }
 
-.operation-hero .actions .button {
+.operation-hero .actions .button,
+.operation-hero-action-rail .button {
     min-height: var(--operation-hero-button-min-height, 36px);
     padding: var(--operation-hero-button-padding, 8px 13px);
     border-radius: var(--operation-hero-button-radius, 14px);
@@ -187,19 +192,22 @@ body[data-theme="dark"] .operation-mini-stat {
     background: var(--surface);
 }
 
-.operation-hero .actions {
+.operation-hero .actions,
+.operation-hero-action-rail {
     flex-wrap: nowrap;
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;
 }
 
-.operation-hero .actions::-webkit-scrollbar {
+.operation-hero .actions::-webkit-scrollbar,
+.operation-hero-action-rail::-webkit-scrollbar {
     display: none;
 }
 
 @media (max-width: 960px) {
-    .operation-hero .actions {
+    .operation-hero .actions,
+    .operation-hero-action-rail {
         flex-wrap: wrap;
         overflow: visible;
     }

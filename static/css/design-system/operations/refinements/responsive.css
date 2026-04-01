@@ -113,7 +113,8 @@ POR QUE ELE EXISTE:
 
     .operation-inline-actions form,
     .operation-note-form .actions .button,
-    .operation-hero .actions .button {
+    .operation-hero .actions .button,
+    .operation-hero-action-rail .button {
         width: 100%;
     }
 

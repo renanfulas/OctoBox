@@ -33,11 +33,14 @@ POR QUE ELE EXISTE:
     background: var(--surface);
 }
 
+.student-hero .operation-hero-copy-block,
 .student-hero .operation-hero-main > div:first-child,
+.student-hero.operation-hero .operation-hero-copy-block,
 .student-hero.operation-hero .operation-hero-main > div:first-child {
     max-width: 560px;
 }
 
+.student-hero .operation-hero-title,
 .student-hero h2 {
     max-width: 13ch;
     font-size: clamp(2.05rem, 3.4vw, 2.9rem);
@@ -49,12 +52,14 @@ POR QUE ELE EXISTE:
     max-width: 40ch;
 }
 
-.student-hero .actions {
+.student-hero .actions,
+.student-hero .operation-hero-action-rail {
     max-width: 560px;
     gap: 6px;
 }
 
-.student-hero .actions .button {
+.student-hero .actions .button,
+.student-hero .operation-hero-action-rail .button {
     min-height: 33px;
     padding: 7px 12px;
 }
