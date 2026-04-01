@@ -12,6 +12,34 @@ from access.shell_actions import build_shell_action_buttons_from_focus
 from shared_support.page_payloads import build_page_assets, build_page_hero, build_page_payload
 
 
+def _build_hero_actions_from_entry_context(entry_context=None, *, tertiary_action=None):
+    entry_context = entry_context or {}
+    actions = []
+
+    if entry_context.get('entry_href'):
+        actions.append(
+            {
+                'label': entry_context.get('entry_href_label') or 'Abrir agora',
+                'href': entry_context['entry_href'],
+                'kind': 'primary',
+            }
+        )
+
+    if entry_context.get('secondary_href'):
+        actions.append(
+            {
+                'label': entry_context.get('secondary_href_label') or 'Abrir depois',
+                'href': entry_context['secondary_href'],
+                'kind': 'secondary',
+            }
+        )
+
+    if tertiary_action:
+        actions.append(tertiary_action)
+
+    return actions
+
+
 def _build_owner_hero_content(snapshot):
     owner_focus = snapshot.get('owner_operational_focus') or []
     primary_focus = owner_focus[0] if owner_focus else {}
@@ -21,15 +49,15 @@ def _build_owner_hero_content(snapshot):
     if primary_key == 'intakes':
         return {
             'title': 'Novas entradas.',
-            'copy': 'Existe demanda esperando resposta agora.' if metrics.get('pending_intakes') else 'A fila de entradas está limpa hoje.',
+            'copy': 'Existe demanda esperando resposta agora.' if metrics.get('pending_intakes') else 'A fila de entradas esta limpa hoje.',
         }
     if primary_key == 'payments':
         return {
             'title': 'Seu caixa.',
-            'copy': 'Há cobrança atrasada pedindo contato agora.' if metrics.get('overdue_payments') else 'As cobranças estão sob controle.',
+            'copy': 'Ha cobranca atrasada pedindo contato agora.' if metrics.get('overdue_payments') else 'As cobrancas estao sob controle.',
         }
     return {
-        'title': 'Operação ativa.',
+        'title': 'Operacao ativa.',
         'copy': 'Confirme a estrutura ou responda novas demandas.',
     }
 
@@ -37,19 +65,27 @@ def _build_owner_hero_content(snapshot):
 def _build_operation_workspace_hero(page_key, snapshot):
     owner_focus = snapshot.get('owner_operational_focus') or []
     owner_primary_focus = owner_focus[0] if owner_focus else None
+    owner_entry_context = snapshot.get('owner_decision_entry_context') or {}
     owner_hero = _build_owner_hero_content(snapshot)
-    owner_actions = []
-    if owner_primary_focus:
+    owner_actions = _build_hero_actions_from_entry_context(
+        owner_entry_context,
+        tertiary_action=(
+            {
+                'label': owner_focus[2].get('href_label', 'Abrir apoio'),
+                'href': owner_focus[2].get('href', reverse('student-directory')),
+                'kind': 'secondary',
+            }
+            if len(owner_focus) > 2 else None
+        ),
+    )
+    if not owner_actions and owner_primary_focus:
         owner_actions = [
             {
                 'label': owner_primary_focus.get('href_label', 'Abrir agora'),
                 'href': owner_primary_focus.get('href', reverse('intake-center')),
             },
-            *[
-                {'label': item['href_label'], 'href': item['href'], 'kind': 'secondary'}
-                for item in owner_focus[1:3]
-            ],
         ]
+
     hero_map = {
         'operations-owner': build_page_hero(
             eyebrow='Comando',
@@ -59,27 +95,21 @@ def _build_operation_workspace_hero(page_key, snapshot):
             aria_label='Comando do dia do owner',
         ),
         'operations-manager': build_page_hero(
-            eyebrow='Gerência',
-            title='Fila e fluxos.',
-            copy='Resolva pendências, vínculos e cobranças abertas.',
-            actions=[
-                {'label': 'Ver alertas financeiros', 'href': '#manager-finance-board'},
-                {'label': 'Ver entradas', 'href': '#manager-intake-board', 'kind': 'secondary'},
-                {'label': 'Ver vinculos pendentes', 'href': '#manager-link-board', 'kind': 'secondary'},
-            ],
+            eyebrow='Gerencia',
+            title='Fila e vinculos.',
+            copy='Abra a entrada dominante e limpe o restante sem perder o caixa.',
+            actions=_build_hero_actions_from_entry_context(snapshot.get('manager_decision_entry_context')),
             aria_label='Panorama da gerencia',
         ),
         'operations-coach': build_page_hero(
             eyebrow='Coach',
-            title='Sua turma.',
-            copy='Registre presenças e feche o diário do treino.',
-            actions=[
-                {'label': 'Ver aulas do dia', 'href': '#coach-sessions-board'},
-            ],
+            title='Turno em curso.',
+            copy='Abra a agenda, registre presenca e feche ocorrencia sem ruido.',
+            actions=_build_hero_actions_from_entry_context(snapshot.get('coach_decision_entry_context')),
             aria_label='Panorama do coach',
         ),
         'operations-dev': build_page_hero(
-            eyebrow='Leitura técnica controlada',
+            eyebrow='Leitura tecnica controlada',
             title='Rastro recente, fronteira, sistema inteiro.',
             copy='Rastro, fronteira e manutencao sem chute tecnico.',
             actions=[
@@ -89,14 +119,18 @@ def _build_operation_workspace_hero(page_key, snapshot):
             aria_label='Panorama de desenvolvimento',
         ),
         'operations-reception': build_page_hero(
-            eyebrow='Recepção',
-            title='Seu balcão.',
-            copy='Acompanhe chegadas e acerte pagamentos curtos.',
-            actions=[
-                {'label': 'Ver cobranca curta', 'href': '#reception-payment-board', 'data_action': 'jump-reception-payments'},
-                {'label': 'Ver entradas', 'href': '#reception-intake-board', 'kind': 'secondary', 'data_action': 'jump-reception-intakes'},
-                {'label': 'Ver grade em leitura', 'href': '#reception-class-grid-board', 'kind': 'secondary', 'data_action': 'jump-reception-class-grid'},
-            ],
+            eyebrow='Recepcao',
+            title='Balcao em fluxo.',
+            copy='Atenda chegada, cobranca curta e grade sem travar o balcao.',
+            actions=_build_hero_actions_from_entry_context(
+                snapshot.get('reception_decision_entry_context'),
+                tertiary_action={
+                    'label': 'Ver grade em leitura',
+                    'href': '#reception-class-grid-board',
+                    'kind': 'secondary',
+                    'data_action': 'jump-reception-class-grid',
+                },
+            ),
             aria_label='Panorama da recepcao',
             classes=['reception-hero'],
             data_panel='reception-hero',

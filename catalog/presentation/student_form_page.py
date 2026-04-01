@@ -245,14 +245,14 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
         eyebrow='Fluxo leve de cadastro',
         title='Cadastrar aluno' if page_mode == 'create' else 'Editar aluno',
         copy=(
-            'Essencial agora, plano e cobranca no mesmo fluxo.'
+            'Essencial primeiro. Fechamento e financeiro depois.'
             if page_mode == 'create'
-            else 'Ajuste cadastro, plano e cobranca sem cair no admin.'
+            else 'Ajuste cadastro, plano e cobranca em fluxo unico.'
         ),
         actions=[
-            {'label': 'Preencher essencial', 'href': '#student-form-essential', 'kind': 'primary', 'data_action': 'open-tab-student-form-essential'},
+            {'label': 'Abrir essencial', 'href': '#student-form-essential', 'kind': 'primary', 'data_action': 'open-tab-student-form-essential'},
             {
-                'label': 'Ver plano e cobranca' if financial_ready else 'Fechar cadastro primeiro',
+                'label': 'Abrir financeiro' if financial_ready else 'Abrir fechamento',
                 'href': '#student-form-financial' if financial_ready else '#student-form-essential',
                 'kind': 'secondary',
                 'data_action': 'open-tab-student-form-financial' if financial_ready else 'open-tab-student-form-essential',
