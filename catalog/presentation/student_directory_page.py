@@ -10,7 +10,7 @@ from access.navigation_contracts import get_shell_route_url
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from access.shell_actions import build_shell_action_buttons_from_focus
 from django.urls import reverse
-from shared_support.page_payloads import build_page_hero, build_page_reading_panel
+from shared_support.page_payloads import build_page_hero
 
 from .shared import build_catalog_assets, build_catalog_page_payload
 
@@ -28,8 +28,8 @@ def build_student_directory_page(*, student_count, students, student_filter_form
             'summary': f'{len(priority_students)} aluno(s) ou lead(s) ja pedem leitura para nao perder tempo nem contexto.',
             'count': len(priority_students),
             'pill_class': 'warning' if len(priority_students) > 0 else 'success',
-            'href': '#tab-students-priority',
-            'href_label': 'Ver prioridades',
+            'href': '#tab-students-directory',
+            'href_label': 'Ver base principal',
         },
         {
             'label': 'Quem ja pode virar aluno',
@@ -52,7 +52,7 @@ def build_student_directory_page(*, student_count, students, student_filter_form
     ]
 
     hero_actions = [
-        {'label': 'Ver prioridades', 'href': '#tab-students-priority', 'kind': 'primary', 'data_action': 'open-tab-students-priority'},
+        {'label': 'Ver base', 'href': '#tab-students-directory', 'kind': 'primary', 'data_action': 'open-tab-students-directory'},
         {'label': 'Abrir intake', 'href': get_shell_route_url('intake', fragment='intake-queue-board'), 'kind': 'secondary', 'data_action': 'open-student-intake-center'},
     ]
 
@@ -62,12 +62,6 @@ def build_student_directory_page(*, student_count, students, student_filter_form
         )
 
     shell_action_buttons = build_shell_action_buttons_from_focus(focus=operational_focus, scope='students')
-    reading_panel = build_page_reading_panel(
-        items=operational_focus,
-        primary_href=operational_focus[0]['href'] if operational_focus else '',
-        class_name='student-reading-panel',
-        panel_id='students-reading-panel',
-    )
     hero = build_page_hero(
         eyebrow='Base',
         title='O que pede cuidado na sua base hoje.',
@@ -94,14 +88,11 @@ def build_student_directory_page(*, student_count, students, student_filter_form
         },
         data={
             'hero': hero,
-            'reading_panel': reading_panel,
             'students': students,
             'base_query_string': base_query_string,
             'student_filter_form': student_filter_form,
             'operational_focus': operational_focus,
             'interactive_kpis': snapshot.get('interactive_kpis', {}),
-            'priority_students': priority_students,
-            'intake_queue': intake_queue,
             'total_students': student_count,
         },
         actions={},

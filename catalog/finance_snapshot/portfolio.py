@@ -51,14 +51,16 @@ def build_plan_portfolio(plans, payments, enrollments):
 
 
 def build_plan_mix(plan_portfolio):
-    total_active = sum(plan.active_enrollments for plan in plan_portfolio) or 1
+    total_revenue = sum(float(plan.revenue_this_month or 0) for plan in plan_portfolio) or 1
     mix = []
     for plan in plan_portfolio:
+        revenue_this_month = float(plan.revenue_this_month or 0)
         mix.append(
             {
                 'name': plan.name,
                 'active_enrollments': plan.active_enrollments,
-                'width': round((plan.active_enrollments / total_active) * 100, 1) if plan.active_enrollments else 6,
+                'width': round((revenue_this_month / total_revenue) * 100, 1) if revenue_this_month else 6,
+                'share': round((revenue_this_month / total_revenue) * 100, 1) if revenue_this_month else 0,
                 'revenue_this_month': plan.revenue_this_month,
             }
         )

@@ -6,6 +6,12 @@ POR QUE ELE EXISTE:
 - fecha a cascade da tela com media queries e contratos de motion.
 */
 
+@media (max-width: 1440px) {
+    .class-grid-metric-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
 @media (max-width: 1240px) {
     .weekly-calendar-section {
         overflow-x: auto;
@@ -22,8 +28,18 @@ POR QUE ELE EXISTE:
 }
 
 @media (max-width: 960px) {
-    .class-grid-insight-strip {
-        grid-template-columns: 1fr;
+    .weekday-picker {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+
+    .weekday-picker .weekday-option,
+    .weekday-picker .weekday-option:nth-child(6),
+    .weekday-picker .weekday-option:nth-child(7) {
+        grid-column: auto;
+    }
+
+    .class-grid-metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .class-grid-panel-head {
@@ -35,6 +51,10 @@ POR QUE ELE EXISTE:
     }
 
     .class-planner-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .class-grid-workspace-bottom-split {
         grid-template-columns: 1fr;
     }
 
@@ -57,11 +77,6 @@ POR QUE ELE EXISTE:
         justify-content: center;
     }
 
-    .class-grid-grab-handle {
-        width: 100%;
-        justify-content: center;
-    }
-
     .weekly-day-card,
     .monthly-day-card {
         min-height: unset;
@@ -77,8 +92,7 @@ POR QUE ELE EXISTE:
     .class-grid-workspace-panel,
     .monthly-day-card,
     .weekly-day-card,
-    .weekly-session-chip,
-    .class-grid-grab-handle {
+    .weekly-session-chip {
         transition: none;
     }
 
@@ -88,16 +102,16 @@ POR QUE ELE EXISTE:
 }
 
 @media (max-width: 640px) {
+    .class-grid-metric-grid {
+        grid-template-columns: 1fr;
+    }
+
     .class-grid-mobile-kicker {
         display: block;
     }
 
     .class-day-header {
         flex-direction: column;
-    }
-
-    .class-grid-insight-card {
-        padding: 18px;
     }
 
     .class-grid-workspace-stack {
@@ -123,8 +137,7 @@ POR QUE ELE EXISTE:
     }
 
     .class-grid-head-badges .pill,
-    .class-grid-head-badges .button,
-    .class-grid-head-badges .class-grid-grab-handle {
+    .class-grid-head-badges .button {
         flex: 1 1 100%;
         justify-content: center;
     }

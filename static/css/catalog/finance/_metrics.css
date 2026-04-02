@@ -10,6 +10,123 @@ POR QUE ELE EXISTE:
     gap: 12px;
 }
 
+.finance-kpi-panel {
+    width: 100%;
+    margin-top: var(--workspace-fib-4);
+}
+
+.finance-kpi-grid {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 18px;
+    align-items: stretch;
+}
+
+.finance-shell .finance-kpi-grid {
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+}
+
+.finance-shell .finance-kpi-grid > * {
+    min-width: 0;
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card-link {
+    min-width: 0;
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .finance-kpi-card {
+    width: 100%;
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card {
+    display: grid;
+    gap: 28px;
+    min-height: 124px;
+    padding: 18px 20px;
+    border-radius: 20px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%);
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+    isolation: isolate;
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card::before {
+    display: none;
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card::after {
+    content: "";
+    position: static;
+    display: block;
+    width: 100%;
+    height: 2px;
+    inset: auto;
+    border-radius: 999px;
+    opacity: 0.72;
+    background: currentColor;
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-body-metric {
+    min-height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 28px;
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-value-stack {
+    gap: 14px;
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-value-row {
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 0;
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-label {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(15, 23, 42, 0.48);
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .metric-number,
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-value {
+    font-size: clamp(2rem, 2.8vw, 3rem);
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+    color: currentColor;
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-copy,
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-kicker,
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-signal,
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-footer,
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-meta,
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .icon-box {
+    display: none;
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card.kpi-emerald {
+    color: #19f5a1;
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card.kpi-red {
+    color: #ff2d6f;
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card.kpi-cyan {
+    color: #16d9ff;
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card.kpi-slate {
+    color: #64748b;
+}
+
 .finance-metric-card {
     min-height: 150px;
     padding: 14px 16px;
@@ -40,4 +157,14 @@ POR QUE ELE EXISTE:
     border-radius: 18px;
     border: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.52);
+}
+
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .metric-card {
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: linear-gradient(180deg, rgba(14, 15, 24, 0.98) 0%, rgba(12, 13, 21, 0.96) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-label {
+    color: rgba(226, 232, 240, 0.56);
 }

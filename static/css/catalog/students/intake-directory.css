@@ -1,72 +1,23 @@
 /*
-ARQUIVO: intake e diretório da base de alunos.
+ARQUIVO: diretório da base de alunos.
 
 POR QUE ELE EXISTE:
-- concentra os painéis de intake, diretório e suas densidades locais.
-- mantém a leitura da base e da fila separada do hero e dos filtros.
+- concentra a tabela principal, identidade do aluno e estados visuais do diretório.
 */
 
-.student-queue-panel,
 .student-data-panel {
     width: 100%;
     min-width: 0;
     max-width: 100%;
     min-height: 100%;
-}
-
-.student-queue-panel {
-    background: var(--surface);
-}
-
-.student-queue-panel .intake-grid {
-    gap: 12px;
-}
-
-.student-queue-panel .intake-card {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    padding: 16px;
-    gap: 14px;
-    background: rgba(255, 255, 255, 0.85);
-}
-
-.student-intake-card-body .card-content {
-    gap: 6px;
-}
-
-.student-intake-card-body {
-    gap: 10px;
-}
-
-.student-intake-card-footer {
-    border-top: 1px solid var(--line);
-    padding-top: 12px;
-    margin-top: auto;
-}
-
-.student-queue-panel .intake-card .actions .button {
-    min-height: 34px;
-    padding: 7px 11px;
-}
-
-.student-data-panel {
     container-type: inline-size;
     overflow: hidden;
-}
-
-.student-bulk-action-bar[hidden] {
-    display: none;
 }
 
 .student-data-panel.is-fit-content {
     min-height: 0;
     height: auto;
     align-self: start;
-}
-
-.student-directory-head {
-    margin-bottom: var(--workspace-fib-4);
 }
 
 .student-table-scroll {
@@ -91,93 +42,51 @@ POR QUE ELE EXISTE:
     white-space: nowrap;
 }
 
-.student-cell {
-    position: relative;
-}
-
-.student-cell-stack {
-    display: grid;
-    gap: 6px;
-    justify-items: center;
-    min-width: 0;
-}
-
-.student-cell-stack--identity {
-    gap: 5px;
-}
-
-.student-name,
-.student-updated-at {
-    display: block;
-    color: var(--ink);
-}
-
-body[data-theme="dark"] .student-name,
-body[data-theme="dark"] .student-updated-at {
-    color: var(--ink) !important;
-}
-
-body[data-theme="dark"] .student-cell-stack,
-body[data-theme="dark"] .student-cell-stack strong,
-body[data-theme="dark"] .student-directory-table td,
-body[data-theme="dark"] .student-name,
-body[data-theme="dark"] .student-data-panel td strong {
-    color: #f1f1f1 !important;
-}
-
-.student-inline-summary {
-    display: none;
-    margin: 8px 0 0;
-    width: 100%;
-}
-
-.student-inline-summary-item {
-    display: grid;
-    gap: 4px;
-}
-
-.student-inline-summary-item + .student-inline-summary-item {
-    margin-top: 8px;
-}
-
-.student-inline-summary dt {
-    margin: 0;
-    font-size: 0.65rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-}
-
-.student-inline-summary dd {
-    margin: 0;
-}
-
-.student-inline-action {
-    width: 100%;
-}
-
-.student-data-panel .operation-card-head {
-    margin-bottom: 12px;
-}
-
-.student-select-column,
-.student-cell--select {
-    width: 40px;
-    text-align: center;
-}
-
 .student-data-panel th,
 .student-data-panel td {
-    padding: 10px 9px;
-    text-align: center;
+    padding: 18px 16px;
+    text-align: left;
     vertical-align: middle;
     min-width: 0;
     overflow-wrap: anywhere;
 }
 
 .student-data-panel th {
-    font-size: 0.72rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(71, 85, 105, 0.72);
+}
+
+.student-directory-table th:nth-child(1),
+.student-directory-table td:nth-child(1) {
+    width: 34%;
+}
+
+.student-directory-table th:nth-child(2),
+.student-directory-table td:nth-child(2) {
+    width: 18%;
+}
+
+.student-directory-table th:nth-child(3),
+.student-directory-table td:nth-child(3) {
+    width: 14%;
+}
+
+.student-directory-table th:nth-child(4),
+.student-directory-table td:nth-child(4) {
+    width: 10%;
+}
+
+.student-directory-table th:nth-child(5),
+.student-directory-table td:nth-child(5) {
+    width: 12%;
+}
+
+.student-directory-table th:nth-child(6),
+.student-directory-table td:nth-child(6) {
+    width: 12%;
 }
 
 .student-data-panel tbody tr + tr {
@@ -194,44 +103,221 @@ body[data-theme="dark"] .student-data-panel td strong {
     background: rgba(248, 250, 252, 0.86);
 }
 
-.student-data-panel td .actions {
+.student-identity {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.student-identity-copy {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.student-avatar-circle {
+    width: 40px;
+    height: 40px;
+    font-size: 0.92rem;
+    font-weight: 800;
+    flex: 0 0 auto;
+}
+
+.student-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.student-email {
+    font-size: 0.92rem;
+    color: rgba(71, 85, 105, 0.78);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.student-plan-name {
+    font-size: 0.98rem;
+    color: #0f172a;
+}
+
+.student-status-pill {
+    display: inline-flex;
+    align-items: center;
     gap: 6px;
-    flex-wrap: wrap;
-    justify-content: center;
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 0.88rem;
+    font-weight: 700;
 }
 
-.student-data-panel td .button {
-    min-height: 32px;
-    padding: 6px 10px;
-    font-size: 0.8rem;
-    white-space: normal;
+.student-status-pill--green {
+    color: #00e78a;
+    background: rgba(0, 231, 138, 0.12);
+}
+
+.student-status-pill--gray {
+    color: #7c8598;
+    background: rgba(124, 133, 152, 0.12);
+}
+
+.student-status-pill--orange {
+    color: #ffb020;
+    background: rgba(255, 176, 32, 0.12);
+}
+
+.student-status-pill--blue {
+    color: #16d9ff;
+    background: rgba(22, 217, 255, 0.12);
+}
+
+.student-presence-value {
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.student-presence-value.is-high {
+    color: #00e78a;
+}
+
+.student-presence-value.is-mid {
+    color: #ffb020;
+}
+
+.student-presence-value.is-low {
+    color: #ff2d6f;
+}
+
+.student-payment-state {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.student-payment-state--green {
+    color: #00e78a;
+}
+
+.student-payment-state--orange {
+    color: #ffb020;
+}
+
+.student-payment-state--red {
+    color: #ff2d6f;
+}
+
+.student-payment-state--gray {
+    color: #7c8598;
+}
+
+.student-due-date {
+    color: rgba(71, 85, 105, 0.84);
+}
+
+.student-directory-footer {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 24px;
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.student-directory-footer-side {
+    display: flex;
+    align-items: center;
+}
+
+.student-directory-footer-side--left {
+    justify-content: flex-start;
+}
+
+.student-directory-footer-side--right {
+    justify-content: flex-end;
+}
+
+.student-directory-footer-count {
+    font-size: 0.85rem;
+    color: rgba(71, 85, 105, 0.78);
     text-align: center;
-    max-width: 100%;
 }
 
-.student-data-panel td strong,
-.student-data-panel td .meta-text-sm,
-.student-data-panel td .pill,
-.student-data-panel td .stack-8 {
-    max-width: 100%;
-}
-
-.student-row-actions {
+.student-pagination-button {
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
+    min-width: 104px;
+    min-height: 40px;
+    padding: 0 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(37, 99, 235, 0.22);
+    background: rgba(37, 99, 235, 0.12);
+    color: #0f172a;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+
+.student-pagination-button:hover {
+    transform: translateY(-1px);
+    background: rgba(37, 99, 235, 0.16);
+}
+
+.student-pagination-button--ghost {
+    border-color: rgba(148, 163, 184, 0.22);
+    background: rgba(248, 250, 252, 0.92);
+}
+
+.student-pagination-button.is-disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+body[data-theme="dark"] .student-data-panel th {
+    color: rgba(226, 232, 240, 0.5);
+}
+
+body[data-theme="dark"] .student-name,
+body[data-theme="dark"] .student-plan-name {
+    color: #f8fafc;
+}
+
+body[data-theme="dark"] .student-email,
+body[data-theme="dark"] .student-due-date {
+    color: rgba(226, 232, 240, 0.58);
+}
+
+body[data-theme="dark"] .student-directory-footer {
+    border-top-color: rgba(148, 163, 184, 0.08);
+}
+
+body[data-theme="dark"] .student-directory-footer-count {
+    color: rgba(226, 232, 240, 0.54);
+}
+
+body[data-theme="dark"] .student-pagination-button {
+    border-color: rgba(99, 102, 241, 0.24);
+    background: rgba(99, 102, 241, 0.16);
+    color: #f8fafc;
+}
+
+body[data-theme="dark"] .student-pagination-button:hover {
+    background: rgba(99, 102, 241, 0.22);
+}
+
+body[data-theme="dark"] .student-pagination-button--ghost {
+    border-color: rgba(148, 163, 184, 0.14);
+    background: rgba(255, 255, 255, 0.04);
 }
 
 @container (max-width: 920px) {
-    .student-inline-summary {
-        display: grid;
-    }
-
-    .student-cell--updated,
-    .student-cell--actions,
-    .student-directory-table thead th:nth-child(5),
-    .student-directory-table thead th:nth-child(6) {
-        display: none;
-    }
-
     .student-table-scroll {
         overflow-x: hidden;
     }
@@ -244,14 +330,7 @@ body[data-theme="dark"] .student-data-panel td strong {
 
     .student-data-panel th,
     .student-data-panel td {
-        padding: 12px 8px;
-    }
-
-    .student-cell-stack,
-    .student-row-actions {
-        justify-items: start;
-        justify-content: flex-start;
-        text-align: left;
+        padding: 14px 10px;
     }
 }
 
@@ -285,10 +364,6 @@ body[data-theme="dark"] .student-data-panel td strong {
         box-shadow: 0 18px 32px rgba(15, 23, 42, 0.04);
     }
 
-    .student-directory-table tbody tr + tr {
-        border-top: 1px solid rgba(148, 163, 184, 0.16);
-    }
-
     .student-directory-table td {
         display: grid;
         gap: 6px;
@@ -310,23 +385,6 @@ body[data-theme="dark"] .student-data-panel td strong {
 
     .student-directory-table .student-cell--student {
         grid-column: 1 / -1;
-    }
-
-    .student-inline-summary {
-        display: none;
-    }
-
-    .student-directory-table .student-cell--updated,
-    .student-directory-table .student-cell--actions {
-        display: grid;
-    }
-
-    .student-directory-table .student-cell--actions {
-        grid-column: 1 / -1;
-    }
-
-    .student-directory-table .student-cell--actions .button {
-        width: 100%;
     }
 }
 

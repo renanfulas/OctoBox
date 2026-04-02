@@ -8,6 +8,147 @@ ARQUIVO: KPIs compartilhados das superfícies operacionais.
     min-height: 174px;
 }
 
+.operation-shell .operation-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.operation-shell .operation-metric-grid .metric-card-link {
+    min-width: 0;
+}
+
+.operation-shell .operation-metric-grid .operation-kpi-card,
+.operation-shell .operation-metric-grid .operation-kpi-compact {
+    min-height: 108px;
+    border-radius: 18px;
+    padding: 16px 18px;
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 97%, transparent), color-mix(in srgb, var(--theme-bg-stage) 94%, transparent));
+    box-shadow: none;
+}
+
+.operation-shell .operation-metric-grid .operation-kpi-card::before,
+.operation-shell .operation-metric-grid .operation-kpi-compact::before {
+    height: 0;
+    opacity: 0;
+}
+
+.operation-shell .operation-metric-grid .operation-kpi-card::after,
+.operation-shell .operation-metric-grid .operation-kpi-compact::after {
+    width: 0;
+    height: 0;
+    opacity: 0;
+}
+
+.operation-shell .operation-metric-grid .metric-card .card-body-metric {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 10px;
+    min-height: 100%;
+}
+
+.operation-shell .operation-metric-grid .metric-card .card-body-metric::before {
+    content: "";
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    border: 1.8px solid currentColor;
+    opacity: 0.9;
+}
+
+.operation-shell .operation-metric-grid .metric-card .card-value-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.operation-shell .operation-metric-grid .metric-card .card-value-row {
+    order: 2;
+    justify-content: flex-start;
+    align-items: baseline;
+    gap: 0;
+}
+
+.operation-shell .operation-metric-grid .metric-card .card-label {
+    order: 3;
+    margin: 0;
+    color: var(--muted-strong);
+    font-size: 0.96rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    text-transform: none;
+}
+
+.operation-shell .operation-metric-grid .metric-card .card-kicker,
+.operation-shell .operation-metric-grid .metric-card .card-copy,
+.operation-shell .operation-metric-grid .metric-card .card-footer,
+.operation-shell .operation-metric-grid .metric-card .card-meta,
+.operation-shell .operation-metric-grid .metric-card .card-signal {
+    display: none;
+}
+
+.operation-shell .operation-metric-grid .metric-card .card-value {
+    font-size: clamp(2rem, 2.2vw, 2.3rem);
+    line-height: 0.95;
+    letter-spacing: -0.05em;
+    font-weight: 800;
+}
+
+.operation-shell .operation-metric-grid .metric-card-link:hover .metric-card,
+.operation-shell .operation-metric-grid .metric-card-link:focus-visible .metric-card {
+    box-shadow: none;
+    transform: translateY(-1px);
+}
+
+.operation-shell .operation-metric-grid .metric-card.status-attention,
+.operation-shell .operation-metric-grid .metric-card.status-clean,
+.operation-shell .operation-metric-grid .metric-card.status-neutral {
+    border-left: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+}
+
+.operation-shell .operation-metric-grid .metric-card.status-attention,
+.operation-shell .operation-metric-grid .metric-card.manager-coral {
+    color: #ff2d6f;
+    border-color: color-mix(in srgb, #ff2d6f 38%, var(--theme-border-soft) 62%);
+}
+
+.operation-shell .operation-metric-grid .metric-card.status-clean,
+.operation-shell .operation-metric-grid .metric-card.owner-green,
+.operation-shell .operation-metric-grid .metric-card.coach-mint {
+    color: #00f596;
+    border-color: color-mix(in srgb, #00f596 34%, var(--theme-border-soft) 66%);
+}
+
+.operation-shell .operation-metric-grid .metric-card.manager-sky,
+.operation-shell .operation-metric-grid .metric-card.coach-indigo,
+.operation-shell .operation-metric-grid .metric-card.owner-blue,
+.operation-shell .operation-metric-grid .metric-card.dev-cyan {
+    color: #16d6ff;
+    border-color: color-mix(in srgb, #16d6ff 34%, var(--theme-border-soft) 66%);
+}
+
+.operation-shell .operation-metric-grid .metric-card.owner-amber,
+.operation-shell .operation-metric-grid .metric-card.manager-gold,
+.operation-shell .operation-metric-grid .metric-card.coach-orange {
+    color: #b56cff;
+    border-color: color-mix(in srgb, #b56cff 30%, var(--theme-border-soft) 70%);
+}
+
+.operation-shell .operation-metric-grid .metric-card.owner-slate,
+.operation-shell .operation-metric-grid .metric-card.manager-steel,
+.operation-shell .operation-metric-grid .metric-card.dev-steel {
+    color: #f43f7a;
+    border-color: color-mix(in srgb, #f43f7a 34%, var(--theme-border-soft) 66%);
+}
+
+@media (max-width: 720px) {
+    .operation-shell .operation-metric-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .operation-kpi-card::after {
     display: none;
 }

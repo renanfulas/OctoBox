@@ -21,13 +21,13 @@ import time
 from pathlib import Path
 
 from django.conf import settings
+from django.urls import reverse
 
 from access.admin import admin_changelist_url, admin_index_url, user_can_access_admin
+from access.navigation_contracts import get_navigation_contract
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
 from access.shell_actions import build_default_shell_action_buttons, get_shell_counts, resolve_shell_scope
-from access.navigation_contracts import get_navigation_contract
 from shared_support.static_assets import resolve_runtime_css_paths
-from django.urls import reverse
 
 
 _ASSET_VERSION_CACHE = {
@@ -35,6 +35,7 @@ _ASSET_VERSION_CACHE = {
     'value': '1',
     'boot_calculated': False,
 }
+
 
 def _calculate_static_asset_version():
     static_root = settings.BASE_DIR / 'static'
@@ -54,10 +55,11 @@ def _calculate_static_asset_version():
 
     return str(max(mtimes, default=1))
 
+
 def _build_static_asset_version():
     if not settings.DEBUG:
-        # 🚀 PERFORMANCE AAA: Boot-time Asset Cache
-        # Em produção, o CSS/JS não muda sozinho.
+        # PERFORMANCE AAA: Boot-time Asset Cache
+        # Em producao, o CSS/JS nao muda sozinho.
         # Varremos os arquivos do HD exatas UMA vez no ciclo de vida da worker.
         if not _ASSET_VERSION_CACHE['boot_calculated']:
             _ASSET_VERSION_CACHE['value'] = getattr(settings, 'STATIC_ASSET_VERSION', _calculate_static_asset_version())
@@ -65,7 +67,7 @@ def _build_static_asset_version():
         return _ASSET_VERSION_CACHE['value']
 
     # Em modo de desenvolvimento (DEBUG=True), verificamos a cada 1 segundo
-    # para permitir Live-Reload fluido sem ter que reiniciar o Gunicorn/Runserver.
+    # para permitir live reload fluido sem reiniciar o servidor.
     now = time.monotonic()
     if now - _ASSET_VERSION_CACHE['checked_at'] < 1:
         return _ASSET_VERSION_CACHE['value']
@@ -83,34 +85,34 @@ def _pick_active_nav_key(current_view_name):
 def _build_shell_page_context(current_view_name, current_path, role, navigation, alerts):
     contract = get_navigation_contract(current_view_name)
     nav_key = contract.get('nav_key')
-    
+
     active_item = next((item for item in navigation if item.get('nav_key') == nav_key), None)
     active_label = active_item['label'] if active_item else 'OctoBox Control'
     role_label = getattr(role, 'label', 'Sem papel definido')
     role_slug = getattr(role, 'slug', '')
-    
+
     scope = resolve_shell_scope(view_name=current_view_name, role_slug=role_slug, fallback_path=current_path)
-    
+
     section_map = {
         'dashboard': {'eyebrow': 'Painel', 'title': 'Dashboard'},
         'intake-center': {'eyebrow': 'Triagem', 'title': 'Fila de Entradas'},
-        'students': {'eyebrow': 'Gestão', 'title': 'Diretório de Alunos'},
-        'finance': {'eyebrow': 'Gestão', 'title': 'Centro Financeiro'},
+        'students': {'eyebrow': 'Gestao', 'title': 'Diretorio de Alunos'},
+        'finance': {'eyebrow': 'Gestao', 'title': 'Centro Financeiro'},
         'class-grid': {'eyebrow': 'Grade', 'title': 'Agenda de Aulas'},
-        'operations-owner': {'eyebrow': 'Operação', 'title': 'Painel Operacional'},
-        'access': {'eyebrow': 'Acessos', 'title': 'Papéis e acessos'},
+        'reports-hub': {'eyebrow': 'Relatorios', 'title': 'Camada gerencial'},
+        'operations-owner': {'eyebrow': 'Operacao', 'title': 'Painel Operacional'},
+        'access': {'eyebrow': 'Acessos', 'title': 'Papeis e acessos'},
         'system-map': {'eyebrow': 'Sistema', 'title': 'Mapa do sistema'},
-        'operational-settings': {'eyebrow': 'Config', 'title': 'Configurações operacionais'},
+        'operational-settings': {'eyebrow': 'Config', 'title': 'Configuracoes operacionais'},
         'admin': {'eyebrow': 'Admin', 'title': active_label},
     }
-    
-    # Generic resolution if not mapped directly
+
     section = section_map.get(scope)
     if not section:
         section = {'eyebrow': 'OctoBox', 'title': active_label}
 
     if scope == 'dashboard' and role_slug == ROLE_RECEPTION:
-        section = {**section, 'eyebrow': 'Recepção'}
+        section = {**section, 'eyebrow': 'Recepcao'}
 
     return {
         **section,
@@ -122,12 +124,29 @@ def _build_shell_page_context(current_view_name, current_path, role, navigation,
 
 def _build_navigation(role_slug, current_view_name):
     base_links = [
-        {'nav_key': 'dashboard', 'label': 'Dashboard', 'href': reverse('dashboard'), 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION, ROLE_COACH), 'icon': 'DB'},
-        {'nav_key': 'operacao', 'label': 'Minha operação', 'href': reverse('role-operations'), 'icon': 'OP'},
+        {
+            'nav_key': 'dashboard',
+            'label': 'Dashboard',
+            'href': reverse('dashboard'),
+            'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION, ROLE_COACH),
+            'icon': 'DB',
+        },
+        {'nav_key': 'operacao', 'label': 'Minha operacao', 'href': reverse('role-operations'), 'icon': 'OP'},
         {'nav_key': 'alunos', 'label': 'Alunos', 'href': reverse('student-directory'), 'icon': 'AL'},
-        {'nav_key': 'financeiro', 'label': 'Financeiro', 'href': reverse('finance-center'), 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER), 'icon': 'FI'},
-        {'nav_key': 'entradas', 'label': 'Entradas', 'href': reverse('intake-center'), 'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION), 'icon': 'EN'},
-        {'nav_key': 'relatorios', 'label': 'Relatórios', 'href': reverse('reports-hub'), 'roles': (ROLE_OWNER, ROLE_MANAGER), 'icon': 'AT'},
+        {
+            'nav_key': 'financeiro',
+            'label': 'Financeiro',
+            'href': reverse('finance-center'),
+            'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER),
+            'icon': 'FI',
+        },
+        {
+            'nav_key': 'entradas',
+            'label': 'Entradas',
+            'href': reverse('intake-center'),
+            'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION),
+            'icon': 'EN',
+        },
         {'nav_key': 'grade-aulas', 'label': 'Grade de aulas', 'href': reverse('class-grid'), 'icon': 'AU'},
     ]
 
@@ -140,7 +159,7 @@ def _build_navigation(role_slug, current_view_name):
             {'nav_key': 'whatsapp', 'label': 'WhatsApp', 'href': reverse('whatsapp-workspace'), 'icon': 'WA'},
         ],
         ROLE_COACH: [
-            {'nav_key': 'operacao', 'label': 'Ocorrências', 'href': reverse('role-operations') + '#coach-boundary-board', 'icon': 'OC'},
+            {'nav_key': 'operacao', 'label': 'Ocorrencias', 'href': reverse('role-operations') + '#coach-boundary-board', 'icon': 'OC'},
         ],
         ROLE_RECEPTION: [],
     }
@@ -160,7 +179,7 @@ def _build_navigation(role_slug, current_view_name):
 
     for item in links:
         item.setdefault('icon', '')
-    # map short icon codes to sophisticated emoji choices
+
     emoji_map = {
         'DB': '🏠',
         'OP': '⚡',
@@ -180,7 +199,7 @@ def _build_navigation(role_slug, current_view_name):
     for item in links:
         code = item.get('icon', '')
         item['icon'] = emoji_map.get(code, code)
-        
+
     active_nav_key = _pick_active_nav_key(current_view_name)
 
     return [
@@ -221,7 +240,7 @@ def role_navigation(request):
         'lead_students': 0,
         'active_enrollments': 0,
     }
-    
+
     view_name = getattr(request.resolver_match, 'view_name', '') if hasattr(request, 'resolver_match') else ''
 
     if request.user.is_authenticated:
@@ -231,7 +250,7 @@ def role_navigation(request):
         admin_home = admin_index_url()
         if role_slug in (ROLE_OWNER, ROLE_DEV):
             profile_navigation = [
-                {'label': 'Papéis e acessos', 'href': reverse('access-overview')},
+                {'label': 'Papeis e acessos', 'href': reverse('access-overview')},
                 {'label': 'Config. operacionais', 'href': reverse('operational-settings')},
                 {'label': 'Auditoria', 'href': admin_changelist_url('boxcore', 'auditevent')},
                 {'label': 'Admin Django', 'href': admin_home},
@@ -262,5 +281,3 @@ def role_navigation(request):
             sessions_today=shell_counts['sessions_today'],
         ),
     }
-
-

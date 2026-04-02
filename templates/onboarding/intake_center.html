@@ -2,11 +2,12 @@
 ARQUIVO: composicao visual da Central de Intake.
 
 POR QUE ELE EXISTE:
-- organiza a fronteira de intake em blocos pequenos sem devolver complexidade ao backend.
+- organiza a fronteira de intake em uma fachada mais limpa, usando a mesma espinha de alunos sem quebrar a fila operacional.
 
 O QUE ESTE ARQUIVO FAZ:
-1. monta a hero e os blocos da fila canonica de intake.
-2. delega filtros, metricas e fila para includes menores.
+1. monta o hero da central.
+2. expone a navegacao principal em cards compactos.
+3. mantem a fila e os demais workspaces dentro de uma superficie unica.
 
 PONTOS CRITICOS:
 - ids e data-actions precisam continuar estaveis porque shell, atalhos e testes apontam para esta tela.
@@ -16,55 +17,47 @@ PONTOS CRITICOS:
 
 {% block content %}
 {% with page=intake_center_page %}
-<div class="operation-shell onboarding-scene intake-center-scene workspace-shell" data-page="intake-center" data-screen="onboarding-intake" data-slot="page-root">
-    <div data-panel="intake-hero">
-        {% if page.data.hero %}
-        {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
-        {% endif %}
-    </div>
+<div class="operation-shell onboarding-scene intake-center-scene workspace-shell catalog-scene" data-page="intake-center" data-screen="onboarding-intake" data-slot="page-root">
+    {% if page.data.hero %}
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    {% endif %}
 
     {% if page.data.interactive_kpis %}
-    <div class="owner-metrics-panel section-gap" data-panel="intake-kpi-triggers">
-        <section class="panel-grid operation-metric-grid owner-metric-grid interactive-tab-triggers" aria-label="Navegação principal de entradas">
-            {% for metric in page.data.interactive_kpis %}
-            {% include "includes/ui/shared/metric_card.html" with card=metric compact=True extra_classes="dashboard-kpi-card is-ledger " %}
+    <div class="student-kpi-overview deferred-surface" data-panel="intake-kpi-triggers">
+        <section class="student-kpi-grid interactive-tab-triggers" aria-label="Navegacao principal de entradas">
+            {% for card in page.data.interactive_kpis %}
+            {% include "catalog/includes/student/student_metric_card.html" with card=card %}
             {% endfor %}
         </section>
     </div>
     {% endif %}
 
-    <div class="interactive-tab-container">
-        <!-- Tab 1: Triagem Inicial -->
-        <div class="stack-16{% if active_intake_panel == 'tab-intake-queue' %} is-tab-active{% endif %}" id="tab-intake-queue" aria-label="Triagem Inicial">
-            {% include "onboarding/includes/intake/intake_queue_panel.html" %}
+    <div class="card student-directory-surface intake-directory-surface deferred-surface deferred-surface--xl">
+        <div class="interactive-tab-container">
+            <div class="stack-16{% if active_intake_panel == 'tab-intake-queue' %} is-tab-active{% endif %}" id="tab-intake-queue" aria-label="Triagem inicial">
+                {% include "onboarding/includes/intake/intake_queue_panel.html" %}
+            </div>
+
+            <div class="stack-16{% if active_intake_panel == 'tab-intake-conversion' %} is-tab-active{% endif %}" id="tab-intake-conversion" aria-label="Motor de conversao">
+                {% include "onboarding/includes/intake/intake_conversion_board.html" %}
+            </div>
+
+            <div class="stack-16{% if active_intake_panel == 'tab-intake-source' %} is-tab-active{% endif %}" id="tab-intake-source" aria-label="Termometro comercial">
+                {% include "onboarding/includes/intake/intake_source_board.html" %}
+            </div>
+
+            <div class="stack-16{% if active_intake_panel == 'tab-intake-filters' %} is-tab-active{% endif %}" id="tab-intake-filters" aria-label="Filtros e busca">
+                {% include "onboarding/includes/intake/intake_filters_panel.html" with form=page.data.filter_form %}
+            </div>
+
+            <div class="stack-16{% if active_intake_panel == 'tab-intake-create-lead' %} is-tab-active{% endif %}" id="tab-intake-create-lead" aria-label="Novo lead">
+                {% include "onboarding/includes/intake/intake_quick_create_panel.html" with form=lead_create_form entry_kind='lead' %}
+            </div>
+
+            <div class="stack-16{% if active_intake_panel == 'tab-intake-create-intake' %} is-tab-active{% endif %}" id="tab-intake-create-intake" aria-label="Novo intake">
+                {% include "onboarding/includes/intake/intake_quick_create_panel.html" with form=intake_create_form entry_kind='intake' %}
+            </div>
         </div>
-
-        <!-- Tab 2: Motor de Conversao -->
-        <div class="stack-16{% if active_intake_panel == 'tab-intake-conversion' %} is-tab-active{% endif %}" id="tab-intake-conversion" aria-label="Motor de Conversão">
-            {% include "onboarding/includes/intake/intake_conversion_board.html" %}
-        </div>
-
-        <!-- Tab 3: Termometro Comercial -->
-        <div class="stack-16{% if active_intake_panel == 'tab-intake-source' %} is-tab-active{% endif %}" id="tab-intake-source" aria-label="Termômetro Comercial">
-            {% include "onboarding/includes/intake/intake_source_board.html" %}
-        </div>
-
-        <!-- Tab 4: Filtros e Busca -->
-        <div class="stack-16{% if active_intake_panel == 'tab-intake-filters' %} is-tab-active{% endif %}" id="tab-intake-filters" aria-label="Filtros e Busca">
-            {% include "onboarding/includes/intake/intake_filters_panel.html" with form=page.data.filter_form %}
-        </div>
-
-        <!-- Tab 5: Novo Lead -->
-        <div class="stack-16{% if active_intake_panel == 'tab-intake-create-lead' %} is-tab-active{% endif %}" id="tab-intake-create-lead" aria-label="Novo Lead">
-            {% include "onboarding/includes/intake/intake_quick_create_panel.html" with form=lead_create_form entry_kind='lead' %}
-        </div>
-
-        <!-- Tab 6: Novo Intake -->
-        <div class="stack-16{% if active_intake_panel == 'tab-intake-create-intake' %} is-tab-active{% endif %}" id="tab-intake-create-intake" aria-label="Novo Intake">
-            {% include "onboarding/includes/intake/intake_quick_create_panel.html" with form=intake_create_form entry_kind='intake' %}
-        </div>
-
-
     </div>
 </div>
 {% endwith %}

@@ -57,6 +57,7 @@ _NAV_CONTRACTS = {
     'intake-center': ('intake', 'entradas'),
     'reception-workspace': ('reception', 'recepcao'),
     'class-grid': ('class-grid', 'grade-aulas'),
+    'reports-hub': ('reports-hub', 'relatorios'),
     'coach-workspace': ('coach-workspace', 'operacao'),
 }
 

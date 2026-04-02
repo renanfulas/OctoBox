@@ -14,7 +14,7 @@ from django.views.generic import TemplateView
 
 from access.roles import ROLE_MANAGER, ROLE_OWNER
 from operations.base_views import OperationBaseView
-from shared_support.page_payloads import build_page_hero, build_page_reading_panel
+from shared_support.page_payloads import build_page_hero
 
 
 class ReportHubView(OperationBaseView, TemplateView):
@@ -68,11 +68,5 @@ class ReportHubView(OperationBaseView, TemplateView):
             classes=['reports-hub-hero'],
             heading_level='h1',
             data_panel='reports-hub-hero',
-        )
-        context['report_hub_reading_panel'] = build_page_reading_panel(
-            items=context['report_hub_focus'],
-            primary_href=context['report_hub_focus'][0]['href'] if context['report_hub_focus'] else '',
-            class_name='reports-hub-reading-panel',
-            panel_id='reports-hub-reading-panel',
         )
         return context

@@ -35,13 +35,15 @@ def _build_hero_stat(label, value):
     return {'label': label, 'value': value}
 
 
-def _build_metric_card(card_class, eyebrow, value, note):
-    return {
+def _build_metric_card(card_class, eyebrow, value, note=None):
+    card = {
         'card_class': card_class,
         'eyebrow': eyebrow,
         'display_value': value,
-        'note': note,
     }
+    if note:
+        card['note'] = note
+    return card
 
 
 def _build_owner_focus_item(*, key, label, summary, count, pill_class, href, href_label, chip_label=''):
@@ -204,26 +206,22 @@ def build_owner_workspace_snapshot(*, today):
         'classes_today': classes_today,
         'metric_cards': [
             {
-                **_build_metric_card('operation-kpi-card owner-amber', 'Total de alunos', headline_metrics['students'], 'Tamanho atual da base.'),
+                **_build_metric_card('operation-kpi-card owner-amber', 'Total de alunos', headline_metrics['students']),
                 'status_hint': 'neutral',
                 'href': reverse('student-directory'),
             },
             {
-                **_build_metric_card('operation-kpi-card owner-blue', 'Entradas abertas', headline_metrics['pending_intakes'], 'Pessoas que ainda esperam resposta.'),
+                **_build_metric_card('operation-kpi-card owner-blue', 'Entradas abertas', headline_metrics['pending_intakes']),
                 'status_hint': 'clean' if headline_metrics['pending_intakes'] == 0 else 'attention',
                 'href': reverse('intake-center'),
             },
             {
-                **_build_metric_card('operation-kpi-card owner-green', 'WhatsApp pronto', headline_metrics['whatsapp_contacts'], 'Contatos prontos para conversa.'),
+                **_build_metric_card('operation-kpi-card owner-green', 'WhatsApp pronto', headline_metrics['whatsapp_contacts']),
                 'status_hint': 'neutral',
                 'href': reverse('whatsapp-workspace'),
             },
             {
-                **_build_metric_card('operation-kpi-card owner-amber', 'Cobrancas atrasadas', headline_metrics['overdue_payments'], 'Dinheiro que ja deveria ter entrado.'),
-                'submetric': {
-                    'label': 'Caixa vencido',
-                    'value': f"R$ {headline_metrics['overdue_amount']:.2f}".replace('.', ','),
-                },
+                **_build_metric_card('operation-kpi-card owner-amber', 'Cobrancas atrasadas', headline_metrics['overdue_payments']),
                 'status_hint': 'clean' if headline_metrics['overdue_payments'] == 0 else 'attention',
                 'href': reverse('finance-center'),
             },
@@ -402,10 +400,10 @@ def build_manager_workspace_snapshot():
             _build_hero_stat('Alertas', len(financial_alerts)),
         ],
         'metric_cards': [
-            _build_metric_card('operation-kpi-card manager-coral', 'Entradas pendentes', len(pending_intakes), 'Pessoas que ja chegaram ao sistema, mas ainda exigem triagem ou conversao.'),
-            _build_metric_card('operation-kpi-card manager-sky', 'Contatos sem vinculo', len(unlinked_whatsapp), 'Conversas abertas que ainda precisam ser conectadas ao aluno principal.'),
-            _build_metric_card('operation-kpi-card manager-gold', 'Pagamentos sem matricula', len(payments_without_enrollment), 'Cobrancas que podem contaminar leitura financeira enquanto nao forem vinculadas.'),
-            _build_metric_card('operation-kpi-card manager-steel', 'Alertas financeiros', len(financial_alerts), 'Fila de inadimplencia e pendencias para agir antes de escalar o problema.'),
+            _build_metric_card('operation-kpi-card manager-coral', 'Entradas pendentes', len(pending_intakes)),
+            _build_metric_card('operation-kpi-card manager-sky', 'Contatos sem vinculo', len(unlinked_whatsapp)),
+            _build_metric_card('operation-kpi-card manager-gold', 'Pagamentos sem matricula', len(payments_without_enrollment)),
+            _build_metric_card('operation-kpi-card manager-steel', 'Alertas financeiros', len(financial_alerts)),
         ],
         'manager_operational_focus': [
             {
@@ -475,9 +473,9 @@ def build_coach_workspace_snapshot(*, today):
             _build_hero_stat('Ocorrencias', len(BehaviorCategory.choices)),
         ],
         'metric_cards': [
-            _build_metric_card('operation-kpi-card coach-mint', 'Aulas do dia', len(sessions), 'Quantidade de turmas que o coach precisa enxergar e conduzir hoje.'),
-            _build_metric_card('operation-kpi-card coach-indigo', 'Guias de execucao', 3, 'Passos operacionais para manter presenca, saida e falta registradas corretamente.'),
-            _build_metric_card('operation-kpi-card coach-orange', 'Fronteiras do papel', 3, 'Lembrete visual do que pertence ao coach e do que continua fora desta area.'),
+            _build_metric_card('operation-kpi-card coach-mint', 'Aulas do dia', len(sessions)),
+            _build_metric_card('operation-kpi-card coach-indigo', 'Guias de execucao', 3),
+            _build_metric_card('operation-kpi-card coach-orange', 'Fronteiras do papel', 3),
         ],
         'coach_operational_focus': [
             {
@@ -625,10 +623,10 @@ def _build_reception_workspace_core(*, today):
             _build_hero_stat('Aulas proximas', len(next_sessions)),
         ],
         'metric_cards': [
-            _build_metric_card('operation-kpi-card manager-coral', 'Entradas prontas', len(pending_intakes), 'Contatos que a recepcao poderia transformar em aluno definitivo sem sair da cadencia de atendimento.'),
-            _build_metric_card('operation-kpi-card manager-gold', 'Cobrancas curtas', len(payment_queue), 'Fila curta de caixa para resolver no balcao sem abrir o financeiro inteiro.'),
-            _build_metric_card('operation-kpi-card manager-sky', 'Base alcancada', active_students, 'Volume de alunos que ja sustenta busca rapida, RM visivel e atendimento orientado.'),
-            _build_metric_card('operation-kpi-card coach-indigo', 'Proximas aulas', len(next_sessions), 'Leitura guiada da grade para orientar check-in e responder duvidas sem virar agenda tecnica.'),
+            _build_metric_card('operation-kpi-card manager-coral', 'Entradas prontas', len(pending_intakes)),
+            _build_metric_card('operation-kpi-card manager-gold', 'Cobrancas curtas', len(payment_queue)),
+            _build_metric_card('operation-kpi-card manager-sky', 'Base alcancada', active_students),
+            _build_metric_card('operation-kpi-card coach-indigo', 'Proximas aulas', len(next_sessions)),
         ],
         'payment_methods': list(PaymentMethod.choices),
         'queue': reception_payment_queue,

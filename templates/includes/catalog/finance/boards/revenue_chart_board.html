@@ -11,11 +11,40 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende do contexto de monthly_comparison.
 -->
-<article class="table-card finance-glass-panel finance-board-trend" id="finance-trend-board">
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Tendencia mensal" title="Receita real recebida nos ultimos 6 meses" title_class="section-title-sm" copy="Mostra se o caixa realmente subiu." copy_class="body-copy text-muted section-gap-top-xs no-margin" %}
-    <div class="chart-grid revenue-chart" data-visual-columns="{{ page.data.monthly_comparison|length|default:1 }}">
-        {% for item in page.data.monthly_comparison %}
-        {% include "includes/catalog/finance/cards/revenue_chart_column.html" with item=item page=page %}
-        {% endfor %}
+<article class="table-card finance-glass-panel finance-board-trend finance-revenue-trend-card" id="finance-trend-board">
+    <div class="finance-revenue-trend-head">
+        <div class="finance-revenue-trend-copy">
+            <h3 class="finance-revenue-trend-title">Receita mensal</h3>
+            <p class="finance-revenue-trend-subtitle">Realizado vs esperado — ultimos 6 meses</p>
+        </div>
+        <div class="finance-revenue-trend-legend" aria-label="Legenda do grafico">
+            <span class="finance-revenue-trend-legend-item">
+                <span class="finance-revenue-trend-legend-dot is-realized" aria-hidden="true"></span>
+                Realizado
+            </span>
+            <span class="finance-revenue-trend-legend-item">
+                <span class="finance-revenue-trend-legend-dot is-expected" aria-hidden="true"></span>
+                Esperado
+            </span>
+        </div>
+    </div>
+    <div class="finance-revenue-trend-chart" aria-label="Grafico comparativo de receita mensal">
+        <div class="finance-revenue-trend-axis" aria-hidden="true">
+            {% for tick in page.data.finance_revenue_chart.ticks %}
+            <span>{{ tick.label }}</span>
+            {% endfor %}
+        </div>
+        <div class="finance-revenue-trend-plot">
+            <div class="finance-revenue-trend-gridlines" aria-hidden="true">
+                {% for tick in page.data.finance_revenue_chart.ticks %}
+                <span></span>
+                {% endfor %}
+            </div>
+            <div class="finance-revenue-trend-columns" data-visual-columns="{{ page.data.finance_revenue_chart.items|length|default:1 }}">
+                {% for item in page.data.finance_revenue_chart.items %}
+                {% include "includes/catalog/finance/cards/revenue_chart_column.html" with item=item %}
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </article>

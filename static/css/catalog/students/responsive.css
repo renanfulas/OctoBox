@@ -7,8 +7,13 @@ POR QUE ELE EXISTE:
 */
 
 @media (max-width: 960px) {
-    .student-command-layout {
+    .student-filter-bar {
         grid-template-columns: 1fr;
+        justify-items: stretch;
+    }
+
+    .student-filter-count {
+        justify-self: start;
     }
 
     .student-toolbar-import {
@@ -20,9 +25,7 @@ POR QUE ELE EXISTE:
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .student-focus-item,
-    .student-compact-layout,
-    .intake-card {
+    .student-focus-item {
         grid-template-columns: 1fr;
     }
 
@@ -90,6 +93,34 @@ POR QUE ELE EXISTE:
 }
 
 @media (max-width: 640px) {
+    .student-filter-pills {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .student-filter-pill {
+        flex: 1 1 calc(50% - 3px);
+    }
+
+    .student-directory-footer {
+        grid-template-columns: 1fr;
+        justify-items: stretch;
+    }
+
+    .student-directory-footer-side--left,
+    .student-directory-footer-side--right {
+        justify-content: stretch;
+    }
+
+    .student-directory-footer-count {
+        order: -1;
+        text-align: left;
+    }
+
+    .student-pagination-button {
+        width: 100%;
+    }
+
     .student-directory-header {
         flex-direction: column !important;
         align-items: stretch !important;
@@ -250,10 +281,20 @@ POR QUE ELE EXISTE:
 
 @media (max-width: 520px) {
     .student-kpi-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .student-filter-pill {
+        flex-basis: 100%;
     }
 
     .student-directory-table tbody tr {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 420px) {
+    .student-kpi-grid {
         grid-template-columns: 1fr;
     }
 }

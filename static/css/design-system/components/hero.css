@@ -21,9 +21,9 @@ REGRA:
     --hero-ink: var(--ink);
     --hero-copy: var(--muted);
     --hero-eyebrow: color-mix(in srgb, var(--theme-accent-support) 62%, var(--ink) 38%);
-    --hero-gap: 20px;
-    --hero-padding: clamp(20px, 2vw, 30px);
-    --hero-radius: var(--radius-shell);
+    --hero-gap: var(--operation-hero-gap, 20px);
+    --hero-padding: var(--operation-hero-padding, clamp(20px, 2vw, 30px));
+    --hero-radius: var(--operation-hero-radius, var(--radius-shell));
     --hero-before-inset: 0 auto 0 0;
     --hero-before-width: 4px;
     --hero-before-height: auto;
@@ -35,13 +35,13 @@ REGRA:
     --hero-after-height: 220px;
     --hero-after-opacity: 0.9;
     --hero-after-background: var(--hero-halo);
-    --hero-heading-size: clamp(1.8rem, 2.8vw, 2.8rem);
-    --hero-heading-line-height: 0.94;
-    --hero-heading-letter-spacing: -0.06em;
-    --hero-copy-size: 1rem;
+    --hero-heading-size: var(--operation-hero-heading-size, clamp(1.8rem, 2.8vw, 2.8rem));
+    --hero-heading-line-height: var(--operation-hero-heading-line-height, 0.94);
+    --hero-heading-letter-spacing: var(--operation-hero-heading-letter-spacing, -0.06em);
+    --hero-copy-size: var(--operation-hero-copy-size, 1rem);
     --hero-panel-backdrop-filter: blur(14px);
     --hero-isolation: isolate;
-    --hero-side-width: min(100%, 340px);
+    --hero-side-width: var(--operation-hero-side-width, min(100%, 340px));
     --hero-panel-surface: color-mix(in srgb, var(--surface-strong) 76%, transparent);
     --hero-panel-border: color-mix(in srgb, var(--line) 86%, transparent);
     --hero-panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -61,9 +61,9 @@ REGRA:
     margin-bottom: 0;
     padding: var(--hero-padding);
     border-radius: var(--hero-radius);
-    background: var(--hero-surface);
-    border: 1px solid var(--hero-border);
-    box-shadow: var(--hero-shadow);
+    background: var(--operation-hero-surface, var(--hero-surface));
+    border: 1px solid var(--operation-hero-border, var(--hero-border));
+    box-shadow: var(--operation-hero-shadow, var(--hero-shadow));
     position: relative;
     overflow: hidden;
     isolation: var(--hero-isolation);
@@ -113,10 +113,10 @@ REGRA:
 
 .hero p {
     margin: 0;
-    max-width: 58ch;
+    max-width: var(--operation-hero-copy-max-width, 58ch);
     font-size: var(--hero-copy-size);
     color: var(--hero-copy);
-    line-height: 1.54;
+    line-height: var(--operation-hero-copy-line-height, 1.54);
 }
 
 .hero .eyebrow {
@@ -130,11 +130,11 @@ REGRA:
 }
 
 .hero .operation-hero-panel {
-    padding: 16px 18px;
+    padding: var(--operation-hero-panel-padding, 16px 18px);
     border-radius: var(--radius-card);
-    background: var(--hero-panel-surface);
-    border: 1px solid var(--hero-panel-border);
-    box-shadow: var(--hero-panel-shadow);
+    background: var(--operation-hero-panel-surface, var(--hero-panel-surface));
+    border: 1px solid var(--operation-hero-panel-border, var(--hero-panel-border));
+    box-shadow: var(--operation-hero-panel-shadow, var(--hero-panel-shadow));
     color: var(--hero-panel-ink);
     backdrop-filter: var(--hero-panel-backdrop-filter);
     -webkit-backdrop-filter: var(--hero-panel-backdrop-filter);

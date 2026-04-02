@@ -384,10 +384,20 @@ REGRA:
     box-shadow: 0 12px 26px rgba(7, 14, 24, 0.05);
 }
 
+.page-reading-panel {
+    width: 100%;
+    margin-top: var(--page-opening-panel-margin-top, var(--workspace-fib-4, 21px));
+}
+
 .fdw-focus-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 14px;
+}
+
+.page-reading-list {
+    width: 100%;
+    margin-top: var(--page-opening-panel-margin-top, var(--workspace-fib-4, 21px));
 }
 
 .fdw-focus-card {
@@ -511,6 +521,144 @@ REGRA:
     color: var(--brand);
     font-size: 0.78rem;
     font-weight: 700;
+}
+
+.operation-shell .page-reading-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.operation-shell .page-reading-list .fdw-focus-card {
+    position: relative;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    min-height: 0;
+    padding: 14px 18px;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 96%, transparent), color-mix(in srgb, var(--surface-strong) 92%, transparent));
+    box-shadow: none;
+}
+
+.operation-shell .page-reading-list .fdw-focus-card:hover {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.operation-shell .page-reading-list .fdw-focus-card::after {
+    content: "›";
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: color-mix(in srgb, var(--muted) 82%, transparent);
+    font-size: 1.2rem;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.operation-shell .page-reading-list .fdw-focus-card-head {
+    justify-content: flex-start;
+    gap: 12px;
+}
+
+.operation-shell .page-reading-list .fdw-focus-meta {
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.operation-shell .page-reading-list .fdw-focus-index {
+    min-width: 12px;
+    width: 12px;
+    height: 12px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--brand) 76%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 10%, transparent);
+    color: transparent;
+    font-size: 0;
+    letter-spacing: 0;
+}
+
+.operation-shell .page-reading-list .fdw-focus-body {
+    gap: 4px;
+}
+
+.operation-shell .page-reading-list .fdw-focus-title {
+    font-size: 1rem;
+    line-height: 1.2;
+}
+
+.operation-shell .page-reading-list .fdw-focus-summary {
+    font-size: 0.9rem;
+    line-height: 1.42;
+}
+
+.operation-shell .page-reading-list .fdw-focus-footer {
+    justify-content: flex-end;
+    padding-right: 20px;
+}
+
+.operation-shell .page-reading-list .fdw-focus-action {
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.operation-shell .page-reading-list .fdw-focus-card.is-primary,
+.operation-shell .page-reading-list .fdw-focus-card:has(.fdw-focus-chip.is-warning) {
+    border-color: color-mix(in srgb, var(--danger) 36%, transparent);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--danger) 7%, var(--surface) 93%), color-mix(in srgb, var(--danger) 4%, var(--surface-strong) 96%));
+}
+
+.operation-shell .page-reading-list .fdw-focus-card:has(.fdw-focus-chip.is-warning) .fdw-focus-index,
+.operation-shell .page-reading-list .fdw-focus-card.is-primary .fdw-focus-index {
+    background: color-mix(in srgb, var(--danger) 86%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.operation-shell .page-reading-list .fdw-focus-card:has(.fdw-focus-chip.is-info),
+.operation-shell .page-reading-list .fdw-focus-card:has(.fdw-focus-chip.is-accent) {
+    border-color: color-mix(in srgb, var(--brand) 30%, transparent);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--brand) 6%, var(--surface) 94%), color-mix(in srgb, var(--brand) 3%, var(--surface-strong) 97%));
+}
+
+.operation-shell .page-reading-list .fdw-focus-card:has(.fdw-focus-chip.is-info) .fdw-focus-index,
+.operation-shell .page-reading-list .fdw-focus-card:has(.fdw-focus-chip.is-accent) .fdw-focus-index {
+    background: color-mix(in srgb, var(--brand) 82%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 12%, transparent);
+}
+
+.operation-shell .page-reading-list .fdw-focus-card:has(.fdw-focus-chip.is-success) {
+    border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--accent) 6%, var(--surface) 94%), color-mix(in srgb, var(--accent) 3%, var(--surface-strong) 97%));
+}
+
+.operation-shell .page-reading-list .fdw-focus-card:has(.fdw-focus-chip.is-success) .fdw-focus-index {
+    background: color-mix(in srgb, var(--accent) 82%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+@media (max-width: 720px) {
+    .operation-shell .page-reading-list .fdw-focus-card {
+        grid-template-columns: auto minmax(0, 1fr);
+        padding-right: 18px;
+    }
+
+    .operation-shell .page-reading-list .fdw-focus-footer {
+        grid-column: 2;
+        padding-right: 0;
+    }
+
+    .operation-shell .page-reading-list .fdw-focus-card::after {
+        right: 12px;
+    }
 }
 
 .dashboard-glance-card.is-emergency::before,

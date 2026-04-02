@@ -2,13 +2,13 @@
 {% load static %}
 
 {% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
 <link rel="stylesheet" href="{% static 'css/operations/reports-hub.css' %}?v={{ static_asset_version }}">
 {% endblock %}
 
 {% block content %}
-<div class="scenic-canvas">
+<div class="operation-shell workspace-shell reports-hub-scene" data-page="reports-hub" data-screen="operations-reports-hub" data-slot="page-root">
     {% include "includes/ui/layout/page_hero.html" with hero=report_hub_hero %}
-    {% include "includes/ui/layout/page_reading_panel.html" with panel=report_hub_reading_panel %}
 
     <div class="cards-grid reports-hub-grid">
         <article class="card reports-hub-card" id="reports-commercial">

@@ -2,129 +2,132 @@
 ARQUIVO: filtro e utilidades da base de alunos.
 
 POR QUE ELE EXISTE:
-- concentra a área de busca, recorte e ações auxiliares da tela.
-- mantém o comportamento de formulário separado dos painéis de leitura.
+- concentra a barra de busca, filtros rapidos e contador do diretorio.
 */
 
-.card.student-filter-card {
-    background: var(--surface);
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    padding: 21px 24px !important;
-    margin-bottom: var(--workspace-fib-4);
-    overflow: clip;
-}
-
-.student-filter-card-head {
-    display: flex;
-    flex-direction: column;
+.student-filter-bar {
+    display: grid;
+    grid-template-columns: minmax(360px, 440px) minmax(0, 1fr) auto;
     align-items: center;
-    text-align: center;
-    margin-bottom: 13px;
+    gap: 16px;
+    padding: 18px 24px 20px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
 }
 
-.student-filter-card .form-stack {
-    gap: var(--workspace-fib-4);
+.student-filter-form {
     min-width: 0;
 }
 
-.student-filter-card .field-grid-200 {
-    grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
-    gap: var(--workspace-fib-4);
-    min-width: 0;
-}
-
-.student-filter-card label {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 0;
-}
-
-.student-filter-card .field-label {
-    margin-bottom: 8px;
-}
-
-.student-filter-card input,
-.student-filter-card select {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    text-align: center;
-    text-align-last: center; /* For select elements */
-}
-
-.student-filter-card .operation-card-head {
-    margin-bottom: var(--workspace-fib-4);
-}
-
-.student-filter-actions-primary {
-    margin-top: 13px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.student-filter-actions {
-    flex: 0 0 auto;
-}
-
-.student-filter-actions .student-directory-import {
-    margin: 0;
-}
-
-.student-filter-reset {
-    color: var(--slate-700);
-    border-color: var(--line);
-}
-
-
-.neon-input-container {
+.student-filter-search {
     position: relative;
-    border-radius: 12px;
-    background: rgba(var(--surface-rgb), 0.5);
-    border: 1px solid var(--line);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
-    width: 100%;
+    display: block;
 }
 
-.neon-input-container:focus-within {
-    border-color: var(--accent);
-    box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.3), 0 0 40px rgba(var(--accent-rgb), 0.1);
-    transform: translateY(-1px);
-}
-
-.search-glow {
+.student-filter-search-icon {
     position: absolute;
-    inset: 0;
-    pointer-events: none;
-    border-radius: 12px;
-    opacity: 0;
-    transition: opacity 0.4s ease;
-    background: radial-gradient(circle at center, rgba(var(--accent-rgb), 0.15) 0%, transparent 70%);
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(148, 163, 184, 0.72);
 }
 
-.neon-input-container:focus-within .search-glow {
-    opacity: 1;
-}
-
-.neon-input-container input {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 12px 16px !important;
-    color: var(--foreground) !important;
+.student-filter-search-input {
     width: 100%;
+    min-height: 44px;
+    padding: 0 16px 0 38px;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(248, 250, 252, 0.94);
+    color: #0f172a;
     outline: none;
-    text-align: center;
 }
 
-.search-field-wrapper .field-label {
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-size: 0.75rem;
-    margin-bottom: 10px;
-    opacity: 0.8;
+.student-filter-search-input::placeholder {
+    color: rgba(71, 85, 105, 0.72);
+}
+
+.student-filter-pills {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: fit-content;
+    max-width: 100%;
+    min-width: 0;
+    justify-self: start;
+    gap: 6px;
+    padding: 4px;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(248, 250, 252, 0.92);
+    flex-wrap: wrap;
+}
+
+.student-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-height: 36px;
+    padding: 0 16px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: rgba(51, 65, 85, 0.84);
+    text-decoration: none;
+    transition: background 160ms ease, color 160ms ease;
+}
+
+.student-filter-pill:hover {
+    color: #0f172a;
+}
+
+.student-filter-pill.is-active {
+    background: rgba(255, 255, 255, 0.96);
+    color: #0f172a;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.student-filter-count {
+    margin: 0;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    color: rgba(71, 85, 105, 0.78);
+    justify-self: end;
+}
+
+body[data-theme="dark"] .student-filter-bar {
+    border-bottom-color: rgba(148, 163, 184, 0.08);
+}
+
+body[data-theme="dark"] .student-filter-search-input {
+    border-color: rgba(148, 163, 184, 0.14);
+    background: rgba(24, 24, 34, 0.9);
+    color: #f8fafc;
+}
+
+body[data-theme="dark"] .student-filter-search-input::placeholder {
+    color: rgba(226, 232, 240, 0.42);
+}
+
+body[data-theme="dark"] .student-filter-pills {
+    border-color: rgba(148, 163, 184, 0.14);
+    background: rgba(18, 18, 28, 0.92);
+}
+
+body[data-theme="dark"] .student-filter-pill {
+    color: rgba(226, 232, 240, 0.58);
+}
+
+body[data-theme="dark"] .student-filter-pill:hover {
+    color: #f8fafc;
+}
+
+body[data-theme="dark"] .student-filter-pill.is-active {
+    background: rgba(255, 255, 255, 0.05);
+    color: #f8fafc;
+    box-shadow: none;
+}
+
+body[data-theme="dark"] .student-filter-count {
+    color: rgba(226, 232, 240, 0.58);
 }

@@ -16,8 +16,6 @@ ARQUIVO: cena base e hero da recepcao.
     --reception-premium-surface-dark:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 36%, transparent), transparent 30%),
         linear-gradient(156deg, rgba(12, 22, 36, 0.98), rgba(8, 15, 26, 0.97) 60%, rgba(7, 12, 22, 0.95));
-    --operation-hero-side-width: min(100%, 304px);
-    --operation-hero-panel-padding: 12px 14px;
     --operation-mini-grid-gap: 6px;
     --operation-mini-grid-margin-top: 10px;
     --operation-mini-stat-padding: 7px 8px;

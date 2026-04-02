@@ -49,8 +49,10 @@ jobs:
 
     - name: 3. Install Dependencies
       run: |
-        pip install -r requirements.txt
-        pip install pytest pytest-django pytest-benchmark
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt
+        python -m pip install pytest pytest-django pytest-benchmark
+        python -m pip show djangorestframework
 
     - name: 4. Populate Test Database for CI
       run: |

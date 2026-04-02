@@ -6,6 +6,6 @@ POR QUE ELE EXISTE:
 -->
 <section class="panel-grid operation-metric-grid" aria-label="Metricas do turno">
     {% for card in page.data.metric_cards %}
-    {% include "includes/ui/shared/metric_card.html" with card=card %}
+    {% include "includes/ui/shared/metric_card.html" with card=card compact=True extra_classes="operation-kpi-compact" %}
     {% endfor %}
 </section>

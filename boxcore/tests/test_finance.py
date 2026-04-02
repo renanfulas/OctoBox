@@ -83,18 +83,21 @@ class FinanceCenterTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Financeiro')
         self.assertContains(response, 'Cross Gold')
-        self.assertContains(response, 'Exportação do Recorte Ativo')
-        self.assertContains(response, 'Handoff de Cobrança')
+        self.assertContains(response, 'Resumo do Recorte Ativo')
+        self.assertContains(response, 'Handoff de Cobranca')
         self.assertContains(response, 'Churn e crescimento')
-        self.assertContains(response, 'Tendencia mensal')
-        self.assertContains(response, 'Ativacoes x cancelamentos')
+        self.assertContains(response, 'Receita mensal')
+        self.assertContains(response, 'Realizado vs esperado')
+        self.assertContains(response, 'Ativacoes vs cancelamentos')
         self.assertContains(response, 'Nenhum contato operacional recente registrado.')
         self.assertContains(response, 'Registrar e abrir WhatsApp')
         self.assertContains(response, 'name="open_in_whatsapp" value="1"', html=False)
         self.assertContains(response, 'href="#finance-priority-board"')
         self.assertContains(response, 'href="#finance-queue-board"')
         self.assertContains(response, 'href="#finance-portfolio-board"')
-        self.assertContains(response, f'href="{reverse("membership-plan-quick-update", args=[self.plan.id])}"')
+        self.assertContains(response, 'Planos ativos')
+        self.assertContains(response, 'Mix Comercial e Dependencia')
+        self.assertContains(response, 'Total MRR')
         self.assertContains(response, f'href="{reverse("student-quick-update", args=[self.student.id])}#student-financial-overview"')
         self.assertRegex(response.content.decode(), r'R\$\s*319[,.]90')
 
@@ -110,26 +113,25 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'Filtros da Leitura Financeira')
         self.assertContains(response, 'Cross Gold')
 
-    def test_finance_center_renders_recent_movements_board_with_expected_cards(self):
+    def test_finance_center_hides_recent_movements_board_from_the_raiox_tab(self):
         self.client.force_login(self.user)
 
         response = self.client.get(reverse('finance-center'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'id="finance-movements-board"')
-        self.assertContains(response, 'finance-movements-panel')
-        self.assertContains(response, 'finance-movements-list')
-        self.assertContains(response, 'class="elite-ledger-row p-3 rounded-surface flex-between items-center"', count=2)
-        self.assertContains(response, 'Paula Nunes')
-        self.assertContains(response, 'Rafa Souza')
+        self.assertNotContains(response, 'id="finance-movements-board"')
+        self.assertNotContains(response, 'finance-movements-panel')
+        self.assertContains(response, 'id="finance-trend-board"')
+        self.assertContains(response, 'finance-revenue-trend-card')
 
-    def test_finance_movements_css_preserves_full_width_board_and_card_grid(self):
+    def test_finance_revenue_chart_css_exposes_compact_dual_bar_contract(self):
         finance_css = (
-            Path(__file__).resolve().parents[2] / 'static' / 'css' / 'catalog' / 'finance' / '_movements.css'
+            Path(__file__).resolve().parents[2] / 'static' / 'css' / 'catalog' / 'finance' / '_boards.css'
         ).read_text(encoding='utf-8')
 
-        self.assertIn('.finance-movements-panel {\n    grid-column: 1 / -1;', finance_css)
-        self.assertIn('grid-template-columns: 18px minmax(0, 1fr);', finance_css)
+        self.assertIn('.finance-revenue-trend-card {', finance_css)
+        self.assertIn('.finance-revenue-trend-columns {', finance_css)
+        self.assertIn('.finance-revenue-bar.is-realized {', finance_css)
 
     def test_finance_center_can_create_plan(self):
         self.client.force_login(self.user)

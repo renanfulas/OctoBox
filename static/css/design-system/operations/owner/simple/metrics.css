@@ -8,12 +8,19 @@ POR QUE ELE EXISTE:
 
 .owner-metrics-panel {
     margin-top: var(--workspace-fib-4);
-    width: 100%;
+    width: min(100%, 420px);
+    margin-left: auto;
+    justify-self: end;
+}
+
+.owner-metrics-panel > .page-reading-panel,
+.owner-metrics-panel > .page-reading-list {
+    margin-top: 0;
 }
 
 .owner-simple-shell .owner-metric-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--workspace-fib-3); /* Fibonacci inteligente */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
 }
 
-/* Cards herdam estilos nativos do Dashboard (.dashboard-kpi-card) */
+/* Grade compacta oficial de KPIs do owner */

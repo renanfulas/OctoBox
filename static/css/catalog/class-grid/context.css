@@ -6,24 +6,61 @@ POR QUE ELE EXISTE:
 - mantem os painéis introdutorios separados do workspace operacional.
 */
 
-.class-grid-insight-card-body,
 .class-grid-focus-card-body {
     height: 100%;
 }
 
-.class-grid-insight-strip {
+.class-grid-metrics-panel {
+    margin-top: var(--workspace-fib-4);
+}
+
+.class-grid-metric-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 12px;
     align-items: stretch;
 }
 
-.class-grid-insight-card {
-    height: 100%;
+.class-grid-metric-card {
+    min-width: 0;
+    min-height: 134px;
 }
 
-.class-grid-insight-card .card-content {
+.class-grid-metric-card .card-body-metric {
+    display: grid;
+    grid-template-rows: auto 1fr;
     gap: 10px;
+    min-height: 100%;
+}
+
+.class-grid-metric-card .card-value-stack {
+    display: grid;
+    gap: 8px;
+}
+
+.class-grid-metric-card .card-label {
+    margin: 0;
+    color: var(--muted-strong);
+    font-size: 0.88rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.class-grid-metric-card .card-value {
+    margin: 0;
+    font-size: clamp(1.85rem, 2vw, 2.25rem);
+    line-height: 0.95;
+    letter-spacing: -0.05em;
+    font-weight: 800;
+}
+
+.class-grid-metric-card .card-copy {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.35;
 }
 
 .class-grid-quick-grid {

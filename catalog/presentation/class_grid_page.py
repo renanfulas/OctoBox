@@ -86,11 +86,6 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
         monthly_calendar=snapshot['monthly_calendar'],
         can_manage_classes=can_manage_classes,
     )
-    class_focus = [
-        'Valide a agenda real da equipe de forma rapida e visual.',
-        'A grade mostra reservas, lotacao e distribuicao das aulas por dia.',
-        'Em caso de duvida, comece por aqui antes de aprofundar em outros paineis.',
-    ]
     shell_action_buttons = build_shell_action_buttons_from_focus(focus=operational_focus, scope='class-grid')
     hero = build_page_hero(
         eyebrow='Aulas',
@@ -106,7 +101,6 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
         aria_label='Panorama da grade',
         classes=[],
     )
-
     payload = build_catalog_page_payload(
         context={
             'page_key': 'class-grid',
@@ -131,7 +125,6 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
             'selected_session': selected_session,
             'session_edit_form': session_edit_form,
             'operational_focus': operational_focus,
-            'class_focus': class_focus,
         },
         actions={
             'anchors': {

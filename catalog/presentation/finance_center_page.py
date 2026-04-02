@@ -8,9 +8,151 @@ POR QUE ELE EXISTE:
 
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
 from access.shell_actions import build_shell_action_buttons_from_focus
-from shared_support.page_payloads import build_page_hero, build_page_reading_panel
+from django.urls import reverse
+from django.utils import timezone
+from shared_support.page_payloads import build_page_hero
 
 from .shared import build_catalog_assets, build_catalog_page_payload
+
+
+FINANCE_PORTFOLIO_COLORS = ('cyan', 'violet', 'green', 'amber', 'rose', 'slate')
+
+
+def _build_finance_revenue_chart(monthly_comparison, comparison_peaks):
+    max_revenue = comparison_peaks.get('max_revenue') or 0
+    axis_step = 3000
+    axis_max = axis_step
+
+    if max_revenue:
+        axis_max = ((int(max_revenue) + axis_step - 1) // axis_step) * axis_step
+        axis_max = max(axis_max, axis_step)
+
+    ticks = []
+    for step in range(4, -1, -1):
+        value = int(axis_max * step / 4)
+        ticks.append(
+            {
+                'value': value,
+                'label': f'{int(round(value / 1000))}k',
+            }
+        )
+
+    items = []
+    for item in monthly_comparison:
+        revenue = item['revenue']
+        expected_revenue = item.get('expected_revenue', revenue)
+        items.append(
+            {
+                'label': item.get('short_label') or item['label'],
+                'realized_value': revenue,
+                'expected_value': expected_revenue,
+                'realized_height': max(8, round((float(revenue) / axis_max) * 100)) if axis_max else 8,
+                'expected_height': max(8, round((float(expected_revenue) / axis_max) * 100)) if axis_max else 8,
+            }
+        )
+
+    return {
+        'ticks': ticks,
+        'items': items,
+    }
+
+
+def _build_finance_churn_chart(monthly_comparison, comparison_peaks):
+    max_count = comparison_peaks.get('max_count') or 1
+    axis_max = max(max_count, 1)
+
+    ticks = []
+    for step in range(4, -1, -1):
+        value = int(round(axis_max * step / 4))
+        ticks.append({'value': value, 'label': str(value)})
+
+    items = []
+    for item in monthly_comparison:
+        activations = item['activations']
+        cancellations = item['cancellations']
+        items.append(
+            {
+                'label': item.get('short_label') or item['label'],
+                'activations': activations,
+                'cancellations': cancellations,
+                'net_growth': item['net_growth'],
+                'activation_height': max(8, round((activations / axis_max) * 100)) if axis_max else 8,
+                'cancellation_height': max(8, round((cancellations / axis_max) * 100)) if axis_max else 8,
+            }
+        )
+
+    return {
+        'ticks': ticks,
+        'items': items,
+    }
+
+
+def _build_finance_overdue_rows(financial_alerts):
+    today = timezone.localdate()
+    rows = []
+
+    for payment in financial_alerts:
+        student_name = payment.student.full_name
+        initials = ''.join(part[0] for part in student_name.split()[:2]).upper()
+        due_date = payment.due_date
+        overdue_days = max((today - due_date).days, 0)
+
+        rows.append(
+            {
+                'student_name': student_name,
+                'student_url': f"{reverse('student-quick-update', args=[payment.student.id])}#student-financial-overview",
+                'initials': initials[:2],
+                'plan_name': payment.enrollment.plan.name if payment.enrollment else 'Sem vinculo de plano',
+                'amount': payment.amount,
+                'overdue_days': overdue_days,
+                'badge': 'Urgente' if overdue_days >= 7 else 'Atencao',
+            }
+        )
+
+    return rows
+
+
+def _build_finance_portfolio_panel(plan_portfolio):
+    active_rows = []
+    total_revenue = 0.0
+
+    for plan in plan_portfolio:
+        revenue = float(plan.revenue_this_month or 0)
+        active_enrollments = int(plan.active_enrollments or 0)
+        if revenue <= 0 and active_enrollments <= 0:
+            continue
+
+        active_rows.append(
+            {
+                'name': plan.name,
+                'revenue': revenue,
+                'active_enrollments': active_enrollments,
+            }
+        )
+        total_revenue += revenue
+
+    if not active_rows:
+        return {'items': [], 'total_revenue': 0.0}
+
+    active_rows.sort(key=lambda item: (-item['revenue'], -item['active_enrollments'], item['name']))
+
+    total_revenue = total_revenue or 1.0
+    items = []
+    for index, row in enumerate(active_rows[:6]):
+        items.append(
+            {
+                'name': row['name'],
+                'revenue': row['revenue'],
+                'active_enrollments': row['active_enrollments'],
+                'width': max(12, round((row['revenue'] / total_revenue) * 100)),
+                'color': FINANCE_PORTFOLIO_COLORS[index % len(FINANCE_PORTFOLIO_COLORS)],
+            }
+        )
+
+    return {
+        'items': items,
+        'total_revenue': sum(item['revenue'] for item in items),
+    }
 
 
 def build_finance_filter_summary(filter_form):
@@ -135,15 +277,6 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         scope='finance',
     )
 
-    reading_panel = build_page_reading_panel(
-        items=operational_focus,
-        primary_href=operational_focus[0]['href'] if operational_focus else '',
-        pill_label=finance_priority_context['pill_label'],
-        pill_class=finance_priority_context['pill_class'],
-        class_name='finance-reading-panel',
-        panel_id='finance-reading-panel',
-    )
-
     hero_actions = [
         {'label': 'Ver prioridades', 'href': '#finance-priority-board', 'kind': 'primary', 'data_action': 'open-tab-finance-queue'},
         {'label': 'Abrir carteira', 'href': '#finance-portfolio-board', 'kind': 'secondary', 'data_action': 'open-tab-finance-portfolio'},
@@ -180,15 +313,18 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         },
         data={
             'hero': hero,
-            'reading_panel': reading_panel,
             'can_manage_finance': can_manage_finance,
             'finance_filter_form': filter_form,
             'finance_metrics': snapshot['finance_metrics'],
             'finance_pulse': finance_pulse,
+            'finance_revenue_chart': _build_finance_revenue_chart(snapshot['monthly_comparison'], snapshot['comparison_peaks']),
+            'finance_churn_chart': _build_finance_churn_chart(snapshot['monthly_comparison'], snapshot['comparison_peaks']),
+            'finance_overdue_rows': _build_finance_overdue_rows(financial_alerts),
             'interactive_kpis': snapshot.get('interactive_kpis', []),
             'finance_priority_context': finance_priority_context,
             'operational_focus': operational_focus,
             'plan_portfolio': plan_portfolio,
+            'finance_portfolio_panel': _build_finance_portfolio_panel(plan_portfolio),
             'plan_mix': snapshot['plan_mix'],
             'monthly_comparison': snapshot['monthly_comparison'],
             'comparison_peaks': snapshot['comparison_peaks'],

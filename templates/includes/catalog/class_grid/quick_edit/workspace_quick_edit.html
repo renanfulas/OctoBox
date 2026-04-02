@@ -1,5 +1,5 @@
 {% if page.data.selected_session and page.data.session_edit_form %}
-<section class="table-card class-session-edit-panel class-grid-workspace-panel" id="edicao-aula" data-panel-id="quick-edit-board" data-panel="class-grid-quick-edit" draggable="true">
+<section class="table-card class-session-edit-panel class-grid-workspace-panel" id="edicao-aula" data-panel="class-grid-quick-edit">
     {% include "includes/ui/class_grid/class_grid_panel_head.html" with eyebrow="Edicao rapida da aula" title="Ajuste "|add:page.data.selected_session.title|add:" sem sair da agenda" pill_label="Ajuste rapido" pill_class="info" header_class="" handle_aria="Arrastar janela da edicao rapida" %}
     <form method="post" class="form-stack-lg section-gap-top-xs" novalidate data-action="submit-class-grid-quick-edit">
         {% csrf_token %}

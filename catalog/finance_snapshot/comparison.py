@@ -23,6 +23,21 @@ from finance.models import Enrollment, EnrollmentStatus, Payment, PaymentStatus
 
 from .base import shift_month
 
+PT_MONTH_ABBR = {
+    1: 'Jan',
+    2: 'Fev',
+    3: 'Mar',
+    4: 'Abr',
+    5: 'Mai',
+    6: 'Jun',
+    7: 'Jul',
+    8: 'Ago',
+    9: 'Set',
+    10: 'Out',
+    11: 'Nov',
+    12: 'Dez',
+}
+
 
 def build_monthly_comparison(months, selected_plan, payment_status, payment_method):
     series = []
@@ -62,17 +77,33 @@ def build_monthly_comparison(months, selected_plan, payment_status, payment_meth
         series.append(
             {
                 'label': f'{month_abbr[start_date.month].upper()}/{str(start_date.year)[-2:]}',
+                'short_label': PT_MONTH_ABBR[start_date.month],
                 'revenue': revenue,
                 'activations': activations,
                 'cancellations': cancellations,
                 'net_growth': activations - cancellations,
             }
         )
+
+    for index, item in enumerate(series):
+        history = [entry['revenue'] for entry in series[max(0, index - 3):index]]
+        if history:
+            expected_revenue = sum(history, Decimal('0.00')) / Decimal(len(history))
+        else:
+            expected_revenue = item['revenue']
+        item['expected_revenue'] = expected_revenue.quantize(Decimal('0.01'))
+
     return series
 
 
 def build_comparison_peaks(series):
-    max_revenue = max((item['revenue'] for item in series), default=Decimal('0.00'))
+    max_revenue = max(
+        (
+            max(item['revenue'], item.get('expected_revenue', Decimal('0.00')))
+            for item in series
+        ),
+        default=Decimal('0.00'),
+    )
     max_count = max((max(item['activations'], item['cancellations']) for item in series), default=0)
     return {
         'max_revenue': max_revenue or Decimal('1.00'),

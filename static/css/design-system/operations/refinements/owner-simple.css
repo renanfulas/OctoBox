@@ -49,6 +49,11 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
         padding: 18px;
     }
 
+    .owner-metrics-panel {
+        width: 100%;
+        justify-self: stretch;
+    }
+
     .owner-metric-grid {
         grid-template-columns: 1fr;
     }

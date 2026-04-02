@@ -11,11 +11,51 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende do contexto de monthly_comparison.
 -->
-<article class="table-card finance-glass-panel finance-board-trend-side">
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Churn e crescimento" title="Ativacoes x cancelamentos" title_class="section-title-sm" copy="Mede acumulo real versus giro de base." copy_class="body-copy text-muted section-gap-top-xs no-margin" %}
-    <div class="stack-14 finance-trend-stack">
-        {% for item in page.data.monthly_comparison %}
-        {% include "includes/catalog/finance/cards/delta_row.html" with item=item page=page %}
-        {% endfor %}
+<article class="table-card finance-glass-panel finance-board-trend-side finance-churn-trend-card">
+    <div class="finance-churn-trend-head">
+        <div class="finance-churn-trend-copy">
+            <h3 class="finance-churn-trend-title">Churn e crescimento</h3>
+            <p class="finance-churn-trend-subtitle">Ativacoes vs cancelamentos — ultimos 6 meses</p>
+        </div>
+        <div class="finance-churn-trend-legend" aria-label="Legenda do grafico">
+            <span class="finance-churn-trend-legend-item">
+                <span class="finance-churn-trend-legend-dot is-activation" aria-hidden="true"></span>
+                Ativacoes
+            </span>
+            <span class="finance-churn-trend-legend-item">
+                <span class="finance-churn-trend-legend-dot is-cancellation" aria-hidden="true"></span>
+                Cancelamentos
+            </span>
+        </div>
+    </div>
+    <div class="finance-churn-trend-chart" aria-label="Grafico comparativo de ativacoes e cancelamentos">
+        <div class="finance-churn-trend-axis" aria-hidden="true">
+            {% for tick in page.data.finance_churn_chart.ticks %}
+            <span>{{ tick.label }}</span>
+            {% endfor %}
+        </div>
+        <div class="finance-churn-trend-plot">
+            <div class="finance-churn-trend-gridlines" aria-hidden="true">
+                {% for tick in page.data.finance_churn_chart.ticks %}
+                <span></span>
+                {% endfor %}
+            </div>
+            <div class="finance-churn-trend-columns" data-visual-columns="{{ page.data.finance_churn_chart.items|length|default:1 }}">
+                {% for item in page.data.finance_churn_chart.items %}
+                <div class="finance-churn-column">
+                    <div class="finance-churn-column-bars">
+                        <div class="finance-churn-bar is-cancellation" style="--finance-bar-height: {{ item.cancellation_height }}%;" title="Cancelamentos: {{ item.cancellations }}"></div>
+                        <div class="finance-churn-bar is-activation" style="--finance-bar-height: {{ item.activation_height }}%;" title="Ativacoes: {{ item.activations }}"></div>
+                    </div>
+                    <div class="finance-churn-column-meta">
+                        <strong class="finance-churn-column-label">{{ item.label }}</strong>
+                        <span class="finance-churn-column-balance{% if item.net_growth < 0 %} is-negative{% elif item.net_growth > 0 %} is-positive{% endif %}">
+                            Saldo {{ item.net_growth }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </article>

@@ -14,7 +14,7 @@ PONTOS CRITICOS:
 
 from access.navigation_contracts import get_shell_route_url
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
-from shared_support.page_payloads import attach_page_payload, build_page_hero, build_page_reading_panel
+from shared_support.page_payloads import attach_page_payload, build_page_hero
 
 from operations.facade import (
     build_coach_workspace_snapshot,
@@ -168,30 +168,5 @@ class WhatsAppWorkspaceView(OperationBaseView):
             classes=['whatsapp-placeholder-hero'],
             heading_level='h1',
             data_panel='whatsapp-placeholder-hero',
-        )
-        context['whatsapp_placeholder_reading_panel'] = build_page_reading_panel(
-            items=[
-                {
-                    'chip_label': 'Estado',
-                    'count': 1,
-                    'label': 'Central ainda em construcao',
-                    'summary': 'A camada de mensagens ainda esta sendo preparada para virar ferramenta de operacao real sem virar improviso.',
-                    'pill_class': 'warning',
-                    'href': get_shell_route_url('dashboard'),
-                    'href_label': 'Voltar ao dashboard',
-                },
-                {
-                    'chip_label': 'Direcao',
-                    'count': 1,
-                    'label': 'Relacionamento vira um workspace proprio',
-                    'summary': 'A intencao aqui e concentrar relacionamento, historico e acao humana no mesmo lugar quando a frente abrir de verdade.',
-                    'pill_class': 'info',
-                    'href': get_shell_route_url('students'),
-                    'href_label': 'Abrir alunos',
-                },
-            ],
-            primary_href=get_shell_route_url('dashboard'),
-            class_name='whatsapp-placeholder-reading-panel',
-            panel_id='whatsapp-placeholder-reading-panel',
         )
         return context

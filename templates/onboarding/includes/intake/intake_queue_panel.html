@@ -2,82 +2,120 @@
 ARQUIVO: fila principal da Central de Intake.
 
 POR QUE ELE EXISTE:
-- concentra a triagem operacional e o handoff de conversao em um bloco proprio.
--->
-<!--
-ARQUIVO: fila principal da Central de Intake.
-
-POR QUE ELE EXISTE:
-- Concentra a triagem operacional e o handoff de conversão em um bloco próprio.
+- concentra a triagem operacional em uma leitura parecida com alunos, sem perder as acoes reais da fila.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Exibe a fila de contatos aguardando atendimento.
-2. Mostra cards detalhados para cada intake.
+1. exibe busca e filtros rapidos da fila.
+2. mostra a fila principal em tabela compacta.
+3. preserva atribuicao, triagem e conversao na mesma superficie.
 
 PONTOS CRITICOS:
-- Depende do contexto de queue_items.
+- depende do contexto de queue_items e de form.
 -->
-<section class="card glass-panel intake-data-panel" id="intake-queue-board" aria-label="Fila principal de intake" data-panel="intake-queue-board">
+<section class="intake-data-panel" id="intake-queue-board" aria-label="Fila principal de intake" data-panel="intake-queue-board">
     {% url 'student-quick-create' as student_quick_create_url %}
-    <div class="card-head">
-        <div class="card-head-main">
-            <h2 class="card-title">Novos Contatos: Quem quer treinar no Box</h2>
-            <p class="card-copy">Pessoas que procuraram o Box. Atenda e dê as boas-vindas para convertê-las em alunos!</p>
+    <section class="student-filter-bar intake-filter-bar" aria-label="Busca e filtros da central de intake">
+        <form method="get" action="." class="student-filter-form" id="intake-directory-filter-form">
+            <input type="hidden" name="panel" value="tab-intake-queue">
+            <label class="student-filter-search" aria-label="Buscar contato">
+                <span class="student-filter-search-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input
+                    type="text"
+                    name="query"
+                    value="{{ page.data.filter_form.query.value|default:'' }}"
+                    placeholder="Buscar contato, telefone ou e-mail..."
+                    class="student-filter-search-input"
+                >
+            </label>
+        </form>
+
+        <nav class="student-filter-pills intake-filter-pills" aria-label="Filtros rapidos da fila de intake">
+            <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}" class="student-filter-pill {% if not request.GET.status %}is-active{% endif %}">Todos</a>
+            <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}&status=new" class="student-filter-pill {% if request.GET.status == 'new' %}is-active{% endif %}">Novos</a>
+            <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}&status=reviewing" class="student-filter-pill {% if request.GET.status == 'reviewing' %}is-active{% endif %}">Em revisao</a>
+            <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}&status=matched" class="student-filter-pill {% if request.GET.status == 'matched' %}is-active{% endif %}">Prontos</a>
+        </nav>
+
+        <p class="student-filter-count">{{ page.data.visible_queue_count }} entradas</p>
+    </section>
+
+    <div class="student-data-panel intake-data-panel-table">
+        <div class="student-table-scroll" data-slot="intake-table-scroll">
+            <table class="table-modern intake-directory-table">
+                <caption class="visually-hidden">Fila principal de intake com busca, filtros rapidos e acoes de triagem.</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Contato</th>
+                        <th scope="col">Origem</th>
+                        <th scope="col">Leitura</th>
+                        <th scope="col">Responsavel</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Proxima acao</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in page.data.queue_items %}
+                    {% with intake=item.object semantic=item.semantic_state conversion=item.conversion permissions=item.action_permissions %}
+                    <tr class="intake-directory-row">
+                        <td data-label="Contato">
+                            <div class="student-identity">
+                                <div class="avatar-circle avatar-{% cycle 'orange' 'blue' 'purple' 'teal' 'pink' 'indigo' %} student-avatar-circle">
+                                    {{ intake.full_name|slice:":2"|upper }}
+                                </div>
+                                <div class="student-identity-copy">
+                                    <strong class="student-name">{{ intake.full_name }}</strong>
+                                    <span class="student-email">{{ intake.email|default:intake.phone }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td data-label="Origem">
+                            <span class="intake-table-text">{{ intake.get_source_display }}</span>
+                        </td>
+                        <td data-label="Leitura">
+                            <div class="intake-reading-stack">
+                                <span class="student-status-pill student-status-pill--blue">{{ semantic.semantic_label }}</span>
+                                <span class="intake-reading-note">{{ conversion.reason }}</span>
+                            </div>
+                        </td>
+                        <td data-label="Responsavel">
+                            <span class="intake-table-text">{% if intake.assigned_to %}{{ intake.assigned_to.get_full_name|default:intake.assigned_to.username }}{% else %}Aguardando{% endif %}</span>
+                        </td>
+                        <td data-label="Status">
+                            <span class="student-status-pill{% if intake.status == 'reviewing' %} student-status-pill--orange{% elif intake.status == 'matched' %} student-status-pill--green{% else %} student-status-pill--blue{% endif %}">
+                                {{ intake.get_status_display }}
+                            </span>
+                        </td>
+                        <td data-label="Proxima acao">
+                            <div class="intake-row-actions">
+                                {% if page.capabilities.can_work_queue %}
+                                <form method="post" class="intake-row-form" data-action="intake-queue-actions">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="intake_id" value="{{ intake.id }}">
+                                    <input type="hidden" name="return_query" value="{{ request.GET.urlencode }}">
+                                    {% if permissions.can_assign_to_me and intake.assigned_to_id != user.id %}<button class="button secondary" type="submit" name="action" value="assign-to-me">Atender</button>{% endif %}
+                                    {% if permissions.can_start_review %}<button class="button secondary" type="submit" name="action" value="start-review">Conversar</button>{% endif %}
+                                    {% if permissions.can_mark_matched %}<button class="button secondary" type="submit" name="action" value="mark-matched">Triar</button>{% endif %}
+                                    {% if permissions.can_reject %}<button class="button secondary" type="submit" name="action" value="reject-intake">Recusar</button>{% endif %}
+                                </form>
+                                {% endif %}
+                                {% if page.capabilities.can_manage_students and conversion.can_convert %}
+                                <a class="button intake-convert-button" href="{{ student_quick_create_url }}?intake={{ intake.id }}#student-form-essential" data-action="open-student-quick-create-from-intake">{{ conversion.action_label }}</a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endwith %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="table-empty-cell p-10 text-center text-dimmed text-sm">
+                            Nenhuma entrada provisoria pede triagem agora.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-    </div>
-    <div class="intake-grid">
-        {% for item in page.data.queue_items %}
-        {% with intake=item.object semantic=item.semantic_state conversion=item.conversion permissions=item.action_permissions %}
-        <div class="intake-card intake-card--detailed" data-panel="intake-queue-card">
-            <div class="card-body intake-card-body">
-                <div class="stack-8 intake-card-main">
-                    <div class="row-between-md intake-card-header">
-                        <div class="card-head-main-stack">
-                            <strong>{{ intake.full_name }}</strong>
-                            <p class="meta-text-sm">{{ intake.phone }}{% if intake.email %} | {{ intake.email }}{% endif %}</p>
-                        </div>
-                        <div class="stack-8 student-priority-badges card-head-aside">
-                            <span class="pill">{{ semantic.entity_label }}</span>
-                            <span class="pill info">{{ semantic.semantic_label }}</span>
-                            <span class="pill info">{{ intake.get_source_display }}</span>
-                            <span class="pill{% if intake.status == 'reviewing' %} warning{% elif intake.status == 'matched' %} success{% endif %}">{{ intake.get_status_display }}</span>
-                        </div>
-                    </div>
-                    <div class="card-content intake-card-content">
-                        <div class="intake-meta-list">
-                            <p class="meta-text">🕒 Chegou em {{ intake.created_at|date:"d/m/Y H:i" }}</p>
-                            <p class="meta-text">👥 {% if intake.assigned_to %}Por conta de: {{ intake.assigned_to.get_full_name|default:intake.assigned_to.username }}{% else %}Aguardando atendimento{% endif %}</p>
-                            <p class="meta-text">{{ semantic.note }}</p>
-                            <p class="meta-text">{{ conversion.reason }}</p>
-                            {% if intake.notes %}<p class="meta-text">{{ intake.notes|truncatechars:180 }}</p>{% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-footer intake-card-footer">
-                <div class="actions actions-tight intake-card-actions">
-                    {% if page.capabilities.can_work_queue %}
-                    <form method="post" class="intake-action-form" data-action="intake-queue-actions">
-                        {% csrf_token %}
-                        <input type="hidden" name="intake_id" value="{{ intake.id }}">
-                        <input type="hidden" name="return_query" value="{{ request.GET.urlencode }}">
-                        {% if permissions.can_assign_to_me and intake.assigned_to_id != user.id %}<button class="button secondary" type="submit" name="action" value="assign-to-me">Atender</button>{% endif %}
-                        {% if permissions.can_start_review %}<button class="button secondary" type="submit" name="action" value="start-review">Conversar</button>{% endif %}
-                        {% if permissions.can_mark_matched %}<button class="button secondary" type="submit" name="action" value="mark-matched">Aprovar Triage</button>{% endif %}
-                        {% if permissions.can_reject %}<button class="button secondary" type="submit" name="action" value="reject-intake">Recusar</button>{% endif %}
-                    </form>
-                    {% endif %}
-                    {% if page.capabilities.can_manage_students and conversion.can_convert %}
-                    <a class="button" href="{{ student_quick_create_url }}?intake={{ intake.id }}#student-form-essential" data-action="open-student-quick-create-from-intake">{{ conversion.action_label }}</a>
-                    {% else %}
-                    <span class="pill intake-conversion-pill">{{ conversion.action_label }}</span>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        {% endwith %}
-        {% empty %}
-        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Fila principal" title="Nenhuma entrada provisoria pede triagem agora" copy="A fila de intake esta limpa neste recorte e a conversao nao depende de pendencia aberta." badge="Fila limpa" badge_class="success" %}
-        {% endfor %}
     </div>
 </section>

@@ -12,6 +12,10 @@ POR QUE ELE EXISTE:
     gap: var(--section-gap);
 }
 
+.reports-hub-scene {
+    gap: calc(var(--section-gap) - 2px);
+}
+
 .reports-hub-card {
     padding: 0;
     display: flex;

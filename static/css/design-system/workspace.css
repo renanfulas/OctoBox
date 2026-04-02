@@ -69,11 +69,13 @@ body[data-theme="dark"] .workspace-panel {
    Garante que todos os heros do sistema (Dashboard, Owner, Recepção, etc)
    tenham exatamente o mesmo grid limpo e botões laterais (Fibonacci).
 ───────────────────────────────────────────────────────────────────────── */
-.workspace-shell .operation-hero {
+.workspace-shell .operation-hero,
+.operation-shell .operation-hero,
+.dashboard-shell .operation-hero {
     --operation-hero-gap: var(--workspace-fib-3);
     --operation-hero-min-height: 178px;
     --operation-hero-padding: var(--workspace-fib-4) clamp(var(--workspace-fib-4), 2.5vw, var(--workspace-fib-5));
-    --operation-hero-radius: 18px;
+    --operation-hero-radius: 28px;
     --operation-hero-border: rgba(255, 255, 255, 0.74);
     --operation-hero-surface: radial-gradient(circle at top right, rgba(212, 102, 44, 0.03), transparent 22%), radial-gradient(circle at bottom left, rgba(37, 85, 220, 0.02), transparent 18%), linear-gradient(145deg, rgba(255, 255, 255, 0.99), rgba(250, 248, 245, 0.98)), var(--surface);
     --operation-hero-shadow: var(--fdw-shadow-lift);
@@ -85,10 +87,10 @@ body[data-theme="dark"] .workspace-panel {
     --operation-hero-stack-gap: var(--workspace-fib-2);
     --operation-hero-stack-max-width: 52ch;
     --operation-hero-heading-max-width: 12ch;
-    --operation-hero-heading-size: clamp(2.15rem, 3.5vw, 3rem);
+    --operation-hero-heading-size: clamp(2.4rem, 4vw, 3.6rem);
     --operation-hero-heading-line-height: 0.95;
     --operation-hero-heading-letter-spacing: -0.05em;
-    --operation-hero-copy-max-width: 55ch;
+    --operation-hero-copy-max-width: 36ch;
     --operation-hero-copy-size: 0.98rem;
     --operation-hero-copy-line-height: 1.5;
     
@@ -105,6 +107,8 @@ body[data-theme="dark"] .workspace-panel {
     --operation-hero-button-min-height: 34px;
     --operation-hero-button-padding: 7px 14px;
     --operation-hero-button-radius: 999px;
+    --operation-hero-side-width: min(100%, 320px);
+    --operation-hero-panel-padding: 14px 16px;
 
     /* Apply standard FDW light swooshes exactly matching dashboard */
     --hero-before-inset: auto auto calc(var(--workspace-fib-5) * -1) calc(var(--workspace-fib-4) * -1);
@@ -120,7 +124,9 @@ body[data-theme="dark"] .workspace-panel {
     --hero-after-background: linear-gradient(125deg, rgba(255, 255, 255, 0.06), transparent 46%);
 }
 
-body[data-theme="dark"] .workspace-shell .operation-hero {
+body[data-theme="dark"] .workspace-shell .operation-hero,
+body[data-theme="dark"] .operation-shell .operation-hero,
+body[data-theme="dark"] .dashboard-shell .operation-hero {
     --operation-hero-border: rgba(148, 163, 184, 0.16);
     --operation-hero-surface: radial-gradient(circle at top right, rgba(249, 115, 22, 0.18), transparent 30%), radial-gradient(circle at bottom left, rgba(37, 99, 235, 0.14), transparent 24%), linear-gradient(145deg, rgba(18, 28, 40, 0.97), rgba(10, 17, 27, 0.99)), var(--surface);
     --operation-hero-shadow: var(--fdw-shadow);
@@ -130,7 +136,9 @@ body[data-theme="dark"] .workspace-shell .operation-hero {
 }
 
 @media (max-width: 960px) {
-    .workspace-shell .operation-hero {
+    .workspace-shell .operation-hero,
+    .operation-shell .operation-hero,
+    .dashboard-shell .operation-hero {
         --operation-hero-main-columns: minmax(0, 1fr);
         --operation-hero-main-align-items: stretch;
         --operation-hero-actions-justify-self: start;

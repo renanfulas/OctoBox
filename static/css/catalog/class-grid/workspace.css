@@ -2,8 +2,8 @@
 ARQUIVO: workspace e controles operacionais da grade.
 
 POR QUE ELE EXISTE:
-- concentra paineis arrastaveis, headers locais e controles do planner.
-- separa a mecânica de organizacao do workspace da renderizacao dos calendarios.
+- concentra paineis do workspace e controles do planner.
+- separa a mecanica de organizacao do workspace da renderizacao dos calendarios.
 */
 
 .class-grid-workspace {
@@ -26,19 +26,18 @@ POR QUE ELE EXISTE:
     gap: 16px;
 }
 
+.class-grid-workspace-bottom-split {
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    align-items: start;
+    gap: 16px;
+}
+
 .class-grid-workspace-panel {
     position: relative;
     overflow: hidden;
     min-height: 100%;
     background: var(--surface);
-    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
-}
-
-.class-grid-workspace-panel.is-dragging {
-    opacity: 0.72;
-    transform: rotate(1deg) scale(1.01);
-    box-shadow: var(--shadow-lift);
-    border-color: rgba(249, 115, 22, 0.28);
+    transition: box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
 }
 
 .class-grid-panel-head {
@@ -60,37 +59,6 @@ POR QUE ELE EXISTE:
     flex-wrap: wrap;
     align-items: center;
     justify-content: end;
-}
-
-.class-grid-grab-handle {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 10px;
-    border-radius: 999px;
-    border: 1px dashed rgba(59, 130, 246, 0.28);
-    background: rgba(255, 255, 255, 0.82);
-    color: var(--muted);
-    font-size: 0.82rem;
-    font-weight: 700;
-    cursor: grab;
-    user-select: none;
-}
-
-.class-grid-grab-handle::before {
-    content: "⋮⋮";
-    letter-spacing: -0.2em;
-    font-size: 0.95rem;
-    color: var(--accent-2);
-}
-
-.class-grid-grab-handle:focus-visible {
-    outline: 2px solid rgba(59, 130, 246, 0.32);
-    outline-offset: 3px;
-}
-
-.class-grid-grab-handle:active {
-    cursor: grabbing;
 }
 
 .button-sm {
@@ -176,8 +144,20 @@ POR QUE ELE EXISTE:
 
 .weekday-picker {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(10, minmax(0, 1fr));
     gap: 10px;
+}
+
+.weekday-picker .weekday-option {
+    grid-column: span 2;
+}
+
+.weekday-picker .weekday-option:nth-child(6) {
+    grid-column: 4 / span 2;
+}
+
+.weekday-picker .weekday-option:nth-child(7) {
+    grid-column: 6 / span 2;
 }
 
 .weekday-option {
@@ -213,9 +193,4 @@ body[data-theme="dark"] .weekday-option {
     background: var(--surface) !important;
     border-color: var(--line) !important;
     color: var(--ink) !important;
-}
-
-body[data-theme="dark"] .class-grid-grab-handle {
-    background: var(--surface) !important;
-    border-color: var(--line) !important;
 }

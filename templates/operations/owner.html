@@ -20,9 +20,7 @@ PONTOS CRITICOS:
 <div class="operation-shell owner-scene owner-simple-shell workspace-shell">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
-    <div class="owner-metrics-panel">
-        {% include "includes/ui/layout/page_reading_panel.html" with panel=page.data.reading_panel %}
-    </div>
+    {% include "includes/ui/layout/page_reading_list.html" with panel=page.data.reading_panel %}
 
     <div class="owner-metrics-panel">
         {% include "operations/includes/owner/owner_metrics_section.html" %}

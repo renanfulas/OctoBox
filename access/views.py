@@ -25,7 +25,7 @@ from django.views.generic import TemplateView
 
 from access.admin import admin_changelist_url, user_can_access_admin
 from access.shell_actions import attach_shell_action_buttons
-from shared_support.page_payloads import build_page_hero, build_page_reading_panel
+from shared_support.page_payloads import build_page_hero
 from .forms import AccessProfileCreateForm, AccessProfileUpdateForm
 from .roles import ROLE_DEFINITIONS, ROLE_DEV, ROLE_OWNER, ROLE_PERMISSION_MAP, get_user_capabilities, get_user_role
 
@@ -270,12 +270,6 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
                 ] if user_can_access_admin(self.request.user) else []),
             ],
             aria_label='Panorama de acessos',
-        )
-        context['access_reading_panel'] = build_page_reading_panel(
-            items=context['access_operational_focus'],
-            primary_href=context['access_operational_focus'][0]['href'] if context['access_operational_focus'] else '',
-            class_name='access-reading-panel',
-            panel_id='access-reading-panel',
         )
         context['governance_points'] = [
             'Manager nao vira coach por atalho.',

@@ -10,15 +10,12 @@ POR QUE ELE EXISTE:
     gap: calc(var(--section-gap) - 2px);
 }
 
-.student-toolbar-import {
-    white-space: nowrap;
+.student-kpi-overview {
+    margin-bottom: 32px;
 }
 
-.student-command-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr);
-    gap: 18px;
-    align-items: start;
+.student-toolbar-import {
+    white-space: nowrap;
 }
 
 .student-scene .metric-card {
@@ -37,7 +34,90 @@ POR QUE ELE EXISTE:
 }
 
 .student-kpi-card {
-    min-height: 100%;
+    display: grid;
+    gap: 28px;
+    min-height: 124px;
+    padding: 18px 20px;
+    cursor: pointer;
+    border-radius: 20px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%);
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+}
+
+.student-kpi-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.student-kpi-card-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(15, 23, 42, 0.48);
+}
+
+.student-kpi-icon-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: currentColor;
+}
+
+.student-kpi-icon-box svg {
+    width: 18px;
+    height: 18px;
+}
+
+.student-kpi-card-body {
+    display: grid;
+    align-content: end;
+}
+
+.student-kpi-card-value {
+    font-size: clamp(2rem, 2.8vw, 3rem);
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+    color: currentColor;
+}
+
+.student-kpi-card::after {
+    content: "";
+    display: block;
+    height: 2px;
+    border-radius: 999px;
+    opacity: 0.72;
+    background: currentColor;
+}
+
+.student-kpi-card.kpi-green {
+    color: #19f5a1;
+}
+
+.student-kpi-card.kpi-red {
+    color: #ff2d6f;
+}
+
+.student-kpi-card.kpi-cyan {
+    color: #16d9ff;
+}
+
+.student-kpi-card.kpi-purple {
+    color: #b45dff;
+}
+
+body[data-theme="dark"] .student-kpi-card {
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: linear-gradient(180deg, rgba(14, 15, 24, 0.98) 0%, rgba(12, 13, 21, 0.96) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="dark"] .student-kpi-card-label {
+    color: rgba(226, 232, 240, 0.56);
 }
 
 .student-directory-surface {

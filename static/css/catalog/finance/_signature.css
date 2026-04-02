@@ -23,9 +23,6 @@ PONTOS CRITICOS:
 
 /* ── Hero signature ── */
 
-.finance-shell .finance-hero-side-stat span {
-    color: rgba(19, 33, 50, 0.58);
-}
 
 .finance-shell .finance-metric-card .metric,
 .finance-shell .finance-ops-metric-card .metric,
@@ -59,27 +56,8 @@ PONTOS CRITICOS:
 
 /* ── Hero panel signature (dark panel inside hero) ── */
 
-.finance-shell .finance-hero .operation-hero-panel,
-.finance-shell .finance-hero-panel.operation-hero-panel {
-    border-color: rgba(15, 118, 110, 0.18);
-    background: var(--finance-signature-ink);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.1),
-        0 22px 44px rgba(19, 33, 50, 0.18);
-}
 
-.finance-shell .finance-hero .operation-hero-panel .eyebrow,
-.finance-shell .finance-hero .operation-hero-panel .operation-card-copy,
-.finance-shell .finance-hero .operation-hero-panel .hero-side-stat span,
-.finance-shell .finance-hero .operation-hero-panel .hero-side-stat strong {
-    color: rgba(245, 249, 252, 0.92);
-}
 
-.finance-shell .finance-hero .hero-side-stat {
-    border-color: rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
 
 /* ── Card signatures (metric, ops, filter-summary, radar, action) ── */
 
@@ -166,9 +144,6 @@ body[data-theme="dark"] .finance-shell .finance-metric-card .meta-text-sm,
 body[data-theme="dark"] .finance-shell .finance-action-body .meta-text-sm,
 body[data-theme="dark"] .finance-shell .finance-summary-chip p,
 body[data-theme="dark"] .finance-shell .finance-data-chip p,
-body[data-theme="dark"] .finance-shell .finance-hero-side-stat span {
-    color: rgba(226, 236, 244, 0.72);
-}
 
 body[data-theme="dark"] .finance-shell .finance-metric-card .metric,
 body[data-theme="dark"] .finance-shell .finance-ops-metric-card .metric,
@@ -183,10 +158,6 @@ body[data-theme="dark"] .finance-shell .finance-support-actions .button.secondar
     color: rgba(245, 249, 252, 0.9);
 }
 
-body[data-theme="dark"] .finance-shell .finance-hero-panel.operation-hero-panel {
-    border-color: rgba(41, 103, 163, 0.22);
-    background: var(--surface);
-}
 
 body[data-theme="dark"] .finance-shell .finance-metric-card,
 body[data-theme="dark"] .finance-shell .finance-ops-metric-card,
@@ -207,3 +178,4 @@ body[data-theme="dark"] .finance-shell .finance-action-message {
     border-color: rgba(144, 181, 205, 0.14);
     background: var(--surface);
 }
+

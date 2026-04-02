@@ -10,24 +10,6 @@ POR QUE ELE EXISTE:
     gap: 18px;
 }
 
-.owner-simple-shell .operation-hero {
-    border-radius: 28px;
-}
-
-.owner-simple-shell .operation-hero h2 {
-    max-width: 12ch;
-    font-size: clamp(2.4rem, 4vw, 3.6rem);
-    line-height: 0.94;
-}
-
-.owner-simple-shell .operation-hero .operation-hero-copy {
-    max-width: 36ch;
-}
-
-.owner-simple-shell .operation-hero-side {
-    width: min(100%, 320px);
-}
-
 .owner-workspace {
     display: grid;
     gap: 32px;

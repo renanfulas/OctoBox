@@ -3,17 +3,6 @@ ARQUIVO: superfície técnica de dev.
 */
 
 .dev-scene {
-    --operation-hero-padding: 18px 20px;
-    --operation-hero-main-gap: 10px;
-    --operation-hero-stack-gap: 6px;
-    --operation-hero-stack-max-width: 560px;
-    --operation-hero-copy-max-width: 40ch;
-    --operation-hero-actions-gap: 6px;
-    --operation-hero-actions-max-width: 530px;
-    --operation-hero-button-min-height: 34px;
-    --operation-hero-button-padding: 7px 12px;
-    --operation-hero-side-width: min(100%, 304px);
-    --operation-hero-panel-padding: 12px 14px;
     --operation-mini-grid-gap: 6px;
     --operation-mini-grid-margin-top: 10px;
     --operation-mini-stat-padding: 7px 8px;

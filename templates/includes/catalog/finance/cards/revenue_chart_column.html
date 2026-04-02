@@ -11,10 +11,10 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende de item e page.data.comparison_peaks.
 -->
-<div class="chart-column finance-chart-column">
-    <div class="chart-bar-wrap">
-        <div class="chart-bar revenue" data-visual-height="{% widthratio item.revenue page.data.comparison_peaks.max_revenue 100 %}"></div>
+<div class="finance-revenue-column">
+    <div class="finance-revenue-column-bars">
+        <div class="finance-revenue-bar is-expected" style="--finance-bar-height: {{ item.expected_height }}%;" title="Esperado: R$ {{ item.expected_value|floatformat:2 }}"></div>
+        <div class="finance-revenue-bar is-realized" style="--finance-bar-height: {{ item.realized_height }}%;" title="Realizado: R$ {{ item.realized_value|floatformat:2 }}"></div>
     </div>
-    <strong>{{ item.label }}</strong>
-    <span class="finance-inline-currency finance-chart-value">R$ {{ item.revenue|floatformat:2 }}</span>
+    <strong class="finance-revenue-column-label">{{ item.label }}</strong>
 </div>

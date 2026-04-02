@@ -9,6 +9,127 @@ POR QUE ELE EXISTE:
     gap: var(--section-gap);
 }
 
+.intake-directory-surface {
+    padding: 0;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--fdw-panel) 94%, transparent);
+}
+
+.intake-filter-bar {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.intake-filter-pills {
+    justify-self: start;
+}
+
+.intake-data-panel {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.intake-data-panel-table {
+    width: 100%;
+    min-width: 0;
+}
+
+.intake-directory-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.intake-directory-table th,
+.intake-directory-table td {
+    padding: 18px 16px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.intake-directory-table th {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(71, 85, 105, 0.72);
+    white-space: nowrap;
+}
+
+.intake-directory-table th:nth-child(1),
+.intake-directory-table td:nth-child(1) {
+    width: 28%;
+}
+
+.intake-directory-table th:nth-child(2),
+.intake-directory-table td:nth-child(2) {
+    width: 11%;
+}
+
+.intake-directory-table th:nth-child(3),
+.intake-directory-table td:nth-child(3) {
+    width: 21%;
+}
+
+.intake-directory-table th:nth-child(4),
+.intake-directory-table td:nth-child(4) {
+    width: 14%;
+}
+
+.intake-directory-table th:nth-child(5),
+.intake-directory-table td:nth-child(5) {
+    width: 10%;
+}
+
+.intake-directory-table th:nth-child(6),
+.intake-directory-table td:nth-child(6) {
+    width: 16%;
+}
+
+.intake-directory-table tbody tr + tr {
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.intake-table-text {
+    color: #0f172a;
+    font-size: 0.95rem;
+}
+
+.intake-reading-stack {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+}
+
+.intake-reading-note {
+    color: rgba(71, 85, 105, 0.82);
+    font-size: 0.88rem;
+    line-height: 1.45;
+}
+
+.intake-row-actions {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+}
+
+.intake-row-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.intake-row-form .button,
+.intake-convert-button {
+    min-height: 34px;
+    padding: 7px 12px;
+}
+
+.intake-convert-button {
+    justify-self: start;
+}
+
 .intake-compact-layout {
     align-items: start;
     gap: 14px;
@@ -66,6 +187,18 @@ body[data-theme="dark"] .intake-rule-card {
     background: var(--surface);
     border-color: var(--line);
     box-shadow: none;
+}
+
+body[data-theme="dark"] .intake-directory-table th {
+    color: rgba(226, 232, 240, 0.5);
+}
+
+body[data-theme="dark"] .intake-table-text {
+    color: #f8fafc;
+}
+
+body[data-theme="dark"] .intake-reading-note {
+    color: rgba(226, 232, 240, 0.58);
 }
 
 .intake-metric-body,
@@ -147,9 +280,77 @@ body[data-theme="dark"] .intake-rule-card {
     .intake-scene .metric-card {
         min-height: 160px;
     }
+
+    .intake-directory-table {
+        table-layout: auto;
+    }
 }
 
 @media (max-width: 720px) {
+    .intake-filter-pills {
+        justify-self: start;
+    }
+
+    .intake-directory-table thead {
+        display: none;
+    }
+
+    .intake-directory-table,
+    .intake-directory-table tbody {
+        display: grid;
+        width: 100%;
+    }
+
+    .intake-directory-table tbody {
+        gap: 13px;
+        padding: 12px 16px 16px;
+    }
+
+    .intake-directory-table tbody tr {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.86);
+    }
+
+    .intake-directory-table td {
+        display: grid;
+        gap: 6px;
+        padding: 0;
+    }
+
+    .intake-directory-table td::before {
+        content: attr(data-label);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(71, 85, 105, 0.64);
+    }
+
+    .intake-row-form {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .intake-row-form .button,
+    .intake-convert-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    body[data-theme="dark"] .intake-directory-table tbody tr {
+        background: rgba(12, 13, 21, 0.96);
+        border-color: rgba(148, 163, 184, 0.12);
+    }
+
+    body[data-theme="dark"] .intake-directory-table td::before {
+        color: rgba(226, 232, 240, 0.46);
+    }
+
     .intake-source-grid {
         grid-template-columns: 1fr;
     }

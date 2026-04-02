@@ -12,16 +12,6 @@ POR QUE ELE EXISTE:
         linear-gradient(155deg, color-mix(in srgb, var(--theme-surface-panel) 98%, white), color-mix(in srgb, var(--theme-surface-strong) 94%, white));
 }
 
-/* Remove overrides that break the global operation-hero grid */
-
-.finance-shell .operation-hero-side {
-    width: min(100%, 300px);
-}
-
-.finance-shell .operation-hero-panel {
-    padding: 12px 14px;
-}
-
 .finance-command-hero {
     --finance-command-surface:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 46%, transparent), transparent 24%),

@@ -228,12 +228,7 @@ def build_finance_interactive_kpis(finance_metrics, *, priority_context=None):
         },
     }
 
-    if priority_context['dominant_key'] == 'queue':
-        order = ['queue', 'movements', 'portfolio', 'filters']
-    elif priority_context['dominant_key'] == 'portfolio':
-        order = ['portfolio', 'movements', 'queue', 'filters']
-    else:
-        order = ['movements', 'queue', 'portfolio', 'filters']
+    order = ['movements', 'queue', 'portfolio', 'filters']
 
     return [cards[key] for key in order]
 

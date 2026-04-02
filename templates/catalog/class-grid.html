@@ -16,23 +16,22 @@ PONTOS CRITICOS:
 
 {% block content %}
 {% with page=class_grid_page %}
-<div class="operation-shell catalog-scene class-grid-scene" data-page="class-grid" data-screen="catalog-class-grid" data-slot="page-root">
-<div data-panel="class-grid-hero">
-{% include "includes/catalog/class_grid/views/hero.html" with page=page %}
-</div>
-<div data-panel="class-grid-context-panels">
-{% include "includes/catalog/class_grid/context/context_panels.html" %}
-</div>
-<div data-panel="class-grid-workspace-root">
-{% include "includes/catalog/class_grid/views/workspace.html" %}
-</div>
-<div data-panel="class-grid-monthly-modal-root">
-{% include "includes/catalog/class_grid/views/monthly_modal.html" %}
-</div>
-<div data-panel="class-grid-weekly-modal-root">
-{% include "includes/catalog/class_grid/views/weekly_modal.html" %}
-</div>
-
+<div class="operation-shell workspace-shell catalog-scene class-grid-scene" data-page="class-grid" data-screen="catalog-class-grid" data-slot="page-root">
+    <div data-panel="class-grid-hero">
+        {% include "includes/catalog/class_grid/views/hero.html" with page=page %}
+    </div>
+    <div data-panel="class-grid-context-panels">
+        {% include "includes/catalog/class_grid/context/context_panels.html" %}
+    </div>
+    <div data-panel="class-grid-workspace-root">
+        {% include "includes/catalog/class_grid/views/workspace.html" %}
+    </div>
+    <div data-panel="class-grid-monthly-modal-root">
+        {% include "includes/catalog/class_grid/views/monthly_modal.html" %}
+    </div>
+    <div data-panel="class-grid-weekly-modal-root">
+        {% include "includes/catalog/class_grid/views/weekly_modal.html" %}
+    </div>
 </div>
 {% endwith %}
 {% endblock %}
