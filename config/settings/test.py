@@ -15,12 +15,9 @@ CACHES = {
 # Redireciona o Redis para evitar timeouts
 REDIS_URL = "redis://localhost:6379/1"
 
-# Database de teste em memória
+# Database de teste - permite override por DATABASE_URL (para CI) ou fallback para SQLite
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',
-    }
+    'default': build_database_config(BASE_DIR / 'test_db.sqlite3')
 }
 
 # Desabilita Celery (Eager mode)
