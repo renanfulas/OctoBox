@@ -54,6 +54,15 @@ jobs:
         python -m pip install pytest pytest-django pytest-benchmark
         python -m pip show djangorestframework
 
+    - name: 3.5 Run Migrations
+      run: |
+        python manage.py migrate --noinput --settings=config.settings.test
+      env:
+        DJANGO_SECRET_KEY: 'a-dummy-secret-key-for-ci'
+        PHONE_BLIND_INDEX_KEY: 'ci-only-blind-index-key'
+        DATABASE_URL: postgres://user:password@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379
+
     - name: 4. Populate Test Database for CI
       run: |
         python manage.py populate_test_db --scale=load --settings=config.settings.test
