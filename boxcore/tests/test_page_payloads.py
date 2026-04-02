@@ -12,7 +12,7 @@ O QUE ESTE ARQUIVO FAZ:
 from django.test import SimpleTestCase
 
 from shared_support.page_payloads import PAGE_HERO_CONTENT_RULES, attach_page_payload, build_page_assets, build_page_hero, build_page_payload
-from shared_support.static_assets import resolve_runtime_css_paths
+from shared_support.static_assets import clear_runtime_css_cache, resolve_runtime_css_paths, sync_static_to_staticfiles
 
 
 class PageHeroContractTests(SimpleTestCase):
@@ -91,3 +91,15 @@ class PagePayloadBridgeContractTests(SimpleTestCase):
         self.assertIn('css/design-system/compass.css', resolved)
         self.assertIn('css/design-system/components/hero.css', resolved)
         self.assertNotIn('css/design-system.css', resolved)
+
+    def test_clear_runtime_css_cache_allows_recompute(self):
+        first = resolve_runtime_css_paths(['css/design-system.css'])
+        clear_runtime_css_cache()
+        second = resolve_runtime_css_paths(['css/design-system.css'])
+
+        self.assertEqual(first, second)
+
+    def test_sync_static_to_staticfiles_copies_selected_subtrees(self):
+        synced = sync_static_to_staticfiles(subpaths=['css'])
+
+        self.assertTrue(any(item['target'].endswith('staticfiles\\css') for item in synced))

@@ -9,7 +9,8 @@ PONTOS CRITICOS:
 -->
 <div class="fdw-focus-list page-reading-list{% if panel.class_name %} {{ panel.class_name }}{% endif %}"{% if panel.panel_id %} id="{{ panel.panel_id }}"{% endif %}>
     {% for item in panel.items %}
-    <a class="fdw-focus-card{% if panel.primary_href %}{% if item.href == panel.primary_href %} is-primary{% endif %}{% elif forloop.first %} is-primary{% endif %}" href="{{ item.href }}"{% if item.data_action %} data-action="{{ item.data_action }}"{% endif %}>
+    {% if item.is_clickable|default:True %}
+    <a class="fdw-focus-card{% if panel.primary_href %}{% if item.href == panel.primary_href %} is-primary{% endif %}{% elif forloop.first %} is-primary{% endif %}{% if item.severity_class %} {{ item.severity_class }}{% endif %}{% if item.is_tranquil %} is-tranquil{% endif %}" href="{{ item.href }}"{% if item.data_action %} data-action="{{ item.data_action }}"{% endif %}>
         <div class="fdw-focus-card-head">
             <span class="fdw-focus-index">{{ forloop.counter|stringformat:"02d" }}</span>
             <div class="fdw-focus-meta">
@@ -29,5 +30,27 @@ PONTOS CRITICOS:
             <span class="fdw-focus-action">{{ item.href_label }}</span>
         </div>
     </a>
+    {% else %}
+    <article class="fdw-focus-card{% if panel.primary_href %}{% if item.href == panel.primary_href %} is-primary{% endif %}{% elif forloop.first %} is-primary{% endif %}{% if item.severity_class %} {{ item.severity_class }}{% endif %}{% if item.is_tranquil %} is-tranquil{% endif %}" aria-label="{{ item.label }}">
+        <div class="fdw-focus-card-head">
+            <span class="fdw-focus-index">{{ forloop.counter|stringformat:"02d" }}</span>
+            <div class="fdw-focus-meta">
+                {% if item.chip_label %}
+                <span class="fdw-focus-chip{% if item.pill_class %} is-{{ item.pill_class }}{% endif %}">{{ item.chip_label }}</span>
+                {% endif %}
+                {% if item.count or item.count == 0 %}
+                <span class="fdw-focus-count">{{ item.count }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="fdw-focus-body">
+            <h3 class="fdw-focus-title">{{ item.label }}</h3>
+            <p class="fdw-focus-summary">{{ item.summary }}</p>
+        </div>
+        <div class="fdw-focus-footer">
+            <span class="fdw-focus-action">{{ item.href_label }}</span>
+        </div>
+    </article>
+    {% endif %}
     {% endfor %}
 </div>

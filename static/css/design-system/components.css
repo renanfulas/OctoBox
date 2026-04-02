@@ -24,9 +24,6 @@ PONTOS CRITICOS:
 @import url("./components/states.css");
 @import url("./components/quick-cards.css");
 @import url("./components/interactive-tabs.css");
-@import url("./components/dashboard/summary.css");        /* layout estrutural */
-@import url("./components/dashboard/glance/glance_cards.css");   /* glance: visual base */
-@import url("./components/dashboard/glance/glance_neon.css");    /* glance: neon/actionable */
 @import url("./components/dashboard/metrics.css");
 @import url("./components/dashboard/side.css");
 @import url("./components/dashboard/sessions_board.css");

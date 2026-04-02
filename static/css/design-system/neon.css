@@ -1,57 +1,64 @@
-/* Neon visual utilities - separado para facilitar cache/invalidação e reutilização */
+/* Neon visual utilities - separado para facilitar cache, depuracao e reutilizacao. */
 :root {
-    --neon-default: #092a5f; /* azul escuro padrão */
-    --neon-default-rgb: 9, 42, 95; /* RGB fallback for broader browser support */
+    --neon-default: #092a5f;
+    --neon-default-rgb: 9, 42, 95;
 }
 
-
-
-
-/* Narrow safety overrides: neutralize pseudo-elements for cards inside the dashboard side column
-   This avoids touching global pseudo-elements used elsewhere (sidebar, hero, tokens). */
-aside.dashboard-instagram-side .table-card::before,
-aside.dashboard-instagram-side .table-card::after,
-aside.dashboard-instagram-side .dashboard-side-card::before,
-aside.dashboard-instagram-side .dashboard-side-card::after,
-aside.dashboard-instagram-side .dashboard-table-card::before,
-aside.dashboard-instagram-side .dashboard-table-card::after {
-    content: none !important;
-    display: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
+/* Neutraliza decoracoes atmosfericas apenas na lateral do dashboard.
+   O objetivo e silenciar o brilho herdado da familia .card/.table-card
+   sem desligar pseudo-elementos fora desse contexto. */
+aside.dashboard-instagram-side .table-card:not(.card-decor-topstripe)::before,
+aside.dashboard-instagram-side .table-card:not(.card-decor-topstripe)::after,
+aside.dashboard-instagram-side .dashboard-side-card:not(.card-decor-topstripe)::before,
+aside.dashboard-instagram-side .dashboard-side-card:not(.card-decor-topstripe)::after,
+aside.dashboard-instagram-side .dashboard-table-card:not(.card-decor-topstripe)::before,
+aside.dashboard-instagram-side .dashboard-table-card:not(.card-decor-topstripe)::after {
+    content: none;
+    display: none;
+    box-shadow: none;
+    background: transparent;
 }
 
-/* Precisa de !important para sobrescrever o bloco de segurança do aside acima */
+/* Faixa superior opt-in para cards que realmente precisam desse detalhe. */
 .card-decor-topstripe::before {
-        content: "" !important;
-        display: block !important;
-        position: absolute;
-        inset: 0 auto auto 0;
-        width: 100%;
-        height: 3px;
-        background: var(--brand);
-        pointer-events: none;
+    content: "";
+    display: block;
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 3px;
+    background: var(--brand);
+    pointer-events: none;
 }
 
-/* Utility: subtle card glow (opt-in, non-animated) */
+/* Utility: subtle card glow (opt-in, non-animated). */
 .card-decor-glow {
-        box-shadow: 0 6px 12px rgba(var(--neon-default-rgb), 0.06);
+    box-shadow: 0 6px 12px rgba(var(--neon-default-rgb), 0.06);
 }
 
 @keyframes neon-pulse {
     0% {
-        opacity: 0.0;
+        opacity: 0;
         transform: scale(1);
-        box-shadow: 0 0 6px color-mix(in srgb, var(--neon-default) 12%, transparent), inset 0 0 6px color-mix(in srgb, var(--neon-default) 6%, transparent);
+        box-shadow:
+            0 0 6px color-mix(in srgb, var(--neon-default) 12%, transparent),
+            inset 0 0 6px color-mix(in srgb, var(--neon-default) 6%, transparent);
     }
+
     30% {
         opacity: 1;
         transform: scale(1.01);
-        box-shadow: 0 0 34px color-mix(in srgb, var(--neon-default) 36%, transparent), 0 0 12px color-mix(in srgb, var(--neon-default) 18%, transparent), inset 0 0 18px color-mix(in srgb, var(--neon-default) 10%, transparent);
+        box-shadow:
+            0 0 34px color-mix(in srgb, var(--neon-default) 36%, transparent),
+            0 0 12px color-mix(in srgb, var(--neon-default) 18%, transparent),
+            inset 0 0 18px color-mix(in srgb, var(--neon-default) 10%, transparent);
     }
+
     100% {
         opacity: 0.6;
         transform: scale(1);
-        box-shadow: 0 0 14px color-mix(in srgb, var(--neon-default) 18%, transparent), inset 0 0 8px color-mix(in srgb, var(--neon-default) 6%, transparent);
+        box-shadow:
+            0 0 14px color-mix(in srgb, var(--neon-default) 18%, transparent),
+            inset 0 0 8px color-mix(in srgb, var(--neon-default) 6%, transparent);
     }
 }

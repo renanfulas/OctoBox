@@ -409,19 +409,29 @@ body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-act
     display: flex;
     align-items: flex-end;
     gap: 3px;
+    width: 100%;
+    min-width: 0;
     height: 38px;
-    margin-top: 16px;
-    margin-bottom: 4px;
+    min-height: 38px;
+    margin-top: 12px;
+    margin-bottom: 0;
+    padding-top: 2px;
+    overflow: hidden;
+    position: relative;
+    isolation: isolate;
 }
 
 .dashboard-kpi-sparkline .spark-bar {
     flex: 1;
     min-height: 3px;
+    align-self: flex-end;
     display: block;
+    height: 100%;
     cursor: pointer;
     transition: opacity 0.2s ease, transform 0.2s ease;
     color: currentColor;
     opacity: 0.15;
+    overflow: hidden;
 }
 
 .dashboard-kpi-sparkline .spark-bar rect {

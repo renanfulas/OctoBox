@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import shutil
 from pathlib import Path
 
 from django.conf import settings
@@ -35,6 +36,10 @@ def resolve_runtime_css_paths(stylesheet_paths):
     return resolved_paths
 
 
+def clear_runtime_css_cache():
+    _CSS_EXPANSION_CACHE.clear()
+
+
 def _expand_css_manifest(stylesheet_path, *, stack):
     asset_file = settings.BASE_DIR / 'static' / stylesheet_path
 
@@ -61,3 +66,38 @@ def _resolve_import_path(parent_asset_path, import_path):
     parent_dir = Path(parent_asset_path).parent
     static_root = (settings.BASE_DIR / 'static').resolve()
     return (static_root / parent_dir / import_path).resolve().relative_to(static_root).as_posix()
+
+
+def sync_static_to_staticfiles(*, subpaths=None, clear=False):
+    """Sincroniza subarvores selecionadas de `static/` para `staticfiles/`.
+
+    Essa rotina existe para ambientes locais onde a app ainda pode ler artefatos
+    espelhados em `staticfiles/` durante inspecao visual. Em producao, a fonte
+    de verdade continua sendo `collectstatic`.
+    """
+    static_root = (settings.BASE_DIR / 'static').resolve()
+    staticfiles_root = (settings.BASE_DIR / 'staticfiles').resolve()
+    selected_subpaths = list(subpaths or ['css', 'js'])
+
+    if clear and staticfiles_root.exists():
+        shutil.rmtree(staticfiles_root)
+
+    staticfiles_root.mkdir(parents=True, exist_ok=True)
+
+    synced = []
+    for subpath in selected_subpaths:
+        source = (static_root / subpath).resolve()
+        target = (staticfiles_root / subpath).resolve()
+        if not source.exists():
+            continue
+        if target.exists():
+            shutil.rmtree(target)
+        shutil.copytree(source, target)
+        synced.append(
+            {
+                'source': str(source),
+                'target': str(target),
+            }
+        )
+
+    return synced

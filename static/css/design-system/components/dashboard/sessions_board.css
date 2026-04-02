@@ -20,6 +20,10 @@ REGRAS DESTE ARQUIVO:
     height: 100%;
 }
 
+#dashboard-sessions-board::before {
+    display: none;
+}
+
 /* Stack Premium */
 .dashboard-session-stack.is-premium {
     position: relative;

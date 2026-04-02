@@ -545,14 +545,14 @@ body[data-theme="dark"] .dashboard-shell::after {
 }
 
 .dashboard-summary-topline .dashboard-glance-card {
-    padding: 21px; /* fib-4 — autoridade final */
-    min-height: 144px; /* fib-12 — autoridade final */
+    padding: 18px 22px;
+    min-height: 132px;
     height: 100%;
 }
 
 .dashboard-summary-topline .dashboard-glance-card--summary {
-    padding: 21px; /* fib-4 — autoridade final */
-    min-height: 144px; /* fib-12 — autoridade final */
+    padding: 18px 22px;
+    min-height: 132px;
 }
 /* ──────────────────────────────────────────────────────────────────────
    VERTICAL RHYTHM — PRIORITY STRIP vs METRICS

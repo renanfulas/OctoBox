@@ -1,0 +1,50 @@
+<!--
+ARQUIVO: dashboard_reading_list.html
+POR QUE ELE EXISTE:
+- isola a variante do dashboard para que o componente generico nao precise carregar regras especiais.
+O QUE ESTE ARQUIVO FAZ:
+- renderiza a leitura curta do dashboard com contagem real, estado tranquilo e clique opcional.
+PONTOS CRITICOS:
+- depende do mesmo payload de reading_panel, mas assume a semantica propria do dashboard.
+-->
+<div class="fdw-focus-list page-reading-list dashboard-reading-panel{% if panel.class_name %} {{ panel.class_name }}{% endif %}"{% if panel.panel_id %} id="{{ panel.panel_id }}"{% endif %}>
+    {% for item in panel.items %}
+    {% if item.is_clickable|default:True %}
+    <a class="fdw-focus-card{% if panel.primary_href and item.href == panel.primary_href %} is-primary{% endif %}{% if item.severity_class %} {{ item.severity_class }}{% endif %}{% if item.is_tranquil %} is-tranquil{% endif %}" href="{{ item.href }}"{% if item.data_action %} data-action="{{ item.data_action }}"{% endif %}>
+        <div class="fdw-focus-card-head">
+            <span class="fdw-focus-index">{{ item.count|default:0 }}</span>
+            <div class="fdw-focus-meta">
+                {% if item.chip_label %}
+                <span class="fdw-focus-chip{% if item.pill_class %} is-{{ item.pill_class }}{% endif %}">{{ item.chip_label }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="fdw-focus-body">
+            <h3 class="fdw-focus-title">{{ item.label }}</h3>
+            <p class="fdw-focus-summary">{{ item.summary }}</p>
+        </div>
+        <div class="fdw-focus-footer">
+            <span class="fdw-focus-action">{{ item.href_label }}</span>
+        </div>
+    </a>
+    {% else %}
+    <article class="fdw-focus-card{% if panel.primary_href and item.href == panel.primary_href %} is-primary{% endif %}{% if item.severity_class %} {{ item.severity_class }}{% endif %}{% if item.is_tranquil %} is-tranquil{% endif %}" aria-label="{{ item.label }}">
+        <div class="fdw-focus-card-head">
+            <span class="fdw-focus-index">{{ item.count|default:0 }}</span>
+            <div class="fdw-focus-meta">
+                {% if item.chip_label %}
+                <span class="fdw-focus-chip{% if item.pill_class %} is-{{ item.pill_class }}{% endif %}">{{ item.chip_label }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="fdw-focus-body">
+            <h3 class="fdw-focus-title">{{ item.label }}</h3>
+            <p class="fdw-focus-summary">{{ item.summary }}</p>
+        </div>
+        <div class="fdw-focus-footer">
+            <span class="fdw-focus-action">{{ item.href_label }}</span>
+        </div>
+    </article>
+    {% endif %}
+    {% endfor %}
+</div>

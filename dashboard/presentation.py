@@ -577,41 +577,20 @@ def _build_dashboard_priority_cards(
     return [emergency_card, urgency_card, risk_card]
 
 
-def _build_dashboard_priority_strip_context(priority_cards):
-    cards = list(priority_cards or [])
-    primary_card = cards[0] if cards else None
-    secondary_cards = cards[1:3]
-    secondary_card = secondary_cards[0] if secondary_cards else None
-
-    return {
-        'cards': cards,
-        'primary_card': primary_card,
-        'secondary_cards': secondary_cards,
-        'decision_entry_context': {
-            'entry_surface': (primary_card or {}).get('surface', ''),
-            'entry_href': (primary_card or {}).get('href', ''),
-            'entry_href_label': (primary_card or {}).get('href_label', 'Abrir prioridade'),
-            'entry_label': (primary_card or {}).get('kicker', ''),
-            'entry_reason': (primary_card or {}).get('copy', ''),
-            'secondary_surface': (secondary_card or {}).get('surface', ''),
-            'secondary_href': (secondary_card or {}).get('href', ''),
-            'secondary_href_label': (secondary_card or {}).get('href_label', 'Abrir proxima leitura'),
-            'secondary_label': (secondary_card or {}).get('kicker', ''),
-            'secondary_reason': (secondary_card or {}).get('copy', ''),
-        },
-    }
-
-
 def _build_dashboard_reading_panel(priority_cards):
     items = []
     for card in list(priority_cards or [])[:3]:
+        is_tranquil = not card.get('is_actionable')
         items.append(
             {
                 'chip_label': card.get('indicator') or card.get('kicker'),
                 'count': card.get('value'),
                 'label': card.get('kicker') or 'Leitura dominante',
                 'summary': card.get('copy', ''),
-                'pill_class': 'warning' if card.get('severity') in ('emergency', 'warning') else 'accent',
+                'pill_class': 'success' if is_tranquil else ('warning' if card.get('severity') in ('emergency', 'warning') else 'accent'),
+                'severity_class': f"is-{card.get('severity')}" if card.get('severity') else '',
+                'is_tranquil': is_tranquil,
+                'is_clickable': not is_tranquil,
                 'href': card.get('href', '#dashboard'),
                 'href_label': card.get('href_label', 'Abrir leitura'),
             }
@@ -651,7 +630,6 @@ def build_dashboard_page(*, request_user, role_slug, snapshot, stored_layout_sta
         actionable_payment_alerts_count=actionable_payment_alerts_count,
         highest_risk_student=highest_risk_student,
     )
-    priority_strip = _build_dashboard_priority_strip_context(priority_cards)
     pending_focus = {
         'href': get_shell_route_url('reception', fragment='reception-intake-board') if role_slug == ROLE_RECEPTION else get_shell_route_url('intake', fragment='intake-queue-board'),
         'summary': 'Tem gente esperando um retorno seu. Vou te levar ate la.',
@@ -692,7 +670,6 @@ def build_dashboard_page(*, request_user, role_slug, snapshot, stored_layout_sta
             'dashboard_can_register_finance_whatsapp': _can_register_finance_whatsapp(role_slug),
             'dashboard_quick_actions': _build_dashboard_quick_actions(role_slug),
             'dashboard_execution_focus': execution_focus,
-            'dashboard_priority_strip': priority_strip,
             'dashboard_priority_cards': priority_cards,
         },
         behavior={
