@@ -30,6 +30,20 @@ PONTOS CRITICOS:
 
 OctoBox e uma central operacional para boxes e academias que precisam sair do improviso de WhatsApp, planilhas e admin bruto demais para a rotina real.
 
+## Preview Visual
+
+Abaixo, os vislumbres da interface moderna do OctoBox.
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-dark.png" width="48%" alt="Dashboard Dark" />
+  <img src="docs/screenshots/dashboard-light.png" width="48%" alt="Dashboard Light" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/class-grid-dark.png" width="48%" alt="Grade de Aulas" />
+  <img src="docs/screenshots/students-list-dark.png" width="48%" alt="Gestão de Alunos" />
+</p>
+
 ## Problema que o OctoBox resolve
 
 Na pratica, muitos boxes crescem com operacao fragmentada: lead no WhatsApp, aluno em planilha, cobranca em controle manual, agenda em memoria da equipe e decisao gerencial sem leitura confiavel. O resultado costuma ser retrabalho, perda de oportunidade comercial, atraso financeiro, falha de acompanhamento e rotina dependente demais de quem esta atendendo.
