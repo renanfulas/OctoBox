@@ -6,7 +6,6 @@ POR QUE ELE EXISTE:
 - organiza a leitura pedagogica e operacional em payloads explicitos.
 """
 
-from access.shell_actions import build_shell_action_buttons_from_focus
 from shared_support.page_payloads import build_page_assets, build_page_hero, build_page_payload
 from shared_support.operational_settings import get_operational_whatsapp_repeat_block_hours
 
@@ -23,9 +22,6 @@ def build_system_map_page():
             'page_key': 'system-map',
             'title': 'Mapa do Sistema',
             'subtitle': 'Modulos, fronteiras e onde investigar bugs.',
-        },
-        shell_context={
-            'shell_action_buttons': build_shell_action_buttons_from_focus(focus=system_map_focus, scope='system-map'),
         },
         data={
             'hero': build_page_hero(
@@ -256,12 +252,6 @@ def build_operational_settings_page():
             'page_key': 'operational-settings',
             'title': 'Configuracoes operacionais',
             'subtitle': 'Ajuste rapido da janela do WhatsApp e dos perfis de acesso.',
-        },
-        shell_context={
-            'shell_action_buttons': build_shell_action_buttons_from_focus(
-                focus=operational_focus,
-                scope='operational-settings',
-            ),
         },
         data={
             'hero': build_page_hero(

@@ -8,7 +8,7 @@ POR QUE ELE EXISTE:
 from shared_support.page_payloads import attach_page_payload, build_page_assets, build_page_payload
 
 
-def build_catalog_page_payload(*, context, shell_context, data, actions, behavior=None, capabilities=None, assets=None):
+def build_catalog_page_payload(*, context, shell_context=None, data=None, actions=None, behavior=None, capabilities=None, assets=None):
     return build_page_payload(
         context=context,
         shell_context=shell_context,

@@ -7,7 +7,6 @@ POR QUE ELE EXISTE:
 """
 
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
-from access.shell_actions import build_shell_action_buttons_from_focus
 from access.navigation_contracts import get_shell_route_url
 from shared_support.page_payloads import build_page_hero
 
@@ -217,7 +216,6 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'href_label': 'Ver plano e cobranca',
         },
     ]
-    shell_action_buttons = build_shell_action_buttons_from_focus(focus=operational_focus, scope='student-form')
     plan_price_map = {
         str(plan.id): str(plan.price)
         for plan in getattr(getattr(form, 'fields', {}).get('selected_plan'), 'queryset', [])
@@ -272,9 +270,6 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             ),
             'mode': page_mode,
             'role_slug': current_role_slug,
-        },
-        shell_context={
-            'shell_action_buttons': shell_action_buttons,
         },
         data={
             'hero': hero,

@@ -16,7 +16,6 @@ PONTOS CRITICOS:
 from django.urls import reverse
 
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
-from access.shell_actions import build_shell_action_buttons_from_focus
 from shared_support.page_payloads import build_page_assets, build_page_hero, build_page_payload
 
 
@@ -75,12 +74,6 @@ def build_intake_center_page(*, snapshot, current_role_slug):
             'subtitle': 'Entradas provisorias, triagem e conversao num ponto proprio.',
             'mode': 'workspace',
             'role_slug': current_role_slug,
-        },
-        shell_context={
-            'shell_action_buttons': build_shell_action_buttons_from_focus(
-                focus=snapshot['intake_operational_focus'],
-                scope='intake-center',
-            ),
         },
         data={
             **snapshot,

@@ -2,300 +2,251 @@
 ARQUIVO: reading_list.css
 
 POR QUE EXISTE:
-- isola a variante da leitura curta do dashboard para fora de cards.css.
+- define a leitura curta do dashboard como um componente proprio, sem depender da familia fdw/page-reading-list.
 
 O QUE ESTE ARQUIVO FAZ:
-1. define a grade do dashboard-reading-panel;
-2. veste os cards de emergencia, urgente, risco e estado tranquilo;
-3. cuida do dark mode e do responsivo dessa familia.
+1. organiza a grade do dashboard-reading-panel;
+2. veste os cards com uma hierarquia limpa e exclusiva;
+3. aplica variacoes de severidade sem override em cascata sobre cards compartilhados.
 */
 
-.dashboard-shell .page-reading-list {
+.dashboard-reading-panel {
+    width: 100%;
+    margin-top: var(--page-opening-panel-margin-top, var(--workspace-fib-4, 21px));
+}
+
+.dashboard-reading-panel__grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 18px;
-    align-items: start;
+    align-items: stretch;
 }
 
-.dashboard-shell .page-reading-list .fdw-focus-card {
-    --dashboard-focus-accent: rgba(14, 165, 233, 0.9);
-    --dashboard-focus-accent-soft: rgba(14, 165, 233, 0.15);
+.dashboard-reading-card {
+    --dashboard-reading-accent: rgba(59, 130, 246, 0.92);
+    --dashboard-reading-accent-soft: rgba(59, 130, 246, 0.14);
     position: relative;
     display: grid;
-    grid-template-rows: auto auto 1fr;
-    gap: 10px;
-    min-height: 132px;
-    padding: 18px 22px;
-    border-radius: 22px;
-    border: 1px solid rgba(148, 163, 184, 0.14);
+    grid-template-rows: auto 1fr auto;
+    gap: 14px;
+    min-height: 172px;
+    padding: 20px;
+    border-radius: 24px;
+    border: 1px solid color-mix(in srgb, var(--dashboard-reading-accent) 18%, var(--theme-border-soft) 82%);
     background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 252, 0.96)),
-        linear-gradient(155deg, rgba(255, 255, 255, 0.96), rgba(241, 245, 249, 0.96));
+        radial-gradient(circle at top right, color-mix(in srgb, var(--dashboard-reading-accent-soft) 92%, transparent), transparent 34%),
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel) 98%, white), color-mix(in srgb, var(--theme-surface-strong) 95%, white));
     box-shadow:
-        0 12px 28px rgba(15, 23, 42, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.82);
+        0 16px 36px rgba(15, 23, 42, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    color: inherit;
+    text-decoration: none;
     overflow: hidden;
-    isolation: isolate;
+    transition:
+        transform var(--motion-base) var(--ease-standard),
+        box-shadow var(--motion-base) var(--ease-standard),
+        border-color var(--motion-base) var(--ease-standard);
 }
 
-.dashboard-shell .page-reading-list .fdw-focus-card::before {
+.dashboard-reading-card::before {
     content: "";
     position: absolute;
-    inset: 0;
-    padding: 1px;
-    border-radius: inherit;
-    background: linear-gradient(
-        135deg,
-        color-mix(in srgb, var(--dashboard-focus-accent) 86%, white 14%),
-        rgba(255, 255, 255, 0.08) 38%,
-        color-mix(in srgb, var(--dashboard-focus-accent) 68%, transparent) 100%
-    );
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    opacity: 1;
-}
-
-.dashboard-shell .page-reading-list .fdw-focus-card::after {
-    content: "";
-    position: absolute;
-    inset: -22% auto auto -8%;
-    width: 58%;
-    height: 78%;
-    border-radius: 999px;
-    background: radial-gradient(circle, var(--dashboard-focus-accent-soft) 0%, transparent 72%);
-    opacity: 0.82;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--dashboard-reading-accent) 96%, white 4%), transparent 72%);
+    opacity: 0.95;
     pointer-events: none;
-    z-index: 0;
 }
 
-.dashboard-shell .page-reading-list .fdw-focus-card:hover {
+.dashboard-reading-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -20px -42px auto;
+    width: 132px;
+    height: 132px;
+    border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--dashboard-reading-accent-soft) 88%, transparent), transparent 72%);
+    opacity: 0.9;
+    pointer-events: none;
+}
+
+a.dashboard-reading-card:hover,
+a.dashboard-reading-card:focus-visible {
     transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--dashboard-reading-accent) 34%, var(--theme-border-strong) 66%);
     box-shadow:
-        0 18px 36px rgba(15, 23, 42, 0.12),
-        0 0 0 1px color-mix(in srgb, var(--dashboard-focus-accent) 18%, transparent),
-        0 0 24px color-mix(in srgb, var(--dashboard-focus-accent-soft) 92%, transparent),
-        inset 0 1px 0 rgba(255, 255, 255, 0.84);
+        0 22px 44px rgba(15, 23, 42, 0.12),
+        0 0 0 1px color-mix(in srgb, var(--dashboard-reading-accent) 12%, transparent);
+    text-decoration: none;
 }
 
-.dashboard-shell .page-reading-list .fdw-focus-card.is-emergency {
-    --dashboard-focus-accent: rgba(244, 63, 94, 0.96);
-    --dashboard-focus-accent-soft: rgba(244, 63, 94, 0.18);
+a.dashboard-reading-card:focus-visible {
+    outline: none;
 }
 
-.dashboard-shell .page-reading-list .fdw-focus-card.is-warning {
-    --dashboard-focus-accent: rgba(245, 158, 11, 0.94);
-    --dashboard-focus-accent-soft: rgba(245, 158, 11, 0.18);
+.dashboard-reading-card.is-emergency {
+    --dashboard-reading-accent: rgba(244, 63, 94, 0.96);
+    --dashboard-reading-accent-soft: rgba(244, 63, 94, 0.16);
 }
 
-.dashboard-shell .page-reading-list .fdw-focus-card.is-risk {
-    --dashboard-focus-accent: rgba(59, 130, 246, 0.94);
-    --dashboard-focus-accent-soft: rgba(59, 130, 246, 0.16);
+.dashboard-reading-card.is-warning {
+    --dashboard-reading-accent: rgba(245, 158, 11, 0.94);
+    --dashboard-reading-accent-soft: rgba(245, 158, 11, 0.16);
 }
 
-.dashboard-shell .page-reading-list .fdw-focus-card.is-tranquil {
-    --dashboard-focus-accent: rgba(52, 211, 153, 0.94);
-    --dashboard-focus-accent-soft: rgba(52, 211, 153, 0.16);
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.98)),
-        linear-gradient(160deg, rgba(236, 253, 245, 0.94), rgba(220, 252, 231, 0.76));
-    border-color: rgba(16, 185, 129, 0.18);
-    box-shadow:
-        0 14px 28px rgba(5, 150, 105, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.72);
-    min-height: 112px;
-    padding: 15px 18px;
+.dashboard-reading-card.is-risk {
+    --dashboard-reading-accent: rgba(59, 130, 246, 0.94);
+    --dashboard-reading-accent-soft: rgba(59, 130, 246, 0.14);
+}
+
+.dashboard-reading-card.is-tranquil {
+    --dashboard-reading-accent: rgba(16, 185, 129, 0.94);
+    --dashboard-reading-accent-soft: rgba(16, 185, 129, 0.14);
+    min-height: 152px;
     cursor: default;
 }
 
-.dashboard-shell .page-reading-list .fdw-focus-card.is-tranquil:hover {
-    transform: none;
-    box-shadow:
-        0 14px 28px rgba(5, 150, 105, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.72);
-}
-
-.dashboard-shell .page-reading-list .fdw-focus-card-head,
-.dashboard-shell .page-reading-list .fdw-focus-meta,
-.dashboard-shell .page-reading-list .fdw-focus-footer,
-.dashboard-shell .page-reading-list .fdw-focus-body {
+.dashboard-reading-card__head,
+.dashboard-reading-card__footer {
     position: relative;
     z-index: 1;
-}
-
-.dashboard-shell .page-reading-list .fdw-focus-card-head {
+    display: flex;
+    align-items: flex-start;
     justify-content: space-between;
-    align-items: flex-start;
+    gap: 16px;
 }
 
-.dashboard-shell .page-reading-list .fdw-focus-index {
+.dashboard-reading-card__label-group,
+.dashboard-reading-card__body {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 10px;
     min-width: 0;
-    width: auto;
-    height: auto;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: none;
-    box-shadow: none;
-    color: color-mix(in srgb, var(--dashboard-focus-accent) 92%, var(--ink) 8%);
-    font-size: clamp(2rem, 2.6vw, 2.4rem);
+}
+
+.dashboard-reading-card__eyebrow {
+    margin: 0;
+    font-size: 0.68rem;
     font-weight: 800;
-    line-height: 0.9;
-    letter-spacing: -0.05em;
-}
-
-.dashboard-shell .page-reading-list .fdw-focus-meta {
-    justify-content: flex-end;
-    align-items: flex-start;
-}
-
-.dashboard-shell .page-reading-list .fdw-focus-chip {
-    min-height: 22px;
-    padding: 3px 10px;
-    border-radius: 999px;
-    border-color: color-mix(in srgb, var(--dashboard-focus-accent) 58%, transparent);
-    background: color-mix(in srgb, var(--dashboard-focus-accent-soft) 92%, transparent);
-    color: color-mix(in srgb, var(--dashboard-focus-accent) 88%, white 12%);
-    font-size: 0.56rem;
-    letter-spacing: 0.1em;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        0 0 14px color-mix(in srgb, var(--dashboard-focus-accent-soft) 72%, transparent);
-}
-
-.dashboard-shell .page-reading-list .fdw-focus-card.is-tranquil .fdw-focus-chip {
-    border-color: rgba(16, 185, 129, 0.18);
-    background: rgba(16, 185, 129, 0.12);
-    color: #059669;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        0 0 14px rgba(16, 185, 129, 0.1);
-}
-
-.dashboard-shell .page-reading-list .fdw-focus-count,
-.dashboard-shell .page-reading-list .fdw-focus-action {
-    display: none;
-}
-
-.dashboard-shell .page-reading-list .fdw-focus-body {
-    gap: 8px;
-}
-
-.dashboard-shell .page-reading-list .fdw-focus-title {
-    font-size: 0.6rem;
-    font-weight: 700;
-    letter-spacing: 0.13em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: color-mix(in srgb, var(--theme-text-muted) 76%, rgba(148, 163, 184, 0.3) 24%);
+    color: color-mix(in srgb, var(--theme-text-muted) 82%, rgba(148, 163, 184, 0.34) 18%);
 }
 
-.dashboard-shell .page-reading-list .fdw-focus-summary {
-    max-width: 31ch;
-    font-size: 0.76rem;
-    line-height: 1.35;
-    color: color-mix(in srgb, var(--theme-text-secondary) 84%, rgba(15, 23, 42, 0.16) 16%);
+.dashboard-reading-card__chip {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--dashboard-reading-accent) 26%, transparent);
+    background: color-mix(in srgb, var(--dashboard-reading-accent-soft) 92%, transparent);
+    color: color-mix(in srgb, var(--dashboard-reading-accent) 84%, white 16%);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
 }
 
-.dashboard-shell .page-reading-list .fdw-focus-footer {
-    justify-content: flex-start;
+.dashboard-reading-card__chip.is-success {
+    border-color: rgba(16, 185, 129, 0.22);
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
 }
 
-.dashboard-shell .page-reading-list .fdw-focus-card.is-tranquil .fdw-focus-index {
-    color: #059669;
-    text-shadow: 0 0 16px rgba(16, 185, 129, 0.16);
+.dashboard-reading-card__chip.is-warning {
+    border-color: rgba(245, 158, 11, 0.22);
+    background: rgba(245, 158, 11, 0.14);
+    color: #b45309;
 }
 
-.dashboard-shell .page-reading-list .fdw-focus-card.is-tranquil .fdw-focus-title {
-    color: rgba(6, 95, 70, 0.78);
+.dashboard-reading-card__chip.is-accent,
+.dashboard-reading-card__chip.is-info {
+    border-color: rgba(59, 130, 246, 0.2);
+    background: rgba(59, 130, 246, 0.12);
+    color: #1d4ed8;
 }
 
-.dashboard-shell .page-reading-list .fdw-focus-card.is-tranquil .fdw-focus-summary {
-    color: rgba(6, 78, 59, 0.72);
+.dashboard-reading-card__value {
+    position: relative;
+    z-index: 1;
+    font-size: clamp(2.2rem, 3.4vw, 2.9rem);
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -0.06em;
+    color: color-mix(in srgb, var(--dashboard-reading-accent) 92%, var(--ink) 8%);
+    font-variant-numeric: tabular-nums;
 }
 
-body[data-theme="dark"] .dashboard-shell .page-reading-list .fdw-focus-card {
+.dashboard-reading-card__summary {
+    margin: 0;
+    max-width: 32ch;
+    font-size: 0.84rem;
+    line-height: 1.48;
+    color: color-mix(in srgb, var(--theme-text-secondary) 86%, rgba(15, 23, 42, 0.12) 14%);
+}
+
+.dashboard-reading-card__footer {
+    align-items: flex-end;
+}
+
+.dashboard-reading-card__action,
+.dashboard-reading-card__status {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.dashboard-reading-card__action {
+    color: color-mix(in srgb, var(--dashboard-reading-accent) 88%, var(--theme-accent-primary) 12%);
+}
+
+.dashboard-reading-card__status {
+    color: color-mix(in srgb, var(--theme-text-muted) 88%, rgba(100, 116, 139, 0.18) 12%);
+}
+
+body[data-theme="dark"] .dashboard-reading-card {
     background:
-        linear-gradient(180deg, rgba(13, 14, 24, 0.98), rgba(12, 13, 22, 0.99)),
-        linear-gradient(155deg, rgba(15, 27, 42, 0.98), rgba(10, 18, 30, 0.99));
-    border-color: rgba(148, 163, 184, 0.14);
+        radial-gradient(circle at top right, color-mix(in srgb, var(--dashboard-reading-accent-soft) 92%, transparent), transparent 36%),
+        linear-gradient(180deg, rgba(11, 18, 30, 0.98), rgba(8, 15, 27, 0.99));
+    border-color: color-mix(in srgb, var(--dashboard-reading-accent) 20%, rgba(148, 163, 184, 0.12) 80%);
     box-shadow:
-        0 16px 36px rgba(2, 6, 23, 0.32),
-        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        0 18px 40px rgba(2, 6, 23, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-body[data-theme="dark"] .dashboard-shell .page-reading-list .fdw-focus-card::after {
-    inset: -18% auto auto -6%;
-    width: 64%;
-    height: 82%;
-    opacity: 0.92;
+body[data-theme="dark"] .dashboard-reading-card__eyebrow {
+    color: rgba(191, 219, 254, 0.62);
 }
 
-body[data-theme="dark"] .dashboard-shell .page-reading-list .fdw-focus-index {
-    color: color-mix(in srgb, var(--dashboard-focus-accent) 94%, white 6%);
-    text-shadow:
-        0 0 18px color-mix(in srgb, var(--dashboard-focus-accent-soft) 92%, transparent),
-        0 0 28px color-mix(in srgb, var(--dashboard-focus-accent-soft) 72%, transparent);
+body[data-theme="dark"] .dashboard-reading-card__value {
+    color: color-mix(in srgb, var(--dashboard-reading-accent) 94%, white 6%);
+    text-shadow: 0 0 18px color-mix(in srgb, var(--dashboard-reading-accent-soft) 88%, transparent);
 }
 
-body[data-theme="dark"] .dashboard-shell .page-reading-list .fdw-focus-title {
-    color: rgba(226, 232, 240, 0.5);
+body[data-theme="dark"] .dashboard-reading-card__summary {
+    color: rgba(226, 232, 240, 0.8);
 }
 
-body[data-theme="dark"] .dashboard-shell .page-reading-list .fdw-focus-summary {
-    color: rgba(226, 232, 240, 0.76);
+body[data-theme="dark"] .dashboard-reading-card__status {
+    color: rgba(148, 163, 184, 0.86);
 }
 
-body[data-theme="dark"] .dashboard-shell .page-reading-list .fdw-focus-chip {
-    color: rgba(255, 255, 255, 0.96);
-    background: color-mix(in srgb, var(--dashboard-focus-accent-soft) 78%, rgba(15, 23, 42, 0.6) 22%);
-    border-color: color-mix(in srgb, var(--dashboard-focus-accent) 62%, transparent);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        0 0 16px color-mix(in srgb, var(--dashboard-focus-accent-soft) 92%, transparent);
-}
-
-body[data-theme="dark"] .dashboard-shell .page-reading-list .fdw-focus-card.is-tranquil {
-    background:
-        linear-gradient(180deg, rgba(8, 21, 19, 0.98), rgba(8, 18, 18, 0.99)),
-        linear-gradient(155deg, rgba(10, 40, 31, 0.82), rgba(6, 24, 21, 0.94));
-    border-color: rgba(16, 185, 129, 0.26);
-    box-shadow:
-        0 18px 38px rgba(3, 12, 10, 0.34),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-body[data-theme="dark"] .dashboard-shell .page-reading-list .fdw-focus-card.is-tranquil .fdw-focus-chip {
-    border-color: rgba(16, 185, 129, 0.28);
-    background: rgba(16, 185, 129, 0.16);
-    color: #6ee7b7;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.04),
-        0 0 16px rgba(16, 185, 129, 0.14);
-}
-
-body[data-theme="dark"] .dashboard-shell .page-reading-list .fdw-focus-card.is-tranquil .fdw-focus-index {
-    color: #34d399;
-    text-shadow:
-        0 0 18px rgba(52, 211, 153, 0.18),
-        0 0 28px rgba(52, 211, 153, 0.12);
-}
-
-body[data-theme="dark"] .dashboard-shell .page-reading-list .fdw-focus-card.is-tranquil .fdw-focus-title {
-    color: rgba(167, 243, 208, 0.72);
-}
-
-body[data-theme="dark"] .dashboard-shell .page-reading-list .fdw-focus-card.is-tranquil .fdw-focus-summary {
-    color: rgba(209, 250, 229, 0.78);
+@media (max-width: 1024px) {
+    .dashboard-reading-panel__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 720px) {
-    .dashboard-shell .page-reading-list {
+    .dashboard-reading-panel__grid {
         grid-template-columns: 1fr;
     }
 
-    .dashboard-shell .page-reading-list .fdw-focus-card {
-        min-height: 124px;
-        padding: 16px 18px;
+    .dashboard-reading-card {
+        min-height: 0;
+        padding: 18px;
     }
 }

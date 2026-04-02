@@ -49,11 +49,6 @@ class PagePayloadBridgeContractTests(SimpleTestCase):
                 'title': 'Alunos',
                 'subtitle': 'Leitura cruzada da base.',
             },
-            shell_context={
-                'shell_action_buttons': [
-                    {'label': 'Prioridade', 'href': '#student-priority-board', 'summary': 'Ler quem pede acao agora.'},
-                ]
-            },
             behavior={
                 'workspace_storage_key': 'octobox-students-layout-v1',
             },
@@ -68,7 +63,6 @@ class PagePayloadBridgeContractTests(SimpleTestCase):
         self.assertIn('student_directory_page', result)
         self.assertEqual(result['page_title'], 'Alunos')
         self.assertEqual(result['page_subtitle'], 'Leitura cruzada da base.')
-        self.assertEqual(result['shell_action_buttons'], payload['shell']['shell_action_buttons'])
         self.assertEqual(result['current_page_behavior'], payload['behavior'])
         self.assertEqual(
             result['current_page_assets']['css'],
@@ -88,7 +82,6 @@ class PagePayloadBridgeContractTests(SimpleTestCase):
         resolved = resolve_runtime_css_paths(['css/design-system.css'])
 
         self.assertIn('css/design-system/tokens.css', resolved)
-        self.assertIn('css/design-system/compass.css', resolved)
         self.assertIn('css/design-system/components/hero.css', resolved)
         self.assertNotIn('css/design-system.css', resolved)
 

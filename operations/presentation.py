@@ -8,7 +8,6 @@ POR QUE ELE EXISTE:
 
 from django.urls import reverse
 
-from access.shell_actions import build_shell_action_buttons_from_focus
 from shared_support.page_payloads import (
     build_page_assets,
     build_page_hero,
@@ -199,9 +198,6 @@ def build_operation_workspace_page(*, page_key, title, subtitle, scope, snapshot
             'subtitle': subtitle,
             'mode': 'workspace',
             'role_slug': current_role_slug,
-        },
-        shell_context={
-            'shell_action_buttons': build_shell_action_buttons_from_focus(focus=focus, scope=scope),
         },
         data={
             **snapshot,

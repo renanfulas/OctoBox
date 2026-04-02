@@ -24,7 +24,6 @@ from django.shortcuts import redirect
 from django.views.generic import TemplateView
 
 from access.admin import admin_changelist_url, user_can_access_admin
-from access.shell_actions import attach_shell_action_buttons
 from shared_support.page_payloads import build_page_hero
 from .forms import AccessProfileCreateForm, AccessProfileUpdateForm
 from .roles import ROLE_DEFINITIONS, ROLE_DEV, ROLE_OWNER, ROLE_PERMISSION_MAP, get_user_capabilities, get_user_role
@@ -278,7 +277,6 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
             'Owner enxerga amplitude sem dissolver fronteiras entre papeis.',
         ]
         context['group_admin_url'] = admin_changelist_url('auth', 'group') if user_can_access_admin(self.request.user) else ''
-        attach_shell_action_buttons(context, focus=context['access_operational_focus'], scope='access')
         return context
 
 

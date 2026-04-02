@@ -9,7 +9,6 @@ POR QUE ELE EXISTE:
 from django.urls import reverse
 
 from access.roles import ROLE_DEV, ROLE_OWNER
-from access.shell_actions import build_shell_action_buttons_from_focus
 from shared_support.page_payloads import build_page_hero
 
 from .shared import build_catalog_assets, build_catalog_page_payload
@@ -86,9 +85,6 @@ def build_membership_plan_page(*, form, plan, current_role_slug):
             'page_key': 'finance-plan-form',
             'title': 'Editar plano',
             'subtitle': 'Ajuste valor, ciclo e proposta comercial sem sair do centro financeiro.',
-        },
-        shell_context={
-            'shell_action_buttons': build_shell_action_buttons_from_focus(focus=plan_focus, scope='finance-plan-form'),
         },
         data={
             'hero': hero,

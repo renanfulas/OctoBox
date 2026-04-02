@@ -26,7 +26,7 @@ from django.urls import reverse
 from access.admin import admin_changelist_url, admin_index_url, user_can_access_admin
 from access.navigation_contracts import get_navigation_contract
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
-from access.shell_actions import build_default_shell_action_buttons, get_shell_counts, resolve_shell_scope
+from access.shell_actions import get_shell_counts, resolve_shell_scope
 from shared_support.static_assets import resolve_runtime_css_paths
 
 
@@ -272,12 +272,4 @@ def role_navigation(request):
         ],
         'shell_page_context': _build_shell_page_context(view_name, request.path, role, sidebar_navigation, shell_counts),
         'shell_counts': shell_counts,
-        'shell_action_buttons': build_default_shell_action_buttons(
-            view_name=view_name,
-            current_path=request.path,
-            role_slug=role_slug,
-            overdue_payments=shell_counts['overdue_payments'],
-            pending_intakes=shell_counts['pending_intakes'],
-            sessions_today=shell_counts['sessions_today'],
-        ),
     }

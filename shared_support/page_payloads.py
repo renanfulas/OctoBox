@@ -135,8 +135,4 @@ def attach_page_payload(context, *, payload_key, payload, include_sections=None)
     if page_context.get('subtitle'):
         context.setdefault('page_subtitle', page_context['subtitle'])
 
-    shell = payload.get('shell') or {}
-    if 'shell_action_buttons' in shell:
-        context['shell_action_buttons'] = shell['shell_action_buttons']
-
     return context

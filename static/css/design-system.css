@@ -14,14 +14,13 @@ PONTOS CRITICOS:
 - Cada módulo tem suas próprias media queries embutidas.
 */
 
-@layer tokens, shell, sidebar, topbar, compass, spacing, responsiveness, components;
+@layer tokens, shell, sidebar, topbar, spacing, responsiveness, components;
 
 @import url("./design-system/tokens.css") layer(tokens);
 @import url("./design-system/shell.css") layer(shell);
 @import url("./design-system/workspace.css") layer(shell);
 @import url("./design-system/sidebar/sidebar.css") layer(sidebar);
 @import url("./design-system/topbar.css") layer(topbar);
-@import url("./design-system/compass.css") layer(compass);
 @import url("./design-system/spacing.css") layer(spacing);
 @import url("./design-system/responsiveness.css") layer(responsiveness);
 @import url("./design-system/components.css") layer(components);

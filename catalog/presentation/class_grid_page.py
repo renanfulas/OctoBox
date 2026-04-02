@@ -8,7 +8,6 @@ POR QUE ELE EXISTE:
 
 from access.admin import admin_changelist_url
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
-from access.shell_actions import build_shell_action_buttons_from_focus
 from shared_support.page_payloads import build_page_hero
 
 from .shared import build_catalog_assets, build_catalog_page_payload
@@ -86,7 +85,6 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
         monthly_calendar=snapshot['monthly_calendar'],
         can_manage_classes=can_manage_classes,
     )
-    shell_action_buttons = build_shell_action_buttons_from_focus(focus=operational_focus, scope='class-grid')
     hero = build_page_hero(
         eyebrow='Aulas',
         title='Grade em leitura.',
@@ -109,9 +107,6 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
             'mode': 'management' if can_manage_classes else 'read-only',
             'role_slug': role_slug,
             'today': base_context['today'],
-        },
-        shell_context={
-            'shell_action_buttons': shell_action_buttons,
         },
         data={
             'hero': hero,

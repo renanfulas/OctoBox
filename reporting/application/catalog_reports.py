@@ -15,6 +15,7 @@ PONTOS CRITICOS:
 
 
 def build_student_directory_report(*, students, report_format):
+    student_rows = students.iterator(chunk_size=1000) if hasattr(students, 'iterator') else iter(students)
     if report_format == 'csv':
         return {
             'format': 'csv',
@@ -48,7 +49,7 @@ def build_student_directory_report(*, students, report_format):
                     student.report_overdue_count if hasattr(student, 'report_overdue_count') and student.report_overdue_count else 0,
                     student.report_last_check_in.strftime('%d/%m/%Y %H:%M') if hasattr(student, 'report_last_check_in') and student.report_last_check_in else '-',
                 ]
-                for student in students.iterator(chunk_size=1000)
+                for student in student_rows
             ),
         }
 

@@ -7,7 +7,6 @@ POR QUE ELE EXISTE:
 """
 
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
-from access.shell_actions import build_shell_action_buttons_from_focus
 from django.urls import reverse
 from django.utils import timezone
 from shared_support.page_payloads import build_page_hero
@@ -267,16 +266,6 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
         },
     ]
 
-    shell_action_buttons = build_shell_action_buttons_from_focus(
-        focus=operational_focus,
-        next_action={
-            'href': '#finance-portfolio-board',
-            'summary': 'Depois da pressao viva, desca para a carteira e leia a proxima acao estrutural do financeiro.',
-            'data_action': 'open-tab-finance-portfolio',
-        },
-        scope='finance',
-    )
-
     hero_actions = [
         {'label': 'Ver prioridades', 'href': '#finance-priority-board', 'kind': 'primary', 'data_action': 'open-tab-finance-queue'},
         {'label': 'Abrir carteira', 'href': '#finance-portfolio-board', 'kind': 'secondary', 'data_action': 'open-tab-finance-portfolio'},
@@ -307,9 +296,6 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
             'subtitle': 'Receita, carteira e sinais operacionais em leitura guiada.',
             'mode': 'management' if can_manage_finance else 'read-only',
             'role_slug': current_role_slug,
-        },
-        shell_context={
-            'shell_action_buttons': shell_action_buttons,
         },
         data={
             'hero': hero,

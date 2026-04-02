@@ -57,7 +57,7 @@ class CatalogViewTests(TestCase):
         self.assertContains(response, 'Alunos')
         self.assertContains(response, 'Bruna Costa')
         self.assertContains(response, 'Novo aluno')
-        self.assertContains(response, 'alunos cadastrados')
+        self.assertContains(response, '1 alunos')
 
     def test_class_grid_renders(self):
         self.client.force_login(self.user)
@@ -241,8 +241,9 @@ class CatalogViewTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(ClassSession.objects.filter(title='WOD Limite Mensal Exato').count(), 150)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ClassSession.objects.filter(title='WOD Limite Mensal Exato').count(), 0)
+        self.assertContains(response, 'Limite mensal atingido')
 
     def test_class_grid_can_filter_by_coach_and_status(self):
         self.client.force_login(self.user)
@@ -909,12 +910,12 @@ class CatalogViewTests(TestCase):
         response = self.client.get(reverse('student-quick-update', args=[self.student.id]))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Editar aluno')
+        self.assertContains(response, 'Ficha do aluno.')
         self.assertContains(response, 'Cross Prime')
         self.assertContains(response, 'Passo 4: plano e status comercial')
         self.assertContains(response, 'Passo 5: cobranca e confirmacao')
-        self.assertContains(response, 'Nova Cobrança')
-        self.assertContains(response, 'Histórico de Cobranças')
+        self.assertContains(response, 'Nova cobranca')
+        self.assertContains(response, 'Cobrancas registradas')
 
     def test_student_update_page_renders_date_inputs_in_iso_format(self):
         self.client.force_login(self.user)

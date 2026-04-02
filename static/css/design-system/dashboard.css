@@ -509,7 +509,6 @@ body[data-theme="dark"] .dashboard-shell::after {
 
 @media (prefers-reduced-motion: no-preference) {
     body[data-shell-scope="dashboard"] .topbar,
-    body[data-shell-scope="dashboard"] .page-compass,
     .dashboard-hero {
         animation: fdw-rise-in 650ms var(--ease-standard) both;
     }

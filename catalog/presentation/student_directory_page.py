@@ -8,7 +8,6 @@ POR QUE ELE EXISTE:
 
 from access.navigation_contracts import get_shell_route_url
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
-from access.shell_actions import build_shell_action_buttons_from_focus
 from django.urls import reverse
 from shared_support.page_payloads import build_page_hero
 
@@ -61,7 +60,6 @@ def build_student_directory_page(*, student_count, students, student_filter_form
             {'label': 'Novo aluno', 'href': f"{reverse('student-quick-create')}#student-form-essential", 'kind': 'secondary', 'data_action': 'open-student-create'}
         )
 
-    shell_action_buttons = build_shell_action_buttons_from_focus(focus=operational_focus, scope='students')
     hero = build_page_hero(
         eyebrow='Base',
         title='O que pede cuidado na sua base hoje.',
@@ -82,9 +80,6 @@ def build_student_directory_page(*, student_count, students, student_filter_form
             'subtitle': 'Triagem, contexto e proxima acao com leitura limpa.',
             'mode': 'management' if can_manage_students else 'read-only',
             'role_slug': current_role_slug,
-        },
-        shell_context={
-            'shell_action_buttons': shell_action_buttons,
         },
         data={
             'hero': hero,

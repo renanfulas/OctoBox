@@ -10,7 +10,6 @@ from django.utils import timezone
 
 from access.navigation_contracts import get_shell_route_url
 from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
-from access.shell_actions import build_shell_action_buttons_from_focus
 from django.urls import reverse
 from shared_support.page_payloads import build_page_assets, build_page_hero, build_page_payload, build_page_reading_panel
 
@@ -588,7 +587,7 @@ def _build_dashboard_reading_panel(priority_cards):
                 'label': card.get('kicker') or 'Leitura dominante',
                 'summary': card.get('copy', ''),
                 'pill_class': 'success' if is_tranquil else ('warning' if card.get('severity') in ('emergency', 'warning') else 'accent'),
-                'severity_class': f"is-{card.get('severity')}" if card.get('severity') else '',
+                'severity_class': '' if is_tranquil else (f"is-{card.get('severity')}" if card.get('severity') else ''),
                 'is_tranquil': is_tranquil,
                 'is_clickable': not is_tranquil,
                 'href': card.get('href', '#dashboard'),
@@ -653,13 +652,6 @@ def build_dashboard_page(*, request_user, role_slug, snapshot, stored_layout_sta
             'subtitle': 'Tudo o que voce precisa, no tempo certo.',
             'mode': 'reception' if role_slug == ROLE_RECEPTION else 'default',
             'role_slug': role_slug,
-        },
-        shell_context={
-            'shell_action_buttons': build_shell_action_buttons_from_focus(
-                focus=execution_focus,
-                pending=pending_focus,
-                scope='dashboard-reception' if role_slug == ROLE_RECEPTION else 'dashboard',
-            ),
         },
         data={
             **snapshot,

@@ -38,7 +38,6 @@ PONTOS CRITICOS:
     .table-card,
     .quick-card,
     .operation-hero,
-    .page-compass,
     .topbar,
     .sidebar-block,
     [class$="-panel"],
@@ -103,7 +102,6 @@ PONTOS CRITICOS:
     .card-copy,
     .card-title,
     .operation-card-copy,
-    .page-compass-copy,
     .pulse-hint-copy
 ) {
     overflow-wrap: anywhere;
