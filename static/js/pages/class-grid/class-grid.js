@@ -3,20 +3,10 @@ ARQUIVO: comportamento da pagina de grade de aulas.
 
 POR QUE ELE EXISTE:
 - retira do template a logica interativa pesada da grade.
-- concentra validacao, modal e reordenacao do workspace num modulo de pagina.
+- concentra validacao e modais da grade num modulo de pagina.
 */
 
 (function() {
-  var payloadElement = document.getElementById('current-page-behavior');
-  var pagePayload = {};
-  if (payloadElement) {
-    try {
-      pagePayload = JSON.parse(payloadElement.textContent || '{}');
-    } catch (error) {
-      pagePayload = {};
-    }
-  }
-
   var plannerForm = document.querySelector('form[data-class-grid-planner]');
   var plannerStartDateField = document.getElementById('id_start_date');
   var plannerEndDateField = document.getElementById('id_end_date');
