@@ -155,6 +155,10 @@ Se quiser entender a estrutura complementar de sinais, integracoes e expansao tr
 
 Se quiser entender como a arquitetura trata suportes temporarios de construcao sem confundi-los com a estrutura final, use [docs/architecture/scaffold-agents.md](docs/architecture/scaffold-agents.md).
 
+Se aparecer duvida sobre a pasta espelho `OctoBox/`, trate-a como legado isolado e use [docs/reference/octobox-mirror-legacy-status.md](docs/reference/octobox-mirror-legacy-status.md).
+
+Se aparecer duvida sobre `prompts/`, `prototypes/` ou docs de apoio e arquivo, use [docs/reference/support-material-map.md](docs/reference/support-material-map.md).
+
 Se quiser entender a grande fachada frontal do produto, onde a experiencia visivel precisa continuar limpa mesmo com obra lateral e transicao arquitetural, use [docs/experience/front-display-wall.md](docs/experience/front-display-wall.md).
 
 Se quiser o plano oficial para reorganizar o front-end de forma alinhada com a Front Display Wall, com contratos claros de tela e encaixe futuro no movimento de desacoplamento do Django, use [docs/plans/front-end-restructuring-guide.md](docs/plans/front-end-restructuring-guide.md).

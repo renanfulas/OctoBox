@@ -66,6 +66,8 @@ Se o foco for entender a grande fachada frontal do produto, onde a experiencia v
 
 Se o foco for reorganizar o front-end agora, com convergencia entre fachada visual, contratos de tela e o plano de longo prazo de desacoplamento do backend, leia tambem [../plans/front-end-restructuring-guide.md](../plans/front-end-restructuring-guide.md).
 
+Se o foco for navegar o front como mapa vivo de ownership, pontos de entrada e encaixe entre shell, shared e domain, leia tambem [front-end-city-map.md](front-end-city-map.md) e [front-end-card-architecture.md](front-end-card-architecture.md).
+
 Se o foco for saber quem e o dono local de cada funcionalidade e quais testes sobem quando uma tela precisa continuar se comunicando com as outras, leia tambem [functional-circuits-matrix.md](functional-circuits-matrix.md).
 
 Se o foco for revisar PRs por circuito ou organizar smoke manual por papel do beta, leia tambem [pr-circuit-checklist.md](pr-circuit-checklist.md) e [../rollout/beta-role-test-agenda.md](../rollout/beta-role-test-agenda.md).

@@ -11,7 +11,7 @@ POR QUE ELE EXISTE:
 }
 
 .finance-plan-page-hero .operation-hero-panel {
-    background: var(--legacy-panel-surface);
+    background: var(--card-surface);
 }
 
 .finance-plan-page-focus,
@@ -25,7 +25,7 @@ POR QUE ELE EXISTE:
 }
 
 .finance-plan-support-card {
-    background: var(--legacy-panel-surface);
+    background: var(--card-surface);
 }
 
 .finance-plan-summary-grid {
