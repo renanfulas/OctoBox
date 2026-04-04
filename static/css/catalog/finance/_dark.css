@@ -26,31 +26,9 @@ body[data-theme="dark"] .finance-focus-card {
 
 /* ── Bulk dark mode ── */
 
-body[data-theme="dark"] .finance-shell .operation-hero,
-body[data-theme="dark"] .finance-shell .operation-hero-panel,
-body[data-theme="dark"] .finance-shell .table-card,
-body[data-theme="dark"] .finance-shell .card,
-body[data-theme="dark"] .finance-shell .finance-action-card,
-body[data-theme="dark"] .finance-shell .finance-alert-card,
-body[data-theme="dark"] .finance-shell .finance-action-message,
-body[data-theme="dark"] .finance-shell .finance-ops-metric-card,
-body[data-theme="dark"] .finance-shell .finance-plan-card,
-body[data-theme="dark"] .finance-shell .finance-radar-chip,
-body[data-theme="dark"] .finance-shell .finance-plan-focus-item,
-body[data-theme="dark"] .finance-shell .finance-summary-chip,
-body[data-theme="dark"] .finance-shell .finance-alert-stat,
-body[data-theme="dark"] .finance-shell .finance-chart-column,
-body[data-theme="dark"] .finance-shell .finance-data-chip,
-body[data-theme="dark"] .finance-shell .finance-movement-item,
-body[data-theme="dark"] .finance-shell .finance-mix-card,
-body[data-theme="dark"] .finance-shell .finance-plan-stat,
-body[data-theme="dark"] .finance-shell .finance-guide-card,
-body[data-theme="dark"] .finance-shell .finance-filter-rule-card,
-body[data-theme="dark"] .finance-shell .finance-section-intro {
-    color: var(--finance-card-text, var(--ink));
-    border-color: var(--finance-card-border, color-mix(in srgb, var(--theme-glass-border) 90%, transparent));
-    background: var(--finance-card-surface, var(--finance-panel-surface, var(--theme-surface-glass)));
-    box-shadow: var(--finance-card-shadow, var(--finance-panel-shadow, var(--theme-glass-shadow)));
+body[data-theme="dark"] .finance-shell {
+    --finance-card-text: var(--theme-text-primary);
+    --finance-card-copy: var(--theme-text-secondary);
 }
 
 body[data-theme="dark"] .finance-shell .finance-action-card,
@@ -63,12 +41,12 @@ body[data-theme="dark"] .finance-shell .finance-plan-focus-item {
 }
 
 body[data-theme="dark"] .finance-shell .card.finance-board-rail.finance-board-rail--priority {
-    --finance-card-border: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
+    --finance-card-border: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--card-border) 82%);
     --finance-card-surface:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
         radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 24%),
-        var(--finance-panel-surface-strong, var(--theme-surface-glass-strong));
-    --finance-card-shadow: var(--finance-panel-shadow, var(--theme-glass-shadow));
+        var(--finance-panel-surface-strong, var(--card-surface-strong));
+    --finance-card-shadow: var(--finance-panel-shadow, var(--card-shadow));
 }
 
 body[data-theme="dark"] .finance-shell .card.finance-board-rail.finance-board-rail--priority .badge-subtle.warning {
@@ -78,12 +56,12 @@ body[data-theme="dark"] .finance-shell .card.finance-board-rail.finance-board-ra
 }
 
 body[data-theme="dark"] .finance-shell .card.finance-board-queue {
-    --finance-card-border: color-mix(in srgb, var(--theme-accent-danger-alpha) 18%, var(--theme-glass-border) 82%);
+    --finance-card-border: color-mix(in srgb, var(--theme-accent-danger-alpha) 18%, var(--card-border) 82%);
     --finance-card-surface:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-danger-alpha) 14%, transparent), transparent 30%),
         radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 22%),
-        var(--finance-panel-surface-strong, var(--theme-surface-glass-strong));
-    --finance-card-shadow: var(--finance-panel-shadow, var(--theme-glass-shadow));
+        var(--finance-panel-surface-strong, var(--card-surface-strong));
+    --finance-card-shadow: var(--finance-panel-shadow, var(--card-shadow));
 }
 
 body[data-theme="dark"] .finance-shell .card.finance-board-queue .card-title,
@@ -98,13 +76,13 @@ body[data-theme="dark"] .finance-shell .card.finance-board-queue .finance-overdu
 }
 
 body[data-theme="dark"] .finance-shell .finance-action-message {
-    background: var(--finance-panel-surface-strong, var(--theme-surface-glass-strong));
-    border-color: color-mix(in srgb, var(--theme-accent-warning) 20%, var(--theme-glass-border) 80%);
+    --card-local-surface: var(--finance-panel-surface-strong, var(--card-surface-strong));
+    --card-local-border: color-mix(in srgb, var(--theme-accent-warning) 20%, var(--card-border) 80%);
 }
 
 body[data-theme="dark"] .finance-shell .button.secondary {
     color: rgba(245, 239, 228, 0.94);
-    border-color: color-mix(in srgb, var(--theme-glass-border) 82%, transparent);
+    border-color: color-mix(in srgb, var(--card-border) 82%, transparent);
     background: var(--finance-panel-surface, var(--theme-surface-glass));
 }
 
@@ -112,23 +90,6 @@ body[data-theme="dark"] .finance-shell .button.secondary:hover {
     color: #fff8ef;
     border-color: color-mix(in srgb, var(--theme-accent-warning) 26%, var(--theme-glass-border) 74%);
     background: var(--finance-panel-surface-strong, var(--theme-surface-glass-strong));
-}
-
-body[data-theme="dark"] .finance-shell .finance-inline-currency,
-body[data-theme="dark"] .finance-shell .history-header,
-body[data-theme="dark"] .finance-shell .metric,
-body[data-theme="dark"] .finance-shell .operation-card-title,
-body[data-theme="dark"] .finance-shell .operation-card-copy,
-body[data-theme="dark"] .finance-shell .body-copy strong {
-    color: var(--ink);
-}
-
-body[data-theme="dark"] .finance-shell .meta-text,
-body[data-theme="dark"] .finance-shell .meta-text-sm,
-body[data-theme="dark"] .finance-shell .card-copy,
-body[data-theme="dark"] .finance-shell .card-label,
-body[data-theme="dark"] .finance-shell .finance-action-body .meta-text-sm {
-    color: var(--theme-text-secondary);
 }
 
 body[data-theme="dark"] .finance-shell .orange-glow {

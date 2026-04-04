@@ -16,7 +16,7 @@ POR QUE ELE EXISTE:
 }
 
 .student-form-hero .operation-hero-panel {
-    background: var(--legacy-panel-surface-strong);
+    background: var(--card-surface-strong);
 }
 
 .student-form-focus-card,
@@ -41,12 +41,12 @@ POR QUE ELE EXISTE:
     display: grid;
     gap: 12px;
     padding: 14px 16px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-warning-alpha) 16%, var(--legacy-panel-border) 84%);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-warning-alpha) 16%, var(--card-border) 84%);
     border-radius: 18px;
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 16%, transparent), transparent 30%),
-        var(--legacy-panel-surface-strong);
-    box-shadow: var(--legacy-panel-shadow);
+        var(--card-surface-strong);
+    box-shadow: var(--card-shadow);
 }
 
 .student-form-step-disclosure {
@@ -54,11 +54,11 @@ POR QUE ELE EXISTE:
     gap: 0;
     padding: 14px 16px;
     border-radius: 18px;
-    border: 1px solid var(--legacy-panel-border);
+    border: 1px solid var(--card-border);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 30%),
-        var(--legacy-panel-surface-strong);
-    box-shadow: var(--legacy-panel-shadow);
+        var(--card-surface-strong);
+    box-shadow: var(--card-shadow);
 }
 
 .student-form-step-disclosure summary {
@@ -118,8 +118,8 @@ POR QUE ELE EXISTE:
     width: 24px;
     height: 24px;
     border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--legacy-panel-border) 84%);
-    background: color-mix(in srgb, var(--legacy-panel-surface) 88%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--card-border) 84%);
+    background: color-mix(in srgb, var(--card-surface) 88%, transparent);
     color: var(--theme-text-secondary);
     font-size: 0.95rem;
     font-weight: 700;
@@ -173,35 +173,33 @@ POR QUE ELE EXISTE:
 body[data-theme="dark"] .student-form-hero .operation-hero-panel {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 30%),
-        var(--legacy-panel-surface-strong);
+        var(--card-surface-strong);
 }
 
 body[data-theme="dark"] .student-form-main-card {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 30%),
-        var(--legacy-panel-surface-strong);
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--legacy-panel-border) 80%);
+        var(--card-surface-strong);
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--card-border) 80%);
     box-shadow: var(--theme-glass-shadow);
 }
 
 body[data-theme="dark"] .student-form-step-essential {
-    border-color: color-mix(in srgb, var(--theme-accent-warning-alpha) 22%, var(--legacy-panel-border) 78%);
+    border-color: color-mix(in srgb, var(--theme-accent-warning-alpha) 22%, var(--card-border) 78%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, transparent), transparent 30%),
-        var(--legacy-panel-surface-strong);
+        var(--card-surface-strong);
     box-shadow: var(--theme-glass-shadow);
 }
 
 body[data-theme="dark"] .student-form-step-disclosure {
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--legacy-panel-border) 82%);
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--card-border) 82%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
-        var(--legacy-panel-surface-strong);
+        var(--card-surface-strong);
     box-shadow: var(--theme-glass-shadow);
 }
 
-body[data-theme="dark"] .student-form-step-kicker,
-body[data-theme="dark"] .student-form-step-copy,
 body[data-theme="dark"] .student-form-step-disclosure summary::after {
     color: var(--theme-text-secondary);
 }

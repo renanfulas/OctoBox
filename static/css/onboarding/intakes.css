@@ -7,6 +7,15 @@ POR QUE ELE EXISTE:
 
 .intake-scene {
     gap: var(--section-gap);
+    --intake-text-primary: var(--theme-text-primary);
+    --intake-text-secondary: var(--theme-text-secondary);
+    --intake-panel-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, transparent), transparent 32%),
+        var(--theme-surface-glass-strong);
+    --intake-panel-border: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    --intake-panel-shadow: var(--theme-glass-shadow);
+    --intake-filter-surface: var(--intake-panel-surface);
+    --intake-filter-border: var(--intake-panel-border);
 }
 
 .intake-directory-surface {
@@ -169,17 +178,25 @@ POR QUE ELE EXISTE:
         var(--theme-surface-glass);
 }
 
+.intake-board :is(.card-title, .metric, .intake-mini-card strong, .intake-rule-card strong) {
+    color: var(--intake-text-primary);
+}
+
+.intake-board :is(.card-copy, .meta-text, .meta-text-sm) {
+    color: var(--intake-text-secondary);
+}
+
 .intake-filter-card .field-grid-200 {
     gap: 14px;
 }
 
 .intake-filter-card .card-title {
-    color: var(--theme-text-primary);
+    color: var(--intake-text-primary);
 }
 
 .intake-filter-card .card-copy,
 .intake-filter-card .field-label {
-    color: var(--theme-text-secondary);
+    color: var(--intake-text-secondary);
 }
 
 .intake-filter-card input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
@@ -247,37 +264,38 @@ POR QUE ELE EXISTE:
     box-shadow: var(--theme-glass-shadow);
 }
 
+body[data-theme="dark"] .intake-scene {
+    --intake-text-primary: var(--theme-text-primary);
+    --intake-text-secondary: var(--theme-text-secondary);
+    --intake-panel-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, transparent), transparent 32%),
+        var(--theme-surface-glass-strong);
+    --intake-panel-border: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    --intake-panel-shadow: var(--theme-glass-shadow);
+    --intake-filter-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 32%),
+        var(--theme-surface-glass-strong);
+    --intake-filter-border: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
+}
+
 body[data-theme="dark"] .intake-mini-card,
 body[data-theme="dark"] .intake-rule-card {
-    background: var(--theme-surface-glass);
-    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
-    box-shadow: var(--theme-glass-shadow);
+    background: var(--intake-panel-surface);
+    border-color: var(--intake-panel-border);
+    box-shadow: var(--intake-panel-shadow);
 }
 
 body[data-theme="dark"] .intake-directory-surface,
 body[data-theme="dark"] .intake-board,
 body[data-theme="dark"] .intake-filter-card {
-    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, transparent), transparent 32%),
-        var(--theme-surface-glass-strong);
-    box-shadow: var(--theme-glass-shadow);
+    border-color: var(--intake-panel-border);
+    background: var(--intake-panel-surface);
+    box-shadow: var(--intake-panel-shadow);
 }
 
 body[data-theme="dark"] .intake-filter-card--engine {
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 32%),
-        var(--theme-surface-glass-strong);
-}
-
-body[data-theme="dark"] .intake-filter-card .card-title {
-    color: var(--theme-text-primary);
-}
-
-body[data-theme="dark"] .intake-filter-card .card-copy,
-body[data-theme="dark"] .intake-filter-card .field-label {
-    color: var(--theme-text-secondary);
+    border-color: var(--intake-filter-border);
+    background: var(--intake-filter-surface);
 }
 
 body[data-theme="dark"] .intake-filter-card input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
@@ -320,21 +338,8 @@ body[data-theme="dark"] .intake-board--source {
         var(--theme-surface-glass-strong);
 }
 
-body[data-theme="dark"] .intake-board .card-title,
-body[data-theme="dark"] .intake-board .metric,
-body[data-theme="dark"] .intake-board .intake-mini-card strong,
-body[data-theme="dark"] .intake-board .intake-rule-card strong {
-    color: var(--theme-text-primary);
-}
-
-body[data-theme="dark"] .intake-board .card-copy,
-body[data-theme="dark"] .intake-board .meta-text,
-body[data-theme="dark"] .intake-board .meta-text-sm {
-    color: var(--theme-text-secondary);
-}
-
 body[data-theme="dark"] .table-empty-cell {
-    color: var(--theme-text-secondary);
+    color: var(--intake-text-secondary);
 }
 
 body[data-theme="dark"] .intake-directory-table th {
@@ -342,11 +347,11 @@ body[data-theme="dark"] .intake-directory-table th {
 }
 
 body[data-theme="dark"] .intake-table-text {
-    color: var(--theme-text-primary);
+    color: var(--intake-text-primary);
 }
 
 body[data-theme="dark"] .intake-reading-note {
-    color: var(--theme-text-secondary);
+    color: var(--intake-text-secondary);
 }
 
 .intake-metric-body,

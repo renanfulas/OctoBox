@@ -10,19 +10,6 @@ POR QUE ELE EXISTE:
 @import url("./payment-management.css");
 @import url("./payment-methods.css");
 
-body[data-theme="dark"] .student-financial-overview-card .student-financial-metric-card,
-body[data-theme="dark"] .student-financial-overview-card .student-financial-plan-card,
-body[data-theme="dark"] .student-financial-overview-card .student-financial-history-table-card,
-body[data-theme="dark"] .student-financial-action-card,
-body[data-theme="dark"] .student-financial-history-card {
-    background: var(--legacy-panel-surface-strong);
-}
-
-.student-financial-overview-card {
-    display: grid;
-    gap: 14px;
-}
-
 .student-financial-overview-summary {
     max-width: 64ch;
 }
@@ -49,11 +36,6 @@ body[data-theme="dark"] .student-financial-history-card {
     gap: 10px;
 }
 
-.student-financial-metric-card {
-    min-height: 124px;
-    padding: 14px 16px;
-}
-
 .student-financial-status-grid {
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
     gap: 12px;
@@ -62,67 +44,6 @@ body[data-theme="dark"] .student-financial-history-card {
 .student-financial-plan-card,
 .student-financial-history-table-card {
     min-height: 100%;
-}
-
-.student-financial-overview-card .student-financial-metric-card,
-.student-financial-overview-card .student-financial-plan-card,
-.student-financial-overview-card .student-financial-history-table-card,
-.student-financial-action-card,
-.student-financial-history-card {
-    position: relative;
-    overflow: hidden;
-    border: 1px solid var(--legacy-panel-border);
-}
-
-.student-financial-overview-card .student-financial-metric-card::before,
-.student-financial-overview-card .student-financial-plan-card::before,
-.student-financial-overview-card .student-financial-history-table-card::before,
-.student-financial-action-card::before,
-.student-financial-history-card::before {
-    content: "";
-    position: absolute;
-    inset: 0 auto auto 0;
-    width: 100%;
-    height: 3px;
-    background: var(--line-strong);
-}
-
-.student-financial-overview-card .student-financial-metric-card,
-.student-financial-overview-card .student-financial-plan-card,
-.student-financial-overview-card .student-financial-history-table-card,
-.student-financial-action-card-primary {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 30%),
-        var(--legacy-panel-surface-strong);
-    box-shadow: var(--shadow-lift);
-}
-
-.student-financial-action-card-secondary,
-.student-financial-history-card {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 28%),
-        var(--legacy-panel-surface);
-    box-shadow: var(--legacy-panel-shadow);
-}
-
-.student-financial-overview-card .student-financial-metric-card::before,
-.student-financial-overview-card .student-financial-plan-card::before {
-    background: var(--brand);
-}
-
-.student-financial-overview-card .student-financial-history-table-card::before,
-.student-financial-action-card-primary::before {
-    background: var(--warning);
-}
-
-.student-financial-action-card-secondary::before,
-.student-financial-history-card::before {
-    background: var(--line-strong);
-}
-
-.student-financial-action-card .eyebrow,
-.student-financial-history-card .eyebrow {
-    margin-bottom: 2px;
 }
 
 .student-financial-history-table-wrap {
@@ -146,20 +67,32 @@ body[data-theme="dark"] .student-financial-history-card {
 
 .student-financial-workspace {
     --student-financial-panel-surface:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 30%),
-        var(--legacy-panel-surface-strong);
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-support-alpha) 22%, transparent), transparent 34%),
+        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--theme-accent-premium-alpha) 18%, transparent), transparent 30%),
+        radial-gradient(circle at 20% 16%, rgba(255, 255, 255, 0.12), transparent 24%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.16), transparent 34%),
+        var(--card-surface-strong);
     --student-financial-panel-surface-muted:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 8%, transparent), transparent 30%),
-        var(--legacy-panel-surface);
-    --student-financial-panel-border: var(--legacy-panel-border);
-    --student-financial-panel-shadow: var(--shadow-lift);
-    --student-financial-panel-shadow-soft: var(--legacy-panel-shadow);
-    --student-financial-panel-line: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-support) 34%, transparent), color-mix(in srgb, var(--theme-accent-primary) 28%, transparent));
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-premium-alpha) 16%, transparent), transparent 34%),
+        radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 30%),
+        var(--card-surface);
+    --student-financial-panel-border: var(--card-border);
+    --student-financial-panel-shadow: var(--card-shadow);
+    --student-financial-panel-shadow-soft: var(--card-shadow);
+    --student-financial-panel-line: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-support) 74%, transparent), color-mix(in srgb, var(--theme-accent-premium) 62%, transparent));
     display: grid;
-    gap: 16px;
-    padding: 24px;
-    border-radius: 28px;
-    background: var(--student-financial-panel-surface-muted);
+    gap: 18px;
+    padding: 26px;
+    border-radius: 32px;
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 20%, transparent), transparent 28%),
+        radial-gradient(circle at 12% 88%, color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, transparent), transparent 22%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 36%),
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent),
+            color-mix(in srgb, var(--theme-surface-secondary) 94%, transparent)
+        );
     border: 1px solid var(--student-financial-panel-border);
     box-shadow: var(--student-financial-panel-shadow-soft);
     color: var(--theme-text-primary);
@@ -175,15 +108,38 @@ body[data-theme="dark"] .student-financial-history-card {
 }
 
 .student-financial-peek {
+    --card-local-border: var(--student-financial-panel-border);
+    --card-local-surface: var(--student-financial-panel-surface);
+    --card-local-shadow: var(--student-financial-panel-shadow);
     display: grid;
     grid-template-columns: minmax(0, 1.2fr) minmax(280px, 1fr) auto;
     gap: 16px;
     align-items: center;
-    padding: 20px 22px;
-    border-radius: 24px;
-    border: 1px solid var(--student-financial-panel-border);
-    background: var(--student-financial-panel-surface);
-    box-shadow: var(--student-financial-panel-shadow);
+    padding: 22px 24px;
+    border-radius: 28px;
+    border: 1px solid var(--card-local-border);
+    background: var(--card-local-surface);
+    box-shadow: var(--card-local-shadow);
+    position: relative;
+    isolation: isolate;
+}
+
+.student-financial-peek::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: calc(28px - 1px);
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.14), transparent 30%),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 38%),
+        linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 22%);
+    opacity: 0.82;
+    pointer-events: none;
+}
+
+.student-financial-peek > * {
+    position: relative;
+    z-index: 1;
 }
 
 .student-financial-peek__copy {
@@ -200,11 +156,14 @@ body[data-theme="dark"] .student-financial-history-card {
 
 .student-financial-peek__stat {
     display: grid;
-    gap: 6px;
-    padding: 12px 14px;
-    border-radius: 16px;
+    gap: 8px;
+    padding: 14px 15px;
+    border-radius: 18px;
     border: 1px solid color-mix(in srgb, var(--student-financial-panel-border) 88%, transparent);
-    background: color-mix(in srgb, var(--student-financial-panel-surface-muted) 82%, transparent);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 8%, transparent), transparent 42%),
+        color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
+    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
 }
 
 .student-financial-peek__label {
@@ -242,14 +201,37 @@ body[data-theme="dark"] .student-financial-history-card {
 }
 
 .student-financial-command-strip {
+    --card-local-border: var(--student-financial-panel-border);
+    --card-local-surface: var(--student-financial-panel-surface);
+    --card-local-shadow: var(--student-financial-panel-shadow);
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 18px;
-    padding: 22px 24px;
-    border-radius: 24px;
-    border: 1px solid var(--student-financial-panel-border);
-    background: var(--student-financial-panel-surface);
-    box-shadow: var(--student-financial-panel-shadow);
+    gap: 20px;
+    padding: 24px 25px;
+    border-radius: 28px;
+    border: 1px solid var(--card-local-border);
+    background: var(--card-local-surface);
+    box-shadow: var(--card-local-shadow);
+    position: relative;
+    isolation: isolate;
+}
+
+.student-financial-command-strip::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: calc(28px - 1px);
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.14), transparent 32%),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 40%),
+        linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-premium-alpha) 9%, transparent), transparent 26%);
+    opacity: 0.82;
+    pointer-events: none;
+}
+
+.student-financial-command-strip > * {
+    position: relative;
+    z-index: 1;
 }
 
 .student-financial-command-copy {
@@ -332,9 +314,20 @@ body[data-theme="dark"] .student-financial-history-card {
 .student-financial-side-panel,
 .student-financial-id-card,
 .student-financial-kpi-card {
-    border: 1px solid var(--student-financial-panel-border);
-    background: var(--student-financial-panel-surface);
-    box-shadow: var(--student-financial-panel-shadow);
+    --card-local-border: var(--student-financial-panel-border);
+    --card-local-surface: var(--student-financial-panel-surface);
+    --card-local-shadow: var(--student-financial-panel-shadow);
+    --card-local-hover-border: var(--card-hover-border);
+    --card-local-hover-shadow: var(--card-hover-shadow);
+    border: 1px solid var(--card-local-border);
+    background: var(--card-local-surface);
+    box-shadow: var(--card-local-shadow);
+    border-radius: 24px;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease,
+        background-color 0.2s ease;
 }
 
 .student-financial-panel::before,
@@ -343,11 +336,22 @@ body[data-theme="dark"] .student-financial-history-card {
 .student-financial-kpi-card::before {
     content: "";
     position: absolute;
-    inset: 0 0 auto 0;
-    height: 1px;
-    background: var(--student-financial-panel-line);
+    inset: 0;
+    border-radius: inherit;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent 26%),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 32%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 26%);
     opacity: 0.9;
     pointer-events: none;
+}
+
+.student-financial-panel:hover,
+.student-financial-side-panel:hover,
+.student-financial-id-card:hover,
+.student-financial-kpi-card:hover {
+    border-color: var(--card-local-hover-border);
+    box-shadow: var(--card-local-hover-shadow);
 }
 
 .student-financial-panel-head {
@@ -355,8 +359,8 @@ body[data-theme="dark"] .student-financial-history-card {
     justify-content: space-between;
     align-items: start;
     gap: 12px;
-    padding: 20px 22px 14px;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+    padding: 22px 24px 16px;
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-border-soft) 90%);
 }
 
 .student-financial-status-pills {
@@ -368,9 +372,14 @@ body[data-theme="dark"] .student-financial-history-card {
 
 .student-financial-workspace .pill {
     border: 1px solid color-mix(in srgb, var(--student-financial-panel-border) 92%, transparent);
-    background: color-mix(in srgb, var(--student-financial-panel-surface-muted) 88%, transparent);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 100%),
+        color-mix(in srgb, var(--student-financial-panel-surface-muted) 88%, transparent);
     color: var(--theme-text-secondary);
-    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 0 0 1px rgba(255, 255, 255, 0.018);
+    backdrop-filter: blur(16px) saturate(138%);
 }
 
 .student-financial-workspace .pill.info {
@@ -432,13 +441,15 @@ body[data-theme="dark"] .student-financial-history-card {
     border-color: color-mix(in srgb, var(--theme-accent-support) 28%, var(--student-financial-panel-border) 72%);
     background: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--student-financial-panel-surface-muted) 84%);
     color: var(--theme-text-primary);
-    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+    box-shadow:
+        0 12px 24px rgba(15, 23, 42, 0.1),
+        0 0 20px color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent);
 }
 
 .student-financial-side-body {
     display: grid;
     gap: 14px;
-    padding: 18px 20px 20px;
+    padding: 20px 22px 22px;
 }
 
 .student-financial-quick-actions {
@@ -453,18 +464,24 @@ body[data-theme="dark"] .student-financial-history-card {
     gap: 14px;
     align-items: start;
     width: 100%;
-    padding: 14px 16px;
+    padding: 16px 17px;
     text-align: left;
-    border: 1px solid var(--student-financial-panel-border);
-    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--student-financial-panel-border) 92%, transparent);
+    border-radius: 20px;
     background: var(--student-financial-panel-surface-muted);
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 0 0 1px rgba(255, 255, 255, 0.025);
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .student-financial-quick-action:hover,
 .student-financial-quick-action:focus-visible {
-    border-color: color-mix(in srgb, var(--brand) 32%, var(--theme-border-soft) 68%);
-    box-shadow: 0 10px 26px color-mix(in srgb, rgb(15 23 42) 8%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 26%, var(--theme-border-soft) 74%);
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 18px 34px rgba(7, 14, 24, 0.12),
+        0 0 24px color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent);
     outline: 2px solid color-mix(in srgb, var(--brand) 32%, transparent);
     outline-offset: 2px;
 }
@@ -510,54 +527,56 @@ body[data-theme="dark"] .student-financial-history-card {
     width: 32px;
     height: 32px;
     border-radius: 12px;
-    background: rgba(255, 140, 0, 0.12);
-    color: var(--brand);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent), transparent 42%),
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), color-mix(in srgb, var(--theme-accent-premium-alpha) 18%, transparent));
+    color: color-mix(in srgb, var(--theme-accent-support) 70%, var(--theme-accent-premium) 30%);
     font-weight: 800;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 0 18px color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent);
 }
 
 .student-financial-drawer,
-.student-financial-action-card,
-.student-financial-history-card,
-.student-financial-overview-card .student-financial-metric-card,
-.student-financial-overview-card .student-financial-plan-card,
-.student-financial-overview-card .student-financial-history-table-card,
+.student-financial-plan-card,
+.student-financial-history-table-card,
 .student-financial-status-tile,
 .student-financial-ledger,
 .student-payment-management-total,
 .student-payment-management-summary,
 .student-financial-drawer-stat,
 .student-financial-timeline__content {
-    border-color: var(--student-financial-panel-border);
-    box-shadow: var(--student-financial-panel-shadow);
+    --card-local-border: var(--student-financial-panel-border);
+    --card-local-shadow: var(--student-financial-panel-shadow);
+    border-color: var(--card-local-border);
+    box-shadow: var(--card-local-shadow);
 }
 
 .student-financial-drawer,
-.student-financial-action-card-primary,
-.student-financial-overview-card .student-financial-metric-card,
-.student-financial-overview-card .student-financial-plan-card,
-.student-financial-overview-card .student-financial-history-table-card,
+.student-financial-plan-card,
+.student-financial-history-table-card,
 .student-financial-status-tile,
 .student-financial-ledger {
-    background: var(--student-financial-panel-surface);
+    --card-local-surface: var(--student-financial-panel-surface);
+    background: var(--card-local-surface);
 }
 
-.student-financial-action-card-secondary,
-.student-financial-history-card,
 .student-payment-management-total,
 .student-payment-management-summary,
 .student-financial-drawer-stat,
 .student-financial-timeline__content {
-    background: var(--student-financial-panel-surface-muted);
+    --card-local-surface: var(--student-financial-panel-surface-muted);
+    background: var(--card-local-surface);
 }
 
 .student-financial-id-card {
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
-    gap: 18px;
+    gap: 20px;
     align-items: stretch;
     min-height: 100%;
-    padding: 18px 20px;
+    padding: 20px 22px;
 }
 
 .student-financial-id-card__identity {
@@ -570,13 +589,19 @@ body[data-theme="dark"] .student-financial-history-card {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 52px;
-    height: 52px;
-    border-radius: 999px;
-    background: var(--brand);
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 20%, transparent), transparent 44%),
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-support) 74%, var(--theme-accent-primary) 26%), color-mix(in srgb, var(--theme-accent-primary) 70%, var(--theme-accent-premium) 30%));
     color: white;
     font-size: 1.1rem;
     font-weight: 800;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.24),
+        0 12px 24px rgba(7, 14, 24, 0.14),
+        0 0 24px color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent);
 }
 
 .student-financial-id-card__meta {
@@ -594,10 +619,13 @@ body[data-theme="dark"] .student-financial-history-card {
     display: grid;
     gap: 6px;
     align-content: start;
-    padding: 12px 14px;
-    border-radius: 16px;
+    padding: 13px 15px;
+    border-radius: 18px;
     border: 1px solid color-mix(in srgb, var(--student-financial-panel-border) 88%, transparent);
-    background: color-mix(in srgb, var(--student-financial-panel-surface-muted) 84%, transparent);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 8%, transparent), transparent 44%),
+        color-mix(in srgb, var(--theme-surface-glass) 86%, transparent);
+    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
     text-align: left;
 }
 
@@ -637,9 +665,9 @@ body[data-theme="dark"] .student-financial-history-card {
 .student-financial-kpi-card {
     display: grid;
     grid-template-rows: auto auto 1fr;
-    gap: 10px;
-    min-height: 148px;
-    padding: 16px;
+    gap: 12px;
+    min-height: 154px;
+    padding: 18px;
 }
 
 .student-financial-kpi-card__head {
@@ -659,31 +687,35 @@ body[data-theme="dark"] .student-financial-history-card {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
     font-size: 0.9rem;
     font-weight: 800;
 }
 
 .student-financial-kpi-card__icon.is-success {
-    background: rgba(16, 185, 129, 0.12);
+    background: linear-gradient(180deg, rgba(16, 185, 129, 0.18), rgba(16, 185, 129, 0.08));
     color: #059669;
+    box-shadow: 0 0 18px rgba(16, 185, 129, 0.14);
 }
 
 .student-financial-kpi-card__icon.is-warning {
-    background: rgba(245, 158, 11, 0.12);
+    background: linear-gradient(180deg, rgba(245, 158, 11, 0.18), rgba(245, 158, 11, 0.08));
     color: #d97706;
+    box-shadow: 0 0 18px rgba(245, 158, 11, 0.14);
 }
 
 .student-financial-kpi-card__icon.is-danger {
-    background: rgba(239, 68, 68, 0.12);
+    background: linear-gradient(180deg, rgba(239, 68, 68, 0.18), rgba(239, 68, 68, 0.08));
     color: #dc2626;
+    box-shadow: 0 0 18px rgba(239, 68, 68, 0.14);
 }
 
 .student-financial-kpi-card__icon.is-info {
-    background: rgba(59, 130, 246, 0.12);
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.18), rgba(59, 130, 246, 0.08));
     color: var(--theme-accent-support);
+    box-shadow: 0 0 18px rgba(59, 130, 246, 0.14);
 }
 
 .student-financial-kpi-card__value {
@@ -712,7 +744,10 @@ body[data-theme="dark"] .student-financial-history-card {
 }
 
 .student-financial-empty-shell {
-    padding: 32px 24px;
+    padding: 36px 28px;
+    border-radius: 24px;
+    border: 1px dashed color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-border-soft) 84%);
+    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
 }
 
 .student-financial-empty-icon {
@@ -761,9 +796,9 @@ body[data-theme="dark"] .student-financial-history-card {
     gap: 10px;
     min-height: 100%;
     padding: 16px 18px;
-    border: 1px solid var(--student-financial-panel-border);
-    background: var(--student-financial-panel-surface);
-    box-shadow: var(--student-financial-panel-shadow);
+    border: 1px solid var(--card-local-border, var(--student-financial-panel-border));
+    background: var(--card-local-surface, var(--student-financial-panel-surface));
+    box-shadow: var(--card-local-shadow, var(--student-financial-panel-shadow));
 }
 
 .student-financial-status-tile::before {
@@ -794,9 +829,9 @@ body[data-theme="dark"] .student-financial-history-card {
 }
 
 .student-financial-ledger {
-    border: 1px solid var(--student-financial-panel-border);
-    background: var(--student-financial-panel-surface);
-    box-shadow: var(--student-financial-panel-shadow);
+    border: 1px solid var(--card-local-border, var(--student-financial-panel-border));
+    background: var(--card-local-surface, var(--student-financial-panel-surface));
+    box-shadow: var(--card-local-shadow, var(--student-financial-panel-shadow));
 }
 
 .student-financial-ledger::before {
@@ -829,7 +864,9 @@ body[data-theme="dark"] .student-financial-history-card {
 }
 
 .student-financial-ledger__row:hover {
-    background: color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--student-financial-panel-surface-muted) 88%);
+    background:
+        linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent), transparent 16%),
+        color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--student-financial-panel-surface-muted) 88%);
 }
 
 .student-financial-ledger__row td {
@@ -974,8 +1011,8 @@ body[data-theme="dark"] .student-financial-history-card {
     gap: 6px;
     padding: 14px 16px;
     border-radius: 18px;
-    border: 1px solid var(--student-financial-panel-border);
-    background: var(--student-financial-panel-surface-muted);
+    border: 1px solid var(--card-local-border, var(--student-financial-panel-border));
+    background: var(--card-local-surface, var(--student-financial-panel-surface-muted));
 }
 
 .student-financial-drawer-stat__label {
@@ -1067,13 +1104,13 @@ body[data-theme="dark"] .student-financial-history-card {
 body[data-theme="dark"] .student-financial-workspace {
     --student-financial-panel-surface:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 30%),
-        linear-gradient(180deg, rgba(23, 30, 46, 0.94), rgba(15, 20, 31, 0.84));
+        var(--card-surface-strong);
     --student-financial-panel-surface-muted:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, transparent), transparent 32%),
-        linear-gradient(180deg, rgba(18, 24, 38, 0.9), rgba(12, 16, 27, 0.8));
-    --student-financial-panel-border: color-mix(in srgb, var(--theme-glass-border) 96%, transparent);
-    --student-financial-panel-shadow: 0 18px 42px rgba(0, 0, 0, 0.24), 0 6px 16px rgba(0, 0, 0, 0.16);
-    --student-financial-panel-shadow-soft: 0 14px 34px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.12);
+        var(--card-surface);
+    --student-financial-panel-border: var(--card-border);
+    --student-financial-panel-shadow: var(--card-shadow);
+    --student-financial-panel-shadow-soft: var(--card-shadow);
     --student-financial-panel-line: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-support) 48%, transparent), color-mix(in srgb, var(--theme-accent-premium) 28%, transparent));
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 28%),
@@ -1095,8 +1132,8 @@ body[data-theme="dark"] .student-financial-workspace :is(
     .student-financial-drawer,
     .student-financial-status-tile,
     .student-financial-ledger,
-    .student-financial-action-card,
-    .student-financial-history-card,
+    .student-financial-plan-card,
+    .student-financial-history-table-card,
     .student-payment-primary-summary,
     .student-payment-management-summary,
     .student-payment-management-total,
@@ -1177,31 +1214,31 @@ body[data-theme="dark"] .student-financial-workspace .pill.success {
 }
 
 body[data-theme="dark"] .student-financial-workspace .student-financial-status-pills .pill.student-financial-filter-pill--paid {
-    border-color: color-mix(in srgb, var(--theme-accent-success) 32%, var(--theme-glass-border) 68%) !important;
-    background: color-mix(in srgb, var(--theme-accent-success-alpha) 20%, var(--theme-surface-glass-strong) 80%) !important;
-    color: var(--theme-accent-success) !important;
-    box-shadow: inset 0 1px 0 var(--theme-glass-highlight), 0 10px 22px rgba(0, 0, 0, 0.18) !important;
+    border-color: color-mix(in srgb, var(--theme-accent-success) 32%, var(--theme-glass-border) 68%);
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 20%, var(--theme-surface-glass-strong) 80%);
+    color: var(--theme-accent-success);
+    box-shadow: inset 0 1px 0 var(--theme-glass-highlight), 0 10px 22px rgba(0, 0, 0, 0.18);
 }
 
 body[data-theme="dark"] .student-financial-workspace .student-financial-status-pills .pill.student-financial-filter-pill--pending {
-    border-color: color-mix(in srgb, var(--theme-accent-premium) 32%, var(--theme-glass-border) 68%) !important;
-    background: color-mix(in srgb, var(--theme-accent-premium-alpha) 20%, var(--theme-surface-glass-strong) 80%) !important;
-    color: var(--theme-accent-premium) !important;
-    box-shadow: inset 0 1px 0 var(--theme-glass-highlight), 0 10px 22px rgba(0, 0, 0, 0.18) !important;
+    border-color: color-mix(in srgb, var(--theme-accent-premium) 32%, var(--theme-glass-border) 68%);
+    background: color-mix(in srgb, var(--theme-accent-premium-alpha) 20%, var(--theme-surface-glass-strong) 80%);
+    color: var(--theme-accent-premium);
+    box-shadow: inset 0 1px 0 var(--theme-glass-highlight), 0 10px 22px rgba(0, 0, 0, 0.18);
 }
 
 body[data-theme="dark"] .student-financial-workspace .student-financial-id-card__stats .pill.student-financial-plan-status-pill {
-    border-color: color-mix(in srgb, var(--theme-accent-premium) 28%, var(--theme-glass-border) 72%) !important;
-    background: color-mix(in srgb, var(--theme-accent-premium-alpha) 18%, var(--theme-surface-glass-strong) 82%) !important;
-    color: var(--theme-accent-premium) !important;
-    box-shadow: inset 0 1px 0 var(--theme-glass-highlight), 0 10px 22px rgba(0, 0, 0, 0.16) !important;
+    border-color: color-mix(in srgb, var(--theme-accent-premium) 28%, var(--theme-glass-border) 72%);
+    background: color-mix(in srgb, var(--theme-accent-premium-alpha) 18%, var(--theme-surface-glass-strong) 82%);
+    color: var(--theme-accent-premium);
+    box-shadow: inset 0 1px 0 var(--theme-glass-highlight), 0 10px 22px rgba(0, 0, 0, 0.16);
 }
 
 body[data-theme="dark"] .student-financial-workspace .student-financial-id-card__stats .pill.student-financial-plan-status-pill.student-financial-plan-status-pill--active {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 30%, var(--theme-glass-border) 70%) !important;
-    background: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-surface-glass-strong) 82%) !important;
-    color: var(--theme-accent-support) !important;
-    box-shadow: inset 0 1px 0 var(--theme-glass-highlight), 0 10px 22px rgba(0, 0, 0, 0.16) !important;
+    border-color: color-mix(in srgb, var(--theme-accent-support) 30%, var(--theme-glass-border) 70%);
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-surface-glass-strong) 82%);
+    color: var(--theme-accent-support);
+    box-shadow: inset 0 1px 0 var(--theme-glass-highlight), 0 10px 22px rgba(0, 0, 0, 0.16);
 }
 
 body[data-theme="dark"] .student-financial-status-pills .pill:hover,
@@ -1272,16 +1309,12 @@ body[data-theme="dark"] .student-financial-kpi-card,
 body[data-theme="dark"] .student-financial-drawer,
 body[data-theme="dark"] .student-financial-status-tile,
 body[data-theme="dark"] .student-financial-ledger,
+body[data-theme="dark"] .student-financial-plan-card,
+body[data-theme="dark"] .student-financial-history-table-card,
 body[data-theme="dark"] .student-payment-management-total,
 body[data-theme="dark"] .student-payment-management-summary,
 body[data-theme="dark"] .student-financial-drawer-stat,
-body[data-theme="dark"] .student-financial-timeline__content,
-body[data-theme="dark"] .student-financial-action-card-primary,
-body[data-theme="dark"] .student-financial-action-card-secondary,
-body[data-theme="dark"] .student-financial-history-card,
-body[data-theme="dark"] .student-financial-overview-card .student-financial-metric-card,
-body[data-theme="dark"] .student-financial-overview-card .student-financial-plan-card,
-body[data-theme="dark"] .student-financial-overview-card .student-financial-history-table-card {
+body[data-theme="dark"] .student-financial-timeline__content {
     border-color: var(--student-financial-panel-border);
     box-shadow: var(--student-financial-panel-shadow);
 }

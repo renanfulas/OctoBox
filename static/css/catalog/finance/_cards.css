@@ -219,9 +219,9 @@ body[data-theme="dark"] .finance-alert-stat {
 }
 
 body[data-theme="dark"] .finance-action-pill {
-    border-color: color-mix(in srgb, var(--theme-accent-warning) 28%, var(--theme-glass-border) 72%) !important;
-    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-surface-glass-strong) 82%) !important;
-    color: color-mix(in srgb, var(--theme-accent-warning) 88%, white 12%) !important;
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 28%, var(--theme-glass-border) 72%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-surface-glass-strong) 82%);
+    color: color-mix(in srgb, var(--theme-accent-warning) 88%, white 12%);
 }
 
 .finance-alert-stat strong {

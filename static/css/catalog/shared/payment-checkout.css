@@ -20,13 +20,16 @@ POR QUE ELE EXISTE:
 }
 
 .student-payment-primary-summary {
+    --card-local-border: var(--student-financial-panel-border, var(--card-border));
+    --card-local-surface: var(--student-financial-panel-surface-muted, var(--card-surface));
+    --card-local-shadow: var(--student-financial-panel-shadow, var(--card-shadow));
     display: grid;
     gap: 14px;
     padding: 18px 20px;
     border-radius: 20px;
-    border: 1px solid var(--student-financial-panel-border);
-    background: var(--student-financial-panel-surface-muted);
-    box-shadow: var(--student-financial-panel-shadow);
+    border: 1px solid var(--card-local-border);
+    background: var(--card-local-surface);
+    box-shadow: var(--card-local-shadow);
 }
 
 .student-payment-primary-summary .payment-primary-summary__amount {
@@ -36,7 +39,7 @@ POR QUE ELE EXISTE:
 }
 
 .student-payment-primary-summary .payment-primary-summary__label {
-    color: var(--legacy-copy);
+    color: var(--card-text-secondary);
     font-size: 0.72rem;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -52,7 +55,7 @@ POR QUE ELE EXISTE:
 }
 
 .student-payment-primary-summary .payment-primary-summary__currency {
-    color: var(--legacy-copy);
+    color: var(--card-text-secondary);
     font-size: 1.1rem;
     font-weight: 700;
 }
@@ -60,7 +63,7 @@ POR QUE ELE EXISTE:
 .student-payment-primary-summary .payment-primary-summary__amount-field strong {
     font-size: 1.5rem;
     font-weight: 800;
-    color: var(--ink);
+    color: var(--card-text-primary);
 }
 
 .student-payment-primary-summary .payment-primary-summary__meta {
@@ -90,7 +93,7 @@ POR QUE ELE EXISTE:
     line-height: 1.45;
     font-size: 0.92rem;
     font-weight: 600;
-    color: color-mix(in srgb, var(--theme-text-primary) 82%, var(--brand) 18%);
+    color: color-mix(in srgb, var(--card-text-primary) 82%, var(--brand) 18%);
     background: color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--student-financial-panel-surface-muted) 90%);
     border: 1px solid color-mix(in srgb, var(--theme-accent-support) 12%, var(--student-financial-panel-border) 88%);
 }

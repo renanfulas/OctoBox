@@ -14,7 +14,7 @@ table {
 th,
 td {
     padding: 16px 14px;
-    border-bottom: 1px solid var(--legacy-panel-border);
+    border-bottom: 1px solid var(--card-border);
     text-align: left;
     vertical-align: top;
 }

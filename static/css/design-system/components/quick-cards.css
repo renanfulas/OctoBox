@@ -12,11 +12,14 @@ POR QUE ELE EXISTE:
 }
 
 .quick-card {
+    --quick-card-surface: var(--card-surface);
+    --quick-card-border: var(--card-border);
+    --quick-card-shadow: var(--card-shadow);
     padding: 24px;
     border-radius: var(--radius-panel);
-    border: 1px solid var(--legacy-panel-border);
-    background: var(--legacy-panel-surface);
-    box-shadow: var(--legacy-panel-shadow);
+    border: 1px solid var(--quick-card-border);
+    background: var(--quick-card-surface);
+    box-shadow: var(--quick-card-shadow);
     text-decoration: none;
     transition: box-shadow 0.18s ease, border-color 0.18s ease;
     position: relative;
@@ -24,8 +27,8 @@ POR QUE ELE EXISTE:
 }
 
 .quick-card:hover {
-    box-shadow: var(--shadow-lift);
-    border-color: var(--brand);
+    box-shadow: var(--card-hover-shadow);
+    border-color: var(--card-hover-border);
 }
 
 .quick-card::after {
@@ -35,8 +38,9 @@ POR QUE ELE EXISTE:
     width: 128px;
     height: 128px;
     border-radius: 999px;
-    background: transparent;
+    background: var(--card-orb);
     pointer-events: none;
+    opacity: 0.78;
 }
 
 .quick-card strong {
@@ -48,18 +52,18 @@ POR QUE ELE EXISTE:
 
 .quick-card p {
     margin: 0;
-    color: var(--legacy-copy);
+    color: var(--card-text-secondary);
     line-height: 1.65;
 }
 
 body[data-theme="dark"] .quick-card {
-    background: var(--legacy-panel-surface);
-    border-color: var(--legacy-panel-border);
-    box-shadow: var(--legacy-panel-shadow);
+    background: var(--quick-card-surface);
+    border-color: var(--quick-card-border);
+    box-shadow: var(--quick-card-shadow);
 }
 
 body[data-theme="dark"] .quick-card:hover {
-    border-color: rgba(120, 170, 255, 0.26);
+    border-color: var(--card-hover-border);
 }
 
 .accent-bar {

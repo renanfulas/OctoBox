@@ -37,7 +37,7 @@ POR QUE ELE EXISTE:
     font-size: 0.875rem;
     line-height: 1.2;
     text-align: center;
-    box-shadow: var(--legacy-panel-shadow);
+    box-shadow: var(--card-shadow);
     transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
     cursor: pointer;
 }
@@ -50,20 +50,20 @@ POR QUE ELE EXISTE:
 
 .button:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3), var(--legacy-panel-shadow);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3), var(--card-shadow);
 }
 
 .button.secondary {
-    background: var(--legacy-panel-surface);
+    background: var(--card-surface);
     color: var(--ink);
-    border: 1px solid var(--legacy-panel-border);
+    border: 1px solid var(--card-border);
     box-shadow: none;
 }
 
 .button.secondary:hover {
     border-color: var(--brand);
     color: var(--brand);
-    background: var(--legacy-panel-surface);
+    background: var(--card-surface);
 }
 
 .button.ghost {
@@ -160,5 +160,5 @@ body[data-theme="dark"] .button.secondary:hover {
 }
 
 .button-pill {
-    border-radius: 9999px !important;
+    border-radius: 9999px;
 }

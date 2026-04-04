@@ -12,23 +12,26 @@ REGRA:
 
 :is(.card, .table-card).card--support,
 .table-card--support {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, transparent), transparent 26%),
-        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 24%),
-        var(--theme-surface-glass);
-    border-color: color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
-    box-shadow: var(--theme-glass-shadow);
+    --card-local-surface:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-glass) 90%, transparent)),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 18%, transparent), transparent 30%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 34%);
+    --card-local-border: color-mix(in srgb, var(--theme-glass-border) 88%, rgba(96, 165, 250, 0.18));
+    --card-local-shadow: var(--card-shadow);
 }
 
 :is(.card, .table-card).card--focus {
     --card-focus-accent: var(--theme-accent-support);
     --card-focus-accent-alpha: var(--theme-accent-support-alpha);
-    background:
+    --card-local-surface:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-glass) 88%, transparent)),
         radial-gradient(circle at top right, color-mix(in srgb, var(--card-focus-accent-alpha) 34%, transparent), transparent 30%),
-        radial-gradient(circle at bottom left, var(--theme-glass-highlight), transparent 26%),
-        color-mix(in srgb, var(--card-focus-accent-alpha) 10%, var(--theme-surface-glass-strong) 90%);
-    border-color: color-mix(in srgb, var(--card-focus-accent) 24%, var(--theme-glass-border) 76%);
-    box-shadow: var(--theme-glass-shadow);
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 14%, transparent), transparent 28%);
+    --card-local-border: color-mix(in srgb, var(--card-focus-accent) 28%, var(--card-border) 72%);
+    --card-local-hover-border: color-mix(in srgb, var(--card-focus-accent) 46%, var(--card-border) 54%);
+    --card-local-focus-border: color-mix(in srgb, var(--card-focus-accent) 54%, var(--card-border) 46%);
+    --card-local-top-stripe: linear-gradient(90deg, color-mix(in srgb, var(--card-focus-accent) 88%, transparent), color-mix(in srgb, var(--theme-accent-premium) 44%, transparent));
+    --card-local-orb: radial-gradient(circle, color-mix(in srgb, var(--card-focus-accent) 18%, transparent), transparent 72%);
 }
 
 :is(.card, .table-card).card--focus[data-tone="danger"],
@@ -45,49 +48,76 @@ REGRA:
 
 :is(.card, .table-card).card--metric {
     --metric-card-surface:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent), color-mix(in srgb, var(--theme-bg-stage) 90%, transparent));
-    --metric-card-border: color-mix(in srgb, var(--theme-glass-border) 92%, transparent);
-    --metric-card-shadow: var(--theme-glass-shadow);
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent), color-mix(in srgb, var(--theme-bg-stage) 88%, transparent)),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 34%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, transparent), transparent 40%);
+    --metric-card-border: color-mix(in srgb, var(--card-border) 92%, transparent);
+    --metric-card-shadow: var(--card-shadow);
     --metric-card-accent: color-mix(in srgb, var(--theme-accent-support) 36%, transparent);
 }
 
 :is(.card, .table-card).card--priority {
-    border-color: color-mix(in srgb, var(--theme-accent-warning) 24%, var(--theme-glass-border) 76%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 16%, transparent), transparent 28%),
-        var(--theme-surface-glass-strong);
+    --card-local-border: color-mix(in srgb, var(--theme-accent-warning) 26%, var(--card-border) 74%);
+    --card-local-surface:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-glass) 88%, transparent)),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 22%, transparent), transparent 30%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 38%);
 }
 
 :is(.card, .table-card).card--critical {
-    border-color: color-mix(in srgb, var(--theme-accent-danger) 24%, var(--theme-glass-border) 76%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-danger-alpha) 14%, transparent), transparent 28%),
-        var(--theme-surface-glass-strong);
+    --card-local-border: color-mix(in srgb, var(--theme-accent-danger) 26%, var(--card-border) 74%);
+    --card-local-surface:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-glass) 88%, transparent)),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-danger-alpha) 22%, transparent), transparent 30%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 38%);
 }
 
 :is(.card, .table-card).card--soft {
-    background: color-mix(in srgb, var(--theme-surface-glass) 74%, transparent);
-    border-color: color-mix(in srgb, var(--theme-glass-border) 80%, transparent);
-    box-shadow: 0 14px 26px color-mix(in srgb, rgba(7, 14, 24, 0.06) 100%, transparent);
+    --card-local-surface:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass) 82%, transparent), color-mix(in srgb, var(--theme-surface-glass) 74%, transparent)),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 8%, transparent), transparent 42%);
+    --card-local-border: color-mix(in srgb, var(--theme-glass-border) 78%, transparent);
+    --card-local-shadow: 0 14px 26px color-mix(in srgb, rgba(7, 14, 24, 0.1) 100%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .table-card--rail {
     --layout-panel-gap: 14px;
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 28%),
-        var(--theme-surface-glass);
-    border-color: color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
+    --card-local-surface:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-glass) 90%, transparent)),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 30%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 38%);
+    --card-local-border: color-mix(in srgb, var(--theme-glass-border) 88%, rgba(56, 189, 248, 0.16));
+}
+
+:is(.card, .table-card).card--sci-fi {
+    --card-local-surface:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 97%, transparent), color-mix(in srgb, var(--theme-surface-glass) 90%, transparent)),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 22%, transparent), transparent 34%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 16%, transparent), transparent 40%);
+    --card-local-border: color-mix(in srgb, var(--theme-glass-border) 86%, rgba(56, 189, 248, 0.22));
+    --card-local-shadow:
+        0 24px 60px rgba(15, 23, 42, 0.1),
+        0 10px 22px rgba(15, 23, 42, 0.06),
+        0 0 26px color-mix(in srgb, var(--theme-accent-support) 10%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    --card-local-hover-border: color-mix(in srgb, var(--theme-accent-support) 42%, var(--card-local-border) 58%);
+    --card-local-hover-shadow:
+        0 30px 72px rgba(15, 23, 42, 0.14),
+        0 14px 26px rgba(15, 23, 42, 0.08),
+        0 0 32px color-mix(in srgb, var(--theme-accent-support) 16%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    --card-local-focus-border: color-mix(in srgb, var(--theme-accent-support) 54%, var(--card-local-border) 46%);
+    --card-local-focus-shadow:
+        0 0 0 3px color-mix(in srgb, var(--theme-accent-support) 14%, transparent),
+        0 30px 72px rgba(15, 23, 42, 0.14),
+        0 14px 26px rgba(15, 23, 42, 0.08),
+        0 0 32px color-mix(in srgb, var(--theme-accent-support) 16%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 body[data-theme="dark"] :is(.card, .table-card).card--support,
 body[data-theme="dark"] .table-card--support,
 body[data-theme="dark"] .table-card--rail {
-    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 18%, transparent), transparent 26%),
-        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 24%),
-        var(--theme-surface-glass-strong);
-    box-shadow:
-        inset 0 1px 0 var(--theme-glass-highlight),
-        0 18px 42px rgba(0, 0, 0, 0.24);
+    --card-local-border: color-mix(in srgb, var(--theme-glass-border) 92%, rgba(56, 189, 248, 0.18));
+    --card-local-shadow: var(--card-shadow);
 }

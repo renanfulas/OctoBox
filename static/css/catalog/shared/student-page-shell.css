@@ -393,7 +393,7 @@ POR QUE ELE EXISTE:
 }
 
 .student-page-section-card {
-    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .student-page-section-card:hover {
@@ -751,11 +751,10 @@ POR QUE ELE EXISTE:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 36%),
         color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
     box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
-    transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+    transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .student-page-plan-meta__item:hover {
-    transform: translateY(-1px);
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
     background: inherit;
     box-shadow:
@@ -936,6 +935,77 @@ POR QUE ELE EXISTE:
     box-shadow: var(--theme-glass-shadow);
 }
 
+.student-page-payments-panel {
+    --student-page-drawer-top: 122px;
+    --student-page-drawer-right: 24px;
+    --student-page-drawer-bottom-gap: 24px;
+    --student-page-drawer-width: min(540px, calc(100vw - (var(--student-page-drawer-right) * 2)));
+}
+
+.student-page-payments-panel > .slide-overlay {
+    top: var(--student-page-drawer-top);
+    height: calc(100dvh - var(--student-page-drawer-top));
+    background: rgba(4, 7, 14, 0.18);
+    backdrop-filter: blur(1.5px);
+    transition:
+        opacity 0.22s ease,
+        visibility 0.22s ease,
+        background-color 0.22s ease;
+}
+
+.student-page-payments-drawer.slide-over-panel {
+    top: var(--student-page-drawer-top);
+    right: var(--student-page-drawer-right);
+    width: var(--student-page-drawer-width);
+    max-width: calc(100vw - (var(--student-page-drawer-right) * 2));
+    height: auto;
+    max-height: calc(100dvh - var(--student-page-drawer-top) - var(--student-page-drawer-bottom-gap));
+    padding: 20px 20px 18px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
+    border-left: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 32%),
+        var(--theme-surface-glass-strong);
+    box-shadow:
+        0 28px 60px rgba(7, 14, 24, 0.16),
+        inset 0 1px 0 var(--theme-glass-highlight);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    visibility: hidden;
+    opacity: 0;
+    transform: translate3d(calc(100% + 20px), 0, 0);
+    transition:
+        transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1),
+        opacity 0.2s ease,
+        visibility 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.student-page-payments-drawer.slide-over-panel.is-active {
+    right: var(--student-page-drawer-right);
+    visibility: visible;
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+}
+
+.student-page-payments-drawer .drawer-close-btn {
+    top: 16px;
+    right: 16px;
+}
+
+.student-page-payments-drawer--checkout.slide-over-panel {
+    width: min(488px, calc(100vw - (var(--student-page-drawer-right) * 2)));
+}
+
+.student-page-payments-drawer--management.slide-over-panel {
+    width: min(620px, calc(100vw - (var(--student-page-drawer-right) * 2)));
+}
+
+.student-page-payments-drawer--enrollment.slide-over-panel {
+    width: min(536px, calc(100vw - (var(--student-page-drawer-right) * 2)));
+}
+
 body[data-theme="dark"] .student-page-tabs {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
     background: color-mix(in srgb, var(--theme-surface-glass) 92%, transparent);
@@ -1000,6 +1070,19 @@ body[data-theme="dark"] :is(
     box-shadow: var(--theme-glass-shadow);
 }
 
+body[data-theme="dark"] .student-page-payments-panel > .slide-overlay {
+    background: rgba(2, 6, 14, 0.3);
+}
+
+body[data-theme="dark"] .student-page-payments-drawer.slide-over-panel {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 34%),
+        var(--theme-surface-glass-strong);
+    box-shadow:
+        0 28px 68px rgba(2, 6, 14, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
 body[data-theme="dark"] .student-page-header__meta,
 body[data-theme="dark"] .student-page-header__stat-meta,
 body[data-theme="dark"] .student-page-header__stat-label,
@@ -1050,6 +1133,12 @@ body[data-theme="dark"] .student-page-alert-banner {
 }
 
 @media (max-width: 900px) {
+    .student-page-payments-panel {
+        --student-page-drawer-top: 110px;
+        --student-page-drawer-right: 18px;
+        --student-page-drawer-bottom-gap: 18px;
+    }
+
     .student-page-header__card {
         grid-template-columns: 1fr;
         gap: 18px;
@@ -1193,6 +1282,19 @@ body[data-theme="dark"] .student-page-charge-card.is-danger {
 }
 
 @media (max-width: 720px) {
+    .student-page-payments-panel {
+        --student-page-drawer-top: 102px;
+        --student-page-drawer-right: 14px;
+        --student-page-drawer-bottom-gap: 14px;
+    }
+
+    .student-page-payments-drawer.slide-over-panel {
+        width: calc(100vw - (var(--student-page-drawer-right) * 2));
+        padding: 18px 18px 16px;
+        border-radius: 20px;
+        max-height: calc(100dvh - var(--student-page-drawer-top) - var(--student-page-drawer-bottom-gap));
+    }
+
     .student-page-header__card,
     .student-page-tabs {
         padding: 16px;
@@ -1262,6 +1364,28 @@ body[data-theme="dark"] .student-page-charge-card.is-danger {
 }
 
 @media (max-width: 480px) {
+    .student-page-payments-panel {
+        --student-page-drawer-top: 92px;
+        --student-page-drawer-right: 8px;
+        --student-page-drawer-bottom-gap: 8px;
+    }
+
+    .student-page-payments-panel > .slide-overlay {
+        backdrop-filter: blur(1px);
+    }
+
+    .student-page-payments-drawer.slide-over-panel {
+        width: calc(100vw - (var(--student-page-drawer-right) * 2));
+        max-width: calc(100vw - (var(--student-page-drawer-right) * 2));
+        padding: 16px 14px 14px;
+        border-radius: 18px;
+        transform: translate3d(0, 16px, 0);
+    }
+
+    .student-page-payments-drawer.slide-over-panel.is-active {
+        transform: translate3d(0, 0, 0);
+    }
+
     .student-page-header__card {
         padding: 14px;
         gap: 16px;

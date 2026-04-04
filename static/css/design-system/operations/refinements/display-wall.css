@@ -42,21 +42,21 @@ POR QUE ELE EXISTE:
 .manager-main-grid .manager-priority-card,
 .manager-main-grid .manager-secondary-card {
     border-radius: var(--radius-panel);
-    border: 1px solid var(--legacy-panel-border);
+    border: 1px solid var(--card-border);
 }
 
 .manager-main-grid .manager-priority-card {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-danger-alpha) 12%, transparent), transparent 28%),
-        var(--legacy-panel-surface-strong);
-    box-shadow: var(--legacy-panel-shadow);
+        var(--card-surface-strong);
+    box-shadow: var(--card-shadow);
 }
 
 .manager-main-grid .manager-secondary-card {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 28%),
-        var(--legacy-panel-surface);
-    box-shadow: var(--legacy-panel-shadow);
+        var(--card-surface);
+    box-shadow: var(--card-shadow);
 }
 
 .manager-main-grid .manager-priority-card::before,
@@ -66,7 +66,7 @@ POR QUE ELE EXISTE:
     inset: 0 auto auto 0;
     width: 100%;
     height: 3px;
-    background: color-mix(in srgb, var(--legacy-panel-border) 92%, transparent);
+    background: color-mix(in srgb, var(--card-border) 92%, transparent);
 }
 
 .manager-main-grid .manager-priority-card::before {
@@ -141,22 +141,22 @@ POR QUE ELE EXISTE:
 .reception-payment-board,
 #reception-intake-board {
     border-radius: var(--radius-panel);
-    border: 1px solid var(--legacy-panel-border);
+    border: 1px solid var(--card-border);
 }
 
 .reception-priority-card {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 28%),
-        var(--legacy-panel-surface-strong);
-    box-shadow: var(--shadow-lift);
+        var(--card-surface-strong);
+    box-shadow: var(--card-shadow);
 }
 
 .reception-secondary-card,
 .reception-support-card {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 28%),
-        var(--legacy-panel-surface);
-    box-shadow: var(--legacy-panel-shadow);
+        var(--card-surface);
+    box-shadow: var(--card-shadow);
 }
 
 .reception-command-card {
@@ -183,7 +183,7 @@ POR QUE ELE EXISTE:
 }
 
 .reception-grid-board::before {
-    background: color-mix(in srgb, var(--legacy-panel-border) 92%, transparent);
+    background: color-mix(in srgb, var(--card-border) 92%, transparent);
 }
 
 #reception-intake-board .operation-card-title {
@@ -219,7 +219,7 @@ POR QUE ELE EXISTE:
     overflow: hidden;
     border-radius: var(--radius-panel);
     padding: 18px;
-    border: 1px solid var(--legacy-panel-border);
+    border: 1px solid var(--card-border);
 }
 
 .manager-focus-lane::before,
@@ -238,8 +238,8 @@ POR QUE ELE EXISTE:
 .reception-focus-lane {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 30%),
-        var(--legacy-panel-surface-strong);
-    box-shadow: var(--legacy-panel-shadow);
+        var(--card-surface-strong);
+    box-shadow: var(--card-shadow);
 }
 
 .manager-focus-lane .fdw-focus-list,
@@ -260,9 +260,9 @@ POR QUE ELE EXISTE:
 .coach-session-card {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 28%),
-        var(--legacy-panel-surface-strong);
-    border: 1px solid var(--legacy-panel-border);
-    box-shadow: var(--legacy-panel-shadow);
+        var(--card-surface-strong);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
 }
 
 .reception-command-card .actions {
@@ -280,9 +280,9 @@ body[data-theme="dark"] .reception-focus-lane,
 body[data-theme="dark"] .coach-session-card {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
-        var(--legacy-panel-surface-strong);
-    border-color: var(--legacy-panel-border);
-    box-shadow: var(--legacy-panel-shadow);
+        var(--card-surface-strong);
+    border-color: var(--card-border);
+    box-shadow: var(--card-shadow);
 }
 
 body[data-theme="dark"] .reception-priority-card,
@@ -290,16 +290,16 @@ body[data-theme="dark"] .reception-secondary-card,
 body[data-theme="dark"] .reception-support-card {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
-        var(--legacy-panel-surface-strong);
-    border-color: var(--legacy-panel-border);
-    box-shadow: var(--legacy-panel-shadow);
+        var(--card-surface-strong);
+    border-color: var(--card-border);
+    box-shadow: var(--card-shadow);
 }
 
 body[data-theme="dark"] .manager-main-grid .manager-priority-card,
 body[data-theme="dark"] .manager-main-grid .manager-secondary-card {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
-        var(--legacy-panel-surface-strong);
-    border-color: var(--legacy-panel-border);
-    box-shadow: var(--legacy-panel-shadow);
+        var(--card-surface-strong);
+    border-color: var(--card-border);
+    box-shadow: var(--card-shadow);
 }

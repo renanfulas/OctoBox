@@ -2,6 +2,18 @@
 
 .student-form-shell {
     gap: calc(var(--section-gap) - 2px);
+    --student-form-text-primary: var(--theme-text-primary);
+    --student-form-text-secondary: var(--legacy-copy);
+    --student-form-panel-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 30%),
+        var(--theme-surface-glass-strong);
+    --student-form-panel-border: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-glass-border) 86%);
+    --student-form-panel-shadow: var(--theme-glass-shadow);
+    --student-form-stepper-surface: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
+    --student-form-stepper-border: color-mix(in srgb, var(--theme-accent-support-alpha) 8%, var(--theme-glass-border) 92%);
+    --student-form-stepper-shadow: inset 0 1px 0 var(--theme-glass-highlight);
+    --student-form-disclosure-surface: var(--student-form-panel-surface);
+    --student-form-disclosure-border: color-mix(in srgb, var(--theme-accent-support-alpha) 22%, var(--theme-glass-border) 78%);
 }
 
 .student-form-main-card {
@@ -17,11 +29,11 @@
 }
 
 .student-form-shell :is(.student-form-step-kicker, .student-form-step-copy, .stepper-helper) {
-    color: var(--legacy-copy);
+    color: var(--student-form-text-secondary);
 }
 
 .student-form-shell :is(.student-form-step-title, .student-form-stepper-summary .section-title-sm, .stepper-label) {
-    color: var(--theme-text-primary);
+    color: var(--student-form-text-primary);
 }
 
 .student-form-main-card form,
@@ -53,9 +65,9 @@
     gap: 18px;
     padding: 14px 16px;
     border-radius: 20px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 8%, var(--theme-glass-border) 92%);
-    background: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
-    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
+    border: 1px solid var(--student-form-stepper-border);
+    background: var(--student-form-stepper-surface);
+    box-shadow: var(--student-form-stepper-shadow);
 }
 
 .student-form-stepper-summary {
@@ -209,11 +221,9 @@
 .student-form-step-essential,
 .student-form-step-disclosure,
 .student-form-stepper-card {
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-glass-border) 86%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 30%),
-        var(--theme-surface-glass-strong);
-    box-shadow: var(--theme-glass-shadow);
+    border-color: var(--student-form-panel-border);
+    background: var(--student-form-panel-surface);
+    box-shadow: var(--student-form-panel-shadow);
 }
 
 .student-form-step {
@@ -222,15 +232,15 @@
 
 .student-form-step-disclosure summary,
 .student-form-step-heading {
-    color: var(--theme-text-primary);
+    color: var(--student-form-text-primary);
 }
 
 .student-form-shell .plan-card {
     border: 1px solid color-mix(in srgb, var(--theme-glass-border) 88%, transparent);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 34%),
-        var(--legacy-panel-surface);
-    box-shadow: var(--legacy-panel-shadow);
+        var(--card-surface);
+    box-shadow: var(--card-shadow);
 }
 
 .student-form-shell .plan-card-price,
@@ -278,9 +288,9 @@
     text-underline-offset: 2px;
 }
 
-.status-paid { color: var(--theme-accent-success) !important; }
-.status-overdue { color: var(--theme-accent-danger) !important; }
-.status-pending { color: var(--theme-accent-warning) !important; }
+.status-paid { color: var(--theme-accent-success); }
+.status-overdue { color: var(--theme-accent-danger); }
+.status-pending { color: var(--theme-accent-warning); }
 
 .step-container {
     transition: opacity 0.3s ease, transform 0.3s ease;
@@ -313,12 +323,12 @@
 
 .student-form-handoff .eyebrow,
 .student-form-handoff__copy {
-    color: var(--legacy-copy);
+    color: var(--student-form-text-secondary);
 }
 
 .student-form-handoff__headline,
 .student-form-handoff__headline strong {
-    color: var(--theme-text-primary);
+    color: var(--student-form-text-primary);
 }
 
 .student-form-handoff .button {
@@ -344,6 +354,23 @@
     background: var(--accent-primary-alpha);
 }
 
+body[data-theme="dark"] .student-form-shell {
+    --student-form-text-primary: var(--theme-text-primary);
+    --student-form-text-secondary: var(--theme-text-secondary);
+    --student-form-panel-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
+        var(--theme-surface-glass-strong);
+    --student-form-panel-border: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
+    --student-form-panel-shadow: var(--theme-glass-shadow);
+    --student-form-stepper-surface: color-mix(in srgb, var(--theme-surface-glass) 92%, transparent);
+    --student-form-stepper-border: color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
+    --student-form-stepper-shadow: inset 0 1px 0 var(--theme-glass-highlight);
+    --student-form-disclosure-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 30%),
+        var(--theme-surface-glass-strong);
+    --student-form-disclosure-border: color-mix(in srgb, var(--theme-accent-support-alpha) 22%, var(--theme-glass-border) 78%);
+}
+
 body[data-theme="dark"] .student-form-main-card,
 body[data-theme="dark"] .student-form-recovery-panel {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
@@ -353,29 +380,19 @@ body[data-theme="dark"] .student-form-recovery-panel {
     box-shadow: var(--theme-glass-shadow);
 }
 
-body[data-theme="dark"] .student-form-shell :is(.field-label, .meta-text, .meta-text-sm, .student-form-step-kicker, .student-form-step-copy, .stepper-helper) {
-    color: var(--theme-text-secondary);
-}
-
-body[data-theme="dark"] .student-form-shell :is(.student-form-step-title, .student-form-stepper-summary .section-title-sm, .stepper-label) {
-    color: var(--theme-text-primary);
-}
-
 body[data-theme="dark"] .student-form-step,
 body[data-theme="dark"] .student-form-step-essential,
 body[data-theme="dark"] .student-form-step-disclosure,
 body[data-theme="dark"] .student-form-stepper-card {
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
-        var(--theme-surface-glass-strong);
-    box-shadow: var(--theme-glass-shadow);
+    border-color: var(--student-form-panel-border);
+    background: var(--student-form-panel-surface);
+    box-shadow: var(--student-form-panel-shadow);
 }
 
 body[data-theme="dark"] .student-form-stepper-card {
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
-    background: color-mix(in srgb, var(--theme-surface-glass) 92%, transparent);
-    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
+    border-color: var(--student-form-stepper-border);
+    background: var(--student-form-stepper-surface);
+    box-shadow: var(--student-form-stepper-shadow);
 }
 
 body[data-theme="dark"] .student-form-stepper {
@@ -405,12 +422,7 @@ body[data-theme="dark"] .student-form-handoff {
 
 body[data-theme="dark"] .student-form-handoff .eyebrow,
 body[data-theme="dark"] .student-form-handoff__copy {
-    color: var(--theme-text-secondary);
-}
-
-body[data-theme="dark"] .student-form-handoff__headline,
-body[data-theme="dark"] .student-form-handoff__headline strong {
-    color: var(--theme-text-primary);
+    color: var(--student-form-text-secondary);
 }
 
 body[data-theme="dark"] .student-form-handoff .button {
@@ -426,7 +438,7 @@ body[data-theme="dark"] .student-form-shell textarea {
             180deg,
             color-mix(in srgb, var(--theme-surface-glass-strong) 92%, transparent),
             color-mix(in srgb, var(--theme-surface-glass) 86%, transparent)
-        ) !important;
+        );
     box-shadow:
         inset 0 1px 0 var(--theme-glass-highlight),
         0 12px 26px rgba(0, 0, 0, 0.2);
@@ -444,34 +456,6 @@ body[data-theme="dark"] .student-form-shell option {
     color: var(--theme-text-primary);
 }
 
-body[data-theme="dark"] .student-form-shell :is(
-    .student-form-main-card .section-title-sm,
-    .student-form-main-card .section-title,
-    .student-form-main-card .eyebrow,
-    .student-form-main-card .field-label,
-    .student-form-main-card .meta-text,
-    .student-form-main-card .meta-text-sm,
-    .student-form-main-card .student-form-step-title,
-    .student-form-main-card .student-form-step-kicker,
-    .student-form-main-card .student-form-step-copy,
-    .student-form-main-card .stepper-label,
-    .student-form-main-card .stepper-helper,
-    .student-form-main-card legend,
-    .student-form-main-card label
-) {
-    color: var(--theme-text-secondary);
-}
-
-body[data-theme="dark"] .student-form-shell :is(
-    .student-form-main-card .section-title,
-    .student-form-main-card .section-title-sm,
-    .student-form-main-card .student-form-step-title,
-    .student-form-main-card summary,
-    .student-form-main-card strong
-) {
-    color: var(--theme-text-primary);
-}
-
 body[data-theme="dark"] .student-form-shell input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):focus,
 body[data-theme="dark"] .student-form-shell select:focus,
 body[data-theme="dark"] .student-form-shell textarea:focus {
@@ -486,59 +470,45 @@ body[data-theme="dark"] .student-form-shell .plan-card {
     border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, transparent), transparent 34%),
-        var(--legacy-panel-surface);
-    box-shadow: var(--legacy-panel-shadow);
+        var(--card-surface);
+    box-shadow: var(--card-shadow);
 }
 
-body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure,
-body[data-theme="dark"] .student-form-shell details#student-form-profile.disclosure-panel.student-form-step.student-form-step-disclosure,
-body[data-theme="dark"] .student-form-shell details#student-form-health.disclosure-panel.student-form-step.student-form-step-disclosure {
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 22%, var(--theme-glass-border) 78%) !important;
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 30%),
-        var(--theme-surface-glass-strong) !important;
-    box-shadow: var(--theme-glass-shadow) !important;
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure {
+    border-color: var(--student-form-disclosure-border);
+    background: var(--student-form-disclosure-surface);
+    box-shadow: var(--student-form-panel-shadow);
 }
 
-body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure > summary,
-body[data-theme="dark"] .student-form-shell details#student-form-profile.disclosure-panel.student-form-step.student-form-step-disclosure > summary,
-body[data-theme="dark"] .student-form-shell details#student-form-health.disclosure-panel.student-form-step.student-form-step-disclosure > summary {
-    color: var(--theme-text-primary) !important;
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure > summary {
+    color: var(--student-form-text-primary);
 }
 
-body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(.student-form-step-kicker, .student-form-step-copy, .field-label, .meta-text, .meta-text-sm),
-body[data-theme="dark"] .student-form-shell details#student-form-profile.disclosure-panel.student-form-step.student-form-step-disclosure :is(.student-form-step-kicker, .student-form-step-copy, .field-label, .meta-text, .meta-text-sm),
-body[data-theme="dark"] .student-form-shell details#student-form-health.disclosure-panel.student-form-step.student-form-step-disclosure :is(.student-form-step-kicker, .student-form-step-copy, .field-label, .meta-text, .meta-text-sm) {
-    color: var(--theme-text-secondary) !important;
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(.student-form-step-kicker, .student-form-step-copy, .field-label, .meta-text, .meta-text-sm) {
+    color: var(--student-form-text-secondary);
 }
 
-body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(.student-form-step-title, .section-title-sm),
-body[data-theme="dark"] .student-form-shell details#student-form-profile.disclosure-panel.student-form-step.student-form-step-disclosure :is(.student-form-step-title, .section-title-sm),
-body[data-theme="dark"] .student-form-shell details#student-form-health.disclosure-panel.student-form-step.student-form-step-disclosure :is(.student-form-step-title, .section-title-sm) {
-    color: var(--theme-text-primary) !important;
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(.student-form-step-title, .section-title-sm) {
+    color: var(--student-form-text-primary);
 }
 
-body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), select, textarea),
-body[data-theme="dark"] .student-form-shell details#student-form-profile.disclosure-panel.student-form-step.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), select, textarea),
-body[data-theme="dark"] .student-form-shell details#student-form-health.disclosure-panel.student-form-step.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
-    border-color: color-mix(in srgb, var(--theme-glass-border) 96%, transparent) !important;
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 96%, transparent);
     background:
         linear-gradient(
             180deg,
             color-mix(in srgb, var(--theme-surface-glass-strong) 92%, transparent),
             color-mix(in srgb, var(--theme-surface-glass) 86%, transparent)
-        ) !important;
+        );
     box-shadow:
         inset 0 1px 0 var(--theme-glass-highlight),
-        0 12px 26px rgba(0, 0, 0, 0.2) !important;
-    color: var(--theme-text-primary) !important;
+        0 12px 26px rgba(0, 0, 0, 0.2);
+    color: var(--theme-text-primary);
 }
 
-body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea)::placeholder,
-body[data-theme="dark"] .student-form-shell details#student-form-profile.disclosure-panel.student-form-step.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea)::placeholder,
-body[data-theme="dark"] .student-form-shell details#student-form-health.disclosure-panel.student-form-step.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea)::placeholder {
-    color: var(--theme-text-secondary) !important;
-    opacity: 0.9 !important;
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea)::placeholder {
+    color: var(--theme-text-secondary);
+    opacity: 0.9;
 }
 
 @media (max-width: 720px) {

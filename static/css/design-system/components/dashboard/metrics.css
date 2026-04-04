@@ -155,13 +155,13 @@
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, transparent), transparent 30%),
-        var(--legacy-panel-surface-strong);
-    border: 1px solid var(--legacy-panel-border);
+        var(--card-surface-strong);
+    border: 1px solid var(--card-border);
     color: var(--theme-text-primary);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage .card-kicker {
-    background: color-mix(in srgb, var(--legacy-panel-fill-strong) 72%, transparent);
+    background: color-mix(in srgb, var(--card-surface-strong) 72%, transparent);
     color: var(--legacy-copy-strong);
 }
 
@@ -193,7 +193,7 @@
     width: fit-content;
     padding: 3px 9px;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--legacy-panel-fill-strong) 72%, transparent);
+    background: color-mix(in srgb, var(--card-surface-strong) 72%, transparent);
     color: var(--legacy-copy-strong);
     letter-spacing: 0.08em;
 }
@@ -270,11 +270,11 @@
 .dashboard-metrics-cluster .dashboard-kpi-card .card-footer {
     margin-top: var(--dashboard-fib-3, 13px);
     padding-top: var(--dashboard-fib-2, 8px);
-    border-top: 1px solid color-mix(in srgb, var(--legacy-panel-border) 82%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--card-border) 82%, transparent);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-action {
-    background: color-mix(in srgb, var(--legacy-panel-fill-strong) 78%, transparent);
+    background: color-mix(in srgb, var(--card-surface-strong) 78%, transparent);
 }
 
 @media (max-width: 960px) {
@@ -371,16 +371,16 @@ body[data-theme="dark"] .dashboard-metrics-cluster .metric-card.dashboard-kpi-ca
             180deg,
             color-mix(in srgb, var(--theme-accent-warning-alpha) 10%, rgba(22, 29, 45, 0.94) 90%),
             rgba(16, 20, 31, 0.94)
-        ) !important;
-    border-color: color-mix(in srgb, var(--theme-accent-warning) 22%, var(--theme-glass-border) 78%) !important;
-    color: var(--theme-text-primary) !important;
+        );
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 22%, var(--theme-glass-border) 78%);
+    color: var(--theme-text-primary);
 }
 
 body[data-theme="dark"] .dashboard-metrics-cluster .metric-card.dashboard-kpi-card.kpi-amber.is-stage .metric-number,
 body[data-theme="dark"] .dashboard-metrics-cluster .metric-card.dashboard-kpi-card.kpi-amber.is-stage .card-value,
 body[data-theme="dark"] .dashboard-metrics-cluster .metric-card.dashboard-kpi-card.kpi-amber.is-stage .card-title,
 body[data-theme="dark"] .dashboard-metrics-cluster .metric-card.dashboard-kpi-card.kpi-amber.is-stage .card-copy {
-    color: var(--theme-text-primary) !important;
+    color: var(--theme-text-primary);
 }
 
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card.kpi-red {
@@ -412,7 +412,7 @@ body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-lab
 
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-kicker,
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage .card-kicker {
-    background: color-mix(in srgb, var(--legacy-panel-fill-strong) 24%, transparent);
+    background: color-mix(in srgb, var(--card-surface-strong) 24%, transparent);
     color: var(--theme-text-primary);
 }
 
@@ -421,7 +421,7 @@ body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-cop
 }
 
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-action {
-    background: color-mix(in srgb, var(--legacy-panel-fill-strong) 20%, transparent);
+    background: color-mix(in srgb, var(--card-surface-strong) 20%, transparent);
 }
 
 /* --- VIP TYPOGRAPHY: JUMBO CARDS --- */

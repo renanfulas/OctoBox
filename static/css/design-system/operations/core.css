@@ -22,15 +22,15 @@ PONTOS CRITICOS:
 }
 
 .operation-hero {
-    background: var(--operation-hero-surface, var(--hero-surface, var(--legacy-panel-surface-strong)));
-    border: 1px solid var(--operation-hero-border, var(--hero-border, var(--legacy-panel-border)));
+    background: var(--operation-hero-surface, var(--hero-surface, var(--card-surface-strong)));
+    border: 1px solid var(--operation-hero-border, var(--hero-border, var(--card-border)));
     border-radius: var(--radius-panel);
-    box-shadow: var(--operation-hero-shadow, var(--hero-shadow, var(--legacy-panel-shadow)));
+    box-shadow: var(--operation-hero-shadow, var(--hero-shadow, var(--card-shadow)));
 }
 
 body[data-theme="dark"] .operation-hero {
-    background: var(--operation-hero-surface, var(--hero-surface, var(--legacy-panel-surface-strong)));
-    border-color: var(--operation-hero-border, var(--hero-border, var(--legacy-panel-border)));
+    background: var(--operation-hero-surface, var(--hero-surface, var(--card-surface-strong)));
+    border-color: var(--operation-hero-border, var(--hero-border, var(--card-border)));
 }
 
 .operation-hero-main {
@@ -69,8 +69,8 @@ body[data-theme="dark"] .operation-hero {
     position: relative;
     padding: 14px 16px;
     border-radius: var(--radius-card);
-    border: 1px solid var(--operation-hero-panel-border, var(--hero-panel-border, var(--legacy-panel-border)));
-    background: var(--operation-hero-panel-surface, var(--hero-panel-surface, var(--legacy-panel-surface)));
+    border: 1px solid var(--operation-hero-panel-border, var(--hero-panel-border, var(--card-border)));
+    background: var(--operation-hero-panel-surface, var(--hero-panel-surface, var(--card-surface)));
     box-shadow: var(--operation-hero-panel-shadow, var(--hero-panel-shadow, none));
     overflow: hidden;
 }
@@ -113,8 +113,8 @@ body[data-theme="dark"] .operation-hero::after {
 .operation-mini-stat {
     padding: 8px 9px;
     border-radius: 8px;
-    border: 1px solid var(--legacy-panel-border);
-    background: var(--legacy-panel-surface);
+    border: 1px solid var(--card-border);
+    background: var(--card-surface);
 }
 
 .operation-mini-label {

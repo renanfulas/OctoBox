@@ -4,7 +4,7 @@ ARQUIVO: gestao ampliada de cobranca do aluno.
 POR QUE ELE EXISTE:
 - concentra historico, revisoes e excecoes fora do fluxo rapido de recebimento.
 -->
-<div class="student-financial-drawer student-page-payments-management-card" id="student-payment-management-root">
+<div class="card card--sci-fi student-financial-drawer student-page-payments-management-card" id="student-payment-management-root">
     <header class="student-financial-drawer__header">
         <div class="stack-4">
             <p class="eyebrow">Gestao ampliada</p>
@@ -39,7 +39,7 @@ POR QUE ELE EXISTE:
                 {% for payment in page.data.financial_overview.payments %}
                 <article class="student-financial-timeline__item student-financial-timeline__item--{{ payment.status }}">
                     <div class="student-financial-timeline__marker" aria-hidden="true"></div>
-                    <div class="card glass-panel student-financial-timeline__content">
+                    <div class="card card--sci-fi glass-panel student-financial-timeline__content">
                         <div class="row-between-md student-financial-timeline__head">
                             <div class="stack-4">
                                 <strong class="font-bold">R$ {{ payment.amount|floatformat:2 }}</strong>

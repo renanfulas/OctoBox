@@ -162,7 +162,7 @@ POR QUE ELE EXISTE:
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 28%),
         linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-glass) 88%, transparent));
-    box-shadow: var(--legacy-panel-shadow);
+    box-shadow: var(--card-shadow);
 }
 
 .finance-guide-card strong {
@@ -180,7 +180,7 @@ POR QUE ELE EXISTE:
 .finance-guide-card-soft {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 10%, transparent), transparent 32%),
-        var(--legacy-panel-surface);
+        var(--card-surface);
 }
 
 .finance-guide-list-tight {
@@ -312,7 +312,7 @@ POR QUE ELE EXISTE:
 }
 
 .finance-portfolio-scene :is(.eyebrow, .card-copy, .finance-revenue-trend-subtitle, .finance-portfolio-panel-value, .field-label, .meta-text, .text-muted, .state-empty-copy, .state-empty-eyebrow, .state-empty-hint) {
-    color: var(--legacy-copy);
+    color: var(--finance-card-copy, var(--legacy-copy));
 }
 
 .finance-portfolio-scene :is(.card-title, .finance-revenue-trend-title, .finance-portfolio-panel-label strong, .state-empty-title) {
@@ -358,7 +358,7 @@ POR QUE ELE EXISTE:
     justify-self: end;
     flex-wrap: wrap;
     justify-content: flex-end;
-    color: var(--legacy-copy);
+    color: var(--finance-card-copy, var(--legacy-copy));
     font-size: 0.92rem;
 }
 
@@ -394,14 +394,6 @@ body[data-theme="dark"] .finance-board-mix {
 
 body[data-theme="dark"] .finance-portfolio-scene {
     color: var(--theme-text-primary);
-}
-
-body[data-theme="dark"] .finance-portfolio-scene :is(.card-title, .finance-revenue-trend-title, .finance-portfolio-panel-label strong, .state-empty-title) {
-    color: var(--theme-text-primary);
-}
-
-body[data-theme="dark"] .finance-portfolio-scene :is(.card-copy, .finance-revenue-trend-subtitle, .finance-portfolio-panel-value, .field-label, .meta-text, .state-empty-copy, .state-empty-eyebrow, .state-empty-hint) {
-    color: var(--theme-text-secondary);
 }
 
 body[data-theme="dark"] .finance-portfolio-scene .text-muted {
@@ -544,7 +536,7 @@ body[data-theme="dark"] .finance-board-rail--priority .finance-action-message .s
 .finance-portfolio-panel-footer {
     margin-top: 4px;
     padding-top: 18px;
-    border-top: 1px solid color-mix(in srgb, var(--legacy-panel-border) 82%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--card-border) 82%, transparent);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -578,7 +570,7 @@ body[data-theme="dark"] .finance-board-rail--priority .finance-action-message .s
 .finance-board-filter .card-copy,
 .finance-filter-summary-card .card-copy,
 .finance-filter-summary-card .meta-text {
-    color: var(--legacy-copy);
+    color: var(--finance-card-copy, var(--legacy-copy));
 }
 
 .finance-board-filter input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
@@ -622,13 +614,6 @@ body[data-theme="dark"] .finance-board-filter--engine {
         linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 95%, transparent), color-mix(in srgb, var(--theme-surface-glass) 88%, transparent));
 }
 
-body[data-theme="dark"] .finance-board-filter .field-label,
-body[data-theme="dark"] .finance-board-filter .card-copy,
-body[data-theme="dark"] .finance-filter-summary-card .card-copy,
-body[data-theme="dark"] .finance-filter-summary-card .meta-text {
-    color: var(--theme-text-secondary);
-}
-
 body[data-theme="dark"] .finance-board-filter input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
 body[data-theme="dark"] .finance-board-filter select,
 body[data-theme="dark"] .finance-board-filter textarea {
@@ -664,8 +649,8 @@ body[data-theme="dark"] .finance-board-filter textarea:focus {
     border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 8%, rgba(148, 163, 184, 0.16) 92%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 34%),
-        var(--legacy-panel-surface);
-    box-shadow: var(--legacy-panel-shadow);
+        var(--card-surface);
+    box-shadow: var(--card-shadow);
 }
 
 .finance-priority-intro {
@@ -1121,7 +1106,7 @@ body[data-theme="dark"] .finance-board-filter textarea:focus {
     border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, rgba(148, 163, 184, 0.16) 90%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 32%),
-        var(--legacy-panel-surface);
+        var(--card-surface);
 }
 
 /* ── Support cards ── */
@@ -1131,8 +1116,8 @@ body[data-theme="dark"] .finance-board-filter textarea:focus {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
-        var(--legacy-panel-surface-strong);
-    box-shadow: var(--shadow-lift);
+        var(--card-surface-strong);
+    box-shadow: var(--card-shadow);
 }
 
 .finance-support-rail-card {
@@ -1162,7 +1147,7 @@ body[data-theme="dark"] .finance-board-filter textarea:focus {
 
 .finance-radar-chip {
     background:
-        var(--legacy-panel-surface);
+        var(--card-surface);
 }
 
 .finance-summary-grid {
@@ -1211,12 +1196,12 @@ body[data-theme="dark"] .finance-support-card {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 34%),
         linear-gradient(160deg, rgba(15, 24, 39, 0.9), rgba(10, 17, 30, 0.88));
-    box-shadow: var(--legacy-panel-shadow);
+    box-shadow: var(--card-shadow);
 }
 
 body[data-theme="dark"] .finance-radar-chip {
     background:
-        var(--legacy-panel-surface);
+        var(--card-surface);
 }
 
 body[data-theme="dark"] .finance-revenue-trend-gridlines span {

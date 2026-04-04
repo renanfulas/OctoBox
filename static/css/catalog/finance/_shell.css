@@ -73,7 +73,23 @@ POR QUE ELE EXISTE:
 
 .finance-shell .table-card,
 .finance-shell .card {
+    --card-local-surface: var(--finance-card-surface, var(--card-surface));
+    --card-local-border: var(--finance-card-border, var(--card-border));
+    --card-local-shadow: var(--finance-card-shadow, var(--card-shadow));
     min-height: 100%;
+    color: var(--finance-card-text);
+}
+
+.finance-shell :is(.table-card, .card) :is(.card-title, .operation-card-title, .metric, .history-header, .finance-inline-currency) {
+    color: var(--finance-card-text);
+}
+
+.finance-shell :is(.table-card, .card) :is(.card-copy, .card-label, .meta-text, .meta-text-sm, .operation-card-copy, .body-copy) {
+    color: var(--finance-card-copy);
+}
+
+.finance-shell :is(.table-card, .card) .body-copy strong {
+    color: var(--finance-card-text);
 }
 
 .finance-shell .deferred-surface,
@@ -177,6 +193,14 @@ body[data-theme="dark"] .finance-board-portfolio {
         var(--finance-panel-surface-strong);
     --finance-card-border: color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
     --finance-card-shadow: var(--finance-panel-shadow);
+}
+
+body[data-theme="dark"] .finance-shell {
+    --finance-card-surface: var(--finance-panel-surface-strong);
+    --finance-card-border: color-mix(in srgb, var(--theme-glass-border) 92%, transparent);
+    --finance-card-shadow: var(--finance-panel-shadow);
+    --finance-card-text: var(--theme-text-primary);
+    --finance-card-copy: var(--theme-text-secondary);
 }
 
 body[data-theme="dark"] .finance-shell .finance-deferred-surface--queue {

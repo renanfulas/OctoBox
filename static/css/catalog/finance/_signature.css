@@ -19,6 +19,13 @@ PONTOS CRITICOS:
     --finance-signature-copper: #c46734;
     --finance-signature-line: rgba(19, 33, 50, 0.1);
     --finance-signature-shadow: rgba(19, 33, 50, 0.12);
+    --finance-signature-copy: color-mix(in srgb, var(--finance-card-copy) 80%, var(--finance-signature-ink) 20%);
+    --finance-signature-surface: var(--finance-card-surface, var(--theme-surface-glass-strong));
+    --finance-signature-border: var(--finance-card-border, var(--finance-signature-line));
+    --finance-signature-card-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 18px 38px rgba(19, 33, 50, 0.08);
+    --finance-signature-chip-surface: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
 }
 
 /* ── Hero signature ── */
@@ -27,7 +34,7 @@ PONTOS CRITICOS:
 .finance-shell .finance-metric-card .metric,
 .finance-shell .finance-ops-metric-card .metric,
 .finance-shell .finance-action-copy strong {
-    color: var(--finance-signature-ink);
+    color: var(--finance-card-text, var(--finance-signature-ink));
 }
 
 .finance-shell .finance-metric-card .card-copy,
@@ -35,7 +42,7 @@ PONTOS CRITICOS:
 .finance-shell .finance-action-body .meta-text-sm,
 .finance-shell .finance-summary-chip p,
 .finance-shell .finance-data-chip p {
-    color: rgba(19, 33, 50, 0.72);
+    color: var(--finance-signature-copy);
 }
 
 /* ── Buttons signature ── */
@@ -68,11 +75,9 @@ PONTOS CRITICOS:
 .finance-shell .finance-action-card {
     position: relative;
     overflow: hidden;
-    border-color: var(--finance-signature-line);
-    background: var(--theme-surface-glass-strong);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.9),
-        0 18px 38px rgba(19, 33, 50, 0.08);
+    border-color: var(--finance-signature-border);
+    background: var(--finance-signature-surface);
+    box-shadow: var(--finance-signature-card-shadow);
 }
 
 .finance-shell .finance-metric-card::before,
@@ -125,7 +130,7 @@ PONTOS CRITICOS:
 .finance-shell .finance-alert-stat,
 .finance-shell .finance-action-message {
     border-color: rgba(19, 33, 50, 0.08);
-    background: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
+    background: var(--finance-signature-chip-surface);
 }
 
 .finance-shell .finance-action-message {
@@ -137,6 +142,13 @@ PONTOS CRITICOS:
 body[data-theme="dark"] .finance-shell {
     --finance-signature-line: rgba(144, 181, 205, 0.16);
     --finance-signature-shadow: rgba(0, 0, 0, 0.34);
+    --finance-signature-copy: var(--finance-card-copy);
+    --finance-signature-surface: var(--finance-card-surface, var(--theme-surface-glass-strong));
+    --finance-signature-border: rgba(144, 181, 205, 0.16);
+    --finance-signature-card-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 20px 40px rgba(0, 0, 0, 0.28);
+    --finance-signature-chip-surface: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
 }
 
 body[data-theme="dark"] .finance-shell .finance-metric-card .card-copy,
@@ -164,11 +176,9 @@ body[data-theme="dark"] .finance-shell .finance-ops-metric-card,
 body[data-theme="dark"] .finance-shell .finance-filter-summary-card,
 body[data-theme="dark"] .finance-shell .finance-radar-card,
 body[data-theme="dark"] .finance-shell .finance-action-card {
-    border-color: rgba(144, 181, 205, 0.16);
-    background: var(--theme-surface-glass-strong);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        0 20px 40px rgba(0, 0, 0, 0.28);
+    border-color: var(--finance-signature-border);
+    background: var(--finance-signature-surface);
+    box-shadow: var(--finance-signature-card-shadow);
 }
 
 body[data-theme="dark"] .finance-shell .finance-summary-chip,
@@ -176,6 +186,6 @@ body[data-theme="dark"] .finance-shell .finance-data-chip,
 body[data-theme="dark"] .finance-shell .finance-alert-stat,
 body[data-theme="dark"] .finance-shell .finance-action-message {
     border-color: rgba(144, 181, 205, 0.14);
-    background: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
+    background: var(--finance-signature-chip-surface);
 }
 

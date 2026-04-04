@@ -110,6 +110,39 @@ PONTO CRITICO:
     --theme-scrollbar-thumb: color-mix(in srgb, var(--theme-text-muted) 40%, transparent);
     --theme-scrollbar-thumb-hover: color-mix(in srgb, var(--theme-accent-premium) 38%, var(--theme-text-muted) 62%);
 
+    /* Canonical premium card surface */
+    --card-surface:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 97%, transparent), color-mix(in srgb, var(--theme-surface-glass) 90%, transparent)),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 36%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 14%, transparent), transparent 42%);
+    --card-surface-strong:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent)),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 22%, transparent), transparent 34%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 16%, transparent), transparent 40%);
+    --card-border: color-mix(in srgb, var(--theme-glass-border) 84%, rgba(96, 165, 250, 0.18));
+    --card-shadow:
+        0 20px 48px rgba(15, 23, 42, 0.08),
+        0 8px 18px rgba(15, 23, 42, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    --card-hover-border: color-mix(in srgb, var(--theme-accent-support) 30%, var(--card-border) 70%);
+    --card-hover-shadow:
+        0 28px 64px rgba(15, 23, 42, 0.12),
+        0 12px 26px rgba(15, 23, 42, 0.08),
+        0 0 28px color-mix(in srgb, var(--theme-accent-support) 10%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    --card-focus-border: color-mix(in srgb, var(--theme-accent-support) 42%, var(--card-border) 58%);
+    --card-focus-shadow:
+        0 0 0 3px color-mix(in srgb, var(--theme-accent-support) 14%, transparent),
+        0 28px 64px rgba(15, 23, 42, 0.12),
+        0 12px 26px rgba(15, 23, 42, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    --card-top-stripe:
+        linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-primary) 84%, transparent), color-mix(in srgb, var(--theme-accent-premium) 58%, transparent));
+    --card-orb:
+        radial-gradient(circle, color-mix(in srgb, var(--theme-accent-premium) 14%, transparent), transparent 72%);
+    --card-text-primary: var(--theme-text-primary);
+    --card-text-secondary: var(--theme-text-secondary);
+
     /* Sidebar */
     --sidebar-bg: #0f172a;
     --sidebar-line: rgba(255, 255, 255, 0.08);
@@ -144,10 +177,10 @@ PONTO CRITICO:
     --shadow-xl: var(--theme-shadow-xl);
     --legacy-panel-fill: var(--theme-surface);
     --legacy-panel-fill-strong: var(--theme-surface-strong);
-    --legacy-panel-surface: var(--theme-surface-glass);
-    --legacy-panel-surface-strong: var(--theme-surface-glass-strong);
-    --legacy-panel-border: color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
-    --legacy-panel-shadow: var(--theme-glass-shadow);
+    --legacy-panel-surface: var(--card-surface);
+    --legacy-panel-surface-strong: var(--card-surface-strong);
+    --legacy-panel-border: var(--card-border);
+    --legacy-panel-shadow: var(--card-shadow);
     --legacy-copy: var(--theme-text-secondary);
     --legacy-copy-strong: var(--theme-text-muted);
 
@@ -230,6 +263,37 @@ body[data-theme="dark"] {
     --theme-scrollbar-track: rgba(255, 255, 255, 0.035);
     --theme-scrollbar-thumb: rgba(146, 160, 188, 0.34);
     --theme-scrollbar-thumb-hover: color-mix(in srgb, var(--theme-accent-premium) 42%, rgba(146, 160, 188, 0.46));
+
+    --card-surface:
+        linear-gradient(180deg, rgba(11, 16, 29, 0.97), rgba(7, 11, 24, 0.94)),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support) 24%, transparent), transparent 34%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium) 18%, transparent), transparent 42%);
+    --card-surface-strong:
+        linear-gradient(180deg, rgba(13, 19, 34, 0.98), rgba(8, 12, 26, 0.95)),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support) 28%, transparent), transparent 32%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium) 20%, transparent), transparent 40%);
+    --card-border: color-mix(in srgb, var(--theme-glass-border) 78%, rgba(56, 189, 248, 0.28));
+    --card-shadow:
+        0 24px 58px rgba(0, 0, 0, 0.3),
+        0 10px 22px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    --card-hover-border: color-mix(in srgb, var(--theme-accent-support) 46%, var(--card-border) 54%);
+    --card-hover-shadow:
+        0 30px 72px rgba(0, 0, 0, 0.36),
+        0 14px 28px rgba(0, 0, 0, 0.24),
+        0 0 36px color-mix(in srgb, var(--theme-accent-support) 18%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    --card-focus-border: color-mix(in srgb, var(--theme-accent-support) 54%, var(--card-border) 46%);
+    --card-focus-shadow:
+        0 0 0 3px color-mix(in srgb, var(--theme-accent-support) 16%, transparent),
+        0 30px 72px rgba(0, 0, 0, 0.36),
+        0 14px 28px rgba(0, 0, 0, 0.24),
+        0 0 36px color-mix(in srgb, var(--theme-accent-support) 18%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    --card-top-stripe:
+        linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-support) 88%, transparent), color-mix(in srgb, var(--theme-accent-premium) 72%, transparent));
+    --card-orb:
+        radial-gradient(circle, color-mix(in srgb, var(--theme-accent-premium) 22%, transparent), transparent 70%);
 
     --sidebar-bg: #07111f;
     --sidebar-line: rgba(146, 160, 188, 0.12);

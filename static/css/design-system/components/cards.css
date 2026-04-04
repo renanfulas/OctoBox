@@ -21,10 +21,20 @@ REGRA:
 .table-card {
     position: relative;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 92%, transparent);
+    isolation: isolate;
+    --card-local-surface: var(--card-surface);
+    --card-local-border: var(--card-border);
+    --card-local-shadow: var(--card-shadow);
+    --card-local-hover-border: var(--card-hover-border);
+    --card-local-hover-shadow: var(--card-hover-shadow);
+    --card-local-focus-border: var(--card-focus-border);
+    --card-local-focus-shadow: var(--card-focus-shadow);
+    --card-local-top-stripe: var(--card-top-stripe);
+    --card-local-orb: var(--card-orb);
+    border: 1px solid var(--card-local-border);
     border-radius: var(--radius-panel);
-    background: var(--theme-surface-glass);
-    box-shadow: var(--theme-glass-shadow);
+    background: var(--card-local-surface);
+    box-shadow: var(--card-local-shadow);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     transition:
@@ -39,7 +49,7 @@ REGRA:
     position: absolute;
     inset: 0 0 auto 0;
     height: 1px;
-    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-premium) 44%, transparent), color-mix(in srgb, var(--theme-accent-support) 46%, transparent));
+    background: var(--card-local-top-stripe);
     opacity: 0.72;
     pointer-events: none;
 }
@@ -52,21 +62,21 @@ REGRA:
     width: 120px;
     height: 120px;
     border-radius: 999px;
-    background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent-premium) 12%, transparent), transparent 72%);
+    background: var(--card-local-orb);
     opacity: 0.72;
     pointer-events: none;
 }
 
 .card:hover,
 .table-card:hover {
-    border-color: color-mix(in srgb, var(--theme-border-strong) 94%, transparent);
-    box-shadow: var(--shadow-lift);
+    border-color: var(--card-local-hover-border);
+    box-shadow: var(--card-local-hover-shadow);
 }
 
 .card:focus-within,
 .table-card:focus-within {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 44%, transparent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-support) 10%, transparent), var(--theme-glass-shadow);
+    border-color: var(--card-local-focus-border);
+    box-shadow: var(--card-local-focus-shadow);
 }
 
 .card {
@@ -83,7 +93,7 @@ REGRA:
     text-transform: uppercase;
     font-size: 0.72rem;
     letter-spacing: 0.14em;
-    color: var(--muted);
+    color: var(--card-text-secondary);
     font-weight: 700;
 }
 
@@ -121,6 +131,7 @@ REGRA:
     font-weight: 800;
     letter-spacing: -0.04em;
     line-height: 1.14;
+    color: var(--card-text-primary);
 }
 
 .metric,
@@ -136,7 +147,7 @@ REGRA:
 .metric-note,
 .card-copy {
     margin: 6px 0 0;
-    color: var(--muted);
+    color: var(--card-text-secondary);
     line-height: 1.48;
     max-width: 42ch;
     font-size: 0.84rem;
@@ -235,42 +246,50 @@ REGRA:
 .metric-card {
     min-height: 100%;
     isolation: isolate;
-    --metric-card-surface:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 96%, transparent), color-mix(in srgb, var(--theme-bg-stage) 92%, transparent));
-    --metric-card-border: color-mix(in srgb, var(--theme-border-soft) 94%, transparent);
-    --metric-card-shadow: var(--theme-glass-shadow);
+    --metric-card-surface: var(--card-surface-strong);
+    --metric-card-border: color-mix(in srgb, var(--card-border) 92%, transparent);
+    --metric-card-shadow: var(--card-shadow);
     --metric-card-accent: color-mix(in srgb, var(--theme-accent-support) 34%, transparent);
-    background: var(--metric-card-surface);
-    border-color: var(--metric-card-border);
-    box-shadow: var(--metric-card-shadow);
+    --card-local-surface: var(--metric-card-surface);
+    --card-local-border: var(--metric-card-border);
+    --card-local-shadow: var(--metric-card-shadow);
+    --card-local-hover-border: color-mix(in srgb, var(--metric-card-accent) 52%, transparent);
+    --card-local-hover-shadow:
+        0 28px 68px rgba(15, 23, 42, 0.12),
+        0 12px 24px rgba(15, 23, 42, 0.08),
+        0 0 30px color-mix(in srgb, var(--metric-card-accent) 18%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    --card-local-focus-border: color-mix(in srgb, var(--metric-card-accent) 62%, transparent);
+    --card-local-focus-shadow:
+        0 0 0 3px color-mix(in srgb, var(--metric-card-accent) 16%, transparent),
+        0 28px 68px rgba(15, 23, 42, 0.12),
+        0 12px 24px rgba(15, 23, 42, 0.08),
+        0 0 30px color-mix(in srgb, var(--metric-card-accent) 18%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    --card-local-top-stripe: linear-gradient(90deg, color-mix(in srgb, var(--metric-card-accent) 92%, transparent), color-mix(in srgb, var(--theme-accent-premium) 36%, transparent));
+    --card-local-orb: radial-gradient(circle, color-mix(in srgb, var(--metric-card-accent) 18%, transparent), transparent 72%);
 }
 
-.metric-card::before {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--metric-card-accent) 92%, transparent), color-mix(in srgb, var(--theme-accent-premium) 28%, transparent));
-    opacity: 0.78;
-}
+.metric-card::before { opacity: 0.82; }
 
 .metric-card::after {
     width: 132px;
     height: 132px;
     inset: auto -34px -42px auto;
-    background: radial-gradient(circle, color-mix(in srgb, var(--metric-card-accent) 18%, transparent), transparent 72%);
     opacity: 0.92;
 }
 
 .metric-card:hover {
-    box-shadow: var(--shadow-lift);
+    box-shadow: var(--card-local-hover-shadow);
 }
 
 .metric-card-link:hover .metric-card,
 .metric-card-link:focus-visible .metric-card {
-    border-color: color-mix(in srgb, var(--metric-card-accent) 52%, transparent);
+    border-color: var(--card-local-hover-border);
 }
 
 .metric-card-link:focus-visible .metric-card {
-    box-shadow:
-        0 0 0 3px color-mix(in srgb, var(--metric-card-accent) 16%, transparent),
-        var(--shadow-lift);
+    box-shadow: var(--card-local-focus-shadow);
 }
 
 .metric-card .card-body-metric {
@@ -735,7 +754,7 @@ REGRA:
 @media (max-width: 720px) {
     .table-card,
     .card,
-    .quick-card {
+.quick-card {
         padding-left: 20px;
         padding-right: 20px;
         padding-top: 22px;
@@ -750,6 +769,11 @@ REGRA:
     .fdw-focus-card {
         padding: 16px;
     }
+}
+
+body[data-theme="dark"] .card,
+body[data-theme="dark"] .table-card {
+    color: var(--card-text-primary);
 }
 
 @media (max-width: 640px) {

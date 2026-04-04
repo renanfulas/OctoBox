@@ -96,7 +96,7 @@ POR QUE ELE EXISTE:
 .green-glow,
 .blue-glow,
 .info-card {
-    background: var(--legacy-panel-surface);
+    background: var(--card-surface);
 }
 
 .primary-glow,
@@ -115,7 +115,7 @@ POR QUE ELE EXISTE:
 }
 
 .info-card {
-    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 32%, var(--legacy-panel-border) 68%);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 32%, var(--card-border) 68%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 34%),
         linear-gradient(
@@ -123,7 +123,7 @@ POR QUE ELE EXISTE:
             color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent),
             color-mix(in srgb, var(--theme-surface-glass) 96%, transparent)
         );
-    box-shadow: var(--legacy-panel-shadow);
+    box-shadow: var(--card-shadow);
 }
 
 .info-card .eyebrow {
@@ -180,7 +180,7 @@ body[data-theme="dark"] .info-card .meta-text {
 }
 
 .student-priority-panel {
-    background: var(--legacy-panel-surface);
+    background: var(--card-surface);
 }
 
 .intake-grid {
@@ -196,8 +196,8 @@ body[data-theme="dark"] .info-card .meta-text {
 .history-entry {
     padding: 18px;
     border-radius: var(--radius-panel);
-    border: 1px solid var(--legacy-panel-border);
-    background: var(--legacy-panel-surface);
+    border: 1px solid var(--card-border);
+    background: var(--card-surface);
     transition: box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
@@ -388,8 +388,8 @@ body[data-theme="dark"] .info-card .meta-text {
     justify-content: center;
     padding: 0 8px;
     border-radius: var(--radius-panel);
-    background: color-mix(in srgb, var(--legacy-panel-fill) 94%, transparent);
-    border: 1px solid var(--legacy-panel-border);
+    background: color-mix(in srgb, var(--card-surface) 94%, transparent);
+    border: 1px solid var(--card-border);
 }
 
 .chart-bar {
@@ -444,10 +444,10 @@ REGRA:
 */
 
 .disclosure-panel {
-    border: 1px solid var(--legacy-panel-border);
+    border: 1px solid var(--card-border);
     border-radius: 20px;
     padding: 20px;
-    background: var(--legacy-panel-surface);
+    background: var(--card-surface);
 }
 
 .disclosure-panel summary {
@@ -460,22 +460,22 @@ REGRA:
 }
 
 .disclosure-panel-success {
-    background: color-mix(in srgb, var(--theme-accent-success-alpha) 14%, var(--legacy-panel-surface) 86%);
-    border-color: color-mix(in srgb, var(--theme-accent-success) 18%, var(--legacy-panel-border) 82%);
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 14%, var(--card-surface) 86%);
+    border-color: color-mix(in srgb, var(--theme-accent-success) 18%, var(--card-border) 82%);
 }
 
 .disclosure-panel-warm {
-    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, var(--legacy-panel-surface) 86%);
-    border-color: color-mix(in srgb, var(--theme-accent-warning) 18%, var(--legacy-panel-border) 82%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, var(--card-surface) 86%);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 18%, var(--card-border) 82%);
 }
 
 .installment-shell {
     display: block;
     padding: 16px;
     border-radius: 16px;
-    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, var(--legacy-panel-surface) 86%);
-    border: 1px solid color-mix(in srgb, var(--theme-accent-warning) 18%, var(--legacy-panel-border) 82%);
-    box-shadow: var(--legacy-panel-shadow);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, var(--card-surface) 86%);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-warning) 18%, var(--card-border) 82%);
+    box-shadow: var(--card-shadow);
 }
 
 .installment-shell[hidden] {
@@ -485,8 +485,8 @@ REGRA:
 .installment-preview {
     padding: 12px 14px;
     border-radius: 14px;
-    border: 1px solid var(--legacy-panel-border);
-    background: var(--legacy-panel-surface);
+    border: 1px solid var(--card-border);
+    background: var(--card-surface);
     min-height: 48px;
     display: flex;
     align-items: center;
@@ -556,15 +556,15 @@ body[data-theme="dark"] .text-dimmed { color: var(--theme-text-muted) !important
 
 /* Surface Engine */
 .glass-card {
-    background: var(--legacy-panel-surface);
+    background: var(--card-surface);
     backdrop-filter: blur(12px);
-    border: 1px solid var(--legacy-panel-border);
+    border: 1px solid var(--card-border);
     border-radius: var(--radius-panel);
 }
 
 body[data-theme="dark"] .glass-card {
-    background: var(--legacy-panel-surface);
-    border-color: var(--legacy-panel-border);
+    background: var(--card-surface);
+    border-color: var(--card-border);
 }
 
 .surface-tonal { background: var(--surface-low); }
@@ -585,21 +585,21 @@ body[data-theme="dark"] .glass-card {
     box-shadow: 0 6px 16px rgba(249, 115, 22, 0.35);
 }
 
-body[data-theme="dark"] .disclosure-panel,
+body[data-theme="dark"] .disclosure-panel:not(.student-form-step-disclosure),
 body[data-theme="dark"] .installment-shell,
 body[data-theme="dark"] .installment-preview {
-    background: var(--legacy-panel-surface) !important;
-    border-color: var(--legacy-panel-border);
-    box-shadow: var(--legacy-panel-shadow);
+    background: var(--card-surface);
+    border-color: var(--card-border);
+    box-shadow: var(--card-shadow);
 }
 
-body[data-theme="dark"] .disclosure-panel-success {
-    background: color-mix(in srgb, var(--theme-accent-success-alpha) 16%, var(--legacy-panel-surface) 84%) !important;
-    border-color: color-mix(in srgb, var(--theme-accent-success) 22%, var(--legacy-panel-border) 78%) !important;
+body[data-theme="dark"] .disclosure-panel-success:not(.student-form-step-disclosure) {
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 16%, var(--card-surface) 84%);
+    border-color: color-mix(in srgb, var(--theme-accent-success) 22%, var(--card-border) 78%);
 }
 
-body[data-theme="dark"] .disclosure-panel-warm,
+body[data-theme="dark"] .disclosure-panel-warm:not(.student-form-step-disclosure),
 body[data-theme="dark"] .installment-shell {
-    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 16%, var(--legacy-panel-surface) 84%) !important;
-    border-color: color-mix(in srgb, var(--theme-accent-warning) 22%, var(--legacy-panel-border) 78%) !important;
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 16%, var(--card-surface) 84%);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 22%, var(--card-border) 78%);
 }

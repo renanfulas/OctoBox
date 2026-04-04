@@ -106,31 +106,31 @@ PONTOS CRITICOS:
 
 /* Blink guiado disparado por shell.js */
 .nav-link.blink {
-    background-color: rgba(16, 185, 129, 0.15) !important;
-    color: #fff !important;
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #fff;
     box-shadow:
         0 0 24px rgba(16, 185, 129, 0.6),
-        inset 0 0 12px rgba(16, 185, 129, 0.2) !important;
-    border-color: rgba(16, 185, 129, 0.4) !important;
+        inset 0 0 12px rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.4);
     transform: scale(1.02);
 }
 
 .nav-link.blink-danger {
-    background-color: rgba(239, 68, 68, 0.15) !important;
-    color: #fff !important;
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #fff;
     box-shadow:
         0 0 24px rgba(239, 68, 68, 0.6),
-        inset 0 0 12px rgba(239, 68, 68, 0.2) !important;
-    border-color: rgba(239, 68, 68, 0.4) !important;
+        inset 0 0 12px rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
     transform: scale(1.02);
 }
 
 .nav-link.blink .nav-icon {
-    color: #fff !important;
-    background-color: rgba(16, 185, 129, 0.35) !important;
+    color: #fff;
+    background-color: rgba(16, 185, 129, 0.35);
 }
 
 .nav-link.blink-danger .nav-icon {
-    color: #fff !important;
-    background-color: rgba(239, 68, 68, 0.35) !important;
+    color: #fff;
+    background-color: rgba(239, 68, 68, 0.35);
 }

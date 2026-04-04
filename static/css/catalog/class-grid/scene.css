@@ -16,6 +16,8 @@ POR QUE ELE EXISTE:
 }
 
 .class-grid-scene {
+    --class-grid-text-primary: var(--theme-text-primary);
+    --class-grid-text-secondary: var(--legacy-copy);
     gap: calc(var(--section-gap) - 2px);
 }
 
@@ -30,18 +32,15 @@ body[data-theme="dark"] .class-grid-hero {
 }
 
 .class-grid-scene :is(.card-title, .operation-card-title, .section-title-sm, .weekly-day-head strong, .weekly-session-title, .state-empty-title) {
-    color: var(--theme-text-primary);
+    color: var(--class-grid-text-primary);
 }
 
 .class-grid-scene :is(.card-copy, .operation-card-copy, .class-day-summary, .class-grid-meta, .weekly-empty-state, .state-empty-copy, .state-empty-hint, .eyebrow, .card-label, .class-grid-mobile-kicker) {
-    color: var(--legacy-copy);
+    color: var(--class-grid-text-secondary);
 }
 
-body[data-theme="dark"] .class-grid-scene :is(.card-title, .operation-card-title, .section-title-sm, .weekly-day-head strong, .weekly-session-title, .state-empty-title) {
-    color: var(--theme-text-primary);
-}
-
-body[data-theme="dark"] .class-grid-scene :is(.card-copy, .operation-card-copy, .class-day-summary, .class-grid-meta, .weekly-empty-state, .state-empty-copy, .state-empty-hint, .eyebrow, .card-label, .class-grid-mobile-kicker) {
-    color: var(--theme-text-secondary);
+body[data-theme="dark"] .class-grid-scene {
+    --class-grid-text-primary: var(--theme-text-primary);
+    --class-grid-text-secondary: var(--theme-text-secondary);
 }
 

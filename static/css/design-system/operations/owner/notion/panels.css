@@ -27,9 +27,9 @@ POR QUE ELE EXISTE:
     position: relative;
     overflow: hidden;
     border-radius: var(--radius-panel);
-    border: 1px solid var(--legacy-panel-border);
-    background: var(--legacy-panel-surface);
-    box-shadow: var(--legacy-panel-shadow);
+    border: 1px solid var(--card-border);
+    background: var(--card-surface);
+    box-shadow: var(--card-shadow);
 }
 
 .owner-notion-shell .owner-focus-card::before {
@@ -52,9 +52,9 @@ POR QUE ELE EXISTE:
     align-items: center;
     padding: 14px 16px;
     border-radius: var(--radius-card);
-    border: 1px solid var(--legacy-panel-border);
-    background: var(--legacy-panel-surface);
-    box-shadow: var(--legacy-panel-shadow);
+    border: 1px solid var(--card-border);
+    background: var(--card-surface);
+    box-shadow: var(--card-shadow);
 }
 
 .owner-notion-shell .owner-focus-copy {
@@ -82,17 +82,17 @@ POR QUE ELE EXISTE:
 
 .owner-notion-shell .owner-focus-actions .button.secondary {
     min-height: 34px;
-    border-color: var(--legacy-panel-border);
-    background: var(--legacy-panel-surface);
+    border-color: var(--card-border);
+    background: var(--card-surface);
 }
 
 .owner-notion-shell .owner-metric-grid .operation-kpi-card {
     min-height: 156px;
     padding: 18px 18px 17px;
     border-radius: var(--radius-panel);
-    border: 1px solid var(--legacy-panel-border);
-    background: var(--legacy-panel-surface);
-    box-shadow: var(--legacy-panel-shadow);
+    border: 1px solid var(--card-border);
+    background: var(--card-surface);
+    box-shadow: var(--card-shadow);
     grid-column: span 2;
 }
 
@@ -146,9 +146,9 @@ POR QUE ELE EXISTE:
 
 .owner-notion-shell .owner-summary-card {
     border-radius: var(--radius-panel);
-    border: 1px solid var(--legacy-panel-border);
-    background: var(--legacy-panel-surface);
-    box-shadow: var(--legacy-panel-shadow);
+    border: 1px solid var(--card-border);
+    background: var(--card-surface);
+    box-shadow: var(--card-shadow);
     overflow: hidden;
 }
 
@@ -175,7 +175,7 @@ POR QUE ELE EXISTE:
 .owner-notion-shell .owner-summary-card .card-head {
     margin-bottom: 14px;
     padding-bottom: 10px;
-    border-bottom: 1px solid color-mix(in srgb, var(--legacy-panel-border) 82%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--card-border) 82%, transparent);
 }
 
 .owner-notion-shell .owner-summary-card .card-head-aside .pill {
@@ -190,8 +190,8 @@ POR QUE ELE EXISTE:
     position: relative;
     padding: 12px 13px;
     border-radius: 8px;
-    border-color: var(--legacy-panel-border);
-    background: color-mix(in srgb, var(--legacy-panel-fill) 94%, transparent);
+    border-color: var(--card-border);
+    background: color-mix(in srgb, var(--card-surface-strong) 94%, transparent);
     box-shadow: none;
     overflow: hidden;
 }

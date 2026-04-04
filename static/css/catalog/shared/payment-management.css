@@ -25,7 +25,7 @@ POR QUE ELE EXISTE:
 
 .student-payment-management-actions-secondary {
     padding-top: 6px;
-    border-top: 1px solid color-mix(in srgb, var(--legacy-panel-border) 82%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--card-border) 82%, transparent);
 }
 
 .student-payment-management-actions-primary .button {
@@ -40,12 +40,14 @@ POR QUE ELE EXISTE:
 }
 
 .student-payment-management-summary {
+    --card-local-border: var(--student-financial-panel-border, var(--card-border));
+    --card-local-surface: var(--student-financial-panel-surface-muted, var(--card-surface));
     display: grid;
     gap: 12px;
     padding: 16px 18px;
     border-radius: 20px;
-    border: 1px solid var(--student-financial-panel-border);
-    background: var(--student-financial-panel-surface-muted);
+    border: 1px solid var(--card-local-border);
+    background: var(--card-local-surface);
 }
 
 .student-payment-management-summary__grid {
@@ -62,7 +64,7 @@ POR QUE ELE EXISTE:
 }
 
 .student-payment-management-summary__row span {
-    color: var(--legacy-copy);
+    color: var(--card-text-secondary);
 }
 
 .student-payment-management-summary__field {
@@ -103,7 +105,7 @@ POR QUE ELE EXISTE:
     content: 'Mostrar';
     margin-left: 8px;
     font-size: 0.74rem;
-    color: var(--legacy-copy);
+    color: var(--card-text-secondary);
     font-weight: 600;
 }
 
