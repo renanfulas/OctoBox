@@ -196,6 +196,57 @@ Todo card relevante deve conseguir ser classificado neste formato:
 | `owner notion` panels | `page-override` | owner-notion-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\operations\owner\notion\panels.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\operations\owner\notion\panels.css) | saudavel |
 | `student-page-charge-card` | `page-owned` | student-page-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css) | saudavel |
 
+## Reclassificacao operacional atual
+
+Depois das ondas de alinhamento, a leitura oficial do territorio fica assim:
+
+### Ja classificados como `page-owned`
+
+1. `student-page-charge-card`
+2. cards editoriais e estruturas premium da [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css)
+
+Motivo:
+
+1. carregam anatomia propria
+2. tem layout, actions, header/footer e densidade local fortes
+3. ja cruzaram o limiar de "pele" e entraram em "anatomia"
+
+### Permanecem `page-override` saudavel
+
+1. `class-grid`
+2. `student-form-shell`
+3. `finance-shell` boards e KPI strip
+4. `owner notion`
+5. `intake-scene`
+
+Motivo:
+
+1. ainda respondem bem ao host e ao shell
+2. a maior parte da diferenca esta em clima, contraste, superficie e densidade
+3. nao pedem split estrutural agora
+
+### Permanecem `transitorio`, mas ainda nao pedem split
+
+1. `finance` signature cards
+
+Motivo:
+
+1. ainda tem identidade visual forte
+2. mas hoje funcionam mais como camada de assinatura do shell do que como card independente de anatomia propria
+
+### Nao devem virar `page-owned` por enquanto
+
+1. `student-financial-*`
+2. `intake` boards
+3. `student-form-stepper`
+4. `class-grid` cards semanais e mensais
+
+Motivo:
+
+1. a maior parte do problema anterior era cascata e ownership
+2. depois da limpeza, esses blocos respondem melhor ao shell
+3. split agora criaria mais manutencao do que beneficio
+
 Tipos oficiais:
 
 1. `shared`
