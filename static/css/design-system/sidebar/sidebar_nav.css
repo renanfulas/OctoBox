@@ -1,41 +1,40 @@
 /*
-ARQUIVO: comunicação visual interativa dos links da barra lateral.
+ARQUIVO: navegacao visual e estados interativos da sidebar.
 
 POR QUE ELE EXISTE:
-- Isola a comunicação visual, tipografia e espaçamento dos links de navegação.
-- Segrega os estados interativos (hover/active/focus) evitando vazamentos de cor para a matriz.
+- Isola tipografia, espacamento e feedback visual dos links da barra lateral.
+- Mantem hover, foco, active e blink no mesmo lugar, sem espalhar regras pela shell.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Padroniza botões e links de `.nav-link` e `.nav-icon`.
-2. Define a coerência visual fluída entre repouso e hover (Fatores Fundo e Movimento).
-3. Gerencia interações de focus e active states para acessibilidade.
-4. Harmoniza a opacidade/saturação cromática dos Emojis para o modo noturno.
+1. Define a base de `.nav-link`, `.nav-link-button` e `.nav-icon`.
+2. Aplica os estados de hover, focus-visible e active da navegacao.
+3. Sustenta o blink disparado por `shell.js` para atalhos guiados.
 
 PONTOS CRITICOS:
-- Breakpoints e cores são essenciais. Se quebrados, o menu falha em dar feedback de localização ao usuário.
-- Cuidado ao bloquear pointer-events globais.
+- O resultado visual da sidebar depende desta cascata ser unica e previsivel.
+- Mudancas aqui nao devem reescrever layout, drawer mobile ou bloco de perfil.
 */
 
 .nav-link {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 12px;
-    margin-bottom: 2px;
+    min-height: 44px;
+    padding: 10px 14px;
+    margin-bottom: 4px;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     text-decoration: none;
     color: var(--sidebar-muted);
     background: transparent;
     font-size: 0.875rem;
-    font-weight: 500;
-    transition: background 0.12s ease, color 0.12s ease;
+    font-weight: var(--weight-subtitle);
     position: relative;
-}
-
-/* Force default cursor for specific metric cards that should not appear as links */
-[data-no-pointer="true"] {
-    cursor: default !important;
+    transition:
+        background var(--motion-base) var(--ease-standard),
+        color var(--motion-base) var(--ease-standard),
+        transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow var(--motion-base) var(--ease-standard);
 }
 
 .sidebar-logout-form {
@@ -49,21 +48,21 @@ PONTOS CRITICOS:
 }
 
 .nav-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
     width: 24px;
     height: 24px;
     border-radius: 6px;
-    font-size: 13px;
-    line-height: 1;
-    flex-shrink: 0;
-    background: transparent;
     border: none;
-    font-family: 'Segoe UI Emoji', 'Noto Color Emoji', 'Apple Color Emoji', 'Twemoji Mozilla', 'Segoe UI Symbol', sans-serif;
+    background: transparent;
+    color: var(--sidebar-muted);
+    font-family: "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", "Twemoji Mozilla", "Segoe UI Symbol", sans-serif;
     font-size: 18px;
-    display: inline-grid;
-    place-items: center;
+    line-height: 1;
+    transition:
+        color var(--motion-base) var(--ease-standard),
+        background var(--motion-base) var(--ease-standard);
 }
 
 .nav-icon.emoji-soft {
@@ -74,37 +73,7 @@ PONTOS CRITICOS:
 .nav-link:hover,
 .nav-link:focus-visible {
     color: var(--sidebar-ink);
-    background: rgba(255, 255, 255, 0.08);
-    transform: none;
-    box-shadow: none;
-}
-
-/* Active-state visuals moved to components/dashboard/sidebar-active.css (scoped to .layout--dashboard) */
-
-.nav-link:hover .nav-icon,
-.nav-link:focus-visible .nav-icon {
-    transform: none;
-}
-
-/* --- Sidebar Interaction Consistency --- */
-.nav-link {
-    min-height: 44px;
-    padding: 10px 14px;
-    margin-bottom: 4px;
-    border-radius: 12px;
-    font-weight: var(--weight-subtitle);
-    transition: background var(--motion-base) var(--ease-standard), color var(--motion-base) var(--ease-standard), transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--motion-base) var(--ease-standard);
-}
-
-.nav-icon {
-    color: var(--sidebar-muted);
-    transition: color var(--motion-base) var(--ease-standard), background var(--motion-base) var(--ease-standard), transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.nav-link:hover,
-.nav-link:focus-visible {
-    color: var(--sidebar-ink);
-    background: var(--sidebar-hover);
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
     transform: translateX(5px);
 }
 
@@ -115,15 +84,6 @@ PONTOS CRITICOS:
 
 .nav-link:active {
     transform: translateX(5px) scale(0.98);
-}
-
-.nav-link.is-active::before {
-    left: 2px;
-    top: 8px;
-    bottom: 8px;
-    width: 4px;
-    border-radius: 999px;
-    background: var(--sidebar-active-bar);
 }
 
 .nav-link:hover .nav-icon,
@@ -137,12 +97,6 @@ PONTOS CRITICOS:
     background: rgba(37, 99, 235, 0.22);
 }
 
-/* --- Front Display Wall facade sidebar pass --- */
-.nav-link:hover,
-.nav-link:focus-visible {
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
-}
-
 @media (prefers-reduced-motion: reduce) {
     .nav-link,
     .nav-icon {
@@ -150,11 +104,13 @@ PONTOS CRITICOS:
     }
 }
 
-/* --- Blink Highlight --- */
+/* Blink guiado disparado por shell.js */
 .nav-link.blink {
     background-color: rgba(16, 185, 129, 0.15) !important;
     color: #fff !important;
-    box-shadow: 0 0 24px rgba(16, 185, 129, 0.6), inset 0 0 12px rgba(16, 185, 129, 0.2) !important;
+    box-shadow:
+        0 0 24px rgba(16, 185, 129, 0.6),
+        inset 0 0 12px rgba(16, 185, 129, 0.2) !important;
     border-color: rgba(16, 185, 129, 0.4) !important;
     transform: scale(1.02);
 }
@@ -162,7 +118,9 @@ PONTOS CRITICOS:
 .nav-link.blink-danger {
     background-color: rgba(239, 68, 68, 0.15) !important;
     color: #fff !important;
-    box-shadow: 0 0 24px rgba(239, 68, 68, 0.6), inset 0 0 12px rgba(239, 68, 68, 0.2) !important;
+    box-shadow:
+        0 0 24px rgba(239, 68, 68, 0.6),
+        inset 0 0 12px rgba(239, 68, 68, 0.2) !important;
     border-color: rgba(239, 68, 68, 0.4) !important;
     transform: scale(1.02);
 }

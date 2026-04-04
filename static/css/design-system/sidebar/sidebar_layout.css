@@ -1,70 +1,89 @@
 /*
-ARQUIVO: estrutura arquitetural base, grid e colapso móvel da sidebar.
+ARQUIVO: estrutura base, sticky e drawer mobile da sidebar.
 
 POR QUE ELE EXISTE:
-- Isola unicamente a infraestrutura da barra lateral. 
-- Define como ela se ancora no shell master liberta cores operacionais das regras de gaveta (drawer).
+- Isola a infraestrutura da barra lateral.
+- Mantem shell, gaveta mobile e fachada visual da coluna em um unico lugar.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Formata a área e posicionamento do componente inteiro usando a mecânica `sticky`.
-2. Formata a proporção intocável entre a Tagline e Brand Mark.
-3. Permite que a sidebar ceda ao limite responsivo de 960px, agindo como modal gaveta por cima da tela principal.
-4. Aplica a cortina translucida `sidebar-backdrop`.
+1. Define a caixa principal da `.sidebar`.
+2. Ajusta brand, tagline e atmosfera visual da coluna.
+3. Controla o drawer mobile e o backdrop abaixo de 960px.
 
 PONTOS CRITICOS:
-- O breakpoint de 960px e as regras de transformação X na navegação lateral são os pilares da tela de celular do sistema.
-- A restrição máxima estrita de `z-index` 15 e 20 impede zombis modais sobre interface ativa.
+- Este arquivo nao deve reescrever hover dos links nem o bloco meta.
+- O breakpoint de 960px e a transicao de drawer sao a parte funcional da sidebar.
 */
 
 .sidebar {
     position: sticky;
-    top: 16px;
+    top: var(--space-3);
     min-height: calc(100vh - 32px);
-    padding: 24px 16px 20px;
-    background: var(--sidebar-bg);
-    color: var(--sidebar-ink);
-    border: none;
-    border-radius: 14px;
-    box-shadow: var(--shadow-xl);
+    height: calc(100vh - (var(--space-3) * 2));
+    padding: var(--space-5) var(--space-3) var(--space-4);
     overflow: hidden;
+    color: var(--sidebar-ink);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(8, 16, 30, 0.98), rgba(12, 22, 40, 0.97) 54%, rgba(7, 41, 62, 0.94));
+    box-shadow: var(--fdw-shadow-lift);
 }
 
 .sidebar::before,
 .sidebar::after {
-    display: none;
+    content: "";
+    position: absolute;
+    pointer-events: none;
+}
+
+.sidebar::before {
+    inset: 0;
+    background:
+        radial-gradient(circle at top left, rgba(96, 165, 250, 0.08), transparent 22%),
+        radial-gradient(circle at 82% 18%, rgba(45, 212, 191, 0.04), transparent 20%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%);
+}
+
+.sidebar::after {
+    inset: auto -18% -10% auto;
+    width: 110px;
+    height: 110px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.06), transparent 70%);
 }
 
 .brand-wrap {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 24px;
+    margin-bottom: var(--space-6);
 }
 
 .brand-mark {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: var(--brand);
     display: grid;
     place-items: center;
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #10b981, #2563eb);
     color: #fff;
     font-weight: 800;
     font-size: 0.875rem;
-    box-shadow: none;
-    flex-shrink: 0;
+    box-shadow: 0 6px 14px rgba(9, 14, 24, 0.14);
 }
 
 .brand {
+    margin: 0;
     font-size: 1.05rem;
     font-weight: 700;
-    margin: 0;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.03em;
 }
 
 .tagline {
+    max-width: 22ch;
     margin: 2px 0 0;
-    color: var(--sidebar-muted);
+    color: rgba(226, 232, 240, 0.76);
     font-size: 0.75rem;
     line-height: 1.4;
     word-break: break-word;
@@ -74,9 +93,9 @@ PONTOS CRITICOS:
     .sidebar {
         position: fixed;
         inset: 0 auto 0 0;
+        top: 0;
         width: min(82vw, 320px);
         min-height: 100vh;
-        top: 0;
         border-radius: 0 30px 30px 0;
         transform: translateX(-102%);
         transition: transform 0.2s ease;
@@ -87,13 +106,13 @@ PONTOS CRITICOS:
         display: block;
         position: fixed;
         inset: 0;
+        z-index: 15;
         border: 0;
         padding: 0;
         background: rgba(15, 23, 42, 0.34);
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.2s ease;
-        z-index: 15;
     }
 
     body.sidebar-open .sidebar {
@@ -104,79 +123,4 @@ PONTOS CRITICOS:
         opacity: 1;
         pointer-events: auto;
     }
-}
-
-/* --- Sidebar Interaction Consistency --- */
-.sidebar {
-    top: var(--space-3);
-    height: calc(100vh - (var(--space-3) * 2));
-    padding: var(--space-5) var(--space-3) var(--space-4);
-    border-radius: 20px;
-}
-
-.brand-wrap {
-    margin-bottom: var(--space-6);
-}
-
-/* --- Front Display Wall facade sidebar pass --- */
-.sidebar {
-    background: linear-gradient(180deg, rgba(8, 16, 30, 0.98), rgba(12, 22, 40, 0.97) 54%, rgba(7, 41, 62, 0.94));
-    border: 1px solid rgba(148, 163, 184, 0.12);
-    box-shadow: var(--fdw-shadow-lift);
-}
-
-.sidebar::before,
-.sidebar::after {
-    display: block;
-    content: "";
-    position: absolute;
-    pointer-events: none;
-}
-
-.sidebar::before {
-    inset: 0;
-    background: radial-gradient(circle at top left, rgba(96, 165, 250, 0.22), transparent 26%), radial-gradient(circle at 82% 18%, rgba(45, 212, 191, 0.14), transparent 24%);
-}
-
-.sidebar::after {
-    inset: auto -18% -10% auto;
-    width: 180px;
-    height: 180px;
-    border-radius: 999px;
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.1), transparent 70%); /* Mudado de Laranja para Emerald */
-}
-
-.brand-mark {
-    width: 46px;
-    height: 46px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #10b981, #2563eb); /* Emerald to Blue - Premium Parity */
-    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.14);
-}
-
-.brand {
-    letter-spacing: -0.03em;
-}
-
-.tagline {
-    max-width: 22ch;
-    color: rgba(226, 232, 240, 0.76);
-}
-
-/* --- Front Display Wall artistic facade pass --- */
-.sidebar::before {
-    background: radial-gradient(circle at top left, rgba(96, 165, 250, 0.08), transparent 22%), radial-gradient(circle at 82% 18%, rgba(45, 212, 191, 0.04), transparent 20%), linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%);
-}
-
-.sidebar::after {
-    width: 110px;
-    height: 110px;
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.06), transparent 70%);
-}
-
-.brand-mark {
-    width: 46px;
-    height: 46px;
-    border-radius: 14px;
-    box-shadow: 0 6px 14px rgba(9, 14, 24, 0.14);
 }
