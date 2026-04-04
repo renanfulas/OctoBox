@@ -14,17 +14,16 @@ POR QUE ELE EXISTE:
 .quick-card {
     padding: 24px;
     border-radius: var(--radius-panel);
-    border: 1px solid var(--line);
-    background: var(--surface);
-    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--legacy-panel-border);
+    background: var(--legacy-panel-surface);
+    box-shadow: var(--legacy-panel-shadow);
     text-decoration: none;
-    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    transition: box-shadow 0.18s ease, border-color 0.18s ease;
     position: relative;
     overflow: hidden;
 }
 
 .quick-card:hover {
-    transform: translateY(-2px);
     box-shadow: var(--shadow-lift);
     border-color: var(--brand);
 }
@@ -49,14 +48,14 @@ POR QUE ELE EXISTE:
 
 .quick-card p {
     margin: 0;
-    color: var(--muted);
+    color: var(--legacy-copy);
     line-height: 1.65;
 }
 
 body[data-theme="dark"] .quick-card {
-    background: var(--surface);
-    border-color: var(--line);
-    box-shadow: var(--shadow-soft);
+    background: var(--legacy-panel-surface);
+    border-color: var(--legacy-panel-border);
+    box-shadow: var(--legacy-panel-shadow);
 }
 
 body[data-theme="dark"] .quick-card:hover {

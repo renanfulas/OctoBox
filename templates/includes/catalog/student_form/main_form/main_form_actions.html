@@ -9,19 +9,23 @@ ARQUIVO: erros globais e acoes finais da ficha do aluno.
 </div>
 {% endif %}
 
-<div class="actions actions-tight student-form-actions" aria-label="Acoes do formulario">
-    <button class="button secondary" type="button" data-action="prev-step" aria-describedby="student-form-stepper-status" hidden>Voltar</button>
-    <button class="button" type="button" data-action="next-step" aria-describedby="student-form-stepper-status">Proximo: plano e pagamento</button>
-    <button class="button" type="submit" aria-describedby="student-form-stepper-status" hidden>{% if page_mode == 'create' %}Finalizar cadastro{% else %}Salvar ajustes{% endif %}</button>
-    {% if student_object and can_open_student_admin %}
-    <a class="button secondary" href="{% url 'admin:boxcore_student_change' student_object.id %}">Editar no admin</a>
-    {% endif %}
+<div class="actions actions-tight student-form-actions" aria-label="A&ccedil;&otilde;es do formul&aacute;rio">
+    <div class="student-form-actions-rail student-form-actions-rail--secondary">
+        <button class="button secondary" type="button" data-action="prev-step" hidden>Voltar</button>
+        {% if student_object and can_open_student_admin %}
+        <a class="button secondary" href="{% url 'admin:boxcore_student_change' student_object.id %}">Editar no Admin</a>
+        {% endif %}
+    </div>
+    <div class="student-form-actions-rail student-form-actions-rail--primary">
+        <button class="button" type="button" data-action="next-step">Pr&oacute;ximo: plano e pagamento</button>
+        <button class="button" type="submit" hidden>{% if page_mode == 'create' %}Finalizar cadastro{% else %}Salvar ajustes{% endif %}</button>
+    </div>
 </div>
 {% if page.data.student_form_handoff %}
-<section class="student-form-handoff note-panel note-panel--info" data-student-form-handoff hidden aria-label="Proximo passo depois do fechamento">
-    <p class="eyebrow">Proxima acao oficial</p>
-    <p class="no-margin"><strong>{{ page.data.student_form_handoff.title }}</strong></p>
-    <p class="meta-text">{{ page.data.student_form_handoff.copy }}</p>
+<section class="student-form-handoff note-panel note-panel--info" data-student-form-handoff hidden aria-label="Pr&oacute;ximo passo depois do fechamento">
+    <p class="eyebrow">Pr&oacute;xima a&ccedil;&atilde;o oficial</p>
+    <p class="no-margin student-form-handoff__headline"><strong>{{ page.data.student_form_handoff.title }}</strong></p>
+    <p class="meta-text student-form-handoff__copy">{{ page.data.student_form_handoff.copy }}</p>
     <div class="actions actions-tight">
         <a class="button" href="{{ page.data.student_form_handoff.href }}" data-action="{{ page.data.student_form_handoff.data_action }}">{{ page.data.student_form_handoff.href_label }}</a>
     </div>

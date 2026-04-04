@@ -5,14 +5,70 @@ POR QUE ELE EXISTE:
 - concentra plano, cobranca, historico e acoes sensiveis sem tirar o operador da ficha.
 
 O QUE ESTE ARQUIVO FAZ:
-1. apresenta um topo de comando financeiro claro.
+1. separa cobrar agora de gestao ampliada.
 2. organiza resumo, historico e acoes laterais em uma leitura mais guiada.
 3. preserva drawers e acoes existentes sem depender de script inline.
 -->
-<div class="stack-16 student-financial-workspace" id="student-financial-overview" data-student-financial-workspace>
+<div class="stack-16 student-financial-workspace {% if financial_shell_mode == 'tabbed' %}student-financial-workspace--tabbed student-page-payments-panel{% else %}student-financial-workspace--embedded{% endif %}" id="student-financial-overview" data-student-financial-workspace data-student-id="{{ page.data.student_object.id|default:'' }}" data-financial-shell-mode="{{ financial_shell_mode|default:'embedded' }}" data-financial-expanded="{% if financial_shell_mode == 'tabbed' %}true{% else %}false{% endif %}">
     <div class="slide-overlay" id="drawer-overlay" data-action="close-drawers" aria-hidden="true"></div>
 
     {% if page.data.financial_overview.has_student %}
+    {% if financial_shell_mode != 'tabbed' %}
+    <section class="student-financial-peek" aria-label="Resumo essencial do financeiro">
+        <div class="student-financial-peek__copy">
+            <p class="eyebrow">Financeiro essencial</p>
+            <h2 class="section-title-sm">Veja o status rapido e abra o painel so quando precisar.</h2>
+            <p class="meta-text">Ideal para entrar na ficha sem tomar a tela inteira logo de cara.</p>
+        </div>
+        <div class="student-financial-peek__stats" aria-label="Leitura curta do aluno">
+            <article class="student-financial-peek__stat">
+                <span class="student-financial-peek__label">Aluno</span>
+                <strong class="student-financial-peek__value">{{ page.data.student_object.full_name }}</strong>
+            </article>
+            <article class="student-financial-peek__stat">
+                <span class="student-financial-peek__label">Atrasados</span>
+                <strong class="student-financial-peek__value{% if page.data.financial_overview.metrics.pagamentos_atrasados %} is-danger{% endif %}">{{ page.data.financial_overview.metrics.pagamentos_atrasados }}</strong>
+            </article>
+            <article class="student-financial-peek__stat">
+                <span class="student-financial-peek__label">Pendentes</span>
+                <strong class="student-financial-peek__value">{{ page.data.financial_overview.metrics.pagamentos_pendentes }}</strong>
+            </article>
+        </div>
+        <div class="student-financial-peek__actions">
+            <div class="student-financial-peek__action-group">
+                <button class="button" type="button" data-action="toggle-financial-workspace" data-label-expand="Abrir financeiro" data-label-collapse="Minimizar financeiro" aria-controls="student-financial-workspace-content" aria-expanded="false">
+                    Abrir financeiro
+                </button>
+                <a class="button secondary student-financial-command-button--quiet" href="#student-form-essential" data-action="open-tab-student-form-essential">
+                    Abrir essencial
+                </a>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <div class="student-financial-workspace__content {% if financial_shell_mode == 'tabbed' %}student-page-payments-workspace__content{% endif %}" id="student-financial-workspace-content" data-financial-workspace-content hidden>
+    {% if financial_shell_mode == 'tabbed' %}
+    {% include "includes/catalog/student_page/student_page_payments_summary.html" with page=page %}
+
+    <section class="card student-page-card student-page-history-card student-page-payments-history-card" aria-label="Historico de pagamentos">
+        <header class="student-page-card__head student-page-panel-heading">
+            <div class="student-page-panel-heading__copy">
+                <h2 class="section-title-sm">Historico de pagamentos</h2>
+                <p class="meta-text">{{ page.data.financial_overview.metrics.transacoes_totais|default:"0" }} transacao(oes)</p>
+            </div>
+        </header>
+        <div class="student-page-card__body">
+            <div id="student-financial-ledger-slot">
+                {% include "includes/catalog/student_page/student_page_payments_history.html" with page=page %}
+            </div>
+        </div>
+    </section>
+
+    <button class="student-page-ghost-action student-page-payments-ghost-action" type="button" data-action="open-drawer" data-drawer-id="student-payment-checkout-slot" aria-controls="student-payment-checkout-slot" aria-expanded="false">
+        + Registrar pagamento avulso
+    </button>
+    {% else %}
     <nav class="student-financial-breadcrumb" aria-label="Caminho da ficha financeira">
         <span>Alunos</span>
         <span aria-hidden="true">&rsaquo;</span>
@@ -24,21 +80,38 @@ O QUE ESTE ARQUIVO FAZ:
     <section class="student-financial-command-strip">
         <div class="student-financial-command-copy">
             <p class="eyebrow">Financeiro do aluno</p>
-            <h2 class="section-title-sm">Onde vinculo, cobranca e historico pedem cuidado.</h2>
-            <p class="meta-text">Veja o que esta saudavel, o que ficou pendente e qual acao faz sentido agora.</p>
+            <h2 class="section-title-sm">Cobrar agora e gerir depois, sem misturar os dois mundos.</h2>
+            <p class="meta-text">Use o fluxo rapido para receber no atendimento. Quando precisar revisar historico, vinculo ou excecoes, entre na gestao ampliada.</p>
         </div>
         <div class="student-financial-command-actions">
-            <button class="button" type="button" data-action="open-drawer" data-drawer-id="financial-payment-management-slot" aria-controls="financial-payment-management-slot" aria-expanded="false">
-                Registrar cobranca
+            <button class="button" type="button" data-action="open-drawer" data-drawer-id="student-payment-checkout-slot" aria-controls="student-payment-checkout-slot" aria-expanded="false">
+                Cobrar agora
             </button>
-            <button class="button secondary" type="button" data-action="open-drawer" data-drawer-id="financial-enrollment-management-slot" aria-controls="financial-enrollment-management-slot" aria-expanded="false">
-                Revisar vinculo
-            </button>
+            <div class="student-financial-command-actions-secondary">
+                <button class="button secondary" type="button" data-action="open-drawer" data-drawer-id="student-payment-management-slot" aria-controls="student-payment-management-slot" aria-expanded="false">
+                    Gestao ampliada
+                </button>
+                <button class="button secondary student-financial-command-button--quiet" type="button" data-action="open-drawer" data-drawer-id="financial-enrollment-management-slot" aria-controls="financial-enrollment-management-slot" aria-expanded="false">
+                    Ver vinculo
+                </button>
+                <button class="button secondary student-financial-command-button--quiet" type="button" data-action="toggle-financial-workspace" data-label-expand="Abrir financeiro" data-label-collapse="Minimizar financeiro" aria-controls="student-financial-workspace-content" aria-expanded="true">
+                    Minimizar financeiro
+                </button>
+                <a class="button secondary student-financial-command-button--quiet" href="#student-form-essential" data-action="open-tab-student-form-essential">
+                    Abrir essencial
+                </a>
+            </div>
         </div>
     </section>
 
-    {% include "includes/catalog/student_form/financial/financial_overview_id_card.html" with page=page %}
-    {% include "includes/catalog/student_form/financial/financial_overview_kpis.html" with page=page %}
+    <section class="student-financial-top-grid" aria-label="Resumo financeiro principal">
+        <div id="student-financial-id-card-slot" class="student-financial-top-grid__identity">
+            {% include "includes/catalog/student_form/financial/financial_overview_id_card.html" with page=page %}
+        </div>
+        <div id="student-financial-kpis-slot" class="student-financial-top-grid__kpis">
+            {% include "includes/catalog/student_form/financial/financial_overview_kpis.html" with page=page %}
+        </div>
+    </section>
 
     <div class="student-financial-layout">
         <div class="student-financial-main stack-16">
@@ -46,20 +119,62 @@ O QUE ESTE ARQUIVO FAZ:
                 <header class="student-financial-panel-head">
                     <div>
                         <p class="eyebrow">Historico</p>
-                        <h3 class="section-title-sm">Cobrancas registradas</h3>
+                        <h3 class="section-title-sm">Cobranças registradas</h3>
                     </div>
                     <div class="student-financial-status-pills" aria-label="Leitura rapida do ledger">
-                        <span class="pill info">Todos</span>
-                        <span class="pill">Pagos</span>
-                        <span class="pill">Pendentes</span>
-                        <span class="pill warning">Atrasados</span>
+                        <span class="pill info student-financial-filter-pill student-financial-filter-pill--all">Todos</span>
+                        <span class="pill success student-financial-filter-pill student-financial-filter-pill--paid">Pagos</span>
+                        <span class="pill student-financial-filter-pill student-financial-filter-pill--pending">Pendentes</span>
+                        <span class="pill warning student-financial-filter-pill student-financial-filter-pill--overdue">Atrasados</span>
                     </div>
                 </header>
-                {% include "includes/catalog/student_form/financial/stripe_elite_ledger.html" with page=page %}
+                <div id="student-financial-ledger-slot">
+                    {% include "includes/catalog/student_form/financial/stripe_elite_ledger.html" with page=page %}
+                </div>
             </section>
         </div>
 
-        <aside class="student-financial-sidebar stack-16" aria-label="Acoes e contexto financeiro">
+        <aside class="student-financial-sidebar stack-16" aria-label="Ações e contexto financeiro">
+            <section class="card overflow-hidden student-financial-side-panel">
+                <header class="student-financial-panel-head">
+                    <div>
+                        <p class="eyebrow">Cobrar agora</p>
+                        <h3 class="section-title-sm">Recebimento rapido</h3>
+                    </div>
+                </header>
+                <div class="student-financial-side-body">
+                    <p class="meta-text">Abra o drawer principal para conferir valor, escolher o metodo e confirmar o recebimento sem entrar na gestao completa.</p>
+                    <button class="student-financial-quick-action student-financial-quick-action--primary" type="button" data-action="open-drawer" data-drawer-id="student-payment-checkout-slot" aria-controls="student-payment-checkout-slot" aria-expanded="false">
+                        <span class="student-financial-quick-action-icon" aria-hidden="true">+</span>
+                        <span>
+                            <strong>Cobrar agora</strong>
+                            <small>Valor, vencimento, metodo e confirmacao em um fluxo curto.</small>
+                        </span>
+                    </button>
+                </div>
+            </section>
+
+            <section class="card overflow-hidden student-financial-side-panel">
+                <header class="student-financial-panel-head">
+                    <div>
+                        <p class="eyebrow">Gestao ampliada</p>
+                        <h3 class="section-title-sm">Historico e excecoes</h3>
+                    </div>
+                </header>
+                <div class="student-financial-side-body">
+                    <p class="meta-text">Use esta camada para revisar cobrancas registradas, ajustar casos especiais e decidir o proximo passo fora do fluxo de balcao.</p>
+                    <div class="student-financial-quick-actions">
+                        <button class="student-financial-quick-action student-financial-quick-action--secondary" type="button" data-action="open-drawer" data-drawer-id="student-payment-management-slot" aria-controls="student-payment-management-slot" aria-expanded="false">
+                            <span class="student-financial-quick-action-icon" aria-hidden="true">&#8635;</span>
+                            <span>
+                                <strong>Abrir gestao ampliada</strong>
+                                <small>Historico, revisao de cobrancas e excecoes sem poluir o recebimento rapido.</small>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
             <section class="card overflow-hidden student-financial-side-panel">
                 <header class="student-financial-panel-head">
                     <div>
@@ -69,10 +184,10 @@ O QUE ESTE ARQUIVO FAZ:
                 </header>
                 <div class="student-financial-side-body">
                     {% if page.data.financial_overview.latest_enrollment %}
-                    <p class="meta-text">O aluno ja tem um vinculo financeiro ativo para leitura e ajuste neste mesmo workspace.</p>
-                    <button class="button secondary" type="button" data-action="open-drawer" data-drawer-id="financial-enrollment-management-slot" aria-controls="financial-enrollment-management-slot" aria-expanded="false">
-                        Abrir vinculo atual
-                    </button>
+                        <p class="meta-text">O aluno ja tem um vinculo financeiro ativo para leitura e ajuste neste mesmo workspace.</p>
+                        <button class="button secondary student-financial-command-button--quiet" type="button" data-action="open-drawer" data-drawer-id="financial-enrollment-management-slot" aria-controls="financial-enrollment-management-slot" aria-expanded="false">
+                            Ver vinculo atual
+                        </button>
                     {% else %}
                     <div class="student-financial-empty-state">
                         <span class="student-financial-empty-icon" aria-hidden="true">+</span>
@@ -81,47 +196,30 @@ O QUE ESTE ARQUIVO FAZ:
                     {% endif %}
                 </div>
             </section>
-
-            <section class="card overflow-hidden student-financial-side-panel">
-                <header class="student-financial-panel-head">
-                    <div>
-                        <p class="eyebrow">Proxima acao</p>
-                        <h3 class="section-title-sm">Acoes rapidas</h3>
-                    </div>
-                </header>
-                <div class="student-financial-quick-actions">
-                    <button class="student-financial-quick-action" type="button" data-action="open-drawer" data-drawer-id="financial-payment-management-slot" aria-controls="financial-payment-management-slot" aria-expanded="false">
-                        <span class="student-financial-quick-action-icon" aria-hidden="true">+</span>
-                        <span>
-                            <strong>Nova cobranca</strong>
-                            <small>Ajuste valor, metodo e vencimento.</small>
-                        </span>
-                    </button>
-                    <button class="student-financial-quick-action" type="button" data-action="open-drawer" data-drawer-id="financial-billing-console-slot" aria-controls="financial-billing-console-slot" aria-expanded="false">
-                        <span class="student-financial-quick-action-icon" aria-hidden="true">&#8635;</span>
-                        <span>
-                            <strong>Console de cobranca</strong>
-                            <small>Editar, dividir ou conduzir o proximo passo.</small>
-                        </span>
-                    </button>
-                </div>
-            </section>
         </aside>
     </div>
 
-    <div class="slide-over-panel" id="financial-billing-console-slot" role="dialog" aria-modal="true" aria-labelledby="financial-billing-console-title" aria-describedby="financial-billing-console-copy" aria-hidden="true" tabindex="-1">
-        <button class="drawer-close-btn" type="button" data-action="close-drawers" aria-label="Fechar console de cobranca">x</button>
-        {% include "includes/catalog/student_form/financial/billing_console.html" with page=page %}
+    {% endif %}
+    <div class="slide-over-panel student-page-payments-drawer student-page-payments-drawer--management" id="student-payment-management-slot" role="dialog" aria-modal="true" aria-labelledby="student-payment-management-title" aria-describedby="student-payment-management-copy" aria-hidden="true" tabindex="-1">
+        <button class="drawer-close-btn" type="button" data-action="close-drawers" aria-label="Fechar gestao ampliada">x</button>
+        <div id="student-payment-management-content">
+            {% include "includes/catalog/student_form/financial/billing_console.html" with page=page %}
+        </div>
     </div>
 
-    <div class="slide-over-panel" id="financial-payment-management-slot" role="dialog" aria-modal="true" aria-labelledby="financial-payment-management-title" aria-describedby="financial-payment-management-copy" aria-hidden="true" tabindex="-1">
-        <button class="drawer-close-btn" type="button" data-action="close-drawers" aria-label="Fechar painel de cobranca">x</button>
-        {% include "includes/catalog/student_form/financial/financial_overview_payment_management.html" with page=page %}
+    <div class="slide-over-panel student-page-payments-drawer student-page-payments-drawer--checkout" id="student-payment-checkout-slot" role="dialog" aria-modal="true" aria-labelledby="student-payment-checkout-title" aria-describedby="student-payment-checkout-copy" aria-hidden="true" tabindex="-1">
+        <button class="drawer-close-btn" type="button" data-action="close-drawers" aria-label="Fechar cobrar agora">x</button>
+        <div id="student-payment-checkout-content">
+            {% include "includes/catalog/student_form/financial/financial_overview_payment_management.html" with page=page %}
+        </div>
     </div>
 
-    <div class="slide-over-panel" id="financial-enrollment-management-slot" role="dialog" aria-modal="true" aria-labelledby="financial-enrollment-management-title" aria-describedby="financial-enrollment-management-copy" aria-hidden="true" tabindex="-1">
+    <div class="slide-over-panel student-page-payments-drawer student-page-payments-drawer--enrollment" id="financial-enrollment-management-slot" role="dialog" aria-modal="true" aria-labelledby="financial-enrollment-management-title" aria-describedby="financial-enrollment-management-copy" aria-hidden="true" tabindex="-1">
         <button class="drawer-close-btn" type="button" data-action="close-drawers" aria-label="Fechar painel de vinculo">x</button>
-        {% include "includes/catalog/student_form/financial/financial_overview_enrollment_management.html" with page=page %}
+        <div id="student-enrollment-management-content">
+            {% include "includes/catalog/student_form/financial/financial_overview_enrollment_management.html" with page=page %}
+        </div>
+    </div>
     </div>
     {% else %}
     <article class="card rounded-surface flex-col flex-center min-h-200 text-center student-financial-empty-shell">

@@ -822,6 +822,56 @@ class CatalogViewTests(TestCase):
         payment.refresh_from_db()
         self.assertEqual(payment.status, PaymentStatus.PAID)
 
+    def test_student_payment_action_returns_fragments_for_ajax(self):
+        self.client.force_login(self.user)
+        payment = self.student.payments.first()
+
+        response = self.client.post(
+            reverse('student-payment-action', args=[self.student.id]),
+            data={
+                'payment_id': payment.id,
+                'amount': payment.amount,
+                'due_date': str(payment.due_date),
+                'method': payment.method,
+                'reference': '',
+                'notes': '',
+                'action': 'mark-paid',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body['status'], 'success')
+        self.assertIn('fragments', body)
+        self.assertIn('student-payment-checkout-form', body['fragments']['checkout'])
+        self.assertIn('student-financial-kpi-card', body['fragments']['kpis'])
+        payment.refresh_from_db()
+        self.assertEqual(payment.status, PaymentStatus.PAID)
+
+    def test_student_payment_drawer_returns_selected_payment_fragment(self):
+        self.client.force_login(self.user)
+        newer_payment = Payment.objects.create(
+            student=self.student,
+            enrollment=self.enrollment,
+            due_date=timezone.localdate() + timezone.timedelta(days=10),
+            amount='319.90',
+            status=PaymentStatus.PENDING,
+            method=PaymentMethod.CREDIT_CARD,
+            reference='ABR-319',
+        )
+
+        response = self.client.get(
+            reverse('student-payment-drawer', args=[self.student.id, newer_payment.id]),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body['status'], 'success')
+        self.assertIn('ABR-319', body['fragments']['checkout'])
+        self.assertIn('319', body['fragments']['checkout'])
+
     def test_student_payment_action_rejects_invalid_action(self):
         self.client.force_login(self.user)
         payment = self.student.payments.first()
@@ -904,18 +954,39 @@ class CatalogViewTests(TestCase):
         self.assertEqual(reactivate_response.status_code, 302)
         self.assertEqual(self.student.enrollments.filter(status=EnrollmentStatus.ACTIVE).count(), 1)
 
+    def test_student_enrollment_action_returns_fragments_for_ajax(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('student-enrollment-action', args=[self.student.id]),
+            data={
+                'enrollment_id': self.enrollment.id,
+                'action_date': str(timezone.localdate()),
+                'reason': 'Mudanca de rotina.',
+                'action': 'cancel-enrollment',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body['status'], 'success')
+        self.assertIn('fragments', body)
+        self.assertIn('student-enrollment-management', body['fragments']['enrollment'])
+        self.enrollment.refresh_from_db()
+        self.assertEqual(self.enrollment.status, EnrollmentStatus.CANCELED)
+
     def test_student_update_page_shows_financial_overview(self):
         self.client.force_login(self.user)
 
         response = self.client.get(reverse('student-quick-update', args=[self.student.id]))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Ficha do aluno.')
-        self.assertContains(response, 'Cross Prime')
-        self.assertContains(response, 'Passo 4: plano e status comercial')
-        self.assertContains(response, 'Passo 5: cobranca e confirmacao')
-        self.assertContains(response, 'Nova cobranca')
-        self.assertContains(response, 'Cobrancas registradas')
+        self.assertContains(response, 'Cobrar agora')
+        self.assertContains(response, 'Plano atual')
+        self.assertContains(response, 'Dados cadastrais')
+        self.assertContains(response, 'Historico de pagamentos')
+        self.assertContains(response, 'Salvar perfil')
 
     def test_student_update_page_renders_date_inputs_in_iso_format(self):
         self.client.force_login(self.user)

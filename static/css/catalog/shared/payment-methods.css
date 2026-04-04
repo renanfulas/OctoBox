@@ -1,0 +1,109 @@
+/*
+ARQUIVO: metodos de pagamento compartilhados da ficha do aluno.
+
+POR QUE ELE EXISTE:
+- isola a apresentacao dos cards de metodo e seus estados.
+- permite evoluir Pix, cartao e dinheiro sem misturar com o resto do workspace.
+*/
+
+.student-payment-methods {
+    display: grid;
+    gap: 12px;
+}
+
+.student-payment-methods__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.student-payment-method-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--theme-surface-panel) 88%, white);
+    color: var(--ink);
+    font-weight: 700;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease, opacity 0.18s ease;
+}
+
+.student-payment-method-button:hover,
+.student-payment-method-button:focus-visible {
+    border-color: color-mix(in srgb, var(--brand) 34%, var(--theme-border-soft) 66%);
+    box-shadow: 0 12px 28px color-mix(in srgb, rgb(15 23 42) 8%, transparent);
+    outline: 2px solid color-mix(in srgb, var(--brand) 28%, transparent);
+    outline-offset: 2px;
+}
+
+.student-payment-method-button.is-active {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 42%, var(--theme-border-soft) 58%);
+    box-shadow: 0 14px 30px color-mix(in srgb, rgb(15 23 42) 10%, transparent);
+    transform: translateY(-1px);
+}
+
+.student-payment-method-button.is-pix.is-active {
+    border-color: color-mix(in srgb, var(--success) 42%, var(--theme-border-soft) 58%);
+    box-shadow: 0 16px 32px color-mix(in srgb, rgb(5 150 105) 16%, transparent);
+}
+
+.student-payment-method-button.is-disabled {
+    opacity: 0.68;
+}
+
+.student-payment-method-button.is-card {
+    background: linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-panel) 92%, white), color-mix(in srgb, var(--theme-surface-strong) 92%, white));
+}
+
+.student-payment-method-button.is-pix {
+    border-color: color-mix(in srgb, var(--success) 24%, var(--theme-border-soft) 76%);
+    background: color-mix(in srgb, var(--success) 10%, var(--theme-surface-panel) 90%);
+}
+
+.student-payment-method-button.is-cash {
+    border-color: color-mix(in srgb, var(--warning) 24%, var(--theme-border-soft) 76%);
+    background: color-mix(in srgb, var(--warning) 10%, var(--theme-surface-panel) 90%);
+}
+
+.student-payment-method-button.is-debit {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, var(--theme-border-soft) 76%);
+    background: color-mix(in srgb, var(--theme-accent-support) 10%, var(--theme-surface-panel) 90%);
+}
+
+body[data-theme="dark"] .student-payment-method-button {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass-strong) 88%, transparent);
+    color: var(--theme-text-primary);
+    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
+}
+
+body[data-theme="dark"] .student-payment-method-button.is-card {
+    background: linear-gradient(160deg, rgba(24, 31, 48, 0.96), rgba(17, 22, 34, 0.92));
+}
+
+body[data-theme="dark"] .student-payment-method-button.is-pix {
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 18%, var(--theme-surface-glass-strong) 82%);
+}
+
+body[data-theme="dark"] .student-payment-method-button.is-cash {
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-surface-glass-strong) 82%);
+}
+
+body[data-theme="dark"] .student-payment-method-button.is-debit {
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-surface-glass-strong) 82%);
+}
+
+body[data-theme="dark"] .student-payment-method-button:hover,
+body[data-theme="dark"] .student-payment-method-button:focus-visible {
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
+}
+
+@media (max-width: 680px) {
+    .student-payment-methods__grid {
+        grid-template-columns: 1fr;
+    }
+}

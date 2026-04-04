@@ -1,4 +1,22 @@
 <div class="actions actions-tight">
-    <button class="button secondary" type="submit" name="action" value="cancel-enrollment">Cancelar matricula</button>
-    <button class="button" type="submit" name="action" value="reactivate-enrollment">Reativar matricula</button>
+    <button
+        class="button secondary"
+        type="submit"
+        name="action"
+        value="cancel-enrollment"
+        data-confirm="true"
+        data-confirm-message="Tem certeza que deseja cancelar esta matricula? Essa acao muda o vinculo atual do aluno."
+    >
+        Cancelar matr&iacute;cula
+    </button>
+    <button
+        class="button"
+        type="submit"
+        name="action"
+        value="reactivate-enrollment"
+        data-confirm="true"
+        data-confirm-message="Tem certeza que deseja reativar esta matricula? O aluno volta para o fluxo ativo."
+    >
+        Reativar matr&iacute;cula
+    </button>
 </div>

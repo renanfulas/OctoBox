@@ -36,7 +36,7 @@ POR QUE ELE EXISTE:
 
 .finance-movements-subtitle {
     margin: 6px 0 0;
-    color: var(--muted);
+    color: var(--legacy-copy);
     font-size: 0.84rem;
     line-height: 1.55;
 }
@@ -92,11 +92,11 @@ POR QUE ELE EXISTE:
 
 .finance-movement-plan,
 .finance-movement-date {
-    color: var(--muted);
+    color: var(--legacy-copy);
 }
 
 .finance-movement-status-muted {
-    color: var(--muted);
+    color: var(--legacy-copy);
 }
 
 .finance-movement-separator {

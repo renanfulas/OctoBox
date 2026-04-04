@@ -130,7 +130,10 @@ def _build_dashboard_priority_context(*, metrics, pending_intakes_count, today_s
             'reason': 'Existe demanda comercial esperando resposta e ela esfria mais rapido do que o restante.',
             'lead_order': ['intakes', 'revenue', 'overdue', 'occupancy', 'attendance', 'active'],
         }
-    if today_schedule_occupancy_percent >= 95 or metrics['sessions_today'] > 0:
+    # Ter aulas no dia e o estado normal do box. A agenda so deve roubar a
+    # dianteira da receita quando existe pressao operacional de ocupacao
+    # suficiente para virar coordenacao urgente.
+    if metrics['sessions_today'] > 0 and today_schedule_occupancy_percent >= 85:
         return {
             'dominant_key': 'occupancy',
             'label': 'session-pressure',
@@ -305,7 +308,6 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
             'display_value': metrics['overdue_payments'],
             'change': _build_delta_badge(metrics['overdue_payments'], metrics['overdue_payments_previous_day'], label='desde ontem', semantic='negative'),
             'data_action': 'blink-topbar-finance',
-            'href': finance_href,
             'note': (
                 'Essa e a pressao dominante agora. Cada cobranca aqui ainda tem chance, mas o relogio ja esta correndo.'
                 if priority_context['dominant_key'] == 'overdue' and metrics['overdue_payments'] > 0 else
@@ -320,7 +322,6 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
             'kicker': 'Sua primeira resposta hoje' if priority_context['dominant_key'] == 'intakes' and pending_intakes_count > 0 else 'Pessoas que procuraram seu Box',
             'display_value': pending_intakes_count,
             'data_action': 'blink-topbar-intake',
-            'href': reverse('intake-center'),
             'signal': {
                 'tone': 'warning' if pending_intakes_count else 'good',
                 'value': 'Responder hoje' if pending_intakes_count else 'Fila limpa',
@@ -339,13 +340,12 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
             'eyebrow': 'Aproveitamento da agenda hoje',
             'kicker': 'Primeira coordenacao do turno' if priority_context['dominant_key'] == 'occupancy' and metrics['sessions_today'] > 0 else 'Pulso do dia',
             'display_value': _format_percent(today_schedule_occupancy_percent),
+            'data_action': 'blink-board-sessions',
             'signal': {
                 'tone': occupancy_signal_tone,
                 'value': occupancy_signal_value,
                 'label': 'ocupacao media',
             },
-            'data_action': 'blink-board-sessions',
-            'href': reverse('class-grid'),
             'note': (
                 'A agenda virou a primeira coordenacao do dia. Vale abrir aqui antes de aprofundar o restante.'
                 if priority_context['dominant_key'] == 'occupancy' and metrics['sessions_today'] > 0 else
@@ -360,7 +360,6 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
             'kicker': 'Compromisso que voltou',
             'display_value': metrics['attendance_this_month'],
             'data_action': 'blink-sidebar-alunos',
-            'href': reverse('student-directory'),
             'change': _build_delta_badge(metrics['attendance_this_month'], metrics['attendance_previous_month'], label='vs mes anterior', semantic='positive'),
             'note': 'Cada presenca e uma pessoa que escolheu voltar. Voce esta construindo algo que importa.',
             'hide_footer': True,
@@ -372,13 +371,15 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
             'kicker': 'Sua comunidade viva',
             'display_value': metrics['active_students'],
             'data_action': 'blink-sidebar-alunos',
-            'href': reverse('student-directory'),
             'signal': {'tone': 'good', 'value': 'Base viva', 'label': 'comunidade ativa'},
             'note': 'Essa e a sua comunidade. Cada pessoa aqui confia no que voce esta construindo.',
             'hide_footer': True,
             'status_hint': 'clean',
         },
     }
+
+    if metrics['overdue_payments'] > 0:
+        cards['overdue']['href'] = finance_href
 
     return [cards[key] for key in priority_context['lead_order']], priority_context
 

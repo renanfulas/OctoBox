@@ -152,10 +152,16 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
     coach_decision_entry_context = snapshot.get('coach_decision_entry_context') or {}
     reception_decision_entry_context = snapshot.get('reception_decision_entry_context') or {}
 
+    def _resolve_primary_href(items, fallback):
+        for item in items or []:
+            if item.get('is_clickable', True):
+                return item.get('href') or fallback
+        return ''
+
     panel_map = {
         'operations-owner': build_page_reading_panel(
             items=snapshot.get('owner_operational_focus'),
-            primary_href=owner_decision_entry_context.get('entry_href'),
+            primary_href=_resolve_primary_href(snapshot.get('owner_operational_focus'), owner_decision_entry_context.get('entry_href')),
             pill_label=owner_priority_context.get('pill_label'),
             pill_class=owner_priority_context.get('pill_class'),
             class_name='owner-reading-panel',

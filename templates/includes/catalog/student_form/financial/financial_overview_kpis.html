@@ -7,7 +7,7 @@ ARQUIVO: grade de KPIs do workspace financeiro do aluno.
             <span class="student-financial-kpi-card__label">Recebido</span>
             <span class="student-financial-kpi-card__icon is-success" aria-hidden="true">&#8599;</span>
         </div>
-        <strong class="student-financial-kpi-card__value">R$ {{ page.data.financial_overview.metrics.total_recebido|default:"0,00" }}</strong>
+        <strong class="student-financial-kpi-card__value">R$ {{ page.data.financial_overview.metrics.total_recebido|default:"0"|floatformat:2 }}</strong>
         <p class="student-financial-kpi-card__meta">Valor confirmado na jornada deste aluno.</p>
     </article>
 
@@ -16,8 +16,8 @@ ARQUIVO: grade de KPIs do workspace financeiro do aluno.
             <span class="student-financial-kpi-card__label">Pendente</span>
             <span class="student-financial-kpi-card__icon is-warning" aria-hidden="true">&#9719;</span>
         </div>
-        <strong class="student-financial-kpi-card__value">R$ {{ page.data.financial_overview.metrics.total_pendente|default:"0,00" }}</strong>
-        <p class="student-financial-kpi-card__meta">Leituras aguardando compensacao ou confirmacao.</p>
+        <strong class="student-financial-kpi-card__value">R$ {{ page.data.financial_overview.metrics.total_pendente|default:"0"|floatformat:2 }}</strong>
+        <p class="student-financial-kpi-card__meta">Leituras aguardando compensa&ccedil;&atilde;o ou confirma&ccedil;&atilde;o.</p>
     </article>
 
     <article class="card student-financial-kpi-card">
@@ -25,16 +25,16 @@ ARQUIVO: grade de KPIs do workspace financeiro do aluno.
             <span class="student-financial-kpi-card__label">Em atraso</span>
             <span class="student-financial-kpi-card__icon is-danger" aria-hidden="true">!</span>
         </div>
-        <strong class="student-financial-kpi-card__value">R$ {{ page.data.financial_overview.metrics.total_atrasado|default:"0,00" }}</strong>
-        <p class="student-financial-kpi-card__meta">{{ page.data.financial_overview.metrics.pagamentos_atrasados|default:"0" }} cobranca(s) pedem leitura curta.</p>
+        <strong class="student-financial-kpi-card__value">R$ {{ page.data.financial_overview.metrics.total_atrasado|default:"0"|floatformat:2 }}</strong>
+        <p class="student-financial-kpi-card__meta">{{ page.data.financial_overview.metrics.pagamentos_atrasados|default:"0" }} cobran&ccedil;a(s) pedem leitura curta.</p>
     </article>
 
     <article class="card student-financial-kpi-card">
         <div class="student-financial-kpi-card__head">
-            <span class="student-financial-kpi-card__label">Historico total</span>
+        <span class="student-financial-kpi-card__label">Hist&oacute;rico total</span>
             <span class="student-financial-kpi-card__icon is-info" aria-hidden="true">&#9633;</span>
         </div>
-        <strong class="student-financial-kpi-card__value">R$ {{ page.data.financial_overview.metrics.total_historico|default:"0,00" }}</strong>
-        <p class="student-financial-kpi-card__meta">{{ page.data.financial_overview.metrics.transacoes_totais|default:"0" }} transacao(oes) registradas.</p>
+        <strong class="student-financial-kpi-card__value">R$ {{ page.data.financial_overview.metrics.total_historico|default:"0"|floatformat:2 }}</strong>
+        <p class="student-financial-kpi-card__meta">{{ page.data.financial_overview.metrics.transacoes_totais|default:"0" }} transa&ccedil;&atilde;o(&otilde;es) registradas.</p>
     </article>
 </section>

@@ -50,7 +50,7 @@ PONTOS CRITICOS:
 .finance-shell .finance-card-actions-compact .button.secondary,
 .finance-shell .finance-support-actions .button.secondary {
     border-color: rgba(19, 33, 50, 0.1);
-    background: var(--surface);
+    background: var(--theme-surface-glass-strong);
     color: var(--finance-signature-ink);
 }
 
@@ -69,7 +69,7 @@ PONTOS CRITICOS:
     position: relative;
     overflow: hidden;
     border-color: var(--finance-signature-line);
-    background: var(--surface);
+    background: var(--theme-surface-glass-strong);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.9),
         0 18px 38px rgba(19, 33, 50, 0.08);
@@ -111,11 +111,11 @@ PONTOS CRITICOS:
 }
 
 .finance-shell .finance-ops-summary-card {
-    background: var(--surface);
+    background: var(--theme-surface-glass-strong);
 }
 
 .finance-shell .finance-radar-card {
-    background: var(--surface);
+    background: var(--theme-surface-glass-strong);
 }
 
 /* ── Chip/stat/message signatures ── */
@@ -125,7 +125,7 @@ PONTOS CRITICOS:
 .finance-shell .finance-alert-stat,
 .finance-shell .finance-action-message {
     border-color: rgba(19, 33, 50, 0.08);
-    background: var(--surface);
+    background: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
 }
 
 .finance-shell .finance-action-message {
@@ -154,7 +154,7 @@ body[data-theme="dark"] .finance-shell .finance-action-copy strong {
 body[data-theme="dark"] .finance-shell .finance-card-actions-compact .button.secondary,
 body[data-theme="dark"] .finance-shell .finance-support-actions .button.secondary {
     border-color: rgba(144, 181, 205, 0.18);
-    background: var(--surface);
+    background: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
     color: rgba(245, 249, 252, 0.9);
 }
 
@@ -165,7 +165,7 @@ body[data-theme="dark"] .finance-shell .finance-filter-summary-card,
 body[data-theme="dark"] .finance-shell .finance-radar-card,
 body[data-theme="dark"] .finance-shell .finance-action-card {
     border-color: rgba(144, 181, 205, 0.16);
-    background: var(--surface);
+    background: var(--theme-surface-glass-strong);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.06),
         0 20px 40px rgba(0, 0, 0, 0.28);
@@ -176,6 +176,6 @@ body[data-theme="dark"] .finance-shell .finance-data-chip,
 body[data-theme="dark"] .finance-shell .finance-alert-stat,
 body[data-theme="dark"] .finance-shell .finance-action-message {
     border-color: rgba(144, 181, 205, 0.14);
-    background: var(--surface);
+    background: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
 }
 

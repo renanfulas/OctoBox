@@ -7,16 +7,14 @@ POR QUE ELE EXISTE:
 */
 
 body[data-theme="dark"] .owner-simple-shell .operation-hero,
-body[data-theme="dark"] .owner-simple-shell .owner-panel,
 body[data-theme="dark"] .owner-simple-shell .owner-metric-grid .operation-kpi-card,
-body[data-theme="dark"] .owner-simple-shell .owner-summary-card,
 body[data-theme="dark"] .owner-simple-shell .owner-secondary-item,
 body[data-theme="dark"] .owner-simple-shell .owner-status-item,
 body[data-theme="dark"] .owner-simple-shell .owner-step-card,
 body[data-theme="dark"] .owner-simple-shell .owner-summary-card .capability-list li {
-    border-color: var(--line);
-    background: var(--surface);
-    box-shadow: var(--shadow-soft);
+    border-color: color-mix(in srgb, var(--theme-glass-border) 92%, transparent);
+    background: var(--theme-surface-glass);
+    box-shadow: var(--theme-glass-shadow);
 }
 
 body[data-theme="dark"] .owner-next-steps-title {

@@ -23,32 +23,32 @@ REGRA:
     --topbar-radius: 21px;
     --topbar-top: 16px;
     --topbar-margin-bottom: 13px;
-    --topbar-surface: color-mix(in srgb, var(--theme-surface-panel) 82%, transparent);
-    --topbar-border-color: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
-    --topbar-shadow: var(--theme-shadow-soft);
+    --topbar-surface: var(--theme-surface-chrome);
+    --topbar-border-color: color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
+    --topbar-shadow: var(--theme-glass-shadow);
     --topbar-overlay-glow:
-        radial-gradient(circle at 96% 20%, color-mix(in srgb, var(--theme-accent-primary-alpha) 70%, transparent), transparent 58%),
+        radial-gradient(circle at 96% 20%, color-mix(in srgb, var(--theme-accent-premium-alpha) 70%, transparent), transparent 58%),
         radial-gradient(circle at 6% 78%, color-mix(in srgb, var(--theme-accent-support-alpha) 56%, transparent), transparent 54%);
     --topbar-search-radius: 17px;
-    --topbar-search-surface: color-mix(in srgb, var(--theme-surface-strong) 84%, transparent);
+    --topbar-search-surface: color-mix(in srgb, var(--theme-surface-chrome-strong) 88%, transparent);
     --topbar-search-border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
-    --topbar-search-shadow: inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+    --topbar-search-shadow: inset 0 1px 0 var(--theme-glass-highlight);
     --topbar-manifesto-surface: color-mix(in srgb, var(--theme-surface-secondary) 80%, transparent);
     --topbar-manifesto-border-color: color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
-    --topbar-manifesto-shadow: inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
+    --topbar-manifesto-shadow: inset 0 1px 0 var(--theme-glass-highlight);
     --topbar-manifesto-kicker-ink: color-mix(in srgb, var(--theme-accent-support) 58%, var(--theme-text-muted) 42%);
     --topbar-manifesto-copy-ink: var(--theme-text-secondary);
     --topbar-toggle-surface: color-mix(in srgb, var(--theme-surface-secondary) 82%, transparent);
     --topbar-toggle-border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
     --topbar-toggle-ink: var(--theme-text-muted);
-    --topbar-toggle-shadow: inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
+    --topbar-toggle-shadow: inset 0 1px 0 var(--theme-glass-highlight);
     --topbar-toggle-surface-hover: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
     --topbar-toggle-border-hover: color-mix(in srgb, var(--theme-border-strong) 92%, transparent);
     --topbar-toggle-ink-hover: var(--theme-text-primary);
     --topbar-profile-radius: var(--radius-panel);
-    --topbar-profile-surface: color-mix(in srgb, var(--theme-surface-strong) 82%, transparent);
+    --topbar-profile-surface: color-mix(in srgb, var(--theme-surface-chrome-strong) 82%, transparent);
     --topbar-profile-border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
-    --topbar-profile-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+    --topbar-profile-shadow: inset 0 1px 0 var(--theme-glass-highlight);
     --topbar-profile-meta-copy: var(--theme-text-muted);
     position: sticky;
     top: var(--topbar-top);
@@ -260,10 +260,13 @@ REGRA:
     min-width: 0;
     width: 100%;
     min-height: auto;
+    color: var(--theme-text-primary);
 }
 
 .global-search input::placeholder {
     text-overflow: ellipsis;
+    color: var(--theme-text-muted);
+    opacity: 1;
 }
 
 .topbar-manifesto {
@@ -312,6 +315,44 @@ REGRA:
     overflow-y: auto;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
+}
+
+body[data-theme="dark"] .topbar {
+    --topbar-surface:
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-chrome-strong) 92%, transparent), color-mix(in srgb, var(--theme-surface-glass-strong) 84%, transparent));
+    --topbar-border-color: color-mix(in srgb, var(--theme-glass-border) 96%, transparent);
+    --topbar-shadow:
+        0 18px 40px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 var(--theme-glass-highlight);
+    --topbar-search-surface:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-glass) 88%, transparent));
+    --topbar-search-border-color: color-mix(in srgb, var(--theme-glass-border) 96%, transparent);
+    --topbar-search-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 10px 20px rgba(0, 0, 0, 0.16);
+    --topbar-profile-surface: color-mix(in srgb, var(--theme-surface-glass-strong) 88%, transparent);
+    --topbar-profile-border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    --topbar-profile-meta-copy: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .global-search {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 12%, transparent), transparent 38%),
+        var(--topbar-search-surface);
+}
+
+body[data-theme="dark"] .global-search input {
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .global-search input::placeholder {
+    color: color-mix(in srgb, var(--theme-text-muted) 92%, white 8%);
+}
+
+body[data-theme="dark"] .search-autocomplete-list {
+    background: color-mix(in srgb, var(--theme-surface-panel-dark) 94%, transparent);
+    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    box-shadow: var(--theme-shadow-lift);
 }
 
 .search-autocomplete-item {
@@ -388,14 +429,14 @@ REGRA:
 }
 
 .topbar-quick-link--primary {
-    background: color-mix(in srgb, var(--theme-accent-primary) 84%, black 16%);
-    color: #fff6eb;
-    box-shadow: 0 10px 22px color-mix(in srgb, var(--theme-accent-primary-alpha) 82%, transparent);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-support) 88%, black 12%), color-mix(in srgb, var(--theme-accent-premium) 82%, black 18%));
+    color: var(--theme-surface-inverse);
+    box-shadow: var(--theme-glow-premium);
 }
 
 .topbar-quick-link--primary:hover,
 .topbar-quick-link--primary:focus-visible {
-    background: color-mix(in srgb, var(--theme-accent-primary) 90%, black 10%);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-support) 92%, black 8%), color-mix(in srgb, var(--theme-accent-premium) 88%, black 12%));
     transform: translateY(-1px);
 }
 

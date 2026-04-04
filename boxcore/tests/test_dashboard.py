@@ -25,8 +25,10 @@ from django.utils import timezone
 
 from communications.models import WhatsAppContact
 from access.roles import ROLE_COACH, ROLE_OWNER, ROLE_RECEPTION
+from dashboard.dashboard_snapshot_queries import _build_dashboard_priority_context
 from dashboard.models import DashboardLayoutPreference
-from dashboard.presentation import _build_dashboard_execution_focus, _build_dashboard_layout
+from dashboard.presentation import _build_dashboard_execution_focus, _build_dashboard_layout, _build_dashboard_priority_cards
+from dashboard.dashboard_snapshot_queries import build_dashboard_snapshot
 from finance.models import Enrollment, MembershipPlan, Payment, PaymentMethod, PaymentStatus
 from operations.models import Attendance, ClassSession, SessionStatus
 from students.models import Student, StudentStatus
@@ -329,6 +331,107 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "Bruna Ativa")
         self.assertContains(response, "Abrir financeiro")
         self.assertNotContains(response, "#dashboard-finance-board")
+
+    def test_dashboard_priority_prefers_revenue_when_there_are_sessions_without_real_schedule_pressure(self):
+        context = _build_dashboard_priority_context(
+            metrics={"overdue_payments": 0, "sessions_today": 6},
+            pending_intakes_count=0,
+            today_schedule_occupancy_percent=52,
+            actionable_payment_alerts_count=0,
+        )
+
+        self.assertEqual(context["dominant_key"], "revenue")
+        self.assertEqual(context["lead_order"][:2], ["revenue", "overdue"])
+
+    def test_dashboard_priority_promotes_occupancy_when_schedule_is_under_real_pressure(self):
+        context = _build_dashboard_priority_context(
+            metrics={"overdue_payments": 0, "sessions_today": 6},
+            pending_intakes_count=0,
+            today_schedule_occupancy_percent=92,
+            actionable_payment_alerts_count=0,
+        )
+
+        self.assertEqual(context["dominant_key"], "occupancy")
+        self.assertEqual(context["lead_order"][:2], ["occupancy", "revenue"])
+
+    def test_dashboard_urgent_card_prefers_live_session_over_retention_when_turn_is_under_pressure(self):
+        pressured_session = {
+            "status_label": "Em andamento",
+            "booking_closed": False,
+            "occupancy_percent": 96,
+            "starts_at": timezone.now(),
+            "object": SimpleNamespace(title="Cross 19h"),
+        }
+        highest_risk_student = SimpleNamespace(full_name="Aluno Sumido", total_absences=3)
+
+        cards = _build_dashboard_priority_cards(
+            ROLE_OWNER,
+            metrics={"overdue_payments": 0, "occurrences_this_month": 0},
+            upcoming_sessions=[pressured_session],
+            next_session=pressured_session,
+            payment_alerts=[],
+            next_payment_alert=None,
+            actionable_payment_alerts_count=0,
+            highest_risk_student=highest_risk_student,
+        )
+
+        urgency_card = cards[1]
+        self.assertEqual(urgency_card["surface"], "sessions")
+        self.assertEqual(urgency_card["indicator"], "Turno")
+        self.assertIn("Cross 19h", urgency_card["copy"])
+
+    def test_dashboard_support_metric_cards_keep_neon_actions_without_navigation(self):
+        today = timezone.localdate()
+        month_start = today.replace(day=1)
+
+        snapshot = build_dashboard_snapshot(today=today, month_start=month_start, role_slug=ROLE_OWNER)
+        cards_by_eyebrow = {card["eyebrow"]: card for card in snapshot["metric_cards"]}
+
+        for eyebrow in (
+            "Entradas pendentes",
+            "Aproveitamento da agenda hoje",
+            "Presenca no mes",
+            "Comunidade ativa",
+        ):
+            self.assertNotIn("href", cards_by_eyebrow[eyebrow])
+            self.assertIn("data_action", cards_by_eyebrow[eyebrow])
+
+    def test_dashboard_overdue_metric_card_keeps_only_neon_when_clean(self):
+        today = timezone.localdate()
+        month_start = today.replace(day=1)
+
+        snapshot = build_dashboard_snapshot(today=today, month_start=month_start, role_slug=ROLE_OWNER)
+        cards_by_eyebrow = {card["eyebrow"]: card for card in snapshot["metric_cards"]}
+        overdue_card = cards_by_eyebrow["Cobrancas em atraso"]
+
+        self.assertEqual(overdue_card["display_value"], 0)
+        self.assertNotIn("href", overdue_card)
+        self.assertEqual(overdue_card["data_action"], "blink-topbar-finance")
+
+    def test_dashboard_overdue_metric_card_restores_click_to_go_when_there_is_pressure(self):
+        student = Student.objects.create(full_name="Bruna Financeiro", phone="5511987001111", status=StudentStatus.ACTIVE)
+        enrollment = Enrollment.objects.create(
+            student=student,
+            plan=MembershipPlan.objects.create(name="Plano Financeiro", price="199.90"),
+        )
+        Payment.objects.create(
+            student=student,
+            enrollment=enrollment,
+            due_date=timezone.localdate() - timezone.timedelta(days=2),
+            amount="199.90",
+            status=PaymentStatus.PENDING,
+            method=PaymentMethod.PIX,
+        )
+
+        today = timezone.localdate()
+        month_start = today.replace(day=1)
+        snapshot = build_dashboard_snapshot(today=today, month_start=month_start, role_slug=ROLE_OWNER)
+        cards_by_eyebrow = {card["eyebrow"]: card for card in snapshot["metric_cards"]}
+        overdue_card = cards_by_eyebrow["Cobrancas em atraso"]
+
+        self.assertGreater(overdue_card["display_value"], 0)
+        self.assertEqual(overdue_card["href"], "/financeiro/")
+        self.assertEqual(overdue_card["data_action"], "blink-topbar-finance")
 
     @override_settings(DASHBOARD_RATE_LIMIT_MAX_REQUESTS=1, DASHBOARD_RATE_LIMIT_WINDOW_SECONDS=60)
     def test_dashboard_blocks_short_burst_attempts(self):

@@ -1,0 +1,46 @@
+<!--
+ARQUIVO: resumo principal compartilhado do pagamento.
+
+POR QUE ELE EXISTE:
+- unifica o bloco central de valor e metadados entre cobranca rapida e gestao financeira.
+-->
+<section class="payment-primary-summary {% if summary_class %}{{ summary_class }}{% endif %}" aria-label="{% if aria_label %}{{ aria_label }}{% else %}Resumo principal do pagamento{% endif %}">
+    <div class="payment-primary-summary__amount">
+        <span class="payment-primary-summary__label">{% if amount_label %}{{ amount_label }}{% else %}Valor{% endif %}</span>
+        <div class="payment-primary-summary__amount-field">
+            <span class="payment-primary-summary__currency">{% if currency_label %}{{ currency_label }}{% else %}R${% endif %}</span>
+            {% if amount_input %}
+                {{ amount_input }}
+            {% else %}
+                <strong>{{ amount_text }}</strong>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="payment-primary-summary__meta">
+        {% if item_value %}
+        <span class="payment-primary-summary__meta-item">
+            <span class="payment-primary-summary__label">{% if item_label %}{{ item_label }}{% else %}Item{% endif %}</span>
+            <strong>{{ item_value }}</strong>
+        </span>
+        {% endif %}
+
+        {% if due_value %}
+        <span class="payment-primary-summary__meta-item">
+            <span class="payment-primary-summary__label">{% if due_label %}{{ due_label }}{% else %}Vencimento{% endif %}</span>
+            {% if due_input %}
+                <span class="payment-primary-summary__field">{{ due_input }}</span>
+            {% else %}
+                <strong>{{ due_value }}</strong>
+            {% endif %}
+        </span>
+        {% endif %}
+
+        {% if method_value %}
+        <span class="payment-primary-summary__meta-item">
+            <span class="payment-primary-summary__label">{% if method_label %}{{ method_label }}{% else %}Metodo{% endif %}</span>
+            <strong>{{ method_value }}</strong>
+        </span>
+        {% endif %}
+    </div>
+</section>

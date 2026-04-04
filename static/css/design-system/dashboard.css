@@ -98,6 +98,9 @@ body[data-shell-scope="dashboard"] .topbar {
 }
 
 .dashboard-hero {
+    --hero-gap: clamp(18px, 2vw, 28px);
+    --hero-padding: clamp(26px, 3vw, 38px);
+    --hero-radius: clamp(24px, 2.4vw, 32px);
     position: relative;
     grid-template-columns: minmax(0, 1fr);
     justify-content: stretch;
@@ -110,7 +113,7 @@ body[data-shell-scope="dashboard"] .topbar {
     align-items: flex-end;
     justify-content: space-between;
     gap: 28px;
-    padding: 44px;
+    min-height: clamp(220px, 24vw, 300px);
     margin-bottom: 48px;
     overflow: hidden;
 }
@@ -126,7 +129,7 @@ body[data-shell-scope="dashboard"] .topbar {
     position: absolute;
     inset: 0 auto 0 40px;
     width: 140px;
-    opacity: 0.05;
+    opacity: 0.06;
     pointer-events: none;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M10,80 L10,60 L30,40 L50,50 L70,20 L90,30" fill="none" stroke="%23000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><rect x="15" y="50" width="10" height="30" rx="2" fill="%23000"/><rect x="45" y="40" width="10" height="40" rx="2" fill="%23000"/><rect x="75" y="20" width="10" height="60" rx="2" fill="%23000"/></svg>');
     background-repeat: no-repeat;
@@ -153,7 +156,7 @@ body[data-shell-scope="dashboard"] .topbar {
     color: var(--ink);
     font-size: clamp(2.35rem, 4vw, 2.9rem);
     font-weight: 800;
-    line-height: 1.1;
+    line-height: 1.04;
     letter-spacing: -0.02em;
 }
 
@@ -173,10 +176,12 @@ body[data-shell-scope="dashboard"] .topbar {
 }
 
 .dashboard-advisor-manifesto-trigger {
-    border: 0;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 18%, var(--theme-glass-border) 82%);
     border-radius: 999px;
     padding: 12px 24px;
-    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-warning) 76%, white 24%), color-mix(in srgb, var(--theme-accent-primary) 64%, white 36%));
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-warning) 72%, transparent), color-mix(in srgb, var(--theme-accent-primary) 62%, transparent)),
+        color-mix(in srgb, var(--theme-surface-chrome-strong) 72%, transparent);
     color: #ffffff;
     font-size: 0.9rem;
     font-weight: 600;
@@ -199,7 +204,7 @@ body[data-shell-scope="dashboard"] .topbar {
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
     border-radius: 999px;
     background:
-        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-strong) 90%, transparent), color-mix(in srgb, var(--theme-surface-secondary) 84%, transparent));
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-glass) 92%, transparent), color-mix(in srgb, var(--theme-surface-chrome) 80%, transparent));
     color: var(--ink);
     font-size: 0.85rem;
     font-weight: 600;
@@ -473,11 +478,10 @@ body[data-theme="dark"] .dashboard-shell::after {
     }
 
     .dashboard-hero {
-        padding: var(--dashboard-rhythm-3);
+        --hero-padding: var(--dashboard-rhythm-3);
     }
 
     .dashboard-advisor-narrative {
-        padding: var(--dashboard-rhythm-3);
         margin-bottom: 32px;
     }
 

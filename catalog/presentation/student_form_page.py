@@ -97,82 +97,6 @@ def build_student_form_recovery_guide(form):
     }
 
 
-def build_student_form_flow_state(*, financial_ready, recovery_guide, selected_intake, latest_enrollment, page_mode):
-    if recovery_guide and recovery_guide.get('initial_step') == 2:
-        return {
-            'headline': 'Corrija plano e cobranca antes de descer para o financeiro.',
-            'copy': 'O fluxo ja mostrou que o atrito esta no fechamento comercial. Resolva plano, estrategia e confirmacao para o restante da ficha voltar a fluir.',
-            'registration_card_class': 'is-ready',
-            'registration_button_label': 'Revisar identificacao',
-            'registration_href': '#student-form-essential',
-            'registration_step': 1,
-            'commercial_kicker': '02 Fechamento',
-            'commercial_title': 'Plano e cobranca pedem ajuste agora.',
-            'commercial_copy': 'O bloqueio atual esta no fechamento comercial. Corrija esta etapa antes de abrir a camada financeira.',
-            'commercial_card_class': 'is-current',
-            'commercial_button_label': 'Corrigir fechamento',
-            'commercial_href': '#student-form-plan',
-            'commercial_step': 2,
-        }
-
-    if recovery_guide:
-        return {
-            'headline': 'Destrave o cadastro antes de avancar para o comercial.',
-            'copy': 'A ficha ja separou onde ficou o atrito. Corrija identidade, perfil ou saude sem sair cacando erro no formulario inteiro.',
-            'registration_card_class': 'is-current',
-            'registration_button_label': 'Corrigir cadastro',
-            'registration_href': '#student-form-essential',
-            'registration_step': 1,
-            'commercial_kicker': '02 Fechamento',
-            'commercial_title': 'Plano e cobranca entram depois do cadastro.',
-            'commercial_copy': 'Quando a base estiver coerente, o fechamento comercial volta a ser a proxima camada natural da conversa.',
-            'commercial_card_class': 'is-muted',
-            'commercial_button_label': 'Ver fechamento',
-            'commercial_href': '#student-form-plan',
-            'commercial_step': 2,
-        }
-
-    if financial_ready:
-        enrollment_name = latest_enrollment.plan.name if latest_enrollment and getattr(latest_enrollment, 'plan', None) else 'o vinculo atual'
-        return {
-            'headline': 'Cadastro pronto. Agora a conversa pode descer para o financeiro.',
-            'copy': f'O aluno ja existe na base e {enrollment_name} sustenta a proxima leitura sem tirar voce da ficha.',
-            'registration_card_class': 'is-ready',
-            'registration_button_label': 'Revisar cadastro',
-            'registration_href': '#student-form-essential',
-            'registration_step': 1,
-            'commercial_kicker': '02 Financeiro',
-            'commercial_title': 'Vinculo, cobranca e historico no mesmo workspace.',
-            'commercial_copy': 'Use a camada financeira para revisar plano, acao pendente e historico sem perder o contexto da ficha.',
-            'commercial_card_class': 'is-current',
-            'commercial_button_label': 'Abrir financeiro',
-            'commercial_href': '#student-form-financial',
-            'commercial_step': None,
-        }
-
-    intake_copy = (
-        f'Esta ficha ja nasceu de {selected_intake.full_name}. Termine o essencial e feche o comercial sem quebrar o fio da conversa.'
-        if selected_intake else
-        'Primeiro confirme identidade e contexto. Depois use plano e cobranca para fechar o comercial sem retrabalho.'
-    )
-
-    return {
-        'headline': 'Cadastro primeiro. Plano e cobranca depois.',
-        'copy': intake_copy if page_mode == 'create' else 'Revise o nucleo do cadastro antes de mexer na camada comercial. Isso reduz ruido e evita voltar etapas depois.',
-        'registration_card_class': 'is-current',
-        'registration_button_label': 'Abrir cadastro',
-        'registration_href': '#student-form-essential',
-        'registration_step': 1,
-        'commercial_kicker': '02 Fechamento',
-        'commercial_title': 'Plano e cobranca fecham a jornada da ficha.',
-        'commercial_copy': 'Quando o cadastro estiver coerente, va para o fechamento comercial e so depois abra o workspace financeiro.',
-        'commercial_card_class': 'is-muted',
-        'commercial_button_label': 'Ir para fechamento',
-        'commercial_href': '#student-form-plan',
-        'commercial_step': 2,
-    }
-
-
 def build_student_form_page(*, form, student_object, selected_intake, financial_overview, page_mode, current_role_slug):
     latest_enrollment = financial_overview.get('latest_enrollment')
     recent_payments = financial_overview.get('payments', [])
@@ -222,13 +146,6 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
     }
     recovery_guide = build_student_form_recovery_guide(form)
     initial_form_step = recovery_guide.get('initial_step', 1) if recovery_guide else 1
-    flow_state = build_student_form_flow_state(
-        financial_ready=financial_ready,
-        recovery_guide=recovery_guide,
-        selected_intake=selected_intake,
-        latest_enrollment=latest_enrollment,
-        page_mode=page_mode,
-    )
     student_form_handoff = None
     if financial_ready:
         enrollment_name = latest_enrollment.plan.name if latest_enrollment and getattr(latest_enrollment, 'plan', None) else 'o contexto financeiro do aluno'
@@ -281,7 +198,6 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'payment_management_form': payment_management_form,
             'enrollment_management_form': enrollment_management_form,
             'student_form_recovery_guide': recovery_guide,
-            'student_form_flow_state': flow_state,
             'student_form_handoff': student_form_handoff,
         },
         actions={
@@ -315,7 +231,12 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'can_manage_student_payments_full': can_manage_student_payments_full,
         },
         assets=build_catalog_assets(
-            css=['css/catalog/students.css', 'css/catalog/student_form_stepper.css', 'css/design-system/financial.css'],
+            css=[
+                'css/catalog/students.css',
+                'css/catalog/shared/student-page-shell.css',
+                'css/catalog/student_form_stepper.css',
+                'css/design-system/financial.css',
+            ],
             js=[
                 'js/pages/students/student-form.js',
                 'js/pages/students/student-form-stepper.js',

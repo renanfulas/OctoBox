@@ -16,9 +16,9 @@ POR QUE ELE EXISTE:
 
 .owner-panel {
     border-radius: var(--radius-panel);
-    border: 1px solid var(--line);
-    background: var(--surface);
-    box-shadow: var(--shadow-soft);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
+    background: var(--theme-surface-glass);
+    box-shadow: var(--theme-glass-shadow);
 }
 
 .owner-primary-panel .operation-card-head,
@@ -37,9 +37,11 @@ POR QUE ELE EXISTE:
     align-items: center;
     padding: 18px;
     border-radius: var(--radius-panel);
-    border: 1px solid var(--line);
-    background: var(--ink);
-    color: #f8f6f2;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-glass-border) 82%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 28%),
+        linear-gradient(155deg, color-mix(in srgb, var(--theme-surface-chrome-strong) 88%, transparent), color-mix(in srgb, var(--theme-surface-glass-strong) 92%, transparent));
+    color: var(--theme-surface-inverse);
 }
 
 .owner-primary-copy {
@@ -87,8 +89,8 @@ POR QUE ELE EXISTE:
     gap: 6px;
     padding: 14px 16px;
     border-radius: var(--radius-card);
-    border: 1px solid var(--line);
-    background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 86%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
     color: inherit;
     text-decoration: none;
 }
@@ -105,7 +107,7 @@ POR QUE ELE EXISTE:
     text-transform: uppercase;
     letter-spacing: 0.12em;
     font-weight: 800;
-    color: rgba(95, 90, 84, 0.74);
+    color: color-mix(in srgb, var(--theme-text-muted) 84%, var(--theme-text-secondary) 16%);
 }
 
 .owner-secondary-body {
@@ -137,9 +139,9 @@ POR QUE ELE EXISTE:
 
 .owner-summary-card {
     border-radius: var(--radius-panel);
-    border: 1px solid var(--line);
-    background: var(--surface);
-    box-shadow: var(--shadow-soft);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
+    background: var(--theme-surface-glass);
+    box-shadow: var(--theme-glass-shadow);
 }
 
 .owner-summary-card .card-copy {
@@ -158,8 +160,8 @@ POR QUE ELE EXISTE:
 .owner-summary-card .capability-list li {
     padding: 12px 14px;
     border-radius: 8px;
-    border: 1px solid var(--line);
-    background: var(--bg);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 82%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 76%, transparent);
 }
 
 .owner-summary-card-structure {

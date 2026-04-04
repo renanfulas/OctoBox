@@ -8,44 +8,51 @@
         </div>
         <span class="pill {{ item.status_class }}">{{ item.status_label }}</span>
     </div>
-    <div class="finance-alert-grid reception-payment-meta">
-        <div class="finance-alert-stat">
-            <span class="operation-mini-label">Vencimento</span>
-            <strong>{{ item.due_date|date:"d/m/Y" }}</strong>
-        </div>
-        <div class="finance-alert-stat">
-            <span class="operation-mini-label">Valor</span>
-            <strong>R$ {{ item.amount|floatformat:2 }}</strong>
-        </div>
-        <div class="finance-alert-stat">
-            <span class="operation-mini-label">Metodo atual</span>
-            <strong>{{ item.method_label }}</strong>
-        </div>
-    </div>
+
+    {% include "includes/ui/finance/payment_primary_summary.html" with summary_class="reception-payment-highlight" amount_label="Valor" amount_text=item.amount|floatformat:2 due_label="Vencimento" due_value=item.due_date|date:"d/m/Y" method_label="Metodo atual" method_value=item.method_label %}
+
     <div class="note-panel note-panel-cream finance-action-message finance-action-message-compact">
         <p class="eyebrow">Leitura de balcao</p>
         <p class="meta-text">{{ item.reason }}</p>
     </div>
+
     {% if page.capabilities.can_manage_reception_payments %}
     <form method="post" action="{{ reception_payment_action_url }}" class="reception-payment-form" data-action="manage-reception-payment">
         {% csrf_token %}
         <input type="hidden" name="payment_id" value="{{ item.payment_id }}">
-        <div class="field-grid-220 reception-payment-form-primary">
-            <label>
-                <span class="field-label">Vencimento curto</span>
-                <input type="date" name="due_date" value="{{ item.due_date|date:'Y-m-d' }}">
-            </label>
-            <label>
-                <span class="field-label">Metodo recebido</span>
-                <select name="method">
-                    {% for value, label in page.data.reception_payment_methods %}
-                    <option value="{{ value }}"{% if item.method == value %} selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
+
+        <section class="reception-payment-primary-flow" aria-label="Confirmacao rapida do pagamento">
+            <div class="reception-payment-method-shell">
+                <label for="reception-method-{{ item.payment_id }}">
+                    <span class="field-label">Como foi pago?</span>
+                </label>
+                <select id="reception-method-{{ item.payment_id }}" name="method" data-role="reception-payment-method">
+                    <option value="pix"{% if item.method == 'pix' %} selected{% endif %}>PIX</option>
+                    <option value="credit_card"{% if item.method == 'credit_card' %} selected{% endif %}>Cartao de credito</option>
+                    <option value="debit_card"{% if item.method == 'debit_card' %} selected{% endif %}>Cartao de debito</option>
+                    <option value="cash"{% if item.method == 'cash' %} selected{% endif %}>Dinheiro</option>
+                    <option value="bank_slip"{% if item.method == 'bank_slip' %} selected{% endif %}>Boleto</option>
+                    <option value="transfer"{% if item.method == 'transfer' %} selected{% endif %}>Transferencia</option>
+                    <option value="other"{% if item.method == 'other' %} selected{% endif %}>Outro</option>
                 </select>
-            </label>
-        </div>
-        <div class="actions actions-tight finance-card-actions-compact reception-payment-actions reception-payment-actions-primary">
-            <button class="button" type="submit" name="action" value="mark-paid" data-action="confirm-reception-payment">Confirmar pagamento</button>
+            </div>
+
+            <div class="actions actions-tight finance-card-actions-compact reception-payment-actions reception-payment-actions-primary">
+                <button
+                    class="button reception-payment-primary-button"
+                    type="submit"
+                    name="action"
+                    value="mark-paid"
+                    data-action="confirm-reception-payment"
+                    data-role="reception-payment-submit"
+                    data-default-label="Confirmar pagamento"
+                    data-pix-label="Receber com Pix">
+                    {% if item.method == 'pix' %}Receber com Pix{% else %}Confirmar pagamento{% endif %}
+                </button>
+            </div>
+        </section>
+
+        <div class="actions actions-tight finance-card-actions-compact reception-payment-actions reception-payment-actions-support">
             <a class="button secondary" href="{{ item.student_href }}#student-financial-overview" data-action="open-student-financial-overview">Abrir ficha</a>
 
             {% if item.clean_phone %}
@@ -84,20 +91,25 @@
                 {% endif %}
             {% endif %}
         </div>
+
         <details class="reception-payment-advanced">
-            <summary>Ajuste opcional</summary>
+            <summary>Ajustes do pagamento</summary>
             <div class="field-grid-220 reception-payment-form-secondary">
                 <label>
-                    <span class="field-label">Referencia curta</span>
-                    <input type="text" name="reference" value="{{ item.reference }}" maxlength="100" placeholder="Ex.: BALCAO-MAR-2026">
+                    <span class="field-label">Vencimento</span>
+                    <input type="date" name="due_date" value="{{ item.due_date|date:'Y-m-d' }}">
                 </label>
                 <label>
-                    <span class="field-label">Observacao</span>
-                    <input type="text" name="notes" value="{{ item.notes }}" maxlength="255" placeholder="Observacao curta de balcao.">
+                    <span class="field-label">Referencia interna</span>
+                    <input type="text" name="reference" value="{{ item.reference }}" maxlength="100" placeholder="Ex.: BALCAO-MAR-2026">
+                </label>
+                <label class="reception-payment-notes-field">
+                    <span class="field-label">Observacao opcional</span>
+                    <input type="text" name="notes" value="{{ item.notes }}" maxlength="255" placeholder="Ex.: aluno pediu comprovante depois.">
                 </label>
             </div>
             <div class="actions actions-tight finance-card-actions-compact reception-payment-actions">
-                <button class="button secondary" type="submit" name="action" value="update-payment" data-action="save-reception-payment-update">Salvar ajuste curto</button>
+                <button class="button secondary" type="submit" name="action" value="update-payment" data-action="save-reception-payment-update">Salvar ajuste</button>
             </div>
         </details>
     </form>

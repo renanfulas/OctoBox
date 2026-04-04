@@ -1,0 +1,66 @@
+<!--
+ARQUIVO: historico nativo de pagamentos da pagina do aluno.
+
+POR QUE ELE EXISTE:
+- reduz a dependencia do shell novo em cima do ledger legado.
+- preserva a leitura operacional e os gatilhos de cobranca dentro de um contrato proprio da pagina do aluno.
+-->
+<div class="student-page-payments-ledger" id="stripe-ledger-root">
+    {% if page.data.financial_overview.payments %}
+    <div class="table-responsive">
+        <table class="student-page-payments-ledger__table">
+            <caption class="visually-hidden">Historico de cobrancas do aluno com data, metodo, valor, status e acao para abrir detalhes.</caption>
+            <thead>
+                <tr class="student-page-payments-ledger__head">
+                    <th scope="col">Descricao</th>
+                    <th scope="col">Data</th>
+                    <th scope="col">Metodo</th>
+                    <th scope="col" class="is-center">Status</th>
+                    <th scope="col" class="is-right">Valor</th>
+                    <th scope="col" class="is-right"><span class="visually-hidden">Acoes</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in page.data.financial_overview.payments %}
+                <tr class="student-page-payments-ledger__row">
+                    <td>
+                        <div class="student-page-payments-ledger__description">
+                            <div class="student-page-payments-ledger__method-icon" aria-hidden="true">
+                                {% if payment.method == 'pix' %}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M7 7h.01M17 7h.01M17 17h.01M7 17h.01"/></svg>
+                                {% elif payment.method == 'credit_card' %}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                                {% else %}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                {% endif %}
+                            </div>
+                            <div class="student-page-payments-ledger__copy">
+                                <strong class="student-page-payments-ledger__title">{{ payment.enrollment.plan.name|default:"Mensalidade" }}{% if payment.due_date %} - {{ payment.due_date|date:"M/y" }}{% endif %}</strong>
+                                <span>
+                                    {% if payment.reference %}INV-{{ payment.reference|truncatechars:8 }}{% else %}Sem referencia{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="student-page-payments-ledger__date">{{ payment.due_date|date:"d M Y" }}</td>
+                    <td class="student-page-payments-ledger__method">{{ payment.get_method_display|default:"-" }}</td>
+                    <td class="is-center student-page-payments-ledger__status">
+                        <span class="pill student-page-payments-ledger__status-pill {% if payment.status == 'paid' %}success{% elif payment.status == 'overdue' %}warning{% else %}info{% endif %}">
+                            {{ payment.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="student-page-payments-ledger__amount is-right">R$ {{ payment.amount|floatformat:2 }}</td>
+                    <td class="is-right">
+                        <button class="student-page-payments-ledger__action" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}" aria-label="Abrir detalhes da cobranca">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Historico financeiro" title="Nenhuma cobranca registrada" copy="As cobrancas deste aluno vao aparecer aqui com leitura curta e contexto claro." badge="Vazio" badge_class="info" %}
+    {% endif %}
+</div>

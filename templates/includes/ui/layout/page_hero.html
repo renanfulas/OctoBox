@@ -7,7 +7,7 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende do objeto 'hero' e seus atributos.
 -->
-<section class="hero operation-hero{% for class_name in hero.classes %} {{ class_name }}{% endfor %}" aria-label="{{ hero.aria_label }}"{% if hero.data_slot %} data-slot="{{ hero.data_slot }}"{% endif %}{% if hero.data_panel %} data-panel="{{ hero.data_panel }}"{% endif %}>
+<section class="hero operation-hero{% if hero_variant_class %} {{ hero_variant_class }}{% endif %}{% for class_name in hero.classes %} {{ class_name }}{% endfor %}" aria-label="{{ hero.aria_label }}"{% if hero.data_slot %} data-slot="{{ hero.data_slot }}"{% endif %}{% if hero.data_panel %} data-panel="{{ hero.data_panel }}"{% endif %}>
     <div class="operation-hero-main">
         <div class="operation-hero-copy-block">
             <p class="operation-hero-eyebrow eyebrow">{{ hero.eyebrow }}</p>

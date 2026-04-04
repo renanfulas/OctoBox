@@ -111,9 +111,9 @@ PONTOS CRITICOS:
 .content::before {
     inset: 0;
     border-radius: 40px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.15)), var(--fdw-panel);
-    border: 1px solid rgba(255, 255, 255, 0.52);
-    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.03), 0 2px 6px rgba(15, 23, 42, 0.02);
+    background: linear-gradient(180deg, var(--theme-glass-highlight), transparent 72%), var(--theme-surface-glass-strong);
+    border: 1px solid var(--theme-glass-border);
+    box-shadow: var(--theme-glass-shadow);
 }
 
 .content::after {
@@ -122,7 +122,7 @@ PONTOS CRITICOS:
     inset: 18px 16px auto;
     height: 64px;
     border-radius: 28px;
-    background: linear-gradient(90deg, rgba(212, 102, 44, 0.02), transparent 30%, rgba(37, 85, 220, 0.02) 70%, transparent);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-premium-alpha) 42%, transparent), transparent 30%, color-mix(in srgb, var(--theme-accent-support-alpha) 42%, transparent) 70%, transparent);
     pointer-events: none;
     z-index: 0;
 }
@@ -133,13 +133,13 @@ PONTOS CRITICOS:
 }
 
 body[data-theme="dark"] .content::before {
-    border-color: rgba(148, 163, 184, 0.14);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)), var(--fdw-panel);
-    box-shadow: var(--fdw-shadow);
+    border-color: var(--theme-glass-border);
+    background: linear-gradient(180deg, var(--theme-glass-highlight), transparent 72%), var(--theme-surface-glass-strong);
+    box-shadow: var(--theme-glass-shadow);
 }
 
 body[data-theme="dark"] .content::after {
-    background: linear-gradient(90deg, rgba(212, 102, 44, 0.06), transparent 28%, rgba(37, 85, 220, 0.06) 70%, transparent);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-premium-alpha) 62%, transparent), transparent 28%, color-mix(in srgb, var(--theme-accent-support-alpha) 62%, transparent) 70%, transparent);
     opacity: 0.4;
 }
 

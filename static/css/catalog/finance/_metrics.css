@@ -39,15 +39,22 @@ POR QUE ELE EXISTE:
     width: 100%;
 }
 
+.finance-shell [data-panel="finance-interactive-kpis"] .finance-kpi-card.is-selected-tab {
+    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 42%, var(--theme-glass-border) 58%);
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--theme-accent-primary-alpha) 24%, transparent),
+        var(--theme-glass-shadow);
+}
+
 .finance-shell [data-panel="finance-interactive-kpis"] .metric-card {
     display: grid;
     gap: 28px;
     min-height: 124px;
     padding: 18px 20px;
     border-radius: 20px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%);
-    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 88%, transparent);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-glass) 92%, transparent));
+    box-shadow: var(--theme-glass-shadow);
     isolation: isolate;
 }
 
@@ -90,7 +97,7 @@ POR QUE ELE EXISTE:
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: rgba(15, 23, 42, 0.48);
+    color: var(--legacy-copy-strong);
 }
 
 .finance-shell [data-panel="finance-interactive-kpis"] .metric-card .metric-number,
@@ -99,7 +106,7 @@ POR QUE ELE EXISTE:
     font-weight: 800;
     line-height: 0.9;
     letter-spacing: -0.05em;
-    color: currentColor;
+    color: var(--finance-metric-value-color, currentColor);
 }
 
 .finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-copy,
@@ -112,18 +119,22 @@ POR QUE ELE EXISTE:
 }
 
 .finance-shell [data-panel="finance-interactive-kpis"] .metric-card.kpi-emerald {
+    --finance-metric-value-color: #19f5a1;
     color: #19f5a1;
 }
 
 .finance-shell [data-panel="finance-interactive-kpis"] .metric-card.kpi-red {
+    --finance-metric-value-color: #ff2d6f;
     color: #ff2d6f;
 }
 
 .finance-shell [data-panel="finance-interactive-kpis"] .metric-card.kpi-cyan {
+    --finance-metric-value-color: #16d9ff;
     color: #16d9ff;
 }
 
 .finance-shell [data-panel="finance-interactive-kpis"] .metric-card.kpi-slate {
+    --finance-metric-value-color: color-mix(in srgb, var(--theme-text-primary) 92%, white 8%);
     color: #64748b;
 }
 
@@ -155,16 +166,77 @@ POR QUE ELE EXISTE:
     padding: 14px;
     height: 100%;
     border-radius: 18px;
-    border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.52);
+    border: 1px solid var(--legacy-panel-border);
+    background: color-mix(in srgb, var(--legacy-panel-surface) 82%, transparent);
 }
 
 body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .metric-card {
-    border: 1px solid rgba(148, 163, 184, 0.16);
-    background: linear-gradient(180deg, rgba(14, 15, 24, 0.98) 0%, rgba(12, 13, 21, 0.96) 100%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, currentColor 12%, transparent), transparent 34%),
+        linear-gradient(180deg, rgba(22, 29, 45, 0.96) 0%, rgba(16, 20, 31, 0.94) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 18px 38px rgba(0, 0, 0, 0.24);
+}
+
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .finance-kpi-card.metric-card {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, currentColor 14%, transparent), transparent 34%),
+        linear-gradient(180deg, rgba(24, 31, 48, 0.97) 0%, rgba(16, 20, 31, 0.95) 100%) !important;
+    border-color: color-mix(in srgb, var(--theme-glass-border) 96%, transparent) !important;
 }
 
 body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-label {
-    color: rgba(226, 232, 240, 0.56);
+    color: color-mix(in srgb, var(--theme-text-muted) 88%, white 12%);
+}
+
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .metric-card .metric-number,
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-value {
+    text-shadow: 0 0 18px color-mix(in srgb, currentColor 16%, transparent);
+}
+
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .finance-kpi-card.metric-card .metric-number,
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .finance-kpi-card.metric-card .card-value {
+    color: var(--finance-metric-value-color, var(--theme-text-primary)) !important;
+}
+
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .metric-card.kpi-emerald {
+    --finance-metric-value-color: color-mix(in srgb, var(--theme-accent-success) 76%, white 24%);
+    color: color-mix(in srgb, var(--theme-accent-success) 76%, white 24%);
+}
+
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .metric-card.kpi-red {
+    --finance-metric-value-color: color-mix(in srgb, var(--theme-accent-danger) 76%, white 24%);
+    color: color-mix(in srgb, var(--theme-accent-danger) 76%, white 24%);
+}
+
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .metric-card.kpi-cyan {
+    --finance-metric-value-color: color-mix(in srgb, var(--theme-accent-primary) 78%, white 22%);
+    color: color-mix(in srgb, var(--theme-accent-primary) 78%, white 22%);
+}
+
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .metric-card.kpi-slate {
+    --finance-metric-value-color: color-mix(in srgb, var(--theme-text-primary) 90%, white 10%);
+    color: color-mix(in srgb, var(--theme-text-secondary) 82%, white 18%);
+}
+
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .finance-kpi-card.is-selected-tab {
+    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 48%, var(--theme-glass-border) 52%);
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--theme-accent-primary-alpha) 28%, transparent),
+        0 18px 42px rgba(0, 0, 0, 0.26);
+}
+
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .finance-kpi-card.kpi-blue.is-selected-tab {
+    --finance-metric-value-color: color-mix(in srgb, var(--theme-accent-danger) 78%, white 22%);
+    color: color-mix(in srgb, var(--theme-accent-danger) 78%, white 22%);
+}
+
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .finance-kpi-card.kpi-blue.is-selected-tab .card-label,
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .finance-kpi-card.kpi-blue.is-selected-tab .metric-number,
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .finance-kpi-card.kpi-blue.is-selected-tab .card-value,
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .finance-kpi-card.kpi-blue.is-selected-tab .card-kicker,
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .finance-kpi-card.kpi-blue.is-selected-tab .card-copy {
+    color: color-mix(in srgb, var(--theme-accent-danger) 78%, white 22%) !important;
 }

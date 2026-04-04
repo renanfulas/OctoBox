@@ -11,15 +11,15 @@ REGRA:
 */
 
 .hero {
-    --hero-surface: var(--fdw-panel);
-    --hero-border: color-mix(in srgb, var(--line) 90%, transparent);
-    --hero-shadow: var(--shadow-lift);
-    --hero-rail: linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-primary) 92%, transparent), color-mix(in srgb, var(--theme-accent-support) 88%, transparent));
+    --hero-surface: var(--theme-surface-glass-strong);
+    --hero-border: color-mix(in srgb, var(--theme-glass-border) 92%, transparent);
+    --hero-shadow: var(--theme-glass-shadow);
+    --hero-rail: linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-premium) 92%, transparent), color-mix(in srgb, var(--theme-accent-support) 88%, transparent));
     --hero-halo:
         radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--theme-accent-support) 12%, transparent), transparent 70%),
-        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--theme-accent-primary) 10%, transparent), transparent 62%);
+        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--theme-accent-premium) 10%, transparent), transparent 62%);
     --hero-ink: var(--ink);
-    --hero-copy: var(--muted);
+    --hero-copy: var(--legacy-copy);
     --hero-eyebrow: color-mix(in srgb, var(--theme-accent-support) 62%, var(--ink) 38%);
     --hero-gap: var(--operation-hero-gap, 20px);
     --hero-padding: var(--operation-hero-padding, clamp(20px, 2vw, 30px));
@@ -42,13 +42,13 @@ REGRA:
     --hero-panel-backdrop-filter: blur(14px);
     --hero-isolation: isolate;
     --hero-side-width: var(--operation-hero-side-width, min(100%, 340px));
-    --hero-panel-surface: color-mix(in srgb, var(--surface-strong) 76%, transparent);
-    --hero-panel-border: color-mix(in srgb, var(--line) 86%, transparent);
-    --hero-panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    --hero-panel-surface: color-mix(in srgb, var(--legacy-panel-fill-strong) 76%, transparent);
+    --hero-panel-border: color-mix(in srgb, var(--legacy-panel-border) 86%, transparent);
+    --hero-panel-shadow: inset 0 1px 0 var(--theme-glass-highlight);
     --hero-panel-ink: var(--ink);
-    --hero-panel-copy: var(--muted);
-    --hero-panel-stat-surface: color-mix(in srgb, var(--surface-strong) 68%, transparent);
-    --hero-panel-stat-border: color-mix(in srgb, var(--line) 86%, transparent);
+    --hero-panel-copy: var(--legacy-copy);
+    --hero-panel-stat-surface: color-mix(in srgb, var(--legacy-panel-fill-strong) 68%, transparent);
+    --hero-panel-stat-border: color-mix(in srgb, var(--legacy-panel-border) 86%, transparent);
     --hero-badge-surface: color-mix(in srgb, var(--theme-accent-support) 10%, transparent);
     --hero-badge-border: color-mix(in srgb, var(--theme-accent-support) 20%, transparent);
     --hero-badge-ink: color-mix(in srgb, var(--theme-accent-support) 72%, var(--ink) 28%);
@@ -216,7 +216,7 @@ REGRA:
     gap: 14px;
     margin-top: 16px;
     padding-top: 14px;
-    border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--legacy-panel-border) 72%, transparent);
 }
 
 .front-command-snapshot {
@@ -234,9 +234,9 @@ REGRA:
 .front-command-summary {
     padding: 14px 15px;
     border-radius: 18px;
-    border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
-    background: color-mix(in srgb, var(--surface-strong) 76%, transparent);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    border: 1px solid color-mix(in srgb, var(--legacy-panel-border) 86%, transparent);
+    background: color-mix(in srgb, var(--legacy-panel-fill-strong) 76%, transparent);
+    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
 }
 
 .front-command-card {
@@ -270,7 +270,7 @@ REGRA:
 .front-command-copy,
 .front-command-summary-item dt {
     margin: 0;
-    color: var(--muted);
+    color: var(--legacy-copy);
     font-size: 0.84rem;
     line-height: 1.48;
 }
@@ -313,7 +313,7 @@ REGRA:
     display: grid;
     gap: 4px;
     padding: 10px 0 0;
-    border-top: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--legacy-panel-border) 74%, transparent);
 }
 
 @media (max-width: 960px) {

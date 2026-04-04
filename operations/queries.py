@@ -28,6 +28,7 @@ from finance.models import Payment, PaymentMethod, PaymentStatus
 from finance.overdue_metrics import get_overdue_payments_queryset, sum_overdue_amount
 from onboarding.queries import get_pending_intakes
 from operations.models import BehaviorCategory, ClassSession
+from operations.session_snapshots import serialize_class_session, sync_runtime_statuses
 from students.models import Student
 
 
@@ -56,6 +57,7 @@ def _build_owner_focus_item(*, key, label, summary, count, pill_class, href, hre
         'pill_class': pill_class,
         'href': href,
         'href_label': href_label,
+        'is_clickable': (count or 0) > 0,
     }
 
 
@@ -104,6 +106,22 @@ def _build_owner_priority_context(primary_focus):
     }
 
 
+def _decorate_operational_sessions(serialized_sessions):
+    visible_sessions = [session for session in serialized_sessions if session['status_label'] != 'Finalizada']
+    for index, session in enumerate(visible_sessions):
+        if session['status_label'] == 'Em andamento':
+            session['dashboard_kicker'] = 'Em aula agora'
+        elif session['booking_closed']:
+            session['dashboard_kicker'] = 'Reservas fechadas'
+        elif index == 0:
+            session['dashboard_kicker'] = 'Proxima aula'
+        elif session['occupancy_percent'] >= 90:
+            session['dashboard_kicker'] = 'Turma quase lotada'
+        else:
+            session['dashboard_kicker'] = 'Em seguida'
+    return visible_sessions
+
+
 def _build_manager_priority_context(*, pending_intakes_count, unlinked_whatsapp_count, payments_without_enrollment_count, financial_alerts_count):
     if pending_intakes_count > 0:
         return {
@@ -139,6 +157,17 @@ def build_owner_workspace_snapshot(*, today):
     overdue_payments = get_overdue_payments_queryset(Payment.objects.all(), today=today)
     overdue_amount = sum_overdue_amount(Payment.objects.all(), today=today)
     classes_today = ClassSession.objects.filter(scheduled_at__date=today).count()
+    current_time = timezone.localtime()
+    owner_session_objects = list(
+        ClassSession.objects.filter(scheduled_at__date=today)
+        .select_related('coach')
+        .annotate(occupied_slots=Count('attendances'))
+        .order_by('scheduled_at')[:5]
+    )
+    sync_runtime_statuses(owner_session_objects, now=current_time)
+    owner_upcoming_sessions = _decorate_operational_sessions(
+        [serialize_class_session(session, now=current_time) for session in owner_session_objects]
+    )
     headline_metrics = {
         'students': Student.objects.count(),
         'pending_intakes': communications_metrics['pending_intakes'],
@@ -204,6 +233,8 @@ def build_owner_workspace_snapshot(*, today):
     return {
         'headline_metrics': headline_metrics,
         'classes_today': classes_today,
+        'owner_upcoming_sessions': owner_upcoming_sessions,
+        'owner_upcoming_sessions_total_label': f"{len(owner_upcoming_sessions)} aula(s)",
         'metric_cards': [
             {
                 **_build_metric_card('operation-kpi-card owner-amber', 'Total de alunos', headline_metrics['students']),

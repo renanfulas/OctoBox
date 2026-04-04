@@ -58,7 +58,7 @@ POR QUE ELE EXISTE:
 
 .class-grid-metric-card .card-copy {
     margin: 0;
-    color: var(--muted);
+    color: var(--legacy-copy);
     font-size: 0.92rem;
     line-height: 1.35;
 }
@@ -71,7 +71,7 @@ POR QUE ELE EXISTE:
 .class-grid-focus-card {
     display: grid;
     gap: 12px;
-    background: var(--surface);
+    background: var(--theme-surface-glass);
 }
 
 .class-grid-focus-content {
@@ -96,12 +96,17 @@ POR QUE ELE EXISTE:
     padding: 12px 14px;
     border-radius: 18px;
     border: 1px solid rgba(40, 92, 142, 0.12);
-    background: rgba(255, 255, 255, 0.84);
+    background: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
 }
 
 body[data-theme="dark"] .class-grid-focus-item {
-    background: var(--surface);
-    border-color: var(--line);
+    background: color-mix(in srgb, var(--theme-surface-glass-strong) 88%, transparent);
+    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+}
+
+body[data-theme="dark"] .class-grid-metric-card .card-label,
+body[data-theme="dark"] .class-grid-focus-copy p {
+    color: var(--theme-text-secondary);
 }
 
 .class-grid-focus-copy {
@@ -112,11 +117,12 @@ body[data-theme="dark"] .class-grid-focus-item {
 .class-grid-focus-copy h3 {
     margin: 0;
     font-size: 1rem;
+    color: var(--theme-text-primary);
 }
 
 .class-grid-focus-copy p {
     margin: 0;
-    color: var(--muted);
+    color: var(--legacy-copy);
 }
 
 .class-grid-focus-actions {
@@ -133,4 +139,32 @@ body[data-theme="dark"] .class-grid-focus-item {
 .class-grid-scene [data-panel="class-grid-context-panels"] .table-card.section-gap {
     padding-top: 22px;
     padding-bottom: 22px;
+}
+
+.class-grid-scene [data-panel="class-grid-context-panels"] .card-title,
+.class-grid-scene [data-panel="class-grid-context-panels"] .card-value,
+.class-grid-scene [data-panel="class-grid-context-panels"] .metric-number,
+.class-grid-scene [data-panel="class-grid-context-panels"] .class-grid-focus-copy h3 {
+    color: var(--theme-text-primary);
+}
+
+.class-grid-scene [data-panel="class-grid-context-panels"] .card-copy,
+.class-grid-scene [data-panel="class-grid-context-panels"] .card-label,
+.class-grid-scene [data-panel="class-grid-context-panels"] .metric-note,
+.class-grid-scene [data-panel="class-grid-context-panels"] .class-grid-focus-copy p {
+    color: var(--legacy-copy);
+}
+
+body[data-theme="dark"] .class-grid-scene [data-panel="class-grid-context-panels"] .card-title,
+body[data-theme="dark"] .class-grid-scene [data-panel="class-grid-context-panels"] .card-value,
+body[data-theme="dark"] .class-grid-scene [data-panel="class-grid-context-panels"] .metric-number,
+body[data-theme="dark"] .class-grid-scene [data-panel="class-grid-context-panels"] .class-grid-focus-copy h3 {
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .class-grid-scene [data-panel="class-grid-context-panels"] .card-copy,
+body[data-theme="dark"] .class-grid-scene [data-panel="class-grid-context-panels"] .card-label,
+body[data-theme="dark"] .class-grid-scene [data-panel="class-grid-context-panels"] .metric-note,
+body[data-theme="dark"] .class-grid-scene [data-panel="class-grid-context-panels"] .class-grid-focus-copy p {
+    color: var(--theme-text-secondary);
 }

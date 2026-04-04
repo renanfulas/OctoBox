@@ -25,8 +25,9 @@ PONTOS CRITICOS:
     gap: 14px;
     height: 100%;
     align-content: space-between;
-    background: var(--surface);
-    border-color: rgba(136, 150, 176, 0.16);
+    background: var(--finance-panel-surface, var(--theme-surface-glass));
+    border-color: var(--finance-panel-border, color-mix(in srgb, var(--theme-glass-border) 90%, transparent));
+    box-shadow: var(--finance-panel-shadow, var(--theme-glass-shadow));
 }
 
 .finance-command-card .button {
@@ -34,7 +35,9 @@ PONTOS CRITICOS:
 }
 
 .finance-focus-card {
-    background: var(--surface);
+    background: var(--finance-panel-surface, var(--theme-surface-glass));
+    border-color: var(--finance-panel-border, color-mix(in srgb, var(--theme-glass-border) 90%, transparent));
+    box-shadow: var(--finance-panel-shadow, var(--theme-glass-shadow));
 }
 
 /* ── Shared card body layouts ── */
@@ -64,8 +67,8 @@ PONTOS CRITICOS:
     padding: 10px 12px;
     height: 100%;
     border-radius: 18px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.84);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 84%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 82%, transparent);
 }
 
 .finance-summary-chip strong {
@@ -81,7 +84,7 @@ PONTOS CRITICOS:
 
 .finance-summary-chip p {
     margin: 8px 0 0;
-    color: var(--muted);
+    color: var(--legacy-copy);
     line-height: 1.55;
 }
 
@@ -116,9 +119,9 @@ PONTOS CRITICOS:
     gap: 8px;
     align-content: start;
     border-radius: 18px;
-    border: 1px solid rgba(148, 163, 184, 0.22);
-    background: rgba(255, 255, 255, 0.74);
-    box-shadow: 0 10px 24px rgba(85, 56, 35, 0.06);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 88%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 86%, transparent);
+    box-shadow: var(--finance-panel-shadow, var(--theme-glass-shadow));
 }
 
 .finance-action-head {
@@ -136,6 +139,12 @@ PONTOS CRITICOS:
     gap: 3px;
 }
 
+.finance-action-pill {
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 20%, var(--theme-glass-border) 80%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 12%, var(--theme-surface-glass) 88%);
+    color: color-mix(in srgb, var(--theme-accent-warning) 78%, var(--theme-text-primary) 22%);
+}
+
 .finance-action-card .card-footer,
 .finance-alert-card .card-footer,
 .finance-plan-card .card-footer {
@@ -151,7 +160,8 @@ PONTOS CRITICOS:
 }
 
 .finance-action-message {
-    background: rgba(255, 253, 248, 0.92);
+    background: color-mix(in srgb, var(--theme-surface-glass-strong) 84%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 18%, var(--theme-glass-border) 82%);
 }
 
 .finance-action-message-compact {
@@ -197,8 +207,21 @@ PONTOS CRITICOS:
 .finance-alert-stat {
     padding: 10px;
     border-radius: 14px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(250, 246, 239, 0.9);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 84%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 78%, transparent);
+}
+
+body[data-theme="dark"] .finance-action-card,
+body[data-theme="dark"] .finance-alert-card,
+body[data-theme="dark"] .finance-alert-stat {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass-strong) 88%, transparent);
+}
+
+body[data-theme="dark"] .finance-action-pill {
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 28%, var(--theme-glass-border) 72%) !important;
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-surface-glass-strong) 82%) !important;
+    color: color-mix(in srgb, var(--theme-accent-warning) 88%, white 12%) !important;
 }
 
 .finance-alert-stat strong {
@@ -245,7 +268,7 @@ PONTOS CRITICOS:
     gap: 6px;
     margin-top: auto;
     padding-top: 8px;
-    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    border-top: 1px solid color-mix(in srgb, var(--theme-glass-border) 76%, transparent);
     align-items: stretch;
 }
 
@@ -259,8 +282,8 @@ PONTOS CRITICOS:
 .finance-chart-column {
     padding: 14px;
     border-radius: 20px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.64);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 82%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 74%, transparent);
 }
 
 .finance-chart-column strong {
@@ -270,7 +293,7 @@ PONTOS CRITICOS:
 
 .finance-chart-value {
     font-size: 0.92rem;
-    color: var(--muted);
+    color: var(--legacy-copy);
 }
 
 /* ── Portfolio list & plan cards (compact) ── */
@@ -287,8 +310,9 @@ PONTOS CRITICOS:
     grid-template-rows: auto auto auto 1fr auto;
     align-content: start;
     gap: 12px;
-    background: var(--surface);
-    box-shadow: 0 12px 30px rgba(85, 56, 35, 0.06);
+    background: var(--finance-panel-surface, var(--theme-surface-glass));
+    border-color: var(--finance-panel-border, color-mix(in srgb, var(--theme-glass-border) 90%, transparent));
+    box-shadow: var(--finance-panel-shadow, var(--theme-glass-shadow));
 }
 
 .finance-plan-card-compact {
@@ -322,15 +346,91 @@ PONTOS CRITICOS:
     margin-bottom: 6px;
 }
 
+.finance-plan-form .field-label,
+.finance-plan-form .meta-text,
+.finance-plan-form .text-muted {
+    color: var(--legacy-copy);
+}
+
 .finance-plan-form input,
 .finance-plan-form select,
 .finance-plan-form textarea {
     padding: 11px 12px;
     border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent),
+            color-mix(in srgb, var(--theme-surface-glass) 96%, transparent)
+        );
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 8px 20px rgba(15, 23, 42, 0.05);
+    color: var(--theme-text-primary);
+}
+
+.finance-plan-form input::placeholder,
+.finance-plan-form textarea::placeholder {
+    color: color-mix(in srgb, var(--legacy-copy) 86%, transparent);
+}
+
+.finance-plan-form select option {
+    color: var(--theme-text-primary);
+    background: var(--theme-surface-panel);
 }
 
 .finance-plan-form textarea {
     min-height: 92px;
+}
+
+.finance-plan-form input:focus,
+.finance-plan-form select:focus,
+.finance-plan-form textarea:focus {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 42%, var(--theme-glass-border) 58%);
+    box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--theme-accent-support) 14%, transparent),
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+body[data-theme="dark"] .finance-plan-form .field-label,
+body[data-theme="dark"] .finance-plan-form .meta-text,
+body[data-theme="dark"] .finance-plan-form .text-muted {
+    color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .finance-plan-form input,
+body[data-theme="dark"] .finance-plan-form select,
+body[data-theme="dark"] .finance-plan-form textarea {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 76%, transparent);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, white 4%, transparent), transparent 26%),
+        color-mix(in srgb, var(--theme-surface-glass) 94%, rgba(10, 10, 15, 0.9) 6%);
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, white 10%, transparent),
+        0 12px 30px rgba(0, 0, 0, 0.2);
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .finance-plan-form input::placeholder,
+body[data-theme="dark"] .finance-plan-form textarea::placeholder {
+    color: color-mix(in srgb, var(--theme-text-secondary) 82%, transparent);
+}
+
+body[data-theme="dark"] .finance-plan-form select option {
+    color: var(--theme-text-primary);
+    background: #11161f;
+}
+
+body[data-theme="dark"] .finance-plan-form input:focus,
+body[data-theme="dark"] .finance-plan-form select:focus,
+body[data-theme="dark"] .finance-plan-form textarea:focus {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 44%, var(--theme-glass-border) 56%);
+    box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--theme-accent-support) 16%, transparent),
+        inset 0 1px 0 color-mix(in srgb, white 12%, transparent),
+        0 14px 34px rgba(0, 0, 0, 0.24);
 }
 
 .finance-plan-actions {
@@ -347,8 +447,8 @@ PONTOS CRITICOS:
 .finance-plan-stat {
     padding: 12px 14px;
     border-radius: 18px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 84%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 82%, transparent);
 }
 
 .finance-plan-card-compact .finance-plan-stats {
@@ -365,7 +465,7 @@ PONTOS CRITICOS:
     gap: 8px;
     margin-top: auto;
     padding-top: 12px;
-    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    border-top: 1px solid color-mix(in srgb, var(--theme-glass-border) 76%, transparent);
 }
 
 .finance-plan-card-compact .actions .button {
@@ -390,7 +490,7 @@ PONTOS CRITICOS:
 
 .finance-mix-panel,
 .finance-mix-insight-panel {
-    background: var(--surface);
+    background: var(--finance-panel-surface, var(--theme-surface-glass));
 }
 
 .finance-mix-list {
@@ -407,12 +507,17 @@ PONTOS CRITICOS:
     gap: 10px;
     align-content: start;
     border-radius: 18px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 84%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 80%, transparent);
 }
 
 .finance-mix-head {
     align-items: center;
+}
+
+.finance-mix-card .text-muted,
+.finance-mix-card .meta-text-sm {
+    color: var(--legacy-copy);
 }
 
 /* ── Data chips ── */
@@ -428,8 +533,8 @@ PONTOS CRITICOS:
     padding: 12px 14px;
     height: 100%;
     border-radius: 18px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.86);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 84%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 82%, transparent);
 }
 
 .finance-data-chip strong {
@@ -440,7 +545,7 @@ PONTOS CRITICOS:
 
 .finance-data-chip p {
     margin: 8px 0 0;
-    color: var(--muted);
+    color: var(--legacy-copy);
     line-height: 1.55;
 }
 

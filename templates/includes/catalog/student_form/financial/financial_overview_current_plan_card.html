@@ -6,6 +6,6 @@
     <p class="meta-text-sm">Inicio: {{ page.data.financial_overview.latest_enrollment.start_date|date:"d/m/Y" }}</p>
     <p class="meta-text">Fim: {% if page.data.financial_overview.latest_enrollment.end_date %}{{ page.data.financial_overview.latest_enrollment.end_date|date:"d/m/Y" }}{% else %}Em aberto{% endif %}</p>
     {% else %}
-    <p class="meta-text">Este aluno ainda nao tem matricula vinculada.</p>
+    <p class="meta-text">Este aluno ainda n&atilde;o tem matr&iacute;cula vinculada.</p>
     {% endif %}
 </article>

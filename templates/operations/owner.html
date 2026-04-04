@@ -18,13 +18,16 @@ PONTOS CRITICOS:
 {% block content %}
 {% with page=operation_page %}
 <div class="operation-shell owner-scene owner-simple-shell workspace-shell">
-    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero hero_variant_class="hero--command" %}
 
     {% include "includes/ui/layout/page_reading_list.html" with panel=page.data.reading_panel %}
 
-    <div class="owner-metrics-panel">
-        {% include "operations/includes/owner/owner_metrics_section.html" %}
-    </div>
+    <section class="owner-workspace-strip" aria-label="Agenda e metricas do owner">
+        {% include "operations/includes/owner/owner_sessions_panel.html" %}
+        <div class="owner-metrics-panel">
+            {% include "operations/includes/owner/owner_metrics_section.html" %}
+        </div>
+    </section>
 </div>
 {% endwith %}
 {% endblock %}

@@ -1,5 +1,18 @@
 /*
-ARQUIVO: cobrança operacional da recepção.
+ARQUIVO: cobranca operacional da recepcao.
+
+POR QUE ELE EXISTE:
+- concentra a identidade visual da fila de pagamento do balcao.
+- destaca a trilha principal de receber agora sem levar a recepcao para o financeiro completo.
+
+O QUE ESTE ARQUIVO FAZ:
+1. define a aparencia do board de cobranca curta.
+2. reforca valor, metodo e CTA principal do card da recepcao.
+3. rebaixa visualmente apoio e ajustes opcionais.
+
+PONTOS CRITICOS:
+- o CTA principal precisa continuar dominante em desktop e mobile.
+- ajustes opcionais nao podem competir com o fluxo de caixa rapido.
 */
 
 .reception-payment-board,
@@ -14,7 +27,7 @@ ARQUIVO: cobrança operacional da recepção.
 .reception-payment-grid,
 .reception-preview-payment-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
     gap: 14px;
 }
 
@@ -22,7 +35,7 @@ ARQUIVO: cobrança operacional da recepção.
 .reception-preview-payment-card {
     display: grid;
     grid-template-rows: auto auto auto 1fr auto;
-    gap: 10px;
+    gap: 12px;
     padding: 14px;
     border-radius: var(--radius-card);
     border: 1px solid rgba(234, 88, 12, 0.14);
@@ -48,19 +61,72 @@ ARQUIVO: cobrança operacional da recepção.
     padding: 5px 9px;
 }
 
-.reception-payment-meta,
-.reception-preview-payment-meta {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+.payment-primary-summary.reception-payment-highlight,
+.reception-preview-payment-highlight {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-border-soft) 82%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, transparent), transparent 30%),
+        linear-gradient(180deg, color-mix(in srgb, white 90%, var(--theme-surface-panel) 10%), color-mix(in srgb, var(--theme-surface-panel) 95%, white));
 }
 
-.reception-payment-meta .finance-alert-stat,
-.reception-preview-payment-meta .finance-alert-stat {
+.payment-primary-summary.reception-payment-highlight .payment-primary-summary__amount,
+.reception-preview-payment-highlight__amount {
+    display: grid;
+    gap: 4px;
+}
+
+.payment-primary-summary.reception-payment-highlight .payment-primary-summary__label {
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.payment-primary-summary.reception-payment-highlight .payment-primary-summary__amount-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.payment-primary-summary.reception-payment-highlight .payment-primary-summary__currency {
+    color: var(--muted);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.payment-primary-summary.reception-payment-highlight .payment-primary-summary__amount strong,
+.reception-preview-payment-highlight__amount strong {
+    font-size: clamp(1.45rem, 2vw, 1.8rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--brand-dark);
+}
+
+.payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta,
+.reception-preview-payment-highlight__meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta-item,
+.reception-preview-payment-highlight__meta-item {
+    display: grid;
+    gap: 3px;
     padding: 9px 10px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--theme-surface-panel) 84%, white 16%);
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, white 16%);
 }
 
-.reception-payment-meta .finance-alert-stat strong,
-.reception-preview-payment-meta .finance-alert-stat strong {
-    line-height: 1.15;
+.payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta-item strong,
+.reception-preview-payment-highlight__meta-item strong {
+    line-height: 1.2;
 }
 
 .reception-payment-card .finance-action-message,
@@ -82,12 +148,28 @@ ARQUIVO: cobrança operacional da recepção.
 .reception-payment-form,
 .reception-preview-payment-form {
     display: grid;
-    gap: 8px;
+    gap: 10px;
     padding-top: 0;
 }
 
-.reception-payment-form-primary {
+.reception-payment-primary-flow,
+.reception-preview-payment-primary-flow {
+    display: grid;
     gap: 8px;
+}
+
+.reception-payment-method-shell,
+.reception-preview-payment-method-shell {
+    display: grid;
+    gap: 4px;
+}
+
+.reception-payment-method-shell select,
+.reception-preview-payment-method-shell select {
+    min-height: 42px;
+    border-radius: 14px;
+    border-color: color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-border-soft) 82%);
+    background: color-mix(in srgb, white 84%, var(--theme-surface-panel) 16%);
 }
 
 .reception-payment-actions-primary {
@@ -99,14 +181,37 @@ ARQUIVO: cobrança operacional da recepção.
     gap: 8px;
 }
 
+.reception-payment-primary-button {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+    border-radius: 14px;
+    font-size: 0.94rem;
+    font-weight: 800;
+    box-shadow: 0 12px 24px rgba(234, 88, 12, 0.18);
+}
+
+.reception-payment-actions-support {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.reception-payment-actions-support .button,
+.reception-payment-actions-support .reception-payment-whatsapp-slot {
+    flex: 1 1 160px;
+}
+
 .reception-payment-whatsapp-slot {
-    margin-left: auto;
     display: grid;
-    justify-items: end;
+    justify-items: stretch;
     gap: 2px;
 }
 
 .reception-payment-whatsapp-button {
+    width: 100%;
     white-space: nowrap;
 }
 
@@ -133,7 +238,7 @@ ARQUIVO: cobrança operacional da recepção.
 
 .reception-payment-actions .button,
 .reception-preview-payment-actions .button {
-    min-height: 32px;
+    min-height: 34px;
     padding: 6px 10px;
     border-radius: 12px;
     font-size: 0.84rem;
@@ -157,7 +262,7 @@ ARQUIVO: cobrança operacional da recepção.
 .reception-payment-advanced {
     display: grid;
     gap: 6px;
-    padding: 6px 8px 0;
+    padding: 8px 10px 0;
     border-top: 1px dashed rgba(148, 163, 184, 0.22);
     background: color-mix(in srgb, var(--theme-surface-panel) 92%, transparent);
     border-radius: 10px;
@@ -191,6 +296,10 @@ ARQUIVO: cobrança operacional da recepção.
     padding-top: 0;
 }
 
+.reception-payment-notes-field {
+    grid-column: 1 / -1;
+}
+
 .reception-payment-actions,
 .reception-preview-payment-actions {
     align-items: stretch;
@@ -208,7 +317,7 @@ ARQUIVO: cobrança operacional da recepção.
 
 .reception-payment-board .operation-card-copy,
 .reception-preview-payment-board .operation-card-copy {
-    max-width: 38ch;
+    max-width: 52ch;
 }
 
 body[data-theme="dark"] .reception-payment-board,
@@ -228,23 +337,40 @@ body[data-theme="dark"] .reception-preview-payment-board {
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
+body[data-theme="dark"] .payment-primary-summary.reception-payment-highlight {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, transparent), transparent 34%),
+        linear-gradient(160deg, rgba(16, 27, 42, 0.98), rgba(10, 18, 30, 0.94));
+}
+
+body[data-theme="dark"] .payment-primary-summary.reception-payment-highlight .payment-primary-summary__amount strong,
+body[data-theme="dark"] .reception-preview-payment-highlight__amount strong {
+    color: rgba(255, 248, 239, 0.98);
+}
+
+body[data-theme="dark"] .payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta-item {
+    background: rgba(10, 17, 28, 0.72);
+}
+
 body[data-theme="dark"] .reception-payment-advanced {
     background: rgba(10, 17, 28, 0.72);
 }
 
 @media (max-width: 720px) {
-    .reception-payment-actions-primary {
+    .payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta,
+    .reception-preview-payment-highlight__meta {
+        grid-template-columns: 1fr;
+    }
+
+    .reception-payment-actions-primary,
+    .reception-payment-actions-support {
         align-items: stretch;
     }
 
-    .reception-payment-actions-primary .button,
-    .reception-payment-actions-primary .reception-payment-whatsapp-button,
-    .reception-payment-actions-primary .reception-payment-whatsapp-slot {
+    .reception-payment-actions-support .button,
+    .reception-payment-actions-support .reception-payment-whatsapp-slot,
+    .reception-payment-actions-primary .button {
         width: 100%;
-    }
-
-    .reception-payment-whatsapp-slot {
-        margin-left: 0;
-        justify-items: stretch;
+        flex-basis: 100%;
     }
 }

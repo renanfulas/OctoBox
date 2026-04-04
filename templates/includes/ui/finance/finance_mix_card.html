@@ -9,16 +9,16 @@
             <div class="mix-bar-track">
                 <div class="mix-bar-fill" data-visual-width="{{ item.width|unlocalize }}"></div>
             </div>
-            <p class="meta-text-sm finance-inline-currency">R$ {{ item.revenue_this_month|floatformat:2 }} no mes • {{ item.active_enrollments }} ativos</p>
+            <p class="meta-text-sm finance-inline-currency">R$ {{ item.revenue_this_month|floatformat:2 }} no mes &bull; {{ item.active_enrollments }} ativos</p>
         </div>
     </div>
 </article>
 <!--
 ARQUIVO: finance_mix_card.html
 POR QUE ELE EXISTE:
-- Centraliza a leitura de participação e receita no mix comercial.
+- centraliza a leitura de participacao e receita no mix comercial.
 O QUE ESTE ARQUIVO FAZ:
-- Renderiza o card de participação e receita de um item do mix financeiro.
+- renderiza o card de participacao e receita de um item do mix financeiro.
 PONTOS CRITICOS:
-- Depende do objeto 'item'.
+- depende do objeto 'item'.
 -->

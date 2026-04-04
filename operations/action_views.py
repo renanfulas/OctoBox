@@ -133,8 +133,8 @@ def _handle_reception_payment_action(request, *, payment_id, fallback_url, succe
     )
 
     if action == 'mark-paid':
-        messages.success(request, f'Pagamento de {payment.student.full_name} confirmado pela {success_context}.')
+        messages.success(request, f'Pagamento de {payment.student.full_name} confirmado com sucesso no balcao.')
     else:
-        messages.success(request, f'Cobranca curta de {payment.student.full_name} ajustada sem sair da {success_context}.')
+        messages.success(request, f'Ajustes rapidos de {payment.student.full_name} salvos sem sair do balcao.')
 
     return _redirect_back(request, fallback_url=fallback_url, fragment='reception-payment-board')

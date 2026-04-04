@@ -9,7 +9,7 @@ PONTOS CRITICOS:
 -->
 <div class="fdw-focus-list page-reading-list{% if panel.class_name %} {{ panel.class_name }}{% endif %}"{% if panel.panel_id %} id="{{ panel.panel_id }}"{% endif %}>
     {% for item in panel.items %}
-    {% if item.is_clickable|default:True %}
+    {% if item.is_clickable or item.is_clickable == None %}
     <a class="fdw-focus-card{% if panel.primary_href %}{% if item.href == panel.primary_href %} is-primary{% endif %}{% elif forloop.first %} is-primary{% endif %}{% if item.severity_class %} {{ item.severity_class }}{% endif %}{% if item.is_tranquil %} is-tranquil{% endif %}" href="{{ item.href }}"{% if item.data_action %} data-action="{{ item.data_action }}"{% endif %}>
         <div class="fdw-focus-card-head">
             <span class="fdw-focus-index">{{ forloop.counter|stringformat:"02d" }}</span>
@@ -31,7 +31,7 @@ PONTOS CRITICOS:
         </div>
     </a>
     {% else %}
-    <article class="fdw-focus-card{% if panel.primary_href %}{% if item.href == panel.primary_href %} is-primary{% endif %}{% elif forloop.first %} is-primary{% endif %}{% if item.severity_class %} {{ item.severity_class }}{% endif %}{% if item.is_tranquil %} is-tranquil{% endif %}" aria-label="{{ item.label }}">
+    <article class="fdw-focus-card is-static{% if item.severity_class %} {{ item.severity_class }}{% endif %}{% if item.is_tranquil %} is-tranquil{% endif %}" aria-label="{{ item.label }}"{% if item.data_action %} data-action="{{ item.data_action }}"{% endif %}>
         <div class="fdw-focus-card-head">
             <span class="fdw-focus-index">{{ forloop.counter|stringformat:"02d" }}</span>
             <div class="fdw-focus-meta">
@@ -48,7 +48,7 @@ PONTOS CRITICOS:
             <p class="fdw-focus-summary">{{ item.summary }}</p>
         </div>
         <div class="fdw-focus-footer">
-            <span class="fdw-focus-action">{{ item.href_label }}</span>
+            <span class="fdw-focus-action">Sem acao imediata</span>
         </div>
     </article>
     {% endif %}

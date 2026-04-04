@@ -29,8 +29,8 @@ POR QUE ELE EXISTE:
 
     .finance-command-layout,
     .finance-priority-layout,
-    .finance-portfolio-layout,
     .finance-trend-layout,
+    .finance-portfolio-scene,
     .finance-plan-layout {
         grid-template-columns: 1fr;
     }
@@ -87,6 +87,12 @@ POR QUE ELE EXISTE:
 
     .finance-action-message .state-notice-copy {
         -webkit-line-clamp: 3;
+    }
+
+    .finance-board-mix,
+    .finance-board-plan,
+    .finance-portfolio-panel-card {
+        padding: 16px;
     }
 }
 

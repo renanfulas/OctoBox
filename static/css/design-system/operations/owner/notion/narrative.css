@@ -11,12 +11,12 @@ POR QUE ELE EXISTE:
     position: relative;
     overflow: hidden;
     border-radius: var(--radius-panel);
-    border: 1px solid var(--line);
-    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--legacy-panel-border);
+    box-shadow: var(--legacy-panel-shadow);
 }
 
 .owner-notion-shell .owner-command-card {
-    background: var(--surface);
+    background: var(--legacy-panel-surface);
     padding-bottom: 14px;
 }
 
@@ -40,9 +40,9 @@ POR QUE ELE EXISTE:
     margin-bottom: 16px;
     padding: 22px 24px;
     border-radius: var(--radius-card);
-    background: var(--ink);
+    background: color-mix(in srgb, var(--theme-surface-inverse) 92%, black 8%);
     color: #f8f8f8;
-    box-shadow: var(--shadow-soft);
+    box-shadow: var(--legacy-panel-shadow);
 }
 
 .owner-notion-shell .owner-command-manifesto {
@@ -66,9 +66,9 @@ POR QUE ELE EXISTE:
     align-items: center;
     padding: 18px 18px 18px 16px;
     border-radius: var(--radius-card);
-    border: 1px solid var(--line);
-    background: var(--surface);
-    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--legacy-panel-border);
+    background: var(--legacy-panel-surface);
+    box-shadow: var(--legacy-panel-shadow);
 }
 
 .owner-notion-shell .owner-command-item:nth-child(2) {
@@ -87,8 +87,8 @@ POR QUE ELE EXISTE:
     min-width: 42px;
     height: 42px;
     border-radius: 10px;
-    background: var(--bg);
-    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--legacy-panel-fill) 94%, transparent);
+    border: 1px solid var(--legacy-panel-border);
     color: var(--ink);
     font-size: 0.78rem;
     font-weight: 900;
@@ -106,7 +106,7 @@ POR QUE ELE EXISTE:
     text-transform: uppercase;
     letter-spacing: 0.14em;
     font-weight: 900;
-    color: rgba(95, 90, 84, 0.72);
+    color: var(--legacy-copy-strong);
 }
 
 .owner-notion-shell .owner-command-copy p:last-child {
@@ -169,12 +169,12 @@ POR QUE ELE EXISTE:
 .owner-notion-shell .owner-command-actions .button.secondary {
     min-width: 172px;
     min-height: 36px;
-    border-color: var(--line-strong);
-    background: var(--surface);
+    border-color: var(--legacy-panel-border);
+    background: var(--legacy-panel-surface);
 }
 
 .owner-notion-shell .owner-proof-card {
-    background: var(--surface);
+    background: var(--legacy-panel-surface);
     margin-left: 40px;
 }
 
@@ -189,9 +189,9 @@ POR QUE ELE EXISTE:
     gap: 6px;
     padding: 18px 18px 16px;
     border-radius: var(--radius-card);
-    border: 1px solid var(--line);
-    background: var(--surface);
-    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--legacy-panel-border);
+    background: var(--legacy-panel-surface);
+    box-shadow: var(--legacy-panel-shadow);
 }
 
 .owner-notion-shell .owner-proof-item:nth-child(2) {
@@ -208,7 +208,7 @@ POR QUE ELE EXISTE:
     text-transform: uppercase;
     letter-spacing: 0.11em;
     font-weight: 800;
-    color: rgba(95, 90, 84, 0.8);
+    color: var(--legacy-copy-strong);
 }
 
 .owner-notion-shell .owner-proof-value {
@@ -232,5 +232,5 @@ POR QUE ELE EXISTE:
     letter-spacing: -0.01em;
     color: var(--owner-art-noir);
     padding-bottom: 2px;
-    border-bottom: 1px solid rgba(55, 53, 47, 0.14);
+    border-bottom: 1px solid color-mix(in srgb, var(--legacy-panel-border) 82%, transparent);
 }

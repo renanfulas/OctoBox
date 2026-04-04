@@ -8,20 +8,20 @@ POR QUE ELE EXISTE:
     {% if page.data.financial_overview.payments %}
     <div class="table-responsive">
         <table class="student-financial-ledger__table">
-            <caption class="visually-hidden">Historico de cobrancas do aluno com data, metodo, valor, status e acao para abrir detalhes.</caption>
+            <caption class="visually-hidden">Hist&oacute;rico de cobran&ccedil;as do aluno com data, m&eacute;todo, valor, status e a&ccedil;&atilde;o para abrir detalhes.</caption>
             <thead>
                 <tr class="student-financial-ledger__head">
+                    <th scope="col">Descri&ccedil;&atilde;o</th>
                     <th scope="col">Data</th>
-                    <th scope="col">Descricao / metodo</th>
-                    <th scope="col" class="is-right">Valor</th>
+                    <th scope="col">M&eacute;todo</th>
                     <th scope="col" class="is-center">Status</th>
-                    <th scope="col" class="is-right"><span class="visually-hidden">Acoes</span></th>
+                    <th scope="col" class="is-right">Valor</th>
+                    <th scope="col" class="is-right"><span class="visually-hidden">A&ccedil;&otilde;es</span></th>
                 </tr>
             </thead>
             <tbody>
                 {% for payment in page.data.financial_overview.payments %}
                 <tr class="student-financial-ledger__row">
-                    <td class="student-financial-ledger__date">{{ payment.due_date|date:"d/m/Y" }}</td>
                     <td>
                         <div class="student-financial-ledger__description">
                             <div class="student-financial-ledger__method-icon" aria-hidden="true">
@@ -34,22 +34,23 @@ POR QUE ELE EXISTE:
                                 {% endif %}
                             </div>
                             <div class="student-financial-ledger__copy">
-                                <strong>{{ payment.enrollment.plan.name|default:"Mensalidade" }}</strong>
+                                <strong>{{ payment.enrollment.plan.name|default:"Mensalidade" }}{% if payment.due_date %} - {{ payment.due_date|date:"M/y" }}{% endif %}</strong>
                                 <span>
-                                    {{ payment.get_method_display }}
-                                    {% if payment.reference %}&bull; {{ payment.reference|truncatechars:8 }}{% endif %}
+                                    {% if payment.reference %}INV-{{ payment.reference|truncatechars:8 }}{% else %}Sem referencia{% endif %}
                                 </span>
                             </div>
                         </div>
                     </td>
-                    <td class="student-financial-ledger__amount is-right">R$ {{ payment.amount|floatformat:2 }}</td>
+                    <td class="student-financial-ledger__date">{{ payment.due_date|date:"d M Y" }}</td>
+                    <td class="student-financial-ledger__method">{{ payment.get_method_display|default:"-" }}</td>
                     <td class="is-center">
                         <span class="pill {% if payment.status == 'paid' %}success{% elif payment.status == 'overdue' %}warning{% else %}info{% endif %}">
                             {{ payment.get_status_display }}
                         </span>
                     </td>
+                    <td class="student-financial-ledger__amount is-right">R$ {{ payment.amount|floatformat:2 }}</td>
                     <td class="is-right">
-                        <button class="student-financial-ledger__action" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}" aria-label="Abrir detalhes da cobranca">
+                        <button class="student-financial-ledger__action" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}" aria-label="Abrir detalhes da cobran&ccedil;a">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                         </button>
                     </td>
@@ -59,6 +60,6 @@ POR QUE ELE EXISTE:
         </table>
     </div>
     {% else %}
-    {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Historico financeiro" title="Nenhuma cobranca registrada" copy="As cobrancas deste aluno vao aparecer aqui com leitura curta e contexto claro." badge="Vazio" badge_class="info" %}
+    {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Hist&oacute;rico financeiro" title="Nenhuma cobran&ccedil;a registrada" copy="As cobran&ccedil;as deste aluno v&atilde;o aparecer aqui com leitura curta e contexto claro." badge="Vazio" badge_class="info" %}
     {% endif %}
 </div>

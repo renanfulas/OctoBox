@@ -50,22 +50,26 @@ PONTO CRITICO:
     --radius-shell: 24px;
 
     /* Canonical theme tokens */
-    --theme-bg-root: #f6f8fc;
-    --theme-bg-depth: #ebf0f7;
-    --theme-bg-stage: linear-gradient(180deg, #f7f9fc 0%, #f2f5fa 42%, #eef3f9 100%);
+    --theme-bg-root: #f5f7fb;
+    --theme-bg-depth: #e9eef7;
+    --theme-bg-stage: linear-gradient(180deg, #fbfcff 0%, #f4f7fc 42%, #edf2f9 100%);
     --theme-bg-stage-depth:
         radial-gradient(circle at 8% 12%, rgba(255, 255, 255, 0.82), transparent 22%),
         radial-gradient(circle at 88% 14%, rgba(79, 156, 255, 0.06), transparent 18%),
         radial-gradient(circle at 16% 82%, rgba(240, 138, 56, 0.06), transparent 20%);
 
-    --theme-surface: rgba(255, 255, 255, 0.9);
-    --theme-surface-secondary: rgba(248, 250, 253, 0.94);
+    --theme-surface: rgba(255, 255, 255, 0.88);
+    --theme-surface-secondary: rgba(246, 249, 254, 0.94);
     --theme-surface-strong: rgba(255, 255, 255, 0.98);
-    --theme-surface-muted: rgba(244, 247, 252, 0.9);
+    --theme-surface-muted: rgba(241, 245, 252, 0.9);
     --theme-surface-inverse: #0b1220;
-    --theme-surface-panel: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 253, 0.95));
-    --theme-surface-panel-strong: linear-gradient(160deg, rgba(255, 255, 255, 1), rgba(243, 247, 252, 0.98));
+    --theme-surface-panel: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 249, 255, 0.95));
+    --theme-surface-panel-strong: linear-gradient(160deg, rgba(255, 255, 255, 1), rgba(241, 246, 253, 0.98));
     --theme-surface-panel-dark: linear-gradient(180deg, rgba(12, 21, 38, 0.98), rgba(16, 27, 47, 0.96));
+    --theme-surface-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(245, 248, 253, 0.6));
+    --theme-surface-glass-strong: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(245, 249, 255, 0.82));
+    --theme-surface-chrome: color-mix(in srgb, var(--theme-surface-panel) 82%, transparent);
+    --theme-surface-chrome-strong: color-mix(in srgb, var(--theme-surface-strong) 88%, transparent);
 
     --theme-text-primary: #101828;
     --theme-text-secondary: #334155;
@@ -80,18 +84,31 @@ PONTO CRITICO:
     --theme-shadow-lift: 0 16px 42px rgba(15, 23, 42, 0.08), 0 8px 16px rgba(15, 23, 42, 0.05);
     --theme-shadow-xl: 0 22px 56px rgba(15, 23, 42, 0.12), 0 10px 22px rgba(15, 23, 42, 0.06);
 
-    --theme-accent-primary: #f08a38;
-    --theme-accent-support: #4f9cff;
-    --theme-accent-success: #2fc39d;
-    --theme-accent-warning: #f2b84b;
-    --theme-accent-danger: #ff7a6f;
+    --theme-accent-primary: #00d4ff;
+    --theme-accent-support: #00d4ff;
+    --theme-accent-success: #00ff88;
+    --theme-accent-warning: #ffb020;
+    --theme-accent-danger: #ff0844;
+    --theme-accent-premium: #af52de;
     --theme-accent-primary-alpha: color-mix(in srgb, var(--theme-accent-primary) 16%, transparent);
     --theme-accent-support-alpha: color-mix(in srgb, var(--theme-accent-support) 16%, transparent);
     --theme-accent-success-alpha: color-mix(in srgb, var(--theme-accent-success) 16%, transparent);
     --theme-accent-warning-alpha: color-mix(in srgb, var(--theme-accent-warning) 16%, transparent);
     --theme-accent-danger-alpha: color-mix(in srgb, var(--theme-accent-danger) 16%, transparent);
+    --theme-accent-premium-alpha: color-mix(in srgb, var(--theme-accent-premium) 16%, transparent);
     --theme-focus-ring: color-mix(in srgb, var(--theme-accent-support) 36%, transparent);
-    --theme-selection: rgba(240, 138, 56, 0.18);
+    --theme-selection: color-mix(in srgb, var(--theme-accent-support) 20%, transparent);
+    --theme-glow-primary: 0 0 24px color-mix(in srgb, var(--theme-accent-primary) 18%, transparent);
+    --theme-glow-success: 0 0 24px color-mix(in srgb, var(--theme-accent-success) 18%, transparent);
+    --theme-glow-warning: 0 0 24px color-mix(in srgb, var(--theme-accent-warning) 18%, transparent);
+    --theme-glow-danger: 0 0 24px color-mix(in srgb, var(--theme-accent-danger) 18%, transparent);
+    --theme-glow-premium: 0 0 24px color-mix(in srgb, var(--theme-accent-premium) 18%, transparent);
+    --theme-glass-border: color-mix(in srgb, white 56%, var(--theme-border-soft) 44%);
+    --theme-glass-highlight: rgba(255, 255, 255, 0.44);
+    --theme-glass-shadow: 0 16px 42px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.03);
+    --theme-scrollbar-track: color-mix(in srgb, var(--theme-surface-secondary) 78%, transparent);
+    --theme-scrollbar-thumb: color-mix(in srgb, var(--theme-text-muted) 40%, transparent);
+    --theme-scrollbar-thumb-hover: color-mix(in srgb, var(--theme-accent-premium) 38%, var(--theme-text-muted) 62%);
 
     /* Sidebar */
     --sidebar-bg: #0f172a;
@@ -125,11 +142,19 @@ PONTO CRITICO:
     --shadow-soft: var(--theme-shadow-soft);
     --shadow-lift: var(--theme-shadow-lift);
     --shadow-xl: var(--theme-shadow-xl);
+    --legacy-panel-fill: var(--theme-surface);
+    --legacy-panel-fill-strong: var(--theme-surface-strong);
+    --legacy-panel-surface: var(--theme-surface-glass);
+    --legacy-panel-surface-strong: var(--theme-surface-glass-strong);
+    --legacy-panel-border: color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
+    --legacy-panel-shadow: var(--theme-glass-shadow);
+    --legacy-copy: var(--theme-text-secondary);
+    --legacy-copy-strong: var(--theme-text-muted);
 
     --brand: var(--theme-accent-support);
-    --brand-dark: #2a6ec7;
+    --brand-dark: #0094cc;
     --accent: var(--theme-accent-success);
-    --accent-2: #0f8278;
+    --accent-2: var(--theme-accent-premium);
     --accent-primary: var(--theme-accent-primary);
     --accent-primary-alpha: var(--theme-accent-primary-alpha);
     --success: var(--theme-accent-success);
@@ -144,7 +169,7 @@ PONTO CRITICO:
 
     /* Front Display Wall compatibility */
     --fdw-copper: var(--theme-accent-primary);
-    --fdw-copper-soft: var(--theme-accent-primary-alpha);
+    --fdw-copper-soft: var(--theme-accent-premium-alpha);
     --fdw-sky: var(--theme-accent-support);
     --fdw-sky-soft: var(--theme-accent-support-alpha);
     --fdw-aqua: var(--theme-accent-success);
@@ -165,44 +190,54 @@ PONTO CRITICO:
 body[data-theme="dark"] {
     color-scheme: dark;
 
-    --theme-bg-root: #09111d;
-    --theme-bg-depth: #101b2f;
-    --theme-bg-stage: linear-gradient(180deg, #08111d 0%, #0c1626 42%, #0f1b31 100%);
+    --theme-bg-root: #0a0a0f;
+    --theme-bg-depth: #10131d;
+    --theme-bg-stage: linear-gradient(180deg, #090a10 0%, #0d1018 42%, #101724 100%);
     --theme-bg-stage-depth:
-        radial-gradient(circle at 10% 12%, rgba(79, 156, 255, 0.1), transparent 24%),
-        radial-gradient(circle at 88% 14%, rgba(47, 195, 157, 0.07), transparent 18%),
-        radial-gradient(circle at 18% 82%, rgba(240, 138, 56, 0.08), transparent 20%),
-        radial-gradient(circle at 72% 68%, rgba(79, 156, 255, 0.05), transparent 18%);
+        radial-gradient(circle at 10% 12%, rgba(0, 212, 255, 0.12), transparent 24%),
+        radial-gradient(circle at 88% 14%, rgba(175, 82, 222, 0.1), transparent 18%),
+        radial-gradient(circle at 18% 82%, rgba(0, 255, 136, 0.08), transparent 20%),
+        radial-gradient(circle at 74% 68%, rgba(255, 8, 68, 0.06), transparent 18%);
 
-    --theme-surface: rgba(13, 22, 38, 0.84);
-    --theme-surface-secondary: rgba(17, 29, 49, 0.88);
-    --theme-surface-strong: rgba(20, 33, 56, 0.94);
-    --theme-surface-muted: rgba(11, 20, 34, 0.9);
+    --theme-surface: rgba(14, 18, 29, 0.82);
+    --theme-surface-secondary: rgba(18, 24, 38, 0.88);
+    --theme-surface-strong: rgba(24, 31, 48, 0.94);
+    --theme-surface-muted: rgba(12, 16, 27, 0.9);
     --theme-surface-inverse: #f8fafc;
-    --theme-surface-panel: linear-gradient(180deg, rgba(14, 24, 41, 0.92), rgba(16, 27, 47, 0.9));
-    --theme-surface-panel-strong: linear-gradient(160deg, rgba(17, 28, 48, 0.96), rgba(19, 32, 54, 0.94));
-    --theme-surface-panel-dark: linear-gradient(180deg, rgba(9, 17, 29, 0.98), rgba(12, 21, 38, 0.96));
+    --theme-surface-panel: linear-gradient(180deg, rgba(14, 18, 29, 0.92), rgba(18, 24, 38, 0.9));
+    --theme-surface-panel-strong: linear-gradient(160deg, rgba(18, 24, 38, 0.97), rgba(24, 31, 48, 0.94));
+    --theme-surface-panel-dark: linear-gradient(180deg, rgba(10, 10, 15, 0.98), rgba(16, 19, 29, 0.96));
+    --theme-surface-glass: linear-gradient(180deg, rgba(18, 24, 38, 0.78), rgba(13, 17, 28, 0.56));
+    --theme-surface-glass-strong: linear-gradient(180deg, rgba(22, 29, 45, 0.9), rgba(16, 20, 31, 0.78));
+    --theme-surface-chrome: color-mix(in srgb, var(--theme-surface-panel) 84%, transparent);
+    --theme-surface-chrome-strong: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
 
     --theme-text-primary: #edf3ff;
-    --theme-text-secondary: #c4d0e5;
-    --theme-text-muted: #8fa1bd;
+    --theme-text-secondary: #c9d3e7;
+    --theme-text-muted: #92a0bb;
     --theme-text-soft: #d7e1f0;
 
-    --theme-border-soft: rgba(129, 152, 186, 0.2);
-    --theme-border-strong: rgba(148, 173, 212, 0.28);
-    --theme-border-glow: rgba(79, 156, 255, 0.32);
+    --theme-border-soft: rgba(146, 160, 188, 0.18);
+    --theme-border-strong: rgba(166, 182, 216, 0.28);
+    --theme-border-glow: rgba(0, 212, 255, 0.3);
 
     --theme-shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.18), 0 4px 10px rgba(0, 0, 0, 0.1);
     --theme-shadow-lift: 0 18px 44px rgba(0, 0, 0, 0.26), 0 8px 18px rgba(0, 0, 0, 0.16);
     --theme-shadow-xl: 0 26px 64px rgba(0, 0, 0, 0.34), 0 12px 26px rgba(0, 0, 0, 0.18);
+    --theme-glass-border: rgba(255, 255, 255, 0.09);
+    --theme-glass-highlight: rgba(255, 255, 255, 0.06);
+    --theme-glass-shadow: 0 18px 46px rgba(0, 0, 0, 0.28), 0 6px 16px rgba(0, 0, 0, 0.18);
+    --theme-scrollbar-track: rgba(255, 255, 255, 0.035);
+    --theme-scrollbar-thumb: rgba(146, 160, 188, 0.34);
+    --theme-scrollbar-thumb-hover: color-mix(in srgb, var(--theme-accent-premium) 42%, rgba(146, 160, 188, 0.46));
 
     --sidebar-bg: #07111f;
-    --sidebar-line: rgba(129, 152, 186, 0.12);
+    --sidebar-line: rgba(146, 160, 188, 0.12);
     --sidebar-ink: #edf3ff;
     --sidebar-muted: rgba(182, 198, 223, 0.72);
-    --sidebar-active: rgba(79, 156, 255, 0.2);
+    --sidebar-active: rgba(0, 212, 255, 0.16);
     --sidebar-hover: rgba(255, 255, 255, 0.06);
-    --sidebar-focus: rgba(79, 156, 255, 0.3);
+    --sidebar-focus: rgba(0, 212, 255, 0.26);
 }
 
 body[data-theme="dark"] {
@@ -220,6 +255,39 @@ body[data-theme="dark"] input::placeholder,
 body[data-theme="dark"] textarea::placeholder {
     color: var(--ink);
     opacity: 0.85;
+}
+
+/* Browser autofill can override dark surfaces with light paint and dark ink.
+   We restyle it here at the token layer so every form inherits the same contrast contract. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--theme-text-primary);
+    caret-color: var(--theme-text-primary);
+    box-shadow: inset 0 0 0 1000px var(--theme-surface-strong);
+    transition: background-color 9999s ease-in-out 0s;
+}
+
+body[data-theme="dark"] input:-webkit-autofill,
+body[data-theme="dark"] input:-webkit-autofill:hover,
+body[data-theme="dark"] input:-webkit-autofill:focus,
+body[data-theme="dark"] textarea:-webkit-autofill,
+body[data-theme="dark"] textarea:-webkit-autofill:hover,
+body[data-theme="dark"] textarea:-webkit-autofill:focus,
+body[data-theme="dark"] select:-webkit-autofill,
+body[data-theme="dark"] select:-webkit-autofill:hover,
+body[data-theme="dark"] select:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--theme-text-primary);
+    caret-color: var(--theme-text-primary);
+    box-shadow:
+        inset 0 0 0 1000px color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent),
+        inset 0 1px 0 var(--theme-glass-highlight);
 }
 
 * {
@@ -253,6 +321,33 @@ body::after {
     inset: 0;
     pointer-events: none;
     z-index: -1;
+}
+
+html {
+    scrollbar-color: var(--theme-scrollbar-thumb) var(--theme-scrollbar-track);
+    scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+    background: var(--theme-scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+    background: var(--theme-scrollbar-thumb);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: var(--theme-scrollbar-thumb-hover);
+    border: 2px solid transparent;
+    background-clip: padding-box;
 }
 
 body::before,

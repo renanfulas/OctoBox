@@ -5,19 +5,19 @@ ARQUIVO: fila financeira com cobrancas ativas.
 ARQUIVO: painel de fila financeira do financeiro.
 
 POR QUE ELE EXISTE:
-- Mostra cobranças ativas e pendências financeiras.
+- Mostra cobrancas ativas e pendencias financeiras.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Exibe alertas financeiros e pendências.
-2. Ajuda a visualizar pressão no fluxo de caixa.
+1. Exibe alertas financeiros e pendencias.
+2. Ajuda a visualizar pressao no fluxo de caixa.
 
 PONTOS CRITICOS:
 - Depende do contexto de financial_alerts.
 -->
-<section class="card glass-panel finance-board-queue" id="finance-queue-board" data-panel="finance-queue-board" aria-label="Fila Automatica">
+<section class="card glass-panel finance-board-queue" id="finance-queue-board" data-panel="finance-queue-board" aria-label="Fila Autom&aacute;tica">
     <div class="card-head">
         <div class="finance-overdue-head-copy">
-            <h3 class="card-title">Cobrancas em atraso</h3>
+            <h3 class="card-title">Cobran&ccedil;as em atraso</h3>
             <p class="finance-overdue-subtitle">{{ page.data.finance_overdue_rows|length }} pagamento(s) pendente(s)</p>
         </div>
         <span class="badge badge-subtle warning">Urgente</span>
@@ -38,7 +38,7 @@ PONTOS CRITICOS:
             </div>
         </a>
         {% empty %}
-        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Fila financeira" title="Nenhuma pendencia financeira no momento" copy="A carteira nao tem cobranca pressionando caixa ou retencao neste recorte." badge="Carteira estabilizada" badge_class="accent" %}
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Fila financeira" title="Nenhuma pend&ecirc;ncia financeira no momento" copy="A carteira n&atilde;o tem cobran&ccedil;a pressionando caixa ou reten&ccedil;&atilde;o neste recorte." badge="Carteira estabilizada" badge_class="accent" %}
         {% endfor %}
     </div>
 </section>

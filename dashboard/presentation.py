@@ -478,24 +478,7 @@ def _build_dashboard_priority_cards(
         None,
     )
 
-    if highest_risk_student and highest_risk_student.total_absences >= 1:
-        urgency_card = build_priority_card(
-            severity='warning',
-            value=highest_risk_student.total_absences,
-            surface='students',
-            href=get_shell_route_url('students'),
-            href_label='Abrir alunos em atencao',
-            card_class='is-base',
-            indicator_class='is-base',
-            kicker='Urgente',
-            indicator='Retencao' if role_slug != ROLE_RECEPTION else 'Cuidado',
-            copy=(
-                f'{highest_risk_student.full_name} sumiu um pouco, {highest_risk_student.total_absences} falta(s). Uma mensagem sua pode ser o que faltava pra voltar.'
-                if role_slug != ROLE_RECEPTION else
-                f'{highest_risk_student.full_name} precisa sentir que alguem notou, {highest_risk_student.total_absences} falta(s). Seu acolhimento pode mudar tudo.'
-            ),
-        )
-    elif pressured_session:
+    if pressured_session:
         starts_at = pressured_session.get('starts_at')
         starts_at_label = timezone.localtime(starts_at).strftime('%H:%M') if starts_at else '--:--'
         urgency_card = build_priority_card(
@@ -512,6 +495,23 @@ def _build_dashboard_priority_cards(
                 f"{pressured_session['object'].title} esta acontecendo agora. Eu cuido da leitura, voce cuida da equipe."
                 if pressured_session['status_label'] == 'Em andamento' else
                 f"{pressured_session['object'].title} comeca as {starts_at_label} e precisa de atencao. Vou te levar pra agenda."
+            ),
+        )
+    elif highest_risk_student and highest_risk_student.total_absences >= 1:
+        urgency_card = build_priority_card(
+            severity='warning',
+            value=highest_risk_student.total_absences,
+            surface='students',
+            href=get_shell_route_url('students'),
+            href_label='Abrir alunos em atencao',
+            card_class='is-base',
+            indicator_class='is-base',
+            kicker='Urgente',
+            indicator='Retencao' if role_slug != ROLE_RECEPTION else 'Cuidado',
+            copy=(
+                f'{highest_risk_student.full_name} sumiu um pouco, {highest_risk_student.total_absences} falta(s). Uma mensagem sua pode ser o que faltava pra voltar.'
+                if role_slug != ROLE_RECEPTION else
+                f'{highest_risk_student.full_name} precisa sentir que alguem notou, {highest_risk_student.total_absences} falta(s). Seu acolhimento pode mudar tudo.'
             ),
         )
     else:
