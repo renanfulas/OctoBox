@@ -189,16 +189,30 @@ Todo card relevante deve conseguir ser classificado neste formato:
 | `card` | `shared` | global | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\cards.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\cards.css) | saudavel |
 | `card--sci-fi` | `variant` | global | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\card-variants.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\card-variants.css) | saudavel |
 | `class-grid` cards com `--card-local-*` | `page-override` | class-grid | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\workspace.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\workspace.css) | saudavel |
+| `weekly-day-card` | `page-override` | class-grid | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\calendar.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\calendar.css) | saudavel |
+| `weekly-session-chip` | `page-override` | class-grid | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\calendar.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\calendar.css) | saudavel |
 | `student-form-shell` stepper e disclosures | `page-override` | student-form-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\student_form_stepper.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\student_form_stepper.css) | saudavel |
+| `student-financial-*` overview panels | `page-override` | student-page-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-financial.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-financial.css) | saudavel |
+| `student-financial-peek` e `student-financial-command-strip` | `page-override` | student-page-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-financial.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-financial.css) | saudavel |
+| `student-financial-drawer` e `student-payment-management-card` | `page-override` | student-page-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-financial.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-financial.css) | saudavel |
 | `finance-shell` boards e KPI strip | `page-override` | finance-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_shell.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_shell.css) | saudavel |
+| `finance-board-queue` | `page-override` | finance-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_boards.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_boards.css) | saudavel |
+| `finance-board-rail--priority` | `page-override` | finance-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_boards.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_boards.css) | saudavel |
 | `finance` signature cards | `page-override` | finance-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_signature.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_signature.css) | transitorio |
-| `intake` boards e filter card | `page-override` | intake-scene | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\onboarding\intakes.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\onboarding\intakes.css) | transitorio |
+| `intake` boards e filter card | `page-override` | intake-scene | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\onboarding\intakes.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\onboarding\intakes.css) | saudavel |
+| `intake-filter-card` | `page-override` | intake-scene | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\onboarding\intakes.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\onboarding\intakes.css) | saudavel |
+| `intake-board` | `page-override` | intake-scene | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\onboarding\intakes.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\onboarding\intakes.css) | saudavel |
 | `owner notion` panels | `page-override` | owner-notion-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\operations\owner\notion\panels.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\operations\owner\notion\panels.css) | saudavel |
 | `student-page-charge-card` | `page-owned` | student-page-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css) | saudavel |
 
 ## Reclassificacao operacional atual
 
 Depois das ondas de alinhamento, a leitura oficial do territorio fica assim:
+
+Nota:
+
+1. esta secao e uma foto operacional do momento
+2. ela deve ser revisada quando novas ondas mudarem ownership, split ou estado dos shells
 
 ### Ja classificados como `page-owned`
 
@@ -215,15 +229,17 @@ Motivo:
 
 1. `class-grid`
 2. `student-form-shell`
-3. `finance-shell` boards e KPI strip
-4. `owner notion`
-5. `intake-scene`
+3. `student-financial-*`
+4. `finance-shell` boards e KPI strip
+5. `owner notion`
+6. `intake-scene`
 
 Motivo:
 
 1. ainda respondem bem ao host e ao shell
 2. a maior parte da diferenca esta em clima, contraste, superficie e densidade
 3. nao pedem split estrutural agora
+4. no caso de `student-financial-*`, os templates ainda nascem em grande parte de `card`, `card--sci-fi` e `--card-local-*`
 
 ### Permanecem `transitorio`, mas ainda nao pedem split
 
@@ -233,6 +249,28 @@ Motivo:
 
 1. ainda tem identidade visual forte
 2. mas hoje funcionam mais como camada de assinatura do shell do que como card independente de anatomia propria
+
+### Triagem explicita do `finance/_signature.css`
+
+Leitura atual:
+
+1. `finance-metric-card`
+2. `finance-filter-summary-card`
+3. `finance-radar-card`
+4. `finance-action-card`
+
+Classificacao:
+
+1. continuam `page-override`
+2. permanecem `transitorio`
+3. ainda nao viram `page-owned`
+
+Motivo:
+
+1. a assinatura nasce de variaveis locais do shell como `--finance-signature-*`
+2. o arquivo muda principalmente cor, superficie, brilho, chips e botoes
+3. a anatomia principal continua vivendo no host, nos boards e nos templates existentes
+4. hoje isso parece mais sotaque visual premium do que uma familia estrutural independente
 
 ### Nao devem virar `page-owned` por enquanto
 
@@ -246,6 +284,29 @@ Motivo:
 1. a maior parte do problema anterior era cascata e ownership
 2. depois da limpeza, esses blocos respondem melhor ao shell
 3. split agora criaria mais manutencao do que beneficio
+
+### Triagem explicita do `student-financial-*`
+
+Leitura atual:
+
+1. `student-financial-peek`
+2. `student-financial-command-strip`
+3. `student-financial-panel`
+4. `student-financial-side-panel`
+5. `student-financial-drawer`
+6. `student-payment-management-card`
+
+Classificacao:
+
+1. continuam `page-override`
+2. nao viram `page-owned` agora
+
+Motivo:
+
+1. ainda nascem majoritariamente de `card`, `card--sci-fi` ou `--card-local-*`
+2. a maior parte da personalizacao esta em superficie, brilho, layout local e contexto de shell
+3. apesar da identidade forte, o host ainda responde de forma previsivel
+4. o custo de split hoje seria maior que o beneficio arquitetural
 
 Tipos oficiais:
 
@@ -265,7 +326,7 @@ Status recomendados:
 Use este prompt curto para triagem rapida:
 
 ```text
-Analise este card ou superficie do OctoBox e classifique em uma das 4 categorias: global, shell da pagina, variante oficial ou page-owned. Explique por que, cite o arquivo dono e diga se o caso pede override, variante ou split.
+Analise este card ou superficie do OctoBox e classifique em uma das 4 categorias: shared/global, shell da pagina, variante oficial ou page-owned. Explique por que, cite o arquivo dono e diga se o caso pede override, variante ou split.
 ```
 
 ## Checklist de criacao
