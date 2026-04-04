@@ -884,7 +884,7 @@ body[data-theme="dark"] .student-financial-history-card {
 
 .student-financial-ledger__amount {
     color: var(--theme-text-primary);
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: var(--font-body);
     font-size: 0.82rem;
     font-weight: 700;
 }

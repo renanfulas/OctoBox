@@ -180,7 +180,7 @@ POR QUE ELE EXISTE:
     font-size: 0.78rem;
     line-height: 1.5;
     color: color-mix(in srgb, var(--theme-accent-danger) 88%, var(--theme-text-primary) 12%);
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-family: var(--font-body);
 }
 
 .import-progress-errors-hint {
