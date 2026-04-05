@@ -14,6 +14,12 @@ ARQUIVO: superficies perifericas e estados isolados do produto.
     box-shadow: var(--shadow-lift);
 }
 
+.error-page-surface {
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(14px);
+}
+
 .error-page-badge {
     margin-bottom: 20px;
     font-size: 3.5rem;

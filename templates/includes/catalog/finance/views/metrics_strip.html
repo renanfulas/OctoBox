@@ -3,7 +3,7 @@ ARQUIVO: faixa de metricas da central financeira.
 -->
 <section class="panel-grid finance-metric-strip" aria-label="Indicadores financeiros">
     {% for label, item in page.data.finance_metrics.items %}
-    <article class="card finance-metric-card {% cycle 'orange-glow' 'green-glow' 'blue-glow' 'orange-glow' 'green-glow' 'blue-glow' %}">
+    <article class="card finance-metric-card {% cycle 'finance-metric-card--copper' 'finance-metric-card--teal' 'finance-metric-card--cyan' 'finance-metric-card--copper' 'finance-metric-card--teal' 'finance-metric-card--cyan' %}">
         <p class="eyebrow card-label">{{ label }}</p>
         <p class="metric card-value{% if item.is_currency %} finance-currency-metric{% endif %}">{% if item.is_currency %}R$ {{ item.value|floatformat:2 }}{% else %}{{ item.value }}{% endif %}</p>
         {% if item.submetric %}

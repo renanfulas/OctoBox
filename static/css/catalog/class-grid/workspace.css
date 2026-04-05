@@ -40,6 +40,12 @@ POR QUE ELE EXISTE:
     transition: box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
 }
 
+.class-grid-surface-card {
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(14px);
+}
+
 .class-grid-panel-head {
     display: flex;
     justify-content: space-between;
@@ -73,6 +79,44 @@ POR QUE ELE EXISTE:
 
 .class-session-edit-panel {
     background: color-mix(in srgb, var(--theme-accent-support-alpha) 58%, var(--card-surface) 42%);
+}
+
+.class-planner-intro-card {
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 22%, var(--card-border) 78%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 34%),
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent),
+            color-mix(in srgb, var(--theme-surface-glass) 96%, transparent)
+        );
+    box-shadow: var(--card-shadow);
+}
+
+.class-planner-intro-card .eyebrow {
+    color: var(--theme-accent-support);
+}
+
+.class-planner-intro-card .class-day-summary {
+    color: var(--muted);
+}
+
+body[data-theme="dark"] .class-planner-intro-card {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 26%, var(--theme-glass-border) 74%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 34%),
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-glass-strong) 92%, transparent),
+            color-mix(in srgb, var(--theme-surface-glass) 88%, transparent)
+        );
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 16px 34px rgba(0, 0, 0, 0.2);
+}
+
+body[data-theme="dark"] .class-planner-intro-card .class-day-summary {
+    color: var(--theme-text-secondary);
 }
 
 .class-day-header {

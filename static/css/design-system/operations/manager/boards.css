@@ -11,14 +11,6 @@ ARQUIVO: densidade e leitura dos boards do manager.
     min-width: 0;
 }
 
-.manager-board .operation-card-title {
-    max-width: 24ch;
-}
-
-.manager-board .operation-card-copy {
-    color: var(--theme-text-secondary);
-}
-
 .manager-priority-card .operation-card-head,
 .manager-secondary-card .operation-card-head {
     margin-bottom: 8px;
@@ -68,18 +60,4 @@ ARQUIVO: densidade e leitura dos boards do manager.
 
 .manager-secondary-card {
     align-content: start;
-}
-
-.manager-scene[data-manager-priority="intake"] .manager-board--intake .operation-card-title,
-.manager-scene[data-manager-priority="links"] .manager-board--links .operation-card-title,
-.manager-scene[data-manager-priority="links"] .manager-board--enrollment .operation-card-title,
-.manager-scene[data-manager-priority="finance"] .manager-board--finance .operation-card-title {
-    color: var(--theme-text-primary);
-}
-
-.manager-scene[data-manager-priority="intake"] .manager-board--intake .operation-card-copy,
-.manager-scene[data-manager-priority="links"] .manager-board--links .operation-card-copy,
-.manager-scene[data-manager-priority="links"] .manager-board--enrollment .operation-card-copy,
-.manager-scene[data-manager-priority="finance"] .manager-board--finance .operation-card-copy {
-    color: var(--theme-text-primary);
 }

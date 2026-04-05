@@ -75,6 +75,24 @@ PONTOS CRITICOS:
         0 18px 38px rgba(19, 33, 50, 0.08);
 }
 
+.finance-shell :is(
+    .finance-board-filter,
+    .finance-filter-summary-card,
+    .finance-board-mix,
+    .finance-board-portfolio,
+    .finance-board-queue,
+    .finance-board-plan,
+    .finance-board-rail,
+    .finance-board-trend,
+    .finance-board-trend-side,
+    .finance-ops-summary-card,
+    .finance-radar-card
+) {
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(14px);
+}
+
 .finance-shell .finance-metric-card::before,
 .finance-shell .finance-ops-summary-card::before,
 .finance-shell .finance-radar-card::before,
@@ -98,15 +116,15 @@ PONTOS CRITICOS:
     pointer-events: none;
 }
 
-.finance-shell .finance-metric-card.orange-glow {
+.finance-shell .finance-metric-card.finance-metric-card--copper {
     --finance-card-aura: rgba(196, 103, 52, 0.18);
 }
 
-.finance-shell .finance-metric-card.green-glow {
+.finance-shell .finance-metric-card.finance-metric-card--teal {
     --finance-card-aura: rgba(15, 118, 110, 0.18);
 }
 
-.finance-shell .finance-metric-card.blue-glow {
+.finance-shell .finance-metric-card.finance-metric-card--cyan {
     --finance-card-aura: rgba(41, 103, 163, 0.18);
 }
 

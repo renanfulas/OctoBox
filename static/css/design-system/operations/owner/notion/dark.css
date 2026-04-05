@@ -13,9 +13,9 @@ body[data-theme="dark"] .owner-notion-shell {
 }
 
 body[data-theme="dark"] .owner-notion-shell .operation-hero {
-    border-color: var(--line);
-    background: var(--surface);
-    box-shadow: var(--shadow-soft);
+    border-color: var(--card-border);
+    background: var(--card-surface-strong);
+    box-shadow: var(--card-shadow);
 }
 
 body[data-theme="dark"] .owner-notion-shell .operation-hero::before {
@@ -30,7 +30,7 @@ body[data-theme="dark"] .owner-notion-shell .operation-hero .actions .button:not
 
 body[data-theme="dark"] .owner-notion-shell .operation-hero .actions .button.secondary {
     border-color: var(--owner-notion-line);
-    background: rgba(255, 255, 255, 0.04);
+    background: color-mix(in srgb, var(--card-surface) 88%, transparent);
     color: rgba(243, 244, 246, 0.92);
 }
 
@@ -42,21 +42,21 @@ body[data-theme="dark"] .owner-notion-shell .owner-metric-grid .operation-kpi-ca
 body[data-theme="dark"] .owner-notion-shell .owner-summary-card,
 body[data-theme="dark"] .owner-notion-shell .owner-summary-card-structure,
 body[data-theme="dark"] .owner-notion-shell .owner-summary-card-priority {
-    border-color: var(--line);
-    background: var(--surface);
-    box-shadow: var(--shadow-soft);
+    border-color: var(--card-border);
+    background: var(--card-surface-strong);
+    box-shadow: var(--card-shadow);
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-focus-item,
 body[data-theme="dark"] .owner-notion-shell .owner-command-item,
 body[data-theme="dark"] .owner-notion-shell .owner-proof-item {
-    border-color: var(--line);
-    background: var(--surface);
+    border-color: var(--card-border);
+    background: var(--card-surface);
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-command-intro {
-    background: var(--ink);
-    box-shadow: var(--shadow-soft);
+    background: color-mix(in srgb, var(--theme-surface-inverse) 94%, black 6%);
+    box-shadow: var(--card-shadow);
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-command-kicker {
@@ -68,8 +68,8 @@ body[data-theme="dark"] .owner-notion-shell .owner-command-item--primary .owner-
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-command-index {
-    border-color: var(--line);
-    background: var(--bg);
+    border-color: var(--card-border);
+    background: color-mix(in srgb, var(--card-surface-strong) 94%, transparent);
     color: var(--ink);
 }
 
@@ -87,13 +87,13 @@ body[data-theme="dark"] .owner-notion-shell .owner-proof-link {
 body[data-theme="dark"] .owner-notion-shell .owner-command-actions .button.secondary,
 body[data-theme="dark"] .owner-notion-shell .owner-focus-actions .button.secondary {
     border-color: var(--owner-notion-line);
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--card-surface) 88%, transparent);
 }
 
 body[data-theme="dark"] .owner-notion-shell .operation-mini-stat,
 body[data-theme="dark"] .owner-notion-shell .owner-summary-card .capability-list li {
-    border-color: var(--line);
-    background: var(--bg);
+    border-color: var(--card-border);
+    background: color-mix(in srgb, var(--card-surface-strong) 94%, transparent);
 }
 
 body[data-theme="dark"] .owner-notion-shell .owner-summary-card-structure::before,

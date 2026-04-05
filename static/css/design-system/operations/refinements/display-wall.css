@@ -42,17 +42,21 @@ POR QUE ELE EXISTE:
 .manager-main-grid .manager-priority-card,
 .manager-main-grid .manager-secondary-card {
     border-radius: var(--radius-panel);
-    border: 1px solid var(--line);
+    border: 1px solid var(--card-border);
 }
 
 .manager-main-grid .manager-priority-card {
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 252, 0.98));
-    box-shadow: var(--shadow-soft);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-danger-alpha) 12%, transparent), transparent 28%),
+        var(--card-surface-strong);
+    box-shadow: var(--card-shadow);
 }
 
 .manager-main-grid .manager-secondary-card {
-    background: color-mix(in srgb, var(--surface) 92%, white);
-    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.07);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 28%),
+        var(--card-surface);
+    box-shadow: var(--card-shadow);
 }
 
 .manager-main-grid .manager-priority-card::before,
@@ -62,7 +66,7 @@ POR QUE ELE EXISTE:
     inset: 0 auto auto 0;
     width: 100%;
     height: 3px;
-    background: var(--line-strong);
+    background: color-mix(in srgb, var(--card-border) 92%, transparent);
 }
 
 .manager-main-grid .manager-priority-card::before {
@@ -90,7 +94,7 @@ POR QUE ELE EXISTE:
 }
 
 .manager-main-grid #manager-intake-board {
-    box-shadow: 0 26px 56px rgba(15, 23, 42, 0.12);
+    box-shadow: var(--shadow-lift);
 }
 
 .manager-main-grid #manager-intake-board .operation-card-title {
@@ -137,18 +141,22 @@ POR QUE ELE EXISTE:
 .reception-payment-board,
 #reception-intake-board {
     border-radius: var(--radius-panel);
-    border: 1px solid var(--line);
+    border: 1px solid var(--card-border);
 }
 
 .reception-priority-card {
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.99), rgba(246, 249, 252, 0.98));
-    box-shadow: 0 24px 54px rgba(15, 23, 42, 0.1);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 28%),
+        var(--card-surface-strong);
+    box-shadow: var(--card-shadow);
 }
 
 .reception-secondary-card,
 .reception-support-card {
-    background: color-mix(in srgb, var(--surface) 94%, white);
-    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.07);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 28%),
+        var(--card-surface);
+    box-shadow: var(--card-shadow);
 }
 
 .reception-command-card {
@@ -175,7 +183,7 @@ POR QUE ELE EXISTE:
 }
 
 .reception-grid-board::before {
-    background: var(--line-strong);
+    background: color-mix(in srgb, var(--card-border) 92%, transparent);
 }
 
 #reception-intake-board .operation-card-title {
@@ -211,7 +219,7 @@ POR QUE ELE EXISTE:
     overflow: hidden;
     border-radius: var(--radius-panel);
     padding: 18px;
-    border: 1px solid var(--line);
+    border: 1px solid var(--card-border);
 }
 
 .manager-focus-lane::before,
@@ -228,8 +236,10 @@ POR QUE ELE EXISTE:
 .manager-focus-lane,
 .coach-focus-lane,
 .reception-focus-lane {
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(246, 248, 251, 0.98));
-    box-shadow: var(--shadow-soft);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 30%),
+        var(--card-surface-strong);
+    box-shadow: var(--card-shadow);
 }
 
 .manager-focus-lane .fdw-focus-list,
@@ -248,7 +258,11 @@ POR QUE ELE EXISTE:
 }
 
 .coach-session-card {
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(246, 248, 251, 0.98));
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 28%),
+        var(--card-surface-strong);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
 }
 
 .reception-command-card .actions {
@@ -264,16 +278,28 @@ body[data-theme="dark"] .manager-focus-lane,
 body[data-theme="dark"] .coach-focus-lane,
 body[data-theme="dark"] .reception-focus-lane,
 body[data-theme="dark"] .coach-session-card {
-    background: var(--surface);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
+        var(--card-surface-strong);
+    border-color: var(--card-border);
+    box-shadow: var(--card-shadow);
 }
 
 body[data-theme="dark"] .reception-priority-card,
 body[data-theme="dark"] .reception-secondary-card,
 body[data-theme="dark"] .reception-support-card {
-    background: var(--surface);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
+        var(--card-surface-strong);
+    border-color: var(--card-border);
+    box-shadow: var(--card-shadow);
 }
 
 body[data-theme="dark"] .manager-main-grid .manager-priority-card,
 body[data-theme="dark"] .manager-main-grid .manager-secondary-card {
-    background: var(--surface);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
+        var(--card-surface-strong);
+    border-color: var(--card-border);
+    box-shadow: var(--card-shadow);
 }

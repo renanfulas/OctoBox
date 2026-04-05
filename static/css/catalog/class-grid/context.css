@@ -24,6 +24,9 @@ POR QUE ELE EXISTE:
 .class-grid-metric-card {
     min-width: 0;
     min-height: 134px;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(14px);
 }
 
 .class-grid-metric-card .card-body-metric {

@@ -167,6 +167,17 @@ POR QUE ELE EXISTE:
     min-height: 172px;
 }
 
+.intake-scene .intake-metric-card {
+    background: var(--card-surface);
+    border-color: rgba(215, 157, 116, 0.24);
+}
+
+.intake-surface-card {
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(14px);
+}
+
 .intake-source-grid {
     display: grid;
     gap: 0.85rem;

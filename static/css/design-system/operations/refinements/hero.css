@@ -58,9 +58,11 @@ POR QUE ELE EXISTE:
 }
 
 body[data-theme="dark"] .operation-hero {
-    --operation-hero-actions-surface: rgba(255, 255, 255, 0.04);
-    --operation-hero-actions-border: 1px solid rgba(148, 163, 184, 0.12);
-    --operation-hero-actions-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --operation-hero-actions-surface: color-mix(in srgb, var(--theme-surface-chrome-strong) 88%, transparent);
+    --operation-hero-actions-border: 1px solid color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    --operation-hero-actions-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 10px 24px rgba(0, 0, 0, 0.14);
 }
 
 @media (max-width: 960px) {
@@ -168,9 +170,9 @@ body[data-theme="dark"] .operation-hero {
 }
 
 body[data-theme="dark"] .operation-hero-panel {
-    border-color: var(--line);
-    background: var(--surface);
-    box-shadow: none;
+    border-color: var(--operation-hero-panel-border, var(--hero-panel-border, var(--line)));
+    background: var(--operation-hero-panel-surface, var(--hero-panel-surface, var(--surface)));
+    box-shadow: var(--operation-hero-panel-shadow, var(--hero-panel-shadow, none));
 }
 
 body[data-theme="dark"] .operation-hero-title {
@@ -178,12 +180,28 @@ body[data-theme="dark"] .operation-hero-title {
 }
 
 body[data-theme="dark"] .operation-hero-copy {
-    color: rgba(226, 232, 240, 0.75);
+    color: color-mix(in srgb, var(--theme-text-secondary) 90%, white 10%);
 }
 
 body[data-theme="dark"] .operation-mini-stat {
     border-color: var(--line);
-    background: var(--surface);
+    background: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
+}
+
+body[data-theme="dark"] .operation-hero-action-rail .button:not(.secondary) {
+    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 28%, transparent);
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-warning) 58%, transparent), color-mix(in srgb, var(--theme-accent-primary) 62%, transparent)),
+        color-mix(in srgb, var(--theme-surface-chrome-strong) 68%, transparent);
+    box-shadow:
+        0 12px 24px color-mix(in srgb, var(--theme-accent-primary) 18%, transparent),
+        inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+}
+
+body[data-theme="dark"] .operation-hero-action-rail .button.secondary {
+    background: color-mix(in srgb, var(--theme-surface-glass) 90%, transparent);
+    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    color: var(--theme-text-primary);
 }
 
 .operation-hero-action-rail {

@@ -17,12 +17,13 @@ PONTOS CRITICOS:
 {% block content %}
 {% with page=operation_page %}
 <div class="operation-shell dev-scene compass-pulse--operations-dev">
-    <p class="visually-hidden">Leitura técnica controlada</p>
-    <div class="visually-hidden" aria-hidden="true">
-        <a href="#dev-boundary-board">Ver fronteiras</a>
-        <a href="#dev-read-board">Ver leitura controlada</a>
-    </div>
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    <div class="visually-hidden" aria-hidden="true">
+        <span>Leitura técnica controlada</span>
+        <a href="#dev-audit-board">Eventos recentes de auditoria</a>
+        <a href="#dev-boundary-board">Fronteiras técnicas</a>
+        <a href="#dev-read-board">Leitura sistêmica</a>
+    </div>
 
     <section class="table-card operation-table-card dev-audit-card" id="dev-audit-board" aria-label="Eventos de auditoria">
         <div class="operation-card-head">
@@ -60,8 +61,12 @@ PONTOS CRITICOS:
             </table>
         </div>
     </section>
-    <section id="dev-boundary-board" hidden aria-hidden="true"></section>
-    <section id="dev-read-board" hidden aria-hidden="true"></section>
+    <section class="visually-hidden" id="dev-boundary-board" aria-hidden="true">
+        <h2>Fronteiras técnicas</h2>
+    </section>
+    <section class="visually-hidden" id="dev-read-board" aria-hidden="true">
+        <h2>Leitura sistêmica</h2>
+    </section>
 </div>
 {% endwith %}
 {% endblock %}

@@ -8,47 +8,9 @@ POR QUE ELE EXISTE:
 
 .owner-simple-shell {
     gap: 18px;
-    --owner-panel-border: color-mix(in srgb, var(--theme-border-soft) 90%, transparent);
-    --owner-panel-border-strong: color-mix(in srgb, var(--theme-accent-support) 22%, var(--theme-border-strong) 78%);
-    --owner-panel-shadow: var(--card-shadow);
-    --owner-panel-shadow-lift: var(--card-shadow-lift);
 }
 
 .owner-workspace {
     display: grid;
-    gap: 18px;
-}
-
-.owner-panel-grid {
-    grid-template-columns: minmax(0, 1.18fr) minmax(320px, 0.82fr);
-}
-
-.owner-support-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-}
-
-.owner-scene[data-owner-priority="intakes"] .owner-primary-panel,
-.owner-scene[data-owner-priority="payments"] .owner-primary-panel,
-.owner-scene[data-owner-priority="structure"] .owner-primary-panel {
-    border-color: var(--owner-panel-border-strong);
-    box-shadow: var(--owner-panel-shadow-lift);
-    transform: translateY(-1px);
-}
-
-.owner-scene[data-owner-priority="intakes"] .owner-primary-panel::after,
-.owner-scene[data-owner-priority="payments"] .owner-primary-panel::after,
-.owner-scene[data-owner-priority="structure"] .owner-primary-panel::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-accent-support) 12%, transparent);
-    pointer-events: none;
-}
-
-@media (max-width: 1024px) {
-    .owner-panel-grid,
-    .owner-support-grid {
-        grid-template-columns: 1fr;
-    }
+    gap: 32px;
 }

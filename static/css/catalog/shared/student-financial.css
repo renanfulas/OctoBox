@@ -1070,6 +1070,9 @@ POR QUE ELE EXISTE:
 
 .student-financial-timeline__content {
     padding: 14px 16px;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(14px);
 }
 
 .student-financial-action-button--compact {

@@ -248,6 +248,10 @@
     color: var(--theme-text-primary);
 }
 
+.student-form-shell .student-plan-expected-price {
+    color: var(--theme-accent-premium);
+}
+
 .student-form-recovery-panel {
     display: grid;
     gap: 10px;

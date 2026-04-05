@@ -6,11 +6,6 @@ ARQUIVO: superfície operacional do coach.
     --operation-mini-grid-gap: 6px;
     --operation-mini-grid-margin-top: 10px;
     --operation-mini-stat-padding: 7px 8px;
-    --coach-priority-border: color-mix(in srgb, var(--theme-accent-support) 24%, var(--theme-border-soft) 76%);
-    --coach-priority-border-strong: color-mix(in srgb, var(--theme-accent-primary) 24%, var(--theme-border-strong) 76%);
-    --coach-priority-glow: color-mix(in srgb, var(--theme-accent-primary-alpha) 58%, transparent);
-    --coach-session-surface: var(--card-surface);
-    --coach-session-surface-strong: var(--card-surface-strong);
     gap: calc(var(--section-gap) - 2px);
 }
 
@@ -35,45 +30,9 @@ ARQUIVO: superfície operacional do coach.
     gap: 16px;
 }
 
-.coach-scene .coach-session-card {
-    position: relative;
-    overflow: hidden;
-    background: var(--coach-session-surface);
-    border: 1px solid var(--coach-priority-border);
-    box-shadow: var(--card-shadow);
-}
-
-.coach-scene .coach-session-card::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto;
-    height: 3px;
-    background: linear-gradient(90deg, var(--theme-accent-support), var(--theme-accent-primary));
-    opacity: 0.82;
-}
-
-.coach-scene .coach-session-card:first-child {
-    background: var(--coach-session-surface-strong);
-    border-color: var(--coach-priority-border-strong);
-    box-shadow: var(--card-shadow-lift);
-}
-
-.coach-scene .coach-session-card:first-child::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-accent-support) 16%, transparent);
-    pointer-events: none;
-}
-
 .coach-session-card .operation-session-head {
     gap: 12px;
     padding: 20px 22px 0;
-}
-
-.coach-session-card:first-child .operation-session-title {
-    font-size: 1.18rem;
 }
 
 .coach-session-card .operation-session-title {
@@ -85,19 +44,12 @@ ARQUIVO: superfície operacional do coach.
     line-height: 1.45;
 }
 
-.coach-session-card .operation-session-body {
-    padding: 16px 22px 22px;
-    border-top: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
-}
-
 .coach-session-card .operation-session-badges {
     gap: 8px;
 }
 
-.coach-session-card .operation-session-badges .pill.accent {
-    background: color-mix(in srgb, var(--theme-accent-support-alpha) 84%, white 16%);
-    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, var(--theme-border-soft) 76%);
-    color: color-mix(in srgb, var(--theme-accent-support) 82%, var(--theme-text-primary) 18%);
+.coach-session-card .operation-session-body {
+    padding: 16px 22px 22px;
 }
 
 .coach-session-card .operation-inline-actions {
@@ -143,102 +95,4 @@ ARQUIVO: superfície operacional do coach.
 .coach-note-form .actions .button {
     min-height: 32px;
     padding: 6px 11px;
-}
-
-.coach-boundary-panel {
-    display: grid;
-    gap: 16px;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 96%, transparent), color-mix(in srgb, var(--theme-bg-stage) 92%, transparent));
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
-    box-shadow: var(--card-shadow);
-}
-
-.coach-boundary-head {
-    display: grid;
-    gap: 6px;
-}
-
-.coach-boundary-copy {
-    margin: 0;
-    color: var(--theme-text-secondary);
-    line-height: 1.55;
-}
-
-.coach-boundary-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
-    gap: 16px;
-}
-
-.coach-boundary-label {
-    margin: 0 0 10px;
-    font-size: 0.82rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--theme-text-muted);
-}
-
-.coach-boundary-list,
-.coach-category-list {
-    margin: 0;
-    padding: 0;
-}
-
-.coach-boundary-list {
-    list-style: none;
-    display: grid;
-    gap: 10px;
-}
-
-.coach-boundary-item {
-    padding: 12px 14px;
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 90%, transparent);
-    background: color-mix(in srgb, var(--theme-surface) 94%, transparent);
-    color: var(--theme-text-secondary);
-    line-height: 1.5;
-}
-
-.coach-category-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.coach-category-pill {
-    min-height: 32px;
-    padding-inline: 12px;
-    border-color: color-mix(in srgb, var(--theme-accent-support) 20%, var(--theme-border-soft) 80%);
-    background: color-mix(in srgb, var(--theme-accent-support-alpha) 58%, transparent);
-}
-
-body[data-theme="dark"] .coach-scene .coach-session-card {
-    background: var(--coach-session-surface);
-    border-color: color-mix(in srgb, var(--theme-accent-support) 22%, var(--theme-border-soft) 78%);
-}
-
-body[data-theme="dark"] .coach-scene .coach-session-card:first-child {
-    background: var(--coach-session-surface-strong);
-    border-color: color-mix(in srgb, var(--theme-accent-primary) 22%, var(--theme-border-strong) 78%);
-}
-
-body[data-theme="dark"] .coach-session-card .operation-session-badges .pill.accent {
-    background: color-mix(in srgb, var(--theme-accent-support-alpha) 62%, transparent);
-    border-color: color-mix(in srgb, var(--theme-accent-support) 28%, var(--theme-border-soft) 72%);
-    color: color-mix(in srgb, var(--theme-accent-support) 72%, white 28%);
-}
-
-body[data-theme="dark"] .coach-boundary-panel {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 92%, transparent), color-mix(in srgb, var(--theme-bg-depth) 86%, transparent));
-}
-
-body[data-theme="dark"] .coach-boundary-item {
-    background: color-mix(in srgb, var(--theme-surface) 92%, transparent);
-}
-
-@media (max-width: 720px) {
-    .coach-boundary-grid {
-        grid-template-columns: 1fr;
-    }
 }

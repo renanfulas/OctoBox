@@ -6,9 +6,19 @@ POR QUE ELE EXISTE:
 - mantém aqui os estados semânticos dos KPI cards.
 */
 
-.owner-metrics-panel {
+.owner-workspace-strip {
     margin-top: var(--workspace-fib-4);
-    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(320px, 420px);
+    gap: 18px;
+    align-items: start;
+}
+
+.owner-metrics-panel {
+    margin-top: 0;
+    width: min(100%, 420px);
+    margin-left: auto;
+    justify-self: end;
 }
 
 .owner-metrics-panel > .page-reading-panel,
@@ -17,20 +27,34 @@ POR QUE ELE EXISTE:
 }
 
 .owner-simple-shell .owner-metric-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
 }
 
 /* Grade compacta oficial de KPIs do owner */
 
-@media (max-width: 1024px) {
-    .owner-simple-shell .owner-metric-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+.owner-sessions-panel {
+    min-width: 0;
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 26%),
+        var(--theme-surface-glass);
 }
 
-@media (max-width: 640px) {
-    .owner-simple-shell .owner-metric-grid {
-        grid-template-columns: 1fr;
-    }
+.owner-sessions-panel .operation-card-copy {
+    max-width: 36ch;
+}
+
+body[data-theme="dark"] .owner-sessions-panel {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 28%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 14%, transparent), transparent 24%),
+        var(--theme-surface-glass-strong);
+    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 18px 42px rgba(0, 0, 0, 0.24);
+}
+
+body[data-theme="dark"] .owner-sessions-panel .operation-card-copy {
+    color: var(--theme-text-secondary);
 }

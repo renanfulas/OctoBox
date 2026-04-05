@@ -20,7 +20,7 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .capability-list
 
 body[data-theme="dark"] .owner-simple-shell .owner-secondary-step,
 body[data-theme="dark"] .owner-simple-shell .owner-status-label {
-    color: rgba(209, 213, 219, 0.62);
+    color: color-mix(in srgb, var(--theme-text-muted) 88%, white 12%);
 }
 
 body[data-theme="dark"] .owner-simple-shell .owner-secondary-body strong,
@@ -42,6 +42,10 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
 }
 
 @media (max-width: 960px) {
+    .owner-workspace-strip {
+        grid-template-columns: 1fr;
+    }
+
     .dev-scene .operation-hero,
     .manager-scene .operation-hero,
     .coach-scene .operation-hero,
@@ -101,18 +105,17 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
 
 .owner-status-item,
 .owner-secondary-item {
-    transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .owner-status-item:hover,
 .owner-secondary-item:hover {
-    transform: translateY(-1px);
     border-color: var(--brand);
     box-shadow: var(--shadow-lift);
 }
 
 body[data-theme="dark"] .owner-secondary-kicker {
-    color: rgba(209, 213, 219, 0.58);
+    color: color-mix(in srgb, var(--theme-text-muted) 84%, white 16%);
 }
 
 body[data-theme="dark"] .owner-secondary-step {

@@ -87,16 +87,15 @@ body[data-theme="dark"] .finance-shell .body-copy strong {
     color: var(--ink);
 }
 
-body[data-theme="dark"] .finance-shell .orange-glow {
+body[data-theme="dark"] .finance-shell .finance-metric-card--copper {
     background: var(--surface);
 }
 
-body[data-theme="dark"] .finance-shell .green-glow {
+body[data-theme="dark"] .finance-shell .finance-metric-card--teal {
     background: var(--surface);
 }
 
-body[data-theme="dark"] .finance-shell .blue-glow,
-body[data-theme="dark"] .finance-shell .info-card {
+body[data-theme="dark"] .finance-shell .finance-metric-card--cyan {
     background: var(--surface);
 }
 

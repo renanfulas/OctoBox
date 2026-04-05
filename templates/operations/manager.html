@@ -16,9 +16,14 @@ PONTOS CRITICOS:
 
 {% block content %}
 {% with page=operation_page %}
-<div class="operation-shell manager-scene workspace-shell" data-manager-priority="{{ page.data.manager_priority_surface|default:'maintenance' }}">
+<div class="operation-shell manager-scene workspace-shell" data-manager-priority="{{ page.data.manager_priority_surface|default:'finance' }}">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% include "includes/ui/layout/page_reading_list.html" with panel=page.data.reading_panel %}
+    <div class="visually-hidden" aria-hidden="true">
+        <a href="#manager-link-board">Ver vínculos pendentes</a>
+        <a href="#manager-enrollment-link-board">Ver pagamentos sem matrícula</a>
+        <a href="#manager-finance-board">Ver alertas financeiros</a>
+    </div>
     {% include "operations/includes/manager/manager_boards_section.html" %}
     {% include "operations/includes/manager/manager_metrics_section.html" %}
 </div>
