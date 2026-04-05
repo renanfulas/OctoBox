@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextBtn = formRoot.querySelector('[data-action="next-step"]');
     const backBtn = formRoot.querySelector('[data-action="prev-step"]');
     const submitBtn = formRoot.querySelector('[type="submit"]');
-    const stepStatus = formRoot.querySelector('[data-stepper-status]');
     const handoffPanel = formRoot.querySelector('[data-student-form-handoff]');
     const initialStep = Math.max(1, Number.parseInt(formRoot.dataset.initialStep || '1', 10) || 1);
 
@@ -22,11 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepMeta = [
         {
             nextLabel: 'Ir para plano e pagamento',
-            status: 'Etapa atual: identificacao. Confirme nome, contato e perfil antes de avancar.',
         },
         {
             nextLabel: 'Continuar',
-            status: 'Etapa atual: plano e pagamento. Revise o fechamento comercial antes de salvar.',
         },
     ];
 
@@ -84,10 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (handoffPanel) {
             handoffPanel.hidden = currentStep !== steps.length - 1;
         }
-
-        if (stepStatus) {
-            stepStatus.textContent = stepMeta[currentStep]?.status || '';
-        }
     }
 
     function jumpToStep(stepIndex) {
@@ -129,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('click', (e) => {
         const stepLink = e.target.closest('[data-step-target]');
-        if (!stepLink || !formRoot.contains(stepLink) && !document.querySelector('.student-workspace-map')?.contains(stepLink)) {
+        if (!stepLink || !formRoot.contains(stepLink)) {
             return;
         }
 
@@ -179,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (payloadElement) {
         try {
             const pagePayload = JSON.parse(payloadElement.textContent || '{}');
-            const planPriceMap = pagePayload.plan_price_map || {};
+        const planPriceMap = pagePayload.plan_price_map || {};
 
             const currencyFormatter = new Intl.NumberFormat('pt-BR', {
                 style: 'currency',
@@ -194,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         } catch (e) {
-            console.error('Error parsing payload for plan prices:', e);
+            console.error('Erro ao interpretar o payload dos preços do plano:', e);
         }
     }
 
@@ -240,7 +233,7 @@ async function generatePaymentLink(paymentId) {
                 btn.disabled = false;
             }, 3000);
         } else {
-            throw new Error('Url not found');
+            throw new Error('URL n\u00e3o encontrada');
         }
     } catch (err) {
         console.error('Erro ao gerar link:', err);

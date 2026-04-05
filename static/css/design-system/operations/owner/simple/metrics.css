@@ -8,9 +8,7 @@ POR QUE ELE EXISTE:
 
 .owner-metrics-panel {
     margin-top: var(--workspace-fib-4);
-    width: min(100%, 420px);
-    margin-left: auto;
-    justify-self: end;
+    width: 100%;
 }
 
 .owner-metrics-panel > .page-reading-panel,
@@ -19,8 +17,20 @@ POR QUE ELE EXISTE:
 }
 
 .owner-simple-shell .owner-metric-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
 }
 
 /* Grade compacta oficial de KPIs do owner */
+
+@media (max-width: 1024px) {
+    .owner-simple-shell .owner-metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .owner-simple-shell .owner-metric-grid {
+        grid-template-columns: 1fr;
+    }
+}

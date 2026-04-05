@@ -41,6 +41,8 @@ Ele deve parecer um produto com fachada propria.
 
 Essa fachada foi formalizada em [front-display-wall.md](front-display-wall.md).
 
+O tema visual oficial que governa paleta, atmosfera, glow e assinatura agora esta em [../architecture/themeOctoBox.md](../architecture/themeOctoBox.md).
+
 Este guia existe para transformar esse conceito em aparencia real, componente real, ritmo real de tela e plano real de execucao.
 
 Regra mestra:
@@ -792,6 +794,10 @@ Uma tela esta pronta quando:
 Este e o guia principal para pensar a aparencia do produto.
 
 Use [front-display-wall.md](front-display-wall.md) para a base conceitual e arquitetural da metafora.
+
+Use [../architecture/themeOctoBox.md](../architecture/themeOctoBox.md) quando a duvida for a linguagem visual oficial, a paleta dominante ou a assinatura do produto.
+
+Use [../plans/theme-implementation-final.md](../plans/theme-implementation-final.md) para a ordem pratica de implantacao por ondas.
 
 Use [css-guide.md](css-guide.md) para decidir onde cada classe deve morar, como manter contrato explicito e como evitar remendo estrutural no CSS.
 

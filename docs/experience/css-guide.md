@@ -33,6 +33,8 @@ PONTOS CRITICOS:
 
 Este guide existe para que o CSS do projeto continue simples de ler, facil de localizar e seguro de expandir.
 
+Para decidir o tema visual oficial antes de decidir onde a classe mora, use [../architecture/themeOctoBox.md](../architecture/themeOctoBox.md).
+
 Regra central:
 
 1. CSS aqui nao pode nascer como remendo solto.
@@ -46,12 +48,15 @@ Depois da unificacao do tema, este projeto passou a operar com uma regra simples
 1. existe um pintor definitivo
 2. os pintores antigos viraram referencia historica
 3. nenhum arquivo novo pode voltar a criar uma autoridade visual paralela
+4. a assinatura premium forte so pode nascer por escopo aprovado
 
 Traducao pratica:
 
 1. cor, sombra, borda e glow nascem dos tokens
 2. cards, hero, notice e topbar nascem dos hosts canonicos
 3. CSS local monta a pagina, mas nao reinventa a familia visual
+4. a familia visual oficial atual e governada pelo tema Luxo Futurista 2050 definido em [../architecture/themeOctoBox.md](../architecture/themeOctoBox.md)
+5. o brilho mais forte fica reservado para escopos premium aprovados no criterio arquitetural
 
 ### Autoridades canonicas
 
@@ -133,12 +138,15 @@ define quick cards e accent bars
 define utilitarios, grids de formulario e bases compartilhadas do catalogo sem autoridade de tema
 
 13. [static/css/catalog/students.css](../../static/css/catalog/students.css)
-define ajustes finais da area de alunos
+define apenas o diretorio de alunos e sua vitrine operacional
 
-14. [static/css/catalog/finance/](../../static/css/catalog/finance/)
+14. [static/css/catalog/student_form_stepper.css](../../static/css/catalog/student_form_stepper.css)
+define a hierarquia propria da ficha do aluno, mapa de leitura, progressao e acabamento local do workspace
+
+15. [static/css/catalog/finance/](../../static/css/catalog/finance/)
 define layout, cards, rail, carteira, tendencia e comportamento responsivo do financeiro
 
-15. [static/css/catalog/class-grid.css](../../static/css/catalog/class-grid.css)
+16. [static/css/catalog/class-grid.css](../../static/css/catalog/class-grid.css)
 define a grade visual de aulas
 
 ## Regra de localizacao
@@ -151,6 +159,11 @@ Use esta regra:
 2. se a classe e utilitaria, neutra ou compartilhada entre alunos, financeiro e grade, ela pertence ao shared do catalogo
 3. se a classe existe para uma tela ou modulo especifico, ela pertence ao arquivo da propria area
 4. se a classe e importante para leitura daquela tela, ela deve existir no CSS local da area, mesmo quando tambem herda algo compartilhado
+5. se a mudanca pede assinatura premium forte, ela so entra depois de passar no criterio de escopo do tema em [../architecture/themeOctoBox.md](../architecture/themeOctoBox.md)
+
+Regra nova para evitar regressao:
+se a tela for a ficha do aluno, a hierarquia do mapa, a progressao e o workspace financeiro nao podem nascer em `students.css`.
+essa tela usa `catalog/shared.css` como base estrutural e `catalog/student_form_stepper.css` como autoridade de hierarquia local.
 
 Traducao pratica:
 
@@ -158,6 +171,7 @@ Traducao pratica:
 2. `finance-radar-card` e semantica local do financeiro
 3. `student-focus-card` e semantica local de alunos
 4. `glass-panel` pode decorar atmosfera, mas nao pode ser a estrutura-base
+5. `student-workspace-map-card` e semantica local da ficha do aluno, nao do diretorio
 
 ## Mapa rapido de ownership
 
@@ -208,6 +222,37 @@ Quando houver duvida, use esta escada:
 4. helper neutro
 
 Nunca ao contrario.
+
+## Regra de escopo premium
+
+Escopo premium nao e um atalho para deixar qualquer tela mais bonita.
+
+Ele existe para concentrar a assinatura forte do produto nas superfices certas.
+
+### Quando usar
+
+1. dashboard, fachada principal ou area de alta percepcao de valor
+2. telas que concentram hero, CTA dominante ou leitura executiva
+3. superfices cuja frequencia e importancia justificam assinatura mais forte
+
+### Quando nao usar
+
+1. formularios utilitarios
+2. fluxos intermediarios
+3. telas com hierarquia ainda imatura
+4. areas onde silencio visual vale mais do que impacto
+
+### Regra pratica de implementacao
+
+1. primeiro estabilizar com token global
+2. depois aplicar classe local semantica
+3. so entao promover para `data-shell-scope` ou cena premium
+4. se a tela precisar de muitas excecoes, retirar do escopo premium
+
+Em linguagem simples:
+
+1. primeiro a casa precisa estar arrumada
+2. depois a gente escolhe qual comodo merece luz de vitrine
 
 ## Regra de naming
 
@@ -476,6 +521,7 @@ Se precisar da versao mais curta possivel, guarde isto:
 6. CSS local compoe, nao reinventa
 7. legado so vive como ponte documentada
 8. novo pintor paralelo nao entra no predio
+9. tema oficial e decidido por [../architecture/themeOctoBox.md](../architecture/themeOctoBox.md), nao por calibracao local solta
 
 ## Resumo operacional
 

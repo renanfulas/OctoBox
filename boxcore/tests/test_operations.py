@@ -324,6 +324,20 @@ class OperationWorkspaceTests(TestCase):
         self.assertTrue(BehaviorNote.objects.filter(student=self.student, author=self.coach).exists())
         self.assertTrue(AuditEvent.objects.filter(action='technical_behavior_note_created', actor=self.coach).exists())
 
+    def test_coach_workspace_exposes_real_turn_metrics_and_boundary_anchor(self):
+        self.client.force_login(self.coach)
+
+        response = self.client.get(reverse('coach-workspace'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'href="#coach-boundary-board"')
+        self.assertContains(response, 'id="coach-boundary-board"')
+        self.assertContains(response, 'Alunos na lista')
+        self.assertContains(response, 'Check-ins no turno')
+        self.assertContains(response, 'Pendencias de check-in')
+        self.assertNotContains(response, 'Guias de execucao')
+        self.assertNotContains(response, 'Fronteiras do papel')
+
     def test_manager_sidebar_hides_coach_links(self):
         self.client.force_login(self.manager)
 
@@ -345,6 +359,17 @@ class OperationWorkspaceTests(TestCase):
         self.assertContains(response, 'manager-scene')
         self.assertContains(response, 'id="manager-enrollment-link-board"', count=1)
         self.assertContains(response, 'Estrutura antes de leitura financeira', count=1)
+
+    def test_manager_workspace_exposes_priority_surface_and_metric_anchors(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.get(reverse('manager-workspace'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-manager-priority="links"')
+        self.assertContains(response, 'href="#manager-link-board"')
+        self.assertContains(response, 'href="#manager-enrollment-link-board"')
+        self.assertContains(response, 'href="#manager-finance-board"')
 
     def test_coach_sidebar_hides_manager_links(self):
         self.client.force_login(self.coach)
@@ -373,6 +398,18 @@ class OperationWorkspaceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Caixa vencido: R$ 299,90')
         self.assertContains(response, 'Há cobrança atrasada pedindo contato agora.')
+
+    def test_owner_workspace_exposes_executive_workspace_and_priority(self):
+        self.client.force_login(self.owner)
+
+        response = self.client.get(reverse('owner-workspace'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-owner-priority=')
+        self.assertContains(response, 'Mesa executiva do owner')
+        self.assertContains(response, 'Movimento que lidera o dia')
+        self.assertContains(response, 'Como o dia esta')
+        self.assertContains(response, 'Se bater duvida, siga isso')
 
     def test_dev_can_access_dev_workspace(self):
         self.client.force_login(self.dev)

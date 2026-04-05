@@ -2,103 +2,82 @@
 
 .student-form-shell {
     gap: calc(var(--section-gap) - 2px);
+    --student-form-text-primary: var(--theme-text-primary);
+    --student-form-text-secondary: var(--legacy-copy);
+    --student-form-panel-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 30%),
+        var(--theme-surface-glass-strong);
+    --student-form-panel-border: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-glass-border) 86%);
+    --student-form-panel-shadow: var(--theme-glass-shadow);
+    --student-form-stepper-surface: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
+    --student-form-stepper-border: color-mix(in srgb, var(--theme-accent-support-alpha) 8%, var(--theme-glass-border) 92%);
+    --student-form-stepper-shadow: inset 0 1px 0 var(--theme-glass-highlight);
+    --student-form-disclosure-surface: var(--student-form-panel-surface);
+    --student-form-disclosure-border: color-mix(in srgb, var(--theme-accent-support-alpha) 22%, var(--theme-glass-border) 78%);
 }
 
-.student-workspace-map-intro,
-.student-workspace-map-card,
-.student-form-main-card,
-.student-form-stepper-card {
-    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 12%, rgba(148, 163, 184, 0.16) 88%);
+.student-form-main-card {
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
-        linear-gradient(160deg, rgba(251, 252, 255, 0.9), rgba(246, 248, 252, 0.82));
-    box-shadow:
-        0 12px 24px rgba(7, 14, 24, 0.04),
-        inset 0 1px 0 rgba(255, 255, 255, 0.52);
-}
-
-.student-workspace-map-intro {
-    display: grid;
-    gap: 6px;
-    padding: 16px 18px;
-    border-radius: 22px;
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 8%, rgba(148, 163, 184, 0.16) 92%);
-}
-
-.student-workspace-map {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-}
-
-.student-workspace-map-card {
-    display: grid;
-    align-content: start;
-    gap: 12px;
-    min-height: 100%;
-    padding: 16px 18px;
-    border-radius: 22px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.student-workspace-map-card:hover {
-    transform: translateY(-1px);
-    box-shadow:
-        0 16px 28px rgba(7, 14, 24, 0.06),
-        inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-
-.student-workspace-map-card.is-current {
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-border-soft) 82%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 30%),
-        linear-gradient(160deg, rgba(252, 254, 255, 0.92), rgba(246, 249, 253, 0.84));
-}
-
-.student-workspace-map-card.is-ready {
-    border-color: color-mix(in srgb, var(--theme-accent-success-alpha) 16%, var(--theme-border-soft) 84%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-success-alpha) 12%, transparent), transparent 30%),
-        linear-gradient(160deg, rgba(249, 252, 250, 0.92), rgba(243, 248, 245, 0.84));
-}
-
-.student-workspace-map-card.is-muted {
-    opacity: 0.9;
-}
-
-.student-workspace-map-card .button {
-    justify-self: start;
+        var(--theme-surface-glass-strong);
+    box-shadow: var(--theme-glass-shadow);
 }
 
 .student-form-stage {
     min-width: 0;
 }
 
-.student-form-stage--financial {
-    padding-top: 4px;
+.student-form-shell :is(.student-form-step-kicker, .student-form-step-copy, .stepper-helper) {
+    color: var(--student-form-text-secondary);
+}
+
+.student-form-shell :is(.student-form-step-title, .student-form-stepper-summary .section-title-sm, .stepper-label) {
+    color: var(--student-form-text-primary);
+}
+
+.student-form-main-card form,
+.student-form-steps,
+.student-form-steps > *,
+.step-container,
+.step-container > .stack-16 {
+    min-width: 0;
+    width: 100%;
 }
 
 .student-form-stepper {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    min-width: 0;
     margin-bottom: 0;
-    padding: 20px 24px;
-    background:
-        linear-gradient(160deg, rgba(255, 255, 255, 0.72), rgba(247, 249, 252, 0.82));
-    border-radius: 18px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--border-100) 90%);
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--theme-surface-glass);
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
 }
 
 .student-form-stepper-card {
     display: grid;
+    grid-template-columns: minmax(220px, 0.82fr) minmax(0, 1fr);
+    align-items: center;
     gap: 18px;
-    padding: 20px 22px;
-    border-radius: 22px;
+    padding: 14px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--student-form-stepper-border);
+    background: var(--student-form-stepper-surface);
+    box-shadow: var(--student-form-stepper-shadow);
 }
 
 .student-form-stepper-summary {
-    max-width: 64ch;
+    max-width: 30ch;
+}
+
+.student-form-stepper-summary .section-title-sm {
+    margin-bottom: 0;
+    font-size: 1.1rem;
+    line-height: 1.15;
 }
 
 .student-form-intake-banner {
@@ -106,7 +85,44 @@
 }
 
 .student-form-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
+    gap: 12px;
+    padding-top: 6px;
+}
+
+.student-form-actions-rail {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.student-form-actions-rail--secondary {
+    justify-content: flex-start;
+}
+
+.student-form-actions-rail--primary {
+    justify-content: flex-end;
+}
+
+.student-form-actions .button,
+.student-form-actions a.button {
+    min-height: 42px;
+    padding: 0 18px;
+    border-radius: 12px;
+}
+
+.student-form-actions .button.secondary,
+.student-form-actions a.button.secondary {
+    background: var(--theme-surface-glass-strong);
+}
+
+.student-form-actions .button:not(.secondary) {
+    min-width: 220px;
+    justify-content: center;
 }
 
 .student-form-actions .button:focus-visible,
@@ -122,6 +138,7 @@
     flex-direction: column;
     align-items: center;
     flex: 1;
+    min-width: 0;
     position: relative;
     opacity: 0.58;
     transition: all 0.3s ease;
@@ -132,46 +149,53 @@
 }
 
 .stepper-circle {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     background: var(--bg-300);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    margin-bottom: 8px;
+    font-size: 0.82rem;
+    margin-bottom: 6px;
     border: 2px solid transparent;
     transition: all 0.3s ease;
 }
 
 .stepper-item.active .stepper-circle {
     background: var(--accent-primary);
-    color: white;
+    color: var(--theme-surface-inverse);
     box-shadow:
         0 0 0 6px color-mix(in srgb, var(--accent-primary-alpha) 24%, transparent),
-        0 0 20px var(--accent-primary-alpha);
+        var(--theme-glow-primary);
 }
 
 .stepper-item.completed .stepper-circle {
     background: var(--success-primary);
-    color: white;
+    color: var(--theme-surface-inverse);
 }
 
 .stepper-label {
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 
 .stepper-helper {
-    margin-top: 4px;
-    font-size: 0.72rem;
+    margin-top: 2px;
+    font-size: 0.68rem;
+    line-height: 1.15;
     color: var(--text-500, var(--muted));
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 
 .stepper-line {
     position: absolute;
-    top: 16px;
+    top: 14px;
     left: 50%;
     right: -50%;
     height: 2px;
@@ -181,14 +205,6 @@
 
 .stepper-item:last-child .stepper-line {
     display: none;
-}
-
-.student-form-stepper-status {
-    margin: 0;
-    padding: 10px 12px;
-    border-radius: 14px;
-    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 9%, rgba(255, 255, 255, 0.54));
-    border: 1px solid color-mix(in srgb, var(--theme-accent-primary-alpha) 10%, rgba(148, 163, 184, 0.12) 90%);
 }
 
 .student-form-step-intro {
@@ -201,18 +217,47 @@
     margin: 0;
 }
 
+.student-form-step,
+.student-form-step-essential,
+.student-form-step-disclosure,
+.student-form-stepper-card {
+    border-color: var(--student-form-panel-border);
+    background: var(--student-form-panel-surface);
+    box-shadow: var(--student-form-panel-shadow);
+}
+
+.student-form-step {
+    border-radius: 22px;
+}
+
+.student-form-step-disclosure summary,
+.student-form-step-heading {
+    color: var(--student-form-text-primary);
+}
+
+.student-form-shell .plan-card {
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 88%, transparent);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 34%),
+        var(--card-surface);
+    box-shadow: var(--card-shadow);
+}
+
+.student-form-shell .plan-card-price,
+.student-form-shell #connected-plan-price {
+    color: var(--theme-text-primary);
+}
+
 .student-form-recovery-panel {
     display: grid;
     gap: 10px;
     padding: 18px 20px;
     border-radius: 22px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, rgba(148, 163, 184, 0.16) 86%);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, var(--theme-glass-border) 86%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, transparent), transparent 28%),
-        linear-gradient(160deg, rgba(255, 250, 245, 0.94), rgba(250, 246, 241, 0.88));
-    box-shadow:
-        0 18px 34px rgba(7, 14, 24, 0.06),
-        inset 0 1px 0 rgba(255, 255, 255, 0.55);
+        var(--theme-surface-glass-strong);
+    box-shadow: var(--theme-glass-shadow);
 }
 
 .student-form-recovery-list {
@@ -222,8 +267,8 @@
 .student-form-recovery-item {
     padding: 10px 12px;
     border-radius: 14px;
-    background: rgba(255, 255, 255, 0.62);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: color-mix(in srgb, var(--theme-surface-glass) 82%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 86%, transparent);
 }
 
 .student-form-recovery-item .no-margin {
@@ -243,9 +288,9 @@
     text-underline-offset: 2px;
 }
 
-.status-paid { color: #16a34a !important; }
-.status-overdue { color: #dc2626 !important; }
-.status-pending { color: #ca8a04 !important; }
+.status-paid { color: var(--theme-accent-success); }
+.status-overdue { color: var(--theme-accent-danger); }
+.status-pending { color: var(--theme-accent-warning); }
 
 .step-container {
     transition: opacity 0.3s ease, transform 0.3s ease;
@@ -263,37 +308,32 @@
     transform: translateY(0);
 }
 
-.student-form-shell .student-financial-workspace {
-    padding-top: 4px;
-}
-
-.student-form-shell .student-financial-command-strip,
-.student-form-shell .student-financial-panel,
-.student-form-shell .student-financial-side-panel {
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
-    box-shadow:
-        0 18px 34px rgba(7, 14, 24, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
 .student-form-handoff {
     display: grid;
     gap: 10px;
     margin-top: 14px;
     padding: 16px 18px;
     border-radius: 18px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 14%, rgba(148, 163, 184, 0.16) 86%);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-glass-border) 86%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 28%),
-        linear-gradient(160deg, rgba(248, 251, 255, 0.94), rgba(243, 247, 252, 0.86));
-    box-shadow:
-        0 16px 28px rgba(7, 14, 24, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        var(--theme-surface-glass-strong);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+.student-form-handoff .eyebrow,
+.student-form-handoff__copy {
+    color: var(--student-form-text-secondary);
+}
+
+.student-form-handoff__headline,
+.student-form-handoff__headline strong {
+    color: var(--student-form-text-primary);
 }
 
 .student-form-handoff .button {
     justify-self: start;
-    box-shadow: 0 12px 24px rgba(7, 14, 24, 0.12);
+    box-shadow: var(--theme-glow-primary);
 }
 
 .payment-link-btn {
@@ -314,69 +354,189 @@
     background: var(--accent-primary-alpha);
 }
 
-body[data-theme="dark"] .student-workspace-map-intro,
-body[data-theme="dark"] .student-workspace-map-card,
+body[data-theme="dark"] .student-form-shell {
+    --student-form-text-primary: var(--theme-text-primary);
+    --student-form-text-secondary: var(--theme-text-secondary);
+    --student-form-panel-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
+        var(--theme-surface-glass-strong);
+    --student-form-panel-border: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
+    --student-form-panel-shadow: var(--theme-glass-shadow);
+    --student-form-stepper-surface: color-mix(in srgb, var(--theme-surface-glass) 92%, transparent);
+    --student-form-stepper-border: color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
+    --student-form-stepper-shadow: inset 0 1px 0 var(--theme-glass-highlight);
+    --student-form-disclosure-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 30%),
+        var(--theme-surface-glass-strong);
+    --student-form-disclosure-border: color-mix(in srgb, var(--theme-accent-support-alpha) 22%, var(--theme-glass-border) 78%);
+}
+
 body[data-theme="dark"] .student-form-main-card,
-body[data-theme="dark"] .student-form-stepper-card,
 body[data-theme="dark"] .student-form-recovery-panel {
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, rgba(148, 163, 184, 0.16) 80%);
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 32%),
-        linear-gradient(160deg, rgba(15, 24, 39, 0.92), rgba(10, 17, 30, 0.9));
-    box-shadow:
-        0 18px 30px rgba(0, 0, 0, 0.16),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        var(--theme-surface-glass-strong);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+body[data-theme="dark"] .student-form-step,
+body[data-theme="dark"] .student-form-step-essential,
+body[data-theme="dark"] .student-form-step-disclosure,
+body[data-theme="dark"] .student-form-stepper-card {
+    border-color: var(--student-form-panel-border);
+    background: var(--student-form-panel-surface);
+    box-shadow: var(--student-form-panel-shadow);
+}
+
+body[data-theme="dark"] .student-form-stepper-card {
+    border-color: var(--student-form-stepper-border);
+    background: var(--student-form-stepper-surface);
+    box-shadow: var(--student-form-stepper-shadow);
 }
 
 body[data-theme="dark"] .student-form-stepper {
-    background:
-        linear-gradient(160deg, rgba(18, 29, 46, 0.88), rgba(13, 21, 34, 0.84));
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, rgba(148, 163, 184, 0.14) 84%);
-}
-
-body[data-theme="dark"] .student-form-stepper-status {
-    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 12%, rgba(18, 29, 46, 0.64));
-    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, rgba(148, 163, 184, 0.14) 84%);
+    background: color-mix(in srgb, var(--theme-surface-glass) 96%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-glass-border) 84%);
 }
 
 body[data-theme="dark"] .student-form-recovery-panel {
-    border-color: color-mix(in srgb, var(--theme-accent-warning-alpha) 22%, rgba(148, 163, 184, 0.16) 78%);
+    border-color: color-mix(in srgb, var(--theme-accent-warning-alpha) 22%, var(--theme-glass-border) 78%);
     background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 20%, transparent), transparent 28%),
-        linear-gradient(160deg, rgba(35, 24, 16, 0.9), rgba(23, 18, 13, 0.88));
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 16%, transparent), transparent 28%),
+        color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, var(--theme-surface-glass-strong) 86%);
 }
 
 body[data-theme="dark"] .student-form-recovery-item {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.06);
+    background: color-mix(in srgb, var(--theme-surface-glass) 82%, transparent);
+    border-color: color-mix(in srgb, var(--theme-glass-border) 84%, transparent);
 }
 
 body[data-theme="dark"] .student-form-handoff {
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, rgba(148, 163, 184, 0.16) 80%);
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 22%, transparent), transparent 28%),
-        linear-gradient(160deg, rgba(14, 24, 38, 0.94), rgba(10, 18, 30, 0.92));
-    box-shadow:
-        0 22px 38px rgba(0, 0, 0, 0.18),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        var(--theme-surface-glass-strong);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+body[data-theme="dark"] .student-form-handoff .eyebrow,
+body[data-theme="dark"] .student-form-handoff__copy {
+    color: var(--student-form-text-secondary);
 }
 
 body[data-theme="dark"] .student-form-handoff .button {
-    box-shadow: 0 16px 28px rgba(0, 0, 0, 0.24);
+    box-shadow: var(--theme-glow-primary);
+}
+
+body[data-theme="dark"] .student-form-shell input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+body[data-theme="dark"] .student-form-shell select,
+body[data-theme="dark"] .student-form-shell textarea {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 96%, transparent);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-glass-strong) 92%, transparent),
+            color-mix(in srgb, var(--theme-surface-glass) 86%, transparent)
+        );
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 12px 26px rgba(0, 0, 0, 0.2);
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .student-form-shell input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"])::placeholder,
+body[data-theme="dark"] .student-form-shell textarea::placeholder {
+    color: var(--theme-text-secondary);
+    opacity: 0.9;
+}
+
+body[data-theme="dark"] .student-form-shell select,
+body[data-theme="dark"] .student-form-shell option {
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .student-form-shell input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):focus,
+body[data-theme="dark"] .student-form-shell select:focus,
+body[data-theme="dark"] .student-form-shell textarea:focus {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 54%, var(--theme-glass-border) 46%);
+    box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--theme-accent-support) 18%, transparent),
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 16px 34px rgba(0, 0, 0, 0.24);
+}
+
+body[data-theme="dark"] .student-form-shell .plan-card {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, transparent), transparent 34%),
+        var(--card-surface);
+    box-shadow: var(--card-shadow);
+}
+
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure {
+    border-color: var(--student-form-disclosure-border);
+    background: var(--student-form-disclosure-surface);
+    box-shadow: var(--student-form-panel-shadow);
+}
+
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure > summary {
+    color: var(--student-form-text-primary);
+}
+
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(.student-form-step-kicker, .student-form-step-copy, .field-label, .meta-text, .meta-text-sm) {
+    color: var(--student-form-text-secondary);
+}
+
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(.student-form-step-title, .section-title-sm) {
+    color: var(--student-form-text-primary);
+}
+
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 96%, transparent);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-glass-strong) 92%, transparent),
+            color-mix(in srgb, var(--theme-surface-glass) 86%, transparent)
+        );
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 12px 26px rgba(0, 0, 0, 0.2);
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea)::placeholder {
+    color: var(--theme-text-secondary);
+    opacity: 0.9;
 }
 
 @media (max-width: 720px) {
-    .student-workspace-map {
+    .student-form-stepper-card {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .student-form-actions {
         grid-template-columns: 1fr;
     }
 
-    .student-form-stepper {
-        gap: 16px;
-        padding: 16px;
+    .student-form-actions-rail,
+    .student-form-actions-rail--secondary,
+    .student-form-actions-rail--primary {
+        justify-content: stretch;
     }
 
-    .student-workspace-map-intro,
-    .student-workspace-map-card,
+    .student-form-actions .button,
+    .student-form-actions a.button {
+        width: 100%;
+    }
+
+    .student-form-stepper {
+        gap: 10px;
+        padding: 12px;
+    }
+
     .student-form-stepper-card,
     .student-form-recovery-panel {
         padding: 16px;

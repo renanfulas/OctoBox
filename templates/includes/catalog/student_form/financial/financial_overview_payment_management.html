@@ -1,20 +1,21 @@
 <!--
-ARQUIVO: gestao da cobranca atual do aluno.
+ARQUIVO: fluxo de cobrar agora da ficha do aluno.
 
 POR QUE ELE EXISTE:
-- concentra a criacao e o recebimento de cobranca com leitura curta e metodos diretos.
+- concentra o recebimento rapido sem misturar historico e excecoes.
 -->
 {% if page.data.payment_management_form %}
-<div class="student-financial-drawer student-payment-management-card">
+<div class="card card--sci-fi student-financial-drawer student-payment-management-card student-page-payments-checkout-card">
     <header class="student-financial-drawer__header">
-            <div class="student-financial-drawer__identity">
-                <div class="student-financial-drawer__avatar" aria-hidden="true">
-                    {{ page.data.student_object.full_name|slice:":1"|upper }}
-                </div>
-                <div class="stack-2">
-                    <h3 class="section-title-sm" id="financial-payment-management-title">{{ page.data.student_object.full_name }}</h3>
-                    <p class="visually-hidden" id="financial-payment-management-copy">Painel de criacao ou recebimento de cobranca com valor, vencimento, referencia e metodo.</p>
-                    <div class="student-financial-drawer__identity-meta">
+        <div class="student-financial-drawer__identity">
+            <div class="student-financial-drawer__avatar" aria-hidden="true">
+                {{ page.data.student_object.full_name|slice:":1"|upper }}
+            </div>
+            <div class="stack-2">
+                <p class="eyebrow">Cobrar agora</p>
+                <h3 class="section-title-sm" id="student-payment-checkout-title">{{ page.data.student_object.full_name }}</h3>
+                <p class="meta-text" id="student-payment-checkout-copy">Confira valor, vencimento e forma de pagamento. Se precisar ajustar o resto, abra a gestao ampliada.</p>
+                <div class="student-financial-drawer__identity-meta">
                     {% if page.data.financial_overview.latest_enrollment %}
                     <span class="pill">{{ page.data.financial_overview.latest_enrollment.get_status_display }}</span>
                     <span class="meta-text">{{ page.data.financial_overview.latest_enrollment.plan.name }}</span>
@@ -27,7 +28,7 @@ POR QUE ELE EXISTE:
     </header>
 
     <div class="student-financial-drawer__body">
-        <form method="post" id="stripe-payment-form" action="{% url 'student-payment-action' page.data.student_object.id %}" class="student-payment-management-form" aria-describedby="stripe-status-message">
+        <form method="post" id="student-payment-checkout-form" action="{% url 'student-payment-action' page.data.student_object.id %}" class="student-payment-management-form" aria-describedby="student-payment-checkout-status">
             {% csrf_token %}
             {{ page.data.payment_management_form.payment_id }}
 
@@ -40,52 +41,44 @@ POR QUE ELE EXISTE:
                 {% endif %}
             </div>
 
-            <section class="student-payment-management-total">
-                <p class="student-payment-management-total__label">Valor total</p>
-                <div class="student-payment-management-total__field">
-                    <span class="student-payment-management-total__currency">R$</span>
-                    {% if page.data.payment_management_form.instance and page.data.payment_management_form.instance.status == 'paid' %}
-                    <span class="student-payment-management-total__static">{{ page.data.payment_management_form.instance.amount|floatformat:2 }}</span>
-                    {% else %}
-                    {{ page.data.payment_management_form.amount }}
-                    {% endif %}
-                </div>
-            </section>
-
             {% if page.data.payment_management_form.instance and page.data.payment_management_form.instance.status == 'paid' %}
-            <div class="student-payment-management-paid-state">
-                <strong>Pagamento confirmado</strong>
-                <p>Este item foi liquidado em {{ page.data.payment_management_form.instance.updated_at|date:"d/m/Y H:i" }}.</p>
-            </div>
+                {% include "includes/ui/states/state_success_payment.html" with compact=True title="Pagamento confirmado" title_tag="h3" text_prefix="Recebimento registrado em " text_value=page.data.payment_management_form.instance.updated_at|date:"d/m/Y H:i" %}
             {% endif %}
 
-            <section class="student-payment-management-summary">
-                <p class="eyebrow">Detalhes</p>
-                <div class="student-payment-management-summary__grid">
-                    <div class="student-payment-management-summary__row">
-                        <span>Item</span>
-                        <strong>
-                            {% if page.data.payment_management_form.instance %}
-                                {{ page.data.payment_management_form.instance.enrollment.plan.name|default:"Faturamento avulso" }}
-                            {% else %}
-                                Nova cobranca avulsa
-                            {% endif %}
-                        </strong>
-                    </div>
+            {% if page.data.payment_management_form.instance and page.data.payment_management_form.instance.status == 'paid' %}
+                {% include "includes/ui/finance/payment_primary_summary.html" with summary_class="student-payment-primary-summary" amount_label="Valor" amount_text=page.data.payment_management_form.instance.amount|floatformat:2 item_label="Item" item_value=page.data.payment_management_form.instance.enrollment.plan.name|default:"Faturamento avulso" due_label="Vencimento" due_value=page.data.payment_management_form.instance.due_date|date:"d/m/Y" %}
+            {% else %}
+                {% include "includes/ui/finance/payment_primary_summary.html" with summary_class="student-payment-primary-summary" amount_label="Valor" amount_input=page.data.payment_management_form.amount item_label="Item" item_value=page.data.payment_management_form.instance.enrollment.plan.name|default:"Faturamento avulso" due_label="Vencimento" due_input=page.data.payment_management_form.due_date due_value=page.data.payment_management_form.instance.due_date|date:"d/m/Y" %}
+            {% endif %}
 
-                    <div class="student-payment-management-summary__row">
-                        <span>Vencimento</span>
-                        <div class="student-payment-management-summary__field">
-                            {% if page.data.payment_management_form.instance and page.data.payment_management_form.instance.status == 'paid' %}
-                            <strong>{{ page.data.payment_management_form.instance.due_date|date:"d/m/Y" }}</strong>
-                            {% else %}
-                            {{ page.data.payment_management_form.due_date }}
-                            {% endif %}
-                        </div>
-                    </div>
+            {% if not page.data.payment_management_form.instance or page.data.payment_management_form.instance.status != 'paid' %}
+            <section class="student-payment-methods">
+                <div class="stack-4">
+                    <p class="eyebrow">Metodo</p>
+                    <h4 class="section-title-sm">Como foi pago?</h4>
+                </div>
+                <div class="student-payment-methods__grid">
+                    <button type="button" class="student-payment-method-button is-pix flex-center gap-2" data-action="submit-stripe" data-method="pix">
+                        <span>Pix</span>
+                    </button>
+                    <button type="button" class="student-payment-method-button is-card flex-center gap-2" data-action="submit-stripe" data-method="credit_card">
+                        <span>Cartao</span>
+                    </button>
+                    <button type="button" class="student-payment-method-button is-debit flex-center gap-2" data-action="submit-stripe" data-method="debit_card">
+                        <span>Debito</span>
+                    </button>
+                    <button type="button" class="student-payment-method-button is-cash flex-center gap-2" data-action="submit-stripe" data-method="cash">
+                        <span>Dinheiro</span>
+                    </button>
+                </div>
+            </section>
+            {% endif %}
 
+            <details class="payment-secondary-details">
+                <summary>Detalhes internos</summary>
+                <div class="payment-secondary-details__grid">
                     <div class="student-payment-management-summary__row">
-                        <span>Referencia</span>
+                        <span>Referencia interna</span>
                         <div class="student-payment-management-summary__field">
                             {% if page.data.payment_management_form.instance and page.data.payment_management_form.instance.status == 'paid' %}
                             <strong>{{ page.data.payment_management_form.instance.reference|default:"-" }}</strong>
@@ -94,44 +87,27 @@ POR QUE ELE EXISTE:
                             {% endif %}
                         </div>
                     </div>
-                </div>
-            </section>
 
-            <section class="student-payment-management-notes">
-                <label>
-                    <span class="field-label">Observacao</span>
-                    {% if page.data.payment_management_form.instance and page.data.payment_management_form.instance.status == 'paid' %}
-                    <p class="meta-text">{{ page.data.payment_management_form.instance.notes|default:"Sem observacoes." }}</p>
-                    {% else %}
-                    {{ page.data.payment_management_form.notes }}
-                    {% endif %}
-                </label>
-            </section>
-
-            {% if not page.data.payment_management_form.instance or page.data.payment_management_form.instance.status != 'paid' %}
-            <section class="student-payment-methods">
-                <div class="stack-4">
-                    <p class="eyebrow">Receber agora</p>
-                    <h4 class="section-title-sm">Escolha o metodo</h4>
+                    <section class="student-payment-management-notes">
+                        <label>
+                            <span class="field-label">Observacao opcional</span>
+                            {% if page.data.payment_management_form.instance and page.data.payment_management_form.instance.status == 'paid' %}
+                            <p class="meta-text">{{ page.data.payment_management_form.instance.notes|default:"Sem observacoes." }}</p>
+                            {% else %}
+                            {{ page.data.payment_management_form.notes }}
+                            {% endif %}
+                        </label>
+                    </section>
                 </div>
-                <div class="student-payment-methods__grid">
-                    <button type="button" class="student-payment-method-button is-card flex-center gap-2" data-action="submit-stripe" data-method="credit_card">
-                        <span>Cartao</span>
-                    </button>
-                    <button type="button" class="student-payment-method-button is-pix flex-center gap-2" data-action="submit-stripe" data-method="pix">
-                        <span>Pix</span>
-                    </button>
-                    <button type="button" class="student-payment-method-button is-cash flex-center gap-2" data-action="submit-stripe" data-method="cash">
-                        <span>Dinheiro</span>
-                    </button>
-                    <button type="button" class="student-payment-method-button is-debit flex-center gap-2" data-action="submit-stripe" data-method="debit_card">
-                        <span>Debito</span>
-                    </button>
-                </div>
-            </section>
-            {% endif %}
+            </details>
 
-            <div id="stripe-status-message" class="student-payment-management-status" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+            <div id="student-payment-checkout-status" class="student-payment-management-status" role="status" aria-live="polite" aria-atomic="true">
+                {% if page.data.payment_management_form.instance and page.data.payment_management_form.instance.status == 'paid' %}
+                Pagamento ja registrado. Se precisar, confira os detalhes abaixo.
+                {% else %}
+                Escolha a forma de pagamento para continuar.
+                {% endif %}
+            </div>
         </form>
     </div>
 </div>

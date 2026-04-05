@@ -1,12 +1,12 @@
 <!--
 ARQUIVO: gestao formal da matricula do aluno.
 -->
-<div class="student-financial-drawer" id="student-enrollment-management">
+<div class="card card--sci-fi student-financial-drawer student-page-payments-enrollment-card" id="student-enrollment-management">
     <header class="student-financial-drawer__header">
         <div class="stack-4">
-            <p class="eyebrow">Vinculo do aluno</p>
-            <h3 class="section-title" id="financial-enrollment-management-title">Manutencao da matricula</h3>
-            <p class="meta-text" id="financial-enrollment-management-copy">Ajuste data, motivo e a proxima acao do vinculo sem perder contexto.</p>
+            <p class="eyebrow">V&iacute;nculo do aluno</p>
+            <h3 class="section-title" id="financial-enrollment-management-title">Manuten&ccedil;&atilde;o da matr&iacute;cula</h3>
+            <p class="meta-text" id="financial-enrollment-management-copy">Ajuste data, motivo e a pr&oacute;xima a&ccedil;&atilde;o do v&iacute;nculo sem perder contexto.</p>
         </div>
     </header>
 
@@ -30,7 +30,7 @@ ARQUIVO: gestao formal da matricula do aluno.
     </div>
     {% else %}
     <div class="student-financial-drawer__body">
-        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Matricula" title="Nenhum vinculo ativo agora" copy="Assim que o aluno tiver um plano ativo, a manutencao da matricula aparece aqui com contexto claro." badge="Vazio" badge_class="info" %}
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Matr&iacute;cula" title="Nenhum v&iacute;nculo ativo agora" copy="Assim que o aluno tiver um plano ativo, a manuten&ccedil;&atilde;o da matr&iacute;cula aparece aqui com contexto claro." badge="Vazio" badge_class="info" %}
     </div>
     {% endif %}
 </div>

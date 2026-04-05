@@ -64,7 +64,11 @@ Se o foco for entender o que e temporario na obra arquitetural e como retirar os
 
 Se o foco for entender a grande fachada frontal do produto, onde a experiencia visivel precisa permanecer limpa mesmo com obra lateral, leia tambem [../experience/front-display-wall.md](../experience/front-display-wall.md).
 
+Se o foco for entender qual e o tema visual oficial do produto, qual linguagem estetica passa a vencer e como o OctoBox define sua assinatura de Luxo Futurista 2050, leia tambem [../architecture/themeOctoBox.md](../architecture/themeOctoBox.md).
+
 Se o foco for reorganizar o front-end agora, com convergencia entre fachada visual, contratos de tela e o plano de longo prazo de desacoplamento do backend, leia tambem [../plans/front-end-restructuring-guide.md](../plans/front-end-restructuring-guide.md).
+
+Se o foco for implantar esse tema em ordem pratica, por ondas, com baixo risco e criterio de aceite claro, leia tambem [../plans/theme-implementation-final.md](../plans/theme-implementation-final.md).
 
 Se o foco for saber quem e o dono local de cada funcionalidade e quais testes sobem quando uma tela precisa continuar se comunicando com as outras, leia tambem [functional-circuits-matrix.md](functional-circuits-matrix.md).
 

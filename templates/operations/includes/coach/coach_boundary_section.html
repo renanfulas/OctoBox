@@ -1,0 +1,33 @@
+<!--
+ARQUIVO: painel de fronteiras operacionais do coach.
+
+POR QUE ELE EXISTE:
+- materializa o destino da ancora de limites da area.
+- evita que o coach precise adivinhar quando agir e quando escalar.
+-->
+<section class="coach-boundary-panel" id="coach-boundary-board" aria-label="Fronteiras operacionais do coach">
+    <div class="coach-boundary-head">
+        <p class="eyebrow">Limites da area</p>
+        <h2 class="operation-card-title">O que fica com o coach neste turno</h2>
+        <p class="coach-boundary-copy">Use este quadro para agir com seguranca: presenca e ocorrencia tecnica ficam aqui; cobranca, intake e vinculo escalam.</p>
+    </div>
+
+    <div class="coach-boundary-grid">
+        <div>
+            <p class="coach-boundary-label">Fronteiras praticas</p>
+            <ul class="coach-boundary-list">
+                {% for boundary in page.data.coach_boundaries %}
+                <li class="coach-boundary-item">{{ boundary }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div>
+            <p class="coach-boundary-label">Categorias de ocorrencia</p>
+            <div class="coach-category-list">
+                {% for value, label in page.data.behavior_categories %}
+                <span class="pill subtle coach-category-pill">{{ label }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>

@@ -27,7 +27,7 @@ from communications.queries import (
 from finance.models import Payment, PaymentMethod, PaymentStatus
 from finance.overdue_metrics import get_overdue_payments_queryset, sum_overdue_amount
 from onboarding.queries import get_pending_intakes
-from operations.models import BehaviorCategory, ClassSession
+from operations.models import AttendanceStatus, BehaviorCategory, ClassSession
 from students.models import Student
 
 
@@ -201,6 +201,7 @@ def build_owner_workspace_snapshot(*, today):
         owner_operational_focus[0] if owner_operational_focus else None,
         owner_operational_focus[1] if len(owner_operational_focus) > 1 else None,
     )
+    owner_priority_surface = owner_operational_focus[0]['key'] if owner_operational_focus else 'structure'
     return {
         'headline_metrics': headline_metrics,
         'classes_today': classes_today,
@@ -230,6 +231,12 @@ def build_owner_workspace_snapshot(*, today):
         'owner_decision_entry_context': owner_decision_entry_context,
         'owner_operational_focus': owner_operational_focus,
         'owner_secondary_focus': owner_operational_focus[1:],
+        'owner_priority_surface': owner_priority_surface,
+        'owner_status_links': {
+            'intakes': focus_map['intakes']['href'],
+            'payments': focus_map['payments']['href'],
+            'structure': focus_map['structure']['href'],
+        },
     }
 
 
@@ -336,6 +343,15 @@ def build_manager_workspace_snapshot():
         financial_alerts_count=len(financial_alerts),
     )
     if len(pending_intakes) > 0:
+        manager_priority_surface = 'intake'
+    elif (len(unlinked_whatsapp) + len(payments_without_enrollment)) > 0:
+        manager_priority_surface = 'links'
+    elif len(financial_alerts) > 0:
+        manager_priority_surface = 'finance'
+    else:
+        manager_priority_surface = 'maintenance'
+
+    if len(pending_intakes) > 0:
         manager_decision_entry_context = _build_decision_entry_context(
             {
                 'href': '#manager-intake-board',
@@ -393,6 +409,7 @@ def build_manager_workspace_snapshot():
         'payments_without_enrollment': payments_without_enrollment,
         'manager_priority_context': manager_priority_context,
         'manager_decision_entry_context': manager_decision_entry_context,
+        'manager_priority_surface': manager_priority_surface,
         'hero_stats': [
             _build_hero_stat('Entradas', len(pending_intakes)),
             _build_hero_stat('WhatsApp', len(unlinked_whatsapp)),
@@ -400,10 +417,26 @@ def build_manager_workspace_snapshot():
             _build_hero_stat('Alertas', len(financial_alerts)),
         ],
         'metric_cards': [
-            _build_metric_card('operation-kpi-card manager-coral', 'Entradas pendentes', len(pending_intakes)),
-            _build_metric_card('operation-kpi-card manager-sky', 'Contatos sem vinculo', len(unlinked_whatsapp)),
-            _build_metric_card('operation-kpi-card manager-gold', 'Pagamentos sem matricula', len(payments_without_enrollment)),
-            _build_metric_card('operation-kpi-card manager-steel', 'Alertas financeiros', len(financial_alerts)),
+            {
+                **_build_metric_card('operation-kpi-card manager-coral', 'Entradas pendentes', len(pending_intakes)),
+                'status_hint': 'attention' if len(pending_intakes) > 0 else 'clean',
+                'href': '#manager-intake-board',
+            },
+            {
+                **_build_metric_card('operation-kpi-card manager-sky', 'Contatos sem vinculo', len(unlinked_whatsapp)),
+                'status_hint': 'attention' if len(unlinked_whatsapp) > 0 else 'clean',
+                'href': '#manager-link-board',
+            },
+            {
+                **_build_metric_card('operation-kpi-card manager-gold', 'Pagamentos sem matricula', len(payments_without_enrollment)),
+                'status_hint': 'attention' if len(payments_without_enrollment) > 0 else 'clean',
+                'href': '#manager-enrollment-link-board',
+            },
+            {
+                **_build_metric_card('operation-kpi-card manager-steel', 'Alertas financeiros', len(financial_alerts)),
+                'status_hint': 'attention' if len(financial_alerts) > 0 else 'clean',
+                'href': '#manager-finance-board',
+            },
         ],
         'manager_operational_focus': [
             {
@@ -438,14 +471,31 @@ def build_manager_workspace_snapshot():
 
 
 def build_coach_workspace_snapshot(*, today):
-    sessions = (
+    sessions = list(
         ClassSession.objects.filter(scheduled_at__date=today)
         .prefetch_related('attendances__student')
         .annotate(attendance_cnt=Count('attendances'))
         .order_by('scheduled_at')
     )
-    total_attendances = sum(session.attendance_cnt for session in sessions)
-    sessions_with_students = sum(1 for session in sessions if session.attendance_cnt > 0)
+    total_attendances = 0
+    checked_in_attendances = 0
+    checked_out_attendances = 0
+    booked_attendances = 0
+    absent_attendances = 0
+
+    for session in sessions:
+        attendances = list(session.attendances.all())
+        total_attendances += len(attendances)
+        for attendance in attendances:
+            if attendance.status == AttendanceStatus.CHECKED_IN:
+                checked_in_attendances += 1
+            elif attendance.status == AttendanceStatus.CHECKED_OUT:
+                checked_out_attendances += 1
+            elif attendance.status == AttendanceStatus.BOOKED:
+                booked_attendances += 1
+            elif attendance.status == AttendanceStatus.ABSENT:
+                absent_attendances += 1
+
     coach_decision_entry_context = _build_decision_entry_context(
         {
             'key': 'sessions',
@@ -461,21 +511,41 @@ def build_coach_workspace_snapshot(*, today):
             'href': '#coach-boundary-board',
             'href_label': 'Ver limites da area',
             'label': 'Feche com ocorrencia tecnica',
-            'summary': f'{len(BehaviorCategory.choices)} categoria(s) cobrem o registro tecnico sem misturar treino com financeiro ou recepcao.',
+            'summary': (
+                f'{booked_attendances} presenca(s) ainda esperam decisao direta e '
+                f'{len(BehaviorCategory.choices)} categoria(s) cobrem o registro tecnico do turno.'
+            ),
         },
     )
     return {
         'sessions_today': sessions,
         'hero_stats': [
             _build_hero_stat('Aulas', len(sessions)),
-            _build_hero_stat('Rotinas', 3),
-            _build_hero_stat('Limites', 3),
-            _build_hero_stat('Ocorrencias', len(BehaviorCategory.choices)),
+            _build_hero_stat('Na lista', total_attendances),
+            _build_hero_stat('Check-ins', checked_in_attendances),
+            _build_hero_stat('Pendentes', booked_attendances),
         ],
         'metric_cards': [
-            _build_metric_card('operation-kpi-card coach-mint', 'Aulas do dia', len(sessions)),
-            _build_metric_card('operation-kpi-card coach-indigo', 'Guias de execucao', 3),
-            _build_metric_card('operation-kpi-card coach-orange', 'Fronteiras do papel', 3),
+            {
+                **_build_metric_card('operation-kpi-card coach-indigo', 'Aulas do dia', len(sessions)),
+                'status_hint': 'neutral',
+                'href': '#coach-sessions-board',
+            },
+            {
+                **_build_metric_card('operation-kpi-card coach-mint', 'Alunos na lista', total_attendances),
+                'status_hint': 'clean' if total_attendances > 0 else 'neutral',
+                'href': '#coach-sessions-board',
+            },
+            {
+                **_build_metric_card('operation-kpi-card coach-indigo', 'Check-ins no turno', checked_in_attendances),
+                'status_hint': 'clean' if checked_in_attendances > 0 else 'neutral',
+                'href': '#coach-sessions-board',
+            },
+            {
+                **_build_metric_card('operation-kpi-card coach-orange', 'Pendencias de check-in', booked_attendances),
+                'status_hint': 'attention' if booked_attendances > 0 else 'clean',
+                'href': '#coach-boundary-board' if booked_attendances > 0 else '#coach-sessions-board',
+            },
         ],
         'coach_operational_focus': [
             {
@@ -490,24 +560,35 @@ def build_coach_workspace_snapshot(*, today):
             {
                 'label': 'Depois veja onde ja ha presenca real',
                 'chip_label': 'Presenca',
-                'summary': f'{sessions_with_students} turma(s) ja tem lista ativa e {total_attendances} presenca(s) para registrar sem ruido administrativo.',
-                'count': sessions_with_students,
-                'pill_class': 'accent',
+                'summary': (
+                    f'{checked_in_attendances} check-in(s), {checked_out_attendances} check-out(s) '
+                    f'e {booked_attendances} presenca(s) ainda esperando decisao no turno.'
+                ),
+                'count': checked_in_attendances,
+                'pill_class': 'accent' if checked_in_attendances > 0 else 'info',
                 'href': '#coach-sessions-board',
                 'href_label': 'Abrir rotina de presenca',
             },
             {
                 'label': 'Feche com ocorrencia tecnica',
                 'chip_label': 'Ocorrencias',
-                'summary': f'{len(BehaviorCategory.choices)} categoria(s) cobrem o registro tecnico sem misturar treino com financeiro ou recepcao.',
-                'count': len(BehaviorCategory.choices),
-                'pill_class': 'warning',
+                'summary': (
+                    f'{absent_attendances} falta(s) e {booked_attendances} pendencia(s) '
+                    f'ajudam a decidir quando registrar uma ocorrencia tecnica sem misturar papeis.'
+                ),
+                'count': absent_attendances + booked_attendances,
+                'pill_class': 'warning' if (absent_attendances + booked_attendances) > 0 else 'info',
                 'href': '#coach-boundary-board',
                 'href_label': 'Ver limites da area',
             },
         ],
         'coach_decision_entry_context': coach_decision_entry_context,
         'behavior_categories': BehaviorCategory.choices,
+        'coach_boundaries': [
+            'Coach cuida de aula, presenca e ocorrencia tecnica do turno.',
+            'Coach nao assume cobranca, intake ou vinculo administrativo na operacao curta.',
+            'Quando houver duvida clinica, financeira ou de recepcao, a acao correta e escalar sem improvisar.',
+        ],
     }
 
 
@@ -623,10 +704,10 @@ def _build_reception_workspace_core(*, today):
             _build_hero_stat('Aulas proximas', len(next_sessions)),
         ],
         'metric_cards': [
-            _build_metric_card('operation-kpi-card manager-coral', 'Entradas prontas', len(pending_intakes)),
-            _build_metric_card('operation-kpi-card manager-gold', 'Cobrancas curtas', len(payment_queue)),
-            _build_metric_card('operation-kpi-card manager-sky', 'Base alcancada', active_students),
-            _build_metric_card('operation-kpi-card coach-indigo', 'Proximas aulas', len(next_sessions)),
+            _build_metric_card('operation-kpi-card reception-intake', 'Entradas prontas', len(pending_intakes)),
+            _build_metric_card('operation-kpi-card reception-cash', 'Cobrancas curtas', len(payment_queue)),
+            _build_metric_card('operation-kpi-card reception-base', 'Base alcancada', active_students),
+            _build_metric_card('operation-kpi-card reception-agenda', 'Proximas aulas', len(next_sessions)),
         ],
         'payment_methods': list(PaymentMethod.choices),
         'queue': reception_payment_queue,

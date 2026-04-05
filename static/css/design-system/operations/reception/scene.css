@@ -4,11 +4,17 @@ ARQUIVO: cena base e hero da recepcao.
 
 .reception-scene,
 .reception-preview-scene {
-    --reception-premium-border: color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, var(--theme-border-soft) 84%);
-    --reception-premium-shadow: 0 20px 42px rgba(7, 14, 24, 0.08);
-    --reception-premium-shadow-soft: 0 14px 30px rgba(7, 14, 24, 0.06);
+    --reception-premium-border: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-border-soft) 82%);
+    --reception-premium-shadow: var(--theme-premium-shadow-lift, var(--card-shadow-lift));
+    --reception-premium-shadow-soft: var(--theme-premium-shadow-soft, var(--card-shadow));
+    --reception-dark-hero-glow-cap: var(--theme-premium-glow-hero, 28%);
+    --reception-dark-panel-glow-cap: var(--theme-premium-glow-medium, 18%);
+    --reception-dark-panel-shadow-cap: var(--theme-premium-shadow-lift, 0 20px 38px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.04));
+    --reception-dark-command-shadow-cap: var(--theme-premium-shadow-soft, 0 16px 30px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.04));
+    --reception-dark-payment-shadow-cap: var(--theme-premium-shadow-feature, 0 20px 36px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.04));
     --reception-premium-surface:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 20%, transparent), transparent 28%),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 18%, transparent), transparent 28%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 26%),
         linear-gradient(158deg, color-mix(in srgb, var(--theme-surface-panel) 98%, white), color-mix(in srgb, var(--theme-surface-strong) 94%, white));
     --reception-premium-surface-soft:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, transparent), transparent 30%),
@@ -34,7 +40,7 @@ ARQUIVO: cena base e hero da recepcao.
     pointer-events: none;
     z-index: -1;
     background:
-        radial-gradient(circle at 12% 12%, color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent), transparent 22%),
+        radial-gradient(circle at 12% 12%, color-mix(in srgb, var(--theme-accent-premium-alpha) 18%, transparent), transparent 22%),
         radial-gradient(circle at 88% 10%, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 24%),
         linear-gradient(180deg, color-mix(in srgb, white 8%, transparent), transparent 72%);
 }
@@ -102,6 +108,7 @@ ARQUIVO: cena base e hero da recepcao.
 .reception-focus-lane {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 30%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, transparent), transparent 26%),
         linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-panel) 98%, white), color-mix(in srgb, var(--theme-surface) 97%, white));
     border-color: var(--reception-premium-border);
 }
@@ -109,8 +116,8 @@ ARQUIVO: cena base e hero da recepcao.
 body[data-theme="dark"] .reception-scene::before,
 body[data-theme="dark"] .reception-preview-scene::before {
     background:
-        radial-gradient(circle at 12% 12%, color-mix(in srgb, var(--theme-accent-primary-alpha) 28%, transparent), transparent 24%),
-        radial-gradient(circle at 88% 10%, color-mix(in srgb, var(--theme-accent-support-alpha) 28%, transparent), transparent 24%),
+        radial-gradient(circle at 12% 12%, color-mix(in srgb, var(--theme-accent-primary-alpha) var(--reception-dark-hero-glow-cap), transparent), transparent 24%),
+        radial-gradient(circle at 88% 10%, color-mix(in srgb, var(--theme-accent-support-alpha) var(--reception-dark-hero-glow-cap), transparent), transparent 24%),
         linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 72%);
 }
 
@@ -118,12 +125,10 @@ body[data-theme="dark"] .reception-scene .workspace-panel,
 body[data-theme="dark"] .reception-preview-scene .workspace-panel,
 body[data-theme="dark"] .reception-focus-lane {
     background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent), transparent 30%),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) var(--reception-dark-panel-glow-cap), transparent), transparent 30%),
         linear-gradient(158deg, rgba(12, 22, 36, 0.98), rgba(8, 15, 26, 0.97) 60%, rgba(7, 12, 22, 0.95));
     border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, var(--theme-border-soft) 84%);
-    box-shadow:
-        0 20px 38px rgba(0, 0, 0, 0.18),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    box-shadow: var(--reception-dark-panel-shadow-cap);
 }
 
 @media (max-width: 1024px) {

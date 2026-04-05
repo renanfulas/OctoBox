@@ -1,0 +1,138 @@
+/*
+ARQUIVO: gestao ampliada de pagamento da ficha do aluno.
+
+POR QUE ELE EXISTE:
+- concentra detalhes secundarios, ajustes internos e acoes de historico.
+- separa revisao e excecao do fluxo rapido de checkout.
+*/
+
+.student-payment-management-actions {
+    display: grid;
+    gap: 6px;
+}
+
+.student-payment-management-actions-primary,
+.student-payment-management-actions-secondary {
+    margin-top: 0;
+}
+
+.student-payment-management-actions-primary,
+.student-payment-management-actions-secondary {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.student-payment-management-actions-secondary {
+    padding-top: 6px;
+    border-top: 1px solid color-mix(in srgb, var(--card-border) 82%, transparent);
+}
+
+.student-payment-management-actions-primary .button {
+    min-height: 34px;
+    padding: 7px 12px;
+}
+
+.student-payment-management-actions-secondary .button {
+    min-height: 33px;
+    padding: 6px 10px;
+    font-size: 0.84rem;
+}
+
+.student-payment-management-summary {
+    --card-local-border: var(--student-financial-panel-border, var(--card-border));
+    --card-local-surface: var(--student-financial-panel-surface-muted, var(--card-surface));
+    display: grid;
+    gap: 12px;
+    padding: 16px 18px;
+    border-radius: 20px;
+    border: 1px solid var(--card-local-border);
+    background: var(--card-local-surface);
+}
+
+.student-payment-management-summary__grid {
+    display: grid;
+    gap: 12px;
+}
+
+.student-payment-management-summary__row {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.student-payment-management-summary__row span {
+    color: var(--card-text-secondary);
+}
+
+.student-payment-management-summary__field {
+    min-width: 0;
+}
+
+.student-payment-management-summary__input {
+    min-height: 38px;
+}
+
+.student-payment-management-notes {
+    display: grid;
+    gap: 8px;
+}
+
+.payment-secondary-details {
+    display: grid;
+    gap: 10px;
+    padding: 10px 12px 0;
+    border-top: 1px dashed color-mix(in srgb, var(--student-financial-panel-border) 86%, transparent);
+    background: color-mix(in srgb, var(--student-financial-panel-surface-muted) 92%, transparent);
+    border-radius: 16px;
+}
+
+.payment-secondary-details summary {
+    cursor: pointer;
+    list-style: none;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--theme-text-primary);
+}
+
+.payment-secondary-details summary::-webkit-details-marker {
+    display: none;
+}
+
+.payment-secondary-details summary::after {
+    content: 'Mostrar';
+    margin-left: 8px;
+    font-size: 0.74rem;
+    color: var(--card-text-secondary);
+    font-weight: 600;
+}
+
+.payment-secondary-details[open] summary::after {
+    content: 'Ocultar';
+}
+
+.payment-secondary-details__grid {
+    display: grid;
+    gap: 12px;
+}
+
+.student-financial-timeline__actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.student-financial-action-button--muted {
+    opacity: 0.82;
+}
+
+body[data-theme="dark"] .payment-secondary-details {
+    background: color-mix(in srgb, var(--student-financial-panel-surface-muted) 88%, rgba(10, 17, 28, 0.4));
+}
+
+@media (max-width: 680px) {
+    .student-payment-management-summary__row {
+        grid-template-columns: 1fr;
+    }
+}

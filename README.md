@@ -143,6 +143,8 @@ If you want to study the codebase in pedagogical order, use [docs/reference/read
 
 If you want to understand how the project's CSS should be organized, expanded, and debugged without turning into accumulated patchwork, use [docs/experience/css-guide.md](docs/experience/css-guide.md).
 
+If you want to understand the official visual theme of the product, which aesthetic language wins when there is conflict, and how OctoBox defines its Futuristic Luxury 2050 signature, use [docs/architecture/themeOctoBox.md](docs/architecture/themeOctoBox.md).
+
 If you want to understand specifically what still holds historical state inside `boxcore`, use [docs/architecture/boxcore-model-state-plan.md](docs/architecture/boxcore-model-state-plan.md) and [docs/architecture/boxcore-state-residue-inventory.md](docs/architecture/boxcore-state-residue-inventory.md).
 
 If you want to understand the technical direction for growing without losing simplicity, use [docs/architecture/architecture-growth-plan.md](docs/architecture/architecture-growth-plan.md).
@@ -158,6 +160,8 @@ If you want to understand the complementary structure of signals, integrations, 
 If you want to understand how the architecture treats temporary construction supports without confusing them with the final structure, use [docs/architecture/scaffold-agents.md](docs/architecture/scaffold-agents.md).
 
 If you want to understand the large front display wall of the product, where the visible experience must stay clean even with side construction and architectural transition, use [docs/experience/front-display-wall.md](docs/experience/front-display-wall.md).
+
+If you want the practical implementation order for the official visual theme, including risk, checklist, and acceptance criteria, use [docs/plans/theme-implementation-final.md](docs/plans/theme-implementation-final.md).
 
 If you want the official plan for reorganizing the front end in alignment with the Front Display Wall, with clear screen contracts and future fit into the Django decoupling movement, use [docs/plans/front-end-restructuring-guide.md](docs/plans/front-end-restructuring-guide.md).
 

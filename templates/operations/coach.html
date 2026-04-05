@@ -17,6 +17,7 @@ PONTOS CRITICOS:
 {% block content %}
 {% with page=operation_page %}
 <div class="operation-shell coach-scene workspace-shell">
+    <p class="visually-hidden">Ocorrências</p>
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% include "includes/ui/layout/page_reading_list.html" with panel=page.data.reading_panel %}
     <section class="workspace-grid-layout" aria-label="Painel de turnos" data-slot="workspace">
@@ -25,6 +26,7 @@ PONTOS CRITICOS:
         </div>
         <aside class="workspace-grid-side">
             <div class="workspace-panel">{% include "operations/includes/coach/coach_metrics_section.html" %}</div>
+            <div class="workspace-panel">{% include "operations/includes/coach/coach_boundary_section.html" %}</div>
         </aside>
     </section>
 </div>

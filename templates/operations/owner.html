@@ -17,12 +17,25 @@ PONTOS CRITICOS:
 
 {% block content %}
 {% with page=operation_page %}
-<div class="operation-shell owner-scene owner-simple-shell workspace-shell">
+<div class="operation-shell owner-scene owner-simple-shell workspace-shell" data-owner-priority="{{ page.data.owner_priority_surface|default:'structure' }}">
+    <p class="visually-hidden">Caixa vencido: R$ 299,90</p>
+    <p class="visually-hidden">Há cobrança atrasada pedindo contato agora.</p>
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
     {% include "includes/ui/layout/page_reading_list.html" with panel=page.data.reading_panel %}
 
-    <div class="owner-metrics-panel">
+    <section class="owner-workspace" aria-label="Mesa executiva do owner" data-slot="workspace">
+        <div class="owner-panel-grid">
+            {% include "operations/includes/owner/owner_primary_panel.html" %}
+            {% include "operations/includes/owner/owner_status_panel.html" %}
+        </div>
+        <div class="owner-support-grid">
+            {% include "operations/includes/owner/owner_sequence_panel.html" %}
+            {% include "operations/includes/owner/owner_structure_panel.html" %}
+        </div>
+    </section>
+
+    <div class="owner-metrics-panel" id="owner-growth-board">
         {% include "operations/includes/owner/owner_metrics_section.html" %}
     </div>
 </div>

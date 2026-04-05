@@ -23,32 +23,32 @@ REGRA:
     --topbar-radius: 21px;
     --topbar-top: 16px;
     --topbar-margin-bottom: 13px;
-    --topbar-surface: color-mix(in srgb, var(--theme-surface-panel) 82%, transparent);
-    --topbar-border-color: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
-    --topbar-shadow: var(--theme-shadow-soft);
+    --topbar-surface: color-mix(in srgb, var(--chrome-surface) 92%, transparent);
+    --topbar-border-color: color-mix(in srgb, var(--chrome-border) 94%, transparent);
+    --topbar-shadow: var(--card-shadow);
     --topbar-overlay-glow:
-        radial-gradient(circle at 96% 20%, color-mix(in srgb, var(--theme-accent-primary-alpha) 70%, transparent), transparent 58%),
-        radial-gradient(circle at 6% 78%, color-mix(in srgb, var(--theme-accent-support-alpha) 56%, transparent), transparent 54%);
+        radial-gradient(circle at 96% 20%, color-mix(in srgb, var(--theme-accent-premium-alpha) 78%, transparent), transparent 58%),
+        radial-gradient(circle at 6% 78%, color-mix(in srgb, var(--theme-accent-support-alpha) 62%, transparent), transparent 54%);
     --topbar-search-radius: 17px;
-    --topbar-search-surface: color-mix(in srgb, var(--theme-surface-strong) 84%, transparent);
-    --topbar-search-border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
-    --topbar-search-shadow: inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
-    --topbar-manifesto-surface: color-mix(in srgb, var(--theme-surface-secondary) 80%, transparent);
-    --topbar-manifesto-border-color: color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
+    --topbar-search-surface: color-mix(in srgb, var(--theme-surface-strong) 78%, var(--theme-accent-support-alpha) 22%);
+    --topbar-search-border-color: color-mix(in srgb, var(--chrome-border) 90%, transparent);
+    --topbar-search-shadow: inset 0 1px 0 color-mix(in srgb, white 18%, transparent), 0 10px 20px color-mix(in srgb, var(--chrome-glow) 22%, transparent);
+    --topbar-manifesto-surface: color-mix(in srgb, var(--theme-surface-secondary) 76%, var(--theme-accent-premium-alpha) 24%);
+    --topbar-manifesto-border-color: color-mix(in srgb, var(--chrome-border) 86%, transparent);
     --topbar-manifesto-shadow: inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
-    --topbar-manifesto-kicker-ink: color-mix(in srgb, var(--theme-accent-support) 58%, var(--theme-text-muted) 42%);
+    --topbar-manifesto-kicker-ink: color-mix(in srgb, var(--theme-accent-primary) 48%, var(--theme-accent-support) 52%);
     --topbar-manifesto-copy-ink: var(--theme-text-secondary);
-    --topbar-toggle-surface: color-mix(in srgb, var(--theme-surface-secondary) 82%, transparent);
-    --topbar-toggle-border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    --topbar-toggle-surface: color-mix(in srgb, var(--theme-surface-secondary) 80%, var(--theme-accent-support-alpha) 20%);
+    --topbar-toggle-border-color: color-mix(in srgb, var(--chrome-border) 88%, transparent);
     --topbar-toggle-ink: var(--theme-text-muted);
-    --topbar-toggle-shadow: inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
-    --topbar-toggle-surface-hover: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
-    --topbar-toggle-border-hover: color-mix(in srgb, var(--theme-border-strong) 92%, transparent);
+    --topbar-toggle-shadow: inset 0 1px 0 color-mix(in srgb, white 12%, transparent), 0 8px 18px color-mix(in srgb, var(--chrome-glow) 18%, transparent);
+    --topbar-toggle-surface-hover: color-mix(in srgb, var(--theme-surface-strong) 90%, var(--theme-accent-support-alpha) 10%);
+    --topbar-toggle-border-hover: color-mix(in srgb, var(--theme-accent-support) 26%, transparent);
     --topbar-toggle-ink-hover: var(--theme-text-primary);
     --topbar-profile-radius: var(--radius-panel);
-    --topbar-profile-surface: color-mix(in srgb, var(--theme-surface-strong) 82%, transparent);
-    --topbar-profile-border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
-    --topbar-profile-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+    --topbar-profile-surface: color-mix(in srgb, var(--theme-surface-strong) 76%, var(--theme-accent-support-alpha) 24%);
+    --topbar-profile-border-color: color-mix(in srgb, var(--chrome-border) 88%, transparent);
+    --topbar-profile-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent), 0 10px 24px color-mix(in srgb, var(--chrome-glow) 18%, transparent);
     --topbar-profile-meta-copy: var(--theme-text-muted);
     position: sticky;
     top: var(--topbar-top);
@@ -77,7 +77,7 @@ REGRA:
     inset: 0;
     border-radius: inherit;
     background: var(--topbar-overlay-glow);
-    opacity: 0.6;
+    opacity: 0.82;
     pointer-events: none;
     z-index: -1;
 }
@@ -388,21 +388,22 @@ REGRA:
 }
 
 .topbar-quick-link--primary {
-    background: color-mix(in srgb, var(--theme-accent-primary) 84%, black 16%);
-    color: #fff6eb;
-    box-shadow: 0 10px 22px color-mix(in srgb, var(--theme-accent-primary-alpha) 82%, transparent);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-primary) 90%, white 10%), color-mix(in srgb, var(--theme-accent-support) 84%, black 16%), color-mix(in srgb, var(--theme-accent-premium) 60%, black 40%));
+    color: #f7feff;
+    border-color: color-mix(in srgb, var(--theme-accent-support) 18%, transparent);
+    box-shadow: 0 14px 26px color-mix(in srgb, var(--theme-accent-support-alpha) 62%, transparent);
 }
 
 .topbar-quick-link--primary:hover,
 .topbar-quick-link--primary:focus-visible {
-    background: color-mix(in srgb, var(--theme-accent-primary) 90%, black 10%);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-primary) 94%, white 6%), color-mix(in srgb, var(--theme-accent-support) 88%, black 12%), color-mix(in srgb, var(--theme-accent-premium) 68%, black 32%));
     transform: translateY(-1px);
 }
 
 .topbar-quick-link--secondary {
-    background: color-mix(in srgb, var(--theme-surface-secondary) 72%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 72%, var(--theme-accent-support-alpha) 28%);
     color: var(--theme-text-secondary);
-    border-color: color-mix(in srgb, var(--theme-border-soft) 94%, transparent);
+    border-color: color-mix(in srgb, var(--chrome-border) 92%, transparent);
 }
 
 .topbar-quick-link--secondary:hover,
@@ -426,8 +427,8 @@ REGRA:
 }
 
 .alert-chip {
-    background: color-mix(in srgb, var(--theme-surface-secondary) 70%, transparent);
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 70%, var(--theme-accent-support-alpha) 30%);
+    border: 1px solid color-mix(in srgb, var(--chrome-border) 92%, transparent);
     color: var(--theme-text-muted);
 }
 
@@ -466,14 +467,14 @@ REGRA:
 
 .alert-chip.has-volume {
     color: color-mix(in srgb, var(--theme-accent-warning) 78%, var(--theme-text-primary) 22%);
-    border-color: color-mix(in srgb, var(--theme-accent-warning) 26%, var(--theme-border-soft) 74%);
-    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 38%, var(--theme-surface-panel) 62%);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 26%, var(--chrome-border) 74%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 34%, var(--theme-surface-panel) 66%);
 }
 
 .alert-chip.danger.has-volume {
     color: color-mix(in srgb, var(--theme-accent-danger) 78%, var(--theme-text-primary) 22%);
-    border-color: color-mix(in srgb, var(--theme-accent-danger) 26%, var(--theme-border-soft) 74%);
-    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 38%, var(--theme-surface-panel) 62%);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 26%, var(--chrome-border) 74%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 34%, var(--theme-surface-panel) 66%);
 }
 
 .alert-chip.is-zero {
@@ -752,6 +753,12 @@ REGRA:
     box-shadow: var(--topbar-profile-shadow);
 }
 
+.topbar-profile:hover,
+.topbar-profile:focus-within {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 26%, transparent);
+    box-shadow: 0 14px 28px color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent);
+}
+
 .topbar.is-shell-scroll-trigger {
     cursor: pointer;
 }
@@ -765,10 +772,11 @@ REGRA:
     place-items: center;
     background: linear-gradient(
         160deg,
-        color-mix(in srgb, var(--theme-accent-support) 88%, white 12%),
-        color-mix(in srgb, var(--theme-accent-primary) 82%, black 18%)
+        color-mix(in srgb, var(--theme-accent-primary) 88%, white 12%),
+        color-mix(in srgb, var(--theme-accent-support) 84%, black 16%),
+        color-mix(in srgb, var(--theme-accent-premium) 52%, black 48%)
     );
-    box-shadow: var(--theme-shadow-soft);
+    box-shadow: 0 14px 26px color-mix(in srgb, var(--theme-accent-support-alpha) 44%, transparent);
     overflow: hidden;
 }
 
@@ -787,7 +795,7 @@ REGRA:
     inset: auto -20% -34% auto;
     width: 34px;
     height: 34px;
-    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 82%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-premium-alpha) 82%, transparent);
 }
 
 .profile-meta strong {

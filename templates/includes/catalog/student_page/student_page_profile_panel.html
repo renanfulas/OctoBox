@@ -1,0 +1,151 @@
+<!--
+ARQUIVO: painel de perfil da pagina canonica do aluno.
+
+POR QUE ELE EXISTE:
+- troca a ficha antiga dentro da tab por uma composicao clara do shell novo.
+- preserva os mesmos bindings do formulario sem depender do stepper legado.
+-->
+<section class="stack-16 student-page-profile-panel" aria-label="Perfil do aluno">
+    {% if page.data.selected_intake %}
+        {% include "includes/catalog/student_form/main_form/main_form_intake_banner.html" with selected_intake=page.data.selected_intake %}
+    {% endif %}
+
+    {% if page.data.student_form_recovery_guide %}
+        {% include "includes/catalog/student_form/main_form/main_form_recovery.html" with student_form_recovery_guide=page.data.student_form_recovery_guide %}
+    {% endif %}
+
+    <form method="post" novalidate data-action="submit-student-form" class="stack-16">
+        {% csrf_token %}
+        {{ page.data.form.selected_plan.as_hidden }}
+        {{ page.data.form.enrollment_status.as_hidden }}
+        {{ page.data.form.payment_method.as_hidden }}
+        {{ page.data.form.confirm_payment_now.as_hidden }}
+        {{ page.data.form.payment_due_date.as_hidden }}
+        {{ page.data.form.payment_reference.as_hidden }}
+        {{ page.data.form.initial_payment_amount.as_hidden }}
+        {{ page.data.form.billing_strategy.as_hidden }}
+        {{ page.data.form.installment_total.as_hidden }}
+        {{ page.data.form.recurrence_cycles.as_hidden }}
+
+        <article class="card student-page-card student-page-section-card student-page-profile-intro-card">
+            <div class="student-page-card__body student-page-profile-intro">
+                <div class="stack-6">
+                    <p class="eyebrow student-page-profile-kicker">Perfil</p>
+                    <h2 class="section-title-sm">Dados do aluno em leitura clara e facil de atualizar.</h2>
+                </div>
+                <p class="meta-text student-page-profile-intro__copy">Revise cadastro, saude e observacoes sem perder o contexto comercial que ja existe nesta ficha.</p>
+            </div>
+        </article>
+
+        <article class="card student-page-card student-page-section-card student-page-profile-section-card">
+            <div class="student-page-card__head student-page-panel-heading">
+                <div class="stack-6 student-page-panel-heading__copy">
+                    <p class="eyebrow student-page-profile-kicker">Cadastro</p>
+                    <h2 class="section-title-sm">Dados cadastrais</h2>
+                </div>
+            </div>
+            <div class="student-page-card__body stack-16">
+                <div class="field-grid-240">
+                    <label>
+                        <span class="field-label">{{ page.data.form.full_name.label }}</span>
+                        {{ page.data.form.full_name }}
+                        {% for error in page.data.form.full_name.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ page.data.form.phone.label }}</span>
+                        {{ page.data.form.phone }}
+                        {% if page.data.form.phone.help_text %}<small class="meta-text">{{ page.data.form.phone.help_text }}</small>{% endif %}
+                        {% for error in page.data.form.phone.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ page.data.form.email.label }}</span>
+                        {{ page.data.form.email }}
+                        {% for error in page.data.form.email.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ page.data.form.birth_date.label }}</span>
+                        {{ page.data.form.birth_date }}
+                        {% for error in page.data.form.birth_date.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ page.data.form.gender.label }}</span>
+                        {{ page.data.form.gender }}
+                        {% for error in page.data.form.gender.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ page.data.form.status.label }}</span>
+                        {{ page.data.form.status }}
+                        {% for error in page.data.form.status.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                    </label>
+                </div>
+
+                <label>
+                    <span class="field-label">{{ page.data.form.intake_record.label }}</span>
+                    {{ page.data.form.intake_record }}
+                    {% if page.data.form.intake_record.help_text %}<small class="meta-text">{{ page.data.form.intake_record.help_text }}</small>{% endif %}
+                    {% for error in page.data.form.intake_record.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                </label>
+            </div>
+        </article>
+
+        <article class="card student-page-card student-page-section-card student-page-profile-section-card">
+            <div class="student-page-card__head student-page-panel-heading">
+                <div class="stack-6 student-page-panel-heading__copy">
+                    <p class="eyebrow student-page-profile-kicker">Saude</p>
+                    <h2 class="section-title-sm">Saude e observacoes</h2>
+                </div>
+            </div>
+            <div class="student-page-card__body stack-16">
+                <div class="field-grid-220">
+                    <label>
+                        <span class="field-label">{{ page.data.form.health_issue_status.label }}</span>
+                        {{ page.data.form.health_issue_status }}
+                        {% for error in page.data.form.health_issue_status.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ page.data.form.cpf.label }}</span>
+                        {{ page.data.form.cpf }}
+                        {% for error in page.data.form.cpf.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                    </label>
+                </div>
+
+                <label>
+                    <span class="field-label">{{ page.data.form.notes.label }}</span>
+                    {{ page.data.form.notes }}
+                    {% for error in page.data.form.notes.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                </label>
+            </div>
+        </article>
+
+        <article class="card student-page-card student-page-section-card student-page-profile-section-card student-page-profile-actions-card">
+            <div class="student-page-card__head student-page-panel-heading">
+                <div class="stack-6 student-page-panel-heading__copy">
+                    <p class="eyebrow student-page-profile-kicker">Acoes</p>
+                    <h2 class="section-title-sm">Salvar e seguir com seguranca</h2>
+                </div>
+            </div>
+            <div class="student-page-card__body stack-14">
+                {% if page.data.form.non_field_errors %}
+                <div class="note-panel note-panel-danger">
+                    {% for error in page.data.form.non_field_errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <p class="meta-text student-page-profile-actions__copy">Atualize o cadastro sem perder o contexto comercial que ja existe do aluno.</p>
+
+                <div class="student-page-form-actions student-page-profile-actions">
+                    <div class="student-page-form-actions__secondary">
+                        {% if page.data.student_object and page.capabilities.can_open_student_admin %}
+                        <a class="button secondary" href="{% url 'admin:boxcore_student_change' page.data.student_object.id %}">Editar no Admin</a>
+                        {% endif %}
+                    </div>
+                    <div class="student-page-form-actions__primary">
+                        <button class="button" type="submit">Salvar perfil</button>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </form>
+</section>

@@ -56,7 +56,7 @@ POR QUE ELE EXISTE:
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: rgba(71, 85, 105, 0.72);
+    color: color-mix(in srgb, var(--muted) 84%, var(--theme-accent-support) 16%);
 }
 
 .student-directory-table th:nth-child(1),
@@ -90,17 +90,17 @@ POR QUE ELE EXISTE:
 }
 
 .student-data-panel tbody tr + tr {
-    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    border-top: 1px solid color-mix(in srgb, var(--card-border) 82%, transparent);
 }
 
 .student-row:focus-visible {
-    outline: 2px solid rgba(37, 99, 235, 0.34);
+    outline: 2px solid color-mix(in srgb, var(--theme-accent-support) 34%, transparent);
     outline-offset: -2px;
-    background: rgba(255, 255, 255, 0.88);
+    background: color-mix(in srgb, var(--theme-surface-strong) 86%, var(--theme-accent-support-alpha) 14%);
 }
 
 .student-row:focus-within {
-    background: rgba(248, 250, 252, 0.86);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 86%, var(--theme-accent-support-alpha) 14%);
 }
 
 .student-identity {
@@ -127,7 +127,7 @@ POR QUE ELE EXISTE:
 .student-name {
     font-size: 1rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -135,7 +135,7 @@ POR QUE ELE EXISTE:
 
 .student-email {
     font-size: 0.92rem;
-    color: rgba(71, 85, 105, 0.78);
+    color: color-mix(in srgb, var(--muted) 88%, var(--ink) 12%);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -143,7 +143,7 @@ POR QUE ELE EXISTE:
 
 .student-plan-name {
     font-size: 0.98rem;
-    color: #0f172a;
+    color: var(--ink);
 }
 
 .student-status-pill {
@@ -158,8 +158,8 @@ POR QUE ELE EXISTE:
 }
 
 .student-status-pill--green {
-    color: #00e78a;
-    background: rgba(0, 231, 138, 0.12);
+    color: var(--theme-accent-success);
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 72%, transparent);
 }
 
 .student-status-pill--gray {
@@ -168,13 +168,13 @@ POR QUE ELE EXISTE:
 }
 
 .student-status-pill--orange {
-    color: #ffb020;
-    background: rgba(255, 176, 32, 0.12);
+    color: var(--theme-accent-warning);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 72%, transparent);
 }
 
 .student-status-pill--blue {
-    color: #16d9ff;
-    background: rgba(22, 217, 255, 0.12);
+    color: var(--theme-accent-primary);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 72%, transparent);
 }
 
 .student-presence-value {
@@ -183,15 +183,15 @@ POR QUE ELE EXISTE:
 }
 
 .student-presence-value.is-high {
-    color: #00e78a;
+    color: var(--theme-accent-success);
 }
 
 .student-presence-value.is-mid {
-    color: #ffb020;
+    color: var(--theme-accent-warning);
 }
 
 .student-presence-value.is-low {
-    color: #ff2d6f;
+    color: var(--theme-accent-danger);
 }
 
 .student-payment-state {
@@ -200,15 +200,15 @@ POR QUE ELE EXISTE:
 }
 
 .student-payment-state--green {
-    color: #00e78a;
+    color: var(--theme-accent-success);
 }
 
 .student-payment-state--orange {
-    color: #ffb020;
+    color: var(--theme-accent-warning);
 }
 
 .student-payment-state--red {
-    color: #ff2d6f;
+    color: var(--theme-accent-danger);
 }
 
 .student-payment-state--gray {
@@ -216,7 +216,7 @@ POR QUE ELE EXISTE:
 }
 
 .student-due-date {
-    color: rgba(71, 85, 105, 0.84);
+    color: color-mix(in srgb, var(--muted) 90%, var(--ink) 10%);
 }
 
 .student-directory-footer {
@@ -225,7 +225,7 @@ POR QUE ELE EXISTE:
     align-items: center;
     gap: 16px;
     padding: 18px 24px;
-    border-top: 1px solid rgba(148, 163, 184, 0.12);
+    border-top: 1px solid color-mix(in srgb, var(--card-border) 82%, transparent);
 }
 
 .student-directory-footer-side {
@@ -243,7 +243,7 @@ POR QUE ELE EXISTE:
 
 .student-directory-footer-count {
     font-size: 0.85rem;
-    color: rgba(71, 85, 105, 0.78);
+    color: color-mix(in srgb, var(--muted) 90%, var(--ink) 10%);
     text-align: center;
 }
 
@@ -255,9 +255,9 @@ POR QUE ELE EXISTE:
     min-height: 40px;
     padding: 0 18px;
     border-radius: 999px;
-    border: 1px solid rgba(37, 99, 235, 0.22);
-    background: rgba(37, 99, 235, 0.12);
-    color: #0f172a;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 72%, transparent);
+    color: var(--ink);
     font-size: 0.88rem;
     font-weight: 700;
     text-decoration: none;
@@ -266,12 +266,12 @@ POR QUE ELE EXISTE:
 
 .student-pagination-button:hover {
     transform: translateY(-1px);
-    background: rgba(37, 99, 235, 0.16);
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 86%, transparent);
 }
 
 .student-pagination-button--ghost {
-    border-color: rgba(148, 163, 184, 0.22);
-    background: rgba(248, 250, 252, 0.92);
+    border-color: color-mix(in srgb, var(--card-border) 82%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
 }
 
 .student-pagination-button.is-disabled {
@@ -358,10 +358,10 @@ body[data-theme="dark"] .student-pagination-button--ghost {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 13px 16px;
         padding: 16px;
-        border: 1px solid rgba(148, 163, 184, 0.16);
+        border: 1px solid color-mix(in srgb, var(--card-border) 86%, transparent);
         border-radius: 18px;
-        background: rgba(255, 255, 255, 0.76);
-        box-shadow: 0 18px 32px rgba(15, 23, 42, 0.04);
+        background: color-mix(in srgb, var(--card-surface) 96%, transparent);
+        box-shadow: var(--card-shadow);
     }
 
     .student-directory-table td {

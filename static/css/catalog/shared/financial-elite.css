@@ -21,11 +21,11 @@ POR QUE ELE EXISTE:
 /* --- 2. Gavetas Laterais: Slide-over Panels --- */
 .slide-over-panel {
     position: fixed; top: 0; right: -520px; width: 480px; max-width: 95%; height: 100vh;
-    background: var(--surface) !important; box-shadow: -5px 0 25px rgba(0,0,0,0.15); z-index: 9999;
+    background: var(--surface); box-shadow: -5px 0 25px rgba(0,0,0,0.15); z-index: 9999;
     transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s; overflow-y: auto; padding: 32px 24px;
     border-left: 1px solid var(--border-100); visibility: hidden;
 }
-.slide-over-panel.is-active { right: 0 !important; visibility: visible !important; }
+.slide-over-panel.is-active { right: 0; visibility: visible; }
 
 .slide-overlay {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;

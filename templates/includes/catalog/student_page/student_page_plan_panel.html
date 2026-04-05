@@ -1,0 +1,126 @@
+<!--
+ARQUIVO: painel de plano da pagina canônica do aluno.
+
+POR QUE ELE EXISTE:
+- entrega uma leitura clara do plano dentro do shell novo da pagina.
+- preserva acoes sensiveis existentes sem depender do drawer do financeiro.
+-->
+<section class="stack-16 student-page-plan-panel" aria-label="Plano do aluno">
+    <article class="card student-page-card student-page-plan-summary">
+        <div class="student-page-card__head student-page-panel-heading">
+            <div class="stack-6 student-page-panel-heading__copy">
+                <p class="eyebrow student-page-plan-kicker">Plano</p>
+                <h2 class="section-title-sm">Plano atual</h2>
+            </div>
+            {% if page.data.financial_overview.latest_enrollment %}
+            <div class="student-page-plan-price">
+                <strong>R$ {{ page.data.financial_overview.latest_enrollment.plan.price|floatformat:2 }}</strong>
+                <span>por mes</span>
+            </div>
+            {% endif %}
+        </div>
+        <div class="student-page-card__body stack-16">
+            {% if page.data.financial_overview.latest_enrollment %}
+            <div class="stack-8 student-page-plan-summary__hero">
+                <h3 class="student-page-plan-title">{{ page.data.financial_overview.latest_enrollment.plan.name }}</h3>
+                <p class="meta-text student-page-plan-summary__copy student-page-plan-summary__support">Vinculo comercial ativo com leitura clara de status, renovacao e cobranca.</p>
+            </div>
+            <div class="student-page-plan-meta student-page-plan-meta--wide">
+                <div class="student-page-plan-meta__item">
+                    <span class="student-page-plan-meta__label">Status do vinculo</span>
+                    <strong class="student-page-plan-meta__value">{{ page.data.financial_overview.latest_enrollment.get_status_display }}</strong>
+                </div>
+                <div class="student-page-plan-meta__item">
+                    <span class="student-page-plan-meta__label">Membro desde</span>
+                    <strong class="student-page-plan-meta__value">{{ page.data.financial_overview.latest_enrollment.start_date|date:"F Y" }}</strong>
+                </div>
+                <div class="student-page-plan-meta__item">
+                    <span class="student-page-plan-meta__label">Proxima renovacao</span>
+                    <strong class="student-page-plan-meta__value">
+                        {% if page.data.financial_overview.metrics.proximo_vencimento %}
+                            {{ page.data.financial_overview.metrics.proximo_vencimento|date:"d/m/Y" }}
+                        {% else %}
+                            Sem vencimento ativo
+                        {% endif %}
+                    </strong>
+                </div>
+                <div class="student-page-plan-meta__item">
+                    <span class="student-page-plan-meta__label">Status da cobranca</span>
+                    <strong class="student-page-plan-meta__value">
+                        {% if page.data.financial_overview.metrics.pagamentos_atrasados %}
+                            {{ page.data.financial_overview.metrics.pagamentos_atrasados }} em atraso
+                        {% else %}
+                            Em dia
+                        {% endif %}
+                    </strong>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </article>
+
+    <article class="card student-page-card student-page-plan-actions">
+        <div class="student-page-card__head student-page-panel-heading">
+            <div class="stack-6 student-page-panel-heading__copy">
+                <p class="eyebrow student-page-plan-kicker">Gestao do plano</p>
+                <h2 class="section-title-sm">Acoes com impacto no acesso do aluno</h2>
+            </div>
+        </div>
+        <div class="student-page-card__body stack-16">
+            {% if page.data.enrollment_management_form %}
+            <form method="post" action="{% url 'student-enrollment-action' page.data.student_object.id %}" class="form-stack student-enrollment-management-form">
+                {% csrf_token %}
+                {{ page.data.enrollment_management_form.enrollment_id }}
+                <div class="field-grid-220">
+                    <label>
+                        <span class="field-label">{{ page.data.enrollment_management_form.action_date.label }}</span>
+                        {{ page.data.enrollment_management_form.action_date }}
+                    </label>
+                    <label>
+                        <span class="field-label">{{ page.data.enrollment_management_form.reason.label }}</span>
+                        {{ page.data.enrollment_management_form.reason }}
+                    </label>
+                </div>
+                <div class="student-page-plan-actions__list">
+                    <div class="student-page-plan-action-row">
+                        <div class="stack-4 student-page-plan-action-copy">
+                            <strong>Cancelar matricula</strong>
+                            <p class="meta-text">Encerra o vinculo atual sem apagar o historico do aluno.</p>
+                        </div>
+                        <button
+                            class="button secondary"
+                            type="submit"
+                            name="action"
+                            value="cancel-enrollment"
+                            data-confirm="true"
+                            data-confirm-message="Tem certeza que deseja cancelar esta matricula? Essa acao muda o vinculo atual do aluno."
+                        >
+                            Cancelar matricula
+                        </button>
+                    </div>
+                    <div class="student-page-plan-action-row">
+                        <div class="stack-4 student-page-plan-action-copy">
+                            <strong>Reativar matricula</strong>
+                            <p class="meta-text">Traz o aluno de volta para o fluxo ativo com o vinculo novamente valido.</p>
+                        </div>
+                        <button
+                            class="button"
+                            type="submit"
+                            name="action"
+                            value="reactivate-enrollment"
+                            data-confirm="true"
+                            data-confirm-message="Tem certeza que deseja reativar esta matricula? O aluno volta para o fluxo ativo."
+                        >
+                            Reativar matricula
+                        </button>
+                    </div>
+                </div>
+            </form>
+            {% else %}
+            <div class="student-page-empty-state">
+                <p class="meta-text">Nenhum vinculo ativo agora. Assim que existir um plano conectado, a manutencao aparece aqui.</p>
+            </div>
+            {% endif %}
+        </div>
+    </article>
+</section>

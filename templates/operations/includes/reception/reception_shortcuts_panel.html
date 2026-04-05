@@ -8,7 +8,7 @@ POR QUE ELE EXISTE:
     {% url 'student-directory' as students_directory_url %}
     {% url 'student-quick-create' as student_quick_create_url %}
     {% url 'class-grid' as class_grid_url %}
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Atalhos de atendimento" title="Atalhos de atendimento" copy="Destinos de fluxo curto sem sair do compasso." pill_label="Fluxo curto" pill_class="info" %}
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Balcao rapido" title="Atalhos de atendimento" copy="Destinos de fluxo curto sem sair do compasso." pill_label="Fluxo curto" pill_class="info" %}
     <div class="actions actions-tight reception-shortcuts-actions">
         {% include "operations/includes/reception/reception_shortcut_link.html" with href=students_directory_url data_action="open-students-directory" label="Abrir alunos" %}
         {% include "operations/includes/reception/reception_shortcut_link.html" with href=student_quick_create_url|add:'#student-form-essential' data_action="open-student-registration" label="Novo aluno" %}

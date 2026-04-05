@@ -20,6 +20,8 @@ POR QUE ELE EXISTE:
 }
 
 .class-grid-hero {
-    background: var(--surface);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 14%, transparent), transparent 34%),
+        linear-gradient(180deg, color-mix(in srgb, var(--card-surface-strong) 96%, transparent), color-mix(in srgb, var(--card-surface) 92%, transparent));
 }
-
+

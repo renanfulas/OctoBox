@@ -1,0 +1,1434 @@
+/*
+ARQUIVO: shell canonico da pagina do aluno.
+
+POR QUE ELE EXISTE:
+- cria a hierarquia macro da Onda A.
+- separa header, tabs e paineis do restante da ficha.
+*/
+
+.student-page-shell {
+    display: grid;
+    gap: 20px;
+}
+
+.student-page-shell :is(.field-label, .meta-text, .meta-text-sm) {
+    color: var(--legacy-copy);
+}
+
+.student-page-shell .field-label {
+    display: inline-block;
+    margin-bottom: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.student-page-shell .meta-text,
+.student-page-shell .meta-text-sm {
+    line-height: 1.45;
+}
+
+.student-page-shell .form-error {
+    display: block;
+    margin-top: 8px;
+    color: var(--theme-accent-danger);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.student-page-shell label {
+    min-width: 0;
+}
+
+.student-page-shell input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+.student-page-shell select,
+.student-page-shell textarea {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 92%, transparent);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent),
+            color-mix(in srgb, var(--theme-surface-glass) 96%, transparent)
+        );
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 8px 20px rgba(15, 23, 42, 0.05);
+    color: var(--theme-text-primary);
+}
+
+.student-page-shell input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"])::placeholder,
+.student-page-shell textarea::placeholder {
+    color: var(--legacy-copy);
+    opacity: 0.9;
+}
+
+.student-page-shell input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):focus,
+.student-page-shell select:focus,
+.student-page-shell textarea:focus {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 42%, var(--theme-glass-border) 58%);
+    box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--theme-accent-support) 16%, transparent),
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.student-page-shell .button,
+.student-page-shell a.button,
+.student-page-shell button {
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease,
+        background-color 0.18s ease,
+        color 0.18s ease;
+}
+
+.student-page-shell .button:hover,
+.student-page-shell a.button:hover {
+    transform: translateY(-1px);
+}
+
+.student-page-shell .button:focus-visible,
+.student-page-shell a.button:focus-visible,
+.student-page-shell button:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--theme-accent-support) 26%, transparent);
+    outline-offset: 3px;
+}
+
+.student-page-shell input[type="checkbox"],
+.student-page-shell input[type="radio"] {
+    accent-color: var(--theme-accent-support);
+}
+
+.student-page-header__card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 22px 18px;
+    padding: 24px 24px 24px;
+}
+
+.student-page-header__identity,
+.student-page-header__title-row,
+.student-page-header__meta,
+.student-page-header__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.student-page-header__identity {
+    gap: 18px;
+    min-width: 0;
+}
+
+.student-page-header__copy {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+
+.student-page-header__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    min-height: 24px;
+    padding: 0 9px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
+    background: color-mix(in srgb, var(--theme-surface-glass) 82%, transparent);
+    color: var(--legacy-copy);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.student-page-header__title-row {
+    gap: 10px 14px;
+}
+
+.student-page-header__title {
+    margin: 0;
+    color: var(--theme-text-primary);
+    font-size: clamp(1.72rem, 2.9vw, 2.18rem);
+    line-height: 1;
+    letter-spacing: -0.026em;
+}
+
+.student-page-header__avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-support) 24%, transparent), color-mix(in srgb, var(--theme-accent-primary) 10%, transparent)),
+        color-mix(in srgb, var(--theme-surface-glass) 86%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 22%, var(--theme-glass-border) 78%);
+    color: var(--theme-accent-support);
+    font-size: 1.3rem;
+    font-weight: 800;
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 12px 24px rgba(7, 14, 24, 0.08);
+}
+
+.student-page-header__status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 31px;
+    padding: 0 13px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-success) 22%, var(--theme-glass-border) 78%);
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 14%, var(--theme-surface-glass) 86%);
+    color: var(--theme-accent-success);
+    font-size: 0.78rem;
+    font-weight: 700;
+    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
+}
+
+.student-page-header__status-pill.is-danger {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 24%, var(--theme-glass-border) 76%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 14%, var(--theme-surface-glass) 86%);
+    color: var(--theme-accent-danger);
+}
+
+.student-page-header__meta {
+    gap: 9px 10px;
+    color: var(--legacy-copy);
+    font-size: 0.82rem;
+    line-height: 1.3;
+}
+
+.student-page-header__meta-item {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 11px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
+    background: color-mix(in srgb, var(--theme-surface-glass) 78%, transparent);
+    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
+}
+
+.student-page-header__actions {
+    justify-content: flex-end;
+    gap: 10px;
+    align-self: start;
+}
+
+.student-page-header__actions-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.student-page-header__actions .button,
+.student-page-form-actions .button,
+.student-page-plan-action-row .button,
+.student-page-charge-card__footer .button {
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 14px;
+}
+
+.student-page-header__primary-action {
+    min-width: 176px;
+    box-shadow: var(--theme-glow-primary);
+    font-weight: 700;
+}
+
+.student-page-header__secondary-action {
+    min-width: 136px;
+    background: color-mix(in srgb, var(--theme-surface-glass) 78%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
+}
+
+.student-page-header__action-icon {
+    flex: 0 0 auto;
+}
+
+.student-page-header__stats {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 13px;
+    padding-top: 20px;
+    border-top: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
+}
+
+.student-page-header__stat {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    align-content: start;
+}
+
+.student-page-header__stat-card {
+    padding: 15px 15px 13px;
+    min-height: 108px;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 11%, var(--theme-glass-border) 89%);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-glass-strong) 82%, transparent),
+            color-mix(in srgb, var(--theme-surface-glass) 78%, transparent)
+        );
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 10px 24px rgba(7, 14, 24, 0.04);
+}
+
+.student-page-header__stat-card--plan,
+.student-page-header__stat-card--money {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 40%),
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-glass-strong) 84%, transparent),
+            color-mix(in srgb, var(--theme-surface-glass) 80%, transparent)
+        );
+}
+
+.student-page-header__stat-label,
+.student-page-charge-card__footer,
+.student-page-charge-card__value span {
+    color: var(--legacy-copy);
+    font-size: 0.76rem;
+}
+
+.student-page-header__stat-label {
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.student-page-header__stat-value {
+    color: var(--theme-text-primary);
+    font-size: 1.18rem;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+}
+
+.student-page-header__stat-value.is-warning {
+    color: var(--theme-accent-warning);
+}
+
+.student-page-header__stat-meta {
+    color: var(--legacy-copy);
+    font-size: 0.79rem;
+    line-height: 1.4;
+}
+
+.student-page-shell__panels {
+    min-width: 0;
+    display: grid;
+}
+
+.student-page-panel {
+    display: none;
+    min-width: 0;
+}
+
+.student-page-panel.is-active {
+    display: block;
+}
+
+.student-page-tabs {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-width: 100%;
+    padding: 6px;
+    border-radius: 20px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-glass-border) 86%);
+    background: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
+    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
+}
+
+.student-page-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 18px;
+    border-radius: 14px;
+    color: var(--legacy-copy);
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.student-page-tab:hover,
+.student-page-tab:focus-visible {
+    color: var(--theme-text-primary);
+    background: color-mix(in srgb, var(--theme-surface-glass-strong) 88%, transparent);
+    transform: translateY(-1px);
+    outline: 2px solid color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
+    outline-offset: 2px;
+}
+
+.student-page-tab.is-active {
+    color: var(--theme-text-primary);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 34%),
+        var(--theme-surface-glass-strong);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+.student-page-card {
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 30%),
+        var(--theme-surface-glass-strong);
+    box-shadow: var(--theme-glass-shadow);
+    color: var(--theme-text-primary);
+}
+
+.student-page-section-card {
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.student-page-section-card:hover {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
+    box-shadow:
+        0 18px 38px rgba(7, 14, 24, 0.08),
+        inset 0 1px 0 var(--theme-glass-highlight);
+    background: inherit;
+}
+
+.student-page-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 12px;
+    padding: 18px 20px 15px;
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
+}
+
+.student-page-card__body {
+    padding: 18px 20px 20px;
+}
+
+.student-page-panel-heading {
+    align-items: end;
+}
+
+.student-page-panel-heading__copy {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+.student-page-panel-heading__copy .meta-text {
+    max-width: 60ch;
+}
+
+.student-page-panel-heading__copy :is(h1, h2, h3, h4, .section-title, .section-title-sm) {
+    color: var(--theme-text-primary);
+}
+
+.student-page-plan-panel {
+    display: grid;
+    gap: 18px;
+}
+
+.student-page-plan-summary,
+.student-page-plan-actions {
+    overflow: hidden;
+}
+
+.student-page-profile-panel {
+    display: grid;
+    gap: 18px;
+}
+
+.student-page-profile-intro-card,
+.student-page-profile-section-card {
+    overflow: hidden;
+}
+
+.student-page-profile-intro {
+    display: grid;
+    gap: 12px;
+    max-width: 56ch;
+    padding-top: 18px;
+    padding-bottom: 18px;
+}
+
+.student-page-profile-kicker {
+    letter-spacing: 0.08em;
+}
+
+.student-page-profile-intro__copy {
+    font-size: 0.92rem;
+}
+
+.student-page-profile-section-card .student-page-card__head {
+    align-items: end;
+}
+
+.student-page-profile-section-card .student-page-card__body {
+    gap: 16px;
+}
+
+.student-page-profile-panel form,
+.student-page-plan-panel form {
+    min-width: 0;
+}
+
+.student-page-section-card .student-page-card__body > .field-grid-220,
+.student-page-section-card .student-page-card__body > .field-grid-240 {
+    align-items: start;
+}
+
+.student-page-alert-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-danger) 24%, var(--theme-glass-border) 76%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 14%, var(--theme-surface-glass) 86%);
+}
+
+.student-page-alert-banner__copy {
+    display: grid;
+    gap: 4px;
+    color: var(--theme-accent-danger);
+}
+
+.student-page-alert-banner .button:hover,
+.student-page-alert-banner .button:focus-visible {
+    box-shadow: 0 10px 22px rgba(190, 24, 93, 0.18);
+}
+
+.student-page-charge-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px 20px;
+    padding: 18px 20px 20px;
+}
+
+.student-page-charge-card.is-danger {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 24%, var(--theme-glass-border) 76%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-danger-alpha) 14%, transparent), transparent 32%),
+        var(--theme-surface-glass-strong);
+}
+
+.student-page-charge-card__copy,
+.student-page-charge-card__value {
+    display: grid;
+    gap: 8px;
+}
+
+.student-page-charge-card__title {
+    letter-spacing: -0.018em;
+}
+
+.student-page-charge-card__eyebrow {
+    letter-spacing: 0.08em;
+}
+
+.student-page-charge-card__support {
+    max-width: 42ch;
+    line-height: 1.5;
+}
+
+.student-page-charge-card__value {
+    align-content: start;
+    justify-items: end;
+    text-align: right;
+}
+
+.student-page-charge-card__value strong {
+    color: var(--theme-text-primary);
+    font-size: clamp(1.5rem, 2.2vw, 2rem);
+    line-height: 1;
+}
+
+.student-page-charge-card__meta {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.student-page-charge-card__bar {
+    grid-column: 1 / -1;
+    height: 6px;
+    border-radius: 999px;
+    background:
+        linear-gradient(90deg, var(--theme-accent-support), color-mix(in srgb, var(--theme-accent-support) 60%, var(--theme-accent-success) 40%));
+}
+
+.student-page-charge-card__bar.is-danger {
+    background: linear-gradient(90deg, var(--theme-accent-danger), color-mix(in srgb, var(--theme-accent-danger) 64%, var(--theme-accent-warning) 36%));
+}
+
+.student-page-charge-card__footer {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.student-page-charge-card__footer > :first-child {
+    min-width: 0;
+}
+
+.student-page-charge-card__footnote {
+    line-height: 1.4;
+}
+
+.student-page-payments-ledger__table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 720px;
+}
+
+.student-page-payments-ledger__head th {
+    padding-top: 0;
+    padding-bottom: 11px;
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
+    color: var(--legacy-copy);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.student-page-payments-ledger__method {
+    color: var(--theme-text-primary);
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+.student-page-payments-ledger__row td {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    vertical-align: middle;
+    border-top: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 8%, var(--theme-glass-border) 92%);
+}
+
+.student-page-payments-ledger__row {
+    transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.student-page-payments-ledger__row:hover {
+    background: color-mix(in srgb, var(--theme-surface-glass) 78%, transparent);
+}
+
+.student-page-payments-ledger__description {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.student-page-payments-ledger__method-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
+    background: color-mix(in srgb, var(--theme-surface-glass) 86%, transparent);
+    color: var(--theme-accent-support);
+}
+
+.student-page-payments-ledger__copy {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.student-page-payments-ledger__copy strong {
+    color: var(--theme-text-primary);
+    font-size: 0.92rem;
+    line-height: 1.25;
+}
+
+.student-page-payments-ledger__title {
+    letter-spacing: -0.01em;
+}
+
+.student-page-payments-ledger__copy span,
+.student-page-payments-ledger__date {
+    color: var(--legacy-copy);
+    font-size: 0.78rem;
+}
+
+.student-page-payments-ledger__amount {
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.student-page-payments-ledger__status {
+    white-space: nowrap;
+}
+
+.student-page-payments-ledger__status-pill {
+    min-width: 74px;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.student-page-payments-ledger__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
+    background: color-mix(in srgb, var(--theme-surface-glass) 82%, transparent);
+    color: var(--legacy-copy);
+    transition: transform 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.student-page-payments-ledger__action:hover,
+.student-page-payments-ledger__action:focus-visible {
+    transform: translateX(2px);
+    background: color-mix(in srgb, var(--theme-surface-glass) 78%, transparent);
+    color: var(--theme-text-primary);
+}
+
+.student-page-ghost-action {
+    width: 100%;
+    min-height: 52px;
+    border-radius: 16px;
+    border: 1px dashed color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
+    background: transparent;
+    color: var(--legacy-copy);
+    font-weight: 600;
+    transition: border-color 0.18s ease, color 0.18s ease, background-color 0.18s ease;
+}
+
+.student-page-ghost-action:hover,
+.student-page-ghost-action:focus-visible {
+    color: var(--theme-text-primary);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 22%, var(--theme-glass-border) 78%);
+    background: color-mix(in srgb, var(--theme-surface-glass) 72%, transparent);
+    outline: 2px solid color-mix(in srgb, var(--theme-accent-support) 20%, transparent);
+    outline-offset: 2px;
+    box-shadow: 0 12px 24px rgba(7, 14, 24, 0.06);
+}
+
+.student-page-plan-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.student-page-plan-meta--wide {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.student-page-plan-meta__item {
+    display: grid;
+    gap: 10px;
+    padding: 15px 15px 14px;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 36%),
+        color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
+    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
+    transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.student-page-plan-meta__item:hover {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
+    background: inherit;
+    box-shadow:
+        0 14px 26px rgba(7, 14, 24, 0.06),
+        inset 0 1px 0 var(--theme-glass-highlight);
+}
+
+.student-page-plan-meta__label {
+    color: var(--legacy-copy);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.student-page-plan-meta__value {
+    color: var(--theme-text-primary);
+    font-size: 1.04rem;
+    line-height: 1.2;
+}
+
+.student-page-plan-kicker {
+    letter-spacing: 0.08em;
+}
+
+.student-page-plan-summary__hero {
+    display: grid;
+    gap: 7px;
+    max-width: 48ch;
+}
+
+.student-page-plan-summary__copy {
+    font-size: 0.92rem;
+}
+
+.student-page-plan-summary__support {
+    max-width: 44ch;
+    line-height: 1.52;
+}
+
+.student-page-plan-title {
+    margin: 0;
+    color: var(--theme-text-primary);
+    font-size: clamp(1.52rem, 2.15vw, 1.94rem);
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+}
+
+.student-page-plan-price {
+    display: grid;
+    gap: 5px;
+    justify-items: end;
+    text-align: right;
+    padding: 8px 0 0;
+}
+
+.student-page-plan-price strong {
+    color: var(--theme-text-primary);
+    font-size: clamp(1.95rem, 2.55vw, 2.45rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+}
+
+.student-page-plan-price span {
+    color: var(--legacy-copy);
+    font-size: 0.78rem;
+}
+
+.student-page-plan-actions__list {
+    display: grid;
+    gap: 0;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
+    border-radius: 20px;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 8%, transparent), transparent 36%),
+        color-mix(in srgb, var(--theme-surface-glass) 78%, transparent);
+}
+
+.student-page-plan-action-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: center;
+    padding: 20px 22px;
+    transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.student-page-plan-action-copy {
+    min-width: 0;
+}
+
+.student-page-plan-action-copy strong {
+    letter-spacing: -0.01em;
+}
+
+.student-page-plan-action-row + .student-page-plan-action-row {
+    border-top: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
+}
+
+.student-page-plan-action-row:hover {
+    background: inherit;
+}
+
+.student-page-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.student-page-profile-actions-card .student-page-card__body {
+    gap: 12px;
+}
+
+.student-page-profile-actions {
+    padding-top: 4px;
+    border-top: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
+}
+
+.student-page-profile-actions__copy {
+    max-width: 54ch;
+    line-height: 1.5;
+}
+
+.student-page-form-actions__secondary,
+.student-page-form-actions__primary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0;
+}
+
+.student-page-empty-state {
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 1px dashed color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
+    background: color-mix(in srgb, var(--theme-surface-glass) 70%, transparent);
+}
+
+.student-page-payments-panel .student-financial-peek {
+    display: none;
+}
+
+.student-page-payments-panel .student-financial-command-actions [data-action="toggle-financial-workspace"],
+.student-page-payments-panel .student-financial-command-actions [data-action="open-tab-student-form-essential"] {
+    display: none;
+}
+
+.student-page-payments-panel {
+    padding-top: 0;
+}
+
+.student-form-shell .student-page-payments-panel {
+    padding-top: 4px;
+}
+
+.student-page-payments-panel .student-page-payments-workspace__content[hidden] {
+    display: block !important;
+}
+
+.student-page-payments-panel :is(
+    .student-payment-management-card,
+    .student-page-payments-management-card,
+    .student-page-payments-enrollment-card
+) {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+.student-page-payments-history-card,
+.student-page-payments-drawer,
+.student-page-payments-checkout-card,
+.student-page-payments-management-card,
+.student-page-payments-enrollment-card {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+.student-page-payments-panel {
+    --student-page-drawer-top: 122px;
+    --student-page-drawer-right: 24px;
+    --student-page-drawer-bottom-gap: 24px;
+    --student-page-drawer-width: min(540px, calc(100vw - (var(--student-page-drawer-right) * 2)));
+}
+
+.student-page-payments-panel > .slide-overlay {
+    top: var(--student-page-drawer-top);
+    height: calc(100dvh - var(--student-page-drawer-top));
+    background: rgba(4, 7, 14, 0.18);
+    backdrop-filter: blur(1.5px);
+    transition:
+        opacity 0.22s ease,
+        visibility 0.22s ease,
+        background-color 0.22s ease;
+}
+
+.student-page-payments-drawer.slide-over-panel {
+    top: var(--student-page-drawer-top);
+    right: var(--student-page-drawer-right);
+    width: var(--student-page-drawer-width);
+    max-width: calc(100vw - (var(--student-page-drawer-right) * 2));
+    height: auto;
+    max-height: calc(100dvh - var(--student-page-drawer-top) - var(--student-page-drawer-bottom-gap));
+    padding: 20px 20px 18px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
+    border-left: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 32%),
+        var(--theme-surface-glass-strong);
+    box-shadow:
+        0 28px 60px rgba(7, 14, 24, 0.16),
+        inset 0 1px 0 var(--theme-glass-highlight);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    visibility: hidden;
+    opacity: 0;
+    transform: translate3d(calc(100% + 20px), 0, 0);
+    transition:
+        transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1),
+        opacity 0.2s ease,
+        visibility 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.student-page-payments-drawer.slide-over-panel.is-active {
+    right: var(--student-page-drawer-right);
+    visibility: visible;
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+}
+
+.student-page-payments-drawer .drawer-close-btn {
+    top: 16px;
+    right: 16px;
+}
+
+.student-page-payments-drawer--checkout.slide-over-panel {
+    width: min(488px, calc(100vw - (var(--student-page-drawer-right) * 2)));
+}
+
+.student-page-payments-drawer--management.slide-over-panel {
+    width: min(620px, calc(100vw - (var(--student-page-drawer-right) * 2)));
+}
+
+.student-page-payments-drawer--enrollment.slide-over-panel {
+    width: min(536px, calc(100vw - (var(--student-page-drawer-right) * 2)));
+}
+
+body[data-theme="dark"] .student-page-tabs {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
+    background: color-mix(in srgb, var(--theme-surface-glass) 92%, transparent);
+}
+
+body[data-theme="dark"] .student-page-tab {
+    color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .student-page-tab:hover,
+body[data-theme="dark"] .student-page-tab:focus-visible {
+    color: var(--theme-text-primary);
+    background: color-mix(in srgb, var(--theme-surface-glass-strong) 92%, transparent);
+}
+
+body[data-theme="dark"] .student-page-tab.is-active,
+body[data-theme="dark"] .student-page-card {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 32%),
+        var(--theme-surface-glass-strong);
+    box-shadow: var(--theme-glass-shadow);
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .student-page-card__head {
+    border-bottom-color: color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
+}
+
+body[data-theme="dark"] .student-page-section-card:hover,
+body[data-theme="dark"] .student-page-plan-meta__item:hover,
+body[data-theme="dark"] .student-page-plan-action-row:hover,
+body[data-theme="dark"] .student-page-payments-ledger__row:hover,
+body[data-theme="dark"] .student-page-payments-ledger__action:hover,
+body[data-theme="dark"] .student-page-payments-ledger__action:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
+}
+
+body[data-theme="dark"] .student-page-section-card:hover,
+body[data-theme="dark"] .student-page-plan-meta__item:hover,
+body[data-theme="dark"] .student-page-plan-action-row:hover {
+    background: inherit;
+}
+
+body[data-theme="dark"] .student-page-payments-panel :is(
+    .student-payment-management-card,
+    .student-page-payments-management-card,
+    .student-page-payments-enrollment-card
+) {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+body[data-theme="dark"] :is(
+    .student-page-payments-history-card,
+    .student-page-payments-drawer,
+    .student-page-payments-checkout-card,
+    .student-page-payments-management-card,
+    .student-page-payments-enrollment-card
+) {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+body[data-theme="dark"] .student-page-payments-panel > .slide-overlay {
+    background: rgba(2, 6, 14, 0.3);
+}
+
+body[data-theme="dark"] .student-page-payments-drawer.slide-over-panel {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 34%),
+        var(--theme-surface-glass-strong);
+    box-shadow:
+        0 28px 68px rgba(2, 6, 14, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"] .student-page-header__meta,
+body[data-theme="dark"] .student-page-header__stat-meta,
+body[data-theme="dark"] .student-page-header__stat-label,
+body[data-theme="dark"] .student-page-charge-card__footer,
+body[data-theme="dark"] .student-page-charge-card__value span {
+    color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .student-page-panel-heading__copy :is(h1, h2, h3, h4, .section-title, .section-title-sm),
+body[data-theme="dark"] .student-page-payments-ledger__copy strong,
+body[data-theme="dark"] .student-page-payments-ledger__method,
+body[data-theme="dark"] .student-page-payments-ledger__amount {
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .student-page-panel-heading__copy .meta-text,
+body[data-theme="dark"] .student-page-payments-ledger__head th,
+body[data-theme="dark"] .student-page-payments-ledger__copy span,
+body[data-theme="dark"] .student-page-payments-ledger__date,
+body[data-theme="dark"] .student-page-payments-ledger__action {
+    color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .student-page-header__eyebrow,
+body[data-theme="dark"] .student-page-header__meta-item,
+body[data-theme="dark"] .student-page-header__stat-card {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-glass-border) 86%);
+    background: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
+}
+
+body[data-theme="dark"] .student-page-header__stat-card--plan,
+body[data-theme="dark"] .student-page-header__stat-card--money {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 42%),
+        color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
+}
+
+body[data-theme="dark"] .student-page-plan-meta__item {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-glass-border) 84%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 34%),
+        color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
+}
+
+body[data-theme="dark"] .student-page-alert-banner {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 30%, var(--theme-glass-border) 70%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 16%, var(--theme-surface-glass) 84%);
+}
+
+@media (max-width: 900px) {
+    .student-page-payments-panel {
+        --student-page-drawer-top: 110px;
+        --student-page-drawer-right: 18px;
+        --student-page-drawer-bottom-gap: 18px;
+    }
+
+    .student-page-header__card {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .student-page-panel-heading {
+        align-items: start;
+    }
+
+    .student-page-panel-heading__copy {
+        gap: 5px;
+    }
+
+    .student-page-header__stats,
+    .student-page-plan-meta,
+    .student-page-plan-meta--wide {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .student-page-header__actions {
+        justify-content: flex-start;
+    }
+
+    .student-page-header__actions-group {
+        width: auto;
+    }
+
+    .student-page-header__title {
+        font-size: clamp(1.35rem, 3vw, 1.8rem);
+    }
+
+    .student-page-plan-action-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .student-page-plan-price {
+        justify-items: start;
+        text-align: left;
+        padding-top: 2px;
+    }
+
+    .student-page-charge-card {
+        grid-template-columns: 1fr;
+    }
+
+    .student-page-header__stats,
+    .student-page-plan-meta {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .student-page-charge-card__value,
+    .student-page-charge-card__footer {
+        justify-items: start;
+        text-align: left;
+    }
+
+    .student-page-charge-card__footer {
+        flex-wrap: wrap;
+    }
+
+    .student-page-charge-card__support,
+    .student-page-panel-heading__copy .meta-text {
+        max-width: none;
+    }
+}
+
+@media (max-width: 680px) {
+    .student-page-header__stats,
+    .student-page-plan-meta,
+    .student-page-plan-meta--wide {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .student-page-header__identity {
+        align-items: flex-start;
+    }
+
+    .student-page-header__avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        font-size: 1.05rem;
+    }
+
+    .student-page-header__title-row {
+        gap: 8px;
+    }
+
+    .student-page-header__meta {
+        display: grid;
+        gap: 6px;
+    }
+
+    .student-page-header__meta-item {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .student-page-form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .student-page-form-actions__secondary,
+    .student-page-form-actions__primary {
+        width: 100%;
+    }
+
+    .student-page-header__actions {
+        width: 100%;
+    }
+
+    .student-page-header__actions-group {
+        width: 100%;
+    }
+
+    .student-page-form-actions .button,
+    .student-page-plan-action-row .button,
+    .student-page-alert-banner .button,
+    .student-page-charge-card__footer .button,
+    .student-page-header__actions .button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .student-page-plan-price {
+        justify-items: start;
+        text-align: left;
+    }
+}
+
+body[data-theme="dark"] .student-page-plan-meta__item,
+body[data-theme="dark"] .student-page-empty-state,
+body[data-theme="dark"] .student-page-ghost-action {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-glass-border) 84%);
+    background: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
+}
+
+body[data-theme="dark"] .student-page-charge-card.is-danger {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 30%, var(--theme-glass-border) 70%);
+}
+
+@media (max-width: 720px) {
+    .student-page-payments-panel {
+        --student-page-drawer-top: 102px;
+        --student-page-drawer-right: 14px;
+        --student-page-drawer-bottom-gap: 14px;
+    }
+
+    .student-page-payments-drawer.slide-over-panel {
+        width: calc(100vw - (var(--student-page-drawer-right) * 2));
+        padding: 18px 18px 16px;
+        border-radius: 20px;
+        max-height: calc(100dvh - var(--student-page-drawer-top) - var(--student-page-drawer-bottom-gap));
+    }
+
+    .student-page-header__card,
+    .student-page-tabs {
+        padding: 16px;
+    }
+
+    .student-page-shell {
+        gap: 16px;
+    }
+
+    .student-page-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        width: 100%;
+    }
+
+    .student-page-tab {
+        width: 100%;
+        min-width: 0;
+        padding: 0 12px;
+    }
+
+    .student-page-header__stats,
+    .student-page-plan-meta,
+    .student-page-charge-card {
+        grid-template-columns: 1fr;
+    }
+
+    .student-page-alert-banner,
+    .student-page-charge-card__footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .student-page-card__head,
+    .student-page-card__body {
+        padding: 16px;
+    }
+
+    .student-page-panel-heading {
+        gap: 10px;
+    }
+
+    .student-page-header__actions {
+        width: 100%;
+        gap: 8px;
+    }
+
+    .student-page-header__actions-group {
+        width: 100%;
+    }
+
+    .student-page-header__actions .button {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .student-page-charge-card__value,
+    .student-page-charge-card__copy {
+        gap: 6px;
+    }
+
+    .student-page-payments-ledger__head th,
+    .student-page-payments-ledger__copy span,
+    .student-page-payments-ledger__date {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .student-page-payments-panel {
+        --student-page-drawer-top: 92px;
+        --student-page-drawer-right: 8px;
+        --student-page-drawer-bottom-gap: 8px;
+    }
+
+    .student-page-payments-panel > .slide-overlay {
+        backdrop-filter: blur(1px);
+    }
+
+    .student-page-payments-drawer.slide-over-panel {
+        width: calc(100vw - (var(--student-page-drawer-right) * 2));
+        max-width: calc(100vw - (var(--student-page-drawer-right) * 2));
+        padding: 16px 14px 14px;
+        border-radius: 18px;
+        transform: translate3d(0, 16px, 0);
+    }
+
+    .student-page-payments-drawer.slide-over-panel.is-active {
+        transform: translate3d(0, 0, 0);
+    }
+
+    .student-page-header__card {
+        padding: 14px;
+        gap: 16px;
+    }
+
+    .student-page-tabs {
+        grid-template-columns: 1fr;
+        padding: 5px;
+        border-radius: 16px;
+    }
+
+    .student-page-tab {
+        min-height: 40px;
+        border-radius: 12px;
+        font-size: 0.88rem;
+    }
+
+    .student-page-card__head,
+    .student-page-card__body,
+    .student-page-charge-card {
+        padding: 14px;
+    }
+
+    .student-page-header__title {
+        font-size: 1.22rem;
+    }
+
+    .student-page-header__stat-card {
+        min-height: unset;
+    }
+
+    .student-page-header__stat-value,
+    .student-page-plan-meta__value {
+        font-size: 0.98rem;
+    }
+
+    .student-page-charge-card__value strong,
+    .student-page-plan-price strong {
+        font-size: 1.55rem;
+    }
+
+    .student-page-payments-ledger__row td {
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+}

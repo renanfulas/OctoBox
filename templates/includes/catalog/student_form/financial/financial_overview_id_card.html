@@ -15,19 +15,19 @@ ARQUIVO: cartao de identidade financeira da ficha do aluno.
     <div class="student-financial-id-card__stats" aria-label="Resumo financeiro imediato">
         <div class="student-financial-id-stat">
             <span class="student-financial-id-stat__label">Status do plano</span>
-            <span class="pill">{{ page.data.financial_overview.latest_enrollment.get_status_display|default:"Sem plano" }}</span>
+            <span class="pill student-financial-plan-status-pill{% if page.data.financial_overview.latest_enrollment %} student-financial-plan-status-pill--active{% endif %}" data-financial-field="plan-status">{{ page.data.financial_overview.latest_enrollment.get_status_display|default:"Sem plano" }}</span>
         </div>
         <div class="student-financial-id-stat">
             <span class="student-financial-id-stat__label">Atrasos</span>
-            <strong class="student-financial-id-stat__value is-danger">{{ page.data.financial_overview.metrics.pagamentos_atrasados|default:"0" }}</strong>
+            <strong class="student-financial-id-stat__value is-danger" data-financial-field="overdue-count">{{ page.data.financial_overview.metrics.pagamentos_atrasados|default:"0" }}</strong>
         </div>
         <div class="student-financial-id-stat">
             <span class="student-financial-id-stat__label">Pendentes</span>
-            <strong class="student-financial-id-stat__value is-warning">{{ page.data.financial_overview.metrics.pagamentos_pendentes|default:"0" }}</strong>
+            <strong class="student-financial-id-stat__value is-warning" data-financial-field="pending-count">{{ page.data.financial_overview.metrics.pagamentos_pendentes|default:"0" }}</strong>
         </div>
         <div class="student-financial-id-stat">
             <span class="student-financial-id-stat__label">Total pago</span>
-            <strong class="student-financial-id-stat__value is-success">R$ {{ page.data.financial_overview.metrics.total_recebido|default:"0" }}</strong>
+            <strong class="student-financial-id-stat__value is-success" data-financial-field="total-paid">R$ {{ page.data.financial_overview.metrics.total_recebido|default:"0"|floatformat:2 }}</strong>
         </div>
     </div>
 </article>

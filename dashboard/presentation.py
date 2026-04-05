@@ -473,7 +473,8 @@ def _build_dashboard_priority_cards(
     pressured_session = next(
         (
             session for session in upcoming_sessions
-            if session['status_label'] == 'Em andamento' or session['booking_closed'] or session['occupancy_percent'] >= 90
+            # Uma aula so vira prioridade quando existe pressao real de carga, nao apenas estado de runtime.
+            if session.get('occupied_slots', 0) > 0 and (session['occupancy_percent'] >= 90 or session['booking_closed'])
         ),
         None,
     )

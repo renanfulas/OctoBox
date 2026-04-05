@@ -14,9 +14,10 @@ PONTOS CRITICOS:
 - Cada módulo tem suas próprias media queries embutidas.
 */
 
-@layer tokens, shell, sidebar, topbar, spacing, responsiveness, components;
+@layer tokens, themes, shell, sidebar, topbar, spacing, responsiveness, components;
 
 @import url("./design-system/tokens.css") layer(tokens);
+@import url("./design-system/theme-scopes.css") layer(themes);
 @import url("./design-system/shell.css") layer(shell);
 @import url("./design-system/workspace.css") layer(shell);
 @import url("./design-system/sidebar/sidebar.css") layer(sidebar);

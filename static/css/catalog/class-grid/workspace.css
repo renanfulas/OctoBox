@@ -36,7 +36,7 @@ POR QUE ELE EXISTE:
     position: relative;
     overflow: hidden;
     min-height: 100%;
-    background: var(--surface);
+    background: var(--card-surface);
     transition: box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
 }
 
@@ -72,7 +72,7 @@ POR QUE ELE EXISTE:
 }
 
 .class-session-edit-panel {
-    background: rgba(59, 130, 246, 0.08);
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 58%, var(--card-surface) 42%);
 }
 
 .class-day-header {
@@ -166,8 +166,8 @@ POR QUE ELE EXISTE:
     gap: 10px;
     padding: 12px 14px;
     border-radius: 16px;
-    border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid color-mix(in srgb, var(--card-border) 88%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 86%, var(--theme-accent-support-alpha) 14%);
     color: var(--ink);
 }
 

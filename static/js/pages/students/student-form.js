@@ -29,6 +29,9 @@ POR QUE ELE EXISTE:
   var installmentPreview = document.getElementById('installment-preview');
   var planSwapStatus = document.getElementById('plan-swap-status');
   var priceDeltaIndicator = document.getElementById('price-delta-indicator');
+  var studentPageShell = document.querySelector('[data-student-page-shell]');
+  var studentPagePanels = studentPageShell ? Array.from(studentPageShell.querySelectorAll('[data-student-page-panel]')) : [];
+  var studentPageTriggers = studentPageShell ? Array.from(studentPageShell.querySelectorAll('[data-student-page-tab-trigger]')) : [];
 
   var initialPlanId = planField ? planField.value : null;
   var initialPrice = (planField && planPriceMap) ? parseAmount(planPriceMap[initialPlanId]) : 0;
@@ -255,6 +258,124 @@ POR QUE ELE EXISTE:
     history.replaceState(null, '', window.location.pathname);
   }
 
+  function activateStudentPagePanel(panelId) {
+    if (!studentPageShell || !panelId) {
+      return;
+    }
+
+    var targetPanel = document.getElementById(panelId);
+    if (!targetPanel || !studentPageShell.contains(targetPanel)) {
+      return;
+    }
+
+    studentPagePanels.forEach(function(panel) {
+      panel.classList.remove('is-active');
+    });
+
+    studentPageTriggers.forEach(function(trigger) {
+      var isCurrent = trigger.getAttribute('data-student-page-target') === panelId;
+      trigger.classList.toggle('is-active', isCurrent);
+      if (isCurrent) {
+        trigger.setAttribute('aria-current', 'page');
+      } else {
+        trigger.removeAttribute('aria-current');
+      }
+    });
+
+    targetPanel.classList.add('is-active');
+  }
+
+  function getStudentPagePanelFromHash(hash) {
+    if (!hash || hash === '#') {
+      return studentPageShell ? (studentPageShell.getAttribute('data-student-page-default-panel') || 'tab-student-form-financial') : 'tab-student-form-financial';
+    }
+
+    if (hash === '#student-financial-overview') {
+      return 'tab-student-form-financial';
+    }
+
+    if (hash === '#student-form-plan') {
+      return 'tab-student-form-plan';
+    }
+
+    if (hash === '#student-form-essential' || hash === '#student-form-profile') {
+      return 'tab-student-form-essential';
+    }
+
+    return 'tab-student-form-financial';
+  }
+
+  function syncStudentPageHash(panelId) {
+    var hash = '#student-financial-overview';
+
+    if (panelId === 'tab-student-form-plan') {
+      hash = '#student-form-plan';
+    } else if (panelId === 'tab-student-form-essential') {
+      hash = '#student-form-essential';
+    }
+
+    if (window.location.hash !== hash) {
+      history.replaceState(null, '', window.location.pathname + window.location.search + hash);
+    }
+  }
+
+  function applyWorkspacePanelFromHash() {
+    if (!studentPageShell) {
+      return;
+    }
+
+    activateStudentPagePanel(getStudentPagePanelFromHash(window.location.hash));
+  }
+
+  if (studentPageShell) {
+    studentPageShell.addEventListener('click', function(event) {
+      var drawerTrigger = event.target.closest('[data-student-page-open-drawer]');
+      if (drawerTrigger) {
+        event.preventDefault();
+        activateStudentPagePanel('tab-student-form-financial');
+        syncStudentPageHash('tab-student-form-financial');
+        if (typeof window.openStudentFinancialDrawer === 'function') {
+          window.openStudentFinancialDrawer(drawerTrigger.getAttribute('data-student-page-open-drawer'), drawerTrigger);
+        }
+        return;
+      }
+
+      var tabTrigger = event.target.closest('[data-student-page-tab-trigger]');
+      if (!tabTrigger) {
+        return;
+      }
+
+      event.preventDefault();
+      var targetPanelId = tabTrigger.getAttribute('data-student-page-target');
+      if (!targetPanelId) {
+        return;
+      }
+
+      activateStudentPagePanel(targetPanelId);
+      syncStudentPageHash(targetPanelId);
+    });
+
+    document.addEventListener('click', function(event) {
+      var confirmTrigger = event.target.closest('button[type="submit"][data-confirm="true"]');
+      if (confirmTrigger) {
+        var confirmMessage = confirmTrigger.getAttribute('data-confirm-message') || 'Tem certeza que deseja continuar com esta acao?';
+        if (!window.confirm(confirmMessage)) {
+          event.preventDefault();
+        }
+        return;
+      }
+
+      var legacyTrigger = event.target.closest('[data-action="open-tab-student-form-essential"]');
+      if (!legacyTrigger) {
+        return;
+      }
+
+      event.preventDefault();
+      activateStudentPagePanel('tab-student-form-essential');
+      syncStudentPageHash('tab-student-form-essential');
+    });
+  }
+
   if (planField && amountField && planPriceField && billingStrategyField && installmentTotalField && installmentSelectorShell && installmentSelector && installmentPreview) {
     planField.addEventListener('change', syncConnectedPlanPrice);
     billingStrategyField.addEventListener('change', syncBillingStrategyState);
@@ -269,5 +390,7 @@ POR QUE ELE EXISTE:
   }
 
   resetPlanSwapFeedback();
+  applyWorkspacePanelFromHash();
   applyHashFocusMode();
+  window.addEventListener('hashchange', applyWorkspacePanelFromHash);
 }());

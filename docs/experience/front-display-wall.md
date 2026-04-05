@@ -224,11 +224,25 @@ A Front Display Wall esta bem implementada quando:
 
 Este documento explica o que a fachada e.
 
+O documento que passa a mandar na linguagem visual oficial, na paleta e na assinatura de tema e [../architecture/themeOctoBox.md](../architecture/themeOctoBox.md).
+
 O documento pratico para transformar esse conceito na aparencia real do produto e [layout-decision-guide.md](layout-decision-guide.md).
 
 A checklist operacional para marcar a implantacao por etapas e [front-display-wall-implementation-checklist.md](front-display-wall-implementation-checklist.md).
 
 O guia estrutural de CSS continua em [css-guide.md](css-guide.md).
+
+O plano pratico por ondas para implantar o tema oficial sem reabrir arquitetura e [../plans/theme-implementation-final.md](../plans/theme-implementation-final.md).
+
+## Nota de precedencia visual
+
+As calibracoes historicas abaixo continuam valiosas para entender a evolucao da obra.
+
+Mas, quando houver conflito com o tema oficial atual:
+
+1. [../architecture/themeOctoBox.md](../architecture/themeOctoBox.md) vence em tema, paleta, glow, atmosfera e assinatura visual
+2. este documento continua valendo como metafora de fachada e criterio de presenca
+3. as calibracoes abaixo passam a ser memoria de evolucao, nao soberania final de tema
 
 ## Nota para devs que estudarem este projeto depois
 

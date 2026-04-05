@@ -19,14 +19,21 @@ REGRA:
 
 .card,
 .table-card {
+    --card-local-surface: var(--card-surface);
+    --card-local-surface-strong: var(--card-surface-strong);
+    --card-local-border: var(--card-border);
+    --card-local-border-strong: var(--card-border-strong);
+    --card-local-shadow: var(--card-shadow);
+    --card-local-shadow-lift: var(--card-shadow-lift);
+    --card-local-glow: var(--card-glow);
     position: relative;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+    border: 1px solid color-mix(in srgb, var(--card-local-border) 94%, transparent);
     border-radius: var(--radius-panel);
-    background: var(--fdw-panel);
-    box-shadow: var(--shadow-soft);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    background: var(--card-local-surface);
+    box-shadow: var(--card-local-shadow);
+    backdrop-filter: blur(18px) saturate(132%);
+    -webkit-backdrop-filter: blur(18px) saturate(132%);
     transition:
         transform var(--motion-base) var(--ease-standard),
         box-shadow var(--motion-base) var(--ease-standard),
@@ -40,8 +47,9 @@ REGRA:
     position: absolute;
     inset: 0 0 auto 0;
     height: 1px;
-    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-primary) 48%, transparent), color-mix(in srgb, var(--theme-accent-support) 42%, transparent));
-    opacity: 0.72;
+    background:
+        linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-primary) 52%, transparent), color-mix(in srgb, var(--theme-accent-support) 42%, transparent), color-mix(in srgb, var(--theme-accent-premium) 34%, transparent));
+    opacity: 0.9;
     pointer-events: none;
 }
 
@@ -53,16 +61,17 @@ REGRA:
     width: 120px;
     height: 120px;
     border-radius: 999px;
-    background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent-support) 14%, transparent), transparent 72%);
-    opacity: 0.72;
+    background:
+        radial-gradient(circle, color-mix(in srgb, var(--card-local-glow) 76%, transparent), transparent 72%);
+    opacity: 0.9;
     pointer-events: none;
 }
 
 .card:hover,
 .table-card:hover {
     transform: translateY(-1px);
-    border-color: color-mix(in srgb, var(--theme-border-strong) 94%, transparent);
-    box-shadow: var(--shadow-lift);
+    border-color: color-mix(in srgb, var(--card-local-border-strong) 96%, transparent);
+    box-shadow: var(--card-local-shadow-lift);
 }
 
 .card:active,
@@ -73,7 +82,7 @@ REGRA:
 .card:focus-within,
 .table-card:focus-within {
     border-color: color-mix(in srgb, var(--theme-accent-support) 44%, transparent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-support) 10%, transparent), var(--shadow-soft);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-support) 10%, transparent), var(--card-local-shadow);
 }
 
 .card {
@@ -243,26 +252,26 @@ REGRA:
     min-height: 100%;
     isolation: isolate;
     --metric-card-surface:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 96%, transparent), color-mix(in srgb, var(--theme-bg-stage) 92%, transparent));
-    --metric-card-border: color-mix(in srgb, var(--theme-border-soft) 94%, transparent);
-    --metric-card-shadow: var(--shadow-soft);
-    --metric-card-accent: color-mix(in srgb, var(--theme-accent-support) 34%, transparent);
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-card-surface-strong) 94%, transparent), color-mix(in srgb, var(--theme-surface-panel) 92%, transparent));
+    --metric-card-border: color-mix(in srgb, var(--theme-card-border) 96%, transparent);
+    --metric-card-shadow: var(--theme-card-shadow);
+    --metric-card-accent: color-mix(in srgb, var(--theme-accent-primary) 34%, transparent);
     background: var(--metric-card-surface);
     border-color: var(--metric-card-border);
     box-shadow: var(--metric-card-shadow);
 }
 
 .metric-card::before {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--metric-card-accent) 92%, transparent), color-mix(in srgb, var(--theme-accent-primary) 28%, transparent));
-    opacity: 0.78;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-primary) 62%, transparent), color-mix(in srgb, var(--theme-accent-support) 42%, transparent), color-mix(in srgb, var(--theme-accent-premium) 24%, transparent));
+    opacity: 0.92;
 }
 
 .metric-card::after {
     width: 132px;
     height: 132px;
     inset: auto -34px -42px auto;
-    background: radial-gradient(circle, color-mix(in srgb, var(--metric-card-accent) 18%, transparent), transparent 72%);
-    opacity: 0.92;
+    background: radial-gradient(circle, color-mix(in srgb, var(--metric-card-accent) 28%, transparent), transparent 72%);
+    opacity: 0.94;
 }
 
 .metric-card:hover {
@@ -378,10 +387,10 @@ REGRA:
     display: grid;
     gap: 16px;
     padding: 18px 20px;
-    border-color: color-mix(in srgb, var(--line) 72%, transparent);
+    border-color: color-mix(in srgb, var(--card-border) 84%, transparent);
     background:
-        linear-gradient(180deg, color-mix(in srgb, var(--fdw-panel) 92%, transparent), color-mix(in srgb, var(--surface) 96%, transparent));
-    box-shadow: 0 12px 26px rgba(7, 14, 24, 0.05);
+        linear-gradient(180deg, color-mix(in srgb, var(--card-surface-strong) 92%, transparent), color-mix(in srgb, var(--theme-surface) 96%, transparent));
+    box-shadow: var(--card-shadow);
 }
 
 .page-reading-panel {
@@ -407,11 +416,11 @@ REGRA:
     min-height: 100%;
     padding: 16px;
     border-radius: var(--radius-panel);
-    border: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-strong) 70%, transparent), color-mix(in srgb, var(--surface) 92%, transparent));
+    border: 1px solid color-mix(in srgb, var(--card-border) 88%, transparent);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--card-surface-strong) 84%, transparent), color-mix(in srgb, var(--theme-surface) 94%, transparent));
     color: inherit;
     text-decoration: none;
-    box-shadow: 0 10px 22px rgba(7, 14, 24, 0.04);
+    box-shadow: var(--card-shadow);
     transition:
         transform var(--motion-base) var(--ease-standard),
         box-shadow var(--motion-base) var(--ease-standard),
@@ -421,15 +430,16 @@ REGRA:
 
 .fdw-focus-card:hover {
     transform: translateY(-1px);
-    box-shadow: 0 14px 28px rgba(7, 14, 24, 0.06);
-    border-color: color-mix(in srgb, var(--brand) 18%, transparent);
+    box-shadow: var(--card-shadow-lift);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 26%, transparent);
 }
 
 .fdw-focus-card.is-primary {
     background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 10%, transparent), transparent 34%),
-        linear-gradient(160deg, color-mix(in srgb, var(--surface-strong) 92%, transparent), color-mix(in srgb, var(--surface) 96%, transparent));
-    border-color: color-mix(in srgb, var(--theme-accent-primary) 16%, transparent);
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 16%, transparent), transparent 36%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-primary-alpha) 12%, transparent), transparent 42%),
+        linear-gradient(160deg, color-mix(in srgb, var(--card-surface-strong) 94%, transparent), color-mix(in srgb, var(--theme-surface) 96%, transparent));
+    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
 }
 
 .fdw-focus-card-head,
@@ -449,9 +459,9 @@ REGRA:
     height: 38px;
     padding: 0 10px;
     border-radius: 10px;
-    border: 1px solid var(--line);
-    background: color-mix(in srgb, var(--surface-strong) 78%, transparent);
-    color: var(--brand);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 40%, var(--theme-surface-strong) 60%);
+    color: color-mix(in srgb, var(--theme-accent-support) 82%, var(--ink) 18%);
     font-size: 0.72rem;
     font-weight: 800;
     letter-spacing: 0.12em;
@@ -472,8 +482,8 @@ REGRA:
     font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.04em;
-    border: 1px solid var(--line);
-    background: color-mix(in srgb, var(--surface-strong) 72%, transparent);
+    border: 1px solid color-mix(in srgb, var(--card-border) 90%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 72%, transparent);
     color: var(--ink-soft);
 }
 

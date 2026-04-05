@@ -7,7 +7,7 @@ POR QUE ELE EXISTE:
 */
 
 .student-focus-card {
-    background: var(--surface);
+    background: var(--card-surface);
 }
 
 .student-focus-list {
@@ -21,7 +21,7 @@ POR QUE ELE EXISTE:
     gap: 12px;
     align-items: center;
     padding: 14px 0;
-    border-top: 1px solid rgba(122, 153, 198, 0.14);
+    border-top: 1px solid color-mix(in srgb, var(--card-border) 84%, transparent);
 }
 
 .student-focus-item:first-child {
@@ -94,5 +94,5 @@ POR QUE ELE EXISTE:
 }
 
 body[data-theme="dark"] .student-focus-item {
-    border-top-color: rgba(176, 201, 232, 0.12);
+    border-top-color: color-mix(in srgb, var(--card-border) 76%, transparent);
 }

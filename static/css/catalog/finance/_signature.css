@@ -13,12 +13,12 @@ PONTOS CRITICOS:
 /* ── Variáveis de assinatura ── */
 
 .finance-shell {
-    --finance-signature-ink: #132132;
-    --finance-signature-teal: #0f766e;
-    --finance-signature-cyan: #2967a3;
-    --finance-signature-copper: #c46734;
-    --finance-signature-line: rgba(19, 33, 50, 0.1);
-    --finance-signature-shadow: rgba(19, 33, 50, 0.12);
+    --finance-signature-ink: #091a2f;
+    --finance-signature-teal: var(--theme-accent-support);
+    --finance-signature-cyan: var(--theme-accent-primary);
+    --finance-signature-copper: var(--theme-accent-premium);
+    --finance-signature-line: color-mix(in srgb, var(--theme-accent-support) 10%, var(--theme-border-soft) 90%);
+    --finance-signature-shadow: rgba(14, 24, 44, 0.14);
 }
 
 /* ── Hero signature ── */
@@ -42,9 +42,9 @@ PONTOS CRITICOS:
 
 .finance-shell .finance-card-actions-compact .button:not(.secondary),
 .finance-shell .finance-support-actions .button:not(.secondary) {
-    border-color: rgba(15, 118, 110, 0.3);
-    background: var(--finance-signature-teal);
-    box-shadow: 0 18px 30px rgba(15, 118, 110, 0.22);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-primary) 88%, white 12%), color-mix(in srgb, var(--theme-accent-support) 84%, black 16%));
+    box-shadow: 0 18px 30px color-mix(in srgb, var(--theme-accent-support-alpha) 62%, transparent);
 }
 
 .finance-shell .finance-card-actions-compact .button.secondary,
@@ -69,7 +69,7 @@ PONTOS CRITICOS:
     position: relative;
     overflow: hidden;
     border-color: var(--finance-signature-line);
-    background: var(--surface);
+    background: var(--card-surface);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.9),
         0 18px 38px rgba(19, 33, 50, 0.08);
@@ -83,7 +83,7 @@ PONTOS CRITICOS:
     position: absolute;
     inset: 0 0 auto;
     height: 5px;
-    background: var(--finance-signature-copper);
+    background: linear-gradient(90deg, var(--finance-signature-cyan), var(--finance-signature-teal), var(--finance-signature-copper));
 }
 
 .finance-shell .finance-metric-card::after,
@@ -165,7 +165,7 @@ body[data-theme="dark"] .finance-shell .finance-filter-summary-card,
 body[data-theme="dark"] .finance-shell .finance-radar-card,
 body[data-theme="dark"] .finance-shell .finance-action-card {
     border-color: rgba(144, 181, 205, 0.16);
-    background: var(--surface);
+    background: var(--card-surface);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.06),
         0 20px 40px rgba(0, 0, 0, 0.28);

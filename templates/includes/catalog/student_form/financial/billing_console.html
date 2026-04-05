@@ -1,20 +1,20 @@
 <!--
-ARQUIVO: console de cobranca do aluno.
+ARQUIVO: gestao ampliada de cobranca do aluno.
 
 POR QUE ELE EXISTE:
-- oferece uma leitura curta da timeline financeira e as acoes de cobranca sem tirar o operador da ficha.
+- concentra historico, revisoes e excecoes fora do fluxo rapido de recebimento.
 -->
-<div class="student-financial-drawer" id="billing-console-root">
+<div class="card card--sci-fi student-financial-drawer student-page-payments-management-card" id="student-payment-management-root">
     <header class="student-financial-drawer__header">
         <div class="stack-4">
-            <p class="eyebrow">Console de cobranca</p>
-            <h2 class="section-title" id="financial-billing-console-title">Onde a timeline pede decisao.</h2>
-            <p class="meta-text" id="financial-billing-console-copy">Veja o que atrasou, o que esta proximo e qual passo faz sentido agora.</p>
+            <p class="eyebrow">Gestao ampliada</p>
+            <h2 class="section-title" id="student-payment-management-title">Historico, revisao e excecoes.</h2>
+            <p class="meta-text" id="student-payment-management-copy">Entre aqui quando o caso sair do balcao rapido e pedir mais contexto.</p>
         </div>
     </header>
 
     <div class="student-financial-drawer__body">
-        <section class="student-financial-drawer-stats" aria-label="Resumo curto do console">
+        <section class="student-financial-drawer-stats" aria-label="Resumo curto da gestao ampliada">
             <article class="student-financial-drawer-stat">
                 <span class="student-financial-drawer-stat__label">Atrasados</span>
                 <strong class="student-financial-drawer-stat__value is-danger">{{ page.data.financial_overview.metrics.pagamentos_atrasados }}</strong>
@@ -31,7 +31,7 @@ POR QUE ELE EXISTE:
 
         <section class="stack-16 section-gap-top">
             <div class="stack-4">
-                <p class="eyebrow">Timeline</p>
+                <p class="eyebrow">Historico</p>
                 <h3 class="section-title-sm">Cobrancas registradas</h3>
             </div>
 
@@ -39,42 +39,50 @@ POR QUE ELE EXISTE:
                 {% for payment in page.data.financial_overview.payments %}
                 <article class="student-financial-timeline__item student-financial-timeline__item--{{ payment.status }}">
                     <div class="student-financial-timeline__marker" aria-hidden="true"></div>
-                    <div class="card glass-panel student-financial-timeline__content">
-                        <div class="row-between-md">
+                    <div class="card card--sci-fi glass-panel student-financial-timeline__content">
+                        <div class="row-between-md student-financial-timeline__head">
                             <div class="stack-4">
                                 <strong class="font-bold">R$ {{ payment.amount|floatformat:2 }}</strong>
                                 <p class="meta-text-sm">Vencimento: {{ payment.due_date|date:"d/m/Y" }}</p>
                             </div>
-                            <div class="actions actions-tight">
+                            <div class="actions actions-tight student-financial-timeline__actions">
                                 {% if payment.status == 'paid' %}
-                                <button class="button secondary student-financial-action-button student-financial-action-button--compact" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}">
-                                    Ver detalhes
+                                <span class="pill success">Ja recebido</span>
+                                {% elif payment.is_next_actionable %}
+                                    {% if payment.status == 'overdue' %}
+                                <button
+                                    class="button danger-soft student-financial-action-button student-financial-action-button--compact"
+                                    type="button"
+                                    data-action="edit-payment"
+                                    data-payment-id="{{ payment.id }}"
+                                    data-payment-amount="{{ payment.amount|floatformat:2 }}"
+                                    data-payment-due="{{ payment.due_date|date:'d/m/Y' }}"
+                                    data-payment-status="{{ payment.get_status_display }}"
+                                >
+                                    Cobrar agora
                                 </button>
-                                {% else %}
-                                    {% if payment.is_next_actionable %}
-                                        {% if payment.status == 'overdue' %}
-                                <button class="button danger-soft student-financial-action-button student-financial-action-button--compact" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}">
-                                    Receber agora
+                                    {% else %}
+                                <button
+                                    class="button success-soft student-financial-action-button student-financial-action-button--compact"
+                                    type="button"
+                                    data-action="edit-payment"
+                                    data-payment-id="{{ payment.id }}"
+                                    data-payment-amount="{{ payment.amount|floatformat:2 }}"
+                                    data-payment-due="{{ payment.due_date|date:'d/m/Y' }}"
+                                    data-payment-status="{{ payment.get_status_display }}"
+                                >
+                                    Confirmar agora
                                 </button>
-                                        {% else %}
-                                <button class="button success-soft student-financial-action-button student-financial-action-button--compact" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}">
-                                    Confirmar recebimento
-                                </button>
-                                        {% endif %}
                                     {% endif %}
-                                <button class="button secondary student-financial-action-button student-financial-action-button--compact" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}">
-                                    Revisar vencimento
-                                </button>
-                                <button class="button secondary student-financial-action-button student-financial-action-button--compact" type="button" data-action="split-payment" data-payment-id="{{ payment.id }}">
-                                    Parcelar
-                                </button>
+                                {% else %}
+                                <span class="pill outline">Sem acao rapida</span>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
                 </article>
                 {% empty %}
-                {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Console de cobranca" title="Nenhuma cobranca encontrada" copy="Assim que a jornada financeira deste aluno ganhar historico, a timeline aparece aqui com contexto curto." badge="Vazio" badge_class="info" %}
+                {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Gestao ampliada" title="Nenhuma cobranca encontrada" copy="Assim que a jornada financeira deste aluno ganhar historico, a gestao ampliada aparece aqui com contexto." badge="Vazio" badge_class="info" %}
                 {% endfor %}
             </div>
         </section>
@@ -82,11 +90,15 @@ POR QUE ELE EXISTE:
 
     <footer class="student-financial-drawer__footer">
         <div class="stack-8">
-            <button class="button success student-financial-action-button student-financial-action-button--full" type="button" data-action="vacation-freeze">
-                Marcar ferias ou congelar
+            <div class="student-financial-context-action">
+                <p class="eyebrow">Ajuste sensivel</p>
+                <p class="meta-text">Use somente quando o aluno precisar pausar a matricula por um periodo.</p>
+            </div>
+            <button class="button secondary student-financial-action-button student-financial-action-button--full student-financial-action-button--contextual" type="button" data-action="vacation-freeze">
+                Ajustar ferias ou congelamento
             </button>
             <button class="button secondary student-financial-action-button student-financial-action-button--full" type="button" data-action="close-drawers">
-                Fechar console
+                Fechar gestao ampliada
             </button>
         </div>
     </footer>

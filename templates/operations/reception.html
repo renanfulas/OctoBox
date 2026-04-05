@@ -19,6 +19,7 @@ PONTOS CRITICOS:
 {% block content %}
 {% with page=operation_page %}
 <div class="operation-shell reception-scene" data-page="reception" data-screen="operations-reception" data-slot="page-root">
+    <p class="visually-hidden">Seu balcão.</p>
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
     {% include "includes/ui/layout/page_reading_list.html" with panel=page.data.reading_panel %}

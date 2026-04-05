@@ -16,7 +16,7 @@ POR QUE ELE EXISTE:
 }
 
 .student-form-hero .operation-hero-panel {
-    background: var(--surface);
+    background: var(--card-surface-strong);
 }
 
 .student-form-focus-card,
@@ -38,17 +38,119 @@ POR QUE ELE EXISTE:
 }
 
 .student-form-step-essential {
-    padding: 12px 14px;
+    display: grid;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-warning-alpha) 16%, var(--card-border) 84%);
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 16%, transparent), transparent 30%),
+        var(--card-surface-strong);
+    box-shadow: var(--card-shadow);
 }
 
 .student-form-step-disclosure {
+    display: grid;
+    gap: 0;
     padding: 14px 16px;
     border-radius: 18px;
+    border: 1px solid var(--card-border);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 30%),
+        var(--card-surface-strong);
+    box-shadow: var(--card-shadow);
 }
 
 .student-form-step-disclosure summary {
-    font-size: 0.94rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+    padding: 2px 0;
+    line-height: 1.2;
+    list-style: none;
+}
+
+.student-form-step-heading,
+.student-form-step-summary-copy {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.student-form-step-kicker {
+    margin: 0;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--legacy-copy);
+}
+
+.student-form-step-title {
+    margin: 0;
+    font-size: 1rem;
     font-weight: 700;
+    line-height: 1.18;
+    letter-spacing: -0.02em;
+    color: var(--theme-text-primary);
+}
+
+.student-form-step-copy {
+    margin: 0;
+    max-width: 40ch;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    color: var(--legacy-copy);
+}
+
+.student-form-step-disclosure summary::-webkit-details-marker {
+    display: none;
+}
+
+.student-form-step-disclosure summary::after {
+    content: "+";
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--card-border) 84%);
+    background: color-mix(in srgb, var(--card-surface) 88%, transparent);
+    color: var(--theme-text-secondary);
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.student-form-step-disclosure[open] summary::after {
+    content: "−";
+}
+
+.student-form-step-disclosure .student-form-step-body {
+    min-width: 0;
+    margin-top: 10px;
+    padding-top: 12px;
+    gap: 12px;
+    border-top: 1px solid color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+}
+
+.student-form-step-disclosure .field-grid-220,
+.student-form-step-disclosure .field-grid-240 {
+    align-items: start;
+}
+
+.student-form-step-disclosure label {
+    min-width: 0;
+}
+
+.student-form-step-disclosure input,
+.student-form-step-disclosure select,
+.student-form-step-disclosure textarea {
+    width: 100%;
 }
 
 .student-form-step-body {
@@ -66,5 +168,39 @@ POR QUE ELE EXISTE:
 
 .student-form-installment-shell {
     padding: 10px 12px;
+}
+
+body[data-theme="dark"] .student-form-hero .operation-hero-panel {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 30%),
+        var(--card-surface-strong);
+}
+
+body[data-theme="dark"] .student-form-main-card {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 30%),
+        var(--card-surface-strong);
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--card-border) 80%);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+body[data-theme="dark"] .student-form-step-essential {
+    border-color: color-mix(in srgb, var(--theme-accent-warning-alpha) 22%, var(--card-border) 78%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, transparent), transparent 30%),
+        var(--card-surface-strong);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+body[data-theme="dark"] .student-form-step-disclosure {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--card-border) 82%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
+        var(--card-surface-strong);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+body[data-theme="dark"] .student-form-step-disclosure summary::after {
+    color: var(--theme-text-secondary);
 }
 

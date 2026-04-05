@@ -52,6 +52,8 @@ Ele deve funcionar como a `Front Display Wall` viva do sistema:
 4. uma conversa clara com o backend
 5. uma estrutura interna preparada para crescer sem virar remendo
 
+No eixo visual, a assinatura oficial do produto agora passa a ser governada por [../architecture/themeOctoBox.md](../architecture/themeOctoBox.md), com implantacao pratica em [theme-implementation-final.md](theme-implementation-final.md).
+
 Em linguagem direta:
 
 1. a fachada precisa parecer produto pronto

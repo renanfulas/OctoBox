@@ -79,6 +79,38 @@ POR QUE ELE EXISTE:
         }).catch(() => undefined);
     }
 
+    function syncReceptionSubmitLabel(form) {
+        const methodSelect = form.querySelector('[data-role="reception-payment-method"]');
+        const submitButton = form.querySelector('[data-role="reception-payment-submit"]');
+
+        if (!methodSelect || !submitButton) {
+            return;
+        }
+
+        const isPix = methodSelect.value === 'pix';
+        submitButton.textContent = isPix
+            ? (submitButton.dataset.pixLabel || 'Receber com Pix')
+            : (submitButton.dataset.defaultLabel || 'Confirmar pagamento');
+    }
+
+    pageRoot.querySelectorAll('[data-action="manage-reception-payment"]').forEach(syncReceptionSubmitLabel);
+
+    pageRoot.addEventListener('change', function (event) {
+        const methodSelect = event.target.closest('[data-role="reception-payment-method"]');
+
+        if (!methodSelect) {
+            return;
+        }
+
+        const form = methodSelect.closest('[data-action="manage-reception-payment"]');
+
+        if (!form) {
+            return;
+        }
+
+        syncReceptionSubmitLabel(form);
+    });
+
     pageRoot.addEventListener('click', function (event) {
         const button = event.target.closest('[data-action="launch-reception-whatsapp"]');
 

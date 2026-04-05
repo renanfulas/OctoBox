@@ -1,0 +1,28 @@
+<nav class="student-page-tabs" aria-label="Secoes do aluno" data-student-page-tabs>
+    <a
+        class="student-page-tab{% if page.data.financial_overview.has_student %} is-active{% endif %}"
+        href="#student-financial-overview"
+        data-student-page-tab-trigger
+        data-student-page-target="tab-student-form-financial"
+        {% if page.data.financial_overview.has_student %}aria-current="page"{% endif %}
+    >
+        Pagamentos
+    </a>
+    <a
+        class="student-page-tab"
+        href="#student-form-plan"
+        data-student-page-tab-trigger
+        data-student-page-target="tab-student-form-plan"
+    >
+        Plano
+    </a>
+    <a
+        class="student-page-tab{% if not page.data.financial_overview.has_student %} is-active{% endif %}"
+        href="#student-form-essential"
+        data-student-page-tab-trigger
+        data-student-page-target="tab-student-form-essential"
+        {% if not page.data.financial_overview.has_student %}aria-current="page"{% endif %}
+    >
+        Perfil
+    </a>
+</nav>

@@ -43,6 +43,7 @@ PONTOS CRITICOS:
     {% endif %}
 
     {# Banner injetado dinamicamente pelo JS quando o lock e tomado apos a pagina carregar #}
+    {% if student_id_for_lock %}
     <div class="lock-banner lock-banner--stolen" id="student-lock-stolen-banner" role="alert" aria-live="assertive" hidden>
         <div class="lock-banner__icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -52,48 +53,41 @@ PONTOS CRITICOS:
             </svg>
         </div>
         <div class="lock-banner__message" id="student-lock-stolen-msg">
-            Outro usu&aacute;rio assumiu a edi&ccedil;&atilde;o deste aluno. Salvamentos ser&atilde;o rejeitados.
+            Outro usu&aacute;rio assumiu a edi&ccedil;&atilde;o deste aluno. Os salvamentos ser&atilde;o rejeitados.
         </div>
     </div>
+    {% endif %}
     <p class="visually-hidden" id="student-lock-live-status" aria-live="assertive" aria-atomic="true"></p>
 
     <div data-panel="student-form-hero">
-        {% include "includes/catalog/student_form/plans/hero.html" with page=page %}
+        {% if page.data.financial_overview.has_student %}
+            {% include "includes/catalog/student_page/student_page_header.html" with page=page %}
+        {% else %}
+            {% include "includes/catalog/student_form/plans/hero.html" with page=page %}
+        {% endif %}
     </div>
 
-    {% with flow=page.data.student_form_flow_state %}
-    <section class="student-workspace-map-intro notice-panel notice-panel--info" aria-label="Ordem de leitura da ficha">
-        <p class="eyebrow">Sequencia curta</p>
-        <h2 class="section-title-sm">{{ flow.headline }}</h2>
-        <p class="meta-text">{{ flow.copy }}</p>
-    </section>
+    <section class="student-page-shell" data-student-page-shell data-student-page-default-panel="{% if page.data.financial_overview.has_student %}tab-student-form-financial{% else %}tab-student-form-essential{% endif %}">
+        {% include "includes/catalog/student_page/student_page_tabs.html" with page=page %}
 
-    <section class="student-workspace-map" aria-label="Mapa da ficha do aluno">
-        <article class="student-workspace-map-card {{ flow.registration_card_class }}">
-            <p class="eyebrow">01 Cadastro</p>
-            <h2 class="section-title-sm">Comece pelo essencial.</h2>
-            <p class="meta-text">Nome, WhatsApp e contexto do aluno sustentam o resto da ficha sem ruido.</p>
-            <a class="button secondary" href="{{ flow.registration_href }}"{% if flow.registration_step %} data-step-target="{{ flow.registration_step }}"{% endif %}>{{ flow.registration_button_label }}</a>
-        </article>
+        <div class="student-page-shell__panels">
+            <div class="stack-16 student-form-stage student-page-panel student-page-panel--payments{% if page.data.financial_overview.has_student %} is-active{% endif %}" id="tab-student-form-financial" data-student-page-panel="payments">
+                {% include "includes/catalog/student_form/financial/financial_overview.html" with student=page.data.student financial_shell_mode="tabbed" %}
+            </div>
 
-        <article class="student-workspace-map-card {{ flow.commercial_card_class }}">
-            <p class="eyebrow">{{ flow.commercial_kicker }}</p>
-            <h2 class="section-title-sm">{{ flow.commercial_title }}</h2>
-            <p class="meta-text">{{ flow.commercial_copy }}</p>
-            <a class="button secondary" href="{{ flow.commercial_href }}"{% if flow.commercial_step %} data-step-target="{{ flow.commercial_step }}"{% endif %}{% if page.behavior.financial_ready and not flow.commercial_step %} data-action="open-tab-student-form-financial"{% endif %}>{{ flow.commercial_button_label }}</a>
-        </article>
-    </section>
-    {% endwith %}
+            <div class="stack-16 student-form-stage student-page-panel student-page-panel--plan" id="tab-student-form-plan" data-student-page-panel="plan">
+                {% include "includes/catalog/student_page/student_page_plan_panel.html" with page=page %}
+            </div>
 
-    <div class="interactive-tab-container" data-panel="student-workspace">
-        <div class="stack-16 student-form-stage student-form-stage--essential is-tab-active" id="tab-student-form-essential" data-panel="student-form-essential">
-            {% include "includes/catalog/student_form/main_form/main_form.html" with form=student_form %}
+            <div class="stack-16 student-form-stage student-page-panel student-page-panel--profile{% if not page.data.financial_overview.has_student %} is-active{% endif %}" id="tab-student-form-essential" data-student-page-panel="profile">
+                {% if page.data.financial_overview.has_student %}
+                    {% include "includes/catalog/student_page/student_page_profile_panel.html" with page=page %}
+                {% else %}
+                    {% include "includes/catalog/student_form/main_form/main_form.html" with form=student_form %}
+                {% endif %}
+            </div>
         </div>
-        
-        <div class="stack-16 student-form-stage student-form-stage--financial" id="tab-student-form-financial" data-panel="student-form-financial">
-            {% include "includes/catalog/student_form/financial/financial_overview.html" with student=page.data.student %}
-        </div>
-    </div>
+    </section>
 
 </div>
 {% endwith %}

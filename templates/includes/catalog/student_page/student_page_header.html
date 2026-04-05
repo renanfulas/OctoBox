@@ -1,0 +1,108 @@
+<!--
+ARQUIVO: header canônico da pagina do aluno.
+
+POR QUE ELE EXISTE:
+- aproxima a ficha do layout aprovado.
+- concentra identidade, status e CTA principal em um bloco vivo.
+-->
+<section class="student-page-header" id="student-page-header-slot" aria-label="Resumo principal do aluno">
+    <article class="card student-page-card student-page-header__card">
+        <div class="student-page-header__identity">
+            <div class="student-page-header__avatar" aria-hidden="true">
+                {{ page.data.student_object.full_name|slice:":1"|upper }}
+            </div>
+            <div class="student-page-header__copy">
+                <span class="student-page-header__eyebrow">Resumo do aluno</span>
+                <div class="student-page-header__title-row">
+                    <h1 class="student-page-header__title">{{ page.data.student_object.full_name }}</h1>
+                    <span class="student-page-header__status-pill{% if page.data.financial_overview.metrics.pagamentos_atrasados %} is-danger{% else %} is-success{% endif %}">
+                        {% if page.data.financial_overview.metrics.pagamentos_atrasados %}
+                            Inadimplente
+                        {% elif page.data.financial_overview.latest_enrollment %}
+                            Ativo
+                        {% else %}
+                            Cadastro
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="student-page-header__meta">
+                    {% if page.data.student_object.email %}
+                    <span class="student-page-header__meta-item">{{ page.data.student_object.email }}</span>
+                    {% endif %}
+                    {% if page.data.student_object.phone %}
+                    <span class="student-page-header__meta-item">{{ page.data.student_object.phone }}</span>
+                    {% endif %}
+                    <span class="student-page-header__meta-item">Desde {{ page.data.student_object.created_at|date:"F Y" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="student-page-header__actions">
+            <div class="student-page-header__actions-group">
+                <button class="button student-page-header__primary-action" type="button" data-student-page-open-drawer="student-payment-checkout-slot" aria-controls="student-payment-checkout-slot" aria-expanded="false">
+                    <svg class="student-page-header__action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M13 3 4 14h7l-1 7 10-12h-7l1-6Z"/>
+                    </svg>
+                    Cobrar agora
+                </button>
+            </div>
+            {% if page.data.student_object.phone %}
+            <a
+                class="button secondary student-page-header__secondary-action"
+                href="https://wa.me/55{{ page.data.student_object.phone|cut:'('|cut:')'|cut:' '|cut:'-' }}"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                <svg class="student-page-header__action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M20.5 3.5A11.8 11.8 0 0 0 12 1C5.9 1 1 5.9 1 12a10.9 10.9 0 0 0 1.6 5.7L1 23l5.5-1.5A10.9 10.9 0 0 0 12 23c6.1 0 11-4.9 11-11 0-3-1.2-5.8-2.5-8.5Z"/>
+                    <path d="M8.4 9.2c.2-.5.5-.5.8-.5h.6c.2 0 .5.1.6.5l.9 2.2c.1.3.1.5-.1.7l-.6.7c-.2.2-.2.4-.1.6.3.5.9 1.5 2 2.3 1.3 1 2.3 1.3 2.8 1.5.2.1.5 0 .6-.1l.8-.9c.2-.2.5-.3.8-.2l2.1 1c.3.1.5.4.4.7l-.4 1.6c-.1.5-.5.8-1 .9-.7.1-1.9.1-3.8-.7-1.2-.5-2.6-1.3-4.3-2.8-2-1.8-3.1-3.7-3.7-4.9-.6-1.1-.6-2.1-.4-2.6l.4-1.6Z"/>
+                </svg>
+                WhatsApp
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="student-page-header__stats">
+            <div class="student-page-header__stat student-page-header__stat-card student-page-header__stat-card--plan">
+                <span class="student-page-header__stat-label">Plano atual</span>
+                <strong class="student-page-header__stat-value">{{ page.data.financial_overview.latest_enrollment.plan.name|default:"Sem plano" }}</strong>
+                <span class="student-page-header__stat-meta">
+                    {% if page.data.financial_overview.latest_enrollment %}
+                        R$ {{ page.data.financial_overview.latest_enrollment.plan.price|floatformat:2 }} / mensal
+                    {% else %}
+                        Vincule um plano para iniciar
+                    {% endif %}
+                </span>
+            </div>
+            <div class="student-page-header__stat student-page-header__stat-card student-page-header__stat-card--money">
+                <span class="student-page-header__stat-label">Total pago</span>
+                <strong class="student-page-header__stat-value">R$ {{ page.data.financial_overview.metrics.total_recebido|default:"0"|floatformat:2 }}</strong>
+                <span class="student-page-header__stat-meta">Historico consolidado do aluno</span>
+            </div>
+            <div class="student-page-header__stat student-page-header__stat-card">
+                <span class="student-page-header__stat-label">Prox. vencimento</span>
+                <strong class="student-page-header__stat-value">
+                    {% if page.data.financial_overview.metrics.proximo_vencimento %}
+                        {{ page.data.financial_overview.metrics.proximo_vencimento|date:"d M Y" }}
+                    {% else %}
+                        Sem vencimento
+                    {% endif %}
+                </strong>
+                <span class="student-page-header__stat-meta">
+                    {% if page.data.financial_overview.metrics.pagamentos_atrasados %}
+                        {{ page.data.financial_overview.metrics.pagamentos_atrasados }} em atraso
+                    {% else %}
+                        Leitura de cobranca atual
+                    {% endif %}
+                </span>
+            </div>
+            <div class="student-page-header__stat student-page-header__stat-card">
+                <span class="student-page-header__stat-label">Presenca</span>
+                <strong class="student-page-header__stat-value{% if page.data.financial_overview.metrics.presenca_percentual_30d < 70 %} is-warning{% endif %}">
+                    {{ page.data.financial_overview.metrics.presenca_percentual_30d|default:"0" }}%
+                </strong>
+                <span class="student-page-header__stat-meta">Ultimos 30 dias</span>
+            </div>
+        </div>
+    </article>
+</section>

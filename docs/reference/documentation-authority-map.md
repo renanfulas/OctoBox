@@ -114,6 +114,7 @@ Exemplos fortes:
 2. [../architecture/octobox-conceptual-core.md](../architecture/octobox-conceptual-core.md)
 3. [../architecture/django-core-strategy.md](../architecture/django-core-strategy.md)
 4. [../architecture/promoted-public-facades-map.md](../architecture/promoted-public-facades-map.md)
+5. [../architecture/themeOctoBox.md](../architecture/themeOctoBox.md) para tema visual oficial, assinatura e precedencia de linguagem estetica
 
 ### 3. Plans
 
@@ -143,6 +144,7 @@ Exemplos fortes:
 1. [../plans/front-end-restructuring-guide.md](../plans/front-end-restructuring-guide.md)
 2. [../plans/front-beta-closure-board.md](../plans/front-beta-closure-board.md)
 3. [../plans/catalog-page-payload-presenter-blueprint.md](../plans/catalog-page-payload-presenter-blueprint.md)
+4. [../plans/theme-implementation-final.md](../plans/theme-implementation-final.md) para a ordem pratica de implantacao do tema oficial
 
 ### 4. Reference
 
@@ -212,6 +214,7 @@ Regra:
 
 1. docs conceituais daqui envelhecem devagar
 2. docs com data, rodada, checklist ou viewport envelhecem rapido e devem ser tratados como snapshot
+3. se um doc de experience conflitar com [../architecture/themeOctoBox.md](../architecture/themeOctoBox.md) em tema, paleta, glow, atmosfera ou assinatura visual, a arquitetura vence
 
 ### 7. Diagnostics e Reports
 
@@ -291,6 +294,7 @@ Use:
 
 1. [../architecture/octobox-architecture-model.md](../architecture/octobox-architecture-model.md)
 2. [../architecture/octobox-conceptual-core.md](../architecture/octobox-conceptual-core.md)
+3. [../architecture/themeOctoBox.md](../architecture/themeOctoBox.md) para tema visual oficial e precedencia de linguagem
 
 ### Frente ativa do front-end
 
@@ -298,6 +302,7 @@ Use:
 
 1. [../plans/front-end-restructuring-guide.md](../plans/front-end-restructuring-guide.md) para tese e estrutura
 2. [../plans/front-beta-closure-board.md](../plans/front-beta-closure-board.md) para status atual de fechamento
+3. [../plans/theme-implementation-final.md](../plans/theme-implementation-final.md) para a implantacao pratica do tema visual oficial
 
 ### Navegacao tecnica e ownership
 

@@ -6,6 +6,8 @@ ARQUIVO: cena base e hero do manager.
     --operation-mini-grid-gap: 6px;
     --operation-mini-grid-margin-top: 10px;
     --operation-mini-stat-padding: 7px 8px;
+    --manager-board-border: color-mix(in srgb, var(--theme-border-soft) 90%, transparent);
+    --manager-board-border-strong: color-mix(in srgb, var(--theme-accent-support) 24%, var(--theme-border-strong) 76%);
     gap: calc(var(--section-gap) - 2px);
 }
 
@@ -24,4 +26,37 @@ ARQUIVO: cena base e hero do manager.
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+.manager-scene .manager-board {
+    background: var(--card-surface);
+    border-color: var(--manager-board-border);
+    box-shadow: var(--card-shadow);
+    transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease, background 180ms ease;
+}
+
+.manager-scene[data-manager-priority="intake"] .manager-board--intake,
+.manager-scene[data-manager-priority="links"] .manager-board--links,
+.manager-scene[data-manager-priority="links"] .manager-board--enrollment,
+.manager-scene[data-manager-priority="finance"] .manager-board--finance {
+    background: var(--card-surface-strong);
+    border-color: var(--manager-board-border-strong);
+    box-shadow: var(--card-shadow-lift);
+    transform: translateY(-1px);
+}
+
+.manager-scene[data-manager-priority="intake"] .manager-board--intake::after,
+.manager-scene[data-manager-priority="links"] .manager-board--links::after,
+.manager-scene[data-manager-priority="links"] .manager-board--enrollment::after,
+.manager-scene[data-manager-priority="finance"] .manager-board--finance::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-accent-support) 14%, transparent);
+    pointer-events: none;
+}
+
+body[data-theme="dark"] .manager-scene .manager-board {
+    background: var(--card-surface);
 }
