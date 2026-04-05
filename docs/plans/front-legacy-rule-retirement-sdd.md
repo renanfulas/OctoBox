@@ -225,6 +225,32 @@ Critero de pronto:
 
 1. o legado para de voltar como “atalho rapido”
 
+## Dividas de nomenclatura documentadas
+
+Alguns nomes historicos podem continuar vivos sem representar risco estrutural imediato.
+
+Exemplo atual:
+
+1. `legacy-copy`
+2. `legacy-copy-strong`
+
+Leitura oficial:
+
+1. hoje esses nomes funcionam como apelidos antigos para tokens de texto secundario
+2. nao estao se comportando como override toxico nem como tema paralelo escondido
+3. o problema principal e semantico, nao funcional
+
+Decisao:
+
+1. tratar `legacy-copy*` como divida de nomenclatura controlada
+2. nao abrir renome amplo sem plano proprio por ondas
+3. so migrar quando houver equivalencia canonica travada por token e recorte de impacto por modulo
+
+Risco de mexer cedo demais:
+
+1. essas referencias estao espalhadas por shared catalog, student page shell e blocos operacionais
+2. trocar tudo no impulso pode gerar regressao silenciosa de contraste e copy hierarchy
+
 ## Taxonomia de decisao
 
 Ao encontrar uma regra antiga, decidir nesta ordem:

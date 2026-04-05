@@ -105,12 +105,14 @@ Estas familias parecem antigas no nome, mas hoje participam do host oficial ou d
 | Familia | Evidencia atual | Onde aparece | Status | Direcao |
 |---|---|---|---|---|
 | `note-panel*` | definida em [states.css](../../static/css/design-system/components/states.css) e usada em varias telas reais | ficha do aluno, plano financeiro, recepcao, pagina expressa | nao tocar ainda | tratar como alias canonizado do host de estados; so migrar se houver plano explicito para `notice-panel` ou `state-notice` |
+| `legacy-copy*` | referencias vivas em [scene.css](../../static/css/catalog/shared/scene.css), [student-financial.css](../../static/css/catalog/shared/student-financial.css), [student-page-shell.css](../../static/css/catalog/shared/student-page-shell.css), [utilities.css](../../static/css/catalog/shared/utilities.css) e camadas de operations | shared catalog, student page shell, operations | divida de nomenclatura controlada | manter por agora; migrar so com plano proprio de equivalencia para `--theme-text-secondary`, `--theme-text-muted`, `--muted` e `--muted-strong` |
 
 Leitura:
 
 1. o nome e historico
 2. mas a casa atual da familia ja e o design system
 3. apagar agora seria matar a campainha achando que ela ainda e fio antigo
+4. `legacy-copy*` segue a mesma logica: o nome envelheceu, mas a funcao continua viva e espalhada
 
 ## 4. Morta ou sem pegada ativa
 
@@ -164,6 +166,7 @@ Status apos execucao da Onda 2:
 ## Itens protegidos nesta rodada
 
 1. `note-panel*`
+2. `legacy-copy*`
 
 ## Veredito da Onda 1
 
