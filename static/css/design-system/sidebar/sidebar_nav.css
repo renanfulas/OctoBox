@@ -1,36 +1,75 @@
 /*
-ARQUIVO: comunicação visual interativa dos links da barra lateral.
+ARQUIVO: comunicacao visual interativa dos links da barra lateral.
 
 POR QUE ELE EXISTE:
-- Isola a comunicação visual, tipografia e espaçamento dos links de navegação.
-- Segrega os estados interativos (hover/active/focus) evitando vazamentos de cor para a matriz.
+- Isola a hierarquia visual da navegacao principal.
+- Mantem estados interativos claros sem transformar o rail em vitrine.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Padroniza botões e links de `.nav-link` e `.nav-icon`.
-2. Define a coerência visual fluída entre repouso e hover (Fatores Fundo e Movimento).
-3. Gerencia interações de focus e active states para acessibilidade.
-4. Harmoniza a opacidade/saturação cromática dos Emojis para o modo noturno.
-
-PONTOS CRITICOS:
-- Breakpoints e cores são essenciais. Se quebrados, o menu falha em dar feedback de localização ao usuário.
-- Cuidado ao bloquear pointer-events globais.
+1. Define o stack da navegacao.
+2. Estiliza links, icones e labels.
+3. Controla hover, focus, active e variantes de destaque.
+4. Mantem acessibilidade e consistencia visual entre dark e light.
 */
 
+.sidebar-nav {
+    display: grid;
+    align-content: start;
+    gap: 5px;
+    min-height: 0;
+    overflow: auto;
+    padding-top: 2px;
+    padding-right: 2px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--scrollbar-thumb);
+}
+
 .nav-link {
-    display: flex;
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    margin-bottom: 2px;
-    border: none;
-    border-radius: 8px;
+    gap: 12px;
+    min-height: 46px;
+    padding: 9px 12px;
+    border: 1px solid transparent;
+    border-radius: 16px;
     text-decoration: none;
     color: var(--sidebar-muted);
     background: transparent;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: background 0.12s ease, color 0.12s ease;
-    position: relative;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    transition:
+        background var(--motion-base) var(--ease-standard),
+        color var(--motion-base) var(--ease-standard),
+        border-color var(--motion-base) var(--ease-standard),
+        box-shadow var(--motion-base) var(--ease-standard),
+        transform var(--motion-base) var(--ease-standard);
+}
+
+.nav-link::before {
+    content: "";
+    position: absolute;
+    inset: 9px auto 9px 0;
+    width: 3px;
+    border-radius: 999px;
+    background: transparent;
+    opacity: 0;
+    transition: opacity var(--motion-base) var(--ease-standard), background var(--motion-base) var(--ease-standard);
 }
 
 /* Force default cursor for specific metric cards that should not appear as links */
@@ -49,130 +88,116 @@ PONTOS CRITICOS:
 }
 
 .nav-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 6px;
-    font-size: 13px;
-    line-height: 1;
-    flex-shrink: 0;
-    background: transparent;
-    border: none;
-    font-family: 'Segoe UI Emoji', 'Noto Color Emoji', 'Apple Color Emoji', 'Twemoji Mozilla', 'Segoe UI Symbol', sans-serif;
-    font-size: 18px;
+    width: 32px;
+    height: 32px;
+    border-radius: 12px;
     display: inline-grid;
     place-items: center;
+    flex-shrink: 0;
+    color: color-mix(in srgb, var(--sidebar-ink) 74%, var(--sidebar-muted) 26%);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition:
+        color var(--motion-base) var(--ease-standard),
+        background var(--motion-base) var(--ease-standard),
+        border-color var(--motion-base) var(--ease-standard),
+        box-shadow var(--motion-base) var(--ease-standard);
 }
 
-.nav-icon.emoji-soft {
-    filter: saturate(0.95) contrast(0.98);
-    opacity: 0.95;
+.nav-icon svg {
+    width: 17px;
+    height: 17px;
+    display: block;
+}
+
+.nav-label {
+    min-width: 0;
+    line-height: 1.18;
 }
 
 .nav-link:hover,
 .nav-link:focus-visible {
     color: var(--sidebar-ink);
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(148, 163, 184, 0.1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
     transform: none;
-    box-shadow: none;
 }
-
-/* Active-state visuals moved to components/dashboard/sidebar-active.css (scoped to .layout--dashboard) */
 
 .nav-link:hover .nav-icon,
 .nav-link:focus-visible .nav-icon {
-    transform: none;
-}
-
-/* --- Sidebar Interaction Consistency --- */
-.nav-link {
-    min-height: 44px;
-    padding: 10px 14px;
-    margin-bottom: 4px;
-    border-radius: 12px;
-    font-weight: var(--weight-subtitle);
-    transition: background var(--motion-base) var(--ease-standard), color var(--motion-base) var(--ease-standard), transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--motion-base) var(--ease-standard);
-}
-
-.nav-icon {
-    color: var(--sidebar-muted);
-    transition: color var(--motion-base) var(--ease-standard), background var(--motion-base) var(--ease-standard), transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.nav-link:hover,
-.nav-link:focus-visible {
-    color: var(--sidebar-ink);
-    background: var(--sidebar-hover);
-    transform: translateX(5px);
+    color: #f8fbff;
+    background: rgba(95, 143, 247, 0.14);
+    border-color: rgba(95, 143, 247, 0.18);
 }
 
 .nav-link:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px var(--sidebar-focus);
+    box-shadow:
+        0 0 0 3px var(--sidebar-focus),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .nav-link:active {
-    transform: translateX(5px) scale(0.98);
+    transform: scale(0.99);
+}
+
+.nav-link.is-active {
+    color: var(--sidebar-ink);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+    border-color: rgba(95, 143, 247, 0.16);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 10px 20px rgba(2, 8, 23, 0.08);
 }
 
 .nav-link.is-active::before {
-    left: 2px;
-    top: 8px;
-    bottom: 8px;
-    width: 4px;
-    border-radius: 999px;
-    background: var(--sidebar-active-bar);
-}
-
-.nav-link:hover .nav-icon,
-.nav-link:focus-visible .nav-icon {
-    color: #fff;
-    background: rgba(148, 163, 184, 0.16);
+    background: linear-gradient(180deg, var(--sidebar-active-bar), color-mix(in srgb, var(--theme-accent-primary) 76%, var(--sidebar-active-bar) 24%));
+    opacity: 1;
 }
 
 .nav-link.is-active .nav-icon {
-    color: #fff;
-    background: rgba(37, 99, 235, 0.22);
+    color: #ffffff;
+    background:
+        linear-gradient(180deg, rgba(95, 143, 247, 0.22), rgba(95, 143, 247, 0.12));
+    border-color: rgba(95, 143, 247, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-/* --- Front Display Wall facade sidebar pass --- */
-.nav-link:hover,
-.nav-link:focus-visible {
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
+.nav-link.blink,
+.nav-link.blink-danger {
+    color: var(--sidebar-ink) !important;
+    transform: none;
+}
+
+.nav-link.blink {
+    background: rgba(16, 185, 129, 0.12) !important;
+    border-color: rgba(16, 185, 129, 0.18) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 10px 22px rgba(16, 185, 129, 0.08) !important;
+}
+
+.nav-link.blink-danger {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.18) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 10px 22px rgba(239, 68, 68, 0.08) !important;
+}
+
+.nav-link.blink .nav-icon,
+.nav-link.blink-danger .nav-icon {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
     .nav-link,
+    .nav-link::before,
     .nav-icon {
         transition: none;
     }
-}
-
-/* --- Blink Highlight --- */
-.nav-link.blink {
-    background-color: rgba(16, 185, 129, 0.15) !important;
-    color: #fff !important;
-    box-shadow: 0 0 24px rgba(16, 185, 129, 0.6), inset 0 0 12px rgba(16, 185, 129, 0.2) !important;
-    border-color: rgba(16, 185, 129, 0.4) !important;
-    transform: scale(1.02);
-}
-
-.nav-link.blink-danger {
-    background-color: rgba(239, 68, 68, 0.15) !important;
-    color: #fff !important;
-    box-shadow: 0 0 24px rgba(239, 68, 68, 0.6), inset 0 0 12px rgba(239, 68, 68, 0.2) !important;
-    border-color: rgba(239, 68, 68, 0.4) !important;
-    transform: scale(1.02);
-}
-
-.nav-link.blink .nav-icon {
-    color: #fff !important;
-    background-color: rgba(16, 185, 129, 0.35) !important;
-}
-
-.nav-link.blink-danger .nav-icon {
-    color: #fff !important;
-    background-color: rgba(239, 68, 68, 0.35) !important;
 }

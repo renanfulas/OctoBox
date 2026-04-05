@@ -1,85 +1,136 @@
 /*
-ARQUIVO: estrutura arquitetural base, grid e colapso móvel da sidebar.
+ARQUIVO: estrutura arquitetural base, grid e colapso movel da sidebar.
 
 POR QUE ELE EXISTE:
-- Isola unicamente a infraestrutura da barra lateral. 
-- Define como ela se ancora no shell master liberta cores operacionais das regras de gaveta (drawer).
+- Isola a infraestrutura da barra lateral global do shell.
+- Define o container, a atmosfera e o comportamento drawer sem disputar com o conteudo principal.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Formata a área e posicionamento do componente inteiro usando a mecânica `sticky`.
-2. Formata a proporção intocável entre a Tagline e Brand Mark.
-3. Permite que a sidebar ceda ao limite responsivo de 960px, agindo como modal gaveta por cima da tela principal.
-4. Aplica a cortina translucida `sidebar-backdrop`.
-
-PONTOS CRITICOS:
-- O breakpoint de 960px e as regras de transformação X na navegação lateral são os pilares da tela de celular do sistema.
-- A restrição máxima estrita de `z-index` 15 e 20 impede zombis modais sobre interface ativa.
+1. Estrutura a sidebar como um trilho editorial premium.
+2. Controla a marca, proporcao vertical e respiro da casca global.
+3. Mantem o comportamento mobile como drawer.
+4. Preserva uma superficie silenciosa e performatica.
 */
 
 .sidebar {
     position: sticky;
-    top: 16px;
-    min-height: calc(100vh - 32px);
-    padding: 24px 16px 20px;
-    background: var(--sidebar-bg);
+    top: var(--space-3);
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 20px;
+    height: calc(100vh - (var(--space-3) * 2));
+    min-height: calc(100vh - (var(--space-3) * 2));
+    padding: 20px 18px 18px;
     color: var(--sidebar-ink);
-    border: none;
-    border-radius: 14px;
-    box-shadow: var(--shadow-xl);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, rgba(7, 14, 28, 0.96) 92%, transparent), rgba(10, 20, 38, 0.98)),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%);
+    border: 1px solid color-mix(in srgb, var(--sidebar-line) 90%, rgba(255, 255, 255, 0.05));
+    border-radius: 24px;
+    box-shadow:
+        0 22px 54px rgba(2, 8, 23, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
     overflow: hidden;
+    isolation: isolate;
 }
 
 .sidebar::before,
 .sidebar::after {
-    display: none;
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.sidebar::before {
+    background:
+        radial-gradient(circle at top left, color-mix(in srgb, var(--theme-accent-support-alpha) 78%, transparent), transparent 28%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 22%);
+    opacity: 0.65;
+}
+
+.sidebar::after {
+    inset: auto 0 0;
+    height: 140px;
+    background: linear-gradient(180deg, transparent, rgba(4, 10, 20, 0.12));
+}
+
+.sidebar-head,
+.sidebar-body {
+    position: relative;
+    z-index: 1;
+}
+
+.sidebar-head {
+    padding-bottom: 2px;
+}
+
+.sidebar-body {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 14px;
+    min-height: 0;
 }
 
 .brand-wrap {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
-    gap: 12px;
-    margin-bottom: 24px;
+    gap: 14px;
+    padding-bottom: 4px;
+}
+
+.brand-copy {
+    min-width: 0;
 }
 
 .brand-mark {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: var(--brand);
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
     display: grid;
     place-items: center;
-    color: #fff;
-    font-weight: 800;
-    font-size: 0.875rem;
-    box-shadow: none;
     flex-shrink: 0;
+    color: #f8fbff;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background:
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-accent-support) 78%, white 22%), color-mix(in srgb, var(--theme-accent-premium) 28%, var(--theme-accent-support) 72%));
+    box-shadow:
+        0 12px 24px rgba(2, 8, 23, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 
 .brand {
-    font-size: 1.05rem;
-    font-weight: 700;
     margin: 0;
-    letter-spacing: -0.01em;
+    color: var(--sidebar-ink);
+    font-size: 1.02rem;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.035em;
 }
 
 .tagline {
-    margin: 2px 0 0;
+    margin: 4px 0 0;
+    max-width: 24ch;
     color: var(--sidebar-muted);
     font-size: 0.75rem;
-    line-height: 1.4;
-    word-break: break-word;
+    line-height: 1.48;
 }
 
 @media (max-width: 960px) {
     .sidebar {
         position: fixed;
         inset: 0 auto 0 0;
-        width: min(82vw, 320px);
+        width: min(84vw, 336px);
         min-height: 100vh;
+        height: 100vh;
         top: 0;
-        border-radius: 0 30px 30px 0;
+        border-radius: 0 28px 28px 0;
         transform: translateX(-102%);
-        transition: transform 0.2s ease;
+        transition: transform 220ms var(--ease-standard);
         z-index: 20;
     }
 
@@ -89,10 +140,10 @@ PONTOS CRITICOS:
         inset: 0;
         border: 0;
         padding: 0;
-        background: rgba(15, 23, 42, 0.34);
+        background: rgba(8, 15, 28, 0.34);
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.2s ease;
+        transition: opacity 220ms var(--ease-standard);
         z-index: 15;
     }
 
@@ -104,79 +155,4 @@ PONTOS CRITICOS:
         opacity: 1;
         pointer-events: auto;
     }
-}
-
-/* --- Sidebar Interaction Consistency --- */
-.sidebar {
-    top: var(--space-3);
-    height: calc(100vh - (var(--space-3) * 2));
-    padding: var(--space-5) var(--space-3) var(--space-4);
-    border-radius: 20px;
-}
-
-.brand-wrap {
-    margin-bottom: var(--space-6);
-}
-
-/* --- Front Display Wall facade sidebar pass --- */
-.sidebar {
-    background: linear-gradient(180deg, rgba(8, 16, 30, 0.98), rgba(12, 22, 40, 0.97) 54%, rgba(7, 41, 62, 0.94));
-    border: 1px solid rgba(148, 163, 184, 0.12);
-    box-shadow: var(--fdw-shadow-lift);
-}
-
-.sidebar::before,
-.sidebar::after {
-    display: block;
-    content: "";
-    position: absolute;
-    pointer-events: none;
-}
-
-.sidebar::before {
-    inset: 0;
-    background: radial-gradient(circle at top left, rgba(96, 165, 250, 0.22), transparent 26%), radial-gradient(circle at 82% 18%, rgba(45, 212, 191, 0.14), transparent 24%);
-}
-
-.sidebar::after {
-    inset: auto -18% -10% auto;
-    width: 180px;
-    height: 180px;
-    border-radius: 999px;
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.1), transparent 70%); /* Mudado de Laranja para Emerald */
-}
-
-.brand-mark {
-    width: 46px;
-    height: 46px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #10b981, #2563eb); /* Emerald to Blue - Premium Parity */
-    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.14);
-}
-
-.brand {
-    letter-spacing: -0.03em;
-}
-
-.tagline {
-    max-width: 22ch;
-    color: rgba(226, 232, 240, 0.76);
-}
-
-/* --- Front Display Wall artistic facade pass --- */
-.sidebar::before {
-    background: radial-gradient(circle at top left, rgba(96, 165, 250, 0.08), transparent 22%), radial-gradient(circle at 82% 18%, rgba(45, 212, 191, 0.04), transparent 20%), linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%);
-}
-
-.sidebar::after {
-    width: 110px;
-    height: 110px;
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.06), transparent 70%);
-}
-
-.brand-mark {
-    width: 46px;
-    height: 46px;
-    border-radius: 14px;
-    box-shadow: 0 6px 14px rgba(9, 14, 24, 0.14);
 }
