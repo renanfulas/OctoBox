@@ -45,7 +45,20 @@ O QUE ESTE ARQUIVO FAZ:
     transition:
         transform var(--motion-base) var(--ease-standard),
         box-shadow var(--motion-base) var(--ease-standard),
-        border-color var(--motion-base) var(--ease-standard);
+        border-color var(--motion-base) var(--ease-standard),
+        background var(--motion-base) var(--ease-standard);
+}
+
+.dashboard-reading-card.is-primary {
+    min-height: 196px;
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--dashboard-reading-accent-soft) 100%, transparent), transparent 34%),
+        radial-gradient(circle at left bottom, color-mix(in srgb, var(--theme-accent-premium-alpha) 34%, transparent), transparent 28%),
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 99%, white), color-mix(in srgb, var(--theme-surface-panel) 94%, white));
+    border-color: color-mix(in srgb, var(--dashboard-reading-accent) 24%, var(--theme-border-strong) 76%);
+    box-shadow:
+        0 22px 44px rgba(15, 23, 42, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.82);
 }
 
 .dashboard-reading-card::before {
@@ -183,8 +196,8 @@ a.dashboard-reading-card:focus-visible {
 .dashboard-reading-card__summary {
     margin: 0;
     max-width: 32ch;
-    font-size: 0.84rem;
-    line-height: 1.48;
+    font-size: 0.88rem;
+    line-height: 1.56;
     color: color-mix(in srgb, var(--theme-text-secondary) 86%, rgba(15, 23, 42, 0.12) 14%);
 }
 
@@ -196,7 +209,7 @@ a.dashboard-reading-card:focus-visible {
 .dashboard-reading-card__status {
     font-size: 0.78rem;
     font-weight: 700;
-    letter-spacing: 0.01em;
+    letter-spacing: 0.02em;
 }
 
 .dashboard-reading-card__action {
@@ -214,6 +227,17 @@ body[data-theme="dark"] .dashboard-reading-card {
     border-color: color-mix(in srgb, var(--dashboard-reading-accent) 20%, rgba(148, 163, 184, 0.12) 80%);
     box-shadow:
         0 18px 40px rgba(2, 6, 23, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"] .dashboard-reading-card.is-primary {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--dashboard-reading-accent-soft) 100%, transparent), transparent 36%),
+        radial-gradient(circle at left bottom, color-mix(in srgb, var(--theme-accent-premium-alpha) 42%, transparent), transparent 30%),
+        linear-gradient(180deg, rgba(9, 17, 30, 0.99), rgba(7, 15, 28, 0.99));
+    border-color: color-mix(in srgb, var(--dashboard-reading-accent) 28%, rgba(148, 163, 184, 0.12) 72%);
+    box-shadow:
+        0 24px 48px rgba(2, 6, 23, 0.34),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
@@ -248,5 +272,9 @@ body[data-theme="dark"] .dashboard-reading-card__status {
     .dashboard-reading-card {
         min-height: 0;
         padding: 18px;
+    }
+
+    .dashboard-reading-card.is-primary {
+        min-height: 0;
     }
 }

@@ -29,7 +29,7 @@ REGRAS DESTE ARQUIVO:
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 13px;
 }
 
 /* Neon Overlay */
@@ -41,6 +41,28 @@ REGRAS DESTE ARQUIVO:
     border: 2px solid transparent;
     z-index: 2;
     opacity: 0;
+}
+
+#dashboard-sessions-board .dashboard-session-queue {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+#dashboard-sessions-board .dashboard-session-queue::-webkit-scrollbar {
+    width: 8px;
+}
+
+#dashboard-sessions-board .dashboard-session-queue::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#dashboard-sessions-board .dashboard-session-queue::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--scrollbar-thumb);
+}
+
+#dashboard-sessions-board .dashboard-session-queue::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
 }
 
 .sessions-board-neon-overlay.is-active {
@@ -70,5 +92,11 @@ REGRAS DESTE ARQUIVO:
         opacity: 0;
         border-color: transparent;
         box-shadow: none;
+    }
+}
+
+@media (max-width: 720px) {
+    #dashboard-sessions-board {
+        overflow: hidden;
     }
 }

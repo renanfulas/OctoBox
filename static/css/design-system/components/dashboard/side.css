@@ -6,6 +6,10 @@
     position: relative;
     min-height: 100%;
     border-radius: var(--dashboard-surface-radius, 18px);
+    transition:
+        transform 220ms var(--ease-standard),
+        box-shadow 220ms var(--ease-standard),
+        border-color 220ms var(--ease-standard);
 }
 
 .dashboard-focus-card {
@@ -16,7 +20,7 @@
     min-height: 100%;
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--dashboard-focus-accent-alpha) 72%, transparent), transparent 30%),
-        radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.05), transparent 26%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, white 6%, transparent), transparent 26%),
         linear-gradient(170deg, color-mix(in srgb, var(--theme-surface-strong) 86%, transparent), color-mix(in srgb, var(--theme-surface) 96%, transparent));
     border-color: color-mix(in srgb, var(--dashboard-focus-accent) 26%, var(--theme-border-soft) 74%);
     box-shadow:
@@ -41,6 +45,11 @@
 
 .dashboard-focus-card-spaced {
     margin-top: var(--dashboard-fib-4, 21px);
+}
+
+.dashboard-side-card:hover,
+.dashboard-focus-card:hover {
+    transform: translateY(-2px);
 }
 
 .dashboard-focus-card .fdw-focus-index {
@@ -122,6 +131,12 @@
         background 0.4s ease,
         border-color 0.4s ease;
     overflow: hidden;
+}
+
+.dashboard-advisor-item:hover {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 22%, var(--theme-border-soft) 78%);
+    background:
+        linear-gradient(150deg, color-mix(in srgb, var(--theme-surface-secondary) 80%, transparent), color-mix(in srgb, var(--theme-surface-strong) 72%, transparent));
 }
 
 .dashboard-advisor-item-head,
@@ -382,6 +397,10 @@
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.78),
         0 6px 14px rgba(15, 23, 42, 0.035);
+    transition:
+        transform 220ms var(--ease-standard),
+        box-shadow 220ms var(--ease-standard),
+        border-color 220ms var(--ease-standard);
 }
 
 .dashboard-session-card.is-primary {
@@ -392,6 +411,13 @@
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.86),
         0 8px 18px rgba(37, 99, 235, 0.05);
+}
+
+.dashboard-session-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.86),
+        0 14px 24px rgba(15, 23, 42, 0.08);
 }
 
 .dashboard-session-time-block {
@@ -564,6 +590,9 @@
 body[data-theme="dark"] .dashboard-support-card {
     border-color: rgba(148, 163, 184, 0.14);
     background: var(--dashboard-support-surface-dark, var(--surface));
+    box-shadow:
+        0 24px 42px rgba(2, 6, 23, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 body[data-theme="dark"] .dashboard-session-card {
@@ -575,7 +604,9 @@ body[data-theme="dark"] .dashboard-session-card {
 }
 
 body[data-theme="dark"] .dashboard-session-card.is-primary {
-    background: linear-gradient(155deg, rgba(19, 39, 70, 0.78), rgba(255, 255, 255, 0.04));
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 44%, transparent), transparent 32%),
+        linear-gradient(155deg, rgba(19, 39, 70, 0.78), rgba(255, 255, 255, 0.04));
 }
 
 body[data-theme="dark"] .dashboard-session-window,
@@ -592,6 +623,12 @@ body[data-theme="dark"] .dashboard-session-time {
 
 body[data-theme="dark"] .dashboard-session-progress {
     background: rgba(148, 163, 184, 0.14);
+}
+
+body[data-theme="dark"] .dashboard-session-card:hover {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 22px 32px rgba(2, 6, 23, 0.22);
 }
 
 @media (max-width: 960px) {
