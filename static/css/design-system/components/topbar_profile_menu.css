@@ -9,13 +9,17 @@
 
 .topbar-profile {
     cursor: pointer;
-    transition: transform 0.2s ease, background 0.2s ease;
-    padding: 4px 8px;
-    border-radius: 12px;
+    transition:
+        border-color var(--motion-base) var(--ease-standard),
+        box-shadow var(--motion-base) var(--ease-standard),
+        background var(--motion-base) var(--ease-standard),
+        transform var(--motion-fast) var(--ease-standard);
+    padding: 0;
+    border-radius: 18px;
 }
 
 .topbar-profile:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: transparent;
 }
 
 .topbar-profile:active {
@@ -29,15 +33,15 @@
 /* O Menu em si */
 .profile-dropdown {
     position: absolute;
-    top: calc(100% + 12px);
+    top: calc(100% + 10px);
     right: 0;
-    width: 220px;
-    background: rgba(255, 255, 255, 0.85); /* Vidro claro */
-    backdrop-filter: blur(25px) saturate(180%);
-    -webkit-backdrop-filter: blur(25px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    width: 232px;
+    background: color-mix(in srgb, var(--theme-surface-panel-strong) 96%, var(--theme-surface-panel) 4%);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 88%, rgba(255, 255, 255, 0.08) 12%);
+    border-radius: 18px;
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.1), 0 4px 10px rgba(15, 23, 42, 0.05);
     padding: 8px;
     z-index: 1000;
     
@@ -46,9 +50,10 @@
     visibility: hidden;
     transform: translateY(-8px) scale(0.95);
     transform-origin: top right;
-    transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
-                transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
-                visibility 0.2s;
+    transition:
+        opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+        visibility 0.18s;
 }
 
 .profile-dropdown.is-open {
@@ -59,8 +64,9 @@
 
 /* Modo Escuro */
 [data-theme="dark"] .profile-dropdown {
-    background: rgba(28, 28, 30, 0.8); /* iOS Dark Material */
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, #0e1828 92%, var(--theme-surface-panel) 8%);
+    border: 1px solid rgba(131, 162, 213, 0.18);
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28), 0 4px 12px rgba(0, 0, 0, 0.16);
 }
 
 .profile-menu-list {
@@ -72,15 +78,18 @@
 .profile-menu-item {
     display: block;
     width: 100%;
-    padding: 10px 16px;
-    font-size: 15px;
-    font-weight: 400;
-    color: #1c1c1e;
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--theme-text-primary);
     text-decoration: none;
-    border-radius: 10px;
-    transition: background 0.2s ease;
+    border-radius: 12px;
+    transition:
+        background var(--motion-base) var(--ease-standard),
+        color var(--motion-base) var(--ease-standard),
+        border-color var(--motion-base) var(--ease-standard);
     text-align: left;
-    border: none;
+    border: 1px solid transparent;
     background: transparent;
     cursor: pointer;
 }
@@ -90,29 +99,30 @@
 }
 
 .profile-menu-item:hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: color-mix(in srgb, var(--theme-surface-strong) 78%, transparent);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 76%, transparent);
 }
 
 [data-theme="dark"] .profile-menu-item:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(131, 162, 213, 0.16);
 }
 
-/* Divisor iOS */
 .profile-menu-divider {
     height: 1px;
-    background: rgba(0, 0, 0, 0.1);
-    margin: 6px 4px;
+    background: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    margin: 6px 4px 7px;
 }
 
 [data-theme="dark"] .profile-menu-divider {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(131, 162, 213, 0.12);
 }
 
-/* Item de Logout (Vermelho no estilo iOS) */
 .profile-menu-item.is-danger {
-    color: #ff3b30;
+    color: color-mix(in srgb, var(--theme-accent-danger) 82%, var(--theme-text-primary) 18%);
 }
 
 .profile-menu-item.is-danger:hover {
-    background: rgba(255, 59, 48, 0.1);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 18%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 16%, transparent);
 }

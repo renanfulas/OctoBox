@@ -1,9 +1,6 @@
 <div class="profile-menu-container">
     <div class="topbar-profile" data-slot="topbar-profile">
-        <div class="avatar" aria-hidden="true">
-            <span class="avatar-core"></span>
-            <span class="avatar-glow"></span>
-        </div>
+        <div class="avatar" aria-hidden="true"></div>
         <div class="profile-meta">
             <strong>{{ user.get_full_name|default:user.username }}</strong>
             <span>{{ current_role.label|default:"Sem papel definido" }}</span>

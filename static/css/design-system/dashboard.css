@@ -62,22 +62,71 @@ body[data-shell-scope="dashboard"] .topbar {
     --topbar-padding-inline: 21px;
     --topbar-radius: 21px;
     --topbar-search-radius: 16px;
-    --topbar-surface:
-        linear-gradient(145deg, color-mix(in srgb, var(--chrome-surface) 88%, transparent), color-mix(in srgb, var(--theme-surface-strong) 76%, transparent));
-    --topbar-search-surface: color-mix(in srgb, var(--theme-surface-strong) 76%, var(--theme-accent-support-alpha) 24%);
-    --topbar-profile-surface: color-mix(in srgb, var(--theme-surface-strong) 74%, var(--theme-accent-support-alpha) 26%);
-    --topbar-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 24%, var(--theme-border-soft) 76%);
+    --topbar-surface: color-mix(in srgb, var(--theme-surface-panel-strong) 94%, var(--theme-accent-support-alpha) 6%);
+    --topbar-search-surface: color-mix(in srgb, var(--theme-surface-panel) 88%, var(--theme-accent-support-alpha) 12%);
+    --topbar-profile-surface: color-mix(in srgb, var(--theme-surface-panel) 86%, var(--theme-accent-support-alpha) 14%);
+    --topbar-manifesto-surface: color-mix(in srgb, var(--theme-surface-secondary) 92%, var(--theme-accent-support-alpha) 8%);
+    --topbar-toggle-surface: color-mix(in srgb, var(--theme-surface-secondary) 94%, var(--theme-accent-support-alpha) 6%);
+    --topbar-toggle-surface-hover: color-mix(in srgb, var(--theme-surface-strong) 92%, var(--theme-accent-support-alpha) 8%);
+    --topbar-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-border-soft) 82%);
     --topbar-shadow:
-        0 18px 36px rgba(3, 8, 20, 0.18),
+        0 14px 28px rgba(3, 8, 20, 0.12),
         inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
-    --topbar-overlay-glow:
-        radial-gradient(circle at 92% 22%, color-mix(in srgb, var(--theme-accent-premium-alpha) 74%, transparent), transparent 52%),
-        radial-gradient(circle at 8% 76%, color-mix(in srgb, var(--theme-accent-support-alpha) 62%, transparent), transparent 50%);
-    --topbar-search-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 22%, var(--theme-border-soft) 78%);
+    --topbar-search-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-border-soft) 84%);
     --topbar-search-shadow:
-        inset 0 1px 0 color-mix(in srgb, white 18%, transparent),
-        0 0 0 1px color-mix(in srgb, var(--theme-accent-support) 8%, transparent);
+        inset 0 1px 0 color-mix(in srgb, white 14%, transparent),
+        0 0 0 1px color-mix(in srgb, var(--theme-accent-support) 5%, transparent);
     --topbar-profile-radius: 16px;
+}
+
+body[data-shell-scope="dashboard"] .topbar-manifesto,
+body[data-shell-scope="dashboard"] .topbar-quick-link--secondary,
+body[data-shell-scope="dashboard"] .alert-chip {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
+}
+
+body[data-shell-scope="dashboard"] .topbar-quick-link--secondary,
+body[data-shell-scope="dashboard"] .alert-chip {
+    background: color-mix(in srgb, var(--theme-surface-secondary) 92%, var(--theme-accent-support-alpha) 8%);
+}
+
+body[data-shell-scope="dashboard"] .topbar-profile,
+body[data-shell-scope="dashboard"] .global-search,
+body[data-shell-scope="dashboard"] .theme-toggle,
+body[data-shell-scope="dashboard"] .sidebar-toggle {
+    backdrop-filter: blur(14px) saturate(122%);
+    -webkit-backdrop-filter: blur(14px) saturate(122%);
+}
+
+body[data-shell-scope="dashboard"] .global-search:focus-within {
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 28%, var(--theme-focus-ring) 72%);
+    box-shadow:
+        0 0 0 3px color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, transparent),
+        var(--topbar-search-shadow);
+}
+
+body[data-shell-scope="dashboard"] .theme-toggle:hover,
+body[data-shell-scope="dashboard"] .theme-toggle:focus-visible,
+body[data-shell-scope="dashboard"] .sidebar-toggle:hover,
+body[data-shell-scope="dashboard"] .sidebar-toggle:focus-visible,
+body[data-shell-scope="dashboard"] .topbar-profile:hover,
+body[data-shell-scope="dashboard"] .topbar-profile:focus-within,
+body[data-shell-scope="dashboard"] .topbar-quick-link--secondary:hover,
+body[data-shell-scope="dashboard"] .topbar-quick-link--secondary:focus-visible,
+body[data-shell-scope="dashboard"] .alert-chip:hover,
+body[data-shell-scope="dashboard"] .alert-chip:focus-visible {
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 18%, var(--theme-accent-support) 12%, transparent 70%);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent);
+}
+
+body[data-shell-scope="dashboard"] .topbar-profile:hover .avatar,
+body[data-shell-scope="dashboard"] .topbar-profile:focus-within .avatar {
+    background: color-mix(in srgb, var(--theme-accent-primary) 42%, var(--theme-accent-support) 42%, var(--theme-surface-strong) 16%);
+}
+
+body[data-shell-scope="dashboard"] .theme-toggle:hover .theme-toggle-icon,
+body[data-shell-scope="dashboard"] .theme-toggle:focus-visible .theme-toggle-icon {
+    color: color-mix(in srgb, var(--theme-accent-primary) 58%, var(--theme-text-primary) 42%);
 }
 
 .dashboard-shell::before,
@@ -681,6 +730,64 @@ body[data-theme="dark"] .dashboard-shell .dashboard-command-hero.hero.operation-
     --operation-hero-shadow:
         0 12px 22px rgba(2, 6, 23, 0.2),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"][data-shell-scope="dashboard"] .topbar {
+    --topbar-surface: color-mix(in srgb, #0a1422 90%, var(--theme-surface-panel-strong) 10%);
+    --topbar-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.2) 74%, rgba(255, 255, 255, 0.04) 26%);
+    --topbar-search-surface: color-mix(in srgb, #0d1828 90%, var(--theme-surface-panel) 10%);
+    --topbar-search-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.18) 72%, rgba(255, 255, 255, 0.05) 28%);
+    --topbar-manifesto-surface: color-mix(in srgb, #0f1a2b 90%, var(--theme-surface-secondary) 10%);
+    --topbar-toggle-surface: color-mix(in srgb, #101a2b 92%, var(--theme-surface-secondary) 8%);
+    --topbar-toggle-surface-hover: color-mix(in srgb, #142235 90%, var(--theme-surface-strong) 10%);
+    --topbar-profile-surface: color-mix(in srgb, #101a2b 90%, var(--theme-surface-panel) 10%);
+    --topbar-profile-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.18) 74%, rgba(255, 255, 255, 0.04) 26%);
+    --topbar-shadow:
+        0 18px 32px rgba(2, 6, 18, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --topbar-search-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 0 0 1px rgba(74, 144, 226, 0.06);
+}
+
+body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-manifesto,
+body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-quick-link--secondary,
+body[data-theme="dark"][data-shell-scope="dashboard"] .alert-chip {
+    background: color-mix(in srgb, #101a2b 90%, var(--theme-surface-secondary) 10%);
+    border-color: color-mix(in srgb, rgba(92, 146, 214, 0.14) 72%, rgba(255, 255, 255, 0.04) 28%);
+}
+
+body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-quick-link--secondary:hover,
+body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-quick-link--secondary:focus-visible,
+body[data-theme="dark"][data-shell-scope="dashboard"] .alert-chip:hover,
+body[data-theme="dark"][data-shell-scope="dashboard"] .alert-chip:focus-visible {
+    background: color-mix(in srgb, #142235 88%, var(--theme-surface-strong) 12%);
+    border-color: color-mix(in srgb, rgba(92, 146, 214, 0.22) 76%, rgba(255, 255, 255, 0.04) 24%);
+}
+
+body[data-theme="dark"][data-shell-scope="dashboard"] .global-search:focus-within {
+    border-color: color-mix(in srgb, rgba(0, 229, 255, 0.38) 62%, rgba(92, 146, 214, 0.32) 38%);
+    box-shadow:
+        0 0 0 3px rgba(0, 229, 255, 0.08),
+        var(--topbar-search-shadow);
+}
+
+body[data-theme="dark"][data-shell-scope="dashboard"] .theme-toggle:hover,
+body[data-theme="dark"][data-shell-scope="dashboard"] .theme-toggle:focus-visible,
+body[data-theme="dark"][data-shell-scope="dashboard"] .sidebar-toggle:hover,
+body[data-theme="dark"][data-shell-scope="dashboard"] .sidebar-toggle:focus-visible,
+body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-profile:hover,
+body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-profile:focus-within,
+body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-quick-link--secondary:hover,
+body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-quick-link--secondary:focus-visible,
+body[data-theme="dark"][data-shell-scope="dashboard"] .alert-chip:hover,
+body[data-theme="dark"][data-shell-scope="dashboard"] .alert-chip:focus-visible {
+    box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.14);
+}
+
+body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-profile:hover .avatar,
+body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-profile:focus-within .avatar {
+    background: color-mix(in srgb, rgba(0, 229, 255, 0.38) 54%, rgba(74, 144, 226, 0.34) 30%, #172334 16%);
 }
 
 body[data-theme="dark"] .dashboard-shell .dashboard-command-hero .operation-hero-copy {
