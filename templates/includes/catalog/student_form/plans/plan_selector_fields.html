@@ -1,36 +1,17 @@
-    <div class="flex-1">
+<div class="field-grid-220 student-form-plan-grid">
+    <label class="student-form-plan-field">
         <span class="field-label">{{ form.selected_plan.label }}</span>
-        
-        <!-- Hidden Original Select -->
-        <div class="d-none">
-            {{ form.selected_plan }}
-        </div>
-
-        <!-- Visual Plan Cards -->
-        <div class="plan-cards-container grid-plans gap-3 mt-2">
-            {% for choice_id, choice_label in form.selected_plan.field.choices %}
-                {% if choice_id %}
-                <div class="plan-card p-4 border-soft rounded-lg cursor-pointer transition-all bg-muted-soft hover:bg-surface" data-plan-id="{{ choice_id }}" data-action="select-plan">
-                    <div class="font-semibold text-sm mb-1">{{ choice_label }}</div>
-                    <div class="plan-card-price text-lg font-bold text-accent">
-                        <!-- Price will be populated or stay simple -->
-                    </div>
-                </div>
-                {% endif %}
-            {% endfor %}
-        </div>
-
-        {% if form.selected_plan.help_text %}<small class="meta-text block mt-2">{{ form.selected_plan.help_text }}</small>{% endif %}
+        {{ form.selected_plan }}
         {% for error in form.selected_plan.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
-    </div>
-    <label>
+    </label>
+    <div class="student-form-inline-metric student-form-inline-metric--plan">
         <span class="field-label text-dimmed">Valor esperado</span>
-        <div class="flex-row items-center gap-2">
+        <div class="student-form-inline-metric__value-row">
             <input id="connected-plan-price" type="text" value="--" readonly class="text-bold student-plan-expected-price w-120">
             <span id="plan-swap-status" class="plan-swap-status" hidden>
                 <span id="plan-swap-pill" class="pill text-xs text-bold"></span>
             </span>
             <div id="price-delta-indicator" class="price-delta-indicator text-xs text-bold" hidden></div>
         </div>
-    </label>
+    </div>
 </div>

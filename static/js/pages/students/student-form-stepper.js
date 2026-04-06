@@ -22,9 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
         {
             nextLabel: 'Ir para plano e pagamento',
         },
-        {
-            nextLabel: 'Continuar',
-        },
     ];
 
     function focusCurrentStep() {
@@ -38,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateSteps() {
+        formRoot.setAttribute('data-current-step', String(currentStep + 1));
+
         steps.forEach((step, index) => {
             if (index === currentStep) {
                 step.classList.add('active');
@@ -70,8 +69,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (nextBtn) {
-            nextBtn.hidden = currentStep === steps.length - 1;
-            nextBtn.textContent = stepMeta[currentStep]?.nextLabel || 'Continuar';
+            const nextLabel = stepMeta[currentStep]?.nextLabel || '';
+            nextBtn.hidden = currentStep !== 0 || !nextLabel;
+            if (nextLabel) {
+                nextBtn.textContent = nextLabel;
+            }
         }
 
         if (submitBtn) {
@@ -134,6 +136,26 @@ document.addEventListener('DOMContentLoaded', () => {
         jumpToStep(requestedStep - 1);
     });
 
+    document.addEventListener('keydown', (e) => {
+        const stepLink = e.target.closest('[data-step-target]');
+        if (!stepLink || !formRoot.contains(stepLink)) {
+            return;
+        }
+
+        if (e.key !== 'Enter' && e.key !== ' ') {
+            return;
+        }
+
+        e.preventDefault();
+
+        const requestedStep = Number.parseInt(stepLink.getAttribute('data-step-target') || '1', 10);
+        if (!Number.isFinite(requestedStep) || requestedStep < 1) {
+            return;
+        }
+
+        jumpToStep(requestedStep - 1);
+    });
+
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.js-generate-payment-link');
         if (btn) {
@@ -144,57 +166,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-});
-
-function selectPlanCard(planId) {
-    const select = document.getElementById('id_selected_plan');
-    if (!select) return;
-
-    select.value = planId;
-
-    document.querySelectorAll('.plan-card').forEach(card => {
-        card.classList.toggle('is-selected-plan', card.getAttribute('data-plan-id') === planId);
-    });
-
-    select.dispatchEvent(new Event('change'));
-}
-
-document.addEventListener('click', (e) => {
-    const planCard = e.target.closest('[data-action="select-plan"]');
-    if (planCard) {
-        const planId = planCard.getAttribute('data-plan-id');
-        if (planId) selectPlanCard(planId);
-    }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    const payloadElement = document.getElementById('current-page-behavior');
-    if (payloadElement) {
-        try {
-            const pagePayload = JSON.parse(payloadElement.textContent || '{}');
-        const planPriceMap = pagePayload.plan_price_map || {};
-
-            const currencyFormatter = new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            });
-
-            document.querySelectorAll('.plan-card').forEach(card => {
-                const planId = card.getAttribute('data-plan-id');
-                const priceDiv = card.querySelector('.plan-card-price');
-                if (priceDiv && planPriceMap[planId]) {
-                    priceDiv.textContent = currencyFormatter.format(planPriceMap[planId]);
-                }
-            });
-        } catch (e) {
-            console.error('Erro ao interpretar o payload dos preços do plano:', e);
-        }
-    }
-
-    const select = document.getElementById('id_selected_plan');
-    if (select && select.value) {
-        selectPlanCard(select.value);
-    }
 });
 
 async function generatePaymentLink(paymentId) {
@@ -233,7 +204,7 @@ async function generatePaymentLink(paymentId) {
                 btn.disabled = false;
             }, 3000);
         } else {
-            throw new Error('URL n\u00e3o encontrada');
+            throw new Error('URL nao encontrada');
         }
     } catch (err) {
         console.error('Erro ao gerar link:', err);

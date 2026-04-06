@@ -61,8 +61,6 @@ PONTOS CRITICOS:
 
     {% if page.data.financial_overview.has_student %}
         {% include "includes/catalog/student_page/student_page_header.html" with page=page %}
-    {% else %}
-        {% include "includes/catalog/student_form/plans/hero.html" with page=page %}
     {% endif %}
 
     <section class="student-page-shell" data-student-page-shell data-student-page-default-panel="{% if page.data.financial_overview.has_student %}tab-student-form-financial{% else %}tab-student-form-essential{% endif %}">
