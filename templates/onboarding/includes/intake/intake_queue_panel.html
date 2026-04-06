@@ -38,7 +38,7 @@ PONTOS CRITICOS:
             <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}&status=matched" class="student-filter-pill {% if request.GET.status == 'matched' %}is-active{% endif %}">Prontos</a>
         </nav>
 
-        <p class="student-filter-count">{{ page.data.visible_queue_count }} entradas</p>
+        <p class="student-filter-count" aria-label="Fila: {{ page.data.visible_queue_count }}.">{{ page.data.visible_queue_count }} entradas</p>
     </section>
 
     <div class="student-data-panel intake-data-panel-table">
