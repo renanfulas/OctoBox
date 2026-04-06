@@ -17,6 +17,37 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .capability-list
     box-shadow: var(--theme-glass-shadow);
 }
 
+body[data-theme="dark"] .owner-simple-shell .operation-hero {
+    --operation-hero-border: rgba(148, 163, 184, 0.12);
+}
+
+body[data-theme="dark"] .owner-simple-shell .page-reading-list .fdw-focus-card.is-primary,
+body[data-theme="dark"] .owner-sessions-panel,
+body[data-theme="dark"] .owner-simple-shell .owner-metric-grid .operation-kpi-card:first-child {
+    box-shadow:
+        0 28px 52px rgba(2, 6, 23, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"] .owner-workspace-strip {
+    background:
+        linear-gradient(180deg, rgba(56, 189, 248, 0.06), transparent 22%),
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.08), transparent 34%),
+        radial-gradient(circle at top right, rgba(217, 70, 239, 0.06), transparent 32%);
+}
+
+body[data-theme="dark"] .owner-simple-shell .page-reading-list .fdw-focus-card.is-primary {
+    background:
+        linear-gradient(180deg, rgba(9, 17, 30, 0.99), rgba(7, 15, 28, 0.99));
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 28%, rgba(148, 163, 184, 0.12) 72%);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-metric-grid .operation-kpi-card:hover {
+    box-shadow:
+        0 30px 54px rgba(2, 6, 23, 0.38),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
 body[data-theme="dark"] .owner-next-steps-title {
     color: rgba(243, 244, 246, 0.96);
 }

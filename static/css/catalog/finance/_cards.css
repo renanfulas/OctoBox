@@ -33,6 +33,18 @@ PONTOS CRITICOS:
     align-self: end;
 }
 
+.finance-shell .finance-command-card .button,
+.finance-shell .finance-flow-bridge-actions .button,
+.finance-shell .finance-support-actions-utility .button,
+.finance-shell .finance-filter-summary-card .finance-support-actions .button,
+.finance-shell .finance-plan-card-compact .actions .button,
+.finance-shell .finance-card-actions-compact .button {
+    min-height: 30px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    box-shadow: none;
+}
+
 .finance-focus-card {
     background: var(--surface);
 }
@@ -250,8 +262,8 @@ PONTOS CRITICOS:
 }
 
 .finance-card-actions-compact .button {
-    padding: 7px 10px;
-    min-height: 34px;
+    padding: 6px 10px;
+    min-height: 30px;
 }
 
 /* ── Chart columns ── */
@@ -369,8 +381,8 @@ PONTOS CRITICOS:
 }
 
 .finance-plan-card-compact .actions .button {
-    padding: 10px 12px;
-    min-height: 40px;
+    padding: 6px 10px;
+    min-height: 30px;
 }
 
 .finance-plan-description-compact {
