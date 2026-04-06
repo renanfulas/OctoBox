@@ -32,7 +32,7 @@
     color: var(--student-form-text-secondary);
 }
 
-.student-form-shell :is(.student-form-step-title, .student-form-stepper-summary .section-title-sm, .stepper-label) {
+.student-form-shell :is(.student-form-step-title, .stepper-label) {
     color: var(--student-form-text-primary);
 }
 
@@ -50,34 +50,15 @@
     justify-content: space-between;
     align-items: center;
     min-width: 0;
+    width: min(100%, 520px);
+    justify-self: center;
+    margin-inline: auto;
     margin-bottom: 0;
     gap: 12px;
     padding: 14px 16px;
     background: var(--theme-surface-glass);
     border-radius: 16px;
     border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
-}
-
-.student-form-stepper-card {
-    display: grid;
-    grid-template-columns: minmax(220px, 0.82fr) minmax(0, 1fr);
-    align-items: center;
-    gap: 18px;
-    padding: 14px 16px;
-    border-radius: 20px;
-    border: 1px solid var(--student-form-stepper-border);
-    background: var(--student-form-stepper-surface);
-    box-shadow: var(--student-form-stepper-shadow);
-}
-
-.student-form-stepper-summary {
-    max-width: 30ch;
-}
-
-.student-form-stepper-summary .section-title-sm {
-    margin-bottom: 0;
-    font-size: 1.1rem;
-    line-height: 1.15;
 }
 
 .student-form-intake-banner {
@@ -140,12 +121,15 @@
     flex: 1;
     min-width: 0;
     position: relative;
-    opacity: 0.58;
-    transition: all 0.3s ease;
+    opacity: 0.6;
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease;
 }
 
 .stepper-item.active {
     opacity: 1;
+    transform: none;
 }
 
 .stepper-circle {
@@ -217,17 +201,36 @@
     margin: 0;
 }
 
-.student-form-step,
 .student-form-step-essential,
-.student-form-step-disclosure,
-.student-form-stepper-card {
+.student-form-step-disclosure {
     border-color: var(--student-form-panel-border);
     background: var(--student-form-panel-surface);
     box-shadow: var(--student-form-panel-shadow);
 }
 
-.student-form-step {
-    border-radius: 22px;
+.student-form-step-essential {
+    position: relative;
+    display: grid;
+    gap: 16px;
+    padding: 20px 22px;
+    overflow: hidden;
+}
+
+.student-form-step-essential::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent-warning-alpha) 10%, transparent), transparent 72%);
+    transform: translate(-28%, -42%);
+    pointer-events: none;
+}
+
+.student-form-step-essential > * {
+    position: relative;
+    z-index: 1;
 }
 
 .student-form-step-disclosure summary,
@@ -384,19 +387,11 @@ body[data-theme="dark"] .student-form-recovery-panel {
     box-shadow: var(--theme-glass-shadow);
 }
 
-body[data-theme="dark"] .student-form-step,
 body[data-theme="dark"] .student-form-step-essential,
-body[data-theme="dark"] .student-form-step-disclosure,
-body[data-theme="dark"] .student-form-stepper-card {
+body[data-theme="dark"] .student-form-step-disclosure {
     border-color: var(--student-form-panel-border);
     background: var(--student-form-panel-surface);
     box-shadow: var(--student-form-panel-shadow);
-}
-
-body[data-theme="dark"] .student-form-stepper-card {
-    border-color: var(--student-form-stepper-border);
-    background: var(--student-form-stepper-surface);
-    box-shadow: var(--student-form-stepper-shadow);
 }
 
 body[data-theme="dark"] .student-form-stepper {
@@ -478,25 +473,25 @@ body[data-theme="dark"] .student-form-shell .plan-card {
     box-shadow: var(--card-shadow);
 }
 
-body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure {
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step-disclosure {
     border-color: var(--student-form-disclosure-border);
     background: var(--student-form-disclosure-surface);
     box-shadow: var(--student-form-panel-shadow);
 }
 
-body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure > summary {
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step-disclosure > summary {
     color: var(--student-form-text-primary);
 }
 
-body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(.student-form-step-kicker, .student-form-step-copy, .field-label, .meta-text, .meta-text-sm) {
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step-disclosure :is(.student-form-step-kicker, .student-form-step-copy, .field-label, .meta-text, .meta-text-sm) {
     color: var(--student-form-text-secondary);
 }
 
-body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(.student-form-step-title, .section-title-sm) {
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step-disclosure :is(.student-form-step-title, .section-title-sm) {
     color: var(--student-form-text-primary);
 }
 
-body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
     border-color: color-mix(in srgb, var(--theme-glass-border) 96%, transparent);
     background:
         linear-gradient(
@@ -510,17 +505,12 @@ body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-for
     color: var(--theme-text-primary);
 }
 
-body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea)::placeholder {
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea)::placeholder {
     color: var(--theme-text-secondary);
     opacity: 0.9;
 }
 
 @media (max-width: 720px) {
-    .student-form-stepper-card {
-        grid-template-columns: 1fr;
-        gap: 14px;
-    }
-
     .student-form-actions {
         grid-template-columns: 1fr;
     }
@@ -541,12 +531,21 @@ body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-for
         padding: 12px;
     }
 
-    .student-form-stepper-card,
-    .student-form-recovery-panel {
+    .student-form-recovery-panel,
+    .student-form-step-essential {
         padding: 16px;
     }
 
     .stepper-helper {
         text-align: center;
+    }
+
+    .stepper-circle {
+        width: 28px;
+        height: 28px;
+    }
+
+    .stepper-label {
+        font-size: 12px;
     }
 }

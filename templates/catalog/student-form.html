@@ -66,7 +66,9 @@ PONTOS CRITICOS:
     {% endif %}
 
     <section class="student-page-shell" data-student-page-shell data-student-page-default-panel="{% if page.data.financial_overview.has_student %}tab-student-form-financial{% else %}tab-student-form-essential{% endif %}">
+        {% if page.data.financial_overview.has_student %}
         {% include "includes/catalog/student_page/student_page_tabs.html" with page=page %}
+        {% endif %}
 
         <div class="student-page-shell__panels">
             <div class="stack-16 student-form-stage student-page-panel student-page-panel--payments{% if page.data.financial_overview.has_student %} is-active{% endif %}" id="tab-student-form-financial" data-student-page-panel="payments">

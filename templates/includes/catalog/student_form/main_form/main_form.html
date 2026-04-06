@@ -11,27 +11,20 @@ ARQUIVO: formulario principal da ficha do aluno.
             <div class="form-stack-lg student-form-steps" data-slot="student-form-steps">
                 {% include "includes/catalog/student_form/main_form/main_form_recovery.html" %}
 
-                <section class="student-form-stepper-card" aria-label="Mapa r&aacute;pido do cadastro">
-                    <div class="student-form-stepper-summary">
-                        <p class="eyebrow">Ritmo do cadastro</p>
-                        <h2 class="section-title-sm">Primeiro identificamos. Depois fechamos plano e cobran&ccedil;a.</h2>
+                <nav class="student-form-stepper" aria-label="Passos do cadastro">
+                    <div class="stepper-item active" id="stepper-1" aria-current="step">
+                        <div class="stepper-circle">1</div>
+                        <span class="stepper-label">Identifica&ccedil;&atilde;o</span>
+                        <small class="stepper-helper">Cadastro base</small>
+                        <div class="stepper-line"></div>
                     </div>
-
-                    <nav class="student-form-stepper" aria-label="Passos do cadastro">
-                        <div class="stepper-item active" id="stepper-1" aria-current="step">
-                            <div class="stepper-circle">1</div>
-                            <span class="stepper-label">Identifica&ccedil;&atilde;o</span>
-                            <small class="stepper-helper">Cadastro base</small>
-                            <div class="stepper-line"></div>
-                        </div>
-                        <div class="stepper-item" id="stepper-2">
-                            <div class="stepper-circle">2</div>
-                            <span class="stepper-label">Plano e pagamento</span>
-                            <small class="stepper-helper">Fechamento comercial</small>
-                            <div class="stepper-line"></div>
-                        </div>
-                    </nav>
-                </section>
+                    <div class="stepper-item" id="stepper-2">
+                        <div class="stepper-circle">2</div>
+                        <span class="stepper-label">Plano e pagamento</span>
+                        <small class="stepper-helper">Fechamento comercial</small>
+                        <div class="stepper-line"></div>
+                    </div>
+                </nav>
 
                 <div class="step-container active" id="student-form-step-panel-1" data-step="1" role="region" aria-labelledby="stepper-1">
                     <div class="stack-16">
