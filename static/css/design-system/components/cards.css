@@ -383,6 +383,94 @@ REGRA:
     border-left: 3px solid var(--line-strong);
 }
 
+:is(.card, .table-card).card--support,
+:is(.card, .table-card).table-card--support {
+    --card-local-surface:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-panel) 92%, transparent));
+    --card-local-border: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--card-border) 86%);
+    --card-local-border-strong: color-mix(in srgb, var(--theme-accent-support-alpha) 24%, var(--card-border-strong) 76%);
+    --card-local-shadow:
+        0 12px 24px rgba(15, 23, 42, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.68);
+    --card-local-shadow-lift:
+        0 18px 34px rgba(15, 23, 42, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    --card-local-glow: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, transparent);
+}
+
+:is(.card, .table-card).card--soft {
+    --card-local-surface:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent), color-mix(in srgb, var(--theme-surface-panel) 92%, transparent));
+    --card-local-border: color-mix(in srgb, var(--theme-border-soft) 90%, transparent);
+    --card-local-border-strong: color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, var(--card-border-strong) 84%);
+    --card-local-shadow:
+        0 10px 20px rgba(15, 23, 42, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.74);
+    --card-local-shadow-lift:
+        0 16px 28px rgba(15, 23, 42, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    --card-local-glow: color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, transparent);
+}
+
+:is(.card, .table-card).card--priority {
+    --card-local-surface:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 94%, transparent), color-mix(in srgb, var(--theme-surface-panel) 90%, transparent));
+    --card-local-border: color-mix(in srgb, var(--theme-accent-warning-alpha) 24%, var(--card-border) 76%);
+    --card-local-border-strong: color-mix(in srgb, var(--theme-accent-warning) 28%, var(--card-border-strong) 72%);
+    --card-local-shadow:
+        0 16px 28px rgba(85, 56, 35, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    --card-local-shadow-lift:
+        0 22px 38px rgba(85, 56, 35, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    --card-local-glow: color-mix(in srgb, var(--theme-accent-warning-alpha) 24%, transparent);
+}
+
+:is(.card, .table-card).card--priority::before {
+    background:
+        linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-warning) 72%, transparent), color-mix(in srgb, var(--theme-accent-support) 40%, transparent), color-mix(in srgb, var(--theme-accent-premium) 26%, transparent));
+}
+
+body[data-theme="dark"] :is(.card, .table-card).card--support,
+body[data-theme="dark"] :is(.card, .table-card).table-card--support {
+    --card-local-surface:
+        linear-gradient(180deg, rgba(9, 17, 30, 0.96), rgba(8, 15, 27, 0.94));
+    --card-local-border: rgba(92, 146, 214, 0.16);
+    --card-local-border-strong: rgba(0, 229, 255, 0.18);
+    --card-local-shadow:
+        0 20px 38px rgba(2, 6, 23, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --card-local-shadow-lift:
+        0 26px 44px rgba(2, 6, 23, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"] :is(.card, .table-card).card--soft {
+    --card-local-surface:
+        linear-gradient(180deg, rgba(10, 18, 32, 0.94), rgba(9, 16, 29, 0.92));
+    --card-local-border: rgba(148, 163, 184, 0.14);
+    --card-local-border-strong: rgba(92, 146, 214, 0.18);
+    --card-local-shadow:
+        0 18px 34px rgba(2, 6, 23, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --card-local-shadow-lift:
+        0 24px 40px rgba(2, 6, 23, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"] :is(.card, .table-card).card--priority {
+    --card-local-surface:
+        linear-gradient(180deg, rgba(28, 19, 13, 0.88), rgba(10, 18, 32, 0.96));
+    --card-local-border: rgba(245, 158, 11, 0.2);
+    --card-local-border-strong: rgba(251, 191, 36, 0.24);
+    --card-local-shadow:
+        0 22px 40px rgba(2, 6, 23, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --card-local-shadow-lift:
+        0 28px 46px rgba(2, 6, 23, 0.36),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
 .fdw-focus-lane {
     display: grid;
     gap: 16px;

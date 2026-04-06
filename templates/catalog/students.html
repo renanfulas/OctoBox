@@ -20,15 +20,9 @@ PONTOS CRITICOS:
 <div class="operation-shell workspace-shell catalog-scene student-scene" data-page="students" data-screen="catalog-students" data-slot="page-root">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
-    <div class="student-kpi-overview deferred-surface">
-        <section class="student-kpi-grid" aria-label="Navegacao principal de alunos">
-            {% for card in page.data.interactive_kpis %}
-                {% include "catalog/includes/student/student_metric_card.html" with card=card %}
-            {% endfor %}
-        </section>
-    </div>
+    {% include "catalog/includes/student/student_interactive_kpis.html" %}
 
-    <div class="card student-directory-surface deferred-surface deferred-surface--xl">
+    <div class="card card--support student-directory-surface deferred-surface deferred-surface--xl">
         {% include "catalog/includes/student/student_filters_panel.html" %}
         {% include "catalog/includes/student/student_directory_panel.html" %}
     </div>

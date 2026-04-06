@@ -17,7 +17,7 @@ PONTOS CRITICOS:
 {% block content %}
 {% with page=operation_page %}
 <div class="operation-shell coach-scene workspace-shell">
-    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero hero_variant_class="hero--command" %}
     {% include "includes/ui/layout/page_reading_list.html" with panel=page.data.reading_panel %}
     <section class="workspace-grid-layout" aria-label="Painel de turnos" data-slot="workspace">
         <div class="workspace-grid-main">

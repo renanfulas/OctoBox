@@ -66,21 +66,21 @@ POR QUE ELE EXISTE:
 }
 
 .finance-board-filter {
-    background: var(--finance-premium-surface-soft);
+    --card-local-surface: var(--finance-premium-surface-soft);
 }
 
 .finance-board-rail {
-    background: var(--finance-premium-surface);
+    --card-local-surface: var(--finance-premium-surface);
 }
 
 .finance-board-queue {
-    background: var(--finance-premium-surface);
+    --card-local-surface: var(--finance-premium-surface);
 }
 
 .finance-board-trend,
 .finance-board-trend-side,
 .finance-board-portfolio {
-    background: var(--finance-premium-surface-soft);
+    --card-local-surface: var(--finance-premium-surface-soft);
 }
 
 .finance-side-stack {
@@ -121,5 +121,5 @@ body[data-theme="dark"] .finance-board-queue,
 body[data-theme="dark"] .finance-board-trend,
 body[data-theme="dark"] .finance-board-trend-side,
 body[data-theme="dark"] .finance-board-portfolio {
-    background: var(--finance-premium-surface-dark);
+    --card-local-surface: var(--finance-premium-surface-dark);
 }

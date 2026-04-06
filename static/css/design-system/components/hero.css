@@ -112,6 +112,16 @@ REGRA:
     width: 100%;
 }
 
+.hero .operation-hero-copy-block {
+    display: grid;
+    gap: 8px;
+}
+
+.hero .operation-hero-text-stack {
+    display: grid;
+    gap: 8px;
+}
+
 .hero p {
     margin: 0;
     font-size: var(--hero-copy-size);
@@ -220,6 +230,118 @@ REGRA:
     border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
 }
 
+.hero.hero--command {
+    --hero-gap: 14px;
+    --hero-padding: var(--operation-hero-padding, clamp(16px, 1.8vw, 20px));
+    --hero-radius: var(--operation-hero-radius, clamp(22px, 2.4vw, 28px));
+    --hero-copy-size: var(--operation-hero-copy-size, 0.88rem);
+    --hero-heading-size: var(--operation-hero-heading-size, clamp(1.72rem, 2.8vw, 2.28rem));
+    --hero-panel-surface: color-mix(in srgb, var(--theme-surface-strong) 84%, transparent);
+    --hero-panel-border: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--card-border) 82%);
+    --hero-panel-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 12px 24px color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent);
+    min-height: clamp(152px, 14vw, 178px);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-panel) 96%, transparent));
+    border-color: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    box-shadow:
+        0 8px 16px rgba(2, 8, 23, 0.04),
+        inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+}
+
+.hero.hero--command .operation-hero-main {
+    display: grid;
+    gap: clamp(10px, 1vw, 12px);
+    align-content: center;
+    min-height: 100%;
+}
+
+.hero.hero--command .operation-hero-title {
+    max-width: 11ch;
+    text-wrap: balance;
+}
+
+.hero.hero--command .operation-hero-copy {
+    max-width: var(--operation-hero-copy-max-width, 42ch);
+    color: color-mix(in srgb, var(--theme-text-secondary) 76%, white 24%);
+}
+
+.hero.hero--command .operation-hero-action-rail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.hero.hero--command .operation-hero-action-rail .button {
+    min-height: 30px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.hero.hero--command .operation-hero-action-rail .button:not(.secondary) {
+    background: color-mix(in srgb, var(--theme-surface-panel) 64%, transparent);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    color: color-mix(in srgb, var(--ink) 82%, var(--theme-text-secondary) 18%);
+}
+
+.hero.hero--command .operation-hero-action-rail .button.secondary {
+    background: transparent;
+    border-color: transparent;
+    color: color-mix(in srgb, var(--theme-text-muted) 84%, var(--ink) 16%);
+}
+
+.hero.hero--command .operation-hero-action-rail .button:hover,
+.hero.hero--command .operation-hero-action-rail .button:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 72%, transparent);
+    box-shadow: none;
+}
+
+.hero.hero--command .operation-hero-action-rail .button.secondary:hover,
+.hero.hero--command .operation-hero-action-rail .button.secondary:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 42%, transparent);
+}
+
+.hero.hero--command .operation-hero-nested-panel {
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--line) 86%);
+}
+
+body[data-theme="dark"] .hero.hero--command {
+    background:
+        linear-gradient(145deg, rgba(8, 15, 29, 0.98), rgba(6, 12, 24, 0.98) 58%, rgba(4, 10, 20, 0.96));
+    border-color: rgba(148, 163, 184, 0.12);
+    box-shadow:
+        0 12px 22px rgba(2, 6, 23, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"] .hero.hero--command .operation-hero-copy {
+    color: rgba(226, 232, 240, 0.74);
+}
+
+body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:not(.secondary) {
+    background: rgba(10, 18, 32, 0.72);
+    border-color: rgba(148, 163, 184, 0.12);
+    color: rgba(248, 250, 252, 0.92);
+}
+
+body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button.secondary {
+    background: transparent;
+    border-color: transparent;
+}
+
+body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:hover,
+body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:focus-visible {
+    background: rgba(15, 23, 42, 0.84);
+}
+
 .front-command-snapshot {
     display: grid;
     gap: 14px;
@@ -229,6 +351,12 @@ REGRA:
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
+}
+
+.front-command-intro {
+    display: grid;
+    gap: 6px;
+    max-width: 42ch;
 }
 
 .front-command-card,
@@ -337,6 +465,11 @@ REGRA:
 
     .front-command-grid {
         grid-template-columns: 1fr;
+    }
+
+    .hero.hero--command .operation-hero-action-rail .button {
+        width: 100%;
+        justify-content: center;
     }
 }
 

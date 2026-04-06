@@ -11,7 +11,7 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende de operational_metrics e operation_card_head.
 -->
-<article class="table-card finance-support-card finance-support-rail-card finance-ops-summary-card">
+<article class="table-card table-card--support finance-support-card finance-support-rail-card finance-ops-summary-card">
     {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Regua operacional em numeros" title="Acao imediata" pill_label=page.data.operational_queue|length|add:": caso(s)" pill_class="accent" %}
     <div class="finance-ops-grid">
         {% for label, value in page.data.operational_metrics.items %}

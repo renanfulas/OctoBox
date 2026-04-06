@@ -17,39 +17,6 @@ from .shared import build_catalog_assets, build_catalog_page_payload
 def build_student_directory_page(*, student_count, students, student_filter_form, snapshot, current_role_slug, base_query_string):
     can_manage_students = current_role_slug in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
     can_open_student_admin = current_role_slug in (ROLE_OWNER, ROLE_DEV)
-    priority_students = snapshot['priority_students']
-    intake_queue = snapshot['intake_queue']
-
-    operational_focus = [
-        {
-            'label': 'Quem pede triagem primeiro',
-            'chip_label': 'Prioridades',
-            'summary': f'{len(priority_students)} aluno(s) ou lead(s) ja pedem leitura para nao perder tempo nem contexto.',
-            'count': len(priority_students),
-            'pill_class': 'warning' if len(priority_students) > 0 else 'success',
-            'href': '#tab-students-directory',
-            'href_label': 'Ver base principal',
-        },
-        {
-            'label': 'Quem ja pode virar aluno',
-            'chip_label': 'Entradas',
-            'summary': f'{len(intake_queue)} entrada(s) provisoria(s) ja podem virar aluno com pouco atrito.',
-            'count': len(intake_queue),
-            'pill_class': 'info' if len(intake_queue) > 0 else 'accent',
-            'href': get_shell_route_url('intake', fragment='intake-queue-board'),
-            'href_label': 'Abrir central de intake',
-        },
-        {
-            'label': 'O tamanho da base agora',
-            'chip_label': 'Base',
-            'summary': f'{student_count} registro(s) sustentam esta leitura e pedem uma varredura calma, sem fadiga.',
-            'count': student_count,
-            'pill_class': 'accent',
-            'href': '#tab-students-directory',
-            'href_label': 'Ver base principal',
-        },
-    ]
-
     hero_actions = [
         {'label': 'Ver base', 'href': '#tab-students-directory', 'kind': 'primary', 'data_action': 'open-tab-students-directory'},
         {'label': 'Abrir intake', 'href': get_shell_route_url('intake', fragment='intake-queue-board'), 'kind': 'secondary', 'data_action': 'open-student-intake-center'},
@@ -86,7 +53,6 @@ def build_student_directory_page(*, student_count, students, student_filter_form
             'students': students,
             'base_query_string': base_query_string,
             'student_filter_form': student_filter_form,
-            'operational_focus': operational_focus,
             'interactive_kpis': snapshot.get('interactive_kpis', {}),
             'total_students': student_count,
         },

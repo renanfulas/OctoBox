@@ -17,7 +17,7 @@ PONTOS CRITICOS:
 {% block content %}
 {% with page=operation_page %}
 <div class="operation-shell dev-scene compass-pulse--operations-dev">
-    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero hero_variant_class="hero--command" %}
     <div class="visually-hidden" aria-hidden="true">
         <span>Leitura técnica controlada</span>
         <a href="#dev-audit-board">Eventos recentes de auditoria</a>

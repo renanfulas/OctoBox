@@ -19,13 +19,11 @@ body[data-theme="dark"] .finance-board-trend-side,
 body[data-theme="dark"] .finance-board-portfolio,
 body[data-theme="dark"] .finance-command-card,
 body[data-theme="dark"] .finance-focus-card {
-    background: var(--surface);
+    --card-local-surface: var(--surface);
 }
 
 /* ── Bulk dark mode ── */
 
-body[data-theme="dark"] .finance-shell .table-card,
-body[data-theme="dark"] .finance-shell .card,
 body[data-theme="dark"] .finance-shell .finance-action-card,
 body[data-theme="dark"] .finance-shell .finance-alert-card,
 body[data-theme="dark"] .finance-shell .finance-action-message,

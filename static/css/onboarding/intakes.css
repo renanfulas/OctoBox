@@ -163,6 +163,16 @@ POR QUE ELE EXISTE:
     gap: 12px;
 }
 
+[data-panel="intake-kpi-triggers"] .student-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+}
+
+[data-panel="intake-kpi-triggers"] .student-kpi-grid > * {
+    min-width: 0;
+}
+
 .intake-scene .metric-card {
     min-height: 172px;
 }
@@ -284,6 +294,10 @@ body[data-theme="dark"] .intake-reading-note {
 }
 
 @media (max-width: 960px) {
+    [data-panel="intake-kpi-triggers"] .student-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .intake-source-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -363,6 +377,10 @@ body[data-theme="dark"] .intake-reading-note {
     }
 
     .intake-source-grid {
+        grid-template-columns: 1fr;
+    }
+
+    [data-panel="intake-kpi-triggers"] .student-kpi-grid {
         grid-template-columns: 1fr;
     }
 
