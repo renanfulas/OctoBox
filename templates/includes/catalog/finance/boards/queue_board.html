@@ -1,15 +1,12 @@
 <!--
-ARQUIVO: fila financeira com cobrancas ativas.
--->
-<!--
 ARQUIVO: painel de fila financeira do financeiro.
 
 POR QUE ELE EXISTE:
-- Mostra cobranças ativas e pendências financeiras.
+- Mostra cobrancas ativas e pendencias financeiras.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Exibe alertas financeiros e pendências.
-2. Ajuda a visualizar pressão no fluxo de caixa.
+1. Exibe alertas financeiros e pendencias.
+2. Ajuda a visualizar pressao no fluxo de caixa.
 
 PONTOS CRITICOS:
 - Depende do contexto de financial_alerts.
@@ -20,11 +17,10 @@ PONTOS CRITICOS:
             <h3 class="card-title">Cobrancas em atraso</h3>
             <p class="finance-overdue-subtitle">{{ page.data.finance_overdue_rows|length }} pagamento(s) pendente(s)</p>
         </div>
-        <span class="badge badge-subtle warning">Urgente</span>
     </div>
     <div class="finance-overdue-list" data-slot="finance-alert-list">
         {% for item in page.data.finance_overdue_rows %}
-        <a class="finance-overdue-row" href="{{ item.student_url }}">
+        <a class="finance-overdue-row" href="{{ item.student_url }}" aria-label="{{ item.student_name }} - {{ item.overdue_days }} dias de atraso">
             <div class="finance-overdue-row-main">
                 <div class="finance-overdue-avatar" aria-hidden="true">{{ item.initials }}</div>
                 <div class="finance-overdue-copy">

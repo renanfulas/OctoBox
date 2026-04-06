@@ -16,10 +16,32 @@ body[data-theme="dark"] .finance-board-rail,
 body[data-theme="dark"] .finance-board-queue,
 body[data-theme="dark"] .finance-board-trend,
 body[data-theme="dark"] .finance-board-trend-side,
-body[data-theme="dark"] .finance-board-portfolio,
-body[data-theme="dark"] .finance-command-card,
-body[data-theme="dark"] .finance-focus-card {
+body[data-theme="dark"] .finance-board-portfolio {
     background: var(--surface);
+}
+
+body[data-theme="dark"] .finance-command-card {
+    border-color: rgba(148, 163, 184, 0.14);
+    background:
+        radial-gradient(circle at top right, rgba(74, 144, 226, 0.08), transparent 36%),
+        linear-gradient(160deg, rgba(11, 18, 31, 0.92), rgba(9, 14, 24, 0.9));
+    box-shadow:
+        0 20px 38px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .finance-command-eyebrow,
+body[data-theme="dark"] .finance-plan-form .field-label {
+    color: rgba(226, 232, 240, 0.62);
+}
+
+body[data-theme="dark"] .finance-plan-form input,
+body[data-theme="dark"] .finance-plan-form select,
+body[data-theme="dark"] .finance-plan-form textarea,
+body[data-theme="dark"] .finance-board-filter select {
+    border-color: rgba(148, 163, 184, 0.14);
+    background: rgba(10, 18, 32, 0.72);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 /* ── Bulk dark mode ── */
@@ -29,19 +51,13 @@ body[data-theme="dark"] .finance-shell .card,
 body[data-theme="dark"] .finance-shell .finance-action-card,
 body[data-theme="dark"] .finance-shell .finance-alert-card,
 body[data-theme="dark"] .finance-shell .finance-action-message,
-body[data-theme="dark"] .finance-shell .finance-ops-metric-card,
 body[data-theme="dark"] .finance-shell .finance-plan-card,
-body[data-theme="dark"] .finance-shell .finance-radar-chip,
 body[data-theme="dark"] .finance-shell .finance-plan-focus-item,
 body[data-theme="dark"] .finance-shell .finance-summary-chip,
 body[data-theme="dark"] .finance-shell .finance-alert-stat,
 body[data-theme="dark"] .finance-shell .finance-chart-column,
-body[data-theme="dark"] .finance-shell .finance-data-chip,
-body[data-theme="dark"] .finance-shell .finance-movement-item,
-body[data-theme="dark"] .finance-shell .finance-mix-card,
 body[data-theme="dark"] .finance-shell .finance-plan-stat,
 body[data-theme="dark"] .finance-shell .finance-guide-card,
-body[data-theme="dark"] .finance-shell .finance-guide-note,
 body[data-theme="dark"] .finance-shell .finance-filter-rule-card,
 body[data-theme="dark"] .finance-shell .finance-section-intro {
     color: var(--ink);
@@ -53,8 +69,6 @@ body[data-theme="dark"] .finance-shell .finance-section-intro {
 body[data-theme="dark"] .finance-shell .finance-action-card,
 body[data-theme="dark"] .finance-shell .finance-alert-card,
 body[data-theme="dark"] .finance-shell .finance-plan-card,
-body[data-theme="dark"] .finance-shell .finance-radar-chip,
-body[data-theme="dark"] .finance-shell .finance-ops-metric-card,
 body[data-theme="dark"] .finance-shell .finance-plan-focus-item {
     background: var(--surface);
 }

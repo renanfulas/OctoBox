@@ -19,25 +19,6 @@ POR QUE ELE EXISTE:
     isolation: isolate;
 }
 
-.finance-shell::before,
-.finance-shell::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: -1;
-}
-
-.finance-shell::before {
-    background:
-        radial-gradient(circle at 92% 4%, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 20%),
-        radial-gradient(circle at 10% 22%, color-mix(in srgb, var(--theme-accent-primary-alpha) 7%, transparent), transparent 18%);
-}
-
-.finance-shell::after {
-    content: none;
-}
-
 .finance-shell [id] {
     scroll-margin-top: 132px;
 }
@@ -54,11 +35,6 @@ POR QUE ELE EXISTE:
 .finance-shell .table-card,
 .finance-shell .card {
     min-height: 100%;
-}
-
-.finance-card-stack {
-    display: grid;
-    align-items: start;
 }
 
 .finance-board {
@@ -83,36 +59,9 @@ POR QUE ELE EXISTE:
     background: var(--finance-premium-surface-soft);
 }
 
-.finance-side-stack {
-    display: grid;
-    gap: var(--section-gap);
-}
-
-.finance-command-side {
-    gap: 14px;
-}
-
-.finance-portfolio-side {
-    display: grid;
-    gap: 14px;
-}
-
-.finance-command-layout,
-.finance-priority-layout,
 .finance-portfolio-layout,
-.finance-trend-layout,
 .finance-plan-layout {
     align-items: start;
-}
-
-body[data-theme="dark"] .finance-shell::before {
-    background:
-        radial-gradient(circle at 92% 4%, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 24%),
-        radial-gradient(circle at 10% 22%, color-mix(in srgb, var(--theme-accent-primary-alpha) 12%, transparent), transparent 20%);
-}
-
-body[data-theme="dark"] .finance-shell::after {
-    content: none;
 }
 
 body[data-theme="dark"] .finance-board-filter,

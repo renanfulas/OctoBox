@@ -34,7 +34,7 @@ PONTOS CRITICOS:
                             <span class="metric-number">{{ card.display_value }}</span>
                         {% endif %}
                     {% else %}
-                        <span class="metric-number">{{ card.display_value }}</span>
+                        <span class="metric-number{% if card.value_class %} {{ card.value_class }}{% endif %}">{{ card.display_value }}</span>
                     {% endif %}
                 </p>
                 {% if card.change %}

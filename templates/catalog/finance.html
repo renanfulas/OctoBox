@@ -39,15 +39,14 @@ PONTOS CRITICOS:
         </div>
 
         <div class="stack-16 deferred-surface deferred-surface--dense{% if page.behavior.default_panel == 'tab-finance-queue' %} is-tab-active{% endif %}" id="tab-finance-queue" aria-label="Handoff de cobranca">
+            {% if page.data.operational_queue %}
             {% include "includes/catalog/finance/views/priority_rail.html" %}
+            {% endif %}
             {% include "includes/catalog/finance/boards/queue_board.html" %}
         </div>
 
         <div class="stack-16 deferred-surface deferred-surface--xl{% if page.behavior.default_panel == 'tab-finance-portfolio' %} is-tab-active{% endif %}" id="tab-finance-portfolio" aria-label="Motor de carteira">
-            <div class="finance-portfolio-layout">
-                {% include "includes/catalog/finance/boards/mix_board.html" %}
-                {% include "includes/catalog/finance/boards/portfolio_board.html" %}
-            </div>
+            {% include "includes/catalog/finance/boards/portfolio_board.html" %}
             {% if page.capabilities.can_manage_finance %}
             {% include "includes/catalog/finance/engine/plan_engine.html" %}
             {% endif %}
@@ -64,4 +63,5 @@ PONTOS CRITICOS:
 {% block extra_scripts %}
 <script src="{% static 'js/pages/interactive_tabs.js' %}?v={{ static_asset_version }}"></script>
 <script src="{% static 'js/pages/finance/finance-filter-summary.js' %}?v={{ static_asset_version }}"></script>
+<script src="{% static 'js/pages/finance/finance-priority-carousel.js' %}?v={{ static_asset_version }}"></script>
 {% endblock %}

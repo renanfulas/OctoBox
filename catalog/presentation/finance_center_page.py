@@ -118,7 +118,8 @@ def _build_finance_portfolio_panel(plan_portfolio):
     for plan in plan_portfolio:
         revenue = float(plan.revenue_this_month or 0)
         active_enrollments = int(plan.active_enrollments or 0)
-        if revenue <= 0 and active_enrollments <= 0:
+        is_active_plan = bool(getattr(plan, 'active', False))
+        if revenue <= 0 and active_enrollments <= 0 and not is_active_plan:
             continue
 
         active_rows.append(
@@ -126,6 +127,7 @@ def _build_finance_portfolio_panel(plan_portfolio):
                 'name': plan.name,
                 'revenue': revenue,
                 'active_enrollments': active_enrollments,
+                'is_active_plan': is_active_plan,
             }
         )
         total_revenue += revenue
@@ -133,7 +135,7 @@ def _build_finance_portfolio_panel(plan_portfolio):
     if not active_rows:
         return {'items': [], 'total_revenue': 0.0}
 
-    active_rows.sort(key=lambda item: (-item['revenue'], -item['active_enrollments'], item['name']))
+    active_rows.sort(key=lambda item: (-int(item['is_active_plan']), -item['revenue'], -item['active_enrollments'], item['name']))
 
     total_revenue = total_revenue or 1.0
     items = []
@@ -145,6 +147,7 @@ def _build_finance_portfolio_panel(plan_portfolio):
                 'active_enrollments': row['active_enrollments'],
                 'width': max(12, round((row['revenue'] / total_revenue) * 100)),
                 'color': FINANCE_PORTFOLIO_COLORS[index % len(FINANCE_PORTFOLIO_COLORS)],
+                'is_new_empty_plan': row['revenue'] <= 0 and row['active_enrollments'] <= 0,
             }
         )
 
@@ -192,42 +195,20 @@ def build_finance_filter_summary(filter_form):
             'summary': 'Util quando a analise precisa isolar comportamento de recebimento.',
         },
     ]
-def build_finance_center_page(*, snapshot, operational_queue, operational_metrics, export_links, current_role_slug, form):
+
+
+def build_finance_center_page(*, snapshot, operational_queue, export_links, current_role_slug, form):
     filter_form = snapshot['filter_form']
     financial_alerts = snapshot['financial_alerts']
     plan_portfolio = snapshot['plan_portfolio']
-    recent_movements = snapshot['recent_movements']
     finance_pulse = snapshot['finance_pulse']
     finance_priority_context = snapshot['finance_priority_context']
     pressure_total = len(operational_queue) + len(financial_alerts)
     can_manage_finance = current_role_slug in (ROLE_OWNER, ROLE_MANAGER)
-
-    if pressure_total > 0:
-        priority_badge = finance_priority_context['pill_class']
-        priority_label = finance_priority_context['pill_label']
-    else:
-        priority_badge = 'success'
-        priority_label = 'Pressao controlada'
+    has_operational_queue = bool(operational_queue)
 
     default_panel = finance_priority_context['default_panel']
     default_action = finance_priority_context['default_action']
-    finance_right_rail_snapshot = [
-        {
-            'label': 'Leitura dominante',
-            'value': finance_priority_context['pill_label'],
-            'summary': finance_priority_context['summary'],
-        },
-        {
-            'label': 'Em aberto',
-            'value': f"R$ {finance_pulse['open']:.2f}",
-            'summary': 'Mostra o volume que ainda pede conversao em caixa.',
-        },
-        {
-            'label': 'Alunos em atraso',
-            'value': finance_pulse['overdue_students'],
-            'summary': 'Ajuda a medir se a pressao e pontual ou ja alcancou a base.',
-        },
-    ]
 
     operational_focus = [
         {
@@ -240,8 +221,8 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
             ),
             'count': len(operational_queue),
             'pill_class': 'warning' if len(operational_queue) > 0 else 'success',
-            'href': '#finance-priority-board',
-            'href_label': 'Abrir regua',
+            'href': '#finance-priority-board' if has_operational_queue else '#finance-queue-board',
+            'href_label': 'Abrir regua' if has_operational_queue else 'Abrir fila',
             'data_action': 'open-tab-finance-queue',
         },
         {
@@ -267,7 +248,12 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
     ]
 
     hero_actions = [
-        {'label': 'Ver prioridades', 'href': '#finance-priority-board', 'kind': 'primary', 'data_action': 'open-tab-finance-queue'},
+        {
+            'label': 'Ver prioridades',
+            'href': '#finance-priority-board' if has_operational_queue else '#finance-queue-board',
+            'kind': 'primary',
+            'data_action': 'open-tab-finance-queue',
+        },
         {'label': 'Abrir carteira', 'href': '#finance-portfolio-board', 'kind': 'secondary', 'data_action': 'open-tab-finance-portfolio'},
     ]
 
@@ -311,16 +297,10 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
             'operational_focus': operational_focus,
             'plan_portfolio': plan_portfolio,
             'finance_portfolio_panel': _build_finance_portfolio_panel(plan_portfolio),
-            'plan_mix': snapshot['plan_mix'],
             'monthly_comparison': snapshot['monthly_comparison'],
             'comparison_peaks': snapshot['comparison_peaks'],
             'financial_alerts': financial_alerts,
-            'recent_movements': recent_movements,
             'operational_queue': operational_queue,
-            'operational_metrics': operational_metrics,
-            'finance_right_rail_snapshot': finance_right_rail_snapshot,
-            'finance_right_rail_priority_badge': priority_badge,
-            'finance_right_rail_priority_label': priority_label,
             'finance_filter_summary': build_finance_filter_summary(filter_form),
             'form': form,
         },

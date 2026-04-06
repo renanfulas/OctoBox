@@ -19,7 +19,7 @@ from ..forms import FinanceFilterForm
 from .base import build_finance_base
 from .comparison import build_comparison_peaks, build_monthly_comparison
 from .metrics import build_finance_interactive_kpis, build_finance_metrics, build_finance_priority_context, build_finance_pulse
-from .portfolio import build_plan_mix, build_plan_portfolio
+from .portfolio import build_plan_portfolio
 
 
 def build_finance_flow_bridge(*, priority_context, operational_queue, financial_alerts):
@@ -106,7 +106,6 @@ def build_finance_snapshot(params=None, *, operational_queue=None):
         'finance_priority_context': finance_priority_context,
         'interactive_kpis': build_finance_interactive_kpis(finance_metrics, priority_context=finance_priority_context),
         'plan_portfolio': plan_portfolio,
-        'plan_mix': build_plan_mix(plan_portfolio),
         'monthly_comparison': monthly_comparison,
         'comparison_peaks': build_comparison_peaks(monthly_comparison),
         'financial_alerts': financial_alerts,

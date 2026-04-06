@@ -1,17 +1,48 @@
-<article class="history-entry card--support finance-action-card finance-action-card-compact">
+<!--
+ARQUIVO: finance_action_item.html
+POR QUE ELE EXISTE:
+- Concentra a estrutura repetida das acoes semiassistidas de cobranca e retencao.
+O QUE ESTE ARQUIVO FAZ:
+- Renderiza o card de acao financeira, com botoes e mensagens de contato.
+PONTOS CRITICOS:
+- Depende do objeto 'item' e de permissoes de WhatsApp.
+-->
+<article class="history-entry card--support finance-action-card finance-action-card-compact finance-action-card--{{ item.kind }}">
+    <div class="finance-action-glow" aria-hidden="true"></div>
     <div class="card-body finance-action-card-body">
         <div class="row-between history-header finance-action-head">
-            <div class="finance-action-copy card-head-main-stack">
-                <strong>{{ item.title }}</strong>
-                <p class="meta-text-sm">{{ item.summary }}</p>
+            <div class="finance-action-heading">
+                <span class="finance-action-kicker">Regua semiassistida</span>
+                <div class="finance-action-copy card-head-main-stack">
+                    <strong>{{ item.title }}</strong>
+                    <p class="meta-text-sm">{{ item.summary }}</p>
+                </div>
             </div>
-            <span class="pill finance-action-pill{% if item.pill_class %} {{ item.pill_class }}{% endif %}">{{ item.pill }}</span>
+            <div class="finance-action-status">
+                <span class="pill finance-action-pill{% if item.pill_class %} {{ item.pill_class }}{% endif %}">{{ item.pill }}</span>
+            </div>
         </div>
         <div class="card-content finance-action-body">
-            {% include "includes/ui/states/state_notice.html" with tone="warning" compact=True eyebrow="Proxima abordagem" title="Mensagem pronta para contato" copy=item.suggested_message class_name="finance-action-message finance-action-message-compact" %}
             <div class="stack-4 finance-action-meta-list">
-                <p class="meta-text-sm">{{ item.whatsapp_last_contact_label }}</p>
-                {% if item.whatsapp_next_available_label %}<p class="meta-text-sm">{{ item.whatsapp_next_available_label }}</p>{% endif %}
+                <div class="finance-action-meta-chip">
+                    <span class="finance-action-meta-label">Ultimo toque</span>
+                    <p class="meta-text-sm">{{ item.whatsapp_last_contact_label }}</p>
+                </div>
+                {% if item.whatsapp_next_available_label %}
+                <div class="finance-action-meta-chip">
+                    <span class="finance-action-meta-label">Proxima janela</span>
+                    <p class="meta-text-sm">{{ item.whatsapp_next_available_label }}</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="finance-action-message finance-action-message-compact" role="status">
+                <div class="finance-action-message-head">
+                    <div>
+                        <span class="finance-action-message-eyebrow">Mensagem pronta</span>
+                        <strong class="finance-action-message-title">Proxima abordagem</strong>
+                    </div>
+                </div>
+                <p class="finance-action-message-copy">{{ item.suggested_message }}</p>
             </div>
         </div>
     </div>
@@ -21,29 +52,20 @@
             {% if item.whatsapp_repeat_blocked %}
             <button class="button" type="button" disabled aria-disabled="true">WhatsApp bloqueado agora</button>
             {% else %}
-            <form method="post" action="{% url 'finance-communication-action' %}" target="_blank" class="actions actions-tight finance-card-actions-compact">
+            <form method="post" action="{% url 'finance-communication-action' %}" target="_blank" class="actions actions-tight finance-card-actions-compact finance-action-primary-form">
                 {% csrf_token %}
                 <input type="hidden" name="action_kind" value="{{ item.kind }}">
                 <input type="hidden" name="student_id" value="{{ item.student.id }}">
                 {% if item.payment %}<input type="hidden" name="payment_id" value="{{ item.payment.id }}">{% endif %}
                 {% if item.enrollment %}<input type="hidden" name="enrollment_id" value="{{ item.enrollment.id }}">{% endif %}
                 <input type="hidden" name="open_in_whatsapp" value="1">
-                <button class="button" type="submit" data-action="open-finance-whatsapp">Registrar e abrir WhatsApp</button>
+                <button class="button finance-action-cta" type="submit" data-action="open-finance-whatsapp">Registrar e abrir WhatsApp</button>
             </form>
             {% endif %}
             {% else %}
-<!--
-ARQUIVO: finance_action_item.html
-POR QUE ELE EXISTE:
-- Concentra a estrutura repetida das ações semiassistidas de cobrança e retenção.
-O QUE ESTE ARQUIVO FAZ:
-- Renderiza o card de ação financeira, com botões e mensagens de contato.
-PONTOS CRITICOS:
-- Depende do objeto 'item' e de permissões de WhatsApp.
--->
-            <span class="meta-text-sm">Aluno sem WhatsApp valido para contato rapido.</span>
+            <span class="meta-text-sm finance-action-fallback">Aluno sem WhatsApp valido para contato rapido.</span>
             {% endif %}
-            <a class="button secondary" href="{% url 'student-quick-update' item.student.id %}#student-financial-overview">Abrir ficha do aluno</a>
+            <a class="button secondary finance-action-secondary" href="{% url 'student-quick-update' item.student.id %}#student-financial-overview">Abrir ficha do aluno</a>
         </div>
     </div>
 </article>

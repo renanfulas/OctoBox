@@ -196,6 +196,7 @@ def build_finance_interactive_kpis(finance_metrics, *, priority_context=None):
             ),
             'data_action': 'open-tab-finance-movements',
             'card_class': 'kpi-emerald',
+            'value_class': 'is-emerald' if finance_metrics['Receita recebida no mes']['value'] > 1 else '',
         },
         'queue': {
             'eyebrow': 'Handoff de Cobranca',
@@ -207,6 +208,7 @@ def build_finance_interactive_kpis(finance_metrics, *, priority_context=None):
             ),
             'data_action': 'open-tab-finance-queue',
             'card_class': 'kpi-red' if finance_metrics['Alunos com atraso ativo']['value'] > 0 else 'kpi-blue',
+            'value_class': 'is-ruby' if finance_metrics['Receita que ainda nao entrou']['value'] > 1 else '',
         },
         'portfolio': {
             'eyebrow': 'Motor de Carteira',

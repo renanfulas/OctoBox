@@ -1,13 +1,13 @@
 <!--
 ARQUIVO: formulário de cadastro de planos da central financeira.
 -->
-<section class="card finance-board-plan" id="cadastro-plano" data-panel="finance-plan-engine">
+<section class="card finance-board-plan finance-command-card" id="cadastro-plano" data-panel="finance-plan-engine">
     <div class="card-head">
-        <h3 class="card-title">Motor de Planos: Cadastre uma nova oferta</h3>
+        <div class="finance-command-head-copy">
+            <p class="finance-command-eyebrow eyebrow">Motor comercial</p>
+            <h3 class="card-title">Motor de Planos: Cadastre uma nova oferta</h3>
+        </div>
         <span class="badge badge-subtle info">Novos produtos</span>
-    </div>
-    <div class="finance-guide-note">
-        <p class="meta-text no-margin">Proposta, entrega e ativação. O plano precisa ser legível antes de ser adicionado à carteira comercial do seu box.</p>
     </div>
     {% if page.capabilities.can_manage_finance %}
     <form method="post" novalidate class="finance-plan-form" data-action="submit-finance-plan-form">

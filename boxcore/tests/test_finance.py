@@ -23,6 +23,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from auditing.models import AuditEvent
+from communications.models import WhatsAppContact
 from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
 from students.models import Student
 
@@ -96,7 +97,7 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'id="finance-queue-board"')
         self.assertContains(response, 'href="#finance-portfolio-board"')
         self.assertContains(response, 'Planos ativos')
-        self.assertContains(response, 'Mix Comercial e Dependencia')
+        self.assertNotContains(response, 'Mix Comercial e Dependencia')
         self.assertContains(response, 'Total MRR')
         self.assertContains(response, f'href="{reverse("student-quick-update", args=[self.student.id])}#student-financial-overview"')
         self.assertRegex(response.content.decode(), r'R\$\s*319[,.]90')
@@ -152,6 +153,10 @@ class FinanceCenterTests(TestCase):
         self.assertTrue(MembershipPlan.objects.filter(name='Legends Unlimited').exists())
         self.assertTrue(AuditEvent.objects.filter(action='membership_plan_quick_created').exists())
 
+        follow_response = self.client.get(reverse('finance-center'))
+        self.assertContains(follow_response, 'Legends Unlimited')
+        self.assertContains(follow_response, 'Aguardando primeira adesao')
+
     def test_finance_center_can_update_plan(self):
         self.client.force_login(self.user)
 
@@ -199,3 +204,20 @@ class FinanceCenterTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
+
+    def test_finance_center_hides_priority_rail_when_all_whatsapp_contacts_are_blocked(self):
+        self.client.force_login(self.user)
+        WhatsAppContact.objects.create(
+            phone='5511910101010',
+            display_name=self.student.full_name,
+            linked_student=self.student,
+            last_outbound_at=timezone.now(),
+        )
+
+        response = self.client.get(reverse('finance-center'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'id="finance-priority-board"')
+        self.assertNotContains(response, 'Registrar e abrir WhatsApp')
+        self.assertContains(response, 'id="finance-queue-board"')
+        self.assertContains(response, 'href="#finance-queue-board"')
