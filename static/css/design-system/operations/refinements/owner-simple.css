@@ -35,6 +35,68 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
     border-bottom-color: rgba(255, 255, 255, 0.06);
 }
 
+.owner-simple-shell .page-reading-list {
+    gap: 8px;
+}
+
+.owner-simple-shell .page-reading-list .fdw-focus-card,
+.owner-simple-shell .page-reading-list .fdw-focus-card.is-primary {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    min-height: 0;
+    padding: 10px 14px;
+    gap: 12px;
+    border-radius: 16px;
+}
+
+.owner-simple-shell .page-reading-list .fdw-focus-card.is-primary {
+    box-shadow:
+        0 10px 18px rgba(15, 23, 42, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.68);
+}
+
+.owner-simple-shell .page-reading-list .fdw-focus-card-head {
+    gap: 10px;
+}
+
+.owner-simple-shell .page-reading-list .fdw-focus-body {
+    gap: 2px;
+}
+
+.owner-simple-shell .page-reading-list .fdw-focus-title {
+    font-size: 0.92rem;
+    line-height: 1.1;
+}
+
+.owner-simple-shell .page-reading-list .fdw-focus-summary {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 0.78rem;
+    line-height: 1.2;
+}
+
+.owner-simple-shell .page-reading-list .fdw-focus-meta {
+    gap: 6px;
+}
+
+.owner-simple-shell .page-reading-list .fdw-focus-chip,
+.owner-simple-shell .page-reading-list .fdw-focus-count {
+    min-height: 20px;
+    padding: 2px 7px;
+    font-size: 0.64rem;
+}
+
+.owner-simple-shell .page-reading-list .fdw-focus-footer {
+    padding-right: 14px;
+}
+
+.owner-simple-shell .page-reading-list .fdw-focus-action {
+    font-size: 0.72rem;
+}
+
 @media (max-width: 1180px) {
     .owner-simple-shell .owner-metric-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -60,11 +122,30 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
         grid-column: auto;
     }
 
+    .owner-simple-shell .page-reading-list .fdw-focus-card,
+    .owner-simple-shell .page-reading-list .fdw-focus-card.is-primary {
+        padding: 11px 14px;
+    }
+
     .coach-scene .operation-kpi-card,
     .reception-scene .operation-kpi-card,
     .reception-preview-scene .operation-kpi-card,
     .owner-metric-grid .operation-kpi-card {
         min-height: 144px;
+    }
+}
+
+@media (max-width: 720px) {
+    .owner-simple-shell .page-reading-list .fdw-focus-card,
+    .owner-simple-shell .page-reading-list .fdw-focus-card.is-primary {
+        grid-template-columns: auto minmax(0, 1fr);
+        padding-right: 14px;
+    }
+
+    .owner-simple-shell .page-reading-list .fdw-focus-footer {
+        grid-column: 2;
+        justify-content: flex-start;
+        padding-right: 0;
     }
 }
 
