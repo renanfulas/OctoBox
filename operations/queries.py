@@ -573,6 +573,14 @@ def _build_reception_payment_reason(payment, *, today):
     return 'Pagamento pede leitura operacional antes de escalar para o financeiro completo.'
 
 
+def _build_reception_focus_signal(*, count, active_class):
+    has_volume = (count or 0) > 0
+    return {
+        'severity_class': active_class if has_volume else 'severity-tranquil',
+        'is_tranquil': not has_volume,
+    }
+
+
 def _build_reception_workspace_core(*, today):
     pending_intakes = list(get_pending_intakes(limit=6))
     payment_queue = list(
@@ -723,6 +731,7 @@ def build_reception_workspace_snapshot(*, today):
         'metric_cards': data['metric_cards'],
         'reception_focus': [
             {
+                **_build_reception_focus_signal(count=len(data['intakes']), active_class='severity-ruby'),
                 'label': 'Comece por quem acabou de chegar',
                 'chip_label': 'Chegada',
                 'summary': (
@@ -736,6 +745,7 @@ def build_reception_workspace_snapshot(*, today):
                 'href_label': 'Ver entradas',
             },
             {
+                **_build_reception_focus_signal(count=len(data['queue']), active_class='severity-amber'),
                 'label': 'Depois resolva o caixa curto',
                 'chip_label': 'Cobrancas',
                 'summary': (
@@ -749,6 +759,7 @@ def build_reception_workspace_snapshot(*, today):
                 'href_label': 'Ver cobranca curta',
             },
             {
+                **_build_reception_focus_signal(count=len(data['sessions']), active_class='severity-cyan'),
                 'label': 'Feche orientando a proxima aula',
                 'chip_label': 'Aulas',
                 'summary': (
