@@ -597,7 +597,6 @@ body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-command-r
 }
 
 @media (prefers-reduced-motion: no-preference) {
-    body[data-shell-scope="dashboard"] .topbar,
     .dashboard-hero {
         animation: fdw-rise-in 650ms var(--ease-standard) both;
     }

@@ -21,29 +21,18 @@ POR QUE ELE EXISTE:
 }
 
 .interactive-tab-container > *.is-tab-active {
-    animation: fadeInTab 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: none;
 }
 
 .deferred-surface {
-    content-visibility: auto;
-    contain-intrinsic-size: 420px;
+    content-visibility: visible;
+    contain-intrinsic-size: auto;
 }
 
 .deferred-surface--dense {
-    contain-intrinsic-size: 720px;
+    contain-intrinsic-size: auto;
 }
 
 .deferred-surface--xl {
-    contain-intrinsic-size: 960px;
-}
-
-@keyframes fadeInTab {
-    0% {
-        opacity: 0;
-        transform: translateY(12px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    contain-intrinsic-size: auto;
 }
