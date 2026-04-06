@@ -295,7 +295,6 @@ body[data-shell-scope="dashboard"] .page-body {
 }
 
 .dashboard-layout-panel:not(.is-collapsed):hover .dashboard-layout-body {
-    transform: translateY(-1px);
     filter: saturate(1.03);
 }
 

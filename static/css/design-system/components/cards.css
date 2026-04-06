@@ -69,7 +69,6 @@ REGRA:
 
 .card:hover,
 .table-card:hover {
-    transform: translateY(-1px);
     border-color: color-mix(in srgb, var(--card-local-border-strong) 96%, transparent);
     box-shadow: var(--card-local-shadow-lift);
 }
@@ -517,7 +516,6 @@ body[data-theme="dark"] :is(.card, .table-card).card--priority {
 }
 
 .fdw-focus-card:hover {
-    transform: translateY(-1px);
     box-shadow: var(--card-shadow-lift);
     border-color: color-mix(in srgb, var(--theme-accent-support) 26%, transparent);
 }
@@ -828,6 +826,6 @@ body[data-theme="dark"] :is(.card, .table-card).card--priority {
 
     .class-grid-scene .card:hover,
     .class-grid-scene .table-card:hover {
-        transform: translateY(-2px);
+        transform: none;
     }
 }

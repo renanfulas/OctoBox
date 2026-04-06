@@ -85,7 +85,6 @@ O QUE ESTE ARQUIVO FAZ:
 
 a.dashboard-reading-card:hover,
 a.dashboard-reading-card:focus-visible {
-    transform: translateY(-2px);
     border-color: color-mix(in srgb, var(--dashboard-reading-accent) 34%, var(--theme-border-strong) 66%);
     box-shadow:
         0 22px 44px rgba(15, 23, 42, 0.12),
