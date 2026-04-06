@@ -39,7 +39,7 @@ O QUE ESTE ARQUIVO FAZ:
         radial-gradient(circle at 84% 72%, color-mix(in srgb, var(--theme-accent-premium) 10%, transparent), transparent 20%),
         linear-gradient(152deg, rgba(9, 18, 34, 0.98), rgba(6, 12, 24, 0.98) 58%, rgba(5, 10, 18, 0.94));
     display: grid;
-    gap: clamp(6px, 0.9vw, 12px);
+    gap: clamp(8px, 1vw, 12px);
     position: relative;
     isolation: isolate;
 }
@@ -48,126 +48,34 @@ body[data-shell-scope="dashboard"] .content {
     padding-top: 2px;
 }
 
+body[data-shell-scope="dashboard"] .content::before {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
 body[data-shell-scope="dashboard"] .content::after {
     opacity: 0;
 }
 
-body[data-shell-scope="dashboard"] .topbar {
-    --topbar-gap: 13px;
-    --topbar-margin-bottom: 6px;
-    --topbar-left-gap: 13px;
-    --topbar-right-gap: 13px;
-    --topbar-top: 12px;
-    --topbar-padding-block: 13px;
-    --topbar-padding-inline: 21px;
-    --topbar-radius: 21px;
-    --topbar-search-radius: 16px;
-    --topbar-surface: color-mix(in srgb, var(--theme-surface-panel-strong) 94%, var(--theme-accent-support-alpha) 6%);
-    --topbar-search-surface: color-mix(in srgb, var(--theme-surface-panel) 88%, var(--theme-accent-support-alpha) 12%);
-    --topbar-profile-surface: color-mix(in srgb, var(--theme-surface-panel) 86%, var(--theme-accent-support-alpha) 14%);
-    --topbar-manifesto-surface: color-mix(in srgb, var(--theme-surface-secondary) 92%, var(--theme-accent-support-alpha) 8%);
-    --topbar-toggle-surface: color-mix(in srgb, var(--theme-surface-secondary) 94%, var(--theme-accent-support-alpha) 6%);
-    --topbar-toggle-surface-hover: color-mix(in srgb, var(--theme-surface-strong) 92%, var(--theme-accent-support-alpha) 8%);
-    --topbar-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-border-soft) 82%);
-    --topbar-shadow:
-        0 14px 28px rgba(3, 8, 20, 0.12),
-        inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
-    --topbar-search-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-border-soft) 84%);
-    --topbar-search-shadow:
-        inset 0 1px 0 color-mix(in srgb, white 14%, transparent),
-        0 0 0 1px color-mix(in srgb, var(--theme-accent-support) 5%, transparent);
-    --topbar-profile-radius: 16px;
+body[data-shell-scope="dashboard"] .page-body {
+    padding-top: 0;
 }
 
-body[data-shell-scope="dashboard"] .topbar-manifesto,
-body[data-shell-scope="dashboard"] .topbar-quick-link--secondary,
-body[data-shell-scope="dashboard"] .alert-chip {
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
-}
-
-body[data-shell-scope="dashboard"] .topbar-quick-link--secondary,
-body[data-shell-scope="dashboard"] .alert-chip {
-    background: color-mix(in srgb, var(--theme-surface-secondary) 92%, var(--theme-accent-support-alpha) 8%);
-}
-
-body[data-shell-scope="dashboard"] .topbar-profile,
-body[data-shell-scope="dashboard"] .global-search,
-body[data-shell-scope="dashboard"] .theme-toggle,
-body[data-shell-scope="dashboard"] .sidebar-toggle {
-    backdrop-filter: blur(14px) saturate(122%);
-    -webkit-backdrop-filter: blur(14px) saturate(122%);
-}
-
-body[data-shell-scope="dashboard"] .global-search:focus-within {
-    border-color: color-mix(in srgb, var(--theme-accent-primary) 28%, var(--theme-focus-ring) 72%);
-    box-shadow:
-        0 0 0 3px color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, transparent),
-        var(--topbar-search-shadow);
-}
-
-body[data-shell-scope="dashboard"] .theme-toggle:hover,
-body[data-shell-scope="dashboard"] .theme-toggle:focus-visible,
-body[data-shell-scope="dashboard"] .sidebar-toggle:hover,
-body[data-shell-scope="dashboard"] .sidebar-toggle:focus-visible,
-body[data-shell-scope="dashboard"] .topbar-profile:hover,
-body[data-shell-scope="dashboard"] .topbar-profile:focus-within,
-body[data-shell-scope="dashboard"] .topbar-quick-link--secondary:hover,
-body[data-shell-scope="dashboard"] .topbar-quick-link--secondary:focus-visible,
-body[data-shell-scope="dashboard"] .alert-chip:hover,
-body[data-shell-scope="dashboard"] .alert-chip:focus-visible {
-    border-color: color-mix(in srgb, var(--theme-accent-primary) 18%, var(--theme-accent-support) 12%, transparent 70%);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent);
-}
-
-body[data-shell-scope="dashboard"] .topbar-profile:hover .avatar,
-body[data-shell-scope="dashboard"] .topbar-profile:focus-within .avatar {
-    background: color-mix(in srgb, var(--theme-accent-primary) 42%, var(--theme-accent-support) 42%, var(--theme-surface-strong) 16%);
-}
-
-body[data-shell-scope="dashboard"] .theme-toggle:hover .theme-toggle-icon,
-body[data-shell-scope="dashboard"] .theme-toggle:focus-visible .theme-toggle-icon {
-    color: color-mix(in srgb, var(--theme-accent-primary) 58%, var(--theme-text-primary) 42%);
-}
 
 .dashboard-shell::before,
 .dashboard-shell::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: -1;
-}
-
-.dashboard-shell::before {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 28%, transparent), transparent 15%),
-        radial-gradient(circle at 12% 34%, color-mix(in srgb, var(--theme-accent-support-alpha) 28%, transparent), transparent 13%),
-        radial-gradient(circle at 50% 0%, color-mix(in srgb, white 24%, transparent), transparent 18%),
-        radial-gradient(circle at 80% 72%, color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent), transparent 13%);
-}
-
-.dashboard-shell::after {
-    inset: 0 0 auto;
-    height: 320px;
-    border-radius: var(--dashboard-fib-5);
-    background:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-support) 7%, transparent), transparent 34%),
-        linear-gradient(135deg, color-mix(in srgb, white 5%, transparent), transparent 58%);
+    content: none;
 }
 
 .dashboard-command-workspace {
     position: relative;
-    gap: clamp(21px, 2vw, 34px);
+    gap: clamp(18px, 1.9vw, 24px);
     align-items: start;
 }
 
 .dashboard-command-workspace::before {
-    content: "";
-    position: absolute;
-    inset: 18px 0 auto;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--dashboard-command-line), transparent 82%);
-    pointer-events: none;
+    content: none;
 }
 
 .dashboard-command-main,
@@ -179,24 +87,20 @@ body[data-shell-scope="dashboard"] .theme-toggle:focus-visible .theme-toggle-ico
 .dashboard-shell--futuristic-luxury .dashboard-command-main,
 .dashboard-shell--futuristic-luxury .dashboard-command-rail {
     display: grid;
-    gap: clamp(21px, 2vw, 28px);
+    gap: clamp(18px, 1.7vw, 22px);
     align-content: start;
 }
 
 .dashboard-shell--futuristic-luxury .dashboard-command-main {
-    padding: clamp(6px, 1vw, 12px);
-    border-radius: clamp(24px, 2.4vw, 32px);
-    background:
-        linear-gradient(180deg, color-mix(in srgb, var(--dashboard-command-border) 26%, transparent), transparent 12%),
-        radial-gradient(circle at top left, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 34%);
+    padding: 0;
+    border-radius: 0;
+    background: none;
 }
 
 .dashboard-shell--futuristic-luxury .dashboard-command-rail {
-    padding: clamp(8px, 1vw, 14px);
-    border-radius: clamp(24px, 2.4vw, 32px);
-    background:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, transparent), transparent 18%),
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 14%, transparent), transparent 32%);
+    padding: 0;
+    border-radius: 0;
+    background: none;
 }
 
 .dashboard-shell--futuristic-luxury .dashboard-command-main > .dashboard-layout-panel,
@@ -206,29 +110,7 @@ body[data-shell-scope="dashboard"] .theme-toggle:focus-visible .theme-toggle-ico
 
 .dashboard-command-main::before,
 .dashboard-command-rail::before {
-    content: "";
-    position: absolute;
-    inset: -8px -10px;
-    border-radius: 28px;
-    border: 1px solid transparent;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 220ms var(--ease-standard);
-}
-
-.dashboard-command-main::before {
-    background:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-support-alpha) 8%, transparent), transparent);
-}
-
-.dashboard-command-rail::before {
-    background:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-premium-alpha) 6%, transparent), transparent);
-}
-
-.dashboard-command-main:hover::before,
-.dashboard-command-rail:hover::before {
-    opacity: 1;
+    content: none;
 }
 
 .dashboard-hero {
@@ -237,133 +119,23 @@ body[data-shell-scope="dashboard"] .theme-toggle:focus-visible .theme-toggle-ico
     justify-content: stretch;
 }
 
-.dashboard-shell .dashboard-command-hero.hero.operation-hero {
-    --operation-hero-surface:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-panel) 96%, transparent));
-    --operation-hero-border: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
-    --operation-hero-shadow:
-        0 6px 12px rgba(2, 8, 23, 0.03),
-        inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
-    --operation-hero-radius: clamp(20px, 2.2vw, 24px);
-    --operation-hero-heading-size: clamp(1.7rem, 3vw, 2.3rem);
-    --operation-hero-heading-line-height: 1.01;
-    --operation-hero-heading-letter-spacing: -0.045em;
-    --operation-hero-copy-max-width: 42ch;
-    --operation-hero-copy-line-height: 1.5;
-    --operation-hero-padding: clamp(16px, 1.8vw, 20px);
-    --hero-before-width: 0;
-    --hero-before-opacity: 0;
-    --hero-before-radius: 0;
-    --hero-after-width: 0;
-    --hero-after-height: 0;
-    --hero-after-opacity: 0;
-    min-height: clamp(148px, 14vw, 172px);
-}
-
-.dashboard-shell .dashboard-command-hero .operation-hero-copy-block {
-    display: grid;
-    gap: 6px;
-}
-
-.dashboard-shell .dashboard-command-hero .operation-hero-main {
-    display: grid;
-    gap: clamp(8px, 1vw, 10px);
-    align-content: center;
-    min-height: 100%;
-}
-
-.dashboard-shell .dashboard-command-hero .operation-hero-title {
-    max-width: 11ch;
-    text-wrap: balance;
-}
-
-.dashboard-shell .dashboard-command-hero .operation-hero-copy {
-    color: color-mix(in srgb, var(--theme-text-secondary) 76%, white 24%);
-    font-size: 0.86rem;
-}
-
-.dashboard-shell .dashboard-command-hero .operation-hero-action-rail {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 4px;
-}
-
-.dashboard-shell .dashboard-command-hero .operation-hero-action-rail .button {
-    min-height: 30px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    font-weight: 500;
-    box-shadow: none;
-}
-
-.dashboard-shell .dashboard-command-hero .operation-hero-action-rail .button:not(.secondary) {
-    background: color-mix(in srgb, var(--theme-surface-panel) 64%, transparent);
-    border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
-    color: color-mix(in srgb, var(--ink) 82%, var(--theme-text-secondary) 18%);
-}
-
-.dashboard-shell .dashboard-command-hero .operation-hero-action-rail .button.secondary {
-    background: transparent;
-    border-color: transparent;
-    color: color-mix(in srgb, var(--theme-text-muted) 84%, var(--ink) 16%);
-}
-
-.dashboard-shell .dashboard-command-hero .operation-hero-action-rail .button:hover,
-.dashboard-shell .dashboard-command-hero .operation-hero-action-rail .button:focus-visible {
-    background: color-mix(in srgb, var(--theme-surface-strong) 72%, transparent);
-    box-shadow: none;
-}
-
-.dashboard-shell .dashboard-command-hero .operation-hero-action-rail .button.secondary:hover,
-.dashboard-shell .dashboard-command-hero .operation-hero-action-rail .button.secondary:focus-visible {
-    background: color-mix(in srgb, var(--theme-surface-strong) 42%, transparent);
-}
-
-.dashboard-shell .dashboard-command-hero .operation-hero-side {
-    align-self: stretch;
-}
-
-.dashboard-shell .dashboard-command-hero .operation-hero-panel {
-    min-height: 100%;
-    border-radius: 22px;
-    overflow: hidden;
-}
-
-.dashboard-shell .dashboard-command-hero .hero-side-stack {
-    gap: 12px;
-}
-
-.dashboard-shell .dashboard-command-hero .hero-side-stat-grid {
-    gap: 10px;
-}
-
-.dashboard-shell .dashboard-command-hero .hero-side-stat {
-    min-height: 74px;
-    padding: 12px;
-    border-radius: 14px;
-}
-
-.dashboard-shell .dashboard-command-hero .hero-side-stat strong {
-    font-size: clamp(0.96rem, 1.2vw, 1.12rem);
+.dashboard-command-main::before {
+    content: none;
 }
 
 .dashboard-shell--futuristic-luxury .dashboard-reading-list {
-    gap: clamp(16px, 1.6vw, 22px);
+    gap: clamp(16px, 1.6vw, 20px);
 }
 
 .dashboard-shell--futuristic-luxury .dashboard-reading-list .fdw-focus-card.is-primary {
-    min-height: clamp(164px, 19vw, 194px);
-    box-shadow:
-        0 18px 32px rgba(2, 8, 23, 0.1),
-        inset 0 1px 0 color-mix(in srgb, white 16%, transparent);
+    min-height: clamp(152px, 17vw, 178px);
+    box-shadow: var(--card-shadow);
 }
 
 .dashboard-shell--futuristic-luxury .dashboard-summary-topline .dashboard-glance-card,
 .dashboard-shell--futuristic-luxury .dashboard-summary-topline .dashboard-glance-card--summary {
-    min-height: clamp(132px, 14vw, 152px);
-    border-radius: 24px;
+    min-height: clamp(124px, 13vw, 140px);
+    border-radius: var(--radius-panel);
 }
 
 .dashboard-shell--futuristic-luxury #dashboard-sessions-board {
@@ -372,12 +144,9 @@ body[data-shell-scope="dashboard"] .theme-toggle:focus-visible .theme-toggle-ico
 }
 
 .dashboard-shell--futuristic-luxury .dashboard-command-rail .dashboard-support-card {
-    border-color: color-mix(in srgb, var(--theme-accent-premium-alpha) 18%, var(--theme-border-soft) 82%);
-    background:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel) 96%, transparent), color-mix(in srgb, var(--theme-surface-strong) 92%, transparent));
-    box-shadow:
-        0 14px 26px rgba(2, 8, 23, 0.08),
-        inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
+    border-color: var(--theme-border-soft);
+    background: var(--theme-surface-panel);
+    box-shadow: var(--card-shadow);
 }
 
 .dashboard-advisor-narrative {
@@ -723,93 +492,6 @@ body[data-theme="dark"] .dashboard-command-rail::before {
     border-color: rgba(148, 163, 184, 0.08);
 }
 
-body[data-theme="dark"] .dashboard-shell .dashboard-command-hero.hero.operation-hero {
-    --operation-hero-surface:
-        linear-gradient(145deg, rgba(8, 15, 29, 0.98), rgba(6, 12, 24, 0.98) 58%, rgba(4, 10, 20, 0.96));
-    --operation-hero-border: rgba(148, 163, 184, 0.12);
-    --operation-hero-shadow:
-        0 12px 22px rgba(2, 6, 23, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-body[data-theme="dark"][data-shell-scope="dashboard"] .topbar {
-    --topbar-surface: color-mix(in srgb, #0a1422 90%, var(--theme-surface-panel-strong) 10%);
-    --topbar-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.2) 74%, rgba(255, 255, 255, 0.04) 26%);
-    --topbar-search-surface: color-mix(in srgb, #0d1828 90%, var(--theme-surface-panel) 10%);
-    --topbar-search-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.18) 72%, rgba(255, 255, 255, 0.05) 28%);
-    --topbar-manifesto-surface: color-mix(in srgb, #0f1a2b 90%, var(--theme-surface-secondary) 10%);
-    --topbar-toggle-surface: color-mix(in srgb, #101a2b 92%, var(--theme-surface-secondary) 8%);
-    --topbar-toggle-surface-hover: color-mix(in srgb, #142235 90%, var(--theme-surface-strong) 10%);
-    --topbar-profile-surface: color-mix(in srgb, #101a2b 90%, var(--theme-surface-panel) 10%);
-    --topbar-profile-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.18) 74%, rgba(255, 255, 255, 0.04) 26%);
-    --topbar-shadow:
-        0 18px 32px rgba(2, 6, 18, 0.24),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    --topbar-search-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.05),
-        0 0 0 1px rgba(74, 144, 226, 0.06);
-}
-
-body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-manifesto,
-body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-quick-link--secondary,
-body[data-theme="dark"][data-shell-scope="dashboard"] .alert-chip {
-    background: color-mix(in srgb, #101a2b 90%, var(--theme-surface-secondary) 10%);
-    border-color: color-mix(in srgb, rgba(92, 146, 214, 0.14) 72%, rgba(255, 255, 255, 0.04) 28%);
-}
-
-body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-quick-link--secondary:hover,
-body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-quick-link--secondary:focus-visible,
-body[data-theme="dark"][data-shell-scope="dashboard"] .alert-chip:hover,
-body[data-theme="dark"][data-shell-scope="dashboard"] .alert-chip:focus-visible {
-    background: color-mix(in srgb, #142235 88%, var(--theme-surface-strong) 12%);
-    border-color: color-mix(in srgb, rgba(92, 146, 214, 0.22) 76%, rgba(255, 255, 255, 0.04) 24%);
-}
-
-body[data-theme="dark"][data-shell-scope="dashboard"] .global-search:focus-within {
-    border-color: color-mix(in srgb, rgba(0, 229, 255, 0.38) 62%, rgba(92, 146, 214, 0.32) 38%);
-    box-shadow:
-        0 0 0 3px rgba(0, 229, 255, 0.08),
-        var(--topbar-search-shadow);
-}
-
-body[data-theme="dark"][data-shell-scope="dashboard"] .theme-toggle:hover,
-body[data-theme="dark"][data-shell-scope="dashboard"] .theme-toggle:focus-visible,
-body[data-theme="dark"][data-shell-scope="dashboard"] .sidebar-toggle:hover,
-body[data-theme="dark"][data-shell-scope="dashboard"] .sidebar-toggle:focus-visible,
-body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-profile:hover,
-body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-profile:focus-within,
-body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-quick-link--secondary:hover,
-body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-quick-link--secondary:focus-visible,
-body[data-theme="dark"][data-shell-scope="dashboard"] .alert-chip:hover,
-body[data-theme="dark"][data-shell-scope="dashboard"] .alert-chip:focus-visible {
-    box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.14);
-}
-
-body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-profile:hover .avatar,
-body[data-theme="dark"][data-shell-scope="dashboard"] .topbar-profile:focus-within .avatar {
-    background: color-mix(in srgb, rgba(0, 229, 255, 0.38) 54%, rgba(74, 144, 226, 0.34) 30%, #172334 16%);
-}
-
-body[data-theme="dark"] .dashboard-shell .dashboard-command-hero .operation-hero-copy {
-    color: rgba(226, 232, 240, 0.74);
-}
-
-body[data-theme="dark"] .dashboard-shell .dashboard-command-hero .operation-hero-action-rail .button.secondary {
-    background: transparent;
-    border-color: transparent;
-}
-
-body[data-theme="dark"] .dashboard-shell .dashboard-command-hero .operation-hero-action-rail .button:not(.secondary) {
-    background: rgba(10, 18, 32, 0.72);
-    border-color: rgba(148, 163, 184, 0.12);
-    color: rgba(248, 250, 252, 0.92);
-}
-
-body[data-theme="dark"] .dashboard-shell .dashboard-command-hero .operation-hero-action-rail .button:hover,
-body[data-theme="dark"] .dashboard-shell .dashboard-command-hero .operation-hero-action-rail .button:focus-visible {
-    background: rgba(15, 23, 42, 0.84);
-}
-
 body[data-theme="dark"] .dashboard-layout-chrome {
     background:
         linear-gradient(145deg, rgba(8, 15, 27, 0.92), rgba(10, 18, 32, 0.94));
@@ -841,65 +523,6 @@ body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-command-r
 body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-command-rail .dashboard-support-card {
     background:
         linear-gradient(180deg, rgba(9, 17, 30, 0.94), rgba(8, 15, 27, 0.94));
-}
-
-@media (min-width: 1241px) and (max-width: 1360px) {
-    body[data-shell-scope="dashboard"] .topbar-left {
-        flex: 1 1 320px;
-        min-width: min(320px, 100%);
-    }
-
-    body[data-shell-scope="dashboard"] .global-search {
-        width: clamp(18ch, 24vw, 24ch);
-        min-width: min(18ch, 100%);
-    }
-
-    body[data-shell-scope="dashboard"] .topbar-right {
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 8px;
-    }
-
-    body[data-shell-scope="dashboard"] .topbar-quick-actions {
-        display: inline-flex;
-        order: 1;
-        gap: 4px;
-        padding: 2px;
-    }
-
-    body[data-shell-scope="dashboard"] .topbar-quick-link {
-        min-height: 26px;
-        padding: 4px 8px;
-        font-size: 0.72rem;
-    }
-
-    body[data-shell-scope="dashboard"] .topbar-alerts {
-        order: 2;
-    }
-
-    body[data-shell-scope="dashboard"] .topbar-profile {
-        order: 3;
-        margin-left: 0;
-        padding: 6px 8px 6px 6px;
-    }
-
-    body[data-shell-scope="dashboard"] .theme-toggle {
-        order: 4;
-    }
-
-    body[data-shell-scope="dashboard"] .avatar {
-        width: 36px;
-        height: 36px;
-    }
-
-    body[data-shell-scope="dashboard"] .profile-meta strong {
-        font-size: 0.9rem;
-    }
-
-    body[data-shell-scope="dashboard"] .profile-meta span {
-        display: none;
-    }
 }
 
 @media (max-width: 960px) {
@@ -938,11 +561,6 @@ body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-command-r
         gap: var(--dashboard-rhythm-3);
     }
 
-    .dashboard-shell .dashboard-command-hero.hero.operation-hero {
-        --operation-hero-heading-size: clamp(1.8rem, 7.2vw, 2.3rem);
-        --operation-hero-padding: 18px;
-    }
-
     .dashboard-hero {
         padding: var(--dashboard-rhythm-3);
     }
@@ -958,11 +576,6 @@ body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-command-r
 
     .dashboard-advisor-narrative-actions {
         width: 100%;
-    }
-
-    .dashboard-shell .dashboard-command-hero .operation-hero-action-rail .button {
-        width: 100%;
-        justify-content: center;
     }
 
     .dashboard-advisor-manifesto-head,

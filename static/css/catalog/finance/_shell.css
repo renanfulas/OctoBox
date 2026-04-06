@@ -7,20 +7,12 @@ POR QUE ELE EXISTE:
 */
 
 .finance-shell {
-    --finance-premium-border: color-mix(in srgb, var(--theme-accent-support-alpha) 22%, var(--theme-border-soft) 78%);
+    --finance-premium-border: color-mix(in srgb, var(--theme-border-soft) 90%, transparent);
     --finance-premium-shadow: var(--card-shadow-lift);
     --finance-premium-shadow-soft: var(--card-shadow);
-    --finance-premium-surface:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 22%, transparent), transparent 28%),
-        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 22%, transparent), transparent 26%),
-        linear-gradient(155deg, color-mix(in srgb, var(--theme-surface-panel) 98%, white), color-mix(in srgb, var(--theme-surface-strong) 94%, white));
-    --finance-premium-surface-soft:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent), transparent 30%),
-        linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-panel) 96%, white), color-mix(in srgb, var(--theme-surface-secondary) 92%, white));
-    --finance-premium-surface-dark:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 42%, transparent), transparent 28%),
-        radial-gradient(circle at 16% 18%, color-mix(in srgb, var(--theme-accent-premium-alpha) 24%, transparent), transparent 24%),
-        linear-gradient(156deg, rgba(9, 18, 34, 0.98), rgba(6, 12, 24, 0.97) 58%, rgba(5, 10, 18, 0.95));
+    --finance-premium-surface: color-mix(in srgb, var(--theme-surface-panel) 98%, white 2%);
+    --finance-premium-surface-soft: color-mix(in srgb, var(--theme-surface-secondary) 94%, white 6%);
+    --finance-premium-surface-dark: linear-gradient(156deg, rgba(9, 18, 34, 0.98), rgba(6, 12, 24, 0.97) 58%, rgba(5, 10, 18, 0.95));
     display: grid;
     gap: calc(var(--section-gap) - 2px);
     position: relative;
@@ -38,17 +30,12 @@ POR QUE ELE EXISTE:
 
 .finance-shell::before {
     background:
-        radial-gradient(circle at 92% 4%, color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent), transparent 20%),
-        radial-gradient(circle at 10% 22%, color-mix(in srgb, var(--theme-accent-premium-alpha) 18%, transparent), transparent 18%);
+        radial-gradient(circle at 92% 4%, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 20%),
+        radial-gradient(circle at 10% 22%, color-mix(in srgb, var(--theme-accent-primary-alpha) 7%, transparent), transparent 18%);
 }
 
 .finance-shell::after {
-    inset: 12px 0 auto;
-    height: 320px;
-    border-radius: 34px;
-    background:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-support) 10%, transparent), transparent),
-        linear-gradient(140deg, color-mix(in srgb, white 7%, transparent), transparent 56%);
+    content: none;
 }
 
 .finance-shell [id] {
@@ -120,14 +107,12 @@ POR QUE ELE EXISTE:
 
 body[data-theme="dark"] .finance-shell::before {
     background:
-        radial-gradient(circle at 92% 4%, color-mix(in srgb, var(--theme-accent-support-alpha) 42%, transparent), transparent 24%),
-        radial-gradient(circle at 10% 22%, color-mix(in srgb, var(--theme-accent-primary-alpha) 32%, transparent), transparent 20%);
+        radial-gradient(circle at 92% 4%, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 24%),
+        radial-gradient(circle at 10% 22%, color-mix(in srgb, var(--theme-accent-primary-alpha) 12%, transparent), transparent 20%);
 }
 
 body[data-theme="dark"] .finance-shell::after {
-    background:
-        linear-gradient(180deg, color-mix(in srgb, rgba(41, 103, 163, 0.16) 100%, transparent), transparent),
-        linear-gradient(140deg, color-mix(in srgb, white 4%, transparent), transparent 60%);
+    content: none;
 }
 
 body[data-theme="dark"] .finance-board-filter,

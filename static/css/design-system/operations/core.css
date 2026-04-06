@@ -24,7 +24,7 @@ PONTOS CRITICOS:
 .operation-hero {
     background: var(--operation-hero-surface, var(--hero-surface, var(--card-surface-strong)));
     border: 1px solid var(--operation-hero-border, var(--hero-border, var(--card-border)));
-    border-radius: var(--radius-panel);
+    border-radius: var(--operation-hero-radius, var(--radius-panel));
     box-shadow: var(--operation-hero-shadow, var(--hero-shadow, var(--card-shadow)));
 }
 
@@ -35,22 +35,18 @@ body[data-theme="dark"] .operation-hero {
 
 .operation-hero-main {
     display: grid;
-    gap: 14px;
+    gap: var(--operation-hero-main-gap, 14px);
     flex: 1 1 auto;
 }
 
 .operation-hero-copy-block {
     display: grid;
-    gap: 8px;
+    gap: var(--operation-hero-stack-gap, 8px);
     max-width: var(--operation-hero-stack-max-width, 40rem);
 }
 
 .operation-hero-copy {
     max-width: var(--operation-hero-copy-max-width, 48ch);
-}
-
-.operation-hero-title {
-    max-width: none;
 }
 
 .operation-hero-tags {
@@ -60,15 +56,15 @@ body[data-theme="dark"] .operation-hero {
 }
 
 .operation-hero-side {
-    width: min(100%, 320px);
+    width: var(--operation-hero-side-width, min(100%, 320px));
     display: grid;
     align-content: start;
 }
 
 .operation-hero-panel {
     position: relative;
-    padding: 14px 16px;
-    border-radius: var(--radius-card);
+    padding: var(--operation-hero-panel-padding, 14px 16px);
+    border-radius: var(--operation-hero-panel-radius, var(--radius-card));
     border: 1px solid var(--operation-hero-panel-border, var(--hero-panel-border, var(--card-border)));
     background: var(--operation-hero-panel-surface, var(--hero-panel-surface, var(--card-surface)));
     box-shadow: var(--operation-hero-panel-shadow, var(--hero-panel-shadow, none));
@@ -85,16 +81,12 @@ body[data-theme="dark"] .operation-hero {
 
 @media (max-width: 1180px) {
     .operation-hero-side {
-        width: min(100%, 292px);
+        width: var(--operation-hero-side-width-collapsed, min(100%, 292px));
     }
 }
 
 .operation-hero-panel::after {
-    content: "";
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 3px;
-    background: var(--brand);
+    content: none;
 }
 
 body[data-theme="dark"] .operation-hero-panel::after,
@@ -137,7 +129,7 @@ body[data-theme="dark"] .operation-hero::after {
 }
 
 .operation-hero-action-rail {
-    margin-top: var(--operation-hero-actions-gap, 0);
+    margin-top: var(--operation-hero-actions-margin-top, 0);
     max-width: var(--operation-hero-actions-max-width, 580px);
     align-items: var(--operation-hero-actions-align-items, flex-start);
 }

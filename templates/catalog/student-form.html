@@ -59,13 +59,11 @@ PONTOS CRITICOS:
     {% endif %}
     <p class="visually-hidden" id="student-lock-live-status" aria-live="assertive" aria-atomic="true"></p>
 
-    <div data-panel="student-form-hero">
-        {% if page.data.financial_overview.has_student %}
-            {% include "includes/catalog/student_page/student_page_header.html" with page=page %}
-        {% else %}
-            {% include "includes/catalog/student_form/plans/hero.html" with page=page %}
-        {% endif %}
-    </div>
+    {% if page.data.financial_overview.has_student %}
+        {% include "includes/catalog/student_page/student_page_header.html" with page=page %}
+    {% else %}
+        {% include "includes/catalog/student_form/plans/hero.html" with page=page %}
+    {% endif %}
 
     <section class="student-page-shell" data-student-page-shell data-student-page-default-panel="{% if page.data.financial_overview.has_student %}tab-student-form-financial{% else %}tab-student-form-essential{% endif %}">
         {% include "includes/catalog/student_page/student_page_tabs.html" with page=page %}

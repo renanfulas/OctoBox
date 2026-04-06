@@ -10,10 +10,6 @@ POR QUE ELE EXISTE:
     gap: var(--section-gap);
 }
 
-.finance-plan-page-hero .operation-hero-panel {
-    background: var(--surface);
-}
-
 .finance-plan-page-focus,
 .finance-plan-edit-card,
 .finance-plan-summary-card {

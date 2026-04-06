@@ -13,11 +13,11 @@ PONTOS CRITICOS:
 /* ── Variáveis de assinatura ── */
 
 .finance-shell {
-    --finance-signature-ink: #091a2f;
+    --finance-signature-ink: var(--ink);
     --finance-signature-teal: var(--theme-accent-support);
     --finance-signature-cyan: var(--theme-accent-primary);
     --finance-signature-copper: var(--theme-accent-premium);
-    --finance-signature-line: color-mix(in srgb, var(--theme-accent-support) 10%, var(--theme-border-soft) 90%);
+    --finance-signature-line: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
     --finance-signature-shadow: rgba(14, 24, 44, 0.14);
 }
 
@@ -35,23 +35,71 @@ PONTOS CRITICOS:
 .finance-shell .finance-action-body .meta-text-sm,
 .finance-shell .finance-summary-chip p,
 .finance-shell .finance-data-chip p {
-    color: rgba(19, 33, 50, 0.72);
+    color: var(--muted);
 }
 
 /* ── Buttons signature ── */
 
+.finance-shell .finance-command-card .button:not(.secondary),
+.finance-shell .finance-flow-bridge-actions .button:not(.secondary),
+.finance-shell .finance-support-actions-utility .button:not(.secondary),
+.finance-shell .finance-filter-summary-card .finance-support-actions .button:not(.secondary),
+.finance-shell .finance-plan-card-compact .actions .button:not(.secondary),
 .finance-shell .finance-card-actions-compact .button:not(.secondary),
 .finance-shell .finance-support-actions .button:not(.secondary) {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
-    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-primary) 88%, white 12%), color-mix(in srgb, var(--theme-accent-support) 84%, black 16%));
-    box-shadow: 0 18px 30px color-mix(in srgb, var(--theme-accent-support-alpha) 62%, transparent);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-panel) 64%, transparent);
+    color: color-mix(in srgb, var(--finance-signature-ink) 82%, var(--theme-text-secondary) 18%);
+    box-shadow: none;
 }
 
+.finance-shell .finance-command-card .button.secondary,
+.finance-shell .finance-flow-bridge-actions .button.secondary,
+.finance-shell .finance-support-actions-utility .button.secondary,
+.finance-shell .finance-filter-summary-card .finance-support-actions .button.secondary,
+.finance-shell .finance-plan-card-compact .actions .button.secondary,
 .finance-shell .finance-card-actions-compact .button.secondary,
 .finance-shell .finance-support-actions .button.secondary {
-    border-color: rgba(19, 33, 50, 0.1);
-    background: var(--surface);
-    color: var(--finance-signature-ink);
+    border-color: transparent;
+    background: transparent;
+    color: color-mix(in srgb, var(--theme-text-muted) 84%, var(--finance-signature-ink) 16%);
+}
+
+.finance-shell .finance-command-card .button:hover,
+.finance-shell .finance-command-card .button:focus-visible,
+.finance-shell .finance-flow-bridge-actions .button:hover,
+.finance-shell .finance-flow-bridge-actions .button:focus-visible,
+.finance-shell .finance-support-actions-utility .button:hover,
+.finance-shell .finance-support-actions-utility .button:focus-visible,
+.finance-shell .finance-filter-summary-card .finance-support-actions .button:hover,
+.finance-shell .finance-filter-summary-card .finance-support-actions .button:focus-visible,
+.finance-shell .finance-plan-card-compact .actions .button:hover,
+.finance-shell .finance-plan-card-compact .actions .button:focus-visible,
+.finance-shell .finance-card-actions-compact .button:hover,
+.finance-shell .finance-card-actions-compact .button:focus-visible,
+.finance-shell .finance-support-actions .button:hover,
+.finance-shell .finance-support-actions .button:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 72%, transparent);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    box-shadow: none;
+}
+
+.finance-shell .finance-command-card .button.secondary:hover,
+.finance-shell .finance-command-card .button.secondary:focus-visible,
+.finance-shell .finance-flow-bridge-actions .button.secondary:hover,
+.finance-shell .finance-flow-bridge-actions .button.secondary:focus-visible,
+.finance-shell .finance-support-actions-utility .button.secondary:hover,
+.finance-shell .finance-support-actions-utility .button.secondary:focus-visible,
+.finance-shell .finance-filter-summary-card .finance-support-actions .button.secondary:hover,
+.finance-shell .finance-filter-summary-card .finance-support-actions .button.secondary:focus-visible,
+.finance-shell .finance-plan-card-compact .actions .button.secondary:hover,
+.finance-shell .finance-plan-card-compact .actions .button.secondary:focus-visible,
+.finance-shell .finance-card-actions-compact .button.secondary:hover,
+.finance-shell .finance-card-actions-compact .button.secondary:focus-visible,
+.finance-shell .finance-support-actions .button.secondary:hover,
+.finance-shell .finance-support-actions .button.secondary:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 42%, transparent);
+    border-color: transparent;
 }
 
 /* ── Hero panel signature (dark panel inside hero) ── */
@@ -169,11 +217,45 @@ body[data-theme="dark"] .finance-shell .finance-action-copy strong {
     color: rgba(245, 249, 252, 0.96);
 }
 
+body[data-theme="dark"] .finance-shell .finance-command-card .button.secondary,
+body[data-theme="dark"] .finance-shell .finance-flow-bridge-actions .button.secondary,
+body[data-theme="dark"] .finance-shell .finance-support-actions-utility .button.secondary,
+body[data-theme="dark"] .finance-shell .finance-filter-summary-card .finance-support-actions .button.secondary,
+body[data-theme="dark"] .finance-shell .finance-plan-card-compact .actions .button.secondary,
 body[data-theme="dark"] .finance-shell .finance-card-actions-compact .button.secondary,
 body[data-theme="dark"] .finance-shell .finance-support-actions .button.secondary {
-    border-color: rgba(144, 181, 205, 0.18);
-    background: var(--surface);
-    color: rgba(245, 249, 252, 0.9);
+    border-color: transparent;
+    background: transparent;
+    color: rgba(226, 232, 240, 0.76);
+}
+
+body[data-theme="dark"] .finance-shell .finance-command-card .button:not(.secondary),
+body[data-theme="dark"] .finance-shell .finance-flow-bridge-actions .button:not(.secondary),
+body[data-theme="dark"] .finance-shell .finance-support-actions-utility .button:not(.secondary),
+body[data-theme="dark"] .finance-shell .finance-filter-summary-card .finance-support-actions .button:not(.secondary),
+body[data-theme="dark"] .finance-shell .finance-plan-card-compact .actions .button:not(.secondary),
+body[data-theme="dark"] .finance-shell .finance-card-actions-compact .button:not(.secondary),
+body[data-theme="dark"] .finance-shell .finance-support-actions .button:not(.secondary) {
+    background: rgba(10, 18, 32, 0.72);
+    border-color: rgba(148, 163, 184, 0.12);
+    color: rgba(248, 250, 252, 0.92);
+}
+
+body[data-theme="dark"] .finance-shell .finance-command-card .button:hover,
+body[data-theme="dark"] .finance-shell .finance-command-card .button:focus-visible,
+body[data-theme="dark"] .finance-shell .finance-flow-bridge-actions .button:hover,
+body[data-theme="dark"] .finance-shell .finance-flow-bridge-actions .button:focus-visible,
+body[data-theme="dark"] .finance-shell .finance-support-actions-utility .button:hover,
+body[data-theme="dark"] .finance-shell .finance-support-actions-utility .button:focus-visible,
+body[data-theme="dark"] .finance-shell .finance-filter-summary-card .finance-support-actions .button:hover,
+body[data-theme="dark"] .finance-shell .finance-filter-summary-card .finance-support-actions .button:focus-visible,
+body[data-theme="dark"] .finance-shell .finance-plan-card-compact .actions .button:hover,
+body[data-theme="dark"] .finance-shell .finance-plan-card-compact .actions .button:focus-visible,
+body[data-theme="dark"] .finance-shell .finance-card-actions-compact .button:hover,
+body[data-theme="dark"] .finance-shell .finance-card-actions-compact .button:focus-visible,
+body[data-theme="dark"] .finance-shell .finance-support-actions .button:hover,
+body[data-theme="dark"] .finance-shell .finance-support-actions .button:focus-visible {
+    background: rgba(15, 23, 42, 0.84);
 }
 
 

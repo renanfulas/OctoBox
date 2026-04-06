@@ -19,7 +19,6 @@ ORDEM DA CASCADE:
 */
 
 @import url("./finance/_shell.css");
-@import url("./finance/_hero.css");
 @import url("./finance/_metrics.css");
 @import url("./finance/_cards.css");
 @import url("./finance/_boards.css");

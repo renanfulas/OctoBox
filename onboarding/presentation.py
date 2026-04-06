@@ -86,7 +86,7 @@ def build_intake_center_page(*, snapshot, current_role_slug):
             'can_work_queue': can_work_queue,
         },
         assets=build_page_assets(
-            css=['css/design-system/operations.css', 'css/catalog/students.css', 'css/onboarding/intakes.css'],
+            css=['css/design-system/operations.css', 'css/catalog/shared.css', 'css/catalog/students.css', 'css/onboarding/intakes.css'],
             js=['js/pages/interactive_tabs.js']
         ),
     )

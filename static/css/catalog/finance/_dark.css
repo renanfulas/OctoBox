@@ -24,8 +24,6 @@ body[data-theme="dark"] .finance-focus-card {
 
 /* ── Bulk dark mode ── */
 
-body[data-theme="dark"] .finance-shell .operation-hero,
-body[data-theme="dark"] .finance-shell .operation-hero-panel,
 body[data-theme="dark"] .finance-shell .table-card,
 body[data-theme="dark"] .finance-shell .card,
 body[data-theme="dark"] .finance-shell .finance-action-card,
@@ -67,15 +65,15 @@ body[data-theme="dark"] .finance-shell .finance-action-message {
 }
 
 body[data-theme="dark"] .finance-shell .button.secondary {
-    color: rgba(245, 239, 228, 0.94);
-    border-color: rgba(199, 186, 167, 0.18);
-    background: var(--surface);
+    color: rgba(226, 232, 240, 0.76);
+    border-color: transparent;
+    background: transparent;
 }
 
 body[data-theme="dark"] .finance-shell .button.secondary:hover {
-    color: #fff8ef;
-    border-color: rgba(214, 164, 112, 0.3);
-    background: var(--surface);
+    color: rgba(248, 250, 252, 0.92);
+    border-color: rgba(92, 146, 214, 0.16);
+    background: rgba(15, 23, 42, 0.84);
 }
 
 body[data-theme="dark"] .finance-shell .finance-inline-currency,

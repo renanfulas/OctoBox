@@ -130,8 +130,8 @@ POR QUE ELE EXISTE:
     }
 
     .operation-hero-panel {
-        padding-top: 22px;
-        padding-bottom: 22px;
-        border-radius: 22px;
+        padding-top: var(--operation-hero-panel-padding-mobile-top, 20px);
+        padding-bottom: var(--operation-hero-panel-padding-mobile-bottom, 20px);
+        border-radius: var(--operation-hero-panel-radius-mobile, var(--operation-hero-panel-radius, var(--radius-card)));
     }
 }

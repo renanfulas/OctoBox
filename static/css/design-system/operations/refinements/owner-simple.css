@@ -46,13 +46,6 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
         grid-template-columns: 1fr;
     }
 
-    .dev-scene .operation-hero,
-    .manager-scene .operation-hero,
-    .coach-scene .operation-hero,
-    .owner-scene .operation-hero {
-        padding: 18px;
-    }
-
     .owner-metrics-panel {
         width: 100%;
         justify-self: stretch;

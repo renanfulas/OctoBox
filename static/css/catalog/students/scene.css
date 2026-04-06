@@ -7,11 +7,11 @@ POR QUE ELE EXISTE:
 */
 
 .student-scene {
-    gap: calc(var(--section-gap) - 2px);
+    gap: var(--section-gap);
 }
 
 .student-kpi-overview {
-    margin-bottom: 32px;
+    margin-bottom: 0;
 }
 
 .student-toolbar-import {
