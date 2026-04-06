@@ -27,6 +27,18 @@ from access.admin import admin_changelist_url, admin_index_url, user_can_access_
 from access.navigation_contracts import get_navigation_contract
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
 from access.shell_actions import get_shell_counts, resolve_shell_scope
+from shared_support.shell_payloads import (
+    build_shell_alert_item,
+    build_shell_alert_link,
+    build_shell_chrome_payload,
+    build_shell_page_payload,
+    build_shell_profile_payload,
+    build_shell_quick_link,
+    build_shell_search_payload,
+    build_shell_sidebar_item,
+    build_shell_sidebar_payload,
+    build_shell_theme_toggle_payload,
+)
 from shared_support.static_assets import resolve_runtime_css_paths
 
 
@@ -138,12 +150,14 @@ def _build_shell_page_context(current_view_name, current_path, role, navigation,
     if scope == 'dashboard' and role_slug == ROLE_RECEPTION:
         section = {**section, 'eyebrow': 'Recepcao'}
 
-    return {
-        **section,
-        'scope': scope,
-        'active_label': active_label,
-        'role_label': role_label,
-    }
+    return build_shell_page_payload(
+        eyebrow=section['eyebrow'],
+        title=section['title'],
+        scope=scope,
+        active_label=active_label,
+        role_label=role_label,
+        role_slug=role_slug,
+    )
 
 
 def _build_navigation(role_slug, current_view_name):
@@ -211,10 +225,13 @@ def _build_navigation(role_slug, current_view_name):
     active_nav_key = _pick_active_nav_key(current_view_name)
 
     return [
-        {
-            **item,
-            'is_active': item.get('nav_key') == active_nav_key,
-        }
+        build_shell_sidebar_item(
+            nav_key=item.get('nav_key', ''),
+            label=item.get('label', ''),
+            href=item.get('href', ''),
+            icon=item.get('icon', ''),
+            is_active=item.get('nav_key') == active_nav_key,
+        )
         for item in links
     ]
 
@@ -237,6 +254,7 @@ def _build_topbar_alert_links(role_slug):
 def role_navigation(request):
     role = get_user_role(request.user)
     role_slug = getattr(role, 'slug', '')
+    user_display_name = ''
     sidebar_navigation = []
     profile_navigation = []
     shell_counts = {
@@ -252,6 +270,7 @@ def role_navigation(request):
     view_name = getattr(request.resolver_match, 'view_name', '') if hasattr(request, 'resolver_match') else ''
 
     if request.user.is_authenticated:
+        user_display_name = request.user.get_full_name() or request.user.username
         shell_counts = get_shell_counts()
         sidebar_navigation = _build_navigation(role_slug, current_view_name=view_name)
 
@@ -265,19 +284,82 @@ def role_navigation(request):
                 {'label': 'Mapa do sistema', 'href': reverse('system-map')},
             ]
 
+    shell_page_context = _build_shell_page_context(view_name, request.path, role, sidebar_navigation, shell_counts)
+    topbar_alert_links = _build_topbar_alert_links(role_slug)
+    global_search_action = reverse('student-directory')
+    topbar_quick_links = [
+        build_shell_quick_link(
+            label='+ Aluno',
+            href=reverse('student-quick-create') + '#student-form-essential',
+            kind='secondary',
+            action='open-topbar-student-quick-create',
+        ),
+        build_shell_quick_link(
+            label='+ Entrada',
+            href=reverse('intake-center'),
+            kind='secondary',
+            action='open-topbar-intake-center',
+        ),
+    ]
+    shell_chrome = build_shell_chrome_payload(
+        sidebar=build_shell_sidebar_payload(
+            brand='OctoBox Control',
+            tagline='Gestao viva do box com leitura comercial e rotina operacional clara.',
+            user_name=user_display_name,
+            navigation=sidebar_navigation,
+        ),
+        topbar={
+            'search': build_shell_search_payload(
+                action=global_search_action,
+                placeholder='Buscar aluno, telefone ou CPF',
+                autocomplete_url=reverse('api-v1-student-autocomplete'),
+            ),
+            'quick_links': topbar_quick_links,
+            'alert_links': build_shell_alert_link(
+                finance=topbar_alert_links['finance'],
+                intakes=topbar_alert_links['intakes'],
+            ),
+            'alerts': [
+                build_shell_alert_item(
+                    key='overdue-payments',
+                    href=topbar_alert_links['finance'],
+                    count=shell_counts['overdue_payments'],
+                    singular_label='vencimento',
+                    plural_label='vencimentos',
+                    action='open-finance-alerts',
+                    tone='danger',
+                ),
+                build_shell_alert_item(
+                    key='pending-intakes',
+                    href=topbar_alert_links['intakes'],
+                    count=shell_counts['pending_intakes'],
+                    singular_label='entrada',
+                    plural_label='entradas',
+                    action='open-intake-alerts',
+                ),
+            ],
+            'theme_toggle': build_shell_theme_toggle_payload(state='light'),
+            'profile': build_shell_profile_payload(
+                user_name=user_display_name,
+                role_label=getattr(role, 'label', 'Sem papel definido'),
+                navigation=profile_navigation,
+            ),
+        },
+        page=shell_page_context,
+        counts=shell_counts,
+    )
+
     return {
         'can_access_admin': user_can_access_admin(request.user),
         'current_role': role,
+        'shell_chrome': shell_chrome,
         'sidebar_navigation': sidebar_navigation,
         'profile_navigation': profile_navigation,
-        'global_search_action': reverse('student-directory'),
+        'global_search_action': global_search_action,
         'shell_core_stylesheets': resolve_runtime_css_paths(['css/design-system.css']),
         'static_asset_version': _build_static_asset_version(),
-        'topbar_alert_links': _build_topbar_alert_links(role_slug),
-        'topbar_quick_links': [
-            {'label': '+ Aluno', 'href': reverse('student-quick-create') + '#student-form-essential', 'kind': 'secondary', 'action': 'open-topbar-student-quick-create'},
-            {'label': '+ Entrada', 'href': reverse('intake-center'), 'kind': 'secondary', 'action': 'open-topbar-intake-center'},
-        ],
-        'shell_page_context': _build_shell_page_context(view_name, request.path, role, sidebar_navigation, shell_counts),
+        'topbar_alert_links': topbar_alert_links,
+        'topbar_quick_links': topbar_quick_links,
+        'shell_page_context': shell_page_context,
         'shell_counts': shell_counts,
     }

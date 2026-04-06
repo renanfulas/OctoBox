@@ -14,8 +14,6 @@
         box-shadow var(--motion-base) var(--ease-standard),
         background var(--motion-base) var(--ease-standard),
         transform var(--motion-fast) var(--ease-standard);
-    padding: 0;
-    border-radius: 18px;
 }
 
 .topbar-profile:hover {

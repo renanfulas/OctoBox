@@ -9,7 +9,7 @@ POR QUE ELE EXISTE:
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
 from django.urls import reverse
 from django.utils import timezone
-from shared_support.page_payloads import build_page_hero
+from shared_support.page_payloads import build_page_context, build_page_hero
 
 from .shared import build_catalog_assets, build_catalog_page_payload
 
@@ -291,11 +291,13 @@ def build_finance_center_page(*, snapshot, operational_queue, operational_metric
 
     return build_catalog_page_payload(
         context={
-            'page_key': 'finance-center',
-            'title': 'Financeiro',
-            'subtitle': 'Receita, carteira e sinais operacionais em leitura guiada.',
-            'mode': 'management' if can_manage_finance else 'read-only',
-            'role_slug': current_role_slug,
+            **build_page_context(
+                page_key='finance-center',
+                title='Financeiro',
+                subtitle='Receita, carteira e sinais operacionais em leitura guiada.',
+                mode='management' if can_manage_finance else 'read-only',
+                role_slug=current_role_slug,
+            ),
         },
         data={
             'hero': hero,

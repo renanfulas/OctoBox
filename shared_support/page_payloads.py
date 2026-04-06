@@ -36,6 +36,16 @@ def build_page_assets(*, css=None, js=None):
     }
 
 
+def build_page_context(*, page_key, title, subtitle='', mode='workspace', role_slug=''):
+    return {
+        'page_key': page_key,
+        'title': title,
+        'subtitle': subtitle,
+        'mode': mode,
+        'role_slug': role_slug,
+    }
+
+
 PAGE_HERO_CONTENT_RULES = {
     'max_primary_actions': 3,
     'max_title_lines': 2,
