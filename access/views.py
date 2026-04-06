@@ -24,7 +24,7 @@ from django.shortcuts import redirect
 from django.views.generic import TemplateView
 
 from access.admin import admin_changelist_url, user_can_access_admin
-from shared_support.page_payloads import build_page_hero
+from shared_support.page_payloads import build_page_hero, build_page_reading_panel
 from .forms import AccessProfileCreateForm, AccessProfileUpdateForm
 from .roles import ROLE_DEFINITIONS, ROLE_DEV, ROLE_OWNER, ROLE_PERMISSION_MAP, get_user_capabilities, get_user_role
 
@@ -257,6 +257,14 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
                 'href_label': 'Ver governanca',
             },
         ]
+        context['access_reading_panel'] = build_page_reading_panel(
+            items=context['access_operational_focus'],
+            primary_href='#access-current-role',
+            pill_label='Governanca',
+            pill_class='accent',
+            class_name='access-reading-panel',
+            panel_id='access-command-lane',
+        )
         context['access_hero'] = build_page_hero(
             eyebrow='Acessos',
             title='Fronteiras em leitura.',
@@ -269,6 +277,7 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
                 ] if user_can_access_admin(self.request.user) else []),
             ],
             aria_label='Panorama de acessos',
+            classes=['access-hero'],
         )
         context['governance_points'] = [
             'Manager nao vira coach por atalho.',

@@ -36,7 +36,12 @@ POR QUE ELE EXISTE:
     position: relative;
     overflow: hidden;
     min-height: 100%;
-    background: var(--card-surface);
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--card-border) 86%);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-panel) 92%, transparent));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        0 18px 34px rgba(19, 33, 50, 0.08);
     transition: box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
 }
 
@@ -44,6 +49,14 @@ POR QUE ELE EXISTE:
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(14px);
+}
+
+.class-grid-workspace-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: linear-gradient(90deg, var(--theme-accent-primary), var(--theme-accent-support), var(--theme-accent-premium));
 }
 
 .class-grid-panel-head {
@@ -117,6 +130,15 @@ body[data-theme="dark"] .class-planner-intro-card {
 
 body[data-theme="dark"] .class-planner-intro-card .class-day-summary {
     color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .class-grid-workspace-panel {
+    border-color: rgba(92, 146, 214, 0.16);
+    background:
+        linear-gradient(180deg, rgba(10, 18, 32, 0.96), rgba(9, 16, 29, 0.93));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 20px 40px rgba(0, 0, 0, 0.26);
 }
 
 .class-day-header {

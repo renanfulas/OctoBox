@@ -189,6 +189,25 @@ Criterio de pronto:
 1. o catalogo parece parte do mesmo predio visual
 2. nenhuma tela perde sua hierarquia propria
 
+Status operacional em 2026-04-05:
+
+1. `students` validada como superficie local estabilizada
+2. `finance-plan-form` validada como adaptacao local segura
+3. `class-grid` validada como adaptacao local segura
+4. `finance` removida do fechamento desta onda e marcada como pendencia manual
+
+Decisao de fechamento:
+
+1. a Onda 2 pode ser considerada concluida para o trilho `catalog core validado`
+2. `finance` passa a existir como excecao consciente e rastreada
+3. a Onda 3 nao depende do fechamento visual de `finance`
+
+Pendencia manual explicita:
+
+1. `finance` deve ser revisada e refinada manualmente, fora do fechamento da Onda 2
+2. nenhuma nova regra shared deve nascer a partir de `finance` sem validacao dedicada
+3. qualquer ajuste futuro em `finance` deve ser tratado como trilha propria, nao como bloqueio do rollout das outras familias
+
 ### Onda 3: Operations Roles
 
 Objetivo:
@@ -202,14 +221,47 @@ Paginas:
 3. `coach`
 4. `dev`
 
-Pagina ancora sugerida:
+ Ancora visual oficial da onda:
 
-1. `manager`
+ 1. `owner`
+
+ Pagina de entrada sugerida para execucao:
+
+ 1. `manager`
 
 Criterio de pronto:
 
 1. as roles compartilham familia visual
 2. cada papel continua legivel e funcionalmente distinto
+
+ Entrada oficial da onda:
+
+ 1. usar `owner` como referencia visual compartilhada da familia operacional
+ 2. iniciar a execucao por `manager`
+ 3. depois replicar para `reception`
+ 4. depois seguir para `coach`
+ 5. fechar em `dev`
+
+ Guardrails de entrada:
+
+ 1. nao aplicar em massa nas quatro roles
+ 2. cada role deve preservar o proprio ritmo operacional
+ 3. hero, leitura inicial e workspace devem ser ajustados localmente antes de qualquer nova promocao para shared
+ 4. se uma role exigir excecao visual forte, registrar como local em vez de forcar padrao global
+ 5. `owner` pode emprestar linguagem, hierarquia e ritmo visual, mas nao autoriza copia cega de markup, semantica ou regras de isolamento
+
+ Status operacional em 2026-04-06:
+
+ 1. `manager` validada como pagina de entrada da execucao
+ 2. `reception` corrigida apos inspecao visual, usando `owner` como ancora de linguagem e ritmo
+ 3. `coach` validada como adaptacao local coerente
+ 4. `dev` corrigida apos inspecao visual, com leitura sistemica humanizada e composicao tecnica propria
+
+ Decisao de fechamento:
+
+ 1. a Onda 3 pode ser considerada concluida para o trilho `operations roles validadas`
+ 2. `owner` fica registrada como ancora visual oficial da onda
+ 3. futuras correcoes nas roles devem preservar a regra `owner` como referencia de linguagem, nunca como copia cega
 
 ### Onda 4: Special Cases
 
@@ -219,13 +271,65 @@ Objetivo:
 
 Paginas candidatas:
 
-1. placeholders
-2. telas com markup proprio forte
-3. fluxos utilitarios com assinatura parcial
+1. `whatsapp-placeholder`
+2. `reports-hub`
+3. `system-map`
+4. `operational-settings`
+5. `access-overview`
+
+Classificacao oficial da onda:
+
+1. especiais que ainda podem herdar linguagem da familia principal
+2. especiais com isolamento forte e trilha local
+
+Especiais que ainda podem herdar linguagem da familia principal:
+
+1. `reports-hub`
+2. `access-overview`
+
+Motivo:
+
+1. continuam dentro do shell autenticado
+2. usam hero, cards e leitura em padroes proximos da familia `owner`
+3. podem herdar linguagem e ritmo sem pedir uma arquitetura visual paralela
+
+Especiais com isolamento forte e trilha local:
+
+1. `whatsapp-placeholder`
+2. `system-map`
+3. `operational-settings`
+
+Motivo:
+
+1. `whatsapp-placeholder` ainda e placeholder e precisa sair do inline CSS antes de qualquer heranca maior
+2. `system-map` e `operational-settings` pertencem ao trilho de guia e governanca, nao a familia operacional comum
+3. essas superficies precisam de semantica propria e silencio suficiente para leitura tecnica
+
+Pagina de entrada sugerida para execucao:
+
+1. `reports-hub`
 
 Criterio de pronto:
 
 1. os casos residuais nao obrigam criar um segundo design system escondido
+2. cada caso especial fica classificado como heranca controlada ou isolamento explicito
+3. nenhuma tela especial volta a usar inline CSS ou markup improvisado como solucao permanente
+
+Guardrails da onda:
+
+1. se a tela estiver em trilho de guia, configuracao ou governanca, priorizar clareza e densidade controlada antes de assinatura forte
+2. placeholders devem ser tratados como divida visivel a ser reduzida, nao como tela pronta
+3. herdar a familia principal significa reaproveitar hero, card, reading lane e ritmo, nunca copiar composicao cega
+
+Status operacional em 2026-04-06:
+
+1. `reports-hub` entrou como primeiro caso da Onda 4
+2. a tela foi validada como heranca controlada da familia principal
+3. o hub herdou hero, reading lane e mesa lateral da familia `owner` sem perder o papel de cofre gerencial
+4. `access-overview` foi validada como heranca controlada de governanca
+5. a tela herdou hero, reading lane e faixa lateral da familia principal sem perder o foco em fronteiras e acesso
+6. `whatsapp-placeholder` recebeu saneamento minimo e saiu do inline CSS
+7. a tela segue registrada como superficie transitoria e nao candidata a shared ou heranca futura
 
 ### Onda 5: Polish and Validation
 
@@ -306,6 +410,7 @@ Saida obrigatoria:
 
 Depois deste plano, a proxima entrega correta e:
 
-1. seguir com a Onda 2 do Catalog Core
-2. usar `finance` como pagina ancora
-3. validar o shared antes de espalhar para `students`, `finance-plan-form` e `class-grid`
+1. registrar `finance` como pendencia manual fora do fechamento da Onda 2
+2. considerar `students`, `finance-plan-form` e `class-grid` como catalog core validado para inspeção final
+3. iniciar a Onda 3 por `manager`
+4. replicar para `reception`, `coach` e `dev` pagina por pagina

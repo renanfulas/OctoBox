@@ -73,6 +73,7 @@ POR QUE ELE EXISTE:
 
     .finance-support-actions,
     .finance-plan-actions,
+    .finance-plan-actions-flat,
     .finance-card-actions-compact,
     .finance-plan-card-compact .actions {
         justify-content: stretch;
@@ -80,6 +81,7 @@ POR QUE ELE EXISTE:
 
     .finance-support-actions .button,
     .finance-plan-actions .button,
+    .finance-plan-actions-flat .button,
     .finance-card-actions-compact .button,
     .finance-plan-card-compact .actions .button {
         width: 100%;

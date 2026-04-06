@@ -13,78 +13,10 @@ from shared_support.page_payloads import build_page_hero
 from .shared import build_catalog_assets, build_catalog_page_payload
 
 
-def _build_operational_focus(*, today_schedule, grouped_sessions, monthly_calendar, can_manage_classes):
-    today_sessions = today_schedule['sessions'] if today_schedule else []
-    today_pressure_count = sum(
-        1
-        for item in today_sessions
-        if item['occupied_slots'] >= item['capacity'] or item['occupancy_percent'] >= 85
-    )
-    busiest_day = max(grouped_sessions, key=lambda item: len(item['sessions']), default=None)
-    busy_days = sum(
-        1
-        for week in monthly_calendar
-        for day in week
-        if day['is_in_month'] and day['session_count'] >= 8
-    )
-    free_days = sum(
-        1
-        for week in monthly_calendar
-        for day in week
-        if day['is_in_month'] and day['session_count'] == 0
-    )
-
-    return [
-        {
-            'title': 'Comece pelo ritmo de hoje',
-            'chip_label': 'Hoje',
-            'summary': (
-                f"{len(today_sessions)} aula(s) no dia e {today_pressure_count} horario(s) com lotacao alta."
-                if today_schedule else
-                'Nenhuma aula marcada hoje. Revise a semana para evitar surpresas.'
-            ),
-            'count': len(today_sessions) if today_schedule else None,
-            'action_label': 'Ver agenda de hoje',
-            'action_href': '#today-board',
-            'href': '#today-board',
-        },
-        {
-            'title': 'Leia o pico da semana',
-            'chip_label': 'Semana',
-            'summary': (
-                f"O pico cai em {busiest_day['date'].strftime('%d/%m')} com {len(busiest_day['sessions'])} aula(s)."
-                if busiest_day else
-                'Nenhum pico de agenda identificado na janela atual.'
-            ),
-            'action_label': 'Ver visao semanal',
-            'action_href': '#weekly-board',
-            'href': '#weekly-board',
-        },
-        {
-            'title': 'Ajuste o mes',
-            'chip_label': 'Planejar',
-            'summary': (
-                f"{busy_days} dia(s) carregado(s) e {free_days} dia(s) livres para redistribuir."
-                if can_manage_classes else
-                f"{busy_days} dia(s) carregado(s) e {free_days} dia(s) livres no mes."
-            ),
-            'action_label': 'Ver mapa do mes' if not can_manage_classes else 'Revisar mes',
-            'action_href': '#monthly-board' if not can_manage_classes else '#planner-board',
-            'href': '#monthly-board' if not can_manage_classes else '#planner-board',
-        },
-    ]
-
-
 def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_session, session_edit_form, current_query_string):
     role_slug = base_context['current_role'].slug
     can_manage_classes = role_slug in (ROLE_OWNER, ROLE_MANAGER)
     can_open_class_admin = role_slug in (ROLE_OWNER, ROLE_DEV)
-    operational_focus = _build_operational_focus(
-        today_schedule=snapshot['today_schedule'],
-        grouped_sessions=snapshot['grouped_sessions'],
-        monthly_calendar=snapshot['monthly_calendar'],
-        can_manage_classes=can_manage_classes,
-    )
     hero = build_page_hero(
         eyebrow='Aulas',
         title='Grade em leitura.',
@@ -97,7 +29,7 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
             ] if can_manage_classes else []),
         ],
         aria_label='Panorama da grade',
-        classes=[],
+        classes=['class-grid-hero'],
     )
     payload = build_catalog_page_payload(
         context={
@@ -119,7 +51,6 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
             'schedule_form': schedule_form,
             'selected_session': selected_session,
             'session_edit_form': session_edit_form,
-            'operational_focus': operational_focus,
         },
         actions={
             'anchors': {

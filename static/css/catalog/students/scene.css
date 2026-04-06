@@ -135,6 +135,7 @@ body[data-theme="dark"] .student-kpi-card-label {
 .student-directory-surface {
     padding: 0;
     overflow: hidden;
+    background: color-mix(in srgb, var(--fdw-panel) 94%, transparent);
 }
 
 .student-metric-card-body {

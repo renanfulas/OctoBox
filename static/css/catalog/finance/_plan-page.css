@@ -10,6 +10,29 @@ POR QUE ELE EXISTE:
     gap: var(--section-gap);
 }
 
+.finance-plan-page .finance-plan-hero {
+    position: relative;
+    overflow: hidden;
+    border-color: var(--finance-signature-line);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--finance-signature-cyan) 12%, transparent), transparent 32%),
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-panel) 94%, transparent));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.86),
+        0 18px 34px rgba(19, 33, 50, 0.08);
+}
+
+.finance-plan-page .finance-plan-hero::after {
+    content: "";
+    position: absolute;
+    inset: auto -42px -58px auto;
+    width: 180px;
+    height: 180px;
+    border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--finance-signature-copper) 20%, transparent), transparent 68%);
+    pointer-events: none;
+}
+
 .finance-plan-page-focus,
 .finance-plan-edit-card,
 .finance-plan-summary-card {
@@ -21,15 +44,51 @@ POR QUE ELE EXISTE:
 }
 
 .finance-plan-support-card {
-    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+    border-color: var(--finance-signature-line);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-panel) 92%, transparent));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        0 16px 32px rgba(19, 33, 50, 0.06);
+    backdrop-filter: blur(14px);
+}
+
+.finance-plan-support-card::before,
+.finance-plan-edit-card::before,
+.finance-plan-summary-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: linear-gradient(90deg, var(--finance-signature-cyan), var(--finance-signature-teal), var(--finance-signature-copper));
+}
+
+.finance-plan-edit-card,
+.finance-plan-summary-card {
+    position: relative;
+    overflow: hidden;
+    border-color: var(--finance-signature-line);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-panel) 92%, transparent));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.84),
+        0 18px 36px rgba(19, 33, 50, 0.08);
 }
 
 .finance-plan-summary-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
 }
 
 .finance-plan-summary-chip {
     min-height: 100%;
+    padding: 14px 15px;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--finance-signature-line) 88%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 76%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .finance-plan-layout-grid {
@@ -43,12 +102,32 @@ POR QUE ELE EXISTE:
     gap: 16px;
 }
 
+.finance-plan-form label,
+#plan-form-delivery {
+    display: grid;
+    gap: 8px;
+}
+
+.finance-plan-field-grid label,
+#plan-form-delivery {
+    padding: 14px;
+    border: 1px solid color-mix(in srgb, var(--finance-signature-line) 86%, transparent);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--theme-surface-strong) 58%, transparent);
+}
+
 .finance-plan-actions-flat {
     margin-top: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-start;
 }
 
 .finance-plan-feedback-card {
     margin: 0;
+    border-radius: 18px;
 }
 
 .finance-plan-title {
@@ -67,4 +146,37 @@ POR QUE ELE EXISTE:
 
 .finance-plan-note {
     margin-bottom: 18px;
+}
+
+body[data-theme="dark"] .finance-plan-page .finance-plan-hero {
+    border-color: rgba(144, 181, 205, 0.14);
+    background:
+        radial-gradient(circle at top right, rgba(41, 103, 163, 0.16), transparent 34%),
+        linear-gradient(145deg, rgba(8, 15, 29, 0.98), rgba(6, 12, 24, 0.98) 58%, rgba(4, 10, 20, 0.96));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 20px 38px rgba(0, 0, 0, 0.24);
+}
+
+body[data-theme="dark"] .finance-plan-page .finance-plan-hero::after {
+    background: radial-gradient(circle, rgba(196, 103, 52, 0.2), transparent 70%);
+}
+
+body[data-theme="dark"] .finance-plan-support-card,
+body[data-theme="dark"] .finance-plan-edit-card,
+body[data-theme="dark"] .finance-plan-summary-card {
+    border-color: rgba(144, 181, 205, 0.16);
+    background:
+        linear-gradient(180deg, rgba(10, 18, 32, 0.96), rgba(9, 16, 29, 0.93));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 20px 40px rgba(0, 0, 0, 0.26);
+}
+
+body[data-theme="dark"] .finance-plan-summary-chip,
+body[data-theme="dark"] .finance-plan-field-grid label,
+body[data-theme="dark"] #plan-form-delivery {
+    border-color: rgba(144, 181, 205, 0.14);
+    background: rgba(10, 18, 32, 0.74);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }

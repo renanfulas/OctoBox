@@ -19,7 +19,7 @@ PONTOS CRITICOS:
 {% block content %}
 {% with page=finance_center_page %}
 <div class="operation-shell finance-shell workspace-shell" data-page="finance" data-screen="catalog-finance" data-slot="page-root">
-    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero hero_variant_class="hero--command" %}
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
     <div class="finance-kpi-panel section-gap" data-panel="finance-interactive-kpis">
         <section class="finance-kpi-grid interactive-tab-triggers" aria-label="Navegacao principal financeira">

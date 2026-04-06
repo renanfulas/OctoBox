@@ -17,161 +17,167 @@ PONTOS CRITICOS:
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
+<link rel="stylesheet" href="{% static 'css/access/overview.css' %}?v={{ static_asset_version }}">
 {% endblock %}
 
 {% block content %}
-<div class="operation-shell">
+<div class="operation-shell access-overview-scene">
     {% include "includes/ui/layout/page_hero.html" with hero=access_hero %}
+    {% include "includes/ui/layout/page_reading_list.html" with panel=access_reading_panel %}
 
-    {% if can_manage_access_profiles %}
-    <section id="access-profile-create" class="table-card operation-focus-card" aria-label="Criacao rapida de perfis">
-        <div class="operation-card-head">
-            <div>
-                <p class="eyebrow">Criacao operacional</p>
-                <h2 class="operation-card-title">Criar perfil sem abrir o admin</h2>
-                <p class="operation-card-copy">Cadastre a pessoa, defina o papel e o grupo ja fica pronto no mesmo fluxo.</p>
-            </div>
-            <span class="pill accent">Acesso direto</span>
-        </div>
-        <form method="post" class="form-stack">
-            {% csrf_token %}
-            <div class="field-grid-200">
-                <label>
-                    <span class="field-label">{{ profile_create_form.full_name.label }}</span>
-                    {{ profile_create_form.full_name }}
-                    {{ profile_create_form.full_name.errors }}
-                </label>
-                <label>
-                    <span class="field-label">{{ profile_create_form.username.label }}</span>
-                    {{ profile_create_form.username }}
-                    {{ profile_create_form.username.errors }}
-                </label>
-                <label>
-                    <span class="field-label">{{ profile_create_form.email.label }}</span>
-                    {{ profile_create_form.email }}
-                    {{ profile_create_form.email.errors }}
-                </label>
-                <label>
-                    <span class="field-label">{{ profile_create_form.role.label }}</span>
-                    {{ profile_create_form.role }}
-                    {{ profile_create_form.role.errors }}
-                </label>
-            </div>
-            <label>
-                <span class="field-label">{{ profile_create_form.password.label }}</span>
-                {{ profile_create_form.password }}
-                {{ profile_create_form.password.errors }}
-            </label>
-            <div class="actions actions-tight">
-                <button class="button" type="submit">Criar perfil</button>
-                <a class="button secondary" href="?manage_profiles=1#access-profile-manage">Gerenciar perfis</a>
-                {% if group_admin_url %}
-                <a class="button secondary" href="{{ group_admin_url }}">Abrir grupos no admin</a>
-                {% endif %}
-            </div>
-        </form>
-    </section>
-
-    {% if access_profiles_panel_open %}
-    <section id="access-profile-manage" class="table-card operation-focus-card" aria-label="Gestao rapida de perfis">
-        <div class="operation-card-head">
-            <div>
-                <p class="eyebrow">Gerenciar perfis</p>
-                <h2 class="operation-card-title">Editar e ativar perfis sem admin</h2>
-                <p class="operation-card-copy">Ajuste nome, e-mail, papel e status de acesso da equipe no mesmo painel.</p>
-            </div>
-            <div class="actions actions-tight">
-                <span class="pill info">Perfis ativos e inativos</span>
-                <a class="button secondary" href="{% url 'access-overview' %}#access-profile-create">Ocultar</a>
-            </div>
-        </div>
-        <div class="operation-focus-list">
-            {% for profile in access_profiles %}
-            <article class="operation-focus-item">
-                <div class="operation-focus-copy operation-focus-copy--full">
-                    <div class="row-between-md operation-focus-head">
-                        <div>
-                            <p class="eyebrow">@{{ profile.username }}</p>
-                            <strong>{{ profile.full_name }}</strong>
-                            <p>
-                                {{ profile.role_label }}
-                                {% if profile.is_superuser %} | Superuser{% endif %}
-                                {% if profile.is_current_user %} | Sessao atual{% endif %}
-                            </p>
-                        </div>
-                        <span class="pill {% if profile.is_active %}accent{% else %}warning{% endif %}">{% if profile.is_active %}Ativo{% else %}Inativo{% endif %}</span>
+    <section class="access-overview-strip" aria-label="Mesa de governanca de acessos">
+        <div class="access-overview-main">
+            {% if can_manage_access_profiles %}
+            <section id="access-profile-create" class="table-card operation-focus-card access-overview-card" aria-label="Criacao rapida de perfis">
+                <div class="operation-card-head">
+                    <div>
+                        <p class="eyebrow">Criacao operacional</p>
+                        <h2 class="operation-card-title">Criar perfil sem abrir o admin</h2>
+                        <p class="operation-card-copy">Cadastre a pessoa, defina o papel e o grupo ja fica pronto no mesmo fluxo.</p>
                     </div>
-                    <form method="post" class="form-stack section-gap-top-xs">
-                        {% csrf_token %}
-                        <input type="hidden" name="access_action" value="update">
-                        <input type="hidden" name="target_profile_id" value="{{ profile.id }}">
-                        <div class="field-grid-200">
-                            <label>
-                                <span class="field-label">{{ profile.form.full_name.label }}</span>
-                                {{ profile.form.full_name }}
-                                {{ profile.form.full_name.errors }}
-                            </label>
-                            <label>
-                                <span class="field-label">Usuario</span>
-                                <input type="text" value="{{ profile.username }}" disabled>
-                            </label>
-                            <label>
-                                <span class="field-label">{{ profile.form.email.label }}</span>
-                                {{ profile.form.email }}
-                                {{ profile.form.email.errors }}
-                            </label>
-                            <label>
-                                <span class="field-label">{{ profile.form.role.label }}</span>
-                                {{ profile.form.role }}
-                                {{ profile.form.role.errors }}
-                            </label>
-                        </div>
-                        <div class="actions actions-tight">
-                            <button class="button secondary" type="submit">Salvar edicao</button>
-                        </div>
-                    </form>
-                    <form method="post" class="actions actions-tight section-gap-top-xs">
-                        {% csrf_token %}
-                        <input type="hidden" name="access_action" value="toggle_active">
-                        <input type="hidden" name="target_profile_id" value="{{ profile.id }}">
-                        <button class="button {% if profile.is_active %}secondary{% endif %}" type="submit"{% if profile.is_current_user and profile.is_active %} disabled{% endif %}>
-                            {% if profile.is_active %}Desativar perfil{% else %}Reativar perfil{% endif %}
-                        </button>
-                    </form>
+                    <span class="pill accent">Acesso direto</span>
                 </div>
-            </article>
-            {% endfor %}
-        </div>
-    </section>
-    {% endif %}
-    {% endif %}
+                <form method="post" class="form-stack">
+                    {% csrf_token %}
+                    <div class="field-grid-200">
+                        <label>
+                            <span class="field-label">{{ profile_create_form.full_name.label }}</span>
+                            {{ profile_create_form.full_name }}
+                            {{ profile_create_form.full_name.errors }}
+                        </label>
+                        <label>
+                            <span class="field-label">{{ profile_create_form.username.label }}</span>
+                            {{ profile_create_form.username }}
+                            {{ profile_create_form.username.errors }}
+                        </label>
+                        <label>
+                            <span class="field-label">{{ profile_create_form.email.label }}</span>
+                            {{ profile_create_form.email }}
+                            {{ profile_create_form.email.errors }}
+                        </label>
+                        <label>
+                            <span class="field-label">{{ profile_create_form.role.label }}</span>
+                            {{ profile_create_form.role }}
+                            {{ profile_create_form.role.errors }}
+                        </label>
+                    </div>
+                    <label>
+                        <span class="field-label">{{ profile_create_form.password.label }}</span>
+                        {{ profile_create_form.password }}
+                        {{ profile_create_form.password.errors }}
+                    </label>
+                    <div class="actions actions-tight">
+                        <button class="button" type="submit">Criar perfil</button>
+                        <a class="button secondary" href="?manage_profiles=1#access-profile-manage">Gerenciar perfis</a>
+                        {% if group_admin_url %}
+                        <a class="button secondary" href="{{ group_admin_url }}">Abrir grupos no admin</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </section>
 
-    <section class="layout-grid align-start" aria-label="Escopo e governanca">
-        <div id="access-current-role">
-            {% include "includes/ui/shared/info_list_card.html" with eyebrow="Escopo do papel ativo" title="Como este usuario deveria operar" copy="O que pertence ao seu papel." pill_label=current_role.label pill_class="info" items=role_capabilities empty_text="Defina um grupo de acesso para este usuario." %}
-        </div>
-        <div id="access-governance-board">
-            {% include "includes/ui/shared/info_list_card.html" with card_class="operation-empty-card" eyebrow="Governanca pratica" title="O que esta tela precisa impedir" copy="Bloquear mistura de responsabilidade." pill_label="Limites claros" pill_class="accent" items=governance_points %}
-        </div>
-    </section>
-
-    <section id="access-role-map" class="panel-grid" aria-label="Mapa de papeis">
-        {% for role in role_definitions %}
-        <article class="table-card">
-            <div class="operation-card-head">
-                <div>
-                    <p class="eyebrow">{{ role.label }}</p>
-                    <h2 class="operation-card-title">{{ role.summary }}</h2>
+            {% if access_profiles_panel_open %}
+            <section id="access-profile-manage" class="table-card operation-focus-card access-overview-card" aria-label="Gestao rapida de perfis">
+                <div class="operation-card-head">
+                    <div>
+                        <p class="eyebrow">Gerenciar perfis</p>
+                        <h2 class="operation-card-title">Editar e ativar perfis sem admin</h2>
+                        <p class="operation-card-copy">Ajuste nome, e-mail, papel e status de acesso da equipe no mesmo painel.</p>
+                    </div>
+                    <div class="actions actions-tight">
+                        <span class="pill info">Perfis ativos e inativos</span>
+                        <a class="button secondary" href="{% url 'access-overview' %}#access-profile-create">Ocultar</a>
+                    </div>
                 </div>
-                <span class="pill{% if current_role.slug == role.slug %} accent{% else %} info{% endif %}">{% if current_role.slug == role.slug %}papel ativo{% else %}fronteira formal{% endif %}</span>
-            </div>
-            <ul class="capability-list">
-                {% for capability in role.capabilities %}
-                <li>{{ capability }}</li>
+                <div class="operation-focus-list">
+                    {% for profile in access_profiles %}
+                    <article class="operation-focus-item">
+                        <div class="operation-focus-copy operation-focus-copy--full">
+                            <div class="row-between-md operation-focus-head">
+                                <div>
+                                    <p class="eyebrow">@{{ profile.username }}</p>
+                                    <strong>{{ profile.full_name }}</strong>
+                                    <p>
+                                        {{ profile.role_label }}
+                                        {% if profile.is_superuser %} | Superuser{% endif %}
+                                        {% if profile.is_current_user %} | Sessao atual{% endif %}
+                                    </p>
+                                </div>
+                                <span class="pill {% if profile.is_active %}accent{% else %}warning{% endif %}">{% if profile.is_active %}Ativo{% else %}Inativo{% endif %}</span>
+                            </div>
+                            <form method="post" class="form-stack section-gap-top-xs">
+                                {% csrf_token %}
+                                <input type="hidden" name="access_action" value="update">
+                                <input type="hidden" name="target_profile_id" value="{{ profile.id }}">
+                                <div class="field-grid-200">
+                                    <label>
+                                        <span class="field-label">{{ profile.form.full_name.label }}</span>
+                                        {{ profile.form.full_name }}
+                                        {{ profile.form.full_name.errors }}
+                                    </label>
+                                    <label>
+                                        <span class="field-label">Usuario</span>
+                                        <input type="text" value="{{ profile.username }}" disabled>
+                                    </label>
+                                    <label>
+                                        <span class="field-label">{{ profile.form.email.label }}</span>
+                                        {{ profile.form.email }}
+                                        {{ profile.form.email.errors }}
+                                    </label>
+                                    <label>
+                                        <span class="field-label">{{ profile.form.role.label }}</span>
+                                        {{ profile.form.role }}
+                                        {{ profile.form.role.errors }}
+                                    </label>
+                                </div>
+                                <div class="actions actions-tight">
+                                    <button class="button secondary" type="submit">Salvar edicao</button>
+                                </div>
+                            </form>
+                            <form method="post" class="actions actions-tight section-gap-top-xs">
+                                {% csrf_token %}
+                                <input type="hidden" name="access_action" value="toggle_active">
+                                <input type="hidden" name="target_profile_id" value="{{ profile.id }}">
+                                <button class="button {% if profile.is_active %}secondary{% endif %}" type="submit"{% if profile.is_current_user and profile.is_active %} disabled{% endif %}>
+                                    {% if profile.is_active %}Desativar perfil{% else %}Reativar perfil{% endif %}
+                                </button>
+                            </form>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+            {% endif %}
+
+            <section id="access-role-map" class="panel-grid access-role-grid" aria-label="Mapa de papeis">
+                {% for role in role_definitions %}
+                <article class="table-card access-role-card">
+                    <div class="operation-card-head">
+                        <div>
+                            <p class="eyebrow">{{ role.label }}</p>
+                            <h2 class="operation-card-title">{{ role.summary }}</h2>
+                        </div>
+                        <span class="pill{% if current_role.slug == role.slug %} accent{% else %} info{% endif %}">{% if current_role.slug == role.slug %}papel ativo{% else %}fronteira formal{% endif %}</span>
+                    </div>
+                    <ul class="capability-list">
+                        {% for capability in role.capabilities %}
+                        <li>{{ capability }}</li>
+                        {% endfor %}
+                    </ul>
+                </article>
                 {% endfor %}
-            </ul>
-        </article>
-        {% endfor %}
+            </section>
+        </div>
+
+        <aside class="access-overview-side">
+            <div id="access-current-role">
+                {% include "includes/ui/shared/info_list_card.html" with eyebrow="Escopo do papel ativo" title="Como este usuario deveria operar" copy="O que pertence ao seu papel." pill_label=current_role.label pill_class="info" items=role_capabilities empty_text="Defina um grupo de acesso para este usuario." %}
+            </div>
+            <div id="access-governance-board">
+                {% include "includes/ui/shared/info_list_card.html" with card_class="operation-empty-card" eyebrow="Governanca pratica" title="O que esta tela precisa impedir" copy="Bloquear mistura de responsabilidade." pill_label="Limites claros" pill_class="accent" items=governance_points %}
+            </div>
+        </aside>
     </section>
 </div>
 {% endblock %}

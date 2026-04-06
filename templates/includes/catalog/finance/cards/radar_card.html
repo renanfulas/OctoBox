@@ -11,7 +11,7 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende de finance_right_rail_snapshot.
 -->
-<article class="table-card table-card--support finance-support-card finance-support-card-tight finance-support-rail-card finance-radar-card">
+<article class="table-card finance-support-card finance-support-card-tight finance-support-rail-card finance-radar-card">
     {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Radar do recorte" title=page.data.finance_priority_context.headline copy=page.data.finance_priority_context.summary pill_label=page.data.finance_right_rail_priority_label pill_class=page.data.finance_right_rail_priority_badge %}
     <div class="finance-data-cluster finance-radar-cluster">
         {% for item in page.data.finance_right_rail_snapshot %}

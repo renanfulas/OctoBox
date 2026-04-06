@@ -1,0 +1,123 @@
+/*
+ARQUIVO: composicao local da tela de acessos.
+
+POR QUE ELE EXISTE:
+- adapta a governanca de acessos para a familia visual da owner sem transformar a tela em workspace operacional comum.
+- mantem a hierarquia local de formulários, escopo e mapa de papeis fora do design system global.
+*/
+
+.access-overview-scene {
+    gap: calc(var(--section-gap) - 2px);
+}
+
+.access-hero {
+    position: relative;
+    overflow: hidden;
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-border-soft) 82%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 30%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, transparent), transparent 36%),
+        linear-gradient(155deg, color-mix(in srgb, var(--theme-surface-panel) 98%, white), color-mix(in srgb, var(--theme-surface-strong) 94%, white));
+    box-shadow: 0 20px 42px rgba(7, 14, 24, 0.08);
+}
+
+.access-hero::after {
+    content: "";
+    position: absolute;
+    inset: auto -36px -48px auto;
+    width: 180px;
+    height: 180px;
+    border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent), transparent 70%);
+    pointer-events: none;
+}
+
+.access-reading-panel {
+    margin-top: 0;
+}
+
+.access-overview-strip {
+    margin-top: var(--workspace-fib-4);
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(320px, 420px);
+    gap: clamp(18px, 2vw, 26px);
+    align-items: start;
+    position: relative;
+    padding: clamp(8px, 1vw, 12px);
+    border-radius: clamp(24px, 2.6vw, 32px);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-support-alpha) 7%, transparent), transparent 20%),
+        radial-gradient(circle at top left, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 32%),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 30%);
+}
+
+.access-overview-main {
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+}
+
+.access-overview-side {
+    display: grid;
+    gap: 14px;
+    width: min(100%, 420px);
+    margin-left: auto;
+    justify-self: end;
+    position: sticky;
+    top: calc(var(--topbar-height, 88px) + 16px);
+}
+
+.access-overview-card,
+.access-role-card {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
+    background: var(--theme-surface-glass);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+.access-role-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.access-role-card .capability-list {
+    display: grid;
+    gap: 8px;
+}
+
+body[data-theme="dark"] .access-hero {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 22%, transparent), transparent 30%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 16%, transparent), transparent 36%),
+        linear-gradient(158deg, rgba(12, 22, 36, 0.98), rgba(8, 15, 26, 0.97) 60%, rgba(7, 12, 22, 0.95));
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-border-soft) 82%);
+    box-shadow:
+        0 20px 38px rgba(0, 0, 0, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.access-overview-scene .info-list-card,
+body[data-theme="dark"] .access-overview-card,
+body[data-theme="dark"] .access-role-card {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 30%),
+        linear-gradient(158deg, rgba(12, 22, 36, 0.98), rgba(8, 15, 26, 0.97) 60%, rgba(7, 12, 22, 0.95));
+    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+}
+
+@media (max-width: 960px) {
+    .access-overview-strip {
+        grid-template-columns: 1fr;
+        padding: 0;
+        background: none;
+    }
+
+    .access-overview-side {
+        position: static;
+        top: auto;
+        width: 100%;
+    }
+
+    .access-role-grid {
+        grid-template-columns: 1fr;
+    }
+}

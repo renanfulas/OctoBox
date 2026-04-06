@@ -314,39 +314,48 @@ def build_dev_workspace_snapshot():
         ],
         'recent_audit_events': recent_audit_events,
         'dev_boundaries': [
-            'DEV investiga e mantem o sistema, mas nao assume rotina de manager ou coach.',
-            'O papel tecnico deve operar com leitura ampla e escrita minima, sempre com rastreabilidade.',
-            'Acesso GOD continua fora da rotina e deve nascer depois com regra de contingencia.',
+            {
+                'title': 'DEV investiga sem assumir a operacao',
+                'copy': 'O papel tecnico mantem o sistema e investiga rastros, mas nao deve virar manager, recepcao ou coach por atalho.',
+            },
+            {
+                'title': 'Leitura ampla, escrita minima',
+                'copy': 'Quando houver manutencao, o caminho seguro e operar com rastreabilidade e o menor alcance de escrita necessario.',
+            },
+            {
+                'title': 'Contingencia nao e rotina',
+                'copy': 'Acesso elevado de emergencia fica fora do fluxo diario e precisa nascer com regra propria antes de existir.',
+            },
         ],
         'dev_reads': [
-            'Mapa do sistema para entender arquitetura e fluxo.',
-            'Papeis e acessos para revisar fronteiras de permissao.',
-            'Trilha de auditoria para investigar acoes sensiveis recentes.',
+            {
+                'title': 'Mapa do sistema antes do mergulho',
+                'copy': 'Comece pela arquitetura e pelo fluxo principal para nao investigar sintoma como se fosse causa raiz.',
+            },
+            {
+                'title': 'Papeis e acessos como segunda camada',
+                'copy': 'Revise as fronteiras de permissao antes de concluir que o problema esta na interface ou no dado.',
+            },
+            {
+                'title': 'Auditoria por ultimo no recorte certo',
+                'copy': 'Abra a trilha sensivel para confirmar ator, horario e alvo sem depender de memoria tecnica ou conversa paralela.',
+            },
         ],
         'dev_table_guides': [
             {
-                'label': 'Rastro que deve abrir a investigacao',
-                'value': f"{technical_metrics['eventos_24h']} evento(s) nas ultimas 24h",
-                'summary': 'Comece por aqui quando precisar localizar alteracao recente antes de abrir historico inteiro e perder tempo tecnico.',
-                'pill_class': 'warning' if technical_metrics['eventos_24h'] > 0 else 'success',
-                'href': '#dev-audit-board',
-                'href_label': 'Abrir rastros recentes',
+                'title': 'Rastro que deve abrir a investigacao',
+                'eyebrow': f"{technical_metrics['eventos_24h']} evento(s) nas ultimas 24h",
+                'copy': 'Comece por aqui quando precisar localizar alteracao recente antes de abrir historico inteiro e perder tempo tecnico.',
             },
             {
-                'label': 'Cobertura de fronteira atual',
-                'value': f"{technical_metrics['usuarios_com_papel']} usuario(s) com papel",
-                'summary': 'Use este ponto para validar se acesso continua com dono claro ou se alguma conta ja saiu da fronteira prevista.',
-                'pill_class': 'info',
-                'href': '#dev-boundary-board',
-                'href_label': 'Ver fronteiras',
+                'title': 'Cobertura de fronteira atual',
+                'eyebrow': f"{technical_metrics['usuarios_com_papel']} usuario(s) com papel",
+                'copy': 'Use este ponto para validar se acesso continua com dono claro ou se alguma conta ja saiu da fronteira prevista.',
             },
             {
-                'label': 'Base forense disponivel',
-                'value': f"{technical_metrics['eventos_auditados']} rastro(s) auditado(s)",
-                'summary': 'Esse volume sustenta manutencao e prova operacional sem depender de memoria tecnica, conversa paralela ou chute.',
-                'pill_class': 'accent',
-                'href': '#dev-read-board',
-                'href_label': 'Ver trilha curta',
+                'title': 'Base forense disponivel',
+                'eyebrow': f"{technical_metrics['eventos_auditados']} rastro(s) auditado(s)",
+                'copy': 'Esse volume sustenta manutencao e prova operacional sem depender de memoria tecnica, conversa paralela ou chute.',
             },
         ],
     }
@@ -569,7 +578,7 @@ def _build_reception_workspace_core(*, today):
     payment_queue = list(
         Payment.objects.select_related('student', 'enrollment__plan')
         .filter(status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE])
-        .order_by('due_date')[:6]
+        .order_by('due_date')[:4]
     )
     overdue_payments_queryset = get_overdue_payments_queryset(Payment.objects.all(), today=today)
     next_sessions = list(
