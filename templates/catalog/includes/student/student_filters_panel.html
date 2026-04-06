@@ -6,6 +6,9 @@ POR QUE ELE EXISTE:
 -->
 <section id="student-filter-bar" class="student-filter-bar" aria-label="Busca e filtros do diretorio">
     <form method="get" action="." class="student-filter-form" id="student-directory-filter-form">
+        {% if request.GET.created_window %}
+            <input type="hidden" name="created_window" value="{{ request.GET.created_window }}">
+        {% endif %}
         {% if request.GET.student_status %}
             <input type="hidden" name="student_status" value="{{ request.GET.student_status }}">
         {% endif %}
@@ -28,10 +31,11 @@ POR QUE ELE EXISTE:
     </form>
 
     <nav class="student-filter-pills" aria-label="Filtros rapidos do diretorio">
-        <a href="?{% if page.data.student_filter_form.query.value %}query={{ page.data.student_filter_form.query.value|urlencode }}{% endif %}" class="student-filter-pill {% if not request.GET.student_status and not request.GET.payment_status %}is-active{% endif %}">Todos</a>
-        <a href="?{% if page.data.student_filter_form.query.value %}query={{ page.data.student_filter_form.query.value|urlencode }}&{% endif %}student_status=active" class="student-filter-pill {% if request.GET.student_status == 'active' %}is-active{% endif %}">Ativos</a>
-        <a href="?{% if page.data.student_filter_form.query.value %}query={{ page.data.student_filter_form.query.value|urlencode }}&{% endif %}payment_status=overdue" class="student-filter-pill {% if request.GET.payment_status == 'overdue' %}is-active{% endif %}">Inadimplentes</a>
-        <a href="?{% if page.data.student_filter_form.query.value %}query={{ page.data.student_filter_form.query.value|urlencode }}&{% endif %}student_status=inactive" class="student-filter-pill {% if request.GET.student_status == 'inactive' %}is-active{% endif %}">Inativos</a>
+        <a href="?{% if page.data.student_filter_form.query.value %}query={{ page.data.student_filter_form.query.value|urlencode }}{% endif %}" class="student-filter-pill {% if not request.GET.created_window and not request.GET.student_status and not request.GET.payment_status %}is-active{% endif %}">Todos</a>
+        <a href="?{% if page.data.student_filter_form.query.value %}query={{ page.data.student_filter_form.query.value|urlencode }}&{% endif %}student_status=active" class="student-filter-pill {% if request.GET.student_status == 'active' and not request.GET.created_window %}is-active{% endif %}">Ativos</a>
+        <a href="?{% if page.data.student_filter_form.query.value %}query={{ page.data.student_filter_form.query.value|urlencode }}&{% endif %}payment_status=overdue" class="student-filter-pill {% if request.GET.payment_status == 'overdue' and not request.GET.created_window %}is-active{% endif %}">Inadimplentes</a>
+        <a href="?{% if page.data.student_filter_form.query.value %}query={{ page.data.student_filter_form.query.value|urlencode }}&{% endif %}created_window=30d" class="student-filter-pill {% if request.GET.created_window == '30d' %}is-active{% endif %}">Novos 30D</a>
+        <a href="?{% if page.data.student_filter_form.query.value %}query={{ page.data.student_filter_form.query.value|urlencode }}&{% endif %}student_status=inactive" class="student-filter-pill {% if request.GET.student_status == 'inactive' and not request.GET.created_window %}is-active{% endif %}">Inativos</a>
     </nav>
 
     <p class="student-filter-count">{{ page.data.total_students }} alunos</p>

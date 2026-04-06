@@ -32,6 +32,14 @@ from students.models import Student, StudentStatus
 
 class StudentDirectoryFilterForm(forms.Form):
     query = forms.CharField(required=False, label='Busca')
+    created_window = forms.ChoiceField(
+        required=False,
+        label='Janela de criacao',
+        choices=(
+            ('', 'Todas'),
+            ('30d', 'Novos (30 dias)'),
+        ),
+    )
     student_status = forms.ChoiceField(
         required=False,
         label='Status do aluno',

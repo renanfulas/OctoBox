@@ -1,4 +1,4 @@
-<article class="card student-kpi-card {{ card.tone_class }}" data-action="{{ card.data_action }}">
+<a class="card student-kpi-card {{ card.tone_class }}" href="{{ card.href|default:'#tab-students-directory' }}">
     <div class="student-kpi-card-head">
         <span class="student-kpi-card-label">{{ card.label }}</span>
         <div class="student-kpi-icon-box" aria-hidden="true">
@@ -20,4 +20,4 @@
     <div class="student-kpi-card-body">
         <strong class="student-kpi-card-value">{{ card.display_value }}</strong>
     </div>
-</article>
+</a>

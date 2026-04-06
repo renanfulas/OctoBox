@@ -5,8 +5,7 @@ POR QUE ELE EXISTE:
 - Renderiza 4 KPI cards que funcionam como os triggers das abas de operação (busca, prioridades, intake, diretório geral).
 -->
 <div class="student-kpi-overview deferred-surface" data-panel="students-interactive-kpis">
-    <section class="student-kpi-grid interactive-tab-triggers"
-        aria-label="Navegacao principal de alunos">
+    <section class="student-kpi-grid" aria-label="Navegacao principal de alunos">
         {% for card in page.data.interactive_kpis %}
         {% include "catalog/includes/student/student_metric_card.html" with card=card %}
         {% endfor %}

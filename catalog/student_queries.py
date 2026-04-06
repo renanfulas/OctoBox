@@ -127,6 +127,7 @@ def build_student_directory_snapshot(params=None, for_export=False):
 
     if filter_form.is_valid():
         query = (filter_form.cleaned_data.get('query') or '').strip()
+        created_window = filter_form.cleaned_data.get('created_window')
         student_status = filter_form.cleaned_data.get('student_status')
         commercial_status = filter_form.cleaned_data.get('commercial_status')
         payment_status = filter_form.cleaned_data.get('payment_status')
@@ -152,6 +153,8 @@ def build_student_directory_snapshot(params=None, for_export=False):
             students = students.filter(latest_enrollment_status=commercial_status)
         if payment_status:
             students = students.filter(operational_payment_status=payment_status)
+        if created_window == '30d':
+            students = students.filter(created_at__gte=thirty_days_ago)
 
     metrics = students.aggregate(
         total=Count('id'),
@@ -199,28 +202,28 @@ def build_student_directory_snapshot(params=None, for_export=False):
                 'display_value': ativos_count,
                 'icon': 'check-circle',
                 'tone_class': 'kpi-green',
-                'data_action': 'open-tab-students-directory',
+                'href': '?student_status=active#tab-students-directory',
             },
             {
                 'label': 'Inadimplentes',
                 'display_value': inadimplentes_count,
                 'icon': 'alert-circle',
                 'tone_class': 'kpi-red',
-                'data_action': 'open-tab-students-directory',
+                'href': '?payment_status=overdue#tab-students-directory',
             },
             {
                 'label': 'Novos (30D)',
                 'display_value': novos_30d_count,
                 'icon': 'trending-up',
                 'tone_class': 'kpi-cyan',
-                'data_action': 'open-tab-students-directory',
+                'href': '?created_window=30d#tab-students-directory',
             },
             {
                 'label': 'Inativos',
                 'display_value': inativos_count,
                 'icon': 'x-circle',
                 'tone_class': 'kpi-purple',
-                'data_action': 'open-tab-students-directory',
+                'href': '?student_status=inactive#tab-students-directory',
             },
         ],
         'priority_students': priority_students,
