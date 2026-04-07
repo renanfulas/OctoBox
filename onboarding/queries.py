@@ -15,10 +15,37 @@ PONTOS CRITICOS:
 
 from django.db.models import Count, Q
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 
 from onboarding.facade import build_intake_queue_item
 from onboarding.forms import IntakeCenterFilterForm, IntakeQuickCreateForm
 from onboarding.models import IntakeSource, IntakeStatus, StudentIntake
+
+
+def _intake_kpi_icon(name):
+    icons = {
+        'queue': mark_safe(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
+            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+            'aria-hidden="true"><path d="M3 12h7"/><path d="M3 6h11"/><path d="M3 18h5"/><path d="m15 15 3 3 3-3"/><path d="M18 6v12"/></svg>'
+        ),
+        'ready': mark_safe(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
+            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+            'aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+        ),
+        'today': mark_safe(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
+            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+            'aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>'
+        ),
+        'owners': mark_safe(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
+            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+            'aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/><path d="M12 18v2"/><path d="M7 9h10"/><path d="M7 13h6"/></svg>'
+        ),
+    }
+    return icons.get(name, '')
 
 
 def count_pending_intakes():
@@ -123,7 +150,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
                 'note': 'Leads aguardando primeiro contato, agendamento ou direcionamento basico no balcao.',
                 'data_action': 'open-tab-intake-queue',
                 'tone_class': 'kpi-red' if pending_count > 0 else 'kpi-green',
-                'icon': 'alert-circle',
+                'icon': _intake_kpi_icon('queue'),
             },
             {
                 'label': 'Prontos',
@@ -131,7 +158,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
                 'note': 'Pessoas aquecidas, triadas e prontas para criar a matricula e assinar o plano.',
                 'data_action': 'open-tab-intake-conversion',
                 'tone_class': 'kpi-cyan' if matched_count > 0 else 'kpi-green',
-                'icon': 'check-circle',
+                'icon': _intake_kpi_icon('ready'),
             },
             {
                 'label': 'Hoje',
@@ -139,7 +166,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
                 'note': 'Volume diario e grafico de canais (Insta, Site, Balcao) para avaliar a atracao de hoje.',
                 'data_action': 'open-tab-intake-source',
                 'tone_class': 'kpi-cyan',
-                'icon': 'trending-up',
+                'icon': _intake_kpi_icon('today'),
             },
             {
                 'label': 'Atribuidos',
@@ -147,7 +174,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
                 'note': 'Mostra quantas entradas ja estao com alguem dono do atendimento.',
                 'data_action': 'open-tab-intake-filters',
                 'tone_class': 'kpi-purple',
-                'icon': 'users',
+                'icon': _intake_kpi_icon('owners'),
             },
         ],
         'hero_stats': [

@@ -14,7 +14,7 @@ POR QUE ELE EXISTE:
     --finance-premium-surface-soft: color-mix(in srgb, var(--theme-surface-secondary) 94%, white 6%);
     --finance-premium-surface-dark: linear-gradient(156deg, rgba(9, 18, 34, 0.98), rgba(6, 12, 24, 0.97) 58%, rgba(5, 10, 18, 0.95));
     display: grid;
-    gap: calc(var(--section-gap) - 2px);
+    gap: var(--section-gap);
     position: relative;
     isolation: isolate;
 }

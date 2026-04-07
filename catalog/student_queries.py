@@ -17,6 +17,7 @@ from datetime import timedelta
 from django.db.models import Case, CharField, Exists, OuterRef, Q, Subquery, Value, When, Sum, Count, IntegerField
 from django.db.models.functions import Coalesce
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 
 from operations.models import Attendance
 from finance.models import Enrollment, EnrollmentStatus, Payment, PaymentStatus
@@ -25,6 +26,32 @@ from students.models import Student, StudentStatus
 
 from catalog.forms import StudentDirectoryFilterForm
 from shared_support.redis_snapshots import get_student_snapshot, update_student_snapshot
+
+
+def _catalog_kpi_icon(name):
+    icons = {
+        'active': mark_safe(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
+            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+            'aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+        ),
+        'overdue': mark_safe(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
+            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+            'aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+        ),
+        'growth': mark_safe(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
+            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+            'aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>'
+        ),
+        'inactive': mark_safe(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
+            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+            'aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+        ),
+    }
+    return icons.get(name, '')
 
 
 def compute_fidalgometro_score(student):
@@ -197,28 +224,28 @@ def build_student_directory_snapshot(params=None, for_export=False):
             {
                 'label': 'Alunos ativos',
                 'display_value': ativos_count,
-                'icon': 'check-circle',
+                'icon': _catalog_kpi_icon('active'),
                 'tone_class': 'kpi-green',
                 'data_action': 'open-tab-students-directory',
             },
             {
                 'label': 'Inadimplentes',
                 'display_value': inadimplentes_count,
-                'icon': 'alert-circle',
+                'icon': _catalog_kpi_icon('overdue'),
                 'tone_class': 'kpi-red',
                 'data_action': 'open-tab-students-directory',
             },
             {
                 'label': 'Novos (30D)',
                 'display_value': novos_30d_count,
-                'icon': 'trending-up',
+                'icon': _catalog_kpi_icon('growth'),
                 'tone_class': 'kpi-cyan',
                 'data_action': 'open-tab-students-directory',
             },
             {
                 'label': 'Inativos',
                 'display_value': inativos_count,
-                'icon': 'x-circle',
+                'icon': _catalog_kpi_icon('inactive'),
                 'tone_class': 'kpi-purple',
                 'data_action': 'open-tab-students-directory',
             },

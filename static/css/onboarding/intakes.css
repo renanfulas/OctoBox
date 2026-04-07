@@ -236,8 +236,8 @@ POR QUE ELE EXISTE:
 
 [data-panel="intake-kpi-triggers"] .student-kpi-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(4, minmax(168px, 1fr));
+    gap: 14px;
 }
 
 [data-panel="intake-kpi-triggers"] .student-kpi-grid > * {
@@ -246,6 +246,10 @@ POR QUE ELE EXISTE:
 
 .intake-scene .metric-card {
     min-height: 172px;
+}
+
+.intake-scene [data-panel="intake-kpi-triggers"] .metric-card {
+    min-height: 104px;
 }
 
 .intake-scene .intake-metric-card {
@@ -416,6 +420,10 @@ body[data-theme="dark"] .intake-command-card .intake-rule-card {
 
     .intake-scene .metric-card {
         min-height: 160px;
+    }
+
+    .intake-scene [data-panel="intake-kpi-triggers"] .metric-card {
+        min-height: 104px;
     }
 
     .intake-directory-table {

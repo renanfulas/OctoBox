@@ -25,9 +25,9 @@ PONTOS CRITICOS:
         <section class="finance-kpi-grid interactive-tab-triggers" aria-label="Navegacao principal financeira">
             {% for card in page.data.interactive_kpis %}
                 {% if card.data_action == page.behavior.default_action %}
-            {% include "includes/ui/shared/metric_card.html" with card=card compact=True extra_classes="finance-kpi-card is-selected-tab "|add:card.card_class %}
+            {% include "includes/ui/shared/interactive_kpi_card.html" with card=card extra_classes="finance-kpi-card is-selected-tab "|add:card.card_class %}
                 {% else %}
-            {% include "includes/ui/shared/metric_card.html" with card=card compact=True extra_classes="finance-kpi-card "|add:card.card_class %}
+            {% include "includes/ui/shared/interactive_kpi_card.html" with card=card extra_classes="finance-kpi-card "|add:card.card_class %}
                 {% endif %}
             {% endfor %}
         </section>

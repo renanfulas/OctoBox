@@ -12,7 +12,8 @@ POR QUE ELE EXISTE:
 
 .finance-kpi-panel {
     width: 100%;
-    margin-top: 12px;
+    margin-top: var(--workspace-fib-4);
+    margin-bottom: 0;
 }
 
 .finance-kpi-grid {
@@ -58,11 +59,15 @@ POR QUE ELE EXISTE:
 .finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-body-metric {
     min-height: 100%;
     display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: auto 1fr;
     gap: 18px;
+    position: relative;
 }
 
 .finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-value-stack {
+    grid-column: 1 / -1;
+    grid-row: 1 / span 2;
     gap: 10px;
 }
 
@@ -76,6 +81,7 @@ POR QUE ELE EXISTE:
     margin: 0;
     font-size: 0.74rem;
     font-weight: 700;
+    line-height: 1;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: rgba(15, 23, 42, 0.48);
@@ -102,9 +108,30 @@ POR QUE ELE EXISTE:
 .finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-kicker,
 .finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-signal,
 .finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-footer,
-.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-meta,
-.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .icon-box {
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-meta {
     display: none;
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .icon-box {
+    grid-column: 2;
+    grid-row: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    margin-left: auto;
+    color: color-mix(in srgb, currentColor 84%, var(--ink) 16%);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.42));
+    border: 1px solid color-mix(in srgb, currentColor 16%, rgba(15, 23, 42, 0.08) 84%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    z-index: 1;
+}
+
+.finance-shell [data-panel="finance-interactive-kpis"] .metric-card .icon-box svg {
+    width: 18px;
+    height: 18px;
 }
 
 .finance-shell [data-panel="finance-interactive-kpis"] .metric-card.kpi-emerald {
@@ -148,6 +175,13 @@ body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .
 
 body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .metric-card .card-label {
     color: rgba(226, 232, 240, 0.56);
+}
+
+body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .metric-card .icon-box {
+    color: color-mix(in srgb, currentColor 88%, white 12%);
+    background: linear-gradient(180deg, rgba(24, 30, 46, 0.96), rgba(13, 18, 31, 0.88));
+    border-color: rgba(148, 163, 184, 0.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 body[data-theme="dark"] .finance-shell [data-panel="finance-interactive-kpis"] .metric-card .metric-number.is-ruby {

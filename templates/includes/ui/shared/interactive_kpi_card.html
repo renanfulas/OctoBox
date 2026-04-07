@@ -1,0 +1,34 @@
+<!--
+ARQUIVO: interactive_kpi_card.html
+
+POR QUE ELE EXISTE:
+- unifica a anatomia visual dos KPIs interativos de alunos, entradas e financeiro.
+
+O QUE ESTE ARQUIVO FAZ:
+1. renderiza um card visual compacto com label, valor e svg.
+2. aplica a mesma estrutura-base para as tres familias.
+3. reduz divergencia de markup entre superficies que devem parecer irmas.
+-->
+{% if card.href %}<a href="{{ card.href }}" class="metric-card-link">{% endif %}
+<article class="card metric-card shared-interactive-kpi {{ card.card_class }} {{ card.tone_class }} {{ extra_classes }}{% if card.data_action %} has-action cursor-pointer{% endif %}{% if card.href %} has-href{% endif %}" data-panel="metric-card" data-slot="interactive-kpi-card"{% if card.data_action %} data-action="{{ card.data_action }}"{% endif %}>
+    <div class="card-body card-body-metric student-metric-card-body">
+        {% if card.icon %}
+        <div class="icon-box student-kpi-icon-box" aria-hidden="true">
+            {{ card.icon|safe }}
+        </div>
+        {% endif %}
+        <div class="card-value-stack">
+            <div class="student-kpi-card-head">
+                <p class="eyebrow card-label student-kpi-card-label">
+                    {% if card.eyebrow %}{{ card.eyebrow }}{% else %}{{ card.label }}{% endif %}
+                </p>
+            </div>
+            <div class="card-value-row{% if card.is_jumbo %} is-jumbo{% endif %}">
+                <p class="metric card-value">
+                    <span class="metric-number student-kpi-card-value{% if card.value_class %} {{ card.value_class }}{% endif %}">{{ card.display_value }}</span>
+                </p>
+            </div>
+        </div>
+    </div>
+</article>
+{% if card.href %}</a>{% endif %}

@@ -19,6 +19,7 @@ from decimal import Decimal
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 
 from finance.models import EnrollmentStatus, Payment, PaymentStatus
 from finance.overdue_metrics import count_overdue_students, get_overdue_payments_queryset, sum_overdue_amount
@@ -27,6 +28,32 @@ from finance.overdue_metrics import count_overdue_students, get_overdue_payments
 def _format_currency_br(value):
     normalized = (value or Decimal('0.00')).quantize(Decimal('0.01'))
     return f'{normalized:.2f}'.replace('.', ',')
+
+
+def _finance_kpi_icon(name):
+    icons = {
+        'movements': mark_safe(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
+            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+            'aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>'
+        ),
+        'queue': mark_safe(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
+            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+            'aria-hidden="true"><path d="M3 12h7"/><path d="M3 6h11"/><path d="M3 18h5"/><path d="m15 15 3 3 3-3"/><path d="M18 6v12"/></svg>'
+        ),
+        'portfolio': mark_safe(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
+            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+            'aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/><path d="M12 18v2"/><path d="M7 9h10"/><path d="M7 13h6"/></svg>'
+        ),
+        'filters': mark_safe(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
+            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+            'aria-hidden="true"><path d="M4 6h16"/><path d="M7 12h10"/><path d="M10 18h4"/></svg>'
+        ),
+    }
+    return icons.get(name, '')
 
 
 def build_finance_metrics(payments, enrollments):
@@ -189,6 +216,7 @@ def build_finance_interactive_kpis(finance_metrics, *, priority_context=None):
         'movements': {
             'eyebrow': 'Raio-X Financeiro',
             'display_value': f"R$ {_format_currency_br(finance_metrics['Receita recebida no mes']['value'])}",
+            'icon': _finance_kpi_icon('movements'),
             'note': (
                 'Movimentos, entradas, saidas e graficos de tendencia financeira.'
                 if priority_context['dominant_key'] != 'movements' else
@@ -201,6 +229,7 @@ def build_finance_interactive_kpis(finance_metrics, *, priority_context=None):
         'queue': {
             'eyebrow': 'Handoff de Cobranca',
             'display_value': f"R$ {_format_currency_br(finance_metrics['Receita que ainda nao entrou']['value'])}",
+            'icon': _finance_kpi_icon('queue'),
             'note': (
                 'Fila automatica e regua ativa contra a inadimplencia e atrasos.'
                 if priority_context['dominant_key'] != 'queue' else
@@ -213,6 +242,7 @@ def build_finance_interactive_kpis(finance_metrics, *, priority_context=None):
         'portfolio': {
             'eyebrow': 'Motor de Carteira',
             'display_value': str(finance_metrics['Novos contratos no mes']['value']),
+            'icon': _finance_kpi_icon('portfolio'),
             'note': (
                 'Portfolio de planos, mix de base e concentracao de receita.'
                 if priority_context['dominant_key'] != 'portfolio' else
@@ -224,6 +254,7 @@ def build_finance_interactive_kpis(finance_metrics, *, priority_context=None):
         'filters': {
             'eyebrow': 'Filtros & Exportacao',
             'display_value': 'Recortes',
+            'icon': _finance_kpi_icon('filters'),
             'note': 'Acesse os controles globais para isolar status, datas e planilhas.',
             'data_action': 'open-tab-finance-filters',
             'card_class': 'kpi-cyan',
