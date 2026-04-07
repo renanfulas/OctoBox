@@ -11,6 +11,7 @@ POR QUE ELE EXISTE:
 }
 
 .student-kpi-overview {
+    margin-top: var(--workspace-fib-4);
     margin-bottom: 0;
 }
 

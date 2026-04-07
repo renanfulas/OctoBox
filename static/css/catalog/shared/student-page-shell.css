@@ -8,7 +8,7 @@ POR QUE ELE EXISTE:
 
 .student-page-shell {
     display: grid;
-    gap: 20px;
+    gap: 12px;
 }
 
 .student-page-shell :is(.field-label, .meta-text, .meta-text-sm) {
@@ -101,12 +101,47 @@ POR QUE ELE EXISTE:
     accent-color: var(--theme-accent-support);
 }
 
-.student-page-header__card {
+.student-page-header {
+    --student-page-header-shell-accent: color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
+    position: relative;
+    border-radius: calc(var(--radius-panel) + 4px);
+    box-shadow:
+        0 0 0 1px var(--student-page-header-shell-accent),
+        0 0 0 2px color-mix(in srgb, var(--student-page-header-shell-accent) 22%, transparent);
+}
+
+.student-page-header.is-danger {
+    --student-page-header-shell-accent: color-mix(in srgb, var(--theme-accent-danger) 21%, transparent);
+}
+
+.student-page-header.is-success {
+    --student-page-header-shell-accent: color-mix(in srgb, var(--theme-accent-success) 18%, transparent);
+}
+
+.student-page-header-card.student-page-header__card {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
-    gap: 22px 18px;
-    padding: 24px 24px 24px;
+    position: relative;
+    overflow: visible;
+    gap: 12px 14px;
+    padding: 15px 16px;
+    border-radius: var(--radius-panel);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 7%, transparent), transparent 28%),
+        var(--theme-surface-glass-strong);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, var(--theme-glass-highlight) 88%, transparent),
+        0 10px 22px rgba(7, 14, 24, 0.04);
+    backdrop-filter: blur(18px) saturate(132%);
+    -webkit-backdrop-filter: blur(18px) saturate(132%);
+    color: var(--theme-text-primary);
+}
+
+.student-page-header-card.student-page-header__card::before,
+.student-page-header-card.student-page-header__card::after {
+    display: none;
 }
 
 .student-page-header__identity,
@@ -119,13 +154,13 @@ POR QUE ELE EXISTE:
 }
 
 .student-page-header__identity {
-    gap: 18px;
+    gap: 14px;
     min-width: 0;
 }
 
 .student-page-header__copy {
     display: grid;
-    gap: 10px;
+    gap: 8px;
     min-width: 0;
     flex: 1;
 }
@@ -147,14 +182,14 @@ POR QUE ELE EXISTE:
 }
 
 .student-page-header__title-row {
-    gap: 10px 14px;
+    gap: 8px 12px;
 }
 
 .student-page-header__title {
     margin: 0;
     color: var(--theme-text-primary);
-    font-size: clamp(1.72rem, 2.9vw, 2.18rem);
-    line-height: 1;
+    font-size: clamp(1.5rem, 2.4vw, 1.92rem);
+    line-height: 0.98;
     letter-spacing: -0.026em;
 }
 
@@ -162,19 +197,19 @@ POR QUE ELE EXISTE:
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 64px;
-    height: 64px;
-    border-radius: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
     background:
         linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-support) 24%, transparent), color-mix(in srgb, var(--theme-accent-primary) 10%, transparent)),
         color-mix(in srgb, var(--theme-surface-glass) 86%, transparent);
     border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 22%, var(--theme-glass-border) 78%);
     color: var(--theme-accent-support);
-    font-size: 1.3rem;
+    font-size: 1.14rem;
     font-weight: 800;
     box-shadow:
         inset 0 1px 0 var(--theme-glass-highlight),
-        0 12px 24px rgba(7, 14, 24, 0.08);
+        0 8px 18px rgba(7, 14, 24, 0.06);
 }
 
 .student-page-header__status-pill {
@@ -201,15 +236,15 @@ POR QUE ELE EXISTE:
 .student-page-header__meta {
     gap: 9px 10px;
     color: var(--legacy-copy);
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     line-height: 1.3;
 }
 
 .student-page-header__meta-item {
     display: inline-flex;
     align-items: center;
-    min-height: 30px;
-    padding: 0 11px;
+    min-height: 28px;
+    padding: 0 10px;
     border-radius: 999px;
     border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
     background: color-mix(in srgb, var(--theme-surface-glass) 78%, transparent);
@@ -228,10 +263,13 @@ POR QUE ELE EXISTE:
     gap: 10px;
 }
 
+.student-page-header__actions-group.operation-hero-action-rail {
+    gap: 6px;
+}
+
 .student-page-header__actions .button,
 .student-page-form-actions .button,
-.student-page-plan-action-row .button,
-.student-page-charge-card__footer .button {
+.student-page-plan-action-row .button {
     min-height: 44px;
     padding: 0 18px;
     border-radius: 14px;
@@ -249,6 +287,39 @@ POR QUE ELE EXISTE:
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
 }
 
+.student-page-header__actions .operation-hero-action-rail .button {
+    min-height: 32px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.student-page-header__actions .operation-hero-action-rail .button:not(.secondary) {
+    background: color-mix(in srgb, var(--theme-surface-panel) 64%, transparent);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    color: color-mix(in srgb, var(--ink) 82%, var(--theme-text-secondary) 18%);
+    min-width: 0;
+}
+
+.student-page-header__actions .operation-hero-action-rail .button.secondary {
+    background: transparent;
+    border-color: transparent;
+    color: color-mix(in srgb, var(--theme-text-muted) 84%, var(--ink) 16%);
+}
+
+.student-page-header__actions .operation-hero-action-rail .button:hover,
+.student-page-header__actions .operation-hero-action-rail .button:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 72%, transparent);
+    box-shadow: none;
+}
+
+.student-page-header__actions .operation-hero-action-rail .button.secondary:hover,
+.student-page-header__actions .operation-hero-action-rail .button.secondary:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 42%, transparent);
+}
+
 .student-page-header__action-icon {
     flex: 0 0 auto;
 }
@@ -256,24 +327,32 @@ POR QUE ELE EXISTE:
 .student-page-header__stats {
     grid-column: 1 / -1;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 13px;
-    padding-top: 20px;
+    grid-template-columns: repeat(4, minmax(0, 210px));
+    gap: 8px;
+    width: 100%;
+    max-width: 900px;
+    justify-content: center;
+    justify-self: center;
+    margin-inline: auto;
+    padding-top: 12px;
+    margin-top: 0;
     border-top: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
+    align-items: stretch;
 }
 
 .student-page-header__stat {
     display: grid;
-    gap: 8px;
+    gap: 6px;
     min-width: 0;
     align-content: start;
 }
 
 .student-page-header__stat-card {
-    padding: 15px 15px 13px;
-    min-height: 108px;
-    border-radius: 18px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 11%, var(--theme-glass-border) 89%);
+    --student-page-stat-border-accent: color-mix(in srgb, var(--theme-accent-support-alpha) 11%, var(--theme-glass-border) 89%);
+    padding: 12px 12px 10px;
+    min-height: 88px;
+    border-radius: 16px;
+    border: 1px solid var(--student-page-stat-border-accent);
     background:
         linear-gradient(
             180deg,
@@ -282,6 +361,22 @@ POR QUE ELE EXISTE:
         );
     box-shadow:
         inset 0 1px 0 var(--theme-glass-highlight),
+        0 10px 24px rgba(7, 14, 24, 0.04);
+}
+
+.student-page-header__stat-card.is-danger {
+    --student-page-stat-border-accent: color-mix(in srgb, var(--theme-accent-danger) 52%, var(--theme-glass-border) 48%);
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 0 0 1px color-mix(in srgb, var(--theme-accent-danger) 10%, transparent),
+        0 10px 24px rgba(7, 14, 24, 0.04);
+}
+
+.student-page-header__stat-card.is-success {
+    --student-page-stat-border-accent: color-mix(in srgb, var(--theme-accent-success) 52%, var(--theme-glass-border) 48%);
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 0 0 1px color-mix(in srgb, var(--theme-accent-success) 9%, transparent),
         0 10px 24px rgba(7, 14, 24, 0.04);
 }
 
@@ -296,9 +391,7 @@ POR QUE ELE EXISTE:
         );
 }
 
-.student-page-header__stat-label,
-.student-page-charge-card__footer,
-.student-page-charge-card__value span {
+.student-page-header__stat-label {
     color: var(--legacy-copy);
     font-size: 0.76rem;
 }
@@ -306,12 +399,14 @@ POR QUE ELE EXISTE:
 .student-page-header__stat-label {
     font-weight: 700;
     letter-spacing: 0.01em;
+    text-transform: uppercase;
+    font-size: 0.7rem;
 }
 
 .student-page-header__stat-value {
     color: var(--theme-text-primary);
-    font-size: 1.18rem;
-    line-height: 1.04;
+    font-size: 1rem;
+    line-height: 1.1;
     letter-spacing: -0.02em;
 }
 
@@ -321,13 +416,18 @@ POR QUE ELE EXISTE:
 
 .student-page-header__stat-meta {
     color: var(--legacy-copy);
-    font-size: 0.79rem;
-    line-height: 1.4;
+    font-size: 0.72rem;
+    line-height: 1.3;
+}
+
+.student-page-header__stat-card .student-page-header__stat {
+    height: 100%;
+    align-content: start;
 }
 
 .student-page-shell__panels {
     min-width: 0;
-    display: grid;
+    display: block;
 }
 
 .student-page-panel {
@@ -344,8 +444,8 @@ POR QUE ELE EXISTE:
     flex-wrap: wrap;
     gap: 6px;
     max-width: 100%;
-    padding: 6px;
-    border-radius: 20px;
+    padding: 4px;
+    border-radius: 18px;
     border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-glass-border) 86%);
     background: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
     box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
@@ -355,11 +455,11 @@ POR QUE ELE EXISTE:
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 42px;
-    padding: 0 18px;
-    border-radius: 14px;
+    min-height: 38px;
+    padding: 0 16px;
+    border-radius: 12px;
     color: var(--legacy-copy);
-    font-size: 0.92rem;
+    font-size: 0.88rem;
     font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
@@ -440,14 +540,57 @@ POR QUE ELE EXISTE:
     gap: 18px;
 }
 
+.student-page-plan-summary-card,
+.student-page-plan-actions-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 26px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 30%),
+        var(--theme-surface-glass-strong);
+    box-shadow: var(--theme-glass-shadow);
+    color: var(--theme-text-primary);
+}
+
 .student-page-plan-summary,
 .student-page-plan-actions {
     overflow: hidden;
 }
 
+.student-page-plan-summary-card .student-page-card__head {
+    padding: 15px 16px 12px;
+    gap: 10px;
+}
+
+.student-page-plan-summary-card .student-page-card__body {
+    padding: 14px 16px 16px;
+}
+
 .student-page-profile-panel {
     display: grid;
-    gap: 18px;
+    gap: 12px;
+}
+
+.student-page-profile-section-surface {
+    position: relative;
+    overflow: hidden;
+    border-radius: 26px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 30%),
+        var(--theme-surface-glass-strong);
+    box-shadow: var(--theme-glass-shadow);
+    color: var(--theme-text-primary);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.student-page-profile-section-surface:hover {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
+    box-shadow:
+        0 18px 38px rgba(7, 14, 24, 0.08),
+        inset 0 1px 0 var(--theme-glass-highlight);
+    background: inherit;
 }
 
 .student-page-profile-intro-card,
@@ -455,12 +598,21 @@ POR QUE ELE EXISTE:
     overflow: hidden;
 }
 
+.student-page-profile-form {
+    display: grid;
+    gap: 10px;
+}
+
 .student-page-profile-intro {
     display: grid;
-    gap: 12px;
-    max-width: 56ch;
-    padding-top: 18px;
-    padding-bottom: 18px;
+    gap: 5px;
+    max-width: 62ch;
+    padding: 13px 144px 13px 0;
+}
+
+.student-page-profile-intro__topline {
+    display: block;
+    padding-right: 0;
 }
 
 .student-page-profile-kicker {
@@ -468,15 +620,36 @@ POR QUE ELE EXISTE:
 }
 
 .student-page-profile-intro__copy {
-    font-size: 0.92rem;
+    font-size: 0.84rem;
+}
+
+.student-page-profile-edit-toggle {
+    min-height: 34px;
+    padding: 0 13px;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    white-space: nowrap;
+    position: absolute;
+    top: 13px;
+    right: 13px;
+}
+
+.student-page-profile-intro-card {
+    position: relative;
+}
+
+.student-page-profile-edit-toggle__icon {
+    flex: 0 0 auto;
 }
 
 .student-page-profile-section-card .student-page-card__head {
     align-items: end;
+    padding: 14px 16px 12px;
 }
 
 .student-page-profile-section-card .student-page-card__body {
-    gap: 16px;
+    gap: 10px;
+    padding: 14px 16px 16px;
 }
 
 .student-page-profile-panel form,
@@ -484,9 +657,71 @@ POR QUE ELE EXISTE:
     min-width: 0;
 }
 
-.student-page-section-card .student-page-card__body > .field-grid-220,
-.student-page-section-card .student-page-card__body > .field-grid-240 {
+.student-page-profile-section-surface .student-page-card__body > .field-grid-220,
+.student-page-profile-section-surface .student-page-card__body > .field-grid-240 {
     align-items: start;
+    gap: 10px 12px;
+}
+
+.student-page-profile-form .stack-16,
+.student-page-profile-form .stack-14 {
+    gap: 10px;
+}
+
+.student-page-profile-form .stack-6 {
+    gap: 4px;
+}
+
+.student-page-profile-form.is-readonly [data-student-profile-actions] {
+    display: none;
+}
+
+.student-page-profile-form.is-readonly input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+.student-page-profile-form.is-readonly select,
+.student-page-profile-form.is-readonly textarea {
+    pointer-events: none;
+    color: color-mix(in srgb, var(--theme-text-primary) 92%, var(--legacy-copy) 8%);
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+    padding: 0 !important;
+    min-height: auto;
+    border-radius: 0;
+}
+
+.student-page-profile-form.is-readonly textarea {
+    resize: none;
+    min-height: auto;
+}
+
+.student-page-profile-form.is-readonly select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: none !important;
+}
+
+.student-page-profile-form .field-label {
+    margin-bottom: 5px;
+    font-size: 0.72rem;
+}
+
+.student-page-profile-form input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+.student-page-profile-form select,
+.student-page-profile-form textarea {
+    min-height: 40px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+}
+
+.student-page-profile-form textarea {
+    min-height: 112px;
+}
+
+.student-page-profile-actions {
+    padding-top: 0;
+    border-top: none;
 }
 
 .student-page-alert-banner {
@@ -511,83 +746,51 @@ POR QUE ELE EXISTE:
     box-shadow: 0 10px 22px rgba(190, 24, 93, 0.18);
 }
 
-.student-page-charge-card {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 18px 20px;
-    padding: 18px 20px 20px;
-}
-
-.student-page-charge-card.is-danger {
-    border-color: color-mix(in srgb, var(--theme-accent-danger) 24%, var(--theme-glass-border) 76%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-danger-alpha) 14%, transparent), transparent 32%),
-        var(--theme-surface-glass-strong);
-}
-
-.student-page-charge-card__copy,
-.student-page-charge-card__value {
-    display: grid;
-    gap: 8px;
-}
-
-.student-page-charge-card__title {
-    letter-spacing: -0.018em;
-}
-
-.student-page-charge-card__eyebrow {
-    letter-spacing: 0.08em;
-}
-
-.student-page-charge-card__support {
-    max-width: 42ch;
-    line-height: 1.5;
-}
-
-.student-page-charge-card__value {
-    align-content: start;
-    justify-items: end;
-    text-align: right;
-}
-
-.student-page-charge-card__value strong {
-    color: var(--theme-text-primary);
-    font-size: clamp(1.5rem, 2.2vw, 2rem);
-    line-height: 1;
-}
-
-.student-page-charge-card__meta {
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-}
-
-.student-page-charge-card__bar {
-    grid-column: 1 / -1;
-    height: 6px;
-    border-radius: 999px;
-    background:
-        linear-gradient(90deg, var(--theme-accent-support), color-mix(in srgb, var(--theme-accent-support) 60%, var(--theme-accent-success) 40%));
-}
-
-.student-page-charge-card__bar.is-danger {
-    background: linear-gradient(90deg, var(--theme-accent-danger), color-mix(in srgb, var(--theme-accent-danger) 64%, var(--theme-accent-warning) 36%));
-}
-
-.student-page-charge-card__footer {
-    grid-column: 1 / -1;
+.student-page-alert-banner .operation-hero-action-rail,
+.student-page-payments-ghost-action-rail {
     display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
     align-items: center;
-    justify-content: space-between;
-    gap: 14px;
 }
 
-.student-page-charge-card__footer > :first-child {
-    min-width: 0;
+.student-page-alert-banner .operation-hero-action-rail .button,
+.student-page-payments-ghost-action-rail .button {
+    min-height: 32px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    box-shadow: none;
 }
 
-.student-page-charge-card__footnote {
-    line-height: 1.4;
+.student-page-alert-banner .operation-hero-action-rail .button:not(.secondary),
+.student-page-payments-ghost-action-rail .button:not(.secondary) {
+    background: color-mix(in srgb, var(--theme-surface-panel) 64%, transparent);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    color: color-mix(in srgb, var(--ink) 82%, var(--theme-text-secondary) 18%);
+}
+
+.student-page-alert-banner .operation-hero-action-rail .button.secondary,
+.student-page-payments-ghost-action-rail .button.secondary {
+    background: transparent;
+    border-color: transparent;
+    color: color-mix(in srgb, var(--theme-text-muted) 84%, var(--ink) 16%);
+}
+
+.student-page-alert-banner .operation-hero-action-rail .button:hover,
+.student-page-alert-banner .operation-hero-action-rail .button:focus-visible,
+.student-page-payments-ghost-action-rail .button:hover,
+.student-page-payments-ghost-action-rail .button:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 72%, transparent);
+    box-shadow: none;
+}
+
+.student-page-alert-banner .operation-hero-action-rail .button.secondary:hover,
+.student-page-alert-banner .operation-hero-action-rail .button.secondary:focus-visible,
+.student-page-payments-ghost-action-rail .button.secondary:hover,
+.student-page-payments-ghost-action-rail .button.secondary:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 42%, transparent);
 }
 
 .student-page-payments-ledger__table {
@@ -734,7 +937,7 @@ POR QUE ELE EXISTE:
 .student-page-plan-meta {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
+    gap: 10px;
 }
 
 .student-page-plan-meta--wide {
@@ -743,9 +946,9 @@ POR QUE ELE EXISTE:
 
 .student-page-plan-meta__item {
     display: grid;
-    gap: 10px;
-    padding: 15px 15px 14px;
-    border-radius: 18px;
+    gap: 7px;
+    padding: 11px 12px 10px;
+    border-radius: 15px;
     border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 36%),
@@ -764,16 +967,16 @@ POR QUE ELE EXISTE:
 
 .student-page-plan-meta__label {
     color: var(--legacy-copy);
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
 }
 
 .student-page-plan-meta__value {
     color: var(--theme-text-primary);
-    font-size: 1.04rem;
-    line-height: 1.2;
+    font-size: 0.96rem;
+    line-height: 1.16;
 }
 
 .student-page-plan-kicker {
@@ -782,45 +985,45 @@ POR QUE ELE EXISTE:
 
 .student-page-plan-summary__hero {
     display: grid;
-    gap: 7px;
-    max-width: 48ch;
+    gap: 4px;
+    max-width: 52ch;
 }
 
 .student-page-plan-summary__copy {
-    font-size: 0.92rem;
+    font-size: 0.84rem;
 }
 
 .student-page-plan-summary__support {
-    max-width: 44ch;
-    line-height: 1.52;
+    max-width: 52ch;
+    line-height: 1.38;
 }
 
 .student-page-plan-title {
     margin: 0;
     color: var(--theme-text-primary);
-    font-size: clamp(1.52rem, 2.15vw, 1.94rem);
-    line-height: 1.04;
+    font-size: clamp(1.28rem, 1.8vw, 1.58rem);
+    line-height: 1.02;
     letter-spacing: -0.02em;
 }
 
 .student-page-plan-price {
     display: grid;
-    gap: 5px;
+    gap: 2px;
     justify-items: end;
     text-align: right;
-    padding: 8px 0 0;
+    padding: 4px 0 0;
 }
 
 .student-page-plan-price strong {
     color: var(--theme-text-primary);
-    font-size: clamp(1.95rem, 2.55vw, 2.45rem);
+    font-size: clamp(1.48rem, 2vw, 1.84rem);
     line-height: 1;
     letter-spacing: -0.03em;
 }
 
 .student-page-plan-price span {
     color: var(--legacy-copy);
-    font-size: 0.78rem;
+    font-size: 0.72rem;
 }
 
 .student-page-plan-actions__list {
@@ -849,6 +1052,38 @@ POR QUE ELE EXISTE:
 
 .student-page-plan-action-copy strong {
     letter-spacing: -0.01em;
+}
+
+.student-page-plan-action-row .button {
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.student-page-plan-action-row .button:not(.secondary) {
+    background: color-mix(in srgb, var(--theme-surface-panel) 64%, transparent);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    color: color-mix(in srgb, var(--ink) 82%, var(--theme-text-secondary) 18%);
+}
+
+.student-page-plan-action-row .button.secondary {
+    background: transparent;
+    border-color: transparent;
+    color: color-mix(in srgb, var(--theme-text-muted) 84%, var(--ink) 16%);
+}
+
+.student-page-plan-action-row .button:hover,
+.student-page-plan-action-row .button:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 72%, transparent);
+    box-shadow: none;
+}
+
+.student-page-plan-action-row .button.secondary:hover,
+.student-page-plan-action-row .button.secondary:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 42%, transparent);
 }
 
 .student-page-plan-action-row + .student-page-plan-action-row {
@@ -906,15 +1141,42 @@ POR QUE ELE EXISTE:
 }
 
 .student-page-payments-panel {
+    display: block;
+    gap: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.student-page-payments-panel {
     padding-top: 0;
+}
+
+.student-page-payments-panel__content {
+    display: block;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: 0;
+}
+
+#student-financial-overview:focus,
+#student-financial-overview:focus-visible,
+#student-financial-workspace-content:focus,
+#student-financial-workspace-content:focus-visible,
+.student-page-panel--payments:focus,
+.student-page-panel--payments:focus-visible {
+    outline: none;
+    box-shadow: none;
 }
 
 .student-form-shell .student-page-payments-panel {
     padding-top: 4px;
-}
-
-.student-page-payments-panel .student-page-payments-workspace__content[hidden] {
-    display: block !important;
 }
 
 .student-page-payments-panel :is(
@@ -933,6 +1195,14 @@ POR QUE ELE EXISTE:
 .student-page-payments-enrollment-card {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
     box-shadow: var(--theme-glass-shadow);
+}
+
+.student-page-payments-history-card {
+    border-color: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+}
+
+.student-page-payments-history-card::before {
+    display: none;
 }
 
 .student-page-payments-panel {
@@ -1031,11 +1301,47 @@ body[data-theme="dark"] .student-page-card {
     color: var(--theme-text-primary);
 }
 
+body[data-theme="dark"] .student-page-header.is-danger {
+    --student-page-header-shell-accent: color-mix(in srgb, var(--theme-accent-danger) 23%, transparent);
+}
+
+body[data-theme="dark"] .student-page-header.is-success {
+    --student-page-header-shell-accent: color-mix(in srgb, var(--theme-accent-success) 21%, transparent);
+}
+
+body[data-theme="dark"] .student-page-header__stat-card.is-danger {
+    --student-page-stat-border-accent: color-mix(in srgb, var(--theme-accent-danger) 48%, var(--theme-glass-border) 52%);
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, var(--theme-glass-highlight) 72%, transparent),
+        0 0 0 1px color-mix(in srgb, var(--theme-accent-danger) 12%, transparent),
+        0 12px 24px rgba(0, 0, 0, 0.14);
+}
+
+body[data-theme="dark"] .student-page-header__stat-card.is-success {
+    --student-page-stat-border-accent: color-mix(in srgb, var(--theme-accent-success) 48%, var(--theme-glass-border) 52%);
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, var(--theme-glass-highlight) 72%, transparent),
+        0 0 0 1px color-mix(in srgb, var(--theme-accent-success) 10%, transparent),
+        0 12px 24px rgba(0, 0, 0, 0.14);
+}
+
+
+body[data-theme="dark"] .student-page-header-card.student-page-header__card {
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 30%),
+        var(--theme-surface-glass-strong);
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, var(--theme-glass-highlight) 72%, transparent),
+        0 12px 26px rgba(0, 0, 0, 0.16);
+    color: var(--theme-text-primary);
+}
+
 body[data-theme="dark"] .student-page-card__head {
     border-bottom-color: color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
 }
 
-body[data-theme="dark"] .student-page-section-card:hover,
+body[data-theme="dark"] .student-page-profile-section-surface:hover,
 body[data-theme="dark"] .student-page-plan-meta__item:hover,
 body[data-theme="dark"] .student-page-plan-action-row:hover,
 body[data-theme="dark"] .student-page-payments-ledger__row:hover,
@@ -1044,10 +1350,26 @@ body[data-theme="dark"] .student-page-payments-ledger__action:focus-visible {
     background: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
 }
 
-body[data-theme="dark"] .student-page-section-card:hover,
+body[data-theme="dark"] .student-page-profile-section-surface:hover,
 body[data-theme="dark"] .student-page-plan-meta__item:hover,
 body[data-theme="dark"] .student-page-plan-action-row:hover {
     background: inherit;
+}
+
+body[data-theme="dark"] .student-page-plan-action-row .button:not(.secondary) {
+    background: rgba(10, 18, 32, 0.72);
+    border-color: rgba(148, 163, 184, 0.12);
+    color: rgba(248, 250, 252, 0.92);
+}
+
+body[data-theme="dark"] .student-page-plan-action-row .button.secondary {
+    background: transparent;
+    border-color: transparent;
+}
+
+body[data-theme="dark"] .student-page-plan-action-row .button:hover,
+body[data-theme="dark"] .student-page-plan-action-row .button:focus-visible {
+    background: rgba(15, 23, 42, 0.84);
 }
 
 body[data-theme="dark"] .student-page-payments-panel :is(
@@ -1070,6 +1392,10 @@ body[data-theme="dark"] :is(
     box-shadow: var(--theme-glass-shadow);
 }
 
+body[data-theme="dark"] .student-page-payments-history-card {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+}
+
 body[data-theme="dark"] .student-page-payments-panel > .slide-overlay {
     background: rgba(2, 6, 14, 0.3);
 }
@@ -1085,9 +1411,7 @@ body[data-theme="dark"] .student-page-payments-drawer.slide-over-panel {
 
 body[data-theme="dark"] .student-page-header__meta,
 body[data-theme="dark"] .student-page-header__stat-meta,
-body[data-theme="dark"] .student-page-header__stat-label,
-body[data-theme="dark"] .student-page-charge-card__footer,
-body[data-theme="dark"] .student-page-charge-card__value span {
+body[data-theme="dark"] .student-page-header__stat-label {
     color: var(--theme-text-secondary);
 }
 
@@ -1160,10 +1484,11 @@ body[data-theme="dark"] .student-page-alert-banner {
 
     .student-page-header__actions {
         justify-content: flex-start;
+        width: 100%;
     }
 
     .student-page-header__actions-group {
-        width: auto;
+        width: 100%;
     }
 
     .student-page-header__title {
@@ -1180,26 +1505,11 @@ body[data-theme="dark"] .student-page-alert-banner {
         padding-top: 2px;
     }
 
-    .student-page-charge-card {
-        grid-template-columns: 1fr;
-    }
-
     .student-page-header__stats,
     .student-page-plan-meta {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .student-page-charge-card__value,
-    .student-page-charge-card__footer {
-        justify-items: start;
-        text-align: left;
-    }
-
-    .student-page-charge-card__footer {
-        flex-wrap: wrap;
-    }
-
-    .student-page-charge-card__support,
     .student-page-panel-heading__copy .meta-text {
         max-width: none;
     }
@@ -1258,10 +1568,14 @@ body[data-theme="dark"] .student-page-alert-banner {
     .student-page-form-actions .button,
     .student-page-plan-action-row .button,
     .student-page-alert-banner .button,
-    .student-page-charge-card__footer .button,
     .student-page-header__actions .button {
         width: 100%;
         justify-content: center;
+    }
+
+    .student-page-alert-banner .operation-hero-action-rail,
+    .student-page-payments-ghost-action-rail {
+        width: 100%;
     }
 
     .student-page-plan-price {
@@ -1277,8 +1591,40 @@ body[data-theme="dark"] .student-page-ghost-action {
     background: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
 }
 
-body[data-theme="dark"] .student-page-charge-card.is-danger {
-    border-color: color-mix(in srgb, var(--theme-accent-danger) 30%, var(--theme-glass-border) 70%);
+body[data-theme="dark"] .student-page-alert-banner .operation-hero-action-rail .button:not(.secondary),
+body[data-theme="dark"] .student-page-payments-ghost-action-rail .button:not(.secondary) {
+    background: rgba(10, 18, 32, 0.72);
+    border-color: rgba(148, 163, 184, 0.12);
+    color: rgba(248, 250, 252, 0.92);
+}
+
+body[data-theme="dark"] .student-page-alert-banner .operation-hero-action-rail .button.secondary,
+body[data-theme="dark"] .student-page-payments-ghost-action-rail .button.secondary {
+    background: transparent;
+    border-color: transparent;
+}
+
+body[data-theme="dark"] .student-page-alert-banner .operation-hero-action-rail .button:hover,
+body[data-theme="dark"] .student-page-alert-banner .operation-hero-action-rail .button:focus-visible,
+body[data-theme="dark"] .student-page-payments-ghost-action-rail .button:hover,
+body[data-theme="dark"] .student-page-payments-ghost-action-rail .button:focus-visible {
+    background: rgba(15, 23, 42, 0.84);
+}
+
+body[data-theme="dark"] .student-page-header__actions .operation-hero-action-rail .button:not(.secondary) {
+    background: rgba(10, 18, 32, 0.72);
+    border-color: rgba(148, 163, 184, 0.12);
+    color: rgba(248, 250, 252, 0.92);
+}
+
+body[data-theme="dark"] .student-page-header__actions .operation-hero-action-rail .button.secondary {
+    background: transparent;
+    border-color: transparent;
+}
+
+body[data-theme="dark"] .student-page-header__actions .operation-hero-action-rail .button:hover,
+body[data-theme="dark"] .student-page-header__actions .operation-hero-action-rail .button:focus-visible {
+    background: rgba(15, 23, 42, 0.84);
 }
 
 @media (max-width: 720px) {
@@ -1317,13 +1663,11 @@ body[data-theme="dark"] .student-page-charge-card.is-danger {
     }
 
     .student-page-header__stats,
-    .student-page-plan-meta,
-    .student-page-charge-card {
+    .student-page-plan-meta {
         grid-template-columns: 1fr;
     }
 
-    .student-page-alert-banner,
-    .student-page-charge-card__footer {
+    .student-page-alert-banner {
         flex-direction: column;
         align-items: stretch;
     }
@@ -1349,11 +1693,6 @@ body[data-theme="dark"] .student-page-charge-card.is-danger {
     .student-page-header__actions .button {
         flex: 1 1 0;
         min-width: 0;
-    }
-
-    .student-page-charge-card__value,
-    .student-page-charge-card__copy {
-        gap: 6px;
     }
 
     .student-page-payments-ledger__head th,
@@ -1404,8 +1743,7 @@ body[data-theme="dark"] .student-page-charge-card.is-danger {
     }
 
     .student-page-card__head,
-    .student-page-card__body,
-    .student-page-charge-card {
+    .student-page-card__body {
         padding: 14px;
     }
 
@@ -1422,7 +1760,6 @@ body[data-theme="dark"] .student-page-charge-card.is-danger {
         font-size: 0.98rem;
     }
 
-    .student-page-charge-card__value strong,
     .student-page-plan-price strong {
         font-size: 1.55rem;
     }

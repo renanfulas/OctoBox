@@ -45,13 +45,13 @@ POR QUE ELE EXISTE:
                                 <strong class="font-bold">R$ {{ payment.amount|floatformat:2 }}</strong>
                                 <p class="meta-text-sm">Vencimento: {{ payment.due_date|date:"d/m/Y" }}</p>
                             </div>
-                            <div class="actions actions-tight student-financial-timeline__actions">
+                            <div class="actions actions-tight operation-hero-action-rail student-financial-timeline__actions">
                                 {% if payment.status == 'paid' %}
                                 <span class="pill success">Ja recebido</span>
                                 {% elif payment.is_next_actionable %}
                                     {% if payment.status == 'overdue' %}
                                 <button
-                                    class="button danger-soft student-financial-action-button student-financial-action-button--compact"
+                                    class="button student-financial-action-button student-financial-action-button--compact"
                                     type="button"
                                     data-action="edit-payment"
                                     data-payment-id="{{ payment.id }}"
@@ -63,7 +63,7 @@ POR QUE ELE EXISTE:
                                 </button>
                                     {% else %}
                                 <button
-                                    class="button success-soft student-financial-action-button student-financial-action-button--compact"
+                                    class="button student-financial-action-button student-financial-action-button--compact"
                                     type="button"
                                     data-action="edit-payment"
                                     data-payment-id="{{ payment.id }}"
@@ -94,12 +94,14 @@ POR QUE ELE EXISTE:
                 <p class="eyebrow">Ajuste sensivel</p>
                 <p class="meta-text">Use somente quando o aluno precisar pausar a matricula por um periodo.</p>
             </div>
-            <button class="button secondary student-financial-action-button student-financial-action-button--full student-financial-action-button--contextual" type="button" data-action="vacation-freeze">
-                Ajustar ferias ou congelamento
-            </button>
-            <button class="button secondary student-financial-action-button student-financial-action-button--full" type="button" data-action="close-drawers">
-                Fechar gestao ampliada
-            </button>
+            <div class="actions actions-tight operation-hero-action-rail student-financial-drawer-action-rail">
+                <button class="button secondary student-financial-action-button student-financial-action-button--full student-financial-action-button--contextual" type="button" data-action="vacation-freeze">
+                    Ajustar ferias ou congelamento
+                </button>
+                <button class="button secondary student-financial-action-button student-financial-action-button--full" type="button" data-action="close-drawers">
+                    Fechar gestao ampliada
+                </button>
+            </div>
         </div>
     </footer>
 </div>

@@ -24,7 +24,7 @@ from catalog.services.membership_plan_workflows import (
     run_membership_plan_create_workflow,
     run_membership_plan_update_workflow,
 )
-from catalog.services.operational_queue import build_operational_queue_metrics, build_operational_queue_snapshot
+from catalog.services.operational_queue import build_operational_queue_snapshot
 from finance.models import MembershipPlan
 from reporting.application.catalog_reports import build_finance_report
 from reporting.infrastructure import build_report_response
@@ -36,9 +36,6 @@ from .catalog_base_views import CatalogBaseView
 
 class FinanceWorkspaceContextMixin:
     allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER)
-
-    def get_finance_snapshot(self):
-        return build_finance_snapshot(self.request.GET)
 
     def get_finance_export_links(self):
         return {
@@ -63,7 +60,6 @@ class FinanceCenterView(FinanceWorkspaceContextMixin, CatalogBaseView, FormView)
         page_payload = build_finance_center_page(
             snapshot=snapshot,
             operational_queue=operational_queue,
-            operational_metrics=build_operational_queue_metrics(operational_queue),
             export_links=self.get_finance_export_links(),
             current_role_slug=base_context['current_role'].slug,
             form=kwargs.get('form') or self.get_form(),

@@ -20,6 +20,7 @@ import json
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import IntegrityError
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -246,11 +247,17 @@ class StudentQuickCreateView(StudentQuickBaseView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        workflow = run_student_quick_create_workflow(
-            actor=self.request.user,
-            form=form,
-            selected_intake=self.get_selected_intake(),
-        )
+        try:
+            workflow = run_student_quick_create_workflow(
+                actor=self.request.user,
+                form=form,
+                selected_intake=self.get_selected_intake(),
+            )
+        except IntegrityError as exc:
+            if 'phone_lookup_index' not in str(exc):
+                raise
+            form.add_error('phone', 'Ja existe um aluno cadastrado com este WhatsApp.')
+            return self.form_invalid(form)
         self.object = workflow['student']
         messages.success(self.request, f'Aluno {self.object.full_name} cadastrado com sucesso.')
         return super().form_valid(form)

@@ -727,6 +727,69 @@ class CatalogViewTests(TestCase):
         self.assertEqual(form.cleaned_data['phone'], '11977777777')
         self.assertEqual(form.cleaned_data['cpf'], self.valid_cpf)
 
+    def test_student_quick_form_blocks_duplicate_phone_after_normalization(self):
+        form = StudentQuickForm(
+            data={
+                'full_name': 'Bruna Costa Duplicada',
+                'phone': '(11) 98888-8888',
+                'status': 'active',
+                'email': '',
+                'gender': '',
+                'birth_date': '',
+                'health_issue_status': '',
+                'cpf': '',
+                'notes': '',
+                'selected_plan': '',
+                'enrollment_status': 'pending',
+                'payment_method': PaymentMethod.PIX,
+                'confirm_payment_now': 'False',
+                'payment_due_date': '',
+                'payment_reference': '',
+                'initial_payment_amount': '',
+                'billing_strategy': 'single',
+                'installment_total': 1,
+                'recurrence_cycles': 3,
+                'intake_record': '',
+            },
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('phone', form.errors)
+        self.assertIn('WhatsApp', form.errors['phone'][0])
+
+    def test_student_quick_create_flow_returns_form_error_when_phone_already_exists(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('student-quick-create'),
+            data={
+                'full_name': 'Bruna Costa Duplicada',
+                'phone': '(11) 98888-8888',
+                'status': 'active',
+                'email': '',
+                'gender': '',
+                'birth_date': '',
+                'health_issue_status': '',
+                'cpf': '',
+                'notes': '',
+                'selected_plan': '',
+                'enrollment_status': 'pending',
+                'payment_method': PaymentMethod.PIX,
+                'confirm_payment_now': 'False',
+                'payment_due_date': '',
+                'payment_reference': '',
+                'initial_payment_amount': '',
+                'billing_strategy': 'single',
+                'installment_total': 1,
+                'recurrence_cycles': 3,
+                'intake_record': '',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Já existe um aluno cadastrado com este WhatsApp.')
+        self.assertEqual(Student.objects.filter(full_name='Bruna Costa Duplicada').count(), 0)
+
     def test_student_quick_create_flow_shows_conversational_recovery_guide_when_invalid(self):
         self.client.force_login(self.user)
 

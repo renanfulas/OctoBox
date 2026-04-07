@@ -18,6 +18,7 @@ from django.utils import timezone
 
 from communications.models import IntakeStatus, StudentIntake
 from finance.models import EnrollmentStatus, MembershipPlan, PaymentMethod, PaymentStatus
+from shared_support.crypto_fields import generate_blind_index
 from shared_support.form_inputs import (
     apply_cpf_input_attrs,
     apply_currency_input_attrs,
@@ -28,6 +29,18 @@ from shared_support.form_inputs import (
 )
 from shared_support.phone_numbers import normalize_phone_number
 from students.models import Student, StudentStatus
+
+
+def _student_phone_exists(*, normalized_phone, instance_pk=None):
+    phone_lookup_index = generate_blind_index(normalized_phone)
+    queryset = Student.objects.all()
+    if instance_pk is not None:
+        queryset = queryset.exclude(pk=instance_pk)
+
+    if phone_lookup_index:
+        return queryset.filter(phone_lookup_index=phone_lookup_index).exists()
+
+    return queryset.filter(phone=normalized_phone).exists()
 
 
 class StudentDirectoryFilterForm(forms.Form):
@@ -222,7 +235,7 @@ class StudentQuickForm(forms.ModelForm):
         if not phone:
             return ''
         student_id = self.instance.pk if self.instance else None
-        if Student.objects.filter(phone=phone).exclude(pk=student_id).exists():
+        if _student_phone_exists(normalized_phone=phone, instance_pk=student_id):
             raise forms.ValidationError('Já existe um aluno cadastrado com este WhatsApp.')
         return phone
 
@@ -306,7 +319,7 @@ class StudentExpressForm(forms.ModelForm):
         phone = normalize_phone_number(self.cleaned_data.get('phone'))
         if not phone:
             return ''
-        if Student.objects.filter(phone=phone).exists():
+        if _student_phone_exists(normalized_phone=phone):
             raise forms.ValidationError('Ja existe aluno cadastrado com este numero.')
         return phone
 

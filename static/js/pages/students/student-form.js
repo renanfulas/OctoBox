@@ -32,6 +32,7 @@ POR QUE ELE EXISTE:
   var studentPageShell = document.querySelector('[data-student-page-shell]');
   var studentPagePanels = studentPageShell ? Array.from(studentPageShell.querySelectorAll('[data-student-page-panel]')) : [];
   var studentPageTriggers = studentPageShell ? Array.from(studentPageShell.querySelectorAll('[data-student-page-tab-trigger]')) : [];
+  var studentProfileForm = document.querySelector('[data-student-profile-form]');
 
   var initialPlanId = planField ? planField.value : null;
   var initialPrice = (planField && planPriceMap) ? parseAmount(planPriceMap[initialPlanId]) : 0;
@@ -327,6 +328,38 @@ POR QUE ELE EXISTE:
     activateStudentPagePanel(getStudentPagePanelFromHash(window.location.hash));
   }
 
+  function setStudentProfileReadonlyState(shouldLock) {
+    if (!studentProfileForm) {
+      return;
+    }
+
+    studentProfileForm.classList.toggle('is-readonly', shouldLock);
+
+    var toggleButtons = studentProfileForm.querySelectorAll('[data-action="toggle-student-profile-edit"]');
+    toggleButtons.forEach(function(button) {
+      button.setAttribute('aria-pressed', shouldLock ? 'false' : 'true');
+      button.innerHTML = shouldLock
+        ? '<svg class="student-page-profile-edit-toggle__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>Editar leitura'
+        : '<svg class="student-page-profile-edit-toggle__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 6-12 12"/><path d="m6 6 12 12"/></svg>Fechar edicao';
+    });
+
+    var fields = studentProfileForm.querySelectorAll('input:not([type="hidden"]), select, textarea, button[type="submit"]');
+    fields.forEach(function(field) {
+      if (field.closest('[data-student-profile-actions]') && field.type === 'submit') {
+        field.disabled = shouldLock;
+        return;
+      }
+
+      if (field.matches('input:not([type="checkbox"]):not([type="radio"])') || field.tagName === 'TEXTAREA') {
+        field.readOnly = shouldLock;
+      }
+
+      if (field.tagName === 'SELECT' || field.type === 'checkbox' || field.type === 'radio') {
+        field.disabled = shouldLock;
+      }
+    });
+  }
+
   if (studentPageShell) {
     studentPageShell.addEventListener('click', function(event) {
       var drawerTrigger = event.target.closest('[data-student-page-open-drawer]');
@@ -336,6 +369,20 @@ POR QUE ELE EXISTE:
         syncStudentPageHash('tab-student-form-financial');
         if (typeof window.openStudentFinancialDrawer === 'function') {
           window.openStudentFinancialDrawer(drawerTrigger.getAttribute('data-student-page-open-drawer'), drawerTrigger);
+        }
+        return;
+      }
+
+      var profileEditTrigger = event.target.closest('[data-action="toggle-student-profile-edit"]');
+      if (profileEditTrigger) {
+        event.preventDefault();
+        var shouldLock = studentProfileForm ? !studentProfileForm.classList.contains('is-readonly') : true;
+        setStudentProfileReadonlyState(shouldLock);
+        if (studentProfileForm && !studentProfileForm.classList.contains('is-readonly')) {
+          var firstEditableField = studentProfileForm.querySelector('input:not([type="hidden"]):not([readonly]), select:not(:disabled), textarea:not([readonly])');
+          if (firstEditableField) {
+            firstEditableField.focus();
+          }
         }
         return;
       }
@@ -390,6 +437,7 @@ POR QUE ELE EXISTE:
   }
 
   resetPlanSwapFeedback();
+  setStudentProfileReadonlyState(true);
   applyWorkspacePanelFromHash();
   applyHashFocusMode();
   window.addEventListener('hashchange', applyWorkspacePanelFromHash);
