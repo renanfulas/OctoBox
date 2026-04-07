@@ -34,10 +34,6 @@ POR QUE ELE EXISTE:
     min-width: 0;
 }
 
-.student-kpi-card {
-    cursor: pointer;
-}
-
 .student-kpi-card-head {
     display: flex;
     align-items: center;
