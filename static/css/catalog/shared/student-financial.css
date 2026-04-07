@@ -295,6 +295,50 @@ POR QUE ELE EXISTE:
     justify-content: flex-end;
 }
 
+.student-financial-confirm-dialog {
+    width: min(440px, calc(100vw - 32px));
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--theme-text-primary);
+}
+
+.student-financial-confirm-dialog::backdrop {
+    background:
+        radial-gradient(circle at top, color-mix(in srgb, var(--theme-accent-support-alpha) 22%, transparent), transparent 42%),
+        rgba(7, 10, 18, 0.72);
+    backdrop-filter: blur(10px);
+}
+
+.student-financial-confirm-dialog__card {
+    display: grid;
+    gap: 18px;
+    padding: 24px;
+    border-radius: 28px;
+    border: 1px solid color-mix(in srgb, var(--student-financial-panel-border) 92%, transparent);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 38%),
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-secondary) 94%, transparent));
+    box-shadow:
+        0 28px 80px rgba(0, 0, 0, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.student-financial-confirm-dialog__copy {
+    display: grid;
+    gap: 6px;
+}
+
+.student-financial-confirm-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.student-financial-confirm-dialog__actions .button {
+    min-width: 96px;
+}
+
 .student-financial-command-actions-secondary {
     display: flex;
     flex-wrap: wrap;

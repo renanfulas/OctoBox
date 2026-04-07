@@ -64,11 +64,6 @@ def get_user_role(user):
         role = ROLE_MAP[cached_slug]
         setattr(user, _ROLE_CACHE_ATTR, role)
         return role
-    if cached_slug == 'SemPapel':
-        role = _build_fallback_role()
-        setattr(user, _ROLE_CACHE_ATTR, role)
-        return role
-
     if user.is_superuser:
         role = ROLE_MAP[ROLE_OWNER]
         cache.set(cache_key, role.slug, timeout=86400)
@@ -84,7 +79,6 @@ def get_user_role(user):
             return role
 
     role = _build_fallback_role()
-    cache.set(cache_key, role.slug, timeout=86400)
     setattr(user, _ROLE_CACHE_ATTR, role)
     return role
 
