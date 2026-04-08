@@ -7,6 +7,7 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Deve prolongar o hero sem competir com ele.
 -->
+{% if panel.items %}
 <section class="table-card fdw-focus-lane page-reading-panel{% if panel.class_name %} {{ panel.class_name }}{% endif %}"{% if panel.panel_id %} id="{{ panel.panel_id }}"{% endif %}>
     {% include "includes/ui/layout/operation_card_head.html" with eyebrow=panel.eyebrow title=panel.title copy=panel.copy pill_label=panel.pill_label pill_class=panel.pill_class %}
     <div class="fdw-focus-list">
@@ -34,3 +35,4 @@ PONTOS CRITICOS:
         {% endfor %}
     </div>
 </section>
+{% endif %}

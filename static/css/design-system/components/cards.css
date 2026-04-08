@@ -261,8 +261,9 @@ REGRA:
 }
 
 .metric-card::before {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-primary) 62%, transparent), color-mix(in srgb, var(--theme-accent-support) 42%, transparent), color-mix(in srgb, var(--theme-accent-premium) 24%, transparent));
-    opacity: 0.92;
+    content: none;
+    background: none;
+    opacity: 0;
 }
 
 .metric-card::after {

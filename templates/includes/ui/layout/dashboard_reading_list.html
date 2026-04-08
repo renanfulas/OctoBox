@@ -7,6 +7,7 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - depende do mesmo payload de reading_panel, mas a casca visual daqui nao deve mais acoplar em page_reading_list.
 -->
+{% if panel.items %}
 <section class="dashboard-reading-panel{% if panel.class_name and panel.class_name != 'dashboard-reading-panel' %} {{ panel.class_name }}{% endif %}"{% if panel.panel_id %} id="{{ panel.panel_id }}"{% endif %} aria-labelledby="dashboard-reading-panel-title">
     <h2 class="visually-hidden" id="dashboard-reading-panel-title">Leitura rapida do dashboard</h2>
     <div class="dashboard-reading-panel__grid">
@@ -51,3 +52,4 @@ PONTOS CRITICOS:
     {% endfor %}
     </div>
 </section>
+{% endif %}

@@ -53,6 +53,26 @@ def _limit_collection(items, *, max_items):
     return list(items or [])[:max_items]
 
 
+def select_priority_items(items, *, priority_order, priority_key='severity', actionable_key='is_actionable'):
+    actionable_items = [item for item in list(items or []) if item.get(actionable_key)]
+    if not actionable_items:
+        return []
+
+    for priority in priority_order:
+        selected_item = next((item for item in actionable_items if item.get(priority_key) == priority), None)
+        if selected_item:
+            return [selected_item]
+
+    return []
+
+
+def resolve_primary_href(items, fallback=''):
+    for item in items or []:
+        if item.get('is_clickable', True):
+            return item.get('href') or fallback
+    return ''
+
+
 def build_page_hero(
     *,
     eyebrow,

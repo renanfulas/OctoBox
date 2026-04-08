@@ -48,15 +48,6 @@ ARQUIVO: KPIs compartilhados das superfícies operacionais.
     min-height: 100%;
 }
 
-.operation-shell .operation-metric-grid .metric-card .card-body-metric::before {
-    content: "";
-    width: 14px;
-    height: 14px;
-    border-radius: 999px;
-    border: 1.8px solid currentColor;
-    opacity: 0.9;
-}
-
 .operation-shell .operation-metric-grid .metric-card .card-value-stack {
     display: flex;
     flex-direction: column;
@@ -104,7 +95,7 @@ ARQUIVO: KPIs compartilhados das superfícies operacionais.
 .operation-shell .operation-metric-grid .metric-card.status-attention,
 .operation-shell .operation-metric-grid .metric-card.status-clean,
 .operation-shell .operation-metric-grid .metric-card.status-neutral {
-    border-left: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+    border-left: 0;
 }
 
 .operation-shell .operation-metric-grid .metric-card.status-attention,

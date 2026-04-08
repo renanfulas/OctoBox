@@ -11,7 +11,16 @@ from django.utils import timezone
 from access.navigation_contracts import get_shell_route_url
 from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from django.urls import reverse
-from shared_support.page_payloads import build_page_assets, build_page_hero, build_page_payload, build_page_reading_panel
+from shared_support.page_payloads import (
+    build_page_assets,
+    build_page_hero,
+    build_page_payload,
+    build_page_reading_panel,
+    select_priority_items,
+)
+
+
+READING_CARD_SEVERITY_ORDER = ('emergency', 'warning', 'risk')
 
 
 
@@ -577,9 +586,20 @@ def _build_dashboard_priority_cards(
     return [emergency_card, urgency_card, risk_card]
 
 
+def _select_dashboard_reading_cards(priority_cards):
+    """Aplica a hierarquia operacional do slot dominante: emergency > warning > risk."""
+    return select_priority_items(
+        priority_cards,
+        priority_order=READING_CARD_SEVERITY_ORDER,
+        priority_key='severity',
+        actionable_key='is_actionable',
+    )
+
+
 def _build_dashboard_reading_panel(priority_cards):
+    selected_cards = _select_dashboard_reading_cards(priority_cards)
     items = []
-    for card in list(priority_cards or [])[:3]:
+    for card in selected_cards:
         is_tranquil = not card.get('is_actionable')
         items.append(
             {
@@ -596,7 +616,7 @@ def _build_dashboard_reading_panel(priority_cards):
             }
         )
 
-    primary_card = priority_cards[0] if priority_cards else {}
+    primary_card = selected_cards[0] if selected_cards else {}
     return build_page_reading_panel(
         items=items,
         primary_href=primary_card.get('href', ''),

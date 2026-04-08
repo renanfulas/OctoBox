@@ -136,17 +136,6 @@
     min-height: clamp(132px, 15vw, 176px);
 }
 
-.dashboard-metrics-cluster .dashboard-kpi-card::before {
-    content: "";
-    position: absolute;
-    inset: 0 auto auto 0;
-    width: 100%;
-    height: 4px;
-    opacity: 0.95;
-    z-index: 2;
-    pointer-events: none;
-}
-
 .dashboard-metrics-cluster .dashboard-kpi-card::after {
     content: "";
     position: absolute;
@@ -157,34 +146,6 @@
     background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent), transparent 72%);
     opacity: 0.7;
     pointer-events: none;
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber::before {
-    background: linear-gradient(90deg, rgba(249, 115, 22, 1), rgba(251, 146, 60, 0.88));
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage::before {
-    background: linear-gradient(90deg, rgba(239, 68, 68, 1), rgba(220, 38, 38, 0.9));
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-red::before {
-    background: linear-gradient(90deg, rgba(220, 38, 38, 1), rgba(185, 28, 28, 0.9));
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-blue::before {
-    background: linear-gradient(90deg, rgba(37, 99, 235, 1), rgba(29, 78, 216, 0.9));
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-slate::before {
-    background: linear-gradient(90deg, rgba(100, 116, 139, 1), rgba(71, 85, 105, 0.9));
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-green::before {
-    background: linear-gradient(90deg, rgba(22, 163, 74, 1), rgba(21, 128, 61, 0.9));
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-emerald::before {
-    background: linear-gradient(90deg, rgba(16, 185, 129, 1), rgba(5, 150, 105, 0.9));
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage {
@@ -312,6 +273,14 @@
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-action {
     background: rgba(255, 255, 255, 0.52);
+}
+
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.status-attention {
+    border-left-color: var(--theme-accent-warning);
+}
+
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-blue.status-attention {
+    border-left-color: var(--theme-accent-primary);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card:hover {
