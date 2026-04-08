@@ -23,6 +23,7 @@ from django.views.generic import TemplateView
 from access.permissions import RoleRequiredMixin
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
 from onboarding.models import IntakeStatus
+from shared_support.manager_event_stream import publish_manager_stream_event
 from shared_support.page_payloads import attach_page_payload
 
 from .forms import IntakeQueueActionForm, IntakeQuickCreateForm
@@ -127,6 +128,15 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
                     'entry_kind': entry_kind,
                 }
                 created_entry.save()
+                publish_manager_stream_event(
+                    event_type='intake.updated',
+                    meta={
+                        'intake_id': created_entry.id,
+                        'action': 'quick-create',
+                        'status': created_entry.status,
+                        'entry_kind': entry_kind,
+                    },
+                )
 
             messages.success(request, f'{entry_kind.capitalize()} cadastrado com sucesso na Central de Intake.')
             return redirect(self._get_quick_create_success_url(entry_kind))
@@ -151,6 +161,15 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
             messages.error(request, str(exc))
         else:
             messages.success(request, result.message)
+            publish_manager_stream_event(
+                event_type='intake.updated',
+                meta={
+                    'intake_id': result.intake_id,
+                    'action': form.cleaned_data['action'],
+                    'status': result.status,
+                    'assigned_to_id': result.assigned_to_id,
+                },
+            )
 
         return redirect(self._get_success_url(form.cleaned_data.get('return_query', '')))
 

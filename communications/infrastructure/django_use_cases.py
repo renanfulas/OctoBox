@@ -50,6 +50,7 @@ from communications.models import (
 from finance.models import Enrollment, Payment, PaymentStatus
 from integrations.whatsapp.identity import resolve_whatsapp_channel_identity
 from integrations.whatsapp.payloads import sanitize_whatsapp_payload
+from shared_support.manager_event_stream import publish_manager_stream_event
 from shared_support.phone_numbers import normalize_phone_number
 from students.models import Student
 
@@ -148,9 +149,11 @@ class DjangoInboundWhatsAppMessagePort(InboundWhatsAppMessagePort):
         contact.status = mutation_plan.status
         contact.last_inbound_at = self.clock.now()
         update_fields.append('last_inbound_at')
+        contact_changed = False
         if update_fields:
             update_fields.append('updated_at')
             contact.save(update_fields=update_fields)
+            contact_changed = True
 
         message_log, duplicate_result = create_inbound_message_with_idempotency(
             external_message_id=command.external_message_id,
@@ -167,6 +170,17 @@ class DjangoInboundWhatsAppMessagePort(InboundWhatsAppMessagePort):
         )
         if duplicate_result is not None:
             return duplicate_result
+
+        if contact_changed:
+            publish_manager_stream_event(
+                event_type='whatsapp_contact.updated',
+                meta={
+                    'contact_id': contact.id,
+                    'linked_student_id': contact.linked_student_id,
+                    'status': contact.status,
+                    'action': 'inbound-sync',
+                },
+            )
 
         return InboundWhatsAppMessageResult(
             accepted=True,
@@ -191,6 +205,7 @@ class DjangoOperationalMessagePort(OperationalMessagePort):
         identity = resolve_whatsapp_channel_identity(phone=normalized_phone)
         contact = identity.contact
         created = False
+        contact_changed = False
         if contact is None:
             # O telefone do contato e do aluno usa criptografia na persistencia,
             # entao o lookup por igualdade no campo nao e confiavel para
@@ -212,6 +227,7 @@ class DjangoOperationalMessagePort(OperationalMessagePort):
                 status=resolve_contact_status(linked_student_id=student.id),
             )
             created = True
+            contact_changed = True
 
         mutation_plan = plan_outbound_contact_mutation(
             current_display_name=contact.display_name,
@@ -227,6 +243,17 @@ class DjangoOperationalMessagePort(OperationalMessagePort):
         if update_fields:
             update_fields.append('updated_at')
             contact.save(update_fields=update_fields)
+            contact_changed = True
+        if contact_changed:
+            publish_manager_stream_event(
+                event_type='whatsapp_contact.updated',
+                meta={
+                    'contact_id': contact.id,
+                    'linked_student_id': contact.linked_student_id,
+                    'status': contact.status,
+                    'action': 'ensure-contact',
+                },
+            )
         return contact, created
 
     @transaction.atomic
@@ -290,6 +317,15 @@ class DjangoOperationalMessagePort(OperationalMessagePort):
         )
         contact.last_outbound_at = message.delivered_at
         contact.save(update_fields=['last_outbound_at', 'updated_at'])
+        publish_manager_stream_event(
+            event_type='whatsapp_contact.updated',
+            meta={
+                'contact_id': contact.id,
+                'linked_student_id': contact.linked_student_id,
+                'status': contact.status,
+                'action': 'outbound-message',
+            },
+        )
 
         if payment is not None and should_mark_payment_overdue(
             action_kind=command.action_kind,

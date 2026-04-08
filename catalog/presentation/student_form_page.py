@@ -97,7 +97,7 @@ def build_student_form_recovery_guide(form):
     }
 
 
-def build_student_form_page(*, form, student_object, selected_intake, financial_overview, page_mode, current_role_slug):
+def build_student_form_page(*, form, student_object, selected_intake, financial_overview, page_mode, current_role_slug, browser_snapshot=None):
     latest_enrollment = financial_overview.get('latest_enrollment')
     recent_payments = financial_overview.get('payments', [])
     financial_ready = financial_overview.get('has_student', False)
@@ -214,6 +214,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'financial_ready': financial_ready,
             'student_form_initial_step': initial_form_step,
             'plan_price_map': plan_price_map,
+            'student_browser_snapshot': browser_snapshot,
             'focus_sections': {
                 'lead': {
                     'open': ['student-form-profile'],

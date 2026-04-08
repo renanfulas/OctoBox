@@ -5,7 +5,7 @@ POR QUE ELE EXISTE:
 - concentra plano, cobranca, historico e acoes sensiveis sem tirar o operador da ficha.
 
 O QUE ESTE ARQUIVO FAZ:
-1. separa cobrar agora de gestao ampliada.
+1. separa cobrar agora de vinculos complementares.
 2. organiza resumo, historico e acoes laterais em uma leitura mais guiada.
 3. preserva drawers e acoes existentes sem depender de script inline.
 -->
@@ -81,9 +81,6 @@ O QUE ESTE ARQUIVO FAZ:
             <button class="button" type="button" data-action="open-drawer" data-drawer-id="student-payment-checkout-slot" aria-controls="student-payment-checkout-slot" aria-expanded="false">
                 Cobrar agora
             </button>
-            <button class="button secondary" type="button" data-action="open-drawer" data-drawer-id="student-payment-management-slot" aria-controls="student-payment-management-slot" aria-expanded="false">
-                Gestao ampliada
-            </button>
             <button class="button secondary" type="button" data-action="open-drawer" data-drawer-id="financial-enrollment-management-slot" aria-controls="financial-enrollment-management-slot" aria-expanded="false">
                 Ver vinculo
             </button>
@@ -138,16 +135,13 @@ O QUE ESTE ARQUIVO FAZ:
                     {% if page.data.financial_overview.metrics.pagamentos_atrasados %}
                         <p class="meta-text">Existe cobranca em atraso. Comece pelo recebimento rapido se voce ja estiver no atendimento.</p>
                     {% elif page.data.financial_overview.metrics.pagamentos_pendentes %}
-                        <p class="meta-text">Ha pagamentos pendentes aguardando leitura. Abra o historico ou a gestao ampliada para decidir o proximo passo.</p>
+                        <p class="meta-text">Ha pagamentos pendentes aguardando leitura. Abra o historico ou o fluxo de pagamento para decidir o proximo passo.</p>
                     {% else %}
                         <p class="meta-text">A carteira deste aluno esta organizada. Use os atalhos abaixo apenas quando precisar registrar ou revisar algo.</p>
                     {% endif %}
                     <div class="student-financial-quick-actions actions actions-tight operation-hero-action-rail">
                         <button class="button" type="button" data-action="open-drawer" data-drawer-id="student-payment-checkout-slot" aria-controls="student-payment-checkout-slot" aria-expanded="false">
                             Cobrar agora
-                        </button>
-                        <button class="button secondary" type="button" data-action="open-drawer" data-drawer-id="student-payment-management-slot" aria-controls="student-payment-management-slot" aria-expanded="false">
-                            Gestao ampliada
                         </button>
                         <button class="button secondary" type="button" data-action="open-drawer" data-drawer-id="financial-enrollment-management-slot" aria-controls="financial-enrollment-management-slot" aria-expanded="false">
                             Ver vinculo
@@ -193,13 +187,6 @@ O QUE ESTE ARQUIVO FAZ:
     </div>
 
     {% endif %}
-    <div class="slide-over-panel student-page-payments-drawer student-page-payments-drawer--management" id="student-payment-management-slot" role="dialog" aria-modal="true" aria-labelledby="student-payment-management-title" aria-describedby="student-payment-management-copy" aria-hidden="true" tabindex="-1">
-        <button class="drawer-close-btn" type="button" data-action="close-drawers" aria-label="Fechar gestao ampliada">x</button>
-        <div id="student-payment-management-content">
-            {% include "includes/catalog/student_form/financial/billing_console.html" with page=page %}
-        </div>
-    </div>
-
     <div class="slide-over-panel student-page-payments-drawer student-page-payments-drawer--checkout" id="student-payment-checkout-slot" role="dialog" aria-modal="true" aria-labelledby="student-payment-checkout-title" aria-describedby="student-payment-checkout-copy" aria-hidden="true" tabindex="-1">
         <button class="drawer-close-btn" type="button" data-action="close-drawers" aria-label="Fechar cobrar agora">x</button>
         <div id="student-payment-checkout-content">

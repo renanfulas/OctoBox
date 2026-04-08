@@ -116,6 +116,44 @@ POR QUE ELE EXISTE:
     min-width: 0;
 }
 
+.student-signal-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.student-signal {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 0 8px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.student-signal--success {
+    color: var(--theme-accent-success);
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 72%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-success) 18%, transparent);
+}
+
+.student-signal--warning {
+    color: var(--theme-accent-warning);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 72%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 18%, transparent);
+}
+
+.student-signal--danger {
+    color: var(--theme-accent-danger);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 72%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 18%, transparent);
+}
+
 .student-avatar-circle {
     width: 40px;
     height: 40px;

@@ -393,6 +393,20 @@ PONTOS CRITICOS:
     white-space: nowrap;
 }
 
+.finance-priority-slide {
+    transition:
+        opacity 180ms ease,
+        transform 220ms ease,
+        max-width 220ms ease,
+        margin 220ms ease;
+}
+
+.finance-priority-slide.is-removing {
+    opacity: 0;
+    transform: scale(0.96);
+    pointer-events: none;
+}
+
 .finance-action-fallback {
     display: inline-flex;
     align-items: center;

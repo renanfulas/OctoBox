@@ -14,7 +14,7 @@ from shared_support.page_payloads import build_page_hero
 from .shared import build_catalog_assets, build_catalog_page_payload
 
 
-def build_student_directory_page(*, student_count, students, student_filter_form, snapshot, current_role_slug, base_query_string):
+def build_student_directory_page(*, student_count, students, student_filter_form, snapshot, current_role_slug, base_query_string, directory_search=None):
     can_manage_students = current_role_slug in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
     can_open_student_admin = current_role_slug in (ROLE_OWNER, ROLE_DEV)
     hero_actions = [
@@ -57,6 +57,15 @@ def build_student_directory_page(*, student_count, students, student_filter_form
             'total_students': student_count,
         },
         actions={},
+        behavior={
+            'student_prefetch': {
+                'enabled': True,
+                'hover_delay_ms': 120,
+                'cache_ttl_ms': 120000,
+                'idle_prefetch_limit': 3,
+            },
+            'directory_search': directory_search or {},
+        },
         capabilities={
             'can_manage_students': can_manage_students,
             'can_open_student_admin': can_open_student_admin,

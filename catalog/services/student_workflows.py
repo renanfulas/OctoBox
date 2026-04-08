@@ -2,6 +2,9 @@
 
 from communications.models import StudentIntake
 from finance.models import Enrollment, Payment
+from shared_support.manager_event_stream import publish_manager_stream_event
+from shared_support.student_event_stream import publish_student_stream_event
+from shared_support.student_snapshot_versions import build_profile_version, build_student_snapshot_version
 from students.facade import run_student_quick_create, run_student_quick_update
 from students.models import Student
 
@@ -48,7 +51,36 @@ def run_student_quick_create_workflow(*, actor, form, selected_intake=None):
 		cleaned_data=form.cleaned_data,
 		selected_intake_id=getattr(selected_intake, 'id', None),
 	)
-	return _build_legacy_workflow_result(result)
+	workflow_result = _build_legacy_workflow_result(result)
+	publish_student_stream_event(
+		student_id=workflow_result['student'].id,
+		event_type='student.profile.updated',
+		snapshot_version=build_student_snapshot_version(student=workflow_result['student']),
+		profile_version=build_profile_version(workflow_result['student']),
+		meta={
+			'action': 'create',
+			'changed_fields': sorted(form.cleaned_data.keys()),
+		},
+	)
+	publish_manager_stream_event(
+		event_type='student.profile.updated',
+		meta={
+			'student_id': workflow_result['student'].id,
+			'action': 'create',
+			'changed_fields': sorted(form.cleaned_data.keys()),
+		},
+	)
+	if workflow_result['intake'] is not None:
+		publish_manager_stream_event(
+			event_type='intake.updated',
+			meta={
+				'intake_id': workflow_result['intake'].id,
+				'action': 'linked-to-student',
+				'status': workflow_result['intake'].status,
+				'student_id': workflow_result['student'].id,
+			},
+		)
+	return workflow_result
 
 
 def run_student_express_create_workflow(*, actor, form):
@@ -70,7 +102,26 @@ def run_student_express_create_workflow(*, actor, form):
 		cleaned_data=cleaned_data,
 		selected_intake_id=None,
 	)
-	return _build_legacy_workflow_result(result)
+	workflow_result = _build_legacy_workflow_result(result)
+	publish_student_stream_event(
+		student_id=workflow_result['student'].id,
+		event_type='student.profile.updated',
+		snapshot_version=build_student_snapshot_version(student=workflow_result['student']),
+		profile_version=build_profile_version(workflow_result['student']),
+		meta={
+			'action': 'express-create',
+			'changed_fields': sorted(cleaned_data.keys()),
+		},
+	)
+	publish_manager_stream_event(
+		event_type='student.profile.updated',
+		meta={
+			'student_id': workflow_result['student'].id,
+			'action': 'express-create',
+			'changed_fields': sorted(cleaned_data.keys()),
+		},
+	)
+	return workflow_result
 
 
 def run_student_quick_update_workflow(*, actor, form, changed_fields, selected_intake=None):
@@ -85,7 +136,45 @@ def run_student_quick_update_workflow(*, actor, form, changed_fields, selected_i
 		selected_intake_id=getattr(selected_intake, 'id', None),
 		changed_fields=tuple(changed_fields),
 	)
-	return _build_legacy_workflow_result(result)
+	workflow_result = _build_legacy_workflow_result(result)
+	publish_student_stream_event(
+		student_id=workflow_result['student'].id,
+		event_type='student.profile.updated',
+		snapshot_version=build_student_snapshot_version(student=workflow_result['student']),
+		profile_version=build_profile_version(workflow_result['student']),
+		meta={
+			'action': 'update',
+			'changed_fields': sorted(changed_fields),
+		},
+	)
+	publish_manager_stream_event(
+		event_type='student.profile.updated',
+		meta={
+			'student_id': workflow_result['student'].id,
+			'action': 'update',
+			'changed_fields': sorted(changed_fields),
+		},
+	)
+	if workflow_result['intake'] is not None:
+		publish_manager_stream_event(
+			event_type='intake.updated',
+			meta={
+				'intake_id': workflow_result['intake'].id,
+				'action': 'linked-to-student',
+				'status': workflow_result['intake'].status,
+				'student_id': workflow_result['student'].id,
+			},
+		)
+	if workflow_result['enrollment_sync']['enrollment'] is not None:
+		publish_manager_stream_event(
+			event_type='student.enrollment.updated',
+			meta={
+				'student_id': workflow_result['student'].id,
+				'enrollment_id': workflow_result['enrollment_sync']['enrollment'].id,
+				'action': 'sync-after-profile',
+			},
+		)
+	return workflow_result
 
 
 __all__ = [
@@ -94,4 +183,4 @@ __all__ = [
 	'run_student_express_create_workflow',
 	'run_student_quick_create_workflow',
 	'run_student_quick_update_workflow',
-]
+]

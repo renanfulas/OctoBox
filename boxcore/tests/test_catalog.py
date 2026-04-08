@@ -906,6 +906,7 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertEqual(body['status'], 'success')
+        self.assertEqual(body['selected_payment_id'], payment.id)
         self.assertIn('fragments', body)
         self.assertIn('student-payment-checkout-form', body['fragments']['checkout'])
         self.assertIn('student-financial-kpi-card', body['fragments']['kpis'])
@@ -932,8 +933,28 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertEqual(body['status'], 'success')
+        self.assertEqual(body['selected_payment_id'], newer_payment.id)
         self.assertIn('ABR-319', body['fragments']['checkout'])
         self.assertIn('319', body['fragments']['checkout'])
+        self.assertIn('value="{}"'.format(newer_payment.id), body['fragments']['checkout'])
+
+    def test_student_form_financial_ledger_buttons_bind_to_specific_payment_ids(self):
+        self.client.force_login(self.user)
+        overdue_payment = Payment.objects.create(
+            student=self.student,
+            enrollment=self.enrollment,
+            due_date=timezone.localdate() - timezone.timedelta(days=5),
+            amount='309.90',
+            status=PaymentStatus.OVERDUE,
+            method=PaymentMethod.CASH,
+            reference='MAR-309',
+        )
+
+        response = self.client.get(reverse('student-quick-update', args=[self.student.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f'data-payment-id="{overdue_payment.id}"', html=False)
+        self.assertContains(response, 'data-action="edit-payment"', html=False)
 
     def test_student_payment_action_rejects_invalid_action(self):
         self.client.force_login(self.user)

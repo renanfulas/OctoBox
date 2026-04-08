@@ -1,0 +1,13 @@
+{% if page.data.financial_overview.next_charge and page.data.financial_overview.next_charge.status == 'overdue' %}
+<section class="student-quick-financial-alert" aria-label="Alerta financeiro">
+    <div class="student-quick-financial-alert__copy">
+        <strong>Pagamento em atraso</strong>
+        <span>R$ {{ page.data.financial_overview.next_charge.amount|floatformat:2 }} ha {{ page.data.financial_overview.next_charge.days_overdue|default:"0" }} dia(s).</span>
+    </div>
+    <div class="actions actions-tight operation-hero-action-rail">
+        <button class="button" type="button" data-action="edit-payment" data-payment-id="{{ page.data.financial_overview.next_charge.id }}">
+            Cobrar agora
+        </button>
+    </div>
+</section>
+{% endif %}

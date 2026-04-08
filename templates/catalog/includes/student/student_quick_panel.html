@@ -1,0 +1,90 @@
+<!--
+ARQUIVO: painel lateral de abertura parcial da ficha no diretorio.
+
+POR QUE ELE EXISTE:
+- permite ler o essencial do aluno sem recarregar a pagina inteira.
+- usa snapshot server-side para dar sensacao de app nativo com baixo risco.
+-->
+<div class="student-quick-panel-overlay" data-student-quick-overlay hidden></div>
+
+<aside
+    class="student-quick-panel"
+    data-student-quick-panel
+    aria-hidden="true"
+    aria-labelledby="student-quick-panel-title"
+    role="dialog"
+    tabindex="-1"
+>
+    <button class="student-quick-panel__close" type="button" data-student-quick-close aria-label="Fechar leitura rapida">×</button>
+
+    <div class="student-quick-panel__scroll">
+        <header class="student-quick-panel__hero">
+            <div class="student-quick-panel__avatar" data-student-quick-avatar aria-hidden="true">?</div>
+            <div class="student-quick-panel__identity">
+                <p class="student-quick-panel__eyebrow">Leitura rapida</p>
+                <h2 class="student-quick-panel__title" id="student-quick-panel-title" data-student-quick-name>Carregando aluno</h2>
+                <p class="student-quick-panel__meta" data-student-quick-contact>Preparando contexto</p>
+            </div>
+        </header>
+
+        <section class="student-quick-panel__status-strip" aria-label="Resumo rapido">
+            <span class="student-quick-chip" data-student-quick-status>--</span>
+            <span class="student-quick-chip" data-student-quick-plan>Plano --</span>
+            <span class="student-quick-chip" data-student-quick-lock>Lock --</span>
+        </section>
+
+        <section class="student-quick-panel__signal-strip" aria-label="Sinais operacionais">
+            <span class="student-quick-signal" data-student-quick-signal="frequency" hidden>Alta frequencia</span>
+            <span class="student-quick-signal" data-student-quick-signal="training" hidden>Baixo treino</span>
+            <span class="student-quick-signal" data-student-quick-signal="financial" hidden>Risco financeiro</span>
+            <span class="student-quick-live-pill" data-student-quick-live-pill hidden>Atualizando leitura</span>
+        </section>
+
+        <section class="student-quick-panel__grid" aria-label="Indicadores principais">
+            <article class="student-quick-panel__stat">
+                <span class="student-quick-panel__stat-label">Pagamento</span>
+                <strong class="student-quick-panel__stat-value" data-student-quick-payment-status>--</strong>
+            </article>
+            <article class="student-quick-panel__stat">
+                <span class="student-quick-panel__stat-label">Presenca 30D</span>
+                <strong class="student-quick-panel__stat-value" data-student-quick-presence>0%</strong>
+            </article>
+            <article class="student-quick-panel__stat">
+                <span class="student-quick-panel__stat-label">Atrasos</span>
+                <strong class="student-quick-panel__stat-value" data-student-quick-overdue>0</strong>
+            </article>
+            <article class="student-quick-panel__stat">
+                <span class="student-quick-panel__stat-label">Pendencias</span>
+                <strong class="student-quick-panel__stat-value" data-student-quick-pending>0</strong>
+            </article>
+        </section>
+
+        <section class="student-quick-panel__narrative">
+            <p class="student-quick-panel__section-kicker">Proxima acao</p>
+            <h3 class="student-quick-panel__section-title">O que fazer agora</h3>
+            <p class="student-quick-panel__copy" data-student-quick-next-step>Carregando orientacao curta.</p>
+        </section>
+
+        <nav class="student-quick-panel__tabs" aria-label="Secoes da ficha no drawer">
+            <button class="student-quick-panel__tab" type="button" data-student-quick-tab="profile" aria-pressed="false">Perfil</button>
+            <button class="student-quick-panel__tab" type="button" data-student-quick-tab="financial" aria-pressed="false">Financeiro</button>
+        </nav>
+
+        <div class="student-quick-panel__content is-idle" data-student-quick-content hidden>
+            <section class="student-quick-panel__section" data-student-quick-section="profile">
+                <div class="student-quick-panel__fragment-slot" data-student-quick-profile-slot>
+                    <p class="student-quick-panel__copy">Carregando perfil...</p>
+                </div>
+            </section>
+            <section class="student-quick-panel__section" data-student-quick-section="financial">
+                <div class="student-quick-panel__fragment-slot" data-student-quick-financial-slot>
+                    <p class="student-quick-panel__copy">Carregando financeiro...</p>
+                </div>
+            </section>
+        </div>
+
+        <footer class="student-quick-panel__actions">
+            <a class="button secondary" href="#" data-student-quick-open-financial>Abrir ficha completa</a>
+        </footer>
+    </div>
+</aside>

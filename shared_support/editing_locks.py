@@ -69,6 +69,7 @@ class LockResult:
     """Resultado de uma tentativa de aquisicao de lock."""
     acquired: bool
     holder: Optional[dict] = None  # dados do detentor atual, se lock nao foi adquirido
+    displaced_holder: Optional[dict] = None  # detentor anterior, caso o lock tenha sido tomado
 
 
 # -------------------------------------------------------------------
@@ -116,8 +117,9 @@ def acquire_student_lock(student_id: int, user, role_slug: str) -> LockResult:
 
     # Tenho maior prioridade (numero menor): tomo o lock
     if my_priority < holder_priority:
+        displaced_holder = existing
         _write_lock(key, user, role_slug, my_priority, timeout)
-        return LockResult(acquired=True)
+        return LockResult(acquired=True, displaced_holder=displaced_holder)
 
     # Prioridade igual ou menor: nao posso tomar o lock
     return LockResult(acquired=False, holder=existing)

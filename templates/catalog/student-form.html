@@ -21,7 +21,11 @@ PONTOS CRITICOS:
 {% block content %}
 {% with page=student_form_page %}
 <div class="operation-shell student-form-shell student-scene student-form-scene workspace-shell" data-page="student-form" data-screen="catalog-student" data-slot="page-root"
-     {% if student_id_for_lock %}data-student-id="{{ student_id_for_lock }}"{% endif %}>
+     {% if student_id_for_lock %}data-student-id="{{ student_id_for_lock }}"{% endif %}
+     {% if student_id_for_lock %}data-student-edit-start-url="{% url 'student-edit-session-start' student_id_for_lock %}"{% endif %}
+     {% if student_id_for_lock %}data-student-edit-release-url="{% url 'student-edit-session-release' student_id_for_lock %}"{% endif %}
+     {% if student_id_for_lock %}data-student-lock-heartbeat-url="{% url 'student-lock-heartbeat' student_id_for_lock %}"{% endif %}
+     {% if student_id_for_lock %}data-student-lock-status-url="{% url 'student-lock-status' student_id_for_lock %}"{% endif %}>
 
     {# --- Banner de lock de edicao com hierarquia de papeis --- #}
     {% if student_lock_holder %}

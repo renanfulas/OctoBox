@@ -1,0 +1,62 @@
+<section class="student-quick-financial-history" aria-label="Historico de pagamentos">
+    <header class="student-quick-financial-history__header">
+        <div class="stack-6">
+            <h3 class="student-quick-financial-history__title">Historico de pagamentos</h3>
+            <p class="student-quick-financial-history__count">{{ page.data.financial_overview.payments|length }} transacao(oes)</p>
+        </div>
+    </header>
+
+    {% if page.data.financial_overview.payments %}
+    <div class="table-responsive student-quick-financial-history__table-wrap">
+        <table class="student-quick-financial-history__table">
+            <caption class="visually-hidden">Historico financeiro do aluno no quick panel.</caption>
+            <thead>
+                <tr class="student-quick-financial-history__head">
+                    <th scope="col">Descricao</th>
+                    <th scope="col">Data</th>
+                    <th scope="col" class="is-center">Status</th>
+                    <th scope="col" class="is-right">Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in page.data.financial_overview.payments %}
+                <tr class="student-quick-financial-history__row">
+                    <td>
+                        <div class="student-quick-financial-history__description">
+                            <div class="student-quick-financial-history__method-icon" aria-hidden="true">
+                                {% if payment.method == 'pix' %}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M7 7h.01M17 7h.01M17 17h.01M7 17h.01"/></svg>
+                                {% elif payment.method == 'credit_card' %}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                                {% else %}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                {% endif %}
+                            </div>
+                            <div class="student-quick-financial-history__copy">
+                                <strong>{{ payment.enrollment.plan.name|default:"Mensalidade" }}{% if payment.due_date %} - {{ payment.due_date|date:"M/y" }}{% endif %}</strong>
+                                <span>{% if payment.reference %}INV-{{ payment.reference|truncatechars:8 }}{% else %}Sem referencia{% endif %}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="student-quick-financial-history__date">
+                        <span class="student-quick-financial-history__date-day">{{ payment.due_date|date:"d" }}</span>
+                        <span class="student-quick-financial-history__date-month">{{ payment.due_date|date:"b" }}</span>
+                        <span class="student-quick-financial-history__date-year">{{ payment.due_date|date:"y" }}</span>
+                    </td>
+                    <td class="is-center">
+                        <span class="pill student-quick-financial-history__status-pill {% if payment.status == 'paid' %}success{% elif payment.status == 'overdue' %}warning{% else %}info{% endif %}">
+                            {{ payment.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="student-quick-financial-history__amount is-right">R$ {{ payment.amount|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="student-quick-financial-history__empty">
+        <p class="student-quick-financial-history__count">Nenhuma cobranca registrada ainda.</p>
+    </div>
+    {% endif %}
+</section>

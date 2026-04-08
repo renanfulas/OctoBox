@@ -25,6 +25,7 @@
   const focusableSelector =
     'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
   let lastTrigger = null;
+  let selectedPaymentId = null;
 
   function decoratePaymentForm() {
     const amountInput = document.querySelector('#student-payment-checkout-form [name="amount"]');
@@ -42,6 +43,31 @@
 
   function refreshWorkspaceUi() {
     decoratePaymentForm();
+    syncSelectedPaymentIdFromDom();
+  }
+
+  function getCheckoutForm() {
+    return document.getElementById('student-payment-checkout-form');
+  }
+
+  function getCheckoutSelectedPaymentId() {
+    const checkoutForm = getCheckoutForm();
+    if (!checkoutForm) {
+      return null;
+    }
+
+    const paymentField = checkoutForm.querySelector('[name="payment_id"]');
+    const rawValue = paymentField ? paymentField.value : checkoutForm.closest('[data-selected-payment-id]')?.getAttribute('data-selected-payment-id');
+    if (!rawValue) {
+      return null;
+    }
+
+    const parsedValue = Number(rawValue);
+    return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : null;
+  }
+
+  function syncSelectedPaymentIdFromDom() {
+    selectedPaymentId = getCheckoutSelectedPaymentId();
   }
 
   function getPaymentMethodLabel(methodValue) {
@@ -58,11 +84,11 @@
     dialog.innerHTML = [
       '<form method="dialog" class="student-financial-confirm-dialog__card">',
       '<div class="student-financial-confirm-dialog__copy">',
-      '<p class="eyebrow">Confirmacao</p>',
-      '<h3 class="section-title-sm">Deseja validar essa transacao?</h3>',
-      '<p class="meta-text" data-payment-confirm-copy>Confirme antes de registrar o recebimento.</p>',
+      '<span class="student-financial-confirm-dialog__kicker">Confirmacao</span>',
+      '<h3 class="section-title-sm">Voce realmente quer fazer este pagamento?</h3>',
+      '<p class="meta-text" data-payment-confirm-copy>Confirme para registrar o recebimento.</p>',
       '</div>',
-      '<div class="student-financial-confirm-dialog__actions">',
+      '<div class="student-financial-confirm-dialog__actions operation-hero-action-rail">',
       '<button type="button" class="button secondary" value="cancel" data-action="cancel-payment-confirm">Nao</button>',
       '<button type="submit" class="button" value="confirm">Sim</button>',
       '</div>',
@@ -84,7 +110,7 @@
     const methodLabel = getPaymentMethodLabel(methodValue);
 
     if (copy) {
-      copy.textContent = 'Voce vai confirmar o recebimento com ' + methodLabel + '.';
+      copy.textContent = 'Voce realmente quer fazer o pagamento com ' + methodLabel + '?';
     }
 
     return new Promise(function(resolve) {
@@ -116,6 +142,21 @@
       dialog.showModal();
       cancelButton.focus();
     });
+  }
+
+  function requestPaymentEditAccess() {
+    const pageRoot = document.querySelector('[data-student-id]');
+    if (!pageRoot || pageRoot.dataset.lockState === 'active') {
+      return;
+    }
+
+    const statusMsg = document.getElementById('student-payment-checkout-status');
+    if (statusMsg) {
+      statusMsg.hidden = false;
+      statusMsg.textContent = 'Liberando edicao para confirmar o pagamento...';
+    }
+
+    document.dispatchEvent(new CustomEvent('student-profile-edit-request'));
   }
 
   function setFinancialWorkspaceExpanded(expanded) {
@@ -196,6 +237,11 @@
       throw new Error(payload.message || 'Nao foi possivel concluir a acao agora.');
     }
     applyFinancialFragments(payload.fragments);
+    if (typeof payload.selected_payment_id !== 'undefined') {
+      selectedPaymentId = payload.selected_payment_id || null;
+    } else {
+      syncSelectedPaymentIdFromDom();
+    }
     return payload;
   }
 
@@ -224,12 +270,17 @@
       return;
     }
 
+    selectedPaymentId = Number(paymentId);
     const payload = await handleJsonAction(`/alunos/${studentId}/financeiro/cobranca/${paymentId}/drawer/`, {
       method: 'GET',
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
       },
     });
+
+    if (payload.selected_payment_id && Number(payload.selected_payment_id) !== Number(paymentId)) {
+      throw new Error('A cobranca carregada nao corresponde ao item selecionado.');
+    }
 
     openDrawer('student-payment-checkout-slot', trigger);
     const statusMsg = document.getElementById('student-payment-checkout-status');
@@ -327,6 +378,10 @@
 
     ensureWorkspaceExpanded();
     lastTrigger = trigger || null;
+
+    if (drawerId === 'student-payment-checkout-slot') {
+      requestPaymentEditAccess();
+    }
 
     closeDrawers();
 
