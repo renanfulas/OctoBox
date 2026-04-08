@@ -87,18 +87,19 @@ def build_page_hero(
     actions_slot=None,
     contract=None,
 ):
+    resolved_contract = {**PAGE_HERO_CONTENT_RULES, **(contract or {})}
     return {
         'eyebrow': eyebrow,
         'title': title,
         'copy': copy,
-        'actions': _limit_collection(actions, max_items=PAGE_HERO_CONTENT_RULES['max_primary_actions']),
+        'actions': _limit_collection(actions, max_items=resolved_contract['max_primary_actions']),
         'aria_label': aria_label or title,
         'classes': classes or [],
         'heading_level': heading_level,
         'data_slot': data_slot,
         'data_panel': data_panel,
         'actions_slot': actions_slot,
-        'contract': contract or dict(PAGE_HERO_CONTENT_RULES),
+        'contract': resolved_contract,
     }
 
 

@@ -2,13 +2,6 @@
 ARQUIVO: painel semanal da grade.
 -->
 <section class="card class-grid-surface-card class-weekly-board" id="weekly-board" data-panel="class-grid-weekly-board">
-    <div class="card-head weekly-board-head is-interactive" data-action="open-weekly-modal-full" role="button" tabindex="0" aria-label="Abrir grade semanal completa">
-        <div class="card-head-main">
-            <h2 class="card-title">Visão Semanal</h2>
-            <p class="card-copy">Calendário das próximas duas semanas com sessões e ocupação.</p>
-        </div>
-    </div>
-
     {% for week in page.data.weekly_calendar|slice:":2" %}
     <section class="weekly-calendar-section" data-panel="class-grid-weekly-section">
         <div class="row-between-md weekly-calendar-header">

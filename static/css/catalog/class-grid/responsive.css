@@ -147,6 +147,19 @@ POR QUE ELE EXISTE:
         gap: 10px;
     }
 
+    .weekly-modal-expanded-grid--rows .weekly-day-card-body {
+        grid-template-columns: 1fr;
+    }
+
+    .weekly-modal-expanded-grid--rows .weekly-day-head {
+        position: static;
+        top: auto;
+    }
+
+    .weekly-calendar-grid.weekly-modal-expanded-grid--preview {
+        grid-template-columns: 1fr;
+    }
+
     .weekly-calendar-section + .weekly-calendar-section {
         margin-top: 16px;
     }

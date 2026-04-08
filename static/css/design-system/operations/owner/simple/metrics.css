@@ -54,12 +54,212 @@ POR QUE ELE EXISTE:
     min-height: clamp(300px, 30vw, 360px);
 }
 
-.owner-sessions-panel .operation-card-copy {
-    max-width: 36ch;
+.owner-sessions-panel .operation-card-head {
+    margin-bottom: 6px;
+    gap: 12px;
 }
 
-.owner-sessions-panel .dashboard-session-stack {
+.owner-sessions-panel .card-head-main-stack {
+    gap: 6px;
+}
+
+.owner-sessions-panel .card-label {
+    color: var(--muted-strong);
+    letter-spacing: 0.12em;
+}
+
+.owner-sessions-panel .operation-card-title {
+    font-size: 1.12rem;
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+}
+
+.owner-sessions-panel .operation-card-copy {
+    margin-top: 0;
+    max-width: 36ch;
+    color: var(--muted-strong);
+    font-size: 0.88rem;
+    line-height: 1.52;
+}
+
+.owner-sessions-panel .owner-session-stack {
     gap: 14px;
+}
+
+.owner-session-stack,
+.owner-session-queue {
+    display: grid;
+    gap: 14px;
+}
+
+.owner-session-card {
+    position: relative;
+    display: grid;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 20px;
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 88%, transparent);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-panel) 94%, transparent));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        0 8px 18px rgba(15, 23, 42, 0.045);
+    transition:
+        transform 220ms var(--ease-standard),
+        box-shadow 220ms var(--ease-standard),
+        border-color 220ms var(--ease-standard),
+        background 220ms var(--ease-standard);
+}
+
+.owner-session-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.76),
+        0 16px 26px rgba(15, 23, 42, 0.08);
+}
+
+.owner-session-card--primary {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 22%, transparent), transparent 34%),
+        linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-panel) 95%, transparent));
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 24%, var(--theme-glass-border) 76%);
+}
+
+.owner-session-card--featured {
+    grid-template-columns: 1fr;
+}
+
+.owner-session-card--compact {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+}
+
+.owner-session-time-block,
+.owner-session-meta,
+.owner-session-body {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+.owner-session-time-block {
+    justify-items: start;
+}
+
+.owner-session-feature-head,
+.owner-session-feature-meta-row,
+.owner-session-meta--inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.owner-session-feature-head strong,
+.owner-session-body strong {
+    display: block;
+    margin-top: 2px;
+    font-size: 1rem;
+    line-height: 1.18;
+    letter-spacing: -0.03em;
+    overflow-wrap: break-word;
+}
+
+.owner-session-body strong {
+    font-size: 0.95rem;
+}
+
+.owner-session-kicker,
+.owner-session-window,
+.owner-session-occupancy-label {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.owner-session-body p,
+.owner-session-feature-meta-row p,
+.owner-session-note {
+    margin: 0;
+    color: var(--muted-strong);
+    font-size: 0.84rem;
+    line-height: 1.5;
+    overflow-wrap: break-word;
+}
+
+.owner-session-time {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 24%, var(--theme-glass-border) 76%);
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-surface-panel-strong) 88%);
+    color: color-mix(in srgb, var(--theme-accent-support) 82%, var(--ink) 18%);
+    font-size: 0.86rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.owner-session-progress {
+    width: min(220px, 100%);
+    height: 7px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-surface-muted) 72%, transparent);
+}
+
+.owner-session-progress-fill {
+    display: block;
+    width: var(--dynamic-visual-width, 0%);
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(37, 99, 235, 0.88), rgba(14, 165, 233, 0.9));
+}
+
+.owner-session-progress-fill.class-occupancy-medium {
+    background: linear-gradient(90deg, rgba(14, 165, 233, 0.88), rgba(6, 182, 212, 0.9));
+}
+
+.owner-session-progress-fill.class-occupancy-high {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.9), rgba(249, 115, 22, 0.92));
+}
+
+.owner-session-progress-fill.class-occupancy-critical,
+.owner-session-progress-fill.class-occupancy-closed {
+    background: linear-gradient(90deg, rgba(220, 38, 38, 0.92), rgba(249, 115, 22, 0.92));
+}
+
+.owner-session-queue {
+    max-height: 360px;
+    overflow: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.owner-session-queue::-webkit-scrollbar {
+    width: 8px;
+}
+
+.owner-session-queue::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.owner-session-queue::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--scrollbar-thumb);
+}
+
+.owner-session-queue::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
 }
 
 .owner-simple-shell .owner-metric-grid .operation-kpi-card {
@@ -103,6 +303,45 @@ POR QUE ELE EXISTE:
     .owner-sessions-panel {
         min-height: 0;
     }
+
+    .owner-session-card--compact {
+        grid-template-columns: 1fr;
+    }
+
+    .owner-session-meta {
+        justify-items: start;
+    }
+}
+
+@media (max-width: 720px) {
+    .owner-session-feature-head,
+    .owner-session-feature-meta-row,
+    .owner-session-meta--inline {
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+
+    .owner-session-card,
+    .owner-session-card--featured,
+    .owner-session-card--compact {
+        padding: 14px;
+    }
+
+    .owner-session-time {
+        min-width: 0;
+        width: fit-content;
+    }
+
+    .owner-session-progress,
+    .owner-session-queue {
+        width: 100%;
+    }
+
+    .owner-session-queue {
+        max-height: none;
+        overflow: visible;
+        padding-right: 0;
+    }
 }
 
 body[data-theme="dark"] .owner-sessions-panel {
@@ -118,4 +357,45 @@ body[data-theme="dark"] .owner-sessions-panel {
 
 body[data-theme="dark"] .owner-sessions-panel .operation-card-copy {
     color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .owner-session-card {
+    background:
+        linear-gradient(180deg, rgba(10, 18, 32, 0.9), rgba(8, 15, 27, 0.94));
+    border-color: rgba(148, 163, 184, 0.14);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 16px 28px rgba(2, 6, 23, 0.22);
+}
+
+body[data-theme="dark"] .owner-session-card:hover {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 24px 34px rgba(2, 6, 23, 0.28);
+}
+
+body[data-theme="dark"] .owner-session-card--primary {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 34%, transparent), transparent 34%),
+        linear-gradient(180deg, rgba(11, 21, 36, 0.98), rgba(8, 16, 29, 0.96));
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 26%, rgba(148, 163, 184, 0.12) 74%);
+}
+
+body[data-theme="dark"] .owner-session-time {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.2);
+    color: #7dd3fc;
+}
+
+body[data-theme="dark"] .owner-session-kicker,
+body[data-theme="dark"] .owner-session-window,
+body[data-theme="dark"] .owner-session-occupancy-label,
+body[data-theme="dark"] .owner-session-body p,
+body[data-theme="dark"] .owner-session-feature-meta-row p,
+body[data-theme="dark"] .owner-session-note {
+    color: rgba(226, 232, 240, 0.72);
+}
+
+body[data-theme="dark"] .owner-session-progress {
+    background: rgba(148, 163, 184, 0.14);
 }

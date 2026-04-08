@@ -180,6 +180,15 @@ POR QUE ELE EXISTE:
     background: var(--surface);
 }
 
+.class-weekly-modal-close {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    width: fit-content;
+    margin: 0 0 12px auto;
+}
+
 .weekly-calendar-section + .weekly-calendar-section {
     margin-top: 20px;
 }
@@ -212,18 +221,14 @@ POR QUE ELE EXISTE:
 }
 
 .weekly-calendar-header {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     padding: 0 2px;
 }
 
-.weekly-board-head.is-interactive {
-    cursor: pointer;
-}
-
-.weekly-board-head.is-interactive:focus-visible {
-    outline: 2px solid rgba(249, 115, 22, 0.24);
-    outline-offset: 3px;
-    border-radius: 20px;
+.weekly-calendar-header .section-title-sm {
+    margin: 2px 0 0;
+    font-size: 1rem;
+    line-height: 1.1;
 }
 
 .weekly-calendar-grid {
@@ -233,19 +238,51 @@ POR QUE ELE EXISTE:
     min-width: 1180px;
 }
 
+.weekly-calendar-section--expanded {
+    overflow-x: visible;
+}
+
+.weekly-calendar-grid.weekly-modal-expanded-grid--rows {
+    min-width: 0;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.weekly-calendar-grid.weekly-modal-expanded-grid--preview {
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
 .weekly-day-card {
     border: 1px solid var(--line);
-    border-radius: 22px;
+    border-radius: 18px;
     background: var(--surface);
-    padding: 14px;
+    padding: 10px 12px;
     display: grid;
-    gap: 12px;
-    min-height: 194px;
+    gap: 8px;
+    min-height: 0;
     min-width: 0;
     overflow: hidden;
     word-break: break-word;
-    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
     transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.weekly-modal-expanded-grid--rows .weekly-day-card {
+    min-height: 0;
+}
+
+.weekly-modal-expanded-grid--rows .weekly-day-card-body {
+    display: grid;
+    grid-template-columns: minmax(132px, 156px) minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+}
+
+.weekly-modal-expanded-grid--rows .weekly-day-head {
+    position: sticky;
+    top: 40px;
 }
 
 .weekly-day-card.is-interactive {
@@ -281,25 +318,26 @@ body[data-theme="dark"] .weekly-day-card.is-today {
 .weekly-day-head {
     display: flex;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
     align-items: start;
 }
 
 .weekly-day-head strong {
-    font-size: 1.15rem;
+    font-size: 1rem;
+    line-height: 1.05;
 }
 
 .weekly-day-body {
     display: grid;
-    gap: 8px;
+    gap: 6px;
     align-content: start;
     min-width: 0;
     overflow: hidden;
 }
 
 .weekly-session-chip {
-    padding: 14px;
-    border-radius: 16px;
+    padding: 8px 10px;
+    border-radius: 12px;
     border: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.96);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
@@ -312,7 +350,7 @@ body[data-theme="dark"] .weekly-session-chip {
 }
 
 .weekly-session-chip-content {
-    gap: 4px;
+    gap: 2px;
 }
 
 .weekly-session-chip.is-info {
@@ -336,6 +374,55 @@ body[data-theme="dark"] .weekly-session-chip {
         inset 0 1px 0 rgba(255, 255, 255, 0.82);
 }
 
+.weekly-day-card--preview {
+    min-height: 0;
+}
+
+.weekly-day-preview-summary {
+    display: grid;
+    gap: 6px;
+    align-content: start;
+    min-height: 100%;
+    padding: 8px 10px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+    background: color-mix(in srgb, var(--surface-strong) 82%, transparent);
+}
+
+body[data-theme="dark"] .weekly-day-preview-summary {
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    border-color: color-mix(in srgb, var(--line) 92%, transparent);
+}
+
+.weekly-day-overflow-note {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 12px;
+    border: 1px dashed color-mix(in srgb, var(--line) 82%, transparent);
+    background: color-mix(in srgb, var(--surface-strong) 76%, transparent);
+}
+
+.weekly-day-overflow-toggle {
+    flex-shrink: 0;
+}
+
+body[data-theme="dark"] .weekly-day-overflow-note {
+    background: color-mix(in srgb, var(--surface) 90%, transparent);
+    border-color: color-mix(in srgb, var(--line) 88%, transparent);
+}
+
+.weekly-day-overflow-list {
+    display: grid;
+    gap: 6px;
+}
+
+.weekly-day-overflow-list[hidden] {
+    display: none;
+}
+
 .weekly-session-chip.is-class-occupancy-closed .class-grid-meta,
 .weekly-session-chip.is-booking-closed .class-grid-meta {
     color: rgba(100, 116, 139, 0.82);
@@ -349,7 +436,7 @@ body[data-theme="dark"] .weekly-session-chip {
 }
 
 .class-chip-actions {
-    margin-top: 8px;
+    margin-top: 4px;
 }
 
 .class-chip-actions form {
@@ -357,19 +444,30 @@ body[data-theme="dark"] .weekly-session-chip {
 }
 
 .weekly-session-chip .card-footer {
-    margin-top: 2px;
+    margin-top: 0;
 }
 
 .weekly-session-top {
     align-items: center;
 }
 
+.weekly-session-top strong {
+    font-size: 0.88rem;
+    line-height: 1;
+}
+
 .weekly-session-title {
-    margin: 8px 0 4px;
+    margin: 2px 0 0;
+    font-size: 0.9rem;
     font-weight: 700;
-    line-height: 1.4;
+    line-height: 1.25;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.weekly-session-chip .class-grid-meta {
+    font-size: 0.8rem;
+    line-height: 1.25;
 }
 
 .weekly-empty-state {

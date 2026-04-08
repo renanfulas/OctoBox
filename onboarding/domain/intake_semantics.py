@@ -2,7 +2,7 @@
 ARQUIVO: regras de dominio da fila de intake.
 
 POR QUE ELE EXISTE:
-- Separa o registro tecnico de intake da leitura comercial de lead e da prontidao para conversao.
+- Separa o registro tecnico de intake da leitura comercial de lead aberto e da decisao de conversao.
 
 O QUE ESTE ARQUIVO FAZ:
 1. Classifica o intake em estagios semanticos.
@@ -10,7 +10,7 @@ O QUE ESTE ARQUIVO FAZ:
 3. Resolve quais acoes operacionais fazem sentido para cada caso.
 
 PONTOS CRITICOS:
-- A semantica daqui orienta o que o operador enxerga como lead, triagem ou conversao pronta.
+- A semantica daqui orienta o que o operador enxerga como lead aberto, resolvido ou caso ja convertido.
 """
 
 from dataclasses import dataclass
@@ -42,19 +42,11 @@ def build_intake_semantic_state(*, status: str, linked_student_id: int | None) -
             note='A entrada ja saiu da fila ativa e nao representa lead operacional aberto.',
         )
 
-    if status == IntakeStatus.MATCHED:
-        return IntakeSemanticState(
-            entity_label='Intake',
-            semantic_stage='conversion-ready',
-            semantic_label='Conversao pronta',
-            note='O caso ja passou da triagem e esta maduro para abrir a ficha definitiva.',
-        )
-
     return IntakeSemanticState(
         entity_label='Intake',
         semantic_stage='lead-open',
         semantic_label='Lead aberto',
-        note='O registro segue como entrada em triagem e ainda pede leitura comercial ou operacional.',
+        note='O registro segue na fila comercial e pode virar aluno assim que a conversa fechar.',
     )
 
 
@@ -66,17 +58,10 @@ def build_intake_conversion_decision(*, status: str, linked_student_id: int | No
             action_label='Ja convertido',
         )
 
-    if status == IntakeStatus.NEW:
-        return IntakeConversionDecision(
-            can_convert=False,
-            reason='Comece a triagem ou marque o caso como pronto para conversao antes de abrir a ficha.',
-            action_label='Triar antes de converter',
-        )
-
-    if status in (IntakeStatus.REVIEWING, IntakeStatus.MATCHED, IntakeStatus.APPROVED):
+    if status in (IntakeStatus.NEW, IntakeStatus.REVIEWING, IntakeStatus.MATCHED):
         return IntakeConversionDecision(
             can_convert=True,
-            reason='A triagem atual ja sustenta abrir a ficha definitiva sem depender de leitura paralela.',
+            reason='Se a conversa ja fechou, voce pode abrir a ficha definitiva direto daqui.',
             action_label='Converter em aluno',
         )
 
@@ -90,12 +75,7 @@ def build_intake_conversion_decision(*, status: str, linked_student_id: int | No
 def resolve_intake_action_permissions(*, status: str, linked_student_id: int | None, is_manager_scope: bool) -> dict[str, bool]:
     is_resolved = linked_student_id is not None or status in (IntakeStatus.APPROVED, IntakeStatus.REJECTED)
     return {
-        'can_assign_to_me': not is_resolved,
-        'can_clear_assignee': is_manager_scope and not is_resolved,
-        'can_start_review': not is_resolved and status == IntakeStatus.NEW,
-        'can_mark_matched': not is_resolved and status in (IntakeStatus.NEW, IntakeStatus.REVIEWING),
-        'can_approve': is_manager_scope and not is_resolved and status in (IntakeStatus.REVIEWING, IntakeStatus.MATCHED),
-        'can_reject': is_manager_scope and not is_resolved,
+        'can_reject': not is_resolved,
     }
 
 

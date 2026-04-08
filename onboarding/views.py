@@ -55,7 +55,6 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
         panel = self.request.GET.get('panel', '').strip()
         allowed_panels = {
             self.PANEL_QUEUE,
-            'tab-intake-conversion',
             'tab-intake-source',
             'tab-intake-filters',
             self.PANEL_CREATE_LEAD,

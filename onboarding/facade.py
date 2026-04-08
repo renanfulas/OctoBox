@@ -7,13 +7,15 @@ POR QUE ELE EXISTE:
 O QUE ESTE ARQUIVO FAZ:
 1. Monta a leitura operacional de cada item da fila.
 2. Executa acoes de intake com validacao de papel e transicao simples de estado.
-3. Explicita quando um intake deve ser tratado como lead aberto ou conversao pronta.
+3. Explicita quando um intake deve ser tratado como lead aberto, resolvido ou convertido.
 
 PONTOS CRITICOS:
 - Essa fronteira define o comportamento do modulo de onboarding; se ficar frouxa, a tela vira so mais um espelho do ORM.
 """
 
 from dataclasses import asdict, dataclass
+
+from django.utils import timezone
 
 from access.roles import ROLE_MANAGER, ROLE_OWNER, get_user_role
 from onboarding.domain import (
@@ -22,6 +24,7 @@ from onboarding.domain import (
     resolve_intake_action_permissions,
 )
 from onboarding.models import IntakeStatus, StudentIntake
+from shared_support.whatsapp_links import build_whatsapp_message_href
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,7 +35,30 @@ class IntakeQueueActionResult:
     message: str
 
 
-def build_intake_queue_item(*, intake: StudentIntake, actor_role_slug: str) -> dict:
+def _build_intake_whatsapp_message(*, intake: StudentIntake) -> str:
+    first_name = str(getattr(intake, 'full_name', '') or '').strip().split(' ')[0] or 'oi'
+    return (
+        f'Oi, {first_name}! Vi seu interesse no OctoBox e queria te ajudar a dar o proximo passo. '
+        'Se fizer sentido, ja podemos organizar sua entrada como aluno.'
+    )
+
+
+def _get_registration_age_days(*, intake: StudentIntake, today=None) -> int:
+    reference_day = today or timezone.localdate()
+    created_day = timezone.localtime(intake.created_at).date() if timezone.is_aware(intake.created_at) else intake.created_at.date()
+    return max((reference_day - created_day).days, 0)
+
+
+def _build_registration_age_label(*, intake: StudentIntake, today=None) -> str:
+    elapsed_days = _get_registration_age_days(intake=intake, today=today)
+    if elapsed_days == 0:
+        return 'Hoje'
+    if elapsed_days == 1:
+        return 'Ha 1 dia'
+    return f'Ha {elapsed_days} dias'
+
+
+def build_intake_queue_item(*, intake: StudentIntake, actor_role_slug: str, today=None) -> dict:
     semantic_state = build_intake_semantic_state(
         status=intake.status,
         linked_student_id=getattr(intake.linked_student, 'id', None),
@@ -51,12 +77,17 @@ def build_intake_queue_item(*, intake: StudentIntake, actor_role_slug: str) -> d
         'semantic_state': asdict(semantic_state),
         'conversion': asdict(conversion),
         'action_permissions': action_permissions,
+        'registration_age_days': _get_registration_age_days(intake=intake, today=today),
+        'registration_age_label': _build_registration_age_label(intake=intake, today=today),
+        'whatsapp_href': build_whatsapp_message_href(
+            phone=intake.phone,
+            message=_build_intake_whatsapp_message(intake=intake),
+        ),
     }
 
 
 def run_intake_queue_action(*, actor, intake_id: int, action: str) -> IntakeQueueActionResult:
     intake = StudentIntake.objects.select_for_update().select_related('linked_student', 'assigned_to').get(pk=intake_id)
-    actor_id = getattr(actor, 'id', None)
     actor_role_slug = getattr(get_user_role(actor), 'slug', '')
 
     permissions = resolve_intake_action_permissions(
@@ -65,45 +96,7 @@ def run_intake_queue_action(*, actor, intake_id: int, action: str) -> IntakeQueu
         is_manager_scope=actor_role_slug in (ROLE_OWNER, ROLE_MANAGER),
     )
 
-    if action == 'assign-to-me':
-        if not permissions['can_assign_to_me']:
-            raise ValueError('Este intake nao pode mais ser assumido nesta etapa.')
-        intake.assigned_to = actor
-        update_fields = ['assigned_to', 'updated_at']
-        message = f'{intake.full_name} agora esta com voce.'
-    elif action == 'clear-assignee':
-        if not permissions['can_clear_assignee']:
-            raise ValueError('So owner ou manager podem remover o responsavel atual deste intake.')
-        intake.assigned_to = None
-        update_fields = ['assigned_to', 'updated_at']
-        message = f'Responsavel removido de {intake.full_name}.'
-    elif action == 'start-review':
-        if not permissions['can_start_review']:
-            raise ValueError('Este intake nao esta mais no ponto de entrar em revisao.')
-        intake.status = IntakeStatus.REVIEWING
-        if intake.assigned_to_id is None and actor_id is not None:
-            intake.assigned_to = actor
-            update_fields = ['status', 'assigned_to', 'updated_at']
-        else:
-            update_fields = ['status', 'updated_at']
-        message = f'{intake.full_name} entrou em revisao.'
-    elif action == 'mark-matched':
-        if not permissions['can_mark_matched']:
-            raise ValueError('Este intake nao pode ser marcado como pronto para conversao agora.')
-        intake.status = IntakeStatus.MATCHED
-        if intake.assigned_to_id is None and actor_id is not None:
-            intake.assigned_to = actor
-            update_fields = ['status', 'assigned_to', 'updated_at']
-        else:
-            update_fields = ['status', 'updated_at']
-        message = f'{intake.full_name} foi marcado como pronto para conversao.'
-    elif action == 'approve-intake':
-        if not permissions['can_approve']:
-            raise ValueError('Este intake ainda nao pode ser aprovado por esta tela.')
-        intake.status = IntakeStatus.APPROVED
-        update_fields = ['status', 'updated_at']
-        message = f'{intake.full_name} foi aprovado e saiu da fila ativa.'
-    elif action == 'reject-intake':
+    if action == 'reject-intake':
         if not permissions['can_reject']:
             raise ValueError('Este intake nao pode ser rejeitado por esta tela.')
         intake.status = IntakeStatus.REJECTED

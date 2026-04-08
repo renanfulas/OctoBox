@@ -18,19 +18,19 @@ from shared_support.form_inputs import apply_text_input_attrs
 
 
 INTAKE_ACTION_CHOICES = (
-    ('assign-to-me', 'Assumir caso'),
-    ('clear-assignee', 'Remover responsavel'),
-    ('start-review', 'Colocar em revisao'),
-    ('mark-matched', 'Marcar como pronto para conversao'),
-    ('approve-intake', 'Aprovar intake'),
     ('reject-intake', 'Rejeitar intake'),
 )
 
 SEMANTIC_STAGE_CHOICES = (
     ('', 'Todos os estagios'),
     ('lead-open', 'Lead aberto'),
-    ('conversion-ready', 'Pronto para conversao'),
     ('resolved', 'Resolvido'),
+)
+
+SORT_CHOICES = (
+    ('', 'Ordem padrao'),
+    ('registration-oldest', 'Registro mais antigo'),
+    ('registration-newest', 'Registro mais recente'),
 )
 
 
@@ -38,6 +38,7 @@ class IntakeCenterFilterForm(forms.Form):
     query = forms.CharField(required=False, label='Buscar por nome, telefone ou e-mail')
     status = forms.ChoiceField(required=False, label='Status', choices=())
     source = forms.ChoiceField(required=False, label='Origem', choices=())
+    sort = forms.ChoiceField(required=False, label='Ordenacao', choices=SORT_CHOICES)
     semantic_stage = forms.ChoiceField(required=False, label='Leitura comercial', choices=SEMANTIC_STAGE_CHOICES)
     assignment = forms.ChoiceField(
         required=False,
@@ -89,4 +90,5 @@ __all__ = [
     'IntakeQuickCreateForm',
     'IntakeQueueActionForm',
     'SEMANTIC_STAGE_CHOICES',
+    'SORT_CHOICES',
 ]

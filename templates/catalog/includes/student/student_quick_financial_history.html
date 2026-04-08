@@ -20,7 +20,13 @@
             </thead>
             <tbody>
                 {% for payment in page.data.financial_overview.payments %}
-                <tr class="student-quick-financial-history__row">
+                <tr
+                    class="student-quick-financial-history__row"
+                    data-student-quick-open-full-record
+                    tabindex="0"
+                    role="link"
+                    aria-label="Abrir ficha completa do aluno"
+                >
                     <td>
                         <div class="student-quick-financial-history__description">
                             <div class="student-quick-financial-history__method-icon" aria-hidden="true">

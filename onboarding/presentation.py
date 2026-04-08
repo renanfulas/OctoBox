@@ -58,7 +58,7 @@ def build_intake_center_page(*, snapshot, current_role_slug):
     hero = build_page_hero(
         eyebrow='Intake',
         title='Entradas em leitura.',
-        copy='Veja quem pede resposta agora, quem ja pode converter e onde agir sem ruido.',
+        copy='Veja quem pede resposta agora, quem ja esta em conversa e onde converter ou recusar sem ruido.',
         actions=hero_actions,
         aria_label='Panorama da central de intake',
         classes=[],

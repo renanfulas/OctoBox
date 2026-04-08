@@ -395,6 +395,15 @@ POR QUE ELE EXISTE:
     vertical-align: middle;
 }
 
+.student-quick-financial-history__row {
+    cursor: pointer;
+}
+
+.student-quick-financial-history__row:focus-visible {
+    outline: 2px solid rgba(59, 130, 246, 0.45);
+    outline-offset: 3px;
+}
+
 .student-quick-financial-history__row .student-quick-financial-history__date {
     border-top: 0;
     border-bottom: 0;

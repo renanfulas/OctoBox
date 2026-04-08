@@ -23,13 +23,13 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
         copy='Veja o ritmo do dia, a pressao da semana e onde ajustar sem ruido.',
         actions=[
             {'label': 'Ver hoje', 'href': '#today-board'},
-            {'label': 'Ver semana', 'href': '#weekly-board', 'kind': 'secondary'},
-            *([
-                {'label': 'Abrir planejamento', 'href': '#planner-board', 'kind': 'secondary'},
-            ] if can_manage_classes else []),
+            {'label': 'Ver semana', 'href': '#class-weekly-modal', 'kind': 'secondary', 'data_action': 'open-weekly-modal-full'},
+            {'label': 'Ver m\u00eas', 'href': '#class-monthly-modal', 'kind': 'secondary', 'data_action': 'open-monthly-calendar'},
+            {'label': 'Abrir planejamento', 'href': '#planner-board', 'kind': 'secondary'},
         ],
         aria_label='Panorama da grade',
         classes=['class-grid-hero'],
+        contract={'max_primary_actions': 4},
     )
     payload = build_catalog_page_payload(
         context={
@@ -55,8 +55,8 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
         actions={
             'anchors': {
                 'today': '#today-board',
-                'weekly': '#weekly-board',
-                'monthly': '#monthly-board',
+                'weekly': '#class-weekly-modal',
+                'monthly': '#class-monthly-modal',
                 'planner': '#planner-board',
             },
             'admin': admin_changelist_url('boxcore', 'classsession') if can_open_class_admin else None,

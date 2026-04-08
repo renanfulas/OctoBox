@@ -38,10 +38,6 @@ PONTOS CRITICOS:
                 {% include "onboarding/includes/intake/intake_queue_panel.html" %}
             </div>
 
-            <div class="stack-16{% if active_intake_panel == 'tab-intake-conversion' %} is-tab-active{% endif %}" id="tab-intake-conversion" aria-label="Motor de conversao">
-                {% include "onboarding/includes/intake/intake_conversion_board.html" %}
-            </div>
-
             <div class="stack-16{% if active_intake_panel == 'tab-intake-source' %} is-tab-active{% endif %}" id="tab-intake-source" aria-label="Termometro comercial">
                 {% include "onboarding/includes/intake/intake_source_board.html" %}
             </div>
@@ -61,4 +57,8 @@ PONTOS CRITICOS:
     </div>
 </div>
 {% endwith %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/pages/onboarding/intake-center.js' %}?v={{ static_asset_version }}"></script>
 {% endblock %}

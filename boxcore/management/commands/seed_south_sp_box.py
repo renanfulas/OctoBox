@@ -553,7 +553,7 @@ class Command(BaseCommand):
                 phone=student.phone,
                 email=student.email,
                 source=IntakeSource.IMPORT if index % 2 == 0 else IntakeSource.CSV,
-                status=IntakeStatus.MATCHED if index < (4 if scenario == SCENARIO_STABLE else 3) else IntakeStatus.APPROVED,
+                status=IntakeStatus.APPROVED,
                 linked_student=student,
                 assigned_to=users['manager'],
                 raw_payload={
