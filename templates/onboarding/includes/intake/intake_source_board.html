@@ -8,33 +8,30 @@ POR QUE ELE EXISTE:
 ARQUIVO: leitura de origem da Central de Intake.
 
 POR QUE ELE EXISTE:
-- Isola a quebra por canal para facilitar manutenção da leitura curta.
+- Isola a quebra por canal para facilitar manutencao da leitura curta.
 
 O QUE ESTE ARQUIVO FAZ:
 1. Exibe cards de origem dos contatos.
-2. Mostra label, valor e nota para cada canal.
+2. Mostra label e volume por canal.
 
 PONTOS CRITICOS:
 - Depende do contexto de source_breakdown.
 -->
-<article class="card intake-surface-card intake-command-card" id="intake-source-board" data-panel="intake-source-board">
+<article class="card intake-source-board-card" id="intake-source-board" data-panel="intake-source-board">
     <div class="card-head">
-        <div class="card-head-main intake-command-head-copy">
-            <p class="intake-command-eyebrow eyebrow">Radar comercial</p>
-            <h2 class="card-title">De onde vêm os Contatos</h2>
-            <p class="card-copy">Veja quantos novos contatos chegam pelo Instagram, Site ou Balcão para saber de onde vem seu público.</p>
+        <div class="card-head-main intake-source-board-head-copy">
+            <p class="intake-source-board-eyebrow eyebrow">Radar comercial</p>
+            <h2 class="card-title intake-source-board-title">Canais de entrada</h2>
+            <p class="card-copy intake-source-board-copy">Compare os canais em uma leitura curta, limpa e direta.</p>
         </div>
     </div>
     <div class="intake-source-grid">
         {% for item in page.data.source_breakdown %}
-        <article class="intake-mini-card" data-panel="intake-source-card">
-            <div class="card-body intake-mini-card-body">
-                <div class="card-value-stack intake-mini-card-value-stack">
-                    <strong>{{ item.label }}</strong>
-                    <p class="metric">{{ item.value }}</p>
-                </div>
-                <div class="card-content intake-mini-card-content">
-                    <p class="meta-text-sm">{{ item.note }}</p>
+        <article class="intake-source-card" data-panel="intake-source-card" data-source-key="{{ item.key }}">
+            <div class="card-body intake-source-card-body">
+                <div class="card-value-stack intake-source-card-value-stack">
+                    <strong class="intake-source-card-label">{{ item.label }}</strong>
+                    <p class="metric intake-source-card-metric">{{ item.value }}</p>
                 </div>
             </div>
         </article>

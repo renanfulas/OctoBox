@@ -21,7 +21,7 @@ body[data-theme="dark"] .owner-simple-shell .operation-hero {
     --operation-hero-border: rgba(148, 163, 184, 0.12);
 }
 
-body[data-theme="dark"] .owner-simple-shell .page-reading-list .fdw-focus-card.is-primary,
+body[data-theme="dark"] .owner-simple-shell .owner-command-card--primary,
 body[data-theme="dark"] .owner-sessions-panel,
 body[data-theme="dark"] .owner-simple-shell .owner-metric-grid .operation-kpi-card:first-child {
     box-shadow:
@@ -36,7 +36,7 @@ body[data-theme="dark"] .owner-workspace-strip {
         radial-gradient(circle at top right, rgba(217, 70, 239, 0.06), transparent 32%);
 }
 
-body[data-theme="dark"] .owner-simple-shell .page-reading-list .fdw-focus-card.is-primary {
+body[data-theme="dark"] .owner-simple-shell .owner-command-card--primary {
     background:
         linear-gradient(180deg, rgba(9, 17, 30, 0.99), rgba(7, 15, 28, 0.99));
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 28%, rgba(148, 163, 184, 0.12) 72%);

@@ -11,6 +11,7 @@ PONTOS CRITICOS:
 */
 
 @import url("./simple/scene.css");
+@import url("./simple/command-lane.css");
 @import url("./simple/panels.css");
 @import url("./simple/metrics.css");
 @import url("./simple/dark.css");

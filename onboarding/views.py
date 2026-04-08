@@ -137,7 +137,8 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
                     },
                 )
 
-            messages.success(request, f'{entry_kind.capitalize()} cadastrado com sucesso na Central de Intake.')
+            entry_label = 'Lead' if entry_kind == 'lead' else 'Conversa'
+            messages.success(request, f'{entry_label} cadastrado com sucesso na Central de Entradas.')
             return redirect(self._get_quick_create_success_url(entry_kind))
 
         if role_slug not in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION):
@@ -146,7 +147,7 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
 
         form = IntakeQueueActionForm(request.POST)
         if not form.is_valid():
-            messages.error(request, 'A acao de intake nao foi entendida. Revise a fila e tente novamente.')
+            messages.error(request, 'A acao de entradas nao foi entendida. Revise a fila e tente novamente.')
             return redirect(self._get_success_url(request.POST.get('return_query', '')))
 
         try:

@@ -168,7 +168,7 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
             primary_href=resolve_primary_href(snapshot.get('owner_operational_focus'), owner_decision_entry_context.get('entry_href')),
             pill_label=owner_priority_context.get('pill_label'),
             pill_class=owner_priority_context.get('pill_class'),
-            class_name='owner-reading-panel',
+            class_name='owner-command-panel',
             panel_id='owner-command-lane',
         ),
         'operations-manager': build_page_reading_panel(

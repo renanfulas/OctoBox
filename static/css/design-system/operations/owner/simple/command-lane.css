@@ -1,0 +1,110 @@
+/*
+ARQUIVO: lane de comando da superficie owner simple.
+
+POR QUE ELE EXISTE:
+- concentra a composicao local dos tres focus cards do owner.
+- reduz dependencia de seletores longos sobre o host generico.
+
+O QUE ESTE ARQUIVO FAZ:
+1. define a lista de comando do owner.
+2. controla o layout local dos cards e do card primario.
+3. centraliza responsividade da lane sem reabrir o primitivo global.
+
+PONTOS CRITICOS:
+- deve complementar `fdw-focus-card`, nao substitui-lo.
+- mudancas aqui nao devem depender de aumentar especificidade no global.
+*/
+
+.owner-command-lane {
+    gap: 8px;
+}
+
+.owner-command-lane .owner-command-card {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    padding: 10px 14px;
+    gap: 12px;
+    min-height: 148px;
+    border-radius: 16px;
+    transition:
+        transform 220ms var(--ease-standard),
+        box-shadow 220ms var(--ease-standard),
+        border-color 220ms var(--ease-standard);
+}
+
+.owner-command-lane .owner-command-card:hover {
+    transform: translateY(-2px);
+}
+
+.owner-command-lane .owner-command-card--primary {
+    min-height: 0;
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, white), color-mix(in srgb, var(--theme-surface-panel) 95%, white));
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 24%, var(--theme-border-strong) 76%);
+    box-shadow:
+        0 10px 18px rgba(15, 23, 42, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.68);
+}
+
+.owner-command-lane .owner-command-card__head {
+    gap: 10px;
+}
+
+.owner-command-lane .owner-command-card__body {
+    gap: 2px;
+}
+
+.owner-command-lane .owner-command-card__title {
+    font-size: 0.92rem;
+    line-height: 1.1;
+}
+
+.owner-command-lane .owner-command-card__summary {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 0.78rem;
+    line-height: 1.2;
+}
+
+.owner-command-lane .owner-command-card__meta {
+    gap: 6px;
+}
+
+.owner-command-lane .owner-command-card__chip,
+.owner-command-lane .owner-command-card__count {
+    min-height: 20px;
+    padding: 2px 7px;
+    font-size: 0.64rem;
+}
+
+.owner-command-lane .owner-command-card__footer {
+    padding-right: 14px;
+}
+
+.owner-command-lane .owner-command-card__action {
+    font-size: 0.72rem;
+}
+
+@media (max-width: 960px) {
+    .owner-command-lane .owner-command-card,
+    .owner-command-lane .owner-command-card--primary {
+        padding: 11px 14px;
+    }
+}
+
+@media (max-width: 720px) {
+    .owner-command-lane .owner-command-card,
+    .owner-command-lane .owner-command-card--primary {
+        grid-template-columns: auto minmax(0, 1fr);
+        padding-right: 14px;
+    }
+
+    .owner-command-lane .owner-command-card__footer {
+        grid-column: 2;
+        justify-content: flex-start;
+        padding-right: 0;
+    }
+}

@@ -7,7 +7,7 @@ POR QUE ELE EXISTE:
 O QUE ESTE ARQUIVO FAZ:
 1. Monta a leitura operacional de cada item da fila.
 2. Executa acoes de intake com validacao de papel e transicao simples de estado.
-3. Explicita quando um intake deve ser tratado como lead aberto, resolvido ou convertido.
+3. Explicita quando um intake deve ser tratado como em conversa, resolvido ou convertido.
 
 PONTOS CRITICOS:
 - Essa fronteira define o comportamento do modulo de onboarding; se ficar frouxa, a tela vira so mais um espelho do ORM.
@@ -96,14 +96,20 @@ def run_intake_queue_action(*, actor, intake_id: int, action: str) -> IntakeQueu
         is_manager_scope=actor_role_slug in (ROLE_OWNER, ROLE_MANAGER),
     )
 
-    if action == 'reject-intake':
+    if action == 'move-to-conversation':
+        if intake.status != IntakeStatus.NEW:
+            raise ValueError('So leads novos podem ser movidos para Em conversa por esta tela.')
+        intake.status = IntakeStatus.REVIEWING
+        update_fields = ['status', 'updated_at']
+        message = f'{intake.full_name} foi movido para Em conversa.'
+    elif action == 'reject-intake':
         if not permissions['can_reject']:
-            raise ValueError('Este intake nao pode ser rejeitado por esta tela.')
+            raise ValueError('Esta entrada nao pode ser rejeitada por esta tela.')
         intake.status = IntakeStatus.REJECTED
         update_fields = ['status', 'updated_at']
         message = f'{intake.full_name} foi rejeitado e saiu da fila ativa.'
     else:
-        raise ValueError('Acao de intake desconhecida para esta central.')
+        raise ValueError('Acao de entradas desconhecida para esta central.')
 
     intake.save(update_fields=update_fields)
     return IntakeQueueActionResult(

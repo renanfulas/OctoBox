@@ -154,6 +154,18 @@ POR QUE ELE EXISTE:
     color: var(--theme-accent-primary);
 }
 
+.student-kpi-card.kpi-blue {
+    color: var(--theme-accent-primary);
+}
+
+.student-kpi-card.kpi-amber {
+    color: var(--theme-accent-warning);
+}
+
+.student-kpi-card.kpi-emerald {
+    color: var(--theme-accent-success);
+}
+
 .student-kpi-card.kpi-purple {
     color: var(--theme-accent-premium);
 }

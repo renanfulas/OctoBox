@@ -16,37 +16,3 @@ POR QUE ELE EXISTE:
     display: grid;
     gap: 32px;
 }
-
-.owner-simple-shell .page-reading-list {
-    gap: var(--owner-shell-gap);
-}
-
-.owner-simple-shell .page-reading-list .fdw-focus-card {
-    min-height: 148px;
-    border-radius: 22px;
-    transition:
-        transform 220ms var(--ease-standard),
-        box-shadow 220ms var(--ease-standard),
-        border-color 220ms var(--ease-standard);
-}
-
-.owner-simple-shell .page-reading-list .fdw-focus-card:hover {
-    transform: translateY(-2px);
-}
-
-.owner-simple-shell .page-reading-list .fdw-focus-card.is-primary {
-    min-height: 168px;
-    background:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, white), color-mix(in srgb, var(--theme-surface-panel) 95%, white));
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 24%, var(--theme-border-strong) 76%);
-    box-shadow:
-        0 14px 24px rgba(15, 23, 42, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.72);
-}
-
-@media (max-width: 720px) {
-    .owner-simple-shell .page-reading-list .fdw-focus-card,
-    .owner-simple-shell .page-reading-list .fdw-focus-card.is-primary {
-        min-height: 0;
-    }
-}

@@ -18,12 +18,14 @@ from shared_support.form_inputs import apply_text_input_attrs
 
 
 INTAKE_ACTION_CHOICES = (
+    ('move-to-conversation', 'Mover para Em conversa'),
     ('reject-intake', 'Rejeitar intake'),
 )
 
 SEMANTIC_STAGE_CHOICES = (
     ('', 'Todos os estagios'),
-    ('lead-open', 'Lead aberto'),
+    ('new-leads', 'Leads'),
+    ('lead-open', 'Em conversa'),
     ('resolved', 'Resolvido'),
 )
 

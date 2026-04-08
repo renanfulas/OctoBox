@@ -20,17 +20,17 @@ PONTOS CRITICOS:
 <section class="card intake-surface-card intake-create-card" aria-label="Cadastro rapido de entrada">
     <div class="card-head">
         <div class="card-head-main">
-            <h2 class="card-title">{% if entry_kind == 'lead' %}Novo Lead{% else %}Novo Intake{% endif %}</h2>
+            <h2 class="card-title">{% if entry_kind == 'lead' %}Novo Lead{% else %}Em conversa{% endif %}</h2>
             <p class="card-copy">
                 {% if entry_kind == 'lead' %}
                 Registre um contato novo para entrar imediatamente na fila comercial do sistema.
                 {% else %}
-                Registre uma entrada mais madura para seguir a mesma fila operacional sem sair desta tela.
+                Registre um contato em conversa para seguir a mesma fila operacional sem sair desta tela.
                 {% endif %}
             </p>
         </div>
         <div class="card-head-aside">
-            <span class="pill {% if entry_kind == 'lead' %}accent{% else %}info{% endif %}">{% if entry_kind == 'lead' %}Lead{% else %}Intake{% endif %}</span>
+            <span class="pill {% if entry_kind == 'lead' %}accent{% else %}info{% endif %}">{% if entry_kind == 'lead' %}Lead{% else %}Em conversa{% endif %}</span>
         </div>
     </div>
     <form method="post" class="form-stack intake-create-form">
@@ -60,7 +60,7 @@ PONTOS CRITICOS:
             </label>
         </div>
         <div class="actions actions-tight intake-create-actions">
-            <button class="button" type="submit">Salvar {% if entry_kind == 'lead' %}lead{% else %}intake{% endif %}</button>
+            <button class="button" type="submit">Salvar {% if entry_kind == 'lead' %}lead{% else %}conversa{% endif %}</button>
             <a class="button secondary" href="#tab-intake-queue" data-action="open-tab-intake-queue">Voltar para fila</a>
         </div>
     </form>

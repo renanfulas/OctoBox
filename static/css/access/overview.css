@@ -39,7 +39,7 @@ POR QUE ELE EXISTE:
 .access-overview-strip {
     margin-top: var(--workspace-fib-4);
     display: grid;
-    grid-template-columns: minmax(0, 1.45fr) minmax(320px, 420px);
+    grid-template-columns: minmax(0, 1fr);
     gap: clamp(18px, 2vw, 26px);
     align-items: start;
     position: relative;
@@ -53,18 +53,10 @@ POR QUE ELE EXISTE:
 
 .access-overview-main {
     display: grid;
-    gap: 16px;
-    min-width: 0;
-}
-
-.access-overview-side {
-    display: grid;
     gap: 14px;
-    width: min(100%, 420px);
-    margin-left: auto;
-    justify-self: end;
-    position: sticky;
-    top: calc(var(--topbar-height, 88px) + 16px);
+    min-width: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
 }
 
 .access-overview-card,
@@ -74,14 +66,141 @@ POR QUE ELE EXISTE:
     box-shadow: var(--theme-glass-shadow);
 }
 
+.access-overview-card--create,
+.access-overview-card--manage,
 .access-role-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
+    grid-column: 1 / -1;
+}
+
+.access-overview-card--manage {
+    position: relative;
+    overflow: hidden;
+}
+
+.access-overview-card--manage::before,
+.access-role-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-support) 88%, white 12%), color-mix(in srgb, var(--theme-accent-premium) 66%, transparent));
+    opacity: 0.9;
+}
+
+.access-overview-card--manage .operation-card-head,
+.access-role-card .operation-card-head {
+    gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-glass-border) 82%, transparent);
+}
+
+.access-overview-card--manage .operation-card-title,
+.access-role-card .operation-card-title {
+    letter-spacing: -0.03em;
+}
+
+.access-overview-card--manage .operation-card-copy,
+.access-role-card .operation-card-copy,
+.access-role-card .capability-list {
+    color: color-mix(in srgb, var(--theme-text-muted) 86%, var(--ink) 14%);
+}
+
+.access-overview-card--manage .operation-focus-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.access-profile-item {
+    padding: 14px;
+    gap: 12px;
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 82%, transparent);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--theme-surface-strong) 72%, transparent);
+    box-shadow: 0 12px 26px rgba(7, 14, 24, 0.06);
+}
+
+.access-profile-item:first-child {
+    padding-top: 14px;
+}
+
+.access-profile-item .operation-focus-head strong {
+    display: block;
+    font-size: 1rem;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+
+.access-profile-item .operation-focus-head p:last-child {
+    margin: 4px 0 0;
+    color: var(--muted);
+    line-height: 1.35;
+}
+
+.access-profile-item .field-grid-200 {
+    gap: 10px 12px;
+}
+
+.access-profile-item .actions {
+    gap: 10px;
+}
+
+.access-role-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.access-role-card {
+    position: relative;
+    overflow: hidden;
 }
 
 .access-role-card .capability-list {
     display: grid;
-    gap: 8px;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.access-role-card .capability-list li {
+    position: relative;
+    padding: 10px 12px 10px 16px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 80%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 70%, transparent);
+    line-height: 1.42;
+}
+
+.access-role-card .capability-list li::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 15px;
+    width: 4px;
+    height: 4px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-accent-support) 78%, white 22%);
+}
+
+.access-role-card .pill {
+    align-self: flex-start;
+}
+
+body[data-theme="dark"] .access-overview-card--manage .operation-card-head,
+body[data-theme="dark"] .access-role-card .operation-card-head {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+body[data-theme="dark"] .access-role-card .capability-list li {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 86%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 82%, transparent);
+}
+
+body[data-theme="dark"] .access-profile-item {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 88%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 84%, transparent);
+    box-shadow:
+        0 16px 30px rgba(0, 0, 0, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 body[data-theme="dark"] .access-hero {
@@ -104,6 +223,17 @@ body[data-theme="dark"] .access-role-card {
     border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
 }
 
+@media (max-width: 1180px) {
+    .access-overview-main {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .access-overview-card--manage .operation-focus-list,
+    .access-role-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
 @media (max-width: 960px) {
     .access-overview-strip {
         grid-template-columns: 1fr;
@@ -111,13 +241,21 @@ body[data-theme="dark"] .access-role-card {
         background: none;
     }
 
-    .access-overview-side {
-        position: static;
-        top: auto;
-        width: 100%;
+    .access-overview-main {
+        grid-template-columns: 1fr;
     }
 
+    .access-overview-card--manage .operation-card-head,
+    .access-role-card .operation-card-head {
+        gap: 12px;
+    }
+
+    .access-overview-card--manage .operation-focus-list,
     .access-role-grid {
         grid-template-columns: 1fr;
+    }
+
+    .access-profile-item .operation-focus-copy--full {
+        gap: 12px;
     }
 }

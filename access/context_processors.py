@@ -255,14 +255,11 @@ def role_navigation(request):
         shell_counts = get_shell_counts()
         sidebar_navigation = _build_navigation(role_slug, current_view_name=view_name)
 
-        admin_home = admin_index_url()
         if role_slug in (ROLE_OWNER, ROLE_DEV):
             profile_navigation = [
                 {'label': 'Papeis e acessos', 'href': reverse('access-overview')},
                 {'label': 'Config. operacionais', 'href': reverse('operational-settings')},
                 {'label': 'Auditoria', 'href': admin_changelist_url('boxcore', 'auditevent')},
-                {'label': 'Admin Django', 'href': admin_home},
-                {'label': 'Mapa do sistema', 'href': reverse('system-map')},
             ]
 
     return {

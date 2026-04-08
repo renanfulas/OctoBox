@@ -28,7 +28,7 @@ PONTOS CRITICOS:
     <section class="access-overview-strip" aria-label="Mesa de governanca de acessos">
         <div class="access-overview-main">
             {% if can_manage_access_profiles %}
-            <section id="access-profile-create" class="table-card operation-focus-card access-overview-card" aria-label="Criacao rapida de perfis">
+            <section id="access-profile-create" class="table-card operation-focus-card access-overview-card access-overview-card--create" aria-label="Criacao rapida de perfis">
                 <div class="operation-card-head">
                     <div>
                         <p class="eyebrow">Criacao operacional</p>
@@ -77,7 +77,7 @@ PONTOS CRITICOS:
             </section>
 
             {% if access_profiles_panel_open %}
-            <section id="access-profile-manage" class="table-card operation-focus-card access-overview-card" aria-label="Gestao rapida de perfis">
+            <section id="access-profile-manage" class="table-card operation-focus-card access-overview-card access-overview-card--manage" aria-label="Gestao rapida de perfis">
                 <div class="operation-card-head">
                     <div>
                         <p class="eyebrow">Gerenciar perfis</p>
@@ -91,7 +91,7 @@ PONTOS CRITICOS:
                 </div>
                 <div class="operation-focus-list">
                     {% for profile in access_profiles %}
-                    <article class="operation-focus-item">
+                    <article class="operation-focus-item access-profile-item">
                         <div class="operation-focus-copy operation-focus-copy--full">
                             <div class="row-between-md operation-focus-head">
                                 <div>
@@ -170,14 +170,6 @@ PONTOS CRITICOS:
             </section>
         </div>
 
-        <aside class="access-overview-side">
-            <div id="access-current-role">
-                {% include "includes/ui/shared/info_list_card.html" with eyebrow="Escopo do papel ativo" title="Como este usuario deveria operar" copy="O que pertence ao seu papel." pill_label=current_role.label pill_class="info" items=role_capabilities empty_text="Defina um grupo de acesso para este usuario." %}
-            </div>
-            <div id="access-governance-board">
-                {% include "includes/ui/shared/info_list_card.html" with card_class="operation-empty-card" eyebrow="Governanca pratica" title="O que esta tela precisa impedir" copy="Bloquear mistura de responsabilidade." pill_label="Limites claros" pill_class="accent" items=governance_points %}
-            </div>
-        </aside>
     </section>
 </div>
 {% endblock %}

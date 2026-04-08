@@ -52,15 +52,15 @@ def build_intake_center_page(*, snapshot, current_role_slug):
             {'label': 'Novo lead', 'href': '#tab-intake-create-lead', 'kind': 'secondary', 'data_action': 'open-tab-intake-create-lead'}
         )
         hero_actions.append(
-            {'label': 'Novo Intake', 'href': '#tab-intake-create-intake', 'kind': 'secondary', 'data_action': 'open-tab-intake-create-intake'}
+            {'label': 'Em conversa', 'href': '#tab-intake-create-intake', 'kind': 'secondary', 'data_action': 'open-tab-intake-create-intake'}
         )
 
     hero = build_page_hero(
-        eyebrow='Intake',
+        eyebrow='Entradas',
         title='Entradas em leitura.',
         copy='Veja quem pede resposta agora, quem ja esta em conversa e onde converter ou recusar sem ruido.',
         actions=hero_actions,
-        aria_label='Panorama da central de intake',
+        aria_label='Panorama da central de entradas',
         classes=[],
         data_slot='hero',
         data_panel='intake-hero',
@@ -70,8 +70,8 @@ def build_intake_center_page(*, snapshot, current_role_slug):
     return build_page_payload(
         context={
             'page_key': 'intake-center',
-            'title': 'Central de Intake',
-            'subtitle': 'Entradas provisorias, triagem e conversao num ponto proprio.',
+            'title': 'Central de Entradas',
+            'subtitle': 'Entradas, triagem e conversao em um ponto proprio.',
             'mode': 'workspace',
             'role_slug': current_role_slug,
         },

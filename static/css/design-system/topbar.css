@@ -745,15 +745,59 @@ REGRA:
     height: 40px;
     flex: 0 0 40px;
     border-radius: var(--radius-card);
-    display: block;
-    background: color-mix(in srgb, var(--theme-accent-support) 70%, var(--theme-surface-strong) 30%);
-    border: 1px solid color-mix(in srgb, white 18%, transparent);
-    box-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 30% 28%, color-mix(in srgb, white 20%, transparent), transparent 42%),
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-accent-support) 74%, white 10%), color-mix(in srgb, var(--theme-accent-primary) 58%, var(--theme-surface-strong) 42%), color-mix(in srgb, var(--theme-accent-premium) 28%, var(--theme-surface-strong) 72%));
+    border: 1px solid color-mix(in srgb, white 22%, transparent);
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, white 14%, transparent),
+        0 8px 16px color-mix(in srgb, var(--theme-accent-support-alpha) 20%, transparent);
+}
+
+.avatar::after {
+    content: "";
+    position: absolute;
+    inset: auto -10px -12px auto;
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent-premium-alpha) 42%, transparent), transparent 72%);
+    pointer-events: none;
+}
+
+.avatar-glyph {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 1px;
+    border-radius: 10px;
+    background: color-mix(in srgb, rgba(9, 17, 30, 0.18) 72%, transparent);
+    color: #f7feff;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-indent: 0.14em;
+    line-height: 1;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .topbar-profile:hover .avatar,
 .topbar-profile:focus-within .avatar {
-    background: color-mix(in srgb, var(--theme-accent-primary) 42%, var(--theme-accent-support) 42%, var(--theme-surface-strong) 16%);
+    background:
+        radial-gradient(circle at 30% 28%, color-mix(in srgb, white 24%, transparent), transparent 44%),
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-accent-primary) 62%, white 8%), color-mix(in srgb, var(--theme-accent-support) 52%, var(--theme-surface-strong) 48%), color-mix(in srgb, var(--theme-accent-premium) 34%, var(--theme-surface-strong) 66%));
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, white 16%, transparent),
+        0 10px 18px color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent);
 }
 
 .profile-meta strong {
@@ -811,9 +855,21 @@ REGRA:
 }
 
 [data-theme="dark"] .avatar {
-    background: color-mix(in srgb, var(--theme-accent-support) 54%, #172334 46%);
+    background:
+        radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.12), transparent 42%),
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-accent-support) 50%, #172334 50%), color-mix(in srgb, var(--theme-accent-primary) 40%, #122033 60%), color-mix(in srgb, var(--theme-accent-premium) 18%, #0d1828 82%));
     border-color: rgba(255, 255, 255, 0.08);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 10px 18px rgba(0, 0, 0, 0.24);
+}
+
+[data-theme="dark"] .avatar-glyph {
+    background: rgba(8, 15, 26, 0.34);
+    color: rgba(247, 254, 255, 0.98);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 4px 10px rgba(0, 0, 0, 0.16);
 }
 
 [data-theme="dark"] .global-search:focus-within {
@@ -825,7 +881,9 @@ REGRA:
 
 [data-theme="dark"] .topbar-profile:hover .avatar,
 [data-theme="dark"] .topbar-profile:focus-within .avatar {
-    background: color-mix(in srgb, rgba(0, 229, 255, 0.38) 54%, rgba(74, 144, 226, 0.34) 30%, #172334 16%);
+    background:
+        radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.14), transparent 44%),
+        linear-gradient(145deg, color-mix(in srgb, rgba(0, 229, 255, 0.38) 54%, #172334 46%), color-mix(in srgb, rgba(74, 144, 226, 0.34) 42%, #122033 58%), color-mix(in srgb, rgba(255, 0, 200, 0.18) 18%, #0d1828 82%));
 }
 
 @media (max-width: 1320px) {

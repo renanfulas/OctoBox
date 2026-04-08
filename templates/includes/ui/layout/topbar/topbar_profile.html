@@ -7,7 +7,9 @@
         aria-haspopup="menu"
         aria-controls="topbar-profile-dropdown"
     >
-        <div class="avatar" aria-hidden="true"></div>
+        <div class="avatar" aria-hidden="true">
+            <span class="avatar-glyph">OB</span>
+        </div>
         <div class="profile-meta">
             <strong>{{ user.get_full_name|default:user.username }}</strong>
             <span>{{ current_role.label|default:"Sem papel definido" }}</span>

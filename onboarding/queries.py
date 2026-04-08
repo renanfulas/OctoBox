@@ -85,10 +85,12 @@ def _resolve_queue_ordering(*, sort_value):
 
 def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None, queue_limit=12):
     today = today or timezone.localdate()
-    queue_queryset = StudentIntake.objects.filter(
+    base_queryset = StudentIntake.objects.filter(
         status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING, IntakeStatus.MATCHED],
         linked_student__isnull=True,
     )
+    queue_queryset = base_queryset
+    metrics_queryset = base_queryset
     filter_form = IntakeCenterFilterForm(
         params or None,
         status_choices=tuple(choice for choice in IntakeStatus.choices if choice[0] != IntakeStatus.MATCHED),
@@ -104,21 +106,27 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         assignment = filter_form.cleaned_data.get('assignment')
 
         if query:
-            queue_queryset = queue_queryset.filter(
-                Q(full_name__icontains=query) | Q(phone__icontains=query) | Q(email__icontains=query)
-            )
+            search_filter = Q(full_name__icontains=query) | Q(phone__icontains=query) | Q(email__icontains=query)
+            queue_queryset = queue_queryset.filter(search_filter)
+            metrics_queryset = metrics_queryset.filter(search_filter)
         if status:
             queue_queryset = queue_queryset.filter(status=status)
+            metrics_queryset = metrics_queryset.filter(status=status)
         if source:
             queue_queryset = queue_queryset.filter(source=source)
-        if semantic_stage == 'lead-open':
-            queue_queryset = queue_queryset.filter(status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING, IntakeStatus.MATCHED])
+            metrics_queryset = metrics_queryset.filter(source=source)
+        if semantic_stage == 'new-leads':
+            queue_queryset = queue_queryset.filter(status=IntakeStatus.NEW)
+        elif semantic_stage == 'lead-open':
+            queue_queryset = queue_queryset.filter(status__in=[IntakeStatus.REVIEWING, IntakeStatus.MATCHED])
         elif semantic_stage == 'resolved':
             queue_queryset = queue_queryset.filter(status__in=[IntakeStatus.APPROVED, IntakeStatus.REJECTED])
         if assignment == 'assigned':
             queue_queryset = queue_queryset.exclude(assigned_to__isnull=True)
+            metrics_queryset = metrics_queryset.exclude(assigned_to__isnull=True)
         elif assignment == 'unassigned':
             queue_queryset = queue_queryset.filter(assigned_to__isnull=True)
+            metrics_queryset = metrics_queryset.filter(assigned_to__isnull=True)
     else:
         sort = ''
 
@@ -130,25 +138,21 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         for intake in queue
     ]
     source_counts = dict(queue_queryset.values_list('source').annotate(total=Count('id')))
-    summary = StudentIntake.objects.aggregate(
-        pending_total=Count('id', filter=Q(status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING], linked_student__isnull=True)),
+    summary = metrics_queryset.aggregate(
+        lead_total=Count('id', filter=Q(status=IntakeStatus.NEW)),
+        pending_total=Count('id', filter=Q(status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING])),
         created_today=Count('id', filter=Q(created_at__date=today)),
         conversation_in_queue=Count(
             'id',
-            filter=Q(
-                id__in=queue_queryset.values('id'),
-                status__in=[IntakeStatus.REVIEWING, IntakeStatus.MATCHED],
-            ),
+            filter=Q(status__in=[IntakeStatus.REVIEWING, IntakeStatus.MATCHED]),
         ),
         assigned_in_queue=Count(
             'id',
-            filter=Q(
-                id__in=queue_queryset.values('id'),
-                assigned_to__isnull=False,
-            ),
+            filter=Q(assigned_to__isnull=False),
         ),
     )
 
+    lead_count = summary['lead_total']
     pending_count = summary['pending_total']
     conversation_count = summary['conversation_in_queue']
     assigned_count = summary['assigned_in_queue']
@@ -159,19 +163,19 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
     return {
         'interactive_kpis': [
             {
-                'label': 'Fila aberta',
-                'display_value': str(pending_count),
+                'label': 'Leads',
+                'display_value': str(lead_count),
                 'note': 'Leads aguardando primeiro contato, agendamento ou direcionamento basico no balcao.',
-                'data_action': 'open-tab-intake-queue',
-                'tone_class': 'kpi-red' if pending_count > 0 else 'kpi-green',
+                'href': '?panel=tab-intake-queue&semantic_stage=new-leads',
+                'tone_class': 'kpi-blue' if lead_count > 0 else 'kpi-green',
                 'icon': _intake_kpi_icon('queue'),
             },
             {
                 'label': 'Em conversa',
                 'display_value': str(conversation_count),
                 'note': 'Leads que ja estao em contato ativo com a equipe e podem virar matricula sem trocar de tela.',
-                'data_action': 'open-tab-intake-queue',
-                'tone_class': 'kpi-cyan' if conversation_count > 0 else 'kpi-green',
+                'href': '?panel=tab-intake-queue&semantic_stage=lead-open',
+                'tone_class': 'kpi-amber' if conversation_count > 0 else 'kpi-green',
                 'icon': _intake_kpi_icon('conversation'),
             },
             {
@@ -179,7 +183,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
                 'display_value': str(created_today),
                 'note': 'Volume diario e grafico de canais (Insta, Site, Balcao) para avaliar a atracao de hoje.',
                 'data_action': 'open-tab-intake-source',
-                'tone_class': 'kpi-cyan',
+                'tone_class': 'kpi-emerald',
                 'icon': _intake_kpi_icon('today'),
             },
             {
@@ -198,12 +202,12 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
             {'label': 'Hoje', 'value': created_today},
         ],
         'source_breakdown': [
-            {
-                'label': dict(IntakeSource.choices)[choice],
-                'value': source_counts.get(choice, 0),
-                'note': 'Mostra quantos contatos vieram por aqui.',
-            }
-            for choice, _label in IntakeSource.choices
+            {'key': 'manual', 'label': 'Manual', 'value': source_counts.get(IntakeSource.MANUAL, 0)},
+            {'key': 'csv', 'label': dict(IntakeSource.choices)[IntakeSource.CSV], 'value': source_counts.get(IntakeSource.CSV, 0)},
+            {'key': 'instagram', 'label': 'Instagram', 'value': 0},
+            {'key': 'whatsapp', 'label': dict(IntakeSource.choices)[IntakeSource.WHATSAPP], 'value': source_counts.get(IntakeSource.WHATSAPP, 0)},
+            {'key': 'site', 'label': 'Site', 'value': 0},
+            {'key': 'import', 'label': dict(IntakeSource.choices)[IntakeSource.IMPORT], 'value': source_counts.get(IntakeSource.IMPORT, 0)},
         ],
         'filter_form': filter_form,
         'create_form': IntakeQuickCreateForm(),

@@ -17,11 +17,11 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende do contexto de filter_form.
 -->
-<section class="card intake-surface-card intake-filter-card intake-command-card" aria-label="Busca e filtros da central de intake" data-slot="filters" data-panel="intake-filters">
+<section class="card intake-surface-card intake-filter-card intake-filter-surface" aria-label="Busca e filtros da central de entradas" data-slot="filters" data-panel="intake-filters">
     {% url 'intake-center' as intake_center_url %}
     <div class="card-head">
-        <div class="card-head-main intake-command-head-copy">
-            <p class="intake-command-eyebrow eyebrow">Leitura guiada</p>
+        <div class="card-head-main intake-filter-head-copy">
+            <p class="intake-filter-eyebrow eyebrow">Leitura guiada</p>
             <h2 class="card-title">Motor de Busca e Foco</h2>
             <p class="card-copy">Filtre seus leads, veja apenas o de urgência ou separe por qual recepcionista está lidando com qual pessoa.</p>
         </div>
@@ -49,7 +49,7 @@ PONTOS CRITICOS:
                 {{ page.data.filter_form.assignment }}
             </label>
         </div>
-        <div class="actions actions-tight operation-hero-action-rail intake-command-actions">
+        <div class="actions actions-tight operation-hero-action-rail intake-filter-actions">
             <button class="button" type="submit" data-action="apply-intake-filters">Aplicar filtros</button>
             <a class="button secondary" href="{{ intake_center_url }}" data-action="clear-intake-filters">Limpar</a>
         </div>

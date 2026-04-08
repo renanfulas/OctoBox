@@ -12,9 +12,9 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - depende do contexto de queue_items e de form.
 -->
-<section class="intake-data-panel" id="intake-queue-board" aria-label="Fila principal de intake" data-panel="intake-queue-board">
+<section class="intake-data-panel" id="intake-queue-board" aria-label="Fila principal de entradas" data-panel="intake-queue-board">
     {% url 'student-quick-create' as student_quick_create_url %}
-    <section class="student-filter-bar intake-filter-bar" aria-label="Busca e filtros da central de intake">
+    <section class="student-filter-bar intake-filter-bar" aria-label="Busca e filtros da central de entradas">
         <form method="get" action="." class="student-filter-form" id="intake-directory-filter-form">
             <input type="hidden" name="panel" value="tab-intake-queue">
             <label class="student-filter-search" aria-label="Buscar contato">
@@ -31,7 +31,7 @@ PONTOS CRITICOS:
             </label>
         </form>
 
-        <nav class="student-filter-pills intake-filter-pills" aria-label="Filtros rapidos da fila de intake">
+        <nav class="student-filter-pills intake-filter-pills" aria-label="Filtros rapidos da fila de entradas">
             <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}" class="student-filter-pill {% if not request.GET.status %}is-active{% endif %}">Todos</a>
             <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}&status=new" class="student-filter-pill {% if request.GET.status == 'new' %}is-active{% endif %}">Novos</a>
             <button type="button" class="student-filter-pill" data-intake-sort="registration" data-sort-direction="desc" aria-pressed="false">Data</button>
@@ -43,22 +43,22 @@ PONTOS CRITICOS:
     <div class="student-data-panel intake-data-panel-table">
         <div class="student-table-scroll" data-slot="intake-table-scroll">
             <table class="table-modern intake-directory-table">
-                <caption class="visually-hidden">Fila principal de intake com busca, filtros rapidos e acoes de triagem.</caption>
+                <caption class="visually-hidden">Fila principal de entradas com busca, filtros rapidos e acoes de triagem.</caption>
                 <thead>
                     <tr>
-                        <th scope="col">Contato</th>
-                        <th scope="col">Origem</th>
-                        <th scope="col">Leitura</th>
-                        <th scope="col">Responsavel</th>
-                        <th scope="col">Registro</th>
-                        <th scope="col">Proxima acao</th>
+                        <th scope="col" class="intake-queue-col--contact">Contato</th>
+                        <th scope="col" class="intake-queue-col--source">Origem</th>
+                        <th scope="col" class="intake-queue-col--stage">Leitura</th>
+                        <th scope="col" class="intake-queue-col--owner">Responsavel</th>
+                        <th scope="col" class="intake-queue-col--registration">Registro</th>
+                        <th scope="col" class="intake-queue-col--actions">Proxima acao</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in page.data.queue_items %}
                     {% with intake=item.object semantic=item.semantic_state conversion=item.conversion permissions=item.action_permissions %}
                     <tr class="intake-directory-row" data-registration-age-days="{{ item.registration_age_days }}">
-                        <td data-label="Contato">
+                        <td class="intake-queue-col--contact" data-label="Contato">
                             <div class="student-identity">
                                 <div class="avatar-circle avatar-{% cycle 'orange' 'blue' 'purple' 'teal' 'pink' 'indigo' %} student-avatar-circle">
                                     {{ intake.full_name|slice:":2"|upper }}
@@ -69,25 +69,33 @@ PONTOS CRITICOS:
                                 </div>
                             </div>
                         </td>
-                        <td data-label="Origem">
+                        <td class="intake-queue-col--source" data-label="Origem">
                             <span class="intake-table-text">{{ intake.get_source_display }}</span>
                         </td>
-                        <td data-label="Leitura">
+                        <td class="intake-queue-col--stage" data-label="Leitura">
                             <div class="intake-reading-stack">
-                                <span class="student-status-pill student-status-pill--blue">{{ semantic.semantic_label }}</span>
+                                <span class="student-status-pill {% if semantic.semantic_stage == 'new-leads' %}student-status-pill--blue{% elif semantic.semantic_stage == 'lead-open' %}student-status-pill--orange{% else %}student-status-pill--gray{% endif %}">{{ semantic.semantic_label }}</span>
                                 <span class="intake-reading-note">{{ conversion.reason }}</span>
                             </div>
                         </td>
-                        <td data-label="Responsavel">
+                        <td class="intake-queue-col--owner" data-label="Responsavel">
                             <span class="intake-table-text">{% if intake.assigned_to %}{{ intake.assigned_to.get_full_name|default:intake.assigned_to.username }}{% else %}Aguardando{% endif %}</span>
                         </td>
-                        <td data-label="Registro">
+                        <td class="intake-queue-col--registration" data-label="Registro">
                             <span class="intake-table-text">{{ item.registration_age_label }}</span>
                         </td>
-                        <td data-label="Proxima acao">
+                        <td class="intake-queue-col--actions" data-label="Proxima acao">
                             <div class="operation-hero-action-rail intake-row-actions">
-                                {% if page.capabilities.can_manage_students and conversion.can_convert %}
+                                {% if page.capabilities.can_manage_students and conversion.can_convert and conversion.action_type == 'convert-student' %}
                                 <a class="button intake-convert-button" href="{{ student_quick_create_url }}?intake={{ intake.id }}#student-form-essential" data-action="open-student-quick-create-from-intake">{{ conversion.action_label }}</a>
+                                {% endif %}
+                                {% if page.capabilities.can_work_queue and conversion.can_convert and conversion.action_type == 'move-to-conversation' %}
+                                <form method="post" class="intake-row-form" data-action="intake-queue-actions">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="intake_id" value="{{ intake.id }}">
+                                    <input type="hidden" name="return_query" value="{{ request.GET.urlencode }}">
+                                    <button class="button intake-convert-button" type="submit" name="action" value="move-to-conversation">{{ conversion.action_label }}</button>
+                                </form>
                                 {% endif %}
                                 {% if page.capabilities.can_work_queue and permissions.can_reject %}
                                 <form method="post" class="intake-row-form" data-action="intake-queue-actions">
