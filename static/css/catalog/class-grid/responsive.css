@@ -46,6 +46,10 @@ POR QUE ELE EXISTE:
         flex-direction: column;
     }
 
+    .class-rotation-rail__grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     .class-grid-head-badges {
         justify-content: start;
     }
@@ -125,6 +129,31 @@ POR QUE ELE EXISTE:
     .class-grid-panel-head {
         gap: 10px;
         margin-bottom: 12px;
+    }
+
+    .class-rotation-rail {
+        padding: 14px;
+        border-radius: 18px;
+    }
+
+    .class-rotation-rail__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .class-rotation-rail__footer,
+    .class-rotation-rail__actions,
+    .class-rotation-weekdays {
+        width: 100%;
+    }
+
+    .class-rotation-rail__actions {
+        margin-left: 0;
+    }
+
+    .class-rotation-rail__actions .pill,
+    .class-rotation-rail__actions .button,
+    .class-rotation-weekdays .weekday-option {
+        width: 100%;
     }
 
     .class-grid-panel-title {

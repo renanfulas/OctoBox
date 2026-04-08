@@ -195,3 +195,22 @@ class OperationClassGridDomainTests(SimpleTestCase):
         )
 
         self.assertEqual([slot.scheduled_date for slot in plan], [date(2026, 3, 16), date(2026, 3, 18)])
+
+    def test_iter_schedule_dates_supports_weekend_rotation_by_interval(self):
+        dates = iter_schedule_dates(
+            start_date=date(2026, 4, 1),
+            end_date=date(2026, 4, 30),
+            weekdays=(5, 6),
+            anchor_date=date(2026, 4, 11),
+            interval_days=14,
+        )
+
+        self.assertEqual(
+            dates,
+            (
+                date(2026, 4, 11),
+                date(2026, 4, 12),
+                date(2026, 4, 25),
+                date(2026, 4, 26),
+            ),
+        )

@@ -13,6 +13,22 @@ from shared_support.page_payloads import build_page_hero
 from .shared import build_catalog_assets, build_catalog_page_payload
 
 
+def _build_weekend_rotation_state(schedule_form):
+    selected_weekdays = {str(value) for value in (schedule_form['weekdays'].value() or [])}
+    return {
+        'title': schedule_form['title'].value() or '',
+        'coach_id': str(schedule_form['coach'].value() or ''),
+        'start_time': schedule_form['start_time'].value() or '',
+        'duration_minutes': schedule_form['duration_minutes'].value() or '',
+        'capacity': schedule_form['capacity'].value() or '',
+        'anchor_date': schedule_form['anchor_date'].value() or '',
+        'interval_days': str(schedule_form['interval_days'].value() or '14'),
+        'skip_existing': bool(schedule_form['skip_existing'].value()),
+        'selected_saturday': '5' in selected_weekdays,
+        'selected_sunday': '6' in selected_weekdays,
+    }
+
+
 def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_session, session_edit_form, current_query_string):
     role_slug = base_context['current_role'].slug
     can_manage_classes = role_slug in (ROLE_OWNER, ROLE_MANAGER)
@@ -48,7 +64,10 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
             'monthly_calendar': snapshot['monthly_calendar'],
             'class_metrics': snapshot['class_metrics'],
             'selected_month_label': snapshot['selected_month_label'],
+            'selected_month_start': snapshot['selected_month_start'],
+            'selected_month_end': snapshot['selected_month_end'],
             'schedule_form': schedule_form,
+            'weekend_rotation_state': _build_weekend_rotation_state(schedule_form),
             'selected_session': selected_session,
             'session_edit_form': session_edit_form,
         },

@@ -28,6 +28,7 @@ from catalog.forms import ClassScheduleRecurringForm, StudentQuickForm
 from communications.models import StudentIntake, WhatsAppContact, WhatsAppMessageLog
 from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
 from operations.models import Attendance, ClassSession, SessionStatus
+from operations.session_snapshots import serialize_class_session
 from students.models import Student
 
 
@@ -130,6 +131,44 @@ class CatalogViewTests(TestCase):
         self.assertEqual(len(created_sessions), 4)
         self.assertEqual([timezone.localtime(item.scheduled_at).strftime('%H:%M') for item in created_sessions], ['07:00', '08:00', '09:00', '10:00'])
 
+    def test_class_grid_can_create_weekend_rotation_inside_monthly_window(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'planner',
+                'title': 'Rodizio Weekend',
+                'coach': self.coach.id,
+                'start_date': '2026-04-01',
+                'end_date': '2026-04-30',
+                'anchor_date': '2026-04-11',
+                'interval_days': '14',
+                'weekdays': ['5', '6'],
+                'start_time': '09:00',
+                'sequence_count': 0,
+                'duration_minutes': 60,
+                'capacity': 18,
+                'status': 'scheduled',
+                'notes': '',
+                'skip_existing': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        created_sessions = list(ClassSession.objects.filter(title='Rodizio Weekend').order_by('scheduled_at'))
+        self.assertEqual(len(created_sessions), 4)
+        self.assertEqual(
+            [timezone.localtime(item.scheduled_at).date() for item in created_sessions],
+            [
+                timezone.datetime(2026, 4, 11).date(),
+                timezone.datetime(2026, 4, 12).date(),
+                timezone.datetime(2026, 4, 25).date(),
+                timezone.datetime(2026, 4, 26).date(),
+            ],
+        )
+        self.assertTrue(all(item.coach_id == self.coach.id for item in created_sessions))
+
     def test_class_schedule_form_normalizes_single_digit_hour(self):
         start_date = timezone.localdate() + timezone.timedelta(days=1)
         form = ClassScheduleRecurringForm(
@@ -151,6 +190,27 @@ class CatalogViewTests(TestCase):
 
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data['start_time'].strftime('%H:%M'), '08:00')
+
+    def test_class_session_snapshot_uses_second_name_when_first_is_generic_coach_title(self):
+        titled_coach = get_user_model().objects.create_user(
+            username='coach.ana',
+            first_name='Coach',
+            last_name='Ana',
+            password='senha-forte-123',
+        )
+        session = ClassSession.objects.create(
+            title='Open 09h',
+            coach=titled_coach,
+            scheduled_at=timezone.now() + timezone.timedelta(days=1),
+            duration_minutes=60,
+            capacity=18,
+            status=SessionStatus.SCHEDULED,
+        )
+        session.occupied_slots = 0
+
+        snapshot = serialize_class_session(session, now=timezone.localtime())
+
+        self.assertEqual(snapshot['coach_display_name'], 'Ana')
 
     def test_class_grid_allows_exact_daily_limit_in_single_batch(self):
         self.client.force_login(self.user)

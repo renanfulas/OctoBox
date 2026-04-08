@@ -130,6 +130,21 @@ POR QUE ELE EXISTE:
     gap: 2px;
 }
 
+.monthly-session-chip-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.monthly-session-chip-coach {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: color-mix(in srgb, var(--muted) 86%, rgba(15, 23, 42, 0.16));
+    white-space: nowrap;
+}
+
 .monthly-session-chip strong,
 .monthly-session-chip span {
     display: block;
@@ -168,16 +183,98 @@ POR QUE ELE EXISTE:
     overflow: auto;
     border-radius: 28px;
     padding: 24px;
+    padding-top: 72px;
     background: var(--surface);
     box-shadow: var(--shadow-lift);
 }
 
-.class-monthly-modal-head {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    padding-bottom: 12px;
-    background: var(--surface);
+.class-monthly-modal-toggle,
+.class-monthly-modal-close {
+    position: absolute;
+    top: 24px;
+    z-index: 3;
+    width: fit-content;
+    margin-bottom: 0;
+}
+
+.class-monthly-modal-toggle {
+    right: 118px;
+}
+
+.class-monthly-modal-close {
+    right: 24px;
+}
+
+.class-rotation-rail {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding: 16px 18px;
+    border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+    border-radius: 22px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.92));
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
+}
+
+.class-rotation-rail[hidden] {
+    display: none;
+}
+
+body[data-theme="dark"] .class-rotation-rail {
+    background:
+        linear-gradient(180deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.94));
+    border-color: color-mix(in srgb, var(--line) 90%, transparent);
+}
+
+.class-rotation-rail__intro {
+    display: grid;
+    gap: 4px;
+}
+
+.class-rotation-rail__intro .section-title-sm {
+    margin: 0;
+}
+
+.class-rotation-rail__intro .class-day-summary {
+    margin: 0;
+}
+
+.class-rotation-rail__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.class-rotation-rail__grid label {
+    display: grid;
+    gap: 6px;
+}
+
+.class-rotation-rail__footer {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.class-rotation-rail__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-left: auto;
+}
+
+.class-rotation-weekdays {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.class-rotation-weekdays .weekday-option {
+    min-width: 132px;
 }
 
 .class-weekly-modal-close {

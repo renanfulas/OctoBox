@@ -3,17 +3,153 @@ ARQUIVO: modal expandido do calendario mensal.
 -->
 <dialog class="class-monthly-modal" id="class-monthly-modal" data-panel="class-grid-monthly-modal" aria-labelledby="class-monthly-modal-title">
     <div class="class-monthly-modal-panel" data-slot="class-grid-monthly-modal-panel">
-        <div class="class-day-header class-monthly-modal-head">
-            <div>
-                <p class="eyebrow">Calendario mensal expandido</p>
-                <h2 class="section-title-sm" id="class-monthly-modal-title">{{ page.data.selected_month_label }}</h2>
-                <p class="class-day-summary">Visao completa do mes para enxergar distribuicao, dias vazios e picos de ocupacao sem compactacao excessiva.</p>
+        {% if page.capabilities.can_manage_classes %}
+        <button
+            class="button secondary class-monthly-modal-toggle"
+            type="button"
+            id="toggle-monthly-rotation"
+            data-action="toggle-monthly-rotation"
+            aria-expanded="{% if page.data.schedule_form.errors %}true{% else %}false{% endif %}"
+            aria-controls="class-grid-weekend-rotation"
+        >
+            Escala
+        </button>
+        {% endif %}
+        <button class="button secondary class-monthly-modal-close" type="button" id="close-monthly-calendar" data-action="close-monthly-calendar">Fechar</button>
+
+        <p class="eyebrow">Calendario mensal expandido</p>
+        <h2 class="section-title-sm" id="class-monthly-modal-title">{{ page.data.selected_month_label }}</h2>
+
+        {% if page.capabilities.can_manage_classes %}
+        <form method="post" class="class-rotation-rail" novalidate data-panel="class-grid-weekend-rotation" id="class-grid-weekend-rotation" {% if not page.data.schedule_form.errors %}hidden{% endif %}>
+            {% csrf_token %}
+            <input type="hidden" name="form_kind" value="planner">
+            <input type="hidden" name="return_query" value="{{ page.behavior.current_query_string }}">
+            <input type="hidden" name="start_date" value="{{ page.data.selected_month_start|date:'Y-m-d' }}">
+            <input type="hidden" name="end_date" value="{{ page.data.selected_month_end|date:'Y-m-d' }}">
+            <input type="hidden" name="sequence_count" value="0">
+            <input type="hidden" name="status" value="scheduled">
+            <input type="hidden" name="notes" value="">
+
+            <div class="class-rotation-rail__intro">
+                <p class="eyebrow">Rodizio de fim de semana</p>
+                <h3 class="section-title-sm">Escala recorrente de coaches</h3>
+                <p class="class-day-summary">Cadastre sabado, domingo ou os dois com ciclo de 7, 14 ou 21 dias sem montar tudo na mao.</p>
             </div>
-            <div class="actions actions-tight" data-slot="class-grid-monthly-modal-actions">
-                <span class="pill info">Tela cheia</span>
-                <button class="button secondary" type="button" id="close-monthly-calendar" data-action="close-monthly-calendar">Fechar</button>
+
+            <div class="class-rotation-rail__grid">
+                <label>
+                    <span class="field-label">{{ page.data.schedule_form.title.label }}</span>
+                    <input
+                        type="text"
+                        name="title"
+                        value="{{ page.data.weekend_rotation_state.title }}"
+                        maxlength="100"
+                        placeholder="Ex.: Open Box Rodizio"
+                    >
+                    {% for error in page.data.schedule_form.title.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+                </label>
+
+                <label>
+                    <span class="field-label">{{ page.data.schedule_form.coach.label }}</span>
+                    <select name="coach">
+                        {% for value, label in page.data.schedule_form.coach.field.choices %}
+                        <option value="{{ value }}" {% if value|stringformat:'s' == page.data.weekend_rotation_state.coach_id %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    {% for error in page.data.schedule_form.coach.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+                </label>
+
+                <label>
+                    <span class="field-label">{{ page.data.schedule_form.start_time.label }}</span>
+                    <input
+                        type="time"
+                        name="start_time"
+                        value="{{ page.data.weekend_rotation_state.start_time }}"
+                        placeholder="07:00"
+                    >
+                    {% for error in page.data.schedule_form.start_time.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+                </label>
+
+                <label>
+                    <span class="field-label">{{ page.data.schedule_form.duration_minutes.label }}</span>
+                    <input
+                        type="number"
+                        name="duration_minutes"
+                        value="{{ page.data.weekend_rotation_state.duration_minutes }}"
+                        min="1"
+                        max="999"
+                        placeholder="60"
+                    >
+                    {% for error in page.data.schedule_form.duration_minutes.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+                </label>
+
+                <label>
+                    <span class="field-label">{{ page.data.schedule_form.capacity.label }}</span>
+                    <input
+                        type="number"
+                        name="capacity"
+                        value="{{ page.data.weekend_rotation_state.capacity }}"
+                        min="1"
+                        max="999"
+                        placeholder="20"
+                    >
+                    {% for error in page.data.schedule_form.capacity.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+                </label>
+
+                <label>
+                    <span class="field-label">{{ page.data.schedule_form.anchor_date.label }}</span>
+                    <input
+                        type="date"
+                        name="anchor_date"
+                        value="{{ page.data.weekend_rotation_state.anchor_date }}"
+                    >
+                    <small class="meta-text">{{ page.data.schedule_form.anchor_date.help_text }}</small>
+                    {% for error in page.data.schedule_form.anchor_date.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+                </label>
+
+                <label>
+                    <span class="field-label">{{ page.data.schedule_form.interval_days.label }}</span>
+                    <select name="interval_days">
+                        {% for value, label in page.data.schedule_form.interval_days.field.choices %}
+                        <option value="{{ value }}" {% if value|stringformat:'s' == page.data.weekend_rotation_state.interval_days %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="meta-text">{{ page.data.schedule_form.interval_days.help_text }}</small>
+                    {% for error in page.data.schedule_form.interval_days.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+                </label>
             </div>
-        </div>
+
+            <div class="class-rotation-rail__footer">
+                <div>
+                    <span class="field-label">{{ page.data.schedule_form.weekdays.label }}</span>
+                    <div class="class-rotation-weekdays">
+                        <label class="weekday-option">
+                            <input type="checkbox" name="weekdays" value="5" {% if page.data.weekend_rotation_state.selected_saturday %}checked{% endif %}>
+                            <span>Sabado</span>
+                        </label>
+                        <label class="weekday-option">
+                            <input type="checkbox" name="weekdays" value="6" {% if page.data.weekend_rotation_state.selected_sunday %}checked{% endif %}>
+                            <span>Domingo</span>
+                        </label>
+                    </div>
+                    {% for error in page.data.schedule_form.weekdays.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+                </div>
+
+                <label class="class-grid-checkbox">
+                    <input type="checkbox" name="skip_existing" {% if page.data.weekend_rotation_state.skip_existing %}checked{% endif %}>
+                    <span>{{ page.data.schedule_form.skip_existing.label }}</span>
+                </label>
+
+                <div class="class-rotation-rail__actions">
+                    <span class="pill info">Janela de {{ page.data.selected_month_start|date:'d/m' }} a {{ page.data.selected_month_end|date:'d/m' }}</span>
+                    <button class="button" type="submit">Aplicar rodizio</button>
+                </div>
+            </div>
+
+            {% for error in page.data.schedule_form.non_field_errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </form>
+        {% endif %}
 
         <div class="monthly-calendar-grid monthly-calendar-head" data-slot="class-grid-monthly-head">
             <span>Seg</span>

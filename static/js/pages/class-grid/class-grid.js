@@ -17,6 +17,8 @@ POR QUE ELE EXISTE:
   var sequenceCountLiveCopy = document.getElementById('sequence-count-live-copy');
   var dialog = document.getElementById('class-monthly-modal');
   var closeButton = document.getElementById('close-monthly-calendar');
+  var monthlyRotationToggle = document.getElementById('toggle-monthly-rotation');
+  var monthlyRotationPanel = document.getElementById('class-grid-weekend-rotation');
 
   function isValidShortDate(value) {
     if (!/^\d{2}\/\d{2}\/\d{2}$/.test(value || '')) {
@@ -204,6 +206,24 @@ POR QUE ELE EXISTE:
   syncSequenceCountCopy();
   if (sequenceCountField) {
     sequenceCountField.addEventListener('change', syncSequenceCountCopy);
+  }
+
+  function setMonthlyRotationVisibility(shouldShow) {
+    if (!monthlyRotationPanel) {
+      return;
+    }
+
+    monthlyRotationPanel.hidden = !shouldShow;
+    if (monthlyRotationToggle) {
+      monthlyRotationToggle.setAttribute('aria-expanded', shouldShow ? 'true' : 'false');
+    }
+  }
+
+  if (monthlyRotationToggle) {
+    monthlyRotationToggle.addEventListener('click', function() {
+      var isExpanded = monthlyRotationToggle.getAttribute('aria-expanded') === 'true';
+      setMonthlyRotationVisibility(!isExpanded);
+    });
   }
 
   if (dialog && dialog.showModal) {

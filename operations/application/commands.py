@@ -24,6 +24,8 @@ class ClassScheduleCreateCommand:
     coach_id: int | None
     start_date: date
     end_date: date
+    anchor_date: date | None
+    interval_days: int | None
     weekdays: tuple[int, ...]
     start_time: time
     sequence_count: int
@@ -62,6 +64,8 @@ def build_class_schedule_create_command(*, actor_id: int | None, cleaned_data: d
         coach_id=getattr(coach, 'id', None),
         start_date=cleaned_data.get('start_date'),
         end_date=cleaned_data.get('end_date'),
+        anchor_date=cleaned_data.get('anchor_date'),
+        interval_days=cleaned_data.get('interval_days'),
         weekdays=weekdays,
         start_time=cleaned_data.get('start_time'),
         sequence_count=cleaned_data.get('sequence_count') or 0,
