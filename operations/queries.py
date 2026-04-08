@@ -26,6 +26,8 @@ from communications.queries import (
 )
 from finance.models import Payment, PaymentMethod, PaymentStatus
 from finance.overdue_metrics import get_overdue_payments_queryset, sum_overdue_amount
+from monitoring.manager_realtime_metrics import build_manager_realtime_metrics_snapshot
+from monitoring.student_realtime_metrics import build_student_realtime_metrics_snapshot
 from onboarding.queries import get_pending_intakes
 from operations.models import BehaviorCategory, ClassSession
 from operations.session_snapshots import serialize_class_session, sync_runtime_statuses
@@ -272,19 +274,26 @@ def build_dev_workspace_snapshot():
         'eventos_24h': AuditEvent.objects.filter(created_at__gte=timezone.now() - timedelta(days=1)).count(),
         'usuarios_com_papel': get_user_model().objects.filter(groups__isnull=False).distinct().count(),
     }
+    student_realtime_metrics = build_student_realtime_metrics_snapshot()
+    manager_realtime_metrics = build_manager_realtime_metrics_snapshot()
     recent_audit_events = list(AuditEvent.objects.select_related('actor')[:10])
     return {
         'technical_metrics': technical_metrics,
+        'student_realtime_metrics': student_realtime_metrics,
+        'manager_realtime_metrics': manager_realtime_metrics,
         'hero_stats': [
             _build_hero_stat('Auditados', technical_metrics['eventos_auditados']),
             _build_hero_stat('Ultimas 24h', technical_metrics['eventos_24h']),
             _build_hero_stat('Usuarios', technical_metrics['usuarios_com_papel']),
-            _build_hero_stat('Auditoria', len(recent_audit_events)),
+            _build_hero_stat('Realtime', student_realtime_metrics['events_total']),
         ],
         'metric_cards': [
             _build_metric_card('operation-kpi-card dev-steel', 'Eventos auditados', technical_metrics['eventos_auditados'], 'Historico total sensivel disponivel para investigacao, leitura forense e prova operacional.'),
             _build_metric_card('operation-kpi-card dev-cyan', 'Eventos nas ultimas 24h', technical_metrics['eventos_24h'], 'Volume recente para avaliar movimentacao real e detectar ondas anormais de alteracao.'),
             _build_metric_card('operation-kpi-card dev-emerald', 'Usuarios com papel', technical_metrics['usuarios_com_papel'], 'Cobertura atual de contas com fronteira operacional definida no sistema.'),
+            _build_metric_card('operation-kpi-card dev-cyan', 'Eventos realtime', student_realtime_metrics['events_total'], 'Sinais SSE publicados para locks, financeiro, matricula e perfil do drawer de alunos.'),
+            _build_metric_card('operation-kpi-card dev-steel', 'Streams ativos', student_realtime_metrics['active_streams'], 'Conexoes SSE vivas neste instante para observar concorrencia sem polling cego.'),
+            _build_metric_card('operation-kpi-card dev-emerald', 'Conflitos de save', student_realtime_metrics['conflicts_total'], 'Tentativas bloqueadas por versao velha em vez de sobrescrever dado novo.'),
         ],
         'dev_operational_focus': [
             {
@@ -663,6 +672,7 @@ def _build_reception_workspace_core(*, today):
             'is_whatsapp_locked': is_whatsapp_locked,
             'is_reception_blocked': sent_count >= 2,
             'repeat_block_hours': repeat_block_hours,
+            'student_events_stream_url': reverse('student-event-stream', args=[payment.student.id]),
         })
 
     return {

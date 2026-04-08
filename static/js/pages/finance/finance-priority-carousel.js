@@ -23,8 +23,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        function collectSlides() {
+            slides = Array.from(track.querySelectorAll('.finance-priority-slide')).filter(function(slide) {
+                return !slide.classList.contains('is-removing');
+            });
+            return slides;
+        }
+
         function getStepSize() {
-            var firstSlide = slides[0];
+            var currentSlides = collectSlides();
+            var firstSlide = currentSlides[0];
 
             if (!firstSlide) {
                 return viewport.clientWidth;
@@ -48,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
         function syncVisualState() {
             var viewportRect = viewport.getBoundingClientRect();
 
-            slides.forEach(function(slide) {
+            collectSlides().forEach(function(slide) {
                 var slideRect = slide.getBoundingClientRect();
                 var overlap = Math.min(viewportRect.right, slideRect.right) - Math.max(viewportRect.left, slideRect.left);
                 var visibleRatio = overlap / Math.max(slideRect.width, 1);
@@ -64,13 +72,14 @@ document.addEventListener('DOMContentLoaded', function() {
             var tolerance = 4;
             var stepSize = getStepSize();
             var visibleSlides = getVisibleSlides();
-            var totalPages = Math.max(1, slides.length - visibleSlides + 1);
+            var currentSlides = collectSlides();
+            var totalPages = Math.max(1, currentSlides.length - visibleSlides + 1);
             var currentPage = stepSize ? Math.round(viewport.scrollLeft / stepSize) + 1 : 1;
 
             currentPage = Math.min(Math.max(currentPage, 1), totalPages);
 
             prevButton.disabled = viewport.scrollLeft <= tolerance;
-            nextButton.disabled = viewport.scrollLeft >= maxScrollLeft - tolerance;
+            nextButton.disabled = viewport.scrollLeft >= maxScrollLeft - tolerance || currentSlides.length <= visibleSlides;
 
             if (counter) {
                 counter.textContent = currentPage + ' de ' + totalPages;
@@ -105,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function renderDots() {
             var visibleSlides = getVisibleSlides();
-            var totalPages = Math.max(1, slides.length - visibleSlides + 1);
+            var totalPages = Math.max(1, collectSlides().length - visibleSlides + 1);
 
             if (!dotsRoot) {
                 return;
@@ -121,6 +130,42 @@ document.addEventListener('DOMContentLoaded', function() {
                 dots.push(dot);
             }
         }
+
+        function removeSlide(slide) {
+            if (!slide || slide.classList.contains('is-removing')) {
+                return;
+            }
+
+            slide.classList.add('is-removing');
+
+            window.setTimeout(function() {
+                var nextStepSize = getStepSize();
+                var nextMaxScrollLeft;
+
+                slide.remove();
+                collectSlides();
+                nextMaxScrollLeft = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
+
+                if (viewport.scrollLeft > nextMaxScrollLeft) {
+                    viewport.scrollLeft = Math.max(0, nextMaxScrollLeft - nextStepSize);
+                }
+
+                renderDots();
+                syncButtons();
+            }, 220);
+        }
+
+        carousel.addEventListener('submit', function(event) {
+            var submitter = event.submitter;
+            var slide;
+
+            if (!submitter || submitter.dataset.action !== 'open-finance-whatsapp') {
+                return;
+            }
+
+            slide = submitter.closest('.finance-priority-slide');
+            removeSlide(slide);
+        });
 
         viewport.addEventListener('scroll', syncButtons, { passive: true });
         window.addEventListener('resize', function() {

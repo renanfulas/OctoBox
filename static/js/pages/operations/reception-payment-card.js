@@ -3,7 +3,7 @@ ARQUIVO: comportamento do card de cobranca curta da recepcao.
 
 POR QUE ELE EXISTE:
 - move o fluxo de WhatsApp para a camada de asset
-- tira fetch e mensagem operacional de dentro do template
+- observa mutacoes criticas do board de cobranca curta sem reload completo
 */
 
 (function () {
@@ -11,6 +11,34 @@ POR QUE ELE EXISTE:
 
     if (!pageRoot) {
         return;
+    }
+
+    const eventSources = new Map();
+    let pendingRefreshTimeout = 0;
+    let isRefreshingBoard = false;
+    let hasDeferredRefresh = false;
+
+    function getReceptionPaymentBoard() {
+        return pageRoot.querySelector('#reception-payment-board');
+    }
+
+    function getReceptionLivePill() {
+        return pageRoot.querySelector('[data-role="reception-payment-live-pill"]');
+    }
+
+    function setLivePillState(text, state, pulse) {
+        const pill = getReceptionLivePill();
+
+        if (!pill) {
+            return;
+        }
+
+        pill.textContent = text;
+        pill.classList.remove('warning', 'info', 'success', 'neutral', 'accent', 'is-pulsing');
+        pill.classList.add(state || 'neutral');
+        if (pulse) {
+            pill.classList.add('is-pulsing');
+        }
     }
 
     function buildReceptionWhatsAppMessage(button) {
@@ -93,22 +121,148 @@ POR QUE ELE EXISTE:
             : (submitButton.dataset.defaultLabel || 'Confirmar pagamento');
     }
 
-    pageRoot.querySelectorAll('[data-action="manage-reception-payment"]').forEach(syncReceptionSubmitLabel);
+    function syncAllReceptionSubmitLabels() {
+        pageRoot.querySelectorAll('[data-action="manage-reception-payment"]').forEach(syncReceptionSubmitLabel);
+    }
+
+    function isReceptionFormBeingEdited() {
+        const activeElement = document.activeElement;
+        return Boolean(activeElement && activeElement.closest('[data-action="manage-reception-payment"]'));
+    }
+
+    function closeStudentEventStreams() {
+        eventSources.forEach((source) => {
+            try {
+                source.close();
+            } catch (error) {
+                // noop
+            }
+        });
+        eventSources.clear();
+    }
+
+    function queueBoardRefresh(reason) {
+        if (pendingRefreshTimeout) {
+            window.clearTimeout(pendingRefreshTimeout);
+        }
+
+        pendingRefreshTimeout = window.setTimeout(() => {
+            pendingRefreshTimeout = 0;
+            refreshReceptionPaymentBoard(reason);
+        }, 140);
+    }
+
+    function connectStudentEventStreams() {
+        closeStudentEventStreams();
+
+        const cards = pageRoot.querySelectorAll('[data-panel="reception-payment-card"][data-student-events-stream-url]');
+        const handledEventTypes = [
+            'student.payment.updated',
+            'student.enrollment.updated',
+            'student.profile.updated',
+        ];
+
+        cards.forEach((card) => {
+            const streamUrl = card.dataset.studentEventsStreamUrl;
+
+            if (!streamUrl || eventSources.has(streamUrl) || typeof window.EventSource !== 'function') {
+                return;
+            }
+
+            const source = new window.EventSource(streamUrl);
+            eventSources.set(streamUrl, source);
+
+            handledEventTypes.forEach((eventType) => {
+                source.addEventListener(eventType, () => {
+                    queueBoardRefresh(eventType);
+                });
+            });
+
+            source.onerror = function () {
+                setLivePillState('Reconectando', 'warning', true);
+            };
+
+            source.onopen = function () {
+                setLivePillState('Escuta pronta', 'neutral', false);
+            };
+        });
+    }
+
+    async function refreshReceptionPaymentBoard(reason) {
+        const currentBoard = getReceptionPaymentBoard();
+        const refreshUrl = currentBoard?.dataset.refreshUrl;
+
+        if (!currentBoard || !refreshUrl || isRefreshingBoard) {
+            return;
+        }
+
+        if (isReceptionFormBeingEdited()) {
+            hasDeferredRefresh = true;
+            setLivePillState('Atualizacao pendente', 'warning', true);
+            return;
+        }
+
+        isRefreshingBoard = true;
+        setLivePillState('Sincronizando', 'info', true);
+
+        try {
+            const response = await fetch(refreshUrl, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+            });
+
+            if (!response.ok) {
+                throw new Error(`refresh-failed:${response.status}`);
+            }
+
+            const html = await response.text();
+            const parser = new window.DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const nextBoard = doc.querySelector('#reception-payment-board');
+
+            if (!nextBoard) {
+                throw new Error('refresh-board-missing');
+            }
+
+            currentBoard.replaceWith(nextBoard);
+            syncAllReceptionSubmitLabels();
+            connectStudentEventStreams();
+            hasDeferredRefresh = false;
+            setLivePillState(reason === 'manual-dirty-release' ? 'Fila atualizada' : 'Atualizado agora', 'success', true);
+            window.setTimeout(() => {
+                setLivePillState('Escuta pronta', 'neutral', false);
+            }, 1800);
+        } catch (error) {
+            setLivePillState('Fallback local', 'warning', false);
+        } finally {
+            isRefreshingBoard = false;
+        }
+    }
+
+    syncAllReceptionSubmitLabels();
+    connectStudentEventStreams();
 
     pageRoot.addEventListener('change', function (event) {
         const methodSelect = event.target.closest('[data-role="reception-payment-method"]');
 
-        if (!methodSelect) {
+        if (methodSelect) {
+            const form = methodSelect.closest('[data-action="manage-reception-payment"]');
+
+            if (!form) {
+                return;
+            }
+
+            syncReceptionSubmitLabel(form);
             return;
         }
+    });
 
-        const form = methodSelect.closest('[data-action="manage-reception-payment"]');
-
-        if (!form) {
-            return;
+    pageRoot.addEventListener('focusout', function () {
+        if (hasDeferredRefresh && !isReceptionFormBeingEdited()) {
+            refreshReceptionPaymentBoard('manual-dirty-release');
         }
-
-        syncReceptionSubmitLabel(form);
     });
 
     pageRoot.addEventListener('click', function (event) {
@@ -134,4 +288,6 @@ POR QUE ELE EXISTE:
 
         registerOperationalContact(button);
     });
+
+    window.addEventListener('beforeunload', closeStudentEventStreams);
 })();

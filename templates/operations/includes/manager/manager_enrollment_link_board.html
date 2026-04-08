@@ -1,5 +1,15 @@
 <article class="table-card operation-table-card manager-priority-card" id="manager-enrollment-link-board">
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Pagamentos sem vínculo de matrícula" title="Estrutura antes de leitura financeira" copy="Resolva vencimentos mais próximos primeiro." pill_label=page.data.payments_without_enrollment|length|add:" pendência(s)" pill_class="accent" %}
+    <div class="operation-card-head">
+        <div>
+            <p class="eyebrow">Pagamentos sem vinculo de matricula</p>
+            <h2 class="operation-card-title">Estrutura antes de leitura financeira</h2>
+            <p class="operation-card-copy">Resolva vencimentos mais proximos primeiro.</p>
+        </div>
+        <div class="manager-board-head-pills">
+            <span class="pill neutral manager-live-pill" data-role="manager-live-pill">Escuta pronta</span>
+            <span class="pill accent">{{ page.data.payments_without_enrollment|length }} pendencia(s)</span>
+        </div>
+    </div>
     <div class="operation-table-wrap">
         <table>
             <thead>
@@ -7,8 +17,8 @@
                     <th scope="col">Aluno</th>
                     <th scope="col">Vencimento</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Leitura rápida</th>
-                    <th scope="col">Ação</th>
+                    <th scope="col">Leitura rapida</th>
+                    <th scope="col">Acao</th>
                 </tr>
             </thead>
             <tbody>

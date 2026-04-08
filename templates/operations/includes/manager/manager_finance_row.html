@@ -1,4 +1,4 @@
-<tr>
+<tr data-student-id="{{ payment.student.id }}" data-student-events-stream-url="{% url 'student-event-stream' payment.student.id %}">
     <td>{{ payment.student.full_name }}</td>
     <td>{{ payment.due_date|date:"d/m/Y" }}</td>
     <td><span class="pill{% if payment.status == 'overdue' or payment.status == 'pending' %} warning{% else %} info{% endif %}">{{ payment.get_status_display }}</span></td>

@@ -20,8 +20,11 @@ from .base_views import RoleOperationRedirectView
 from .workspace_views import (
     CoachWorkspaceView,
     DevWorkspaceView,
+    ManagerBoardsPartialView,
+    ManagerEventStreamView,
     ManagerWorkspaceView,
     OwnerWorkspaceView,
+    ReceptionPaymentBoardPartialView,
     ReceptionWorkspaceView,
     WhatsAppWorkspaceView,
 )
@@ -34,7 +37,10 @@ urlpatterns = [
     path('operacao/owner/', OwnerWorkspaceView.as_view(), name='owner-workspace'),
     path('operacao/dev/', DevWorkspaceView.as_view(), name='dev-workspace'),
     path('operacao/manager/', ManagerWorkspaceView.as_view(), name='manager-workspace'),
+    path('operacao/manager/fragmentos/boards/', ManagerBoardsPartialView.as_view(), name='manager-boards-fragment'),
+    path('operacao/manager/events/stream/', ManagerEventStreamView.as_view(), name='manager-event-stream'),
     path('operacao/recepcao/', ReceptionWorkspaceView.as_view(), name='reception-workspace'),
+    path('operacao/recepcao/fragmentos/pagamentos/', ReceptionPaymentBoardPartialView.as_view(), name='reception-payment-board-fragment'),
     path('operacao/coach/', CoachWorkspaceView.as_view(), name='coach-workspace'),
     path('operacao/whatsapp/', WhatsAppWorkspaceView.as_view(), name='whatsapp-workspace'),
     path('operacao/recepcao/pagamento/<int:payment_id>/acao/', ReceptionPaymentActionView.as_view(), name='reception-payment-action'),

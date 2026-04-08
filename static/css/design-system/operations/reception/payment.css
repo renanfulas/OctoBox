@@ -344,6 +344,29 @@ PONTOS CRITICOS:
     margin-bottom: 10px;
 }
 
+.reception-payment-head-pills {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.reception-payment-live-pill {
+    position: relative;
+    overflow: hidden;
+}
+
+.reception-payment-live-pill.is-pulsing::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 1px solid currentColor;
+    opacity: 0;
+    animation: reception-live-pill-pulse 1.5s ease-out;
+}
+
 .reception-payment-board .operation-card-copy,
 .reception-preview-payment-board .operation-card-copy {
     max-width: 52ch;
@@ -385,6 +408,18 @@ body[data-theme="dark"] .reception-payment-advanced {
     background: rgba(10, 17, 28, 0.72);
 }
 
+@keyframes reception-live-pill-pulse {
+    0% {
+        opacity: 0.45;
+        transform: scale(0.98);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(1.12);
+    }
+}
+
 @media (max-width: 720px) {
     .reception-payment-grid,
     .reception-preview-payment-grid {
@@ -406,5 +441,10 @@ body[data-theme="dark"] .reception-payment-advanced {
     .reception-payment-actions-primary .button {
         width: 100%;
         flex-basis: 100%;
+    }
+
+    .reception-payment-head-pills {
+        width: 100%;
+        justify-content: flex-start;
     }
 }
