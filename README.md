@@ -86,6 +86,9 @@ Timeline of this first cycle:
 - WhatsApp identity contract with blind index, historical backfill, and uniqueness constraint
 - shell navigation contract stabilized across the core surfaces
 - visual student and finance flows updated and protected by catalog and finance tests
+- finance follow-up analytics, retention queue reading, and churn foundation already live in the visual finance surface
+- student directory now carries operational KPI shortcuts, 30-day growth reading, and an expanded quick panel flow
+- owner, manager, reception, and dev surfaces already absorb the newer shared shell and page-payload contracts
 - CI workflow for performance and integrity already tracks migrate, fixture loading, and a supported PostgreSQL baseline
 - admin hardened with a configurable private path and centralized role gate
 - scope-based throttling active for login, admin, writes, exports, dashboard, heavy reads, and autocomplete
@@ -157,15 +160,11 @@ If you want to understand the official declaration of what becomes the conceptua
 
 If you want to understand the new architectural CENTER that separates access level and internal core, use [docs/architecture/center-layer.md](docs/architecture/center-layer.md).
 
-<<<<<<< HEAD
 If you want to understand the complementary structure of signals, integrations, and cross-system expansion, use [docs/architecture/signal-mesh.md](docs/architecture/signal-mesh.md).
-=======
-Se aparecer duvida sobre a pasta espelho `OctoBox/`, trate-a como legado isolado e use [docs/reference/octobox-mirror-legacy-status.md](docs/reference/octobox-mirror-legacy-status.md).
 
-Se aparecer duvida sobre `prompts/`, `prototypes/` ou docs de apoio e arquivo, use [docs/reference/support-material-map.md](docs/reference/support-material-map.md).
+If doubt comes up around the mirrored `OctoBox/` folder, treat it as isolated legacy and use [docs/reference/octobox-mirror-legacy-status.md](docs/reference/octobox-mirror-legacy-status.md).
 
-Se quiser entender a grande fachada frontal do produto, onde a experiencia visivel precisa continuar limpa mesmo com obra lateral e transicao arquitetural, use [docs/experience/front-display-wall.md](docs/experience/front-display-wall.md).
->>>>>>> codex/student-page-refactor-and-ui-polish
+If doubt comes up around `prompts/`, `prototypes/`, or supporting/archive materials, use [docs/reference/support-material-map.md](docs/reference/support-material-map.md).
 
 If you want to understand how the architecture treats temporary construction supports without confusing them with the final structure, use [docs/architecture/scaffold-agents.md](docs/architecture/scaffold-agents.md).
 
