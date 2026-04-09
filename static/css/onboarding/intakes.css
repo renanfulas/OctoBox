@@ -439,75 +439,74 @@ POR QUE ELE EXISTE:
         linear-gradient(120deg, color-mix(in srgb, var(--theme-accent-success-alpha) 4%, transparent), transparent 26%);
 }
 
-.intake-command-surface--radar::before {
-    background:
-        radial-gradient(circle at top left, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 34%),
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-success-alpha) 10%, transparent), transparent 30%);
-}
-
 .intake-filter-surface {
     padding: 18px;
     backdrop-filter: none;
 }
 
-.intake-source-board-card {
+.intake-radar-board {
     position: relative;
     overflow: hidden;
-    padding: 20px;
-    border-color: color-mix(in srgb, var(--theme-accent-support) 20%, var(--theme-border-soft) 80%);
+    padding: 22px;
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-border-soft) 82%);
+    background:
+        radial-gradient(circle at top left, color-mix(in srgb, var(--theme-accent-primary-alpha) 8%, transparent), transparent 34%),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-success-alpha) 8%, transparent), transparent 30%),
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-panel) 94%, transparent));
     box-shadow:
-        0 22px 42px rgba(15, 23, 42, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.86);
-    backdrop-filter: blur(14px);
+        0 18px 36px rgba(15, 23, 42, 0.07),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    backdrop-filter: none;
 }
 
-.intake-source-board-card::before {
+.intake-radar-board::before {
     content: "";
     position: absolute;
-    inset: 0 auto 0 0;
-    width: 4px;
-    background: linear-gradient(180deg, #38bdf8, #22c55e);
-    opacity: 0.9;
+    inset: 0;
+    background:
+        linear-gradient(120deg, color-mix(in srgb, var(--theme-accent-primary-alpha) 8%, transparent), transparent 26%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 24%);
+    pointer-events: none;
 }
 
-.intake-source-board-card .card-head {
-    margin-bottom: 16px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, rgba(148, 163, 184, 0.12) 18%);
+.intake-radar-board-head {
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, rgba(148, 163, 184, 0.16) 16%);
 }
 
-.intake-source-board-head-copy {
+.intake-radar-board-copy {
     display: grid;
     gap: 6px;
     min-width: 0;
 }
 
-.intake-source-board-head-aside {
+.intake-radar-board-actions {
     align-items: flex-start;
 }
 
-.intake-source-board-eyebrow {
+.intake-radar-board-eyebrow {
     margin: 0;
     font-size: 0.68rem;
     letter-spacing: 0.12em;
-    color: color-mix(in srgb, var(--theme-accent-primary) 34%, var(--theme-text-muted) 66%);
+    color: color-mix(in srgb, var(--theme-accent-primary) 42%, var(--theme-text-muted) 58%);
 }
 
-.intake-source-board-title {
+.intake-radar-board-title {
     margin: 0;
-    font-size: 1.08rem;
+    font-size: 1.12rem;
     letter-spacing: -0.04em;
 }
 
-.intake-source-board-copy {
+.intake-radar-board-description {
     margin: 0;
     max-width: 42ch;
     color: color-mix(in srgb, var(--muted) 78%, var(--ink) 22%);
-    line-height: 1.4;
+    line-height: 1.48;
     font-size: 0.9rem;
 }
 
-.intake-source-board-summary {
+.intake-radar-board-summary {
     margin: 0;
     font-size: 0.78rem;
     font-weight: 700;
@@ -515,17 +514,17 @@ POR QUE ELE EXISTE:
     color: color-mix(in srgb, var(--theme-accent-support) 62%, var(--ink) 38%);
 }
 
-.intake-source-period-nav {
+.intake-radar-period-nav {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
     padding: 0.22rem;
     border-radius: 999px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, rgba(148, 163, 184, 0.18) 18%);
-    background: color-mix(in srgb, var(--theme-surface-panel) 90%, rgba(255, 255, 255, 0.7) 10%);
+    background: color-mix(in srgb, var(--theme-surface-panel) 92%, rgba(255, 255, 255, 0.7) 8%);
 }
 
-.intake-source-period-link {
+.intake-radar-period-link {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -544,13 +543,13 @@ POR QUE ELE EXISTE:
         transform 180ms ease;
 }
 
-.intake-source-period-link:hover,
-.intake-source-period-link:focus-visible {
+.intake-radar-period-link:hover,
+.intake-radar-period-link:focus-visible {
     color: color-mix(in srgb, var(--theme-accent-primary) 70%, var(--ink) 30%);
     text-decoration: none;
 }
 
-.intake-source-period-link.is-active {
+.intake-radar-period-link.is-active {
     color: color-mix(in srgb, var(--theme-accent-primary) 78%, var(--ink) 22%);
     background: color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, rgba(255, 255, 255, 0.88) 82%);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
@@ -817,102 +816,89 @@ POR QUE ELE EXISTE:
     color: var(--theme-accent-premium);
 }
 
-.intake-source-grid {
+.intake-radar-grid {
     display: grid;
-    gap: 0.75rem;
+    gap: 0.85rem;
     grid-template-columns: repeat(6, minmax(0, 1fr));
     align-items: stretch;
 }
 
-.intake-source-card {
+.intake-radar-card {
     position: relative;
-    min-height: 96px;
-    padding: 0.72rem 0.85rem;
-    border-radius: 16px;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, rgba(148, 163, 184, 0.22) 22%);
+    min-height: 104px;
+    padding: 0.95rem 1rem;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, rgba(148, 163, 184, 0.16) 16%);
     background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(246, 249, 252, 0.72)),
-        radial-gradient(circle at top right, rgba(56, 189, 248, 0.08), transparent 55%);
+        radial-gradient(circle at top right, color-mix(in srgb, currentColor 10%, transparent), transparent 58%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 250, 252, 0.76));
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.82),
-        0 10px 22px rgba(15, 23, 42, 0.05);
+        inset 0 1px 0 rgba(255, 255, 255, 0.74),
+        0 8px 20px rgba(15, 23, 42, 0.05);
     transition:
         transform 180ms ease,
         border-color 180ms ease,
         box-shadow 180ms ease,
         background 180ms ease;
+    color: color-mix(in srgb, var(--theme-accent-primary) 72%, var(--ink) 28%);
 }
 
-.intake-source-card::before {
-    content: "";
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 3px;
-    border-radius: 20px 0 0 20px;
-    background: linear-gradient(180deg, #38bdf8, #0f172a);
-    opacity: 0.9;
-}
-
-.intake-source-card:hover,
-.intake-source-card:focus-within {
+.intake-radar-card:hover,
+.intake-radar-card:focus-within {
     transform: translateY(-2px);
-    border-color: color-mix(in srgb, currentColor 22%, var(--theme-border-soft) 78%);
+    border-color: color-mix(in srgb, currentColor 24%, var(--theme-border-soft) 76%);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.84),
-        0 14px 28px rgba(15, 23, 42, 0.08);
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        0 14px 26px rgba(15, 23, 42, 0.07);
 }
 
-.intake-source-card-body {
+.intake-radar-card-body {
     height: 100%;
-    padding: 0;
-    display: flex;
-    align-items: center;
+    display: grid;
+    align-content: space-between;
+    gap: 0.5rem;
 }
 
-.intake-source-card-value-stack {
-    width: 100%;
-    gap: 0.28rem;
-}
-
-.intake-source-card-label {
+.intake-radar-card-label {
     display: block;
-    font-size: 0.72rem;
+    margin: 0;
+    font-size: 0.73rem;
     font-weight: 800;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: color-mix(in srgb, var(--theme-text-muted) 78%, var(--ink) 22%);
 }
 
-.intake-source-card-metric {
+.intake-radar-card-value {
     margin: 0;
-    font-size: clamp(1.5rem, 1.2vw + 1rem, 2rem);
+    font-size: clamp(1.65rem, 1.1vw + 1.08rem, 2.15rem);
     line-height: 1;
     letter-spacing: -0.05em;
-    color: color-mix(in srgb, var(--ink) 92%, black 8%);
+    color: color-mix(in srgb, currentColor 82%, var(--ink) 18%);
 }
 
-.intake-source-card[data-source-key="manual"]::before {
-    background: linear-gradient(180deg, #60a5fa, #1d4ed8);
+.intake-radar-card[data-source-key="manual"] {
+    color: color-mix(in srgb, var(--theme-accent-support) 54%, var(--theme-text-secondary) 46%);
 }
 
-.intake-source-card[data-source-key="csv"]::before {
-    background: linear-gradient(180deg, #f59e0b, #d97706);
+.intake-radar-card[data-source-key="csv"] {
+    color: color-mix(in srgb, var(--theme-accent-premium) 42%, var(--theme-text-secondary) 58%);
 }
 
-.intake-source-card[data-source-key="instagram"]::before {
-    background: linear-gradient(180deg, #fb7185, #a855f7);
+.intake-radar-card[data-source-key="instagram"] {
+    color: color-mix(in srgb, var(--theme-accent-premium) 48%, var(--theme-text-secondary) 52%);
 }
 
-.intake-source-card[data-source-key="whatsapp"]::before {
-    background: linear-gradient(180deg, #22c55e, #15803d);
+.intake-radar-card[data-source-key="whatsapp"] {
+    color: color-mix(in srgb, var(--theme-accent-success) 44%, var(--theme-text-secondary) 56%);
 }
 
-.intake-source-card[data-source-key="site"]::before {
-    background: linear-gradient(180deg, #38bdf8, #0f766e);
+.intake-radar-card[data-source-key="site"] {
+    color: color-mix(in srgb, var(--theme-accent-primary) 52%, var(--theme-text-secondary) 48%);
 }
 
-.intake-source-card[data-source-key="import"]::before {
-    background: linear-gradient(180deg, #94a3b8, #475569);
+.intake-radar-card[data-source-key="import"] {
+    color: color-mix(in srgb, var(--theme-text-muted) 82%, var(--theme-text-secondary) 18%);
 }
 
 body[data-theme="dark"] .intake-directory-table th {
@@ -1002,44 +988,48 @@ body[data-theme="dark"] .intake-filter-surface {
     border-color: rgba(148, 163, 184, 0.14);
 }
 
-body[data-theme="dark"] .intake-source-board-card {
+body[data-theme="dark"] .intake-radar-board {
     border-color: rgba(56, 189, 248, 0.14);
+    background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.08), transparent 34%),
+        radial-gradient(circle at top right, rgba(34, 197, 94, 0.06), transparent 30%),
+        linear-gradient(180deg, rgba(10, 18, 31, 0.94), rgba(8, 14, 24, 0.9));
     box-shadow:
         0 20px 38px rgba(0, 0, 0, 0.24),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-body[data-theme="dark"] .intake-source-board-card .card-head {
+body[data-theme="dark"] .intake-radar-board-head {
     border-bottom-color: rgba(148, 163, 184, 0.12);
 }
 
-body[data-theme="dark"] .intake-source-board-eyebrow {
+body[data-theme="dark"] .intake-radar-board-eyebrow {
     color: rgba(125, 211, 252, 0.74);
 }
 
-body[data-theme="dark"] .intake-source-board-copy {
+body[data-theme="dark"] .intake-radar-board-description {
     color: rgba(226, 232, 240, 0.76);
 }
 
-body[data-theme="dark"] .intake-source-board-summary {
+body[data-theme="dark"] .intake-radar-board-summary {
     color: rgba(125, 211, 252, 0.78);
 }
 
-body[data-theme="dark"] .intake-source-period-nav {
+body[data-theme="dark"] .intake-radar-period-nav {
     border-color: rgba(148, 163, 184, 0.14);
     background: rgba(8, 14, 24, 0.78);
 }
 
-body[data-theme="dark"] .intake-source-period-link {
+body[data-theme="dark"] .intake-radar-period-link {
     color: rgba(226, 232, 240, 0.62);
 }
 
-body[data-theme="dark"] .intake-source-period-link:hover,
-body[data-theme="dark"] .intake-source-period-link:focus-visible {
+body[data-theme="dark"] .intake-radar-period-link:hover,
+body[data-theme="dark"] .intake-radar-period-link:focus-visible {
     color: rgba(125, 211, 252, 0.92);
 }
 
-body[data-theme="dark"] .intake-source-period-link.is-active {
+body[data-theme="dark"] .intake-radar-period-link.is-active {
     color: rgba(224, 242, 254, 0.96);
     background: rgba(14, 116, 144, 0.24);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -1070,22 +1060,22 @@ body[data-theme="dark"] .intake-filter-surface textarea {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-body[data-theme="dark"] .intake-source-card {
+body[data-theme="dark"] .intake-radar-card {
     background:
-        linear-gradient(180deg, rgba(11, 18, 31, 0.92), rgba(9, 14, 24, 0.86)),
-        radial-gradient(circle at top right, rgba(56, 189, 248, 0.1), transparent 55%);
+        radial-gradient(circle at top right, color-mix(in srgb, currentColor 14%, transparent), transparent 56%),
+        linear-gradient(180deg, rgba(11, 18, 31, 0.92), rgba(9, 14, 24, 0.86));
     border-color: rgba(148, 163, 184, 0.14);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.04),
         0 12px 24px rgba(0, 0, 0, 0.2);
 }
 
-body[data-theme="dark"] .intake-source-card-label {
+body[data-theme="dark"] .intake-radar-card-label {
     color: rgba(226, 232, 240, 0.64);
 }
 
-body[data-theme="dark"] .intake-source-card-metric {
-    color: #f8fafc;
+body[data-theme="dark"] .intake-radar-card-value {
+    color: color-mix(in srgb, currentColor 22%, #f8fafc 78%);
 }
 
 body[data-theme="dark"] .intake-command-surface {
@@ -1112,12 +1102,6 @@ body[data-theme="dark"] .intake-command-surface--conversation::before {
     background:
         radial-gradient(circle at top right, rgba(74, 144, 226, 0.08), transparent 34%),
         linear-gradient(120deg, rgba(34, 197, 94, 0.04), transparent 26%);
-}
-
-body[data-theme="dark"] .intake-command-surface--radar::before {
-    background:
-        radial-gradient(circle at top left, rgba(56, 189, 248, 0.14), transparent 34%),
-        radial-gradient(circle at top right, rgba(34, 197, 94, 0.1), transparent 30%);
 }
 
 body[data-theme="dark"] .intake-kpi-card-label {

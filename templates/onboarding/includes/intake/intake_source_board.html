@@ -2,12 +2,6 @@
 ARQUIVO: leitura de origem da Central de Intake.
 
 POR QUE ELE EXISTE:
-- isola a quebra por canal para facilitar manutencao da leitura curta.
--->
-<!--
-ARQUIVO: leitura de origem da Central de Intake.
-
-POR QUE ELE EXISTE:
 - Isola a quebra por canal para facilitar manutencao da leitura curta.
 
 O QUE ESTE ARQUIVO FAZ:
@@ -15,36 +9,27 @@ O QUE ESTE ARQUIVO FAZ:
 2. Mostra label e volume por canal.
 
 PONTOS CRITICOS:
-- Depende do contexto de source_breakdown.
+- Depende do contexto de radar_board.
 -->
-<article class="card intake-command-surface intake-command-surface--radar intake-source-board-card" id="intake-source-board" data-panel="intake-source-board">
-    <div class="card-head">
-        <div class="card-head-main intake-source-board-head-copy">
-            <p class="intake-source-board-eyebrow eyebrow">Radar comercial</p>
-            <h2 class="card-title intake-source-board-title">Canais de entrada</h2>
-            <p class="card-copy intake-source-board-copy">{{ page.data.source_period_copy }}</p>
-            <p class="intake-source-board-summary">
-                {{ page.data.source_period_total }} lead(s) em {{ page.data.source_period_label|lower }}.
-            </p>
+<article class="card intake-radar-board intake-radar-board--{{ page.data.radar_board.period }}" id="intake-source-board" data-panel="intake-source-board">
+    <div class="card-head intake-radar-board-head">
+        <div class="card-head-main intake-radar-board-copy">
+            <p class="intake-radar-board-eyebrow eyebrow">{{ page.data.radar_board.eyebrow }}</p>
+            <h2 class="card-title intake-radar-board-title">{{ page.data.radar_board.title }}</h2>
+            <p class="card-copy intake-radar-board-description">{{ page.data.radar_board.copy }}</p>
+            <p class="intake-radar-board-summary">{{ page.data.radar_board.summary }}</p>
         </div>
-        <div class="card-head-aside intake-source-board-head-aside">
-            <nav class="intake-source-period-nav" aria-label="Periodo do radar comercial">
-                {% for tab in page.data.source_period_tabs %}
-                <a href="{{ tab.href }}" class="intake-source-period-link{% if tab.is_active %} is-active{% endif %}">{{ tab.label }}</a>
+        <div class="card-head-aside intake-radar-board-actions">
+            <nav class="intake-radar-period-nav" aria-label="Periodo do radar comercial">
+                {% for tab in page.data.radar_board.periods %}
+                <a href="{{ tab.href }}" class="intake-radar-period-link{% if tab.is_active %} is-active{% endif %}">{{ tab.label }}</a>
                 {% endfor %}
             </nav>
         </div>
     </div>
-    <div class="intake-source-grid">
-        {% for item in page.data.source_breakdown %}
-        <article class="intake-source-card" data-panel="intake-source-card" data-source-key="{{ item.key }}">
-            <div class="card-body intake-source-card-body">
-                <div class="card-value-stack intake-source-card-value-stack">
-                    <strong class="intake-source-card-label">{{ item.label }}</strong>
-                    <p class="metric intake-source-card-metric">{{ item.value }}</p>
-                </div>
-            </div>
-        </article>
+    <div class="intake-radar-grid">
+        {% for item in page.data.radar_board.cards %}
+        {% include "onboarding/includes/intake/intake_radar_metric_card.html" with item=item %}
         {% endfor %}
     </div>
 </article>

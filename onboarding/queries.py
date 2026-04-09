@@ -69,6 +69,77 @@ def _resolve_queue_ordering(*, sort_value):
     return ('status', '-created_at')
 
 
+def _build_intake_radar_board(*, params, metrics_queryset, today):
+    source_period = (params.get('source_period') or 'day').strip().lower()
+    if source_period not in {'day', 'week', 'month'}:
+        source_period = 'day'
+
+    radar_queryset = metrics_queryset.filter(
+        status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING, IntakeStatus.MATCHED],
+    )
+    week_start = today - timedelta(days=today.weekday())
+    month_start = today.replace(day=1)
+
+    if source_period == 'week':
+        radar_queryset = radar_queryset.filter(
+            created_at__date__gte=week_start,
+            created_at__date__lte=today,
+        )
+        period_label = 'Semana'
+        copy = 'Veja quem procurou o box nesta semana, sem carregar volume antigo junto.'
+    elif source_period == 'month':
+        radar_queryset = radar_queryset.filter(
+            created_at__date__gte=month_start,
+            created_at__date__lte=today,
+        )
+        period_label = 'Mês'
+        copy = 'Leia o acumulado do mês atual para entender quais canais sustentam a captação agora.'
+    else:
+        radar_queryset = radar_queryset.filter(created_at__date=today)
+        period_label = 'Hoje'
+        copy = 'Compare quem entrou hoje em uma leitura curta, limpa e direta.'
+
+    source_counts = dict(radar_queryset.values_list('source').annotate(total=Count('id')))
+    total = sum(source_counts.values())
+
+    base_params = params.copy() if hasattr(params, 'copy') else dict(params)
+    base_params.pop('source_period', None)
+    base_params['panel'] = 'tab-intake-source'
+
+    periods = []
+    for key, label in (('day', 'Hoje'), ('week', 'Semana'), ('month', 'Mês')):
+        period_params = base_params.copy()
+        period_params['source_period'] = key
+        periods.append(
+            {
+                'key': key,
+                'label': label,
+                'href': f"?{urlencode(period_params, doseq=True)}",
+                'is_active': source_period == key,
+            }
+        )
+
+    return {
+        'key': 'intake-radar',
+        'eyebrow': 'Radar comercial',
+        'title': 'Canais de entrada',
+        'copy': copy,
+        'summary': f'{total} lead(s) em {period_label.lower()}.',
+        'period': source_period,
+        'period_label': period_label,
+        'total': total,
+        'periods': periods,
+        'cards': [
+            {'key': 'manual', 'label': 'Manual', 'value': source_counts.get(IntakeSource.MANUAL, 0)},
+            {'key': 'csv', 'label': dict(IntakeSource.choices)[IntakeSource.CSV], 'value': source_counts.get(IntakeSource.CSV, 0)},
+            {'key': 'instagram', 'label': 'Instagram', 'value': 0},
+            {'key': 'whatsapp', 'label': dict(IntakeSource.choices)[IntakeSource.WHATSAPP], 'value': source_counts.get(IntakeSource.WHATSAPP, 0)},
+            {'key': 'site', 'label': 'Site', 'value': 0},
+            {'key': 'import', 'label': dict(IntakeSource.choices)[IntakeSource.IMPORT], 'value': source_counts.get(IntakeSource.IMPORT, 0)},
+        ],
+    }
+
+
 def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None, queue_limit=12):
     today = today or timezone.localdate()
     params = params or {}
@@ -79,9 +150,6 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
     queue_queryset = base_queryset
     metrics_queryset = base_queryset
     active_panel = (params.get('panel') or '').strip()
-    source_period = (params.get('source_period') or 'day').strip().lower()
-    if source_period not in {'day', 'week', 'month'}:
-        source_period = 'day'
     semantic_stage = ''
     filter_form = IntakeCenterFilterForm(
         params or None,
@@ -129,48 +197,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         build_intake_queue_item(intake=intake, actor_role_slug=actor_role_slug, today=today)
         for intake in queue
     ]
-    source_reference_queryset = metrics_queryset.filter(
-        status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING, IntakeStatus.MATCHED],
-    )
-    week_start = today - timedelta(days=today.weekday())
-    month_start = today.replace(day=1)
-    if source_period == 'week':
-        source_reference_queryset = source_reference_queryset.filter(
-            created_at__date__gte=week_start,
-            created_at__date__lte=today,
-        )
-        source_period_label = 'Semana'
-        source_period_copy = 'Veja quem procurou o box nesta semana, sem carregar volume antigo junto.'
-    elif source_period == 'month':
-        source_reference_queryset = source_reference_queryset.filter(
-            created_at__date__gte=month_start,
-            created_at__date__lte=today,
-        )
-        source_period_label = 'Mês'
-        source_period_copy = 'Leia o acumulado do mês atual para entender quais canais sustentam a captação agora.'
-    else:
-        source_reference_queryset = source_reference_queryset.filter(created_at__date=today)
-        source_period_label = 'Hoje'
-        source_period_copy = 'Compare quem entrou hoje em uma leitura curta, limpa e direta.'
-
-    source_counts = dict(source_reference_queryset.values_list('source').annotate(total=Count('id')))
-    source_total = sum(source_counts.values())
-
-    source_period_base_params = params.copy() if hasattr(params, 'copy') else dict(params)
-    source_period_base_params.pop('source_period', None)
-    source_period_base_params['panel'] = 'tab-intake-source'
-    source_period_tabs = []
-    for key, label in (('day', 'Hoje'), ('week', 'Semana'), ('month', 'Mês')):
-        tab_params = source_period_base_params.copy()
-        tab_params['source_period'] = key
-        source_period_tabs.append(
-            {
-                'key': key,
-                'label': label,
-                'href': f"?{urlencode(tab_params, doseq=True)}",
-                'is_active': source_period == key,
-            }
-        )
+    radar_board = _build_intake_radar_board(params=params, metrics_queryset=metrics_queryset, today=today)
     summary = metrics_queryset.aggregate(
         lead_total=Count('id', filter=Q(status=IntakeStatus.NEW)),
         pending_total=Count('id', filter=Q(status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING])),
@@ -244,19 +271,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
             {'label': 'Atribuidos', 'value': assigned_count},
             {'label': 'Hoje', 'value': created_today},
         ],
-        'source_breakdown': [
-            {'key': 'manual', 'label': 'Manual', 'value': source_counts.get(IntakeSource.MANUAL, 0)},
-            {'key': 'csv', 'label': dict(IntakeSource.choices)[IntakeSource.CSV], 'value': source_counts.get(IntakeSource.CSV, 0)},
-            {'key': 'instagram', 'label': 'Instagram', 'value': 0},
-            {'key': 'whatsapp', 'label': dict(IntakeSource.choices)[IntakeSource.WHATSAPP], 'value': source_counts.get(IntakeSource.WHATSAPP, 0)},
-            {'key': 'site', 'label': 'Site', 'value': 0},
-            {'key': 'import', 'label': dict(IntakeSource.choices)[IntakeSource.IMPORT], 'value': source_counts.get(IntakeSource.IMPORT, 0)},
-        ],
-        'source_period': source_period,
-        'source_period_label': source_period_label,
-        'source_period_copy': source_period_copy,
-        'source_period_total': source_total,
-        'source_period_tabs': source_period_tabs,
+        'radar_board': radar_board,
         'filter_form': filter_form,
         'create_form': IntakeQuickCreateForm(),
         'intake_queue': queue,
