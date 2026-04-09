@@ -6,6 +6,7 @@ POR QUE ELE EXISTE:
 - preserva os mesmos bindings do formulario sem depender do stepper legado.
 -->
 <section class="stack-16 student-page-profile-panel" aria-label="Perfil do aluno">
+    {% with is_drawer=page.context.surface_mode == 'drawer' %}
     {% if page.data.selected_intake %}
         {% include "includes/catalog/student_form/main_form/main_form_intake_banner.html" with selected_intake=page.data.selected_intake %}
     {% endif %}
@@ -28,6 +29,7 @@ POR QUE ELE EXISTE:
         {{ page.data.form.recurrence_cycles.as_hidden }}
         <input type="hidden" name="profile_version" value="{{ page.behavior.student_browser_snapshot.profile_version|default:'' }}" data-student-profile-version-field>
 
+        {% if not is_drawer %}
         <div class="student-page-profile-toolbar">
             <button class="button secondary student-page-profile-edit-toggle" type="button" data-action="toggle-student-profile-edit" aria-pressed="false">
                 <svg class="student-page-profile-edit-toggle__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -37,8 +39,9 @@ POR QUE ELE EXISTE:
                 Editar leitura
             </button>
         </div>
+        {% endif %}
 
-        <article class="student-page-profile-section-surface student-page-profile-section-card">
+        <article class="student-page-profile-section-surface{% if not is_drawer %} student-page-profile-section-card{% else %} student-page-profile-section-surface--drawer{% endif %}">
             <div class="student-page-card__head student-page-panel-heading">
                 <div class="stack-6 student-page-panel-heading__copy">
                     <p class="eyebrow student-page-profile-kicker">Cadastro</p>
@@ -87,7 +90,7 @@ POR QUE ELE EXISTE:
             </div>
         </article>
 
-        <article class="student-page-profile-section-surface student-page-profile-section-card">
+        <article class="student-page-profile-section-surface{% if not is_drawer %} student-page-profile-section-card{% else %} student-page-profile-section-surface--drawer{% endif %}">
             <div class="student-page-card__head student-page-panel-heading">
                 <div class="stack-6 student-page-panel-heading__copy">
                     <p class="eyebrow student-page-profile-kicker">Saude</p>
@@ -116,6 +119,7 @@ POR QUE ELE EXISTE:
             </div>
         </article>
 
+        {% if not is_drawer %}
         <article class="student-page-profile-section-surface student-page-profile-section-card student-page-profile-actions-card">
             <div class="student-page-card__head student-page-panel-heading">
                 <div class="stack-6 student-page-panel-heading__copy">
@@ -138,5 +142,7 @@ POR QUE ELE EXISTE:
                 </div>
             </div>
         </article>
+        {% endif %}
     </form>
+    {% endwith %}
 </section>

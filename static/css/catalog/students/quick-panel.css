@@ -512,6 +512,29 @@ POR QUE ELE EXISTE:
     justify-content: center;
 }
 
+.student-quick-panel .student-page-profile-section-surface--drawer {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+}
+
+.student-quick-panel .student-page-profile-section-surface--drawer:hover {
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
+.student-quick-panel .student-page-profile-section-surface--drawer .student-page-card__head {
+    padding: 4px 0 8px;
+}
+
+.student-quick-panel .student-page-profile-section-surface--drawer .student-page-card__body {
+    padding: 0;
+    gap: 10px;
+}
+
 .student-quick-panel .student-page-profile-actions {
     position: sticky;
     bottom: 0;
