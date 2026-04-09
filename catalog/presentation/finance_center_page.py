@@ -11,7 +11,8 @@ from communications.application.message_templates import build_operational_messa
 from collections import Counter
 from django.urls import reverse
 from django.utils import timezone
-from shared_support.page_payloads import build_page_hero
+<<<<<<< HEAD
+from shared_support.page_payloads import build_page_context, build_page_hero
 from shared_support.whatsapp_links import build_whatsapp_message_href
 
 from ..finance_snapshot.follow_up_analytics import build_turn_recommendation
@@ -1083,11 +1084,13 @@ def build_finance_center_page(*, snapshot, operational_queue, export_links, curr
 
     return build_catalog_page_payload(
         context={
-            'page_key': 'finance-center',
-            'title': 'Financeiro',
-            'subtitle': 'Receita, carteira e sinais operacionais em leitura guiada.',
-            'mode': 'management' if can_manage_finance else 'read-only',
-            'role_slug': current_role_slug,
+            **build_page_context(
+                page_key='finance-center',
+                title='Financeiro',
+                subtitle='Receita, carteira e sinais operacionais em leitura guiada.',
+                mode='management' if can_manage_finance else 'read-only',
+                role_slug=current_role_slug,
+            ),
         },
         data={
             'hero': hero,
