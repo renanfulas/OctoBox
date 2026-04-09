@@ -8,7 +8,7 @@ POR QUE ELE EXISTE:
     <section class="students-kpi-grid interactive-tab-triggers"
         aria-label="Navegacao principal de alunos">
         {% for card in page.data.interactive_kpis %}
-        {% if card.data_action == page.behavior.default_action %}
+        {% if card.is_selected or card.data_action == page.behavior.default_action %}
         {% include "catalog/includes/student/student_metric_card.html" with card=card card_extra_classes="is-selected-tab" %}
         {% else %}
         {% include "catalog/includes/student/student_metric_card.html" with card=card %}

@@ -1,0 +1,22 @@
+/*
+ARQUIVO: contrato minimo operacional para superficies do catalogo.
+
+POR QUE ELE EXISTE:
+- reduz o acoplamento do catalogo com `operations.css` quando a tela so precisa da moldura operacional.
+- preserva hero, shell e card-head operacionais sem puxar personas, boards e KPI grid de operations.
+
+O QUE ESTE ARQUIVO FAZ:
+1. importa o shell operacional minimo.
+2. importa o card-shell compartilhado.
+3. importa o contrato visual do hero operacional.
+4. importa a base de tabela operacional usada em superficies do catalogo.
+
+PONTOS CRITICOS:
+- este manifesto nao substitui `operations.css` em telas que usam boards, KPI grid operacional ou refinamentos por persona.
+- ele existe para superficies de catalogo com dependencia parcial do contrato operacional.
+*/
+
+@import url("./operations/core.css");
+@import url("./operations/components/card-shell.css");
+@import url("./operations/workspace/tables.css");
+@import url("./operations/refinements/hero.css");

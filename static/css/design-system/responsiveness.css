@@ -112,6 +112,11 @@ PONTOS CRITICOS:
         width: 100%;
     }
 
+    :where(.operation-card-head) {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
     :where(.topbar-alerts > .alert-chip) {
         flex: 1 1 180px;
     }
@@ -126,6 +131,11 @@ PONTOS CRITICOS:
 }
 
 @media (max-width: 720px) {
+    :where(.operation-card-head) {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
     :where(.actions) > :where(.button, button, a),
     :where(.topbar-alerts > .alert-chip) {
         width: 100%;

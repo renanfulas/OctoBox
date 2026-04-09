@@ -332,7 +332,6 @@ h1,
 h2,
 h3,
 .metric,
-.operation-card-title,
 .section-title,
 .section-title-sm,
 .brand {
@@ -385,11 +384,20 @@ button,
     font-weight: var(--weight-body);
 }
 
+.meta-text {
+    margin: 0;
+    line-height: 1.6;
+}
+
 small,
 .meta-text-sm {
     font-size: var(--font-size-small);
     line-height: 1.45;
     font-weight: var(--weight-body);
+}
+
+.meta-text-sm {
+    margin: 4px 0;
 }
 
 .skip-link {

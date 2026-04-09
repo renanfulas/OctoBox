@@ -244,7 +244,7 @@ POR QUE ELE EXISTE:
     color: var(--theme-text-primary);
 }
 
-.student-financial-workspace :is(.eyebrow, .meta-text, .meta-text-sm, .student-financial-breadcrumb, .student-financial-kpi-card__label, .student-financial-kpi-card__meta, .student-financial-id-stat__label, .student-financial-status-tile__label, .student-financial-drawer-stat__label, .student-payment-management-total__label, .student-payment-management-total__currency, .student-payment-management-summary__row span, .student-financial-ledger__head th, .student-financial-ledger__copy span) {
+.student-financial-workspace :is(.eyebrow, [class~="meta-text"], [class~="meta-text-sm"], .student-financial-breadcrumb, .student-financial-kpi-card__label, .student-financial-kpi-card__meta, .student-financial-id-stat__label, .student-financial-status-tile__label, .student-financial-drawer-stat__label, .student-payment-management-total__label, .student-payment-management-total__currency, .student-payment-management-summary__row span, .student-financial-ledger__head th, .student-financial-ledger__copy span) {
     color: var(--legacy-copy);
 }
 
@@ -353,7 +353,7 @@ POR QUE ELE EXISTE:
     line-height: 1.15;
 }
 
-.student-financial-confirm-dialog__copy .meta-text {
+.student-financial-confirm-dialog__copy [class~="meta-text"] {
     max-width: 34ch;
     font-size: 0.88rem;
     line-height: 1.48;
@@ -609,7 +609,7 @@ body[data-theme="dark"] .student-financial-confirm-dialog__actions .button:focus
     width: 100%;
 }
 
-.student-financial-side-panel .meta-text {
+.student-financial-side-panel [class~="meta-text"] {
     color: var(--legacy-copy);
 }
 
@@ -1259,7 +1259,7 @@ body[data-theme="dark"] .student-financial-workspace :is(
     color: var(--theme-text-primary);
 }
 
-body[data-theme="dark"] .student-financial-workspace :is(.eyebrow, .meta-text, .meta-text-sm, .student-financial-breadcrumb, .student-financial-kpi-card__label, .student-financial-kpi-card__meta, .student-financial-id-stat__label, .student-financial-status-tile__label, .student-financial-drawer-stat__label, .student-payment-management-total__label, .student-payment-management-total__currency, .student-payment-management-summary__row span, .student-financial-ledger__head th, .student-financial-ledger__copy span) {
+body[data-theme="dark"] .student-financial-workspace :is(.eyebrow, [class~="meta-text"], [class~="meta-text-sm"], .student-financial-breadcrumb, .student-financial-kpi-card__label, .student-financial-kpi-card__meta, .student-financial-id-stat__label, .student-financial-status-tile__label, .student-financial-drawer-stat__label, .student-payment-management-total__label, .student-payment-management-total__currency, .student-payment-management-summary__row span, .student-financial-ledger__head th, .student-financial-ledger__copy span) {
     color: var(--theme-text-secondary);
 }
 
@@ -1299,13 +1299,13 @@ body[data-theme="dark"] .student-financial-workspace :is(
 }
 
 body[data-theme="dark"] .student-financial-workspace :is(
-    .student-financial-panel-head .meta-text,
-    .student-financial-timeline__content .meta-text,
-    .student-financial-timeline__content .meta-text-sm,
-    .student-financial-context-action .meta-text,
+    .student-financial-panel-head [class~="meta-text"],
+    .student-financial-timeline__content [class~="meta-text"],
+    .student-financial-timeline__content [class~="meta-text-sm"],
+    .student-financial-context-action [class~="meta-text"],
     .student-payment-management-summary__row,
     .student-payment-management-summary__row span,
-    .student-payment-methods .meta-text,
+    .student-payment-methods [class~="meta-text"],
     .student-payment-methods small
 ) {
     color: var(--theme-text-secondary);
@@ -1408,7 +1408,7 @@ body[data-theme="dark"] .student-financial-command-actions-secondary {
     border-left-color: color-mix(in srgb, var(--theme-glass-border) 88%, transparent);
 }
 
-body[data-theme="dark"] .student-financial-side-panel .meta-text {
+body[data-theme="dark"] .student-financial-side-panel [class~="meta-text"] {
     color: var(--theme-text-secondary);
 }
 

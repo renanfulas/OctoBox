@@ -37,6 +37,32 @@ def _catalog_kpi_icon(name):
     return build_kpi_icon(icon_map.get(name, ''))
 
 
+def get_operational_enrollment(student):
+    """
+    Resolve a matricula que deve governar a leitura operacional atual.
+
+    Regra:
+    1. prioriza matricula ativa
+    2. depois uma pendente
+    3. se nao houver nenhuma das duas, usa a mais recente
+    """
+    enrollments = list(
+        student.enrollments.select_related('plan').order_by('-start_date', '-created_at')
+    )
+    if not enrollments:
+        return None
+
+    for enrollment in enrollments:
+        if enrollment.status == EnrollmentStatus.ACTIVE:
+            return enrollment
+
+    for enrollment in enrollments:
+        if enrollment.status == EnrollmentStatus.PENDING:
+            return enrollment
+
+    return enrollments[0]
+
+
 def compute_fidalgometro_score(student):
     """
     Computa o score de saude (Fidalgometro) do aluno:
@@ -69,6 +95,9 @@ def compute_fidalgometro_score(student):
 def build_student_directory_snapshot(params=None, for_export=False):
     now = timezone.now()
     thirty_days_ago = now - timedelta(days=30)
+    selected_created_window = ''
+    selected_student_status = ''
+    selected_payment_status = ''
     latest_enrollment_status = Enrollment.objects.filter(student=OuterRef('pk')).order_by('-start_date', '-created_at').values('status')[:1]
     latest_plan_name = Enrollment.objects.filter(student=OuterRef('pk')).order_by('-start_date', '-created_at').values('plan__name')[:1]
     latest_payment_status = Payment.objects.filter(student=OuterRef('pk')).order_by('-due_date', '-created_at').values('status')[:1]
@@ -137,9 +166,13 @@ def build_student_directory_snapshot(params=None, for_export=False):
 
     if filter_form.is_valid():
         query = (filter_form.cleaned_data.get('query') or '').strip()
+        created_window = filter_form.cleaned_data.get('created_window')
         student_status = filter_form.cleaned_data.get('student_status')
         commercial_status = filter_form.cleaned_data.get('commercial_status')
         payment_status = filter_form.cleaned_data.get('payment_status')
+        selected_created_window = created_window or ''
+        selected_student_status = student_status or ''
+        selected_payment_status = payment_status or ''
 
         if query:
             normalized_query = query.lower()
@@ -162,6 +195,8 @@ def build_student_directory_snapshot(params=None, for_export=False):
             students = students.filter(latest_enrollment_status=commercial_status)
         if payment_status:
             students = students.filter(operational_payment_status=payment_status)
+        if created_window == '30d':
+            students = students.filter(created_at__gte=thirty_days_ago)
 
     metrics = students.aggregate(
         total=Count('id'),
@@ -209,28 +244,32 @@ def build_student_directory_snapshot(params=None, for_export=False):
                 'display_value': ativos_count,
                 'icon': _catalog_kpi_icon('active'),
                 'tone_class': 'kpi-green',
-                'data_action': 'open-tab-students-directory',
+                'href': '?student_status=active#tab-students-directory',
+                'is_selected': selected_student_status == StudentStatus.ACTIVE,
             },
             {
                 'label': 'Inadimplentes',
                 'display_value': inadimplentes_count,
                 'icon': _catalog_kpi_icon('overdue'),
                 'tone_class': 'kpi-red',
-                'data_action': 'open-tab-students-priority',
+                'href': '?payment_status=overdue#tab-students-directory',
+                'is_selected': selected_payment_status == PaymentStatus.OVERDUE,
             },
             {
                 'label': 'Novos (30D)',
                 'display_value': novos_30d_count,
                 'icon': _catalog_kpi_icon('growth'),
                 'tone_class': 'kpi-cyan',
-                'data_action': 'open-tab-students-intake',
+                'href': '?created_window=30d#tab-students-directory',
+                'is_selected': selected_created_window == '30d',
             },
             {
                 'label': 'Inativos',
                 'display_value': inativos_count,
                 'icon': _catalog_kpi_icon('inactive'),
                 'tone_class': 'kpi-purple',
-                'data_action': 'open-tab-students-filters',
+                'href': '?student_status=inactive#tab-students-directory',
+                'is_selected': selected_student_status == StudentStatus.INACTIVE,
             },
         ],
         'priority_students': priority_students,
@@ -259,7 +298,7 @@ def build_student_financial_snapshot(student):
 
     enrollments = student.enrollments.select_related('plan').order_by('-start_date', '-created_at')
     raw_payments = student.payments.select_related('enrollment').order_by('due_date', 'created_at')[:6]
-    latest_enrollment = enrollments.first()
+    latest_enrollment = get_operational_enrollment(student)
 
     today = timezone.localdate()
     seven_days_from_now = today + timezone.timedelta(days=7)
@@ -293,4 +332,4 @@ def build_student_financial_snapshot(student):
     }
 
 
-__all__ = ['build_student_directory_snapshot', 'build_student_financial_snapshot', 'compute_fidalgometro_score']
+__all__ = ['build_student_directory_snapshot', 'build_student_financial_snapshot', 'compute_fidalgometro_score', 'get_operational_enrollment']

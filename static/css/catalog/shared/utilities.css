@@ -88,12 +88,6 @@ PONTOS CRITICOS:
     backdrop-filter: blur(14px);
 }
 
-.metric-card,
-.finance-metric-card {
-    position: relative;
-    overflow: hidden;
-}
-
 .metric-pulse,
 .metric-spark {
     position: absolute;
@@ -247,20 +241,11 @@ PONTOS CRITICOS:
 }
 
 .plan-stats span,
-.meta-text,
-.meta-text-sm,
+[class~="meta-text"],
+[class~="meta-text-sm"],
 .chart-column span,
 .delta-label {
     color: var(--legacy-copy);
-}
-
-.meta-text {
-    margin: 0;
-    line-height: 1.6;
-}
-
-.meta-text-sm {
-    margin: 4px 0;
 }
 
 .mix-bar-track {

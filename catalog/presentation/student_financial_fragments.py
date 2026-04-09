@@ -19,7 +19,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from catalog.forms import EnrollmentManagementForm, PaymentManagementForm
-from catalog.student_queries import build_student_financial_snapshot
+from catalog.student_queries import build_student_financial_snapshot, get_operational_enrollment
 
 
 def resolve_student_payment_selection_id(form):
@@ -60,7 +60,7 @@ def build_student_payment_management_form(student, payment=None):
 
 
 def build_student_enrollment_management_form(student):
-    latest_enrollment = student.enrollments.order_by('-start_date', '-created_at').first()
+    latest_enrollment = get_operational_enrollment(student)
     if latest_enrollment is None:
         return None
 

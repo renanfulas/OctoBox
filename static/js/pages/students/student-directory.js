@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
         sortDirection: 'desc',
         searchQuery: '',
     };
+    var currentSearchParams = new URLSearchParams(window.location.search || '');
     var rowPrefetchTimers = new WeakMap();
     var searchSubmitTimerId = null;
     var serverRows = rows.slice();
@@ -2174,6 +2175,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         filterState.searchQuery = normalizeSearchText(searchInput.value);
+    }
+
+    if (currentSearchParams.get('payment_status') === 'overdue') {
+        filterState.filter = 'overdue';
+    } else if (currentSearchParams.get('student_status') === 'inactive') {
+        filterState.filter = 'inactive';
+    } else if (currentSearchParams.get('student_status') === 'active') {
+        filterState.filter = 'active';
     }
 
     pills.forEach(function(pill) {

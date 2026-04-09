@@ -81,6 +81,10 @@ POR QUE ELE EXISTE:
     margin: 0;
 }
 
+.student-quick-panel .note-panel::before {
+    content: none;
+}
+
 .student-quick-panel__avatar {
     width: 58px;
     height: 58px;

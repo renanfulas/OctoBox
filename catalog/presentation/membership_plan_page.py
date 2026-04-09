@@ -124,5 +124,8 @@ def build_membership_plan_page(*, form, plan, current_role_slug):
                 'admin': reverse('admin:boxcore_membershipplan_change', args=[plan.id]) if current_role_slug in (ROLE_OWNER, ROLE_DEV) else None,
             },
         },
-        assets=build_catalog_assets(css=['css/catalog/finance.css'], include_catalog_shared=True),
+        assets=build_catalog_assets(
+            css=['css/catalog/finance.css'],
+            include_catalog_shared=True,
+        ),
     )

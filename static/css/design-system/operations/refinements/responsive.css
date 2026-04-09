@@ -63,11 +63,6 @@ POR QUE ELE EXISTE:
         justify-content: flex-start;
     }
 
-    .operation-card-head {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
     .reception-payment-meta,
     .reception-preview-payment-meta,
     .reception-grade-stats,
@@ -78,9 +73,11 @@ POR QUE ELE EXISTE:
 }
 
 @media (max-width: 720px) {
-    .operation-card-head,
     .operation-table-guide-head {
         grid-template-columns: 1fr;
+    }
+
+    .operation-table-guide-head {
         display: grid;
     }
 

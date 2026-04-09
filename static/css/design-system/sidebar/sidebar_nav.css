@@ -72,11 +72,6 @@ O QUE ESTE ARQUIVO FAZ:
     transition: opacity var(--motion-base) var(--ease-standard), background var(--motion-base) var(--ease-standard);
 }
 
-/* Force default cursor for specific metric cards that should not appear as links */
-[data-no-pointer="true"] {
-    cursor: default !important;
-}
-
 .sidebar-logout-form {
     margin: 0;
 }
@@ -167,31 +162,31 @@ O QUE ESTE ARQUIVO FAZ:
 
 .nav-link.blink,
 .nav-link.blink-danger {
-    color: var(--sidebar-ink) !important;
+    color: var(--sidebar-ink);
     transform: none;
 }
 
 .nav-link.blink {
-    background: rgba(16, 185, 129, 0.12) !important;
-    border-color: rgba(16, 185, 129, 0.18) !important;
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.18);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.05),
-        0 10px 22px rgba(16, 185, 129, 0.08) !important;
+        0 10px 22px rgba(16, 185, 129, 0.08);
 }
 
 .nav-link.blink-danger {
-    background: rgba(239, 68, 68, 0.12) !important;
-    border-color: rgba(239, 68, 68, 0.18) !important;
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.18);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.05),
-        0 10px 22px rgba(239, 68, 68, 0.08) !important;
+        0 10px 22px rgba(239, 68, 68, 0.08);
 }
 
 .nav-link.blink .nav-icon,
 .nav-link.blink-danger .nav-icon {
-    color: #ffffff !important;
-    background: rgba(255, 255, 255, 0.08) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -451,16 +451,6 @@ POR QUE ELE EXISTE:
     }
   });
 
-  // Sidebar neon behavior removed: no-op handler kept for compatibility
-  document.addEventListener('click', function() {
-    // Intentionally left blank: sidebar neon/blink handled elsewhere no longer.
-  });
-
-  // Finance sidebar highlight removed: no-op for click events to avoid errors
-  document.addEventListener('click', function() {
-    // Intentionally left blank: finance sidebar neon removed.
-  });
-
   revealHashTarget();
   window.addEventListener('hashchange', revealHashTarget);
 

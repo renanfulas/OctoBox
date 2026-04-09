@@ -72,5 +72,8 @@ def build_student_directory_page(*, student_count, students, student_filter_form
             'can_manage_students': can_manage_students,
             'can_open_student_admin': can_open_student_admin,
         },
-        assets=build_catalog_assets(css=['css/catalog/students.css'], include_catalog_shared=True),
+        assets=build_catalog_assets(
+            css=['css/catalog/students.css'],
+            include_catalog_shared=True,
+        ),
     )

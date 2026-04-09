@@ -49,6 +49,14 @@ def _student_phone_exists(*, normalized_phone, instance_pk=None):
 
 class StudentDirectoryFilterForm(forms.Form):
     query = forms.CharField(required=False, label='Busca')
+    created_window = forms.ChoiceField(
+        required=False,
+        label='Janela de criacao',
+        choices=(
+            ('', 'Tudo'),
+            ('30d', 'Novos 30 dias'),
+        ),
+    )
     student_status = forms.ChoiceField(
         required=False,
         label='Status do aluno',

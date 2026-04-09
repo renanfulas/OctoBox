@@ -1158,5 +1158,8 @@ def build_finance_center_page(*, snapshot, operational_queue, export_links, curr
             'can_manage_finance': can_manage_finance,
             'can_export_finance': current_role_slug in (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER),
         },
-        assets=build_catalog_assets(css=['css/catalog/finance.css', 'css/design-system/financial.css'], include_catalog_shared=True),
+        assets=build_catalog_assets(
+            css=['css/catalog/finance.css', 'css/design-system/financial.css'],
+            include_catalog_shared=True,
+        ),
     )

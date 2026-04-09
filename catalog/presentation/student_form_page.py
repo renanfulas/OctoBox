@@ -190,6 +190,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
                 else 'Ajuste rapidamente o cadastro sem cair no admin bruto.'
             ),
             'mode': page_mode,
+            'surface_mode': 'full',
             'role_slug': current_role_slug,
         },
         data={

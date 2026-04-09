@@ -10,6 +10,51 @@ document.addEventListener('DOMContentLoaded', function() {
     var triggers = document.querySelectorAll('[data-action^="open-tab-"]');
     if (!triggers.length) return;
 
+    function syncTriggerSelection(targetPanel, action) {
+        var scopeRoot = targetPanel ? (targetPanel.closest('[data-page]') || document) : document;
+        var cardGrid = scopeRoot.querySelector('.interactive-tab-triggers');
+        if (!cardGrid) {
+            return;
+        }
+
+        var allCards = cardGrid.querySelectorAll('.card');
+        allCards.forEach(function(card) {
+            card.classList.remove('is-selected-tab');
+        });
+
+        var linkedTrigger = cardGrid.querySelector('[data-action="' + action + '"]');
+        if (!linkedTrigger) {
+            return;
+        }
+
+        var currentCard = linkedTrigger.closest('.card') || linkedTrigger;
+        currentCard.classList.add('is-selected-tab');
+    }
+
+    function activatePanelById(targetId, options) {
+        var targetPanel = document.getElementById(targetId);
+        if (!targetPanel) return null;
+
+        var container = targetPanel.closest('.interactive-tab-container');
+        if (container) {
+            Array.from(container.children).forEach(function(child) {
+                child.classList.remove('is-tab-active');
+            });
+        }
+
+        targetPanel.classList.add('is-tab-active');
+
+        if (targetId === 'tab-students-filters' && !(options && options.skipCoDependentDirectory) && !window.location.search.includes('keep_open=true')) {
+            var directoryPanel = document.getElementById('tab-students-directory');
+            if (directoryPanel) {
+                directoryPanel.classList.add('is-tab-active');
+            }
+        }
+
+        syncTriggerSelection(targetPanel, 'open-tab-' + targetId.replace(/^tab-/, ''));
+        return targetPanel;
+    }
+
     function activateDefaultPanel(container) {
         if (!container || container.querySelector('.is-tab-active')) {
             return;
@@ -22,16 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        firstPanel.classList.add('is-tab-active');
-
-        var expectedAction = 'open-tab-' + firstPanel.id.replace(/^tab-/, '');
-        var linkedTrigger = document.querySelector('[data-action="' + expectedAction + '"]');
-        if (!linkedTrigger) {
-            return;
-        }
-
-        var triggerCard = linkedTrigger.closest('.card') || linkedTrigger;
-        triggerCard.classList.add('is-selected-tab');
+        activatePanelById(firstPanel.id);
     }
 
     triggers.forEach(function(trigger) {
@@ -57,36 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Remove 'is-tab-active' de todos os irmãos no container
-            var container = targetPanel.closest('.interactive-tab-container');
-            if (container) {
-                Array.from(container.children).forEach(function(child) {
-                    child.classList.remove('is-tab-active');
-                });
-            }
-            
-            // Adiciona classe no alvo principal
-            targetPanel.classList.add('is-tab-active');
-            
-            // Regra especial (Phase 13.5): Se o alvo for o form de Busca, a Tabela de Diretório vira co-dependente e deve abrir abaixo.
-            if (targetId === 'tab-students-filters' && !window.location.search.includes('keep_open=true')) {
-                var directoryPanel = document.getElementById('tab-students-directory');
-                if (directoryPanel) {
-                    directoryPanel.classList.add('is-tab-active');
-                }
-            }
-            
-            // Trata o estado selecionado do card (trigger)
-            var cardGrid = this.closest('.interactive-tab-triggers');
-            if (cardGrid) {
-                var allCards = cardGrid.querySelectorAll('.card');
-                allCards.forEach(function(c) {
-                    c.classList.remove('is-selected-tab');
-                });
-                
-                var currentCard = this.closest('.card') || this;
-                currentCard.classList.add('is-selected-tab');
-            }
+            activatePanelById(targetId);
             
             // Scroll suave compensando a altura da topbar fixa (ex: 80px)
             if (this.dataset.noScroll !== "true") {
@@ -116,20 +123,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-open filters if the URL contains filtering queries
     if (window.location.search && window.location.search.length > 1) {
         var params = new URLSearchParams(window.location.search);
-        var hasFilter = params.has('query') || params.has('student_status') || params.has('commercial_status') || params.has('payment_status') || params.has('keep_open');
+        var hasFilter = params.has('query') || params.has('student_status') || params.has('commercial_status') || params.has('payment_status') || params.has('created_window') || params.has('keep_open');
         
         if (hasFilter) {
-            var filtersTrigger = document.querySelector('[data-action="open-tab-students-filters"]');
-            if (filtersTrigger) {
-                filtersTrigger.dataset.noScroll = "true"; 
-                filtersTrigger.click();
-            }
+            activatePanelById('tab-students-directory');
         } else if (params.has('page')) {
-            var directoryTrigger = document.querySelector('[data-action="open-tab-students-directory"]');
-            if (directoryTrigger) {
-                directoryTrigger.dataset.noScroll = "true"; 
-                directoryTrigger.click();
-            }
+            activatePanelById('tab-students-directory');
         }
     }
 });

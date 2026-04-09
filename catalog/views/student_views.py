@@ -56,7 +56,7 @@ from catalog.presentation.shared import attach_catalog_page_payload
 from catalog.services.student_enrollment_actions import handle_student_enrollment_action
 from catalog.services.student_payment_actions import handle_student_payment_action
 from catalog.services.student_workflows import run_student_quick_create_workflow, run_student_quick_update_workflow, run_student_express_create_workflow
-from catalog.student_queries import build_student_directory_snapshot, build_student_financial_snapshot
+from catalog.student_queries import build_student_directory_snapshot, build_student_financial_snapshot, get_operational_enrollment
 from shared_support.redis_snapshots import prewarm_student_snapshots
 from finance.models import Enrollment, Payment
 from monitoring.student_realtime_metrics import record_student_save_conflict
@@ -218,6 +218,7 @@ def _build_student_drawer_fragments(*, request, student, form=None):
         current_role_slug=role_slug,
         browser_snapshot=_serialize_student_browser_snapshot(request=request, student=student),
     )
+    page['context']['surface_mode'] = 'drawer'
     page['data']['source_snapshot']['capture_url'] = _build_student_source_capture_url(request=request, student=student)
     context = {'page': page}
 
@@ -377,7 +378,7 @@ class StudentQuickBaseView(CatalogBaseView, FormView):
     def get_enrollment_management_form(self):
         if not self.object:
             return None
-        latest_enrollment = self.object.enrollments.order_by('-start_date', '-created_at').first()
+        latest_enrollment = get_operational_enrollment(self.object)
         if latest_enrollment is None:
             return None
         return EnrollmentManagementForm(

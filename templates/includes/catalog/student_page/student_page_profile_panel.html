@@ -26,7 +26,7 @@ POR QUE ELE EXISTE:
         {{ page.data.form.billing_strategy.as_hidden }}
         {{ page.data.form.installment_total.as_hidden }}
         {{ page.data.form.recurrence_cycles.as_hidden }}
-        <input type="hidden" name="profile_version" value="{{ page.behavior.student_form.browser_snapshot.profile_version|default:'' }}" data-student-profile-version-field>
+        <input type="hidden" name="profile_version" value="{{ page.behavior.student_browser_snapshot.profile_version|default:'' }}" data-student-profile-version-field>
 
         <div class="student-page-profile-toolbar">
             <button class="button secondary student-page-profile-edit-toggle" type="button" data-action="toggle-student-profile-edit" aria-pressed="false">
@@ -113,51 +113,6 @@ POR QUE ELE EXISTE:
                     {{ page.data.form.notes }}
                     {% for error in page.data.form.notes.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
                 </label>
-            </div>
-        </article>
-
-        <article class="student-page-profile-section-surface student-page-profile-section-card">
-            <div class="student-page-card__head student-page-panel-heading">
-                <div class="stack-6 student-page-panel-heading__copy">
-                    <p class="eyebrow student-page-profile-kicker">Origem</p>
-                    <h2 class="section-title-sm">Governanca comercial</h2>
-                </div>
-            </div>
-            <div class="student-page-card__body stack-16">
-                <div class="field-grid-220">
-                    <div>
-                        <span class="field-label">Operacional</span>
-                        <p class="meta-text"><strong>{{ page.data.source_snapshot.operational_label }}</strong></p>
-                        {% if page.data.source_snapshot.operational_detail %}<p class="meta-text">{{ page.data.source_snapshot.operational_detail }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <span class="field-label">Declarada</span>
-                        <p class="meta-text"><strong>{{ page.data.source_snapshot.declared_label }}</strong></p>
-                        {% if page.data.source_snapshot.declared_detail %}<p class="meta-text">{{ page.data.source_snapshot.declared_detail }}</p>{% endif %}
-                        {% if page.data.source_snapshot.declared_channel %}<p class="meta-text">Canal: {{ page.data.source_snapshot.declared_channel }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <span class="field-label">Resolvida</span>
-                        <p class="meta-text"><strong>{{ page.data.source_snapshot.resolved_label }}</strong></p>
-                        {% if page.data.source_snapshot.resolved_detail %}<p class="meta-text">{{ page.data.source_snapshot.resolved_detail }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <span class="field-label">Confianca</span>
-                        <p class="meta-text"><strong>{{ page.data.source_snapshot.confidence|default:"unknown" }}</strong></p>
-                        {% if page.data.source_snapshot.conflict_flag %}
-                        <p class="form-error">Existe conflito entre origem operacional e declarada.</p>
-                        {% elif page.data.source_snapshot.resolution_reason %}
-                        <p class="meta-text">Motivo: {{ page.data.source_snapshot.resolution_reason }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-                {% if page.data.source_snapshot.capture_url %}
-                <div class="note-panel">
-                    <p class="meta-text no-margin"><strong>Link seguro de qualificacao</strong></p>
-                    <p class="meta-text">Use este link em WhatsApp, SMS ou follow-up para coletar a origem declarada diretamente no OctoBox.</p>
-                    <a class="button secondary" href="{{ page.data.source_snapshot.capture_url }}" target="_blank" rel="noopener">Abrir link seguro</a>
-                </div>
-                {% endif %}
             </div>
         </article>
 
