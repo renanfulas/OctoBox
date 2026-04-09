@@ -18,6 +18,8 @@ POR QUE ELE EXISTE:
   const sidebarBackdrop = document.querySelector('[data-ui="sidebar-backdrop"]') || document.getElementById('sidebar-backdrop');
   const financeAlert = document.querySelector('[data-ui="topbar-finance-alert"]');
   const intakeAlert = document.querySelector('[data-ui="topbar-intake-alert"]');
+  const profileTrigger = document.querySelector('.topbar-profile');
+  const profileMenu = document.querySelector('.profile-dropdown');
   const shellUserId = body.dataset.shellUserId || 'anonymous';
   const celebrationStorageKey = 'octobox-shell-counts:' + shellUserId;
 
@@ -191,6 +193,28 @@ POR QUE ELE EXISTE:
     syncSidebarUi();
   }
 
+  function syncProfileMenuUi(isOpen) {
+    if (!profileTrigger || !profileMenu) {
+      return;
+    }
+
+    profileTrigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    profileMenu.classList.toggle('is-open', isOpen);
+  }
+
+  function closeProfileMenu() {
+    syncProfileMenuUi(false);
+  }
+
+  function toggleProfileMenu() {
+    if (!profileTrigger || !profileMenu) {
+      return;
+    }
+
+    var isOpen = profileTrigger.getAttribute('aria-expanded') === 'true';
+    syncProfileMenuUi(!isOpen);
+  }
+
   function resolveLegacyHash(hash) {
     if (body.dataset.shellScope === 'dashboard' && hash === '#dashboard') {
       return '#dashboard-sessions-board';
@@ -279,6 +303,23 @@ POR QUE ELE EXISTE:
   if (sidebarBackdrop) {
     sidebarBackdrop.addEventListener('click', function() {
       closeSidebar();
+    });
+  }
+
+  if (profileTrigger && profileMenu) {
+    profileTrigger.addEventListener('click', function(event) {
+      event.stopPropagation();
+      toggleProfileMenu();
+    });
+
+    profileMenu.addEventListener('click', function(event) {
+      event.stopPropagation();
+    });
+
+    document.addEventListener('click', function(event) {
+      if (!profileTrigger.contains(event.target) && !profileMenu.contains(event.target)) {
+        closeProfileMenu();
+      }
     });
   }
 
@@ -424,9 +465,16 @@ POR QUE ELE EXISTE:
   window.addEventListener('hashchange', revealHashTarget);
 
   document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape' && body.classList.contains('sidebar-open')) {
-      closeSidebar();
-      syncSidebarUi();
+    if (event.key === 'Escape') {
+      if (body.classList.contains('sidebar-open')) {
+        closeSidebar();
+        syncSidebarUi();
+      }
+
+      if (profileTrigger && profileTrigger.getAttribute('aria-expanded') === 'true') {
+        closeProfileMenu();
+        profileTrigger.focus();
+      }
     }
   });
 }());

@@ -77,6 +77,8 @@ class DjangoClassGridWriter(ClassGridWriterPort):
             start_date=command.start_date,
             end_date=command.end_date,
             weekdays=command.weekdays,
+            anchor_date=command.anchor_date,
+            interval_days=command.interval_days,
             start_time=command.start_time,
             duration_minutes=command.duration_minutes,
             sequence_count=command.sequence_count,

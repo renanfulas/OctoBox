@@ -51,7 +51,7 @@ class IntakeCenterViewTests(TestCase):
             phone='5511999994444',
             email='triado.central@example.com',
             source='manual',
-            status=IntakeStatus.MATCHED,
+            status=IntakeStatus.REVIEWING,
         )
 
     def test_redirects_when_user_is_not_authenticated(self):
@@ -59,20 +59,21 @@ class IntakeCenterViewTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
 
-    def test_intake_center_renders_queue_and_conversion_handoff(self):
+    def test_intake_center_renders_queue_and_primary_actions(self):
         self.client.force_login(self.user)
 
         response = self.client.get(reverse('intake-center'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Como um Contato vira Aluno')
         self.assertContains(response, 'id="intake-queue-board"')
         self.assertContains(response, 'Navegacao principal de entradas')
         self.assertContains(response, 'Buscar contato, telefone ou e-mail...')
         self.assertContains(response, 'Lead Central')
         self.assertContains(response, 'Lead aberto')
-        self.assertContains(response, 'Comece a triagem')
+        self.assertContains(response, 'pode abrir a ficha definitiva direto daqui')
         self.assertContains(response, f'/alunos/novo/?intake={self.convertible_intake.id}#student-form-essential')
+        self.assertContains(response, 'Recusar')
+        self.assertContains(response, 'Conversar no WhatsApp')
         self.assertContains(response, 'Novo Lead')
         self.assertContains(response, 'Novo Intake')
 
@@ -123,7 +124,7 @@ class IntakeCenterViewTests(TestCase):
     def test_intake_center_filters_queue_by_status(self):
         self.client.force_login(self.user)
 
-        response = self.client.get(reverse('intake-center'), {'status': IntakeStatus.MATCHED})
+        response = self.client.get(reverse('intake-center'), {'status': IntakeStatus.REVIEWING})
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Triado Central')
@@ -131,35 +132,20 @@ class IntakeCenterViewTests(TestCase):
         self.assertContains(response, 'aria-label="Fila: 1.', html=False)
         self.assertNotContains(response, 'pulse-pending has-count')
 
-    def test_reception_can_assume_and_start_review_from_intake_center(self):
+    def test_reception_can_reject_from_intake_center(self):
         self.client.force_login(self.reception)
 
-        assign_response = self.client.post(
+        response = self.client.post(
             reverse('intake-center'),
             data={
                 'intake_id': self.intake.id,
-                'action': 'assign-to-me',
+                'action': 'reject-intake',
                 'return_query': '',
             },
             follow=True,
         )
 
-        self.assertEqual(assign_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.intake.refresh_from_db()
-        self.assertEqual(self.intake.assigned_to_id, self.reception.id)
-        self.assertContains(assign_response, 'agora esta com voce')
-
-        review_response = self.client.post(
-            reverse('intake-center'),
-            data={
-                'intake_id': self.intake.id,
-                'action': 'start-review',
-                'return_query': '',
-            },
-            follow=True,
-        )
-
-        self.assertEqual(review_response.status_code, 200)
-        self.intake.refresh_from_db()
-        self.assertEqual(self.intake.status, IntakeStatus.REVIEWING)
-        self.assertContains(review_response, 'entrou em revisao')
+        self.assertEqual(self.intake.status, IntakeStatus.REJECTED)
+        self.assertContains(response, 'foi rejeitado e saiu da fila ativa')

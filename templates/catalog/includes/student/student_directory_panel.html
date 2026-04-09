@@ -18,9 +18,32 @@ POR QUE ELE EXISTE:
                     <th scope="col">Vencimento</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody data-student-directory-body>
                 {% for student in page.data.students %}
-                <tr class="student-row hover:bg-muted-soft cursor-pointer transition-all" data-student-row data-href="{% url 'student-quick-update' student.id %}#student-financial-overview" tabindex="0" role="link" aria-label="Abrir ficha de {{ student.full_name }}">
+                <tr
+                    class="student-row hover:bg-muted-soft cursor-pointer transition-all"
+                    data-student-row
+                    data-href="{% url 'student-quick-update' student.id %}#student-financial-overview"
+                    data-student-snapshot-url="{% url 'student-read-snapshot' student.id %}"
+                    data-student-events-stream-url="{% url 'student-event-stream' student.id %}"
+                    data-student-drawer-fragments-url="{% url 'student-drawer-fragments' student.id %}"
+                    data-student-drawer-profile-url="{% url 'student-drawer-profile-save' student.id %}"
+                    data-student-edit-start-url="{% url 'student-edit-session-start' student.id %}"
+                    data-student-edit-release-url="{% url 'student-edit-session-release' student.id %}"
+                    data-student-lock-heartbeat-url="{% url 'student-lock-heartbeat' student.id %}"
+                    data-student-lock-status-url="{% url 'student-lock-status' student.id %}"
+                    data-student-id="{{ student.id }}"
+                    data-student-name="{{ student.full_name }}"
+                    data-student-contact="{{ student.email|default:student.phone|default:'' }}"
+                    data-student-plan="{{ student.latest_plan_name|default:'' }}"
+                    data-student-due-label="{% if student.latest_payment_due_date %}{{ student.latest_payment_due_date|date:'d/m/Y' }}{% endif %}"
+                    data-student-status="{{ student.status }}"
+                    data-payment-status="{{ student.operational_payment_status|default:'' }}"
+                    data-presence-percent="{{ student.presence_percent|default:0 }}"
+                    data-search-index="{{ student.full_name|lower }} {{ student.email|default:student.phone|lower }} {{ student.latest_plan_name|default:'--'|lower }}"
+                    tabindex="0"
+                    role="link"
+                    aria-label="Abrir ficha de {{ student.full_name }}">
                     <td class="student-cell student-cell--student" data-label="Aluno">
                         <div class="student-identity">
                             <div class="avatar-circle avatar-{% cycle 'orange' 'blue' 'purple' 'teal' 'pink' 'indigo' %} student-avatar-circle">
@@ -29,6 +52,17 @@ POR QUE ELE EXISTE:
                             <div class="student-identity-copy">
                                 <strong class="student-name">{{ student.full_name }}</strong>
                                 <span class="student-email">{{ student.email|default:student.phone }}</span>
+                                <div class="student-signal-strip" data-student-signal-strip>
+                                    {% if student.presence_percent >= 85 %}
+                                    <span class="student-signal student-signal--success" data-student-signal="frequency">Alta frequencia</span>
+                                    {% endif %}
+                                    {% if student.presence_percent < 45 %}
+                                    <span class="student-signal student-signal--warning" data-student-signal="training">Baixo treino</span>
+                                    {% endif %}
+                                    {% if student.operational_payment_status == 'overdue' or student.operational_payment_status == 'pending' %}
+                                    <span class="student-signal student-signal--danger" data-student-signal="financial">Risco financeiro</span>
+                                    {% endif %}
+                                </div>
                                 <span class="visually-hidden">Pressione Enter para abrir a ficha.</span>
                             </div>
                         </div>
@@ -87,7 +121,7 @@ POR QUE ELE EXISTE:
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="table-empty-cell p-10 text-center text-dimmed text-sm">
+                    <td colspan="6" class="table-empty-cell p-10 text-center text-dimmed text-sm" data-student-empty-state>
                         Nenhum aluno encontrado para este filtro.
                     </td>
                 </tr>

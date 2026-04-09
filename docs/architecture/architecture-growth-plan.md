@@ -33,6 +33,8 @@ Este documento traduz a ambicao do OctoBox em uma arquitetura de crescimento pra
 
 Para a trilha especifica de quebra do monolito interno em apps Django reais, leia tambem [app-split-plan.md](app-split-plan.md).
 
+Para a direcao especifica da camada superior de inteligencia operacional, score, previsao e guardrails de ML, leia tambem [operational-intelligence-ml-layer.md](operational-intelligence-ml-layer.md).
+
 O objetivo nao e fazer um sistema complexo antes da hora. O objetivo e fazer o simples atual de um jeito que permita crescer para:
 
 1. integracao oficial com WhatsApp
@@ -40,6 +42,12 @@ O objetivo nao e fazer um sistema complexo antes da hora. O objetivo e fazer o s
 3. API para app mobile
 4. multiunidade e franquias
 5. relatorios inteligentes, IA e ML
+
+Neste trilho, a regra continua sendo clara:
+
+1. ML sobe acima do core
+2. ML nao redefine verdade transacional
+3. ML depende de dados consolidados, reconciliados e auditaveis
 
 ## Tese de arquitetura
 

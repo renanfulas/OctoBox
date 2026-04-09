@@ -3,9 +3,7 @@
 {% block content %}
 {% with page=student_express_page %}
 <div class="operation-shell student-form-shell workspace-shell" data-page="student-form" data-screen="catalog-student" data-slot="page-root">
-    <div data-panel="student-form-hero">
-        {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
-    </div>
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
     <section class="section-gap" aria-label="Formulario Expresso" data-slot="student-express-form-section">
         <article class="table-card student-filter-card student-form-main-card" data-panel="student-form-main-card">

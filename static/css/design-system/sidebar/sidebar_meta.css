@@ -1,73 +1,33 @@
 /*
-ARQUIVO: bloco de identificação e meta-dados de perfil do usuário.
+ARQUIVO: bloco de identificacao e meta-dados de perfil do usuario.
 
 POR QUE ELE EXISTE:
-- Isola a estilização do núcleo inferior da barra onde residem os dados críticos do logado (nome, papel e alertas diretos).
+- Isola a composicao do topo utilitario da sidebar.
+- Mantem perfil e leitura rapida como apoio de contexto, nao como card protagonista.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Define a caixa semântica `.sidebar-meta`.
-2. Estiliza a anatomia textual (nome forte e `.sidebar-role` sutil).
-3. Constrói o visual de destaque do resumo veloz ("Leitura rápida").
-4. Mantém e aplica variações frontais isoladas do modo Wall.
-
-PONTOS CRITICOS:
-- Se removido, a responsabilidade do visual vaza de volta para o root da sidebar.
+1. Define o bloco integrado `.sidebar-meta`.
+2. Estiliza avatar textual, nome, papel e resumo rapido.
+3. Sustenta a leitura silenciosa do topo da sidebar.
 */
 
 .sidebar-block {
-    margin-bottom: 20px;
+    margin: 0;
 }
 
 .sidebar-meta {
-    padding: 12px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid var(--sidebar-line);
+    padding: 0 0 10px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.08);
     color: var(--sidebar-ink);
-    box-shadow: none;
 }
 
-.sidebar-meta strong {
+.sidebar-user-name {
     display: block;
-    margin-bottom: 4px;
-    font-size: 0.875rem;
-}
-
-.sidebar-role {
-    color: var(--sidebar-muted);
-    font-size: 0.8rem;
-    word-break: break-all;
-}
-
-.sidebar-highlight {
-    margin-top: 12px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    background: rgba(37, 99, 235, 0.14);
-    border: 1px solid rgba(37, 99, 235, 0.2);
-    color: #e0ecff;
-    font-size: 0.8rem;
-}
-
-.sidebar-highlight strong {
-    display: block;
-    margin-bottom: 4px;
-}
-
-/* --- Front Display Wall facade sidebar pass --- */
-.sidebar-meta {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-    border-color: rgba(148, 163, 184, 0.14);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-.sidebar-highlight {
-    background: linear-gradient(135deg, rgba(29, 78, 216, 0.18), rgba(15, 118, 110, 0.16));
-    border-color: rgba(96, 165, 250, 0.08);
-}
-
-/* --- Front Display Wall artistic facade pass --- */
-.sidebar-meta {
-    padding: 13px;
-    border-radius: 14px;
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.18;
+    letter-spacing: -0.025em;
+    overflow-wrap: break-word;
+    color: color-mix(in srgb, var(--sidebar-ink) 90%, var(--sidebar-muted) 10%);
 }

@@ -36,7 +36,12 @@ POR QUE ELE EXISTE:
     position: relative;
     overflow: hidden;
     min-height: 100%;
-    background: var(--card-surface);
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--card-border) 86%);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-panel) 92%, transparent));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        0 18px 34px rgba(19, 33, 50, 0.08);
     transition: box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
 }
 
@@ -44,6 +49,14 @@ POR QUE ELE EXISTE:
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(14px);
+}
+
+.class-grid-workspace-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: linear-gradient(90deg, var(--theme-accent-primary), var(--theme-accent-support), var(--theme-accent-premium));
 }
 
 .class-grid-panel-head {
@@ -119,6 +132,15 @@ body[data-theme="dark"] .class-planner-intro-card .class-day-summary {
     color: var(--theme-text-secondary);
 }
 
+body[data-theme="dark"] .class-grid-workspace-panel {
+    border-color: rgba(92, 146, 214, 0.16);
+    background:
+        linear-gradient(180deg, rgba(10, 18, 32, 0.96), rgba(9, 16, 29, 0.93));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 20px 40px rgba(0, 0, 0, 0.26);
+}
+
 .class-day-header {
     display: flex;
     justify-content: space-between;
@@ -171,19 +193,28 @@ body[data-theme="dark"] .class-planner-intro-card .class-day-summary {
 .class-occupancy-stack.is-closed {
     padding: 12px;
     border-radius: 18px;
-    border: 1px solid rgba(71, 85, 105, 0.45);
-    background: rgba(31, 41, 55, 0.98);
-    color: #f8fafc;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    background:
+        linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.96));
+    color: color-mix(in srgb, var(--theme-text-primary) 82%, rgba(71, 85, 105, 0.18));
+    box-shadow:
+        0 8px 18px rgba(148, 163, 184, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.84);
 }
 
 .class-occupancy-stack.is-closed .class-grid-meta {
-    color: rgba(226, 232, 240, 0.82);
+    color: rgba(100, 116, 139, 0.82);
+}
+
+.class-occupancy-stack.is-closed .pill {
+    border-color: rgba(148, 163, 184, 0.2);
+    background: rgba(226, 232, 240, 0.42);
+    color: rgba(71, 85, 105, 0.9);
 }
 
 .class-occupancy-stack.is-closed .mix-bar-track {
-    background: rgba(15, 23, 42, 0.7);
-    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(226, 232, 240, 0.46);
+    border: 1px solid rgba(148, 163, 184, 0.16);
 }
 
 .weekday-picker {

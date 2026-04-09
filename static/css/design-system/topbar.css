@@ -11,44 +11,41 @@ REGRA:
 */
 
 .topbar {
-    --topbar-h: 89px;
-    --topbar-item-h: 34px;
-    --topbar-profile-h: 55px;
-    --topbar-padding-block: 13px;
-    --topbar-padding-inline: 21px;
-    --topbar-gap: 8px;
-    --topbar-left-gap: 8px;
-    --topbar-right-gap: 8px;
-    --topbar-item-pad-x: 13px;
+    --topbar-h: 84px;
+    --topbar-item-h: 32px;
+    --topbar-profile-h: 54px;
+    --topbar-padding-block: 11px;
+    --topbar-padding-inline: 18px;
+    --topbar-gap: 7px;
+    --topbar-left-gap: 7px;
+    --topbar-right-gap: 7px;
+    --topbar-item-pad-x: 12px;
     --topbar-radius: 21px;
     --topbar-top: 16px;
-    --topbar-margin-bottom: 13px;
-    --topbar-surface: color-mix(in srgb, var(--chrome-surface) 92%, transparent);
-    --topbar-border-color: color-mix(in srgb, var(--chrome-border) 94%, transparent);
-    --topbar-shadow: var(--card-shadow);
-    --topbar-overlay-glow:
-        radial-gradient(circle at 96% 20%, color-mix(in srgb, var(--theme-accent-premium-alpha) 78%, transparent), transparent 58%),
-        radial-gradient(circle at 6% 78%, color-mix(in srgb, var(--theme-accent-support-alpha) 62%, transparent), transparent 54%);
-    --topbar-search-radius: 17px;
-    --topbar-search-surface: color-mix(in srgb, var(--theme-surface-strong) 78%, var(--theme-accent-support-alpha) 22%);
-    --topbar-search-border-color: color-mix(in srgb, var(--chrome-border) 90%, transparent);
-    --topbar-search-shadow: inset 0 1px 0 color-mix(in srgb, white 18%, transparent), 0 10px 20px color-mix(in srgb, var(--chrome-glow) 22%, transparent);
-    --topbar-manifesto-surface: color-mix(in srgb, var(--theme-surface-secondary) 76%, var(--theme-accent-premium-alpha) 24%);
-    --topbar-manifesto-border-color: color-mix(in srgb, var(--chrome-border) 86%, transparent);
+    --topbar-margin-bottom: 12px;
+    --topbar-surface: color-mix(in srgb, var(--theme-surface-panel-strong) 94%, var(--theme-accent-support-alpha) 6%);
+    --topbar-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-border-soft) 82%);
+    --topbar-shadow: 0 14px 28px rgba(3, 8, 20, 0.12), 0 2px 6px rgba(15, 23, 42, 0.03);
+    --topbar-search-radius: 16px;
+    --topbar-search-surface: color-mix(in srgb, var(--theme-surface-panel) 88%, var(--theme-accent-support-alpha) 12%);
+    --topbar-search-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-border-soft) 84%);
+    --topbar-search-shadow: inset 0 1px 0 color-mix(in srgb, white 14%, transparent), 0 0 0 1px color-mix(in srgb, var(--theme-accent-support) 5%, transparent);
+    --topbar-manifesto-surface: color-mix(in srgb, var(--theme-surface-secondary) 92%, var(--theme-accent-support-alpha) 8%);
+    --topbar-manifesto-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
     --topbar-manifesto-shadow: inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
     --topbar-manifesto-kicker-ink: color-mix(in srgb, var(--theme-accent-primary) 48%, var(--theme-accent-support) 52%);
     --topbar-manifesto-copy-ink: var(--theme-text-secondary);
-    --topbar-toggle-surface: color-mix(in srgb, var(--theme-surface-secondary) 80%, var(--theme-accent-support-alpha) 20%);
-    --topbar-toggle-border-color: color-mix(in srgb, var(--chrome-border) 88%, transparent);
+    --topbar-toggle-surface: color-mix(in srgb, var(--theme-surface-secondary) 94%, var(--theme-accent-support-alpha) 6%);
+    --topbar-toggle-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
     --topbar-toggle-ink: var(--theme-text-muted);
-    --topbar-toggle-shadow: inset 0 1px 0 color-mix(in srgb, white 12%, transparent), 0 8px 18px color-mix(in srgb, var(--chrome-glow) 18%, transparent);
-    --topbar-toggle-surface-hover: color-mix(in srgb, var(--theme-surface-strong) 90%, var(--theme-accent-support-alpha) 10%);
-    --topbar-toggle-border-hover: color-mix(in srgb, var(--theme-accent-support) 26%, transparent);
+    --topbar-toggle-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent), 0 3px 8px color-mix(in srgb, var(--chrome-glow) 8%, transparent);
+    --topbar-toggle-surface-hover: color-mix(in srgb, var(--theme-surface-strong) 92%, var(--theme-accent-support-alpha) 8%);
+    --topbar-toggle-border-hover: color-mix(in srgb, var(--theme-accent-primary) 18%, var(--theme-accent-support) 12%, transparent 70%);
     --topbar-toggle-ink-hover: var(--theme-text-primary);
     --topbar-profile-radius: var(--radius-panel);
-    --topbar-profile-surface: color-mix(in srgb, var(--theme-surface-strong) 76%, var(--theme-accent-support-alpha) 24%);
-    --topbar-profile-border-color: color-mix(in srgb, var(--chrome-border) 88%, transparent);
-    --topbar-profile-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent), 0 10px 24px color-mix(in srgb, var(--chrome-glow) 18%, transparent);
+    --topbar-profile-surface: color-mix(in srgb, var(--theme-surface-panel) 86%, var(--theme-accent-support-alpha) 14%);
+    --topbar-profile-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-border-soft) 84%);
+    --topbar-profile-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent), 0 4px 10px color-mix(in srgb, var(--chrome-glow) 8%, transparent);
     --topbar-profile-meta-copy: var(--theme-text-muted);
     position: sticky;
     top: var(--topbar-top);
@@ -69,17 +66,6 @@ REGRA:
     box-shadow: var(--topbar-shadow);
     overflow: visible;
     isolation: isolate;
-}
-
-.topbar::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: var(--topbar-overlay-glow);
-    opacity: 0.82;
-    pointer-events: none;
-    z-index: -1;
 }
 
 .topbar-left,
@@ -116,7 +102,7 @@ REGRA:
     border: 1px solid var(--topbar-toggle-border-color);
     background: var(--topbar-toggle-surface);
     color: var(--topbar-toggle-ink);
-    border-radius: 10px;
+    border-radius: 11px;
     cursor: pointer;
     font: inherit;
     transition:
@@ -167,16 +153,6 @@ REGRA:
         background var(--motion-base) var(--ease-standard);
 }
 
-.theme-toggle::before {
-    content: "";
-    position: absolute;
-    inset: 4px;
-    border-radius: 999px;
-    border: 1px solid currentColor;
-    opacity: 0.16;
-    transition: opacity var(--motion-base) var(--ease-standard), transform var(--motion-base) var(--ease-standard);
-}
-
 .theme-toggle[data-theme-state="light"] .theme-toggle-icon {
     background: transparent;
 }
@@ -194,29 +170,24 @@ REGRA:
     background: var(--topbar-toggle-surface-hover);
     border-color: var(--topbar-toggle-border-hover);
     color: var(--topbar-toggle-ink-hover);
-    transform: translateY(-1px);
-    box-shadow: var(--theme-shadow-soft);
+    transform: none;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent);
 }
 
 .theme-toggle:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-focus-ring) 60%, transparent), var(--theme-shadow-soft);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, transparent), 0 0 0 1px color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent);
 }
 
 .theme-toggle:active,
 .sidebar-toggle:active {
-    transform: translateY(0);
-}
-
-.theme-toggle:hover::before,
-.theme-toggle:focus-visible::before {
-    opacity: 0.3;
-    transform: scale(1.02);
+    transform: scale(0.98);
 }
 
 .theme-toggle:hover .theme-toggle-icon,
 .theme-toggle:focus-visible .theme-toggle-icon {
-    transform: scale(1.06);
+    transform: scale(1.02);
+    color: color-mix(in srgb, var(--theme-accent-primary) 58%, var(--theme-text-primary) 42%);
 }
 
 .theme-toggle[data-theme-state="dark"]:hover .theme-toggle-icon,
@@ -232,7 +203,7 @@ REGRA:
     width: clamp(22ch, 27vw, 30ch);
     min-width: min(26ch, 100%);
     max-width: 100%;
-    padding: 9px 12px;
+    padding: 8px 12px;
     border-radius: var(--topbar-search-radius);
     background: var(--topbar-search-surface);
     border: 1px solid var(--topbar-search-border-color);
@@ -245,9 +216,9 @@ REGRA:
 }
 
 .global-search:focus-within {
-    border-color: color-mix(in srgb, var(--theme-focus-ring) 84%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 28%, var(--theme-focus-ring) 72%);
     box-shadow:
-        0 0 0 3px color-mix(in srgb, var(--theme-focus-ring) 30%, transparent),
+        0 0 0 3px color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, transparent),
         var(--topbar-search-shadow);
 }
 
@@ -348,14 +319,14 @@ REGRA:
 .topbar-alerts {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     flex-wrap: wrap;
 }
 
 .topbar-quick-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     padding: 0;
     border-radius: 0;
     background: transparent;
@@ -371,7 +342,7 @@ REGRA:
     gap: 5px;
     padding: 0 var(--topbar-item-pad-x);
     border-radius: 999px;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     line-height: 1;
     text-decoration: none;
     white-space: nowrap;
@@ -379,7 +350,8 @@ REGRA:
         background var(--motion-base) var(--ease-standard),
         border-color var(--motion-base) var(--ease-standard),
         color var(--motion-base) var(--ease-standard),
-        transform var(--motion-fast) var(--ease-standard);
+        transform var(--motion-fast) var(--ease-standard),
+        box-shadow var(--motion-base) var(--ease-standard);
 }
 
 .topbar-quick-link {
@@ -388,30 +360,32 @@ REGRA:
 }
 
 .topbar-quick-link--primary {
-    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-primary) 90%, white 10%), color-mix(in srgb, var(--theme-accent-support) 84%, black 16%), color-mix(in srgb, var(--theme-accent-premium) 60%, black 40%));
+    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-primary) 82%, white 18%), color-mix(in srgb, var(--theme-accent-support) 76%, black 24%), color-mix(in srgb, var(--theme-accent-premium) 42%, black 58%));
     color: #f7feff;
-    border-color: color-mix(in srgb, var(--theme-accent-support) 18%, transparent);
-    box-shadow: 0 14px 26px color-mix(in srgb, var(--theme-accent-support-alpha) 62%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 12%, transparent);
+    box-shadow: 0 8px 16px color-mix(in srgb, var(--theme-accent-support-alpha) 26%, transparent);
 }
 
 .topbar-quick-link--primary:hover,
 .topbar-quick-link--primary:focus-visible {
-    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-primary) 94%, white 6%), color-mix(in srgb, var(--theme-accent-support) 88%, black 12%), color-mix(in srgb, var(--theme-accent-premium) 68%, black 32%));
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-primary) 86%, white 14%), color-mix(in srgb, var(--theme-accent-support) 80%, black 20%), color-mix(in srgb, var(--theme-accent-premium) 48%, black 52%));
+    transform: none;
 }
 
 .topbar-quick-link--secondary {
-    background: color-mix(in srgb, var(--theme-surface-secondary) 72%, var(--theme-accent-support-alpha) 28%);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 92%, var(--theme-accent-support-alpha) 8%);
     color: var(--theme-text-secondary);
-    border-color: color-mix(in srgb, var(--chrome-border) 92%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
 }
 
 .topbar-quick-link--secondary:hover,
 .topbar-quick-link--secondary:focus-visible {
-    background: color-mix(in srgb, var(--theme-surface-strong) 88%, transparent);
-    border-color: color-mix(in srgb, var(--theme-border-strong) 94%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 18%, var(--theme-accent-support) 12%, transparent 70%);
     color: var(--theme-text-primary);
-    transform: translateY(-1px);
+    transform: none;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent);
 }
 
 .visually-hidden {
@@ -427,9 +401,10 @@ REGRA:
 }
 
 .alert-chip {
-    background: color-mix(in srgb, var(--theme-surface-secondary) 70%, var(--theme-accent-support-alpha) 30%);
-    border: 1px solid color-mix(in srgb, var(--chrome-border) 92%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 92%, var(--theme-accent-support-alpha) 8%);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
     color: var(--theme-text-muted);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
 }
 
 .alert-chip.blink {
@@ -460,21 +435,22 @@ REGRA:
 
 .alert-chip:hover,
 .alert-chip:focus-visible {
-    background: color-mix(in srgb, var(--theme-surface-strong) 84%, transparent);
-    border-color: color-mix(in srgb, var(--theme-border-strong) 88%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 18%, var(--theme-accent-support) 12%, transparent 70%);
     color: var(--theme-text-primary);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent);
 }
 
 .alert-chip.has-volume {
-    color: color-mix(in srgb, var(--theme-accent-warning) 78%, var(--theme-text-primary) 22%);
-    border-color: color-mix(in srgb, var(--theme-accent-warning) 26%, var(--chrome-border) 74%);
-    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 34%, var(--theme-surface-panel) 66%);
+    color: color-mix(in srgb, var(--theme-accent-warning) 62%, var(--theme-text-primary) 38%);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 18%, var(--chrome-border) 82%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-surface-panel) 82%);
 }
 
 .alert-chip.danger.has-volume {
-    color: color-mix(in srgb, var(--theme-accent-danger) 78%, var(--theme-text-primary) 22%);
-    border-color: color-mix(in srgb, var(--theme-accent-danger) 26%, var(--chrome-border) 74%);
-    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 34%, var(--theme-surface-panel) 66%);
+    color: color-mix(in srgb, var(--theme-accent-danger) 62%, var(--theme-text-primary) 38%);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 18%, var(--chrome-border) 82%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 18%, var(--theme-surface-panel) 82%);
 }
 
 .alert-chip.is-zero {
@@ -486,11 +462,11 @@ REGRA:
 }
 
 .alert-chip.has-volume strong {
-    color: color-mix(in srgb, var(--theme-accent-warning) 88%, white 12%);
+    color: color-mix(in srgb, var(--theme-accent-warning) 76%, var(--theme-text-primary) 24%);
 }
 
 .alert-chip.danger.has-volume strong {
-    color: color-mix(in srgb, var(--theme-accent-danger) 88%, white 12%);
+    color: color-mix(in srgb, var(--theme-accent-danger) 76%, var(--theme-text-primary) 24%);
 }
 
 .alert-chip.is-zero strong {
@@ -515,14 +491,14 @@ REGRA:
 
 .alert-chip.has-volume:hover,
 .alert-chip.has-volume:focus-visible {
-    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 54%, var(--theme-surface-panel) 46%);
-    border-color: color-mix(in srgb, var(--theme-accent-warning) 34%, var(--theme-border-soft) 66%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 24%, var(--theme-surface-panel) 76%);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 22%, var(--theme-border-soft) 78%);
 }
 
 .alert-chip.danger.has-volume:hover,
 .alert-chip.danger.has-volume:focus-visible {
-    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 54%, var(--theme-surface-panel) 46%);
-    border-color: color-mix(in srgb, var(--theme-accent-danger) 34%, var(--theme-border-soft) 66%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 24%, var(--theme-surface-panel) 76%);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 22%, var(--theme-border-soft) 78%);
 }
 
 .shell-celebration-stack {
@@ -746,7 +722,8 @@ REGRA:
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 8px 10px 8px 8px;
+    min-height: var(--topbar-profile-h);
+    padding: 8px 14px 8px 10px;
     border-radius: var(--topbar-profile-radius);
     background: var(--topbar-profile-surface);
     border: 1px solid var(--topbar-profile-border-color);
@@ -755,8 +732,8 @@ REGRA:
 
 .topbar-profile:hover,
 .topbar-profile:focus-within {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 26%, transparent);
-    box-shadow: 0 14px 28px color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 18%, var(--theme-accent-support) 12%, transparent 70%);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent);
 }
 
 .topbar.is-shell-scroll-trigger {
@@ -764,50 +741,149 @@ REGRA:
 }
 
 .avatar {
-    position: relative;
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
     border-radius: var(--radius-card);
-    display: grid;
-    place-items: center;
-    background: linear-gradient(
-        160deg,
-        color-mix(in srgb, var(--theme-accent-primary) 88%, white 12%),
-        color-mix(in srgb, var(--theme-accent-support) 84%, black 16%),
-        color-mix(in srgb, var(--theme-accent-premium) 52%, black 48%)
-    );
-    box-shadow: 0 14px 26px color-mix(in srgb, var(--theme-accent-support-alpha) 44%, transparent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
     overflow: hidden;
+    background:
+        radial-gradient(circle at 30% 28%, color-mix(in srgb, white 20%, transparent), transparent 42%),
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-accent-support) 74%, white 10%), color-mix(in srgb, var(--theme-accent-primary) 58%, var(--theme-surface-strong) 42%), color-mix(in srgb, var(--theme-accent-premium) 28%, var(--theme-surface-strong) 72%));
+    border: 1px solid color-mix(in srgb, white 22%, transparent);
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, white 14%, transparent),
+        0 8px 16px color-mix(in srgb, var(--theme-accent-support-alpha) 20%, transparent);
 }
 
-.avatar-core,
-.avatar-glow {
+.avatar::after {
+    content: "";
     position: absolute;
+    inset: auto -10px -12px auto;
+    width: 26px;
+    height: 26px;
     border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent-premium-alpha) 42%, transparent), transparent 72%);
+    pointer-events: none;
 }
 
-.avatar-core {
-    inset: 10px;
-    background: color-mix(in srgb, white 90%, transparent);
+.avatar-glyph {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 1px;
+    border-radius: 10px;
+    background: color-mix(in srgb, rgba(9, 17, 30, 0.18) 72%, transparent);
+    color: #f7feff;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-indent: 0.14em;
+    line-height: 1;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-.avatar-glow {
-    inset: auto -20% -34% auto;
-    width: 34px;
-    height: 34px;
-    background: color-mix(in srgb, var(--theme-accent-premium-alpha) 82%, transparent);
+.topbar-profile:hover .avatar,
+.topbar-profile:focus-within .avatar {
+    background:
+        radial-gradient(circle at 30% 28%, color-mix(in srgb, white 24%, transparent), transparent 44%),
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-accent-primary) 62%, white 8%), color-mix(in srgb, var(--theme-accent-support) 52%, var(--theme-surface-strong) 48%), color-mix(in srgb, var(--theme-accent-premium) 34%, var(--theme-surface-strong) 66%));
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, white 16%, transparent),
+        0 10px 18px color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent);
 }
 
 .profile-meta strong {
     display: block;
-    font-size: 0.96rem;
+    font-size: 0.91rem;
     color: var(--theme-text-primary);
+    line-height: 1.15;
 }
 
 .profile-meta span {
     display: block;
-    font-size: 0.84rem;
+    font-size: 0.78rem;
     color: var(--topbar-profile-meta-copy);
+}
+
+[data-theme="dark"] .topbar {
+    --topbar-surface: color-mix(in srgb, #0a1422 90%, var(--theme-surface-panel-strong) 10%);
+    --topbar-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.2) 74%, rgba(255, 255, 255, 0.04) 26%);
+    --topbar-shadow: 0 18px 32px rgba(2, 6, 18, 0.24), 0 4px 12px rgba(0, 0, 0, 0.14);
+    --topbar-search-surface: color-mix(in srgb, #0d1828 90%, var(--theme-surface-panel) 10%);
+    --topbar-search-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.18) 72%, rgba(255, 255, 255, 0.05) 28%);
+    --topbar-search-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 0 1px rgba(74, 144, 226, 0.06);
+    --topbar-manifesto-surface: color-mix(in srgb, #0f1a2b 90%, var(--theme-surface-secondary) 10%);
+    --topbar-manifesto-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.14) 72%, rgba(255, 255, 255, 0.04) 28%);
+    --topbar-toggle-surface: color-mix(in srgb, #101a2b 92%, var(--theme-surface-secondary) 8%);
+    --topbar-toggle-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.14) 72%, rgba(255, 255, 255, 0.04) 28%);
+    --topbar-toggle-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 3px 10px rgba(0, 0, 0, 0.16);
+    --topbar-toggle-surface-hover: color-mix(in srgb, #142235 90%, var(--theme-surface-strong) 10%);
+    --topbar-profile-surface: color-mix(in srgb, #101a2b 90%, var(--theme-surface-panel) 10%);
+    --topbar-profile-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.18) 74%, rgba(255, 255, 255, 0.04) 26%);
+    --topbar-profile-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 12px rgba(0, 0, 0, 0.16);
+    --topbar-profile-meta-copy: color-mix(in srgb, var(--theme-text-secondary) 82%, white 18%);
+}
+
+[data-theme="dark"] .topbar-manifesto-copy,
+[data-theme="dark"] .topbar-quick-link--secondary,
+[data-theme="dark"] .alert-chip {
+    color: color-mix(in srgb, var(--theme-text-secondary) 88%, white 12%);
+}
+
+[data-theme="dark"] .topbar-quick-link--secondary,
+[data-theme="dark"] .alert-chip {
+    background: color-mix(in srgb, #101a2b 90%, var(--theme-surface-secondary) 10%);
+    border-color: color-mix(in srgb, rgba(92, 146, 214, 0.14) 72%, rgba(255, 255, 255, 0.04) 28%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .topbar-quick-link--secondary:hover,
+[data-theme="dark"] .topbar-quick-link--secondary:focus-visible,
+[data-theme="dark"] .alert-chip:hover,
+[data-theme="dark"] .alert-chip:focus-visible {
+    background: color-mix(in srgb, #142235 88%, var(--theme-surface-strong) 12%);
+    border-color: color-mix(in srgb, rgba(92, 146, 214, 0.22) 76%, rgba(255, 255, 255, 0.04) 24%);
+    box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.14);
+}
+
+[data-theme="dark"] .avatar {
+    background:
+        radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.12), transparent 42%),
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-accent-support) 50%, #172334 50%), color-mix(in srgb, var(--theme-accent-primary) 40%, #122033 60%), color-mix(in srgb, var(--theme-accent-premium) 18%, #0d1828 82%));
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 10px 18px rgba(0, 0, 0, 0.24);
+}
+
+[data-theme="dark"] .avatar-glyph {
+    background: rgba(8, 15, 26, 0.34);
+    color: rgba(247, 254, 255, 0.98);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 4px 10px rgba(0, 0, 0, 0.16);
+}
+
+[data-theme="dark"] .global-search:focus-within {
+    border-color: color-mix(in srgb, rgba(0, 229, 255, 0.38) 62%, rgba(92, 146, 214, 0.32) 38%);
+    box-shadow:
+        0 0 0 3px rgba(0, 229, 255, 0.08),
+        var(--topbar-search-shadow);
+}
+
+[data-theme="dark"] .topbar-profile:hover .avatar,
+[data-theme="dark"] .topbar-profile:focus-within .avatar {
+    background:
+        radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.14), transparent 44%),
+        linear-gradient(145deg, color-mix(in srgb, rgba(0, 229, 255, 0.38) 54%, #172334 46%), color-mix(in srgb, rgba(74, 144, 226, 0.34) 42%, #122033 58%), color-mix(in srgb, rgba(255, 0, 200, 0.18) 18%, #0d1828 82%));
 }
 
 @media (max-width: 1320px) {
@@ -862,7 +938,7 @@ REGRA:
     }
 
     .topbar {
-        padding: 14px;
+        padding: 13px 14px;
     }
 
     .shell-celebration-stack {
@@ -906,7 +982,7 @@ REGRA:
 
 @media (max-width: 640px) {
     .topbar {
-        padding: 12px 14px;
+        padding: 11px 14px;
         border-radius: 24px;
     }
 
@@ -939,7 +1015,6 @@ REGRA:
 @media (prefers-reduced-motion: reduce) {
     .sidebar-toggle,
     .theme-toggle,
-    .theme-toggle::before,
     .theme-toggle-icon,
     .global-search,
     .topbar-quick-link,

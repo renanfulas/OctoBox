@@ -4,7 +4,7 @@ ARQUIVO: grade de metricas do Coach.
 POR QUE ELE EXISTE:
 - separa os numeros do turno da grade de sessoes.
 -->
-<section class="panel-grid operation-metric-grid" aria-label="Metricas do turno">
+<section class="panel-grid operation-metric-grid coach-metric-grid" aria-label="Metricas do turno">
     {% for card in page.data.metric_cards %}
     {% include "includes/ui/shared/metric_card.html" with card=card compact=True extra_classes="operation-kpi-compact" %}
     {% endfor %}

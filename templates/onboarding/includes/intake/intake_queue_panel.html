@@ -7,18 +7,18 @@ POR QUE ELE EXISTE:
 O QUE ESTE ARQUIVO FAZ:
 1. exibe busca e filtros rapidos da fila.
 2. mostra a fila principal em tabela compacta.
-3. preserva atribuicao, triagem e conversao na mesma superficie.
+3. concentra as acoes operacionais da fila em uma superficie unica.
 
 PONTOS CRITICOS:
 - depende do contexto de queue_items e de form.
 -->
-<section class="intake-data-panel" id="intake-queue-board" aria-label="Fila principal de intake" data-panel="intake-queue-board">
+<section class="intake-data-panel" id="intake-queue-board" aria-label="Fila principal de entradas" data-panel="intake-queue-board">
     {% url 'student-quick-create' as student_quick_create_url %}
-    <section class="student-filter-bar intake-filter-bar" aria-label="Busca e filtros da central de intake">
-        <form method="get" action="." class="student-filter-form" id="intake-directory-filter-form">
+    <section class="intake-queue-filter-bar intake-filter-bar" aria-label="Busca e filtros da central de entradas">
+        <form method="get" action="." class="intake-queue-filter-form" id="intake-directory-filter-form">
             <input type="hidden" name="panel" value="tab-intake-queue">
-            <label class="student-filter-search" aria-label="Buscar contato">
-                <span class="student-filter-search-icon" aria-hidden="true">
+            <label class="intake-queue-search" aria-label="Buscar contato">
+                <span class="intake-queue-search-icon" aria-hidden="true">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </span>
                 <input
@@ -26,82 +26,100 @@ PONTOS CRITICOS:
                     name="query"
                     value="{{ page.data.filter_form.query.value|default:'' }}"
                     placeholder="Buscar contato, telefone ou e-mail..."
-                    class="student-filter-search-input"
+                    class="intake-queue-search-input"
                 >
             </label>
         </form>
 
-        <nav class="student-filter-pills intake-filter-pills" aria-label="Filtros rapidos da fila de intake">
-            <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}" class="student-filter-pill {% if not request.GET.status %}is-active{% endif %}">Todos</a>
-            <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}&status=new" class="student-filter-pill {% if request.GET.status == 'new' %}is-active{% endif %}">Novos</a>
-            <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}&status=reviewing" class="student-filter-pill {% if request.GET.status == 'reviewing' %}is-active{% endif %}">Em revisao</a>
-            <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}&status=matched" class="student-filter-pill {% if request.GET.status == 'matched' %}is-active{% endif %}">Prontos</a>
+        <nav class="intake-queue-filter-pills intake-filter-pills" aria-label="Filtros rapidos da fila de entradas">
+            <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}" class="intake-queue-filter-pill {% if not request.GET.status %}is-active{% endif %}">Todos</a>
+            <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}&status=new" class="intake-queue-filter-pill {% if request.GET.status == 'new' %}is-active{% endif %}">Novos</a>
+            <button type="button" class="intake-queue-filter-pill" data-intake-sort="registration" data-sort-direction="desc" aria-pressed="false">Data</button>
         </nav>
 
-        <p class="student-filter-count">{{ page.data.visible_queue_count }} entradas</p>
+        <p class="intake-queue-filter-count" aria-label="Fila: {{ page.data.visible_queue_count }}.">{{ page.data.visible_queue_count }} entradas</p>
     </section>
 
-    <div class="student-data-panel intake-data-panel-table">
-        <div class="student-table-scroll" data-slot="intake-table-scroll">
+    <div class="intake-table-panel intake-data-panel-table">
+        <div class="intake-table-scroll" data-slot="intake-table-scroll">
             <table class="table-modern intake-directory-table">
-                <caption class="visually-hidden">Fila principal de intake com busca, filtros rapidos e acoes de triagem.</caption>
+                <caption class="visually-hidden">Fila principal de entradas com busca, filtros rapidos e acoes de triagem.</caption>
                 <thead>
                     <tr>
-                        <th scope="col">Contato</th>
-                        <th scope="col">Origem</th>
-                        <th scope="col">Leitura</th>
-                        <th scope="col">Responsavel</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Proxima acao</th>
+                        <th scope="col" class="intake-queue-col--contact">Contato</th>
+                        <th scope="col" class="intake-queue-col--source">Origem</th>
+                        <th scope="col" class="intake-queue-col--stage">Leitura</th>
+                        <th scope="col" class="intake-queue-col--owner">Responsavel</th>
+                        <th scope="col" class="intake-queue-col--registration">Registro</th>
+                        <th scope="col" class="intake-queue-col--actions">Proxima acao</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in page.data.queue_items %}
                     {% with intake=item.object semantic=item.semantic_state conversion=item.conversion permissions=item.action_permissions %}
-                    <tr class="intake-directory-row">
-                        <td data-label="Contato">
-                            <div class="student-identity">
-                                <div class="avatar-circle avatar-{% cycle 'orange' 'blue' 'purple' 'teal' 'pink' 'indigo' %} student-avatar-circle">
+                    <tr class="intake-directory-row" data-registration-age-days="{{ item.registration_age_days }}">
+                        <td class="intake-queue-col--contact" data-label="Contato">
+                            <div class="intake-contact-identity">
+                                <div class="avatar-circle avatar-{% cycle 'orange' 'blue' 'purple' 'teal' 'pink' 'indigo' %} intake-contact-avatar">
                                     {{ intake.full_name|slice:":2"|upper }}
                                 </div>
-                                <div class="student-identity-copy">
-                                    <strong class="student-name">{{ intake.full_name }}</strong>
-                                    <span class="student-email">{{ intake.email|default:intake.phone }}</span>
+                                <div class="intake-contact-copy">
+                                    <strong class="intake-contact-name">{{ intake.full_name }}</strong>
+                                    <span class="intake-contact-channel">{{ intake.email|default:intake.phone }}</span>
                                 </div>
                             </div>
                         </td>
-                        <td data-label="Origem">
+                        <td class="intake-queue-col--source" data-label="Origem">
                             <span class="intake-table-text">{{ intake.get_source_display }}</span>
                         </td>
-                        <td data-label="Leitura">
+                        <td class="intake-queue-col--stage" data-label="Leitura">
                             <div class="intake-reading-stack">
-                                <span class="student-status-pill student-status-pill--blue">{{ semantic.semantic_label }}</span>
+                                <span class="student-status-pill {% if semantic.semantic_stage == 'new-leads' %}student-status-pill--blue{% elif semantic.semantic_stage == 'lead-open' %}student-status-pill--orange{% else %}student-status-pill--gray{% endif %}">{{ semantic.semantic_label }}</span>
                                 <span class="intake-reading-note">{{ conversion.reason }}</span>
                             </div>
                         </td>
-                        <td data-label="Responsavel">
+                        <td class="intake-queue-col--owner" data-label="Responsavel">
                             <span class="intake-table-text">{% if intake.assigned_to %}{{ intake.assigned_to.get_full_name|default:intake.assigned_to.username }}{% else %}Aguardando{% endif %}</span>
                         </td>
-                        <td data-label="Status">
-                            <span class="student-status-pill{% if intake.status == 'reviewing' %} student-status-pill--orange{% elif intake.status == 'matched' %} student-status-pill--green{% else %} student-status-pill--blue{% endif %}">
-                                {{ intake.get_status_display }}
-                            </span>
+                        <td class="intake-queue-col--registration" data-label="Registro">
+                            <span class="intake-table-text">{{ item.registration_age_label }}</span>
                         </td>
-                        <td data-label="Proxima acao">
-                            <div class="intake-row-actions">
-                                {% if page.capabilities.can_work_queue %}
+                        <td class="intake-queue-col--actions" data-label="Proxima acao">
+                            <div class="operation-hero-action-rail intake-row-actions">
+                                {% if page.capabilities.can_manage_students and conversion.can_convert and conversion.action_type == 'convert-student' %}
+                                <a class="button intake-convert-button" href="{{ student_quick_create_url }}?intake={{ intake.id }}#student-form-essential" data-action="open-student-quick-create-from-intake">{{ conversion.action_label }}</a>
+                                {% endif %}
+                                {% if page.capabilities.can_work_queue and conversion.can_convert and conversion.action_type == 'move-to-conversation' %}
                                 <form method="post" class="intake-row-form" data-action="intake-queue-actions">
                                     {% csrf_token %}
                                     <input type="hidden" name="intake_id" value="{{ intake.id }}">
                                     <input type="hidden" name="return_query" value="{{ request.GET.urlencode }}">
-                                    {% if permissions.can_assign_to_me and intake.assigned_to_id != user.id %}<button class="button secondary" type="submit" name="action" value="assign-to-me">Atender</button>{% endif %}
-                                    {% if permissions.can_start_review %}<button class="button secondary" type="submit" name="action" value="start-review">Conversar</button>{% endif %}
-                                    {% if permissions.can_mark_matched %}<button class="button secondary" type="submit" name="action" value="mark-matched">Triar</button>{% endif %}
-                                    {% if permissions.can_reject %}<button class="button secondary" type="submit" name="action" value="reject-intake">Recusar</button>{% endif %}
+                                    <button class="button intake-convert-button" type="submit" name="action" value="move-to-conversation">{{ conversion.action_label }}</button>
                                 </form>
                                 {% endif %}
-                                {% if page.capabilities.can_manage_students and conversion.can_convert %}
-                                <a class="button intake-convert-button" href="{{ student_quick_create_url }}?intake={{ intake.id }}#student-form-essential" data-action="open-student-quick-create-from-intake">{{ conversion.action_label }}</a>
+                                {% if page.capabilities.can_work_queue and permissions.can_reject %}
+                                <form method="post" class="intake-row-form" data-action="intake-queue-actions">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="intake_id" value="{{ intake.id }}">
+                                    <input type="hidden" name="return_query" value="{{ request.GET.urlencode }}">
+                                    <button class="button secondary" type="submit" name="action" value="reject-intake">Recusar</button>
+                                </form>
+                                {% endif %}
+                                {% if item.whatsapp_href %}
+                                <div class="intake-whatsapp-slot">
+                                    <a
+                                        class="button secondary intake-whatsapp-button"
+                                        href="{{ item.whatsapp_href }}"
+                                        target="_blank"
+                                        rel="noopener"
+                                        aria-label="Conversar com {{ intake.full_name }} no WhatsApp"
+                                        title="Conversar no WhatsApp"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" aria-hidden="true" focusable="false">
+                                            <path fill="currentColor" d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.1-16.4-14.6-27.4-32.7-30.6-38.2-3.2-5.6-.3-8.6 2.4-11.4 2.5-2.5 5.5-6.5 8.3-9.8 2.8-3.3 3.7-5.6 5.5-9.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.8 23.5 9.2 31.5 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.7z"/>
+                                        </svg>
+                                    </a>
+                                </div>
                                 {% endif %}
                             </div>
                         </td>

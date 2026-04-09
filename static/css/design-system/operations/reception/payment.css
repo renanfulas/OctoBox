@@ -17,6 +17,8 @@ PONTOS CRITICOS:
 
 .reception-payment-board,
 .reception-preview-payment-board {
+    position: relative;
+    overflow: hidden;
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 12%, transparent), transparent 26%),
         linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-panel) 97%, white), color-mix(in srgb, var(--theme-surface) 97%, white));
@@ -24,11 +26,21 @@ PONTOS CRITICOS:
     box-shadow: 0 18px 34px rgba(7, 14, 24, 0.07);
 }
 
+.reception-payment-board::before,
+.reception-preview-payment-board::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: linear-gradient(90deg, var(--theme-accent-warning), var(--theme-accent-support), var(--theme-accent-premium));
+}
+
 .reception-payment-grid,
 .reception-preview-payment-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
+    align-items: start;
 }
 
 .reception-payment-card,
@@ -43,6 +55,23 @@ PONTOS CRITICOS:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 10%, transparent), transparent 28%),
         linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-panel) 96%, white), color-mix(in srgb, var(--theme-surface) 98%, white));
     box-shadow: inset 0 1px 0 color-mix(in srgb, white 16%, transparent);
+}
+
+.reception-payment-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.reception-payment-card::after,
+.reception-preview-payment-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -30px -38px auto;
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, transparent), transparent 70%);
+    pointer-events: none;
 }
 
 .reception-payment-card .finance-action-copy,
@@ -315,6 +344,29 @@ PONTOS CRITICOS:
     margin-bottom: 10px;
 }
 
+.reception-payment-head-pills {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.reception-payment-live-pill {
+    position: relative;
+    overflow: hidden;
+}
+
+.reception-payment-live-pill.is-pulsing::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 1px solid currentColor;
+    opacity: 0;
+    animation: reception-live-pill-pulse 1.5s ease-out;
+}
+
 .reception-payment-board .operation-card-copy,
 .reception-preview-payment-board .operation-card-copy {
     max-width: 52ch;
@@ -356,7 +408,24 @@ body[data-theme="dark"] .reception-payment-advanced {
     background: rgba(10, 17, 28, 0.72);
 }
 
+@keyframes reception-live-pill-pulse {
+    0% {
+        opacity: 0.45;
+        transform: scale(0.98);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(1.12);
+    }
+}
+
 @media (max-width: 720px) {
+    .reception-payment-grid,
+    .reception-preview-payment-grid {
+        grid-template-columns: 1fr;
+    }
+
     .payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta,
     .reception-preview-payment-highlight__meta {
         grid-template-columns: 1fr;
@@ -372,5 +441,10 @@ body[data-theme="dark"] .reception-payment-advanced {
     .reception-payment-actions-primary .button {
         width: 100%;
         flex-basis: 100%;
+    }
+
+    .reception-payment-head-pills {
+        width: 100%;
+        justify-content: flex-start;
     }
 }

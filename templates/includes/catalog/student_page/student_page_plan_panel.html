@@ -6,7 +6,7 @@ POR QUE ELE EXISTE:
 - preserva acoes sensiveis existentes sem depender do drawer do financeiro.
 -->
 <section class="stack-16 student-page-plan-panel" aria-label="Plano do aluno">
-    <article class="card student-page-card student-page-plan-summary">
+    <article class="student-page-plan-summary-card student-page-plan-summary">
         <div class="student-page-card__head student-page-panel-heading">
             <div class="stack-6 student-page-panel-heading__copy">
                 <p class="eyebrow student-page-plan-kicker">Plano</p>
@@ -59,7 +59,7 @@ POR QUE ELE EXISTE:
         </div>
     </article>
 
-    <article class="card student-page-card student-page-plan-actions">
+    <article class="student-page-plan-actions-card student-page-plan-actions">
         <div class="student-page-card__head student-page-panel-heading">
             <div class="stack-6 student-page-panel-heading__copy">
                 <p class="eyebrow student-page-plan-kicker">Gestao do plano</p>
@@ -82,6 +82,7 @@ POR QUE ELE EXISTE:
                     </label>
                 </div>
                 <div class="student-page-plan-actions__list">
+                    {% if page.data.financial_overview.latest_enrollment.status == 'active' %}
                     <div class="student-page-plan-action-row">
                         <div class="stack-4 student-page-plan-action-copy">
                             <strong>Cancelar matricula</strong>
@@ -98,6 +99,7 @@ POR QUE ELE EXISTE:
                             Cancelar matricula
                         </button>
                     </div>
+                    {% else %}
                     <div class="student-page-plan-action-row">
                         <div class="stack-4 student-page-plan-action-copy">
                             <strong>Reativar matricula</strong>
@@ -114,6 +116,7 @@ POR QUE ELE EXISTE:
                             Reativar matricula
                         </button>
                     </div>
+                    {% endif %}
                 </div>
             </form>
             {% else %}

@@ -40,6 +40,17 @@ class FinanceFilterForm(forms.Form):
         label='Metodo',
         choices=(('', 'Todos'), *PaymentMethod.choices),
     )
+    queue_focus = forms.ChoiceField(
+        required=False,
+        label='Missao da fila',
+        choices=(
+            ('', 'Todas'),
+            ('high_signal', 'Alto risco'),
+            ('already_inactive', 'Ja inativo'),
+            ('watch', 'Observacao'),
+            ('recovered', 'Recuperado'),
+        ),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

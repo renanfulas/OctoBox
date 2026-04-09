@@ -58,6 +58,14 @@ def env_str(name, default=''):
     return os.getenv(name, default).strip()
 
 
+def env_list_alias(names, default=''):
+    for name in names:
+        raw_value = os.getenv(name)
+        if raw_value is not None and raw_value.strip():
+            return env_list(name)
+    return env_list(names[0], default)
+
+
 def is_local_runtime_mode():
     return env_bool('DJANGO_DEBUG', False) or env_str('DJANGO_ENV').lower() == 'development'
 
@@ -155,8 +163,17 @@ if not is_local_runtime_mode():
     if PHONE_BLIND_INDEX_KEY == 'dev-default-blind-index-key' or not PHONE_BLIND_INDEX_KEY:
         raise ImproperlyConfigured("PHONE_BLIND_INDEX_KEY não configurada ou usando valor padrão em Produção.")
 
-ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
-CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS')
+ALLOWED_HOSTS = env_list_alias(('DJANGO_ALLOWED_HOSTS', 'ALLOWED_HOSTS'), 'localhost,127.0.0.1')
+CSRF_TRUSTED_ORIGINS = env_list_alias(('DJANGO_CSRF_TRUSTED_ORIGINS', 'CSRF_TRUSTED_ORIGINS'))
+
+if is_local_runtime_mode():
+    local_hosts = local_private_network_hosts()
+    ALLOWED_HOSTS = sorted(dict.fromkeys([*ALLOWED_HOSTS, *local_hosts]))
+    local_trusted_origins = []
+    for host in local_hosts:
+        local_trusted_origins.append(f'http://{host}')
+        local_trusted_origins.append(f'https://{host}')
+    CSRF_TRUSTED_ORIGINS = sorted(dict.fromkeys([*CSRF_TRUSTED_ORIGINS, *local_trusted_origins]))
 
 # 🚀 Segurança de Elite (Ghost Hardening): CSRF Fail-Safe
 if not is_local_runtime_mode() and not CSRF_TRUSTED_ORIGINS:

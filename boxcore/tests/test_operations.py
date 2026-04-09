@@ -22,6 +22,7 @@ from django.utils import timezone
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION
 from auditing.models import AuditEvent
 from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
+from onboarding.models import StudentIntake
 from operations.models import Attendance, BehaviorNote, ClassSession
 from operations.queries import build_reception_workspace_snapshot
 from students.models import Student
@@ -281,6 +282,37 @@ class OperationWorkspaceTests(TestCase):
         overdue_stat = next(item for item in snapshot['hero_stats'] if item['label'] == 'Atrasos')
         self.assertEqual(overdue_stat['value'], 1)
         self.assertIn('Pagamento vencido ha 1 dia(s)', snapshot['reception_queue'][0]['reason'])
+
+    def test_reception_snapshot_marks_focus_cards_with_octobox_signal_states(self):
+        StudentIntake.objects.create(full_name='Lead de Balcao', phone='5511944444444')
+        snapshot = build_reception_workspace_snapshot(today=timezone.localdate())
+
+        first_focus, second_focus, third_focus = snapshot['reception_focus']
+
+        self.assertEqual(first_focus['severity_class'], 'severity-ruby')
+        self.assertFalse(first_focus['is_tranquil'])
+        self.assertEqual(second_focus['severity_class'], 'severity-amber')
+        self.assertFalse(second_focus['is_tranquil'])
+        self.assertEqual(third_focus['severity_class'], 'severity-cyan')
+        self.assertFalse(third_focus['is_tranquil'])
+
+    def test_reception_snapshot_marks_empty_focus_cards_as_tranquil(self):
+        Payment.objects.all().delete()
+        ClassSession.objects.all().delete()
+
+        snapshot = build_reception_workspace_snapshot(today=timezone.localdate())
+
+        first_focus, second_focus, third_focus = snapshot['reception_focus']
+
+        self.assertEqual(first_focus['count'], 0)
+        self.assertEqual(first_focus['severity_class'], 'severity-tranquil')
+        self.assertTrue(first_focus['is_tranquil'])
+        self.assertEqual(second_focus['count'], 0)
+        self.assertEqual(second_focus['severity_class'], 'severity-tranquil')
+        self.assertTrue(second_focus['is_tranquil'])
+        self.assertEqual(third_focus['count'], 0)
+        self.assertEqual(third_focus['severity_class'], 'severity-tranquil')
+        self.assertTrue(third_focus['is_tranquil'])
 
     def test_coach_can_check_in_attendance(self):
         self.client.force_login(self.coach)

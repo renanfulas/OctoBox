@@ -17,14 +17,24 @@ from datetime import timedelta
 from django.db.models import Case, CharField, Exists, OuterRef, Q, Subquery, Value, When, Sum, Count, IntegerField
 from django.db.models.functions import Coalesce
 from django.utils import timezone
-
 from operations.models import Attendance
 from finance.models import Enrollment, EnrollmentStatus, Payment, PaymentStatus
 from onboarding.queries import count_pending_intakes, get_intake_conversion_queue
+from shared_support.kpi_icons import build_kpi_icon
 from students.models import Student, StudentStatus
 
 from catalog.forms import StudentDirectoryFilterForm
 from shared_support.redis_snapshots import get_student_snapshot, update_student_snapshot
+
+
+def _catalog_kpi_icon(name):
+    icon_map = {
+        'active': 'active',
+        'overdue': 'alert',
+        'growth': 'trend',
+        'inactive': 'inactive',
+    }
+    return build_kpi_icon(icon_map.get(name, ''))
 
 
 def compute_fidalgometro_score(student):
@@ -197,30 +207,30 @@ def build_student_directory_snapshot(params=None, for_export=False):
             {
                 'label': 'Alunos ativos',
                 'display_value': ativos_count,
-                'icon': 'check-circle',
+                'icon': _catalog_kpi_icon('active'),
                 'tone_class': 'kpi-green',
                 'data_action': 'open-tab-students-directory',
             },
             {
                 'label': 'Inadimplentes',
                 'display_value': inadimplentes_count,
-                'icon': 'alert-circle',
+                'icon': _catalog_kpi_icon('overdue'),
                 'tone_class': 'kpi-red',
-                'data_action': 'open-tab-students-directory',
+                'data_action': 'open-tab-students-priority',
             },
             {
                 'label': 'Novos (30D)',
                 'display_value': novos_30d_count,
-                'icon': 'trending-up',
+                'icon': _catalog_kpi_icon('growth'),
                 'tone_class': 'kpi-cyan',
-                'data_action': 'open-tab-students-directory',
+                'data_action': 'open-tab-students-intake',
             },
             {
                 'label': 'Inativos',
                 'display_value': inativos_count,
-                'icon': 'x-circle',
+                'icon': _catalog_kpi_icon('inactive'),
                 'tone_class': 'kpi-purple',
-                'data_action': 'open-tab-students-directory',
+                'data_action': 'open-tab-students-filters',
             },
         ],
         'priority_students': priority_students,

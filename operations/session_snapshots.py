@@ -16,6 +16,19 @@ PONTOS CRITICOS:
 from django.utils import timezone
 
 
+COACH_NAME_PREFIXES = {
+    'coach',
+    'coaches',
+    'prof',
+    'prof.',
+    'professor',
+    'professora',
+    'teacher',
+    'instrutor',
+    'instrutora',
+}
+
+
 def _resolve_status_pill(session):
     if session.status in ('scheduled', 'open'):
         return 'class-status-scheduled'
@@ -115,6 +128,26 @@ def _resolve_closed_occupancy_note(runtime_label):
     return ''
 
 
+def _resolve_coach_display_name(coach):
+    if coach is None:
+        return 'Coach'
+
+    full_name = (getattr(coach, 'get_full_name', lambda: '')() or '').strip()
+    fallback_name = (getattr(coach, 'username', '') or '').strip()
+    raw_name = full_name or fallback_name
+    if not raw_name:
+        return 'Coach'
+
+    parts = [part for part in raw_name.split() if part]
+    if not parts:
+        return 'Coach'
+
+    first_part = parts[0].strip(' .').lower()
+    if first_part in COACH_NAME_PREFIXES and len(parts) > 1:
+        return parts[1]
+    return parts[0]
+
+
 def serialize_class_session(session, *, now):
     occupied_slots = session.occupied_slots
     capacity = session.capacity or 0
@@ -139,6 +172,7 @@ def serialize_class_session(session, *, now):
     return {
         'object': session,
         'coach_name': getattr(session.coach, 'get_full_name', lambda: '')() or getattr(session.coach, 'username', '') or 'Coach ainda nao definido',
+        'coach_display_name': _resolve_coach_display_name(session.coach),
         'status_label': runtime_state['label'],
         'status_pill_class': runtime_state['pill_class'] or _resolve_status_pill(session),
         'occupied_slots': occupied_slots,

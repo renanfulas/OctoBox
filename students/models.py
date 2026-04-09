@@ -12,11 +12,22 @@ PONTOS CRITICOS:
 - o ownership de codigo do cadastro de alunos ja saiu de boxcore, mas o estado historico do app ainda permanece nesta fase.
 """
 
-from students.model_definitions import HealthIssueStatus, Student, StudentGender, StudentStatus
+from students.model_definitions import (
+    HealthIssueStatus,
+    SourceConfidence,
+    SourceResolutionMethod,
+    Student,
+    StudentSourceDeclaration,
+    StudentGender,
+    StudentStatus,
+)
 
 __all__ = [
     'HealthIssueStatus',
+    'SourceConfidence',
+    'SourceResolutionMethod',
     'Student',
+    'StudentSourceDeclaration',
     'StudentGender',
     'StudentStatus',
 ]

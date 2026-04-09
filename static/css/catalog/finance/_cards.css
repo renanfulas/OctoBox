@@ -11,30 +11,14 @@ PONTOS CRITICOS:
 - .finance-plan-card e .finance-mix-card afetam portfolio e mix boards.
 */
 
-/* ── Command grid & cards ── */
+/* ── Compact action buttons ── */
 
-.finance-command-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
-    grid-auto-rows: 1fr;
-}
-
-.finance-command-card {
-    display: grid;
-    gap: 14px;
-    height: 100%;
-    align-content: space-between;
-    background: var(--surface);
-    border-color: rgba(136, 150, 176, 0.16);
-}
-
-.finance-command-card .button {
-    align-self: end;
-}
-
-.finance-focus-card {
-    background: var(--surface);
+.finance-shell .finance-plan-card-compact .actions .button,
+.finance-shell .finance-card-actions-compact .button {
+    min-height: 28px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    box-shadow: none;
 }
 
 /* ── Shared card body layouts ── */
@@ -42,47 +26,46 @@ PONTOS CRITICOS:
 .finance-chip-body,
 .finance-alert-body,
 .finance-action-card-body,
-.finance-plan-card-body,
-.finance-mix-card-body {
-    gap: 12px;
+.finance-plan-card-body {
+    gap: 10px;
 }
 
 .finance-chip-value-stack,
 .finance-alert-content,
-.finance-plan-card-content,
-.finance-mix-card-content {
-    gap: 10px;
+.finance-plan-card-content {
+    gap: 8px;
 }
 
 .finance-action-meta-list {
     gap: 4px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 /* ── Summary chips & currency ── */
 
 .finance-summary-chip {
-    padding: 10px 12px;
+    padding: 8px 10px;
     height: 100%;
-    border-radius: 18px;
+    border-radius: 16px;
     border: 1px solid rgba(148, 163, 184, 0.18);
     background: rgba(255, 255, 255, 0.84);
 }
 
 .finance-summary-chip strong {
     display: block;
-    margin-top: 6px;
-    font-size: 1.02rem;
+    margin-top: 4px;
+    font-size: 0.98rem;
 }
 
-.finance-summary-chip .card-content p,
-.finance-data-chip .card-content p {
+.finance-summary-chip .card-content p {
     margin: 0;
 }
 
 .finance-summary-chip p {
-    margin: 8px 0 0;
+    margin: 6px 0 0;
     color: var(--muted);
-    line-height: 1.55;
+    line-height: 1.48;
 }
 
 .finance-currency-metric,
@@ -110,70 +93,202 @@ PONTOS CRITICOS:
 
 .finance-action-card,
 .finance-alert-card {
+    position: relative;
     padding: 14px;
     height: 100%;
+    min-height: 0;
     display: grid;
-    gap: 8px;
+    grid-template-rows: 1fr auto;
+    gap: 10px;
     align-content: start;
-    border-radius: 18px;
-    border: 1px solid rgba(148, 163, 184, 0.22);
-    background: rgba(255, 255, 255, 0.74);
-    box-shadow: 0 10px 24px rgba(85, 56, 35, 0.06);
+    border-radius: 20px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, rgba(148, 163, 184, 0.22) 14%);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.92));
+    box-shadow:
+        0 20px 40px rgba(14, 24, 44, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.finance-action-glow {
+    display: none;
 }
 
 .finance-action-head {
-    align-items: center;
+    align-items: flex-start;
+    gap: 10px;
 }
 
 .finance-action-card-compact,
 .finance-alert-card-compact {
-    padding: 11px 12px;
-    border-radius: 16px;
+    padding: 14px;
+    border-radius: 20px;
+}
+
+.finance-action-card-body {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 10px;
+}
+
+.finance-action-heading {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+.finance-action-kicker {
+    display: inline-flex;
+    align-items: center;
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
 }
 
 .finance-action-copy {
     display: grid;
-    gap: 3px;
+    gap: 4px;
+}
+
+.finance-action-copy strong {
+    font-size: clamp(0.98rem, 1.2vw, 1.08rem);
+    line-height: 1.16;
+    letter-spacing: -0.03em;
+    max-width: 24ch;
+}
+
+.finance-action-copy .meta-text-sm {
+    max-width: 34ch;
+    font-size: 0.82rem;
+    line-height: 1.46;
+    color: color-mix(in srgb, var(--muted) 88%, var(--ink) 12%);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.finance-action-status {
+    display: grid;
+    justify-items: end;
+    flex-shrink: 0;
+}
+
+.finance-action-pill {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
 }
 
 .finance-action-card .card-footer,
 .finance-alert-card .card-footer,
 .finance-plan-card .card-footer {
-    margin-top: 10px;
+    position: relative;
+    z-index: 1;
+    margin-top: 0;
 }
 
 .finance-action-body {
     margin-top: 0;
+    display: grid;
+    gap: 10px;
 }
 
 .finance-action-body .meta-text-sm {
-    line-height: 1.45;
+    font-size: 0.82rem;
+    line-height: 1.42;
 }
 
 .finance-action-message {
-    background: rgba(255, 253, 248, 0.92);
+    position: relative;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: linear-gradient(165deg, rgba(249, 251, 253, 0.96), rgba(243, 246, 250, 0.92));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        0 12px 22px rgba(14, 24, 44, 0.04);
 }
 
 .finance-action-message-compact {
-    padding: 7px 9px;
+    padding: 12px;
+    border-radius: 16px;
+    gap: 10px;
 }
 
-.finance-action-message .eyebrow {
+.finance-action-message-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+}
+
+.finance-action-message-head > div {
+    display: grid;
+    gap: 4px;
+}
+
+.finance-action-message-eyebrow {
+    display: inline-flex;
     margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
 }
 
-.finance-action-message .state-notice-title {
-    font-size: 0.95rem;
+.finance-action-message-title {
+    display: block;
+    font-size: 0.94rem;
+    line-height: 1.16;
+    letter-spacing: -0.03em;
+    max-width: 24ch;
 }
 
-.finance-action-message .state-notice-copy {
-    margin-top: 4px;
-    line-height: 1.4;
+.finance-action-message-copy {
+    margin: 0;
+    max-width: 34ch;
+    color: color-mix(in srgb, var(--ink) 72%, var(--muted) 28%);
+    font-size: 0.88rem;
+    line-height: 1.46;
     display: -webkit-box;
-    -webkit-line-clamp: 4;
-    line-clamp: 4;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+.finance-action-meta-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+    padding-top: 0;
+    border-top: 0;
+}
+
+.finance-action-meta-chip {
+    min-width: 0;
+    padding: 8px 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.finance-action-meta-label {
+    display: inline-flex;
+    margin-bottom: 2px;
+    color: var(--muted);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.finance-action-meta-chip .meta-text-sm {
+    margin: 0;
+    font-size: 0.8rem;
 }
 
 /* ── Alert grid & stats ── */
@@ -216,8 +331,8 @@ PONTOS CRITICOS:
 .finance-action-list,
 .finance-alert-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 10px;
     grid-auto-rows: 1fr;
 }
 
@@ -227,7 +342,7 @@ PONTOS CRITICOS:
 }
 
 .finance-action-list {
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
 .finance-alert-list {
@@ -238,20 +353,113 @@ PONTOS CRITICOS:
 
 .finance-trend-stack {
     display: grid;
-    gap: 12px;
+    gap: 10px;
 }
 
 .finance-card-actions-compact {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 6px;
     margin-top: auto;
-    padding-top: 8px;
-    border-top: 1px solid rgba(148, 163, 184, 0.14);
-    align-items: stretch;
+    padding-top: 6px;
+    border-top: 0;
+    align-items: end;
 }
 
 .finance-card-actions-compact .button {
-    padding: 7px 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 11px;
     min-height: 34px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.finance-action-primary-form {
+    display: grid;
+    min-width: 0;
+    align-self: end;
+}
+
+.finance-action-cta {
+    width: 100%;
+}
+
+.finance-action-secondary {
+    align-self: end;
+    min-width: fit-content;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.finance-priority-slide {
+    transition:
+        opacity 180ms ease,
+        transform 220ms ease,
+        max-width 220ms ease,
+        margin 220ms ease;
+}
+
+.finance-priority-slide.is-removing {
+    opacity: 0;
+    transform: scale(0.96);
+    pointer-events: none;
+}
+
+.finance-action-fallback {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 6px;
+}
+
+.finance-action-card--overdue .finance-action-glow {
+    background: radial-gradient(circle, rgba(196, 103, 52, 0.12) 0%, rgba(148, 163, 184, 0.04) 44%, transparent 72%);
+}
+
+.finance-action-card--reactivation .finance-action-glow {
+    background: radial-gradient(circle, rgba(15, 118, 110, 0.12) 0%, rgba(148, 163, 184, 0.04) 44%, transparent 72%);
+}
+
+body[data-theme="dark"] .finance-action-card,
+body[data-theme="dark"] .finance-alert-card {
+    border-color: rgba(144, 181, 205, 0.16);
+    background: linear-gradient(160deg, rgba(9, 16, 29, 0.94), rgba(12, 18, 29, 0.9));
+    box-shadow:
+        0 20px 38px rgba(0, 0, 0, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+body[data-theme="dark"] .finance-action-copy .meta-text-sm,
+body[data-theme="dark"] .finance-action-meta-label,
+body[data-theme="dark"] .finance-action-body .meta-text-sm {
+    color: rgba(226, 232, 240, 0.7);
+}
+
+body[data-theme="dark"] .finance-action-message {
+    border-color: rgba(144, 181, 205, 0.14);
+    background: linear-gradient(165deg, rgba(11, 18, 31, 0.92), rgba(8, 13, 22, 0.9));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 14px 28px rgba(0, 0, 0, 0.18);
+}
+
+body[data-theme="dark"] .finance-action-message-eyebrow {
+    color: rgba(148, 163, 184, 0.74);
+}
+
+body[data-theme="dark"] .finance-action-message-title {
+    color: rgba(245, 249, 252, 0.96);
+}
+
+body[data-theme="dark"] .finance-action-message-copy {
+    color: rgba(226, 232, 240, 0.78);
+}
+
+body[data-theme="dark"] .finance-action-meta-chip {
+    border-color: rgba(144, 181, 205, 0.14);
+    background: rgba(10, 18, 32, 0.56);
 }
 
 /* ── Chart columns ── */
@@ -320,6 +528,11 @@ PONTOS CRITICOS:
 
 .finance-plan-form .field-label {
     margin-bottom: 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--theme-text-muted) 78%, var(--ink) 22%);
 }
 
 .finance-plan-form input,
@@ -327,6 +540,9 @@ PONTOS CRITICOS:
 .finance-plan-form textarea {
     padding: 11px 12px;
     border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 88%, rgba(148, 163, 184, 0.18) 12%);
+    background: color-mix(in srgb, var(--theme-surface-panel) 94%, white);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68);
 }
 
 .finance-plan-form textarea {
@@ -369,8 +585,8 @@ PONTOS CRITICOS:
 }
 
 .finance-plan-card-compact .actions .button {
-    padding: 10px 12px;
-    min-height: 40px;
+    padding: 6px 10px;
+    min-height: 30px;
 }
 
 .finance-plan-description-compact {
@@ -386,64 +602,4 @@ PONTOS CRITICOS:
     font-size: 1.08rem;
 }
 
-/* ── Mix cards ── */
 
-.finance-mix-panel,
-.finance-mix-insight-panel {
-    background: var(--surface);
-}
-
-.finance-mix-list {
-    display: grid;
-    gap: 10px;
-    grid-auto-rows: 1fr;
-}
-
-.finance-mix-card {
-    padding: 12px 14px;
-    height: 100%;
-    display: grid;
-    grid-template-rows: auto auto auto;
-    gap: 10px;
-    align-content: start;
-    border-radius: 18px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.78);
-}
-
-.finance-mix-head {
-    align-items: center;
-}
-
-/* ── Data chips ── */
-
-.finance-data-cluster {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-    margin-bottom: 14px;
-}
-
-.finance-data-chip {
-    padding: 12px 14px;
-    height: 100%;
-    border-radius: 18px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.86);
-}
-
-.finance-data-chip strong {
-    display: block;
-    margin-top: 6px;
-    font-size: 1.05rem;
-}
-
-.finance-data-chip p {
-    margin: 8px 0 0;
-    color: var(--muted);
-    line-height: 1.55;
-}
-
-.finance-radar-cluster {
-    margin-bottom: 0;
-}

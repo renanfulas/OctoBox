@@ -2,6 +2,7 @@
 
 from communications.facade import run_finance_communication_action
 from communications.models import WhatsAppMessageLog
+from finance.follow_up_tracker import mark_finance_follow_up_realized
 from shared_support.whatsapp_links import build_whatsapp_message_href
 from students.models import Student
 
@@ -27,6 +28,13 @@ def handle_finance_communication_action(*, actor, action_kind, student_id, payme
 		}
 
 	message = WhatsAppMessageLog.objects.get(pk=result.message_log_id)
+	mark_finance_follow_up_realized(
+		student_id=result.student_id,
+		action_kind=action_kind,
+		actor_id=getattr(actor, 'id', None),
+		payment_id=payment_id,
+		enrollment_id=enrollment_id,
+	)
 	return {
 		'student': student,
 		'message': message,

@@ -11,7 +11,16 @@ POR QUE ELE EXISTE:
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .finance-command-grid,
+    .finance-priority-track {
+        grid-auto-columns: calc((100% - 44px) / 2);
+        gap: 12px;
+        padding-inline: 14px;
+    }
+
+    .finance-priority-slide .finance-action-card {
+        min-height: 288px;
+    }
+
     .finance-plan-support-grid,
     .finance-board {
         grid-template-columns: 1fr;
@@ -27,22 +36,14 @@ POR QUE ELE EXISTE:
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .finance-command-layout,
-    .finance-priority-layout,
-    .finance-portfolio-layout,
-    .finance-trend-layout,
-    .finance-plan-layout {
+    .finance-plan-layout-grid {
         grid-template-columns: 1fr;
     }
 
-    .finance-ops-grid,
     .finance-alert-grid,
-    .finance-data-cluster,
     .finance-action-list,
     .finance-alert-list,
-    .finance-movements-list,
     .finance-guide-grid-3,
-    .finance-summary-grid,
     .finance-filter-rule-list {
         grid-template-columns: 1fr;
     }
@@ -51,14 +52,10 @@ POR QUE ELE EXISTE:
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .finance-plan-layout-grid,
     .finance-plan-focus-item {
         grid-template-columns: 1fr;
     }
 
-    .finance-filter-summary-card .finance-support-actions {
-        grid-template-columns: 1fr;
-    }
 }
 
 @media (max-width: 620px) {
@@ -66,20 +63,58 @@ POR QUE ELE EXISTE:
         grid-template-columns: 1fr;
     }
 
+    .finance-priority-carousel {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 8px;
+    }
+
+    .finance-priority-meta {
+        justify-content: center;
+    }
+
+    .finance-priority-track {
+        grid-auto-columns: 100%;
+        gap: 10px;
+        padding-inline: 0;
+    }
+
+    .finance-priority-slide .finance-action-card {
+        min-height: 0;
+    }
+
+    .finance-action-head {
+        flex-direction: column;
+    }
+
+    .finance-action-status {
+        width: 100%;
+        justify-items: start;
+    }
+
+    .finance-action-copy strong,
+    .finance-action-copy .meta-text-sm {
+        max-width: none;
+    }
+
+    .finance-priority-nav {
+        width: 34px;
+        height: 34px;
+    }
+
     .finance-metric-strip,
     .finance-plan-grid {
         grid-template-columns: 1fr;
     }
 
-    .finance-support-actions,
     .finance-plan-actions,
+    .finance-plan-actions-flat,
     .finance-card-actions-compact,
     .finance-plan-card-compact .actions {
         justify-content: stretch;
     }
 
-    .finance-support-actions .button,
     .finance-plan-actions .button,
+    .finance-plan-actions-flat .button,
     .finance-card-actions-compact .button,
     .finance-plan-card-compact .actions .button {
         width: 100%;
@@ -87,6 +122,44 @@ POR QUE ELE EXISTE:
 
     .finance-action-message .state-notice-copy {
         -webkit-line-clamp: 3;
+    }
+
+    .finance-board-rail .card-head,
+    .finance-board-queue .card-head,
+    .finance-portfolio-panel-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .finance-board-rail .badge,
+    .finance-board-queue .badge {
+        align-self: flex-start;
+    }
+
+    .finance-overdue-row {
+        gap: 12px;
+    }
+
+    .finance-overdue-row-main {
+        gap: 12px;
+    }
+
+    .finance-overdue-row-side {
+        padding-left: 48px;
+    }
+
+    .finance-action-copy .meta-text-sm {
+        max-width: none;
+    }
+
+    .finance-portfolio-panel-row-head {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .finance-portfolio-panel-value {
+        justify-self: start;
+        justify-content: flex-start;
     }
 }
 
@@ -98,10 +171,6 @@ POR QUE ELE EXISTE:
 
     .finance-focus-actions {
         justify-items: stretch;
-    }
-
-    .finance-command-card .button {
-        width: 100%;
     }
 
     .finance-plan-focus-item {

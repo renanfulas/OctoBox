@@ -25,6 +25,7 @@
   const focusableSelector =
     'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
   let lastTrigger = null;
+  let selectedPaymentId = null;
 
   function decoratePaymentForm() {
     const amountInput = document.querySelector('#student-payment-checkout-form [name="amount"]');
@@ -42,6 +43,120 @@
 
   function refreshWorkspaceUi() {
     decoratePaymentForm();
+    syncSelectedPaymentIdFromDom();
+  }
+
+  function getCheckoutForm() {
+    return document.getElementById('student-payment-checkout-form');
+  }
+
+  function getCheckoutSelectedPaymentId() {
+    const checkoutForm = getCheckoutForm();
+    if (!checkoutForm) {
+      return null;
+    }
+
+    const paymentField = checkoutForm.querySelector('[name="payment_id"]');
+    const rawValue = paymentField ? paymentField.value : checkoutForm.closest('[data-selected-payment-id]')?.getAttribute('data-selected-payment-id');
+    if (!rawValue) {
+      return null;
+    }
+
+    const parsedValue = Number(rawValue);
+    return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : null;
+  }
+
+  function syncSelectedPaymentIdFromDom() {
+    selectedPaymentId = getCheckoutSelectedPaymentId();
+  }
+
+  function getPaymentMethodLabel(methodValue) {
+    if (methodValue === 'pix') return 'Pix';
+    if (methodValue === 'credit_card') return 'Credito';
+    if (methodValue === 'debit_card') return 'Debito';
+    if (methodValue === 'cash') return 'Dinheiro';
+    return 'este metodo';
+  }
+
+  function buildPaymentConfirmationDialog() {
+    const dialog = document.createElement('dialog');
+    dialog.className = 'student-financial-confirm-dialog';
+    dialog.innerHTML = [
+      '<form method="dialog" class="student-financial-confirm-dialog__card">',
+      '<div class="student-financial-confirm-dialog__copy">',
+      '<span class="student-financial-confirm-dialog__kicker">Confirmacao</span>',
+      '<h3 class="section-title-sm">Voce realmente quer fazer este pagamento?</h3>',
+      '<p class="meta-text" data-payment-confirm-copy>Confirme para registrar o recebimento.</p>',
+      '</div>',
+      '<div class="student-financial-confirm-dialog__actions operation-hero-action-rail">',
+      '<button type="button" class="button secondary" value="cancel" data-action="cancel-payment-confirm">Nao</button>',
+      '<button type="submit" class="button" value="confirm">Sim</button>',
+      '</div>',
+      '</form>',
+    ].join('');
+    document.body.appendChild(dialog);
+    return dialog;
+  }
+
+  function getPaymentConfirmationDialog() {
+    return document.querySelector('.student-financial-confirm-dialog') || buildPaymentConfirmationDialog();
+  }
+
+  function askPaymentConfirmation(methodValue) {
+    const dialog = getPaymentConfirmationDialog();
+    const form = dialog.querySelector('form');
+    const cancelButton = dialog.querySelector('[data-action="cancel-payment-confirm"]');
+    const copy = dialog.querySelector('[data-payment-confirm-copy]');
+    const methodLabel = getPaymentMethodLabel(methodValue);
+
+    if (copy) {
+      copy.textContent = 'Voce realmente quer fazer o pagamento com ' + methodLabel + '?';
+    }
+
+    return new Promise(function(resolve) {
+      function cleanup(result) {
+        form.removeEventListener('submit', onSubmit);
+        cancelButton.removeEventListener('click', onCancel);
+        dialog.removeEventListener('cancel', onCancel);
+        if (dialog.open) {
+          dialog.close();
+        }
+        resolve(result);
+      }
+
+      function onSubmit(event) {
+        event.preventDefault();
+        cleanup(true);
+      }
+
+      function onCancel(event) {
+        if (event) {
+          event.preventDefault();
+        }
+        cleanup(false);
+      }
+
+      form.addEventListener('submit', onSubmit);
+      cancelButton.addEventListener('click', onCancel);
+      dialog.addEventListener('cancel', onCancel);
+      dialog.showModal();
+      cancelButton.focus();
+    });
+  }
+
+  function requestPaymentEditAccess() {
+    const pageRoot = document.querySelector('[data-student-id]');
+    if (!pageRoot || pageRoot.dataset.lockState === 'active') {
+      return;
+    }
+
+    const statusMsg = document.getElementById('student-payment-checkout-status');
+    if (statusMsg) {
+      statusMsg.hidden = false;
+      statusMsg.textContent = 'Liberando edicao para confirmar o pagamento...';
+    }
+
+    document.dispatchEvent(new CustomEvent('student-profile-edit-request'));
   }
 
   function setFinancialWorkspaceExpanded(expanded) {
@@ -101,17 +216,39 @@
 
   async function handleJsonAction(url, options) {
     const response = await fetch(url, options);
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const rawBody = await response.text();
+      const snippet = rawBody ? rawBody.slice(0, 120).trim() : '';
+      if (snippet.startsWith('<')) {
+        var titleMatch = rawBody.match(/<title>(.*?)<\/title>/i);
+        var pageTitle = titleMatch && titleMatch[1] ? titleMatch[1].replace(/\s+/g, ' ').trim() : 'HTML sem titulo identificado';
+        var diagnosticParts = ['HTTP ' + response.status, pageTitle];
+        if (response.redirected && response.url) {
+          diagnosticParts.push('redirected: ' + response.url);
+        }
+        throw new Error('O servidor respondeu com HTML em vez de JSON. ' + diagnosticParts.join(' | '));
+      }
+      throw new Error('O servidor respondeu em um formato inesperado para esta acao. HTTP ' + response.status + '.');
+    }
+
     const payload = await response.json();
     if (!response.ok || payload.status !== 'success') {
       throw new Error(payload.message || 'Nao foi possivel concluir a acao agora.');
     }
     applyFinancialFragments(payload.fragments);
+    if (typeof payload.selected_payment_id !== 'undefined') {
+      selectedPaymentId = payload.selected_payment_id || null;
+    } else {
+      syncSelectedPaymentIdFromDom();
+    }
     return payload;
   }
 
   async function submitFinancialForm(form) {
     const formData = new FormData(form);
-    const payload = await handleJsonAction(form.action, {
+    const actionUrl = form.getAttribute('action') || form.action;
+    const payload = await handleJsonAction(actionUrl, {
       method: 'POST',
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
@@ -133,12 +270,17 @@
       return;
     }
 
+    selectedPaymentId = Number(paymentId);
     const payload = await handleJsonAction(`/alunos/${studentId}/financeiro/cobranca/${paymentId}/drawer/`, {
       method: 'GET',
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
       },
     });
+
+    if (payload.selected_payment_id && Number(payload.selected_payment_id) !== Number(paymentId)) {
+      throw new Error('A cobranca carregada nao corresponde ao item selecionado.');
+    }
 
     openDrawer('student-payment-checkout-slot', trigger);
     const statusMsg = document.getElementById('student-payment-checkout-status');
@@ -237,6 +379,10 @@
     ensureWorkspaceExpanded();
     lastTrigger = trigger || null;
 
+    if (drawerId === 'student-payment-checkout-slot') {
+      requestPaymentEditAccess();
+    }
+
     closeDrawers();
 
     if (overlay) {
@@ -300,28 +446,34 @@
 
       if (!form || !methodValue) return;
 
-      if (methodField) {
-        methodField.value = methodValue;
-      }
-
-      document.querySelectorAll('.student-payment-method-button').forEach(function (button) {
-        button.classList.add('is-disabled');
-        button.classList.remove('is-active');
-        button.setAttribute('aria-disabled', 'true');
-      });
-
-      submitPaymentTrigger.classList.remove('is-disabled');
-      submitPaymentTrigger.classList.add('is-active');
-      submitPaymentTrigger.removeAttribute('aria-disabled');
-
-      updatePaymentCheckoutStatus(methodValue);
-
-      submitFinancialForm(form).catch(function (error) {
-        const statusMsg = document.getElementById('student-payment-checkout-status');
-        if (statusMsg) {
-          statusMsg.hidden = false;
-          statusMsg.textContent = error.message;
+      askPaymentConfirmation(methodValue).then(function(confirmed) {
+        if (!confirmed) {
+          return;
         }
+
+        if (methodField) {
+          methodField.value = methodValue;
+        }
+
+        document.querySelectorAll('.student-payment-method-button').forEach(function (button) {
+          button.classList.add('is-disabled');
+          button.classList.remove('is-active');
+          button.setAttribute('aria-disabled', 'true');
+        });
+
+        submitPaymentTrigger.classList.remove('is-disabled');
+        submitPaymentTrigger.classList.add('is-active');
+        submitPaymentTrigger.removeAttribute('aria-disabled');
+
+        updatePaymentCheckoutStatus(methodValue);
+
+        submitFinancialForm(form).catch(function (error) {
+          const statusMsg = document.getElementById('student-payment-checkout-status');
+          if (statusMsg) {
+            statusMsg.hidden = false;
+            statusMsg.textContent = error.message;
+          }
+        });
       });
       return;
     }

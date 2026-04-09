@@ -1,19 +1,42 @@
 <!--
-ARQUIVO: régua prioritária de cobrança e retenção.
+ARQUIVO: regua prioritaria de cobranca e retencao.
 -->
-<section class="card finance-board-rail" id="finance-priority-board" aria-label="Régua Ativa">
+<section class="card finance-board-rail" id="finance-priority-board" aria-label="Acoes prontas do turno">
     <div class="card-head">
-        <h3 class="card-title">Régua Ativa: Quem pede contato agora</h3>
-        <span class="badge badge-subtle warning">{{ page.data.operational_queue|length }} ação(ões)</span>
+        <div class="finance-board-head-copy">
+            <span class="eyebrow">Execucao pronta</span>
+            <h3 class="card-title">Acoes prontas do turno</h3>
+            <p class="finance-overdue-subtitle">Casos semiassistidos que ja chegam prontos para disparo.</p>
+        </div>
+        <span class="badge badge-subtle warning">{{ page.data.operational_queue|length }} acao(oes)</span>
     </div>
-    <div class="finance-guide-note">
-        <p class="meta-text no-margin">Pressão operacional viva. Sinal financeiro pendente convertido em tarefa assistida direta para não virar ruído estrutural.</p>
+    {% if page.data.operational_queue %}
+    <div class="finance-priority-carousel" data-finance-priority-carousel>
+        <button class="finance-priority-nav finance-priority-nav-prev" type="button" aria-label="Ver acao anterior" data-action="finance-priority-prev">
+            <span aria-hidden="true">&#8249;</span>
+        </button>
+        <div class="finance-priority-stage">
+            <div class="finance-priority-meta">
+                <div class="finance-priority-dots" data-finance-priority-dots aria-hidden="true"></div>
+                <p class="finance-priority-counter" data-finance-priority-counter aria-live="polite" aria-atomic="true">1 de 1</p>
+            </div>
+            <div class="finance-priority-viewport" data-finance-priority-viewport tabindex="0" aria-label="Mensagens prontas para cobranca">
+                <div class="finance-priority-track" data-finance-priority-track>
+                    {% for item in page.data.operational_queue %}
+                    <div class="finance-priority-slide">
+                        {% include "includes/ui/finance/finance_action_item.html" with item=item %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <button class="finance-priority-nav finance-priority-nav-next" type="button" aria-label="Ver proxima acao" data-action="finance-priority-next">
+            <span aria-hidden="true">&#8250;</span>
+        </button>
     </div>
-    <div class="stack-14 finance-action-list finance-action-list-compact">
-        {% for item in page.data.operational_queue %}
-        {% include "includes/ui/finance/finance_action_item.html" with item=item %}
-        {% empty %}
-        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Régua operacional" title="Nenhuma ação semiassistida pendente" copy="Não há contato financeiro ou de retenção aguardando disparo assistido agora." badge="Fila limpa" badge_class="accent" %}
-        {% endfor %}
+    {% else %}
+    <div class="stack-14">
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Regua operacional" title="Nenhuma acao semiassistida pendente" copy="Nao ha contato financeiro ou de retencao aguardando disparo assistido agora." badge="Fila limpa" badge_class="accent" %}
     </div>
+    {% endif %}
 </section>

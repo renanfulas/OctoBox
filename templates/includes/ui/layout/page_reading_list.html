@@ -7,6 +7,7 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - usa o mesmo payload do reading_panel para nao duplicar semantica.
 -->
+{% if panel.items %}
 <div class="fdw-focus-list page-reading-list{% if panel.class_name %} {{ panel.class_name }}{% endif %}"{% if panel.panel_id %} id="{{ panel.panel_id }}"{% endif %}>
     {% for item in panel.items %}
     {% if item.is_clickable|default:True %}
@@ -54,3 +55,4 @@ PONTOS CRITICOS:
     {% endif %}
     {% endfor %}
 </div>
+{% endif %}

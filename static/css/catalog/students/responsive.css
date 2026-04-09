@@ -166,7 +166,8 @@ POR QUE ELE EXISTE:
         min-width: 0;
     }
 
-    .student-filter-pills > a {
+    .student-filter-pills > a,
+    .student-filter-pills > button {
         flex: 1 1 calc(50% - 4px);
         min-width: 0;
         text-align: center;

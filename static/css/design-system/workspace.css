@@ -21,7 +21,6 @@ O QUE ESTE ARQUIVO FAZ:
     --workspace-fib-5: 34px;
     --workspace-fib-6: 55px;
     --workspace-fib-ratio: 1.618;
-    
     display: grid;
     gap: clamp(var(--workspace-fib-3), 1.5vw, var(--workspace-fib-4));
     position: relative;
@@ -64,85 +63,39 @@ body[data-theme="dark"] .workspace-panel {
     -webkit-backdrop-filter: blur(16px);
 }
 
-/* ──────────────────────────────────────────────────────────────────────
-   FIBONACCI HERO STRUCTURE — FINAL AUTHORITY
-   Garante que todos os heros do sistema (Dashboard, Owner, Recepção, etc)
-   tenham exatamente o mesmo grid limpo e botões laterais (Fibonacci).
-───────────────────────────────────────────────────────────────────────── */
+/* Hero compartilhado: mesma leitura calma do dashboard para todas as superficies. */
 .workspace-shell .operation-hero,
 .operation-shell .operation-hero,
 .dashboard-shell .operation-hero {
-    --operation-hero-gap: var(--workspace-fib-3);
-    --operation-hero-min-height: 178px;
-    --operation-hero-padding: var(--workspace-fib-4) clamp(var(--workspace-fib-4), 2.5vw, var(--workspace-fib-5));
-    --operation-hero-radius: 28px;
-    --operation-hero-border: rgba(255, 255, 255, 0.74);
-    --operation-hero-surface: radial-gradient(circle at top right, rgba(212, 102, 44, 0.03), transparent 22%), radial-gradient(circle at bottom left, rgba(37, 85, 220, 0.02), transparent 18%), linear-gradient(145deg, rgba(255, 255, 255, 0.99), rgba(250, 248, 245, 0.98)), var(--surface);
-    --operation-hero-shadow: var(--fdw-shadow-lift);
-    --operation-hero-main-columns: minmax(0, 1fr) auto;
-    --operation-hero-main-align-items: end;
-    --operation-hero-main-position: relative;
-    --operation-hero-main-z-index: 1;
-    --operation-hero-main-gap: var(--workspace-fib-3);
-    --operation-hero-stack-gap: var(--workspace-fib-2);
-    --operation-hero-stack-max-width: 52ch;
-    --operation-hero-heading-max-width: 12ch;
-    --operation-hero-heading-size: clamp(2.4rem, 4vw, 3.6rem);
-    --operation-hero-heading-line-height: 0.95;
-    --operation-hero-heading-letter-spacing: -0.05em;
-    --operation-hero-copy-max-width: 36ch;
-    --operation-hero-copy-size: 0.98rem;
-    --operation-hero-copy-line-height: 1.5;
-    
-    /* Configurações do pílula de ações laterais */
-    --operation-hero-actions-display: inline-flex;
-    --operation-hero-actions-align-self: end;
-    --operation-hero-actions-justify-self: end;
-    --operation-hero-actions-max-width: max-content;
-    --operation-hero-actions-padding: 3px 3px 2px;
-    --operation-hero-actions-radius: 999px;
-    --operation-hero-actions-surface: rgba(255, 255, 255, 0.58);
-    --operation-hero-actions-border: 1px solid rgba(80, 102, 128, 0.08);
-    --operation-hero-actions-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
-    --operation-hero-button-min-height: 34px;
-    --operation-hero-button-padding: 7px 14px;
-    --operation-hero-button-radius: 999px;
-    --operation-hero-side-width: min(100%, 320px);
-    --operation-hero-panel-padding: 14px 16px;
-
-    /* Apply standard FDW light swooshes exactly matching dashboard */
-    --hero-before-inset: auto auto calc(var(--workspace-fib-5) * -1) calc(var(--workspace-fib-4) * -1);
-    --hero-before-width: 233px;
-    --hero-before-height: 233px;
-    --hero-before-radius: 999px;
-    --hero-before-opacity: 1;
-    --hero-before-background: radial-gradient(circle, rgba(37, 99, 235, 0.12), transparent 68%);
-    --hero-after-inset: 0 0 auto auto;
-    --hero-after-width: 18%;
-    --hero-after-height: 100%;
-    --hero-after-opacity: 1;
-    --hero-after-background: linear-gradient(125deg, rgba(255, 255, 255, 0.06), transparent 46%);
+    --operation-hero-border: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    --operation-hero-surface: linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-panel) 96%, transparent));
+    --operation-hero-shadow:
+        0 6px 12px rgba(2, 8, 23, 0.03),
+        inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+    --operation-hero-actions-surface: transparent;
+    --operation-hero-actions-border: 0;
+    --operation-hero-actions-shadow: none;
 }
 
 body[data-theme="dark"] .workspace-shell .operation-hero,
 body[data-theme="dark"] .operation-shell .operation-hero,
 body[data-theme="dark"] .dashboard-shell .operation-hero {
-    --operation-hero-border: rgba(148, 163, 184, 0.16);
-    --operation-hero-surface: radial-gradient(circle at top right, rgba(249, 115, 22, 0.18), transparent 30%), radial-gradient(circle at bottom left, rgba(37, 99, 235, 0.14), transparent 24%), linear-gradient(145deg, rgba(18, 28, 40, 0.97), rgba(10, 17, 27, 0.99)), var(--surface);
-    --operation-hero-shadow: var(--fdw-shadow);
-    --operation-hero-actions-surface: rgba(255, 255, 255, 0.04);
-    --operation-hero-actions-border: 1px solid rgba(148, 163, 184, 0.12);
-    --operation-hero-actions-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --operation-hero-border: rgba(148, 163, 184, 0.12);
+    --operation-hero-surface: linear-gradient(145deg, rgba(8, 15, 29, 0.98), rgba(6, 12, 24, 0.98) 58%, rgba(4, 10, 20, 0.96));
+    --operation-hero-shadow:
+        0 12px 22px rgba(2, 6, 23, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --operation-hero-actions-surface: transparent;
+    --operation-hero-actions-border: 0;
+    --operation-hero-actions-shadow: none;
 }
 
 @media (max-width: 960px) {
     .workspace-shell .operation-hero,
     .operation-shell .operation-hero,
     .dashboard-shell .operation-hero {
-        --operation-hero-main-columns: minmax(0, 1fr);
-        --operation-hero-main-align-items: stretch;
-        --operation-hero-actions-justify-self: start;
-        --operation-hero-actions-max-width: 100%;
-        --operation-hero-actions-padding: 3px;
+        --operation-hero-actions-surface: transparent;
+        --operation-hero-actions-border: 0;
+        --operation-hero-actions-shadow: none;
     }
 }

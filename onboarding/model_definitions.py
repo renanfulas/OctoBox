@@ -27,7 +27,7 @@ HISTORICAL_BOXCORE_STUDENT_MODEL = 'boxcore.Student'
 
 class IntakeSource(models.TextChoices):
     MANUAL = 'manual', 'Manual'
-    CSV = 'csv', 'CSV'
+    CSV = 'csv', 'Indicação'
     WHATSAPP = 'whatsapp', 'WhatsApp'
     IMPORT = 'import', 'Importação externa'
 

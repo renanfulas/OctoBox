@@ -9,11 +9,36 @@ ARQUIVO: densidade e leitura dos boards do manager.
 .manager-priority-card,
 .manager-secondary-card {
     min-width: 0;
+    position: relative;
+    overflow: hidden;
 }
 
 .manager-priority-card .operation-card-head,
 .manager-secondary-card .operation-card-head {
     margin-bottom: 8px;
+}
+
+.manager-board-head-pills {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.manager-live-pill {
+    position: relative;
+    overflow: hidden;
+}
+
+.manager-live-pill.is-pulsing::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 1px solid currentColor;
+    opacity: 0;
+    animation: manager-live-pill-pulse 1.5s ease-out;
 }
 
 .manager-priority-card .operation-card-copy,
@@ -60,4 +85,82 @@ ARQUIVO: densidade e leitura dos boards do manager.
 
 .manager-secondary-card {
     align-content: start;
+}
+
+.manager-priority-card {
+    border-color: color-mix(in srgb, var(--theme-accent-danger-alpha) 18%, var(--card-border) 82%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-danger-alpha) 12%, transparent), transparent 30%),
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-panel) 94%, transparent));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        0 18px 34px rgba(19, 33, 50, 0.08);
+}
+
+.manager-secondary-card {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--card-border) 86%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 30%),
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-panel) 92%, transparent));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.78),
+        0 16px 30px rgba(19, 33, 50, 0.06);
+}
+
+.manager-priority-card::after,
+.manager-secondary-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -34px -42px auto;
+    width: 140px;
+    height: 140px;
+    border-radius: 999px;
+    pointer-events: none;
+}
+
+.manager-priority-card::after {
+    background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent-danger-alpha) 18%, transparent), transparent 70%);
+}
+
+.manager-secondary-card::after {
+    background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 70%);
+}
+
+body[data-theme="dark"] .manager-priority-card {
+    border-color: rgba(245, 110, 126, 0.16);
+    background:
+        radial-gradient(circle at top right, rgba(245, 110, 126, 0.12), transparent 30%),
+        linear-gradient(180deg, rgba(10, 18, 32, 0.96), rgba(9, 16, 29, 0.93));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 20px 38px rgba(0, 0, 0, 0.24);
+}
+
+body[data-theme="dark"] .manager-secondary-card {
+    border-color: rgba(92, 146, 214, 0.16);
+    background:
+        radial-gradient(circle at top right, rgba(0, 229, 255, 0.08), transparent 30%),
+        linear-gradient(180deg, rgba(10, 18, 32, 0.96), rgba(9, 16, 29, 0.93));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 20px 38px rgba(0, 0, 0, 0.24);
+}
+
+@keyframes manager-live-pill-pulse {
+    0% {
+        opacity: 0.45;
+        transform: scale(0.98);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(1.12);
+    }
+}
+
+@media (max-width: 720px) {
+    .manager-board-head-pills {
+        width: 100%;
+        justify-content: flex-start;
+    }
 }

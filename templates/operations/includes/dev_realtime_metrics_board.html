@@ -1,0 +1,85 @@
+<section class="table-card operation-table-card dev-support-card dev-realtime-card" id="dev-realtime-board" aria-label="Metricas realtime do drawer de alunos">
+    <div class="operation-card-head">
+        <div>
+            <p class="eyebrow">Realtime</p>
+            <h2 class="operation-card-title">SSE, locks e conflitos vivos</h2>
+            <p class="operation-card-copy">Leitura curta do que a campainha do drawer esta fazendo agora.</p>
+        </div>
+        <span class="pill accent">{{ page.data.student_realtime_metrics.events_total }} evento(s)</span>
+    </div>
+
+    <div class="dev-realtime-summary-grid" aria-label="Resumo realtime">
+        <article class="dev-guide-card">
+            <div class="dev-guide-head">
+                <strong>Streams</strong>
+                <span class="pill info">{{ page.data.student_realtime_metrics.active_streams }} ativo(s)</span>
+            </div>
+            <p>{{ page.data.student_realtime_metrics.stream_connections_total }} conexao(oes) abertas, fechadas ou com erro desde o boot atual.</p>
+        </article>
+        <article class="dev-guide-card">
+            <div class="dev-guide-head">
+                <strong>Conflitos</strong>
+                <span class="pill {% if page.data.student_realtime_metrics.conflicts_total > 0 %}warning{% else %}success{% endif %}">{{ page.data.student_realtime_metrics.conflicts_total }} bloqueio(s)</span>
+            </div>
+            <p>Quando sobe, o backend escolheu proteger dado novo em vez de deixar uma versao velha sobrescrever.</p>
+        </article>
+    </div>
+
+    <div class="dev-realtime-grid">
+        <article class="dev-support-item">
+            <strong>Eventos publicados</strong>
+            <div class="dev-realtime-list">
+                {% for event_type, total in page.data.student_realtime_metrics.event_counts.items %}
+                <div class="dev-realtime-row">
+                    <span>{{ event_type }}</span>
+                    <strong>{{ total }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="dev-support-item">
+            <strong>Manager realtime</strong>
+            <div class="dev-realtime-list">
+                <div class="dev-realtime-row">
+                    <span>Eventos</span>
+                    <strong>{{ page.data.manager_realtime_metrics.events_total }}</strong>
+                </div>
+                <div class="dev-realtime-row">
+                    <span>Streams ativos</span>
+                    <strong>{{ page.data.manager_realtime_metrics.active_streams }}</strong>
+                </div>
+                {% for event_type, total in page.data.manager_realtime_metrics.event_counts.items %}
+                <div class="dev-realtime-row">
+                    <span>{{ event_type }}</span>
+                    <strong>{{ total }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="dev-support-item">
+            <strong>Status das streams</strong>
+            <div class="dev-realtime-list">
+                {% for status, total in page.data.student_realtime_metrics.stream_status_counts.items %}
+                <div class="dev-realtime-row">
+                    <span>{{ status }}</span>
+                    <strong>{{ total }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="dev-support-item">
+            <strong>Conflitos por superficie</strong>
+            <div class="dev-realtime-list">
+                {% for surface, total in page.data.student_realtime_metrics.conflict_counts.items %}
+                <div class="dev-realtime-row">
+                    <span>{{ surface }}</span>
+                    <strong>{{ total }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+    </div>
+</section>

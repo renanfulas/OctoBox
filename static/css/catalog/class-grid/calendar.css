@@ -130,6 +130,21 @@ POR QUE ELE EXISTE:
     gap: 2px;
 }
 
+.monthly-session-chip-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.monthly-session-chip-coach {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: color-mix(in srgb, var(--muted) 86%, rgba(15, 23, 42, 0.16));
+    white-space: nowrap;
+}
+
 .monthly-session-chip strong,
 .monthly-session-chip span {
     display: block;
@@ -168,16 +183,107 @@ POR QUE ELE EXISTE:
     overflow: auto;
     border-radius: 28px;
     padding: 24px;
+    padding-top: 72px;
     background: var(--surface);
     box-shadow: var(--shadow-lift);
 }
 
-.class-monthly-modal-head {
+.class-monthly-modal-toggle,
+.class-monthly-modal-close {
+    position: absolute;
+    top: 24px;
+    z-index: 3;
+    width: fit-content;
+    margin-bottom: 0;
+}
+
+.class-monthly-modal-toggle {
+    right: 118px;
+}
+
+.class-monthly-modal-close {
+    right: 24px;
+}
+
+.class-rotation-rail {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding: 16px 18px;
+    border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+    border-radius: 22px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.92));
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
+}
+
+.class-rotation-rail[hidden] {
+    display: none;
+}
+
+body[data-theme="dark"] .class-rotation-rail {
+    background:
+        linear-gradient(180deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.94));
+    border-color: color-mix(in srgb, var(--line) 90%, transparent);
+}
+
+.class-rotation-rail__intro {
+    display: grid;
+    gap: 4px;
+}
+
+.class-rotation-rail__intro .section-title-sm {
+    margin: 0;
+}
+
+.class-rotation-rail__intro .class-day-summary {
+    margin: 0;
+}
+
+.class-rotation-rail__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.class-rotation-rail__grid label {
+    display: grid;
+    gap: 6px;
+}
+
+.class-rotation-rail__footer {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.class-rotation-rail__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-left: auto;
+}
+
+.class-rotation-weekdays {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.class-rotation-weekdays .weekday-option {
+    min-width: 132px;
+}
+
+.class-weekly-modal-close {
     position: sticky;
     top: 0;
-    z-index: 2;
-    padding-bottom: 12px;
-    background: var(--surface);
+    z-index: 3;
+    display: flex;
+    width: fit-content;
+    margin: 0 0 12px auto;
 }
 
 .weekly-calendar-section + .weekly-calendar-section {
@@ -212,18 +318,14 @@ POR QUE ELE EXISTE:
 }
 
 .weekly-calendar-header {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     padding: 0 2px;
 }
 
-.weekly-board-head.is-interactive {
-    cursor: pointer;
-}
-
-.weekly-board-head.is-interactive:focus-visible {
-    outline: 2px solid rgba(249, 115, 22, 0.24);
-    outline-offset: 3px;
-    border-radius: 20px;
+.weekly-calendar-header .section-title-sm {
+    margin: 2px 0 0;
+    font-size: 1rem;
+    line-height: 1.1;
 }
 
 .weekly-calendar-grid {
@@ -233,19 +335,51 @@ POR QUE ELE EXISTE:
     min-width: 1180px;
 }
 
+.weekly-calendar-section--expanded {
+    overflow-x: visible;
+}
+
+.weekly-calendar-grid.weekly-modal-expanded-grid--rows {
+    min-width: 0;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.weekly-calendar-grid.weekly-modal-expanded-grid--preview {
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
 .weekly-day-card {
     border: 1px solid var(--line);
-    border-radius: 22px;
+    border-radius: 18px;
     background: var(--surface);
-    padding: 14px;
+    padding: 10px 12px;
     display: grid;
-    gap: 12px;
-    min-height: 194px;
+    gap: 8px;
+    min-height: 0;
     min-width: 0;
     overflow: hidden;
     word-break: break-word;
-    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
     transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.weekly-modal-expanded-grid--rows .weekly-day-card {
+    min-height: 0;
+}
+
+.weekly-modal-expanded-grid--rows .weekly-day-card-body {
+    display: grid;
+    grid-template-columns: minmax(132px, 156px) minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+}
+
+.weekly-modal-expanded-grid--rows .weekly-day-head {
+    position: sticky;
+    top: 40px;
 }
 
 .weekly-day-card.is-interactive {
@@ -281,25 +415,26 @@ body[data-theme="dark"] .weekly-day-card.is-today {
 .weekly-day-head {
     display: flex;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
     align-items: start;
 }
 
 .weekly-day-head strong {
-    font-size: 1.15rem;
+    font-size: 1rem;
+    line-height: 1.05;
 }
 
 .weekly-day-body {
     display: grid;
-    gap: 8px;
+    gap: 6px;
     align-content: start;
     min-width: 0;
     overflow: hidden;
 }
 
 .weekly-session-chip {
-    padding: 14px;
-    border-radius: 16px;
+    padding: 8px 10px;
+    border-radius: 12px;
     border: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.96);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
@@ -312,7 +447,7 @@ body[data-theme="dark"] .weekly-session-chip {
 }
 
 .weekly-session-chip-content {
-    gap: 4px;
+    gap: 2px;
 }
 
 .weekly-session-chip.is-info {
@@ -327,19 +462,78 @@ body[data-theme="dark"] .weekly-session-chip {
 
 .weekly-session-chip.is-class-occupancy-closed,
 .weekly-session-chip.is-booking-closed {
-    border-color: rgba(71, 85, 105, 0.5);
-    background: rgba(31, 41, 55, 0.96);
-    color: #f8fafc;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    border-color: rgba(148, 163, 184, 0.26);
+    background:
+        linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.96));
+    color: color-mix(in srgb, var(--theme-text-primary) 82%, rgba(71, 85, 105, 0.18));
+    box-shadow:
+        0 8px 18px rgba(148, 163, 184, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.weekly-day-card--preview {
+    min-height: 0;
+}
+
+.weekly-day-preview-summary {
+    display: grid;
+    gap: 6px;
+    align-content: start;
+    min-height: 100%;
+    padding: 8px 10px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+    background: color-mix(in srgb, var(--surface-strong) 82%, transparent);
+}
+
+body[data-theme="dark"] .weekly-day-preview-summary {
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    border-color: color-mix(in srgb, var(--line) 92%, transparent);
+}
+
+.weekly-day-overflow-note {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 12px;
+    border: 1px dashed color-mix(in srgb, var(--line) 82%, transparent);
+    background: color-mix(in srgb, var(--surface-strong) 76%, transparent);
+}
+
+.weekly-day-overflow-toggle {
+    flex-shrink: 0;
+}
+
+body[data-theme="dark"] .weekly-day-overflow-note {
+    background: color-mix(in srgb, var(--surface) 90%, transparent);
+    border-color: color-mix(in srgb, var(--line) 88%, transparent);
+}
+
+.weekly-day-overflow-list {
+    display: grid;
+    gap: 6px;
+}
+
+.weekly-day-overflow-list[hidden] {
+    display: none;
 }
 
 .weekly-session-chip.is-class-occupancy-closed .class-grid-meta,
 .weekly-session-chip.is-booking-closed .class-grid-meta {
-    color: rgba(226, 232, 240, 0.8);
+    color: rgba(100, 116, 139, 0.82);
+}
+
+.weekly-session-chip.is-class-occupancy-closed .pill,
+.weekly-session-chip.is-booking-closed .pill {
+    border-color: rgba(148, 163, 184, 0.22);
+    background: rgba(226, 232, 240, 0.4);
+    color: rgba(71, 85, 105, 0.9);
 }
 
 .class-chip-actions {
-    margin-top: 8px;
+    margin-top: 4px;
 }
 
 .class-chip-actions form {
@@ -347,19 +541,30 @@ body[data-theme="dark"] .weekly-session-chip {
 }
 
 .weekly-session-chip .card-footer {
-    margin-top: 2px;
+    margin-top: 0;
 }
 
 .weekly-session-top {
     align-items: center;
 }
 
+.weekly-session-top strong {
+    font-size: 0.88rem;
+    line-height: 1;
+}
+
 .weekly-session-title {
-    margin: 8px 0 4px;
+    margin: 2px 0 0;
+    font-size: 0.9rem;
     font-weight: 700;
-    line-height: 1.4;
+    line-height: 1.25;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.weekly-session-chip .class-grid-meta {
+    font-size: 0.8rem;
+    line-height: 1.25;
 }
 
 .weekly-empty-state {

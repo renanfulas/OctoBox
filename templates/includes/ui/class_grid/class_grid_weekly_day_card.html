@@ -1,4 +1,4 @@
-<article class="weekly-day-card is-interactive{% if day.is_today %} is-today{% endif %}{% if not day.is_in_window %} is-muted{% endif %}{% if day.sessions %} has-sessions{% endif %}" data-panel="class-grid-weekly-day-card" data-day-date="{{ day.date|date:'Y-m-d' }}" role="button" tabindex="0" aria-label="Ver aulas de {{ day.weekday_label }} {{ day.date|date:'d/m' }}">
+<article class="weekly-day-card{% if not preview_mode %} is-interactive{% endif %}{% if preview_mode %} weekly-day-card--preview{% endif %}{% if day.is_today %} is-today{% endif %}{% if not day.is_in_window %} is-muted{% endif %}{% if day.sessions %} has-sessions{% endif %}" data-panel="class-grid-weekly-day-card" data-day-date="{{ day.date|date:'Y-m-d' }}"{% if not preview_mode %} role="button" tabindex="0" aria-label="Ver aulas de {{ day.weekday_label }} {{ day.date|date:'d/m' }}"{% endif %}>
     <div class="card-body weekly-day-card-body">
         <div class="weekly-day-head card-head">
             <div class="card-head-main-stack weekly-day-head-main">
@@ -12,11 +12,29 @@
         </div>
 
         <div class="card-content weekly-day-body" data-slot="class-grid-weekly-day-body">
-            {% for item in day.sessions %}
+            {% if preview_mode %}
+            <div class="weekly-day-preview-summary">
+                <span class="pill{% if day.sessions|length >= 5 %} info{% endif %}">{% if day.sessions %}{{ day.sessions|length }} aula(s){% else %}Dia livre{% endif %}</span>
+                <p class="class-grid-meta">{% if day.sessions %}Prévia compacta da próxima semana.{% else %}Nenhuma aula prevista nesse dia.{% endif %}</p>
+            </div>
+            {% else %}
+            {% for item in day.sessions|slice:":3" %}
             {% include "includes/ui/class_grid/class_grid_weekly_session_chip.html" with item=item page=page %}
             {% empty %}
             {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Janela semanal" title="Sem aula cadastrada" copy="Esse bloco do dia esta livre no recorte atual." badge="Dia aberto" badge_class="info" class_name="weekly-empty-state" %}
             {% endfor %}
+            {% if day.sessions|length > 3 %}
+            <div class="weekly-day-overflow-note">
+                <span class="pill info">+{{ day.sessions|length|add:"-3" }} aulas</span>
+                <button class="button secondary button-sm weekly-day-overflow-toggle" type="button" data-action="toggle-weekly-day-overflow" aria-expanded="false">Ver mais</button>
+            </div>
+            <div class="weekly-day-overflow-list" hidden>
+                {% for item in day.sessions|slice:"3:" %}
+                {% include "includes/ui/class_grid/class_grid_weekly_session_chip.html" with item=item page=page %}
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endif %}
         </div>
     </div>
 </article>

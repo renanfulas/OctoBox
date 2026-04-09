@@ -14,23 +14,26 @@ PONTOS CRITICOS:
 
 from django import forms
 
+from onboarding.attribution import ACQUISITION_CHANNEL_CHOICES
 from shared_support.form_inputs import apply_text_input_attrs
 
 
 INTAKE_ACTION_CHOICES = (
-    ('assign-to-me', 'Assumir caso'),
-    ('clear-assignee', 'Remover responsavel'),
-    ('start-review', 'Colocar em revisao'),
-    ('mark-matched', 'Marcar como pronto para conversao'),
-    ('approve-intake', 'Aprovar intake'),
+    ('move-to-conversation', 'Mover para Em conversa'),
     ('reject-intake', 'Rejeitar intake'),
 )
 
 SEMANTIC_STAGE_CHOICES = (
     ('', 'Todos os estagios'),
-    ('lead-open', 'Lead aberto'),
-    ('conversion-ready', 'Pronto para conversao'),
+    ('new-leads', 'Leads'),
+    ('lead-open', 'Em conversa'),
     ('resolved', 'Resolvido'),
+)
+
+SORT_CHOICES = (
+    ('', 'Ordem padrao'),
+    ('registration-oldest', 'Registro mais antigo'),
+    ('registration-newest', 'Registro mais recente'),
 )
 
 
@@ -38,6 +41,7 @@ class IntakeCenterFilterForm(forms.Form):
     query = forms.CharField(required=False, label='Buscar por nome, telefone ou e-mail')
     status = forms.ChoiceField(required=False, label='Status', choices=())
     source = forms.ChoiceField(required=False, label='Origem', choices=())
+    sort = forms.ChoiceField(required=False, label='Ordenacao', choices=SORT_CHOICES)
     semantic_stage = forms.ChoiceField(required=False, label='Leitura comercial', choices=SEMANTIC_STAGE_CHOICES)
     assignment = forms.ChoiceField(
         required=False,
@@ -60,6 +64,17 @@ from onboarding.model_definitions import StudentIntake
 
 
 class IntakeQuickCreateForm(forms.ModelForm):
+    acquisition_channel = forms.ChoiceField(
+        required=False,
+        label='Canal de captacao',
+        choices=ACQUISITION_CHANNEL_CHOICES,
+    )
+    acquisition_detail = forms.CharField(
+        required=False,
+        label='Detalhe da origem',
+        max_length=120,
+    )
+
     class Meta:
         model = StudentIntake
         fields = ['full_name', 'phone', 'email', 'source']
@@ -75,6 +90,7 @@ class IntakeQuickCreateForm(forms.ModelForm):
         apply_text_input_attrs(self.fields['full_name'], placeholder='Nome completo')
         apply_text_input_attrs(self.fields['phone'], placeholder='WhatsApp principal (com DDD)')
         apply_text_input_attrs(self.fields['email'], placeholder='E-mail (opcional)')
+        apply_text_input_attrs(self.fields['acquisition_detail'], placeholder='Ex.: indicacao do Joao, Google Maps, passou na frente')
 
 
 class IntakeQueueActionForm(forms.Form):
@@ -89,4 +105,5 @@ __all__ = [
     'IntakeQuickCreateForm',
     'IntakeQueueActionForm',
     'SEMANTIC_STAGE_CHOICES',
+    'SORT_CHOICES',
 ]

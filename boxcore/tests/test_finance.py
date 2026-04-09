@@ -23,6 +23,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from auditing.models import AuditEvent
+from communications.models import WhatsAppContact
 from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
 from students.models import Student
 
@@ -69,7 +70,7 @@ class FinanceCenterTests(TestCase):
         self.overdue_payment = Payment.objects.create(
             student=self.student,
             enrollment=self.enrollment,
-            due_date=timezone.localdate() - timezone.timedelta(days=6),
+            due_date=timezone.localdate() - timezone.timedelta(days=8),
             amount='319.90',
             status=PaymentStatus.PENDING,
             method=PaymentMethod.PIX,
@@ -86,9 +87,60 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'Resumo do Recorte Ativo')
         self.assertContains(response, 'Handoff de cobranca')
         self.assertContains(response, 'Churn e crescimento')
+        self.assertContains(response, 'Placar de follow-up')
+        self.assertContains(response, 'Melhor jogada agora')
+        self.assertContains(response, 'Aderencia ao turno')
+        self.assertContains(response, 'Outcome de quem seguiu')
+        self.assertContains(response, 'Outcome de quem divergiu')
+        self.assertContains(response, 'Quando divergir valeu a pena')
+        self.assertContains(response, 'Quando divergir piorou o resultado')
+        self.assertContains(response, 'Outcome do turno alinhado')
+        self.assertContains(response, 'Outcome do turno em tensao')
+        self.assertContains(response, 'Quando a tensao valeu a pena')
+        self.assertContains(response, 'Quando a tensao virou dispersao')
+        self.assertContains(response, 'Tensao por timing')
+        self.assertContains(response, 'Tensao por gravidade do caso')
+        self.assertContains(response, 'Leitura composta da tensao')
+        self.assertContains(response, 'Divergencia por timing')
+        self.assertContains(response, 'Divergencia por acao sugerida')
+        self.assertContains(response, 'Divergencia por gravidade do caso')
+        self.assertContains(response, 'Leitura composta da divergencia')
+        self.assertContains(response, 'historical_score = 0.4 * execution_rate + 0.6 * success_rate')
+        self.assertContains(response, 'Timing')
+        self.assertContains(response, 'Acao por timing')
+        self.assertContains(response, 'Acao no tempo certo')
         self.assertContains(response, 'Receita mensal')
         self.assertContains(response, 'Realizado vs esperado')
         self.assertContains(response, 'Ativacoes vs cancelamentos')
+        self.assertContains(response, 'alto risco')
+        self.assertContains(response, 'Atraso financeiro recente')
+        self.assertContains(response, 'Score historico')
+        self.assertContains(response, 'Score de fila')
+        self.assertContains(response, 'Score contextual')
+        self.assertContains(response, 'Sem leitura contextual')
+        self.assertContains(response, 'Observar primeiro')
+        self.assertContains(response, 'Casos que merecem monitoramento antes de empurrar a acao.')
+        self.assertContains(response, 'com jogada contextual')
+        self.assertContains(response, 'com conviccao alta')
+        self.assertContains(response, 'com alta confianca')
+        self.assertContains(response, 'O sinal que mais puxou este bloco foi')
+        self.assertContains(response, 'A acao mais presente neste bloco e')
+        self.assertContains(response, 'So vigie estes')
+        self.assertContains(response, 'Prioridade agregada do turno')
+        self.assertContains(response, 'estao nesta faixa')
+        self.assertContains(response, 'O peso maior veio de')
+        self.assertContains(response, 'A jogada que mais pede energia neste turno e')
+        self.assertContains(response, 'Ela esta em tensao com a recomendacao global do turno')
+        self.assertContains(response, 'Alta confianca')
+        self.assertContains(response, 'Missao primeiro, historico depois, contextual por ultimo')
+        self.assertContains(response, 'Recomendacao global do turno')
+        self.assertContains(response, 'Janela esfriando')
+        self.assertContains(response, 'Sem amostra historica suficiente para sugerir outra jogada neste timing.')
+        self.assertContains(response, 'Revisar winback')
+        self.assertContains(response, 'Acionar winback')
+        self.assertContains(response, 'Abrir WhatsApp')
+        self.assertContains(response, 'Revisar matricula')
+        self.assertContains(response, 'finance-risk-action-neutral')
         self.assertContains(response, 'Nenhum contato operacional recente registrado.')
         self.assertContains(response, 'Registrar e abrir WhatsApp')
         self.assertContains(response, 'name="open_in_whatsapp" value="1"', html=False)
@@ -96,7 +148,7 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'id="finance-queue-board"')
         self.assertContains(response, 'href="#finance-portfolio-board"')
         self.assertContains(response, 'Planos ativos')
-        self.assertContains(response, 'Mix Comercial e Dependencia')
+        self.assertNotContains(response, 'Mix Comercial e Dependencia')
         self.assertContains(response, 'Total MRR')
         self.assertContains(response, f'href="{reverse("student-quick-update", args=[self.student.id])}#student-financial-overview"')
         self.assertRegex(response.content.decode(), r'R\$\s*319[,.]90')
@@ -112,6 +164,18 @@ class FinanceCenterTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Filtros da Leitura Financeira')
         self.assertContains(response, 'Cross Gold')
+
+    def test_finance_center_filters_queue_by_mission(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(
+            reverse('finance-center'),
+            data={'queue_focus': 'high_signal'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Alto risco')
+        self.assertContains(response, 'Missao da fila')
 
     def test_finance_center_hides_recent_movements_board_from_the_raiox_tab(self):
         self.client.force_login(self.user)
@@ -151,6 +215,10 @@ class FinanceCenterTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(MembershipPlan.objects.filter(name='Legends Unlimited').exists())
         self.assertTrue(AuditEvent.objects.filter(action='membership_plan_quick_created').exists())
+
+        follow_response = self.client.get(reverse('finance-center'))
+        self.assertContains(follow_response, 'Legends Unlimited')
+        self.assertContains(follow_response, 'Aguardando primeira adesao')
 
     def test_finance_center_can_update_plan(self):
         self.client.force_login(self.user)
@@ -199,3 +267,20 @@ class FinanceCenterTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
+
+    def test_finance_center_hides_priority_rail_when_all_whatsapp_contacts_are_blocked(self):
+        self.client.force_login(self.user)
+        WhatsAppContact.objects.create(
+            phone='5511910101010',
+            display_name=self.student.full_name,
+            linked_student=self.student,
+            last_outbound_at=timezone.now(),
+        )
+
+        response = self.client.get(reverse('finance-center'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'id="finance-priority-board"')
+        self.assertNotContains(response, 'Registrar e abrir WhatsApp')
+        self.assertContains(response, 'id="finance-queue-board"')
+        self.assertContains(response, 'href="#finance-queue-board"')

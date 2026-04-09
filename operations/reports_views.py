@@ -14,7 +14,7 @@ from django.views.generic import TemplateView
 
 from access.roles import ROLE_MANAGER, ROLE_OWNER
 from operations.base_views import OperationBaseView
-from shared_support.page_payloads import build_page_hero
+from shared_support.page_payloads import build_page_hero, build_page_reading_panel
 
 
 class ReportHubView(OperationBaseView, TemplateView):
@@ -30,7 +30,7 @@ class ReportHubView(OperationBaseView, TemplateView):
         context = super().get_context_data(**kwargs)
         base_context = self.get_base_context()
         context.update(base_context)
-        context['report_hub_focus'] = [
+        focus_items = [
             {
                 'label': 'Leitura comercial guardada',
                 'chip_label': 'Comercial',
@@ -54,6 +54,43 @@ class ReportHubView(OperationBaseView, TemplateView):
                 'pill_class': 'warning',
                 'href': '#reports-finance',
                 'href_label': 'Ler direcao da fase',
+            },
+        ]
+        context['report_hub_focus'] = focus_items
+        context['report_hub_reading_panel'] = build_page_reading_panel(
+            items=focus_items,
+            primary_href='#reports-commercial',
+            pill_label='Cofre gerencial',
+            pill_class='accent',
+            class_name='reports-hub-reading-panel',
+            panel_id='reports-hub-command-lane',
+        )
+        context['report_hub_summary_cards'] = [
+            {
+                'eyebrow': 'Estrutura',
+                'title': 'O cofre fica fora da operacao diaria',
+                'copy': 'Relatorios ficam organizados para leitura executiva sem roubar a atencao do fluxo principal do produto.',
+                'pill_label': 'Guardado',
+                'pill_class': 'info',
+                'items': [
+                    'A camada comercial continua preservada para o momento certo.',
+                    'A camada financeira segue pronta sem expor alavancas cedo demais.',
+                    'A fachada principal continua protegida contra ruido gerencial precoce.',
+                ],
+                'variant': 'structure',
+            },
+            {
+                'eyebrow': 'Metodo',
+                'title': 'Quando reabrir, abrir com criterio',
+                'copy': 'A proxima etapa nao e encher a tela de botoes. E devolver leitura e saida final na ordem certa.',
+                'pill_label': 'Fase atual',
+                'pill_class': 'warning',
+                'items': [
+                    'Primeiro preservar clareza da experiencia principal.',
+                    'Depois amadurecer a camada de leitura gerencial.',
+                    'So entao reabrir saida, exportacao e fechamento final.',
+                ],
+                'variant': 'priority',
             },
         ]
         context['report_hub_hero'] = build_page_hero(

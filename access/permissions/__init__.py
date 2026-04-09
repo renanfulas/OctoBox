@@ -12,6 +12,6 @@ PONTOS CRITICOS:
 - Essa camada define quem entra em cada area operacional.
 """
 
-from .mixins import RoleRequiredMixin
+from .mixins import AjaxLoginRequiredMixin, RoleRequiredMixin
 
-__all__ = ['RoleRequiredMixin']
+__all__ = ['AjaxLoginRequiredMixin', 'RoleRequiredMixin']

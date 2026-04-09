@@ -121,21 +121,21 @@ def _build_dashboard_priority_context(*, metrics, pending_intakes_count, today_s
             'dominant_key': 'overdue',
             'label': 'cash-pressure',
             'reason': 'Atrasos e cobrancas acionaveis pedem contato antes de qualquer leitura mais profunda.',
-            'lead_order': ['overdue', 'revenue', 'intakes', 'occupancy', 'attendance', 'active'],
+            'lead_order': ['revenue', 'overdue', 'intakes', 'occupancy', 'attendance', 'active'],
         }
     if pending_intakes_count > 0:
         return {
             'dominant_key': 'intakes',
             'label': 'intake-pressure',
             'reason': 'Existe demanda comercial esperando resposta e ela esfria mais rapido do que o restante.',
-            'lead_order': ['intakes', 'revenue', 'overdue', 'occupancy', 'attendance', 'active'],
+            'lead_order': ['intakes', 'overdue', 'revenue', 'occupancy', 'attendance', 'active'],
         }
     if today_schedule_occupancy_percent >= 95 or metrics['sessions_today'] > 0:
         return {
             'dominant_key': 'occupancy',
             'label': 'session-pressure',
             'reason': 'A agenda do dia virou o primeiro ponto de coordenacao operacional.',
-            'lead_order': ['occupancy', 'revenue', 'overdue', 'intakes', 'attendance', 'active'],
+            'lead_order': ['occupancy', 'overdue', 'revenue', 'intakes', 'attendance', 'active'],
         }
     return {
         'dominant_key': 'revenue',
@@ -159,6 +159,16 @@ def _build_dashboard_metric_cards_legacy(metrics, *, pending_intakes_count, toda
     previous_revenue = _weekly_prev if _weekly_prev else metrics['monthly_revenue_paid_previous']
 
     return [
+        {
+            'card_class': 'dashboard-kpi-card kpi-red is-panel',
+            'eyebrow': 'Cobranças em atraso',
+            'kicker': 'Tudo Certo' if metrics['overdue_payments'] == 0 else 'Precisa do seu olhar',
+            'display_value': metrics['overdue_payments'],
+            'change': _build_delta_badge(metrics['overdue_payments'], metrics['overdue_payments_previous_day'], label='desde ontem', semantic='negative'),
+            'data_action': 'blink-topbar-finance',
+            'note': 'Cada cobrança aqui ainda tem chance. Vou te ajudar a priorizar quem abordar primeiro.',
+            'hide_footer': True,
+        },
         {
             'card_class': 'dashboard-kpi-card kpi-amber is-stage',
             'eyebrow': 'Receita realizada',
@@ -186,17 +196,7 @@ def _build_dashboard_metric_cards_legacy(metrics, *, pending_intakes_count, toda
             'hide_footer': True,
         },
         {
-            'card_class': 'dashboard-kpi-card kpi-red is-panel',
-            'eyebrow': 'Cobranças em atraso',
-            'kicker': 'Tudo Certo' if metrics['overdue_payments'] == 0 else 'Precisa do seu olhar',
-            'display_value': metrics['overdue_payments'],
-            'change': _build_delta_badge(metrics['overdue_payments'], metrics['overdue_payments_previous_day'], label='desde ontem', semantic='negative'),
-            'data_action': 'blink-topbar-finance',
-            'note': 'Cada cobrança aqui ainda tem chance. Vou te ajudar a priorizar quem abordar primeiro.',
-            'hide_footer': True,
-        },
-        {
-            'card_class': 'dashboard-kpi-card kpi-blue is-ribbon',
+            'card_class': 'dashboard-kpi-card kpi-amber is-ribbon',
             'eyebrow': 'Entradas pendentes',
             'kicker': 'Pessoas que procuraram seu Box',
             'display_value': pending_intakes_count,
@@ -210,7 +210,7 @@ def _build_dashboard_metric_cards_legacy(metrics, *, pending_intakes_count, toda
             'hide_footer': True,
         },
         {
-            'card_class': 'dashboard-kpi-card kpi-slate is-ledger',
+            'card_class': 'dashboard-kpi-card kpi-blue is-ledger',
             'eyebrow': 'Aproveitamento da agenda hoje',
             'kicker': 'Pulso do dia',
             'display_value': _format_percent(today_schedule_occupancy_percent),
@@ -263,8 +263,6 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
         today_schedule_occupancy_percent=today_schedule_occupancy_percent,
         actionable_payment_alerts_count=actionable_payment_alerts_count,
     )
-    finance_href = _build_dashboard_finance_href(role_slug)
-
     cards = {
         'revenue': {
             'card_class': 'dashboard-kpi-card kpi-amber is-stage',
@@ -273,7 +271,6 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
             'display_value': _format_currency(current_revenue),
             'is_jumbo': True,
             'data_action': 'blink-sidebar-financeiro',
-            'href': reverse('finance-center'),
             'sparkline_data': [
                 {'percent': 25, 'label': '6 dias atras: R$ 850,00'},
                 {'percent': 40, 'label': '5 dias atras: R$ 1.360,00'},
@@ -305,7 +302,6 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
             'display_value': metrics['overdue_payments'],
             'change': _build_delta_badge(metrics['overdue_payments'], metrics['overdue_payments_previous_day'], label='desde ontem', semantic='negative'),
             'data_action': 'blink-topbar-finance',
-            'href': finance_href,
             'note': (
                 'Essa e a pressao dominante agora. Cada cobranca aqui ainda tem chance, mas o relogio ja esta correndo.'
                 if priority_context['dominant_key'] == 'overdue' and metrics['overdue_payments'] > 0 else
@@ -315,12 +311,11 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
             'status_hint': 'attention' if metrics['overdue_payments'] > 0 else 'clean',
         },
         'intakes': {
-            'card_class': 'dashboard-kpi-card kpi-blue is-ribbon',
+            'card_class': 'dashboard-kpi-card kpi-amber is-ribbon',
             'eyebrow': 'Entradas pendentes',
             'kicker': 'Sua primeira resposta hoje' if priority_context['dominant_key'] == 'intakes' and pending_intakes_count > 0 else 'Pessoas que procuraram seu Box',
             'display_value': pending_intakes_count,
             'data_action': 'blink-topbar-intake',
-            'href': reverse('intake-center'),
             'signal': {
                 'tone': 'warning' if pending_intakes_count else 'good',
                 'value': 'Responder hoje' if pending_intakes_count else 'Fila limpa',
@@ -335,7 +330,7 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
             'status_hint': 'attention' if pending_intakes_count > 0 else 'clean',
         },
         'occupancy': {
-            'card_class': 'dashboard-kpi-card kpi-slate is-ledger',
+            'card_class': 'dashboard-kpi-card kpi-blue is-ledger',
             'eyebrow': 'Aproveitamento da agenda hoje',
             'kicker': 'Primeira coordenacao do turno' if priority_context['dominant_key'] == 'occupancy' and metrics['sessions_today'] > 0 else 'Pulso do dia',
             'display_value': _format_percent(today_schedule_occupancy_percent),
@@ -345,7 +340,6 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
                 'label': 'ocupacao media',
             },
             'data_action': 'blink-board-sessions',
-            'href': reverse('class-grid'),
             'note': (
                 'A agenda virou a primeira coordenacao do dia. Vale abrir aqui antes de aprofundar o restante.'
                 if priority_context['dominant_key'] == 'occupancy' and metrics['sessions_today'] > 0 else
@@ -360,7 +354,6 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
             'kicker': 'Compromisso que voltou',
             'display_value': metrics['attendance_this_month'],
             'data_action': 'blink-sidebar-alunos',
-            'href': reverse('student-directory'),
             'change': _build_delta_badge(metrics['attendance_this_month'], metrics['attendance_previous_month'], label='vs mes anterior', semantic='positive'),
             'note': 'Cada presenca e uma pessoa que escolheu voltar. Voce esta construindo algo que importa.',
             'hide_footer': True,
@@ -372,7 +365,6 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
             'kicker': 'Sua comunidade viva',
             'display_value': metrics['active_students'],
             'data_action': 'blink-sidebar-alunos',
-            'href': reverse('student-directory'),
             'signal': {'tone': 'good', 'value': 'Base viva', 'label': 'comunidade ativa'},
             'note': 'Essa e a sua comunidade. Cada pessoa aqui confia no que voce esta construindo.',
             'hide_footer': True,

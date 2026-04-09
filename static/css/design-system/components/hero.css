@@ -12,9 +12,11 @@ REGRA:
 
 .hero {
     --hero-surface:
-        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-panel-strong) 94%, transparent), color-mix(in srgb, var(--theme-surface-panel) 90%, transparent));
-    --hero-border: color-mix(in srgb, var(--card-border) 94%, transparent);
-    --hero-shadow: var(--card-shadow-lift);
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-panel) 96%, transparent));
+    --hero-border: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    --hero-shadow:
+        0 6px 12px rgba(2, 8, 23, 0.03),
+        inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
     --hero-rail: linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-primary) 92%, transparent), color-mix(in srgb, var(--theme-accent-support) 84%, transparent), color-mix(in srgb, var(--theme-accent-premium) 56%, transparent));
     --hero-halo:
         radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--theme-accent-support) 16%, transparent), transparent 68%),
@@ -23,32 +25,32 @@ REGRA:
     --hero-ink: var(--ink);
     --hero-copy: var(--muted);
     --hero-eyebrow: color-mix(in srgb, var(--theme-accent-primary) 54%, var(--theme-accent-support) 46%);
-    --hero-gap: var(--operation-hero-gap, 20px);
-    --hero-padding: var(--operation-hero-padding, clamp(20px, 2vw, 30px));
-    --hero-radius: var(--operation-hero-radius, var(--radius-shell));
+    --hero-gap: var(--operation-hero-gap, 16px);
+    --hero-padding: var(--operation-hero-padding, clamp(16px, 1.8vw, 20px));
+    --hero-radius: var(--operation-hero-radius, clamp(20px, 2.2vw, 24px));
     --hero-before-inset: 0 auto 0 0;
-    --hero-before-width: 4px;
+    --hero-before-width: 0;
     --hero-before-height: auto;
     --hero-before-radius: 0;
-    --hero-before-opacity: 0.92;
+    --hero-before-opacity: 0;
     --hero-before-background: var(--hero-rail);
     --hero-after-inset: auto -6% -24% auto;
-    --hero-after-width: 220px;
-    --hero-after-height: 220px;
-    --hero-after-opacity: 0.98;
+    --hero-after-width: 0;
+    --hero-after-height: 0;
+    --hero-after-opacity: 0;
     --hero-after-background: var(--hero-halo);
-    --hero-heading-size: var(--operation-hero-heading-size, clamp(1.8rem, 2.8vw, 2.8rem));
-    --hero-heading-line-height: var(--operation-hero-heading-line-height, 0.94);
-    --hero-heading-letter-spacing: var(--operation-hero-heading-letter-spacing, -0.06em);
-    --hero-copy-size: var(--operation-hero-copy-size, 1rem);
+    --hero-heading-size: var(--operation-hero-heading-size, clamp(1.7rem, 3vw, 2.3rem));
+    --hero-heading-line-height: var(--operation-hero-heading-line-height, 1.01);
+    --hero-heading-letter-spacing: var(--operation-hero-heading-letter-spacing, -0.045em);
+    --hero-copy-size: var(--operation-hero-copy-size, 0.9rem);
     --hero-panel-backdrop-filter: blur(14px);
     --hero-isolation: isolate;
     --hero-side-width: var(--operation-hero-side-width, min(100%, 340px));
-    --hero-panel-surface: color-mix(in srgb, var(--theme-surface-strong) 72%, transparent);
+    --hero-panel-surface: color-mix(in srgb, var(--theme-surface-strong) 82%, transparent);
     --hero-panel-border: color-mix(in srgb, var(--card-border) 88%, transparent);
     --hero-panel-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        0 10px 26px color-mix(in srgb, var(--theme-accent-support-alpha) 20%, transparent);
+        0 8px 18px color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent);
     --hero-panel-ink: var(--ink);
     --hero-panel-copy: var(--muted);
     --hero-panel-stat-surface: color-mix(in srgb, var(--theme-surface-strong) 68%, var(--theme-accent-support-alpha) 32%);
@@ -58,10 +60,7 @@ REGRA:
     --hero-badge-ink: color-mix(in srgb, var(--theme-accent-primary) 54%, var(--ink) 46%);
     --hero-pulse-surface: color-mix(in srgb, var(--theme-accent-primary) 8%, transparent);
     --hero-pulse-border: color-mix(in srgb, var(--theme-accent-support) 18%, transparent);
-    display: flex;
-    justify-content: space-between;
     gap: var(--hero-gap);
-    align-items: stretch;
     margin-bottom: 0;
     padding: var(--hero-padding);
     border-radius: var(--hero-radius);
@@ -103,7 +102,6 @@ REGRA:
 
 .hero :is(h1, h2) {
     margin: 0 0 4px;
-    max-width: none;
     font-size: var(--hero-heading-size);
     line-height: var(--hero-heading-line-height);
     letter-spacing: var(--hero-heading-letter-spacing);
@@ -112,12 +110,20 @@ REGRA:
 
 .hero .operation-hero-main {
     width: 100%;
-    max-width: none;
+}
+
+.hero .operation-hero-copy-block {
+    display: grid;
+    gap: 8px;
+}
+
+.hero .operation-hero-text-stack {
+    display: grid;
+    gap: 8px;
 }
 
 .hero p {
     margin: 0;
-    max-width: var(--operation-hero-copy-max-width, 58ch);
     font-size: var(--hero-copy-size);
     color: var(--hero-copy);
     line-height: var(--operation-hero-copy-line-height, 1.54);
@@ -150,19 +156,20 @@ REGRA:
 
 .hero-side-stack {
     display: grid;
-    gap: 10px;
+    gap: 12px;
 }
 
 .hero-side-stat-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: 10px;
     margin-top: 2px;
 }
 
 .hero-side-stat {
-    padding: 9px;
-    border-radius: 10px;
+    min-height: 74px;
+    padding: 12px;
+    border-radius: 14px;
     border: 1px solid var(--hero-panel-stat-border);
     background: var(--hero-panel-stat-surface);
 }
@@ -179,7 +186,7 @@ REGRA:
 .hero-side-stat strong {
     display: block;
     margin-top: 4px;
-    font-size: clamp(0.9rem, 1vw, 1.02rem);
+    font-size: clamp(0.96rem, 1.2vw, 1.12rem);
     line-height: 1.1;
     letter-spacing: -0.03em;
     color: var(--hero-panel-ink);
@@ -223,6 +230,118 @@ REGRA:
     border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
 }
 
+.hero.hero--command {
+    --hero-gap: 14px;
+    --hero-padding: var(--operation-hero-padding, clamp(16px, 1.8vw, 20px));
+    --hero-radius: var(--operation-hero-radius, clamp(22px, 2.4vw, 28px));
+    --hero-copy-size: var(--operation-hero-copy-size, 0.88rem);
+    --hero-heading-size: var(--operation-hero-heading-size, clamp(1.72rem, 2.8vw, 2.28rem));
+    --hero-panel-surface: color-mix(in srgb, var(--theme-surface-strong) 84%, transparent);
+    --hero-panel-border: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--card-border) 82%);
+    --hero-panel-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 12px 24px color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent);
+    min-height: clamp(152px, 14vw, 178px);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-panel) 96%, transparent));
+    border-color: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    box-shadow:
+        0 8px 16px rgba(2, 8, 23, 0.04),
+        inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+}
+
+.hero.hero--command .operation-hero-main {
+    display: grid;
+    gap: clamp(10px, 1vw, 12px);
+    align-content: center;
+    min-height: 100%;
+}
+
+.hero.hero--command .operation-hero-title {
+    max-width: 11ch;
+    text-wrap: balance;
+}
+
+.hero.hero--command .operation-hero-copy {
+    max-width: var(--operation-hero-copy-max-width, 42ch);
+    color: color-mix(in srgb, var(--theme-text-secondary) 76%, white 24%);
+}
+
+.hero.hero--command .operation-hero-action-rail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.hero.hero--command .operation-hero-action-rail .button {
+    min-height: 30px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.hero.hero--command .operation-hero-action-rail .button:not(.secondary) {
+    background: color-mix(in srgb, var(--theme-surface-panel) 64%, transparent);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    color: color-mix(in srgb, var(--ink) 82%, var(--theme-text-secondary) 18%);
+}
+
+.hero.hero--command .operation-hero-action-rail .button.secondary {
+    background: transparent;
+    border-color: transparent;
+    color: color-mix(in srgb, var(--theme-text-muted) 84%, var(--ink) 16%);
+}
+
+.hero.hero--command .operation-hero-action-rail .button:hover,
+.hero.hero--command .operation-hero-action-rail .button:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 72%, transparent);
+    box-shadow: none;
+}
+
+.hero.hero--command .operation-hero-action-rail .button.secondary:hover,
+.hero.hero--command .operation-hero-action-rail .button.secondary:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 42%, transparent);
+}
+
+.hero.hero--command .operation-hero-nested-panel {
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--line) 86%);
+}
+
+body[data-theme="dark"] .hero.hero--command {
+    background:
+        linear-gradient(145deg, rgba(8, 15, 29, 0.98), rgba(6, 12, 24, 0.98) 58%, rgba(4, 10, 20, 0.96));
+    border-color: rgba(148, 163, 184, 0.12);
+    box-shadow:
+        0 12px 22px rgba(2, 6, 23, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"] .hero.hero--command .operation-hero-copy {
+    color: rgba(226, 232, 240, 0.74);
+}
+
+body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:not(.secondary) {
+    background: rgba(10, 18, 32, 0.72);
+    border-color: rgba(148, 163, 184, 0.12);
+    color: rgba(248, 250, 252, 0.92);
+}
+
+body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button.secondary {
+    background: transparent;
+    border-color: transparent;
+}
+
+body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:hover,
+body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:focus-visible {
+    background: rgba(15, 23, 42, 0.84);
+}
+
 .front-command-snapshot {
     display: grid;
     gap: 14px;
@@ -232,6 +351,12 @@ REGRA:
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
+}
+
+.front-command-intro {
+    display: grid;
+    gap: 6px;
+    max-width: 42ch;
 }
 
 .front-command-card,
@@ -340,6 +465,11 @@ REGRA:
 
     .front-command-grid {
         grid-template-columns: 1fr;
+    }
+
+    .hero.hero--command .operation-hero-action-rail .button {
+        width: 100%;
+        justify-content: center;
     }
 }
 

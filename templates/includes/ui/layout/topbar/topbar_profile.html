@@ -1,15 +1,21 @@
 <div class="profile-menu-container">
-    <div class="topbar-profile" data-slot="topbar-profile">
+    <button
+        class="topbar-profile"
+        type="button"
+        data-slot="topbar-profile"
+        aria-expanded="false"
+        aria-haspopup="menu"
+        aria-controls="topbar-profile-dropdown"
+    >
         <div class="avatar" aria-hidden="true">
-            <span class="avatar-core"></span>
-            <span class="avatar-glow"></span>
+            <span class="avatar-glyph">OB</span>
         </div>
         <div class="profile-meta">
             <strong>{{ user.get_full_name|default:user.username }}</strong>
             <span>{{ current_role.label|default:"Sem papel definido" }}</span>
         </div>
-    </div>
-    <div class="profile-dropdown" role="menu" aria-label="Menu de perfil">
+    </button>
+    <div class="profile-dropdown" id="topbar-profile-dropdown" role="menu" aria-label="Menu de perfil">
         <div class="profile-menu-list">
             {% for item in profile_navigation %}
             <a href="{{ item.href }}" class="profile-menu-item" role="menuitem">{{ item.label }}</a>

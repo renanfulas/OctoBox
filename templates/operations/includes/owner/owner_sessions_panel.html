@@ -7,16 +7,16 @@ POR QUE ELE EXISTE:
 PONTO CRITICO:
 - depende de page.data.owner_upcoming_sessions no mesmo shape visual das sessoes do dashboard.
 -->
-<article class="table-card table-card--support layout-panel layout-panel--stack dashboard-table-card dashboard-side-card dashboard-support-card owner-sessions-panel" id="owner-sessions-board" data-panel="owner-sessions-board">
+<article class="table-card table-card--support layout-panel layout-panel--stack owner-sessions-panel" id="owner-sessions-board" data-panel="owner-sessions-board">
     {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Agenda de apoio" title="Agenda do dia" copy="Linha do turno para sustentar a decisao do owner sem competir com o comando principal." pill_label=page.data.owner_upcoming_sessions_total_label pill_class="info" %}
     {% if page.data.owner_upcoming_sessions %}
     {% with featured_session=page.data.owner_upcoming_sessions|first %}
-    <div class="dashboard-session-stack is-premium">
-        {% include "includes/ui/dashboard/dashboard_session_featured_card.html" with featured_session=featured_session %}
+    <div class="owner-session-stack">
+        {% include "operations/includes/owner/owner_session_featured_card.html" with featured_session=featured_session %}
         {% if page.data.owner_upcoming_sessions|length > 1 %}
-        <div class="dashboard-session-queue" aria-label="Fila curta da agenda do owner">
+        <div class="owner-session-queue" aria-label="Fila curta da agenda do owner">
             {% for session in page.data.owner_upcoming_sessions|slice:"1:" %}
-            {% include "includes/ui/dashboard/dashboard_session_queue_card.html" with session=session %}
+            {% include "operations/includes/owner/owner_session_queue_card.html" with session=session %}
             {% endfor %}
         </div>
         {% endif %}

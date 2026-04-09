@@ -26,6 +26,8 @@ from communications.queries import (
 )
 from finance.models import Payment, PaymentMethod, PaymentStatus
 from finance.overdue_metrics import get_overdue_payments_queryset, sum_overdue_amount
+from monitoring.manager_realtime_metrics import build_manager_realtime_metrics_snapshot
+from monitoring.student_realtime_metrics import build_student_realtime_metrics_snapshot
 from onboarding.queries import get_pending_intakes
 from operations.models import BehaviorCategory, ClassSession
 from operations.session_snapshots import serialize_class_session, sync_runtime_statuses
@@ -239,7 +241,7 @@ def build_owner_workspace_snapshot(*, today):
         'owner_upcoming_sessions_total_label': f"{len(owner_upcoming_sessions)} aula(s)",
         'metric_cards': [
             {
-                **_build_metric_card('operation-kpi-card owner-amber', 'Total de alunos', headline_metrics['students']),
+                **_build_metric_card('operation-kpi-card owner-green', 'Total de alunos', headline_metrics['students']),
                 'status_hint': 'neutral',
                 'href': reverse('student-directory'),
             },
@@ -254,7 +256,7 @@ def build_owner_workspace_snapshot(*, today):
                 'href': reverse('whatsapp-workspace'),
             },
             {
-                **_build_metric_card('operation-kpi-card owner-amber', 'Cobrancas atrasadas', headline_metrics['overdue_payments']),
+                **_build_metric_card('operation-kpi-card owner-ruby', 'Cobrancas atrasadas', headline_metrics['overdue_payments']),
                 'status_hint': 'clean' if headline_metrics['overdue_payments'] == 0 else 'attention',
                 'href': reverse('finance-center'),
             },
@@ -272,19 +274,26 @@ def build_dev_workspace_snapshot():
         'eventos_24h': AuditEvent.objects.filter(created_at__gte=timezone.now() - timedelta(days=1)).count(),
         'usuarios_com_papel': get_user_model().objects.filter(groups__isnull=False).distinct().count(),
     }
+    student_realtime_metrics = build_student_realtime_metrics_snapshot()
+    manager_realtime_metrics = build_manager_realtime_metrics_snapshot()
     recent_audit_events = list(AuditEvent.objects.select_related('actor')[:10])
     return {
         'technical_metrics': technical_metrics,
+        'student_realtime_metrics': student_realtime_metrics,
+        'manager_realtime_metrics': manager_realtime_metrics,
         'hero_stats': [
             _build_hero_stat('Auditados', technical_metrics['eventos_auditados']),
             _build_hero_stat('Ultimas 24h', technical_metrics['eventos_24h']),
             _build_hero_stat('Usuarios', technical_metrics['usuarios_com_papel']),
-            _build_hero_stat('Auditoria', len(recent_audit_events)),
+            _build_hero_stat('Realtime', student_realtime_metrics['events_total']),
         ],
         'metric_cards': [
             _build_metric_card('operation-kpi-card dev-steel', 'Eventos auditados', technical_metrics['eventos_auditados'], 'Historico total sensivel disponivel para investigacao, leitura forense e prova operacional.'),
             _build_metric_card('operation-kpi-card dev-cyan', 'Eventos nas ultimas 24h', technical_metrics['eventos_24h'], 'Volume recente para avaliar movimentacao real e detectar ondas anormais de alteracao.'),
             _build_metric_card('operation-kpi-card dev-emerald', 'Usuarios com papel', technical_metrics['usuarios_com_papel'], 'Cobertura atual de contas com fronteira operacional definida no sistema.'),
+            _build_metric_card('operation-kpi-card dev-cyan', 'Eventos realtime', student_realtime_metrics['events_total'], 'Sinais SSE publicados para locks, financeiro, matricula e perfil do drawer de alunos.'),
+            _build_metric_card('operation-kpi-card dev-steel', 'Streams ativos', student_realtime_metrics['active_streams'], 'Conexoes SSE vivas neste instante para observar concorrencia sem polling cego.'),
+            _build_metric_card('operation-kpi-card dev-emerald', 'Conflitos de save', student_realtime_metrics['conflicts_total'], 'Tentativas bloqueadas por versao velha em vez de sobrescrever dado novo.'),
         ],
         'dev_operational_focus': [
             {
@@ -314,39 +323,48 @@ def build_dev_workspace_snapshot():
         ],
         'recent_audit_events': recent_audit_events,
         'dev_boundaries': [
-            'DEV investiga e mantem o sistema, mas nao assume rotina de manager ou coach.',
-            'O papel tecnico deve operar com leitura ampla e escrita minima, sempre com rastreabilidade.',
-            'Acesso GOD continua fora da rotina e deve nascer depois com regra de contingencia.',
+            {
+                'title': 'DEV investiga sem assumir a operacao',
+                'copy': 'O papel tecnico mantem o sistema e investiga rastros, mas nao deve virar manager, recepcao ou coach por atalho.',
+            },
+            {
+                'title': 'Leitura ampla, escrita minima',
+                'copy': 'Quando houver manutencao, o caminho seguro e operar com rastreabilidade e o menor alcance de escrita necessario.',
+            },
+            {
+                'title': 'Contingencia nao e rotina',
+                'copy': 'Acesso elevado de emergencia fica fora do fluxo diario e precisa nascer com regra propria antes de existir.',
+            },
         ],
         'dev_reads': [
-            'Mapa do sistema para entender arquitetura e fluxo.',
-            'Papeis e acessos para revisar fronteiras de permissao.',
-            'Trilha de auditoria para investigar acoes sensiveis recentes.',
+            {
+                'title': 'Mapa do sistema antes do mergulho',
+                'copy': 'Comece pela arquitetura e pelo fluxo principal para nao investigar sintoma como se fosse causa raiz.',
+            },
+            {
+                'title': 'Papeis e acessos como segunda camada',
+                'copy': 'Revise as fronteiras de permissao antes de concluir que o problema esta na interface ou no dado.',
+            },
+            {
+                'title': 'Auditoria por ultimo no recorte certo',
+                'copy': 'Abra a trilha sensivel para confirmar ator, horario e alvo sem depender de memoria tecnica ou conversa paralela.',
+            },
         ],
         'dev_table_guides': [
             {
-                'label': 'Rastro que deve abrir a investigacao',
-                'value': f"{technical_metrics['eventos_24h']} evento(s) nas ultimas 24h",
-                'summary': 'Comece por aqui quando precisar localizar alteracao recente antes de abrir historico inteiro e perder tempo tecnico.',
-                'pill_class': 'warning' if technical_metrics['eventos_24h'] > 0 else 'success',
-                'href': '#dev-audit-board',
-                'href_label': 'Abrir rastros recentes',
+                'title': 'Rastro que deve abrir a investigacao',
+                'eyebrow': f"{technical_metrics['eventos_24h']} evento(s) nas ultimas 24h",
+                'copy': 'Comece por aqui quando precisar localizar alteracao recente antes de abrir historico inteiro e perder tempo tecnico.',
             },
             {
-                'label': 'Cobertura de fronteira atual',
-                'value': f"{technical_metrics['usuarios_com_papel']} usuario(s) com papel",
-                'summary': 'Use este ponto para validar se acesso continua com dono claro ou se alguma conta ja saiu da fronteira prevista.',
-                'pill_class': 'info',
-                'href': '#dev-boundary-board',
-                'href_label': 'Ver fronteiras',
+                'title': 'Cobertura de fronteira atual',
+                'eyebrow': f"{technical_metrics['usuarios_com_papel']} usuario(s) com papel",
+                'copy': 'Use este ponto para validar se acesso continua com dono claro ou se alguma conta ja saiu da fronteira prevista.',
             },
             {
-                'label': 'Base forense disponivel',
-                'value': f"{technical_metrics['eventos_auditados']} rastro(s) auditado(s)",
-                'summary': 'Esse volume sustenta manutencao e prova operacional sem depender de memoria tecnica, conversa paralela ou chute.',
-                'pill_class': 'accent',
-                'href': '#dev-read-board',
-                'href_label': 'Ver trilha curta',
+                'title': 'Base forense disponivel',
+                'eyebrow': f"{technical_metrics['eventos_auditados']} rastro(s) auditado(s)",
+                'copy': 'Esse volume sustenta manutencao e prova operacional sem depender de memoria tecnica, conversa paralela ou chute.',
             },
         ],
     }
@@ -564,12 +582,20 @@ def _build_reception_payment_reason(payment, *, today):
     return 'Pagamento pede leitura operacional antes de escalar para o financeiro completo.'
 
 
+def _build_reception_focus_signal(*, count, active_class):
+    has_volume = (count or 0) > 0
+    return {
+        'severity_class': active_class if has_volume else 'severity-tranquil',
+        'is_tranquil': not has_volume,
+    }
+
+
 def _build_reception_workspace_core(*, today):
     pending_intakes = list(get_pending_intakes(limit=6))
     payment_queue = list(
         Payment.objects.select_related('student', 'enrollment__plan')
         .filter(status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE])
-        .order_by('due_date')[:6]
+        .order_by('due_date')[:4]
     )
     overdue_payments_queryset = get_overdue_payments_queryset(Payment.objects.all(), today=today)
     next_sessions = list(
@@ -646,6 +672,7 @@ def _build_reception_workspace_core(*, today):
             'is_whatsapp_locked': is_whatsapp_locked,
             'is_reception_blocked': sent_count >= 2,
             'repeat_block_hours': repeat_block_hours,
+            'student_events_stream_url': reverse('student-event-stream', args=[payment.student.id]),
         })
 
     return {
@@ -714,6 +741,7 @@ def build_reception_workspace_snapshot(*, today):
         'metric_cards': data['metric_cards'],
         'reception_focus': [
             {
+                **_build_reception_focus_signal(count=len(data['intakes']), active_class='severity-ruby'),
                 'label': 'Comece por quem acabou de chegar',
                 'chip_label': 'Chegada',
                 'summary': (
@@ -727,6 +755,7 @@ def build_reception_workspace_snapshot(*, today):
                 'href_label': 'Ver entradas',
             },
             {
+                **_build_reception_focus_signal(count=len(data['queue']), active_class='severity-amber'),
                 'label': 'Depois resolva o caixa curto',
                 'chip_label': 'Cobrancas',
                 'summary': (
@@ -740,6 +769,7 @@ def build_reception_workspace_snapshot(*, today):
                 'href_label': 'Ver cobranca curta',
             },
             {
+                **_build_reception_focus_signal(count=len(data['sessions']), active_class='severity-cyan'),
                 'label': 'Feche orientando a proxima aula',
                 'chip_label': 'Aulas',
                 'summary': (

@@ -1,5 +1,15 @@
 <article class="table-card operation-table-card manager-secondary-card" id="manager-finance-board">
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Alertas financeiros" title="Cobrança e retenção sob pressão" copy="Evite que a cobrança escale silenciosamente." pill_label=page.data.financial_alerts|length|add:" alerta(s)" pill_class="warning" %}
+    <div class="operation-card-head">
+        <div>
+            <p class="eyebrow">Alertas financeiros</p>
+            <h2 class="operation-card-title">Cobranca e retencao sob pressao</h2>
+            <p class="operation-card-copy">Evite que a cobranca escale silenciosamente.</p>
+        </div>
+        <div class="manager-board-head-pills">
+            <span class="pill neutral manager-live-pill" data-role="manager-live-pill">Escuta pronta</span>
+            <span class="pill warning">{{ page.data.financial_alerts|length }} alerta(s)</span>
+        </div>
+    </div>
     <div class="operation-table-wrap">
         <table>
             <thead>
@@ -8,7 +18,7 @@
                     <th scope="col">Vencimento</th>
                     <th scope="col">Status</th>
                     <th scope="col">Valor</th>
-                    <th scope="col">Leitura rápida</th>
+                    <th scope="col">Leitura rapida</th>
                 </tr>
             </thead>
             <tbody>

@@ -185,6 +185,25 @@ Regra dura:
 2. a malha nao pode crescer sem freio
 3. a integridade estrutural vale mais do que a ambicao de throughput
 
+### Operational Intelligence and ML Layer
+
+Pergunta:
+
+1. como o sistema interpreta padroes acima do core sem transformar inferencia em verdade primaria?
+
+Essa camada sobe acima do core transacional e da malha de sinais.
+
+Funcao:
+
+1. consolidar leituras analiticas
+2. produzir features reproduziveis
+3. calcular score, previsao e recomendacao auditavel
+4. apoiar filas operacionais e leitura executiva sem contaminar o nucleo
+
+No estado atual da documentacao, essa camada foi formalizada em [operational-intelligence-ml-layer.md](operational-intelligence-ml-layer.md).
+
+Para a primeira trilha financeira focada em churn e cancelamento com saida em fila operacional, leia tambem [finance-churn-ml-foundation.md](finance-churn-ml-foundation.md).
+
 ### Scaffold Agents
 
 Pergunta:

@@ -32,6 +32,10 @@ POR QUE ELE EXISTE:
   var studentPageShell = document.querySelector('[data-student-page-shell]');
   var studentPagePanels = studentPageShell ? Array.from(studentPageShell.querySelectorAll('[data-student-page-panel]')) : [];
   var studentPageTriggers = studentPageShell ? Array.from(studentPageShell.querySelectorAll('[data-student-page-tab-trigger]')) : [];
+  var studentProfileForm = document.querySelector('[data-student-profile-form]');
+  var pageRoot = document.querySelector('[data-page="student-form"][data-student-id]');
+  var browserSnapshot = pagePayload.student_browser_snapshot || null;
+  var navigationHintKey = 'octobox.student.navigation-hint.v1';
 
   var initialPlanId = planField ? planField.value : null;
   var initialPrice = (planField && planPriceMap) ? parseAmount(planPriceMap[initialPlanId]) : 0;
@@ -327,6 +331,123 @@ POR QUE ELE EXISTE:
     activateStudentPagePanel(getStudentPagePanelFromHash(window.location.hash));
   }
 
+  function supportsSessionStorage() {
+    try {
+      return typeof window.sessionStorage !== 'undefined';
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function getSnapshotKey(studentId) {
+    return 'octobox.student.snapshot.v1.' + studentId;
+  }
+
+  function writeSessionJson(key, value) {
+    if (!supportsSessionStorage()) {
+      return;
+    }
+
+    try {
+      window.sessionStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      // Degradacao silenciosa para nao quebrar a ficha.
+    }
+  }
+
+  function readSessionJson(key) {
+    if (!supportsSessionStorage()) {
+      return null;
+    }
+
+    try {
+      var rawValue = window.sessionStorage.getItem(key);
+      return rawValue ? JSON.parse(rawValue) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function removeSessionKey(key) {
+    if (!supportsSessionStorage()) {
+      return;
+    }
+
+    try {
+      window.sessionStorage.removeItem(key);
+    } catch (error) {
+      // Ignore storage failures to keep the page functional.
+    }
+  }
+
+  function persistBrowserSnapshot() {
+    if (!browserSnapshot || !browserSnapshot.id) {
+      return;
+    }
+
+    writeSessionJson(getSnapshotKey(browserSnapshot.id), {
+      expires_at: Date.now() + 120000,
+      payload: browserSnapshot,
+    });
+  }
+
+  function reconcileNavigationHint() {
+    if (!pageRoot) {
+      return;
+    }
+
+    var studentId = Number(pageRoot.getAttribute('data-student-id') || '0');
+    var navigationHint = readSessionJson(navigationHintKey);
+
+    if (!navigationHint || Number(navigationHint.id || 0) !== studentId) {
+      pageRoot.dataset.studentWarmOpen = 'false';
+      return;
+    }
+
+    pageRoot.dataset.studentWarmOpen = 'true';
+    removeSessionKey(navigationHintKey);
+  }
+
+  function setStudentProfileReadonlyState(shouldLock) {
+    if (!studentProfileForm) {
+      return;
+    }
+
+    studentProfileForm.classList.toggle('is-readonly', shouldLock);
+
+    var toggleButtons = studentProfileForm.querySelectorAll('[data-action="toggle-student-profile-edit"]');
+    toggleButtons.forEach(function(button) {
+      button.setAttribute('aria-pressed', shouldLock ? 'false' : 'true');
+      button.innerHTML = shouldLock
+        ? '<svg class="student-page-profile-edit-toggle__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>Editar leitura'
+        : '<svg class="student-page-profile-edit-toggle__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 6-12 12"/><path d="m6 6 12 12"/></svg>Fechar edicao';
+    });
+
+    var fields = studentProfileForm.querySelectorAll('input:not([type="hidden"]), select, textarea, button[type="submit"]');
+    fields.forEach(function(field) {
+      if (field.closest('[data-student-profile-actions]') && field.type === 'submit') {
+        field.disabled = shouldLock;
+        return;
+      }
+
+      if (field.matches('input:not([type="checkbox"]):not([type="radio"])') || field.tagName === 'TEXTAREA') {
+        field.readOnly = shouldLock;
+      }
+
+      if (field.tagName === 'SELECT' || field.type === 'checkbox' || field.type === 'radio') {
+        field.disabled = shouldLock;
+      }
+    });
+  }
+
+  function requestStudentProfileEdit() {
+    document.dispatchEvent(new CustomEvent('student-profile-edit-request'));
+  }
+
+  function stopStudentProfileEdit() {
+    document.dispatchEvent(new CustomEvent('student-profile-edit-stop'));
+  }
+
   if (studentPageShell) {
     studentPageShell.addEventListener('click', function(event) {
       var drawerTrigger = event.target.closest('[data-student-page-open-drawer]');
@@ -336,6 +457,17 @@ POR QUE ELE EXISTE:
         syncStudentPageHash('tab-student-form-financial');
         if (typeof window.openStudentFinancialDrawer === 'function') {
           window.openStudentFinancialDrawer(drawerTrigger.getAttribute('data-student-page-open-drawer'), drawerTrigger);
+        }
+        return;
+      }
+
+      var profileEditTrigger = event.target.closest('[data-action="toggle-student-profile-edit"]');
+      if (profileEditTrigger) {
+        event.preventDefault();
+        if (studentProfileForm && studentProfileForm.classList.contains('is-readonly')) {
+          requestStudentProfileEdit();
+        } else {
+          stopStudentProfileEdit();
         }
         return;
       }
@@ -376,6 +508,23 @@ POR QUE ELE EXISTE:
     });
   }
 
+  document.addEventListener('student-profile-lock-state', function(event) {
+    var detail = event.detail || {};
+    var shouldUnlock = Boolean(detail.editable);
+
+    setStudentProfileReadonlyState(!shouldUnlock);
+
+    if (shouldUnlock && studentProfileForm) {
+      var firstEditableField = studentProfileForm.querySelector('input:not([type="hidden"]):not([readonly]), select:not(:disabled), textarea:not([readonly])');
+      if (firstEditableField) {
+        firstEditableField.focus();
+      }
+    }
+  });
+
+  persistBrowserSnapshot();
+  reconcileNavigationHint();
+
   if (planField && amountField && planPriceField && billingStrategyField && installmentTotalField && installmentSelectorShell && installmentSelector && installmentPreview) {
     planField.addEventListener('change', syncConnectedPlanPrice);
     billingStrategyField.addEventListener('change', syncBillingStrategyState);
@@ -390,6 +539,7 @@ POR QUE ELE EXISTE:
   }
 
   resetPlanSwapFeedback();
+  setStudentProfileReadonlyState(true);
   applyWorkspacePanelFromHash();
   applyHashFocusMode();
   window.addEventListener('hashchange', applyWorkspacePanelFromHash);

@@ -1,5 +1,5 @@
 <article class="table-card finance-plan-edit-card" data-panel="finance-plan-edit-form">
-    <form method="post" novalidate>
+    <form method="post" novalidate class="finance-plan-form">
         {% csrf_token %}
         <div class="finance-plan-form-stack">
             {% if page.data.form.errors %}

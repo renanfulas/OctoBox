@@ -13,6 +13,7 @@ from shared_support.page_payloads import (
     build_page_hero,
     build_page_payload,
     build_page_reading_panel,
+    resolve_primary_href,
 )
 
 
@@ -104,6 +105,9 @@ def _build_operation_workspace_hero(page_key, snapshot):
             copy='Veja intake, vinculos e caixa sem perder o ritmo.',
             actions=_build_hero_actions_from_entry_context(snapshot.get('manager_decision_entry_context')),
             aria_label='Panorama da gerencia',
+            classes=['manager-hero'],
+            data_panel='manager-hero',
+            actions_slot='manager-hero-actions',
         ),
         'operations-coach': build_page_hero(
             eyebrow='Coach',
@@ -111,6 +115,9 @@ def _build_operation_workspace_hero(page_key, snapshot):
             copy='Veja agenda, presença e ocorrência sem ruído.',
             actions=_build_hero_actions_from_entry_context(snapshot.get('coach_decision_entry_context')),
             aria_label='Panorama do coach',
+            classes=['coach-hero'],
+            data_panel='coach-hero',
+            actions_slot='coach-hero-actions',
         ),
         'operations-dev': build_page_hero(
             eyebrow='Sistema',
@@ -121,6 +128,9 @@ def _build_operation_workspace_hero(page_key, snapshot):
                 {'label': 'Abrir mapa do sistema', 'href': reverse('system-map'), 'kind': 'secondary'},
             ],
             aria_label='Panorama de desenvolvimento',
+            classes=['dev-hero'],
+            data_panel='dev-hero',
+            actions_slot='dev-hero-actions',
         ),
         'operations-reception': build_page_hero(
             eyebrow='Recepcao',
@@ -152,19 +162,13 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
     coach_decision_entry_context = snapshot.get('coach_decision_entry_context') or {}
     reception_decision_entry_context = snapshot.get('reception_decision_entry_context') or {}
 
-    def _resolve_primary_href(items, fallback):
-        for item in items or []:
-            if item.get('is_clickable', True):
-                return item.get('href') or fallback
-        return ''
-
     panel_map = {
         'operations-owner': build_page_reading_panel(
             items=snapshot.get('owner_operational_focus'),
-            primary_href=_resolve_primary_href(snapshot.get('owner_operational_focus'), owner_decision_entry_context.get('entry_href')),
+            primary_href=resolve_primary_href(snapshot.get('owner_operational_focus'), owner_decision_entry_context.get('entry_href')),
             pill_label=owner_priority_context.get('pill_label'),
             pill_class=owner_priority_context.get('pill_class'),
-            class_name='owner-reading-panel',
+            class_name='owner-command-panel',
             panel_id='owner-command-lane',
         ),
         'operations-manager': build_page_reading_panel(
@@ -182,6 +186,14 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
             pill_class='accent',
             class_name='coach-focus-lane',
             panel_id='coach-command-lane',
+        ),
+        'operations-dev': build_page_reading_panel(
+            items=snapshot.get('dev_operational_focus'),
+            primary_href='#dev-audit-board',
+            pill_label='Leitura tecnica',
+            pill_class='accent',
+            class_name='dev-focus-lane',
+            panel_id='dev-command-lane',
         ),
         'operations-reception': build_page_reading_panel(
             items=snapshot.get('reception_focus'),

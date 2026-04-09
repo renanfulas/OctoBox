@@ -5,11 +5,13 @@
 .dashboard-metrics-cluster {
     display: grid;
     min-width: 0;
+    gap: var(--dashboard-rhythm-3);
 }
 
 .dashboard-metrics-lead {
     display: grid;
     grid-template-columns: minmax(0, 13fr) minmax(0, 8fr);
+    gap: var(--dashboard-rhythm-3);
 }
 
 /* Moving .dashboard-instagram-metrics--support to below the main block for specificity override */
@@ -18,7 +20,7 @@
 }
 
 .dashboard-kpi-slot--lead .dashboard-kpi-card {
-    min-height: 233px;
+    min-height: 198px;
 }
 
 .dashboard-kpi-slot--lead .dashboard-kpi-card .card-value {
@@ -55,12 +57,33 @@
     grid-template-rows: 1fr auto;
     border-radius: var(--dashboard-fib-4, 21px);
     overflow: hidden;
+    transition:
+        transform 220ms var(--ease-standard),
+        box-shadow 220ms var(--ease-standard),
+        border-color 220ms var(--ease-standard);
     --kpi-good-surface: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(255, 255, 255, 0.78));
     --kpi-good-border: rgba(16, 185, 129, 0.24);
     --kpi-bad-surface: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(255, 255, 255, 0.78));
     --kpi-bad-border: rgba(249, 115, 22, 0.24);
     --kpi-neutral-surface: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(255, 255, 255, 0.78));
     --kpi-neutral-border: rgba(56, 189, 248, 0.24);
+}
+
+.dashboard-kpi-slot.is-primary .dashboard-kpi-card {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 66%, transparent), transparent 34%),
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-panel) 96%, transparent), color-mix(in srgb, var(--theme-surface-strong) 92%, transparent));
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 26%, var(--theme-border-soft) 74%);
+    box-shadow:
+        0 24px 42px rgba(2, 8, 23, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.dashboard-kpi-slot--lead:not(.is-primary) .dashboard-kpi-card {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 34%, transparent), transparent 34%),
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-panel) 94%, transparent), color-mix(in srgb, var(--theme-surface-strong) 90%, transparent));
+    border-color: color-mix(in srgb, var(--theme-accent-premium-alpha) 16%, var(--theme-border-soft) 84%);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber {
@@ -110,46 +133,19 @@
 
 .dashboard-instagram-metrics .dashboard-kpi-card {
     position: relative;
-    min-height: clamp(144px, 18vw, 233px);
+    min-height: clamp(132px, 15vw, 176px);
 }
 
-.dashboard-metrics-cluster .dashboard-kpi-card::before {
+.dashboard-metrics-cluster .dashboard-kpi-card::after {
     content: "";
     position: absolute;
-    inset: 0 auto auto 0;
-    width: 100%;
-    height: 4px;
-    opacity: 0.95;
-    z-index: 2;
+    inset: auto -26px -42px auto;
+    width: 144px;
+    height: 144px;
+    border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent), transparent 72%);
+    opacity: 0.7;
     pointer-events: none;
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber::before {
-    background: linear-gradient(90deg, rgba(249, 115, 22, 1), rgba(251, 146, 60, 0.88));
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage::before {
-    background: linear-gradient(90deg, rgba(239, 68, 68, 1), rgba(220, 38, 38, 0.9));
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-red::before {
-    background: linear-gradient(90deg, rgba(220, 38, 38, 1), rgba(185, 28, 28, 0.9));
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-blue::before {
-    background: linear-gradient(90deg, rgba(37, 99, 235, 1), rgba(29, 78, 216, 0.9));
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-slate::before {
-    background: linear-gradient(90deg, rgba(100, 116, 139, 1), rgba(71, 85, 105, 0.9));
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-green::before {
-    background: linear-gradient(90deg, rgba(22, 163, 74, 1), rgba(21, 128, 61, 0.9));
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-emerald::before {
-    background: linear-gradient(90deg, rgba(16, 185, 129, 1), rgba(5, 150, 105, 0.9));
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage {
@@ -209,11 +205,12 @@
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-value {
     font-family: var(--font-display);
-    font-size: clamp(3.2rem, 4.5vw, 4.2rem);
-    font-weight: 300;
+    font-size: clamp(2.6rem, 3.8vw, 3.3rem);
+    font-weight: 500;
     line-height: 0.85;
     letter-spacing: -0.04em;
     color: var(--ink);
+    text-wrap: balance;
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-signal {
@@ -259,8 +256,8 @@
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-copy {
     max-width: 34ch;
-    font-size: 0.88rem;
-    line-height: 1.46;
+    font-size: 0.84rem;
+    line-height: 1.48;
     color: var(--muted-strong);
 }
 
@@ -276,6 +273,20 @@
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-action {
     background: rgba(255, 255, 255, 0.52);
+}
+
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.status-attention {
+    border-left-color: var(--theme-accent-warning);
+}
+
+.dashboard-metrics-cluster .dashboard-kpi-card.kpi-blue.status-attention {
+    border-left-color: var(--theme-accent-primary);
+}
+
+.dashboard-metrics-cluster .dashboard-kpi-card:hover {
+    box-shadow:
+        0 28px 48px rgba(2, 8, 23, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 @media (max-width: 960px) {
@@ -303,11 +314,6 @@
     }
 }
 
-.dashboard-metrics-cluster {
-    gap: var(--dashboard-rhythm-3);
-}
-
-.dashboard-metrics-lead,
 .dashboard-instagram-metrics {
     gap: var(--dashboard-rhythm-3);
 }
@@ -344,6 +350,23 @@ body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card {
     --kpi-neutral-border: rgba(56, 189, 248, 0.15);
 }
 
+body[data-theme="dark"] .dashboard-kpi-slot.is-primary .dashboard-kpi-card {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 74%, transparent), transparent 34%),
+        linear-gradient(145deg, rgba(8, 16, 29, 0.98), rgba(7, 14, 26, 0.98));
+    border-color: rgba(125, 211, 252, 0.18);
+    box-shadow:
+        0 28px 52px rgba(2, 6, 23, 0.38),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"] .dashboard-kpi-slot--lead:not(.is-primary) .dashboard-kpi-card {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 44%, transparent), transparent 34%),
+        linear-gradient(145deg, rgba(11, 18, 32, 0.98), rgba(9, 16, 29, 0.98));
+    border-color: rgba(148, 163, 184, 0.14);
+}
+
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber {
     --kpi-good-surface: linear-gradient(135deg, rgba(245, 158, 11, 0.14), rgba(30, 41, 59, 1));
     --kpi-neutral-surface: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(30, 41, 59, 1));
@@ -376,6 +399,7 @@ body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card.kpi-green
 /* Dark mode text element overrides */
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-value {
     color: #f8fafc;
+    text-shadow: 0 0 18px color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent);
 }
 
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-label {
@@ -394,6 +418,12 @@ body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-cop
 
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-action {
     background: rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card:hover {
+    box-shadow:
+        0 32px 56px rgba(2, 6, 23, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 /* --- VIP TYPOGRAPHY: JUMBO CARDS --- */

@@ -93,8 +93,8 @@ POR QUE ELE EXISTE:
             color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent),
             color-mix(in srgb, var(--theme-surface-secondary) 94%, transparent)
         );
-    border: 1px solid var(--student-financial-panel-border);
-    box-shadow: var(--student-financial-panel-shadow-soft);
+    border: none;
+    box-shadow: none;
     color: var(--theme-text-primary);
 }
 
@@ -244,8 +244,47 @@ POR QUE ELE EXISTE:
     color: var(--theme-text-primary);
 }
 
-.student-financial-workspace :is(.eyebrow, .meta-text, .meta-text-sm, .student-financial-breadcrumb, .student-financial-kpi-card__label, .student-financial-kpi-card__meta, .student-financial-id-stat__label, .student-financial-status-tile__label, .student-financial-drawer-stat__label, .student-payment-management-total__label, .student-payment-management-total__currency, .student-payment-management-summary__row span, .student-financial-ledger__head th, .student-financial-ledger__copy span, .student-financial-quick-action small) {
+.student-financial-workspace :is(.eyebrow, .meta-text, .meta-text-sm, .student-financial-breadcrumb, .student-financial-kpi-card__label, .student-financial-kpi-card__meta, .student-financial-id-stat__label, .student-financial-status-tile__label, .student-financial-drawer-stat__label, .student-payment-management-total__label, .student-payment-management-total__currency, .student-payment-management-summary__row span, .student-financial-ledger__head th, .student-financial-ledger__copy span) {
     color: var(--legacy-copy);
+}
+
+.student-financial-workspace .operation-hero-action-rail .button,
+#student-page-payments-summary-slot .operation-hero-action-rail .button {
+    min-height: 32px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.student-financial-workspace .operation-hero-action-rail .button:not(.secondary),
+#student-page-payments-summary-slot .operation-hero-action-rail .button:not(.secondary) {
+    background: color-mix(in srgb, var(--theme-surface-panel) 64%, transparent);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    color: color-mix(in srgb, var(--ink) 82%, var(--theme-text-secondary) 18%);
+}
+
+.student-financial-workspace .operation-hero-action-rail .button.secondary,
+#student-page-payments-summary-slot .operation-hero-action-rail .button.secondary {
+    background: transparent;
+    border-color: transparent;
+    color: color-mix(in srgb, var(--theme-text-muted) 84%, var(--ink) 16%);
+}
+
+.student-financial-workspace .operation-hero-action-rail .button:hover,
+.student-financial-workspace .operation-hero-action-rail .button:focus-visible,
+#student-page-payments-summary-slot .operation-hero-action-rail .button:hover,
+#student-page-payments-summary-slot .operation-hero-action-rail .button:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 72%, transparent);
+    box-shadow: none;
+}
+
+.student-financial-workspace .operation-hero-action-rail .button.secondary:hover,
+.student-financial-workspace .operation-hero-action-rail .button.secondary:focus-visible,
+#student-page-payments-summary-slot .operation-hero-action-rail .button.secondary:hover,
+#student-page-payments-summary-slot .operation-hero-action-rail .button.secondary:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 42%, transparent);
 }
 
 .student-financial-command-actions {
@@ -256,6 +295,128 @@ POR QUE ELE EXISTE:
     justify-content: flex-end;
 }
 
+.student-financial-confirm-dialog {
+    width: min(440px, calc(100vw - 32px));
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--theme-text-primary);
+}
+
+.student-financial-confirm-dialog::backdrop {
+    background:
+        radial-gradient(circle at top, color-mix(in srgb, var(--theme-accent-support-alpha) 22%, transparent), transparent 42%),
+        rgba(7, 10, 18, 0.72);
+    backdrop-filter: blur(10px);
+}
+
+.student-financial-confirm-dialog__card {
+    display: grid;
+    gap: 20px;
+    padding: 26px 26px 24px;
+    border-radius: 30px;
+    border: 1px solid color-mix(in srgb, var(--student-financial-panel-border) 88%, transparent);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 34%),
+        radial-gradient(circle at top left, color-mix(in srgb, var(--theme-accent-primary-alpha) 6%, transparent), transparent 28%),
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-glass-strong) 97%, transparent), color-mix(in srgb, var(--theme-surface-secondary) 95%, transparent));
+    box-shadow:
+        0 30px 84px rgba(0, 0, 0, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 0 0 1px color-mix(in srgb, var(--theme-glass-highlight) 18%, transparent);
+}
+
+.student-financial-confirm-dialog__copy {
+    display: grid;
+    gap: 8px;
+}
+
+.student-financial-confirm-dialog__kicker {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    min-height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--student-financial-panel-border) 84%);
+    background: color-mix(in srgb, var(--theme-surface-glass) 82%, transparent);
+    color: var(--legacy-copy);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.student-financial-confirm-dialog__copy .section-title-sm {
+    margin: 0;
+    font-size: 1.08rem;
+    line-height: 1.15;
+}
+
+.student-financial-confirm-dialog__copy .meta-text {
+    max-width: 34ch;
+    font-size: 0.88rem;
+    line-height: 1.48;
+}
+
+.student-financial-confirm-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 2px;
+}
+
+.student-financial-confirm-dialog__actions .button {
+    min-width: 104px;
+    min-height: 36px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.student-financial-confirm-dialog__actions .button:not(.secondary) {
+    background: color-mix(in srgb, var(--theme-surface-panel) 64%, transparent);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    color: color-mix(in srgb, var(--ink) 82%, var(--theme-text-secondary) 18%);
+    box-shadow: none;
+}
+
+.student-financial-confirm-dialog__actions .button.secondary {
+    background: transparent;
+    border-color: transparent;
+    color: color-mix(in srgb, var(--theme-text-muted) 84%, var(--ink) 16%);
+}
+
+.student-financial-confirm-dialog__actions .button:hover,
+.student-financial-confirm-dialog__actions .button:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 72%, transparent);
+    box-shadow: none;
+}
+
+.student-financial-confirm-dialog__actions .button.secondary:hover,
+.student-financial-confirm-dialog__actions .button.secondary:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 42%, transparent);
+}
+
+body[data-theme="dark"] .student-financial-confirm-dialog__actions .button:not(.secondary) {
+    background: rgba(10, 18, 32, 0.72);
+    border-color: rgba(148, 163, 184, 0.12);
+    color: rgba(248, 250, 252, 0.92);
+}
+
+body[data-theme="dark"] .student-financial-confirm-dialog__actions .button.secondary {
+    background: transparent;
+    border-color: transparent;
+}
+
+body[data-theme="dark"] .student-financial-confirm-dialog__actions .button:hover,
+body[data-theme="dark"] .student-financial-confirm-dialog__actions .button:focus-visible {
+    background: rgba(15, 23, 42, 0.84);
+}
+
 .student-financial-command-actions-secondary {
     display: flex;
     flex-wrap: wrap;
@@ -264,21 +425,6 @@ POR QUE ELE EXISTE:
     padding-left: 12px;
     margin-left: 4px;
     border-left: 1px solid color-mix(in srgb, var(--student-financial-panel-border) 88%, transparent);
-}
-
-.student-financial-command-button--quiet {
-    opacity: 0.78;
-    border-color: color-mix(in srgb, var(--student-financial-panel-border) 88%, transparent);
-    background: color-mix(in srgb, var(--student-financial-panel-surface-muted) 72%, transparent);
-    box-shadow: none;
-    min-height: 38px;
-    padding-inline: 12px;
-    font-size: 0.9rem;
-}
-
-.student-financial-command-button--quiet:hover,
-.student-financial-command-button--quiet:focus-visible {
-    opacity: 1;
 }
 
 .student-financial-layout {
@@ -458,83 +604,13 @@ POR QUE ELE EXISTE:
     padding: 4px 0 0;
 }
 
-.student-financial-quick-action {
-    display: grid;
-    grid-template-columns: 32px minmax(0, 1fr);
-    gap: 14px;
-    align-items: start;
+.student-financial-side-body > .button,
+.student-financial-quick-actions .button {
     width: 100%;
-    padding: 16px 17px;
-    text-align: left;
-    border: 1px solid color-mix(in srgb, var(--student-financial-panel-border) 92%, transparent);
-    border-radius: 20px;
-    background: var(--student-financial-panel-surface-muted);
-    box-shadow:
-        inset 0 1px 0 var(--theme-glass-highlight),
-        0 0 0 1px rgba(255, 255, 255, 0.025);
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.student-financial-quick-action:hover,
-.student-financial-quick-action:focus-visible {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 26%, var(--theme-border-soft) 74%);
-    box-shadow:
-        inset 0 1px 0 var(--theme-glass-highlight),
-        0 18px 34px rgba(7, 14, 24, 0.12),
-        0 0 24px color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent);
-    outline: 2px solid color-mix(in srgb, var(--brand) 32%, transparent);
-    outline-offset: 2px;
-}
-
-.student-financial-quick-action strong,
-.student-financial-quick-action small {
-    display: block;
-}
-
-.student-financial-quick-action small {
-    margin-top: 4px;
-    color: var(--legacy-copy);
-    line-height: 1.45;
-}
-
-.student-financial-quick-action span strong {
-    color: var(--theme-text-primary);
-}
-
-.student-financial-quick-action--primary,
-.student-financial-sidebar .student-financial-quick-action:first-child {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 22%, var(--student-financial-panel-border) 78%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 32%),
-        var(--student-financial-panel-surface-muted);
-}
-
-.student-financial-quick-action--secondary {
-    border-color: color-mix(in srgb, var(--theme-accent-premium) 18%, var(--student-financial-panel-border) 82%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 32%),
-        var(--student-financial-panel-surface-muted);
 }
 
 .student-financial-side-panel .meta-text {
     color: var(--legacy-copy);
-}
-
-.student-financial-quick-action-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 12px;
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent), transparent 42%),
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), color-mix(in srgb, var(--theme-accent-premium-alpha) 18%, transparent));
-    color: color-mix(in srgb, var(--theme-accent-support) 70%, var(--theme-accent-premium) 30%);
-    font-weight: 800;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.18),
-        0 0 18px color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent);
 }
 
 .student-financial-drawer,
@@ -606,6 +682,15 @@ POR QUE ELE EXISTE:
 
 .student-financial-id-card__meta {
     min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.student-financial-id-card__meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
 }
 
 .student-financial-id-card__stats {
@@ -652,6 +737,13 @@ POR QUE ELE EXISTE:
 
 .student-financial-id-stat__value.is-success {
     color: var(--success);
+}
+
+.student-page-alert-banner .operation-hero-action-rail,
+.student-financial-drawer-action-rail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 
 .student-financial-kpi-grid {
@@ -847,14 +939,31 @@ POR QUE ELE EXISTE:
 .student-financial-ledger__table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
     text-align: left;
 }
 
+.student-financial-ledger__col--description {
+    width: 36%;
+}
+
+.student-financial-ledger__col--date {
+    width: 14%;
+}
+
+.student-financial-ledger__col--status {
+    width: 15%;
+}
+
+.student-financial-ledger__col--amount {
+    width: 15%;
+}
+
 .student-financial-ledger__head th {
-    padding: 14px 18px;
+    padding: 13px 18px;
     border-bottom: 1px solid rgba(148, 163, 184, 0.14);
     color: var(--legacy-copy);
-    font-size: 0.68rem;
+    font-size: 0.66rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
 }
@@ -870,7 +979,7 @@ POR QUE ELE EXISTE:
 }
 
 .student-financial-ledger__row td {
-    padding: 16px 18px;
+    padding: 14px 18px;
     border-bottom: 1px solid rgba(148, 163, 184, 0.1);
     vertical-align: middle;
 }
@@ -880,9 +989,28 @@ POR QUE ELE EXISTE:
 }
 
 .student-financial-ledger__date {
+    display: grid;
+    gap: 2px;
+    justify-items: start;
     color: var(--theme-text-primary);
-    font-size: 0.82rem;
-    font-weight: 600;
+}
+
+.student-financial-ledger__date-primary {
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.student-financial-ledger__date-secondary {
+    font-size: 0.68rem;
+    color: var(--legacy-copy);
+    text-transform: lowercase;
+    letter-spacing: 0.04em;
+}
+
+.student-financial-ledger__date-tertiary {
+    font-size: 0.68rem;
+    color: var(--legacy-copy);
+    letter-spacing: 0.04em;
 }
 
 .student-financial-ledger__description {
@@ -911,41 +1039,26 @@ POR QUE ELE EXISTE:
 .student-financial-ledger__copy strong {
     color: var(--theme-text-primary);
     font-size: 0.82rem;
+    line-height: 1.35;
 }
 
 .student-financial-ledger__copy span {
-    margin-top: 4px;
+    margin-top: 3px;
     color: var(--legacy-copy);
-    font-size: 0.72rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.02em;
 }
 
 .student-financial-ledger__amount {
     color: var(--theme-text-primary);
     font-family: var(--font-body);
-    font-size: 0.82rem;
-    font-weight: 700;
+    font-size: 0.8rem;
 }
 
-.student-financial-ledger__action {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: 1px solid rgba(148, 163, 184, 0.16);
-    border-radius: 999px;
-    background: var(--student-financial-panel-surface-muted);
-    color: var(--legacy-copy);
-    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
-}
-
-.student-financial-ledger__action:hover,
-.student-financial-ledger__action:focus-visible {
-    border-color: rgba(100, 116, 139, 0.32);
-    background: color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--student-financial-panel-surface-muted) 88%);
-    color: var(--theme-text-primary);
-    outline: 2px solid rgba(100, 116, 139, 0.26);
-    outline-offset: 2px;
+.student-financial-ledger__amount-value {
+    display: inline-block;
+    font-weight: 800;
+    letter-spacing: -0.01em;
 }
 
 .student-financial-drawer {
@@ -1146,8 +1259,28 @@ body[data-theme="dark"] .student-financial-workspace :is(
     color: var(--theme-text-primary);
 }
 
-body[data-theme="dark"] .student-financial-workspace :is(.eyebrow, .meta-text, .meta-text-sm, .student-financial-breadcrumb, .student-financial-kpi-card__label, .student-financial-kpi-card__meta, .student-financial-id-stat__label, .student-financial-status-tile__label, .student-financial-drawer-stat__label, .student-payment-management-total__label, .student-payment-management-total__currency, .student-payment-management-summary__row span, .student-financial-ledger__head th, .student-financial-ledger__copy span, .student-financial-quick-action small) {
+body[data-theme="dark"] .student-financial-workspace :is(.eyebrow, .meta-text, .meta-text-sm, .student-financial-breadcrumb, .student-financial-kpi-card__label, .student-financial-kpi-card__meta, .student-financial-id-stat__label, .student-financial-status-tile__label, .student-financial-drawer-stat__label, .student-payment-management-total__label, .student-payment-management-total__currency, .student-payment-management-summary__row span, .student-financial-ledger__head th, .student-financial-ledger__copy span) {
     color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .student-financial-workspace .operation-hero-action-rail .button:not(.secondary),
+body[data-theme="dark"] #student-page-payments-summary-slot .operation-hero-action-rail .button:not(.secondary) {
+    background: rgba(10, 18, 32, 0.72);
+    border-color: rgba(148, 163, 184, 0.12);
+    color: rgba(248, 250, 252, 0.92);
+}
+
+body[data-theme="dark"] .student-financial-workspace .operation-hero-action-rail .button.secondary,
+body[data-theme="dark"] #student-page-payments-summary-slot .operation-hero-action-rail .button.secondary {
+    background: transparent;
+    border-color: transparent;
+}
+
+body[data-theme="dark"] .student-financial-workspace .operation-hero-action-rail .button:hover,
+body[data-theme="dark"] .student-financial-workspace .operation-hero-action-rail .button:focus-visible,
+body[data-theme="dark"] #student-page-payments-summary-slot .operation-hero-action-rail .button:hover,
+body[data-theme="dark"] #student-page-payments-summary-slot .operation-hero-action-rail .button:focus-visible {
+    background: rgba(15, 23, 42, 0.84);
 }
 
 body[data-theme="dark"] .student-financial-workspace :is(
@@ -1252,15 +1385,6 @@ body[data-theme="dark"] .student-financial-status-pills .pill:focus-visible {
     box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
 }
 
-body[data-theme="dark"] .student-financial-quick-action span strong {
-    color: var(--theme-text-primary);
-}
-
-body[data-theme="dark"] .student-financial-command-button--quiet {
-    border-color: color-mix(in srgb, var(--theme-glass-border) 88%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-glass) 76%, transparent);
-}
-
 body[data-theme="dark"] .student-financial-peek {
     border-color: var(--student-financial-panel-border);
     box-shadow: var(--student-financial-panel-shadow);
@@ -1284,23 +1408,7 @@ body[data-theme="dark"] .student-financial-command-actions-secondary {
     border-left-color: color-mix(in srgb, var(--theme-glass-border) 88%, transparent);
 }
 
-body[data-theme="dark"] .student-financial-quick-action--primary,
-body[data-theme="dark"] .student-financial-sidebar .student-financial-quick-action:first-child {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 28%, var(--theme-glass-border) 72%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 32%),
-        var(--student-financial-panel-surface-muted);
-}
-
-body[data-theme="dark"] .student-financial-quick-action--secondary {
-    border-color: color-mix(in srgb, var(--theme-accent-premium) 24%, var(--theme-glass-border) 76%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 14%, transparent), transparent 32%),
-        var(--student-financial-panel-surface-muted);
-}
-
-body[data-theme="dark"] .student-financial-side-panel .meta-text,
-body[data-theme="dark"] .student-financial-quick-action small {
+body[data-theme="dark"] .student-financial-side-panel .meta-text {
     color: var(--theme-text-secondary);
 }
 
@@ -1328,11 +1436,6 @@ body[data-theme="dark"] .student-payment-management-paid-state {
     border: 1px solid color-mix(in srgb, var(--theme-accent-success) 24%, var(--student-financial-panel-border) 76%);
 }
 
-body[data-theme="dark"] .student-financial-quick-action:hover,
-body[data-theme="dark"] .student-financial-quick-action:focus-visible {
-    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
-}
-
 body[data-theme="dark"] .student-financial-action-button--contextual,
 body[data-theme="dark"] .student-financial-context-action {
     border-color: color-mix(in srgb, var(--theme-accent-warning) 26%, var(--theme-glass-border) 74%);
@@ -1341,19 +1444,6 @@ body[data-theme="dark"] .student-financial-context-action {
 
 body[data-theme="dark"] .student-financial-ledger__row:hover {
     background: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--student-financial-panel-surface-muted) 84%);
-}
-
-body[data-theme="dark"] .student-financial-ledger__action {
-    border-color: color-mix(in srgb, var(--theme-glass-border) 88%, transparent);
-    background: var(--student-financial-panel-surface-muted);
-    color: var(--theme-text-secondary);
-}
-
-body[data-theme="dark"] .student-financial-ledger__action:hover,
-body[data-theme="dark"] .student-financial-ledger__action:focus-visible {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 30%, var(--student-financial-panel-border) 70%);
-    background: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--student-financial-panel-surface-muted) 86%);
-    color: var(--theme-text-primary);
 }
 
 .student-enrollment-management-form {
@@ -1366,6 +1456,234 @@ body[data-theme="dark"] .student-financial-ledger__action:focus-visible {
 
 .is-center {
     text-align: center;
+}
+
+.student-financial-workspace--embedded {
+    --student-financial-panel-surface: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--theme-surface-primary) 98%, transparent),
+        color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent)
+    );
+    --student-financial-panel-surface-muted: color-mix(in srgb, var(--theme-surface-secondary) 92%, white 8%);
+    --student-financial-panel-border: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    --student-financial-panel-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+    --student-financial-panel-shadow-soft: 0 16px 32px rgba(15, 23, 42, 0.05);
+    padding: 22px;
+    gap: 14px;
+    border-radius: 26px;
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-primary) 97%, transparent),
+            color-mix(in srgb, var(--theme-surface-secondary) 95%, transparent)
+        );
+}
+
+.student-financial-workspace--embedded .student-financial-breadcrumb,
+.student-financial-workspace--embedded .student-financial-panel::before,
+.student-financial-workspace--embedded .student-financial-side-panel::before,
+.student-financial-workspace--embedded .student-financial-id-card::before,
+.student-financial-workspace--embedded .student-financial-kpi-card::before,
+.student-financial-workspace--embedded .student-financial-command-strip::after,
+.student-financial-workspace--embedded .student-financial-peek::after,
+.student-financial-workspace--embedded .student-financial-ledger::before {
+    display: none;
+}
+
+.student-financial-workspace--embedded .student-financial-peek,
+.student-financial-workspace--embedded .student-financial-command-strip,
+.student-financial-workspace--embedded .student-financial-panel,
+.student-financial-workspace--embedded .student-financial-side-panel,
+.student-financial-workspace--embedded .student-financial-id-card,
+.student-financial-workspace--embedded .student-financial-kpi-card,
+.student-financial-workspace--embedded .student-financial-ledger {
+    border-radius: 22px;
+    background: var(--student-financial-panel-surface);
+    border-color: var(--student-financial-panel-border);
+    box-shadow: var(--student-financial-panel-shadow);
+}
+
+.student-financial-workspace--embedded .student-financial-peek,
+.student-financial-workspace--embedded .student-financial-command-strip {
+    padding: 18px 20px;
+}
+
+.student-financial-workspace--embedded .student-financial-command-strip {
+    grid-template-columns: minmax(0, 1.2fr) auto;
+    gap: 16px;
+    align-items: center;
+}
+
+.student-financial-workspace--embedded .student-financial-command-copy {
+    gap: 4px;
+    max-width: 58ch;
+}
+
+.student-financial-workspace--embedded .student-financial-command-actions {
+    justify-content: flex-end;
+    align-items: center;
+    max-width: 100%;
+}
+
+.student-financial-workspace--embedded .student-financial-command-actions .button {
+    min-height: 40px;
+}
+
+.student-financial-workspace--embedded .student-financial-top-grid {
+    grid-template-columns: minmax(300px, 1.05fr) minmax(0, 1.2fr);
+    gap: 12px;
+}
+
+.student-financial-workspace--embedded .student-financial-id-card {
+    gap: 16px;
+    padding: 18px 20px;
+}
+
+.student-financial-workspace--embedded .student-financial-id-card__stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.student-financial-workspace--embedded .student-financial-id-stat {
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: var(--student-financial-panel-surface-muted);
+}
+
+.student-financial-workspace--embedded .student-financial-id-stat__value {
+    font-size: 1rem;
+}
+
+.student-financial-workspace--embedded .student-financial-kpi-grid {
+    gap: 10px;
+}
+
+.student-financial-workspace--embedded .student-financial-kpi-card {
+    min-height: 126px;
+    padding: 16px;
+    gap: 8px;
+}
+
+.student-financial-workspace--embedded .student-financial-kpi-card__value {
+    font-size: 1.18rem;
+}
+
+.student-financial-workspace--embedded .student-financial-kpi-card__meta {
+    font-size: 0.74rem;
+    line-height: 1.45;
+}
+
+.student-financial-workspace--embedded .student-financial-layout {
+    grid-template-columns: minmax(0, 1.7fr) minmax(300px, 0.86fr);
+    gap: 12px;
+}
+
+.student-financial-workspace--embedded .student-financial-panel-head {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+}
+
+.student-financial-workspace--embedded .student-financial-status-pills {
+    gap: 4px;
+}
+
+.student-financial-workspace--embedded .student-financial-workspace .pill,
+.student-financial-workspace--embedded .pill {
+    background: var(--student-financial-panel-surface-muted);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.student-financial-workspace--embedded .student-financial-side-body {
+    gap: 12px;
+    padding: 16px 18px 18px;
+}
+
+.student-financial-workspace--embedded .student-financial-quick-actions {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+}
+
+.student-financial-workspace--embedded .student-financial-quick-actions .button {
+    width: 100%;
+    justify-content: center;
+}
+
+.student-financial-link-summary {
+    display: grid;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 90%, transparent);
+    background: var(--student-financial-panel-surface-muted);
+}
+
+.student-financial-link-summary__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: baseline;
+}
+
+.student-financial-link-summary__label {
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--legacy-copy);
+    font-weight: 700;
+}
+
+.student-financial-workspace--embedded .student-financial-ledger__head th {
+    padding: 12px 16px;
+    font-size: 0.66rem;
+}
+
+.student-financial-workspace--embedded .student-financial-ledger__row td {
+    padding: 13px 16px;
+}
+
+.student-financial-workspace--embedded .student-financial-ledger__row:hover {
+    background: color-mix(in srgb, var(--theme-surface-secondary) 88%, var(--theme-accent-support-alpha) 12%);
+}
+
+.student-financial-workspace--embedded .student-financial-ledger__description {
+    gap: 10px;
+}
+
+.student-financial-workspace--embedded .student-financial-ledger__method-icon {
+    background: var(--student-financial-panel-surface-muted);
+}
+
+body[data-theme="dark"] .student-financial-workspace--embedded {
+    --student-financial-panel-surface: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent),
+        color-mix(in srgb, var(--theme-surface-glass) 94%, transparent)
+    );
+    --student-financial-panel-surface-muted: color-mix(in srgb, var(--theme-surface-glass) 90%, var(--theme-surface-secondary) 10%);
+    --student-financial-panel-border: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    --student-financial-panel-shadow: 0 22px 44px rgba(0, 0, 0, 0.22);
+    --student-financial-panel-shadow-soft: 0 18px 36px rgba(0, 0, 0, 0.18);
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent),
+        color-mix(in srgb, var(--theme-surface-primary) 94%, transparent)
+    );
+}
+
+body[data-theme="dark"] .student-financial-workspace--embedded .student-financial-ledger__row:hover {
+    background: color-mix(in srgb, var(--theme-surface-glass-strong) 84%, var(--theme-accent-support-alpha) 16%);
+}
+
+body[data-theme="dark"] .student-financial-ledger__date-secondary {
+    color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .student-financial-ledger__date-tertiary {
+    color: var(--theme-text-secondary);
 }
 
 @media (max-width: 1100px) {
@@ -1381,6 +1699,10 @@ body[data-theme="dark"] .student-financial-ledger__action:focus-visible {
         justify-content: flex-start;
     }
 
+    .student-financial-id-card__meta-row {
+        align-items: flex-start;
+    }
+
     .student-financial-peek__actions {
         justify-content: flex-start;
     }
@@ -1389,10 +1711,12 @@ body[data-theme="dark"] .student-financial-ledger__action:focus-visible {
         grid-template-columns: 1fr;
     }
 
-    .student-financial-command-actions-secondary {
-        padding-left: 0;
-        margin-left: 0;
-        border-left: 0;
+    .student-financial-workspace--embedded .student-financial-command-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .student-financial-workspace--embedded .student-financial-command-actions {
+        justify-content: flex-start;
     }
 
     .student-financial-kpi-grid {
@@ -1402,6 +1726,10 @@ body[data-theme="dark"] .student-financial-ledger__action:focus-visible {
 
 @media (max-width: 920px) {
     .student-financial-top-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .student-financial-workspace--embedded .student-financial-layout {
         grid-template-columns: 1fr;
     }
 }
@@ -1445,7 +1773,40 @@ body[data-theme="dark"] .student-financial-ledger__action:focus-visible {
         padding: 12px 14px;
     }
 
+    .student-financial-ledger__table {
+        table-layout: auto;
+    }
+
     .student-financial-ledger__description {
         grid-template-columns: 1fr;
+    }
+
+    .student-financial-workspace--embedded {
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .student-financial-workspace--embedded .student-financial-peek,
+    .student-financial-workspace--embedded .student-financial-command-strip,
+    .student-financial-workspace--embedded .student-financial-id-card {
+        padding: 16px;
+    }
+
+    .student-financial-workspace--embedded .student-financial-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .student-financial-workspace--embedded .student-financial-panel-head {
+        padding: 16px 16px 12px;
+    }
+
+    .student-financial-workspace--embedded .student-financial-side-body {
+        padding: 14px 16px 16px;
+    }
+
+    .student-financial-workspace .operation-hero-action-rail .button,
+    #student-page-payments-summary-slot .operation-hero-action-rail .button {
+        width: 100%;
+        justify-content: center;
     }
 }

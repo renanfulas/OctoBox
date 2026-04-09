@@ -1,0 +1,39 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="operation-shell workspace-shell" data-page="student-source-capture">
+    <section class="table-card student-filter-card" style="max-width: 720px; margin: 40px auto;">
+        <div class="form-stack-lg">
+            <header class="stack-8">
+                <p class="eyebrow">Qualificacao de origem</p>
+                <h1 class="section-title-sm">Como {{ student.full_name }} conheceu o box?</h1>
+                <p class="meta-text">Essa resposta ajuda o OctoBox a separar origem operacional, declarada e resolvida com mais verdade analitica.</p>
+            </header>
+
+            {% if submitted %}
+            <div class="note-panel note-panel-success">
+                Obrigado. Sua resposta foi registrada com sucesso.
+            </div>
+            {% endif %}
+
+            <form method="post" class="form-stack">
+                {% csrf_token %}
+                {{ form.token }}
+                <label>
+                    <span class="field-label">{{ form.declared_acquisition_source.label }}</span>
+                    {{ form.declared_acquisition_source }}
+                    {% for error in form.declared_acquisition_source.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                </label>
+                <label>
+                    <span class="field-label">{{ form.declared_source_detail.label }}</span>
+                    {{ form.declared_source_detail }}
+                    {% for error in form.declared_source_detail.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                </label>
+                <div class="actions actions-tight">
+                    <button class="button" type="submit">Enviar resposta</button>
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+{% endblock %}

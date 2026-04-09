@@ -28,6 +28,7 @@ from catalog.forms import ClassScheduleRecurringForm, StudentQuickForm
 from communications.models import StudentIntake, WhatsAppContact, WhatsAppMessageLog
 from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
 from operations.models import Attendance, ClassSession, SessionStatus
+from operations.session_snapshots import serialize_class_session
 from students.models import Student
 
 
@@ -130,6 +131,44 @@ class CatalogViewTests(TestCase):
         self.assertEqual(len(created_sessions), 4)
         self.assertEqual([timezone.localtime(item.scheduled_at).strftime('%H:%M') for item in created_sessions], ['07:00', '08:00', '09:00', '10:00'])
 
+    def test_class_grid_can_create_weekend_rotation_inside_monthly_window(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'planner',
+                'title': 'Rodizio Weekend',
+                'coach': self.coach.id,
+                'start_date': '2026-04-01',
+                'end_date': '2026-04-30',
+                'anchor_date': '2026-04-11',
+                'interval_days': '14',
+                'weekdays': ['5', '6'],
+                'start_time': '09:00',
+                'sequence_count': 0,
+                'duration_minutes': 60,
+                'capacity': 18,
+                'status': 'scheduled',
+                'notes': '',
+                'skip_existing': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        created_sessions = list(ClassSession.objects.filter(title='Rodizio Weekend').order_by('scheduled_at'))
+        self.assertEqual(len(created_sessions), 4)
+        self.assertEqual(
+            [timezone.localtime(item.scheduled_at).date() for item in created_sessions],
+            [
+                timezone.datetime(2026, 4, 11).date(),
+                timezone.datetime(2026, 4, 12).date(),
+                timezone.datetime(2026, 4, 25).date(),
+                timezone.datetime(2026, 4, 26).date(),
+            ],
+        )
+        self.assertTrue(all(item.coach_id == self.coach.id for item in created_sessions))
+
     def test_class_schedule_form_normalizes_single_digit_hour(self):
         start_date = timezone.localdate() + timezone.timedelta(days=1)
         form = ClassScheduleRecurringForm(
@@ -151,6 +190,27 @@ class CatalogViewTests(TestCase):
 
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data['start_time'].strftime('%H:%M'), '08:00')
+
+    def test_class_session_snapshot_uses_second_name_when_first_is_generic_coach_title(self):
+        titled_coach = get_user_model().objects.create_user(
+            username='coach.ana',
+            first_name='Coach',
+            last_name='Ana',
+            password='senha-forte-123',
+        )
+        session = ClassSession.objects.create(
+            title='Open 09h',
+            coach=titled_coach,
+            scheduled_at=timezone.now() + timezone.timedelta(days=1),
+            duration_minutes=60,
+            capacity=18,
+            status=SessionStatus.SCHEDULED,
+        )
+        session.occupied_slots = 0
+
+        snapshot = serialize_class_session(session, now=timezone.localtime())
+
+        self.assertEqual(snapshot['coach_display_name'], 'Ana')
 
     def test_class_grid_allows_exact_daily_limit_in_single_batch(self):
         self.client.force_login(self.user)
@@ -670,6 +730,8 @@ class CatalogViewTests(TestCase):
                 'birth_date': '',
                 'health_issue_status': 'no',
                 'cpf': self.valid_cpf,
+                'acquisition_source': 'instagram',
+                'acquisition_source_detail': 'story da unidade',
                 'notes': '',
                 'selected_plan': self.plan.id,
                 'enrollment_status': 'active',
@@ -687,6 +749,15 @@ class CatalogViewTests(TestCase):
         self.assertTrue(Student.objects.filter(full_name='Mateus Oliveira').exists())
         created_student = Student.objects.get(full_name='Mateus Oliveira')
         self.assertEqual(created_student.cpf, self.valid_cpf)
+        self.assertEqual(created_student.acquisition_source, 'instagram')
+        self.assertEqual(created_student.acquisition_source_detail, 'story da unidade')
+        self.assertEqual(created_student.resolved_acquisition_source, 'instagram')
+        self.assertEqual(created_student.source_resolution_method, 'intake_auto')
+        self.assertEqual(created_student.source_resolution_reason, 'operational_only')
+        self.assertEqual(created_student.source_confidence, 'high')
+        self.assertFalse(created_student.source_conflict_flag)
+        self.assertIsNotNone(created_student.source_captured_at)
+        self.assertEqual(created_student.source_captured_by_id, self.user.id)
         self.assertTrue(created_student.enrollments.filter(plan=self.plan, status='active').exists())
         created_payment = created_student.payments.latest('created_at')
         self.assertEqual(created_payment.method, PaymentMethod.PIX)
@@ -708,6 +779,8 @@ class CatalogViewTests(TestCase):
                 'birth_date': '',
                 'health_issue_status': '',
                 'cpf': self.valid_cpf,
+                'acquisition_source': 'instagram',
+                'acquisition_source_detail': '',
                 'notes': '',
                 'selected_plan': '',
                 'enrollment_status': 'pending',
@@ -727,6 +800,73 @@ class CatalogViewTests(TestCase):
         self.assertEqual(form.cleaned_data['phone'], '11977777777')
         self.assertEqual(form.cleaned_data['cpf'], self.valid_cpf)
 
+    def test_student_quick_form_blocks_duplicate_phone_after_normalization(self):
+        form = StudentQuickForm(
+            data={
+                'full_name': 'Bruna Costa Duplicada',
+                'phone': '(11) 98888-8888',
+                'status': 'active',
+                'email': '',
+                'gender': '',
+                'birth_date': '',
+                'health_issue_status': '',
+                'cpf': '',
+                'acquisition_source': 'instagram',
+                'acquisition_source_detail': '',
+                'notes': '',
+                'selected_plan': '',
+                'enrollment_status': 'pending',
+                'payment_method': PaymentMethod.PIX,
+                'confirm_payment_now': 'False',
+                'payment_due_date': '',
+                'payment_reference': '',
+                'initial_payment_amount': '',
+                'billing_strategy': 'single',
+                'installment_total': 1,
+                'recurrence_cycles': 3,
+                'intake_record': '',
+            },
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('phone', form.errors)
+        self.assertIn('WhatsApp', form.errors['phone'][0])
+
+    def test_student_quick_create_flow_returns_form_error_when_phone_already_exists(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('student-quick-create'),
+            data={
+                'full_name': 'Bruna Costa Duplicada',
+                'phone': '(11) 98888-8888',
+                'status': 'active',
+                'email': '',
+                'gender': '',
+                'birth_date': '',
+                'health_issue_status': '',
+                'cpf': '',
+                'acquisition_source': 'instagram',
+                'acquisition_source_detail': '',
+                'notes': '',
+                'selected_plan': '',
+                'enrollment_status': 'pending',
+                'payment_method': PaymentMethod.PIX,
+                'confirm_payment_now': 'False',
+                'payment_due_date': '',
+                'payment_reference': '',
+                'initial_payment_amount': '',
+                'billing_strategy': 'single',
+                'installment_total': 1,
+                'recurrence_cycles': 3,
+                'intake_record': '',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Já existe um aluno cadastrado com este WhatsApp.')
+        self.assertEqual(Student.objects.filter(full_name='Bruna Costa Duplicada').count(), 0)
+
     def test_student_quick_create_flow_shows_conversational_recovery_guide_when_invalid(self):
         self.client.force_login(self.user)
 
@@ -741,6 +881,8 @@ class CatalogViewTests(TestCase):
                 'birth_date': '',
                 'health_issue_status': '',
                 'cpf': '',
+                'acquisition_source': 'instagram',
+                'acquisition_source_detail': '',
                 'notes': '',
                 'selected_plan': self.plan.id,
                 'enrollment_status': 'active',
@@ -843,6 +985,7 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertEqual(body['status'], 'success')
+        self.assertEqual(body['selected_payment_id'], payment.id)
         self.assertIn('fragments', body)
         self.assertIn('student-payment-checkout-form', body['fragments']['checkout'])
         self.assertIn('student-financial-kpi-card', body['fragments']['kpis'])
@@ -869,8 +1012,28 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertEqual(body['status'], 'success')
+        self.assertEqual(body['selected_payment_id'], newer_payment.id)
         self.assertIn('ABR-319', body['fragments']['checkout'])
         self.assertIn('319', body['fragments']['checkout'])
+        self.assertIn('value="{}"'.format(newer_payment.id), body['fragments']['checkout'])
+
+    def test_student_form_financial_ledger_buttons_bind_to_specific_payment_ids(self):
+        self.client.force_login(self.user)
+        overdue_payment = Payment.objects.create(
+            student=self.student,
+            enrollment=self.enrollment,
+            due_date=timezone.localdate() - timezone.timedelta(days=5),
+            amount='309.90',
+            status=PaymentStatus.OVERDUE,
+            method=PaymentMethod.CASH,
+            reference='MAR-309',
+        )
+
+        response = self.client.get(reverse('student-quick-update', args=[self.student.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f'data-payment-id="{overdue_payment.id}"', html=False)
+        self.assertContains(response, 'data-action="edit-payment"', html=False)
 
     def test_student_payment_action_rejects_invalid_action(self):
         self.client.force_login(self.user)

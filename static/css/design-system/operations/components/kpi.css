@@ -48,15 +48,6 @@ ARQUIVO: KPIs compartilhados das superfícies operacionais.
     min-height: 100%;
 }
 
-.operation-shell .operation-metric-grid .metric-card .card-body-metric::before {
-    content: "";
-    width: 14px;
-    height: 14px;
-    border-radius: 999px;
-    border: 1.8px solid currentColor;
-    opacity: 0.9;
-}
-
 .operation-shell .operation-metric-grid .metric-card .card-value-stack {
     display: flex;
     flex-direction: column;
@@ -104,11 +95,16 @@ ARQUIVO: KPIs compartilhados das superfícies operacionais.
 .operation-shell .operation-metric-grid .metric-card.status-attention,
 .operation-shell .operation-metric-grid .metric-card.status-clean,
 .operation-shell .operation-metric-grid .metric-card.status-neutral {
-    border-left: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+    border-left: 0;
 }
 
 .operation-shell .operation-metric-grid .metric-card.status-attention,
 .operation-shell .operation-metric-grid .metric-card.manager-coral {
+    color: color-mix(in srgb, var(--theme-accent-danger) 80%, white 20%);
+    border-color: color-mix(in srgb, var(--theme-accent-danger-alpha) 42%, var(--theme-border-soft) 58%);
+}
+
+.operation-shell .operation-metric-grid .metric-card.owner-ruby {
     color: color-mix(in srgb, var(--theme-accent-danger) 80%, white 20%);
     border-color: color-mix(in srgb, var(--theme-accent-danger-alpha) 42%, var(--theme-border-soft) 58%);
 }
@@ -165,6 +161,11 @@ ARQUIVO: KPIs compartilhados das superfícies operacionais.
 .operation-kpi-card.owner-green {
     background: var(--theme-surface-glass);
     border-color: rgba(16, 185, 129, 0.16);
+}
+
+.operation-kpi-card.owner-ruby {
+    background: var(--theme-surface-glass);
+    border-color: rgba(239, 68, 68, 0.16);
 }
 
 .operation-kpi-card.owner-slate {
@@ -234,6 +235,7 @@ body[data-theme="dark"] .operation-kpi-card.dev-cyan {
 }
 
 body[data-theme="dark"] .operation-kpi-card.owner-green,
+body[data-theme="dark"] .operation-kpi-card.owner-ruby,
 body[data-theme="dark"] .operation-kpi-card.coach-mint,
 body[data-theme="dark"] .operation-kpi-card.dev-emerald {
     background: var(--theme-surface-glass-strong);

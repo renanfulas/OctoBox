@@ -20,7 +20,7 @@ PONTOS CRITICOS:
 <div class="operation-shell owner-scene owner-simple-shell workspace-shell" data-owner-priority="{{ page.data.owner_priority_surface|default:'structure' }}">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero hero_variant_class="hero--command" %}
 
-    {% include "includes/ui/layout/page_reading_list.html" with panel=page.data.reading_panel %}
+    {% include "operations/includes/owner/owner_command_lane.html" with panel=page.data.reading_panel %}
 
     <section class="owner-workspace-strip" aria-label="Mesa executiva do owner">
         <div class="visually-hidden" aria-hidden="true">

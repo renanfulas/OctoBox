@@ -1,23 +1,23 @@
-<article class="card student-kpi-card {{ card.tone_class }}" data-action="{{ card.data_action }}">
-    <div class="student-kpi-card-head">
-        <span class="student-kpi-card-label">{{ card.label }}</span>
-        <div class="student-kpi-icon-box" aria-hidden="true">
-        {% if card.icon == 'users' %}
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        {% elif card.icon == 'check-circle' %}
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        {% elif card.icon == 'alert-circle' %}
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        {% elif card.icon == 'clock' %}
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        {% elif card.icon == 'trending-up' %}
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-        {% elif card.icon == 'x-circle' %}
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+{% if card.href %}<a href="{{ card.href }}" class="metric-card-link">{% endif %}
+<article class="card metric-card kpi-family-card students-kpi-card students-interactive-kpi {{ card.card_class }} {{ card.tone_class }} {{ card_extra_classes }}{% if card.data_action %} has-action cursor-pointer{% endif %}{% if card.href %} has-href{% endif %}" data-panel="metric-card" data-slot="students-interactive-kpi-card"{% if card.data_action %} data-action="{{ card.data_action }}"{% endif %}>
+    <div class="card-body card-body-metric students-kpi-card-body">
+        {% if card.icon %}
+        <div class="icon-box students-kpi-icon-box kpi-card-icon-box" aria-hidden="true">
+            {{ card.icon|safe }}
+        </div>
         {% endif %}
+        <div class="card-value-stack">
+            <div class="students-kpi-card-head">
+                <p class="eyebrow card-label students-kpi-card-label">
+                    {% if card.eyebrow %}{{ card.eyebrow }}{% else %}{{ card.label }}{% endif %}
+                </p>
+            </div>
+            <div class="card-value-row{% if card.is_jumbo %} is-jumbo{% endif %}">
+                <p class="metric card-value">
+                    <span class="metric-number students-kpi-card-value{% if card.value_class %} {{ card.value_class }}{% endif %}">{{ card.display_value }}</span>
+                </p>
+            </div>
         </div>
     </div>
-    <div class="student-kpi-card-body">
-        <strong class="student-kpi-card-value">{{ card.display_value }}</strong>
-    </div>
 </article>
+{% if card.href %}</a>{% endif %}

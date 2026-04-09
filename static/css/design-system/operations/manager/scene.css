@@ -9,6 +9,51 @@ ARQUIVO: cena base e hero do manager.
     gap: calc(var(--section-gap) - 2px);
 }
 
+.manager-scene .manager-hero {
+    position: relative;
+    overflow: hidden;
+    border-color: color-mix(in srgb, var(--theme-accent-danger-alpha) 18%, var(--card-border) 82%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-danger-alpha) 14%, transparent), transparent 32%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 40%),
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-panel) 94%, transparent));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        0 18px 34px rgba(19, 33, 50, 0.08);
+}
+
+.manager-scene .manager-hero::after {
+    content: "";
+    position: absolute;
+    inset: auto -40px -52px auto;
+    width: 180px;
+    height: 180px;
+    border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent-danger-alpha) 24%, transparent), transparent 68%);
+    pointer-events: none;
+}
+
+.manager-scene .manager-hero .operation-hero-copy {
+    max-width: 42ch;
+}
+
+.manager-scene .manager-hero .operation-hero-action-rail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.manager-scene .manager-hero .operation-hero-action-rail .button:not(.secondary) {
+    background: color-mix(in srgb, var(--theme-surface-panel) 64%, transparent);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    box-shadow: none;
+}
+
+.manager-scene .manager-hero .operation-hero-action-rail .button.secondary {
+    border-color: transparent;
+    background: transparent;
+}
+
 .manager-metric-grid {
     gap: 14px;
 }
@@ -16,6 +61,10 @@ ARQUIVO: cena base e hero do manager.
 .manager-metric-grid .operation-kpi-card {
     min-height: 150px;
     padding: 16px 18px;
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--card-border) 86%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 16px 32px rgba(19, 33, 50, 0.08);
 }
 
 .manager-metric-grid .card-copy {
@@ -24,4 +73,26 @@ ARQUIVO: cena base e hero do manager.
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+body[data-theme="dark"] .manager-scene .manager-hero {
+    border-color: rgba(245, 110, 126, 0.16);
+    background:
+        radial-gradient(circle at top right, rgba(245, 110, 126, 0.14), transparent 32%),
+        radial-gradient(circle at bottom left, rgba(0, 229, 255, 0.1), transparent 40%),
+        linear-gradient(145deg, rgba(8, 15, 29, 0.98), rgba(6, 12, 24, 0.98) 58%, rgba(4, 10, 20, 0.96));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 20px 38px rgba(0, 0, 0, 0.24);
+}
+
+body[data-theme="dark"] .manager-scene .manager-hero::after {
+    background: radial-gradient(circle, rgba(245, 110, 126, 0.22), transparent 70%);
+}
+
+body[data-theme="dark"] .manager-metric-grid .operation-kpi-card {
+    border-color: rgba(92, 146, 214, 0.16);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 20px 36px rgba(0, 0, 0, 0.24);
 }

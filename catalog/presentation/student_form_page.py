@@ -8,6 +8,7 @@ POR QUE ELE EXISTE:
 
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
 from access.navigation_contracts import get_shell_route_url
+from shared_support.acquisition import get_acquisition_channel_label
 from shared_support.page_payloads import build_page_hero
 
 from .shared import build_catalog_assets, build_catalog_page_payload
@@ -18,8 +19,8 @@ STUDENT_FORM_GUIDE_STEPS = (
         'label': 'Passo 1: essencial',
         'href': '#student-form-essential',
         'step': 1,
-        'fields': ('full_name', 'phone'),
-        'summary': 'Confirme nome completo e WhatsApp. Sem esse nucleo o fluxo nao consegue continuar com seguranca.',
+        'fields': ('full_name', 'phone', 'acquisition_source', 'acquisition_source_detail'),
+        'summary': 'Confirme nome completo, WhatsApp e origem de aquisicao. Sem esse nucleo o fluxo nao consegue continuar com seguranca.',
     },
     {
         'label': 'Passo 2: perfil do aluno',
@@ -97,7 +98,7 @@ def build_student_form_recovery_guide(form):
     }
 
 
-def build_student_form_page(*, form, student_object, selected_intake, financial_overview, page_mode, current_role_slug):
+def build_student_form_page(*, form, student_object, selected_intake, financial_overview, page_mode, current_role_slug, browser_snapshot=None):
     latest_enrollment = financial_overview.get('latest_enrollment')
     recent_payments = financial_overview.get('payments', [])
     financial_ready = financial_overview.get('has_student', False)
@@ -105,6 +106,9 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
     can_manage_student_payments_full = current_role_slug in (ROLE_OWNER, ROLE_MANAGER)
     payment_management_form = financial_overview.get('payment_management_form')
     enrollment_management_form = financial_overview.get('enrollment_management_form')
+    active_source_declaration = None
+    if student_object is not None and getattr(student_object, 'pk', None):
+        active_source_declaration = student_object.source_declarations.filter(is_active=True).order_by('-captured_at', '-created_at').first()
     operational_focus = [
         {
             'label': 'Comece pelo nucleo do cadastro',
@@ -195,6 +199,22 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'student_object': student_object,
             'selected_intake': selected_intake,
             'financial_overview': financial_overview,
+            'source_snapshot': {
+                'operational_source': getattr(student_object, 'acquisition_source', '') if student_object is not None else '',
+                'operational_label': get_acquisition_channel_label(getattr(student_object, 'acquisition_source', '')) if student_object is not None else 'Nao informado',
+                'operational_detail': getattr(student_object, 'acquisition_source_detail', '') if student_object is not None else '',
+                'declared_source': getattr(active_source_declaration, 'declared_acquisition_source', ''),
+                'declared_label': get_acquisition_channel_label(getattr(active_source_declaration, 'declared_acquisition_source', '')),
+                'declared_detail': getattr(active_source_declaration, 'declared_source_detail', ''),
+                'declared_channel': getattr(active_source_declaration, 'declared_source_channel', ''),
+                'resolved_source': getattr(student_object, 'resolved_acquisition_source', '') if student_object is not None else '',
+                'resolved_label': get_acquisition_channel_label(getattr(student_object, 'resolved_acquisition_source', '')) if student_object is not None else 'Nao informado',
+                'resolved_detail': getattr(student_object, 'resolved_source_detail', '') if student_object is not None else '',
+                'confidence': getattr(student_object, 'source_confidence', '') if student_object is not None else '',
+                'conflict_flag': getattr(student_object, 'source_conflict_flag', False) if student_object is not None else False,
+                'resolution_reason': getattr(student_object, 'source_resolution_reason', '') if student_object is not None else '',
+                'capture_url': '',
+            },
             'payment_management_form': payment_management_form,
             'enrollment_management_form': enrollment_management_form,
             'student_form_recovery_guide': recovery_guide,
@@ -214,6 +234,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'financial_ready': financial_ready,
             'student_form_initial_step': initial_form_step,
             'plan_price_map': plan_price_map,
+            'student_browser_snapshot': browser_snapshot,
             'focus_sections': {
                 'lead': {
                     'open': ['student-form-profile'],

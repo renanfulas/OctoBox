@@ -2,15 +2,15 @@
 ARQUIVO: tela operacional do DEV.
 
 POR QUE ELE EXISTE:
-- Entrega uma área técnica separada da rotina de negócio.
+- Entrega uma area tecnica separada da rotina de negocio.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Resume navegação técnica e segurança.
+1. Resume navegacao tecnica e seguranca.
 2. Mostra eventos recentes de auditoria.
-3. Explica o limite entre manutenção, operação e contingência.
+3. Explica o limite entre manutencao, operacao e contingencia.
 
 PONTOS CRITICOS:
-- Esta área não deve virar atalho para operação administrativa ou técnica do box.
+- Esta area nao deve virar atalho para operacao administrativa ou tecnica do box.
 -->
 {% extends "layouts/base.html" %}
 
@@ -18,18 +18,21 @@ PONTOS CRITICOS:
 {% with page=operation_page %}
 <div class="operation-shell dev-scene compass-pulse--operations-dev">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
-    <div class="visually-hidden" aria-hidden="true">
-        <span>Leitura técnica controlada</span>
-        <a href="#dev-audit-board">Eventos recentes de auditoria</a>
-        <a href="#dev-boundary-board">Fronteiras técnicas</a>
-        <a href="#dev-read-board">Leitura sistêmica</a>
-    </div>
+    {% include "includes/ui/layout/page_reading_list.html" with panel=page.data.reading_panel %}
+
+    <section class="panel-grid operation-metric-grid dev-metric-grid" aria-label="Metricas tecnicas">
+        {% for card in page.data.metric_cards %}
+        {% include "includes/ui/shared/metric_card.html" with card=card compact=True extra_classes="operation-kpi-compact" %}
+        {% endfor %}
+    </section>
+
+    {% include "operations/includes/dev_realtime_metrics_board.html" %}
 
     <section class="table-card operation-table-card dev-audit-card" id="dev-audit-board" aria-label="Eventos de auditoria">
         <div class="operation-card-head">
             <div>
                 <p class="eyebrow">Eventos recentes de auditoria</p>
-                <h2 class="operation-card-title">Últimos rastros sensíveis</h2>
+                <h2 class="operation-card-title">Ultimos rastros sensiveis</h2>
                 <p class="operation-card-copy">Ator, papel e alvo antes de aprofundar.</p>
             </div>
             <span class="pill info">{{ page.data.recent_audit_events|length }} evento(s)</span>
@@ -41,7 +44,7 @@ PONTOS CRITICOS:
                         <th scope="col">Quando</th>
                         <th scope="col">Ator</th>
                         <th scope="col">Papel</th>
-                        <th scope="col">Ação</th>
+                        <th scope="col">Acao</th>
                         <th scope="col">Alvo</th>
                     </tr>
                 </thead>
@@ -55,17 +58,72 @@ PONTOS CRITICOS:
                         <td>{{ event.target_label|default:event.target_model }}</td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="5">Nenhum evento sensível registrado ainda.</td></tr>
+                    <tr><td colspan="5">Nenhum evento sensivel registrado ainda.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </section>
-    <section class="visually-hidden" id="dev-boundary-board" aria-hidden="true">
-        <h2>Fronteiras técnicas</h2>
-    </section>
-    <section class="visually-hidden" id="dev-read-board" aria-hidden="true">
-        <h2>Leitura sistêmica</h2>
+
+    <section class="panel-grid dev-support-grid" aria-label="Leitura operacional do desenvolvimento">
+        <section class="table-card operation-table-card dev-support-card" id="dev-boundary-board" aria-label="Fronteiras tecnicas">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Escopo vivo</p>
+                    <h2 class="operation-card-title">Limites operacionais do DEV</h2>
+                    <p class="operation-card-copy">O papel tecnico investiga, valida fronteiras e mantem o sistema sem invadir a rotina operacional.</p>
+                </div>
+                <span class="pill info">{{ page.data.dev_boundaries|length }} guardrails</span>
+            </div>
+            <div class="dev-support-list">
+                {% for item in page.data.dev_boundaries %}
+                <article class="dev-support-item">
+                    <strong>{{ item.title }}</strong>
+                    <p>{{ item.copy }}</p>
+                </article>
+                {% empty %}
+                <article class="dev-support-item">
+                    <strong>Sem fronteiras registradas</strong>
+                    <p>A pagina ainda nao recebeu limites operacionais explicitos.</p>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="table-card operation-table-card dev-support-card" id="dev-read-board" aria-label="Leitura sistemica">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Metodo</p>
+                    <h2 class="operation-card-title">Ordem de leitura sistemica</h2>
+                    <p class="operation-card-copy">Quando a investigacao abrir, siga uma trilha curta antes de mergulhar no historico inteiro.</p>
+                </div>
+                <span class="pill accent">{{ page.data.dev_reads|length }} leituras</span>
+            </div>
+            <div class="dev-guide-grid">
+                {% for item in page.data.dev_table_guides %}
+                <article class="dev-guide-card">
+                    <div class="dev-guide-head">
+                        <strong>{{ item.title }}</strong>
+                        <span class="pill neutral">{{ item.eyebrow }}</span>
+                    </div>
+                    <p>{{ item.copy }}</p>
+                </article>
+                {% endfor %}
+            </div>
+            <div class="dev-read-list">
+                {% for item in page.data.dev_reads %}
+                <article class="dev-read-item">
+                    <strong>{{ item.title }}</strong>
+                    <p>{{ item.copy }}</p>
+                </article>
+                {% empty %}
+                <article class="dev-read-item">
+                    <strong>Sem trilha definida</strong>
+                    <p>Adicione uma leitura sistemica quando a role precisar de protocolo mais guiado.</p>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
     </section>
 </div>
 {% endwith %}

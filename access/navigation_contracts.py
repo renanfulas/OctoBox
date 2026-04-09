@@ -43,22 +43,29 @@ CORE_ROUTES = {
     'reception': ShellRoute('reception-workspace', 'reception', 'recepcao'),
     'classes': ShellRoute('class-grid', 'class-grid', 'grade-aulas'),
     'coach': ShellRoute('coach-workspace', 'coach-workspace', 'operacao'),
+    'operations': ShellRoute('role-operations', 'operations', 'operacao'),
+    'whatsapp': ShellRoute('whatsapp-workspace', 'whatsapp', 'whatsapp'),
 }
 
 # 🗺️ Mapeamento estático para o context_processor/shell_actions
 # Focado em resolver scope e nav_key para visual state.
 _NAV_CONTRACTS = {
     'dashboard': ('dashboard', 'dashboard'),
+    'role-operations': ('operations', 'operacao'),
+    'owner-workspace': ('operations-owner', 'operacao'),
+    'manager-workspace': ('operations-manager', 'operacao'),
+    'dev-workspace': ('operations-dev', 'operacao'),
+    'reception-workspace': ('operations-reception', 'operacao'),
     'student-directory': ('students', 'alunos'),
     'student-quick-create': ('student-form', 'alunos'),
     'student-quick-update': ('student-form', 'alunos'),
     'finance-center': ('finance', 'financeiro'),
     'membership-plan-quick-update': ('finance-plan-form', 'financeiro'),
     'intake-center': ('intake', 'entradas'),
-    'reception-workspace': ('reception', 'recepcao'),
     'class-grid': ('class-grid', 'grade-aulas'),
     'reports-hub': ('reports-hub', 'relatorios'),
     'coach-workspace': ('coach-workspace', 'operacao'),
+    'whatsapp-workspace': ('whatsapp', 'whatsapp'),
 }
 
 

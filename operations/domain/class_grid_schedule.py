@@ -23,7 +23,46 @@ class PlannedClassGridSlot:
     start_at: datetime
 
 
-def iter_schedule_dates(*, start_date: date, end_date: date, weekdays: tuple[int, ...]) -> tuple[date, ...]:
+def _resolve_weekday_anchor(*, anchor_date: date, target_weekday: int) -> date:
+    day_offset = (target_weekday - anchor_date.weekday()) % 7
+    return anchor_date + timedelta(days=day_offset)
+
+
+def _iter_interval_schedule_dates(
+    *,
+    start_date: date,
+    end_date: date,
+    weekdays: tuple[int, ...],
+    anchor_date: date,
+    interval_days: int,
+) -> tuple[date, ...]:
+    dates: list[date] = []
+    for weekday in sorted(set(weekdays)):
+        cursor = _resolve_weekday_anchor(anchor_date=anchor_date, target_weekday=weekday)
+        while cursor <= end_date:
+            if cursor >= start_date:
+                dates.append(cursor)
+            cursor += timedelta(days=interval_days)
+    return tuple(sorted(dates))
+
+
+def iter_schedule_dates(
+    *,
+    start_date: date,
+    end_date: date,
+    weekdays: tuple[int, ...],
+    anchor_date: date | None = None,
+    interval_days: int | None = None,
+) -> tuple[date, ...]:
+    if anchor_date is not None and interval_days:
+        return _iter_interval_schedule_dates(
+            start_date=start_date,
+            end_date=end_date,
+            weekdays=weekdays,
+            anchor_date=anchor_date,
+            interval_days=interval_days,
+        )
+
     dates: list[date] = []
     cursor = start_date
     while cursor <= end_date:
@@ -38,6 +77,8 @@ def build_class_grid_schedule_plan(
     start_date: date,
     end_date: date,
     weekdays: tuple[int, ...],
+    anchor_date: date | None = None,
+    interval_days: int | None = None,
     start_time: time,
     duration_minutes: int,
     sequence_count: int,
@@ -47,6 +88,8 @@ def build_class_grid_schedule_plan(
         start_date=start_date,
         end_date=end_date,
         weekdays=weekdays,
+        anchor_date=anchor_date,
+        interval_days=interval_days,
     ):
         for sequence_offset in range(sequence_count + 1):
             slot_start = datetime.combine(scheduled_date, start_time) + timedelta(

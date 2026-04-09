@@ -34,6 +34,25 @@ class PageHeroContractTests(SimpleTestCase):
         self.assertEqual(hero['contract']['max_title_lines'], 2)
         self.assertEqual(hero['contract']['max_copy_lines'], 2)
 
+    def test_build_page_hero_allows_local_override_for_primary_actions(self):
+        hero = build_page_hero(
+            eyebrow='Teste',
+            title='Hero com excecao controlada',
+            copy='Uma frase curta para manter leitura direta.',
+            actions=[
+                {'label': 'Acao 1', 'href': '#1'},
+                {'label': 'Acao 2', 'href': '#2'},
+                {'label': 'Acao 3', 'href': '#3'},
+                {'label': 'Acao 4', 'href': '#4'},
+            ],
+            contract={'max_primary_actions': 4},
+        )
+
+        self.assertEqual(len(hero['actions']), 4)
+        self.assertEqual(hero['contract']['max_primary_actions'], 4)
+        self.assertEqual(hero['contract']['max_title_lines'], 2)
+        self.assertEqual(hero['contract']['max_copy_lines'], 2)
+
 
 class PagePayloadBridgeContractTests(SimpleTestCase):
     def test_attach_page_payload_propagates_shared_contract_to_page_context(self):

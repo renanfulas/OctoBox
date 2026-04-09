@@ -14,7 +14,10 @@
             {% for item in day.visible_sessions %}
             <div class="monthly-session-chip">
                 <div class="monthly-session-chip-body">
-                    <strong>{{ item.starts_at|date:"H:i" }}</strong>
+                    <div class="monthly-session-chip-top">
+                        <strong>{{ item.starts_at|date:"H:i" }}</strong>
+                        <span class="monthly-session-chip-coach">{{ item.coach_display_name }}</span>
+                    </div>
                     <span>{{ item.object.title }}</span>
                 </div>
             </div>

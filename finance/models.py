@@ -12,11 +12,24 @@ PONTOS CRITICOS:
 - o ownership de codigo do dominio financeiro ja saiu de boxcore, mas o estado historico do app ainda permanece nesta fase.
 """
 
-from finance.model_definitions import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
+from finance.model_definitions import (
+    Enrollment,
+    EnrollmentStatus,
+    FinanceFollowUp,
+    FinanceFollowUpOutcomeStatus,
+    FinanceFollowUpStatus,
+    MembershipPlan,
+    Payment,
+    PaymentMethod,
+    PaymentStatus,
+)
 
 __all__ = [
     'Enrollment',
     'EnrollmentStatus',
+    'FinanceFollowUp',
+    'FinanceFollowUpOutcomeStatus',
+    'FinanceFollowUpStatus',
     'MembershipPlan',
     'Payment',
     'PaymentMethod',

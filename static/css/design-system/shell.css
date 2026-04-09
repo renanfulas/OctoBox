@@ -111,36 +111,28 @@ PONTOS CRITICOS:
 .content::before {
     inset: 0;
     border-radius: 40px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.15)), var(--fdw-panel);
-    border: 1px solid rgba(255, 255, 255, 0.52);
-    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.03), 0 2px 6px rgba(15, 23, 42, 0.02);
+    background: transparent;
+    border: 0;
+    box-shadow: none;
 }
 
 .content::after {
-    content: "";
-    position: absolute;
-    inset: 18px 16px auto;
-    height: 64px;
-    border-radius: 28px;
-    background: linear-gradient(90deg, rgba(212, 102, 44, 0.02), transparent 30%, rgba(37, 85, 220, 0.02) 70%, transparent);
-    pointer-events: none;
-    z-index: 0;
+    content: none;
 }
 
 .page-body {
     gap: calc(var(--section-gap) + 4px);
-    padding: 8px 0 0;
+    padding: 0;
 }
 
 body[data-theme="dark"] .content::before {
-    border-color: rgba(148, 163, 184, 0.14);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)), var(--fdw-panel);
-    box-shadow: var(--fdw-shadow);
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
 }
 
 body[data-theme="dark"] .content::after {
-    background: linear-gradient(90deg, rgba(212, 102, 44, 0.06), transparent 28%, rgba(37, 85, 220, 0.06) 70%, transparent);
-    opacity: 0.4;
+    content: none;
 }
 
 @media (max-width: 960px) {
@@ -158,8 +150,6 @@ body[data-theme="dark"] .content::after {
     }
 
     .content::after {
-        inset: 12px 10px auto;
-        height: 84px;
-        border-radius: 20px;
+        content: none;
     }
 }

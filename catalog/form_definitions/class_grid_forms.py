@@ -84,6 +84,12 @@ class ClassGridFilterForm(forms.Form):
 
 
 class ClassScheduleRecurringForm(forms.ModelForm):
+    ROTATION_INTERVAL_CHOICES = (
+        (7, '7 dias'),
+        (14, '14 dias'),
+        (21, '21 dias'),
+    )
+
     start_date = forms.DateField(
         label='Primeiro dia (dd/mm/aa)',
         input_formats=['%d/%m/%y', '%d/%m/%Y', '%Y-%m-%d'],
@@ -146,6 +152,30 @@ class ClassScheduleRecurringForm(forms.ModelForm):
         choices=WEEKDAY_CHOICES,
         widget=forms.CheckboxSelectMultiple,
     )
+    anchor_date = forms.DateField(
+        required=False,
+        label='Data base do rodizio',
+        input_formats=['%d/%m/%y', '%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(
+            format='%d/%m/%y',
+            attrs={
+                'placeholder': '11/04/26',
+                'inputmode': 'numeric',
+                'autocomplete': 'off',
+                'maxlength': '8',
+                'pattern': '\\d{2}/\\d{2}/\\d{2}',
+                'data-mask': 'date',
+            },
+        ),
+    )
+    interval_days = forms.TypedChoiceField(
+        required=False,
+        label='Ciclo do rodizio',
+        choices=ROTATION_INTERVAL_CHOICES,
+        coerce=int,
+        empty_value=None,
+        widget=forms.Select,
+    )
     coach = forms.ModelChoiceField(
         queryset=get_user_model().objects.none(),
         required=False,
@@ -202,9 +232,12 @@ class ClassScheduleRecurringForm(forms.ModelForm):
         apply_text_input_attrs(self.fields['notes'], placeholder='Ex.: aula de alta demanda; abrir check-in 15 min antes.')
         apply_date_input_attrs(self.fields['start_date'], placeholder='11/03/26', maxlength=8, pattern=r'\d{2}/\d{2}/\d{2}')
         apply_date_input_attrs(self.fields['end_date'], placeholder='08/04/26', maxlength=8, pattern=r'\d{2}/\d{2}/\d{2}')
+        apply_date_input_attrs(self.fields['anchor_date'], placeholder='11/04/26', maxlength=8, pattern=r'\d{2}/\d{2}/\d{2}')
 
         self.fields['start_date'].initial = timezone.localdate()
         self.fields['end_date'].initial = timezone.localdate() + timezone.timedelta(days=27)
+        self.fields['anchor_date'].help_text = 'Use a primeira data que serve de ancora para sabado, domingo ou ambos.'
+        self.fields['interval_days'].help_text = '7, 14 ou 21 dias para o rodizio de fim de semana.'
         self.fields['duration_minutes'].initial = 60
         self.fields['capacity'].initial = 20
         self.fields['status'].initial = SessionStatus.SCHEDULED
@@ -233,6 +266,8 @@ class ClassScheduleRecurringForm(forms.ModelForm):
         start_date = cleaned_data.get('start_date')
         end_date = cleaned_data.get('end_date')
         weekdays = cleaned_data.get('weekdays') or []
+        anchor_date = cleaned_data.get('anchor_date')
+        interval_days = cleaned_data.get('interval_days')
 
         if start_date and end_date and end_date < start_date:
             self.add_error('end_date', 'A data final precisa ser igual ou posterior a data inicial.')
@@ -242,6 +277,18 @@ class ClassScheduleRecurringForm(forms.ModelForm):
 
         if not weekdays:
             self.add_error('weekdays', 'Escolha pelo menos um dia da semana para gerar a agenda.')
+
+        if anchor_date and end_date and anchor_date > end_date:
+            self.add_error('anchor_date', 'A data base precisa cair antes do fim da janela planejada.')
+
+        if anchor_date and not interval_days:
+            self.add_error('interval_days', 'Escolha o ciclo do rodizio quando informar uma data base.')
+
+        if interval_days and not anchor_date:
+            self.add_error('anchor_date', 'Informe a data base para usar o ciclo do rodizio.')
+
+        if anchor_date and any(day not in (5, 6) for day in weekdays):
+            self.add_error('weekdays', 'O rodizio com data base so pode ser aplicado em sabado, domingo ou ambos.')
 
         return cleaned_data
 

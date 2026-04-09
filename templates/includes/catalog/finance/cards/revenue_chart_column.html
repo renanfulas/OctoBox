@@ -13,8 +13,8 @@ PONTOS CRITICOS:
 -->
 <div class="finance-revenue-column">
     <div class="finance-revenue-column-bars">
-        <div class="finance-revenue-bar is-expected" style="--finance-bar-height: {{ item.expected_height }}%;" title="Esperado: R$ {{ item.expected_value|floatformat:2 }}"></div>
-        <div class="finance-revenue-bar is-realized" style="--finance-bar-height: {{ item.realized_height }}%;" title="Realizado: R$ {{ item.realized_value|floatformat:2 }}"></div>
+        <div class="finance-revenue-bar is-expected" data-visual-height="{{ item.expected_height }}" title="Esperado: R$ {{ item.expected_value|floatformat:2 }}"></div>
+        <div class="finance-revenue-bar is-realized" data-visual-height="{{ item.realized_height }}" title="Realizado: R$ {{ item.realized_value|floatformat:2 }}"></div>
     </div>
     <strong class="finance-revenue-column-label">{{ item.label }}</strong>
 </div>

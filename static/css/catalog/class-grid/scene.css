@@ -19,9 +19,46 @@ POR QUE ELE EXISTE:
     gap: calc(var(--section-gap) - 2px);
 }
 
-.class-grid-hero {
+.class-grid-scene .class-grid-hero {
+    position: relative;
+    overflow: hidden;
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--card-border) 82%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 14%, transparent), transparent 34%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 42%),
         linear-gradient(180deg, color-mix(in srgb, var(--card-surface-strong) 96%, transparent), color-mix(in srgb, var(--card-surface) 92%, transparent));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        0 18px 34px rgba(19, 33, 50, 0.08);
+}
+
+.class-grid-scene .class-grid-hero::after {
+    content: "";
+    position: absolute;
+    inset: auto -36px -48px auto;
+    width: 170px;
+    height: 170px;
+    border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent), transparent 68%);
+    pointer-events: none;
+}
+
+.class-grid-scene [data-panel="class-grid-hero"] {
+    position: relative;
+}
+
+body[data-theme="dark"] .class-grid-scene .class-grid-hero {
+    border-color: rgba(92, 146, 214, 0.16);
+    background:
+        radial-gradient(circle at top right, rgba(122, 92, 250, 0.14), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(0, 229, 255, 0.1), transparent 42%),
+        linear-gradient(145deg, rgba(8, 15, 29, 0.98), rgba(6, 12, 24, 0.98) 58%, rgba(4, 10, 20, 0.96));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 20px 38px rgba(0, 0, 0, 0.24);
+}
+
+body[data-theme="dark"] .class-grid-scene .class-grid-hero::after {
+    background: radial-gradient(circle, rgba(41, 103, 163, 0.24), transparent 70%);
 }
 

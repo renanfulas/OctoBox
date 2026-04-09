@@ -9,14 +9,18 @@ POR QUE ELE EXISTE:
     <div class="table-responsive">
         <table class="student-financial-ledger__table">
             <caption class="visually-hidden">Hist&oacute;rico de cobran&ccedil;as do aluno com data, m&eacute;todo, valor, status e a&ccedil;&atilde;o para abrir detalhes.</caption>
+            <colgroup>
+                <col class="student-financial-ledger__col student-financial-ledger__col--description">
+                <col class="student-financial-ledger__col student-financial-ledger__col--date">
+                <col class="student-financial-ledger__col student-financial-ledger__col--status">
+                <col class="student-financial-ledger__col student-financial-ledger__col--amount">
+            </colgroup>
             <thead>
                 <tr class="student-financial-ledger__head">
                     <th scope="col">Descri&ccedil;&atilde;o</th>
                     <th scope="col">Data</th>
-                    <th scope="col">M&eacute;todo</th>
                     <th scope="col" class="is-center">Status</th>
                     <th scope="col" class="is-right">Valor</th>
-                    <th scope="col" class="is-right"><span class="visually-hidden">A&ccedil;&otilde;es</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -41,18 +45,18 @@ POR QUE ELE EXISTE:
                             </div>
                         </div>
                     </td>
-                    <td class="student-financial-ledger__date">{{ payment.due_date|date:"d M Y" }}</td>
-                    <td class="student-financial-ledger__method">{{ payment.get_method_display|default:"-" }}</td>
+                    <td class="student-financial-ledger__date">
+                        <span class="student-financial-ledger__date-primary">{{ payment.due_date|date:"d" }}</span>
+                        <span class="student-financial-ledger__date-secondary">{{ payment.due_date|date:"b" }}</span>
+                        <span class="student-financial-ledger__date-tertiary">{{ payment.due_date|date:"y" }}</span>
+                    </td>
                     <td class="is-center">
                         <span class="pill {% if payment.status == 'paid' %}success{% elif payment.status == 'overdue' %}warning{% else %}info{% endif %}">
                             {{ payment.get_status_display }}
                         </span>
                     </td>
-                    <td class="student-financial-ledger__amount is-right">R$ {{ payment.amount|floatformat:2 }}</td>
-                    <td class="is-right">
-                        <button class="student-financial-ledger__action" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}" aria-label="Abrir detalhes da cobran&ccedil;a">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                        </button>
+                    <td class="student-financial-ledger__amount is-right">
+                        <span class="student-financial-ledger__amount-value">R$ {{ payment.amount|floatformat:2 }}</span>
                     </td>
                 </tr>
                 {% endfor %}

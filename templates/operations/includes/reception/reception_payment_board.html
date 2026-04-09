@@ -4,16 +4,23 @@ ARQUIVO: fila curta de cobranca da Recepcao.
 POR QUE ELE EXISTE:
 - separa a leitura de caixa do balcao do restante da tela.
 -->
-<article class="table-card operation-table-card reception-payment-board reception-secondary-card" id="reception-payment-board" data-panel="reception-payment-board">
+<article
+    class="table-card operation-table-card reception-payment-board reception-secondary-card"
+    id="reception-payment-board"
+    data-panel="reception-payment-board"
+    data-refresh-url="{% url 'reception-payment-board-fragment' %}">
     <div class="operation-card-head">
         <div>
             <p class="eyebrow">Pagamentos de hoje</p>
             <h2 class="operation-card-title">Receba rapido no balcao</h2>
             <p class="operation-card-copy">Veja quem esta pendente, confira o valor e finalize sem abrir o financeiro completo.</p>
         </div>
-        <span class="pill warning">{{ page.data.reception_queue|length }} caso(s)</span>
+        <div class="reception-payment-head-pills">
+            <span class="pill neutral reception-payment-live-pill" data-role="reception-payment-live-pill">Escuta pronta</span>
+            <span class="pill warning">{{ page.data.reception_queue|length }} caso(s)</span>
+        </div>
     </div>
-    <div class="reception-payment-grid">
+    <div class="reception-payment-grid" data-role="reception-payment-grid">
         {% for item in page.data.reception_queue %}
         {% include "operations/includes/reception/reception_payment_card.html" with item=item page=page %}
         {% empty %}

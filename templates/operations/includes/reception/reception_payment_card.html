@@ -1,4 +1,8 @@
-<article class="history-entry finance-action-card finance-action-card-compact reception-payment-card" data-panel="reception-payment-card">
+<article
+    class="history-entry finance-action-card finance-action-card-compact reception-payment-card"
+    data-panel="reception-payment-card"
+    data-student-id="{{ item.student_id }}"
+    data-student-events-stream-url="{{ item.student_events_stream_url }}">
     {% url 'reception-payment-action' payment_id=item.payment_id as reception_payment_action_url %}
     {% url 'finance-communication-action' as finance_communication_action_url %}
     <div class="row-between history-header finance-action-head">

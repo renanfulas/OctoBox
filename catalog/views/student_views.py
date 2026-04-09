@@ -20,8 +20,11 @@ import json
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.signing import BadSignature, SignatureExpired
+from django.db import IntegrityError
 from django.http import Http404, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.views import View
@@ -34,11 +37,21 @@ from shared_support.editing_locks import (
     refresh_student_lock,
     release_student_lock,
 )
+from shared_support.student_event_stream import build_student_event_stream, publish_student_stream_event
+from shared_support.student_snapshot_versions import build_profile_version, build_student_snapshot_version
 
-from access.permissions import RoleRequiredMixin
+from access.permissions import AjaxLoginRequiredMixin, RoleRequiredMixin
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
-from catalog.forms import EnrollmentManagementForm, PaymentManagementForm, StudentPaymentActionForm, StudentQuickForm, StudentExpressForm
+from catalog.forms import (
+    EnrollmentManagementForm,
+    PaymentManagementForm,
+    StudentPaymentActionForm,
+    StudentQuickForm,
+    StudentExpressForm,
+    StudentSourceDeclarationCaptureForm,
+)
 from catalog.presentation import build_student_directory_page, build_student_form_page
+from catalog.presentation.student_financial_fragments import render_student_financial_fragments
 from catalog.presentation.shared import attach_catalog_page_payload
 from catalog.services.student_enrollment_actions import handle_student_enrollment_action
 from catalog.services.student_payment_actions import handle_student_payment_action
@@ -46,10 +59,14 @@ from catalog.services.student_workflows import run_student_quick_create_workflow
 from catalog.student_queries import build_student_directory_snapshot, build_student_financial_snapshot
 from shared_support.redis_snapshots import prewarm_student_snapshots
 from finance.models import Enrollment, Payment
+from monitoring.student_realtime_metrics import record_student_save_conflict
+from onboarding.attribution import extract_acquisition_channel
 from onboarding.models import StudentIntake
 from reporting.application.catalog_reports import build_student_directory_report
 from reporting.infrastructure import build_report_response
 from shared_support.security import check_export_quota
+from students.facade import run_student_source_declaration_record
+from students.infrastructure.source_capture_links import build_student_source_capture_token, read_student_source_capture_token
 from students.models import Student
 
 from .catalog_base_views import CatalogBaseView
@@ -67,6 +84,149 @@ def _append_fragment(url, fragment):
     return f'{url}#{fragment}'
 
 
+def _expects_json_response(request):
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+
+def _student_financial_json_response(*, request, student, message, selected_payment=None, status=200):
+    return JsonResponse(
+        {
+            'status': 'success',
+            'message': message,
+            'selected_payment_id': getattr(selected_payment, 'id', None),
+            'fragments': render_student_financial_fragments(
+                student,
+                request=request,
+                selected_payment=selected_payment,
+            ),
+        },
+        status=status,
+    )
+
+
+def _student_financial_json_error(*, message, status=400):
+    return JsonResponse(
+        {
+            'status': 'error',
+            'message': message,
+        },
+        status=status,
+    )
+
+
+def _build_student_source_capture_url(*, request, student):
+    token = build_student_source_capture_token(student_id=student.id)
+    return f"{request.build_absolute_uri(reverse('student-source-capture'))}?token={token}"
+
+
+def _serialize_student_browser_snapshot(*, request, student):
+    """
+    Serializa uma leitura canonica e enxuta da ficha do aluno para warm-up do navegador.
+
+    Mantemos o backend como fonte oficial, mas entregamos um payload pequeno o bastante
+    para o browser guardar e reaproveitar sem custo excessivo.
+    """
+
+    financial_overview = build_student_financial_snapshot(student)
+    latest_enrollment = financial_overview.get('latest_enrollment')
+    latest_payment = next(iter(financial_overview.get('payments') or []), None)
+    current_lock = get_student_lock_status(student.id)
+    snapshot_version = build_student_snapshot_version(
+        student=student,
+        latest_enrollment=latest_enrollment,
+        latest_payment=latest_payment,
+    )
+    profile_version = build_profile_version(student)
+
+    if not current_lock:
+        lock_payload = {'status': 'free'}
+    elif current_lock.get('user_id') == request.user.id:
+        lock_payload = {'status': 'owner'}
+    else:
+        lock_payload = {
+            'status': 'blocked',
+            'holder': {
+                'user_display': current_lock.get('user_display', ''),
+                'role_label': current_lock.get('role_label', ''),
+            },
+        }
+
+    return {
+        'id': student.id,
+        'full_name': student.full_name,
+        'email': student.email or '',
+        'phone': student.phone or '',
+        'status': student.status,
+        'financial': {
+            'latest_plan_name': latest_enrollment.plan.name if latest_enrollment and getattr(latest_enrollment, 'plan', None) else '',
+            'latest_payment_status': getattr(latest_payment, 'status', '') or '',
+            'latest_payment_due_date': latest_payment.due_date.isoformat() if getattr(latest_payment, 'due_date', None) else '',
+            'overdue_count': financial_overview.get('metrics', {}).get('pagamentos_atrasados', 0),
+            'pending_count': financial_overview.get('metrics', {}).get('pagamentos_pendentes', 0),
+        },
+        'presence': {
+            'percent_30d': financial_overview.get('metrics', {}).get('presenca_percentual_30d', 0) or 0,
+        },
+        'snapshot_version': snapshot_version,
+        'profile_version': profile_version,
+        'lock': lock_payload,
+        'links': {
+            'edit': _append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT),
+            'source_capture': _build_student_source_capture_url(request=request, student=student),
+        },
+        'generated_at': timezone.now().isoformat(),
+        'source': 'backend-snapshot',
+    }
+
+
+def _serialize_student_directory_search_entry(student):
+    latest_payment_due_date = getattr(student, 'latest_payment_due_date', None)
+    due_label = latest_payment_due_date.strftime('%d/%m/%Y') if latest_payment_due_date else ''
+
+    return {
+        'id': student.id,
+        'full_name': student.full_name,
+        'email': student.email or '',
+        'phone': student.phone or '',
+        'status': student.status,
+        'latest_plan_name': getattr(student, 'latest_plan_name', '') or '',
+        'payment_status': getattr(student, 'operational_payment_status', '') or '',
+        'presence_percent': getattr(student, 'presence_percent', 0) or 0,
+        'due_label': due_label,
+        'href': _append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT),
+        'snapshot_url': reverse('student-read-snapshot', args=[student.id]),
+        'events_stream_url': reverse('student-event-stream', args=[student.id]),
+        'drawer_fragments_url': reverse('student-drawer-fragments', args=[student.id]),
+        'drawer_profile_url': reverse('student-drawer-profile-save', args=[student.id]),
+        'edit_start_url': reverse('student-edit-session-start', args=[student.id]),
+        'edit_release_url': reverse('student-edit-session-release', args=[student.id]),
+        'lock_heartbeat_url': reverse('student-lock-heartbeat', args=[student.id]),
+        'lock_status_url': reverse('student-lock-status', args=[student.id]),
+    }
+
+
+def _build_student_drawer_fragments(*, request, student, form=None):
+    role = get_user_role(request.user)
+    role_slug = getattr(role, 'slug', ROLE_RECEPTION)
+    financial_overview = build_student_financial_snapshot(student)
+    page = build_student_form_page(
+        form=form or StudentQuickForm(instance=student),
+        student_object=student,
+        selected_intake=None,
+        financial_overview=financial_overview,
+        page_mode='update',
+        current_role_slug=role_slug,
+        browser_snapshot=_serialize_student_browser_snapshot(request=request, student=student),
+    )
+    page['data']['source_snapshot']['capture_url'] = _build_student_source_capture_url(request=request, student=student)
+    context = {'page': page}
+
+    return {
+        'profile': render_to_string('includes/catalog/student_page/student_page_profile_panel.html', context=context, request=request),
+        'financial': render_to_string('catalog/includes/student/student_quick_panel_financial.html', context=context, request=request),
+    }
+
+
 class StudentDirectoryView(CatalogBaseView):
     template_name = 'catalog/students.html'
 
@@ -75,10 +235,20 @@ class StudentDirectoryView(CatalogBaseView):
         base_context = self.get_base_context()
         context.update(base_context)
         snapshot = build_student_directory_snapshot(self.request.GET)
+        index_params = self.request.GET.copy()
+        if 'query' in index_params:
+            del index_params['query']
+        if 'page' in index_params:
+            del index_params['page']
         students = snapshot['students']
         student_count = snapshot['total_students']
         current_role_slug = base_context['current_role'].slug
         context['students'] = students
+        search_snapshot = snapshot if not self.request.GET.get('query') else build_student_directory_snapshot(index_params)
+        directory_search_entries = [
+            _serialize_student_directory_search_entry(student)
+            for student in search_snapshot['students']
+        ]
 
         from django.core.paginator import Paginator
         
@@ -115,6 +285,11 @@ class StudentDirectoryView(CatalogBaseView):
             snapshot=snapshot,
             current_role_slug=current_role_slug,
             base_query_string=base_query_string,
+            directory_search={
+                'cache_key': index_params.urlencode() or 'all',
+                'refresh_token': timezone.now().isoformat(),
+                'index': directory_search_entries,
+            },
         )
 
         # 🚀 Performance AAA (Preloading Preditivo): Aquecimento de Cache
@@ -157,12 +332,20 @@ class StudentQuickBaseView(CatalogBaseView, FormView):
         initial = super().get_initial()
         selected_intake = self.get_selected_intake()
         if selected_intake and self.page_mode == 'create':
+            intake_raw_payload = getattr(selected_intake, 'raw_payload', {}) or {}
+            intake_channel = extract_acquisition_channel(
+                raw_payload=intake_raw_payload,
+                fallback_source=getattr(selected_intake, 'source', ''),
+            )
+            intake_detail = ((intake_raw_payload.get('attribution') or {}).get('acquisition') or {}).get('declared_detail', '')
             initial.update(
                 {
                     'full_name': selected_intake.full_name,
                     'phone': selected_intake.phone,
                     'email': selected_intake.email,
                     'intake_record': selected_intake,
+                    'acquisition_source': intake_channel,
+                    'acquisition_source_detail': intake_detail,
                 }
             )
         return initial
@@ -220,7 +403,10 @@ class StudentQuickBaseView(CatalogBaseView, FormView):
             financial_overview=financial_overview,
             page_mode=self.page_mode,
             current_role_slug=role_slug,
+            browser_snapshot=_serialize_student_browser_snapshot(request=self.request, student=self.object) if self.object else None,
         )
+        if self.object is not None:
+            page_payload['data']['source_snapshot']['capture_url'] = _build_student_source_capture_url(request=self.request, student=self.object)
         return attach_catalog_page_payload(
             context,
             payload_key='student_form_page',
@@ -246,11 +432,17 @@ class StudentQuickCreateView(StudentQuickBaseView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        workflow = run_student_quick_create_workflow(
-            actor=self.request.user,
-            form=form,
-            selected_intake=self.get_selected_intake(),
-        )
+        try:
+            workflow = run_student_quick_create_workflow(
+                actor=self.request.user,
+                form=form,
+                selected_intake=self.get_selected_intake(),
+            )
+        except IntegrityError as exc:
+            if 'phone_lookup_index' not in str(exc):
+                raise
+            form.add_error('phone', 'Ja existe um aluno cadastrado com este WhatsApp.')
+            return self.form_invalid(form)
         self.object = workflow['student']
         messages.success(self.request, f'Aluno {self.object.full_name} cadastrado com sucesso.')
         return super().form_valid(form)
@@ -312,15 +504,14 @@ class StudentQuickUpdateView(StudentQuickBaseView):
         self.object = get_object_or_404(Student, pk=kwargs['student_id'])
 
         # --- Lock de edicao com hierarquia de papeis ---
-        # Dev nao participa do lock: ve a ficha sem adquirir nem bloquear.
+        # A ficha abre em leitura. O lock so e pedido quando a pessoa entra em edicao.
         role = get_user_role(request.user)
         role_slug = getattr(role, 'slug', None)
 
         if role_slug and role_slug != ROLE_DEV:
-            lock_result = acquire_student_lock(self.object.id, request.user, role_slug)
-            if not lock_result.acquired:
-                # Armazena o detentor para o template exibir o banner contextual.
-                self._lock_holder = lock_result.holder
+            current_lock = get_student_lock_status(self.object.id)
+            if current_lock and current_lock.get('user_id') != request.user.id:
+                self._lock_holder = current_lock
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -341,14 +532,20 @@ class StudentQuickUpdateView(StudentQuickBaseView):
         return kwargs
 
     def form_valid(self, form):
-        # Revalida o lock antes de persistir. Se outro usuario de maior prioridade
-        # tomou o lock enquanto este usuario estava preenchendo, rejeita a gravacao.
+        # Revalida o lock antes de persistir. Salvar sem lock valido nao e permitido.
         role = get_user_role(self.request.user)
         role_slug = getattr(role, 'slug', None)
+        request_profile_version = self.request.POST.get('profile_version', '')
 
         if role_slug and role_slug != ROLE_DEV:
             current_lock = get_student_lock_status(self.object.id)
-            if current_lock and current_lock.get('user_id') != self.request.user.id:
+            if not current_lock or current_lock.get('user_id') != self.request.user.id:
+                if not current_lock:
+                    messages.error(
+                        self.request,
+                        'A edicao desta ficha nao esta reservada para voce agora. Entre em modo de edicao novamente antes de salvar.'
+                    )
+                    return redirect(_append_fragment(reverse('student-quick-update', args=[self.object.id]), STUDENT_FORM_ESSENTIAL_FRAGMENT))
                 holder = current_lock
                 messages.error(
                     self.request,
@@ -357,6 +554,15 @@ class StudentQuickUpdateView(StudentQuickBaseView):
                     f"Suas alterações não foram salvas. Fale com ele para coordenar."
                 )
                 return redirect(_append_fragment(reverse('student-quick-update', args=[self.object.id]), STUDENT_FORM_ESSENTIAL_FRAGMENT))
+
+        current_profile_version = build_profile_version(self.object)
+        if request_profile_version and current_profile_version and request_profile_version != current_profile_version:
+            record_student_save_conflict('student-form')
+            messages.error(
+                self.request,
+                'A ficha mudou antes do seu salvar. Reabrimos a leitura oficial para evitar sobrescrever informacao mais nova.'
+            )
+            return redirect(_append_fragment(reverse('student-quick-update', args=[self.object.id]), STUDENT_FORM_ESSENTIAL_FRAGMENT))
 
         changed_fields = list(form.changed_data)
         workflow = run_student_quick_update_workflow(
@@ -370,20 +576,264 @@ class StudentQuickUpdateView(StudentQuickBaseView):
         # Libera o lock apos salvar com sucesso.
         if role_slug and role_slug != ROLE_DEV:
             release_student_lock(self.object.id, self.request.user.id)
+            publish_student_stream_event(
+                student_id=self.object.id,
+                event_type='student.lock.released',
+                meta={
+                    'holder': {
+                        'user_display': self.request.user.get_full_name() or self.request.user.username,
+                    },
+                    'reason': 'student_form_saved',
+                },
+            )
 
         messages.success(self.request, f'Cadastro de {self.object.full_name} atualizado com sucesso.')
         return redirect(self.get_success_url())
 
 
-class StudentPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
+class StudentEditSessionStartView(LoginRequiredMixin, RoleRequiredMixin, View):
+    """
+    Inicia a sessao autoritativa de edicao da ficha do aluno.
+
+    A leitura da ficha fica livre, mas a caneta so e entregue pelo backend
+    quando o operador realmente entra em modo de edicao.
+    """
+
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION, ROLE_DEV)
+
+    def post(self, request, student_id, *args, **kwargs):
+        student = get_object_or_404(Student, pk=student_id)
+        role = get_user_role(request.user)
+        role_slug = getattr(role, 'slug', None)
+
+        if not role_slug:
+            return JsonResponse({'status': 'denied', 'reason': 'no_role'}, status=403)
+
+        if role_slug == ROLE_DEV:
+            return JsonResponse({'status': 'granted', 'mode': 'dev_bypass'})
+
+        lock_result = acquire_student_lock(student.id, request.user, role_slug)
+        if lock_result.acquired:
+            holder_meta = {
+                'user_display': request.user.get_full_name() or request.user.username,
+                'role_label': getattr(role, 'name', '') or getattr(role, 'label', '') or role_slug,
+            }
+            if lock_result.displaced_holder:
+                publish_student_stream_event(
+                    student_id=student.id,
+                    event_type='student.lock.preempted',
+                    meta={
+                        'holder': holder_meta,
+                        'displaced_holder': {
+                            'user_display': lock_result.displaced_holder.get('user_display', ''),
+                            'role_label': lock_result.displaced_holder.get('role_label', ''),
+                        },
+                    },
+                )
+            else:
+                publish_student_stream_event(
+                    student_id=student.id,
+                    event_type='student.lock.acquired',
+                    meta={'holder': holder_meta},
+                )
+            return JsonResponse({'status': 'granted'})
+
+        holder = lock_result.holder or {}
+        return JsonResponse(
+            {
+                'status': 'blocked',
+                'holder': {
+                    'user_display': holder.get('user_display', ''),
+                    'role_label': holder.get('role_label', ''),
+                },
+            },
+            status=409,
+        )
+
+
+class StudentEditSessionReleaseView(LoginRequiredMixin, RoleRequiredMixin, View):
+    """
+    Libera explicitamente a sessao de edicao da ficha.
+    """
+
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION, ROLE_DEV)
+
+    def post(self, request, student_id, *args, **kwargs):
+        student = get_object_or_404(Student, pk=student_id)
+        released = release_student_lock(student.id, request.user.id)
+        if released:
+            publish_student_stream_event(
+                student_id=student.id,
+                event_type='student.lock.released',
+                meta={
+                    'holder': {
+                        'user_display': request.user.get_full_name() or request.user.username,
+                    }
+                },
+            )
+        return JsonResponse({'status': 'released' if released else 'noop'})
+
+
+class StudentEventStreamView(LoginRequiredMixin, RoleRequiredMixin, View):
+    """
+    Stream SSE dos eventos criticos do drawer do aluno.
+
+    Nesta primeira fase, o canal cobre lock autoritativo. O frontend usa
+    o evento apenas como gatilho para atualizar snapshot/fragments oficiais.
+    """
+
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION, ROLE_DEV)
+
+    def get(self, request, student_id, *args, **kwargs):
+        get_object_or_404(Student, pk=student_id)
+        return build_student_event_stream(student_id=student_id)
+
+
+class StudentReadSnapshotView(LoginRequiredMixin, RoleRequiredMixin, View):
+    """
+    Entrega um snapshot canonico e enxuto da ficha para prefetch do navegador.
+
+    Nao concede lock nem autoriza edicao. Apenas aquece leitura com a verdade
+    server-side mais recente disponivel para o usuario autenticado.
+    """
+
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION, ROLE_DEV)
+
+    def get(self, request, student_id, *args, **kwargs):
+        student = get_object_or_404(Student, pk=student_id)
+        return JsonResponse(
+            {
+                'status': 'ok',
+                'snapshot': _serialize_student_browser_snapshot(request=request, student=student),
+            }
+        )
+
+
+class StudentDrawerFragmentsView(LoginRequiredMixin, RoleRequiredMixin, View):
+    """
+    Carrega os fragments reais da ficha dentro do drawer do diretorio.
+
+    Mantemos a navegação parcial só para leitura e edição curta do perfil,
+    sem converter toda a aplicação em SPA improvisada.
+    """
+
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION, ROLE_DEV)
+
+    def get(self, request, student_id, *args, **kwargs):
+        student = get_object_or_404(Student, pk=student_id)
+        return JsonResponse(
+            {
+                'status': 'ok',
+                'snapshot': _serialize_student_browser_snapshot(request=request, student=student),
+                'fragments': _build_student_drawer_fragments(request=request, student=student),
+            }
+        )
+
+
+class StudentDrawerProfileSaveView(LoginRequiredMixin, RoleRequiredMixin, View):
+    """
+    Salva o perfil do aluno diretamente do drawer do diretorio.
+
+    A regra de lock continua autoritativa no backend; o drawer apenas oferece
+    uma casca mais rápida para edição curta.
+    """
+
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION, ROLE_DEV)
+
+    def post(self, request, student_id, *args, **kwargs):
+        student = get_object_or_404(Student, pk=student_id)
+        role = get_user_role(request.user)
+        role_slug = getattr(role, 'slug', None)
+        form = StudentQuickForm(request.POST, instance=student)
+        request_profile_version = request.POST.get('profile_version', '')
+
+        if role_slug and role_slug != ROLE_DEV:
+            current_lock = get_student_lock_status(student.id)
+            if not current_lock or current_lock.get('user_id') != request.user.id:
+                fragments = _build_student_drawer_fragments(request=request, student=student, form=form)
+                holder = current_lock or {}
+                return JsonResponse(
+                    {
+                        'status': 'error',
+                        'message': (
+                            f"{holder.get('user_display', 'Outro usuário')} ({holder.get('role_label', '')}) está com a edição desta ficha."
+                            if current_lock else
+                            'Entre em modo de edição novamente antes de salvar.'
+                        ),
+                        'snapshot': _serialize_student_browser_snapshot(request=request, student=student),
+                        'fragments': fragments,
+                    },
+                    status=409,
+                )
+
+        current_profile_version = build_profile_version(student)
+        if request_profile_version and current_profile_version and request_profile_version != current_profile_version:
+            record_student_save_conflict('drawer-profile')
+            return JsonResponse(
+                {
+                    'status': 'conflict',
+                    'message': 'A ficha mudou antes do seu salvar. Atualizamos a leitura oficial para evitar conflito.',
+                    'snapshot': _serialize_student_browser_snapshot(request=request, student=student),
+                    'fragments': _build_student_drawer_fragments(request=request, student=student, form=form),
+                },
+                status=409,
+            )
+
+        if not form.is_valid():
+            return JsonResponse(
+                {
+                    'status': 'error',
+                    'message': 'Revise os campos destacados antes de salvar.',
+                    'snapshot': _serialize_student_browser_snapshot(request=request, student=student),
+                    'fragments': _build_student_drawer_fragments(request=request, student=student, form=form),
+                },
+                status=400,
+            )
+
+        workflow = run_student_quick_update_workflow(
+            actor=request.user,
+            form=form,
+            changed_fields=list(form.changed_data),
+            selected_intake=None,
+        )
+        student = workflow['student']
+
+        if role_slug and role_slug != ROLE_DEV:
+            release_student_lock(student.id, request.user.id)
+            publish_student_stream_event(
+                student_id=student.id,
+                event_type='student.lock.released',
+                meta={
+                    'holder': {
+                        'user_display': request.user.get_full_name() or request.user.username,
+                    },
+                    'reason': 'profile_saved',
+                },
+            )
+
+        return JsonResponse(
+            {
+                'status': 'success',
+                'message': f'Perfil de {student.full_name} atualizado com sucesso.',
+                'snapshot': _serialize_student_browser_snapshot(request=request, student=student),
+                'fragments': _build_student_drawer_fragments(request=request, student=student),
+            }
+        )
+
+
+class StudentPaymentActionView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
     allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
 
     @idempotent_action
     def post(self, request, student_id, *args, **kwargs):
         student = get_object_or_404(Student, pk=student_id)
+        expects_json = _expects_json_response(request)
         action_form = StudentPaymentActionForm(request.POST)
         if not action_form.is_valid():
-            messages.error(request, 'A acao financeira enviada para o aluno nao e valida neste fluxo.')
+            error_message = 'A acao financeira enviada para o aluno nao e valida neste fluxo.'
+            if expects_json:
+                return _student_financial_json_error(message=error_message, status=400)
+            messages.error(request, error_message)
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
         action = action_form.cleaned_data['action']
@@ -398,9 +848,20 @@ class StudentPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
                 payload=request.POST
             )
             if new_payment:
-                messages.success(request, 'Cobranca avulsa criada e recebimento confirmado via Balcao.')
+                success_message = 'Cobranca avulsa criada e recebimento confirmado via Balcao.'
+                if expects_json:
+                    return _student_financial_json_response(
+                        request=request,
+                        student=student,
+                        message=success_message,
+                        selected_payment=new_payment,
+                    )
+                messages.success(request, success_message)
             else:
-                messages.error(request, 'Erro ao criar cobranca avulsa.')
+                error_message = 'Erro ao criar cobranca avulsa.'
+                if expects_json:
+                    return _student_financial_json_error(message=error_message, status=400)
+                messages.error(request, error_message)
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
         # --- FLUXO 2: ATUALIZACAO/RECEBIMENTO DE EXISTENTE ---
@@ -415,33 +876,84 @@ class StudentPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
                     student=student
                 )
         except DatabaseError:
-            messages.error(request, 'Esta operacao financeira está sendo processada em outra aba ou por outro administrador. Tente novamente em 15 segundos.')
+            error_message = 'Esta operacao financeira esta sendo processada em outra aba ou por outro administrador. Tente novamente em 15 segundos.'
+            if expects_json:
+                return _student_financial_json_error(message=error_message, status=409)
+            messages.error(request, error_message)
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
         restricted_actions = {'refund-payment', 'cancel-payment', 'regenerate-payment'}
         if action in restricted_actions and getattr(get_user_role(request.user), 'slug', '') == ROLE_RECEPTION:
-            messages.error(request, 'A Recepcao so pode salvar cobranca ou confirmar pagamento neste fluxo.')
+            error_message = 'A Recepcao so pode salvar cobranca ou confirmar pagamento neste fluxo.'
+            if expects_json:
+                return _student_financial_json_error(message=error_message, status=403)
+            messages.error(request, error_message)
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
         if action == 'update-payment':
             form = PaymentManagementForm(request.POST)
-            if form.is_valid():
-                handle_student_payment_action(
-                    actor=request.user,
-                    student=student,
-                    payment=payment,
-                    action=action,
-                    payload=form.cleaned_data,
-                )
+            if not form.is_valid():
+                error_message = 'A cobranca nao foi atualizada. Revise valor, vencimento e campos enviados.'
+                if expects_json:
+                    return _student_financial_json_error(message=error_message, status=400)
+                messages.error(request, error_message)
+                return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
+
+            updated_payment = handle_student_payment_action(
+                actor=request.user,
+                student=student,
+                payment=payment,
+                action=action,
+                payload=form.cleaned_data,
+            )
+            if updated_payment is not None:
+                payment = updated_payment
+            success_message = 'Cobranca atualizada com sucesso.'
         else:
-            handle_student_payment_action(
+            updated_payment = handle_student_payment_action(
                 actor=request.user,
                 student=student,
                 payment=payment,
                 action=action,
             )
+            if updated_payment is not None:
+                payment = updated_payment
+            action_success_messages = {
+                'mark-paid': 'Pagamento registrado com sucesso.',
+                'refund-payment': 'Estorno registrado com sucesso.',
+                'cancel-payment': 'Cobranca cancelada com sucesso.',
+                'regenerate-payment': 'Cobranca regenerada com sucesso.',
+            }
+            success_message = action_success_messages.get(action, 'Acao financeira concluida com sucesso.')
 
+        if expects_json:
+            return _student_financial_json_response(
+                request=request,
+                student=student,
+                message=success_message,
+                selected_payment=payment,
+            )
+
+        messages.success(request, success_message)
         return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
+
+
+class StudentPaymentDrawerView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
+
+    def get(self, request, student_id, payment_id, *args, **kwargs):
+        student = get_object_or_404(Student, pk=student_id)
+        payment = get_object_or_404(Payment, pk=payment_id, student=student)
+
+        if not _expects_json_response(request):
+            return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
+
+        return _student_financial_json_response(
+            request=request,
+            student=student,
+            message=f'Cobranca de {payment.due_date:%d/%m/%Y} carregada para revisao.',
+            selected_payment=payment,
+        )
 
 
 class StudentDirectoryExportView(LoginRequiredMixin, RoleRequiredMixin, View):
@@ -485,7 +997,7 @@ class StudentEnrollmentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
         if form.cleaned_data['action'] == 'cancel-enrollment' and enrollment.status != 'active':
             messages.error(request, 'Esta matricula já se encontra inativa ou cancelada.')
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
-        handle_student_enrollment_action(
+        updated_enrollment = handle_student_enrollment_action(
             actor=request.user,
             student=student,
             enrollment=enrollment,
@@ -639,6 +1151,56 @@ class StudentBulkActionView(LoginRequiredMixin, RoleRequiredMixin, View):
             messages.error(request, f"{falhas} falha(s) ignoradas: {error_details}")
 
         return redirect('student-directory')
+
+
+class StudentSourceCaptureView(View):
+    template_name = 'catalog/student-source-capture.html'
+
+    def _resolve_student(self, token: str):
+        student_id = read_student_source_capture_token(token=token)
+        return get_object_or_404(Student, pk=student_id)
+
+    def get(self, request, *args, **kwargs):
+        token = (request.GET.get('token') or '').strip()
+        if not token:
+            raise Http404('Link de qualificacao invalido.')
+        try:
+            student = self._resolve_student(token)
+        except (BadSignature, SignatureExpired, ValueError):
+            raise Http404('Link de qualificacao invalido.')
+
+        form = StudentSourceDeclarationCaptureForm(initial={'token': token})
+        return render(request, self.template_name, {'form': form, 'student': student, 'submitted': False})
+
+    def post(self, request, *args, **kwargs):
+        form = StudentSourceDeclarationCaptureForm(request.POST)
+        if not form.is_valid():
+            token = (request.POST.get('token') or '').strip()
+            if not token:
+                raise Http404('Link de qualificacao invalido.')
+            try:
+                student = self._resolve_student(token)
+            except (BadSignature, SignatureExpired, ValueError):
+                raise Http404('Link de qualificacao invalido.')
+            return render(request, self.template_name, {'form': form, 'student': student, 'submitted': False}, status=400)
+
+        token = form.cleaned_data['token']
+        try:
+            student = self._resolve_student(token)
+        except (BadSignature, SignatureExpired, ValueError):
+            raise Http404('Link de qualificacao invalido.')
+
+        run_student_source_declaration_record(
+            student_id=student.id,
+            declared_acquisition_source=form.cleaned_data['declared_acquisition_source'],
+            declared_source_detail=form.cleaned_data.get('declared_source_detail') or '',
+            declared_source_channel='secure_link',
+            declared_source_response_id=f'secure-link:{timezone.now().isoformat()}',
+            raw_payload={'captured_via': 'secure_link'},
+        )
+        student.refresh_from_db()
+        fresh_form = StudentSourceDeclarationCaptureForm(initial={'token': token})
+        return render(request, self.template_name, {'form': fresh_form, 'student': student, 'submitted': True})
 
 
 class StudentImportView(LoginRequiredMixin, RoleRequiredMixin, View):

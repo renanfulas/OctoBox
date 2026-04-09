@@ -24,7 +24,7 @@ from django.shortcuts import redirect
 from django.views.generic import TemplateView
 
 from access.admin import admin_changelist_url, user_can_access_admin
-from shared_support.page_payloads import build_page_hero
+from shared_support.page_payloads import build_page_hero, build_page_reading_panel
 from .forms import AccessProfileCreateForm, AccessProfileUpdateForm
 from .roles import ROLE_DEFINITIONS, ROLE_DEV, ROLE_OWNER, ROLE_PERMISSION_MAP, get_user_capabilities, get_user_role
 
@@ -217,7 +217,6 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
         access_profiles_panel_open = self.request.GET.get('manage_profiles') == '1' or bool(kwargs.get('forms_by_user_id'))
 
         context['current_role'] = current_role
-        context['role_capabilities'] = role_capabilities
         context['role_definitions'] = role_definitions
         context['can_manage_access_profiles'] = can_manage_access_profiles
         context['access_profiles_panel_open'] = access_profiles_panel_open
@@ -231,51 +230,25 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
             {'label': 'Papeis formais', 'value': len(role_definitions)},
             {'label': 'Fronteira central', 'value': 'Governanca'},
         ]
-        context['access_operational_focus'] = [
-            {
-                'label': 'Comece pelo seu proprio escopo',
-                'chip_label': 'Papel',
-                'summary': f'O papel {current_role.label} precisa ficar claro primeiro, para a leitura desta tela nao virar teoria solta sem utilidade operacional.',
-                'pill_class': 'accent',
-                'href': '#access-current-role',
-                'href_label': 'Ver meu escopo',
-            },
-            {
-                'label': 'Depois compare as fronteiras',
-                'chip_label': 'Fronteiras',
-                'summary': f'{len(role_definitions)} papel(is) ja desenham quem decide crescimento, manutencao, administracao e rotina tecnica sem mistura indevida.',
-                'pill_class': 'info',
-                'href': '#access-role-map',
-                'href_label': 'Ver mapa de papeis',
-            },
-            {
-                'label': 'Feche com a governanca pratica',
-                'chip_label': 'Governanca',
-                'summary': 'Grupos e permissoes devem sustentar o desenho do produto, nunca obrigar a operacao a adivinhar limite por tentativa e erro.',
-                'pill_class': 'warning',
-                'href': '#access-governance-board',
-                'href_label': 'Ver governanca',
-            },
-        ]
+        context['access_operational_focus'] = []
+        context['access_reading_panel'] = build_page_reading_panel(
+            items=context['access_operational_focus'],
+            primary_href='',
+            pill_label='Governanca',
+            pill_class='accent',
+            class_name='access-reading-panel',
+            panel_id='access-command-lane',
+        )
         context['access_hero'] = build_page_hero(
             eyebrow='Acessos',
             title='Fronteiras em leitura.',
             copy='Veja quem pode agir, onde cada papel comeca e o que pede cuidado agora.',
             actions=[
-                {'label': 'Ver meu escopo', 'href': '#access-current-role'},
-                {'label': 'Ver fronteiras', 'href': '#access-role-map', 'kind': 'secondary'},
-                *([
-                    {'label': 'Gerenciar grupos', 'href': admin_changelist_url('auth', 'group'), 'kind': 'secondary'},
-                ] if user_can_access_admin(self.request.user) else []),
+                {'label': 'Ver mapa de papeis', 'href': '#access-role-map'},
             ],
             aria_label='Panorama de acessos',
+            classes=['access-hero'],
         )
-        context['governance_points'] = [
-            'Manager nao vira coach por atalho.',
-            'Coach nao carrega rotina financeira ou administrativa.',
-            'DEV investiga e mantem sem virar operador do box.',
-            'Owner enxerga amplitude sem dissolver fronteiras entre papeis.',
-        ]
         context['group_admin_url'] = admin_changelist_url('auth', 'group') if user_can_access_admin(self.request.user) else ''
         return context
 

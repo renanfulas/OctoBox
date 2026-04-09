@@ -18,7 +18,7 @@ PONTOS CRITICOS:
 
 {% block content %}
 {% with page=dashboard_page %}
-<div class="scene-stack dashboard-shell workspace-shell" data-page="dashboard" data-screen="dashboard" data-slot="page-root" data-dashboard-layout-version="{{ page.data.dashboard_layout.version }}">
+<div class="scene-stack dashboard-shell dashboard-shell--futuristic-luxury workspace-shell" data-page="dashboard" data-screen="dashboard" data-slot="page-root" data-dashboard-layout-version="{{ page.data.dashboard_layout.version }}">
     {% for block in page.data.dashboard_layout.slots.hero %}
     {% include block.template with block=block page=page %}
     {% endfor %}
@@ -27,14 +27,14 @@ PONTOS CRITICOS:
 
     {% include "dashboard/includes/layout/layout_toolbar.html" with page=page %}
 
-    <section class="workspace-grid-layout" aria-label="Painel principal do dashboard" data-slot="workspace" data-dashboard-workspace>
-        <div class="workspace-grid-main" data-dashboard-slot="main-primary" data-dashboard-slot-id="main_primary">
+    <section class="workspace-grid-layout dashboard-command-workspace" aria-label="Painel principal do dashboard" data-slot="workspace" data-panel="dashboard-command-workspace" data-dashboard-workspace>
+        <div class="workspace-grid-main dashboard-command-main" data-dashboard-slot="main-primary" data-dashboard-slot-id="main_primary" data-panel="dashboard-command-main">
             {% for block in page.data.dashboard_layout.slots.main_primary %}
             {% include "dashboard/includes/layout/layout_panel.html" with block=block page=page %}
             {% endfor %}
         </div>
 
-        <aside class="workspace-grid-side" data-dashboard-slot="right-rail" data-dashboard-slot-id="right_rail">
+        <aside class="workspace-grid-side dashboard-command-rail" data-dashboard-slot="right-rail" data-dashboard-slot-id="right_rail" data-panel="dashboard-command-rail">
             <span id="dashboard" class="visually-hidden" aria-hidden="true"></span>
             {% for block in page.data.dashboard_layout.slots.right_rail %}
             {% include "dashboard/includes/layout/layout_panel.html" with block=block page=page %}

@@ -1,12 +1,11 @@
 <!--
 ARQUIVO: passo essencial da ficha do aluno.
 -->
-<div id="student-form-essential" class="student-form-step student-form-step-essential">
+<div id="student-form-essential" class="student-form-step student-form-step-essential student-form-step-essential--welcome">
     <div class="student-form-step-heading">
         <p class="student-form-step-kicker">Passo 1</p>
         <h3 class="student-form-step-title">Essencial</h3>
     </div>
-    <p class="student-form-step-copy">Nome, telefone e base do cadastro.</p>
     <div class="field-grid-240">
         <label>
             <span class="field-label">{{ form.full_name.label }}</span>
@@ -18,5 +17,33 @@ ARQUIVO: passo essencial da ficha do aluno.
             {{ form.phone }}
             {% for error in form.phone.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
         </label>
+        <label>
+            <span class="field-label">{{ form.acquisition_source.label }}</span>
+            {{ form.acquisition_source }}
+            {% if page.data.selected_intake and form.acquisition_source.value %}
+            <small class="field-help">Origem sugerida a partir da Central de Entradas.</small>
+            {% elif form.acquisition_source.help_text %}
+            <small class="field-help">{{ form.acquisition_source.help_text }}</small>
+            {% endif %}
+            {% for error in form.acquisition_source.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+        </label>
+        <label>
+            <span class="field-label">{{ form.acquisition_source_detail.label }}</span>
+            {{ form.acquisition_source_detail }}
+            {% for error in form.acquisition_source_detail.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+        </label>
     </div>
+    {% if page.data.source_snapshot.declared_source or page.data.source_snapshot.conflict_flag %}
+    <div class="student-form-inline-note">
+        {% if page.data.source_snapshot.declared_source %}
+        <small class="field-help">
+            Origem declarada ativa: {{ page.data.source_snapshot.declared_source }}
+            {% if page.data.source_snapshot.declared_channel %} via {{ page.data.source_snapshot.declared_channel }}{% endif %}.
+        </small>
+        {% endif %}
+        {% if page.data.source_snapshot.conflict_flag %}
+        <small class="form-error">Existe divergencia entre a origem operacional e a declarada. O sistema manteve a operacional como verdade resolvida por enquanto.</small>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>

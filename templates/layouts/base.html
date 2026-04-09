@@ -91,6 +91,7 @@
     {% for script_path in current_page_assets.js %}
     <script src="{% static script_path %}?v={{ static_asset_version }}"></script>
     {% endfor %}
+    <script src="{% static 'js/core/search.js' %}?v={{ static_asset_version }}"></script>
     <script src="{% static 'js/core/shell.js' %}?v={{ static_asset_version }}"></script>
 </body>
 </html>

@@ -7,15 +7,19 @@ ARQUIVO: cartao de identidade financeira da ficha do aluno.
             {{ page.data.student_object.full_name|slice:":1"|upper }}
         </div>
         <div class="student-financial-id-card__meta">
+            <p class="eyebrow">Resumo do aluno</p>
             <h3 class="section-title-sm">{{ page.data.student_object.full_name }}</h3>
-            <p class="meta-text">ID: {{ page.data.student_object.id|truncatechars:20 }}</p>
+            <div class="student-financial-id-card__meta-row">
+                <p class="meta-text">ID: {{ page.data.student_object.id|truncatechars:20 }}</p>
+                <span class="pill student-financial-plan-status-pill{% if page.data.financial_overview.latest_enrollment %} student-financial-plan-status-pill--active{% endif %}" data-financial-field="plan-status">{{ page.data.financial_overview.latest_enrollment.get_status_display|default:"Sem plano" }}</span>
+            </div>
         </div>
     </div>
 
     <div class="student-financial-id-card__stats" aria-label="Resumo financeiro imediato">
         <div class="student-financial-id-stat">
             <span class="student-financial-id-stat__label">Status do plano</span>
-            <span class="pill student-financial-plan-status-pill{% if page.data.financial_overview.latest_enrollment %} student-financial-plan-status-pill--active{% endif %}" data-financial-field="plan-status">{{ page.data.financial_overview.latest_enrollment.get_status_display|default:"Sem plano" }}</span>
+            <strong class="student-financial-id-stat__value" data-financial-field="plan-status-text">{{ page.data.financial_overview.latest_enrollment.get_status_display|default:"Sem plano" }}</strong>
         </div>
         <div class="student-financial-id-stat">
             <span class="student-financial-id-stat__label">Atrasos</span>

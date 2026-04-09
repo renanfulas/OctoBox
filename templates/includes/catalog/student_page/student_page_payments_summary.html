@@ -1,78 +1,16 @@
 <!--
 ARQUIVO: resumo principal de pagamentos da pagina do aluno.
 -->
-<div id="student-page-payments-summary-slot" class="stack-16">
-    {% if page.data.financial_overview.next_charge and page.data.financial_overview.next_charge.status == 'overdue' %}
-    <section class="student-page-alert-banner student-page-alert-banner--danger" aria-label="Alerta financeiro">
-        <div class="student-page-alert-banner__copy">
-            <strong>Pagamento em atraso</strong>
-            <span>R$ {{ page.data.financial_overview.next_charge.amount|floatformat:2 }} ha {{ page.data.financial_overview.next_charge.days_overdue|default:"0" }} dia(s).</span>
-        </div>
+{% if page.data.financial_overview.next_charge and page.data.financial_overview.next_charge.status == 'overdue' %}
+<section class="student-page-alert-banner student-page-alert-banner--danger" aria-label="Alerta financeiro">
+    <div class="student-page-alert-banner__copy">
+        <strong>Pagamento em atraso</strong>
+        <span>R$ {{ page.data.financial_overview.next_charge.amount|floatformat:2 }} ha {{ page.data.financial_overview.next_charge.days_overdue|default:"0" }} dia(s).</span>
+    </div>
+    <div class="actions actions-tight operation-hero-action-rail">
         <button class="button" type="button" data-action="edit-payment" data-payment-id="{{ page.data.financial_overview.next_charge.id }}">
             Cobrar agora
         </button>
-    </section>
-    {% endif %}
-
-    <article class="card student-page-card student-page-charge-card{% if page.data.financial_overview.next_charge and page.data.financial_overview.next_charge.status == 'overdue' %} is-danger{% endif %}">
-        <div class="student-page-charge-card__copy">
-            <p class="eyebrow student-page-charge-card__eyebrow">
-                {% if page.data.financial_overview.next_charge and page.data.financial_overview.next_charge.status == 'overdue' %}
-                    Cobranca em aberto
-                {% else %}
-                    Proxima cobranca
-                {% endif %}
-            </p>
-            <h2 class="section-title-sm student-page-charge-card__title">
-                {% if page.data.financial_overview.next_charge %}
-                    {{ page.data.financial_overview.next_charge.enrollment.plan.name|default:"Mensalidade" }}
-                {% else %}
-                    Nenhuma cobranca aberta
-                {% endif %}
-            </h2>
-            <p class="meta-text student-page-charge-card__support">
-                {% if page.data.financial_overview.next_charge %}
-                    {{ page.data.financial_overview.next_charge.due_date|date:"d M Y" }}
-                {% else %}
-                    O aluno esta sem cobrancas pendentes agora.
-                {% endif %}
-            </p>
-        </div>
-
-        <div class="student-page-charge-card__value">
-            <strong>
-                {% if page.data.financial_overview.next_charge %}
-                    R$ {{ page.data.financial_overview.next_charge.amount|floatformat:2 }}
-                {% else %}
-                    R$ 0,00
-                {% endif %}
-            </strong>
-            <span class="student-page-charge-card__meta">
-                {% if page.data.financial_overview.next_charge and page.data.financial_overview.next_charge.status == 'overdue' %}
-                    {{ page.data.financial_overview.next_charge.days_overdue|default:"0" }} dia(s) em atraso
-                {% elif page.data.financial_overview.next_charge %}
-                    pagamento automatico
-                {% else %}
-                    em dia
-                {% endif %}
-            </span>
-        </div>
-
-        <div class="student-page-charge-card__bar{% if page.data.financial_overview.next_charge and page.data.financial_overview.next_charge.status == 'overdue' %} is-danger{% endif %}" aria-hidden="true"></div>
-
-        <div class="student-page-charge-card__footer">
-            <span class="student-page-charge-card__footnote">
-                {% if page.data.financial_overview.next_charge %}
-                    {{ page.data.financial_overview.metrics.transacoes_totais|default:"0" }} transacao(oes) registradas
-                {% else %}
-                    Sem acao pendente
-                {% endif %}
-            </span>
-            {% if page.data.financial_overview.next_charge %}
-            <button class="button secondary" type="button" data-action="edit-payment" data-payment-id="{{ page.data.financial_overview.next_charge.id }}">
-                Abrir cobranca
-            </button>
-            {% endif %}
-        </div>
-    </article>
-</div>
+    </div>
+</section>
+{% endif %}

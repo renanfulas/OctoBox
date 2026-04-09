@@ -9,49 +9,75 @@
 {% block content %}
 <div class="operation-shell workspace-shell reports-hub-scene" data-page="reports-hub" data-screen="operations-reports-hub" data-slot="page-root">
     {% include "includes/ui/layout/page_hero.html" with hero=report_hub_hero %}
+    {% include "includes/ui/layout/page_reading_list.html" with panel=report_hub_reading_panel %}
 
-    <div class="cards-grid reports-hub-grid">
-        <article class="card reports-hub-card" id="reports-commercial">
-            <header>
-                <div class="reports-hub-card-icon">Comercial</div>
-                <h3 class="reports-hub-card-title">Book Comercial guardado com criterio</h3>
-                <p class="reports-hub-card-copy">A camada comercial segue preservada para o fechamento, com foco em base, retencao e sinais que mexem com conversao.</p>
-            </header>
-
-            <div class="reports-hub-card-body">
-                <p class="reports-hub-card-label">Estado atual</p>
-                <ul class="reports-hub-list">
-                    <li>Pipeline tecnico preservado para o fechamento gerencial</li>
-                    <li>Leitura de base e retencao organizada fora do fluxo operacional</li>
-                    <li>UI principal protegida contra atalhos que tiram foco do atendimento</li>
-                </ul>
+    <section class="reports-hub-strip" aria-label="Mesa gerencial de relatorios">
+        <article class="table-card reports-hub-vault-card" id="reports-commercial">
+            <div class="operation-card-head">
+                <div>
+                    <p class="eyebrow">Comercial</p>
+                    <h2 class="operation-card-title">Book comercial guardado com criterio</h2>
+                    <p class="operation-card-copy">A camada comercial segue preservada para o fechamento, com foco em base, retencao e sinais que mexem com conversao.</p>
+                </div>
+                <span class="pill accent">Reservado</span>
             </div>
+            <div class="reports-hub-grid">
+                <article class="reports-hub-card">
+                    <header>
+                        <div class="reports-hub-card-icon">Base</div>
+                        <h3 class="reports-hub-card-title">Leitura comercial sob controle</h3>
+                        <p class="reports-hub-card-copy">A base comercial foi mantida fora da fachada para preservar foco, velocidade e clareza de uso.</p>
+                    </header>
+                    <div class="reports-hub-card-body">
+                        <p class="reports-hub-card-label">Estado atual</p>
+                        <ul class="reports-hub-list">
+                            <li>Pipeline tecnico preservado para o fechamento gerencial.</li>
+                            <li>Leitura de base e retencao organizada fora do fluxo operacional.</li>
+                            <li>UI principal protegida contra atalhos que tiram foco do atendimento.</li>
+                        </ul>
+                    </div>
+                </article>
 
-            <footer class="reports-hub-card-footer">
-                <p class="reports-hub-footer-copy">Proximo passo: manter a experiencia principal limpa e reabrir a camada final de saida so quando o fechamento pedir isso.</p>
-            </footer>
-        </article>
-
-        <article class="card reports-hub-card" id="reports-finance">
-            <header>
-                <div class="reports-hub-card-icon">Financeiro</div>
-                <h3 class="reports-hub-card-title">Book Financeiro guardado para a hora certa</h3>
-                <p class="reports-hub-card-copy">A camada financeira fica organizada para leitura por competencia, metodo e movimento de caixa sem roubar atencao da operacao diaria.</p>
-            </header>
-
-            <div class="reports-hub-card-body">
-                <p class="reports-hub-card-label">Estado atual</p>
-                <ul class="reports-hub-list">
-                    <li>Infra de exportacao preservada sem comando exposto na fachada</li>
-                    <li>Recortes seguem visiveis no Financeiro para leitura e decisao</li>
-                    <li>Reativacao dos downloads fica reservada para o fechamento operacional</li>
-                </ul>
+                <article class="reports-hub-card" id="reports-finance">
+                    <header>
+                        <div class="reports-hub-card-icon">Financeiro</div>
+                        <h3 class="reports-hub-card-title">Book financeiro guardado para a hora certa</h3>
+                        <p class="reports-hub-card-copy">A camada financeira fica pronta para leitura por competencia, metodo e movimento de caixa sem roubar atencao da operacao diaria.</p>
+                    </header>
+                    <div class="reports-hub-card-body">
+                        <p class="reports-hub-card-label">Estado atual</p>
+                        <ul class="reports-hub-list">
+                            <li>Infra de exportacao preservada sem comando exposto na fachada.</li>
+                            <li>Recortes seguem visiveis no Financeiro para leitura e decisao.</li>
+                            <li>Reativacao dos downloads fica reservada para o fechamento operacional.</li>
+                        </ul>
+                    </div>
+                </article>
             </div>
-
-            <footer class="reports-hub-card-footer">
+            <footer class="reports-hub-vault-footer">
                 <p class="reports-hub-footer-copy">Pense nesta central como cofre e nao como vitrine: o motor continua pronto, mas a alavanca so volta quando fizer sentido para o negocio.</p>
             </footer>
         </article>
-    </div>
+
+        <aside class="reports-hub-side">
+            {% for card in report_hub_summary_cards %}
+            <article class="table-card reports-hub-summary-card reports-hub-summary-card--{{ card.variant }}">
+                <div class="operation-card-head">
+                    <div>
+                        <p class="eyebrow">{{ card.eyebrow }}</p>
+                        <h2 class="operation-card-title">{{ card.title }}</h2>
+                        <p class="operation-card-copy">{{ card.copy }}</p>
+                    </div>
+                    <span class="pill {{ card.pill_class }}">{{ card.pill_label }}</span>
+                </div>
+                <ul class="capability-list reports-hub-summary-list">
+                    {% for item in card.items %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </article>
+            {% endfor %}
+        </aside>
+    </section>
 </div>
 {% endblock %}

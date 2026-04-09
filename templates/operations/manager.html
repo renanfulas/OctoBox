@@ -13,10 +13,11 @@ PONTOS CRITICOS:
 - Depende de pending_intakes, unlinked_whatsapp e financial_alerts.
 -->
 {% extends "layouts/base.html" %}
+{% load static %}
 
 {% block content %}
 {% with page=operation_page %}
-<div class="operation-shell manager-scene workspace-shell" data-manager-priority="{{ page.data.manager_priority_surface|default:'finance' }}">
+<div class="operation-shell manager-scene workspace-shell" data-manager-priority="{{ page.data.manager_priority_surface|default:'finance' }}" data-manager-events-stream-url="{% url 'manager-event-stream' %}">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% include "includes/ui/layout/page_reading_list.html" with panel=page.data.reading_panel %}
     <div class="visually-hidden" aria-hidden="true">
@@ -28,4 +29,8 @@ PONTOS CRITICOS:
     {% include "operations/includes/manager/manager_metrics_section.html" %}
 </div>
 {% endwith %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/pages/operations/manager-boards.js' %}?v={{ static_asset_version }}"></script>
 {% endblock %}

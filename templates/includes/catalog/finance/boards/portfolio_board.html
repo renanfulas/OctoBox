@@ -5,7 +5,7 @@ POR QUE ELE EXISTE:
 - Mostra o peso consolidado de cada oferta no engajamento e receita.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Exibe os planos ativos e sua participação.
+1. Exibe os planos ativos e sua participacao.
 2. Ajuda a visualizar a carteira e mix de produtos.
 
 PONTOS CRITICOS:
@@ -13,9 +13,8 @@ PONTOS CRITICOS:
 -->
 <section class="card finance-board-portfolio finance-portfolio-panel-card" id="finance-portfolio-board" aria-label="Portfolio de produtos ativos">
     <div class="finance-portfolio-panel-head">
-        <div class="finance-portfolio-panel-copy">
+        <div class="finance-portfolio-panel-copy finance-board-head-copy">
             <h3 class="finance-revenue-trend-title">Planos ativos</h3>
-            <p class="finance-revenue-trend-subtitle">Distribuicao de receita por plano</p>
         </div>
     </div>
     <div class="finance-portfolio-panel-list">
@@ -28,11 +27,15 @@ PONTOS CRITICOS:
                 </div>
                 <div class="finance-portfolio-panel-value">
                     <strong>R$ {{ item.revenue|floatformat:2 }}</strong>
+                    {% if item.is_new_empty_plan %}
+                    <span>Aguardando primeira adesao</span>
+                    {% else %}
                     <span>{{ item.active_enrollments }} aluno{{ item.active_enrollments|pluralize:"s" }}</span>
+                    {% endif %}
                 </div>
             </div>
             <div class="finance-portfolio-panel-track">
-                <div class="finance-portfolio-panel-fill is-{{ item.color }}" style="width: {{ item.width }}%;"></div>
+                <div class="finance-portfolio-panel-fill is-{{ item.color }}" data-visual-width="{{ item.width }}"></div>
             </div>
         </article>
         {% empty %}

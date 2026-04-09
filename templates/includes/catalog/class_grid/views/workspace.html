@@ -11,17 +11,11 @@ POR QUE ELE EXISTE:
         {% include "includes/catalog/class_grid/today/workspace_today.html" %}
     </div>
 
-    <!-- Secao 2: Visao semanal em largura total -->
+    <!-- Secao 2: Planejamento -->
     <div class="section-gap">
-        {% include "includes/catalog/class_grid/views/workspace_weekly.html" %}
+        {% include "includes/catalog/class_grid/planner/workspace_planner.html" %}
     </div>
 
-    <!-- Secao 3: Mensal compacta + Planner lado a lado -->
-    <div class="layout-grid section-gap class-grid-workspace-bottom-split">
-        <div>{% include "includes/catalog/class_grid/views/workspace_monthly_preview.html" %}</div>
-        <div>{% include "includes/catalog/class_grid/planner/workspace_planner.html" %}</div>
-    </div>
-
-    <!-- Secao 4: Edicao Rapida -->
+    <!-- Secao 3: Edicao Rapida -->
     {% include "includes/catalog/class_grid/quick_edit/workspace_quick_edit.html" %}
 </section>

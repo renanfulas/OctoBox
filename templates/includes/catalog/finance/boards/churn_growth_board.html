@@ -44,8 +44,8 @@ PONTOS CRITICOS:
                 {% for item in page.data.finance_churn_chart.items %}
                 <div class="finance-churn-column">
                     <div class="finance-churn-column-bars">
-                        <div class="finance-churn-bar is-cancellation" style="--finance-bar-height: {{ item.cancellation_height }}%;" title="Cancelamentos: {{ item.cancellations }}"></div>
-                        <div class="finance-churn-bar is-activation" style="--finance-bar-height: {{ item.activation_height }}%;" title="Ativacoes: {{ item.activations }}"></div>
+                        <div class="finance-churn-bar is-cancellation" data-visual-height="{{ item.cancellation_height }}" title="Cancelamentos: {{ item.cancellations }}"></div>
+                        <div class="finance-churn-bar is-activation" data-visual-height="{{ item.activation_height }}" title="Ativacoes: {{ item.activations }}"></div>
                     </div>
                     <div class="finance-churn-column-meta">
                         <strong class="finance-churn-column-label">{{ item.label }}</strong>

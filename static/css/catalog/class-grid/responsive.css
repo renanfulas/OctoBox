@@ -46,6 +46,10 @@ POR QUE ELE EXISTE:
         flex-direction: column;
     }
 
+    .class-rotation-rail__grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     .class-grid-head-badges {
         justify-content: start;
     }
@@ -127,6 +131,31 @@ POR QUE ELE EXISTE:
         margin-bottom: 12px;
     }
 
+    .class-rotation-rail {
+        padding: 14px;
+        border-radius: 18px;
+    }
+
+    .class-rotation-rail__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .class-rotation-rail__footer,
+    .class-rotation-rail__actions,
+    .class-rotation-weekdays {
+        width: 100%;
+    }
+
+    .class-rotation-rail__actions {
+        margin-left: 0;
+    }
+
+    .class-rotation-rail__actions .pill,
+    .class-rotation-rail__actions .button,
+    .class-rotation-weekdays .weekday-option {
+        width: 100%;
+    }
+
     .class-grid-panel-title {
         gap: 12px;
     }
@@ -145,6 +174,19 @@ POR QUE ELE EXISTE:
     .weekly-calendar-grid {
         grid-template-columns: 1fr;
         gap: 10px;
+    }
+
+    .weekly-modal-expanded-grid--rows .weekly-day-card-body {
+        grid-template-columns: 1fr;
+    }
+
+    .weekly-modal-expanded-grid--rows .weekly-day-head {
+        position: static;
+        top: auto;
+    }
+
+    .weekly-calendar-grid.weekly-modal-expanded-grid--preview {
+        grid-template-columns: 1fr;
     }
 
     .weekly-calendar-section + .weekly-calendar-section {

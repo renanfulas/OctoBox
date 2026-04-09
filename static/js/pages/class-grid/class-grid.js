@@ -16,11 +16,10 @@ POR QUE ELE EXISTE:
   var sequenceCountField = document.getElementById('id_sequence_count');
   var sequenceCountLiveCopy = document.getElementById('sequence-count-live-copy');
   var dialog = document.getElementById('class-monthly-modal');
-  var openButtons = [
-    document.getElementById('open-monthly-calendar'),
-    document.getElementById('open-monthly-calendar-preview')
-  ].filter(Boolean);
   var closeButton = document.getElementById('close-monthly-calendar');
+  var monthlyRotationToggle = document.getElementById('toggle-monthly-rotation');
+  var monthlyRotationPanel = document.getElementById('class-grid-weekend-rotation');
+
   function isValidShortDate(value) {
     if (!/^\d{2}\/\d{2}\/\d{2}$/.test(value || '')) {
       return false;
@@ -209,38 +208,51 @@ POR QUE ELE EXISTE:
     sequenceCountField.addEventListener('change', syncSequenceCountCopy);
   }
 
-  if (!dialog || !dialog.showModal) {
-    return;
-  }
-
-  openButtons.forEach(function(button) {
-    button.addEventListener('click', function() {
-      dialog.showModal();
-    });
-  });
-
-  if (closeButton) {
-    closeButton.addEventListener('click', function() {
-      dialog.close();
-    });
-  }
-
-  dialog.addEventListener('click', function(event) {
-    var panel = dialog.querySelector('.class-monthly-modal-panel');
-    if (panel && !panel.contains(event.target)) {
-      dialog.close();
+  function setMonthlyRotationVisibility(shouldShow) {
+    if (!monthlyRotationPanel) {
+      return;
     }
-  });
 
-  /* ────────────────────────────────────────────────
-     Visão semanal – modal de tela cheia
-     ──────────────────────────────────────────────── */
+    monthlyRotationPanel.hidden = !shouldShow;
+    if (monthlyRotationToggle) {
+      monthlyRotationToggle.setAttribute('aria-expanded', shouldShow ? 'true' : 'false');
+    }
+  }
+
+  if (monthlyRotationToggle) {
+    monthlyRotationToggle.addEventListener('click', function() {
+      var isExpanded = monthlyRotationToggle.getAttribute('aria-expanded') === 'true';
+      setMonthlyRotationVisibility(!isExpanded);
+    });
+  }
+
+  if (dialog && dialog.showModal) {
+    document.querySelectorAll('[data-action="open-monthly-calendar"]').forEach(function(trigger) {
+      trigger.addEventListener('click', function(event) {
+        event.preventDefault();
+        dialog.showModal();
+      });
+    });
+
+    if (closeButton) {
+      closeButton.addEventListener('click', function() {
+        dialog.close();
+      });
+    }
+
+    dialog.addEventListener('click', function(event) {
+      var panel = dialog.querySelector('.class-monthly-modal-panel');
+      if (panel && !panel.contains(event.target)) {
+        dialog.close();
+      }
+    });
+  }
+
   var weeklyDialog = document.getElementById('class-weekly-modal');
   var weeklyCloseButton = document.getElementById('close-weekly-modal');
   var weeklyFullView = document.getElementById('weekly-modal-full-view');
   var weeklyDayView = document.getElementById('weekly-modal-day-view');
   var weeklyModalTitle = document.getElementById('class-weekly-modal-title');
-  var weeklyBoard = document.getElementById('weekly-board');
   var weeklyDayGrid = weeklyDayView ? weeklyDayView.querySelector('[data-slot="class-grid-weekly-modal-day-grid"]') : null;
 
   function setElementHidden(element, shouldHide) {
@@ -267,10 +279,11 @@ POR QUE ELE EXISTE:
   }
 
   function openWeeklyModal(mode, dayCard) {
-    if (!weeklyDialog || !weeklyDialog.showModal) return;
+    if (!weeklyDialog || !weeklyDialog.showModal) {
+      return;
+    }
 
     if (mode === 'day' && dayCard) {
-      // Modo dia: esconde grade completa, mostra o dia clicado
       setWeeklyModalMode('day');
       resetWeeklyModalDayView();
       if (weeklyDayGrid) {
@@ -287,38 +300,40 @@ POR QUE ELE EXISTE:
         weeklyModalTitle.textContent = (dayLabel ? dayLabel.textContent : '') + ' ' + (dayDate ? dayDate.textContent : '');
       }
     } else {
-      // Modo completo: mostra grade inteira
       setWeeklyModalMode('full');
       resetWeeklyModalDayView();
-      if (weeklyModalTitle) weeklyModalTitle.textContent = 'Grade completa';
+      if (weeklyModalTitle) {
+        weeklyModalTitle.textContent = 'Grade Semanal';
+      }
     }
 
     weeklyDialog.showModal();
   }
 
-  // Clique no header da visão semanal → abre grade completa
-  if (weeklyBoard) {
-    var weeklyHead = weeklyBoard.querySelector('[data-action="open-weekly-modal-full"]');
-    if (weeklyHead) {
-      weeklyHead.addEventListener('click', function(event) {
-        // Não interceptar cliques em botões/links dentro do header
-        if (event.target.closest('a, button')) return;
-        openWeeklyModal('full');
-      });
-      weeklyHead.addEventListener('keydown', function(event) {
+  document.querySelectorAll('[data-action="open-weekly-modal-full"]').forEach(function(trigger) {
+    trigger.addEventListener('click', function(event) {
+      if (event.target.closest('a, button') && event.target !== trigger) {
+        return;
+      }
+      event.preventDefault();
+      openWeeklyModal('full');
+    });
+
+    if (trigger.getAttribute('role') === 'button') {
+      trigger.addEventListener('keydown', function(event) {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           openWeeklyModal('full');
         }
       });
     }
-  }
+  });
 
-  // Clique em qualquer day card na visão semanal → abre aquele dia
   document.querySelectorAll('#weekly-board [data-day-date]').forEach(function(card) {
     card.addEventListener('click', function(event) {
-      // Não interceptar cliques em botões/links (Editar, Excluir)
-      if (event.target.closest('a, button, form')) return;
+      if (event.target.closest('a, button, form')) {
+        return;
+      }
       openWeeklyModal('day', card);
     });
     card.addEventListener('keydown', function(event) {
@@ -329,7 +344,6 @@ POR QUE ELE EXISTE:
     });
   });
 
-  // Fechar o modal semanal
   if (weeklyCloseButton) {
     weeklyCloseButton.addEventListener('click', function() {
       setWeeklyModalMode('full');
@@ -339,6 +353,24 @@ POR QUE ELE EXISTE:
   }
 
   if (weeklyDialog) {
+    weeklyDialog.addEventListener('click', function(event) {
+      var overflowToggle = event.target.closest('[data-action="toggle-weekly-day-overflow"]');
+      if (overflowToggle) {
+        var overflowNote = overflowToggle.closest('.weekly-day-overflow-note');
+        var overflowList = overflowNote ? overflowNote.nextElementSibling : null;
+        var isExpanded = overflowToggle.getAttribute('aria-expanded') === 'true';
+
+        if (overflowList && overflowList.classList.contains('weekly-day-overflow-list')) {
+          overflowList.hidden = isExpanded;
+          overflowToggle.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
+          overflowToggle.textContent = isExpanded ? 'Ver mais' : 'Ver menos';
+        }
+
+        event.preventDefault();
+        return;
+      }
+    });
+
     weeklyDialog.addEventListener('click', function(event) {
       var panel = weeklyDialog.querySelector('.class-monthly-modal-panel');
       if (panel && !panel.contains(event.target)) {
@@ -351,38 +383,8 @@ POR QUE ELE EXISTE:
       setWeeklyModalMode('full');
       resetWeeklyModalDayView();
       if (weeklyModalTitle) {
-        weeklyModalTitle.textContent = 'Grade completa';
+        weeklyModalTitle.textContent = 'Grade Semanal';
       }
     });
   }
-
-  /* ────────────────────────────────────────────────
-     Click em botões de foco operacional (Abrir Modais)
-     ──────────────────────────────────────────────── */
-  document.querySelectorAll('.class-grid-focus-actions a').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-      var href = btn.getAttribute('href');
-
-      if (href === '#today-board') {
-        e.preventDefault();
-        var todayCard = document.querySelector('#weekly-board .weekly-day-card.is-today');
-        if (todayCard && typeof openWeeklyModal === 'function') {
-          openWeeklyModal('day', todayCard);
-        } else if (typeof openWeeklyModal === 'function') {
-          openWeeklyModal('full');
-        }
-      } else if (href === '#weekly-board') {
-        e.preventDefault();
-        if (typeof openWeeklyModal === 'function') {
-          openWeeklyModal('full');
-        }
-      } else if (href === '#monthly-board' || href === '#planner-board') {
-        e.preventDefault();
-        if (dialog && typeof dialog.showModal === 'function') {
-           dialog.showModal();
-        }
-      }
-    });
-  });
-
 }());

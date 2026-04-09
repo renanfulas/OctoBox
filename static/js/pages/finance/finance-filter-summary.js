@@ -9,10 +9,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     var form = document.getElementById('finance-filter-form');
     var summaryTitle = document.getElementById('finance-summary-title');
-    var summaryDesc = document.getElementById('finance-summary-description');
     var statusNode = document.getElementById('finance-filter-status');
 
-    if (!form || !summaryTitle || !summaryDesc) {
+    if (!form || !summaryTitle) {
         return;
     }
 
@@ -38,7 +37,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (parts.length > 0) {
             var joinedParts = parts.join(' | ');
             summaryTitle.textContent = 'Recorte ativo: ' + joinedParts;
-            summaryDesc.textContent = 'Esse contexto orienta a leitura e prepara o fechamento operacional sem expor exportacoes na interface principal.';
             if (statusNode) {
                 statusNode.textContent = 'Recorte financeiro atualizado para ' + joinedParts + '.';
             }
@@ -46,7 +44,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         summaryTitle.textContent = 'Resumo do Recorte Ativo';
-        summaryDesc.textContent = 'Confirme o recorte antes de seguir com cobranca, leitura e fechamento operacional.';
         if (statusNode) {
             statusNode.textContent = 'Recorte financeiro sem filtros especificos.';
         }

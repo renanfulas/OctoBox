@@ -9,6 +9,9 @@ POR QUE ELE EXISTE:
         {% if request.GET.student_status %}
             <input type="hidden" name="student_status" value="{{ request.GET.student_status }}">
         {% endif %}
+        {% if request.GET.commercial_status %}
+            <input type="hidden" name="commercial_status" value="{{ request.GET.commercial_status }}">
+        {% endif %}
         {% if request.GET.payment_status %}
             <input type="hidden" name="payment_status" value="{{ request.GET.payment_status }}">
         {% endif %}
@@ -28,11 +31,12 @@ POR QUE ELE EXISTE:
     </form>
 
     <nav class="student-filter-pills" aria-label="Filtros rapidos do diretorio">
-        <a href="?{% if page.data.student_filter_form.query.value %}query={{ page.data.student_filter_form.query.value|urlencode }}{% endif %}" class="student-filter-pill {% if not request.GET.student_status and not request.GET.payment_status %}is-active{% endif %}">Todos</a>
-        <a href="?{% if page.data.student_filter_form.query.value %}query={{ page.data.student_filter_form.query.value|urlencode }}&{% endif %}student_status=active" class="student-filter-pill {% if request.GET.student_status == 'active' %}is-active{% endif %}">Ativos</a>
-        <a href="?{% if page.data.student_filter_form.query.value %}query={{ page.data.student_filter_form.query.value|urlencode }}&{% endif %}payment_status=overdue" class="student-filter-pill {% if request.GET.payment_status == 'overdue' %}is-active{% endif %}">Inadimplentes</a>
-        <a href="?{% if page.data.student_filter_form.query.value %}query={{ page.data.student_filter_form.query.value|urlencode }}&{% endif %}student_status=inactive" class="student-filter-pill {% if request.GET.student_status == 'inactive' %}is-active{% endif %}">Inativos</a>
+        <button type="button" class="student-filter-pill is-active" data-student-filter="all" aria-pressed="true">Todos</button>
+        <button type="button" class="student-filter-pill" data-student-filter="active" aria-pressed="false">Ativos</button>
+        <button type="button" class="student-filter-pill" data-student-sort="presence" data-sort-direction="desc" aria-pressed="false">Presen&ccedil;a</button>
+        <button type="button" class="student-filter-pill" data-student-filter="overdue" data-filter-scope="payment" aria-pressed="false">Inadimplentes</button>
+        <button type="button" class="student-filter-pill" data-student-filter="inactive" aria-pressed="false">Inativos</button>
     </nav>
 
-    <p class="student-filter-count">{{ page.data.total_students }} alunos</p>
+    <p class="student-filter-count" data-student-count>{{ page.data.total_students }} alunos</p>
 </section>

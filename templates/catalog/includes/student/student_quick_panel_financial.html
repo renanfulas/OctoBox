@@ -1,0 +1,9 @@
+<section class="student-quick-panel-financial" data-student-quick-financial aria-label="Resumo financeiro real da ficha">
+    <div class="student-quick-panel-fragment" data-quick-financial-summary-slot>
+        {% include "catalog/includes/student/student_quick_financial_summary.html" with page=page %}
+    </div>
+    <div class="student-quick-panel-fragment" data-quick-financial-ledger-slot>
+        {% include "catalog/includes/student/student_quick_financial_history.html" with page=page %}
+    </div>
+
+</section>

@@ -159,6 +159,8 @@ def build_class_grid_snapshot(today, params=None):
 		'weekly_calendar': weekly_calendar,
 		'monthly_calendar': monthly_calendar,
 		'selected_month_label': f"{MONTH_LABELS[start_date.month - 1]} de {start_date.year}",
+		'selected_month_start': start_date,
+		'selected_month_end': end_date,
 		'class_metrics': {
 			'Aulas previstas': {
 				'value': total_sessions,

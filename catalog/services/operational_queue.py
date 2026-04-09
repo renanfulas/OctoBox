@@ -26,24 +26,25 @@ def build_operational_queue_snapshot(*, limit=9):
 	for item in result.items:
 		student = students_by_id.get(item.student_id)
 		contact_state = build_whatsapp_contact_state(contacts_by_student_id.get(item.student_id))
-		queue.append(
-			{
-				'kind': item.kind,
-				'title': item.title,
-				'student': student,
-				'payment': payments_by_id.get(item.payment_id),
-				'enrollment': enrollments_by_id.get(item.enrollment_id),
-				'pill': item.pill,
-				'pill_class': item.pill_class,
-				'summary': item.summary,
-				'suggested_message': item.suggested_message,
-				'whatsapp_href': build_whatsapp_message_href(
-					phone=getattr(student, 'phone', ''),
-					message=item.suggested_message,
-				),
-				**contact_state,
-			}
-		)
+		queue_item = {
+			'kind': item.kind,
+			'title': item.title,
+			'student': student,
+			'payment': payments_by_id.get(item.payment_id),
+			'enrollment': enrollments_by_id.get(item.enrollment_id),
+			'pill': item.pill,
+			'pill_class': item.pill_class,
+			'summary': item.summary,
+			'suggested_message': item.suggested_message,
+			'whatsapp_href': build_whatsapp_message_href(
+				phone=getattr(student, 'phone', ''),
+				message=item.suggested_message,
+			),
+			**contact_state,
+		}
+		if queue_item['whatsapp_repeat_blocked']:
+			continue
+		queue.append(queue_item)
 	return queue
 
 

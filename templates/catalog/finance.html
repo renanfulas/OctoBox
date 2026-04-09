@@ -25,9 +25,9 @@ PONTOS CRITICOS:
         <section class="finance-kpi-grid interactive-tab-triggers" aria-label="Navegacao principal financeira">
             {% for card in page.data.interactive_kpis %}
                 {% if card.data_action == page.behavior.default_action %}
-            {% include "includes/ui/shared/metric_card.html" with card=card compact=True extra_classes="finance-kpi-card is-selected-tab "|add:card.card_class %}
+            {% include "includes/ui/shared/interactive_kpi_card.html" with card=card extra_classes="finance-kpi-card is-selected-tab "|add:card.card_class %}
                 {% else %}
-            {% include "includes/ui/shared/metric_card.html" with card=card compact=True extra_classes="finance-kpi-card "|add:card.card_class %}
+            {% include "includes/ui/shared/interactive_kpi_card.html" with card=card extra_classes="finance-kpi-card "|add:card.card_class %}
                 {% endif %}
             {% endfor %}
         </section>
@@ -39,15 +39,26 @@ PONTOS CRITICOS:
         </div>
 
         <div class="stack-16 deferred-surface deferred-surface--dense{% if page.behavior.default_panel == 'tab-finance-queue' %} is-tab-active{% endif %}" id="tab-finance-queue" aria-label="Handoff de cobranca">
+            <section class="finance-section-intro finance-queue-intro" aria-label="Leitura da aba de cobranca">
+                <div class="finance-queue-intro-column">
+                    <span class="eyebrow">Execucao pronta</span>
+                    <strong>Acoes prontas do turno</strong>
+                    <p>Casos semiassistidos que ja chegam mastigados para disparo.</p>
+                </div>
+                <div class="finance-queue-intro-column">
+                    <span class="eyebrow">Decisao assistida</span>
+                    <strong>Fila assistida</strong>
+                    <p>Casos que pedem leitura de prioridade, timing e contexto antes do proximo toque.</p>
+                </div>
+            </section>
+            {% if page.data.operational_queue %}
             {% include "includes/catalog/finance/views/priority_rail.html" %}
+            {% endif %}
             {% include "includes/catalog/finance/boards/queue_board.html" %}
         </div>
 
         <div class="stack-16 deferred-surface deferred-surface--xl{% if page.behavior.default_panel == 'tab-finance-portfolio' %} is-tab-active{% endif %}" id="tab-finance-portfolio" aria-label="Motor de carteira">
-            <div class="finance-portfolio-layout">
-                {% include "includes/catalog/finance/boards/mix_board.html" %}
-                {% include "includes/catalog/finance/boards/portfolio_board.html" %}
-            </div>
+            {% include "includes/catalog/finance/boards/portfolio_board.html" %}
             {% if page.capabilities.can_manage_finance %}
             {% include "includes/catalog/finance/engine/plan_engine.html" %}
             {% endif %}
@@ -64,4 +75,5 @@ PONTOS CRITICOS:
 {% block extra_scripts %}
 <script src="{% static 'js/pages/interactive_tabs.js' %}?v={{ static_asset_version }}"></script>
 <script src="{% static 'js/pages/finance/finance-filter-summary.js' %}?v={{ static_asset_version }}"></script>
+<script src="{% static 'js/pages/finance/finance-priority-carousel.js' %}?v={{ static_asset_version }}"></script>
 {% endblock %}

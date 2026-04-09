@@ -7,11 +7,18 @@ POR QUE ELE EXISTE:
 */
 
 .student-scene {
-    gap: calc(var(--section-gap) - 2px);
+    gap: var(--section-gap);
 }
 
-.student-kpi-overview {
-    margin-bottom: 32px;
+.students-kpi-panel {
+    width: 100%;
+    margin-top: var(--workspace-fib-4);
+    margin-bottom: 0;
+}
+
+.students-kpi-overview {
+    position: relative;
+    margin-top: 0;
 }
 
 .student-toolbar-import {
@@ -23,105 +30,242 @@ POR QUE ELE EXISTE:
     padding: 14px 16px;
 }
 
-.student-kpi-grid {
+.students-kpi-grid {
+    position: relative;
+    align-items: stretch;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(4, minmax(168px, 1fr));
+    gap: 14px;
 }
 
-.student-kpi-grid > * {
+.students-tab-workspace {
+    position: relative;
+    display: grid;
+    gap: 0;
+}
+
+.students-tab-panel {
+    position: relative;
+}
+
+.students-tab-panel.is-tab-active {
+    animation: none;
+}
+
+.students-tab-surface {
+    position: relative;
+    overflow: hidden;
+}
+
+.students-tab-surface::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(14, 165, 233, 0.2), rgba(168, 85, 247, 0.14), transparent 72%);
+    pointer-events: none;
+}
+
+.students-kpi-grid > * {
     min-width: 0;
 }
 
-.student-kpi-card {
-    display: grid;
-    gap: 28px;
-    min-height: 124px;
-    padding: 18px 20px;
-    cursor: pointer;
-    border-radius: 20px;
-    border: 1px solid color-mix(in srgb, var(--card-border) 90%, transparent);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, currentColor 10%, transparent), transparent 34%),
-        linear-gradient(180deg, color-mix(in srgb, var(--card-surface-strong) 96%, transparent) 0%, color-mix(in srgb, var(--card-surface) 92%, transparent) 100%);
-    box-shadow: var(--card-shadow);
-}
-
-.student-kpi-card-head {
+.students-kpi-card-head {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 16px;
 }
 
-.student-kpi-card-label {
-    font-size: 0.8rem;
+.students-kpi-card-label {
+    font-size: 0.74rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: color-mix(in srgb, var(--muted) 82%, currentColor 18%);
 }
 
-.student-kpi-icon-box {
+.students-kpi-icon-box {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     color: currentColor;
 }
 
-.student-kpi-icon-box svg {
+.students-kpi-icon-box svg {
     width: 18px;
     height: 18px;
 }
 
-.student-kpi-card-body {
-    display: grid;
-    align-content: end;
-}
-
-.student-kpi-card-value {
-    font-size: clamp(2rem, 2.8vw, 3rem);
+.students-kpi-card-value {
+    font-size: clamp(1.75rem, 2.35vw, 2.45rem);
     font-weight: 800;
     line-height: 0.9;
     letter-spacing: -0.05em;
     color: currentColor;
 }
 
-.student-kpi-card::after {
-    content: "";
-    display: block;
-    height: 2px;
-    border-radius: 999px;
-    opacity: 0.72;
-    background: currentColor;
+.student-scene .students-kpi-card {
+    display: grid;
+    gap: 20px;
+    min-height: 104px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(246, 250, 255, 0.96) 100%);
+    box-shadow:
+        0 16px 34px rgba(15, 23, 42, 0.07),
+        inset 0 1px 0 rgba(255, 255, 255, 0.84);
+    isolation: isolate;
+    overflow: hidden;
+    transition:
+        transform var(--transition-base),
+        border-color var(--transition-base),
+        box-shadow var(--transition-base),
+        background var(--transition-base);
 }
 
-.student-kpi-card.kpi-green {
+.student-scene .students-kpi-card::after {
+    display: none;
+}
+
+.student-scene .students-kpi-card:hover,
+.student-scene .students-kpi-card:focus-within {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, currentColor 20%, rgba(15, 23, 42, 0.08) 80%);
+    box-shadow:
+        0 18px 34px rgba(15, 23, 42, 0.09),
+        inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+.student-scene .students-kpi-card.is-selected-tab {
+    border-color: color-mix(in srgb, currentColor 24%, rgba(15, 23, 42, 0.08) 76%);
+    box-shadow:
+        0 18px 34px rgba(15, 23, 42, 0.09),
+        0 0 0 1px color-mix(in srgb, currentColor 10%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+.student-scene .students-kpi-card-body {
+    min-height: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto 1fr;
+    gap: 18px;
+    position: relative;
+    height: 100%;
+}
+
+.student-scene .students-kpi-card .card-value-stack {
+    grid-column: 1 / -1;
+    grid-row: 1 / span 2;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.student-scene .students-kpi-card .card-value-row {
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 0;
+}
+
+.student-scene .students-kpi-card .card-value,
+.student-scene .students-kpi-card .metric-number {
+    color: currentColor;
+}
+
+.student-scene .students-kpi-card .card-label {
+    margin: 0;
+    line-height: 1;
+}
+
+.student-scene .students-kpi-icon-box {
+    grid-column: 2;
+    grid-row: 1;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    margin-left: auto;
+    color: color-mix(in srgb, currentColor 84%, var(--ink) 16%);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.42));
+    border: 1px solid color-mix(in srgb, currentColor 16%, rgba(15, 23, 42, 0.08) 84%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    z-index: 1;
+}
+
+.students-kpi-card.kpi-green {
     color: var(--theme-accent-success);
 }
 
-.student-kpi-card.kpi-red {
+.students-kpi-card.kpi-red {
     color: var(--theme-accent-danger);
 }
 
-.student-kpi-card.kpi-cyan {
+.students-kpi-card.kpi-cyan {
     color: var(--theme-accent-primary);
 }
 
-.student-kpi-card.kpi-purple {
+.students-kpi-card.kpi-blue {
+    color: var(--theme-accent-primary);
+}
+
+.students-kpi-card.kpi-amber {
+    color: var(--theme-accent-warning);
+}
+
+.students-kpi-card.kpi-emerald {
+    color: var(--theme-accent-success);
+}
+
+.students-kpi-card.kpi-purple {
     color: var(--theme-accent-premium);
 }
 
-body[data-theme="dark"] .student-kpi-card {
-    border: 1px solid color-mix(in srgb, var(--card-border) 92%, transparent);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, currentColor 12%, transparent), transparent 36%),
-        linear-gradient(180deg, color-mix(in srgb, var(--card-surface-strong) 96%, transparent) 0%, color-mix(in srgb, var(--card-surface) 94%, transparent) 100%);
-    box-shadow: var(--card-shadow);
+body[data-theme="dark"] .student-scene .students-kpi-card {
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: linear-gradient(180deg, rgba(14, 15, 24, 0.98) 0%, rgba(12, 13, 21, 0.96) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-body[data-theme="dark"] .student-kpi-card-label {
+body[data-theme="dark"] .students-tab-surface::before {
+    background: linear-gradient(90deg, rgba(0, 229, 255, 0.18), rgba(217, 70, 239, 0.14), transparent 72%);
+}
+
+body[data-theme="dark"] .students-kpi-card-label {
     color: rgba(226, 232, 240, 0.56);
+}
+
+body[data-theme="dark"] .student-scene .students-kpi-icon-box {
+    color: color-mix(in srgb, currentColor 88%, white 12%);
+    background: linear-gradient(180deg, rgba(24, 30, 46, 0.96), rgba(13, 18, 31, 0.88));
+    border-color: rgba(148, 163, 184, 0.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .student-scene .students-kpi-card {
+    background:
+        linear-gradient(180deg, rgba(14, 15, 24, 0.98) 0%, rgba(12, 13, 21, 0.96) 100%);
+}
+
+body[data-theme="dark"] .student-scene .students-kpi-card.is-selected-tab {
+    box-shadow:
+        0 20px 36px rgba(0, 0, 0, 0.22),
+        0 0 0 1px color-mix(in srgb, currentColor 14%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 960px) {
+    .students-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 420px) {
+    .students-kpi-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .student-directory-surface {

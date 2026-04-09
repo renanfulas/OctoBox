@@ -29,6 +29,7 @@ from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from catalog.forms import ReceptionPaymentManagementForm
 from catalog.services.student_payment_actions import handle_student_payment_action
 from finance.models import Payment
+from shared_support.manager_event_stream import publish_manager_stream_event
 from operations.facade import (
     run_apply_attendance_action,
     run_create_technical_behavior_note,
@@ -61,9 +62,20 @@ class PaymentEnrollmentLinkView(LoginRequiredMixin, RoleRequiredMixin, View):
     allowed_roles = (ROLE_MANAGER,)
 
     def post(self, request, payment_id, *args, **kwargs):
-        get_object_or_404(Payment.objects.select_related('student'), pk=payment_id)
-        run_link_payment_enrollment(actor_id=request.user.id, payment_id=payment_id)
-        return _redirect_back(request, fallback_url=reverse('manager-workspace'))
+        payment = get_object_or_404(Payment.objects.select_related('student'), pk=payment_id)
+        result = run_link_payment_enrollment(actor_id=request.user.id, payment_id=payment_id)
+        if result is not None:
+            publish_manager_stream_event(
+                event_type='student.enrollment.updated',
+                meta={
+                    'student_id': payment.student_id,
+                    'payment_id': result.payment_id,
+                    'enrollment_id': result.enrollment_id,
+                    'action': 'link-payment-enrollment',
+                },
+            )
+        messages.success(request, 'Pagamento vinculado a matricula ativa sem sair da mesa da gerencia.')
+        return _redirect_back(request, fallback_url=reverse('manager-workspace'), fragment='manager-enrollment-link-board')
 
 
 class TechnicalBehaviorNoteCreateView(LoginRequiredMixin, RoleRequiredMixin, View):

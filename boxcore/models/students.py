@@ -13,12 +13,23 @@ PONTOS CRITICOS:
 - O app label continua sendo boxcore nesta etapa para evitar mudanca de schema e de migrations.
 """
 
-from students.model_definitions import HealthIssueStatus, Student, StudentGender, StudentStatus
+from students.model_definitions import (
+    HealthIssueStatus,
+    SourceConfidence,
+    SourceResolutionMethod,
+    Student,
+    StudentSourceDeclaration,
+    StudentGender,
+    StudentStatus,
+)
 
 
 __all__ = [
     'HealthIssueStatus',
+    'SourceConfidence',
+    'SourceResolutionMethod',
     'Student',
+    'StudentSourceDeclaration',
     'StudentGender',
     'StudentStatus',
 ]

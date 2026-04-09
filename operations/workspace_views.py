@@ -15,6 +15,7 @@ PONTOS CRITICOS:
 from access.navigation_contracts import get_shell_route_url
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from shared_support.page_payloads import attach_page_payload, build_page_hero
+from shared_support.manager_event_stream import build_manager_event_stream
 
 from operations.facade import (
     build_coach_workspace_snapshot,
@@ -26,6 +27,34 @@ from operations.facade import (
 from operations.presentation import build_operation_workspace_page
 
 from .base_views import OperationBaseView
+from django.views import View
+
+
+def _build_reception_workspace_payload(context):
+    snapshot = build_reception_workspace_snapshot(today=context['today'])
+    return build_operation_workspace_page(
+        page_key='operations-reception',
+        title='Minha operacao',
+        subtitle='Chegada, agenda e cobranca curta no balcao.',
+        scope='operations-reception',
+        snapshot=snapshot,
+        current_role_slug=context['current_role'].slug,
+        focus_key='reception_focus',
+        capabilities={'can_manage_reception_payments': context['current_role'].slug in (ROLE_OWNER, ROLE_RECEPTION)},
+    )
+
+
+def _build_manager_workspace_payload(context):
+    snapshot = build_manager_workspace_snapshot()
+    return build_operation_workspace_page(
+        page_key='operations-manager',
+        title='Minha operacao',
+        subtitle='Triagem, vinculo e cobranca em ordem curta.',
+        scope='operations-manager',
+        snapshot=snapshot,
+        current_role_slug=context['current_role'].slug,
+        focus_key='manager_operational_focus',
+    )
 
 
 class OwnerWorkspaceView(OperationBaseView):
@@ -83,18 +112,27 @@ class ManagerWorkspaceView(OperationBaseView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
-        snapshot = build_manager_workspace_snapshot()
-        payload = build_operation_workspace_page(
-            page_key='operations-manager',
-            title=self.page_title,
-            subtitle=self.page_subtitle,
-            scope='operations-manager',
-            snapshot=snapshot,
-            current_role_slug=context['current_role'].slug,
-            focus_key='manager_operational_focus',
-        )
-        attach_page_payload(context, payload_key='operation_page', payload=payload)
+        attach_page_payload(context, payload_key='operation_page', payload=_build_manager_workspace_payload(context))
         return context
+
+
+class ManagerBoardsPartialView(OperationBaseView):
+    allowed_roles = (ROLE_MANAGER,)
+    template_name = 'operations/includes/manager/manager_boards_section.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_base_context())
+        attach_page_payload(context, payload_key='operation_page', payload=_build_manager_workspace_payload(context))
+        context['page'] = context['operation_page']
+        return context
+
+
+class ManagerEventStreamView(OperationBaseView, View):
+    allowed_roles = (ROLE_MANAGER,)
+
+    def get(self, request, *args, **kwargs):
+        return build_manager_event_stream()
 
 
 class CoachWorkspaceView(OperationBaseView):
@@ -129,18 +167,20 @@ class ReceptionWorkspaceView(OperationBaseView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
-        snapshot = build_reception_workspace_snapshot(today=context['today'])
-        payload = build_operation_workspace_page(
-            page_key='operations-reception',
-            title=self.page_title,
-            subtitle=self.page_subtitle,
-            scope='operations-reception',
-            snapshot=snapshot,
-            current_role_slug=context['current_role'].slug,
-            focus_key='reception_focus',
-            capabilities={'can_manage_reception_payments': context['current_role'].slug in (ROLE_OWNER, ROLE_RECEPTION)},
-        )
+        payload = _build_reception_workspace_payload(context)
         attach_page_payload(context, payload_key='operation_page', payload=payload)
+        return context
+
+
+class ReceptionPaymentBoardPartialView(OperationBaseView):
+    allowed_roles = (ROLE_OWNER, ROLE_RECEPTION)
+    template_name = 'operations/includes/reception/reception_payment_board.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_base_context())
+        attach_page_payload(context, payload_key='operation_page', payload=_build_reception_workspace_payload(context))
+        context['page'] = context['operation_page']
         return context
 
 

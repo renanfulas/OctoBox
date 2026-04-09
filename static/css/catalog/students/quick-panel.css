@@ -1,0 +1,692 @@
+/*
+ARQUIVO: painel lateral de leitura rapida do aluno.
+
+POR QUE ELE EXISTE:
+- cria abertura parcial da ficha no diretorio sem reload.
+- usa um visual intencional e limpo para parecer app nativo, nao modal generico.
+*/
+
+.student-quick-panel-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 11, 18, 0.44);
+    backdrop-filter: blur(8px);
+    z-index: 70;
+}
+
+.student-quick-panel {
+    position: fixed;
+    top: 108px;
+    right: 20px;
+    width: min(440px, calc(100vw - 24px));
+    max-height: calc(100dvh - 128px);
+    border-radius: 28px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    background:
+        radial-gradient(circle at top, rgba(59, 130, 246, 0.16), transparent 42%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 252, 0.98));
+    box-shadow:
+        0 24px 80px rgba(15, 23, 42, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    transform: translateX(calc(100% + 28px));
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 240ms ease, opacity 240ms ease;
+    z-index: 80;
+}
+
+.student-quick-panel.is-open {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.student-quick-panel__scroll {
+    overflow-y: auto;
+    max-height: inherit;
+    padding: 24px;
+    display: grid;
+    gap: 18px;
+}
+
+.student-quick-panel__close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.88);
+    color: #0f172a;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+}
+
+.student-quick-panel__hero {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding-right: 32px;
+}
+
+.student-quick-panel__feedback {
+    display: grid;
+    gap: 8px;
+}
+
+.student-quick-panel__feedback .note-panel {
+    margin: 0;
+}
+
+.student-quick-panel__avatar {
+    width: 58px;
+    height: 58px;
+    border-radius: 20px;
+    display: grid;
+    place-items: center;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #eff6ff;
+    background: linear-gradient(135deg, #0f172a, #2563eb);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.student-quick-panel__eyebrow,
+.student-quick-panel__section-kicker {
+    margin: 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.student-quick-panel__title,
+.student-quick-panel__section-title {
+    margin: 0;
+    color: #0f172a;
+}
+
+.student-quick-panel__meta,
+.student-quick-panel__copy {
+    margin: 0;
+    color: #475569;
+}
+
+.student-quick-panel__meta {
+    font-size: 0.75rem;
+}
+
+.student-quick-panel__status-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.student-quick-panel__signal-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.student-quick-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(226, 232, 240, 0.82);
+    color: #0f172a;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.student-quick-signal,
+.student-quick-live-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: rgba(255, 255, 255, 0.72);
+    color: #334155;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68);
+}
+
+.student-quick-signal--success {
+    color: #166534;
+    background: rgba(220, 252, 231, 0.96);
+    border-color: rgba(34, 197, 94, 0.22);
+}
+
+.student-quick-signal--warning {
+    color: #92400e;
+    background: rgba(254, 243, 199, 0.98);
+    border-color: rgba(245, 158, 11, 0.22);
+}
+
+.student-quick-signal--danger {
+    color: #991b1b;
+    background: rgba(254, 226, 226, 0.96);
+    border-color: rgba(239, 68, 68, 0.22);
+}
+
+.student-quick-live-pill {
+    margin-left: auto;
+    color: #1d4ed8;
+    background: rgba(219, 234, 254, 0.98);
+    border-color: rgba(37, 99, 235, 0.18);
+}
+
+.student-quick-live-pill.is-pulsing::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    margin-right: 8px;
+    border-radius: 999px;
+    background: currentColor;
+    box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 34%, transparent);
+    animation: student-quick-pulse 1.6s ease-out infinite;
+}
+
+.student-quick-chip.is-danger {
+    background: rgba(254, 226, 226, 0.96);
+    color: #991b1b;
+}
+
+.student-quick-chip.is-warning {
+    background: rgba(254, 243, 199, 0.98);
+    color: #92400e;
+}
+
+.student-quick-chip.is-success {
+    background: rgba(220, 252, 231, 0.96);
+    color: #166534;
+}
+
+.student-quick-chip.is-info {
+    background: rgba(219, 234, 254, 0.98);
+    color: #1d4ed8;
+}
+
+.student-quick-panel__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.student-quick-panel__stat,
+.student-quick-panel__narrative {
+    padding: 16px;
+    border-radius: 22px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(255, 255, 255, 0.76);
+}
+
+.student-quick-panel__stat-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+}
+
+.student-quick-panel__stat-value {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 1.4rem;
+    line-height: 1.1;
+    color: #0f172a;
+}
+
+.student-quick-panel__actions {
+    display: grid;
+    gap: 10px;
+}
+
+.student-quick-panel__tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.student-quick-panel__tab {
+    min-height: 40px;
+    border: 0;
+    border-radius: 14px;
+    background: rgba(226, 232, 240, 0.72);
+    color: #334155;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 180ms ease, background 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.student-quick-panel__tab:hover {
+    transform: translateY(-1px);
+}
+
+.student-quick-panel__tab.is-active {
+    background: linear-gradient(135deg, #0f172a, #2563eb);
+    color: #eff6ff;
+    box-shadow: 0 12px 28px rgba(37, 99, 235, 0.22);
+}
+
+.student-quick-panel__content {
+    display: block;
+}
+
+.student-quick-panel__content.is-idle {
+    display: none;
+}
+
+.student-quick-panel__section {
+    display: none;
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+    pointer-events: none;
+    visibility: hidden;
+    transition: opacity 220ms ease, transform 220ms ease, visibility 220ms ease;
+}
+
+.student-quick-panel__section.is-active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+    visibility: visible;
+    animation: student-quick-section-enter 220ms ease;
+}
+
+.student-quick-panel__fragment-slot > * {
+    padding: 16px;
+    border-radius: 22px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(255, 255, 255, 0.76);
+}
+
+.student-quick-panel__fragment-slot .student-page-profile-panel,
+.student-quick-panel__fragment-slot .student-quick-panel-financial {
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.student-quick-panel-financial {
+    display: grid;
+    gap: 12px;
+}
+
+.student-quick-financial-alert {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(239, 68, 68, 0.16);
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.student-quick-financial-alert__copy {
+    display: grid;
+    gap: 3px;
+}
+
+.student-quick-financial-alert__copy strong {
+    color: #991b1b;
+    font-size: 0.82rem;
+}
+
+.student-quick-financial-alert__copy span {
+    color: #64748b;
+    font-size: 0.72rem;
+}
+
+.student-quick-financial-history {
+    display: grid;
+    gap: 12px;
+}
+
+.student-quick-financial-history__header {
+    display: grid;
+    gap: 4px;
+}
+
+.student-quick-financial-history__title {
+    margin: 0;
+    color: #0f172a;
+    font-size: 0.98rem;
+}
+
+.student-quick-financial-history__count {
+    margin: 0;
+    color: #475569;
+    font-size: 0.72rem;
+}
+
+.student-quick-financial-history__table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.student-quick-financial-history__head th {
+    padding: 8px 0 10px;
+    color: #334155;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: left;
+}
+
+.student-quick-financial-history__row td {
+    padding: 10px 0;
+    border-top: 1px solid rgba(148, 163, 184, 0.16);
+    vertical-align: middle;
+}
+
+.student-quick-financial-history__row {
+    cursor: pointer;
+}
+
+.student-quick-financial-history__row:focus-visible {
+    outline: 2px solid rgba(59, 130, 246, 0.45);
+    outline-offset: 3px;
+}
+
+.student-quick-financial-history__row .student-quick-financial-history__date {
+    border-top: 0;
+    border-bottom: 0;
+}
+
+.student-quick-financial-history__description {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+}
+
+.student-quick-financial-history__method-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    color: #2563eb;
+}
+
+.student-quick-financial-history__copy {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.student-quick-financial-history__copy strong {
+    color: #0f172a;
+    font-size: 0.82rem;
+    line-height: 1.25;
+}
+
+.student-quick-financial-history__copy span {
+    color: #64748b;
+    font-size: 0.72rem;
+}
+
+.student-quick-financial-history__date {
+    display: grid;
+    justify-items: start;
+    gap: 1px;
+    line-height: 1;
+}
+
+.student-quick-financial-history__date-day {
+    color: #0f172a;
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+.student-quick-financial-history__date-month,
+.student-quick-financial-history__date-year {
+    color: #64748b;
+    font-size: 0.68rem;
+    text-transform: lowercase;
+}
+
+.student-quick-financial-history__status-pill {
+    min-width: 74px;
+    justify-content: center;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.student-quick-financial-history__amount {
+    color: #0f172a;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.student-quick-financial-history__empty {
+    padding: 12px 0 4px;
+}
+
+.student-quick-financial-drawer {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 22px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(248, 250, 252, 0.88);
+    animation: student-quick-drawer-enter 220ms ease;
+}
+
+.student-quick-financial-drawer__actions {
+    justify-content: flex-end;
+}
+
+.student-quick-panel-financial .student-financial-drawer,
+.student-quick-panel-financial .student-page-payments-ledger,
+.student-quick-panel-financial .student-page-alert-banner {
+    box-shadow: none;
+}
+
+.student-quick-panel .student-page-profile-edit-toggle {
+    width: 100%;
+    justify-content: center;
+}
+
+.student-quick-panel .student-page-profile-actions {
+    position: sticky;
+    bottom: 0;
+    background: inherit;
+}
+
+.student-quick-confirm-dialog {
+    border: 0;
+    padding: 0;
+    background: transparent;
+}
+
+.student-quick-confirm-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.42);
+    backdrop-filter: blur(8px);
+}
+
+.student-quick-confirm-dialog__card {
+    width: min(420px, calc(100vw - 24px));
+    border-radius: 24px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
+    box-shadow: 0 24px 80px rgba(15, 23, 42, 0.24);
+    padding: 22px;
+    display: grid;
+    gap: 16px;
+}
+
+.student-quick-confirm-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+@keyframes student-quick-section-enter {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes student-quick-drawer-enter {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes student-quick-pulse {
+    0% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 30%, transparent);
+    }
+    80% {
+        box-shadow: 0 0 0 12px color-mix(in srgb, currentColor 0%, transparent);
+    }
+    100% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 0%, transparent);
+    }
+}
+
+body[data-theme="dark"] .student-quick-panel {
+    background:
+        radial-gradient(circle at top, rgba(14, 165, 233, 0.18), transparent 38%),
+        linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.98));
+    border-color: rgba(148, 163, 184, 0.18);
+    box-shadow:
+        0 24px 80px rgba(2, 6, 23, 0.46),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] :is(.student-quick-panel__title, .student-quick-panel__section-title, .student-quick-panel__stat-value, .student-quick-chip) {
+    color: #f8fafc;
+}
+
+body[data-theme="dark"] :is(.student-quick-signal, .student-quick-live-pill) {
+    color: #e2e8f0;
+    background: rgba(15, 23, 42, 0.72);
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+body[data-theme="dark"] :is(.student-quick-panel__meta, .student-quick-panel__copy, .student-quick-panel__eyebrow, .student-quick-panel__section-kicker, .student-quick-panel__stat-label) {
+    color: rgba(226, 232, 240, 0.76);
+}
+
+body[data-theme="dark"] :is(.student-quick-panel__stat, .student-quick-panel__narrative) {
+    background: rgba(15, 23, 42, 0.72);
+    border-color: rgba(148, 163, 184, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .student-quick-panel,
+    .student-quick-panel__tab,
+    .student-quick-panel__section,
+    .student-quick-financial-drawer,
+    .student-quick-live-pill.is-pulsing::before {
+        animation: none;
+        transition: none;
+    }
+}
+
+body[data-theme="dark"] .student-quick-panel__fragment-slot > * {
+    background: rgba(15, 23, 42, 0.72);
+    border-color: rgba(148, 163, 184, 0.12);
+}
+
+body[data-theme="dark"] .student-quick-financial-drawer {
+    background: rgba(15, 23, 42, 0.76);
+    border-color: rgba(148, 163, 184, 0.12);
+}
+
+body[data-theme="dark"] .student-quick-financial-alert {
+    border-color: rgba(239, 68, 68, 0.18);
+    background: rgba(15, 23, 42, 0.72);
+}
+
+body[data-theme="dark"] .student-quick-financial-alert__copy strong,
+body[data-theme="dark"] .student-quick-financial-history__title,
+body[data-theme="dark"] .student-quick-financial-history__copy strong,
+body[data-theme="dark"] .student-quick-financial-history__date-day,
+body[data-theme="dark"] .student-quick-financial-history__amount {
+    color: #f8fafc;
+}
+
+body[data-theme="dark"] .student-quick-financial-alert__copy span,
+body[data-theme="dark"] .student-quick-financial-history__count,
+body[data-theme="dark"] .student-quick-financial-history__copy span,
+body[data-theme="dark"] .student-quick-financial-history__date-month,
+body[data-theme="dark"] .student-quick-financial-history__date-year {
+    color: rgba(226, 232, 240, 0.72);
+}
+
+body[data-theme="dark"] .student-quick-financial-history__head th {
+    color: rgba(226, 232, 240, 0.68);
+}
+
+body[data-theme="dark"] .student-quick-financial-history__row td {
+    border-top-color: rgba(148, 163, 184, 0.12);
+}
+
+body[data-theme="dark"] .student-quick-panel__close {
+    background: rgba(30, 41, 59, 0.92);
+    color: #f8fafc;
+}
+
+body[data-theme="dark"] .student-quick-panel__tab {
+    background: rgba(30, 41, 59, 0.88);
+    color: #e2e8f0;
+}
+
+body[data-theme="dark"] .student-quick-confirm-dialog__card {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.98));
+    border-color: rgba(148, 163, 184, 0.12);
+}
+
+@media (max-width: 860px) {
+    .student-quick-panel {
+        top: 90px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+        max-height: calc(100dvh - 104px);
+        border-radius: 24px;
+    }
+}
+
+@media (max-width: 640px) {
+    .student-quick-panel__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .student-quick-panel__scroll {
+        padding: 18px;
+    }
+}

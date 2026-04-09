@@ -19,14 +19,24 @@ from decimal import Decimal
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
-
 from finance.models import EnrollmentStatus, Payment, PaymentStatus
 from finance.overdue_metrics import count_overdue_students, get_overdue_payments_queryset, sum_overdue_amount
+from shared_support.kpi_icons import build_kpi_icon
 
 
 def _format_currency_br(value):
     normalized = (value or Decimal('0.00')).quantize(Decimal('0.01'))
     return f'{normalized:.2f}'.replace('.', ',')
+
+
+def _finance_kpi_icon(name):
+    icon_map = {
+        'movements': 'trend',
+        'queue': 'queue',
+        'portfolio': 'portfolio',
+        'filters': 'filters',
+    }
+    return build_kpi_icon(icon_map.get(name, ''))
 
 
 def build_finance_metrics(payments, enrollments):
@@ -189,6 +199,7 @@ def build_finance_interactive_kpis(finance_metrics, *, priority_context=None):
         'movements': {
             'eyebrow': 'Raio-X Financeiro',
             'display_value': f"R$ {_format_currency_br(finance_metrics['Receita recebida no mes']['value'])}",
+            'icon': _finance_kpi_icon('movements'),
             'note': (
                 'Movimentos, entradas, saidas e graficos de tendencia financeira.'
                 if priority_context['dominant_key'] != 'movements' else
@@ -196,21 +207,25 @@ def build_finance_interactive_kpis(finance_metrics, *, priority_context=None):
             ),
             'data_action': 'open-tab-finance-movements',
             'card_class': 'kpi-emerald',
+            'value_class': 'is-emerald' if finance_metrics['Receita recebida no mes']['value'] > 1 else '',
         },
         'queue': {
             'eyebrow': 'Handoff de Cobranca',
             'display_value': f"R$ {_format_currency_br(finance_metrics['Receita que ainda nao entrou']['value'])}",
+            'icon': _finance_kpi_icon('queue'),
             'note': (
                 'Fila automatica e regua ativa contra a inadimplencia e atrasos.'
                 if priority_context['dominant_key'] != 'queue' else
                 'Essa e a primeira pressao do recorte agora: fila e regua pedem acao antes de aprofundar carteira.'
             ),
             'data_action': 'open-tab-finance-queue',
-            'card_class': 'kpi-red' if finance_metrics['Alunos com atraso ativo']['value'] > 0 else 'kpi-blue',
+            'card_class': 'kpi-red',
+            'value_class': 'is-ruby' if finance_metrics['Receita que ainda nao entrou']['value'] > 1 else '',
         },
         'portfolio': {
             'eyebrow': 'Motor de Carteira',
             'display_value': str(finance_metrics['Novos contratos no mes']['value']),
+            'icon': _finance_kpi_icon('portfolio'),
             'note': (
                 'Portfolio de planos, mix de base e concentracao de receita.'
                 if priority_context['dominant_key'] != 'portfolio' else
@@ -222,9 +237,10 @@ def build_finance_interactive_kpis(finance_metrics, *, priority_context=None):
         'filters': {
             'eyebrow': 'Filtros & Exportacao',
             'display_value': 'Recortes',
+            'icon': _finance_kpi_icon('filters'),
             'note': 'Acesse os controles globais para isolar status, datas e planilhas.',
             'data_action': 'open-tab-finance-filters',
-            'card_class': 'kpi-cyan',
+            'card_class': 'kpi-ink',
         },
     }
 

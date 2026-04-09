@@ -37,6 +37,30 @@ _ASSET_VERSION_CACHE = {
 }
 
 
+_SIDEBAR_ICON_PATHS = {
+    'DB': '<path d="M3.5 9.5 12 3l8.5 6.5v9a1 1 0 0 1-1 1H15v-6h-6v6H4.5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"/>',
+    'OP': '<path d="M12 3.5v4m0 9v4m8.5-8.5h-4m-9 0h-4m11.7-5.7-2.8 2.8m-4.8 4.8-2.8 2.8m0-10.4 2.8 2.8m4.8 4.8 2.8 2.8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"/>',
+    'AL': '<path d="M12 4 3.5 8.2 12 12.5l8.5-4.3L12 4Zm-5.5 7.2v4.3L12 19l5.5-3.5v-4.3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"/>',
+    'FI': '<path d="M12 3.5v17m4-13.5h-6.2a2.8 2.8 0 1 0 0 5.6h4.4a2.8 2.8 0 1 1 0 5.6H7.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"/>',
+    'EN': '<path d="M4.5 12h8m0 0-3-3m3 3-3 3m4.5-8.5h4a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"/>',
+    'AU': '<rect x="4" y="5" width="16" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M8 3.75v3.5M16 3.75v3.5M4 9h16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"/>',
+    'WA': '<path d="M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.75 20.5l4.5-.8A8.5 8.5 0 1 0 12 3.5Zm4.05 11.05c-.18.5-1.05.95-1.46 1.01-.38.06-.86.09-1.39-.08-.32-.1-.73-.23-1.26-.46-2.2-.95-3.64-3.17-3.75-3.32-.11-.15-.9-1.2-.9-2.3s.58-1.64.79-1.86c.2-.22.44-.27.59-.27h.43c.14 0 .33-.05.52.4.19.46.64 1.57.7 1.68.06.11.1.25.02.4-.08.15-.12.25-.24.38-.12.14-.25.31-.36.42-.12.12-.24.24-.1.47.13.23.61 1 1.32 1.63.91.81 1.67 1.06 1.9 1.18.23.11.36.09.49-.06.14-.15.58-.68.73-.92.15-.24.31-.2.52-.12.22.08 1.37.65 1.61.76.24.12.4.18.46.28.06.1.06.59-.12 1.1Z" fill="currentColor"/>',
+    'OC': '<path d="M12 4.5 20 18H4l8-13.5Zm0 4.5v4m0 3.2h.01" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"/>',
+}
+
+
+def _render_sidebar_icon(icon_code):
+    paths = _SIDEBAR_ICON_PATHS.get(icon_code)
+    if not paths:
+        return icon_code or ''
+    return (
+        '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" '
+        'xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">'
+        f'{paths}'
+        '</svg>'
+    )
+
+
 def _calculate_static_asset_version():
     static_root = settings.BASE_DIR / 'static'
     css_paths = [
@@ -51,7 +75,8 @@ def _calculate_static_asset_version():
 
     for asset_path in asset_paths:
         if isinstance(asset_path, Path) and asset_path.exists():
-            mtimes.append(int(asset_path.stat().st_mtime))
+            stat_result = asset_path.stat()
+            mtimes.append(getattr(stat_result, 'st_mtime_ns', int(stat_result.st_mtime * 1_000_000_000)))
 
     return str(max(mtimes, default=1))
 
@@ -180,25 +205,9 @@ def _build_navigation(role_slug, current_view_name):
     for item in links:
         item.setdefault('icon', '')
 
-    emoji_map = {
-        'DB': '🏠',
-        'OP': '⚡',
-        'AL': '🎓',
-        'FI': '💰',
-        'EN': '📥',
-        'AU': '🗓️',
-        'AC': '👥',
-        'MP': '🗺️',
-        'CF': '⚙️',
-        'AD': '🧩',
-        'AT': '🔍',
-        'WA': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="20" height="20" style="fill: #25D366;"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.1-16.4-14.6-27.4-32.7-30.6-38.2-3.2-5.6-.3-8.6 2.4-11.4 2.5-2.5 5.5-6.5 8.3-9.8 2.8-3.3 3.7-5.6 5.5-9.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.8 23.5 9.2 31.5 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.7z"/></svg>',
-        'OC': '🚨',
-    }
-
     for item in links:
         code = item.get('icon', '')
-        item['icon'] = emoji_map.get(code, code)
+        item['icon'] = _render_sidebar_icon(code)
 
     active_nav_key = _pick_active_nav_key(current_view_name)
 
@@ -247,14 +256,11 @@ def role_navigation(request):
         shell_counts = get_shell_counts()
         sidebar_navigation = _build_navigation(role_slug, current_view_name=view_name)
 
-        admin_home = admin_index_url()
         if role_slug in (ROLE_OWNER, ROLE_DEV):
             profile_navigation = [
                 {'label': 'Papeis e acessos', 'href': reverse('access-overview')},
                 {'label': 'Config. operacionais', 'href': reverse('operational-settings')},
                 {'label': 'Auditoria', 'href': admin_changelist_url('boxcore', 'auditevent')},
-                {'label': 'Admin Django', 'href': admin_home},
-                {'label': 'Mapa do sistema', 'href': reverse('system-map')},
             ]
 
     return {
