@@ -9,7 +9,63 @@ on:
   pull_request:
 
 jobs:
+  front-runtime-drift:
+    name: Front / Runtime Drift Audit
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 1. Checkout Code
+      uses: actions/checkout@v3
+
+    - name: 2. Set up Python Environment
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: 3. Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt
+
+    - name: 4. Explain Audit Goal
+      run: |
+        echo "Auditando drift entre static/ e staticfiles/."
+        echo "Se houver divergencia, a UI pode servir assets visuais antigos mesmo com CSS novo no repositorio."
+
+    - name: 5. Generate Pedagogical Drift Report
+      env:
+        DJANGO_SECRET_KEY: 'a-dummy-secret-key-for-ci'
+        PHONE_BLIND_INDEX_KEY: 'ci-only-blind-index-key'
+      run: |
+        python manage.py check_static_drift --limit 20 --settings=config.settings.test | tee static-drift-report.txt
+        {
+          echo "## Front / Runtime Drift Audit"
+          echo ""
+          echo "Este job verifica se \`static/\` e \`staticfiles/\` estao sincronizados."
+          echo ""
+          echo "Quando existe drift, o runtime pode vestir uma versao antiga do frontend."
+          echo ""
+          echo "### Saida da auditoria"
+          echo '```text'
+          cat static-drift-report.txt
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    - name: 6. Upload Drift Report Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: static-drift-report
+        path: static-drift-report.txt
+
+    - name: 7. Enforce Zero Drift
+      env:
+        DJANGO_SECRET_KEY: 'a-dummy-secret-key-for-ci'
+        PHONE_BLIND_INDEX_KEY: 'ci-only-blind-index-key'
+      run: |
+        python manage.py check_static_drift --strict --settings=config.settings.test
+
   test:
+    needs: front-runtime-drift
     runs-on: ubuntu-latest
     
     # Define os serviços de dependência (banco de dados e cache)

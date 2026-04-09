@@ -45,12 +45,15 @@ POR QUE ELE EXISTE:
     background: var(--finance-premium-surface-soft);
 }
 
+/* Legado energizado controlado:
+   rail e queue continuam com estes nomes por compatibilidade de markup, mas a
+   autoridade visual real agora mora em finance-board-shell + modifiers. */
 .finance-board-rail {
-    background: var(--finance-premium-surface);
+    background: transparent;
 }
 
 .finance-board-queue {
-    background: var(--finance-premium-surface);
+    background: transparent;
 }
 
 .finance-board-trend,
@@ -65,8 +68,6 @@ POR QUE ELE EXISTE:
 }
 
 body[data-theme="dark"] .finance-board-filter,
-body[data-theme="dark"] .finance-board-rail,
-body[data-theme="dark"] .finance-board-queue,
 body[data-theme="dark"] .finance-board-trend,
 body[data-theme="dark"] .finance-board-trend-side,
 body[data-theme="dark"] .finance-board-portfolio {

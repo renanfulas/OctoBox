@@ -72,7 +72,7 @@ def _resolve_queue_ordering(*, sort_value):
 
 def _build_intake_radar_board(*, params, metrics_queryset, today):
     source_period = (params.get('source_period') or 'day').strip().lower()
-    if source_period not in {'day', 'week', 'month'}:
+    if source_period not in {'day', 'week', 'month', 'all'}:
         source_period = 'day'
 
     radar_queryset = metrics_queryset.filter(
@@ -95,6 +95,9 @@ def _build_intake_radar_board(*, params, metrics_queryset, today):
         )
         period_label = 'Mês'
         copy = 'Leia o acumulado do mês atual para entender quais canais sustentam a captação agora.'
+    elif source_period == 'all':
+        period_label = 'Todos'
+        copy = 'Leia todo o historico disponivel para enxergar os canais que mais sustentam a captacao.'
     else:
         radar_queryset = radar_queryset.filter(created_at__date=today)
         period_label = 'Hoje'
@@ -110,7 +113,7 @@ def _build_intake_radar_board(*, params, metrics_queryset, today):
     base_params['panel'] = 'tab-intake-source'
 
     periods = []
-    for key, label in (('day', 'Hoje'), ('week', 'Semana'), ('month', 'Mês')):
+    for key, label in (('day', 'Hoje'), ('week', 'Semana'), ('month', 'Mês'), ('all', 'Todos')):
         period_params = base_params.copy()
         period_params['source_period'] = key
         periods.append(

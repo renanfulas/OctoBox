@@ -478,6 +478,30 @@ def _build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics
         'medium': 'Confianca media',
         'low': 'Baixa confianca',
     }
+    student_status_map = {
+        'active': 'ativo',
+        'inactive': 'inativo',
+        'paused': 'pausado',
+    }
+    enrollment_status_map = {
+        'active': 'Matricula ativa',
+        'canceled': 'Matricula cancelada',
+        'expired': 'Matricula expirada',
+        'paused': 'Matricula pausada',
+        'pending': 'Matricula pendente',
+    }
+    touch_label_map = {
+        'overdue': 'Toque de cobranca',
+        'reactivation': 'Toque de reativacao',
+    }
+    prediction_window_map = {
+        'next_7_days': 'Resposta em 7 dias',
+        'next_15_days': 'Resposta em 15 dias',
+        'next_30_days': 'Resposta em 30 dias',
+        '7d': 'Janela 7d',
+        '15d': 'Janela 15d',
+        '30d': 'Janela 30d',
+    }
     momentum_class_map = {
         'fresh': 'success',
         'cooling': 'warning',
@@ -733,17 +757,23 @@ def _build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics
                 'student_url': f"{reverse('student-quick-update', args=[item['student_id']])}#student-financial-overview",
                 'bucket_label': bucket_label,
                 'bucket_class': bucket_class,
-                'actual_status': item['actual_student_status'],
+                'actual_status': student_status_map.get(item['actual_student_status'], item['actual_student_status']),
                 'open_amount': open_amount_text,
                 'overdue_count_60d': item['financial_signal']['overdue_payment_count_60d'],
-                'latest_enrollment_status': item['operational_state']['latest_enrollment_status'] or 'Sem matricula',
-                'last_touch_label': item['communication_state']['last_finance_touch_action_kind'] or 'Sem toque recente',
+                'latest_enrollment_status': enrollment_status_map.get(
+                    item['operational_state']['latest_enrollment_status'],
+                    'Sem matricula',
+                ),
+                'last_touch_label': touch_label_map.get(
+                    item['communication_state']['last_finance_touch_action_kind'],
+                    'Sem toque recente',
+                ),
                 'reason_labels': [reason_map.get(code, code.replace('_', ' ')) for code in item['reason_codes'][:3]],
                 'recommended_action_label': action_map.get(item['recommended_action'], item['recommended_action'].replace('_', ' ')),
                 'recommended_action_base_label': adjusted_from_label,
                 'confidence_label': confidence_map.get(item['confidence'], item['confidence']),
                 'confidence_base_label': confidence_map.get(item.get('confidence_base', ''), item.get('confidence_base', '')),
-                'prediction_window': item['prediction_window'],
+                'prediction_window': prediction_window_map.get(item['prediction_window'], item['prediction_window']),
                 'prediction_window_base': item.get('prediction_window_base', ''),
                 'priority_label': item['priority_label'],
                 'historical_score_label': f"Score historico {item.get('historical_score', 0.0):.1f}",
@@ -815,15 +845,15 @@ def _build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics
         )
         if band_level == 'act_now':
             command_message = (
-                f"Ataque esses {len(band_rows)} primeiro; {high_contextual_conviction_count} chegam com conviccao contextual alta."
+                f"Abra o turno por estes {len(band_rows)}; {high_contextual_conviction_count} chegam com leitura contextual forte."
             )
         elif band_level == 'act_with_caution':
             command_message = (
-                f"Avance com calma nestes {len(band_rows)}; {contextual_guidance_count} pedem leitura contextual antes do proximo toque."
+                f"Avance com calma nestes {len(band_rows)}; {contextual_guidance_count} ainda pedem leitura fina antes do proximo toque."
             )
         else:
             command_message = (
-                f"So vigie estes {len(band_rows)} por enquanto; {high_confidence_count} ainda sustentam leitura forte sem pedir aceleracao."
+                f"Deixe estes {len(band_rows)} em observacao; {high_confidence_count} ainda sustentam leitura sem pedir aceleracao."
             )
         grouped_rows.append(
             {
@@ -870,16 +900,16 @@ def _build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics
             'dominant_signal_label': dominant_signal['label'],
             'dominant_action_label': dominant_action_label,
             'why_now': (
-                f"{lead_group['count']} caso(s) abrem esta faixa. "
-                f"O peso maior veio de {dominant_signal['label']}."
+                f"{lead_group['count']} caso(s) puxam a abertura. "
+                f"O que mais empurra esta faixa e {dominant_signal['label']}."
             ),
             'action_focus': (
-                f"Jogada dominante: {dominant_action_label}."
+                f"Primeira jogada sugerida: {dominant_action_label}."
             ),
             'alignment_note': (
-                f"Ela esta alinhada com a recomendacao global do turno: {global_action_label}."
+                f"Ela converge com a recomendacao global do turno: {global_action_label}."
                 if is_turn_action_aligned else
-                f"Ela esta em tensao com a recomendacao global do turno: {global_action_label}."
+                f"Ela puxa para outro lado da recomendacao global do turno: {global_action_label}."
                 if global_action_label else
                 'Ainda sem recomendacao global suficiente para medir alinhamento.'
             ),

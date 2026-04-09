@@ -262,14 +262,74 @@ POR QUE ELE EXISTE:
     background: var(--scrollbar-thumb-hover);
 }
 
-.owner-simple-shell .owner-metric-grid .operation-kpi-card {
+.owner-simple-shell .owner-metric-grid .operation-kpi-card,
+.owner-simple-shell .owner-metric-grid .operation-kpi-compact {
     min-height: 124px;
     height: 100%;
     border-radius: 22px;
+    padding: 18px 18px 16px;
     transition:
         transform 220ms var(--ease-standard),
         box-shadow 220ms var(--ease-standard),
         border-color 220ms var(--ease-standard);
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card-link {
+    min-width: 0;
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card .card-body-metric {
+    display: grid;
+    grid-template-rows: auto;
+    align-content: start;
+    gap: 10px;
+    min-height: 0;
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card .card-value-stack {
+    display: grid;
+    gap: 8px;
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card .card-value-row {
+    order: 1;
+    align-items: baseline;
+    justify-content: flex-start;
+    gap: 0;
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card .card-label {
+    order: 0;
+    margin: 0;
+    color: var(--muted-strong);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card .card-value {
+    font-size: clamp(2.05rem, 2.2vw, 2.45rem);
+    line-height: 0.92;
+    letter-spacing: -0.055em;
+    font-weight: 800;
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card .metric-number {
+    font-variant-numeric: tabular-nums;
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card .card-content {
+    display: none;
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card .card-kicker,
+.owner-simple-shell .owner-metric-grid .metric-card .card-copy,
+.owner-simple-shell .owner-metric-grid .metric-card .card-footer,
+.owner-simple-shell .owner-metric-grid .metric-card .card-meta,
+.owner-simple-shell .owner-metric-grid .metric-card .card-signal {
+    display: none;
 }
 
 .owner-simple-shell .owner-metric-grid .operation-kpi-card:hover {

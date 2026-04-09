@@ -11,16 +11,16 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende do contexto de financial_alerts.
 -->
-<section class="card finance-board-queue" id="finance-queue-board" data-panel="finance-queue-board" aria-label="Fila Automatica">
+<section class="card finance-board-shell finance-board-queue is-queue" id="finance-queue-board" data-panel="finance-queue-board" aria-label="Fila Automatica">
     <div class="card-head">
-        <div class="finance-overdue-head-copy">
+        <div class="finance-board-shell-copy">
             <span class="eyebrow">Decisao assistida</span>
-            <h3 class="card-title">Fila assistida do turno</h3>
-            <p class="finance-overdue-subtitle">{{ page.data.finance_risk_queue.filtered_count }} caso(s) em leitura de prioridade e {{ page.data.finance_overdue_rows|length }} pagamento(s) pendente(s)</p>
+            <h3 class="card-title finance-board-shell-title">Fila do turno</h3>
+            <p class="finance-board-shell-subtitle">{{ page.data.finance_risk_queue.filtered_count }} caso(s) em leitura de prioridade, timing e contexto.</p>
         </div>
     </div>
     {% if page.data.finance_risk_queue.rows %}
-    <div class="finance-risk-queue" data-slot="finance-risk-queue">
+    <div class="finance-board-shell-body finance-risk-queue" data-slot="finance-risk-queue">
         <div class="finance-risk-summary">
             <span class="badge badge-subtle ink">{{ page.data.finance_risk_queue.queue_focus_label }}</span>
             <span class="badge badge-subtle info">{{ page.data.finance_risk_queue.filtered_count }} na fila</span>
@@ -29,7 +29,7 @@ PONTOS CRITICOS:
             <span class="badge badge-subtle success">{{ page.data.finance_risk_queue.summary.recovered_count }} recuperado(s)</span>
         </div>
         {% if page.data.finance_risk_queue.turn_recommendation %}
-        <div class="finance-guide-card finance-guide-card-soft finance-guide-card-compact">
+        <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft finance-guide-card-compact">
             <span class="eyebrow">Recomendacao global do turno</span>
             <div class="finance-followup-line">
                 <strong>{{ page.data.finance_risk_queue.turn_recommendation.action_label }}</strong>
@@ -39,7 +39,7 @@ PONTOS CRITICOS:
         </div>
         {% endif %}
         {% if page.data.finance_risk_queue.turn_priority %}
-        <div class="finance-guide-card finance-guide-card-compact">
+        <div class="finance-guide-card finance-board-subsurface finance-guide-card-compact">
             <span class="eyebrow">Prioridade agregada do turno</span>
             <div class="finance-followup-line">
                 <strong>{{ page.data.finance_risk_queue.turn_priority.label }}</strong>
@@ -53,7 +53,7 @@ PONTOS CRITICOS:
         {% endif %}
         <div class="finance-risk-list">
             {% for group in page.data.finance_risk_queue.groups %}
-            <div class="finance-guide-card finance-guide-card-compact finance-queue-group-card {% if group.level == 'act_now' %}finance-guide-card-soft{% endif %}">
+            <div class="finance-guide-card finance-board-subsurface finance-guide-card-compact finance-queue-group-card {% if group.level == 'act_now' %}finance-guide-card-soft{% endif %}">
                 <span class="eyebrow">{{ group.label }}</span>
                 <div class="finance-followup-line">
                     <strong>{{ group.count }} caso(s)</strong>
@@ -72,26 +72,25 @@ PONTOS CRITICOS:
                         <div class="finance-risk-meta">
                             <span class="badge badge-subtle {{ item.bucket_class }}">{{ item.bucket_label }}</span>
                             <span>{{ item.operational_band_label }}</span>
-                            <span>{{ item.confidence_label }}</span>
-                            <span>Status {{ item.actual_status }}</span>
+                            <span class="finance-risk-meta-secondary">{{ item.confidence_label }}</span>
                             <span>{{ item.open_amount }}</span>
                             {% if item.overdue_count_60d %}
-                            <span>{{ item.overdue_count_60d }} atraso(s) em 60d</span>
+                            <span class="finance-risk-meta-secondary">{{ item.overdue_count_60d }} atraso(s) em 60d</span>
                             {% endif %}
                         </div>
                     </div>
                     <div class="finance-risk-side">
                         <strong>{{ item.recommended_action_label }}</strong>
-                        <span>{{ item.prediction_window }}</span>
-                        <span>{{ item.latest_enrollment_status }}</span>
-                        <span>{{ item.last_touch_label }}</span>
+                        <span class="finance-risk-side-secondary">{{ item.prediction_window }}</span>
+                        <span class="finance-risk-side-secondary">{{ item.latest_enrollment_status }}</span>
                     </div>
                 </div>
                 <p class="finance-risk-note">{{ item.playbook_note }}</p>
                 <div class="finance-risk-meta finance-risk-meta-quiet">
                     <span class="badge badge-subtle {{ item.momentum_class }}">{{ item.momentum_label }}</span>
-                    <span>{{ item.momentum_detail }}</span>
-                    <span>{{ item.priority_order_hint }}</span>
+                    <span class="finance-risk-meta-secondary">{{ item.momentum_detail }}</span>
+                    <span class="finance-risk-meta-secondary">{{ item.last_touch_label }}</span>
+                    <span class="visually-hidden">{{ item.priority_order_hint }}</span>
                     {% for flag in item.assist_flags %}
                     <span class="badge badge-subtle {{ flag.tone }}">{{ flag.label }}</span>
                     {% endfor %}
@@ -101,13 +100,16 @@ PONTOS CRITICOS:
                     <span class="finance-risk-reason">{{ reason }}</span>
                     {% endfor %}
                 </div>
-                {% if item.assist_notes %}
                 <details class="finance-risk-details">
                     <summary>Ver sinais de apoio</summary>
                     <div class="finance-risk-details-body">
+                        {% if item.assist_notes %}
                         {% for note in item.assist_notes %}
                         <p class="finance-risk-order-hint">{{ note }}</p>
                         {% endfor %}
+                        {% else %}
+                        <p class="finance-risk-order-hint">Este caso segue a leitura base da fila, sem reforcos extras de timing ou contexto por enquanto.</p>
+                        {% endif %}
                         <div class="finance-risk-meta finance-risk-meta-quiet">
                             <span>{{ item.historical_score_label }}</span>
                             <span>{{ item.queue_assist_score_label }}</span>
@@ -116,7 +118,6 @@ PONTOS CRITICOS:
                         </div>
                     </div>
                 </details>
-                {% endif %}
                 <div class="actions actions-tight finance-risk-actions">
                     {% if item.primary_action_mode == 'finance_whatsapp' %}
                     <form method="post" action="{% url 'finance-communication-action' %}" target="_blank" class="actions actions-tight finance-risk-actions-inline">
@@ -141,8 +142,19 @@ PONTOS CRITICOS:
         </div>
     </div>
     {% elif page.data.financial_churn_foundation.summary.students_in_scope %}
-    {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Fila por missao" title="Nenhum aluno neste recorte da fila" copy="Mude a missao da fila para abrir outro grupo de prioridade operacional sem perder o recorte financeiro." badge=page.data.finance_risk_queue.queue_focus_label badge_class="info" %}
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Fila por missao" title="Nenhum aluno neste recorte da fila" copy="Mude a missao da fila para abrir outro grupo de prioridade operacional sem perder o recorte financeiro." badge=page.data.finance_risk_queue.queue_focus_label badge_class="info" %}
     {% endif %}
+</section>
+
+<section class="card finance-board-shell finance-board-overdue-support is-support" id="finance-overdue-support-board" aria-label="Pendencias abertas">
+    <div class="card-head">
+        <div class="finance-board-shell-copy">
+            <span class="eyebrow">Apoio bruto</span>
+            <h3 class="card-title finance-board-shell-title">Pendencias abertas</h3>
+            <p class="finance-board-shell-subtitle finance-board-support-subtitle">Lista bruta de pagamentos vencidos que continuam pressionando o caixa.</p>
+        </div>
+    </div>
+    <div class="finance-board-shell-body">
     <div class="finance-overdue-list" data-slot="finance-alert-list">
         {% for item in page.data.finance_overdue_rows %}
         <a class="finance-overdue-row" href="{{ item.student_url }}" aria-label="{{ item.student_name }} - {{ item.overdue_days }} dias de atraso">
@@ -161,5 +173,6 @@ PONTOS CRITICOS:
         {% empty %}
         {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Fila financeira" title="Nenhuma pendencia financeira no momento" copy="A carteira nao tem cobranca pressionando caixa ou retencao neste recorte." badge="Carteira estabilizada" badge_class="accent" %}
         {% endfor %}
+    </div>
     </div>
 </section>

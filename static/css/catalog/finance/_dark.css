@@ -12,11 +12,10 @@ PONTOS CRITICOS:
 /* ── Board sections + command/focus dark ── */
 
 body[data-theme="dark"] .finance-board-filter,
-body[data-theme="dark"] .finance-board-rail,
-body[data-theme="dark"] .finance-board-queue,
 body[data-theme="dark"] .finance-board-trend,
 body[data-theme="dark"] .finance-board-trend-side,
-body[data-theme="dark"] .finance-board-portfolio {
+body[data-theme="dark"] .finance-board-portfolio,
+body[data-theme="dark"] .finance-board-shell {
     background: var(--surface);
 }
 
@@ -46,8 +45,10 @@ body[data-theme="dark"] .finance-board-filter select {
 
 /* ── Bulk dark mode ── */
 
-body[data-theme="dark"] .finance-shell .table-card,
-body[data-theme="dark"] .finance-shell .card,
+/* Ponte controlada:
+   este bulk deve cobrir cards genericos do financeiro, mas nao pode voltar a ser
+   autoridade principal dos hosts canonicos. Superficies finance-board-shell ficam
+   com a assinatura dark em _signature.css. */
 body[data-theme="dark"] .finance-shell .finance-action-card,
 body[data-theme="dark"] .finance-shell .finance-alert-card,
 body[data-theme="dark"] .finance-shell .finance-action-message,
@@ -58,6 +59,7 @@ body[data-theme="dark"] .finance-shell .finance-alert-stat,
 body[data-theme="dark"] .finance-shell .finance-chart-column,
 body[data-theme="dark"] .finance-shell .finance-plan-stat,
 body[data-theme="dark"] .finance-shell .finance-guide-card,
+body[data-theme="dark"] .finance-shell .finance-board-subsurface,
 body[data-theme="dark"] .finance-shell .finance-filter-rule-card,
 body[data-theme="dark"] .finance-shell .finance-section-intro {
     color: var(--ink);

@@ -124,16 +124,100 @@ POR QUE ELE EXISTE:
         -webkit-line-clamp: 3;
     }
 
-    .finance-board-rail .card-head,
-    .finance-board-queue .card-head,
+    .finance-board-shell > .card-head,
+    .finance-board-shell > .finance-board-shell-head,
     .finance-portfolio-panel-head {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .finance-board-rail .badge,
-    .finance-board-queue .badge {
+    .finance-board-shell .finance-board-shell-meta,
+    .finance-board-shell .badge,
+    .finance-portfolio-panel-head .badge {
         align-self: flex-start;
+    }
+
+    .finance-board-shell-body {
+        gap: 12px;
+    }
+
+    .finance-board-shell.is-rail,
+    .finance-board-shell.is-queue,
+    .finance-board-shell.is-support {
+        padding: 14px 14px 12px;
+        border-radius: 20px;
+    }
+
+    .finance-queue-intro {
+        gap: 8px;
+        padding: 8px 10px;
+    }
+
+    .finance-queue-intro-column p {
+        font-size: 0.78rem;
+    }
+
+    .finance-risk-summary {
+        gap: 6px;
+    }
+
+    .finance-guide-card-compact {
+        padding: 10px 12px;
+    }
+
+    .finance-risk-row {
+        gap: 8px;
+        padding: 10px 9px 9px;
+        border-radius: 16px;
+    }
+
+    .finance-risk-copy {
+        gap: 6px;
+    }
+
+    .finance-risk-meta {
+        gap: 5px;
+        font-size: 0.78rem;
+    }
+
+    .finance-risk-meta-secondary,
+    .finance-risk-side-secondary {
+        display: none;
+    }
+
+    .finance-risk-note {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        overflow: hidden;
+    }
+
+    .finance-risk-reasons {
+        gap: 5px;
+    }
+
+    .finance-risk-reason {
+        padding: 5px 8px;
+        font-size: 0.72rem;
+    }
+
+    .finance-risk-details {
+        padding-top: 8px;
+    }
+
+    .finance-risk-actions {
+        margin-top: 0;
+    }
+
+    .finance-risk-actions .button,
+    .finance-risk-actions-inline .button {
+        width: 100%;
+    }
+
+    .finance-board-overdue-support .finance-overdue-list {
+        max-height: 320px;
+        overflow: auto;
+        padding-right: 4px;
     }
 
     .finance-overdue-row {

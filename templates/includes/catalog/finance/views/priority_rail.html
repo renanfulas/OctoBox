@@ -1,14 +1,14 @@
 <!--
 ARQUIVO: regua prioritaria de cobranca e retencao.
 -->
-<section class="card finance-board-rail" id="finance-priority-board" aria-label="Acoes prontas do turno">
+<section class="card finance-board-shell finance-board-rail is-rail" id="finance-priority-board" aria-label="Acoes prontas do turno">
     <div class="card-head">
-        <div class="finance-board-head-copy">
+        <div class="finance-board-shell-copy">
             <span class="eyebrow">Execucao pronta</span>
-            <h3 class="card-title">Acoes prontas do turno</h3>
-            <p class="finance-overdue-subtitle">Casos semiassistidos que ja chegam prontos para disparo.</p>
+            <h3 class="card-title finance-board-shell-title">Acoes prontas</h3>
+            <p class="finance-board-shell-subtitle">Casos semiassistidos prontos para disparo.</p>
         </div>
-        <span class="badge badge-subtle warning">{{ page.data.operational_queue|length }} acao(oes)</span>
+        <span class="badge badge-subtle warning finance-board-shell-meta">{{ page.data.operational_queue|length }} acao(oes)</span>
     </div>
     {% if page.data.operational_queue %}
     <div class="finance-priority-carousel" data-finance-priority-carousel>

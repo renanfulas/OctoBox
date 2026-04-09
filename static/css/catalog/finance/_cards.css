@@ -37,6 +37,9 @@ PONTOS CRITICOS:
 }
 
 .finance-action-meta-list {
+    /* Ponte controlada:
+       este corte superior pertence ao subcard da regua.
+       Nao promover para outros cards do financeiro sem revisar se o host externo ja separa secoes. */
     gap: 4px;
     padding-top: 8px;
     border-top: 1px solid rgba(148, 163, 184, 0.12);
@@ -107,6 +110,13 @@ PONTOS CRITICOS:
     box-shadow:
         0 20px 40px rgba(14, 24, 44, 0.08),
         inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.finance-action-card.finance-board-subsurface {
+    border-radius: 18px;
+    box-shadow:
+        0 14px 28px rgba(14, 24, 44, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .finance-action-glow {
@@ -578,6 +588,9 @@ body[data-theme="dark"] .finance-action-meta-chip {
 }
 
 .finance-plan-card-compact .actions {
+    /* Ponte controlada:
+       divisao final legitima do card compacto de plano.
+       Evitar copiar este padrao como atalho para outros cards, pois ele pode criar segunda moldura interna. */
     gap: 8px;
     margin-top: auto;
     padding-top: 12px;

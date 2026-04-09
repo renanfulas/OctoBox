@@ -78,7 +78,9 @@ PONTOS CRITICOS:
 
 .finance-shell .finance-metric-card,
 .finance-shell .finance-filter-summary-card,
-.finance-shell .finance-action-card {
+.finance-shell .finance-action-card,
+.finance-shell .finance-board-shell,
+.finance-shell .finance-board-subsurface {
     position: relative;
     overflow: hidden;
     border-color: var(--finance-signature-line);
@@ -88,7 +90,18 @@ PONTOS CRITICOS:
         0 18px 38px rgba(19, 33, 50, 0.08);
 }
 
+.finance-shell .finance-board-shell::before,
+.finance-shell .finance-board-shell::after {
+    content: none;
+    display: none;
+}
+
+.finance-shell .finance-board-shell .eyebrow {
+    margin: 0;
+}
+
 .finance-shell :is(
+    .finance-board-shell,
     .finance-board-filter,
     .finance-filter-summary-card,
     .finance-board-mix,
@@ -102,6 +115,56 @@ PONTOS CRITICOS:
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(14px);
+}
+
+.finance-shell .finance-board-shell.is-support {
+    border-style: dashed;
+}
+
+.finance-shell .finance-board-shell.is-rail {
+    border-color: color-mix(in srgb, var(--theme-accent-warning-alpha) 26%, var(--finance-signature-line) 74%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, transparent), transparent 34%),
+        linear-gradient(160deg, rgba(255, 251, 244, 0.98), rgba(249, 245, 238, 0.94));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.94),
+        0 20px 42px rgba(85, 56, 35, 0.1);
+    outline: 1px solid color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, transparent);
+    outline-offset: 1px;
+}
+
+.finance-shell .finance-board-shell.is-queue {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--finance-signature-line) 88%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 8%, transparent), transparent 32%),
+        linear-gradient(160deg, rgba(250, 252, 255, 0.98), rgba(244, 248, 252, 0.94));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.88),
+        0 16px 32px rgba(19, 33, 50, 0.07);
+}
+
+.finance-shell .finance-board-shell.is-support {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--finance-signature-line) 90%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 5%, transparent), transparent 34%),
+        linear-gradient(160deg, rgba(248, 251, 254, 0.94), rgba(243, 247, 251, 0.9));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.86),
+        0 14px 28px rgba(19, 33, 50, 0.06);
+    backdrop-filter: blur(10px);
+}
+
+.finance-shell .finance-board-shell.is-analytics,
+.finance-shell .finance-board-subsurface.finance-guide-card {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        0 14px 30px rgba(19, 33, 50, 0.06);
+}
+
+.finance-shell .finance-board-shell.is-rail .finance-board-subsurface.finance-action-card {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 16%, transparent), transparent 34%),
+        linear-gradient(160deg, rgba(255, 251, 244, 0.96), rgba(249, 246, 239, 0.92));
 }
 
 .finance-shell .finance-metric-card.finance-metric-card--copper {
@@ -170,12 +233,57 @@ body[data-theme="dark"] .finance-shell .finance-card-actions-compact .button:foc
 
 body[data-theme="dark"] .finance-shell .finance-metric-card,
 body[data-theme="dark"] .finance-shell .finance-filter-summary-card,
-body[data-theme="dark"] .finance-shell .finance-action-card {
+body[data-theme="dark"] .finance-shell .finance-action-card,
+body[data-theme="dark"] .finance-shell .finance-board-shell,
+body[data-theme="dark"] .finance-shell .finance-board-subsurface {
     border-color: rgba(144, 181, 205, 0.16);
     background: var(--card-surface);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.06),
         0 20px 40px rgba(0, 0, 0, 0.28);
+}
+
+body[data-theme="dark"] .finance-shell .finance-board-shell.is-support {
+    border-style: dashed;
+}
+
+body[data-theme="dark"] .finance-shell .finance-board-shell.is-rail {
+    border-color: rgba(214, 164, 112, 0.24);
+    background:
+        radial-gradient(circle at top right, rgba(214, 164, 112, 0.14), transparent 34%),
+        linear-gradient(160deg, rgba(18, 17, 22, 0.96), rgba(12, 15, 24, 0.94));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 24px 44px rgba(34, 22, 12, 0.34);
+    outline: 1px solid rgba(214, 164, 112, 0.18);
+    outline-offset: 1px;
+}
+
+body[data-theme="dark"] .finance-shell .finance-board-shell.is-queue {
+    border-color: rgba(92, 146, 214, 0.16);
+    background:
+        radial-gradient(circle at top right, rgba(74, 144, 226, 0.08), transparent 34%),
+        linear-gradient(160deg, rgba(10, 18, 32, 0.94), rgba(8, 15, 27, 0.92));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 20px 38px rgba(2, 6, 23, 0.26);
+}
+
+body[data-theme="dark"] .finance-shell .finance-board-shell.is-support {
+    border-color: rgba(148, 163, 184, 0.14);
+    background:
+        radial-gradient(circle at top right, rgba(74, 144, 226, 0.04), transparent 34%),
+        linear-gradient(160deg, rgba(9, 16, 29, 0.92), rgba(8, 14, 25, 0.9));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.03),
+        0 18px 34px rgba(2, 6, 23, 0.24);
+    backdrop-filter: blur(10px);
+}
+
+body[data-theme="dark"] .finance-shell .finance-board-shell.is-rail .finance-board-subsurface.finance-action-card {
+    background:
+        radial-gradient(circle at top right, rgba(245, 158, 11, 0.12), transparent 34%),
+        linear-gradient(160deg, rgba(26, 20, 13, 0.9), rgba(11, 18, 31, 0.92));
 }
 
 body[data-theme="dark"] .finance-shell .finance-summary-chip,
