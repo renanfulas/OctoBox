@@ -55,6 +55,12 @@ Contrato rapido do design system:
 
 1. [design-system-contract.md](design-system-contract.md)
 
+Mapas complementares desta frente:
+
+1. [front-end-forensics-map.md](front-end-forensics-map.md) para bugs visuais, overrides, legado e hotspots de CSS
+2. [front-end-contract-forensics-map.md](front-end-contract-forensics-map.md) para bugs de backend visual, payload, presenter e contrato de tela
+3. [front-end-forensics-checklist.md](front-end-forensics-checklist.md) para auditoria operacional recorrente de UI
+
 ## Taxonomia oficial dos heroes
 
 Use esta classificacao antes de criar, refatorar ou diagnosticar qualquer hero.

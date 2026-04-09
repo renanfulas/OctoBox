@@ -60,6 +60,11 @@ PONTOS CRITICOS:
     align-content: start;
 }
 
+.layout-panel--narrow-center {
+    width: min(100%, 720px);
+    margin: 40px auto;
+}
+
 .layout-panel-head {
     display: grid;
     gap: 12px;

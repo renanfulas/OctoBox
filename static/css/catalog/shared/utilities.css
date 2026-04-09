@@ -4,7 +4,22 @@ ARQUIVO: utilitários visuais compartilhados do catálogo.
 POR QUE ELE EXISTE:
 - reúne tipografia, grids, cards genéricos, gráficos, notas e disclosure panels.
 - sustenta a base visual comum das telas de catálogo fora do overview financeiro.
+
+O QUE ESTE ARQUIVO FAZ:
+1. define helpers compartilhados de formulário, tipografia e layout do catálogo.
+2. hospeda componentes leves que ainda não justificam módulo próprio.
+3. concentra hotspots históricos de override que precisam de migração gradual.
+
+PONTOS CRITICOS:
+- este arquivo não é autoridade de tema.
+- `note-panel*` não mora mais aqui; apenas complementos de layout são permitidos.
+- blocos com `!important` existem por compatibilidade e devem ser tratados como área de exceção.
 */
+
+/* ==========================================================================
+   CAMADA 1: HELPERS NEUTROS DE TEXTO E FORMULÁRIO
+   Ownership: catálogo compartilhado
+   ========================================================================== */
 
 .body-copy {
     line-height: 1.6;
@@ -57,6 +72,12 @@ POR QUE ELE EXISTE:
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 16px;
 }
+
+/* ==========================================================================
+   CAMADA 2: SURFACES E CARDS COMPARTILHADOS DO CATÁLOGO
+   Ownership: catálogo compartilhado
+   Observação: ainda não virar design system sem prova de reuso canônico
+   ========================================================================== */
 
 .student-priority-panel,
 .plan-card,
@@ -188,7 +209,10 @@ POR QUE ELE EXISTE:
     display: block;
 }
 
-
+/* ==========================================================================
+   CAMADA 3: LAYOUTS E MÉTRICAS COMPARTILHADAS
+   Ownership: catálogo compartilhado
+   ========================================================================== */
 
 .row-between,
 .row-between-sm,
@@ -349,6 +373,12 @@ POR QUE ELE EXISTE:
     box-shadow: 0 0 0 5px rgba(184, 92, 56, 0.12);
 }
 
+/* ==========================================================================
+   CAMADA 4: COMPLEMENTOS DE ESTADO E DISCLOSURE
+   Ownership: catálogo compartilhado
+   Guarda: não redefinir famílias canônicas como `note-panel*`
+   ========================================================================== */
+
 /*
 REGRA:
 - `note-panel` deixou de ser autoridade visual local
@@ -426,8 +456,11 @@ REGRA:
     }
 }
 
-
-/* 🚀 ENGINE DE UTILITÁRIOS AAA - OCTOBOX */
+/* ==========================================================================
+   CAMADA 5: ENGINE UTILITÁRIA DE COMPATIBILIDADE
+   Ownership: legado controlado / hotspot de override
+   Regra: manter comportamento enquanto a migração por ownership não termina
+   ========================================================================== */
 
 /* Spacing Engine */
 .mt-1 { margin-top: 0.25rem !important; }
@@ -471,6 +504,12 @@ body[data-theme="dark"] .text-dimmed { color: var(--theme-text-muted) !important
 
 /* Interactive Engine */
 .hover-lift { transition: box-shadow 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* ==========================================================================
+   CAMADA 6: ADAPTAÇÕES DE TEMA ESCURO
+   Ownership: catálogo compartilhado
+   Regra: apenas ajustar superfícies locais deste arquivo
+   ========================================================================== */
 
 body[data-theme="dark"] .disclosure-panel:not(.student-form-step-disclosure),
 body[data-theme="dark"] .installment-shell,

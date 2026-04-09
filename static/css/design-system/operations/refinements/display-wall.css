@@ -23,91 +23,20 @@ POR QUE ELE EXISTE:
     align-items: start;
 }
 
-#manager-intake-board {
+[data-panel="manager-intake-board"] {
     grid-area: intake;
 }
 
-#manager-enrollment-link-board {
+[data-panel="manager-enrollment-link-board"] {
     grid-area: enrollment;
 }
 
-#manager-link-board {
+[data-panel="manager-link-board"] {
     grid-area: link;
 }
 
-#manager-finance-board {
+[data-panel="manager-finance-board"] {
     grid-area: finance;
-}
-
-.manager-main-grid .manager-priority-card,
-.manager-main-grid .manager-secondary-card {
-    border-radius: var(--radius-panel);
-    border: 1px solid var(--card-border);
-}
-
-.manager-main-grid .manager-priority-card {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-danger-alpha) 12%, transparent), transparent 28%),
-        var(--card-surface-strong);
-    box-shadow: var(--card-shadow);
-}
-
-.manager-main-grid .manager-secondary-card {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 28%),
-        var(--card-surface);
-    box-shadow: var(--card-shadow);
-}
-
-.manager-main-grid .manager-priority-card::before,
-.manager-main-grid .manager-secondary-card::before {
-    content: "";
-    position: absolute;
-    inset: 0 auto auto 0;
-    width: 100%;
-    height: 3px;
-    background: color-mix(in srgb, var(--card-border) 92%, transparent);
-}
-
-.manager-main-grid .manager-priority-card::before {
-    height: 4px;
-}
-
-.manager-main-grid .manager-secondary-card::before {
-    opacity: 0.9;
-}
-
-.manager-main-grid #manager-intake-board::before {
-    background: var(--danger);
-}
-
-.manager-main-grid #manager-enrollment-link-board::before {
-    background: var(--warning);
-}
-
-.manager-main-grid #manager-link-board::before {
-    background: var(--brand);
-}
-
-.manager-main-grid #manager-finance-board::before {
-    background: var(--danger);
-}
-
-.manager-main-grid #manager-intake-board {
-    box-shadow: var(--shadow-lift);
-}
-
-.manager-main-grid #manager-intake-board .operation-card-title {
-    max-width: 20ch;
-}
-
-.manager-main-grid #manager-enrollment-link-board .operation-card-title,
-.manager-main-grid #manager-finance-board .operation-card-title {
-    max-width: 24ch;
-}
-
-.manager-main-grid #manager-link-board {
-    align-self: start;
 }
 
 .reception-main-grid {
@@ -120,15 +49,15 @@ POR QUE ELE EXISTE:
     grid-template-areas: "grid shortcuts";
 }
 
-#reception-intake-board {
+[data-panel="reception-intake-board"] {
     grid-area: intake;
 }
 
-#reception-payment-board {
+[data-panel="reception-payment-board"] {
     grid-area: payment;
 }
 
-#reception-class-grid-board {
+[data-panel="reception-class-grid-board"] {
     grid-area: grid;
 }
 
@@ -139,7 +68,7 @@ POR QUE ELE EXISTE:
 .reception-command-card,
 .reception-grid-board,
 .reception-payment-board,
-#reception-intake-board {
+[data-panel="reception-intake-board"] {
     border-radius: var(--radius-panel);
     border: 1px solid var(--card-border);
 }
@@ -159,13 +88,9 @@ POR QUE ELE EXISTE:
     box-shadow: var(--card-shadow);
 }
 
-.reception-command-card {
-    align-content: start;
-}
-
 .reception-grid-board::before,
 .reception-payment-board::before,
-#reception-intake-board::before {
+[data-panel="reception-intake-board"]::before {
     content: "";
     position: absolute;
     inset: 0 auto auto 0;
@@ -173,7 +98,7 @@ POR QUE ELE EXISTE:
     height: 3px;
 }
 
-#reception-intake-board::before {
+[data-panel="reception-intake-board"]::before {
     height: 4px;
     background: var(--brand);
 }
@@ -186,12 +111,12 @@ POR QUE ELE EXISTE:
     background: color-mix(in srgb, var(--card-border) 92%, transparent);
 }
 
-#reception-intake-board .operation-card-title {
+[data-panel="reception-intake-board"] .operation-card-title {
     max-width: 20ch;
 }
 
-#reception-payment-board .operation-card-title,
-#reception-class-grid-board .operation-card-title {
+[data-panel="reception-payment-board"] .operation-card-title,
+[data-panel="reception-class-grid-board"] .operation-card-title {
     max-width: 24ch;
 }
 
@@ -362,33 +287,14 @@ POR QUE ELE EXISTE:
 .manager-main-grid .manager-priority-card,
 .manager-main-grid .manager-secondary-card,
 .reception-main-grid > *,
-.reception-support-grid > *,
-.coach-session-card {
+.reception-support-grid > * {
     position: relative;
     overflow: hidden;
 }
 
-.coach-session-card {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 28%),
-        var(--card-surface-strong);
-    border: 1px solid var(--card-border);
-    box-shadow: var(--card-shadow);
-}
-
-.reception-command-card .actions {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.reception-command-card .button {
-    width: 100%;
-}
-
 body[data-theme="dark"] .manager-focus-lane,
 body[data-theme="dark"] .coach-focus-lane,
-body[data-theme="dark"] .reception-focus-lane,
-body[data-theme="dark"] .coach-session-card {
+body[data-theme="dark"] .reception-focus-lane {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
         var(--card-surface-strong);
@@ -447,11 +353,3 @@ body[data-theme="dark"] .reception-support-card {
     box-shadow: var(--card-shadow);
 }
 
-body[data-theme="dark"] .manager-main-grid .manager-priority-card,
-body[data-theme="dark"] .manager-main-grid .manager-secondary-card {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
-        var(--card-surface-strong);
-    border-color: var(--card-border);
-    box-shadow: var(--card-shadow);
-}
