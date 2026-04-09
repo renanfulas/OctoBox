@@ -1,0 +1,82 @@
+/*
+ARQUIVO: variantes oficiais da familia hero.
+
+POR QUE ELE EXISTE:
+- centraliza personalidades visuais reaproveitaveis do host `.hero`
+- evita que cada pagina repinte o hero do zero
+
+REGRA:
+- este arquivo ajusta knobs do host
+- este arquivo nao cria uma segunda engenharia de hero
+*/
+
+.hero--command {
+    --hero-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 28%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 24%),
+        var(--theme-surface-glass-strong);
+    --hero-border: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    --hero-shadow: var(--theme-glass-shadow);
+    --hero-before-width: 4px;
+    --hero-before-opacity: 0.88;
+    --hero-after-opacity: 0.84;
+}
+
+.hero--support {
+    --hero-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 28%),
+        var(--theme-surface-glass);
+    --hero-border: color-mix(in srgb, var(--theme-glass-border) 88%, transparent);
+    --hero-shadow: 0 18px 34px color-mix(in srgb, rgba(7, 14, 24, 0.08) 100%, transparent);
+    --hero-before-width: 2px;
+    --hero-before-opacity: 0.68;
+    --hero-after-width: 180px;
+    --hero-after-height: 180px;
+    --hero-after-opacity: 0.56;
+}
+
+.hero--feature {
+    --hero-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 18%, transparent), transparent 26%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 24%),
+        var(--theme-surface-glass-strong);
+    --hero-border: color-mix(in srgb, var(--theme-glass-border) 96%, transparent);
+    --hero-shadow: var(--shadow-lift);
+    --hero-before-width: 4px;
+    --hero-before-opacity: 0.9;
+    --hero-after-width: 240px;
+    --hero-after-height: 240px;
+    --hero-after-opacity: 0.86;
+    --hero-padding: clamp(24px, 2.4vw, 36px);
+}
+
+.hero--placeholder {
+    --hero-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-success-alpha) 16%, transparent), transparent 28%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 24%),
+        var(--theme-surface-glass-strong);
+    --hero-border: color-mix(in srgb, var(--theme-glass-border) 92%, transparent);
+    --hero-shadow: var(--theme-glass-shadow);
+    --hero-panel-surface: color-mix(in srgb, var(--theme-surface-glass) 82%, transparent);
+    --hero-panel-border: color-mix(in srgb, var(--theme-glass-border) 84%, transparent);
+    --hero-panel-shadow: inset 0 1px 0 var(--theme-glass-highlight);
+    --hero-before-background: linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-success) 88%, transparent), color-mix(in srgb, var(--theme-accent-support) 72%, transparent));
+}
+
+body[data-theme="dark"] .hero--command,
+body[data-theme="dark"] .hero--feature {
+    --hero-border: color-mix(in srgb, var(--theme-glass-border) 96%, transparent);
+}
+
+body[data-theme="dark"] .hero--support {
+    --hero-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 28%),
+        var(--theme-surface-glass);
+}
+
+body[data-theme="dark"] .hero--placeholder {
+    --hero-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-success-alpha) 18%, transparent), transparent 28%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 24%),
+        var(--theme-surface-glass-strong);
+}

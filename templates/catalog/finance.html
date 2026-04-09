@@ -19,7 +19,7 @@ PONTOS CRITICOS:
 {% block content %}
 {% with page=finance_center_page %}
 <div class="operation-shell finance-shell workspace-shell" data-page="finance" data-screen="catalog-finance" data-slot="page-root">
-    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero hero_variant_class="hero--command" %}
 
     <div class="finance-kpi-panel section-gap" data-panel="finance-interactive-kpis">
         <section class="finance-kpi-grid interactive-tab-triggers" aria-label="Navegacao principal financeira">
@@ -38,6 +38,7 @@ PONTOS CRITICOS:
             {% include "includes/catalog/finance/boards/trend_boards.html" %}
         </div>
 
+<<<<<<< HEAD
         <div class="stack-16 deferred-surface deferred-surface--dense{% if page.behavior.default_panel == 'tab-finance-queue' %} is-tab-active{% endif %}" id="tab-finance-queue" aria-label="Handoff de cobranca">
             <section class="finance-section-intro finance-queue-intro" aria-label="Leitura da aba de cobranca">
                 <div class="finance-queue-intro-column">
@@ -52,16 +53,35 @@ PONTOS CRITICOS:
                 </div>
             </section>
             {% if page.data.operational_queue %}
+=======
+        <div class="stack-16 deferred-surface deferred-surface--dense finance-deferred-surface finance-deferred-surface--queue{% if page.behavior.default_panel == 'tab-finance-queue' %} is-tab-active{% endif %}" id="tab-finance-queue" aria-label="Handoff de cobranca">
+>>>>>>> codex/student-page-refactor-and-ui-polish
             {% include "includes/catalog/finance/views/priority_rail.html" %}
             {% endif %}
             {% include "includes/catalog/finance/boards/queue_board.html" %}
         </div>
 
         <div class="stack-16 deferred-surface deferred-surface--xl{% if page.behavior.default_panel == 'tab-finance-portfolio' %} is-tab-active{% endif %}" id="tab-finance-portfolio" aria-label="Motor de carteira">
+<<<<<<< HEAD
             {% include "includes/catalog/finance/boards/portfolio_board.html" %}
             {% if page.capabilities.can_manage_finance %}
             {% include "includes/catalog/finance/engine/plan_engine.html" %}
             {% endif %}
+=======
+            <div class="finance-portfolio-scene">
+                <div class="finance-portfolio-analysis">
+                    {% include "includes/catalog/finance/boards/portfolio_board.html" %}
+                    {% include "includes/catalog/finance/boards/mix_board.html" %}
+                </div>
+                <div class="finance-portfolio-engine">
+                    {% if page.capabilities.can_manage_finance %}
+                    {% include "includes/catalog/finance/engine/plan_engine.html" %}
+                    {% else %}
+                    {% include "includes/catalog/finance/engine/plan_engine.html" %}
+                    {% endif %}
+                </div>
+            </div>
+>>>>>>> codex/student-page-refactor-and-ui-polish
         </div>
 
         <div class="stack-16 deferred-surface{% if page.behavior.default_panel == 'tab-finance-filters' %} is-tab-active{% endif %}" id="tab-finance-filters" aria-label="Filtros e contexto">

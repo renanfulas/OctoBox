@@ -16,8 +16,17 @@ body[data-theme="dark"] .finance-board-rail,
 body[data-theme="dark"] .finance-board-queue,
 body[data-theme="dark"] .finance-board-trend,
 body[data-theme="dark"] .finance-board-trend-side,
+<<<<<<< HEAD
 body[data-theme="dark"] .finance-board-portfolio {
     background: var(--surface);
+=======
+body[data-theme="dark"] .finance-board-portfolio,
+body[data-theme="dark"] .finance-command-card,
+body[data-theme="dark"] .finance-focus-card {
+    --finance-card-surface: var(--finance-panel-surface-strong, var(--theme-surface-glass-strong));
+    --finance-card-border: color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
+    --finance-card-shadow: var(--finance-panel-shadow, var(--theme-glass-shadow));
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 body[data-theme="dark"] .finance-command-card {
@@ -46,6 +55,7 @@ body[data-theme="dark"] .finance-board-filter select {
 
 /* ── Bulk dark mode ── */
 
+<<<<<<< HEAD
 body[data-theme="dark"] .finance-shell .table-card,
 body[data-theme="dark"] .finance-shell .card,
 body[data-theme="dark"] .finance-shell .finance-action-card,
@@ -64,21 +74,62 @@ body[data-theme="dark"] .finance-shell .finance-section-intro {
     border-color: rgba(199, 186, 167, 0.14);
     background: var(--surface);
     box-shadow: 0 20px 42px rgba(0, 0, 0, 0.22);
+=======
+body[data-theme="dark"] .finance-shell {
+    --finance-card-text: var(--theme-text-primary);
+    --finance-card-copy: var(--theme-text-secondary);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 body[data-theme="dark"] .finance-shell .finance-action-card,
 body[data-theme="dark"] .finance-shell .finance-alert-card,
 body[data-theme="dark"] .finance-shell .finance-plan-card,
 body[data-theme="dark"] .finance-shell .finance-plan-focus-item {
-    background: var(--surface);
+    --finance-card-surface: var(--finance-panel-surface, var(--theme-surface-glass));
+}
+
+body[data-theme="dark"] .finance-shell .card.finance-board-rail.finance-board-rail--priority {
+    --finance-card-border: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--card-border) 82%);
+    --finance-card-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 24%),
+        var(--finance-panel-surface-strong, var(--card-surface-strong));
+    --finance-card-shadow: var(--finance-panel-shadow, var(--card-shadow));
+}
+
+body[data-theme="dark"] .finance-shell .card.finance-board-rail.finance-board-rail--priority .badge-subtle.warning {
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 30%, var(--theme-glass-border) 70%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-surface-glass) 82%);
+    color: var(--theme-accent-warning);
+}
+
+body[data-theme="dark"] .finance-shell .card.finance-board-queue {
+    --finance-card-border: color-mix(in srgb, var(--theme-accent-danger-alpha) 18%, var(--card-border) 82%);
+    --finance-card-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-danger-alpha) 14%, transparent), transparent 30%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 22%),
+        var(--finance-panel-surface-strong, var(--card-surface-strong));
+    --finance-card-shadow: var(--finance-panel-shadow, var(--card-shadow));
+}
+
+body[data-theme="dark"] .finance-shell .card.finance-board-queue .card-title,
+body[data-theme="dark"] .finance-shell .card.finance-board-queue .finance-overdue-copy strong {
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .finance-shell .card.finance-board-queue .finance-overdue-subtitle,
+body[data-theme="dark"] .finance-shell .card.finance-board-queue .finance-overdue-copy span,
+body[data-theme="dark"] .finance-shell .card.finance-board-queue .finance-overdue-age {
+    color: var(--theme-text-secondary);
 }
 
 body[data-theme="dark"] .finance-shell .finance-action-message {
-    background: var(--surface);
-    border-color: rgba(214, 164, 112, 0.18);
+    --card-local-surface: var(--finance-panel-surface-strong, var(--card-surface-strong));
+    --card-local-border: color-mix(in srgb, var(--theme-accent-warning) 20%, var(--card-border) 80%);
 }
 
 body[data-theme="dark"] .finance-shell .button.secondary {
+<<<<<<< HEAD
     color: rgba(226, 232, 240, 0.76);
     border-color: transparent;
     background: transparent;
@@ -109,6 +160,30 @@ body[data-theme="dark"] .finance-shell .finance-metric-card--teal {
 
 body[data-theme="dark"] .finance-shell .finance-metric-card--cyan {
     background: var(--surface);
+=======
+    color: rgba(245, 239, 228, 0.94);
+    border-color: color-mix(in srgb, var(--card-border) 82%, transparent);
+    background: var(--finance-panel-surface, var(--theme-surface-glass));
+}
+
+body[data-theme="dark"] .finance-shell .button.secondary:hover {
+    color: #fff8ef;
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 26%, var(--theme-glass-border) 74%);
+    background: var(--finance-panel-surface-strong, var(--theme-surface-glass-strong));
+}
+
+body[data-theme="dark"] .finance-shell .orange-glow {
+    background: var(--finance-panel-surface, var(--theme-surface-glass));
+}
+
+body[data-theme="dark"] .finance-shell .green-glow {
+    background: var(--finance-panel-surface, var(--theme-surface-glass));
+}
+
+body[data-theme="dark"] .finance-shell .blue-glow,
+body[data-theme="dark"] .finance-shell .info-card {
+    background: var(--finance-panel-surface, var(--theme-surface-glass));
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 body[data-theme="dark"] .finance-shell .metric-spark,

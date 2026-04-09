@@ -44,6 +44,16 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
 @media (max-width: 960px) {
     .owner-workspace-strip {
         grid-template-columns: 1fr;
+<<<<<<< HEAD
+=======
+    }
+
+    .dev-scene .operation-hero,
+    .manager-scene .operation-hero,
+    .coach-scene .operation-hero,
+    .owner-scene .operation-hero {
+        padding: 18px;
+>>>>>>> codex/student-page-refactor-and-ui-polish
     }
 
     .owner-metrics-panel {

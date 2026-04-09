@@ -48,7 +48,7 @@ POR QUE ELE EXISTE:
 .import-progress-status {
     font-size: 0.95rem;
     font-weight: 700;
-    color: var(--accent-2);
+    color: var(--theme-accent-support);
 }
 
 .import-progress-status.is-success {
@@ -69,23 +69,23 @@ POR QUE ELE EXISTE:
     height: 12px;
     overflow: hidden;
     border-radius: 999px;
-    background: rgba(148, 163, 184, 0.14);
-    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.12);
+    background: color-mix(in srgb, var(--theme-surface-muted) 82%, transparent);
+    box-shadow: inset 0 1px 2px color-mix(in srgb, var(--theme-border-soft) 58%, transparent);
 }
 
 .import-progress-bar {
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, rgba(37, 99, 235, 0.88), rgba(99, 102, 241, 0.92));
+    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-support) 92%, transparent), color-mix(in srgb, var(--theme-accent-premium) 86%, transparent));
     transition: width 0.3s ease, background 0.2s ease;
 }
 
 .import-progress-bar.is-success {
-    background: linear-gradient(90deg, rgba(47, 195, 157, 0.94), rgba(16, 185, 129, 0.9));
+    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-success) 94%, transparent), color-mix(in srgb, var(--theme-accent-support) 52%, transparent));
 }
 
 .import-progress-bar.is-danger {
-    background: linear-gradient(90deg, rgba(239, 68, 68, 0.96), rgba(249, 115, 22, 0.9));
+    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-danger) 96%, transparent), color-mix(in srgb, var(--theme-accent-warning) 82%, transparent));
 }
 
 .import-progress-metrics {
@@ -98,9 +98,10 @@ POR QUE ELE EXISTE:
     display: grid;
     gap: 6px;
     padding: 18px;
-    border: 1px solid var(--line);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
     border-radius: 18px;
-    background: rgba(255, 255, 255, 0.85);
+    background: var(--theme-surface-glass);
+    box-shadow: var(--theme-glass-shadow);
     text-align: center;
 }
 
@@ -167,7 +168,7 @@ POR QUE ELE EXISTE:
     padding: 16px;
     border-radius: 18px;
     border: 1px solid color-mix(in srgb, var(--danger) 16%, var(--line) 84%);
-    background: color-mix(in srgb, var(--danger) 6%, white 94%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 14%, var(--theme-surface-glass-strong) 86%);
 }
 
 .import-progress-error-list {
@@ -178,8 +179,8 @@ POR QUE ELE EXISTE:
     list-style: none;
     font-size: 0.78rem;
     line-height: 1.5;
-    color: #b91c1c;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    color: color-mix(in srgb, var(--theme-accent-danger) 88%, var(--theme-text-primary) 12%);
+    font-family: var(--font-body);
 }
 
 .import-progress-errors-hint {

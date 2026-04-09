@@ -18,7 +18,7 @@ POR QUE ELE EXISTE:
 .monthly-preview-button:hover .monthly-day-card,
 .monthly-preview-button:focus-visible .monthly-day-card {
     border-color: rgba(16, 185, 129, 0.28);
-    box-shadow: var(--shadow-soft);
+    box-shadow: var(--card-hover-shadow);
 }
 
 .monthly-preview-button:focus-visible {
@@ -45,7 +45,7 @@ POR QUE ELE EXISTE:
     text-transform: uppercase;
     font-size: 0.76rem;
     letter-spacing: 0.08em;
-    color: var(--muted);
+    color: var(--legacy-copy);
     font-weight: 700;
 }
 
@@ -65,12 +65,35 @@ POR QUE ELE EXISTE:
 
 .monthly-day-card {
     min-height: 128px;
-    border-radius: 18px;
-    border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.82);
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 88%, rgba(96, 165, 250, 0.22));
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent), color-mix(in srgb, var(--theme-surface-glass) 92%, transparent)),
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.18), transparent 42%),
+        radial-gradient(circle at bottom left, rgba(217, 70, 239, 0.12), transparent 46%);
     padding: 10px;
     display: grid;
     gap: 8px;
+    box-shadow:
+        0 28px 64px rgba(2, 6, 23, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    transition: border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+}
+
+.monthly-day-card::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    z-index: -1;
+    border-radius: inherit;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 38%),
+        radial-gradient(circle at top, rgba(34, 211, 238, 0.08), transparent 48%);
+    pointer-events: none;
 }
 
 .monthly-day-card.is-today {
@@ -79,17 +102,23 @@ POR QUE ELE EXISTE:
 }
 
 .monthly-day-card.is-muted {
-    opacity: 0.55;
+    opacity: 1;
+    border-color: color-mix(in srgb, var(--card-border) 72%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 72%, transparent);
 }
 
 .monthly-day-card.is-busy {
-    border-color: rgba(59, 130, 246, 0.24);
-    background: rgba(59, 130, 246, 0.07);
+    border-color: rgba(59, 130, 246, 0.3);
+    background:
+        linear-gradient(180deg, rgba(8, 47, 73, 0.88), rgba(11, 18, 32, 0.94)),
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.28), transparent 44%);
 }
 
 .monthly-day-card.is-loaded {
-    border-color: rgba(239, 68, 68, 0.22);
-    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(244, 114, 182, 0.28);
+    background:
+        linear-gradient(180deg, rgba(44, 12, 24, 0.9), rgba(18, 18, 34, 0.95)),
+        radial-gradient(circle at top right, rgba(244, 114, 182, 0.24), transparent 44%);
 }
 
 .monthly-day-card.is-preview {
@@ -118,11 +147,19 @@ POR QUE ELE EXISTE:
 }
 
 .monthly-session-chip {
+    position: relative;
+    overflow: hidden;
     display: grid;
     gap: 2px;
     padding: 7px 9px;
-    border-radius: 12px;
-    background: rgba(22, 33, 31, 0.05);
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 88%, rgba(56, 189, 248, 0.18));
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent), color-mix(in srgb, var(--theme-surface-glass) 88%, transparent)),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.14), transparent 48%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 14px 28px rgba(2, 6, 23, 0.14);
 }
 
 .monthly-session-chip-body {
@@ -151,7 +188,7 @@ POR QUE ELE EXISTE:
 }
 
 .monthly-session-chip span {
-    color: var(--muted);
+    color: var(--legacy-copy);
     line-height: 1.4;
 }
 
@@ -174,18 +211,41 @@ POR QUE ELE EXISTE:
 }
 
 .class-monthly-modal::backdrop {
-    background: rgba(15, 23, 42, 0.62);
+    background: color-mix(in srgb, var(--theme-surface-inverse) 22%, black 78%);
     backdrop-filter: blur(6px);
 }
 
 .class-monthly-modal-panel {
     height: 100%;
     overflow: auto;
-    border-radius: 28px;
+    position: relative;
+    isolation: isolate;
+    border-radius: 32px;
     padding: 24px;
+<<<<<<< HEAD
     padding-top: 72px;
     background: var(--surface);
     box-shadow: var(--shadow-lift);
+=======
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 92%, rgba(96, 165, 250, 0.2));
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 97%, transparent), color-mix(in srgb, var(--theme-surface-glass) 92%, transparent)),
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.16), transparent 36%),
+        radial-gradient(circle at bottom left, rgba(217, 70, 239, 0.12), transparent 40%);
+    box-shadow:
+        0 32px 90px rgba(2, 6, 23, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.class-monthly-modal-panel::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    z-index: -1;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), transparent 28%);
+    pointer-events: none;
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .class-monthly-modal-toggle,
@@ -280,10 +340,16 @@ body[data-theme="dark"] .class-rotation-rail {
 .class-weekly-modal-close {
     position: sticky;
     top: 0;
+<<<<<<< HEAD
     z-index: 3;
     display: flex;
     width: fit-content;
     margin: 0 0 12px auto;
+=======
+    z-index: 2;
+    padding-bottom: 12px;
+    background: var(--theme-surface-glass-strong);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .weekly-calendar-section + .weekly-calendar-section {
@@ -352,16 +418,29 @@ body[data-theme="dark"] .class-rotation-rail {
 }
 
 .weekly-day-card {
+<<<<<<< HEAD
     border: 1px solid var(--line);
     border-radius: 18px;
     background: var(--surface);
     padding: 10px 12px;
+=======
+    position: relative;
+    isolation: isolate;
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 88%, rgba(96, 165, 250, 0.24));
+    border-radius: 28px;
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-glass) 90%, transparent)),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.18), transparent 38%),
+        radial-gradient(circle at bottom left, rgba(192, 38, 211, 0.12), transparent 44%);
+    padding: 14px;
+>>>>>>> codex/student-page-refactor-and-ui-polish
     display: grid;
     gap: 8px;
     min-height: 0;
     min-width: 0;
     overflow: hidden;
     word-break: break-word;
+<<<<<<< HEAD
     box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
     transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
@@ -380,6 +459,25 @@ body[data-theme="dark"] .class-rotation-rail {
 .weekly-modal-expanded-grid--rows .weekly-day-head {
     position: sticky;
     top: 40px;
+=======
+    box-shadow:
+        0 24px 68px rgba(2, 6, 23, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.weekly-day-card::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    z-index: -1;
+    border-radius: inherit;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 32%),
+        radial-gradient(circle at top, rgba(34, 211, 238, 0.08), transparent 48%);
+    pointer-events: none;
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .weekly-day-card.is-interactive {
@@ -388,8 +486,12 @@ body[data-theme="dark"] .class-rotation-rail {
 
 .weekly-day-card.is-interactive:hover,
 .weekly-day-card.is-interactive:focus-visible {
-    border-color: rgba(249, 115, 22, 0.3);
-    box-shadow: var(--shadow-soft);
+    border-color: rgba(34, 211, 238, 0.5);
+    box-shadow:
+        0 30px 76px rgba(2, 6, 23, 0.3),
+        0 0 0 1px rgba(34, 211, 238, 0.18),
+        0 0 28px rgba(34, 211, 238, 0.16);
+    transform: translateY(-2px);
 }
 
 .weekly-day-card.is-interactive:focus-visible {
@@ -398,9 +500,14 @@ body[data-theme="dark"] .class-rotation-rail {
 }
 
 .weekly-day-card.is-today {
-    border-color: rgba(184, 92, 56, 0.3);
-    box-shadow: var(--shadow-soft);
-    background: rgba(255, 247, 237, 0.94);
+    border-color: rgba(250, 204, 21, 0.36);
+    box-shadow:
+        0 28px 72px rgba(2, 6, 23, 0.28),
+        0 0 0 1px rgba(250, 204, 21, 0.16),
+        0 0 32px rgba(250, 204, 21, 0.12);
+    background:
+        linear-gradient(180deg, rgba(42, 28, 9, 0.92), rgba(14, 20, 33, 0.95)),
+        radial-gradient(circle at top right, rgba(250, 204, 21, 0.22), transparent 40%);
 }
 
 body[data-theme="dark"] .weekly-day-card.is-today {
@@ -409,7 +516,38 @@ body[data-theme="dark"] .weekly-day-card.is-today {
 }
 
 .weekly-day-card.is-muted {
-    opacity: 0.58;
+    opacity: 1;
+    border-color: color-mix(in srgb, var(--card-border) 72%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 76%, transparent);
+}
+
+.weekly-day-card.is-muted .weekly-day-head strong,
+.weekly-day-card.is-muted .eyebrow,
+.weekly-day-card.is-muted .class-grid-mobile-kicker,
+.weekly-day-card.is-muted .class-grid-meta,
+.weekly-day-card.is-muted .weekly-session-title,
+.weekly-day-card.is-muted .card-title,
+.weekly-day-card.is-muted .card-copy {
+    opacity: 1;
+}
+
+body[data-theme="dark"] .monthly-day-card.is-muted {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 82%, transparent);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 8%, transparent), transparent 32%),
+        color-mix(in srgb, var(--theme-surface-glass) 74%, transparent);
+}
+
+body[data-theme="dark"] .weekly-day-card.is-muted {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 82%, transparent);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 8%, transparent), transparent 32%),
+        color-mix(in srgb, var(--theme-surface-glass) 76%, transparent);
+}
+
+body[data-theme="dark"] .weekly-day-card.is-muted {
+    --class-grid-text-primary: var(--theme-text-primary);
+    --class-grid-text-secondary: var(--theme-text-secondary);
 }
 
 .weekly-day-head {
@@ -433,17 +571,63 @@ body[data-theme="dark"] .weekly-day-card.is-today {
 }
 
 .weekly-session-chip {
+<<<<<<< HEAD
     padding: 8px 10px;
     border-radius: 12px;
     border: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.96);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+=======
+    position: relative;
+    overflow: hidden;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 88%, rgba(56, 189, 248, 0.2));
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-glass) 90%, transparent)),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.14), transparent 46%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 16px 30px rgba(2, 6, 23, 0.16);
+}
+
+.weekly-session-chip::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent 34%);
+    pointer-events: none;
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 body[data-theme="dark"] .weekly-session-chip {
-    background: var(--surface);
-    border-color: var(--line);
-    box-shadow: none;
+    background:
+        linear-gradient(180deg, rgba(12, 18, 34, 0.96), rgba(9, 13, 28, 0.92)),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.16), transparent 46%);
+    border-color: color-mix(in srgb, var(--theme-glass-border) 96%, rgba(56, 189, 248, 0.24));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 18px 34px rgba(2, 6, 23, 0.28);
+}
+
+body[data-theme="dark"] .monthly-day-card,
+body[data-theme="dark"] .weekly-day-card,
+body[data-theme="dark"] .class-monthly-modal-panel,
+body[data-theme="dark"] .class-monthly-modal-head {
+    background:
+        linear-gradient(180deg, rgba(10, 16, 30, 0.97), rgba(7, 11, 24, 0.94)),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.16), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(217, 70, 239, 0.1), transparent 42%);
+    border-color: color-mix(in srgb, var(--theme-glass-border) 96%, rgba(96, 165, 250, 0.22));
+    box-shadow:
+        0 30px 84px rgba(2, 6, 23, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+body[data-theme="dark"] .monthly-calendar-head span,
+body[data-theme="dark"] .monthly-session-chip span {
+    color: var(--theme-text-secondary);
 }
 
 .weekly-session-chip-content {
@@ -462,6 +646,7 @@ body[data-theme="dark"] .weekly-session-chip {
 
 .weekly-session-chip.is-class-occupancy-closed,
 .weekly-session-chip.is-booking-closed {
+<<<<<<< HEAD
     border-color: rgba(148, 163, 184, 0.26);
     background:
         linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.96));
@@ -518,6 +703,12 @@ body[data-theme="dark"] .weekly-day-overflow-note {
 
 .weekly-day-overflow-list[hidden] {
     display: none;
+=======
+    border-color: rgba(71, 85, 105, 0.5);
+    background: rgba(31, 41, 55, 0.96);
+    color: #f8fafc;
+    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .weekly-session-chip.is-class-occupancy-closed .class-grid-meta,
@@ -569,7 +760,7 @@ body[data-theme="dark"] .weekly-day-overflow-note {
 
 .weekly-empty-state {
     margin: 0;
-    color: var(--muted);
+    color: var(--legacy-copy);
     line-height: 1.6;
     overflow: hidden;
     min-width: 0;
@@ -582,7 +773,10 @@ body[data-theme="dark"] .weekly-day-overflow-note {
 
 .weekly-empty-state .card-copy,
 .weekly-empty-state .state-empty-copy {
-    display: none;
+    display: block;
+    margin-top: 4px;
+    color: var(--theme-text-secondary);
+    white-space: normal;
 }
 
 .weekly-empty-state .card-title,
@@ -591,4 +785,17 @@ body[data-theme="dark"] .weekly-day-overflow-note {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.class-grid-scene :is(.weekly-day-card .card-title, .weekly-day-head, .weekly-day-head strong, .weekly-day-card .eyebrow, .weekly-day-card .class-grid-mobile-kicker, .weekly-session-title, .weekly-session-chip strong, .monthly-day-head strong, .monthly-session-chip strong) {
+    color: var(--theme-text-primary);
+}
+
+.class-grid-scene :is(.monthly-calendar-head span, .monthly-session-chip span, .weekly-session-chip .class-grid-meta, .weekly-session-chip span, .weekly-session-chip .card-copy, .weekly-empty-state, .weekly-empty-state .card-copy, .weekly-empty-state .state-empty-copy) {
+    color: var(--class-grid-text-secondary);
+}
+
+body[data-theme="dark"] .class-grid-scene {
+    --class-grid-text-primary: var(--theme-text-primary);
+    --class-grid-text-secondary: var(--theme-text-secondary);
 }

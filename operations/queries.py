@@ -235,8 +235,11 @@ def build_owner_workspace_snapshot(*, today):
     return {
         'headline_metrics': headline_metrics,
         'classes_today': classes_today,
+<<<<<<< HEAD
         'owner_priority_surface': (owner_operational_focus[0] if owner_operational_focus else {}).get('key', 'structure'),
         'overdue_amount_label': f"R$ {overdue_amount:.2f}".replace('.', ','),
+=======
+>>>>>>> codex/student-page-refactor-and-ui-polish
         'owner_upcoming_sessions': owner_upcoming_sessions,
         'owner_upcoming_sessions_total_label': f"{len(owner_upcoming_sessions)} aula(s)",
         'metric_cards': [

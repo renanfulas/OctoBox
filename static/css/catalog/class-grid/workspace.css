@@ -36,6 +36,7 @@ POR QUE ELE EXISTE:
     position: relative;
     overflow: hidden;
     min-height: 100%;
+<<<<<<< HEAD
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--card-border) 86%);
     background:
         linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-panel) 92%, transparent));
@@ -57,6 +58,29 @@ POR QUE ELE EXISTE:
     inset: 0 0 auto;
     height: 4px;
     background: linear-gradient(90deg, var(--theme-accent-primary), var(--theme-accent-support), var(--theme-accent-premium));
+=======
+    border-radius: 30px;
+    border-color: color-mix(in srgb, var(--theme-glass-border) 92%, rgba(96, 165, 250, 0.22));
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-glass) 90%, transparent)),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.16), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(217, 70, 239, 0.1), transparent 42%);
+    box-shadow:
+        0 28px 70px rgba(2, 6, 23, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    transition: box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+}
+
+.class-grid-workspace-panel::after,
+.weekday-option::after,
+.class-occupancy-stack.is-closed::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 32%);
+    pointer-events: none;
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .class-grid-panel-head {
@@ -91,6 +115,7 @@ POR QUE ELE EXISTE:
 }
 
 .class-session-edit-panel {
+<<<<<<< HEAD
     background: color-mix(in srgb, var(--theme-accent-support-alpha) 58%, var(--card-surface) 42%);
 }
 
@@ -139,6 +164,12 @@ body[data-theme="dark"] .class-grid-workspace-panel {
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.05),
         0 20px 40px rgba(0, 0, 0, 0.26);
+=======
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent), color-mix(in srgb, var(--theme-surface-glass) 90%, transparent)),
+        radial-gradient(circle at top right, rgba(217, 70, 239, 0.14), transparent 38%),
+        radial-gradient(circle at bottom left, rgba(34, 211, 238, 0.1), transparent 42%);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .class-day-header {
@@ -152,7 +183,7 @@ body[data-theme="dark"] .class-grid-workspace-panel {
 .class-day-summary,
 .class-grid-meta {
     margin: 0;
-    color: var(--muted);
+    color: var(--legacy-copy);
     line-height: 1.6;
 }
 
@@ -172,7 +203,7 @@ body[data-theme="dark"] .class-grid-workspace-panel {
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: var(--legacy-copy);
 }
 
 .class-grid-row td {
@@ -191,7 +222,10 @@ body[data-theme="dark"] .class-grid-workspace-panel {
 }
 
 .class-occupancy-stack.is-closed {
+    position: relative;
+    overflow: hidden;
     padding: 12px;
+<<<<<<< HEAD
     border-radius: 18px;
     border: 1px solid rgba(148, 163, 184, 0.24);
     background:
@@ -200,6 +234,17 @@ body[data-theme="dark"] .class-grid-workspace-panel {
     box-shadow:
         0 8px 18px rgba(148, 163, 184, 0.08),
         inset 0 1px 0 rgba(255, 255, 255, 0.84);
+=======
+    border-radius: 22px;
+    border: 1px solid rgba(56, 189, 248, 0.24);
+    background:
+        linear-gradient(180deg, rgba(12, 18, 34, 0.96), rgba(8, 12, 26, 0.94)),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.14), transparent 42%);
+    color: #f8fafc;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 18px 34px rgba(2, 6, 23, 0.24);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .class-occupancy-stack.is-closed .class-grid-meta {
@@ -236,19 +281,34 @@ body[data-theme="dark"] .class-grid-workspace-panel {
 }
 
 .weekday-option {
+    position: relative;
+    overflow: hidden;
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 12px 14px;
+<<<<<<< HEAD
     border-radius: 16px;
     border: 1px solid color-mix(in srgb, var(--card-border) 88%, transparent);
     background: color-mix(in srgb, var(--theme-surface-strong) 86%, var(--theme-accent-support-alpha) 14%);
+=======
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 88%, rgba(96, 165, 250, 0.18));
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-glass) 90%, transparent)),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.12), transparent 46%);
+>>>>>>> codex/student-page-refactor-and-ui-polish
     color: var(--ink);
+    box-shadow:
+        0 16px 30px rgba(2, 6, 23, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 body[data-theme="dark"] .weekday-option {
-    background: var(--surface);
-    border-color: var(--line);
+    background:
+        linear-gradient(180deg, rgba(10, 16, 30, 0.96), rgba(7, 11, 24, 0.92)),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.14), transparent 46%);
+    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, rgba(56, 189, 248, 0.2));
 }
 
 .weekday-option input,
@@ -260,12 +320,146 @@ body[data-theme="dark"] .weekday-option {
     display: flex;
     gap: 10px;
     align-items: center;
-    color: var(--muted);
+    color: var(--legacy-copy);
+}
+
+.class-grid-scene [data-panel="class-grid-workspace-root"] :is(.card-title, .section-title-sm, .class-grid-panel-title h2, .class-grid-panel-title h3) {
+    color: var(--theme-text-primary);
+}
+
+.class-grid-scene [data-panel="class-grid-workspace-root"] :is(.card-copy, .class-day-summary, .class-grid-meta, .eyebrow, .card-label, .class-grid-mobile-kicker, .class-grid-checkbox) {
+    color: var(--legacy-copy);
+}
+
+[data-class-grid-planner] {
+    display: grid;
+    gap: 18px;
+}
+
+[data-class-grid-planner] > label,
+[data-class-grid-planner] > div,
+[data-class-grid-planner] .field-grid-220 > label {
+    min-width: 0;
+}
+
+[data-class-grid-planner] :is(.field-label, .meta-text) {
+    color: var(--legacy-copy);
+}
+
+[data-class-grid-planner] .field-label {
+    margin-bottom: 8px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+[data-class-grid-planner] .meta-text {
+    display: block;
+    margin-top: 6px;
+    color: var(--legacy-copy-strong);
+}
+
+[data-class-grid-planner] input:not([type="hidden"]):not([type="checkbox"]),
+[data-class-grid-planner] select,
+[data-class-grid-planner] textarea {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 92%, transparent);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent),
+            color-mix(in srgb, var(--theme-surface-glass) 96%, transparent)
+        );
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 8px 20px rgba(15, 23, 42, 0.05);
+    color: var(--theme-text-primary);
+}
+
+[data-class-grid-planner] textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+[data-class-grid-planner] input:not([type="hidden"]):not([type="checkbox"]):focus,
+[data-class-grid-planner] select:focus,
+[data-class-grid-planner] textarea:focus {
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 40%, var(--theme-glass-border) 60%);
+    box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--theme-accent-primary) 16%, transparent),
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+[data-class-grid-planner] .weekday-option {
+    min-height: 52px;
+}
+
+[data-class-grid-planner] .form-error {
+    color: var(--theme-accent-danger);
+    font-weight: 600;
 }
 
 /* --- Dark Mode Absolute Overrides --- */
 body[data-theme="dark"] .weekday-option {
-    background: var(--surface) !important;
-    border-color: var(--line) !important;
-    color: var(--ink) !important;
+    background:
+        linear-gradient(180deg, rgba(10, 16, 30, 0.96), rgba(7, 11, 24, 0.92)),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.14), transparent 46%);
+    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, rgba(56, 189, 248, 0.2));
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .class-grid-workspace-panel,
+body[data-theme="dark"] .class-session-edit-panel {
+    --card-local-surface:
+        linear-gradient(180deg, rgba(10, 16, 30, 0.96), rgba(7, 11, 24, 0.92)),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.16), transparent 30%),
+        radial-gradient(circle at bottom left, rgba(217, 70, 239, 0.1), transparent 42%);
+    --card-local-border: color-mix(in srgb, var(--theme-glass-border) 94%, rgba(56, 189, 248, 0.2));
+    --card-local-shadow: var(--card-shadow);
+}
+
+body[data-theme="dark"] .table-card.class-grid-workspace-panel,
+body[data-theme="dark"] .table-card.class-grid-planner-panel.class-grid-workspace-panel {
+    --card-local-surface:
+        linear-gradient(180deg, rgba(10, 16, 30, 0.96), rgba(7, 11, 24, 0.92)),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.16), transparent 30%),
+        radial-gradient(circle at bottom left, rgba(217, 70, 239, 0.1), transparent 42%);
+    --card-local-border: color-mix(in srgb, var(--theme-glass-border) 96%, rgba(56, 189, 248, 0.2));
+    --card-local-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 18px 42px rgba(0, 0, 0, 0.24);
+}
+
+body[data-theme="dark"] .class-grid-scene [data-panel="class-grid-workspace-root"] {
+    --class-grid-text-primary: var(--theme-text-primary);
+    --class-grid-text-secondary: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] [data-class-grid-planner] :is(.field-label, .meta-text) {
+    color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] [data-class-grid-planner] input:not([type="hidden"]):not([type="checkbox"]),
+body[data-theme="dark"] [data-class-grid-planner] select,
+body[data-theme="dark"] [data-class-grid-planner] textarea {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 96%, transparent);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-glass-strong) 92%, transparent),
+            color-mix(in srgb, var(--theme-surface-glass) 86%, transparent)
+        );
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 12px 26px rgba(0, 0, 0, 0.2);
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] [data-class-grid-planner] input:not([type="hidden"]):not([type="checkbox"]):focus,
+body[data-theme="dark"] [data-class-grid-planner] select:focus,
+body[data-theme="dark"] [data-class-grid-planner] textarea:focus {
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 54%, var(--theme-glass-border) 46%);
+    box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--theme-accent-primary) 18%, transparent),
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 16px 34px rgba(0, 0, 0, 0.24);
 }

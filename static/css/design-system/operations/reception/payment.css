@@ -38,7 +38,11 @@ PONTOS CRITICOS:
 .reception-payment-grid,
 .reception-preview-payment-grid {
     display: grid;
+<<<<<<< HEAD
     grid-template-columns: repeat(2, minmax(0, 1fr));
+=======
+    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+>>>>>>> codex/student-page-refactor-and-ui-polish
     gap: 14px;
     align-items: start;
 }
@@ -421,11 +425,14 @@ body[data-theme="dark"] .reception-payment-advanced {
 }
 
 @media (max-width: 720px) {
+<<<<<<< HEAD
     .reception-payment-grid,
     .reception-preview-payment-grid {
         grid-template-columns: 1fr;
     }
 
+=======
+>>>>>>> codex/student-page-refactor-and-ui-polish
     .payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta,
     .reception-preview-payment-highlight__meta {
         grid-template-columns: 1fr;
@@ -441,10 +448,13 @@ body[data-theme="dark"] .reception-payment-advanced {
     .reception-payment-actions-primary .button {
         width: 100%;
         flex-basis: 100%;
+<<<<<<< HEAD
     }
 
     .reception-payment-head-pills {
         width: 100%;
         justify-content: flex-start;
+=======
+>>>>>>> codex/student-page-refactor-and-ui-polish
     }
 }

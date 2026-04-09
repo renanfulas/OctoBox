@@ -23,7 +23,7 @@ POR QUE ELE EXISTE:
     border: 1px solid var(--line);
     border-radius: 16px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-    transition: transform var(--motion-base) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
+    transition: box-shadow var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard);
 }
 
 body[data-theme="dark"] .premium-contact-row {

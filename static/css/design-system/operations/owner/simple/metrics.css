@@ -10,6 +10,7 @@ POR QUE ELE EXISTE:
     margin-top: var(--workspace-fib-4);
     display: grid;
     grid-template-columns: minmax(0, 1.45fr) minmax(320px, 420px);
+<<<<<<< HEAD
     gap: clamp(18px, 2vw, 26px);
     align-items: start;
     position: relative;
@@ -19,11 +20,19 @@ POR QUE ELE EXISTE:
         linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-support-alpha) 8%, transparent), transparent 20%),
         radial-gradient(circle at top left, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 32%),
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 30%);
+=======
+    gap: 18px;
+    align-items: start;
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .owner-metrics-panel {
     margin-top: 0;
+<<<<<<< HEAD
     width: min(100%, 380px);
+=======
+    width: min(100%, 420px);
+>>>>>>> codex/student-page-refactor-and-ui-polish
     margin-left: auto;
     justify-self: end;
     position: sticky;
@@ -46,6 +55,7 @@ POR QUE ELE EXISTE:
 .owner-sessions-panel {
     min-width: 0;
     background:
+<<<<<<< HEAD
         var(--theme-surface-glass);
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
     box-shadow:
@@ -342,6 +352,14 @@ POR QUE ELE EXISTE:
         overflow: visible;
         padding-right: 0;
     }
+=======
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 26%),
+        var(--theme-surface-glass);
+}
+
+.owner-sessions-panel .operation-card-copy {
+    max-width: 36ch;
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 body[data-theme="dark"] .owner-sessions-panel {
@@ -358,6 +376,7 @@ body[data-theme="dark"] .owner-sessions-panel {
 body[data-theme="dark"] .owner-sessions-panel .operation-card-copy {
     color: var(--theme-text-secondary);
 }
+<<<<<<< HEAD
 
 body[data-theme="dark"] .owner-session-card {
     background:
@@ -399,3 +418,5 @@ body[data-theme="dark"] .owner-session-note {
 body[data-theme="dark"] .owner-session-progress {
     background: rgba(148, 163, 184, 0.14);
 }
+=======
+>>>>>>> codex/student-page-refactor-and-ui-polish

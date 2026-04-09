@@ -39,6 +39,10 @@ POR QUE ELE EXISTE:
     border-radius: var(--radius-panel);
     border: 1px solid color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-glass-border) 82%);
     background:
+<<<<<<< HEAD
+=======
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 28%),
+>>>>>>> codex/student-page-refactor-and-ui-polish
         linear-gradient(155deg, color-mix(in srgb, var(--theme-surface-chrome-strong) 88%, transparent), color-mix(in srgb, var(--theme-surface-glass-strong) 92%, transparent));
     color: var(--theme-surface-inverse);
 }
@@ -89,7 +93,11 @@ POR QUE ELE EXISTE:
     padding: 12px 14px;
     border-radius: var(--radius-card);
     border: 1px solid color-mix(in srgb, var(--theme-glass-border) 86%, transparent);
+<<<<<<< HEAD
     background: color-mix(in srgb, var(--theme-surface-glass) 74%, transparent);
+=======
+    background: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
+>>>>>>> codex/student-page-refactor-and-ui-polish
     color: inherit;
     text-decoration: none;
 }
@@ -162,7 +170,11 @@ POR QUE ELE EXISTE:
     padding: 10px 12px;
     border-radius: 8px;
     border: 1px solid color-mix(in srgb, var(--theme-glass-border) 82%, transparent);
+<<<<<<< HEAD
     background: color-mix(in srgb, var(--theme-surface-glass) 68%, transparent);
+=======
+    background: color-mix(in srgb, var(--theme-surface-glass) 76%, transparent);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .owner-summary-card-structure {

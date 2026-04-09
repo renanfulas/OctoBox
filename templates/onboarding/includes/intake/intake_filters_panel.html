@@ -3,27 +3,25 @@ ARQUIVO: filtros da Central de Intake.
 
 POR QUE ELE EXISTE:
 - isola o recorte da fila para manter o template principal curto.
--->
-<!--
-ARQUIVO: filtros da Central de Intake.
-
-POR QUE ELE EXISTE:
-- Isola o recorte da fila para manter o template principal curto.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Exibe formulário de filtros e busca.
-2. Permite filtrar leads por status, origem, estágio e responsável.
+1. Exibe formulario de filtros e busca.
+2. Permite filtrar leads por status, origem, estagio e responsavel.
 
 PONTOS CRITICOS:
 - Depende do contexto de filter_form.
 -->
+<<<<<<< HEAD
 <section class="card intake-surface-card intake-command-surface intake-command-surface--quiet intake-filter-card intake-filter-surface" aria-label="Busca e filtros da central de entradas" data-slot="filters" data-panel="intake-filters">
+=======
+<section class="card glass-panel intake-filter-card intake-filter-card--engine" aria-label="Busca e filtros da central de intake" data-slot="filters" data-panel="intake-filters">
+>>>>>>> codex/student-page-refactor-and-ui-polish
     {% url 'intake-center' as intake_center_url %}
     <div class="card-head">
         <div class="card-head-main intake-filter-head-copy">
             <p class="intake-filter-eyebrow eyebrow">Leitura guiada</p>
             <h2 class="card-title">Motor de Busca e Foco</h2>
-            <p class="card-copy">Filtre seus leads, veja apenas o de urgência ou separe por qual recepcionista está lidando com qual pessoa.</p>
+            <p class="card-copy">Filtre seus leads, veja apenas o de urg&ecirc;ncia ou separe por qual recepcionista est&aacute; lidando com qual pessoa.</p>
         </div>
     </div>
     <form method="get" class="form-stack" data-action="filter-intakes">

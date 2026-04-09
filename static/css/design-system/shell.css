@@ -111,6 +111,7 @@ PONTOS CRITICOS:
 .content::before {
     inset: 0;
     border-radius: 40px;
+<<<<<<< HEAD
     background: transparent;
     border: 0;
     box-shadow: none;
@@ -118,6 +119,22 @@ PONTOS CRITICOS:
 
 .content::after {
     content: none;
+=======
+    background: linear-gradient(180deg, var(--theme-glass-highlight), transparent 72%), var(--theme-surface-glass-strong);
+    border: 1px solid var(--theme-glass-border);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+.content::after {
+    content: "";
+    position: absolute;
+    inset: 18px 16px auto;
+    height: 64px;
+    border-radius: 28px;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-premium-alpha) 42%, transparent), transparent 30%, color-mix(in srgb, var(--theme-accent-support-alpha) 42%, transparent) 70%, transparent);
+    pointer-events: none;
+    z-index: 0;
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .page-body {
@@ -126,6 +143,7 @@ PONTOS CRITICOS:
 }
 
 body[data-theme="dark"] .content::before {
+<<<<<<< HEAD
     border-color: transparent;
     background: transparent;
     box-shadow: none;
@@ -133,6 +151,16 @@ body[data-theme="dark"] .content::before {
 
 body[data-theme="dark"] .content::after {
     content: none;
+=======
+    border-color: var(--theme-glass-border);
+    background: linear-gradient(180deg, var(--theme-glass-highlight), transparent 72%), var(--theme-surface-glass-strong);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+body[data-theme="dark"] .content::after {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-premium-alpha) 62%, transparent), transparent 28%, color-mix(in srgb, var(--theme-accent-support-alpha) 62%, transparent) 70%, transparent);
+    opacity: 0.4;
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 @media (max-width: 960px) {

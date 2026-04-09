@@ -14,7 +14,11 @@ POR QUE ELE EXISTE:
         {% include "includes/catalog/student_form/main_form/main_form_recovery.html" with student_form_recovery_guide=page.data.student_form_recovery_guide %}
     {% endif %}
 
+<<<<<<< HEAD
     <form method="post" novalidate data-action="submit-student-form" class="stack-16 student-page-profile-form is-readonly" data-student-profile-form>
+=======
+    <form method="post" novalidate data-action="submit-student-form" class="stack-16">
+>>>>>>> codex/student-page-refactor-and-ui-polish
         {% csrf_token %}
         {{ page.data.form.selected_plan.as_hidden }}
         {{ page.data.form.enrollment_status.as_hidden }}
@@ -26,6 +30,7 @@ POR QUE ELE EXISTE:
         {{ page.data.form.billing_strategy.as_hidden }}
         {{ page.data.form.installment_total.as_hidden }}
         {{ page.data.form.recurrence_cycles.as_hidden }}
+<<<<<<< HEAD
         <input type="hidden" name="profile_version" value="{{ page.behavior.student_form.browser_snapshot.profile_version|default:'' }}" data-student-profile-version-field>
 
         <div class="student-page-profile-toolbar">
@@ -39,6 +44,20 @@ POR QUE ELE EXISTE:
         </div>
 
         <article class="student-page-profile-section-surface student-page-profile-section-card">
+=======
+
+        <article class="card student-page-card student-page-section-card student-page-profile-intro-card">
+            <div class="student-page-card__body student-page-profile-intro">
+                <div class="stack-6">
+                    <p class="eyebrow student-page-profile-kicker">Perfil</p>
+                    <h2 class="section-title-sm">Dados do aluno em leitura clara e facil de atualizar.</h2>
+                </div>
+                <p class="meta-text student-page-profile-intro__copy">Revise cadastro, saude e observacoes sem perder o contexto comercial que ja existe nesta ficha.</p>
+            </div>
+        </article>
+
+        <article class="card student-page-card student-page-section-card student-page-profile-section-card">
+>>>>>>> codex/student-page-refactor-and-ui-polish
             <div class="student-page-card__head student-page-panel-heading">
                 <div class="stack-6 student-page-panel-heading__copy">
                     <p class="eyebrow student-page-profile-kicker">Cadastro</p>
@@ -55,6 +74,10 @@ POR QUE ELE EXISTE:
                     <label>
                         <span class="field-label">{{ page.data.form.phone.label }}</span>
                         {{ page.data.form.phone }}
+<<<<<<< HEAD
+=======
+                        {% if page.data.form.phone.help_text %}<small class="meta-text">{{ page.data.form.phone.help_text }}</small>{% endif %}
+>>>>>>> codex/student-page-refactor-and-ui-polish
                         {% for error in page.data.form.phone.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
                     </label>
                     <label>
@@ -82,12 +105,20 @@ POR QUE ELE EXISTE:
                 <label>
                     <span class="field-label">{{ page.data.form.intake_record.label }}</span>
                     {{ page.data.form.intake_record }}
+<<<<<<< HEAD
+=======
+                    {% if page.data.form.intake_record.help_text %}<small class="meta-text">{{ page.data.form.intake_record.help_text }}</small>{% endif %}
+>>>>>>> codex/student-page-refactor-and-ui-polish
                     {% for error in page.data.form.intake_record.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
                 </label>
             </div>
         </article>
 
+<<<<<<< HEAD
         <article class="student-page-profile-section-surface student-page-profile-section-card">
+=======
+        <article class="card student-page-card student-page-section-card student-page-profile-section-card">
+>>>>>>> codex/student-page-refactor-and-ui-polish
             <div class="student-page-card__head student-page-panel-heading">
                 <div class="stack-6 student-page-panel-heading__copy">
                     <p class="eyebrow student-page-profile-kicker">Saude</p>
@@ -116,6 +147,7 @@ POR QUE ELE EXISTE:
             </div>
         </article>
 
+<<<<<<< HEAD
         <article class="student-page-profile-section-surface student-page-profile-section-card">
             <div class="student-page-card__head student-page-panel-heading">
                 <div class="stack-6 student-page-panel-heading__copy">
@@ -162,6 +194,9 @@ POR QUE ELE EXISTE:
         </article>
 
         <article class="student-page-profile-section-surface student-page-profile-section-card student-page-profile-actions-card">
+=======
+        <article class="card student-page-card student-page-section-card student-page-profile-section-card student-page-profile-actions-card">
+>>>>>>> codex/student-page-refactor-and-ui-polish
             <div class="student-page-card__head student-page-panel-heading">
                 <div class="stack-6 student-page-panel-heading__copy">
                     <p class="eyebrow student-page-profile-kicker">Acoes</p>
@@ -176,9 +211,23 @@ POR QUE ELE EXISTE:
                     {% endfor %}
                 </div>
                 {% endif %}
+<<<<<<< HEAD
                 <div class="student-page-form-actions student-page-profile-actions operation-hero-action-rail" data-student-profile-actions>
                     <div class="student-page-form-actions__primary">
                         <button class="button student-page-profile-save-action" type="submit">Salvar perfil</button>
+=======
+
+                <p class="meta-text student-page-profile-actions__copy">Atualize o cadastro sem perder o contexto comercial que ja existe do aluno.</p>
+
+                <div class="student-page-form-actions student-page-profile-actions">
+                    <div class="student-page-form-actions__secondary">
+                        {% if page.data.student_object and page.capabilities.can_open_student_admin %}
+                        <a class="button secondary" href="{% url 'admin:boxcore_student_change' page.data.student_object.id %}">Editar no Admin</a>
+                        {% endif %}
+                    </div>
+                    <div class="student-page-form-actions__primary">
+                        <button class="button" type="submit">Salvar perfil</button>
+>>>>>>> codex/student-page-refactor-and-ui-polish
                     </div>
                 </div>
             </div>

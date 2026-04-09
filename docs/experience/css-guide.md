@@ -68,6 +68,27 @@ Estas sao as familias que mandam no tema:
 4. notice-panel e state-notice: [static/css/design-system/components/states.css](../../static/css/design-system/components/states.css)
 5. topbar: [static/css/design-system/topbar.css](../../static/css/design-system/topbar.css)
 
+### Variantes oficiais
+
+Entre o host canonico e o CSS local agora existe uma camada oficial de variantes.
+
+Ela mora aqui:
+
+1. hero variants: [static/css/design-system/components/hero-variants.css](../../static/css/design-system/components/hero-variants.css)
+2. card variants: [static/css/design-system/components/card-variants.css](../../static/css/design-system/components/card-variants.css)
+
+Responsabilidade dessa camada:
+
+1. ajustar knobs do host por semantica
+2. definir familias oficiais como `hero--command`, `hero--feature`, `card--support` e `card--priority`
+3. absorver repeticoes visuais que aparecem em mais de uma tela
+
+Regra pratica:
+
+1. se duas telas pedem a mesma pele para `hero`, `card` ou `table-card`, isso deve virar variante oficial
+2. se uma classe local precisa redefinir fundo, borda ou sombra estrutural de um host canonico, pare e reavalie
+3. o caminho preferido agora e `token -> host -> variante -> composicao local`
+
 ### Legado permitido apenas como ponte
 
 Estas familias nao sao mais soberanas:
@@ -116,27 +137,34 @@ agora funciona como manifesto estavel dos componentes compartilhados e delega a 
 5. [static/css/design-system/components/hero.css](../../static/css/design-system/components/hero.css)
 define o hero compartilhado e seus stats laterais
 
-6. [static/css/design-system/components/cards.css](../../static/css/design-system/components/cards.css)
+6. [static/css/design-system/components/hero-variants.css](../../static/css/design-system/components/hero-variants.css)
+define personalidades oficiais do hero sem recriar um segundo host
+
+7. [static/css/design-system/components/cards.css](../../static/css/design-system/components/cards.css)
 define cards, table-cards, panel-grid, layout-grid e metricas
 
-7. [static/css/design-system/components/tables.css](../../static/css/design-system/components/tables.css)
+8. [static/css/design-system/components/card-variants.css](../../static/css/design-system/components/card-variants.css)
+define personalidades oficiais de `card` e `table-card`
+
+9. [static/css/design-system/components/tables.css](../../static/css/design-system/components/tables.css)
 define a apresentacao tabular compartilhada
 
-8. [static/css/design-system/components/pills.css](../../static/css/design-system/components/pills.css)
+10. [static/css/design-system/components/pills.css](../../static/css/design-system/components/pills.css)
 define badges, pills e variacoes de status/ocupacao
 
-9. [static/css/design-system/components/actions.css](../../static/css/design-system/components/actions.css)
+11. [static/css/design-system/components/actions.css](../../static/css/design-system/components/actions.css)
 define botoes, barras de acao e listas de capacidade
 
-10. [static/css/design-system/components/states.css](../../static/css/design-system/components/states.css)
+12. [static/css/design-system/components/states.css](../../static/css/design-system/components/states.css)
 define empty states, notices, `notice-panel` e mensagens
 
-11. [static/css/design-system/components/quick-cards.css](../../static/css/design-system/components/quick-cards.css)
+13. [static/css/design-system/components/quick-cards.css](../../static/css/design-system/components/quick-cards.css)
 define quick cards e accent bars
 
-12. [static/css/catalog/shared.css](../../static/css/catalog/shared.css)
+14. [static/css/catalog/shared.css](../../static/css/catalog/shared.css)
 define utilitarios, grids de formulario e bases compartilhadas do catalogo sem autoridade de tema
 
+<<<<<<< HEAD
 13. [static/css/catalog/students.css](../../static/css/catalog/students.css)
 define apenas o diretorio de alunos e sua vitrine operacional
 
@@ -147,6 +175,15 @@ define a hierarquia propria da ficha do aluno, mapa de leitura, progressao e aca
 define layout, cards, rail, carteira, tendencia e comportamento responsivo do financeiro
 
 16. [static/css/catalog/class-grid.css](../../static/css/catalog/class-grid.css)
+=======
+15. [static/css/catalog/students.css](../../static/css/catalog/students.css)
+define ajustes finais da area de alunos
+
+16. [static/css/catalog/finance/](../../static/css/catalog/finance/)
+define layout, cards, rail, carteira, tendencia e comportamento responsivo do financeiro
+
+17. [static/css/catalog/class-grid.css](../../static/css/catalog/class-grid.css)
+>>>>>>> codex/student-page-refactor-and-ui-polish
 define a grade visual de aulas
 
 ## Regra de localizacao
@@ -218,11 +255,13 @@ Quando houver duvida, use esta escada:
 
 1. token semantico
 2. primitivo canonico
-3. classe semantica local
-4. helper neutro
+3. variante oficial
+4. classe semantica local
+5. helper neutro
 
 Nunca ao contrario.
 
+<<<<<<< HEAD
 ## Regra de escopo premium
 
 Escopo premium nao e um atalho para deixar qualquer tela mais bonita.
@@ -253,6 +292,22 @@ Em linguagem simples:
 
 1. primeiro a casa precisa estar arrumada
 2. depois a gente escolhe qual comodo merece luz de vitrine
+=======
+### Regra de migracao
+
+Quando um modulo local ja estiver usando uma variante oficial no template, o CSS local deve perder a autoridade visual que ficou redundante.
+
+Exemplos do que remover quando a variante ja cobre:
+
+1. `background` estrutural duplicado
+2. `border-color` estrutural duplicado
+3. `box-shadow` estrutural duplicado
+4. override dark que so repete a mesma pele da variante
+
+Em linguagem simples:
+
+1. se o uniforme oficial ja foi entregue, a tela local nao deve costurar outra jaqueta por cima
+>>>>>>> codex/student-page-refactor-and-ui-polish
 
 ## Regra de naming
 

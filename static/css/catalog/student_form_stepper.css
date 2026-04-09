@@ -2,6 +2,7 @@
 
 .student-form-shell {
     gap: calc(var(--section-gap) - 2px);
+<<<<<<< HEAD
     --student-stepper-circle-size: 28px;
     --student-stepper-circle-radius: calc(var(--student-stepper-circle-size) / 2);
     --student-form-text-primary: var(--theme-text-primary);
@@ -9,6 +10,10 @@
     --student-form-placeholder-color: color-mix(in srgb, var(--student-form-text-secondary) 14%, transparent);
     --student-form-paper-surface:
         linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-panel) 98%, transparent));
+=======
+    --student-form-text-primary: var(--theme-text-primary);
+    --student-form-text-secondary: var(--legacy-copy);
+>>>>>>> codex/student-page-refactor-and-ui-polish
     --student-form-panel-surface:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 30%),
         var(--theme-surface-glass-strong);
@@ -19,11 +24,14 @@
     --student-form-stepper-shadow: inset 0 1px 0 var(--theme-glass-highlight);
     --student-form-disclosure-surface: var(--student-form-panel-surface);
     --student-form-disclosure-border: color-mix(in srgb, var(--theme-accent-support-alpha) 22%, var(--theme-glass-border) 78%);
+<<<<<<< HEAD
     --student-step-profile-accent: #00e5ff;
     --student-step-health-accent: #4a90e2;
     --student-step-plan-accent: #ff00c8;
     --student-step-billing-accent: #4a90e2;
     --student-step-welcome-accent: #ffb54a;
+=======
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-form-main-card {
@@ -42,7 +50,11 @@
     color: var(--student-form-text-secondary);
 }
 
+<<<<<<< HEAD
 .student-form-shell :is(.student-form-step-title, .stepper-label) {
+=======
+.student-form-shell :is(.student-form-step-title, .student-form-stepper-summary .section-title-sm, .stepper-label) {
+>>>>>>> codex/student-page-refactor-and-ui-polish
     color: var(--student-form-text-primary);
 }
 
@@ -60,6 +72,7 @@
     justify-content: space-between;
     align-items: center;
     min-width: 0;
+<<<<<<< HEAD
     width: min(100%, 520px);
     justify-self: center;
     margin-inline: auto;
@@ -70,6 +83,36 @@
     border-radius: 16px;
     border: 1px solid var(--student-form-stepper-border);
     box-shadow: var(--student-form-stepper-shadow);
+=======
+    margin-bottom: 0;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--theme-surface-glass);
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
+}
+
+.student-form-stepper-card {
+    display: grid;
+    grid-template-columns: minmax(220px, 0.82fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 18px;
+    padding: 14px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--student-form-stepper-border);
+    background: var(--student-form-stepper-surface);
+    box-shadow: var(--student-form-stepper-shadow);
+}
+
+.student-form-stepper-summary {
+    max-width: 30ch;
+}
+
+.student-form-stepper-summary .section-title-sm {
+    margin-bottom: 0;
+    font-size: 1.1rem;
+    line-height: 1.15;
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-form-intake-banner {
@@ -80,14 +123,22 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
+<<<<<<< HEAD
     gap: 10px;
+=======
+    gap: 12px;
+>>>>>>> codex/student-page-refactor-and-ui-polish
     padding-top: 6px;
 }
 
 .student-form-actions-rail {
     display: flex;
     align-items: center;
+<<<<<<< HEAD
     gap: 6px;
+=======
+    gap: 10px;
+>>>>>>> codex/student-page-refactor-and-ui-polish
     min-width: 0;
     flex-wrap: wrap;
 }
@@ -102,16 +153,23 @@
 
 .student-form-actions .button,
 .student-form-actions a.button {
+<<<<<<< HEAD
     min-height: 30px;
     padding: 6px 10px;
     border-radius: 999px;
     font-size: 0.78rem;
     font-weight: 600;
     box-shadow: none;
+=======
+    min-height: 42px;
+    padding: 0 18px;
+    border-radius: 12px;
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-form-actions .button.secondary,
 .student-form-actions a.button.secondary {
+<<<<<<< HEAD
     background: transparent;
     border-color: transparent;
     color: color-mix(in srgb, var(--theme-text-muted) 84%, var(--ink) 16%);
@@ -143,6 +201,14 @@
 
 form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-form-button--next {
     display: none;
+=======
+    background: var(--theme-surface-glass-strong);
+}
+
+.student-form-actions .button:not(.secondary) {
+    min-width: 220px;
+    justify-content: center;
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-form-actions .button:focus-visible,
@@ -195,10 +261,15 @@ form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-fo
 }
 
 .stepper-circle {
+<<<<<<< HEAD
     width: var(--student-stepper-circle-size);
     height: var(--student-stepper-circle-size);
     position: relative;
     z-index: 2;
+=======
+    width: 28px;
+    height: 28px;
+>>>>>>> codex/student-page-refactor-and-ui-polish
     border-radius: 50%;
     background: var(--bg-300);
     display: flex;
@@ -225,11 +296,14 @@ form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-fo
 }
 
 .stepper-label {
+<<<<<<< HEAD
     position: relative;
     z-index: 1;
     width: 100%;
     max-width: 140px;
     margin-inline: auto;
+=======
+>>>>>>> codex/student-page-refactor-and-ui-polish
     font-size: 12px;
     font-weight: 600;
     line-height: 1.2;
@@ -238,11 +312,14 @@ form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-fo
 }
 
 .stepper-helper {
+<<<<<<< HEAD
     position: relative;
     z-index: 1;
     width: 100%;
     max-width: 140px;
     margin-inline: auto;
+=======
+>>>>>>> codex/student-page-refactor-and-ui-polish
     margin-top: 2px;
     font-size: 0.68rem;
     line-height: 1.15;
@@ -253,9 +330,15 @@ form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-fo
 
 .stepper-line {
     position: absolute;
+<<<<<<< HEAD
     top: var(--student-stepper-circle-radius);
     left: calc(50% + var(--student-stepper-circle-radius));
     right: calc(-50% + var(--student-stepper-circle-radius));
+=======
+    top: 14px;
+    left: 50%;
+    right: -50%;
+>>>>>>> codex/student-page-refactor-and-ui-polish
     height: 2px;
     background: var(--border-100);
     z-index: 0;
@@ -275,6 +358,7 @@ form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-fo
     margin: 0;
 }
 
+<<<<<<< HEAD
 .student-form-step-essential,
 .student-form-step-disclosure {
     position: relative;
@@ -345,6 +429,19 @@ form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-fo
 
 .student-form-step-disclosure--billing {
     --student-step-accent: var(--student-step-billing-accent);
+=======
+.student-form-step,
+.student-form-step-essential,
+.student-form-step-disclosure,
+.student-form-stepper-card {
+    border-color: var(--student-form-panel-border);
+    background: var(--student-form-panel-surface);
+    box-shadow: var(--student-form-panel-shadow);
+}
+
+.student-form-step {
+    border-radius: 22px;
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-form-step-disclosure summary,
@@ -352,6 +449,7 @@ form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-fo
     color: var(--student-form-text-primary);
 }
 
+<<<<<<< HEAD
 .student-form-step-heading {
     display: grid;
     gap: 10px;
@@ -529,6 +627,8 @@ form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-fo
     transform: translateY(-1px);
 }
 
+=======
+>>>>>>> codex/student-page-refactor-and-ui-polish
 .student-form-shell .plan-card {
     border: 1px solid color-mix(in srgb, var(--theme-glass-border) 88%, transparent);
     background:
@@ -542,10 +642,13 @@ form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-fo
     color: var(--theme-text-primary);
 }
 
+<<<<<<< HEAD
 .student-form-shell .student-plan-expected-price {
     color: var(--theme-accent-premium);
 }
 
+=======
+>>>>>>> codex/student-page-refactor-and-ui-polish
 .student-form-recovery-panel {
     display: grid;
     gap: 10px;
@@ -655,9 +758,12 @@ form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-fo
 body[data-theme="dark"] .student-form-shell {
     --student-form-text-primary: var(--theme-text-primary);
     --student-form-text-secondary: var(--theme-text-secondary);
+<<<<<<< HEAD
     --student-form-placeholder-color: rgba(148, 163, 184, 0.58);
     --student-form-paper-surface:
         linear-gradient(180deg, rgba(10, 18, 32, 0.98), rgba(7, 13, 24, 0.98));
+=======
+>>>>>>> codex/student-page-refactor-and-ui-polish
     --student-form-panel-surface:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 30%),
         var(--theme-surface-glass-strong);
@@ -674,6 +780,7 @@ body[data-theme="dark"] .student-form-shell {
 
 body[data-theme="dark"] .student-form-main-card,
 body[data-theme="dark"] .student-form-recovery-panel {
+<<<<<<< HEAD
     border-color: transparent;
     background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 18%),
@@ -686,6 +793,28 @@ body[data-theme="dark"] .student-form-main-card {
     box-shadow:
         0 26px 52px rgba(2, 6, 14, 0.32),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
+=======
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 32%),
+        var(--theme-surface-glass-strong);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+body[data-theme="dark"] .student-form-step,
+body[data-theme="dark"] .student-form-step-essential,
+body[data-theme="dark"] .student-form-step-disclosure,
+body[data-theme="dark"] .student-form-stepper-card {
+    border-color: var(--student-form-panel-border);
+    background: var(--student-form-panel-surface);
+    box-shadow: var(--student-form-panel-shadow);
+}
+
+body[data-theme="dark"] .student-form-stepper-card {
+    border-color: var(--student-form-stepper-border);
+    background: var(--student-form-stepper-surface);
+    box-shadow: var(--student-form-stepper-shadow);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 body[data-theme="dark"] .student-form-step-essential,
@@ -737,6 +866,7 @@ body[data-theme="dark"] .student-form-installment-shell {
 body[data-theme="dark"] .student-form-stepper {
     background: color-mix(in srgb, var(--theme-surface-glass) 96%, transparent);
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-glass-border) 84%);
+<<<<<<< HEAD
 }
 
 body[data-theme="dark"] .student-form-actions .button:not(.secondary),
@@ -758,6 +888,8 @@ body[data-theme="dark"] .student-form-actions .button:focus-visible,
 body[data-theme="dark"] .student-form-actions a.button:hover,
 body[data-theme="dark"] .student-form-actions a.button:focus-visible {
     background: rgba(15, 23, 42, 0.84);
+=======
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 body[data-theme="dark"] .student-form-recovery-panel {
@@ -789,12 +921,15 @@ body[data-theme="dark"] .student-form-handoff .button {
     box-shadow: var(--theme-glow-primary);
 }
 
+<<<<<<< HEAD
 .student-form-shell input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"])::placeholder,
 .student-form-shell textarea::placeholder {
     color: var(--student-form-placeholder-color);
     opacity: 0.38;
 }
 
+=======
+>>>>>>> codex/student-page-refactor-and-ui-polish
 body[data-theme="dark"] .student-form-shell input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
 body[data-theme="dark"] .student-form-shell select,
 body[data-theme="dark"] .student-form-shell textarea {
@@ -813,7 +948,11 @@ body[data-theme="dark"] .student-form-shell textarea {
 
 body[data-theme="dark"] .student-form-shell input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"])::placeholder,
 body[data-theme="dark"] .student-form-shell textarea::placeholder {
+<<<<<<< HEAD
     color: var(--student-form-placeholder-color);
+=======
+    color: var(--theme-text-secondary);
+>>>>>>> codex/student-page-refactor-and-ui-polish
     opacity: 0.9;
 }
 
@@ -840,12 +979,18 @@ body[data-theme="dark"] .student-form-shell .plan-card {
     box-shadow: var(--card-shadow);
 }
 
+<<<<<<< HEAD
 body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step-disclosure {
     border-color: transparent;
+=======
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure {
+    border-color: var(--student-form-disclosure-border);
+>>>>>>> codex/student-page-refactor-and-ui-polish
     background: var(--student-form-disclosure-surface);
     box-shadow: var(--student-form-panel-shadow);
 }
 
+<<<<<<< HEAD
 body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step-disclosure > summary {
     color: var(--student-form-text-primary);
 }
@@ -859,6 +1004,21 @@ body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-for
 }
 
 body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
+=======
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure > summary {
+    color: var(--student-form-text-primary);
+}
+
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(.student-form-step-kicker, .student-form-step-copy, .field-label, .meta-text, .meta-text-sm) {
+    color: var(--student-form-text-secondary);
+}
+
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(.student-form-step-title, .section-title-sm) {
+    color: var(--student-form-text-primary);
+}
+
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
+>>>>>>> codex/student-page-refactor-and-ui-polish
     border-color: color-mix(in srgb, var(--theme-glass-border) 96%, transparent);
     background:
         linear-gradient(
@@ -872,14 +1032,25 @@ body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-for
     color: var(--theme-text-primary);
 }
 
+<<<<<<< HEAD
 body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea)::placeholder {
     color: var(--student-form-placeholder-color);
+=======
+body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step.student-form-step-disclosure :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea)::placeholder {
+    color: var(--theme-text-secondary);
+>>>>>>> codex/student-page-refactor-and-ui-polish
     opacity: 0.9;
 }
 
 @media (max-width: 720px) {
+<<<<<<< HEAD
     .student-form-shell {
         --student-stepper-circle-size: 30px;
+=======
+    .student-form-stepper-card {
+        grid-template-columns: 1fr;
+        gap: 14px;
+>>>>>>> codex/student-page-refactor-and-ui-polish
     }
 
     .student-form-actions {
@@ -899,6 +1070,7 @@ body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-for
         min-height: 30px;
     }
 
+<<<<<<< HEAD
     .student-form-stepper {
         gap: 10px;
         padding: 12px;
@@ -931,6 +1103,27 @@ body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-for
         inset: -24% auto auto -18%;
         width: 180px;
         height: 180px;
+=======
+    .student-form-actions-rail,
+    .student-form-actions-rail--secondary,
+    .student-form-actions-rail--primary {
+        justify-content: stretch;
+    }
+
+    .student-form-actions .button,
+    .student-form-actions a.button {
+        width: 100%;
+    }
+
+    .student-form-stepper {
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .student-form-stepper-card,
+    .student-form-recovery-panel {
+        padding: 16px;
+>>>>>>> codex/student-page-refactor-and-ui-polish
     }
 
     .stepper-helper {

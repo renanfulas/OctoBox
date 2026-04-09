@@ -36,7 +36,15 @@ POR QUE ELE EXISTE:
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+<<<<<<< HEAD
     .finance-plan-layout-grid {
+=======
+    .finance-command-layout,
+    .finance-priority-layout,
+    .finance-trend-layout,
+    .finance-portfolio-scene,
+    .finance-plan-layout {
+>>>>>>> codex/student-page-refactor-and-ui-polish
         grid-template-columns: 1fr;
     }
 
@@ -124,6 +132,7 @@ POR QUE ELE EXISTE:
         -webkit-line-clamp: 3;
     }
 
+<<<<<<< HEAD
     .finance-board-rail .card-head,
     .finance-board-queue .card-head,
     .finance-portfolio-panel-head {
@@ -160,6 +169,12 @@ POR QUE ELE EXISTE:
     .finance-portfolio-panel-value {
         justify-self: start;
         justify-content: flex-start;
+=======
+    .finance-board-mix,
+    .finance-board-plan,
+    .finance-portfolio-panel-card {
+        padding: 16px;
+>>>>>>> codex/student-page-refactor-and-ui-polish
     }
 }
 

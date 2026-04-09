@@ -13,12 +13,40 @@ PONTOS CRITICOS:
 
 /* ── Compact action buttons ── */
 
+<<<<<<< HEAD
 .finance-shell .finance-plan-card-compact .actions .button,
 .finance-shell .finance-card-actions-compact .button {
     min-height: 28px;
     padding: 5px 10px;
     border-radius: 999px;
     box-shadow: none;
+=======
+.finance-command-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    grid-auto-rows: 1fr;
+}
+
+.finance-command-card {
+    display: grid;
+    gap: 14px;
+    height: 100%;
+    align-content: space-between;
+    background: var(--finance-panel-surface, var(--theme-surface-glass));
+    border-color: var(--finance-panel-border, color-mix(in srgb, var(--theme-glass-border) 90%, transparent));
+    box-shadow: var(--finance-panel-shadow, var(--theme-glass-shadow));
+}
+
+.finance-command-card .button {
+    align-self: end;
+}
+
+.finance-focus-card {
+    background: var(--finance-panel-surface, var(--theme-surface-glass));
+    border-color: var(--finance-panel-border, color-mix(in srgb, var(--theme-glass-border) 90%, transparent));
+    box-shadow: var(--finance-panel-shadow, var(--theme-glass-shadow));
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 /* ── Shared card body layouts ── */
@@ -47,9 +75,15 @@ PONTOS CRITICOS:
 .finance-summary-chip {
     padding: 8px 10px;
     height: 100%;
+<<<<<<< HEAD
     border-radius: 16px;
     border: 1px solid rgba(148, 163, 184, 0.18);
     background: rgba(255, 255, 255, 0.84);
+=======
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 84%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 82%, transparent);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .finance-summary-chip strong {
@@ -63,9 +97,15 @@ PONTOS CRITICOS:
 }
 
 .finance-summary-chip p {
+<<<<<<< HEAD
     margin: 6px 0 0;
     color: var(--muted);
     line-height: 1.48;
+=======
+    margin: 8px 0 0;
+    color: var(--legacy-copy);
+    line-height: 1.55;
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .finance-currency-metric,
@@ -101,6 +141,7 @@ PONTOS CRITICOS:
     grid-template-rows: 1fr auto;
     gap: 10px;
     align-content: start;
+<<<<<<< HEAD
     border-radius: 20px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, rgba(148, 163, 184, 0.22) 14%);
     background: linear-gradient(160deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.92));
@@ -111,6 +152,12 @@ PONTOS CRITICOS:
 
 .finance-action-glow {
     display: none;
+=======
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 88%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 86%, transparent);
+    box-shadow: var(--finance-panel-shadow, var(--theme-glass-shadow));
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .finance-action-head {
@@ -183,6 +230,12 @@ PONTOS CRITICOS:
     letter-spacing: 0.06em;
 }
 
+.finance-action-pill {
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 20%, var(--theme-glass-border) 80%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 12%, var(--theme-surface-glass) 88%);
+    color: color-mix(in srgb, var(--theme-accent-warning) 78%, var(--theme-text-primary) 22%);
+}
+
 .finance-action-card .card-footer,
 .finance-alert-card .card-footer,
 .finance-plan-card .card-footer {
@@ -203,12 +256,17 @@ PONTOS CRITICOS:
 }
 
 .finance-action-message {
+<<<<<<< HEAD
     position: relative;
     border: 1px solid rgba(148, 163, 184, 0.18);
     background: linear-gradient(165deg, rgba(249, 251, 253, 0.96), rgba(243, 246, 250, 0.92));
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.82),
         0 12px 22px rgba(14, 24, 44, 0.04);
+=======
+    background: color-mix(in srgb, var(--theme-surface-glass-strong) 84%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 18%, var(--theme-glass-border) 82%);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .finance-action-message-compact {
@@ -312,8 +370,21 @@ PONTOS CRITICOS:
 .finance-alert-stat {
     padding: 10px;
     border-radius: 14px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(250, 246, 239, 0.9);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 84%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 78%, transparent);
+}
+
+body[data-theme="dark"] .finance-action-card,
+body[data-theme="dark"] .finance-alert-card,
+body[data-theme="dark"] .finance-alert-stat {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass-strong) 88%, transparent);
+}
+
+body[data-theme="dark"] .finance-action-pill {
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 28%, var(--theme-glass-border) 72%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-surface-glass-strong) 82%);
+    color: color-mix(in srgb, var(--theme-accent-warning) 88%, white 12%);
 }
 
 .finance-alert-stat strong {
@@ -361,9 +432,15 @@ PONTOS CRITICOS:
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 6px;
     margin-top: auto;
+<<<<<<< HEAD
     padding-top: 6px;
     border-top: 0;
     align-items: end;
+=======
+    padding-top: 8px;
+    border-top: 1px solid color-mix(in srgb, var(--theme-glass-border) 76%, transparent);
+    align-items: stretch;
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .finance-card-actions-compact .button {
@@ -467,8 +544,8 @@ body[data-theme="dark"] .finance-action-meta-chip {
 .finance-chart-column {
     padding: 14px;
     border-radius: 20px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.64);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 82%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 74%, transparent);
 }
 
 .finance-chart-column strong {
@@ -478,7 +555,7 @@ body[data-theme="dark"] .finance-action-meta-chip {
 
 .finance-chart-value {
     font-size: 0.92rem;
-    color: var(--muted);
+    color: var(--legacy-copy);
 }
 
 /* ── Portfolio list & plan cards (compact) ── */
@@ -495,8 +572,9 @@ body[data-theme="dark"] .finance-action-meta-chip {
     grid-template-rows: auto auto auto 1fr auto;
     align-content: start;
     gap: 12px;
-    background: var(--surface);
-    box-shadow: 0 12px 30px rgba(85, 56, 35, 0.06);
+    background: var(--finance-panel-surface, var(--theme-surface-glass));
+    border-color: var(--finance-panel-border, color-mix(in srgb, var(--theme-glass-border) 90%, transparent));
+    box-shadow: var(--finance-panel-shadow, var(--theme-glass-shadow));
 }
 
 .finance-plan-card-compact {
@@ -535,18 +613,97 @@ body[data-theme="dark"] .finance-action-meta-chip {
     color: color-mix(in srgb, var(--theme-text-muted) 78%, var(--ink) 22%);
 }
 
+.finance-plan-form .field-label,
+.finance-plan-form .meta-text,
+.finance-plan-form .text-muted {
+    color: var(--legacy-copy);
+}
+
 .finance-plan-form input,
 .finance-plan-form select,
 .finance-plan-form textarea {
     padding: 11px 12px;
     border-radius: 14px;
+<<<<<<< HEAD
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 88%, rgba(148, 163, 184, 0.18) 12%);
     background: color-mix(in srgb, var(--theme-surface-panel) 94%, white);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68);
+=======
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent),
+            color-mix(in srgb, var(--theme-surface-glass) 96%, transparent)
+        );
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 8px 20px rgba(15, 23, 42, 0.05);
+    color: var(--theme-text-primary);
+}
+
+.finance-plan-form input::placeholder,
+.finance-plan-form textarea::placeholder {
+    color: color-mix(in srgb, var(--legacy-copy) 86%, transparent);
+}
+
+.finance-plan-form select option {
+    color: var(--theme-text-primary);
+    background: var(--theme-surface-panel);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .finance-plan-form textarea {
     min-height: 92px;
+}
+
+.finance-plan-form input:focus,
+.finance-plan-form select:focus,
+.finance-plan-form textarea:focus {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 42%, var(--theme-glass-border) 58%);
+    box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--theme-accent-support) 14%, transparent),
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+body[data-theme="dark"] .finance-plan-form .field-label,
+body[data-theme="dark"] .finance-plan-form .meta-text,
+body[data-theme="dark"] .finance-plan-form .text-muted {
+    color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .finance-plan-form input,
+body[data-theme="dark"] .finance-plan-form select,
+body[data-theme="dark"] .finance-plan-form textarea {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 76%, transparent);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, white 4%, transparent), transparent 26%),
+        color-mix(in srgb, var(--theme-surface-glass) 94%, rgba(10, 10, 15, 0.9) 6%);
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, white 10%, transparent),
+        0 12px 30px rgba(0, 0, 0, 0.2);
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .finance-plan-form input::placeholder,
+body[data-theme="dark"] .finance-plan-form textarea::placeholder {
+    color: color-mix(in srgb, var(--theme-text-secondary) 82%, transparent);
+}
+
+body[data-theme="dark"] .finance-plan-form select option {
+    color: var(--theme-text-primary);
+    background: #11161f;
+}
+
+body[data-theme="dark"] .finance-plan-form input:focus,
+body[data-theme="dark"] .finance-plan-form select:focus,
+body[data-theme="dark"] .finance-plan-form textarea:focus {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 44%, var(--theme-glass-border) 56%);
+    box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--theme-accent-support) 16%, transparent),
+        inset 0 1px 0 color-mix(in srgb, white 12%, transparent),
+        0 14px 34px rgba(0, 0, 0, 0.24);
 }
 
 .finance-plan-actions {
@@ -563,8 +720,8 @@ body[data-theme="dark"] .finance-action-meta-chip {
 .finance-plan-stat {
     padding: 12px 14px;
     border-radius: 18px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 84%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 82%, transparent);
 }
 
 .finance-plan-card-compact .finance-plan-stats {
@@ -581,7 +738,7 @@ body[data-theme="dark"] .finance-action-meta-chip {
     gap: 8px;
     margin-top: auto;
     padding-top: 12px;
-    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    border-top: 1px solid color-mix(in srgb, var(--theme-glass-border) 76%, transparent);
 }
 
 .finance-plan-card-compact .actions .button {
@@ -603,3 +760,70 @@ body[data-theme="dark"] .finance-action-meta-chip {
 }
 
 
+<<<<<<< HEAD
+=======
+.finance-mix-panel,
+.finance-mix-insight-panel {
+    background: var(--finance-panel-surface, var(--theme-surface-glass));
+}
+
+.finance-mix-list {
+    display: grid;
+    gap: 10px;
+    grid-auto-rows: 1fr;
+}
+
+.finance-mix-card {
+    padding: 12px 14px;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto auto auto;
+    gap: 10px;
+    align-content: start;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 84%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 80%, transparent);
+}
+
+.finance-mix-head {
+    align-items: center;
+}
+
+.finance-mix-card .text-muted,
+.finance-mix-card .meta-text-sm {
+    color: var(--legacy-copy);
+}
+
+/* ── Data chips ── */
+
+.finance-data-cluster {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.finance-data-chip {
+    padding: 12px 14px;
+    height: 100%;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 84%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 82%, transparent);
+}
+
+.finance-data-chip strong {
+    display: block;
+    margin-top: 6px;
+    font-size: 1.05rem;
+}
+
+.finance-data-chip p {
+    margin: 8px 0 0;
+    color: var(--legacy-copy);
+    line-height: 1.55;
+}
+
+.finance-radar-cluster {
+    margin-bottom: 0;
+}
+>>>>>>> codex/student-page-refactor-and-ui-polish

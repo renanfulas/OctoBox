@@ -11,12 +11,20 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende do contexto de financial_alerts.
 -->
+<<<<<<< HEAD
 <section class="card finance-board-queue" id="finance-queue-board" data-panel="finance-queue-board" aria-label="Fila Automatica">
     <div class="card-head">
         <div class="finance-overdue-head-copy">
             <span class="eyebrow">Decisao assistida</span>
             <h3 class="card-title">Fila assistida do turno</h3>
             <p class="finance-overdue-subtitle">{{ page.data.finance_risk_queue.filtered_count }} caso(s) em leitura de prioridade e {{ page.data.finance_overdue_rows|length }} pagamento(s) pendente(s)</p>
+=======
+<section class="card glass-panel finance-board-queue" id="finance-queue-board" data-panel="finance-queue-board" aria-label="Fila Autom&aacute;tica">
+    <div class="card-head">
+        <div class="finance-overdue-head-copy">
+            <h3 class="card-title">Cobran&ccedil;as em atraso</h3>
+            <p class="finance-overdue-subtitle">{{ page.data.finance_overdue_rows|length }} pagamento(s) pendente(s)</p>
+>>>>>>> codex/student-page-refactor-and-ui-polish
         </div>
     </div>
     {% if page.data.finance_risk_queue.rows %}
@@ -159,7 +167,7 @@ PONTOS CRITICOS:
             </div>
         </a>
         {% empty %}
-        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Fila financeira" title="Nenhuma pendencia financeira no momento" copy="A carteira nao tem cobranca pressionando caixa ou retencao neste recorte." badge="Carteira estabilizada" badge_class="accent" %}
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Fila financeira" title="Nenhuma pend&ecirc;ncia financeira no momento" copy="A carteira n&atilde;o tem cobran&ccedil;a pressionando caixa ou reten&ccedil;&atilde;o neste recorte." badge="Carteira estabilizada" badge_class="accent" %}
         {% endfor %}
     </div>
 </section>

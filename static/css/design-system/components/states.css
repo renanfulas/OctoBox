@@ -79,6 +79,28 @@ POR QUE ELE EXISTE:
     background: color-mix(in srgb, var(--theme-surface) 92%, transparent);
 }
 
+body[data-theme="dark"] .state-empty,
+body[data-theme="dark"] .state-empty.is-compact {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 32%),
+        var(--theme-surface-glass-strong);
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 16px 36px rgba(0, 0, 0, 0.22);
+}
+
+body[data-theme="dark"] .state-empty-title,
+body[data-theme="dark"] .state-empty-copy,
+body[data-theme="dark"] .state-empty-hint {
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .state-empty-copy,
+body[data-theme="dark"] .state-empty-hint {
+    color: var(--theme-text-secondary);
+}
+
 .notice-panel,
 .state-notice {
     position: relative;
@@ -274,6 +296,19 @@ POR QUE ELE EXISTE:
 .state-payment-success-actions {
     display: flex;
     justify-content: flex-start;
+}
+
+.state-payment-success--compact {
+    gap: 14px;
+    padding: 14px 16px;
+}
+
+.state-payment-success--compact .state-payment-success-title {
+    font-size: 1rem;
+}
+
+.state-payment-success--compact .state-payment-success-text {
+    line-height: 1.45;
 }
 
 @media (max-width: 720px) {

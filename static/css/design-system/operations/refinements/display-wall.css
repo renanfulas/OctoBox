@@ -394,6 +394,7 @@ body[data-theme="dark"] .coach-session-card {
         var(--card-surface-strong);
     border-color: var(--card-border);
     box-shadow: var(--card-shadow);
+<<<<<<< HEAD
 }
 
 body[data-theme="dark"] .reception-focus-lane .fdw-focus-card {
@@ -435,6 +436,8 @@ body[data-theme="dark"] .reception-focus-lane .fdw-focus-card.is-tranquil .fdw-f
 body[data-theme="dark"] .reception-focus-lane .fdw-focus-card.severity-tranquil .fdw-focus-action,
 body[data-theme="dark"] .reception-focus-lane .fdw-focus-card.is-tranquil .fdw-focus-action {
     color: color-mix(in srgb, var(--theme-accent-success) 58%, var(--theme-text-muted) 42%);
+=======
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 body[data-theme="dark"] .reception-priority-card,

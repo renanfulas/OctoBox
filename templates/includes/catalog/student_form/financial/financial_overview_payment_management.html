@@ -5,7 +5,11 @@ POR QUE ELE EXISTE:
 - concentra o recebimento rapido sem misturar historico e excecoes.
 -->
 {% if page.data.payment_management_form %}
+<<<<<<< HEAD
 <div class="card card--sci-fi student-financial-drawer student-payment-management-card student-page-payments-checkout-card" data-selected-payment-id="{{ page.data.selected_payment_id|default:'' }}">
+=======
+<div class="card card--sci-fi student-financial-drawer student-payment-management-card student-page-payments-checkout-card">
+>>>>>>> codex/student-page-refactor-and-ui-polish
     <header class="student-financial-drawer__header">
         <div class="student-financial-drawer__identity">
             <div class="student-financial-drawer__avatar" aria-hidden="true">
@@ -14,7 +18,11 @@ POR QUE ELE EXISTE:
             <div class="stack-2">
                 <p class="eyebrow">Cobrar agora</p>
                 <h3 class="section-title-sm" id="student-payment-checkout-title">{{ page.data.student_object.full_name }}</h3>
+<<<<<<< HEAD
             <p class="meta-text" id="student-payment-checkout-copy">Confira valor, vencimento e forma de pagamento para concluir o atendimento com menos passos.</p>
+=======
+                <p class="meta-text" id="student-payment-checkout-copy">Confira valor, vencimento e forma de pagamento. Se precisar ajustar o resto, abra a gestao ampliada.</p>
+>>>>>>> codex/student-page-refactor-and-ui-polish
                 <div class="student-financial-drawer__identity-meta">
                     {% if page.data.financial_overview.latest_enrollment %}
                     <span class="pill">{{ page.data.financial_overview.latest_enrollment.get_status_display }}</span>
@@ -62,7 +70,11 @@ POR QUE ELE EXISTE:
                         <span>Pix</span>
                     </button>
                     <button type="button" class="student-payment-method-button is-card flex-center gap-2" data-action="submit-stripe" data-method="credit_card">
+<<<<<<< HEAD
                         <span>Credito</span>
+=======
+                        <span>Cartao</span>
+>>>>>>> codex/student-page-refactor-and-ui-polish
                     </button>
                     <button type="button" class="student-payment-method-button is-debit flex-center gap-2" data-action="submit-stripe" data-method="debit_card">
                         <span>Debito</span>

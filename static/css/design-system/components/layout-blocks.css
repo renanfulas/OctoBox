@@ -52,12 +52,17 @@ PONTOS CRITICOS:
 .layout-panel {
     min-width: 0;
     min-height: 100%;
+    --layout-panel-gap: 14px;
 }
 
 .layout-panel--stack {
     display: grid;
-    gap: 14px;
+    gap: var(--layout-panel-gap);
     align-content: start;
+}
+
+.layout-panel > * {
+    min-width: 0;
 }
 
 .layout-panel-head {

@@ -22,6 +22,7 @@ POR QUE ELE EXISTE:
     min-height: 134px;
     position: relative;
     overflow: hidden;
+<<<<<<< HEAD
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--card-border) 86%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 34%),
@@ -30,6 +31,28 @@ POR QUE ELE EXISTE:
         inset 0 1px 0 rgba(255, 255, 255, 0.78),
         0 16px 30px rgba(19, 33, 50, 0.06);
     backdrop-filter: blur(14px);
+=======
+    border-radius: 28px;
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 88%, rgba(96, 165, 250, 0.2));
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-glass) 90%, transparent)),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.14), transparent 38%),
+        radial-gradient(circle at bottom left, rgba(217, 70, 239, 0.1), transparent 42%);
+    box-shadow:
+        0 24px 60px rgba(2, 6, 23, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.class-grid-metric-card::after,
+.class-grid-focus-card::after,
+.class-grid-focus-item::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 32%);
+    pointer-events: none;
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .class-grid-metric-card .card-body-metric {
@@ -64,7 +87,7 @@ POR QUE ELE EXISTE:
 
 .class-grid-metric-card .card-copy {
     margin: 0;
-    color: var(--muted);
+    color: var(--legacy-copy);
     font-size: 0.92rem;
     line-height: 1.35;
 }
@@ -77,6 +100,7 @@ POR QUE ELE EXISTE:
     background: linear-gradient(90deg, var(--theme-accent-primary), var(--theme-accent-support), var(--theme-accent-premium));
 }
 
+<<<<<<< HEAD
 body[data-theme="dark"] .class-grid-metric-card {
     border-color: rgba(92, 146, 214, 0.16);
     background:
@@ -85,6 +109,84 @@ body[data-theme="dark"] .class-grid-metric-card {
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.05),
         0 20px 38px rgba(0, 0, 0, 0.24);
+=======
+.class-grid-focus-card {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    gap: 12px;
+    border-radius: 28px;
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 88%, rgba(96, 165, 250, 0.2));
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-glass) 90%, transparent)),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.14), transparent 38%),
+        radial-gradient(circle at bottom left, rgba(217, 70, 239, 0.1), transparent 42%);
+    box-shadow:
+        0 24px 60px rgba(2, 6, 23, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.class-grid-focus-content {
+    gap: 12px;
+}
+
+.class-grid-focus-head {
+    align-items: start;
+    gap: 12px;
+}
+
+.class-grid-focus-list {
+    display: grid;
+    gap: 8px;
+}
+
+.class-grid-focus-item {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+    padding: 12px 14px;
+    border-radius: 20px;
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 86%, rgba(34, 211, 238, 0.18));
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent), color-mix(in srgb, var(--theme-surface-glass) 90%, transparent)),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.12), transparent 44%);
+    box-shadow:
+        0 18px 34px rgba(2, 6, 23, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+body[data-theme="dark"] .class-grid-focus-item {
+    background:
+        linear-gradient(180deg, rgba(10, 16, 30, 0.96), rgba(7, 11, 24, 0.92)),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.14), transparent 44%);
+    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, rgba(56, 189, 248, 0.2));
+}
+
+.class-grid-focus-copy {
+    display: grid;
+    gap: 4px;
+}
+
+.class-grid-focus-copy h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--theme-text-primary);
+}
+
+.class-grid-focus-copy p {
+    margin: 0;
+    color: var(--legacy-copy);
+}
+
+.class-grid-focus-actions {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    flex-shrink: 0;
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .class-grid-scene [data-panel="class-grid-context-panels"] > section + section {
@@ -94,4 +196,23 @@ body[data-theme="dark"] .class-grid-metric-card {
 .class-grid-scene [data-panel="class-grid-context-panels"] .table-card.section-gap {
     padding-top: 22px;
     padding-bottom: 22px;
+}
+
+.class-grid-scene [data-panel="class-grid-context-panels"] .card-title,
+.class-grid-scene [data-panel="class-grid-context-panels"] .card-value,
+.class-grid-scene [data-panel="class-grid-context-panels"] .metric-number,
+.class-grid-scene [data-panel="class-grid-context-panels"] .class-grid-focus-copy h3 {
+    color: var(--theme-text-primary);
+}
+
+.class-grid-scene [data-panel="class-grid-context-panels"] .card-copy,
+.class-grid-scene [data-panel="class-grid-context-panels"] .card-label,
+.class-grid-scene [data-panel="class-grid-context-panels"] .metric-note,
+.class-grid-scene [data-panel="class-grid-context-panels"] .class-grid-focus-copy p {
+    color: var(--class-grid-text-secondary);
+}
+
+body[data-theme="dark"] .class-grid-scene [data-panel="class-grid-context-panels"] {
+    --class-grid-text-primary: var(--theme-text-primary);
+    --class-grid-text-secondary: var(--theme-text-secondary);
 }

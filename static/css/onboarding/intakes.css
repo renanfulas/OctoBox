@@ -7,6 +7,15 @@ POR QUE ELE EXISTE:
 
 .intake-scene {
     gap: var(--section-gap);
+    --intake-text-primary: var(--theme-text-primary);
+    --intake-text-secondary: var(--theme-text-secondary);
+    --intake-panel-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, transparent), transparent 32%),
+        var(--theme-surface-glass-strong);
+    --intake-panel-border: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    --intake-panel-shadow: var(--theme-glass-shadow);
+    --intake-filter-surface: var(--intake-panel-surface);
+    --intake-filter-border: var(--intake-panel-border);
 }
 
 .intake-workspace-surface {
@@ -39,7 +48,7 @@ POR QUE ELE EXISTE:
 .intake-directory-surface {
     padding: 0;
     overflow: hidden;
-    background: color-mix(in srgb, var(--fdw-panel) 94%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass-strong) 92%, transparent);
 }
 
 .intake-tab-workspace {
@@ -70,7 +79,7 @@ POR QUE ELE EXISTE:
 }
 
 .intake-filter-bar {
-    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
 }
 
 .intake-queue-filter-bar {
@@ -227,7 +236,7 @@ POR QUE ELE EXISTE:
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: rgba(71, 85, 105, 0.72);
+    color: color-mix(in srgb, var(--theme-text-muted) 88%, transparent);
     white-space: nowrap;
 }
 
@@ -256,11 +265,11 @@ POR QUE ELE EXISTE:
 }
 
 .intake-directory-table tbody tr + tr {
-    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    border-top: 1px solid color-mix(in srgb, var(--theme-border-soft) 94%, transparent);
 }
 
 .intake-table-text {
-    color: #0f172a;
+    color: var(--theme-text-primary);
     font-size: 0.95rem;
 }
 
@@ -309,7 +318,7 @@ POR QUE ELE EXISTE:
 }
 
 .intake-reading-note {
-    color: rgba(71, 85, 105, 0.82);
+    color: var(--theme-text-secondary);
     font-size: 0.88rem;
     line-height: 1.45;
 }
@@ -391,10 +400,83 @@ POR QUE ELE EXISTE:
 
 .intake-filter-card {
     gap: 0.85rem;
+    border-color: color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+.intake-filter-card--engine {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-glass-border) 86%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 32%),
+        var(--theme-surface-glass);
+}
+
+.intake-board {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 32%),
+        var(--theme-surface-glass);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+.intake-board--conversion {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 10%, transparent), transparent 32%),
+        var(--theme-surface-glass);
+}
+
+.intake-board--source {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-success-alpha) 10%, transparent), transparent 32%),
+        var(--theme-surface-glass);
+}
+
+.intake-board :is(.card-title, .metric, .intake-mini-card strong, .intake-rule-card strong) {
+    color: var(--intake-text-primary);
+}
+
+.intake-board :is(.card-copy, .meta-text, .meta-text-sm) {
+    color: var(--intake-text-secondary);
 }
 
 .intake-filter-card .field-grid-200 {
     gap: 14px;
+}
+
+.intake-filter-card .card-title {
+    color: var(--intake-text-primary);
+}
+
+.intake-filter-card .card-copy,
+.intake-filter-card .field-label {
+    color: var(--intake-text-secondary);
+}
+
+.intake-filter-card input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+.intake-filter-card select,
+.intake-filter-card textarea {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 92%, transparent);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent),
+            color-mix(in srgb, var(--theme-surface-glass) 96%, transparent)
+        );
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 8px 20px rgba(15, 23, 42, 0.05);
+    color: var(--theme-text-primary);
+}
+
+.intake-filter-card input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):focus,
+.intake-filter-card select:focus,
+.intake-filter-card textarea:focus {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 42%, var(--theme-glass-border) 58%);
+    box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--theme-accent-support) 14%, transparent),
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
 .intake-filter-card .actions {
@@ -823,6 +905,7 @@ POR QUE ELE EXISTE:
     align-items: stretch;
 }
 
+<<<<<<< HEAD
 .intake-radar-card {
     position: relative;
     min-height: 104px;
@@ -899,10 +982,97 @@ POR QUE ELE EXISTE:
 
 .intake-radar-card[data-source-key="import"] {
     color: color-mix(in srgb, var(--theme-text-muted) 82%, var(--theme-text-secondary) 18%);
+=======
+.intake-mini-card,
+.intake-rule-card {
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
+    border-radius: 18px;
+    padding: 0.9rem 1rem;
+    background: var(--theme-surface-glass);
+    box-shadow: var(--theme-glass-shadow);
+}
+
+body[data-theme="dark"] .intake-scene {
+    --intake-text-primary: var(--theme-text-primary);
+    --intake-text-secondary: var(--theme-text-secondary);
+    --intake-panel-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, transparent), transparent 32%),
+        var(--theme-surface-glass-strong);
+    --intake-panel-border: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
+    --intake-panel-shadow: var(--theme-glass-shadow);
+    --intake-filter-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 32%),
+        var(--theme-surface-glass-strong);
+    --intake-filter-border: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
+}
+
+body[data-theme="dark"] .intake-mini-card,
+body[data-theme="dark"] .intake-rule-card {
+    background: var(--intake-panel-surface);
+    border-color: var(--intake-panel-border);
+    box-shadow: var(--intake-panel-shadow);
+}
+
+body[data-theme="dark"] .intake-directory-surface,
+body[data-theme="dark"] .intake-board,
+body[data-theme="dark"] .intake-filter-card {
+    border-color: var(--intake-panel-border);
+    background: var(--intake-panel-surface);
+    box-shadow: var(--intake-panel-shadow);
+}
+
+body[data-theme="dark"] .intake-filter-card--engine {
+    border-color: var(--intake-filter-border);
+    background: var(--intake-filter-surface);
+}
+
+body[data-theme="dark"] .intake-filter-card input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+body[data-theme="dark"] .intake-filter-card select,
+body[data-theme="dark"] .intake-filter-card textarea {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 96%, transparent);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-glass-strong) 92%, transparent),
+            color-mix(in srgb, var(--theme-surface-glass) 86%, transparent)
+        );
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 12px 26px rgba(0, 0, 0, 0.2);
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .intake-filter-card input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):focus,
+body[data-theme="dark"] .intake-filter-card select:focus,
+body[data-theme="dark"] .intake-filter-card textarea:focus {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 54%, var(--theme-glass-border) 46%);
+    box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--theme-accent-support) 18%, transparent),
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 16px 34px rgba(0, 0, 0, 0.24);
+}
+
+body[data-theme="dark"] .intake-board--conversion {
+    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, var(--theme-glass-border) 82%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, transparent), transparent 32%),
+        var(--theme-surface-glass-strong);
+}
+
+body[data-theme="dark"] .intake-board--source {
+    border-color: color-mix(in srgb, var(--theme-accent-success-alpha) 18%, var(--theme-glass-border) 82%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-success-alpha) 16%, transparent), transparent 32%),
+        var(--theme-surface-glass-strong);
+}
+
+body[data-theme="dark"] .table-empty-cell {
+    color: var(--intake-text-secondary);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 body[data-theme="dark"] .intake-directory-table th {
-    color: rgba(226, 232, 240, 0.5);
+    color: color-mix(in srgb, var(--theme-text-muted) 84%, transparent);
 }
 
 body[data-theme="dark"] .intake-queue-filter-bar {
@@ -969,7 +1139,7 @@ body[data-theme="dark"] .intake-tab-workspace > .intake-tab-panel.is-tab-active 
 }
 
 body[data-theme="dark"] .intake-table-text {
-    color: #f8fafc;
+    color: var(--intake-text-primary);
 }
 
 body[data-theme="dark"] .intake-contact-name {
@@ -981,7 +1151,7 @@ body[data-theme="dark"] .intake-contact-channel {
 }
 
 body[data-theme="dark"] .intake-reading-note {
-    color: rgba(226, 232, 240, 0.58);
+    color: var(--intake-text-secondary);
 }
 
 body[data-theme="dark"] .intake-filter-surface {
@@ -1210,9 +1380,9 @@ body[data-theme="dark"] .intake-scene .intake-kpi-card.is-selected-tab {
         grid-template-columns: 1fr;
         gap: 12px;
         padding: 16px;
-        border: 1px solid rgba(148, 163, 184, 0.12);
+        border: 1px solid color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
         border-radius: 18px;
-        background: rgba(255, 255, 255, 0.86);
+        background: var(--theme-surface-glass-strong);
     }
 
     .intake-directory-table td {
@@ -1227,7 +1397,7 @@ body[data-theme="dark"] .intake-scene .intake-kpi-card.is-selected-tab {
         font-weight: 700;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: rgba(71, 85, 105, 0.64);
+        color: color-mix(in srgb, var(--theme-text-muted) 82%, transparent);
     }
 
     .intake-row-form {
@@ -1258,12 +1428,12 @@ body[data-theme="dark"] .intake-scene .intake-kpi-card.is-selected-tab {
     }
 
     body[data-theme="dark"] .intake-directory-table tbody tr {
-        background: rgba(12, 13, 21, 0.96);
-        border-color: rgba(148, 163, 184, 0.12);
+        background: var(--theme-surface-glass-strong);
+        border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
     }
 
     body[data-theme="dark"] .intake-directory-table td::before {
-        color: rgba(226, 232, 240, 0.46);
+        color: color-mix(in srgb, var(--theme-text-muted) 76%, transparent);
     }
 
     .intake-source-grid {

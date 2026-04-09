@@ -13,12 +13,28 @@ PONTOS CRITICOS:
 /* ── Variáveis de assinatura ── */
 
 .finance-shell {
+<<<<<<< HEAD
     --finance-signature-ink: var(--ink);
     --finance-signature-teal: var(--theme-accent-support);
     --finance-signature-cyan: var(--theme-accent-primary);
     --finance-signature-copper: var(--theme-accent-premium);
     --finance-signature-line: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
     --finance-signature-shadow: rgba(14, 24, 44, 0.14);
+=======
+    --finance-signature-ink: #132132;
+    --finance-signature-teal: #0f766e;
+    --finance-signature-cyan: #2967a3;
+    --finance-signature-copper: #c46734;
+    --finance-signature-line: rgba(19, 33, 50, 0.1);
+    --finance-signature-shadow: rgba(19, 33, 50, 0.12);
+    --finance-signature-copy: color-mix(in srgb, var(--finance-card-copy) 80%, var(--finance-signature-ink) 20%);
+    --finance-signature-surface: var(--finance-card-surface, var(--theme-surface-glass-strong));
+    --finance-signature-border: var(--finance-card-border, var(--finance-signature-line));
+    --finance-signature-card-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 18px 38px rgba(19, 33, 50, 0.08);
+    --finance-signature-chip-surface: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 /* ── Hero signature ── */
@@ -26,13 +42,20 @@ PONTOS CRITICOS:
 
 .finance-shell .finance-metric-card .metric,
 .finance-shell .finance-action-copy strong {
-    color: var(--finance-signature-ink);
+    color: var(--finance-card-text, var(--finance-signature-ink));
 }
 
 .finance-shell .finance-metric-card .card-copy,
 .finance-shell .finance-metric-card .meta-text-sm,
+<<<<<<< HEAD
 .finance-shell .finance-action-body .meta-text-sm {
     color: var(--muted);
+=======
+.finance-shell .finance-action-body .meta-text-sm,
+.finance-shell .finance-summary-chip p,
+.finance-shell .finance-data-chip p {
+    color: var(--finance-signature-copy);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 /* ── Buttons signature ── */
@@ -45,6 +68,7 @@ PONTOS CRITICOS:
     box-shadow: none;
 }
 
+<<<<<<< HEAD
 .finance-shell .finance-plan-card-compact .actions .button.secondary,
 .finance-shell .finance-card-actions-compact .button.secondary {
     border-color: transparent;
@@ -67,6 +91,13 @@ PONTOS CRITICOS:
 .finance-shell .finance-card-actions-compact .button.secondary:focus-visible {
     background: color-mix(in srgb, var(--theme-surface-strong) 42%, transparent);
     border-color: transparent;
+=======
+.finance-shell .finance-card-actions-compact .button.secondary,
+.finance-shell .finance-support-actions .button.secondary {
+    border-color: rgba(19, 33, 50, 0.1);
+    background: var(--theme-surface-glass-strong);
+    color: var(--finance-signature-ink);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 /* ── Hero panel signature (dark panel inside hero) ── */
@@ -81,11 +112,17 @@ PONTOS CRITICOS:
 .finance-shell .finance-action-card {
     position: relative;
     overflow: hidden;
+<<<<<<< HEAD
     border-color: var(--finance-signature-line);
     background: var(--card-surface);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.9),
         0 18px 38px rgba(19, 33, 50, 0.08);
+=======
+    border-color: var(--finance-signature-border);
+    background: var(--finance-signature-surface);
+    box-shadow: var(--finance-signature-card-shadow);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .finance-shell :is(
@@ -116,13 +153,24 @@ PONTOS CRITICOS:
     --finance-card-aura: rgba(41, 103, 163, 0.18);
 }
 
+<<<<<<< HEAD
+=======
+.finance-shell .finance-ops-summary-card {
+    background: var(--theme-surface-glass-strong);
+}
+
+.finance-shell .finance-radar-card {
+    background: var(--theme-surface-glass-strong);
+}
+
+>>>>>>> codex/student-page-refactor-and-ui-polish
 /* ── Chip/stat/message signatures ── */
 
 .finance-shell .finance-summary-chip,
 .finance-shell .finance-alert-stat,
 .finance-shell .finance-action-message {
     border-color: rgba(19, 33, 50, 0.08);
-    background: var(--surface);
+    background: var(--finance-signature-chip-surface);
 }
 
 .finance-shell .finance-action-message {
@@ -134,6 +182,13 @@ PONTOS CRITICOS:
 body[data-theme="dark"] .finance-shell {
     --finance-signature-line: rgba(144, 181, 205, 0.16);
     --finance-signature-shadow: rgba(0, 0, 0, 0.34);
+    --finance-signature-copy: var(--finance-card-copy);
+    --finance-signature-surface: var(--finance-card-surface, var(--theme-surface-glass-strong));
+    --finance-signature-border: rgba(144, 181, 205, 0.16);
+    --finance-signature-card-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 20px 40px rgba(0, 0, 0, 0.28);
+    --finance-signature-chip-surface: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
 }
 
 body[data-theme="dark"] .finance-shell .finance-metric-card .card-copy,
@@ -146,6 +201,7 @@ body[data-theme="dark"] .finance-shell .finance-action-copy strong {
     color: rgba(245, 249, 252, 0.96);
 }
 
+<<<<<<< HEAD
 body[data-theme="dark"] .finance-shell .finance-plan-card-compact .actions .button.secondary,
 body[data-theme="dark"] .finance-shell .finance-card-actions-compact .button.secondary {
     border-color: transparent;
@@ -165,23 +221,36 @@ body[data-theme="dark"] .finance-shell .finance-plan-card-compact .actions .butt
 body[data-theme="dark"] .finance-shell .finance-card-actions-compact .button:hover,
 body[data-theme="dark"] .finance-shell .finance-card-actions-compact .button:focus-visible {
     background: rgba(15, 23, 42, 0.84);
+=======
+body[data-theme="dark"] .finance-shell .finance-card-actions-compact .button.secondary,
+body[data-theme="dark"] .finance-shell .finance-support-actions .button.secondary {
+    border-color: rgba(144, 181, 205, 0.18);
+    background: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
+    color: rgba(245, 249, 252, 0.9);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 
 body[data-theme="dark"] .finance-shell .finance-metric-card,
 body[data-theme="dark"] .finance-shell .finance-filter-summary-card,
 body[data-theme="dark"] .finance-shell .finance-action-card {
+<<<<<<< HEAD
     border-color: rgba(144, 181, 205, 0.16);
     background: var(--card-surface);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.06),
         0 20px 40px rgba(0, 0, 0, 0.28);
+=======
+    border-color: var(--finance-signature-border);
+    background: var(--finance-signature-surface);
+    box-shadow: var(--finance-signature-card-shadow);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 body[data-theme="dark"] .finance-shell .finance-summary-chip,
 body[data-theme="dark"] .finance-shell .finance-alert-stat,
 body[data-theme="dark"] .finance-shell .finance-action-message {
     border-color: rgba(144, 181, 205, 0.14);
-    background: var(--surface);
+    background: var(--finance-signature-chip-surface);
 }
 
