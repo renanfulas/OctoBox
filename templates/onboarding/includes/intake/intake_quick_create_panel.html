@@ -17,11 +17,12 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende do contexto de entry_kind e form.
 -->
-<section class="card intake-surface-card intake-create-card" aria-label="Cadastro rapido de entrada">
+<section class="card intake-surface-card intake-command-surface {% if entry_kind == 'lead' %}intake-command-surface--lead{% else %}intake-command-surface--conversation{% endif %} intake-create-card" aria-label="Cadastro rapido de entrada">
     <div class="card-head">
-        <div class="card-head-main">
-            <h2 class="card-title">{% if entry_kind == 'lead' %}Novo Lead{% else %}Em conversa{% endif %}</h2>
-            <p class="card-copy">
+        <div class="card-head-main intake-create-head-copy">
+            <p class="intake-create-eyebrow eyebrow">{% if entry_kind == 'lead' %}Entrada nova{% else %}Conversa ativa{% endif %}</p>
+            <h2 class="card-title intake-create-title">{% if entry_kind == 'lead' %}Novo Lead{% else %}Em conversa{% endif %}</h2>
+            <p class="card-copy intake-create-copy">
                 {% if entry_kind == 'lead' %}
                 Registre um contato novo para entrar imediatamente na fila comercial do sistema.
                 {% else %}

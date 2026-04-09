@@ -23,34 +23,38 @@ PONTOS CRITICOS:
     {% endif %}
 
     {% if page.data.interactive_kpis %}
-    <div class="student-kpi-overview deferred-surface" data-panel="intake-kpi-triggers">
-        <section class="student-kpi-grid interactive-tab-triggers" aria-label="Navegacao principal de entradas">
+    <div class="intake-kpi-overview deferred-surface" data-panel="intake-kpi-triggers">
+        <section class="intake-kpi-grid interactive-tab-triggers" aria-label="Navegacao principal de entradas">
             {% for card in page.data.interactive_kpis %}
-            {% include "catalog/includes/student/student_metric_card.html" with card=card %}
+            {% if card.is_selected %}
+            {% include "onboarding/includes/intake/intake_metric_card.html" with card=card card_extra_classes="is-selected-tab" %}
+            {% else %}
+            {% include "onboarding/includes/intake/intake_metric_card.html" with card=card %}
+            {% endif %}
             {% endfor %}
         </section>
     </div>
     {% endif %}
 
-    <div class="card student-directory-surface intake-directory-surface deferred-surface deferred-surface--xl">
-        <div class="interactive-tab-container">
-            <div class="stack-16{% if active_intake_panel == 'tab-intake-queue' %} is-tab-active{% endif %}" id="tab-intake-queue" aria-label="Triagem inicial">
+    <div class="card intake-directory-surface intake-workspace-surface deferred-surface deferred-surface--xl">
+        <div class="interactive-tab-container intake-tab-workspace" data-panel="intake-tab-workspace">
+            <div class="stack-16 intake-tab-panel{% if active_intake_panel == 'tab-intake-queue' %} is-tab-active{% endif %}" id="tab-intake-queue" aria-label="Triagem inicial">
                 {% include "onboarding/includes/intake/intake_queue_panel.html" %}
             </div>
 
-            <div class="stack-16{% if active_intake_panel == 'tab-intake-source' %} is-tab-active{% endif %}" id="tab-intake-source" aria-label="Termometro comercial">
+            <div class="stack-16 intake-tab-panel{% if active_intake_panel == 'tab-intake-source' %} is-tab-active{% endif %}" id="tab-intake-source" aria-label="Termometro comercial">
                 {% include "onboarding/includes/intake/intake_source_board.html" %}
             </div>
 
-            <div class="stack-16{% if active_intake_panel == 'tab-intake-filters' %} is-tab-active{% endif %}" id="tab-intake-filters" aria-label="Filtros e busca">
+            <div class="stack-16 intake-tab-panel{% if active_intake_panel == 'tab-intake-filters' %} is-tab-active{% endif %}" id="tab-intake-filters" aria-label="Filtros e busca">
                 {% include "onboarding/includes/intake/intake_filters_panel.html" with form=page.data.filter_form %}
             </div>
 
-            <div class="stack-16{% if active_intake_panel == 'tab-intake-create-lead' %} is-tab-active{% endif %}" id="tab-intake-create-lead" aria-label="Novo lead">
+            <div class="stack-16 intake-tab-panel{% if active_intake_panel == 'tab-intake-create-lead' %} is-tab-active{% endif %}" id="tab-intake-create-lead" aria-label="Novo lead">
                 {% include "onboarding/includes/intake/intake_quick_create_panel.html" with form=lead_create_form entry_kind='lead' %}
             </div>
 
-            <div class="stack-16{% if active_intake_panel == 'tab-intake-create-intake' %} is-tab-active{% endif %}" id="tab-intake-create-intake" aria-label="Em conversa">
+            <div class="stack-16 intake-tab-panel{% if active_intake_panel == 'tab-intake-create-intake' %} is-tab-active{% endif %}" id="tab-intake-create-intake" aria-label="Em conversa">
                 {% include "onboarding/includes/intake/intake_quick_create_panel.html" with form=intake_create_form entry_kind='intake' %}
             </div>
         </div>

@@ -17,12 +17,22 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende do contexto de source_breakdown.
 -->
-<article class="card intake-source-board-card" id="intake-source-board" data-panel="intake-source-board">
+<article class="card intake-command-surface intake-command-surface--radar intake-source-board-card" id="intake-source-board" data-panel="intake-source-board">
     <div class="card-head">
         <div class="card-head-main intake-source-board-head-copy">
             <p class="intake-source-board-eyebrow eyebrow">Radar comercial</p>
             <h2 class="card-title intake-source-board-title">Canais de entrada</h2>
-            <p class="card-copy intake-source-board-copy">Compare os canais em uma leitura curta, limpa e direta.</p>
+            <p class="card-copy intake-source-board-copy">{{ page.data.source_period_copy }}</p>
+            <p class="intake-source-board-summary">
+                {{ page.data.source_period_total }} lead(s) em {{ page.data.source_period_label|lower }}.
+            </p>
+        </div>
+        <div class="card-head-aside intake-source-board-head-aside">
+            <nav class="intake-source-period-nav" aria-label="Periodo do radar comercial">
+                {% for tab in page.data.source_period_tabs %}
+                <a href="{{ tab.href }}" class="intake-source-period-link{% if tab.is_active %} is-active{% endif %}">{{ tab.label }}</a>
+                {% endfor %}
+            </nav>
         </div>
     </div>
     <div class="intake-source-grid">

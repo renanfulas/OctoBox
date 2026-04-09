@@ -241,7 +241,7 @@ def build_owner_workspace_snapshot(*, today):
         'owner_upcoming_sessions_total_label': f"{len(owner_upcoming_sessions)} aula(s)",
         'metric_cards': [
             {
-                **_build_metric_card('operation-kpi-card owner-amber', 'Total de alunos', headline_metrics['students']),
+                **_build_metric_card('operation-kpi-card owner-green', 'Total de alunos', headline_metrics['students']),
                 'status_hint': 'neutral',
                 'href': reverse('student-directory'),
             },
@@ -256,7 +256,7 @@ def build_owner_workspace_snapshot(*, today):
                 'href': reverse('whatsapp-workspace'),
             },
             {
-                **_build_metric_card('operation-kpi-card owner-amber', 'Cobrancas atrasadas', headline_metrics['overdue_payments']),
+                **_build_metric_card('operation-kpi-card owner-ruby', 'Cobrancas atrasadas', headline_metrics['overdue_payments']),
                 'status_hint': 'clean' if headline_metrics['overdue_payments'] == 0 else 'attention',
                 'href': reverse('finance-center'),
             },

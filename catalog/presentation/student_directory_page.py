@@ -58,6 +58,8 @@ def build_student_directory_page(*, student_count, students, student_filter_form
         },
         actions={},
         behavior={
+            'default_panel': 'tab-students-directory',
+            'default_action': 'open-tab-students-directory',
             'student_prefetch': {
                 'enabled': True,
                 'hover_delay_ms': 120,

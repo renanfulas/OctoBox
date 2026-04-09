@@ -10,10 +10,10 @@ O QUE ESTE ARQUIVO FAZ:
 3. reduz divergencia de markup entre superficies que devem parecer irmas.
 -->
 {% if card.href %}<a href="{{ card.href }}" class="metric-card-link">{% endif %}
-<article class="card metric-card shared-interactive-kpi {{ card.card_class }} {{ card.tone_class }} {{ extra_classes }}{% if card.data_action %} has-action cursor-pointer{% endif %}{% if card.href %} has-href{% endif %}" data-panel="metric-card" data-slot="interactive-kpi-card"{% if card.data_action %} data-action="{{ card.data_action }}"{% endif %}>
+<article class="card metric-card kpi-family-card shared-interactive-kpi {{ card.card_class }} {{ card.tone_class }} {{ extra_classes }}{% if card.data_action %} has-action cursor-pointer{% endif %}{% if card.href %} has-href{% endif %}" data-panel="metric-card" data-slot="interactive-kpi-card"{% if card.data_action %} data-action="{{ card.data_action }}"{% endif %}>
     <div class="card-body card-body-metric student-metric-card-body">
         {% if card.icon %}
-        <div class="icon-box student-kpi-icon-box" aria-hidden="true">
+        <div class="icon-box student-kpi-icon-box kpi-card-icon-box" aria-hidden="true">
             {{ card.icon|safe }}
         </div>
         {% endif %}

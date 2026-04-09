@@ -315,6 +315,70 @@ REGRA:
     max-width: 34ch;
 }
 
+.metric-card .kpi-card-icon-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+}
+
+.metric-card .kpi-card-icon-box svg {
+    display: block;
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
+    overflow: visible;
+}
+
+.metric-card.kpi-family-card {
+    transition:
+        transform var(--transition-base),
+        border-color var(--transition-base),
+        box-shadow var(--transition-base),
+        background var(--transition-base);
+}
+
+.metric-card.kpi-family-card .kpi-card-icon-box {
+    transition:
+        transform var(--transition-base),
+        border-color var(--transition-base),
+        box-shadow var(--transition-base),
+        background var(--transition-base);
+}
+
+.metric-card.kpi-family-card:hover,
+.metric-card.kpi-family-card:focus-within,
+.metric-card-link:hover .metric-card.kpi-family-card,
+.metric-card-link:focus-visible .metric-card.kpi-family-card {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, currentColor 20%, rgba(15, 23, 42, 0.08) 80%);
+    box-shadow:
+        0 18px 34px rgba(15, 23, 42, 0.09),
+        inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+.metric-card.kpi-family-card:hover .kpi-card-icon-box,
+.metric-card.kpi-family-card:focus-within .kpi-card-icon-box,
+.metric-card-link:hover .metric-card.kpi-family-card .kpi-card-icon-box,
+.metric-card-link:focus-visible .metric-card.kpi-family-card .kpi-card-icon-box {
+    transform: translateY(-1px) scale(1.03);
+    border-color: color-mix(in srgb, currentColor 22%, rgba(15, 23, 42, 0.08) 78%);
+}
+
+body[data-theme="dark"] .metric-card.kpi-family-card:hover,
+body[data-theme="dark"] .metric-card.kpi-family-card:focus-within,
+body[data-theme="dark"] .metric-card-link:hover .metric-card.kpi-family-card,
+body[data-theme="dark"] .metric-card-link:focus-visible .metric-card.kpi-family-card {
+    box-shadow:
+        0 20px 36px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
 .metric-card .card-footer {
     margin-top: 14px;
     padding-top: 10px;

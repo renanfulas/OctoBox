@@ -75,7 +75,8 @@ def _calculate_static_asset_version():
 
     for asset_path in asset_paths:
         if isinstance(asset_path, Path) and asset_path.exists():
-            mtimes.append(int(asset_path.stat().st_mtime))
+            stat_result = asset_path.stat()
+            mtimes.append(getattr(stat_result, 'st_mtime_ns', int(stat_result.st_mtime * 1_000_000_000)))
 
     return str(max(mtimes, default=1))
 

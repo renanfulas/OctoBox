@@ -14,11 +14,11 @@ PONTOS CRITICOS:
 -->
 <section class="intake-data-panel" id="intake-queue-board" aria-label="Fila principal de entradas" data-panel="intake-queue-board">
     {% url 'student-quick-create' as student_quick_create_url %}
-    <section class="student-filter-bar intake-filter-bar" aria-label="Busca e filtros da central de entradas">
-        <form method="get" action="." class="student-filter-form" id="intake-directory-filter-form">
+    <section class="intake-queue-filter-bar intake-filter-bar" aria-label="Busca e filtros da central de entradas">
+        <form method="get" action="." class="intake-queue-filter-form" id="intake-directory-filter-form">
             <input type="hidden" name="panel" value="tab-intake-queue">
-            <label class="student-filter-search" aria-label="Buscar contato">
-                <span class="student-filter-search-icon" aria-hidden="true">
+            <label class="intake-queue-search" aria-label="Buscar contato">
+                <span class="intake-queue-search-icon" aria-hidden="true">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </span>
                 <input
@@ -26,22 +26,22 @@ PONTOS CRITICOS:
                     name="query"
                     value="{{ page.data.filter_form.query.value|default:'' }}"
                     placeholder="Buscar contato, telefone ou e-mail..."
-                    class="student-filter-search-input"
+                    class="intake-queue-search-input"
                 >
             </label>
         </form>
 
-        <nav class="student-filter-pills intake-filter-pills" aria-label="Filtros rapidos da fila de entradas">
-            <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}" class="student-filter-pill {% if not request.GET.status %}is-active{% endif %}">Todos</a>
-            <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}&status=new" class="student-filter-pill {% if request.GET.status == 'new' %}is-active{% endif %}">Novos</a>
-            <button type="button" class="student-filter-pill" data-intake-sort="registration" data-sort-direction="desc" aria-pressed="false">Data</button>
+        <nav class="intake-queue-filter-pills intake-filter-pills" aria-label="Filtros rapidos da fila de entradas">
+            <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}" class="intake-queue-filter-pill {% if not request.GET.status %}is-active{% endif %}">Todos</a>
+            <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}&status=new" class="intake-queue-filter-pill {% if request.GET.status == 'new' %}is-active{% endif %}">Novos</a>
+            <button type="button" class="intake-queue-filter-pill" data-intake-sort="registration" data-sort-direction="desc" aria-pressed="false">Data</button>
         </nav>
 
-        <p class="student-filter-count" aria-label="Fila: {{ page.data.visible_queue_count }}.">{{ page.data.visible_queue_count }} entradas</p>
+        <p class="intake-queue-filter-count" aria-label="Fila: {{ page.data.visible_queue_count }}.">{{ page.data.visible_queue_count }} entradas</p>
     </section>
 
-    <div class="student-data-panel intake-data-panel-table">
-        <div class="student-table-scroll" data-slot="intake-table-scroll">
+    <div class="intake-table-panel intake-data-panel-table">
+        <div class="intake-table-scroll" data-slot="intake-table-scroll">
             <table class="table-modern intake-directory-table">
                 <caption class="visually-hidden">Fila principal de entradas com busca, filtros rapidos e acoes de triagem.</caption>
                 <thead>
@@ -59,13 +59,13 @@ PONTOS CRITICOS:
                     {% with intake=item.object semantic=item.semantic_state conversion=item.conversion permissions=item.action_permissions %}
                     <tr class="intake-directory-row" data-registration-age-days="{{ item.registration_age_days }}">
                         <td class="intake-queue-col--contact" data-label="Contato">
-                            <div class="student-identity">
-                                <div class="avatar-circle avatar-{% cycle 'orange' 'blue' 'purple' 'teal' 'pink' 'indigo' %} student-avatar-circle">
+                            <div class="intake-contact-identity">
+                                <div class="avatar-circle avatar-{% cycle 'orange' 'blue' 'purple' 'teal' 'pink' 'indigo' %} intake-contact-avatar">
                                     {{ intake.full_name|slice:":2"|upper }}
                                 </div>
-                                <div class="student-identity-copy">
-                                    <strong class="student-name">{{ intake.full_name }}</strong>
-                                    <span class="student-email">{{ intake.email|default:intake.phone }}</span>
+                                <div class="intake-contact-copy">
+                                    <strong class="intake-contact-name">{{ intake.full_name }}</strong>
+                                    <span class="intake-contact-channel">{{ intake.email|default:intake.phone }}</span>
                                 </div>
                             </div>
                         </td>

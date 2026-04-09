@@ -19,10 +19,9 @@ from decimal import Decimal
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
-from django.utils.safestring import mark_safe
-
 from finance.models import EnrollmentStatus, Payment, PaymentStatus
 from finance.overdue_metrics import count_overdue_students, get_overdue_payments_queryset, sum_overdue_amount
+from shared_support.kpi_icons import build_kpi_icon
 
 
 def _format_currency_br(value):
@@ -31,29 +30,13 @@ def _format_currency_br(value):
 
 
 def _finance_kpi_icon(name):
-    icons = {
-        'movements': mark_safe(
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
-            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
-            'aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>'
-        ),
-        'queue': mark_safe(
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
-            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
-            'aria-hidden="true"><path d="M3 12h7"/><path d="M3 6h11"/><path d="M3 18h5"/><path d="m15 15 3 3 3-3"/><path d="M18 6v12"/></svg>'
-        ),
-        'portfolio': mark_safe(
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
-            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
-            'aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/><path d="M12 18v2"/><path d="M7 9h10"/><path d="M7 13h6"/></svg>'
-        ),
-        'filters': mark_safe(
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
-            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
-            'aria-hidden="true"><path d="M4 6h16"/><path d="M7 12h10"/><path d="M10 18h4"/></svg>'
-        ),
+    icon_map = {
+        'movements': 'trend',
+        'queue': 'queue',
+        'portfolio': 'portfolio',
+        'filters': 'filters',
     }
-    return icons.get(name, '')
+    return build_kpi_icon(icon_map.get(name, ''))
 
 
 def build_finance_metrics(payments, enrollments):
@@ -236,7 +219,7 @@ def build_finance_interactive_kpis(finance_metrics, *, priority_context=None):
                 'Essa e a primeira pressao do recorte agora: fila e regua pedem acao antes de aprofundar carteira.'
             ),
             'data_action': 'open-tab-finance-queue',
-            'card_class': 'kpi-red' if finance_metrics['Alunos com atraso ativo']['value'] > 0 else 'kpi-blue',
+            'card_class': 'kpi-red',
             'value_class': 'is-ruby' if finance_metrics['Receita que ainda nao entrou']['value'] > 1 else '',
         },
         'portfolio': {
@@ -257,7 +240,7 @@ def build_finance_interactive_kpis(finance_metrics, *, priority_context=None):
             'icon': _finance_kpi_icon('filters'),
             'note': 'Acesse os controles globais para isolar status, datas e planilhas.',
             'data_action': 'open-tab-finance-filters',
-            'card_class': 'kpi-cyan',
+            'card_class': 'kpi-ink',
         },
     }
 

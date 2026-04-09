@@ -13,39 +13,25 @@ PONTOS CRITICOS:
 - Essas consultas abastecem shell, operacao, onboarding e alunos; qualquer regressao aqui aparece como fila quebrada ou contagem errada.
 """
 
+from datetime import timedelta
+from urllib.parse import urlencode
+
 from django.db.models import Count, Q
 from django.utils import timezone
-from django.utils.safestring import mark_safe
-
 from onboarding.facade import build_intake_queue_item
 from onboarding.forms import IntakeCenterFilterForm, IntakeQuickCreateForm
 from onboarding.models import IntakeSource, IntakeStatus, StudentIntake
+from shared_support.kpi_icons import build_kpi_icon
 
 
 def _intake_kpi_icon(name):
-    icons = {
-        'queue': mark_safe(
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
-            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
-            'aria-hidden="true"><path d="M3 12h7"/><path d="M3 6h11"/><path d="M3 18h5"/><path d="m15 15 3 3 3-3"/><path d="M18 6v12"/></svg>'
-        ),
-        'conversation': mark_safe(
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
-            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
-            'aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
-        ),
-        'today': mark_safe(
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
-            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
-            'aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>'
-        ),
-        'owners': mark_safe(
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
-            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
-            'aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/><path d="M12 18v2"/><path d="M7 9h10"/><path d="M7 13h6"/></svg>'
-        ),
+    icon_map = {
+        'queue': 'queue',
+        'conversation': 'conversation',
+        'today': 'today',
+        'owners': 'owners',
     }
-    return icons.get(name, '')
+    return build_kpi_icon(icon_map.get(name, ''))
 
 
 def count_pending_intakes():
@@ -85,12 +71,18 @@ def _resolve_queue_ordering(*, sort_value):
 
 def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None, queue_limit=12):
     today = today or timezone.localdate()
+    params = params or {}
     base_queryset = StudentIntake.objects.filter(
         status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING, IntakeStatus.MATCHED],
         linked_student__isnull=True,
     )
     queue_queryset = base_queryset
     metrics_queryset = base_queryset
+    active_panel = (params.get('panel') or '').strip()
+    source_period = (params.get('source_period') or 'day').strip().lower()
+    if source_period not in {'day', 'week', 'month'}:
+        source_period = 'day'
+    semantic_stage = ''
     filter_form = IntakeCenterFilterForm(
         params or None,
         status_choices=tuple(choice for choice in IntakeStatus.choices if choice[0] != IntakeStatus.MATCHED),
@@ -102,7 +94,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         status = filter_form.cleaned_data.get('status')
         source = filter_form.cleaned_data.get('source')
         sort = filter_form.cleaned_data.get('sort')
-        semantic_stage = filter_form.cleaned_data.get('semantic_stage')
+        semantic_stage = filter_form.cleaned_data.get('semantic_stage') or ''
         assignment = filter_form.cleaned_data.get('assignment')
 
         if query:
@@ -137,11 +129,58 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         build_intake_queue_item(intake=intake, actor_role_slug=actor_role_slug, today=today)
         for intake in queue
     ]
-    source_counts = dict(queue_queryset.values_list('source').annotate(total=Count('id')))
+    source_reference_queryset = metrics_queryset.filter(
+        status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING, IntakeStatus.MATCHED],
+    )
+    week_start = today - timedelta(days=today.weekday())
+    month_start = today.replace(day=1)
+    if source_period == 'week':
+        source_reference_queryset = source_reference_queryset.filter(
+            created_at__date__gte=week_start,
+            created_at__date__lte=today,
+        )
+        source_period_label = 'Semana'
+        source_period_copy = 'Veja quem procurou o box nesta semana, sem carregar volume antigo junto.'
+    elif source_period == 'month':
+        source_reference_queryset = source_reference_queryset.filter(
+            created_at__date__gte=month_start,
+            created_at__date__lte=today,
+        )
+        source_period_label = 'Mês'
+        source_period_copy = 'Leia o acumulado do mês atual para entender quais canais sustentam a captação agora.'
+    else:
+        source_reference_queryset = source_reference_queryset.filter(created_at__date=today)
+        source_period_label = 'Hoje'
+        source_period_copy = 'Compare quem entrou hoje em uma leitura curta, limpa e direta.'
+
+    source_counts = dict(source_reference_queryset.values_list('source').annotate(total=Count('id')))
+    source_total = sum(source_counts.values())
+
+    source_period_base_params = params.copy() if hasattr(params, 'copy') else dict(params)
+    source_period_base_params.pop('source_period', None)
+    source_period_base_params['panel'] = 'tab-intake-source'
+    source_period_tabs = []
+    for key, label in (('day', 'Hoje'), ('week', 'Semana'), ('month', 'Mês')):
+        tab_params = source_period_base_params.copy()
+        tab_params['source_period'] = key
+        source_period_tabs.append(
+            {
+                'key': key,
+                'label': label,
+                'href': f"?{urlencode(tab_params, doseq=True)}",
+                'is_active': source_period == key,
+            }
+        )
     summary = metrics_queryset.aggregate(
         lead_total=Count('id', filter=Q(status=IntakeStatus.NEW)),
         pending_total=Count('id', filter=Q(status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING])),
-        created_today=Count('id', filter=Q(created_at__date=today)),
+        today_funnel_total=Count(
+            'id',
+            filter=Q(
+                created_at__date=today,
+                status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING, IntakeStatus.MATCHED],
+            ),
+        ),
         conversation_in_queue=Count(
             'id',
             filter=Q(status__in=[IntakeStatus.REVIEWING, IntakeStatus.MATCHED]),
@@ -156,7 +195,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
     pending_count = summary['pending_total']
     conversation_count = summary['conversation_in_queue']
     assigned_count = summary['assigned_in_queue']
-    created_today = summary['created_today']
+    created_today = summary['today_funnel_total']
     visible_queue_count = len(queue_items)
     first_intake = queue[0] if queue else None
 
@@ -167,24 +206,27 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
                 'display_value': str(lead_count),
                 'note': 'Leads aguardando primeiro contato, agendamento ou direcionamento basico no balcao.',
                 'href': '?panel=tab-intake-queue&semantic_stage=new-leads',
-                'tone_class': 'kpi-blue' if lead_count > 0 else 'kpi-green',
+                'tone_class': 'kpi-blue',
                 'icon': _intake_kpi_icon('queue'),
+                'is_selected': active_panel == 'tab-intake-queue' and semantic_stage == 'new-leads',
             },
             {
                 'label': 'Em conversa',
                 'display_value': str(conversation_count),
                 'note': 'Leads que ja estao em contato ativo com a equipe e podem virar matricula sem trocar de tela.',
                 'href': '?panel=tab-intake-queue&semantic_stage=lead-open',
-                'tone_class': 'kpi-amber' if conversation_count > 0 else 'kpi-green',
+                'tone_class': 'kpi-amber',
                 'icon': _intake_kpi_icon('conversation'),
+                'is_selected': active_panel == 'tab-intake-queue' and semantic_stage == 'lead-open',
             },
             {
                 'label': 'Hoje',
                 'display_value': str(created_today),
-                'note': 'Volume diario e grafico de canais (Insta, Site, Balcao) para avaliar a atracao de hoje.',
+                'note': 'Conta apenas os leads e contatos em conversa que entraram hoje; na virada do dia esse numero reinicia.',
                 'data_action': 'open-tab-intake-source',
                 'tone_class': 'kpi-emerald',
                 'icon': _intake_kpi_icon('today'),
+                'is_selected': active_panel == 'tab-intake-source',
             },
             {
                 'label': 'Atribuidos',
@@ -193,6 +235,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
                 'data_action': 'open-tab-intake-filters',
                 'tone_class': 'kpi-purple',
                 'icon': _intake_kpi_icon('owners'),
+                'is_selected': active_panel == 'tab-intake-filters',
             },
         ],
         'hero_stats': [
@@ -209,6 +252,11 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
             {'key': 'site', 'label': 'Site', 'value': 0},
             {'key': 'import', 'label': dict(IntakeSource.choices)[IntakeSource.IMPORT], 'value': source_counts.get(IntakeSource.IMPORT, 0)},
         ],
+        'source_period': source_period,
+        'source_period_label': source_period_label,
+        'source_period_copy': source_period_copy,
+        'source_period_total': source_total,
+        'source_period_tabs': source_period_tabs,
         'filter_form': filter_form,
         'create_form': IntakeQuickCreateForm(),
         'intake_queue': queue,
