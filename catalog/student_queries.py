@@ -216,6 +216,7 @@ def build_student_directory_snapshot(params=None, for_export=False):
                 'display_value': inadimplentes_count,
                 'icon': _catalog_kpi_icon('overdue'),
                 'tone_class': 'kpi-red',
+                'href': '?payment_status=overdue#tab-students-directory',
                 'data_action': 'open-tab-students-priority',
             },
             {
@@ -223,6 +224,7 @@ def build_student_directory_snapshot(params=None, for_export=False):
                 'display_value': novos_30d_count,
                 'icon': _catalog_kpi_icon('growth'),
                 'tone_class': 'kpi-cyan',
+                'href': '?created_window=30d#tab-students-directory',
                 'data_action': 'open-tab-students-intake',
             },
             {
@@ -230,6 +232,7 @@ def build_student_directory_snapshot(params=None, for_export=False):
                 'display_value': inativos_count,
                 'icon': _catalog_kpi_icon('inactive'),
                 'tone_class': 'kpi-purple',
+                'href': '?student_status=inactive#tab-students-directory',
                 'data_action': 'open-tab-students-filters',
             },
         ],
