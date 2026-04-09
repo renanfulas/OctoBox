@@ -18,6 +18,154 @@ PONTOS CRITICOS:
             <p class="finance-overdue-subtitle">{{ page.data.finance_overdue_rows|length }} pagamento(s) pendente(s)</p>
         </div>
     </div>
+    {% if page.data.finance_risk_queue.rows %}
+    <div class="finance-risk-queue" data-slot="finance-risk-queue">
+        <div class="finance-risk-summary">
+            <span class="badge badge-subtle ink">{{ page.data.finance_risk_queue.queue_focus_label }}</span>
+            <span class="badge badge-subtle info">{{ page.data.finance_risk_queue.filtered_count }} na fila</span>
+            <span class="badge badge-subtle warning">{{ page.data.finance_risk_queue.summary.high_signal_count }} alto risco</span>
+            <span class="badge badge-subtle info">{{ page.data.finance_risk_queue.summary.watch_count }} em observacao</span>
+            <span class="badge badge-subtle accent">{{ page.data.finance_risk_queue.summary.actual_churn_count }} ja inativo(s)</span>
+            <span class="badge badge-subtle success">{{ page.data.finance_risk_queue.summary.recovered_count }} recuperado(s)</span>
+        </div>
+        {% if page.data.finance_risk_queue.turn_recommendation %}
+        <div class="finance-guide-card finance-guide-card-soft">
+            <span class="eyebrow">Recomendacao global do turno</span>
+            <div class="finance-followup-line">
+                <strong>{{ page.data.finance_risk_queue.turn_recommendation.action_label }}</strong>
+                <span>{{ page.data.finance_risk_queue.turn_recommendation.summary }}</span>
+            </div>
+            <p>{{ page.data.finance_risk_queue.turn_recommendation.note }}</p>
+        </div>
+        {% endif %}
+        {% if page.data.finance_risk_queue.turn_priority %}
+        <div class="finance-guide-card">
+            <span class="eyebrow">Prioridade agregada do turno</span>
+            <div class="finance-followup-line">
+                <strong>{{ page.data.finance_risk_queue.turn_priority.label }}</strong>
+                <span>{{ page.data.finance_risk_queue.turn_priority.count }} caso(s) abrem esta faixa</span>
+            </div>
+            <p>{{ page.data.finance_risk_queue.turn_priority.command_message }}</p>
+            <p>{{ page.data.finance_risk_queue.turn_priority.why_now }}</p>
+            <p>{{ page.data.finance_risk_queue.turn_priority.action_focus }}</p>
+            <p>{{ page.data.finance_risk_queue.turn_priority.alignment_note }}</p>
+        </div>
+        {% endif %}
+        <div class="finance-risk-list">
+            {% for group in page.data.finance_risk_queue.groups %}
+            <div class="finance-guide-card {% if group.level == 'act_now' %}finance-guide-card-soft{% endif %}">
+                <span class="eyebrow">{{ group.label }}</span>
+                <div class="finance-followup-line">
+                    <strong>{{ group.count }} caso(s)</strong>
+                    <span>{{ group.description }}</span>
+                </div>
+                <p>
+                    {{ group.contextual_guidance_count }} com jogada contextual |
+                    {{ group.high_contextual_conviction_count }} com conviccao alta |
+                    {{ group.high_confidence_count }} com alta confianca
+                </p>
+                <p>O sinal que mais puxou este bloco foi {{ group.dominant_signal.label }}.</p>
+                <p>{{ group.dominant_action.note }}</p>
+                <p>{{ group.command_message }}</p>
+            </div>
+            {% for item in group.rows %}
+            <article class="finance-risk-row" aria-label="{{ item.student_name }} - {{ item.bucket_label }}">
+                <div class="finance-risk-main">
+                    <div class="finance-risk-copy">
+                        <strong><a class="finance-risk-name-link" href="{{ item.student_url }}">{{ item.student_name }}</a></strong>
+                        <span class="finance-risk-playbook">{{ item.playbook_label }}</span>
+                        <div class="finance-risk-meta">
+                            <span class="badge badge-subtle {{ item.bucket_class }}">{{ item.bucket_label }}</span>
+                            <span>{{ item.priority_label }}</span>
+                            <span>{{ item.historical_score_label }}</span>
+                            <span>{{ item.queue_assist_score_label }}</span>
+                            <span>{{ item.contextual_priority_score_label }}</span>
+                            <span>{{ item.contextual_conviction_label }}</span>
+                            <span>{{ item.operational_band_label }}</span>
+                            <span>{{ item.confidence_label }}</span>
+                            <span>Status {{ item.actual_status }}</span>
+                            <span>{{ item.open_amount }}</span>
+                            <span>{{ item.overdue_count_60d }} atraso(s) em 60d</span>
+                        </div>
+                    </div>
+                    <div class="finance-risk-side">
+                        <strong>{{ item.recommended_action_label }}</strong>
+                        <span>{{ item.prediction_window }}</span>
+                        <span>{{ item.latest_enrollment_status }}</span>
+                        <span>{{ item.last_touch_label }}</span>
+                    </div>
+                </div>
+                <p class="finance-risk-note">{{ item.playbook_note }}</p>
+                <p class="finance-risk-order-hint">{{ item.priority_order_hint }}</p>
+                <div class="finance-risk-meta">
+                    <span class="badge badge-subtle {{ item.momentum_class }}">{{ item.momentum_label }}</span>
+                    <span>{{ item.momentum_detail }}</span>
+                    {% if item.timing_guidance_aligned %}
+                    <span class="badge badge-subtle success">Acao alinhada ao melhor timing</span>
+                    {% endif %}
+                    {% if item.recommendation_adjusted %}
+                    <span class="badge badge-subtle warning">Ajuste automatico por timing</span>
+                    {% endif %}
+                    {% if item.confidence_adjusted %}
+                    <span class="badge badge-subtle info">Confianca ajustada por historico</span>
+                    {% endif %}
+                    {% if item.prediction_window_adjusted %}
+                    <span class="badge badge-subtle accent">Janela ajustada por historico</span>
+                    {% endif %}
+                    {% if item.contextual_guidance_available %}
+                    <span class="badge badge-subtle ink">Jogada contextual sugerida</span>
+                    {% endif %}
+                    {% if item.turn_priority_tension_guidance_available %}
+                    <span class="badge badge-subtle accent">{{ item.turn_priority_tension_guidance_label }}</span>
+                    {% endif %}
+                </div>
+                <p class="finance-risk-order-hint">{{ item.timing_guidance_note }}</p>
+                {% if item.recommendation_adjusted %}
+                <p class="finance-risk-order-hint">{{ item.recommendation_adjustment_note }}</p>
+                {% endif %}
+                {% if item.confidence_adjusted %}
+                <p class="finance-risk-order-hint">{{ item.confidence_adjustment_note }}</p>
+                {% endif %}
+                {% if item.prediction_window_adjusted %}
+                <p class="finance-risk-order-hint">{{ item.prediction_window_adjustment_note }}</p>
+                {% endif %}
+                {% if item.contextual_guidance_available %}
+                <p class="finance-risk-order-hint">{{ item.contextual_guidance_note }}</p>
+                {% endif %}
+                {% if item.turn_priority_tension_guidance_available %}
+                <p class="finance-risk-order-hint">{{ item.turn_priority_tension_guidance_note }}</p>
+                {% endif %}
+                <div class="finance-risk-reasons">
+                    {% for reason in item.reason_labels %}
+                    <span class="finance-risk-reason">{{ reason }}</span>
+                    {% endfor %}
+                </div>
+                <div class="actions actions-tight finance-risk-actions">
+                    {% if item.primary_action_mode == 'finance_whatsapp' %}
+                    <form method="post" action="{% url 'finance-communication-action' %}" target="_blank" class="actions actions-tight finance-risk-actions-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action_kind" value="{{ item.primary_action_kind }}">
+                        <input type="hidden" name="student_id" value="{{ item.student_id }}">
+                        {% if item.payment_id %}<input type="hidden" name="payment_id" value="{{ item.payment_id }}">{% endif %}
+                        {% if item.enrollment_id %}<input type="hidden" name="enrollment_id" value="{{ item.enrollment_id }}">{% endif %}
+                        <input type="hidden" name="open_in_whatsapp" value="1">
+                        <button class="button" type="submit">{{ item.primary_action_label }}</button>
+                    </form>
+                    {% else %}
+                    <a class="button" href="{{ item.primary_action_href }}">{{ item.primary_action_label }}</a>
+                    {% endif %}
+                    {% if item.secondary_action_label and item.secondary_action_href %}
+                    <a class="button secondary {{ item.secondary_action_variant }}" href="{{ item.secondary_action_href }}">{{ item.secondary_action_label }}</a>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+    {% elif page.data.financial_churn_foundation.summary.students_in_scope %}
+    {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Fila por missao" title="Nenhum aluno neste recorte da fila" copy="Mude a missao da fila para abrir outro grupo de prioridade operacional sem perder o recorte financeiro." badge=page.data.finance_risk_queue.queue_focus_label badge_class="info" %}
+    {% endif %}
     <div class="finance-overdue-list" data-slot="finance-alert-list">
         {% for item in page.data.finance_overdue_rows %}
         <a class="finance-overdue-row" href="{{ item.student_url }}" aria-label="{{ item.student_name }} - {{ item.overdue_days }} dias de atraso">

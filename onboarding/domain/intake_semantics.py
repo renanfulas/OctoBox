@@ -54,7 +54,7 @@ def build_intake_semantic_state(*, status: str, linked_student_id: int | None) -
     return IntakeSemanticState(
         entity_label='Entrada',
         semantic_stage='lead-open',
-        semantic_label='Em conversa',
+        semantic_label='Lead aberto',
         note='O registro segue quente na fila comercial e pode virar aluno assim que a conversa fechar.',
     )
 

@@ -149,6 +149,8 @@ If you want to understand specifically what still holds historical state inside 
 
 If you want to understand the technical direction for growing without losing simplicity, use [docs/architecture/architecture-growth-plan.md](docs/architecture/architecture-growth-plan.md).
 
+If you want to understand where operational intelligence, scoring, prediction, and ML belong in the architecture without contaminating the transactional core, use [docs/architecture/operational-intelligence-ml-layer.md](docs/architecture/operational-intelligence-ml-layer.md).
+
 If you want to understand the specific strategy for making the business stop depending on Django as the core, use [docs/architecture/django-core-strategy.md](docs/architecture/django-core-strategy.md) and [docs/architecture/django-decoupling-blueprint.md](docs/architecture/django-decoupling-blueprint.md).
 
 If you want to understand the official declaration of what becomes the conceptual center of the system, use [docs/architecture/octobox-conceptual-core.md](docs/architecture/octobox-conceptual-core.md).

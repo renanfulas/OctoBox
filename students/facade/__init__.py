@@ -29,6 +29,10 @@ from .student_lifecycle import (
     run_student_quick_create,
     run_student_quick_update,
 )
+from .student_attribution import (
+    StudentSourceDeclarationFacadeResult,
+    run_student_source_declaration_record,
+)
 
 __all__ = [
     'StudentEnrollmentActionFacadeResult',
@@ -38,6 +42,7 @@ __all__ = [
     'StudentPaymentRegenerationFacadeResult',
     'StudentPaymentScheduleFacadeResult',
     'StudentQuickWorkflowFacadeResult',
+    'StudentSourceDeclarationFacadeResult',
     'run_student_enrollment_action',
     'run_student_enrollment_sync',
     'run_student_intake_sync',
@@ -46,4 +51,5 @@ __all__ = [
     'run_student_payment_schedule',
     'run_student_quick_create',
     'run_student_quick_update',
+    'run_student_source_declaration_record',
 ]

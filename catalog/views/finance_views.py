@@ -56,7 +56,7 @@ class FinanceCenterView(FinanceWorkspaceContextMixin, CatalogBaseView, FormView)
         base_context = self.get_base_context()
         context.update(base_context)
         operational_queue = build_operational_queue_snapshot()
-        snapshot = build_finance_snapshot(self.request.GET, operational_queue=operational_queue)
+        snapshot = build_finance_snapshot(self.request.GET, operational_queue=operational_queue, persist_follow_ups=True)
         page_payload = build_finance_center_page(
             snapshot=snapshot,
             operational_queue=operational_queue,

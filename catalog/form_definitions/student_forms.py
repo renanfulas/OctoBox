@@ -18,7 +18,9 @@ from django.utils import timezone
 
 from communications.models import IntakeStatus, StudentIntake
 from finance.models import EnrollmentStatus, MembershipPlan, PaymentMethod, PaymentStatus
+from onboarding.attribution import extract_acquisition_channel
 from shared_support.crypto_fields import generate_blind_index
+from shared_support.acquisition import ACQUISITION_CHANNEL_CHOICES, normalize_acquisition_channel
 from shared_support.form_inputs import (
     apply_cpf_input_attrs,
     apply_currency_input_attrs,
@@ -28,7 +30,9 @@ from shared_support.form_inputs import (
     apply_text_input_attrs,
 )
 from shared_support.phone_numbers import normalize_phone_number
-from students.models import Student, StudentStatus
+from students.domain import resolve_acquisition_resolution
+from students.infrastructure.django_attribution import get_active_student_source_declaration
+from students.models import SourceConfidence, SourceResolutionMethod, Student, StudentStatus
 
 
 def _student_phone_exists(*, normalized_phone, instance_pk=None):
@@ -67,6 +71,16 @@ class StudentDirectoryFilterForm(forms.Form):
 
 
 class StudentQuickForm(forms.ModelForm):
+    acquisition_source = forms.ChoiceField(
+        required=True,
+        label='Origem de aquisicao',
+        choices=tuple(choice for choice in ACQUISITION_CHANNEL_CHOICES if choice[0] not in ('legacy',)),
+    )
+    acquisition_source_detail = forms.CharField(
+        required=False,
+        label='Detalhe da origem',
+        max_length=120,
+    )
     intake_record = forms.ModelChoiceField(
         queryset=StudentIntake.objects.none(),
         required=False,
@@ -145,6 +159,8 @@ class StudentQuickForm(forms.ModelForm):
             'birth_date',
             'health_issue_status',
             'cpf',
+            'acquisition_source',
+            'acquisition_source_detail',
             'notes',
         ]
         widgets = {
@@ -167,6 +183,7 @@ class StudentQuickForm(forms.ModelForm):
         self.fields['birth_date'].label = 'Nascimento (dd/mm/aaaa)'
         self.fields['health_issue_status'].label = 'Algum problema de saude?'
         self.fields['cpf'].label = 'CPF do aluno'
+        self.fields['acquisition_source'].help_text = 'Esse dado sustenta leitura comercial, reconciliacao e ML futuro.'
         self.fields['notes'].label = 'Descreva o problema, se houver'
         self.fields['intake_record'].queryset = StudentIntake.objects.filter(
             linked_student__isnull=True,
@@ -189,6 +206,7 @@ class StudentQuickForm(forms.ModelForm):
         apply_text_input_attrs(self.fields['email'], placeholder='Opcional neste momento', maxlength=254, autocomplete='email')
         apply_date_input_attrs(self.fields['birth_date'], placeholder='dd/mm/aaaa', maxlength=10, pattern=r'\d{2}/\d{2}/\d{4}')
         apply_cpf_input_attrs(self.fields['cpf'], placeholder='Ex.: 123.456.789-00')
+        apply_text_input_attrs(self.fields['acquisition_source_detail'], placeholder='Ex.: indicacao do Joao, Google Maps, passou na frente', maxlength=120)
         apply_text_input_attrs(self.fields['notes'], placeholder='Descreva o problema de saude ou deixe em branco.')
         apply_text_input_attrs(self.fields['payment_reference'], placeholder='Ex.: PIX-MAR-2026', maxlength=100)
         apply_currency_input_attrs(self.fields['initial_payment_amount'], placeholder='Ex.: 289.90')
@@ -230,6 +248,27 @@ class StudentQuickForm(forms.ModelForm):
         if linked_intake is not None:
             self.fields['intake_record'].initial = linked_intake
 
+        if self.instance.pk:
+            self.fields['acquisition_source'].initial = self.instance.acquisition_source or self.instance.resolved_acquisition_source
+            self.fields['acquisition_source_detail'].initial = self.instance.acquisition_source_detail or self.instance.resolved_source_detail
+            self.active_source_declaration = get_active_student_source_declaration(self.instance)
+        else:
+            self.active_source_declaration = None
+
+        intake_record = self.initial.get('intake_record')
+        if isinstance(intake_record, StudentIntake):
+            intake_channel = extract_acquisition_channel(
+                raw_payload=getattr(intake_record, 'raw_payload', {}),
+                fallback_source=getattr(intake_record, 'source', ''),
+            )
+            intake_detail = (
+                ((getattr(intake_record, 'raw_payload', {}) or {}).get('attribution') or {}).get('acquisition', {}) or {}
+            ).get('declared_detail', '')
+            if intake_channel and not self.fields['acquisition_source'].initial:
+                self.fields['acquisition_source'].initial = intake_channel
+            if intake_detail and not self.fields['acquisition_source_detail'].initial:
+                self.fields['acquisition_source_detail'].initial = intake_detail
+
     def clean_phone(self):
         phone = normalize_phone_number(self.cleaned_data.get('phone'))
         if not phone:
@@ -262,6 +301,12 @@ class StudentQuickForm(forms.ModelForm):
 
         return f'{raw_cpf[:3]}.{raw_cpf[3:6]}.{raw_cpf[6:9]}-{raw_cpf[9:]}'
 
+    def clean_acquisition_source(self):
+        acquisition_source = normalize_acquisition_channel(self.cleaned_data.get('acquisition_source'))
+        if not acquisition_source:
+            raise forms.ValidationError('Escolha a origem de aquisicao antes de continuar.')
+        return acquisition_source
+
     def clean(self):
         cleaned_data = super().clean()
         selected_plan = cleaned_data.get('selected_plan')
@@ -282,6 +327,38 @@ class StudentQuickForm(forms.ModelForm):
 
         if selected_plan is not None and enrollment_status == EnrollmentStatus.ACTIVE and student_status == StudentStatus.LEAD:
             self.add_error('status', 'Lead nao pode sair com matricula ativa. Ajuste o status do aluno para ativo, pausado ou inativo.')
+
+        acquisition_source = cleaned_data.get('acquisition_source')
+        acquisition_source_detail = (cleaned_data.get('acquisition_source_detail') or '').strip()
+        selected_intake = cleaned_data.get('intake_record')
+        active_declaration = self.active_source_declaration
+
+        preferred_method = ''
+        if acquisition_source:
+            if self.instance.pk and self.instance.acquisition_source and self.instance.acquisition_source != acquisition_source:
+                preferred_method = SourceResolutionMethod.MANUAL_REVIEW
+            elif selected_intake:
+                preferred_method = SourceResolutionMethod.INTAKE_AUTO
+            else:
+                preferred_method = SourceResolutionMethod.MANUAL_FORM
+
+        if acquisition_source:
+            resolution = resolve_acquisition_resolution(
+                operational_source=acquisition_source,
+                operational_detail=acquisition_source_detail,
+                operational_method=preferred_method,
+                declared_source=getattr(active_declaration, 'declared_acquisition_source', ''),
+                declared_detail=getattr(active_declaration, 'declared_source_detail', ''),
+            )
+            cleaned_data['resolved_acquisition_source'] = resolution.resolved_acquisition_source
+            cleaned_data['resolved_source_detail'] = resolution.resolved_source_detail
+            cleaned_data['source_confidence'] = resolution.source_confidence
+            cleaned_data['source_conflict_flag'] = resolution.source_conflict_flag
+            cleaned_data['source_resolution_method'] = resolution.source_resolution_method
+            cleaned_data['source_resolution_reason'] = resolution.source_resolution_reason
+            cleaned_data['source_captured_at'] = timezone.now()
+        else:
+            cleaned_data['source_confidence'] = SourceConfidence.UNKNOWN
 
         return cleaned_data
 
@@ -322,6 +399,28 @@ class StudentExpressForm(forms.ModelForm):
         if _student_phone_exists(normalized_phone=phone):
             raise forms.ValidationError('Ja existe aluno cadastrado com este numero.')
         return phone
+
+
+class StudentSourceDeclarationCaptureForm(forms.Form):
+    token = forms.CharField(widget=forms.HiddenInput)
+    declared_acquisition_source = forms.ChoiceField(
+        required=True,
+        label='Como voce conheceu o box?',
+        choices=tuple(choice for choice in ACQUISITION_CHANNEL_CHOICES if choice[0] not in ('', 'legacy')),
+    )
+    declared_source_detail = forms.CharField(
+        required=False,
+        label='Detalhe opcional',
+        max_length=120,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        apply_text_input_attrs(
+            self.fields['declared_source_detail'],
+            placeholder='Ex.: indicacao da Ana, Google Maps, passei na frente',
+            maxlength=120,
+        )
 
 
 class PaymentManagementForm(forms.Form):

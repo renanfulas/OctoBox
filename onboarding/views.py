@@ -22,6 +22,8 @@ from django.views.generic import TemplateView
 
 from access.permissions import RoleRequiredMixin
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
+from monitoring.lead_attribution_metrics import record_lead_attribution_capture
+from onboarding.attribution import build_intake_attribution_payload, normalize_acquisition_channel
 from onboarding.models import IntakeStatus
 from shared_support.manager_event_stream import publish_manager_stream_event
 from shared_support.page_payloads import attach_page_payload
@@ -124,9 +126,20 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
                 created_entry.status = IntakeStatus.NEW
                 created_entry.raw_payload = {
                     **(created_entry.raw_payload or {}),
-                    'entry_kind': entry_kind,
+                    **build_intake_attribution_payload(
+                        source=created_entry.source,
+                        acquisition_channel=form.cleaned_data.get('acquisition_channel', ''),
+                        acquisition_detail=form.cleaned_data.get('acquisition_detail', ''),
+                        entry_kind=entry_kind,
+                        actor_id=getattr(request.user, 'id', None),
+                    ),
                 }
                 created_entry.save()
+                record_lead_attribution_capture(
+                    entry_kind=entry_kind,
+                    operational_source=created_entry.source,
+                    acquisition_channel=normalize_acquisition_channel(form.cleaned_data.get('acquisition_channel')),
+                )
                 publish_manager_stream_event(
                     event_type='intake.updated',
                     meta={
@@ -134,11 +147,12 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
                         'action': 'quick-create',
                         'status': created_entry.status,
                         'entry_kind': entry_kind,
+                        'acquisition_channel': normalize_acquisition_channel(form.cleaned_data.get('acquisition_channel')),
                     },
                 )
 
-            entry_label = 'Lead' if entry_kind == 'lead' else 'Conversa'
-            messages.success(request, f'{entry_label} cadastrado com sucesso na Central de Entradas.')
+            entry_label = 'Lead' if entry_kind == 'lead' else 'Intake'
+            messages.success(request, f'{entry_label} cadastrado com sucesso na Central de Intake.')
             return redirect(self._get_quick_create_success_url(entry_kind))
 
         if role_slug not in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION):

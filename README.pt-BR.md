@@ -149,6 +149,8 @@ Se quiser entender especificamente o que ainda prende o estado historico em `box
 
 Se quiser entender a direcao tecnica para crescer sem perder simplicidade, use [docs/architecture/architecture-growth-plan.md](docs/architecture/architecture-growth-plan.md).
 
+Se quiser entender onde inteligencia operacional, score, previsao e ML devem viver na arquitetura sem contaminar o core transacional, use [docs/architecture/operational-intelligence-ml-layer.md](docs/architecture/operational-intelligence-ml-layer.md).
+
 Se quiser entender a estrategia especifica para fazer o negocio deixar de depender de Django como core, use [docs/architecture/django-core-strategy.md](docs/architecture/django-core-strategy.md) e [docs/architecture/django-decoupling-blueprint.md](docs/architecture/django-decoupling-blueprint.md).
 
 Se quiser entender a declaracao oficial de qual passa a ser o centro conceitual do sistema, use [docs/architecture/octobox-conceptual-core.md](docs/architecture/octobox-conceptual-core.md).

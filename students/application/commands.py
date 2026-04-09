@@ -13,7 +13,7 @@ PONTOS CRITICOS:
 """
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -29,6 +29,15 @@ class StudentQuickCommand:
     birth_date: date | None = None
     health_issue_status: str = ''
     cpf: str = ''
+    acquisition_source: str = ''
+    acquisition_source_detail: str = ''
+    resolved_acquisition_source: str = ''
+    resolved_source_detail: str = ''
+    source_confidence: str = 'unknown'
+    source_conflict_flag: bool = False
+    source_resolution_method: str = ''
+    source_resolution_reason: str = ''
+    source_captured_at: datetime | None = None
     notes: str = ''
     student_id: int | None = None
     selected_plan_id: int | None = None
@@ -139,6 +148,15 @@ def build_student_quick_command(
         birth_date=cleaned_data.get('birth_date'),
         health_issue_status=cleaned_data.get('health_issue_status') or '',
         cpf=cleaned_data.get('cpf') or '',
+        acquisition_source=cleaned_data.get('acquisition_source') or '',
+        acquisition_source_detail=cleaned_data.get('acquisition_source_detail') or '',
+        resolved_acquisition_source=cleaned_data.get('resolved_acquisition_source') or '',
+        resolved_source_detail=cleaned_data.get('resolved_source_detail') or '',
+        source_confidence=cleaned_data.get('source_confidence') or 'unknown',
+        source_conflict_flag=bool(cleaned_data.get('source_conflict_flag')),
+        source_resolution_method=cleaned_data.get('source_resolution_method') or '',
+        source_resolution_reason=cleaned_data.get('source_resolution_reason') or '',
+        source_captured_at=cleaned_data.get('source_captured_at'),
         notes=cleaned_data.get('notes') or '',
         selected_plan_id=_resolve_model_id(selected_plan),
         enrollment_status=cleaned_data.get('enrollment_status') or '',

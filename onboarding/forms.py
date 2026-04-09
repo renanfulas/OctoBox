@@ -14,6 +14,7 @@ PONTOS CRITICOS:
 
 from django import forms
 
+from onboarding.attribution import ACQUISITION_CHANNEL_CHOICES
 from shared_support.form_inputs import apply_text_input_attrs
 
 
@@ -63,6 +64,17 @@ from onboarding.model_definitions import StudentIntake
 
 
 class IntakeQuickCreateForm(forms.ModelForm):
+    acquisition_channel = forms.ChoiceField(
+        required=False,
+        label='Canal de captacao',
+        choices=ACQUISITION_CHANNEL_CHOICES,
+    )
+    acquisition_detail = forms.CharField(
+        required=False,
+        label='Detalhe da origem',
+        max_length=120,
+    )
+
     class Meta:
         model = StudentIntake
         fields = ['full_name', 'phone', 'email', 'source']
@@ -78,6 +90,7 @@ class IntakeQuickCreateForm(forms.ModelForm):
         apply_text_input_attrs(self.fields['full_name'], placeholder='Nome completo')
         apply_text_input_attrs(self.fields['phone'], placeholder='WhatsApp principal (com DDD)')
         apply_text_input_attrs(self.fields['email'], placeholder='E-mail (opcional)')
+        apply_text_input_attrs(self.fields['acquisition_detail'], placeholder='Ex.: indicacao do Joao, Google Maps, passou na frente')
 
 
 class IntakeQueueActionForm(forms.Form):

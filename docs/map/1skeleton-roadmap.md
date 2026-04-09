@@ -72,6 +72,8 @@ Se o foco for implantar esse tema em ordem pratica, por ondas, com baixo risco e
 
 Se o foco for saber quem e o dono local de cada funcionalidade e quais testes sobem quando uma tela precisa continuar se comunicando com as outras, leia tambem [functional-circuits-matrix.md](functional-circuits-matrix.md).
 
+Se o foco for entender o circuito comercial de entrada, triagem, conversao e fechamento inicial de aluno sem se perder entre onboarding, catalog e models promovidos, leia tambem [leads-intake-cadastro-alunos-map.md](leads-intake-cadastro-alunos-map.md).
+
 Se o foco for revisar PRs por circuito ou organizar smoke manual por papel do beta, leia tambem [pr-circuit-checklist.md](pr-circuit-checklist.md) e [../rollout/beta-role-test-agenda.md](../rollout/beta-role-test-agenda.md).
 
 Se o foco for padronizar especificamente a lingua estrutural do catalogo, com presenters e page payload para alunos, financeiro e grade, leia tambem [../plans/catalog-page-payload-presenter-blueprint.md](../plans/catalog-page-payload-presenter-blueprint.md).

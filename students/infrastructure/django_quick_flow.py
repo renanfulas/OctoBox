@@ -49,11 +49,22 @@ class DjangoStudentWriter(StudentWriterPort):
         'birth_date',
         'health_issue_status',
         'cpf',
+        'acquisition_source',
+        'acquisition_source_detail',
+        'resolved_acquisition_source',
+        'resolved_source_detail',
+        'source_confidence',
+        'source_conflict_flag',
+        'source_resolution_method',
+        'source_resolution_reason',
+        'source_captured_at',
         'notes',
     )
 
     def _build_student_values(self, command: StudentQuickCommand):
-        return {field_name: getattr(command, field_name) for field_name in self.writable_fields}
+        values = {field_name: getattr(command, field_name) for field_name in self.writable_fields}
+        values['source_captured_by_id'] = command.actor_id
+        return values
 
     def create(self, command: StudentQuickCommand) -> StudentRecord:
         student = Student.objects.create(**self._build_student_values(command))

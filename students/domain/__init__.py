@@ -18,6 +18,7 @@ from .action_policies import (
     build_payment_mutation_decision,
     resolve_regeneration_enrollment_id,
 )
+from .acquisition_resolution import AcquisitionResolution, resolve_acquisition_resolution
 from .enrollment_lifecycle import (
     EnrollmentCancellationDecision,
     EnrollmentReactivationDecision,
@@ -56,6 +57,7 @@ __all__ = [
     'PaymentMutationDecision',
     'PlannedPayment',
     'DEFAULT_INTAKE_CONVERSION_NOTE',
+    'AcquisitionResolution',
     'advance_due_date',
     'append_enrollment_note',
     'append_intake_note',
@@ -69,6 +71,7 @@ __all__ = [
     'build_payment_regeneration_decision',
     'build_payment_schedule_plan',
     'describe_plan_change',
+    'resolve_acquisition_resolution',
     'resolve_regeneration_enrollment_id',
     'resolve_enrollment_sync_defaults',
     'shift_month',

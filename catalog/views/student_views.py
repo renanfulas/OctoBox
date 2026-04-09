@@ -20,9 +20,10 @@ import json
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.signing import BadSignature, SignatureExpired
 from django.db import IntegrityError
 from django.http import Http404, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
@@ -41,7 +42,14 @@ from shared_support.student_snapshot_versions import build_profile_version, buil
 
 from access.permissions import AjaxLoginRequiredMixin, RoleRequiredMixin
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
-from catalog.forms import EnrollmentManagementForm, PaymentManagementForm, StudentPaymentActionForm, StudentQuickForm, StudentExpressForm
+from catalog.forms import (
+    EnrollmentManagementForm,
+    PaymentManagementForm,
+    StudentPaymentActionForm,
+    StudentQuickForm,
+    StudentExpressForm,
+    StudentSourceDeclarationCaptureForm,
+)
 from catalog.presentation import build_student_directory_page, build_student_form_page
 from catalog.presentation.student_financial_fragments import render_student_financial_fragments
 from catalog.presentation.shared import attach_catalog_page_payload
@@ -52,10 +60,13 @@ from catalog.student_queries import build_student_directory_snapshot, build_stud
 from shared_support.redis_snapshots import prewarm_student_snapshots
 from finance.models import Enrollment, Payment
 from monitoring.student_realtime_metrics import record_student_save_conflict
+from onboarding.attribution import extract_acquisition_channel
 from onboarding.models import StudentIntake
 from reporting.application.catalog_reports import build_student_directory_report
 from reporting.infrastructure import build_report_response
 from shared_support.security import check_export_quota
+from students.facade import run_student_source_declaration_record
+from students.infrastructure.source_capture_links import build_student_source_capture_token, read_student_source_capture_token
 from students.models import Student
 
 from .catalog_base_views import CatalogBaseView
@@ -101,6 +112,11 @@ def _student_financial_json_error(*, message, status=400):
         },
         status=status,
     )
+
+
+def _build_student_source_capture_url(*, request, student):
+    token = build_student_source_capture_token(student_id=student.id)
+    return f"{request.build_absolute_uri(reverse('student-source-capture'))}?token={token}"
 
 
 def _serialize_student_browser_snapshot(*, request, student):
@@ -156,6 +172,7 @@ def _serialize_student_browser_snapshot(*, request, student):
         'lock': lock_payload,
         'links': {
             'edit': _append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT),
+            'source_capture': _build_student_source_capture_url(request=request, student=student),
         },
         'generated_at': timezone.now().isoformat(),
         'source': 'backend-snapshot',
@@ -201,6 +218,7 @@ def _build_student_drawer_fragments(*, request, student, form=None):
         current_role_slug=role_slug,
         browser_snapshot=_serialize_student_browser_snapshot(request=request, student=student),
     )
+    page['data']['source_snapshot']['capture_url'] = _build_student_source_capture_url(request=request, student=student)
     context = {'page': page}
 
     return {
@@ -314,12 +332,20 @@ class StudentQuickBaseView(CatalogBaseView, FormView):
         initial = super().get_initial()
         selected_intake = self.get_selected_intake()
         if selected_intake and self.page_mode == 'create':
+            intake_raw_payload = getattr(selected_intake, 'raw_payload', {}) or {}
+            intake_channel = extract_acquisition_channel(
+                raw_payload=intake_raw_payload,
+                fallback_source=getattr(selected_intake, 'source', ''),
+            )
+            intake_detail = ((intake_raw_payload.get('attribution') or {}).get('acquisition') or {}).get('declared_detail', '')
             initial.update(
                 {
                     'full_name': selected_intake.full_name,
                     'phone': selected_intake.phone,
                     'email': selected_intake.email,
                     'intake_record': selected_intake,
+                    'acquisition_source': intake_channel,
+                    'acquisition_source_detail': intake_detail,
                 }
             )
         return initial
@@ -379,6 +405,8 @@ class StudentQuickBaseView(CatalogBaseView, FormView):
             current_role_slug=role_slug,
             browser_snapshot=_serialize_student_browser_snapshot(request=self.request, student=self.object) if self.object else None,
         )
+        if self.object is not None:
+            page_payload['data']['source_snapshot']['capture_url'] = _build_student_source_capture_url(request=self.request, student=self.object)
         return attach_catalog_page_payload(
             context,
             payload_key='student_form_page',
@@ -1123,6 +1151,56 @@ class StudentBulkActionView(LoginRequiredMixin, RoleRequiredMixin, View):
             messages.error(request, f"{falhas} falha(s) ignoradas: {error_details}")
 
         return redirect('student-directory')
+
+
+class StudentSourceCaptureView(View):
+    template_name = 'catalog/student-source-capture.html'
+
+    def _resolve_student(self, token: str):
+        student_id = read_student_source_capture_token(token=token)
+        return get_object_or_404(Student, pk=student_id)
+
+    def get(self, request, *args, **kwargs):
+        token = (request.GET.get('token') or '').strip()
+        if not token:
+            raise Http404('Link de qualificacao invalido.')
+        try:
+            student = self._resolve_student(token)
+        except (BadSignature, SignatureExpired, ValueError):
+            raise Http404('Link de qualificacao invalido.')
+
+        form = StudentSourceDeclarationCaptureForm(initial={'token': token})
+        return render(request, self.template_name, {'form': form, 'student': student, 'submitted': False})
+
+    def post(self, request, *args, **kwargs):
+        form = StudentSourceDeclarationCaptureForm(request.POST)
+        if not form.is_valid():
+            token = (request.POST.get('token') or '').strip()
+            if not token:
+                raise Http404('Link de qualificacao invalido.')
+            try:
+                student = self._resolve_student(token)
+            except (BadSignature, SignatureExpired, ValueError):
+                raise Http404('Link de qualificacao invalido.')
+            return render(request, self.template_name, {'form': form, 'student': student, 'submitted': False}, status=400)
+
+        token = form.cleaned_data['token']
+        try:
+            student = self._resolve_student(token)
+        except (BadSignature, SignatureExpired, ValueError):
+            raise Http404('Link de qualificacao invalido.')
+
+        run_student_source_declaration_record(
+            student_id=student.id,
+            declared_acquisition_source=form.cleaned_data['declared_acquisition_source'],
+            declared_source_detail=form.cleaned_data.get('declared_source_detail') or '',
+            declared_source_channel='secure_link',
+            declared_source_response_id=f'secure-link:{timezone.now().isoformat()}',
+            raw_payload={'captured_via': 'secure_link'},
+        )
+        student.refresh_from_db()
+        fresh_form = StudentSourceDeclarationCaptureForm(initial={'token': token})
+        return render(request, self.template_name, {'form': fresh_form, 'student': student, 'submitted': True})
 
 
 class StudentImportView(LoginRequiredMixin, RoleRequiredMixin, View):

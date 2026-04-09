@@ -24,6 +24,7 @@ from .student_forms import (
     StudentDirectoryFilterForm,
     StudentExpressForm,
     StudentQuickForm,
+    StudentSourceDeclarationCaptureForm,
 )
 
 __all__ = [
@@ -39,4 +40,5 @@ __all__ = [
     'StudentPaymentActionForm',
     'StudentDirectoryFilterForm',
     'StudentQuickForm',
+    'StudentSourceDeclarationCaptureForm',
 ]

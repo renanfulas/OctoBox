@@ -13,13 +13,27 @@ PONTOS CRITICOS:
 - a estrutura de saida precisa permanecer estavel para templates e relatorios.
 """
 
-from finance.models import PaymentStatus
+from finance.models import FinanceFollowUp, PaymentStatus
+from finance.follow_up_tracker import sync_finance_follow_up_suggestions
 
 from ..forms import FinanceFilterForm
 from .base import build_finance_base
+from .churn_foundation import build_financial_churn_foundation
 from .comparison import build_comparison_peaks, build_monthly_comparison
+from .follow_up_analytics import (
+    build_best_action_by_timing_map,
+    build_best_prediction_window_by_action_map,
+    build_contextual_recommendation_map,
+    build_finance_follow_up_analytics,
+    build_recommendation_historical_score_map,
+    build_recommendation_timing_lookup_map,
+    build_turn_priority_tension_context_map,
+    build_turn_recommendation,
+    build_timing_recommendation_override_map,
+)
 from .metrics import build_finance_interactive_kpis, build_finance_metrics, build_finance_priority_context, build_finance_pulse
 from .portfolio import build_plan_portfolio
+from django.utils import timezone
 
 
 def build_finance_flow_bridge(*, priority_context, operational_queue, financial_alerts):
@@ -76,7 +90,7 @@ def build_finance_flow_bridge(*, priority_context, operational_queue, financial_
     }
 
 
-def build_finance_snapshot(params=None, *, operational_queue=None):
+def build_finance_snapshot(params=None, *, operational_queue=None, persist_follow_ups=False):
     filter_form = FinanceFilterForm(params or None)
     finance_base = build_finance_base(filter_form)
     payments = finance_base['payments']
@@ -92,9 +106,44 @@ def build_finance_snapshot(params=None, *, operational_queue=None):
     finance_metrics = build_finance_metrics(payments, enrollments)
     finance_pulse = build_finance_pulse(finance_metrics)
     finance_priority_context = build_finance_priority_context(finance_metrics)
+    queue_focus = ''
+    if filter_form.is_valid():
+        queue_focus = filter_form.cleaned_data.get('queue_focus') or ''
+    students = [
+        payment.student
+        for payment in payments.select_related('student')
+    ]
+    students_by_id = {student.id: student for student in students}
+    for enrollment in enrollments.select_related('student'):
+        students_by_id.setdefault(enrollment.student_id, enrollment.student)
     financial_alerts = payments.filter(
         status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE],
     ).order_by('due_date', 'student__full_name')[:8]
+    current_follow_ups = FinanceFollowUp.objects.filter(source_surface='finance_queue')
+    historical_follow_up_analytics = build_finance_follow_up_analytics(follow_ups=current_follow_ups)
+    turn_recommendation = build_turn_recommendation(historical_follow_up_analytics)
+    financial_churn_foundation = build_financial_churn_foundation(
+        students=students_by_id.values(),
+        payments=payments,
+        enrollments=enrollments,
+        today=timezone.localdate(),
+        queue_focus=queue_focus,
+        historical_score_map=build_recommendation_historical_score_map(historical_follow_up_analytics),
+        recommendation_timing_map=build_best_action_by_timing_map(historical_follow_up_analytics),
+        recommendation_timing_lookup_map=build_recommendation_timing_lookup_map(historical_follow_up_analytics),
+        recommendation_override_map=build_timing_recommendation_override_map(historical_follow_up_analytics),
+        prediction_window_override_map=build_best_prediction_window_by_action_map(historical_follow_up_analytics),
+        contextual_recommendation_map=build_contextual_recommendation_map(historical_follow_up_analytics),
+        turn_priority_tension_context_map=build_turn_priority_tension_context_map(historical_follow_up_analytics),
+    )
+    if persist_follow_ups:
+        sync_finance_follow_up_suggestions(
+            items=financial_churn_foundation.get('queue_preview') or [],
+            turn_recommendation=turn_recommendation,
+        )
+    finance_follow_up_analytics = build_finance_follow_up_analytics(
+        follow_ups=FinanceFollowUp.objects.filter(source_surface='finance_queue')
+    )
 
     snapshot = {
         'filter_form': filter_form,
@@ -109,6 +158,8 @@ def build_finance_snapshot(params=None, *, operational_queue=None):
         'monthly_comparison': monthly_comparison,
         'comparison_peaks': build_comparison_peaks(monthly_comparison),
         'financial_alerts': financial_alerts,
+        'financial_churn_foundation': financial_churn_foundation,
+        'finance_follow_up_analytics': finance_follow_up_analytics,
         'recent_movements': enrollments.order_by('-updated_at', '-created_at')[:8],
     }
 

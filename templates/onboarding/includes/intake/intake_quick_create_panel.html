@@ -21,7 +21,7 @@ PONTOS CRITICOS:
     <div class="card-head">
         <div class="card-head-main intake-create-head-copy">
             <p class="intake-create-eyebrow eyebrow">{% if entry_kind == 'lead' %}Entrada nova{% else %}Conversa ativa{% endif %}</p>
-            <h2 class="card-title intake-create-title">{% if entry_kind == 'lead' %}Novo Lead{% else %}Em conversa{% endif %}</h2>
+            <h2 class="card-title intake-create-title">{% if entry_kind == 'lead' %}Novo Lead{% else %}Novo Intake{% endif %}</h2>
             <p class="card-copy intake-create-copy">
                 {% if entry_kind == 'lead' %}
                 Registre um contato novo para entrar imediatamente na fila comercial do sistema.
@@ -31,7 +31,7 @@ PONTOS CRITICOS:
             </p>
         </div>
         <div class="card-head-aside">
-            <span class="pill {% if entry_kind == 'lead' %}accent{% else %}info{% endif %}">{% if entry_kind == 'lead' %}Lead{% else %}Em conversa{% endif %}</span>
+            <span class="pill {% if entry_kind == 'lead' %}accent{% else %}info{% endif %}">{% if entry_kind == 'lead' %}Lead{% else %}Intake{% endif %}</span>
         </div>
     </div>
     <form method="post" class="form-stack intake-create-form">
@@ -58,6 +58,16 @@ PONTOS CRITICOS:
                 <span class="field-label">{{ form.source.label }}</span>
                 {{ form.source }}
                 {{ form.source.errors }}
+            </label>
+            <label>
+                <span class="field-label">{{ form.acquisition_channel.label }}</span>
+                {{ form.acquisition_channel }}
+                {{ form.acquisition_channel.errors }}
+            </label>
+            <label>
+                <span class="field-label">{{ form.acquisition_detail.label }}</span>
+                {{ form.acquisition_detail }}
+                {{ form.acquisition_detail.errors }}
             </label>
         </div>
         <div class="actions actions-tight intake-create-actions">

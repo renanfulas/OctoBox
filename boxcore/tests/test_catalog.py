@@ -730,6 +730,8 @@ class CatalogViewTests(TestCase):
                 'birth_date': '',
                 'health_issue_status': 'no',
                 'cpf': self.valid_cpf,
+                'acquisition_source': 'instagram',
+                'acquisition_source_detail': 'story da unidade',
                 'notes': '',
                 'selected_plan': self.plan.id,
                 'enrollment_status': 'active',
@@ -747,6 +749,15 @@ class CatalogViewTests(TestCase):
         self.assertTrue(Student.objects.filter(full_name='Mateus Oliveira').exists())
         created_student = Student.objects.get(full_name='Mateus Oliveira')
         self.assertEqual(created_student.cpf, self.valid_cpf)
+        self.assertEqual(created_student.acquisition_source, 'instagram')
+        self.assertEqual(created_student.acquisition_source_detail, 'story da unidade')
+        self.assertEqual(created_student.resolved_acquisition_source, 'instagram')
+        self.assertEqual(created_student.source_resolution_method, 'intake_auto')
+        self.assertEqual(created_student.source_resolution_reason, 'operational_only')
+        self.assertEqual(created_student.source_confidence, 'high')
+        self.assertFalse(created_student.source_conflict_flag)
+        self.assertIsNotNone(created_student.source_captured_at)
+        self.assertEqual(created_student.source_captured_by_id, self.user.id)
         self.assertTrue(created_student.enrollments.filter(plan=self.plan, status='active').exists())
         created_payment = created_student.payments.latest('created_at')
         self.assertEqual(created_payment.method, PaymentMethod.PIX)
@@ -768,6 +779,8 @@ class CatalogViewTests(TestCase):
                 'birth_date': '',
                 'health_issue_status': '',
                 'cpf': self.valid_cpf,
+                'acquisition_source': 'instagram',
+                'acquisition_source_detail': '',
                 'notes': '',
                 'selected_plan': '',
                 'enrollment_status': 'pending',
@@ -798,6 +811,8 @@ class CatalogViewTests(TestCase):
                 'birth_date': '',
                 'health_issue_status': '',
                 'cpf': '',
+                'acquisition_source': 'instagram',
+                'acquisition_source_detail': '',
                 'notes': '',
                 'selected_plan': '',
                 'enrollment_status': 'pending',
@@ -831,6 +846,8 @@ class CatalogViewTests(TestCase):
                 'birth_date': '',
                 'health_issue_status': '',
                 'cpf': '',
+                'acquisition_source': 'instagram',
+                'acquisition_source_detail': '',
                 'notes': '',
                 'selected_plan': '',
                 'enrollment_status': 'pending',
@@ -864,6 +881,8 @@ class CatalogViewTests(TestCase):
                 'birth_date': '',
                 'health_issue_status': '',
                 'cpf': '',
+                'acquisition_source': 'instagram',
+                'acquisition_source_detail': '',
                 'notes': '',
                 'selected_plan': self.plan.id,
                 'enrollment_status': 'active',

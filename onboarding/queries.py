@@ -18,6 +18,7 @@ from urllib.parse import urlencode
 
 from django.db.models import Count, Q
 from django.utils import timezone
+from onboarding.attribution import summarize_acquisition_channels
 from onboarding.facade import build_intake_queue_item
 from onboarding.forms import IntakeCenterFilterForm, IntakeQuickCreateForm
 from onboarding.models import IntakeSource, IntakeStatus, StudentIntake
@@ -99,8 +100,10 @@ def _build_intake_radar_board(*, params, metrics_queryset, today):
         period_label = 'Hoje'
         copy = 'Compare quem entrou hoje em uma leitura curta, limpa e direta.'
 
+    radar_rows = list(radar_queryset.values_list('source', 'raw_payload'))
+    acquisition_counts = summarize_acquisition_channels(radar_rows)
     source_counts = dict(radar_queryset.values_list('source').annotate(total=Count('id')))
-    total = sum(source_counts.values())
+    total = len(radar_rows)
 
     base_params = params.copy() if hasattr(params, 'copy') else dict(params)
     base_params.pop('source_period', None)
@@ -130,13 +133,24 @@ def _build_intake_radar_board(*, params, metrics_queryset, today):
         'total': total,
         'periods': periods,
         'cards': [
-            {'key': 'manual', 'label': 'Manual', 'value': source_counts.get(IntakeSource.MANUAL, 0)},
-            {'key': 'csv', 'label': dict(IntakeSource.choices)[IntakeSource.CSV], 'value': source_counts.get(IntakeSource.CSV, 0)},
-            {'key': 'instagram', 'label': 'Instagram', 'value': 0},
-            {'key': 'whatsapp', 'label': dict(IntakeSource.choices)[IntakeSource.WHATSAPP], 'value': source_counts.get(IntakeSource.WHATSAPP, 0)},
-            {'key': 'site', 'label': 'Site', 'value': 0},
-            {'key': 'import', 'label': dict(IntakeSource.choices)[IntakeSource.IMPORT], 'value': source_counts.get(IntakeSource.IMPORT, 0)},
+            {'key': 'referral', 'label': 'Indicacao', 'value': acquisition_counts.get('referral', 0)},
+            {'key': 'instagram', 'label': 'Instagram', 'value': acquisition_counts.get('instagram', 0)},
+            {'key': 'walk_in', 'label': 'Passei na frente', 'value': acquisition_counts.get('walk_in', 0)},
+            {'key': 'google', 'label': 'Google', 'value': acquisition_counts.get('google', 0)},
+            {'key': 'whatsapp', 'label': 'WhatsApp', 'value': acquisition_counts.get('whatsapp', 0)},
+            {'key': 'website', 'label': 'Site', 'value': acquisition_counts.get('website', 0)},
+            {'key': 'other', 'label': 'Outro', 'value': acquisition_counts.get('other', 0) + acquisition_counts.get('meta_ads', 0)},
         ],
+        'analytics': {
+            'missing_attribution_total': acquisition_counts.get('missing', 0),
+            'operational_source_counts': {
+                'manual': source_counts.get(IntakeSource.MANUAL, 0),
+                'csv': source_counts.get(IntakeSource.CSV, 0),
+                'whatsapp': source_counts.get(IntakeSource.WHATSAPP, 0),
+                'import': source_counts.get(IntakeSource.IMPORT, 0),
+            },
+            'acquisition_channel_counts': acquisition_counts,
+        },
     }
 
 

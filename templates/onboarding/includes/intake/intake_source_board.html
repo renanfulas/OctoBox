@@ -18,6 +18,11 @@ PONTOS CRITICOS:
             <h2 class="card-title intake-radar-board-title">{{ page.data.radar_board.title }}</h2>
             <p class="card-copy intake-radar-board-description">{{ page.data.radar_board.copy }}</p>
             <p class="intake-radar-board-summary">{{ page.data.radar_board.summary }}</p>
+            {% if page.data.radar_board.analytics.missing_attribution_total %}
+            <p class="intake-radar-board-summary">
+                {{ page.data.radar_board.analytics.missing_attribution_total }} entrada(s) ainda sem origem comercial declarada.
+            </p>
+            {% endif %}
         </div>
         <div class="card-head-aside intake-radar-board-actions">
             <nav class="intake-radar-period-nav" aria-label="Periodo do radar comercial">

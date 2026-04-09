@@ -29,6 +29,7 @@ from .views.student_views import (
     StudentQuickCreateView,
     StudentExpressCreateView,
     StudentQuickUpdateView,
+    StudentSourceCaptureView,
 )
 
 from finance.views.stripe_checkout import StripeCheckoutRedirectView, StripeCheckoutSuccessView, StripeCheckoutCancelView
@@ -42,6 +43,7 @@ urlpatterns = [
     path('alunos/exportar/<str:report_format>/', StudentDirectoryExportView.as_view(), name='student-directory-export'),
     path('alunos/novo/', StudentQuickCreateView.as_view(), name='student-quick-create'),
     path('alunos/balcao/', StudentExpressCreateView.as_view(), name='student-express-create'),
+    path('alunos/origem/qualificar/', StudentSourceCaptureView.as_view(), name='student-source-capture'),
     path('alunos/<int:student_id>/editar/', StudentQuickUpdateView.as_view(), name='student-quick-update'),
     path('alunos/<int:student_id>/snapshot/', StudentReadSnapshotView.as_view(), name='student-read-snapshot'),
     path('alunos/<int:student_id>/events/stream/', StudentEventStreamView.as_view(), name='student-event-stream'),
