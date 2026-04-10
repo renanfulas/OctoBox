@@ -3,12 +3,11 @@ ARQUIVO: todos os tipos de card do financeiro.
 
 POR QUE ELE EXISTE:
 - Concentra command cards, action cards, alert cards, plan cards (compact),
-  mix cards, data chips, summary chips, chart columns, currency metrics,
-  trend stack, portfolio list e seus sub-componentes.
+  data chips, summary chips, currency metrics e seus sub-componentes.
 
 PONTOS CRITICOS:
 - Mudanças em .finance-action-card ou .finance-alert-card afetam o queue e priority rail.
-- .finance-plan-card e .finance-mix-card afetam portfolio e mix boards.
+- .finance-plan-card afeta portfolio e plan boards.
 */
 
 /* ── Compact action buttons ── */
@@ -23,14 +22,12 @@ PONTOS CRITICOS:
 
 /* ── Shared card body layouts ── */
 
-.finance-chip-body,
 .finance-alert-body,
 .finance-action-card-body,
 .finance-plan-card-body {
     gap: 10px;
 }
 
-.finance-chip-value-stack,
 .finance-alert-content,
 .finance-plan-card-content {
     gap: 8px;
@@ -72,7 +69,6 @@ PONTOS CRITICOS:
 }
 
 .finance-currency-metric,
-.finance-mini-value,
 .finance-inline-currency {
     font-variant-numeric: tabular-nums;
     line-height: 1.05;
@@ -82,10 +78,6 @@ PONTOS CRITICOS:
 
 .finance-currency-metric {
     font-size: clamp(1.55rem, 2.1vw, 2.35rem);
-}
-
-.finance-mini-value {
-    font-size: clamp(1.15rem, 1.7vw, 1.6rem);
 }
 
 .finance-inline-currency {
@@ -336,35 +328,7 @@ PONTOS CRITICOS:
     border-radius: 14px;
 }
 
-/* ── Action/alert lists ── */
-
-.finance-action-list,
-.finance-alert-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 10px;
-    grid-auto-rows: 1fr;
-}
-
-.finance-action-list-compact,
-.finance-alert-list-compact {
-    gap: 8px;
-}
-
-.finance-action-list {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-
-.finance-alert-list {
-    grid-template-columns: 1fr;
-}
-
-/* ── Trend stack & compact actions ── */
-
-.finance-trend-stack {
-    display: grid;
-    gap: 10px;
-}
+/* ── Compact actions ── */
 
 .finance-card-actions-compact {
     display: grid;
@@ -424,14 +388,6 @@ PONTOS CRITICOS:
     padding: 0 6px;
 }
 
-.finance-action-card--overdue .finance-action-glow {
-    background: radial-gradient(circle, rgba(196, 103, 52, 0.12) 0%, rgba(148, 163, 184, 0.04) 44%, transparent 72%);
-}
-
-.finance-action-card--reactivation .finance-action-glow {
-    background: radial-gradient(circle, rgba(15, 118, 110, 0.12) 0%, rgba(148, 163, 184, 0.04) 44%, transparent 72%);
-}
-
 body[data-theme="dark"] .finance-action-card,
 body[data-theme="dark"] .finance-alert-card {
     border-color: rgba(144, 181, 205, 0.16);
@@ -472,32 +428,7 @@ body[data-theme="dark"] .finance-action-meta-chip {
     background: rgba(10, 18, 32, 0.56);
 }
 
-/* ── Chart columns ── */
-
-.finance-chart-column {
-    padding: 14px;
-    border-radius: 20px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(255, 255, 255, 0.64);
-}
-
-.finance-chart-column strong {
-    display: block;
-    margin-top: 10px;
-}
-
-.finance-chart-value {
-    font-size: 0.92rem;
-    color: var(--muted);
-}
-
-/* ── Portfolio list & plan cards (compact) ── */
-
-.finance-portfolio-list {
-    display: grid;
-    gap: 14px;
-    grid-auto-rows: 1fr;
-}
+/* ── Plan cards (compact) ── */
 
 .finance-plan-card {
     height: 100%;

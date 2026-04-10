@@ -57,7 +57,7 @@
         </section>
 
         <div class="actions actions-tight finance-card-actions-compact reception-payment-actions reception-payment-actions-support">
-            <a class="button secondary" href="{{ item.student_href }}#student-financial-overview" data-action="open-student-financial-overview">Abrir ficha</a>
+            <a class="button secondary" href="{{ item.student_href }}#student-financial-overview">Abrir ficha</a>
 
             {% if item.clean_phone %}
                 {% if current_role.slug|lower == 'recepcao' and item.is_reception_blocked %}

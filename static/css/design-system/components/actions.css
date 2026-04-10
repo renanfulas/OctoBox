@@ -133,7 +133,3 @@ body[data-theme="dark"] .button.secondary {
     transform: translateY(0) scale(0.985);
     transition-duration: var(--motion-fast);
 }
-
-.button-pill {
-    border-radius: 9999px !important;
-}

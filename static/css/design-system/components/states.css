@@ -38,7 +38,6 @@ POR QUE ELE EXISTE:
 }
 
 .state-empty-head,
-.notice-panel-head,
 .state-notice-head {
     display: flex;
     justify-content: space-between;
@@ -48,7 +47,6 @@ POR QUE ELE EXISTE:
 
 
 .state-empty-title,
-.notice-panel-title,
 .state-notice-title {
     margin: 0;
     font-size: 1rem;
@@ -57,10 +55,8 @@ POR QUE ELE EXISTE:
 }
 
 .state-empty-copy,
-.notice-panel-copy,
 .state-notice-copy,
 .state-empty-hint,
-.notice-panel-hint,
 .state-notice-hint {
     margin: 6px 0 0;
     color: var(--notice-copy);
@@ -68,7 +64,6 @@ POR QUE ELE EXISTE:
 }
 
 .state-empty-hint,
-.notice-panel-hint,
 .state-notice-hint {
     margin-top: 0;
     font-size: 0.95rem;
@@ -97,57 +92,45 @@ POR QUE ELE EXISTE:
     background: var(--notice-rail);
 }
 
-.notice-panel--info,
-.state-notice-info {
+.notice-panel--info {
     border-color: color-mix(in srgb, var(--theme-accent-support) 28%, var(--theme-border-soft) 72%);
     background: color-mix(in srgb, var(--theme-surface-panel) 82%, transparent);
 }
 
-.notice-panel--info::before,
-.state-notice-info::before {
+.notice-panel--info::before {
     background: color-mix(in srgb, var(--theme-accent-support) 86%, white 14%);
 }
 
-.notice-panel--warning,
 .note-panel-warm,
-.note-panel-cream,
-.state-notice-warning {
+.note-panel-cream {
     border-color: color-mix(in srgb, var(--theme-accent-warning) 30%, var(--theme-border-soft) 70%);
     background: color-mix(in srgb, var(--theme-accent-warning-alpha) 46%, var(--theme-surface-panel) 54%);
 }
 
-.notice-panel--warning::before,
 .note-panel-warm::before,
-.note-panel-cream::before,
-.state-notice-warning::before {
+.note-panel-cream::before {
     background: var(--theme-accent-warning);
 }
 
 .notice-panel--success,
 .note-panel-success,
-.note-panel-success-soft,
-.state-notice-success {
+.note-panel-success-soft {
     border-color: color-mix(in srgb, var(--theme-accent-success) 28%, var(--theme-border-soft) 72%);
     background: color-mix(in srgb, var(--theme-accent-success-alpha) 40%, var(--theme-surface-panel) 60%);
 }
 
 .notice-panel--success::before,
 .note-panel-success::before,
-.note-panel-success-soft::before,
-.state-notice-success::before {
+.note-panel-success-soft::before {
     background: var(--theme-accent-success);
 }
 
-.notice-panel--danger,
-.note-panel-danger,
-.state-notice-danger {
+.note-panel-danger {
     border-color: color-mix(in srgb, var(--theme-accent-danger) 28%, var(--theme-border-soft) 72%);
     background: color-mix(in srgb, var(--theme-accent-danger-alpha) 40%, var(--theme-surface-panel) 60%);
 }
 
-.notice-panel--danger::before,
-.note-panel-danger::before,
-.state-notice-danger::before {
+.note-panel-danger::before {
     background: var(--theme-accent-danger);
 }
 

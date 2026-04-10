@@ -491,18 +491,6 @@ POR QUE ELE EXISTE:
     color: var(--theme-text-primary);
 }
 
-.student-page-section-card {
-    transition: border-color 0.18s ease, box-shadow 0.18s ease;
-}
-
-.student-page-section-card:hover {
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
-    box-shadow:
-        0 18px 38px rgba(7, 14, 24, 0.08),
-        inset 0 1px 0 var(--theme-glass-highlight);
-    background: inherit;
-}
-
 .student-page-card__head {
     display: flex;
     justify-content: space-between;
@@ -680,11 +668,11 @@ POR QUE ELE EXISTE:
     width: 100%;
     pointer-events: none;
     color: color-mix(in srgb, var(--theme-text-primary) 92%, var(--legacy-copy) 8%);
-    background: transparent !important;
-    border: 0 !important;
-    box-shadow: none !important;
-    outline: 0 !important;
-    padding: 0 !important;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    outline: 0;
+    padding: 0;
     min-height: auto;
     border-radius: 0;
 }
@@ -699,7 +687,7 @@ POR QUE ELE EXISTE:
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    background-image: none !important;
+    background-image: none;
 }
 
 .student-page-profile-form .field-label {
@@ -928,27 +916,6 @@ POR QUE ELE EXISTE:
     outline: none;
 }
 
-.student-page-ghost-action {
-    width: 100%;
-    min-height: 52px;
-    border-radius: 16px;
-    border: 1px dashed color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
-    background: transparent;
-    color: var(--legacy-copy);
-    font-weight: 600;
-    transition: border-color 0.18s ease, color 0.18s ease, background-color 0.18s ease;
-}
-
-.student-page-ghost-action:hover,
-.student-page-ghost-action:focus-visible {
-    color: var(--theme-text-primary);
-    border-color: color-mix(in srgb, var(--theme-accent-support) 22%, var(--theme-glass-border) 78%);
-    background: color-mix(in srgb, var(--theme-surface-glass) 72%, transparent);
-    outline: 2px solid color-mix(in srgb, var(--theme-accent-support) 20%, transparent);
-    outline-offset: 2px;
-    box-shadow: 0 12px 24px rgba(7, 14, 24, 0.06);
-}
-
 .student-page-plan-meta {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1127,12 +1094,6 @@ POR QUE ELE EXISTE:
     justify-content: flex-end;
 }
 
-.student-page-profile-actions__copy {
-    max-width: 54ch;
-    line-height: 1.5;
-}
-
-.student-page-form-actions__secondary,
 .student-page-form-actions__primary {
     display: flex;
     flex-wrap: wrap;
@@ -1173,7 +1134,7 @@ POR QUE ELE EXISTE:
 }
 
 .student-page-payments-panel .student-financial-command-actions [data-action="toggle-financial-workspace"],
-.student-page-payments-panel .student-financial-command-actions [data-action="open-tab-student-form-essential"] {
+.student-page-payments-panel .student-financial-command-actions [data-student-page-target="tab-student-form-essential"] {
     display: none;
 }
 
@@ -1218,7 +1179,6 @@ POR QUE ELE EXISTE:
 
 .student-page-payments-panel :is(
     .student-payment-management-card,
-    .student-page-payments-management-card,
     .student-page-payments-enrollment-card
 ) {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
@@ -1228,7 +1188,6 @@ POR QUE ELE EXISTE:
 .student-page-payments-history-card,
 .student-page-payments-drawer,
 .student-page-payments-checkout-card,
-.student-page-payments-management-card,
 .student-page-payments-enrollment-card {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
     box-shadow: var(--theme-glass-shadow);
@@ -1303,10 +1262,6 @@ POR QUE ELE EXISTE:
 
 .student-page-payments-drawer--checkout.slide-over-panel {
     width: min(488px, calc(100vw - (var(--student-page-drawer-right) * 2)));
-}
-
-.student-page-payments-drawer--management.slide-over-panel {
-    width: min(620px, calc(100vw - (var(--student-page-drawer-right) * 2)));
 }
 
 .student-page-payments-drawer--enrollment.slide-over-panel {
@@ -1409,7 +1364,6 @@ body[data-theme="dark"] .student-page-plan-action-row .button:focus-visible {
 
 body[data-theme="dark"] .student-page-payments-panel :is(
     .student-payment-management-card,
-    .student-page-payments-management-card,
     .student-page-payments-enrollment-card
 ) {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
@@ -1420,7 +1374,6 @@ body[data-theme="dark"] :is(
     .student-page-payments-history-card,
     .student-page-payments-drawer,
     .student-page-payments-checkout-card,
-    .student-page-payments-management-card,
     .student-page-payments-enrollment-card
 ) {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
@@ -1586,7 +1539,6 @@ body[data-theme="dark"] .student-page-alert-banner {
         align-items: stretch;
     }
 
-    .student-page-form-actions__secondary,
     .student-page-form-actions__primary {
         width: 100%;
     }
@@ -1619,8 +1571,7 @@ body[data-theme="dark"] .student-page-alert-banner {
 }
 
 body[data-theme="dark"] .student-page-plan-meta__item,
-body[data-theme="dark"] .student-page-empty-state,
-body[data-theme="dark"] .student-page-ghost-action {
+body[data-theme="dark"] .student-page-empty-state {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-glass-border) 84%);
     background: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
 }

@@ -30,11 +30,6 @@ REGRA:
     --topbar-search-surface: color-mix(in srgb, var(--theme-surface-panel) 88%, var(--theme-accent-support-alpha) 12%);
     --topbar-search-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-border-soft) 84%);
     --topbar-search-shadow: inset 0 1px 0 color-mix(in srgb, white 14%, transparent), 0 0 0 1px color-mix(in srgb, var(--theme-accent-support) 5%, transparent);
-    --topbar-manifesto-surface: color-mix(in srgb, var(--theme-surface-secondary) 92%, var(--theme-accent-support-alpha) 8%);
-    --topbar-manifesto-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
-    --topbar-manifesto-shadow: inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
-    --topbar-manifesto-kicker-ink: color-mix(in srgb, var(--theme-accent-primary) 48%, var(--theme-accent-support) 52%);
-    --topbar-manifesto-copy-ink: var(--theme-text-secondary);
     --topbar-toggle-surface: color-mix(in srgb, var(--theme-surface-secondary) 94%, var(--theme-accent-support-alpha) 6%);
     --topbar-toggle-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
     --topbar-toggle-ink: var(--theme-text-muted);
@@ -237,35 +232,6 @@ REGRA:
     text-overflow: ellipsis;
 }
 
-.topbar-manifesto {
-    grid-area: manifesto;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 7px 12px;
-    border-radius: 16px;
-    background: var(--topbar-manifesto-surface);
-    border: 1px solid var(--topbar-manifesto-border-color);
-    box-shadow: var(--topbar-manifesto-shadow);
-}
-
-.topbar-manifesto-kicker {
-    font-size: 0.63rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--topbar-manifesto-kicker-ink);
-}
-
-.topbar-manifesto-copy {
-    font-size: 0.82rem;
-    line-height: 1.16;
-    letter-spacing: -0.02em;
-    flex: 1 1 auto;
-    color: var(--topbar-manifesto-copy-ink);
-    text-wrap: balance;
-}
-
 .search-autocomplete-list {
     position: absolute;
     top: calc(100% + 8px);
@@ -359,6 +325,7 @@ REGRA:
     border: 1px solid transparent;
 }
 
+/* Dynamic contract: `topbar-quick-link--*` is emitted by topbar_actions.html from link.kind. */
 .topbar-quick-link--primary {
     background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-primary) 82%, white 18%), color-mix(in srgb, var(--theme-accent-support) 76%, black 24%), color-mix(in srgb, var(--theme-accent-premium) 42%, black 58%));
     color: #f7feff;
@@ -820,8 +787,6 @@ REGRA:
     --topbar-search-surface: color-mix(in srgb, #0d1828 90%, var(--theme-surface-panel) 10%);
     --topbar-search-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.18) 72%, rgba(255, 255, 255, 0.05) 28%);
     --topbar-search-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 0 1px rgba(74, 144, 226, 0.06);
-    --topbar-manifesto-surface: color-mix(in srgb, #0f1a2b 90%, var(--theme-surface-secondary) 10%);
-    --topbar-manifesto-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.14) 72%, rgba(255, 255, 255, 0.04) 28%);
     --topbar-toggle-surface: color-mix(in srgb, #101a2b 92%, var(--theme-surface-secondary) 8%);
     --topbar-toggle-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.14) 72%, rgba(255, 255, 255, 0.04) 28%);
     --topbar-toggle-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 3px 10px rgba(0, 0, 0, 0.16);
@@ -832,7 +797,6 @@ REGRA:
     --topbar-profile-meta-copy: color-mix(in srgb, var(--theme-text-secondary) 82%, white 18%);
 }
 
-[data-theme="dark"] .topbar-manifesto-copy,
 [data-theme="dark"] .topbar-quick-link--secondary,
 [data-theme="dark"] .alert-chip {
     color: color-mix(in srgb, var(--theme-text-secondary) 88%, white 12%);
@@ -960,19 +924,6 @@ REGRA:
 @media (max-width: 720px) {
     .alert-chip span:not(.alert-dot) {
         font-size: 0.72rem;
-    }
-
-    .topbar-manifesto {
-        gap: 6px;
-        padding: 7px 11px;
-    }
-
-    .topbar-manifesto-kicker {
-        display: none;
-    }
-
-    .topbar-manifesto-copy {
-        font-size: 0.76rem;
     }
 
     .topbar {

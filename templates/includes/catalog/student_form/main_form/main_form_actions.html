@@ -27,7 +27,7 @@ ARQUIVO: erros globais e acoes finais da ficha do aluno.
     <p class="no-margin student-form-handoff__headline"><strong>{{ page.data.student_form_handoff.title }}</strong></p>
     <p class="meta-text student-form-handoff__copy">{{ page.data.student_form_handoff.copy }}</p>
     <div class="actions actions-tight">
-        <a class="button student-form-button student-form-button--submit" href="{{ page.data.student_form_handoff.href }}" data-action="{{ page.data.student_form_handoff.data_action }}">{{ page.data.student_form_handoff.href_label }}</a>
+        <a class="button student-form-button student-form-button--submit" href="{{ page.data.student_form_handoff.href }}"{% if page.data.student_form_handoff.data_action %} data-action="{{ page.data.student_form_handoff.data_action }}"{% endif %}{% if page.data.student_form_handoff.target_panel %} data-student-page-tab-trigger data-student-page-target="{{ page.data.student_form_handoff.target_panel }}"{% endif %}>{{ page.data.student_form_handoff.href_label }}</a>
     </div>
 </section>
 {% endif %}

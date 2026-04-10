@@ -21,15 +21,8 @@ POR QUE ELE EXISTE:
         min-height: 288px;
     }
 
-    .finance-plan-support-grid,
-    .finance-board {
+    .finance-plan-support-grid {
         grid-template-columns: 1fr;
-    }
-
-    .finance-board > article,
-    .finance-board > div,
-    .finance-board > section {
-        grid-column: 1 / -1;
     }
 
     .finance-metric-strip {
@@ -41,19 +34,12 @@ POR QUE ELE EXISTE:
     }
 
     .finance-alert-grid,
-    .finance-action-list,
-    .finance-alert-list,
-    .finance-guide-grid-3,
-    .finance-filter-rule-list {
+    .finance-guide-grid-3 {
         grid-template-columns: 1fr;
     }
 
     .finance-plan-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .finance-plan-focus-item {
-        grid-template-columns: 1fr;
     }
 
 }
@@ -244,25 +230,5 @@ POR QUE ELE EXISTE:
     .finance-portfolio-panel-value {
         justify-self: start;
         justify-content: flex-start;
-    }
-}
-
-@media (max-width: 960px) {
-    .finance-focus-item,
-    .finance-plan-focus-item {
-        grid-template-columns: 1fr;
-    }
-
-    .finance-focus-actions {
-        justify-items: stretch;
-    }
-
-    .finance-plan-focus-item {
-        justify-items: stretch;
-    }
-
-    .finance-plan-focus-item .pill {
-        width: fit-content;
-        max-width: 100%;
     }
 }

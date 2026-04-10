@@ -31,10 +31,6 @@ PONTOS CRITICOS:
     min-width: 0;
 }
 
-.layout-block--tight {
-    gap: clamp(16px, 1.8vw, 22px);
-}
-
 .layout-block--split {
     grid-template-columns: minmax(0, 1.3fr) minmax(320px, 1fr);
     align-items: start;
@@ -42,11 +38,6 @@ PONTOS CRITICOS:
 
 .layout-block--rail {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.layout-block--workspace {
-    grid-template-columns: minmax(0, 1fr);
-    gap: clamp(18px, 2.2vw, 26px);
 }
 
 .layout-panel {
@@ -65,28 +56,13 @@ PONTOS CRITICOS:
     margin: 40px auto;
 }
 
-.layout-panel-head {
-    display: grid;
-    gap: 12px;
-}
-
-.layout-panel-body {
-    min-width: 0;
-}
-
-.layout-panel-rail {
-    display: grid;
-    gap: 14px;
-}
-
 @media (max-width: 960px) {
     .layout-block,
     .scene-stack {
         gap: 18px;
     }
 
-    .layout-block--split,
-    .layout-block--workspace {
+    .layout-block--split {
         grid-template-columns: 1fr;
     }
 }

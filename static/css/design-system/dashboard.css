@@ -44,17 +44,17 @@ O QUE ESTE ARQUIVO FAZ:
     isolation: isolate;
 }
 
-body[data-shell-scope="dashboard"] .content {
+body[data-shell-scope="dashboard"] .content-area {
     padding-top: 2px;
 }
 
-body[data-shell-scope="dashboard"] .content::before {
+body[data-shell-scope="dashboard"] .content-area::before {
     background: transparent;
     border: 0;
     box-shadow: none;
 }
 
-body[data-shell-scope="dashboard"] .content::after {
+body[data-shell-scope="dashboard"] .content-area::after {
     opacity: 0;
 }
 
@@ -117,10 +117,6 @@ body[data-shell-scope="dashboard"] .page-body {
     position: relative;
     grid-template-columns: minmax(0, 1fr);
     justify-content: stretch;
-}
-
-.dashboard-command-main::before {
-    content: none;
 }
 
 .dashboard-shell--futuristic-luxury .dashboard-reading-list {
@@ -473,24 +469,6 @@ body[data-shell-scope="dashboard"] .page-body {
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-support) 16%, transparent), 0 10px 24px color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
 }
 
-body[data-theme="dark"] .dashboard-shell::before {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 48%, transparent), transparent 20%),
-        radial-gradient(circle at 12% 34%, color-mix(in srgb, var(--theme-accent-support-alpha) 48%, transparent), transparent 18%),
-        radial-gradient(circle at 50% 0%, color-mix(in srgb, white 4%, transparent), transparent 20%);
-}
-
-body[data-theme="dark"] .dashboard-shell::after {
-    background:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 24%, transparent), transparent 36%),
-        linear-gradient(135deg, color-mix(in srgb, white 2%, transparent), transparent 60%);
-}
-
-body[data-theme="dark"] .dashboard-command-main::before,
-body[data-theme="dark"] .dashboard-command-rail::before {
-    border-color: rgba(148, 163, 184, 0.08);
-}
-
 body[data-theme="dark"] .dashboard-layout-chrome {
     background:
         linear-gradient(145deg, rgba(8, 15, 27, 0.92), rgba(10, 18, 32, 0.94));
@@ -525,10 +503,6 @@ body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-command-r
 }
 
 @media (max-width: 960px) {
-    .dashboard-command-workspace::before {
-        display: none;
-    }
-
     .dashboard-hero {
         min-height: 0;
     }

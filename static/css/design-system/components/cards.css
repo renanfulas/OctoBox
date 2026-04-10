@@ -394,59 +394,6 @@ body[data-theme="dark"] .metric-card-link:focus-visible .metric-card.kpi-family-
     font-weight: 700;
 }
 
-.card-change {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    width: fit-content;
-    margin-top: 8px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    border: 1px solid var(--line);
-    background: color-mix(in srgb, var(--surface-strong) 72%, transparent);
-    font-size: 0.76rem;
-    font-weight: 700;
-    line-height: 1;
-}
-
-.card-change.is-good {
-    color: var(--accent);
-    border-color: color-mix(in srgb, var(--accent) 24%, transparent);
-    background: color-mix(in srgb, var(--accent) 8%, transparent);
-}
-
-.card-change.is-bad {
-    color: var(--danger);
-    border-color: color-mix(in srgb, var(--danger) 24%, transparent);
-    background: color-mix(in srgb, var(--danger) 8%, transparent);
-}
-
-.card-change.is-neutral {
-    color: var(--brand);
-    border-color: color-mix(in srgb, var(--brand) 22%, transparent);
-    background: color-mix(in srgb, var(--brand) 6%, transparent);
-}
-
-.card-change-label {
-    color: var(--muted);
-    font-weight: 600;
-}
-
-.card.status-clean,
-.table-card.status-clean {
-    border-left: 3px solid var(--accent);
-}
-
-.card.status-attention,
-.table-card.status-attention {
-    border-left: 3px solid var(--danger);
-}
-
-.card.status-neutral,
-.table-card.status-neutral {
-    border-left: 3px solid var(--line-strong);
-}
-
 :is(.card, .table-card).card--support,
 :is(.card, .table-card).table-card--support {
     --card-local-surface:
@@ -460,20 +407,6 @@ body[data-theme="dark"] .metric-card-link:focus-visible .metric-card.kpi-family-
         0 18px 34px rgba(15, 23, 42, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.72);
     --card-local-glow: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, transparent);
-}
-
-:is(.card, .table-card).card--soft {
-    --card-local-surface:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent), color-mix(in srgb, var(--theme-surface-panel) 92%, transparent));
-    --card-local-border: color-mix(in srgb, var(--theme-border-soft) 90%, transparent);
-    --card-local-border-strong: color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, var(--card-border-strong) 84%);
-    --card-local-shadow:
-        0 10px 20px rgba(15, 23, 42, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.74);
-    --card-local-shadow-lift:
-        0 16px 28px rgba(15, 23, 42, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.78);
-    --card-local-glow: color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, transparent);
 }
 
 :is(.card, .table-card).card--priority {
@@ -506,19 +439,6 @@ body[data-theme="dark"] :is(.card, .table-card).table-card--support {
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
     --card-local-shadow-lift:
         0 26px 44px rgba(2, 6, 23, 0.34),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-body[data-theme="dark"] :is(.card, .table-card).card--soft {
-    --card-local-surface:
-        linear-gradient(180deg, rgba(10, 18, 32, 0.94), rgba(9, 16, 29, 0.92));
-    --card-local-border: rgba(148, 163, 184, 0.14);
-    --card-local-border-strong: rgba(92, 146, 214, 0.18);
-    --card-local-shadow:
-        0 18px 34px rgba(2, 6, 23, 0.24),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    --card-local-shadow-lift:
-        0 24px 40px rgba(2, 6, 23, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 

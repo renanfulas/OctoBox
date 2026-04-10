@@ -120,6 +120,10 @@ O QUE ESTE ARQUIVO FAZ:
     line-height: 1.48;
 }
 
+.sidebar-backdrop {
+    display: none;
+}
+
 @media (max-width: 960px) {
     .sidebar {
         position: fixed;

@@ -1,9 +1,9 @@
 /*
-ARQUIVO: scaffolding da finance-shell e finance-board.
+ARQUIVO: scaffolding da finance-shell.
 
 POR QUE ELE EXISTE:
 - Isola o grid principal e overrides genericos do shell financeiro.
-- Board layout (12-column grid), seções, card stack e side stacks.
+- Shell layout, seções, card stack e side stacks.
 */
 
 .finance-shell {
@@ -37,10 +37,6 @@ POR QUE ELE EXISTE:
     min-height: 100%;
 }
 
-.finance-board {
-    display: contents; /* Modulo convertido para .workspace-grid-layout */
-}
-
 .finance-board-filter {
     background: var(--finance-premium-surface-soft);
 }
@@ -60,11 +56,6 @@ POR QUE ELE EXISTE:
 .finance-board-trend-side,
 .finance-board-portfolio {
     background: var(--finance-premium-surface-soft);
-}
-
-.finance-portfolio-layout,
-.finance-plan-layout {
-    align-items: start;
 }
 
 body[data-theme="dark"] .finance-board-filter,

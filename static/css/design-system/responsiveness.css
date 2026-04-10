@@ -19,6 +19,10 @@ PONTOS CRITICOS:
     --responsive-cluster-gap: clamp(12px, 1.8vw, 18px);
 }
 
+:where([hidden]) {
+    display: none !important;
+}
+
 :where(
     .page-body,
     .panel-grid,
@@ -26,7 +30,6 @@ PONTOS CRITICOS:
     .quick-grid,
     .operation-shell,
     .dashboard-shell,
-    .finance-board,
     [class$="-grid"],
     [class*="-grid "]
 ) > * {

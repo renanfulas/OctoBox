@@ -72,15 +72,6 @@ POR QUE ELE EXISTE:
     padding-right: 32px;
 }
 
-.student-quick-panel__feedback {
-    display: grid;
-    gap: 8px;
-}
-
-.student-quick-panel__feedback .note-panel {
-    margin: 0;
-}
-
 .student-quick-panel .note-panel::before {
     content: none;
 }
@@ -487,20 +478,6 @@ POR QUE ELE EXISTE:
     padding: 12px 0 4px;
 }
 
-.student-quick-financial-drawer {
-    display: grid;
-    gap: 10px;
-    padding: 14px;
-    border-radius: 22px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(248, 250, 252, 0.88);
-    animation: student-quick-drawer-enter 220ms ease;
-}
-
-.student-quick-financial-drawer__actions {
-    justify-content: flex-end;
-}
-
 .student-quick-panel-financial .student-financial-drawer,
 .student-quick-panel-financial .student-page-payments-ledger,
 .student-quick-panel-financial .student-page-alert-banner {
@@ -636,7 +613,6 @@ body[data-theme="dark"] :is(.student-quick-panel__stat, .student-quick-panel__na
     .student-quick-panel,
     .student-quick-panel__tab,
     .student-quick-panel__section,
-    .student-quick-financial-drawer,
     .student-quick-live-pill.is-pulsing::before {
         animation: none;
         transition: none;
@@ -645,11 +621,6 @@ body[data-theme="dark"] :is(.student-quick-panel__stat, .student-quick-panel__na
 
 body[data-theme="dark"] .student-quick-panel__fragment-slot > * {
     background: rgba(15, 23, 42, 0.72);
-    border-color: rgba(148, 163, 184, 0.12);
-}
-
-body[data-theme="dark"] .student-quick-financial-drawer {
-    background: rgba(15, 23, 42, 0.76);
     border-color: rgba(148, 163, 184, 0.12);
 }
 

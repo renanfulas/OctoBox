@@ -98,8 +98,8 @@ class ReportHubView(OperationBaseView, TemplateView):
             title='Camada gerencial.',
             copy='Abra a frente certa sem misturar o cofre gerencial com a operacao diaria.',
             actions=[
-                {'label': 'Ver comercial', 'href': '#reports-commercial', 'kind': 'primary', 'data_action': 'jump-report-commercial'},
-                {'label': 'Ver financeiro', 'href': '#reports-finance', 'kind': 'secondary', 'data_action': 'jump-report-finance'},
+                {'label': 'Ver comercial', 'href': '#reports-commercial', 'kind': 'primary'},
+                {'label': 'Ver financeiro', 'href': '#reports-finance', 'kind': 'secondary'},
             ],
             aria_label='Panorama da central de relatorios',
             classes=['reports-hub-hero'],

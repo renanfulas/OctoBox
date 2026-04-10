@@ -6,7 +6,7 @@ POR QUE ELE EXISTE:
 
 O QUE ESTE ARQUIVO FAZ:
 1. Grid do .shell (sidebar + main).
-2. Container .content com max-width.
+2. Container .content-area com max-width.
 3. .page-body e scroll-margin dos IDs.
 4. Sidebar backdrop para mobile.
 
@@ -18,30 +18,23 @@ PONTOS CRITICOS:
     min-height: 100vh;
     display: grid;
     grid-template-columns: 320px minmax(0, 1fr);
-    gap: 18px;
-    padding: 18px;
     scrollbar-gutter: stable;
 }
 
-.content {
+.content-area {
     width: min(100%, var(--content-max));
     margin: 0 auto;
-    padding: 10px 14px 34px 8px;
     position: relative;
 }
 
-.content::before {
+.content-area::before {
     content: "";
     position: absolute;
-    inset: 8px 0 0;
-    border-radius: 36px;
-    background: transparent;
     pointer-events: none;
 }
 
 .page-body {
     display: grid;
-    gap: var(--section-gap);
     position: relative;
 }
 
@@ -53,25 +46,13 @@ PONTOS CRITICOS:
     scroll-margin-top: 148px;
 }
 
-.sidebar-backdrop {
-    display: none;
-}
-
 @media (max-width: 960px) {
     .shell {
         grid-template-columns: 1fr;
-        padding: 12px;
-        gap: 12px;
     }
 
-    .content {
+    .content-area {
         width: 100%;
-        padding: 8px 6px 26px;
-    }
-
-    .content::before {
-        inset: 0;
-        border-radius: 28px;
     }
 }
 
@@ -104,11 +85,11 @@ PONTOS CRITICOS:
     padding: 24px;
 }
 
-.content {
+.content-area {
     padding: 8px 8px 34px 8px; /* Simétrico: 8px em ambos os lados para fit perfeito */
 }
 
-.content::before {
+.content-area::before {
     inset: 0;
     border-radius: 40px;
     background: transparent;
@@ -116,7 +97,7 @@ PONTOS CRITICOS:
     box-shadow: none;
 }
 
-.content::after {
+.content-area::after {
     content: none;
 }
 
@@ -125,31 +106,21 @@ PONTOS CRITICOS:
     padding: 0;
 }
 
-body[data-theme="dark"] .content::before {
-    border-color: transparent;
-    background: transparent;
-    box-shadow: none;
-}
-
-body[data-theme="dark"] .content::after {
-    content: none;
-}
-
 @media (max-width: 960px) {
     .shell {
         gap: 13px;
         padding: 13px;
     }
 
-    .content {
+    .content-area {
         padding: 0 4px 21px;
     }
 
-    .content::before {
+    .content-area::before {
         border-radius: 24px;
     }
 
-    .content::after {
+    .content-area::after {
         content: none;
     }
 }

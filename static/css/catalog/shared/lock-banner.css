@@ -31,10 +31,6 @@ PONTOS CRÍTICOS:
   animation: lockBannerIn 0.25s ease-out;
 }
 
-.lock-banner[hidden] {
-  display: none !important;
-}
-
 @keyframes lockBannerIn {
   from {
     opacity: 0;

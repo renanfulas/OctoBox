@@ -489,22 +489,14 @@ POR QUE ELE EXISTE:
 
     document.addEventListener('click', function(event) {
       var confirmTrigger = event.target.closest('button[type="submit"][data-confirm="true"]');
-      if (confirmTrigger) {
-        var confirmMessage = confirmTrigger.getAttribute('data-confirm-message') || 'Tem certeza que deseja continuar com esta acao?';
-        if (!window.confirm(confirmMessage)) {
-          event.preventDefault();
-        }
+      if (!confirmTrigger) {
         return;
       }
 
-      var legacyTrigger = event.target.closest('[data-action="open-tab-student-form-essential"]');
-      if (!legacyTrigger) {
-        return;
+      var confirmMessage = confirmTrigger.getAttribute('data-confirm-message') || 'Tem certeza que deseja continuar com esta acao?';
+      if (!window.confirm(confirmMessage)) {
+        event.preventDefault();
       }
-
-      event.preventDefault();
-      activateStudentPagePanel('tab-student-form-essential');
-      syncStudentPageHash('tab-student-form-essential');
     });
   }
 

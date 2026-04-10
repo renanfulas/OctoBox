@@ -38,7 +38,7 @@
     min-width: 0;
 }
 
-.student-form-shell :is(.student-form-step-kicker, .student-form-step-copy, .stepper-helper) {
+.student-form-shell :is(.student-form-step-kicker, .stepper-helper) {
     color: var(--student-form-text-secondary);
 }
 
@@ -265,16 +265,6 @@ form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-fo
     display: none;
 }
 
-.student-form-step-intro {
-    display: grid;
-    gap: 6px;
-    max-width: 62ch;
-}
-
-.student-form-step-intro [class~="meta-text"] {
-    margin: 0;
-}
-
 .student-form-step-essential,
 .student-form-step-disclosure {
     position: relative;
@@ -389,14 +379,6 @@ form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-fo
     font-size: clamp(1.08rem, 0.98rem + 0.4vw, 1.36rem);
     line-height: 1.15;
     letter-spacing: -0.02em;
-}
-
-.student-form-step-note {
-    margin: 0;
-    max-width: 56ch;
-    color: var(--student-form-text-secondary);
-    font-size: 0.92rem;
-    line-height: 1.55;
 }
 
 .student-form-step-disclosure > summary {
@@ -537,7 +519,6 @@ form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-fo
     box-shadow: var(--card-shadow);
 }
 
-.student-form-shell .plan-card-price,
 .student-form-shell #connected-plan-price {
     color: var(--theme-text-primary);
 }
@@ -585,10 +566,6 @@ form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-fo
     text-decoration-thickness: 1.5px;
     text-underline-offset: 2px;
 }
-
-.status-paid { color: var(--theme-accent-success); }
-.status-overdue { color: var(--theme-accent-danger); }
-.status-pending { color: var(--theme-accent-warning); }
 
 .step-container {
     transition: opacity 0.3s ease, transform 0.3s ease;

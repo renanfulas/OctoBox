@@ -15,8 +15,7 @@ PONTOS CRITICOS:
 - ajustes opcionais nao podem competir com o fluxo de caixa rapido.
 */
 
-.reception-payment-board,
-.reception-preview-payment-board {
+.reception-payment-board {
     position: relative;
     overflow: hidden;
     background:
@@ -26,8 +25,7 @@ PONTOS CRITICOS:
     box-shadow: 0 18px 34px rgba(7, 14, 24, 0.07);
 }
 
-.reception-payment-board::before,
-.reception-preview-payment-board::before {
+.reception-payment-board::before {
     content: "";
     position: absolute;
     inset: 0 0 auto;
@@ -35,16 +33,14 @@ PONTOS CRITICOS:
     background: linear-gradient(90deg, var(--theme-accent-warning), var(--theme-accent-support), var(--theme-accent-premium));
 }
 
-.reception-payment-grid,
-.reception-preview-payment-grid {
+.reception-payment-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
     align-items: start;
 }
 
-.reception-payment-card,
-.reception-preview-payment-card {
+.reception-payment-card {
     display: grid;
     grid-template-rows: auto auto auto 1fr auto;
     gap: 12px;
@@ -62,8 +58,7 @@ PONTOS CRITICOS:
     overflow: hidden;
 }
 
-.reception-payment-card::after,
-.reception-preview-payment-card::after {
+.reception-payment-card::after {
     content: "";
     position: absolute;
     inset: auto -30px -38px auto;
@@ -74,24 +69,20 @@ PONTOS CRITICOS:
     pointer-events: none;
 }
 
-.reception-payment-card .finance-action-copy,
-.reception-preview-payment-card .finance-action-copy {
+.reception-payment-card .finance-action-copy {
     display: grid;
     gap: 3px;
 }
 
-.reception-payment-card .finance-action-copy .meta-text-sm,
-.reception-preview-payment-card .finance-action-copy .meta-text-sm {
+.reception-payment-card .finance-action-copy .meta-text-sm {
     line-height: 1.35;
 }
 
-.reception-payment-card .pill,
-.reception-preview-payment-card .pill {
+.reception-payment-card .pill {
     padding: 5px 9px;
 }
 
-.payment-primary-summary.reception-payment-highlight,
-.reception-preview-payment-highlight {
+.payment-primary-summary.reception-payment-highlight {
     display: grid;
     gap: 10px;
     padding: 12px;
@@ -102,8 +93,7 @@ PONTOS CRITICOS:
         linear-gradient(180deg, color-mix(in srgb, white 90%, var(--theme-surface-panel) 10%), color-mix(in srgb, var(--theme-surface-panel) 95%, white));
 }
 
-.payment-primary-summary.reception-payment-highlight .payment-primary-summary__amount,
-.reception-preview-payment-highlight__amount {
+.payment-primary-summary.reception-payment-highlight .payment-primary-summary__amount {
     display: grid;
     gap: 4px;
 }
@@ -128,23 +118,20 @@ PONTOS CRITICOS:
     font-weight: 700;
 }
 
-.payment-primary-summary.reception-payment-highlight .payment-primary-summary__amount strong,
-.reception-preview-payment-highlight__amount strong {
+.payment-primary-summary.reception-payment-highlight .payment-primary-summary__amount strong {
     font-size: clamp(1.45rem, 2vw, 1.8rem);
     line-height: 1;
     letter-spacing: -0.03em;
     color: var(--brand-dark);
 }
 
-.payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta,
-.reception-preview-payment-highlight__meta {
+.payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
 }
 
-.payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta-item,
-.reception-preview-payment-highlight__meta-item {
+.payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta-item {
     display: grid;
     gap: 3px;
     padding: 9px 10px;
@@ -153,18 +140,15 @@ PONTOS CRITICOS:
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, white 16%);
 }
 
-.payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta-item strong,
-.reception-preview-payment-highlight__meta-item strong {
+.payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta-item strong {
     line-height: 1.2;
 }
 
-.reception-payment-card .finance-action-message,
-.reception-preview-payment-card .finance-action-message {
+.reception-payment-card .finance-action-message {
     padding: 10px 12px;
 }
 
-.reception-payment-card .finance-action-message .meta-text,
-.reception-preview-payment-card .finance-action-message .meta-text {
+.reception-payment-card .finance-action-message .meta-text {
     margin-top: 4px;
     line-height: 1.45;
     display: -webkit-box;
@@ -174,27 +158,23 @@ PONTOS CRITICOS:
     overflow: hidden;
 }
 
-.reception-payment-form,
-.reception-preview-payment-form {
+.reception-payment-form {
     display: grid;
     gap: 10px;
     padding-top: 0;
 }
 
-.reception-payment-primary-flow,
-.reception-preview-payment-primary-flow {
+.reception-payment-primary-flow {
     display: grid;
     gap: 8px;
 }
 
-.reception-payment-method-shell,
-.reception-preview-payment-method-shell {
+.reception-payment-method-shell {
     display: grid;
     gap: 4px;
 }
 
-.reception-payment-method-shell select,
-.reception-preview-payment-method-shell select {
+.reception-payment-method-shell select {
     min-height: 42px;
     border-radius: 14px;
     border-color: color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-border-soft) 82%);
@@ -265,24 +245,20 @@ PONTOS CRITICOS:
     opacity: 1;
 }
 
-.reception-payment-actions .button,
-.reception-preview-payment-actions .button {
+.reception-payment-actions .button {
     min-height: 34px;
     padding: 6px 10px;
     border-radius: 12px;
     font-size: 0.84rem;
 }
 
-.reception-payment-form .field-label,
-.reception-preview-payment-form .field-label {
+.reception-payment-form .field-label {
     margin-bottom: 4px;
     font-size: 0.72rem;
 }
 
 .reception-payment-form input,
-.reception-payment-form select,
-.reception-preview-payment-form input,
-.reception-preview-payment-form select {
+.reception-payment-form select {
     min-height: 38px;
     padding-top: 8px;
     padding-bottom: 8px;
@@ -334,13 +310,11 @@ PONTOS CRITICOS:
     align-items: stretch;
 }
 
-.reception-payment-form-secondary .field-label,
-.reception-preview-payment-form-secondary .field-label {
+.reception-payment-form-secondary .field-label {
     margin-bottom: 4px;
 }
 
-.reception-payment-board .operation-card-head,
-.reception-preview-payment-board .operation-card-head {
+.reception-payment-board .operation-card-head {
     margin-bottom: 10px;
 }
 
@@ -367,23 +341,19 @@ PONTOS CRITICOS:
     animation: reception-live-pill-pulse 1.5s ease-out;
 }
 
-.reception-payment-board .operation-card-copy,
-.reception-preview-payment-board .operation-card-copy {
+.reception-payment-board .operation-card-copy {
     max-width: 52ch;
 }
 
 body[data-theme="dark"] .reception-payment-board,
-body[data-theme="dark"] .reception-preview-payment-board,
-body[data-theme="dark"] .reception-payment-card,
-body[data-theme="dark"] .reception-preview-payment-card {
+body[data-theme="dark"] .reception-payment-card {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, transparent), transparent 30%),
         linear-gradient(158deg, rgba(12, 22, 36, 0.98), rgba(8, 15, 26, 0.97) 60%, rgba(7, 12, 22, 0.95));
     border-color: color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-border-soft) 82%);
 }
 
-body[data-theme="dark"] .reception-payment-board,
-body[data-theme="dark"] .reception-preview-payment-board {
+body[data-theme="dark"] .reception-payment-board {
     box-shadow:
         0 20px 36px rgba(0, 0, 0, 0.18),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -395,8 +365,7 @@ body[data-theme="dark"] .payment-primary-summary.reception-payment-highlight {
         linear-gradient(160deg, rgba(16, 27, 42, 0.98), rgba(10, 18, 30, 0.94));
 }
 
-body[data-theme="dark"] .payment-primary-summary.reception-payment-highlight .payment-primary-summary__amount strong,
-body[data-theme="dark"] .reception-preview-payment-highlight__amount strong {
+body[data-theme="dark"] .payment-primary-summary.reception-payment-highlight .payment-primary-summary__amount strong {
     color: rgba(255, 248, 239, 0.98);
 }
 
@@ -421,13 +390,11 @@ body[data-theme="dark"] .reception-payment-advanced {
 }
 
 @media (max-width: 720px) {
-    .reception-payment-grid,
-    .reception-preview-payment-grid {
+    .reception-payment-grid {
         grid-template-columns: 1fr;
     }
 
-    .payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta,
-    .reception-preview-payment-highlight__meta {
+    .payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta {
         grid-template-columns: 1fr;
     }
 

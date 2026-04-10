@@ -19,12 +19,12 @@ def build_student_directory_page(*, student_count, students, student_filter_form
     can_open_student_admin = current_role_slug in (ROLE_OWNER, ROLE_DEV)
     hero_actions = [
         {'label': 'Ver base', 'href': '#tab-students-directory', 'kind': 'primary', 'data_action': 'open-tab-students-directory'},
-        {'label': 'Abrir entradas', 'href': get_shell_route_url('intake', fragment='intake-queue-board'), 'kind': 'secondary', 'data_action': 'open-student-intake-center'},
+        {'label': 'Abrir entradas', 'href': get_shell_route_url('intake', fragment='intake-queue-board'), 'kind': 'secondary'},
     ]
 
     if can_manage_students:
         hero_actions.append(
-            {'label': 'Novo aluno', 'href': f"{reverse('student-quick-create')}#student-form-essential", 'kind': 'secondary', 'data_action': 'open-student-create'}
+            {'label': 'Novo aluno', 'href': f"{reverse('student-quick-create')}#student-form-essential", 'kind': 'secondary'}
         )
 
     hero = build_page_hero(

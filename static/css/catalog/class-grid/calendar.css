@@ -6,27 +6,6 @@ POR QUE ELE EXISTE:
 - deixa o workspace livre para cuidar apenas da organizacao dos paineis.
 */
 
-.monthly-preview-button {
-    width: 100%;
-    border: 0;
-    padding: 0;
-    background: transparent;
-    text-align: left;
-    cursor: pointer;
-}
-
-.monthly-preview-button:hover .monthly-day-card,
-.monthly-preview-button:focus-visible .monthly-day-card {
-    border-color: rgba(16, 185, 129, 0.28);
-    box-shadow: var(--shadow-soft);
-}
-
-.monthly-preview-button:focus-visible {
-    outline: 2px solid rgba(16, 185, 129, 0.35);
-    outline-offset: 8px;
-    border-radius: 24px;
-}
-
 .monthly-calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -47,14 +26,6 @@ POR QUE ELE EXISTE:
     letter-spacing: 0.08em;
     color: var(--muted);
     font-weight: 700;
-}
-
-.monthly-calendar-head-preview {
-    margin-bottom: 8px;
-}
-
-.monthly-calendar-grid-preview + .monthly-calendar-grid-preview {
-    margin-top: 8px;
 }
 
 .weekly-day-card-body,
@@ -92,18 +63,8 @@ POR QUE ELE EXISTE:
     background: rgba(239, 68, 68, 0.08);
 }
 
-.monthly-day-card.is-preview {
-    min-height: 92px;
-    padding: 8px;
-    gap: 6px;
-}
-
 .monthly-day-card-expanded {
     min-height: 150px;
-}
-
-.monthly-day-card-body-preview {
-    gap: 6px;
 }
 
 .monthly-day-body {
@@ -153,15 +114,6 @@ POR QUE ELE EXISTE:
 .monthly-session-chip span {
     color: var(--muted);
     line-height: 1.4;
-}
-
-.monthly-session-chip-preview {
-    padding: 6px 8px;
-}
-
-.monthly-session-chip-preview strong,
-.monthly-session-chip-preview span {
-    font-size: 0.78rem;
 }
 
 .class-monthly-modal {
@@ -215,10 +167,6 @@ POR QUE ELE EXISTE:
     background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.92));
     box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
-}
-
-.class-rotation-rail[hidden] {
-    display: none;
 }
 
 body[data-theme="dark"] .class-rotation-rail {
@@ -299,10 +247,6 @@ body[data-theme="dark"] .class-rotation-rail {
 .weekly-modal-expanded-grid {
     min-width: 0;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-}
-
-.weekly-modal-view[hidden] {
-    display: none;
 }
 
 .weekly-modal-day-grid {
@@ -460,7 +404,6 @@ body[data-theme="dark"] .weekly-session-chip {
     background: rgba(239, 68, 68, 0.08);
 }
 
-.weekly-session-chip.is-class-occupancy-closed,
 .weekly-session-chip.is-booking-closed {
     border-color: rgba(148, 163, 184, 0.26);
     background:
@@ -516,16 +459,10 @@ body[data-theme="dark"] .weekly-day-overflow-note {
     gap: 6px;
 }
 
-.weekly-day-overflow-list[hidden] {
-    display: none;
-}
-
-.weekly-session-chip.is-class-occupancy-closed .class-grid-meta,
 .weekly-session-chip.is-booking-closed .class-grid-meta {
     color: rgba(100, 116, 139, 0.82);
 }
 
-.weekly-session-chip.is-class-occupancy-closed .pill,
 .weekly-session-chip.is-booking-closed .pill {
     border-color: rgba(148, 163, 184, 0.22);
     background: rgba(226, 232, 240, 0.4);

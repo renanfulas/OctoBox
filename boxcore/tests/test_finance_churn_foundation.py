@@ -299,6 +299,42 @@ class FinanceChurnFoundationTests(TestCase):
         self.assertEqual(follow_up.resolved_by, self.user)
         self.assertEqual(follow_up.outcome_status, FinanceFollowUpOutcomeStatus.PENDING)
 
+    def test_build_finance_snapshot_reuses_existing_suggestion_key_after_status_transition(self):
+        student = Student.objects.create(full_name='Kai Reaparece', phone='5511910000099', status='inactive')
+        enrollment = Enrollment.objects.create(
+            student=student,
+            plan=self.plan,
+            start_date=self.today - timezone.timedelta(days=90),
+            end_date=self.today - timezone.timedelta(days=4),
+            status=EnrollmentStatus.CANCELED,
+        )
+        Payment.objects.create(
+            student=student,
+            enrollment=enrollment,
+            due_date=self.today - timezone.timedelta(days=12),
+            amount='299.90',
+            status=PaymentStatus.PENDING,
+            method=PaymentMethod.PIX,
+        )
+
+        build_finance_snapshot(persist_follow_ups=True)
+        follow_up = FinanceFollowUp.objects.get(student=student)
+        original_id = follow_up.id
+        follow_up.status = FinanceFollowUpStatus.SUPERSEDED
+        follow_up.resolved_at = timezone.now()
+        follow_up.outcome_reason = 'queue_shifted'
+        follow_up.save(update_fields=['status', 'resolved_at', 'outcome_reason', 'updated_at'])
+
+        build_finance_snapshot(persist_follow_ups=True)
+
+        follow_up.refresh_from_db()
+        self.assertEqual(follow_up.id, original_id)
+        self.assertEqual(follow_up.status, FinanceFollowUpStatus.SUGGESTED)
+        self.assertIsNone(follow_up.resolved_at)
+        self.assertEqual(follow_up.outcome_reason, '')
+        self.assertEqual(follow_up.outcome_status, FinanceFollowUpOutcomeStatus.PENDING)
+        self.assertEqual(FinanceFollowUp.objects.filter(student=student).count(), 1)
+
     def test_evaluate_finance_follow_up_outcome_marks_payment_recovered(self):
         student = Student.objects.create(full_name='Nico Pago', phone='5511910000013', status='active')
         enrollment = Enrollment.objects.create(

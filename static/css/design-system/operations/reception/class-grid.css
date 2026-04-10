@@ -2,8 +2,7 @@
 ARQUIVO: grade de aulas e leitura rápida da recepção.
 */
 
-.reception-grid-board,
-.reception-preview-grid-board {
+.reception-grid-board {
     position: relative;
     overflow: hidden;
     background:
@@ -13,8 +12,7 @@ ARQUIVO: grade de aulas e leitura rápida da recepção.
     box-shadow: 0 14px 28px rgba(7, 14, 24, 0.06);
 }
 
-.reception-grid-board::before,
-.reception-preview-grid-board::before {
+.reception-grid-board::before {
     content: "";
     position: absolute;
     inset: 0 0 auto;
@@ -22,25 +20,21 @@ ARQUIVO: grade de aulas e leitura rápida da recepção.
     background: linear-gradient(90deg, var(--theme-accent-primary), var(--theme-accent-support), var(--theme-accent-premium));
 }
 
-.reception-grid-board .operation-card-head,
-.reception-preview-grid-board .operation-card-head {
+.reception-grid-board .operation-card-head {
     margin-bottom: 10px;
 }
 
-.reception-grid-board .operation-card-copy,
-.reception-preview-grid-board .operation-card-copy {
+.reception-grid-board .operation-card-copy {
     max-width: 38ch;
 }
 
-.reception-grade-grid,
-.reception-preview-grade-grid {
+.reception-grade-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 12px;
 }
 
-.reception-grade-card,
-.reception-preview-grade-card {
+.reception-grade-card {
     display: grid;
     gap: 12px;
     padding: 16px;
@@ -79,25 +73,21 @@ ARQUIVO: grade de aulas e leitura rápida da recepção.
     padding-top: 4px;
 }
 
-.reception-grade-stats,
-.reception-preview-grade-stats {
+.reception-grade-stats {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
 }
 
 body[data-theme="dark"] .reception-grid-board,
-body[data-theme="dark"] .reception-preview-grid-board,
-body[data-theme="dark"] .reception-grade-card,
-body[data-theme="dark"] .reception-preview-grade-card {
+body[data-theme="dark"] .reception-grade-card {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, transparent), transparent 30%),
         linear-gradient(158deg, rgba(12, 22, 36, 0.98), rgba(8, 15, 26, 0.97) 60%, rgba(7, 12, 22, 0.95));
     border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, var(--theme-border-soft) 84%);
 }
 
-body[data-theme="dark"] .reception-grid-board,
-body[data-theme="dark"] .reception-preview-grid-board {
+body[data-theme="dark"] .reception-grid-board {
     box-shadow:
         0 16px 30px rgba(0, 0, 0, 0.18),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);

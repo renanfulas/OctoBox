@@ -6,11 +6,6 @@ POR QUE ELE EXISTE:
 - separa revisao e excecao do fluxo rapido de checkout.
 */
 
-.student-payment-management-actions {
-    display: grid;
-    gap: 6px;
-}
-
 .student-payment-management-actions-primary,
 .student-payment-management-actions-secondary {
     margin-top: 0;
@@ -37,22 +32,6 @@ POR QUE ELE EXISTE:
     min-height: 33px;
     padding: 6px 10px;
     font-size: 0.84rem;
-}
-
-.student-payment-management-summary {
-    --card-local-border: var(--student-financial-panel-border, var(--card-border));
-    --card-local-surface: var(--student-financial-panel-surface-muted, var(--card-surface));
-    display: grid;
-    gap: 12px;
-    padding: 16px 18px;
-    border-radius: 20px;
-    border: 1px solid var(--card-local-border);
-    background: var(--card-local-surface);
-}
-
-.student-payment-management-summary__grid {
-    display: grid;
-    gap: 12px;
 }
 
 .student-payment-management-summary__row {
@@ -116,15 +95,6 @@ POR QUE ELE EXISTE:
 .payment-secondary-details__grid {
     display: grid;
     gap: 12px;
-}
-
-.student-financial-timeline__actions {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-}
-
-.student-financial-action-button--muted {
-    opacity: 0.82;
 }
 
 body[data-theme="dark"] .payment-secondary-details {

@@ -6,32 +6,6 @@ POR QUE ELE EXISTE:
 - separa a mecanica de organizacao do workspace da renderizacao dos calendarios.
 */
 
-.class-grid-workspace {
-    display: grid;
-    gap: 12px;
-}
-
-.class-grid-workspace-head {
-    align-items: end;
-}
-
-.class-grid-workspace-stack {
-    display: grid;
-    gap: 12px;
-}
-
-.class-grid-workspace-split {
-    grid-template-columns: 2fr 1fr;
-    align-items: start;
-    gap: 16px;
-}
-
-.class-grid-workspace-bottom-split {
-    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-    align-items: start;
-    gap: 16px;
-}
-
 .class-grid-workspace-panel {
     position: relative;
     overflow: hidden;
@@ -83,11 +57,6 @@ POR QUE ELE EXISTE:
 .button-sm {
     padding: 8px 12px;
     font-size: 0.84rem;
-}
-
-.class-planner-layout {
-    grid-template-columns: 1.25fr 0.75fr;
-    align-items: start;
 }
 
 .class-session-edit-panel {
@@ -265,7 +234,7 @@ body[data-theme="dark"] .weekday-option {
 
 /* --- Dark Mode Absolute Overrides --- */
 body[data-theme="dark"] .weekday-option {
-    background: var(--surface) !important;
-    border-color: var(--line) !important;
-    color: var(--ink) !important;
+    background: var(--surface);
+    border-color: var(--line);
+    color: var(--ink);
 }

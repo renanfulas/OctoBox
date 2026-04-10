@@ -9,7 +9,7 @@ POR QUE ELE EXISTE:
     {% url 'intake-center' as intake_center_url %}
     <div class="actions actions-tight">
         {% if page.capabilities.can_manage_students %}
-        <a class="button" href="{{ intake_center_url }}#intake-queue-board" data-action="open-intake-center">Abrir central de intake</a>
+        <a class="button" href="{{ intake_center_url }}#intake-queue-board">Abrir central de intake</a>
         {% endif %}
         {% if page.capabilities.can_manage_students %}
         <a class="button secondary" href="{% url 'student-quick-create' %}#student-form-essential" data-action="open-student-quick-create-from-intake-handoff">Abrir cadastro rapido</a>
@@ -30,7 +30,7 @@ POR QUE ELE EXISTE:
             <div class="card-footer student-intake-card-footer">
                 <div class="actions actions-tight">
                     {% if page.capabilities.can_manage_students %}
-                    <a class="button secondary" href="{{ intake_center_url }}#intake-queue-board" data-action="open-intake-center-from-preview">Ver fila completa</a>
+                    <a class="button secondary" href="{{ intake_center_url }}#intake-queue-board">Ver fila completa</a>
                     {% endif %}
                     {% if page.capabilities.can_manage_students %}
                     <a class="button" href="{% url 'student-quick-create' %}?intake={{ intake.id }}#student-form-essential" data-action="open-student-quick-create-from-intake">Converter em aluno</a>
