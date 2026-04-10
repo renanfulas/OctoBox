@@ -8,9 +8,17 @@ POR QUE ELE EXISTE:
 
 body[data-theme="dark"] .owner-simple-shell .operation-hero,
 body[data-theme="dark"] .owner-simple-shell .owner-metric-grid .operation-kpi-card {
-    border-color: color-mix(in srgb, var(--theme-glass-border) 92%, transparent);
-    background: var(--theme-surface-glass);
-    box-shadow: var(--theme-glass-shadow);
+    border-color: color-mix(in srgb, var(--owner-kpi-accent-alpha, var(--theme-accent-support-alpha)) 30%, var(--theme-glass-border) 70%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--owner-kpi-accent-alpha, var(--theme-accent-support-alpha)) 30%, transparent), transparent 34%),
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, rgba(10, 18, 32, 0.98) 92%, var(--owner-kpi-accent, var(--theme-accent-support)) 8%),
+            color-mix(in srgb, rgba(8, 15, 27, 0.98) 95%, var(--owner-kpi-accent, var(--theme-accent-support)) 5%)
+        );
+    box-shadow:
+        0 24px 44px rgba(2, 6, 23, 0.26),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 body[data-theme="dark"] .owner-simple-shell .operation-hero {
@@ -40,6 +48,6 @@ body[data-theme="dark"] .owner-simple-shell .owner-command-card--primary {
 
 body[data-theme="dark"] .owner-simple-shell .owner-metric-grid .operation-kpi-card:hover {
     box-shadow:
-        0 30px 54px rgba(2, 6, 23, 0.38),
+        0 30px 54px color-mix(in srgb, var(--owner-kpi-accent-alpha, var(--theme-accent-support-alpha)) 14%, rgba(2, 6, 23, 0.38) 86%),
         inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }

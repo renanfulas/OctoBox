@@ -51,7 +51,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        syncTriggerSelection(targetPanel, 'open-tab-' + targetId.replace(/^tab-/, ''));
+        var selectionAction = options && options.action ? options.action : 'open-tab-' + targetId.replace(/^tab-/, '');
+        syncTriggerSelection(targetPanel, selectionAction);
         return targetPanel;
     }
 
@@ -76,24 +77,29 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Pega o ID alvo (ex: 'open-tab-students-filters' -> 'tab-students-filters')
             var action = this.getAttribute('data-action');
-            var targetId = action.replace('open-tab-', 'tab-');
+            var targetId = this.getAttribute('data-target-panel') || action.replace('open-tab-', 'tab-');
             var targetPanel = document.getElementById(targetId);
             
             if (!targetPanel) return;
             
             // Se o painel ja esta ativo (toggle), minimiza-o e para.
             if (targetPanel.classList.contains('is-tab-active')) {
+                var currentCardActive = this.closest('.card') || this;
+                if (!currentCardActive.classList.contains('is-selected-tab')) {
+                    activatePanelById(targetId, { action: action });
+                    return;
+                }
+
                 targetPanel.classList.remove('is-tab-active');
                 
                 var cardGridToggle = this.closest('.interactive-tab-triggers');
                 if (cardGridToggle) {
-                    var currentCardToggle = this.closest('.card') || this;
-                    currentCardToggle.classList.remove('is-selected-tab');
+                    currentCardActive.classList.remove('is-selected-tab');
                 }
                 return;
             }
             
-            activatePanelById(targetId);
+            activatePanelById(targetId, { action: action });
             
             // Scroll suave compensando a altura da topbar fixa (ex: 80px)
             if (this.dataset.noScroll !== "true") {

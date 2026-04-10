@@ -182,6 +182,10 @@ def _serialize_student_browser_snapshot(*, request, student):
 def _serialize_student_directory_search_entry(student):
     latest_payment_due_date = getattr(student, 'latest_payment_due_date', None)
     due_label = latest_payment_due_date.strftime('%d/%m/%Y') if latest_payment_due_date else ''
+    created_at = getattr(student, 'created_at', None)
+    is_new_30d = getattr(student, 'is_new_30d', None)
+    if is_new_30d is None:
+        is_new_30d = bool(created_at and created_at >= timezone.now() - timezone.timedelta(days=30))
 
     return {
         'id': student.id,
@@ -189,6 +193,7 @@ def _serialize_student_directory_search_entry(student):
         'email': student.email or '',
         'phone': student.phone or '',
         'status': student.status,
+        'is_new_30d': is_new_30d,
         'latest_plan_name': getattr(student, 'latest_plan_name', '') or '',
         'payment_status': getattr(student, 'operational_payment_status', '') or '',
         'presence_percent': getattr(student, 'presence_percent', 0) or 0,

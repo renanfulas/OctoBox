@@ -41,6 +41,10 @@
             .trim();
     }
 
+    function isListAllSearchCommand(value) {
+        return String(value || '').trim() === '/';
+    }
+
     var payloadElement = document.getElementById('current-page-behavior');
     var pageBehavior = {};
     if (payloadElement) {
@@ -72,12 +76,26 @@
     var serverRows = Array.prototype.slice.call(tbody.querySelectorAll('.intake-directory-row'));
     var intakeSearchCacheKey = 'octobox.intake.queue.search-index.v1.' + String(intakeSearchConfig.cache_key || 'all');
     var searchState = {
-        query: normalizeSearchText(searchInput.value),
+        query: '',
+        listAllCommand: false,
         sortBy: null,
         sortDirection: sortPill.getAttribute('data-sort-direction') || 'desc',
         index: [],
         isUsingSearchIndex: false,
+        hasNext: Boolean(intakeSearchConfig.has_next),
+        nextOffset: intakeSearchConfig.next_offset || null,
+        total: Number(intakeSearchConfig.total || 0),
+        isLoadingNext: false,
     };
+
+    function setSearchStateFromInputValue(value) {
+        searchState.listAllCommand = isListAllSearchCommand(value);
+        searchState.query = searchState.listAllCommand ? '' : normalizeSearchText(value);
+        if (searchState.listAllCommand) {
+            searchState.sortBy = null;
+            searchState.sortDirection = sortPill.getAttribute('data-sort-direction') || 'desc';
+        }
+    }
 
     function buildCurrentServerIndex() {
         return serverRows.map(function(row) {
@@ -91,12 +109,19 @@
         });
     }
 
-    function persistSearchIndex(index) {
+    function persistSearchIndex(index, meta) {
         var normalizedIndex = Array.isArray(index) ? index : [];
+        var resolvedMeta = meta || {};
         searchState.index = normalizedIndex;
+        searchState.hasNext = typeof resolvedMeta.has_next === 'boolean' ? resolvedMeta.has_next : Boolean(searchState.hasNext);
+        searchState.nextOffset = Object.prototype.hasOwnProperty.call(resolvedMeta, 'next_offset') ? resolvedMeta.next_offset : searchState.nextOffset;
+        searchState.total = Number(resolvedMeta.total || searchState.total || normalizedIndex.length);
         writeSessionJson(intakeSearchCacheKey, {
             index: normalizedIndex,
             refresh_token: intakeSearchConfig.refresh_token || '',
+            has_next: searchState.hasNext,
+            next_offset: searchState.nextOffset,
+            total: searchState.total,
             saved_at: Date.now(),
         });
     }
@@ -111,6 +136,9 @@
             return [];
         }
 
+        searchState.hasNext = Object.prototype.hasOwnProperty.call(cacheEntry, 'has_next') ? Boolean(cacheEntry.has_next) : Boolean(intakeSearchConfig.has_next);
+        searchState.nextOffset = Object.prototype.hasOwnProperty.call(cacheEntry, 'next_offset') ? cacheEntry.next_offset : (intakeSearchConfig.next_offset || null);
+        searchState.total = Number(cacheEntry.total || intakeSearchConfig.total || cacheEntry.index.length || 0);
         return cacheEntry.index;
     }
 
@@ -126,13 +154,93 @@
         }
 
         if (Array.isArray(intakeSearchConfig.index) && intakeSearchConfig.index.length) {
-            persistSearchIndex(intakeSearchConfig.index);
+            persistSearchIndex(intakeSearchConfig.index, {
+                has_next: Boolean(intakeSearchConfig.has_next),
+                next_offset: intakeSearchConfig.next_offset || null,
+                total: Number(intakeSearchConfig.total || intakeSearchConfig.index.length || 0),
+            });
             return searchState.index;
         }
 
         var fallbackIndex = buildCurrentServerIndex();
-        persistSearchIndex(fallbackIndex);
+        persistSearchIndex(fallbackIndex, {
+            has_next: false,
+            next_offset: null,
+            total: fallbackIndex.length,
+        });
         return searchState.index;
+    }
+
+    function buildNextSearchPageUrl() {
+        if (!intakeSearchConfig.page_url || searchState.nextOffset === null || searchState.nextOffset === undefined) {
+            return '';
+        }
+
+        var url = new URL(intakeSearchConfig.page_url, window.location.origin);
+        var params = new URLSearchParams(window.location.search || '');
+        params.delete('query');
+        params.delete('panel');
+        params.delete('offset');
+        params.forEach(function(value, key) {
+            url.searchParams.append(key, value);
+        });
+        url.searchParams.set('offset', String(searchState.nextOffset));
+        return url.toString();
+    }
+
+    function mergeSearchIndexPage(pageEntries) {
+        var seenIds = new Set();
+        var mergedEntries = [];
+
+        getSearchIndex().concat(Array.isArray(pageEntries) ? pageEntries : []).forEach(function(entry) {
+            var entryId = String(entry && entry.id ? entry.id : '');
+            if (!entryId || seenIds.has(entryId)) {
+                return;
+            }
+            seenIds.add(entryId);
+            mergedEntries.push(entry);
+        });
+
+        return mergedEntries;
+    }
+
+    function loadNextSearchPage() {
+        var nextUrl = buildNextSearchPageUrl();
+        if (!nextUrl || searchState.isLoadingNext || !searchState.hasNext) {
+            return Promise.resolve(false);
+        }
+
+        searchState.isLoadingNext = true;
+        return fetch(nextUrl, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Falha ao carregar proxima pagina de entradas.');
+                }
+                return response.json();
+            })
+            .then(function(payload) {
+                var nextIndex = mergeSearchIndexPage(payload.index || []);
+                if (String(payload.refresh_token || '') !== String(intakeSearchConfig.refresh_token || '')) {
+                    nextIndex = Array.isArray(payload.index) ? payload.index : [];
+                    intakeSearchConfig.refresh_token = payload.refresh_token || '';
+                }
+                persistSearchIndex(nextIndex, {
+                    has_next: Boolean(payload.has_next),
+                    next_offset: payload.next_offset || null,
+                    total: Number(payload.total || nextIndex.length || 0),
+                });
+                return true;
+            })
+            .catch(function() {
+                return false;
+            })
+            .finally(function() {
+                searchState.isLoadingNext = false;
+            });
     }
 
     function getRegistrationAgeValue(entry) {
@@ -154,7 +262,7 @@
             return;
         }
 
-        emptySearchRow.hidden = visibleCount !== 0 || !searchState.query;
+        emptySearchRow.hidden = visibleCount !== 0 || (!searchState.query && !searchState.listAllCommand);
     }
 
     function syncSortPill() {
@@ -198,6 +306,7 @@
         var html = entries.map(function(entry) {
             return entry.row_html || '';
         }).join('');
+        var shouldShowNextPage = searchState.hasNext && (searchState.query || searchState.listAllCommand);
 
         serverRows.forEach(function(row) {
             row.hidden = true;
@@ -208,6 +317,12 @@
         }
 
         tbody.innerHTML = html;
+        if (shouldShowNextPage) {
+            tbody.insertAdjacentHTML(
+                'beforeend',
+                '<tr data-intake-search-next-row><td colspan="6" class="table-empty-cell p-6 text-center"><button type="button" class="button secondary" data-intake-search-next>Carregar proximas 200 entradas</button></td></tr>'
+            );
+        }
 
         if (emptySearchRow) {
             tbody.appendChild(emptySearchRow);
@@ -217,7 +332,8 @@
     }
 
     function applyLocalQueueState() {
-        if (!searchState.query) {
+        var shouldUseSearchIndex = searchState.query || searchState.listAllCommand;
+        if (!shouldUseSearchIndex) {
             restoreServerRows();
 
             var visibleRows = Array.prototype.slice.call(tbody.querySelectorAll('.intake-directory-row'));
@@ -242,6 +358,9 @@
         }
 
         var filteredEntries = getSearchIndex().filter(function(entry) {
+            if (searchState.listAllCommand) {
+                return true;
+            }
             return normalizeSearchText(entry.full_name).indexOf(searchState.query) !== -1;
         });
 
@@ -264,10 +383,25 @@
     });
 
     searchInput.addEventListener('input', function() {
-        searchState.query = normalizeSearchText(searchInput.value);
+        setSearchStateFromInputValue(searchInput.value);
         applyLocalQueueState();
     });
 
+    tbody.addEventListener('click', function(event) {
+        var nextButton = event.target.closest('[data-intake-search-next]');
+        if (!nextButton) {
+            return;
+        }
+
+        event.preventDefault();
+        nextButton.disabled = true;
+        nextButton.textContent = 'Carregando...';
+        loadNextSearchPage().then(function() {
+            applyLocalQueueState();
+        });
+    });
+
+    setSearchStateFromInputValue(searchInput.value);
     syncSortPill();
     applyLocalQueueState();
 })();

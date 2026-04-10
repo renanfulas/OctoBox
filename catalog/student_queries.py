@@ -95,9 +95,6 @@ def compute_fidalgometro_score(student):
 def build_student_directory_snapshot(params=None, for_export=False):
     now = timezone.now()
     thirty_days_ago = now - timedelta(days=30)
-    selected_created_window = ''
-    selected_student_status = ''
-    selected_payment_status = ''
     latest_enrollment_status = Enrollment.objects.filter(student=OuterRef('pk')).order_by('-start_date', '-created_at').values('status')[:1]
     latest_plan_name = Enrollment.objects.filter(student=OuterRef('pk')).order_by('-start_date', '-created_at').values('plan__name')[:1]
     latest_payment_status = Payment.objects.filter(student=OuterRef('pk')).order_by('-due_date', '-created_at').values('status')[:1]
@@ -161,7 +158,7 @@ def build_student_directory_snapshot(params=None, for_export=False):
             report_overdue_count=Subquery(overdue_count),
         )
 
-    students = students.defer('cpf', 'notes', 'health_issue_status', 'created_at', 'updated_at').order_by('full_name')
+    students = students.defer('cpf', 'notes', 'health_issue_status', 'updated_at').order_by('full_name')
     filter_form = StudentDirectoryFilterForm(params or None)
 
     if filter_form.is_valid():
@@ -170,9 +167,6 @@ def build_student_directory_snapshot(params=None, for_export=False):
         student_status = filter_form.cleaned_data.get('student_status')
         commercial_status = filter_form.cleaned_data.get('commercial_status')
         payment_status = filter_form.cleaned_data.get('payment_status')
-        selected_created_window = created_window or ''
-        selected_student_status = student_status or ''
-        selected_payment_status = payment_status or ''
 
         if query:
             normalized_query = query.lower()
@@ -230,14 +224,16 @@ def build_student_directory_snapshot(params=None, for_export=False):
     pending_intakes_count = count_pending_intakes()
     intake_queue = list(get_intake_conversion_queue(limit=6))
 
-    priority_students = students.filter(
+    priority_students_queryset = students.filter(
         Q(operational_payment_status=PaymentStatus.OVERDUE)
         | Q(status=StudentStatus.LEAD)
         | Q(latest_enrollment_status=EnrollmentStatus.PENDING)
-    ).order_by('full_name')[:6]
+    )
+    priority_students = priority_students_queryset.order_by('full_name')[:6]
 
     visible_students = list(students)
     for student in visible_students:
+        student.is_new_30d = bool(student.created_at and student.created_at >= thirty_days_ago)
         total_presence = getattr(student, 'recent_presence_total', 0) or 0
         attended_presence = getattr(student, 'recent_presence_attended', 0) or 0
         if total_presence > 0:
@@ -251,36 +247,48 @@ def build_student_directory_snapshot(params=None, for_export=False):
         'filter_form': filter_form,
         'interactive_kpis': [
             {
-                'label': 'Alunos ativos',
+                'label': 'Ativos',
                 'display_value': ativos_count,
+                'note': 'Mostra a leitura da base ativa e abre o diretorio principal sem navegar para outra URL.',
                 'icon': _catalog_kpi_icon('active'),
                 'tone_class': 'kpi-green',
-                'href': '?student_status=active#tab-students-directory',
-                'is_selected': selected_student_status == StudentStatus.ACTIVE,
+                'data_action': 'open-tab-students-active',
+                'target_panel': 'tab-students-directory',
+                'student_filter': 'active',
+                'is_selected': True,
             },
             {
                 'label': 'Inadimplentes',
                 'display_value': inadimplentes_count,
+                'note': 'Mostra a leitura de atraso e aplica o recorte financeiro no diretorio sem trocar de pagina.',
                 'icon': _catalog_kpi_icon('overdue'),
                 'tone_class': 'kpi-red',
-                'href': '?payment_status=overdue#tab-students-directory',
-                'is_selected': selected_payment_status == PaymentStatus.OVERDUE,
+                'data_action': 'open-tab-students-overdue',
+                'target_panel': 'tab-students-directory',
+                'student_filter': 'overdue',
+                'is_selected': False,
             },
             {
                 'label': 'Novos (30D)',
                 'display_value': novos_30d_count,
+                'note': 'Mostra alunos criados nos ultimos 30 dias e aplica o recorte no diretorio sem navegar.',
                 'icon': _catalog_kpi_icon('growth'),
                 'tone_class': 'kpi-cyan',
-                'href': '?created_window=30d#tab-students-directory',
-                'is_selected': selected_created_window == '30d',
+                'data_action': 'open-tab-students-new',
+                'target_panel': 'tab-students-directory',
+                'student_filter': 'new-30d',
+                'is_selected': False,
             },
             {
                 'label': 'Inativos',
                 'display_value': inativos_count,
+                'note': 'Mostra a leitura de alunos inativos e abre a base principal sem trocar de pagina.',
                 'icon': _catalog_kpi_icon('inactive'),
                 'tone_class': 'kpi-purple',
-                'href': '?student_status=inactive#tab-students-directory',
-                'is_selected': selected_student_status == StudentStatus.INACTIVE,
+                'data_action': 'open-tab-students-inactive',
+                'target_panel': 'tab-students-directory',
+                'student_filter': 'inactive',
+                'is_selected': False,
             },
         ],
         'priority_students': priority_students,

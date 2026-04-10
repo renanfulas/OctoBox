@@ -214,7 +214,7 @@ def build_owner_workspace_snapshot(*, today):
         'owner_upcoming_sessions_total_label': f"{len(owner_upcoming_sessions)} aula(s)",
         'metric_cards': [
             {
-                **_build_metric_card('operation-kpi-card owner-green', 'Total de alunos', headline_metrics['students']),
+                **_build_metric_card('operation-kpi-card owner-emerald', 'Total de alunos', headline_metrics['students']),
                 'status_hint': 'neutral',
                 'href': reverse('student-directory'),
             },
@@ -224,7 +224,7 @@ def build_owner_workspace_snapshot(*, today):
                 'href': reverse('intake-center'),
             },
             {
-                **_build_metric_card('operation-kpi-card owner-green', 'WhatsApp pronto', headline_metrics['whatsapp_contacts']),
+                **_build_metric_card('operation-kpi-card owner-whatsapp', 'WhatsApp pronto', headline_metrics['whatsapp_contacts']),
                 'status_hint': 'neutral',
                 'href': reverse('whatsapp-workspace'),
             },

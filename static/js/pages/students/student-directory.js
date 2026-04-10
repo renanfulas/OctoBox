@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var filterForm = document.getElementById('student-directory-filter-form');
     var searchInput = filterForm ? filterForm.querySelector('input[name="query"]') : null;
     var pills = Array.from(document.querySelectorAll('[data-student-filter], [data-student-sort]'));
+    var kpiFilters = Array.from(document.querySelectorAll('[data-student-kpi-filter]'));
     var rows = Array.from(document.querySelectorAll('[data-student-row]'));
     var tbody = document.querySelector('[data-student-directory-body]');
     var countNode = document.querySelector('[data-student-count]');
@@ -45,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
         sortBy: '',
         sortDirection: 'desc',
         searchQuery: '',
+        searchListAllCommand: false,
     };
     var currentSearchParams = new URLSearchParams(window.location.search || '');
     var rowPrefetchTimers = new WeakMap();
@@ -121,6 +123,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (nextFilter === 'active') {
             nextParams.set('student_status', 'active');
+        } else if (nextFilter === 'paused') {
+            nextParams.set('student_status', 'paused');
         } else if (nextFilter === 'inactive') {
             nextParams.set('student_status', 'inactive');
         } else if (nextFilter === 'overdue') {
@@ -1798,6 +1802,20 @@ document.addEventListener('DOMContentLoaded', function() {
             .trim();
     }
 
+    function isListAllSearchCommand(value) {
+        return String(value || '').trim() === '/';
+    }
+
+    function setSearchStateFromInputValue(value) {
+        filterState.searchListAllCommand = isListAllSearchCommand(value);
+        filterState.searchQuery = filterState.searchListAllCommand ? '' : normalizeSearchText(value);
+        if (filterState.searchListAllCommand) {
+            filterState.filter = 'all';
+            filterState.sortBy = '';
+            filterState.sortDirection = 'desc';
+        }
+    }
+
     function getRowSearchIndex(row) {
         var cachedIndex = row.getAttribute('data-search-normalized');
         if (cachedIndex) {
@@ -1847,6 +1865,7 @@ document.addEventListener('DOMContentLoaded', function() {
             status: entry.status || '',
             latest_plan_name: entry.latest_plan_name || '',
             payment_status: entry.payment_status || '',
+            is_new_30d: Boolean(entry.is_new_30d),
             presence_percent: Number(entry.presence_percent || 0),
             due_label: entry.due_label || '',
             href: entry.href || '',
@@ -1859,6 +1878,10 @@ document.addEventListener('DOMContentLoaded', function() {
             lock_heartbeat_url: entry.lock_heartbeat_url || '',
             lock_status_url: entry.lock_status_url || '',
         };
+    }
+
+    function isDirectoryBaseStatus(status) {
+        return status !== 'lead';
     }
 
     function buildDirectoryRowMarkup(entry) {
@@ -1932,6 +1955,7 @@ document.addEventListener('DOMContentLoaded', function() {
         row.setAttribute('data-student-plan', student.latest_plan_name || '');
         row.setAttribute('data-student-due-label', student.due_label || '');
         row.setAttribute('data-student-status', student.status || '');
+        row.setAttribute('data-student-new-30d', student.is_new_30d ? 'true' : 'false');
         row.setAttribute('data-payment-status', student.payment_status || '');
         row.setAttribute('data-presence-percent', String(student.presence_percent || 0));
         row.setAttribute('data-search-index', (student.full_name + ' ' + (student.email || student.phone || '') + ' ' + (student.latest_plan_name || '--')).toLowerCase());
@@ -1962,16 +1986,19 @@ document.addEventListener('DOMContentLoaded', function() {
             var paymentStatus = entry.payment_status || '';
             var studentStatus = entry.status || '';
             var searchIndexValue = normalizeSearchText(entry.full_name + ' ' + (entry.email || entry.phone || '') + ' ' + (entry.latest_plan_name || '--'));
-            var matchesQuery = !filterState.searchQuery || searchIndexValue.indexOf(filterState.searchQuery) !== -1;
+            var matchesQuery = filterState.searchListAllCommand || !filterState.searchQuery || searchIndexValue.indexOf(filterState.searchQuery) !== -1;
             if (!matchesQuery) {
                 return false;
             }
 
             if (filterState.filter === 'all') {
-                return true;
+                return isDirectoryBaseStatus(studentStatus);
             }
             if (filterState.filter === 'overdue') {
                 return paymentStatus === 'overdue';
+            }
+            if (filterState.filter === 'new-30d') {
+                return Boolean(entry.is_new_30d);
             }
             return studentStatus === filterState.filter;
         });
@@ -2149,21 +2176,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function matchesFilter(row) {
         if (filterState.filter === 'all') {
-            return true;
+            return isDirectoryBaseStatus(row.getAttribute('data-student-status') || '');
         }
 
         if (filterState.filter === 'overdue') {
             return row.getAttribute('data-payment-status') === 'overdue';
         }
 
+        if (filterState.filter === 'new-30d') {
+            return row.getAttribute('data-student-new-30d') === 'true';
+        }
+
         return row.getAttribute('data-student-status') === filterState.filter;
     }
 
     function applyLocalDirectoryState() {
-        setDirectoryFooterVisibility(!filterState.searchQuery);
+        var shouldUseSearchIndex = filterState.searchQuery || filterState.searchListAllCommand;
+        setDirectoryFooterVisibility(!shouldUseSearchIndex);
 
-        if (filterState.searchQuery) {
-            if (isDirectorySearchStale()) {
+        if (shouldUseSearchIndex) {
+            if (filterState.searchQuery && isDirectorySearchStale()) {
                 scheduleDirectorySearchSubmit();
                 return;
             }
@@ -2216,23 +2248,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.clearTimeout(searchSubmitTimerId);
                 searchSubmitTimerId = null;
             }
+            if (isListAllSearchCommand(searchInput.value)) {
+                event.preventDefault();
+                setSearchStateFromInputValue(searchInput.value);
+                syncPills();
+                applyLocalDirectoryState();
+            }
         });
 
         searchInput.addEventListener('input', function() {
-            filterState.searchQuery = normalizeSearchText(searchInput.value);
-            if (!filterState.searchQuery && directorySearchState.isUsingSearchIndex) {
+            setSearchStateFromInputValue(searchInput.value);
+            if (!filterState.searchQuery && !filterState.searchListAllCommand && directorySearchState.isUsingSearchIndex) {
                 restoreServerRows();
             }
+            syncPills();
             applyLocalDirectoryState();
         });
 
-        filterState.searchQuery = normalizeSearchText(searchInput.value);
+        setSearchStateFromInputValue(searchInput.value);
     }
 
     if (currentSearchParams.get('payment_status') === 'overdue') {
         filterState.filter = 'overdue';
     } else if (currentSearchParams.get('student_status') === 'inactive') {
         filterState.filter = 'inactive';
+    } else if (currentSearchParams.get('student_status') === 'paused') {
+        filterState.filter = 'paused';
     } else if (currentSearchParams.get('student_status') === 'active') {
         filterState.filter = 'active';
     }
@@ -2264,6 +2305,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             syncPills();
+            applyLocalDirectoryState();
+        });
+    });
+
+    kpiFilters.forEach(function(card) {
+        card.addEventListener('click', function() {
+            var nextFilter = card.getAttribute('data-student-kpi-filter') || 'all';
+            filterState.filter = nextFilter;
+            if (filterState.sortBy === 'presence') {
+                filterState.sortBy = '';
+                filterState.sortDirection = 'desc';
+            }
+            syncPills();
+            if (getDirectorySearchIndex().length) {
+                renderDirectorySearchRows();
+                return;
+            }
             applyLocalDirectoryState();
         });
     });

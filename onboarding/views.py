@@ -16,9 +16,11 @@ PONTOS CRITICOS:
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.views import View
 from django.views.generic import TemplateView
 
 from access.permissions import RoleRequiredMixin
@@ -35,7 +37,7 @@ from .presentation import build_intake_center_page
 from .queries import build_intake_center_snapshot
 
 
-INTAKE_SEARCH_INDEX_LIMIT = 250
+INTAKE_SEARCH_INDEX_LIMIT = 200
 
 
 def _serialize_intake_search_entry(*, item, request):
@@ -52,6 +54,22 @@ def _serialize_intake_search_entry(*, item, request):
             request=request,
         ),
     }
+
+
+def _clean_intake_search_index_params(params):
+    index_params = params.copy()
+    for key in ('query', 'panel', 'offset'):
+        if key in index_params:
+            del index_params[key]
+    return index_params
+
+
+def _parse_non_negative_int(value, default=0):
+    try:
+        parsed_value = int(value)
+    except (TypeError, ValueError):
+        return default
+    return max(parsed_value, 0)
 
 
 class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
@@ -112,11 +130,7 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         current_role = self._get_current_role()
         snapshot = kwargs.get('snapshot') or self._build_snapshot()
-        index_params = self.request.GET.copy()
-        if 'query' in index_params:
-            del index_params['query']
-        if 'panel' in index_params:
-            del index_params['panel']
+        index_params = _clean_intake_search_index_params(self.request.GET)
         search_snapshot = build_intake_center_snapshot(
             params=index_params,
             actor_role_slug=getattr(current_role, 'slug', ''),
@@ -128,6 +142,11 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
             intake_search={
                 'cache_key': index_params.urlencode() or 'all',
                 'refresh_token': search_snapshot.get('queue_refresh_token', ''),
+                'page_url': reverse('intake-search-index-page'),
+                'page_size': INTAKE_SEARCH_INDEX_LIMIT,
+                'total': search_snapshot.get('queue_total_count', 0),
+                'has_next': search_snapshot.get('queue_has_next', False),
+                'next_offset': search_snapshot.get('queue_next_offset'),
                 'index': [
                     _serialize_intake_search_entry(item=item, request=self.request)
                     for item in search_snapshot.get('queue_items', [])
@@ -227,4 +246,33 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
         return redirect(self._get_success_url(form.cleaned_data.get('return_query', '')))
 
 
-__all__ = ['IntakeCenterView']
+class IntakeSearchIndexPageView(LoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION)
+
+    def get(self, request, *args, **kwargs):
+        current_role = get_user_role(request.user)
+        offset = _parse_non_negative_int(request.GET.get('offset'), default=0)
+        index_params = _clean_intake_search_index_params(request.GET)
+        snapshot = build_intake_center_snapshot(
+            params=index_params,
+            actor_role_slug=getattr(current_role, 'slug', ''),
+            queue_limit=INTAKE_SEARCH_INDEX_LIMIT,
+            queue_offset=offset,
+        )
+        return JsonResponse(
+            {
+                'cache_key': index_params.urlencode() or 'all',
+                'refresh_token': snapshot.get('queue_refresh_token', ''),
+                'page_size': INTAKE_SEARCH_INDEX_LIMIT,
+                'total': snapshot.get('queue_total_count', 0),
+                'has_next': snapshot.get('queue_has_next', False),
+                'next_offset': snapshot.get('queue_next_offset'),
+                'index': [
+                    _serialize_intake_search_entry(item=item, request=request)
+                    for item in snapshot.get('queue_items', [])
+                ],
+            }
+        )
+
+
+__all__ = ['IntakeCenterView', 'IntakeSearchIndexPageView']

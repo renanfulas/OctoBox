@@ -7,9 +7,10 @@ POR QUE ELE EXISTE:
 
 from django.urls import path
 
-from .views import IntakeCenterView
+from .views import IntakeCenterView, IntakeSearchIndexPageView
 
 
 urlpatterns = [
     path('entradas/', IntakeCenterView.as_view(), name='intake-center'),
+    path('entradas/indice/', IntakeSearchIndexPageView.as_view(), name='intake-search-index-page'),
 ]

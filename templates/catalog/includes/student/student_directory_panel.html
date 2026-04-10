@@ -38,6 +38,7 @@ POR QUE ELE EXISTE:
                     data-student-plan="{{ student.latest_plan_name|default:'' }}"
                     data-student-due-label="{% if student.latest_payment_due_date %}{{ student.latest_payment_due_date|date:'d/m/Y' }}{% endif %}"
                     data-student-status="{{ student.status }}"
+                    data-student-new-30d="{{ student.is_new_30d|yesno:'true,false' }}"
                     data-payment-status="{{ student.operational_payment_status|default:'' }}"
                     data-presence-percent="{{ student.presence_percent|default:0 }}"
                     data-search-index="{{ student.full_name|lower }} {{ student.email|default:student.phone|lower }} {{ student.latest_plan_name|default:'--'|lower }}"

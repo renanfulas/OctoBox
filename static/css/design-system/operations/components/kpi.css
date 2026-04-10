@@ -109,8 +109,14 @@ ARQUIVO: KPIs compartilhados das superfícies operacionais.
     border-color: color-mix(in srgb, var(--theme-accent-danger-alpha) 42%, var(--theme-border-soft) 58%);
 }
 
+.operation-shell .operation-metric-grid .metric-card.owner-emerald {
+    color: color-mix(in srgb, var(--theme-accent-success) 82%, white 18%);
+    border-color: color-mix(in srgb, var(--theme-accent-success-alpha) 38%, var(--theme-border-soft) 62%);
+}
+
 .operation-shell .operation-metric-grid .metric-card.status-clean,
 .operation-shell .operation-metric-grid .metric-card.owner-green,
+.operation-shell .operation-metric-grid .metric-card.owner-whatsapp,
 .operation-shell .operation-metric-grid .metric-card.coach-mint {
     color: color-mix(in srgb, var(--theme-accent-success) 82%, white 18%);
     border-color: color-mix(in srgb, var(--theme-accent-success-alpha) 38%, var(--theme-border-soft) 62%);
@@ -161,6 +167,16 @@ ARQUIVO: KPIs compartilhados das superfícies operacionais.
 .operation-kpi-card.owner-green {
     background: var(--theme-surface-glass);
     border-color: rgba(16, 185, 129, 0.16);
+}
+
+.operation-kpi-card.owner-emerald {
+    background: var(--theme-surface-glass);
+    border-color: rgba(16, 185, 129, 0.16);
+}
+
+.operation-kpi-card.owner-whatsapp {
+    background: var(--theme-surface-glass);
+    border-color: rgba(37, 211, 102, 0.16);
 }
 
 .operation-kpi-card.owner-ruby {
@@ -235,7 +251,9 @@ body[data-theme="dark"] .operation-kpi-card.dev-cyan {
 }
 
 body[data-theme="dark"] .operation-kpi-card.owner-green,
+body[data-theme="dark"] .operation-kpi-card.owner-emerald,
 body[data-theme="dark"] .operation-kpi-card.owner-ruby,
+body[data-theme="dark"] .operation-kpi-card.owner-whatsapp,
 body[data-theme="dark"] .operation-kpi-card.coach-mint,
 body[data-theme="dark"] .operation-kpi-card.dev-emerald {
     background: var(--theme-surface-glass-strong);

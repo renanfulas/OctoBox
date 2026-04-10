@@ -157,9 +157,10 @@ def _build_intake_radar_board(*, params, metrics_queryset, today):
     }
 
 
-def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None, queue_limit=12):
+def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None, queue_limit=12, queue_offset=0):
     today = today or timezone.localdate()
     params = params or {}
+    queue_offset = max(int(queue_offset or 0), 0)
     base_queryset = StudentIntake.objects.filter(
         status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING, IntakeStatus.MATCHED],
         linked_student__isnull=True,
@@ -215,9 +216,11 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         total=queue_refresh_aggregate.get('total') or 0,
         updated=(queue_refresh_aggregate.get('latest_updated_at').isoformat() if queue_refresh_aggregate.get('latest_updated_at') else ''),
     )
+    queue_total_count = queue_refresh_aggregate.get('total') or 0
+    queue_end_offset = queue_offset + queue_limit
 
     queue = list(
-        queue_queryset.select_related('linked_student', 'assigned_to').order_by(*_resolve_queue_ordering(sort_value=sort))[:queue_limit]
+        queue_queryset.select_related('linked_student', 'assigned_to').order_by(*_resolve_queue_ordering(sort_value=sort))[queue_offset:queue_end_offset]
     )
     queue_items = [
         build_intake_queue_item(intake=intake, actor_role_slug=actor_role_slug, today=today)
@@ -302,6 +305,11 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         'create_form': IntakeQuickCreateForm(),
         'intake_queue': queue,
         'visible_queue_count': visible_queue_count,
+        'queue_total_count': queue_total_count,
+        'queue_offset': queue_offset,
+        'queue_limit': queue_limit,
+        'queue_has_next': queue_end_offset < queue_total_count,
+        'queue_next_offset': queue_end_offset if queue_end_offset < queue_total_count else None,
         'queue_refresh_token': queue_refresh_token,
         'queue_items': queue_items,
         'first_intake': first_intake,
