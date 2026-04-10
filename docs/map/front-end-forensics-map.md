@@ -47,6 +47,7 @@ Mapas irmaos desta frente:
 10. [front-end-wave4-contract-audit.md](front-end-wave4-contract-audit.md) para o raio-x da trilha contratual entre payload, presenter, shell e template
 11. [front-end-wave4-operations-dependency-map.md](front-end-wave4-operations-dependency-map.md) para o inventario de onde `operations.css` ainda e full, pending ou contract-only no catalogo
 12. [front-end-contract-only-visual-smoke-checklist.md](front-end-contract-only-visual-smoke-checklist.md) para o roteiro curto de validacao visual das telas migradas para o contrato minimo
+13. [front-end-search-cache-contract-map.md](front-end-search-cache-contract-map.md) para o contrato de cache local, versionamento e invalidação das buscas ricas
 
 ## Ordem curta de leitura da cena do crime
 
