@@ -6,35 +6,6 @@ POR QUE ELE EXISTE:
 - mantém esse acabamento fora da base estrutural do owner.
 */
 
-body[data-theme="dark"] .owner-step-summary {
-    color: rgba(209, 213, 219, 0.72);
-}
-
-body[data-theme="dark"] .owner-simple-shell .owner-primary-copy .eyebrow,
-body[data-theme="dark"] .owner-simple-shell .owner-primary-text,
-body[data-theme="dark"] .owner-simple-shell .owner-secondary-body span,
-body[data-theme="dark"] .owner-simple-shell .owner-status-copy,
-body[data-theme="dark"] .owner-simple-shell .owner-summary-card .capability-list {
-    color: rgba(209, 213, 219, 0.72);
-}
-
-body[data-theme="dark"] .owner-simple-shell .owner-secondary-step,
-body[data-theme="dark"] .owner-simple-shell .owner-status-label {
-    color: color-mix(in srgb, var(--theme-text-muted) 88%, white 12%);
-}
-
-body[data-theme="dark"] .owner-simple-shell .owner-secondary-body strong,
-body[data-theme="dark"] .owner-simple-shell .owner-status-value {
-    color: rgba(243, 244, 246, 0.96);
-}
-
-body[data-theme="dark"] .owner-simple-shell .owner-primary-panel .operation-card-head,
-body[data-theme="dark"] .owner-simple-shell .owner-status-panel .operation-card-head,
-body[data-theme="dark"] .owner-simple-shell .owner-summary-card .operation-card-head,
-body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
-    border-bottom-color: rgba(255, 255, 255, 0.06);
-}
-
 @media (max-width: 1180px) {
     .owner-simple-shell .owner-metric-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -66,54 +37,5 @@ body[data-theme="dark"] .owner-simple-shell .owner-summary-card .card-head {
     .owner-metric-grid .operation-kpi-card {
         min-height: 144px;
     }
-}
-
-.owner-primary-title {
-    margin: 0;
-    font-size: clamp(1.35rem, 2vw, 1.7rem);
-    line-height: 1.05;
-    letter-spacing: -0.04em;
-}
-
-.owner-secondary-kicker {
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.11em;
-    color: rgba(95, 90, 84, 0.68);
-    font-weight: 700;
-}
-
-.owner-secondary-step {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 40px;
-    height: 40px;
-    padding: 0 10px;
-    border-radius: 8px;
-    border: 1px solid var(--line);
-    background: var(--bg);
-    color: var(--brand);
-}
-
-.owner-status-item,
-.owner-secondary-item {
-    transition: border-color 0.16s ease, box-shadow 0.16s ease;
-}
-
-.owner-status-item:hover,
-.owner-secondary-item:hover {
-    border-color: var(--brand);
-    box-shadow: var(--shadow-lift);
-}
-
-body[data-theme="dark"] .owner-secondary-kicker {
-    color: color-mix(in srgb, var(--theme-text-muted) 84%, white 16%);
-}
-
-body[data-theme="dark"] .owner-secondary-step {
-    border-color: var(--line);
-    background: var(--surface);
-    color: var(--brand);
 }
 

@@ -7,11 +7,7 @@ POR QUE ELE EXISTE:
 */
 
 body[data-theme="dark"] .owner-simple-shell .operation-hero,
-body[data-theme="dark"] .owner-simple-shell .owner-metric-grid .operation-kpi-card,
-body[data-theme="dark"] .owner-simple-shell .owner-secondary-item,
-body[data-theme="dark"] .owner-simple-shell .owner-status-item,
-body[data-theme="dark"] .owner-simple-shell .owner-step-card,
-body[data-theme="dark"] .owner-simple-shell .owner-summary-card .capability-list li {
+body[data-theme="dark"] .owner-simple-shell .owner-metric-grid .operation-kpi-card {
     border-color: color-mix(in srgb, var(--theme-glass-border) 92%, transparent);
     background: var(--theme-surface-glass);
     box-shadow: var(--theme-glass-shadow);
@@ -46,16 +42,4 @@ body[data-theme="dark"] .owner-simple-shell .owner-metric-grid .operation-kpi-ca
     box-shadow:
         0 30px 54px rgba(2, 6, 23, 0.38),
         inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-body[data-theme="dark"] .owner-next-steps-title {
-    color: rgba(243, 244, 246, 0.96);
-}
-
-body[data-theme="dark"] .owner-step-number {
-    color: rgba(209, 213, 219, 0.62);
-}
-
-body[data-theme="dark"] .owner-step-body strong {
-    color: rgba(243, 244, 246, 0.96);
 }

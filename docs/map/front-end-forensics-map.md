@@ -48,6 +48,7 @@ Mapas irmaos desta frente:
 11. [front-end-wave4-operations-dependency-map.md](front-end-wave4-operations-dependency-map.md) para o inventario de onde `operations.css` ainda e full, pending ou contract-only no catalogo
 12. [front-end-contract-only-visual-smoke-checklist.md](front-end-contract-only-visual-smoke-checklist.md) para o roteiro curto de validacao visual das telas migradas para o contrato minimo
 13. [front-end-search-cache-contract-map.md](front-end-search-cache-contract-map.md) para o contrato de cache local, versionamento e invalidação das buscas ricas
+14. [front-end-owner-workspace-audit.md](front-end-owner-workspace-audit.md) para o raio-x do `/operacao/owner/`, legado notion e manifestos vivos da superficie
 
 ## Ordem curta de leitura da cena do crime
 

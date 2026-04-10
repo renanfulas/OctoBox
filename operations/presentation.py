@@ -155,7 +155,6 @@ def _build_operation_workspace_hero(page_key, snapshot):
 
 
 def _build_operation_workspace_reading_panel(page_key, snapshot):
-    owner_priority_context = snapshot.get('owner_priority_context') or {}
     owner_decision_entry_context = snapshot.get('owner_decision_entry_context') or {}
     manager_priority_context = snapshot.get('manager_priority_context') or {}
     manager_decision_entry_context = snapshot.get('manager_decision_entry_context') or {}
@@ -166,8 +165,8 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
         'operations-owner': build_page_reading_panel(
             items=snapshot.get('owner_operational_focus'),
             primary_href=resolve_primary_href(snapshot.get('owner_operational_focus'), owner_decision_entry_context.get('entry_href')),
-            pill_label=owner_priority_context.get('pill_label'),
-            pill_class=owner_priority_context.get('pill_class'),
+            pill_label='Agora',
+            pill_class='accent',
             class_name='owner-command-panel',
             panel_id='owner-command-lane',
         ),
