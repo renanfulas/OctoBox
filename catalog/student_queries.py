@@ -14,7 +14,7 @@ PONTOS CRITICOS:
 
 from datetime import timedelta
 
-from django.db.models import Case, CharField, Exists, OuterRef, Q, Subquery, Value, When, Sum, Count, IntegerField
+from django.db.models import Case, CharField, Exists, OuterRef, Q, Subquery, Value, When, Sum, Count, IntegerField, Max
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from operations.models import Attendance
@@ -206,6 +206,10 @@ def build_student_directory_snapshot(params=None, for_export=False):
         pendentes=Count('id', filter=Q(operational_payment_status=PaymentStatus.PENDING)),
         inativos=Count('id', filter=Q(status=StudentStatus.INACTIVE)),
         novos_30d=Count('id', filter=Q(created_at__gte=thirty_days_ago)),
+        latest_student_updated_at=Max('updated_at'),
+        latest_enrollment_updated_at=Max('enrollments__updated_at'),
+        latest_payment_updated_at=Max('payments__updated_at'),
+        latest_attendance_updated_at=Max('attendances__updated_at'),
     )
 
     total_students = metrics['total']
@@ -215,6 +219,13 @@ def build_student_directory_snapshot(params=None, for_export=False):
     pendentes_count = metrics['pendentes']
     inativos_count = metrics['inativos']
     novos_30d_count = metrics['novos_30d']
+    directory_refresh_token = '{total}:{student}:{enrollment}:{payment}:{attendance}'.format(
+        total=total_students or 0,
+        student=(metrics['latest_student_updated_at'].isoformat() if metrics['latest_student_updated_at'] else ''),
+        enrollment=(metrics['latest_enrollment_updated_at'].isoformat() if metrics['latest_enrollment_updated_at'] else ''),
+        payment=(metrics['latest_payment_updated_at'].isoformat() if metrics['latest_payment_updated_at'] else ''),
+        attendance=(metrics['latest_attendance_updated_at'].isoformat() if metrics['latest_attendance_updated_at'] else ''),
+    )
 
     pending_intakes_count = count_pending_intakes()
     intake_queue = list(get_intake_conversion_queue(limit=6))
@@ -277,6 +288,7 @@ def build_student_directory_snapshot(params=None, for_export=False):
         'pending_intakes_count': pending_intakes_count,
         'em_dia_count': em_dia_count,
         'pendentes_count': pendentes_count,
+        'directory_refresh_token': directory_refresh_token,
     }
 
 

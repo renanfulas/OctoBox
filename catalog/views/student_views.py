@@ -288,7 +288,7 @@ class StudentDirectoryView(CatalogBaseView):
             base_query_string=base_query_string,
             directory_search={
                 'cache_key': index_params.urlencode() or 'all',
-                'refresh_token': timezone.now().isoformat(),
+                'refresh_token': search_snapshot.get('directory_refresh_token', ''),
                 'index': directory_search_entries,
             },
         )

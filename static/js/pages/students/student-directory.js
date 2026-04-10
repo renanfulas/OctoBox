@@ -182,6 +182,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!cacheEntry || !Array.isArray(cacheEntry.index)) {
             return [];
         }
+
+        if ((cacheEntry.refresh_token || '') !== String(directorySearchConfig.refresh_token || '')) {
+            return [];
+        }
+
         return cacheEntry.index;
     }
 
