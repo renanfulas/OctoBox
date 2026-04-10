@@ -387,6 +387,12 @@
         applyLocalQueueState();
     });
 
+    filterForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        setSearchStateFromInputValue(searchInput.value);
+        applyLocalQueueState();
+    });
+
     tbody.addEventListener('click', function(event) {
         var nextButton = event.target.closest('[data-intake-search-next]');
         if (!nextButton) {

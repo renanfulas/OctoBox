@@ -50,7 +50,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     var currentSearchParams = new URLSearchParams(window.location.search || '');
     var rowPrefetchTimers = new WeakMap();
-    var searchSubmitTimerId = null;
     var serverRows = rows.slice();
     var directorySearchCacheKey = 'octobox.student.directory.search-index.v1.' + String(directorySearchConfig.cache_key || 'all');
     var directorySearchStaleKey = 'octobox.student.directory.search-index.stale.v1.' + String(directorySearchConfig.cache_key || 'all');
@@ -1154,13 +1153,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function warmStudentRow(row) {
+    function warmStudentRow(row, options) {
         if (!row || row.hidden) {
             return;
         }
 
         cacheStudentHint(row);
-        fetchSnapshotForRow(row);
+        if (!(options && options.skipSnapshot)) {
+            fetchSnapshotForRow(row);
+        }
         prefetchStudentDocument(row.getAttribute('data-href') || '');
     }
 
@@ -1763,7 +1764,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .filter(function(row) { return !row.hidden; })
                 .slice(0, idlePrefetchLimit)
                 .forEach(function(row) {
-                    warmStudentRow(row);
+                    warmStudentRow(row, { skipSnapshot: true });
                 });
         };
 
@@ -2038,44 +2039,6 @@ document.addEventListener('DOMContentLoaded', function() {
         setDirectoryFooterVisibility(false);
     }
 
-    function submitDirectorySearchForm() {
-        if (!filterForm) {
-            return;
-        }
-
-        if (searchSubmitTimerId) {
-            window.clearTimeout(searchSubmitTimerId);
-            searchSubmitTimerId = null;
-        }
-
-        if (typeof filterForm.requestSubmit === 'function') {
-            filterForm.requestSubmit();
-            return;
-        }
-
-        filterForm.submit();
-    }
-
-    function scheduleDirectorySearchSubmit() {
-        if (!filterForm || !searchInput) {
-            return;
-        }
-
-        var nextQuery = normalizeSearchText(searchInput.value);
-        var currentQuery = normalizeSearchText(searchInput.defaultValue || '');
-        if (nextQuery === currentQuery) {
-            return;
-        }
-
-        if (searchSubmitTimerId) {
-            window.clearTimeout(searchSubmitTimerId);
-        }
-
-        searchSubmitTimerId = window.setTimeout(function() {
-            submitDirectorySearchForm();
-        }, 280);
-    }
-
     function bindRowInteractions(row) {
         if (!row) {
             return;
@@ -2195,11 +2158,6 @@ document.addEventListener('DOMContentLoaded', function() {
         setDirectoryFooterVisibility(!shouldUseSearchIndex);
 
         if (shouldUseSearchIndex) {
-            if (filterState.searchQuery && isDirectorySearchStale()) {
-                scheduleDirectorySearchSubmit();
-                return;
-            }
-
             if (getDirectorySearchIndex().length) {
                 renderDirectorySearchRows();
                 return;
@@ -2244,16 +2202,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (filterForm && searchInput) {
         filterForm.addEventListener('submit', function(event) {
-            if (searchSubmitTimerId) {
-                window.clearTimeout(searchSubmitTimerId);
-                searchSubmitTimerId = null;
-            }
-            if (isListAllSearchCommand(searchInput.value)) {
-                event.preventDefault();
-                setSearchStateFromInputValue(searchInput.value);
-                syncPills();
-                applyLocalDirectoryState();
-            }
+            event.preventDefault();
+            setSearchStateFromInputValue(searchInput.value);
+            syncPills();
+            applyLocalDirectoryState();
         });
 
         searchInput.addEventListener('input', function() {

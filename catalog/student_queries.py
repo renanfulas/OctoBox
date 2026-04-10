@@ -163,6 +163,8 @@ def build_student_directory_snapshot(params=None, for_export=False):
 
     if filter_form.is_valid():
         query = (filter_form.cleaned_data.get('query') or '').strip()
+        if query == '/':
+            query = ''
         created_window = filter_form.cleaned_data.get('created_window')
         student_status = filter_form.cleaned_data.get('student_status')
         commercial_status = filter_form.cleaned_data.get('commercial_status')

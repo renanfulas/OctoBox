@@ -177,6 +177,8 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
 
     if filter_form.is_valid():
         query = (filter_form.cleaned_data.get('query') or '').strip()
+        if query == '/':
+            query = ''
         status = filter_form.cleaned_data.get('status')
         source = filter_form.cleaned_data.get('source')
         sort = filter_form.cleaned_data.get('sort')
