@@ -16,7 +16,7 @@ PONTOS CRITICOS:
 from datetime import timedelta
 from urllib.parse import urlencode
 
-from django.db.models import Count, Q
+from django.db.models import Count, Max, Q
 from django.utils import timezone
 from onboarding.attribution import summarize_acquisition_channels
 from onboarding.facade import build_intake_queue_item
@@ -183,7 +183,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         assignment = filter_form.cleaned_data.get('assignment')
 
         if query:
-            search_filter = Q(full_name__icontains=query) | Q(phone__icontains=query) | Q(email__icontains=query)
+            search_filter = Q(full_name__icontains=query)
             queue_queryset = queue_queryset.filter(search_filter)
             metrics_queryset = metrics_queryset.filter(search_filter)
         if status:
@@ -206,6 +206,15 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
             metrics_queryset = metrics_queryset.filter(assigned_to__isnull=True)
     else:
         sort = ''
+
+    queue_refresh_aggregate = queue_queryset.aggregate(
+        total=Count('id'),
+        latest_updated_at=Max('updated_at'),
+    )
+    queue_refresh_token = '{total}:{updated}'.format(
+        total=queue_refresh_aggregate.get('total') or 0,
+        updated=(queue_refresh_aggregate.get('latest_updated_at').isoformat() if queue_refresh_aggregate.get('latest_updated_at') else ''),
+    )
 
     queue = list(
         queue_queryset.select_related('linked_student', 'assigned_to').order_by(*_resolve_queue_ordering(sort_value=sort))[:queue_limit]
@@ -293,6 +302,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         'create_form': IntakeQuickCreateForm(),
         'intake_queue': queue,
         'visible_queue_count': visible_queue_count,
+        'queue_refresh_token': queue_refresh_token,
         'queue_items': queue_items,
         'first_intake': first_intake,
         'intake_operational_focus': [

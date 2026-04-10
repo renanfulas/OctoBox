@@ -17,6 +17,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.shortcuts import redirect
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views.generic import TemplateView
 
@@ -32,6 +33,25 @@ from .forms import IntakeQueueActionForm, IntakeQuickCreateForm
 from .facade import run_intake_queue_action
 from .presentation import build_intake_center_page
 from .queries import build_intake_center_snapshot
+
+
+INTAKE_SEARCH_INDEX_LIMIT = 250
+
+
+def _serialize_intake_search_entry(*, item, request):
+    intake = item['object']
+    return {
+        'id': intake.id,
+        'full_name': intake.full_name,
+        'registration_age_days': item['registration_age_days'],
+        'row_html': render_to_string(
+            'onboarding/includes/intake/intake_queue_row.html',
+            {
+                'item': item,
+            },
+            request=request,
+        ),
+    }
 
 
 class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
@@ -91,9 +111,28 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         current_role = self._get_current_role()
+        snapshot = kwargs.get('snapshot') or self._build_snapshot()
+        index_params = self.request.GET.copy()
+        if 'query' in index_params:
+            del index_params['query']
+        if 'panel' in index_params:
+            del index_params['panel']
+        search_snapshot = build_intake_center_snapshot(
+            params=index_params,
+            actor_role_slug=getattr(current_role, 'slug', ''),
+            queue_limit=INTAKE_SEARCH_INDEX_LIMIT,
+        )
         page_payload = build_intake_center_page(
-            snapshot=kwargs.get('snapshot') or self._build_snapshot(),
+            snapshot=snapshot,
             current_role_slug=getattr(current_role, 'slug', ''),
+            intake_search={
+                'cache_key': index_params.urlencode() or 'all',
+                'refresh_token': search_snapshot.get('queue_refresh_token', ''),
+                'index': [
+                    _serialize_intake_search_entry(item=item, request=self.request)
+                    for item in search_snapshot.get('queue_items', [])
+                ],
+            },
         )
         attach_page_payload(context, payload_key='intake_center_page', payload=page_payload)
         context['active_intake_panel'] = kwargs.get('active_panel') or self._get_active_panel()

@@ -38,7 +38,7 @@ SORT_CHOICES = (
 
 
 class IntakeCenterFilterForm(forms.Form):
-    query = forms.CharField(required=False, label='Buscar por nome, telefone ou e-mail')
+    query = forms.CharField(required=False, label='Buscar por nome')
     status = forms.ChoiceField(required=False, label='Status', choices=())
     source = forms.ChoiceField(required=False, label='Origem', choices=())
     sort = forms.ChoiceField(required=False, label='Ordenacao', choices=SORT_CHOICES)
@@ -57,7 +57,7 @@ class IntakeCenterFilterForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['status'].choices = (('', 'Todos os status'), *status_choices)
         self.fields['source'].choices = (('', 'Todas as origens'), *source_choices)
-        apply_text_input_attrs(self.fields['query'], placeholder='Ex.: Fernanda, 1199..., lead@box.com', maxlength=150)
+        apply_text_input_attrs(self.fields['query'], placeholder='Ex.: Fernanda, Helio, Heloisa', maxlength=150)
 
 
 from onboarding.model_definitions import StudentIntake
