@@ -86,6 +86,51 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.__octoboxStudentRealtimeTelemetry = realtimeTelemetry;
 
+    function setDirectoryFooterVisibility(shouldShow) {
+        if (!directoryFooter) {
+            return;
+        }
+
+        directoryFooter.hidden = !shouldShow;
+        directoryFooter.style.display = shouldShow ? '' : 'none';
+    }
+
+    function hasServerScopedFilters() {
+        return currentSearchParams.has('student_status')
+            || currentSearchParams.has('commercial_status')
+            || currentSearchParams.has('payment_status')
+            || currentSearchParams.has('created_window');
+    }
+
+    function buildDirectoryFilterUrl(nextFilter) {
+        var nextParams = new URLSearchParams(window.location.search || '');
+        var liveQueryValue = searchInput ? String(searchInput.value || '').trim() : '';
+
+        nextParams.delete('student_status');
+        nextParams.delete('commercial_status');
+        nextParams.delete('payment_status');
+        nextParams.delete('created_window');
+        nextParams.delete('page');
+        nextParams.delete('keep_open');
+
+        if (liveQueryValue) {
+            nextParams.set('query', liveQueryValue);
+        } else {
+            nextParams.delete('query');
+        }
+
+        if (nextFilter === 'active') {
+            nextParams.set('student_status', 'active');
+        } else if (nextFilter === 'inactive') {
+            nextParams.set('student_status', 'inactive');
+        } else if (nextFilter === 'overdue') {
+            nextParams.set('payment_status', 'overdue');
+        }
+
+        var queryString = nextParams.toString();
+        return window.location.pathname + (queryString ? ('?' + queryString) : '') + '#tab-students-directory';
+    }
+
     function supportsSessionStorage() {
         try {
             return typeof window.sessionStorage !== 'undefined';
@@ -1903,9 +1948,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         rows = serverRows.slice();
         directorySearchState.isUsingSearchIndex = false;
-        if (directoryFooter) {
-            directoryFooter.hidden = false;
-        }
+        setDirectoryFooterVisibility(true);
     }
 
     function renderDirectorySearchRows() {
@@ -1960,9 +2003,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         directorySearchState.isUsingSearchIndex = true;
-        if (directoryFooter) {
-            directoryFooter.hidden = true;
-        }
+        setDirectoryFooterVisibility(false);
     }
 
     function submitDirectorySearchForm() {
@@ -2064,24 +2105,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function sortRowsIfNeeded(visibleRows) {
-        if (!tbody || filterState.sortBy !== 'presence') {
+        if (!tbody) {
             return;
         }
 
         visibleRows.sort(function(a, b) {
-            var leftValue = getPresenceValue(a);
-            var rightValue = getPresenceValue(b);
-            var compare = leftValue - rightValue;
+            if (filterState.sortBy === 'presence') {
+                var leftValue = getPresenceValue(a);
+                var rightValue = getPresenceValue(b);
+                var compare = leftValue - rightValue;
 
-            if (filterState.sortDirection === 'desc') {
-                compare *= -1;
+                if (filterState.sortDirection === 'desc') {
+                    compare *= -1;
+                }
+
+                if (compare !== 0) {
+                    return compare;
+                }
             }
 
-            if (compare !== 0) {
-                return compare;
-            }
-
-            return a.innerText.localeCompare(b.innerText, 'pt-BR');
+            var leftName = String(a.getAttribute('data-student-name') || a.innerText || '');
+            var rightName = String(b.getAttribute('data-student-name') || b.innerText || '');
+            return leftName.localeCompare(rightName, 'pt-BR');
         });
 
         visibleRows.forEach(function(row) {
@@ -2110,6 +2155,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function applyLocalDirectoryState() {
+        setDirectoryFooterVisibility(!filterState.searchQuery);
+
         if (filterState.searchQuery) {
             if (isDirectorySearchStale()) {
                 scheduleDirectorySearchSubmit();
@@ -2195,7 +2242,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     filterState.sortDirection = pill.getAttribute('data-sort-direction') || 'desc';
                 }
             } else {
-                filterState.filter = pill.getAttribute('data-student-filter') || 'all';
+                var nextFilter = pill.getAttribute('data-student-filter') || 'all';
+                if (filterState.filter === nextFilter && filterState.sortBy === 'presence') {
+                    filterState.sortBy = '';
+                    filterState.sortDirection = 'desc';
+                    filterState.filter = nextFilter;
+                    syncPills();
+                    applyLocalDirectoryState();
+                    return;
+                }
+                if (hasServerScopedFilters()) {
+                    window.location.assign(buildDirectoryFilterUrl(nextFilter));
+                    return;
+                }
+                filterState.filter = nextFilter;
             }
 
             syncPills();

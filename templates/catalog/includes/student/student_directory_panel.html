@@ -130,7 +130,7 @@ POR QUE ELE EXISTE:
         </table>
     </div>
 
-    <footer class="student-directory-footer" aria-label="Paginacao do diretorio de alunos">
+    <footer class="student-directory-footer" aria-label="Paginacao do diretorio de alunos"{% if page.data.student_filter_form.query.value %} hidden{% endif %}>
         <div class="student-directory-footer-side student-directory-footer-side--left">
             {% if page.data.students.has_previous %}
             <a href="?page={{ page.data.students.previous_page_number }}&{{ page.data.base_query_string }}" class="student-pagination-button student-pagination-button--ghost">Anterior</a>
