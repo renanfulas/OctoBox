@@ -199,13 +199,13 @@ def build_student_directory_snapshot(params=None, for_export=False):
             students = students.filter(created_at__gte=thirty_days_ago)
 
     metrics = students.aggregate(
-        total=Count('id'),
-        ativos=Count('id', filter=Q(status=StudentStatus.ACTIVE)),
-        em_dia=Count('id', filter=Q(status=StudentStatus.ACTIVE, operational_payment_status=PaymentStatus.PAID)),
-        inadimplentes=Count('id', filter=Q(operational_payment_status=PaymentStatus.OVERDUE)),
-        pendentes=Count('id', filter=Q(operational_payment_status=PaymentStatus.PENDING)),
-        inativos=Count('id', filter=Q(status=StudentStatus.INACTIVE)),
-        novos_30d=Count('id', filter=Q(created_at__gte=thirty_days_ago)),
+        total=Count('id', distinct=True),
+        ativos=Count('id', filter=Q(status=StudentStatus.ACTIVE), distinct=True),
+        em_dia=Count('id', filter=Q(status=StudentStatus.ACTIVE, operational_payment_status=PaymentStatus.PAID), distinct=True),
+        inadimplentes=Count('id', filter=Q(operational_payment_status=PaymentStatus.OVERDUE), distinct=True),
+        pendentes=Count('id', filter=Q(operational_payment_status=PaymentStatus.PENDING), distinct=True),
+        inativos=Count('id', filter=Q(status=StudentStatus.INACTIVE), distinct=True),
+        novos_30d=Count('id', filter=Q(created_at__gte=thirty_days_ago), distinct=True),
         latest_student_updated_at=Max('updated_at'),
         latest_enrollment_updated_at=Max('enrollments__updated_at'),
         latest_payment_updated_at=Max('payments__updated_at'),
