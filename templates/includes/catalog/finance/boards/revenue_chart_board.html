@@ -12,7 +12,6 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - depende do contrato de finance_trend_foundation e do recorte global ativo.
 -->
-{% load l10n %}
 <article class="table-card finance-board-trend finance-revenue-trend-card" id="finance-trend-board" data-finance-mode-visibility="traditional hybrid" data-finance-trend-board data-finance-trend-active="{{ page.data.finance_trend_default_metric_key }}">
     <div class="finance-revenue-trend-head">
         <div class="finance-revenue-trend-copy">
@@ -78,33 +77,26 @@ PONTOS CRITICOS:
                     </div>
                 </div>
             </div>
-            <div class="finance-revenue-sparkline finance-revenue-sparkline--{{ page.data.finance_trend_metric_views.recebido.sparkline.semantic_state }}" data-finance-trend-sparkline="recebido">
+            <div class="finance-revenue-sparkline finance-revenue-sparkline--recebido finance-revenue-sparkline--{{ page.data.finance_trend_metric_views.recebido.sparkline.semantic_state }}" data-finance-trend-sparkline="recebido">
                 <div class="finance-revenue-sparkline-copy">
                     <strong>{{ page.data.finance_trend_metric_views.recebido.sparkline.headline }}</strong>
-                    <span class="finance-revenue-sparkline-summary">
-                        <span class="finance-revenue-sparkline-value">{{ page.data.finance_trend_metric_views.recebido.sparkline.value_display }}</span>
-                        {% if page.data.finance_trend_metric_views.recebido.sparkline.delta_display %}
-                        <span class="finance-revenue-sparkline-delta">{{ page.data.finance_trend_metric_views.recebido.sparkline.delta_display }}</span>
-                        {% endif %}
-                    </span>
+                    <span>{{ page.data.finance_trend_metric_views.recebido.sparkline.summary }}</span>
                 </div>
                 <div class="finance-revenue-sparkline-visual" aria-label="Tendencia de recebido no recorte atual">
-                    {% localize off %}
-                    <svg viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true">
+                    <svg viewBox="0 0 377 36" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
                         <polyline points="{{ page.data.finance_trend_metric_views.recebido.sparkline.expected_polyline_points }}" class="finance-revenue-sparkline-line finance-revenue-sparkline-line--expected"></polyline>
                         <polyline points="{{ page.data.finance_trend_metric_views.recebido.sparkline.realized_polyline_points }}" class="finance-revenue-sparkline-line finance-revenue-sparkline-line--realized"></polyline>
                         {% for point in page.data.finance_trend_metric_views.recebido.sparkline.expected_points %}
-                        <circle cx="{{ point.x }}" cy="{{ point.y }}" r="1.5" class="finance-revenue-sparkline-point finance-revenue-sparkline-point--expected">
+                        <circle cx="{{ point.svg_x }}" cy="{{ point.svg_y }}" r="1.5" class="finance-revenue-sparkline-point finance-revenue-sparkline-point--expected">
                             <title>{{ point.tooltip }}</title>
                         </circle>
                         {% endfor %}
                         {% for point in page.data.finance_trend_metric_views.recebido.sparkline.realized_points %}
-                        <circle cx="{{ point.x }}" cy="{{ point.y }}" r="1.9" class="finance-revenue-sparkline-point finance-revenue-sparkline-point--realized">
+                        <circle cx="{{ point.svg_x }}" cy="{{ point.svg_y }}" r="1.9" class="finance-revenue-sparkline-point finance-revenue-sparkline-point--realized">
                             <title>{{ point.tooltip }}</title>
                         </circle>
                         {% endfor %}
                     </svg>
-                    {% endlocalize %}
                 </div>
             </div>
         </section>
@@ -140,33 +132,26 @@ PONTOS CRITICOS:
                     </div>
                 </div>
             </div>
-            <div class="finance-revenue-sparkline finance-revenue-sparkline--{{ page.data.finance_trend_metric_views.churn.sparkline.semantic_state }}" data-finance-trend-sparkline="churn">
+            <div class="finance-revenue-sparkline finance-revenue-sparkline--churn finance-revenue-sparkline--{{ page.data.finance_trend_metric_views.churn.sparkline.semantic_state }}" data-finance-trend-sparkline="churn">
                 <div class="finance-revenue-sparkline-copy">
                     <strong>{{ page.data.finance_trend_metric_views.churn.sparkline.headline }}</strong>
-                    <span class="finance-revenue-sparkline-summary">
-                        <span class="finance-revenue-sparkline-value">{{ page.data.finance_trend_metric_views.churn.sparkline.value_display }}</span>
-                        {% if page.data.finance_trend_metric_views.churn.sparkline.delta_display %}
-                        <span class="finance-revenue-sparkline-delta">{{ page.data.finance_trend_metric_views.churn.sparkline.delta_display }}</span>
-                        {% endif %}
-                    </span>
+                    <span>{{ page.data.finance_trend_metric_views.churn.sparkline.summary }}</span>
                 </div>
                 <div class="finance-revenue-sparkline-visual" aria-label="Tendencia de churn no recorte atual">
-                    {% localize off %}
-                    <svg viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true">
+                    <svg viewBox="0 0 377 36" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
                         <polyline points="{{ page.data.finance_trend_metric_views.churn.sparkline.expected_polyline_points }}" class="finance-revenue-sparkline-line finance-revenue-sparkline-line--expected"></polyline>
                         <polyline points="{{ page.data.finance_trend_metric_views.churn.sparkline.realized_polyline_points }}" class="finance-revenue-sparkline-line finance-revenue-sparkline-line--realized"></polyline>
                         {% for point in page.data.finance_trend_metric_views.churn.sparkline.expected_points %}
-                        <circle cx="{{ point.x }}" cy="{{ point.y }}" r="1.5" class="finance-revenue-sparkline-point finance-revenue-sparkline-point--expected">
+                        <circle cx="{{ point.svg_x }}" cy="{{ point.svg_y }}" r="1.5" class="finance-revenue-sparkline-point finance-revenue-sparkline-point--expected">
                             <title>{{ point.tooltip }}</title>
                         </circle>
                         {% endfor %}
                         {% for point in page.data.finance_trend_metric_views.churn.sparkline.realized_points %}
-                        <circle cx="{{ point.x }}" cy="{{ point.y }}" r="1.9" class="finance-revenue-sparkline-point finance-revenue-sparkline-point--realized">
+                        <circle cx="{{ point.svg_x }}" cy="{{ point.svg_y }}" r="1.9" class="finance-revenue-sparkline-point finance-revenue-sparkline-point--realized">
                             <title>{{ point.tooltip }}</title>
                         </circle>
                         {% endfor %}
                     </svg>
-                    {% endlocalize %}
                 </div>
             </div>
         </section>

@@ -1572,7 +1572,7 @@ POR QUE ELE EXISTE:
 
 .finance-revenue-sparkline {
     display: grid;
-    grid-template-columns: minmax(0, 180px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 140px) minmax(0, 1.4fr);
     gap: 14px;
     align-items: center;
     padding-top: 10px;
@@ -1652,22 +1652,6 @@ POR QUE ELE EXISTE:
     line-height: 1.35;
 }
 
-.finance-revenue-sparkline-summary {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-}
-
-.finance-revenue-sparkline-value {
-    color: var(--ink);
-    font-weight: 700;
-}
-
-.finance-revenue-sparkline-delta {
-    color: var(--muted);
-}
-
 .finance-revenue-sparkline-visual {
     min-width: 0;
     height: 44px;
@@ -1679,6 +1663,7 @@ POR QUE ELE EXISTE:
     width: 100%;
     height: 100%;
     overflow: visible;
+    shape-rendering: geometricPrecision;
 }
 
 .finance-revenue-sparkline-line {
@@ -1686,6 +1671,7 @@ POR QUE ELE EXISTE:
     stroke-width: 1.9;
     stroke-linecap: round;
     stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
 }
 
 .finance-revenue-sparkline-line--expected {
@@ -1699,6 +1685,7 @@ POR QUE ELE EXISTE:
 
 .finance-revenue-sparkline-point {
     opacity: 0.82;
+    vector-effect: non-scaling-stroke;
 }
 
 .finance-revenue-sparkline-point--expected {
@@ -1709,16 +1696,28 @@ POR QUE ELE EXISTE:
     fill: #64748b;
 }
 
+.finance-revenue-sparkline--churn .finance-revenue-sparkline-line--expected {
+    stroke: rgba(15, 118, 110, 0.48);
+}
+
+.finance-revenue-sparkline--churn .finance-revenue-sparkline-point--expected {
+    fill: #0f766e;
+}
+
+.finance-revenue-sparkline--churn .finance-revenue-sparkline-line--realized {
+    stroke: rgba(225, 29, 72, 0.58);
+}
+
+.finance-revenue-sparkline--churn .finance-revenue-sparkline-point--realized {
+    fill: #e11d48;
+}
+
 .finance-revenue-sparkline--good .finance-revenue-sparkline-line--realized {
     stroke: rgba(5, 150, 105, 0.56);
 }
 
 .finance-revenue-sparkline--good .finance-revenue-sparkline-point--realized {
     fill: #059669;
-}
-
-.finance-revenue-sparkline--good .finance-revenue-sparkline-delta {
-    color: #059669;
 }
 
 .finance-revenue-sparkline--bad .finance-revenue-sparkline-line--realized {
@@ -1729,20 +1728,12 @@ POR QUE ELE EXISTE:
     fill: #be185d;
 }
 
-.finance-revenue-sparkline--bad .finance-revenue-sparkline-delta {
-    color: #be185d;
-}
-
 .finance-revenue-sparkline--steady .finance-revenue-sparkline-line--realized {
     stroke: rgba(100, 116, 139, 0.56);
 }
 
 .finance-revenue-sparkline--steady .finance-revenue-sparkline-point--realized {
     fill: #64748b;
-}
-
-.finance-revenue-sparkline--steady .finance-revenue-sparkline-delta {
-    color: #64748b;
 }
 
 .finance-filter-summary-item {

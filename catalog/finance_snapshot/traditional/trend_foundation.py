@@ -13,6 +13,12 @@ O QUE ESTE ARQUIVO FAZ:
 from decimal import Decimal
 
 
+SPARKLINE_VIEWBOX_WIDTH = Decimal('377')
+SPARKLINE_VIEWBOX_HEIGHT = Decimal('36')
+SPARKLINE_DRAWING_BASELINE = Decimal('30')
+SPARKLINE_DRAWING_AMPLITUDE = Decimal('24')
+
+
 def _format_currency_compact(value):
     value = Decimal(value or 0)
     absolute = abs(value)
@@ -50,6 +56,14 @@ def _format_delta_count(current, previous):
     return f'{signal}{delta} vs mes anterior', direction
 
 
+def _format_svg_number(value):
+    decimal_value = Decimal(str(value or 0)).quantize(Decimal('0.01'))
+    normalized = format(decimal_value.normalize(), 'f')
+    if '.' in normalized:
+        normalized = normalized.rstrip('0').rstrip('.')
+    return normalized or '0'
+
+
 def _build_sparkline_points(series):
     values = [Decimal(item or 0) for item in series]
     if not values:
@@ -62,16 +76,24 @@ def _build_sparkline_points(series):
         span = Decimal('1')
 
     if len(values) == 1:
-        x_positions = [50]
+        x_positions = [float((SPARKLINE_VIEWBOX_WIDTH / Decimal('2')).quantize(Decimal('0.01')))]
     else:
-        step = Decimal('100') / Decimal(len(values) - 1)
+        step = SPARKLINE_VIEWBOX_WIDTH / Decimal(len(values) - 1)
         x_positions = [float((step * index).quantize(Decimal('0.01'))) for index in range(len(values))]
 
     points = []
     for index, value in enumerate(values):
         normalized = (value - min_value) / span
-        y = float((Decimal('30') - (normalized * Decimal('24'))).quantize(Decimal('0.01')))
-        points.append({'x': x_positions[index], 'y': y, 'value': value})
+        y = float((SPARKLINE_DRAWING_BASELINE - (normalized * SPARKLINE_DRAWING_AMPLITUDE)).quantize(Decimal('0.01')))
+        points.append(
+            {
+                'x': x_positions[index],
+                'y': y,
+                'svg_x': _format_svg_number(x_positions[index]),
+                'svg_y': _format_svg_number(y),
+                'value': value,
+            }
+        )
     return points
 
 
@@ -167,6 +189,8 @@ def _build_received_sparkline(monthly_comparison):
             {
                 'x': point['x'],
                 'y': point['y'],
+                'svg_x': point['svg_x'],
+                'svg_y': point['svg_y'],
                 'label': current_item.get('short_label') or current_item.get('label'),
                 'tooltip': tooltip,
             }
@@ -178,6 +202,8 @@ def _build_received_sparkline(monthly_comparison):
             {
                 'x': point['x'],
                 'y': point['y'],
+                'svg_x': point['svg_x'],
+                'svg_y': point['svg_y'],
                 'label': current_item.get('short_label') or current_item.get('label'),
                 'tooltip': f"{current_item.get('short_label')}: esperado {_format_currency_compact(current_item.get('expected_revenue', Decimal('0.00')))}",
             }
@@ -192,8 +218,8 @@ def _build_received_sparkline(monthly_comparison):
         'semantic_state': semantic_state,
         'realized_points': enriched_realized_points,
         'expected_points': enriched_expected_points,
-        'realized_polyline_points': ' '.join(f"{point['x']},{point['y']}" for point in enriched_realized_points),
-        'expected_polyline_points': ' '.join(f"{point['x']},{point['y']}" for point in enriched_expected_points),
+        'realized_polyline_points': ' '.join(f"{point['svg_x']},{point['svg_y']}" for point in enriched_realized_points),
+        'expected_polyline_points': ' '.join(f"{point['svg_x']},{point['svg_y']}" for point in enriched_expected_points),
     }
 
 
@@ -254,6 +280,8 @@ def _build_churn_sparkline(monthly_comparison):
             {
                 'x': point['x'],
                 'y': point['y'],
+                'svg_x': point['svg_x'],
+                'svg_y': point['svg_y'],
                 'label': current_item.get('short_label') or current_item.get('label'),
                 'tooltip': tooltip,
             }
@@ -265,6 +293,8 @@ def _build_churn_sparkline(monthly_comparison):
             {
                 'x': point['x'],
                 'y': point['y'],
+                'svg_x': point['svg_x'],
+                'svg_y': point['svg_y'],
                 'label': current_item.get('short_label') or current_item.get('label'),
                 'tooltip': f"{current_item.get('short_label')}: {current_item.get('activations', 0)} ativacoes",
             }
@@ -279,8 +309,8 @@ def _build_churn_sparkline(monthly_comparison):
         'semantic_state': semantic_state,
         'realized_points': enriched_cancellations_points,
         'expected_points': enriched_activations_points,
-        'realized_polyline_points': ' '.join(f"{point['x']},{point['y']}" for point in enriched_cancellations_points),
-        'expected_polyline_points': ' '.join(f"{point['x']},{point['y']}" for point in enriched_activations_points),
+        'realized_polyline_points': ' '.join(f"{point['svg_x']},{point['svg_y']}" for point in enriched_cancellations_points),
+        'expected_polyline_points': ' '.join(f"{point['svg_x']},{point['svg_y']}" for point in enriched_activations_points),
     }
 
 
@@ -406,7 +436,6 @@ def build_finance_trend_foundation(*, filter_form, finance_metrics, monthly_comp
         'metric_pills': metric_pills,
         'metric_views': metric_views,
         'default_metric_key': default_metric_key,
-        'sparkline': metric_views[default_metric_key]['sparkline'],
         'legend': {
             'primary': 'Realizado',
             'secondary': 'Esperado',

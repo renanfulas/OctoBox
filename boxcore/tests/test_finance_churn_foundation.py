@@ -239,8 +239,19 @@ class FinanceChurnFoundationTests(TestCase):
         self.assertEqual(snapshot['finance_trend_foundation']['metric_pills'][2]['availability_status'], 'pending_foundation')
         self.assertTrue(snapshot['finance_trend_foundation']['metric_pills'][1]['is_interactive'])
         self.assertTrue(snapshot['finance_trend_foundation']['metric_pills'][3]['is_interactive'])
-        self.assertEqual(snapshot['finance_trend_foundation']['sparkline']['metric_key'], 'received')
         self.assertEqual(snapshot['finance_trend_foundation']['metric_views']['churn']['sparkline']['metric_key'], 'churn')
+        self.assertEqual(snapshot['finance_trend_foundation']['metric_views']['recebido']['sparkline']['metric_key'], 'received')
+
+    def test_finance_trend_foundation_formats_svg_coordinates_with_dot_decimal(self):
+        snapshot = build_finance_snapshot()
+
+        received_sparkline = snapshot['finance_trend_foundation']['metric_views']['recebido']['sparkline']
+        churn_sparkline = snapshot['finance_trend_foundation']['metric_views']['churn']['sparkline']
+
+        for sparkline in (received_sparkline, churn_sparkline):
+            for point in sparkline['realized_points'] + sparkline['expected_points']:
+                self.assertNotIn(',', point['svg_x'])
+                self.assertNotIn(',', point['svg_y'])
 
     def test_build_finance_snapshot_persists_suggested_follow_up(self):
         student = Student.objects.create(full_name='Teo Follow', phone='5511910000011', status='inactive')

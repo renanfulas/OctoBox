@@ -88,7 +88,6 @@ def build_finance_center_page(
             'finance_follow_up_analytics': finance_follow_up_analytics,
             'finance_follow_up_analytics_board': finance_follow_up_analytics_board,
             'finance_revenue_chart': build_finance_revenue_chart(snapshot['monthly_comparison'], snapshot['comparison_peaks']),
-            'finance_received_sparkline': finance_trend_foundation['sparkline'],
             'finance_trend_metric_pills': finance_trend_foundation['metric_pills'],
             'finance_trend_foundation': finance_trend_foundation,
             'finance_trend_metric_views': finance_trend_foundation['metric_views'],
