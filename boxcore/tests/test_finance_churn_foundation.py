@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from catalog.finance_snapshot import build_financial_churn_foundation, build_finance_snapshot
-from catalog.finance_snapshot.follow_up_analytics import (
+from catalog.finance_snapshot.ai import (
     build_contextual_recommendation_map,
     build_finance_follow_up_analytics,
     build_turn_priority_tension_context_map,

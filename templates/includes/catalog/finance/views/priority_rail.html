@@ -11,26 +11,26 @@ ARQUIVO: regua prioritaria de cobranca e retencao.
         <span class="badge badge-subtle warning finance-board-shell-meta">{{ page.data.operational_queue|length }} acao(oes)</span>
     </div>
     {% if page.data.operational_queue %}
-    <div class="finance-priority-carousel" data-finance-priority-carousel>
-        <button class="finance-priority-nav finance-priority-nav-prev" type="button" aria-label="Ver acao anterior" data-action="finance-priority-prev">
+    <div class="finance-priority-carousel" data-finance-priority-carousel data-finance-carousel data-finance-carousel-remove-on-submit="true">
+        <button class="finance-priority-nav finance-priority-nav-prev" type="button" aria-label="Ver acao anterior" data-action="finance-priority-prev" data-finance-carousel-prev>
             <span aria-hidden="true">&#8249;</span>
         </button>
         <div class="finance-priority-stage">
             <div class="finance-priority-meta">
-                <div class="finance-priority-dots" data-finance-priority-dots aria-hidden="true"></div>
-                <p class="finance-priority-counter" data-finance-priority-counter aria-live="polite" aria-atomic="true">1 de 1</p>
+                <div class="finance-priority-dots" data-finance-priority-dots data-finance-carousel-dots aria-hidden="true"></div>
+                <p class="finance-priority-counter" data-finance-priority-counter data-finance-carousel-counter aria-live="polite" aria-atomic="true">1 de 1</p>
             </div>
-            <div class="finance-priority-viewport" data-finance-priority-viewport tabindex="0" aria-label="Mensagens prontas para cobranca">
-                <div class="finance-priority-track" data-finance-priority-track>
+            <div class="finance-priority-viewport" data-finance-priority-viewport data-finance-carousel-viewport tabindex="0" aria-label="Mensagens prontas para cobranca">
+                <div class="finance-priority-track" data-finance-priority-track data-finance-carousel-track>
                     {% for item in page.data.operational_queue %}
-                    <div class="finance-priority-slide">
+                    <div class="finance-priority-slide" data-finance-carousel-slide>
                         {% include "includes/ui/finance/finance_action_item.html" with item=item %}
                     </div>
                     {% endfor %}
                 </div>
             </div>
         </div>
-        <button class="finance-priority-nav finance-priority-nav-next" type="button" aria-label="Ver proxima acao" data-action="finance-priority-next">
+        <button class="finance-priority-nav finance-priority-nav-next" type="button" aria-label="Ver proxima acao" data-action="finance-priority-next" data-finance-carousel-next>
             <span aria-hidden="true">&#8250;</span>
         </button>
     </div>

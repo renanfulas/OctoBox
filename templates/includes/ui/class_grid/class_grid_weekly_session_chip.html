@@ -13,14 +13,14 @@
         {% url 'class-grid' as class_grid_url %}
         <div class="card-footer class-chip-actions">
             <div class="actions actions-tight">
-                <a class="button secondary button-sm" href="{{ class_grid_url }}?{% if page.behavior.current_query_string %}{{ page.behavior.current_query_string }}&{% endif %}edit_session={{ item.object.id }}#edicao-aula" data-action="open-class-grid-session-edit">Editar</a>
-                <form method="post" data-action="delete-class-grid-session">
+                <a class="button secondary button-sm" href="{{ class_grid_url }}?{% if page.behavior.current_query_string %}{{ page.behavior.current_query_string }}&{% endif %}edit_session={{ item.object.id }}#edicao-aula">Editar</a>
+                <form method="post">
                     {% csrf_token %}
                     <input type="hidden" name="form_kind" value="session-action">
                     <input type="hidden" name="action" value="delete-session">
                     <input type="hidden" name="session_id" value="{{ item.object.id }}">
                     <input type="hidden" name="return_query" value="{{ page.behavior.current_query_string }}">
-                    <button class="button secondary button-sm" type="submit" data-action="confirm-class-grid-session-delete">Excluir</button>
+                    <button class="button secondary button-sm" type="submit">Excluir</button>
                 </form>
             </div>
         </div>

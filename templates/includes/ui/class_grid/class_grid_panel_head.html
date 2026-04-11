@@ -14,7 +14,7 @@
             <span class="pill{% if pill_class %} {{ pill_class }}{% endif %}">{{ pill_label }}</span>
             {% endif %}
             {% if button_label %}
-            <button class="{{ button_class|default:'button secondary' }}" type="button"{% if button_id %} id="{{ button_id }}"{% endif %} data-action="class-grid-panel-button">{{ button_label }}</button>
+            <button class="{{ button_class|default:'button secondary' }}" type="button"{% if button_id %} id="{{ button_id }}"{% endif %}>{{ button_label }}</button>
             {% endif %}
         </div>
     </div>

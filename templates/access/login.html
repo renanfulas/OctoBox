@@ -73,7 +73,7 @@ PONTOS CRITICOS:
                         <span class="entry-badge info">passo 2</span>
                     </article>
                 </div>
-                <form method="post" data-slot="login-form-fields" data-action="submit-login">
+                <form method="post" data-slot="login-form-fields">
                     {% csrf_token %}
                     {% if form.errors %}
                     <div class="error-summary" role="alert" aria-live="polite" data-slot="login-error-summary">
@@ -110,7 +110,7 @@ PONTOS CRITICOS:
                     </ul>
                     {% endif %}
                     <p class="field-note" id="login-password-note">Entre com a senha do usuário interno para cair direto no papel certo.</p>
-                    <button type="submit" data-action="confirm-login">Entrar</button>
+                    <button type="submit">Entrar</button>
                     <input type="hidden" name="next" value="{{ next }}" autocomplete="off">
                 </form>
                 <div class="helper-card" data-panel="login-support-card">

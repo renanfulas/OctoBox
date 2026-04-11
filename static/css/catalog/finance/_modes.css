@@ -1,0 +1,91 @@
+/*
+ARQUIVO: contrato visual dos modos do financeiro.
+
+POR QUE ELE EXISTE:
+- deixa visivel a fronteira entre leitura tradicional, assistida e hibrida sem redesenhar a tela inteira.
+*/
+
+.finance-mode-strip {
+    display: grid;
+    gap: 14px;
+}
+
+.finance-mode-strip-copy {
+    display: grid;
+    gap: 4px;
+    max-width: 68ch;
+}
+
+.finance-mode-strip-copy strong {
+    color: var(--ink);
+    font-size: 1rem;
+    line-height: 1.18;
+}
+
+.finance-mode-strip-copy p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.finance-mode-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.finance-mode-card {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 76%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-panel) 94%, white 6%);
+    box-shadow: 0 8px 18px rgba(7, 14, 24, 0.04);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.finance-mode-card:hover,
+.finance-mode-card:focus-visible {
+    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 28%, var(--theme-border-soft));
+    box-shadow: 0 12px 24px rgba(7, 14, 24, 0.07);
+    transform: translateY(-1px);
+}
+
+.finance-mode-card.is-active {
+    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 38%, var(--theme-border-soft));
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 10%, transparent), transparent 38%),
+        color-mix(in srgb, var(--theme-surface-panel) 96%, white 4%);
+    box-shadow:
+        0 14px 26px rgba(7, 14, 24, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.finance-mode-card strong {
+    color: var(--ink);
+    font-size: 0.98rem;
+    line-height: 1.18;
+}
+
+.finance-mode-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.46;
+}
+
+.finance-mode-card-meta {
+    color: var(--muted-strong);
+    font-size: 0.78rem;
+}
+
+@media (max-width: 960px) {
+    .finance-mode-grid {
+        grid-template-columns: 1fr;
+    }
+}

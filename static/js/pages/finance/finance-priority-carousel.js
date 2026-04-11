@@ -7,24 +7,28 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    var carousels = document.querySelectorAll('[data-finance-priority-carousel]');
+    var carousels = document.querySelectorAll('[data-finance-carousel], [data-finance-priority-carousel]');
 
     carousels.forEach(function(carousel) {
-        var viewport = carousel.querySelector('[data-finance-priority-viewport]');
-        var track = carousel.querySelector('[data-finance-priority-track]');
-        var counter = carousel.querySelector('[data-finance-priority-counter]');
-        var dotsRoot = carousel.querySelector('[data-finance-priority-dots]');
-        var prevButton = carousel.querySelector('[data-action="finance-priority-prev"]');
-        var nextButton = carousel.querySelector('[data-action="finance-priority-next"]');
-        var slides = Array.from(track ? track.querySelectorAll('.finance-priority-slide') : []);
+        var viewport = carousel.querySelector('[data-finance-carousel-viewport]') || carousel.querySelector('[data-finance-priority-viewport]');
+        var track = carousel.querySelector('[data-finance-carousel-track]') || carousel.querySelector('[data-finance-priority-track]');
+        var counter = carousel.querySelector('[data-finance-carousel-counter]') || carousel.querySelector('[data-finance-priority-counter]');
+        var dotsRoot = carousel.querySelector('[data-finance-carousel-dots]') || carousel.querySelector('[data-finance-priority-dots]');
+        var prevButton = carousel.querySelector('[data-finance-carousel-prev]') || carousel.querySelector('[data-action="finance-priority-prev"]');
+        var nextButton = carousel.querySelector('[data-finance-carousel-next]') || carousel.querySelector('[data-action="finance-priority-next"]');
+        var slideSelector = '[data-finance-carousel-slide], .finance-priority-slide';
+        var slides = Array.from(track ? track.querySelectorAll(slideSelector) : []);
         var dots = [];
+        var removeOnSubmit = carousel.dataset.financeCarouselRemoveOnSubmit === 'true';
+        var syncDetailsRoot = carousel.hasAttribute('data-finance-shared-details-root') ? carousel : null;
+        var isSyncingDetails = false;
 
         if (!viewport || !track || !prevButton || !nextButton || slides.length === 0) {
             return;
         }
 
         function collectSlides() {
-            slides = Array.from(track.querySelectorAll('.finance-priority-slide')).filter(function(slide) {
+            slides = Array.from(track.querySelectorAll(slideSelector)).filter(function(slide) {
                 return !slide.classList.contains('is-removing');
             });
             return slides;
@@ -159,13 +163,33 @@ document.addEventListener('DOMContentLoaded', function() {
             var submitter = event.submitter;
             var slide;
 
-            if (!submitter || submitter.dataset.action !== 'open-finance-whatsapp') {
+            if (!removeOnSubmit || !submitter || submitter.dataset.action !== 'open-finance-whatsapp') {
                 return;
             }
 
-            slide = submitter.closest('.finance-priority-slide');
+            slide = submitter.closest('[data-finance-carousel-slide], .finance-priority-slide');
             removeSlide(slide);
         });
+
+        if (syncDetailsRoot) {
+            syncDetailsRoot.addEventListener('toggle', function(event) {
+                var target = event.target;
+                var details;
+
+                if (isSyncingDetails || !target.matches('details[data-finance-shared-details]')) {
+                    return;
+                }
+
+                details = Array.from(syncDetailsRoot.querySelectorAll('details[data-finance-shared-details]'));
+                isSyncingDetails = true;
+                details.forEach(function(item) {
+                    if (item !== target) {
+                        item.open = target.open;
+                    }
+                });
+                isSyncingDetails = false;
+            }, true);
+        }
 
         viewport.addEventListener('scroll', syncButtons, { passive: true });
         window.addEventListener('resize', function() {

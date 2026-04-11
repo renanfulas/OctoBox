@@ -35,7 +35,7 @@
     <td class="intake-queue-col--actions" data-label="Proxima acao">
         <div class="operation-hero-action-rail intake-row-actions">
             {% if page.capabilities.can_manage_students and conversion.can_convert and conversion.action_type == 'convert-student' %}
-            <a class="button intake-convert-button" href="{{ student_quick_create_url }}?intake={{ intake.id }}#student-form-essential" data-action="open-student-quick-create-from-intake">{{ conversion.action_label }}</a>
+            <a class="button intake-convert-button" href="{{ student_quick_create_url }}?intake={{ intake.id }}#student-form-essential">{{ conversion.action_label }}</a>
             {% endif %}
             {% if page.capabilities.can_work_queue and conversion.can_convert and conversion.action_type == 'move-to-conversation' %}
             <form method="post" class="intake-row-form" data-action="intake-queue-actions">

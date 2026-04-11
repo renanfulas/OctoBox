@@ -26,7 +26,7 @@ PONTOS CRITICOS:
             <p class="card-copy">Filtre seus leads, veja apenas o de urgência ou separe por qual recepcionista está lidando com qual pessoa.</p>
         </div>
     </div>
-    <form method="get" class="form-stack" data-action="filter-intakes">
+    <form method="get" class="form-stack">
         <div class="field-grid-200">
             <label>
                 <span class="field-label">{{ page.data.filter_form.query.label }}</span>
@@ -50,8 +50,8 @@ PONTOS CRITICOS:
             </label>
         </div>
         <div class="actions actions-tight operation-hero-action-rail intake-filter-actions">
-            <button class="button" type="submit" data-action="apply-intake-filters">Aplicar filtros</button>
-            <a class="button secondary" href="{{ intake_center_url }}" data-action="clear-intake-filters">Limpar</a>
+            <button class="button" type="submit">Aplicar filtros</button>
+            <a class="button secondary" href="{{ intake_center_url }}">Limpar</a>
         </div>
     </form>
 </section>

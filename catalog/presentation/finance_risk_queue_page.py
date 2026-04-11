@@ -190,7 +190,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
                 'primary_href': whatsapp_href or student_url,
                 'primary_mode': 'finance_whatsapp',
                 'primary_action_kind': 'reactivation',
-                'secondary_label': 'Revisar matricula',
+                'secondary_label': 'Ver ficha',
                 'secondary_href': student_url,
             }
         elif item['recommended_action'] in {'send_financial_followup', 'escalate_manual_retention'}:
@@ -201,7 +201,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
                 'primary_href': whatsapp_href or student_url,
                 'primary_mode': 'finance_whatsapp',
                 'primary_action_kind': 'overdue',
-                'secondary_label': 'Revisar matricula',
+                'secondary_label': 'Ver ficha',
                 'secondary_href': student_url,
             }
         elif item['recommended_action'] == 'monitor_and_nudge':
@@ -212,7 +212,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
                 'primary_href': whatsapp_href or student_url,
                 'primary_mode': 'finance_whatsapp',
                 'primary_action_kind': 'overdue',
-                'secondary_label': 'Monitorar por 7 dias',
+                'secondary_label': 'Ver caso',
                 'secondary_href': student_url,
             }
         elif item['recommended_action'] == 'monitor_recent_reactivation':
@@ -223,7 +223,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
                 'primary_href': student_url,
                 'primary_mode': 'link',
                 'primary_action_kind': '',
-                'secondary_label': 'Abrir ficha',
+                'secondary_label': 'Ver ficha',
                 'secondary_href': student_url,
             }
         elif item['recommended_action'] == 'observe_payment_resolution':
@@ -234,7 +234,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
                 'primary_href': student_url,
                 'primary_mode': 'link',
                 'primary_action_kind': '',
-                'secondary_label': 'Monitorar por 7 dias',
+                'secondary_label': 'Ver caso',
                 'secondary_href': student_url,
             }
         else:
@@ -255,24 +255,21 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
                 f"{playbook['playbook_note']} Contexto com espaco para ajuste humano."
             )
             if playbook.get('secondary_href'):
-                playbook['secondary_label'] = 'Abrir ficha' if item['recommended_action'] in {
-                    'review_winback',
-                    'monitor_recent_reactivation',
-                } else 'Revisar matricula'
+                playbook['secondary_label'] = 'Ver ficha'
                 playbook['secondary_variant'] = 'finance-risk-action-healthy'
         elif tendency == 'dangerous':
             playbook['playbook_note'] = (
                 f"{playbook['playbook_note']} Melhor seguir o plano base."
             )
             if playbook.get('secondary_href'):
-                playbook['secondary_label'] = 'Seguir plano base'
+                playbook['secondary_label'] = 'Ver ficha'
                 playbook['secondary_variant'] = 'finance-risk-action-dangerous'
         elif tendency == 'mixed':
             playbook['playbook_note'] = (
                 f"{playbook['playbook_note']} Melhor agir com prudencia."
             )
             if playbook.get('secondary_href'):
-                playbook['secondary_label'] = 'Monitorar antes de escalar'
+                playbook['secondary_label'] = 'Ver caso'
                 playbook['secondary_variant'] = 'finance-risk-action-mixed'
         elif playbook.get('secondary_href'):
             playbook['secondary_variant'] = 'finance-risk-action-neutral'

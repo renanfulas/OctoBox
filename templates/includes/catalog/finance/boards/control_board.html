@@ -18,7 +18,7 @@ O QUE ESTE ARQUIVO FAZ:
         </div>
         <span class="badge badge-subtle info">Leitura ativa</span>
     </div>
-    <form method="get" class="form-stack" data-action="filter-finance" id="finance-filter-form" aria-describedby="finance-filter-status">
+    <form method="get" class="form-stack" id="finance-filter-form" aria-describedby="finance-filter-status">
         <div class="field-grid-200">
             <label>
                 <span class="field-label">{{ page.data.finance_filter_form.months.label }}</span>
@@ -42,8 +42,8 @@ O QUE ESTE ARQUIVO FAZ:
             </label>
         </div>
         <div class="actions actions-tight operation-hero-action-rail finance-command-actions">
-            <button class="button" type="submit" data-action="apply-finance-filters">Aplicar filtros</button>
-            <a class="button secondary" href="{% url 'finance-center' %}" data-action="clear-finance-filters">Limpar</a>
+            <button class="button" type="submit">Aplicar filtros</button>
+            <a class="button secondary" href="{% url 'finance-center' %}">Limpar</a>
         </div>
     </form>
 </section>

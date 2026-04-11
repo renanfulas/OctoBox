@@ -34,7 +34,8 @@ POR QUE ELE EXISTE:
     }
 
     .finance-alert-grid,
-    .finance-guide-grid-3 {
+    .finance-guide-grid-3,
+    .finance-queue-guide-grid {
         grid-template-columns: 1fr;
     }
 
@@ -54,7 +55,8 @@ POR QUE ELE EXISTE:
         gap: 8px;
     }
 
-    .finance-priority-meta {
+    .finance-priority-meta,
+    .finance-queue-meta {
         justify-content: center;
     }
 
@@ -64,7 +66,16 @@ POR QUE ELE EXISTE:
         padding-inline: 0;
     }
 
+    .finance-queue-track {
+        grid-auto-columns: 100%;
+        padding-inline: 0;
+    }
+
     .finance-priority-slide .finance-action-card {
+        min-height: 0;
+    }
+
+    .finance-queue-slide .finance-queue-card {
         min-height: 0;
     }
 
@@ -82,7 +93,8 @@ POR QUE ELE EXISTE:
         max-width: none;
     }
 
-    .finance-priority-nav {
+    .finance-priority-nav,
+    .finance-queue-nav {
         width: 34px;
         height: 34px;
     }
@@ -134,17 +146,13 @@ POR QUE ELE EXISTE:
         border-radius: 20px;
     }
 
-    .finance-queue-intro {
-        gap: 8px;
-        padding: 8px 10px;
-    }
-
-    .finance-queue-intro-column p {
-        font-size: 0.78rem;
-    }
-
     .finance-risk-summary {
         gap: 6px;
+    }
+
+    .finance-risk-summary--headline .badge {
+        padding: 3px 7px;
+        font-size: 0.66rem;
     }
 
     .finance-guide-card-compact {

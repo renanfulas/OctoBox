@@ -33,38 +33,44 @@ PONTOS CRITICOS:
         </section>
     </div>
 
+    <section class="finance-mode-strip section-gap" aria-label="Modo de leitura do financeiro">
+        <div class="finance-mode-strip-copy">
+            <span class="eyebrow">Contrato de leitura</span>
+            <strong>{{ page.data.finance_mode_contract.headline }}</strong>
+            <p>{{ page.data.finance_mode_contract.summary }}</p>
+        </div>
+        <div class="finance-mode-grid" data-active-mode="{{ page.behavior.active_mode }}">
+            {% for mode in page.data.finance_mode_contract.modes %}
+            <a class="finance-mode-card{% if mode.is_active %} is-active{% endif %}" href="{{ mode.href }}" data-mode-key="{{ mode.key }}">
+                <span class="eyebrow">{{ mode.kicker }}</span>
+                <strong>{{ mode.label }}</strong>
+                <p>{{ mode.summary }}</p>
+                <span class="finance-mode-card-meta">{{ mode.badge }} | {{ mode.surface_count }} superficie(s)</span>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+
     <div class="interactive-tab-container" data-default-panel="{{ page.behavior.default_panel }}">
-        <div class="stack-16 deferred-surface deferred-surface--dense{% if page.behavior.default_panel == 'tab-finance-movements' %} is-tab-active{% endif %}" id="tab-finance-movements" aria-label="Raio-X financeiro">
+        <div class="stack-16 deferred-surface deferred-surface--dense{% if page.behavior.default_panel == 'tab-finance-movements' %} is-tab-active{% endif %}" id="tab-finance-movements" data-mode-surface="traditional" aria-label="Raio-X financeiro">
             {% include "includes/catalog/finance/boards/trend_boards.html" %}
         </div>
 
-        <div class="stack-16 deferred-surface deferred-surface--dense{% if page.behavior.default_panel == 'tab-finance-queue' %} is-tab-active{% endif %}" id="tab-finance-queue" aria-label="Handoff de cobranca">
-            <section class="finance-section-intro finance-queue-intro" aria-label="Leitura da aba de cobranca">
-                <div class="finance-queue-intro-column">
-                    <span class="eyebrow">Aba de cobranca</span>
-                    <strong>Primeiro agir, depois analisar</strong>
-                    <p>Regua para disparo rapido. Fila para o que ainda pede leitura.</p>
-                </div>
-                <div class="finance-queue-intro-column">
-                    <span class="eyebrow">Leitura do turno</span>
-                    <strong>Separar disparo, prioridade e apoio</strong>
-                    <p>Abra pela regua. Decida na fila. Consulte vencidos so como apoio.</p>
-                </div>
-            </section>
+        <div class="stack-16 deferred-surface deferred-surface--dense{% if page.behavior.default_panel == 'tab-finance-queue' %} is-tab-active{% endif %}" id="tab-finance-queue" data-mode-surface="hybrid" aria-label="Handoff de cobranca">
             {% if page.data.operational_queue %}
             {% include "includes/catalog/finance/views/priority_rail.html" %}
             {% endif %}
             {% include "includes/catalog/finance/boards/queue_board.html" %}
         </div>
 
-        <div class="stack-16 deferred-surface deferred-surface--xl{% if page.behavior.default_panel == 'tab-finance-portfolio' %} is-tab-active{% endif %}" id="tab-finance-portfolio" aria-label="Motor de carteira">
+        <div class="stack-16 deferred-surface deferred-surface--xl{% if page.behavior.default_panel == 'tab-finance-portfolio' %} is-tab-active{% endif %}" id="tab-finance-portfolio" data-mode-surface="traditional" aria-label="Motor de carteira">
             {% include "includes/catalog/finance/boards/portfolio_board.html" %}
             {% if page.capabilities.can_manage_finance %}
             {% include "includes/catalog/finance/engine/plan_engine.html" %}
             {% endif %}
         </div>
 
-        <div class="stack-16 deferred-surface{% if page.behavior.default_panel == 'tab-finance-filters' %} is-tab-active{% endif %}" id="tab-finance-filters" aria-label="Filtros e contexto">
+        <div class="stack-16 deferred-surface{% if page.behavior.default_panel == 'tab-finance-filters' %} is-tab-active{% endif %}" id="tab-finance-filters" data-mode-surface="traditional" aria-label="Filtros e contexto">
             {% include "includes/catalog/finance/boards/control_board.html" %}
         </div>
     </div>

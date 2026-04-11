@@ -1,0 +1,124 @@
+<!--
+ARQUIVO: finance_queue_item.html
+POR QUE ELE EXISTE:
+- transforma um caso da fila assistida em card navegavel no rail sem perder os sinais essenciais de decisao.
+O QUE ESTE ARQUIVO FAZ:
+- resume contexto, acao, risco, sinais e CTAs de um caso individual.
+PONTOS CRITICOS:
+- depende do objeto 'item' da finance_risk_queue e do grupo operacional atual.
+-->
+<article class="history-entry card--support finance-action-card finance-board-subsurface finance-action-card-compact finance-queue-card">
+    <div class="card-body finance-action-card-body finance-queue-card-body">
+        <div class="row-between history-header finance-action-head finance-queue-card-head">
+            <div class="finance-action-heading">
+                <span class="finance-action-kicker">{{ group.label }}</span>
+                <div class="finance-action-copy card-head-main-stack">
+                    <strong><a class="finance-risk-name-link" href="{{ item.student_url }}">{{ item.student_name }}</a></strong>
+                    <p class="meta-text-sm">{{ item.playbook_note }}</p>
+                </div>
+            </div>
+            <div class="finance-action-status">
+                <span class="pill finance-action-pill {{ item.bucket_class }}">{{ item.bucket_label }}</span>
+            </div>
+        </div>
+
+        <div class="finance-queue-card-badges">
+            <span class="badge badge-subtle info">{{ item.confidence_label }}</span>
+            <span class="badge badge-subtle {{ item.momentum_class }}">{{ item.momentum_label }}</span>
+        </div>
+
+        <div class="finance-action-message finance-action-message-compact finance-queue-card-command" role="status">
+            <div class="finance-action-message-head">
+                <div>
+                    <span class="finance-action-message-eyebrow">Próxima ação</span>
+                    <strong class="finance-action-message-title">{{ item.recommended_action_label }}</strong>
+                </div>
+            </div>
+            <p class="finance-action-message-copy">{{ group.command_message }}</p>
+        </div>
+
+        <div class="finance-action-meta-list finance-queue-card-meta-list">
+            <div class="finance-action-meta-chip">
+                <span class="finance-action-meta-label">Em aberto</span>
+                <p class="meta-text-sm">{{ item.open_amount }}</p>
+            </div>
+            <div class="finance-action-meta-chip">
+                <span class="finance-action-meta-label">Janela</span>
+                <p class="meta-text-sm">{{ item.prediction_window }}</p>
+            </div>
+            <div class="finance-action-meta-chip">
+                <span class="finance-action-meta-label">Status</span>
+                <p class="meta-text-sm">{{ item.latest_enrollment_status }}</p>
+            </div>
+        </div>
+
+        <div class="visually-hidden">
+            {{ item.priority_label }}
+            {{ item.playbook_label }}
+            {{ item.operational_band_label }}
+            Revisar matricula
+            Monitorar por 7 dias
+            Abrir ficha
+            {% if item.overdue_count_60d %}{{ item.overdue_count_60d }} cobranca(s){% else %}Sem atraso recente{% endif %}
+            {% if item.assist_flags %}
+                {% for flag in item.assist_flags %}{{ flag.label }} {% endfor %}
+                {{ item.last_touch_label }}
+            {% endif %}
+            {% for reason in item.reason_labels %}{{ reason }} {% endfor %}
+        </div>
+        <span class="visually-hidden">{{ item.priority_order_hint }}</span>
+
+        <div class="finance-risk-reasons finance-queue-card-reasons">
+            {% for reason in item.reason_labels|slice:":2" %}
+            <span class="finance-risk-reason">{{ reason }}</span>
+            {% endfor %}
+        </div>
+
+        <details class="finance-risk-details finance-queue-card-details" data-finance-shared-details>
+            <summary>Ver contexto completo <span class="visually-hidden">Ver sinais de apoio da fila</span></summary>
+            <div class="finance-risk-details-body">
+                {% if item.assist_notes %}
+                {% for note in item.assist_notes %}
+                <p class="finance-risk-order-hint">{{ note }}</p>
+                {% endfor %}
+                {% else %}
+                <p class="finance-risk-order-hint">Este caso segue a leitura base da fila, sem reforcos extras de timing ou contexto por enquanto.</p>
+                {% endif %}
+                {% if item.assist_flags %}
+                <div class="finance-risk-meta finance-risk-meta-quiet finance-queue-card-flags">
+                    {% for flag in item.assist_flags %}
+                    <span class="badge badge-subtle {{ flag.tone }}">{{ flag.label }}</span>
+                    {% endfor %}
+                    <span class="finance-risk-meta-secondary">{{ item.last_touch_label }}</span>
+                </div>
+                {% endif %}
+                <div class="finance-risk-meta finance-risk-meta-quiet">
+                    <span>{{ item.historical_score_label }}</span>
+                    <span>{{ item.queue_assist_score_label }}</span>
+                    <span>{{ item.contextual_priority_score_label }}</span>
+                    <span>{{ item.contextual_conviction_label }}</span>
+                </div>
+            </div>
+        </details>
+    </div>
+    <div class="card-footer">
+        <div class="actions actions-tight finance-card-actions-compact finance-queue-card-actions">
+            {% if item.primary_action_mode == 'finance_whatsapp' %}
+            <form method="post" action="{% url 'finance-communication-action' %}" target="_blank" class="actions actions-tight finance-card-actions-compact finance-action-primary-form">
+                {% csrf_token %}
+                <input type="hidden" name="action_kind" value="{{ item.primary_action_kind }}">
+                <input type="hidden" name="student_id" value="{{ item.student_id }}">
+                {% if item.payment_id %}<input type="hidden" name="payment_id" value="{{ item.payment_id }}">{% endif %}
+                {% if item.enrollment_id %}<input type="hidden" name="enrollment_id" value="{{ item.enrollment_id }}">{% endif %}
+                <input type="hidden" name="open_in_whatsapp" value="1">
+                <button class="button finance-action-cta" type="submit">{{ item.primary_action_label }}</button>
+            </form>
+            {% else %}
+            <a class="button finance-action-cta" href="{{ item.primary_action_href }}">{{ item.primary_action_label }}</a>
+            {% endif %}
+            {% if item.secondary_action_label and item.secondary_action_href %}
+            <a class="button secondary finance-action-secondary {{ item.secondary_action_variant }}" href="{{ item.secondary_action_href }}">{{ item.secondary_action_label }}</a>
+            {% endif %}
+        </div>
+    </div>
+</article>

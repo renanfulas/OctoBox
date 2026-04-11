@@ -12,7 +12,7 @@ POR QUE ELE EXISTE:
         <a class="button" href="{{ intake_center_url }}#intake-queue-board">Abrir central de intake</a>
         {% endif %}
         {% if page.capabilities.can_manage_students %}
-        <a class="button secondary" href="{% url 'student-quick-create' %}#student-form-essential" data-action="open-student-quick-create-from-intake-handoff">Abrir cadastro rapido</a>
+        <a class="button secondary" href="{% url 'student-quick-create' %}#student-form-essential">Abrir cadastro rapido</a>
         {% endif %}
     </div>
     <div class="intake-grid">
@@ -33,7 +33,7 @@ POR QUE ELE EXISTE:
                     <a class="button secondary" href="{{ intake_center_url }}#intake-queue-board">Ver fila completa</a>
                     {% endif %}
                     {% if page.capabilities.can_manage_students %}
-                    <a class="button" href="{% url 'student-quick-create' %}?intake={{ intake.id }}#student-form-essential" data-action="open-student-quick-create-from-intake">Converter em aluno</a>
+                    <a class="button" href="{% url 'student-quick-create' %}?intake={{ intake.id }}#student-form-essential">Converter em aluno</a>
                     {% endif %}
                 </div>
             </div>

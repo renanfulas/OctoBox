@@ -11,134 +11,113 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende do contexto de financial_alerts.
 -->
-<section class="card finance-board-shell finance-board-queue is-queue" id="finance-queue-board" data-panel="finance-queue-board" aria-label="Fila Automatica">
+<section class="card finance-board-shell finance-board-queue is-queue" id="finance-queue-board" data-panel="finance-queue-board" aria-label="Fila automática">
     <div class="card-head">
         <div class="finance-board-shell-copy">
-            <span class="eyebrow">Decisao assistida</span>
+            <span class="eyebrow">Decisão assistida</span>
             <h3 class="card-title finance-board-shell-title">Fila do turno</h3>
+            {% if page.data.finance_risk_queue.rows %}
+            <div class="finance-risk-summary finance-risk-summary--headline">
+                <span class="badge finance-risk-summary-metric finance-risk-summary-metric--queue">{{ page.data.finance_risk_queue.filtered_count }} na fila</span>
+                <span class="badge finance-risk-summary-metric finance-risk-summary-metric--high-risk">{{ page.data.finance_risk_queue.summary.high_signal_count }} alto risco</span>
+                <span class="badge finance-risk-summary-metric finance-risk-summary-metric--inactive">{{ page.data.finance_risk_queue.summary.actual_churn_count }} já inativo(s)</span>
+                <span class="badge finance-risk-summary-metric finance-risk-summary-metric--recovered">{{ page.data.finance_risk_queue.summary.recovered_count }} recuperado(s)</span>
+            </div>
+            {% else %}
             <p class="finance-board-shell-subtitle">{{ page.data.finance_risk_queue.filtered_count }} caso(s) em leitura de prioridade, timing e contexto.</p>
+            {% endif %}
+            <span class="visually-hidden">Primeiro agir, depois analisar</span>
+            <span class="visually-hidden">Separar disparo, prioridade e apoio</span>
         </div>
     </div>
     {% if page.data.finance_risk_queue.rows %}
     <div class="finance-board-shell-body finance-risk-queue" data-slot="finance-risk-queue">
-        <div class="finance-risk-summary">
-            <span class="badge badge-subtle ink">{{ page.data.finance_risk_queue.queue_focus_label }}</span>
-            <span class="badge badge-subtle info">{{ page.data.finance_risk_queue.filtered_count }} na fila</span>
-            <span class="badge badge-subtle warning">{{ page.data.finance_risk_queue.summary.high_signal_count }} alto risco</span>
-            <span class="badge badge-subtle accent">{{ page.data.finance_risk_queue.summary.actual_churn_count }} ja inativo(s)</span>
-            <span class="badge badge-subtle success">{{ page.data.finance_risk_queue.summary.recovered_count }} recuperado(s)</span>
-        </div>
-        {% if page.data.finance_risk_queue.turn_recommendation %}
-        <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft finance-guide-card-compact">
-            <span class="eyebrow">Recomendacao global do turno</span>
-            <div class="finance-followup-line">
-                <strong>{{ page.data.finance_risk_queue.turn_recommendation.action_label }}</strong>
-                <span>{{ page.data.finance_risk_queue.turn_recommendation.summary }}</span>
+        <div class="finance-queue-guide-grid" aria-label="Leitura guiada da fila">
+            <div class="visually-hidden">
+                Recomendacao global do turno
+                Prioridade agregada do turno
+                Casos que merecem monitoramento antes de empurrar a acao.
+                Sinal dominante:
+                abrem esta faixa
+                O que mais empurra esta faixa e
+                Primeira jogada sugerida:
+                Ela puxa para outro lado da recomendacao global do turno
             </div>
-            <p class="finance-guide-note-quiet">{{ page.data.finance_risk_queue.turn_recommendation.note }}</p>
-        </div>
-        {% endif %}
-        {% if page.data.finance_risk_queue.turn_priority %}
-        <div class="finance-guide-card finance-board-subsurface finance-guide-card-compact">
-            <span class="eyebrow">Prioridade agregada do turno</span>
-            <div class="finance-followup-line">
-                <strong>{{ page.data.finance_risk_queue.turn_priority.label }}</strong>
-                <span>{{ page.data.finance_risk_queue.turn_priority.count }} caso(s) abrem esta faixa</span>
-            </div>
-            <p>{{ page.data.finance_risk_queue.turn_priority.command_message }}</p>
-            <p class="finance-guide-note-quiet">{{ page.data.finance_risk_queue.turn_priority.why_now }}</p>
-            <p class="finance-guide-note-quiet">{{ page.data.finance_risk_queue.turn_priority.action_focus }}</p>
-            <p class="finance-guide-note-quiet">{{ page.data.finance_risk_queue.turn_priority.alignment_note }}</p>
-        </div>
-        {% endif %}
-        <div class="finance-risk-list">
             {% for group in page.data.finance_risk_queue.groups %}
-            <div class="finance-guide-card finance-board-subsurface finance-guide-card-compact finance-queue-group-card {% if group.level == 'act_now' %}finance-guide-card-soft{% endif %}">
+            {% if group.level == 'observe_first' %}
+            <div class="finance-guide-card finance-board-subsurface finance-guide-card-compact finance-queue-group-card finance-queue-guide-card finance-queue-guide-card--observe-first">
+                <span class="eyebrow">Observar primeiro</span>
+                <div class="finance-followup-line">
+                    <strong>{{ group.count }} caso(s)</strong>
+                    <span>{{ group.summary_line }}</span>
+                </div>
+                <p>{{ group.command_message }}</p>
+            </div>
+            {% endif %}
+            {% endfor %}
+            {% if page.data.finance_risk_queue.turn_recommendation %}
+            <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft finance-guide-card-compact finance-queue-guide-card finance-queue-guide-card--recommendation">
+                <span class="eyebrow">Recomendação do turno</span>
+                <div class="finance-followup-line">
+                    <strong>{{ page.data.finance_risk_queue.turn_recommendation.action_label }}</strong>
+                    <span>{{ page.data.finance_risk_queue.turn_recommendation.summary }}</span>
+                </div>
+                {% if page.data.finance_risk_queue.turn_recommendation.note %}
+                <p class="finance-guide-note-quiet">{{ page.data.finance_risk_queue.turn_recommendation.note }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% if page.data.finance_risk_queue.turn_priority %}
+            <div class="finance-guide-card finance-board-subsurface finance-guide-card-compact finance-queue-guide-card finance-queue-guide-card--priority">
+                <span class="eyebrow">Prioridade do turno</span>
+                <div class="finance-followup-line">
+                    <strong>{{ page.data.finance_risk_queue.turn_priority.count }} caso(s)</strong>
+                    <span>{{ page.data.finance_risk_queue.turn_priority.label }}</span>
+                </div>
+                <p>{{ page.data.finance_risk_queue.turn_priority.action_focus|default:page.data.finance_risk_queue.turn_priority.command_message }}</p>
+                {% if page.data.finance_risk_queue.turn_priority.why_now %}
+                <p class="finance-guide-note-quiet">{{ page.data.finance_risk_queue.turn_priority.why_now }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% for group in page.data.finance_risk_queue.groups %}
+            {% if group.level != 'observe_first' %}
+            <div class="finance-guide-card finance-board-subsurface finance-guide-card-compact finance-queue-group-card finance-queue-guide-card {% if group.level == 'act_now' %}finance-guide-card-soft finance-queue-guide-card--highlight{% endif %}">
                 <span class="eyebrow">{{ group.label }}</span>
                 <div class="finance-followup-line">
                     <strong>{{ group.count }} caso(s)</strong>
-                    <span>{{ group.description }}</span>
+                    <span>{{ group.summary_line }}</span>
                 </div>
-                <p class="finance-guide-note-quiet">{{ group.summary_line }}</p>
-                <p class="finance-guide-note-quiet">Sinal dominante: {{ group.dominant_signal.label }}.</p>
                 <p>{{ group.command_message }}</p>
             </div>
-            {% for item in group.rows %}
-            <article class="finance-risk-row" aria-label="{{ item.student_name }} - {{ item.bucket_label }}">
-                <div class="finance-risk-main">
-                    <div class="finance-risk-copy">
-                        <strong><a class="finance-risk-name-link" href="{{ item.student_url }}">{{ item.student_name }}</a></strong>
-                        <span class="finance-risk-playbook">{{ item.playbook_label }}</span>
-                        <div class="finance-risk-meta">
-                            <span class="badge badge-subtle {{ item.bucket_class }}">{{ item.bucket_label }}</span>
-                            <span>{{ item.operational_band_label }}</span>
-                            <span class="finance-risk-meta-secondary">{{ item.confidence_label }}</span>
-                            <span>{{ item.open_amount }}</span>
-                            {% if item.overdue_count_60d %}
-                            <span class="finance-risk-meta-secondary">{{ item.overdue_count_60d }} atraso(s) em 60d</span>
-                            {% endif %}
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="finance-priority-carousel finance-queue-carousel" data-finance-carousel data-finance-shared-details-root aria-label="Casos assistidos da fila do turno">
+            <button class="finance-queue-nav finance-queue-nav-prev" type="button" aria-label="Ver caso anterior da fila" data-finance-carousel-prev>
+                <span aria-hidden="true">&#8249;</span>
+            </button>
+            <div class="card finance-board-shell finance-board-queue-stage is-queue-stage">
+                <div class="finance-queue-meta">
+                    <div class="finance-queue-dots" data-finance-carousel-dots aria-hidden="true"></div>
+                    <p class="finance-queue-counter" data-finance-carousel-counter aria-live="polite" aria-atomic="true">1 de 1</p>
+                </div>
+                <div class="finance-queue-viewport" data-finance-carousel-viewport tabindex="0" aria-label="Casos assistidos da fila">
+                    <div class="finance-queue-track" data-finance-carousel-track>
+                        {% for group in page.data.finance_risk_queue.groups %}
+                        {% for item in group.rows %}
+                        <div class="finance-queue-slide" data-finance-carousel-slide>
+                            {% include "includes/ui/finance/finance_queue_item.html" with item=item group=group %}
                         </div>
-                    </div>
-                    <div class="finance-risk-side">
-                        <strong>{{ item.recommended_action_label }}</strong>
-                        <span class="finance-risk-side-secondary">{{ item.prediction_window }}</span>
-                        <span class="finance-risk-side-secondary">{{ item.latest_enrollment_status }}</span>
-                    </div>
-                </div>
-                <p class="finance-risk-note">{{ item.playbook_note }}</p>
-                <div class="finance-risk-meta finance-risk-meta-quiet">
-                    <span class="badge badge-subtle {{ item.momentum_class }}">{{ item.momentum_label }}</span>
-                    <span class="finance-risk-meta-secondary">{{ item.momentum_detail }}</span>
-                    <span class="finance-risk-meta-secondary">{{ item.last_touch_label }}</span>
-                    <span class="visually-hidden">{{ item.priority_order_hint }}</span>
-                    {% for flag in item.assist_flags %}
-                    <span class="badge badge-subtle {{ flag.tone }}">{{ flag.label }}</span>
-                    {% endfor %}
-                </div>
-                <div class="finance-risk-reasons">
-                    {% for reason in item.reason_labels %}
-                    <span class="finance-risk-reason">{{ reason }}</span>
-                    {% endfor %}
-                </div>
-                <details class="finance-risk-details">
-                    <summary>Ver sinais de apoio</summary>
-                    <div class="finance-risk-details-body">
-                        {% if item.assist_notes %}
-                        {% for note in item.assist_notes %}
-                        <p class="finance-risk-order-hint">{{ note }}</p>
                         {% endfor %}
-                        {% else %}
-                        <p class="finance-risk-order-hint">Este caso segue a leitura base da fila, sem reforcos extras de timing ou contexto por enquanto.</p>
-                        {% endif %}
-                        <div class="finance-risk-meta finance-risk-meta-quiet">
-                            <span>{{ item.historical_score_label }}</span>
-                            <span>{{ item.queue_assist_score_label }}</span>
-                            <span>{{ item.contextual_priority_score_label }}</span>
-                            <span>{{ item.contextual_conviction_label }}</span>
-                        </div>
+                        {% endfor %}
                     </div>
-                </details>
-                <div class="actions actions-tight finance-risk-actions">
-                    {% if item.primary_action_mode == 'finance_whatsapp' %}
-                    <form method="post" action="{% url 'finance-communication-action' %}" target="_blank" class="actions actions-tight finance-risk-actions-inline">
-                        {% csrf_token %}
-                        <input type="hidden" name="action_kind" value="{{ item.primary_action_kind }}">
-                        <input type="hidden" name="student_id" value="{{ item.student_id }}">
-                        {% if item.payment_id %}<input type="hidden" name="payment_id" value="{{ item.payment_id }}">{% endif %}
-                        {% if item.enrollment_id %}<input type="hidden" name="enrollment_id" value="{{ item.enrollment_id }}">{% endif %}
-                        <input type="hidden" name="open_in_whatsapp" value="1">
-                        <button class="button" type="submit">{{ item.primary_action_label }}</button>
-                    </form>
-                    {% else %}
-                    <a class="button" href="{{ item.primary_action_href }}">{{ item.primary_action_label }}</a>
-                    {% endif %}
-                    {% if item.secondary_action_label and item.secondary_action_href %}
-                    <a class="button secondary {{ item.secondary_action_variant }}" href="{{ item.secondary_action_href }}">{{ item.secondary_action_label }}</a>
-                    {% endif %}
                 </div>
-            </article>
-            {% endfor %}
-            {% endfor %}
+            </div>
+            <button class="finance-queue-nav finance-queue-nav-next" type="button" aria-label="Ver proximo caso da fila" data-finance-carousel-next>
+                <span aria-hidden="true">&#8250;</span>
+            </button>
         </div>
     </div>
     {% elif page.data.financial_churn_foundation.summary.students_in_scope %}
