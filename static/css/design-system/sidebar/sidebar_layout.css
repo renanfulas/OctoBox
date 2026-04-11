@@ -1,4 +1,5 @@
 /*
+<<<<<<< HEAD
 ARQUIVO: estrutura arquitetural base, grid e colapso movel da sidebar.
 
 POR QUE ELE EXISTE:
@@ -10,11 +11,28 @@ O QUE ESTE ARQUIVO FAZ:
 2. Controla a marca, proporcao vertical e respiro da casca global.
 3. Mantem o comportamento mobile como drawer.
 4. Preserva uma superficie silenciosa e performatica.
+=======
+ARQUIVO: estrutura base, sticky e drawer mobile da sidebar.
+
+POR QUE ELE EXISTE:
+- Isola a infraestrutura da barra lateral.
+- Mantem shell, gaveta mobile e fachada visual da coluna em um unico lugar.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Define a caixa principal da `.sidebar`.
+2. Ajusta brand, tagline e atmosfera visual da coluna.
+3. Controla o drawer mobile e o backdrop abaixo de 960px.
+
+PONTOS CRITICOS:
+- Este arquivo nao deve reescrever hover dos links nem o bloco meta.
+- O breakpoint de 960px e a transicao de drawer sao a parte funcional da sidebar.
+>>>>>>> codex/student-page-refactor-and-ui-polish
 */
 
 .sidebar {
     position: sticky;
     top: var(--space-3);
+<<<<<<< HEAD
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
     gap: 20px;
@@ -32,17 +50,32 @@ O QUE ESTE ARQUIVO FAZ:
         inset 0 1px 0 rgba(255, 255, 255, 0.06);
     overflow: hidden;
     isolation: isolate;
+=======
+    min-height: calc(100vh - 32px);
+    height: calc(100vh - (var(--space-3) * 2));
+    padding: var(--space-5) var(--space-3) var(--space-4);
+    overflow: hidden;
+    color: var(--sidebar-ink);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(8, 16, 30, 0.98), rgba(12, 22, 40, 0.97) 54%, rgba(7, 41, 62, 0.94));
+    box-shadow: var(--fdw-shadow-lift);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .sidebar::before,
 .sidebar::after {
     content: "";
     position: absolute;
+<<<<<<< HEAD
     inset: 0;
+=======
+>>>>>>> codex/student-page-refactor-and-ui-polish
     pointer-events: none;
 }
 
 .sidebar::before {
+<<<<<<< HEAD
     background:
         radial-gradient(circle at top left, color-mix(in srgb, var(--theme-accent-support-alpha) 78%, transparent), transparent 28%),
         linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 22%);
@@ -70,12 +103,28 @@ O QUE ESTE ARQUIVO FAZ:
     grid-template-rows: auto minmax(0, 1fr);
     gap: 14px;
     min-height: 0;
+=======
+    inset: 0;
+    background:
+        radial-gradient(circle at top left, rgba(96, 165, 250, 0.08), transparent 22%),
+        radial-gradient(circle at 82% 18%, rgba(45, 212, 191, 0.04), transparent 20%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%);
+}
+
+.sidebar::after {
+    inset: auto -18% -10% auto;
+    width: 110px;
+    height: 110px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.06), transparent 70%);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .brand-wrap {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
+<<<<<<< HEAD
     gap: 14px;
     padding-bottom: 4px;
 }
@@ -101,10 +150,29 @@ O QUE ESTE ARQUIVO FAZ:
     box-shadow:
         0 12px 24px rgba(2, 8, 23, 0.18),
         inset 0 1px 0 rgba(255, 255, 255, 0.24);
+=======
+    gap: 12px;
+    margin-bottom: var(--space-6);
+}
+
+.brand-mark {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #10b981, #2563eb);
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.875rem;
+    box-shadow: 0 6px 14px rgba(9, 14, 24, 0.14);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .brand {
     margin: 0;
+<<<<<<< HEAD
     color: var(--sidebar-ink);
     font-size: 1.02rem;
     font-weight: 700;
@@ -116,6 +184,17 @@ O QUE ESTE ARQUIVO FAZ:
     margin: 4px 0 0;
     max-width: 24ch;
     color: var(--sidebar-muted);
+=======
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+.tagline {
+    max-width: 22ch;
+    margin: 2px 0 0;
+    color: rgba(226, 232, 240, 0.76);
+>>>>>>> codex/student-page-refactor-and-ui-polish
     font-size: 0.75rem;
     line-height: 1.48;
 }
@@ -128,11 +207,18 @@ O QUE ESTE ARQUIVO FAZ:
     .sidebar {
         position: fixed;
         inset: 0 auto 0 0;
+<<<<<<< HEAD
         width: min(84vw, 336px);
         min-height: 100vh;
         height: 100vh;
         top: 0;
         border-radius: 0 28px 28px 0;
+=======
+        top: 0;
+        width: min(82vw, 320px);
+        min-height: 100vh;
+        border-radius: 0 30px 30px 0;
+>>>>>>> codex/student-page-refactor-and-ui-polish
         transform: translateX(-102%);
         transition: transform 220ms var(--ease-standard);
         z-index: 20;
@@ -142,13 +228,18 @@ O QUE ESTE ARQUIVO FAZ:
         display: block;
         position: fixed;
         inset: 0;
+        z-index: 15;
         border: 0;
         padding: 0;
         background: rgba(8, 15, 28, 0.34);
         opacity: 0;
         pointer-events: none;
+<<<<<<< HEAD
         transition: opacity 220ms var(--ease-standard);
         z-index: 15;
+=======
+        transition: opacity 0.2s ease;
+>>>>>>> codex/student-page-refactor-and-ui-polish
     }
 
     body.sidebar-open .sidebar {

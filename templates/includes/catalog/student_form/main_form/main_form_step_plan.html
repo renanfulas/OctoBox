@@ -1,6 +1,7 @@
 <!--
 ARQUIVO: passo de plano e status comercial da ficha do aluno.
 -->
+<<<<<<< HEAD
 <details id="student-form-plan"{% if page_mode == 'create' or form.selected_plan.errors or form.enrollment_status.errors %} open{% endif %} class="disclosure-panel disclosure-panel-success student-form-step student-form-step-disclosure student-form-step-disclosure--plan">
     <summary>
         <span class="student-form-step-summary-copy">
@@ -8,6 +9,10 @@ ARQUIVO: passo de plano e status comercial da ficha do aluno.
             <span class="student-form-step-title">Plano e status comercial</span>
         </span>
     </summary>
+=======
+<details id="student-form-plan"{% if page_mode == 'create' or form.selected_plan.errors or form.enrollment_status.errors %} open{% endif %} class="disclosure-panel disclosure-panel-success student-form-step student-form-step-disclosure">
+    <summary>Passo 4: plano e status comercial</summary>
+>>>>>>> codex/student-page-refactor-and-ui-polish
     <div class="stack-16 student-form-step-body">
         {% include "includes/catalog/student_form/plans/plan_selector_fields.html" with form=form %}
         {{ form.enrollment_status.as_hidden }}

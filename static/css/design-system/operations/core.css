@@ -24,7 +24,11 @@ PONTOS CRITICOS:
 .operation-hero {
     background: var(--operation-hero-surface, var(--hero-surface, var(--card-surface-strong)));
     border: 1px solid var(--operation-hero-border, var(--hero-border, var(--card-border)));
+<<<<<<< HEAD
     border-radius: var(--operation-hero-radius, var(--radius-panel));
+=======
+    border-radius: var(--radius-panel);
+>>>>>>> codex/student-page-refactor-and-ui-polish
     box-shadow: var(--operation-hero-shadow, var(--hero-shadow, var(--card-shadow)));
 }
 
@@ -34,14 +38,10 @@ body[data-theme="dark"] .operation-hero {
 }
 
 .operation-hero-main {
-    display: grid;
-    gap: var(--operation-hero-main-gap, 14px);
     flex: 1 1 auto;
 }
 
 .operation-hero-copy-block {
-    display: grid;
-    gap: var(--operation-hero-stack-gap, 8px);
     max-width: var(--operation-hero-stack-max-width, 40rem);
 }
 
@@ -63,8 +63,13 @@ body[data-theme="dark"] .operation-hero {
 
 .operation-hero-panel {
     position: relative;
+<<<<<<< HEAD
     padding: var(--operation-hero-panel-padding, 14px 16px);
     border-radius: var(--operation-hero-panel-radius, var(--radius-card));
+=======
+    padding: 14px 16px;
+    border-radius: var(--radius-card);
+>>>>>>> codex/student-page-refactor-and-ui-polish
     border: 1px solid var(--operation-hero-panel-border, var(--hero-panel-border, var(--card-border)));
     background: var(--operation-hero-panel-surface, var(--hero-panel-surface, var(--card-surface)));
     box-shadow: var(--operation-hero-panel-shadow, var(--hero-panel-shadow, none));
@@ -131,13 +136,9 @@ body[data-theme="dark"] .operation-hero::after {
 .operation-hero-action-rail {
     margin-top: var(--operation-hero-actions-margin-top, 0);
     max-width: var(--operation-hero-actions-max-width, 580px);
-    align-items: var(--operation-hero-actions-align-items, flex-start);
 }
 
 .operation-hero-action-rail .button {
-    min-height: var(--operation-hero-button-min-height, 36px);
-    padding: var(--operation-hero-button-padding, 8px 13px);
-    border-radius: var(--operation-hero-button-radius, 999px);
     font-size: var(--operation-hero-button-font-size, 0.92rem);
 }
 

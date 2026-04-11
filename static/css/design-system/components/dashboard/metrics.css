@@ -57,6 +57,7 @@
     grid-template-rows: 1fr auto;
     border-radius: var(--dashboard-fib-4, 21px);
     overflow: hidden;
+<<<<<<< HEAD
     transition:
         transform 220ms var(--ease-standard),
         box-shadow 220ms var(--ease-standard),
@@ -67,6 +68,14 @@
     --kpi-bad-border: rgba(249, 115, 22, 0.24);
     --kpi-neutral-surface: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(255, 255, 255, 0.78));
     --kpi-neutral-border: rgba(56, 189, 248, 0.24);
+=======
+    --kpi-good-surface: color-mix(in srgb, var(--theme-accent-success-alpha) 14%, var(--theme-surface-glass-strong) 86%);
+    --kpi-good-border: color-mix(in srgb, var(--theme-accent-success) 24%, var(--theme-glass-border) 76%);
+    --kpi-bad-surface: color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, var(--theme-surface-glass-strong) 86%);
+    --kpi-bad-border: color-mix(in srgb, var(--theme-accent-warning) 24%, var(--theme-glass-border) 76%);
+    --kpi-neutral-surface: color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, var(--theme-surface-glass-strong) 86%);
+    --kpi-neutral-border: color-mix(in srgb, var(--theme-accent-primary) 24%, var(--theme-glass-border) 76%);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .dashboard-kpi-slot.is-primary .dashboard-kpi-card {
@@ -150,21 +159,20 @@
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage {
     background:
-        linear-gradient(160deg, rgba(247, 250, 255, 0.96), rgba(240, 246, 252, 0.98)),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0)),
-        var(--surface);
-    border: 1px solid rgba(148, 163, 184, 0.14);
-    color: inherit;
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, transparent), transparent 30%),
+        var(--card-surface-strong);
+    border: 1px solid var(--card-border);
+    color: var(--theme-text-primary);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage .card-kicker {
-    background: rgba(255, 255, 255, 0.46);
-    color: var(--muted-strong);
+    background: color-mix(in srgb, var(--card-surface-strong) 72%, transparent);
+    color: var(--legacy-copy-strong);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage .card-copy,
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage .card-value {
-    color: inherit;
+    color: var(--theme-text-primary);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-body-metric {
@@ -179,7 +187,7 @@
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-label {
-    color: var(--muted);
+    color: var(--legacy-copy);
     font-size: 0.68rem;
     letter-spacing: 0.16em;
     font-weight: 800;
@@ -190,8 +198,8 @@
     width: fit-content;
     padding: 3px 9px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.46);
-    color: var(--muted-strong);
+    background: color-mix(in srgb, var(--card-surface-strong) 72%, transparent);
+    color: var(--legacy-copy-strong);
     letter-spacing: 0.08em;
 }
 
@@ -256,9 +264,15 @@
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-copy {
     max-width: 34ch;
+<<<<<<< HEAD
     font-size: 0.84rem;
     line-height: 1.48;
     color: var(--muted-strong);
+=======
+    font-size: 0.88rem;
+    line-height: 1.46;
+    color: var(--legacy-copy);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-content {
@@ -268,11 +282,11 @@
 .dashboard-metrics-cluster .dashboard-kpi-card .card-footer {
     margin-top: var(--dashboard-fib-3, 13px);
     padding-top: var(--dashboard-fib-2, 8px);
-    border-top: 1px solid rgba(148, 163, 184, 0.12);
+    border-top: 1px solid color-mix(in srgb, var(--card-border) 82%, transparent);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-action {
-    background: rgba(255, 255, 255, 0.52);
+    background: color-mix(in srgb, var(--card-surface-strong) 78%, transparent);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.status-attention {
@@ -374,8 +388,37 @@ body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber
 }
 
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage {
-    background: linear-gradient(160deg, rgba(30, 41, 59, 1), rgba(15, 23, 42, 1));
-    border-color: rgba(148, 163, 184, 0.16);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 22%, transparent), transparent 30%),
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-accent-warning-alpha) 10%, rgba(22, 29, 45, 0.94) 90%),
+            rgba(16, 20, 31, 0.92)
+        );
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 22%, var(--theme-glass-border) 78%);
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 18px 42px rgba(0, 0, 0, 0.24);
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .dashboard-metrics-cluster .metric-card.dashboard-kpi-card.kpi-amber.is-stage {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 22%, transparent), transparent 30%),
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-accent-warning-alpha) 10%, rgba(22, 29, 45, 0.94) 90%),
+            rgba(16, 20, 31, 0.94)
+        );
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 22%, var(--theme-glass-border) 78%);
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .dashboard-metrics-cluster .metric-card.dashboard-kpi-card.kpi-amber.is-stage .metric-number,
+body[data-theme="dark"] .dashboard-metrics-cluster .metric-card.dashboard-kpi-card.kpi-amber.is-stage .card-value,
+body[data-theme="dark"] .dashboard-metrics-cluster .metric-card.dashboard-kpi-card.kpi-amber.is-stage .card-title,
+body[data-theme="dark"] .dashboard-metrics-cluster .metric-card.dashboard-kpi-card.kpi-amber.is-stage .card-copy {
+    color: var(--theme-text-primary);
 }
 
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card.kpi-red {
@@ -408,8 +451,8 @@ body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-lab
 
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-kicker,
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage .card-kicker {
-    background: rgba(255, 255, 255, 0.08);
-    color: #f8fafc;
+    background: color-mix(in srgb, var(--card-surface-strong) 24%, transparent);
+    color: var(--theme-text-primary);
 }
 
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-copy {
@@ -417,7 +460,7 @@ body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-cop
 }
 
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-action {
-    background: rgba(255, 255, 255, 0.08);
+    background: color-mix(in srgb, var(--card-surface-strong) 20%, transparent);
 }
 
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card:hover {

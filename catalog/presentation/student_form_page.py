@@ -98,7 +98,11 @@ def build_student_form_recovery_guide(form):
     }
 
 
+<<<<<<< HEAD
 def build_student_form_page(*, form, student_object, selected_intake, financial_overview, page_mode, current_role_slug, browser_snapshot=None):
+=======
+def build_student_form_page(*, form, student_object, selected_intake, financial_overview, page_mode, current_role_slug):
+>>>>>>> codex/student-page-refactor-and-ui-polish
     latest_enrollment = financial_overview.get('latest_enrollment')
     recent_payments = financial_overview.get('payments', [])
     financial_ready = financial_overview.get('has_student', False)

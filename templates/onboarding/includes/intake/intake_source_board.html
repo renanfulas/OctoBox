@@ -2,7 +2,11 @@
 ARQUIVO: leitura de origem da Central de Intake.
 
 POR QUE ELE EXISTE:
+<<<<<<< HEAD
 - Isola a quebra por canal para facilitar manutencao da leitura curta.
+=======
+- isola a quebra por canal para facilitar manutencao da leitura curta.
+>>>>>>> codex/student-page-refactor-and-ui-polish
 
 O QUE ESTE ARQUIVO FAZ:
 1. Exibe cards de origem dos contatos.
@@ -11,6 +15,7 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende do contexto de radar_board.
 -->
+<<<<<<< HEAD
 <article class="card intake-radar-board intake-radar-board--{{ page.data.radar_board.period }}" id="intake-source-board" data-panel="intake-source-board">
     <div class="card-head intake-radar-board-head">
         <div class="card-head-main intake-radar-board-copy">
@@ -30,6 +35,13 @@ PONTOS CRITICOS:
                 <a href="{{ tab.href }}" class="intake-radar-period-link{% if tab.is_active %} is-active{% endif %}">{{ tab.label }}</a>
                 {% endfor %}
             </nav>
+=======
+<article class="card glass-panel intake-board intake-board--source" id="intake-source-board" data-panel="intake-source-board">
+    <div class="card-head">
+        <div class="card-head-main">
+            <h2 class="card-title">De onde v&ecirc;m os Contatos</h2>
+            <p class="card-copy">Veja quantos novos contatos chegam pelo Instagram, Site ou Balc&atilde;o para saber de onde vem seu p&uacute;blico.</p>
+>>>>>>> codex/student-page-refactor-and-ui-polish
         </div>
     </div>
     <div class="intake-radar-grid">

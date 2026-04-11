@@ -19,7 +19,11 @@ ARQUIVO: cartao de identidade financeira da ficha do aluno.
     <div class="student-financial-id-card__stats" aria-label="Resumo financeiro imediato">
         <div class="student-financial-id-stat">
             <span class="student-financial-id-stat__label">Status do plano</span>
+<<<<<<< HEAD
             <strong class="student-financial-id-stat__value" data-financial-field="plan-status-text">{{ page.data.financial_overview.latest_enrollment.get_status_display|default:"Sem plano" }}</strong>
+=======
+            <span class="pill student-financial-plan-status-pill{% if page.data.financial_overview.latest_enrollment %} student-financial-plan-status-pill--active{% endif %}" data-financial-field="plan-status">{{ page.data.financial_overview.latest_enrollment.get_status_display|default:"Sem plano" }}</span>
+>>>>>>> codex/student-page-refactor-and-ui-polish
         </div>
         <div class="student-financial-id-stat">
             <span class="student-financial-id-stat__label">Atrasos</span>

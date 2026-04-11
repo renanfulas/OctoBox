@@ -103,11 +103,14 @@ ARQUIVO: KPIs compartilhados das superfícies operacionais.
 .operation-shell .operation-metric-grid .metric-card.manager-coral {
     color: color-mix(in srgb, var(--theme-accent-danger) 80%, white 20%);
     border-color: color-mix(in srgb, var(--theme-accent-danger-alpha) 42%, var(--theme-border-soft) 58%);
+<<<<<<< HEAD
 }
 
 .operation-shell .operation-metric-grid .metric-card.owner-ruby {
     color: color-mix(in srgb, var(--theme-accent-danger) 80%, white 20%);
     border-color: color-mix(in srgb, var(--theme-accent-danger-alpha) 42%, var(--theme-border-soft) 58%);
+=======
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .operation-shell .operation-metric-grid .metric-card.owner-emerald {

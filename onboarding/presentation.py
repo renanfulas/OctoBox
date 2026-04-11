@@ -16,7 +16,7 @@ PONTOS CRITICOS:
 from django.urls import reverse
 
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
-from shared_support.page_payloads import build_page_assets, build_page_hero, build_page_payload
+from shared_support.page_payloads import build_page_assets, build_page_context, build_page_hero, build_page_payload
 
 
 def build_intake_center_page(*, snapshot, current_role_slug, intake_search=None):
@@ -69,11 +69,13 @@ def build_intake_center_page(*, snapshot, current_role_slug, intake_search=None)
 
     return build_page_payload(
         context={
-            'page_key': 'intake-center',
-            'title': 'Central de Entradas',
-            'subtitle': 'Entradas, triagem e conversao em um ponto proprio.',
-            'mode': 'workspace',
-            'role_slug': current_role_slug,
+            **build_page_context(
+                page_key='intake-center',
+                title='Central de Entradas',
+                subtitle='Entradas, triagem e conversao em um ponto proprio.',
+                mode='workspace',
+                role_slug=current_role_slug,
+            ),
         },
         data={
             **snapshot,

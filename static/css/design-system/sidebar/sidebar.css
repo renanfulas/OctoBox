@@ -1,17 +1,14 @@
 /*
-ARQUIVO: index agregador do submódulo da barra lateral.
+ARQUIVO: agregador da familia da sidebar.
 
 POR QUE ELE EXISTE:
-- Atua como o hub/orquestrador central para a Sidebar sem conter estilos rígidos e brutos nativamente.
-- Facilita os imports nos arquivos principais da aplicação sem expor as entranhas da barra lateral.
+- Centraliza os imports da barra lateral sem colocar estilo bruto aqui.
+- Mantem a composicao previsivel entre layout, navegacao e meta.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Importa a fundação de estrutura e media-queries (`sidebar_layout.css`).
-2. Importa o módulo interativo de navegação e botões (`sidebar_nav.css`).
-3. Importa o módulo do perfil logado inferior (`sidebar_meta.css`).
-
-PONTOS CRITICOS:
-- Se corrompido ou caso as dependências falhem, o sistema de arquivos principal do projeto perde registro das partes menores.
+1. Importa a base estrutural de `sidebar_layout.css`.
+2. Importa os estados interativos de `sidebar_nav.css`.
+3. Importa o bloco de perfil em `sidebar_meta.css`.
 */
 
 @import url("./sidebar_layout.css");

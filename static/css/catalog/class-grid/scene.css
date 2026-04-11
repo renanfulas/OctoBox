@@ -16,6 +16,7 @@ POR QUE ELE EXISTE:
 }
 
 .class-grid-scene {
+<<<<<<< HEAD
     gap: calc(var(--section-gap) - 2px);
 }
 
@@ -60,5 +61,33 @@ body[data-theme="dark"] .class-grid-scene .class-grid-hero {
 
 body[data-theme="dark"] .class-grid-scene .class-grid-hero::after {
     background: radial-gradient(circle, rgba(41, 103, 163, 0.24), transparent 70%);
+=======
+    --class-grid-text-primary: var(--theme-text-primary);
+    --class-grid-text-secondary: var(--legacy-copy);
+    gap: calc(var(--section-gap) - 2px);
+}
+
+.class-grid-hero {
+    background: var(--theme-surface-glass-strong);
+}
+
+body[data-theme="dark"] .class-grid-hero {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, transparent), transparent 30%),
+        var(--theme-surface-glass-strong);
+}
+
+.class-grid-scene :is(.card-title, .operation-card-title, .section-title-sm, .weekly-day-head strong, .weekly-session-title, .state-empty-title) {
+    color: var(--class-grid-text-primary);
+}
+
+.class-grid-scene :is(.card-copy, .operation-card-copy, .class-day-summary, .class-grid-meta, .weekly-empty-state, .state-empty-copy, .state-empty-hint, .eyebrow, .card-label, .class-grid-mobile-kicker) {
+    color: var(--class-grid-text-secondary);
+}
+
+body[data-theme="dark"] .class-grid-scene {
+    --class-grid-text-primary: var(--theme-text-primary);
+    --class-grid-text-secondary: var(--theme-text-secondary);
+>>>>>>> codex/student-page-refactor-and-ui-polish
 }
 

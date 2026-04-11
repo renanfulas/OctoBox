@@ -130,7 +130,10 @@ def _build_dashboard_priority_context(*, metrics, pending_intakes_count, today_s
             'reason': 'Existe demanda comercial esperando resposta e ela esfria mais rapido do que o restante.',
             'lead_order': ['intakes', 'overdue', 'revenue', 'occupancy', 'attendance', 'active'],
         }
-    if today_schedule_occupancy_percent >= 95 or metrics['sessions_today'] > 0:
+    # Ter aulas no dia e o estado normal do box. A agenda so deve roubar a
+    # dianteira da receita quando existe pressao operacional de ocupacao
+    # suficiente para virar coordenacao urgente.
+    if metrics['sessions_today'] > 0 and today_schedule_occupancy_percent >= 85:
         return {
             'dominant_key': 'occupancy',
             'label': 'session-pressure',
@@ -334,12 +337,16 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
             'eyebrow': 'Aproveitamento da agenda hoje',
             'kicker': 'Primeira coordenacao do turno' if priority_context['dominant_key'] == 'occupancy' and metrics['sessions_today'] > 0 else 'Pulso do dia',
             'display_value': _format_percent(today_schedule_occupancy_percent),
+            'data_action': 'blink-board-sessions',
             'signal': {
                 'tone': occupancy_signal_tone,
                 'value': occupancy_signal_value,
                 'label': 'ocupacao media',
             },
+<<<<<<< HEAD
             'data_action': 'blink-board-sessions',
+=======
+>>>>>>> codex/student-page-refactor-and-ui-polish
             'note': (
                 'A agenda virou a primeira coordenacao do dia. Vale abrir aqui antes de aprofundar o restante.'
                 if priority_context['dominant_key'] == 'occupancy' and metrics['sessions_today'] > 0 else
@@ -371,6 +378,9 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
             'status_hint': 'clean',
         },
     }
+
+    if metrics['overdue_payments'] > 0:
+        cards['overdue']['href'] = finance_href
 
     return [cards[key] for key in priority_context['lead_order']], priority_context
 
