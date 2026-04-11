@@ -49,6 +49,7 @@ Mapas irmaos desta frente:
 12. [front-end-contract-only-visual-smoke-checklist.md](front-end-contract-only-visual-smoke-checklist.md) para o roteiro curto de validacao visual das telas migradas para o contrato minimo
 13. [front-end-search-cache-contract-map.md](front-end-search-cache-contract-map.md) para o contrato de cache local, versionamento e invalidação das buscas ricas
 14. [front-end-owner-workspace-audit.md](front-end-owner-workspace-audit.md) para o raio-x do `/operacao/owner/`, legado notion e manifestos vivos da superficie
+15. [dashboard-darkmode-cascade-roadmap.md](dashboard-darkmode-cascade-roadmap.md) para o mapa de familias repetidas de contraste ruim, wrappers paralelos e ordem de correcao do dashboard no dark mode
 
 ## Ordem curta de leitura da cena do crime
 
@@ -70,6 +71,8 @@ Regra pratica:
 2. se aparece so em uma tela, suspeite primeiro do template local, CSS local, JS local ou presenter da pagina
 3. se os dados estao certos e a tela esta errada, o problema costuma estar do payload para frente
 4. se os dados ja chegam errados, o problema costuma estar do presenter para tras
+5. se o sintoma for "texto escuro, pill estranha, card lavado ou board pesado no dashboard dark", abra antes o [dashboard-darkmode-cascade-roadmap.md](dashboard-darkmode-cascade-roadmap.md)
+6. se o sintoma for "moldura dupla em grid dark" ou "barra de progresso curta dentro do card", consulte tambem [front-end-error-patterns-map.md](front-end-error-patterns-map.md) antes de mexer em HTML
 
 ## Perguntas que resolvem metade da investigacao
 

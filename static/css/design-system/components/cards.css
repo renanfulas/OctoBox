@@ -251,10 +251,19 @@ REGRA:
     min-height: 100%;
     isolation: isolate;
     --metric-card-surface:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-card-surface-strong) 94%, transparent), color-mix(in srgb, var(--theme-surface-panel) 92%, transparent));
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-secondary) 94%, transparent));
     --metric-card-border: color-mix(in srgb, var(--theme-card-border) 96%, transparent);
     --metric-card-shadow: var(--theme-card-shadow);
     --metric-card-accent: color-mix(in srgb, var(--theme-accent-primary) 34%, transparent);
+    --metric-card-value-ink: var(--theme-text-primary);
+    --metric-card-copy-ink: var(--theme-text-secondary);
+    --metric-card-label-ink: var(--theme-text-muted);
+    --metric-card-kicker-surface: color-mix(in srgb, var(--theme-surface-secondary) 76%, transparent);
+    --metric-card-kicker-ink: var(--theme-text-secondary);
+    --metric-card-signal-surface: color-mix(in srgb, var(--theme-surface-secondary) 88%, transparent);
+    --metric-card-signal-border: color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
+    --metric-card-signal-ink: var(--theme-text-secondary);
+    --metric-card-sparkline-ink: color-mix(in srgb, var(--theme-accent-support) 58%, var(--theme-text-secondary) 42%);
     background: var(--metric-card-surface);
     border-color: var(--metric-card-border);
     box-shadow: var(--metric-card-shadow);
@@ -313,6 +322,7 @@ REGRA:
 
 .metric-card .card-copy {
     max-width: 34ch;
+    color: var(--metric-card-copy-ink);
 }
 
 .metric-card .kpi-card-icon-box {
@@ -333,6 +343,151 @@ REGRA:
     min-width: 18px;
     min-height: 18px;
     overflow: visible;
+}
+
+.metric-card .card-label {
+    color: var(--metric-card-label-ink);
+}
+
+.metric-card .card-kicker {
+    width: fit-content;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--metric-card-kicker-surface);
+    color: var(--metric-card-kicker-ink);
+}
+
+.metric-card .card-value {
+    color: var(--metric-card-value-ink);
+}
+
+.metric-card .metric-number {
+    color: inherit;
+}
+
+.metric-card .metric-number.is-good {
+    color: color-mix(in srgb, var(--theme-accent-success) 84%, var(--metric-card-value-ink) 16%);
+}
+
+.metric-card .metric-number.is-warning {
+    color: color-mix(in srgb, var(--theme-accent-warning) 84%, var(--metric-card-value-ink) 16%);
+}
+
+.metric-card .metric-number.is-bad {
+    color: color-mix(in srgb, var(--theme-accent-danger) 82%, var(--metric-card-value-ink) 18%);
+}
+
+.metric-card .card-signal {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 28px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--metric-card-signal-border);
+    background: var(--metric-card-signal-surface);
+    color: var(--metric-card-signal-ink);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.metric-card .card-signal-dot {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 8px;
+    border-radius: 999px;
+    background: currentColor;
+    box-shadow: 0 0 10px currentColor;
+    opacity: 0.9;
+}
+
+.metric-card .card-signal-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.metric-card .signal-arrow {
+    font-size: 0.82em;
+    line-height: 1;
+}
+
+.metric-card .card-signal.is-good {
+    background: color-mix(in srgb, var(--theme-accent-success) 12%, var(--theme-surface-strong) 88%);
+    border-color: color-mix(in srgb, var(--theme-accent-success) 24%, var(--theme-border-soft) 76%);
+    color: color-mix(in srgb, var(--theme-accent-success) 84%, var(--metric-card-value-ink) 16%);
+}
+
+.metric-card .card-signal.is-warning {
+    background: color-mix(in srgb, var(--theme-accent-warning) 12%, var(--theme-surface-strong) 88%);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 24%, var(--theme-border-soft) 76%);
+    color: color-mix(in srgb, var(--theme-accent-warning) 84%, var(--metric-card-value-ink) 16%);
+}
+
+.metric-card .card-signal.is-bad {
+    background: color-mix(in srgb, var(--theme-accent-danger) 12%, var(--theme-surface-strong) 88%);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 24%, var(--theme-border-soft) 76%);
+    color: color-mix(in srgb, var(--theme-accent-danger) 82%, var(--metric-card-value-ink) 18%);
+}
+
+.metric-card .card-signal.is-neutral,
+.metric-card .card-signal.is-info {
+    background: color-mix(in srgb, var(--theme-accent-support) 10%, var(--theme-surface-strong) 90%);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 22%, var(--theme-border-soft) 78%);
+    color: color-mix(in srgb, var(--theme-accent-support) 80%, var(--metric-card-value-ink) 20%);
+}
+
+.metric-card .dashboard-kpi-sparkline {
+    color: var(--metric-card-sparkline-ink);
+}
+
+body[data-theme="dark"] .metric-card {
+    --metric-card-surface:
+        linear-gradient(180deg, rgba(11, 18, 32, 0.98), rgba(9, 16, 29, 0.96));
+    --metric-card-border: color-mix(in srgb, var(--theme-border-soft) 84%, var(--theme-accent-support-alpha) 16%);
+    --metric-card-shadow: 0 24px 48px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --metric-card-accent: color-mix(in srgb, var(--theme-accent-primary) 42%, transparent);
+    --metric-card-copy-ink: color-mix(in srgb, var(--theme-text-secondary) 88%, white 12%);
+    --metric-card-label-ink: color-mix(in srgb, var(--theme-text-muted) 92%, white 8%);
+    --metric-card-kicker-surface: color-mix(in srgb, var(--theme-surface-strong) 88%, rgba(255, 255, 255, 0.08) 12%);
+    --metric-card-kicker-ink: color-mix(in srgb, var(--theme-text-secondary) 86%, white 14%);
+    --metric-card-signal-surface: color-mix(in srgb, var(--theme-surface-strong) 84%, var(--theme-accent-support-alpha) 16%);
+    --metric-card-signal-border: color-mix(in srgb, var(--theme-border-soft) 72%, var(--theme-accent-support) 28%);
+    --metric-card-signal-ink: color-mix(in srgb, var(--theme-text-secondary) 86%, white 14%);
+    --metric-card-sparkline-ink: color-mix(in srgb, var(--theme-accent-primary) 52%, var(--theme-text-secondary) 48%);
+}
+
+body[data-theme="dark"] .metric-card .card-value {
+    text-shadow: 0 0 18px color-mix(in srgb, var(--metric-card-accent) 22%, transparent);
+}
+
+body[data-theme="dark"] .metric-card .card-signal.is-good {
+    background: color-mix(in srgb, var(--theme-surface-strong) 78%, var(--theme-accent-success) 22%);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 66%, var(--theme-accent-success) 34%);
+    color: color-mix(in srgb, var(--theme-accent-success) 80%, white 20%);
+}
+
+body[data-theme="dark"] .metric-card .card-signal.is-warning {
+    background: color-mix(in srgb, var(--theme-surface-strong) 78%, var(--theme-accent-warning) 22%);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 64%, var(--theme-accent-warning) 36%);
+    color: color-mix(in srgb, var(--theme-accent-warning) 80%, white 20%);
+}
+
+body[data-theme="dark"] .metric-card .card-signal.is-bad {
+    background: color-mix(in srgb, var(--theme-surface-strong) 78%, var(--theme-accent-danger) 22%);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 64%, var(--theme-accent-danger) 36%);
+    color: color-mix(in srgb, var(--theme-accent-danger) 80%, white 20%);
+}
+
+body[data-theme="dark"] .metric-card .card-signal.is-neutral,
+body[data-theme="dark"] .metric-card .card-signal.is-info {
+    background: color-mix(in srgb, var(--theme-surface-strong) 78%, var(--theme-accent-support) 22%);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 64%, var(--theme-accent-support) 36%);
+    color: color-mix(in srgb, var(--theme-accent-support) 80%, white 20%);
 }
 
 .metric-card.kpi-family-card {

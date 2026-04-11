@@ -1,0 +1,43 @@
+{
+  "pageUrl": "http://127.0.0.1:8000/dashboard/",
+  "cluster": {
+    "backgroundImage": "linear-gradient(rgba(7, 13, 24, 0.92), rgba(5, 10, 19, 0.88))",
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "boxShadow": "rgba(255, 255, 255, 0.03) 0px 1px 0px 0px inset, rgba(2, 6, 23, 0.24) 0px 22px 42px 0px",
+    "borderRadius": "31px",
+    "overflow": "hidden",
+    "paddingTop": "6px",
+    "paddingLeft": "14px"
+  },
+  "layoutBody": {
+    "backgroundImage": "none",
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "boxShadow": "none",
+    "borderRadius": "0px",
+    "overflow": "visible",
+    "paddingTop": "0px",
+    "paddingLeft": "0px"
+  },
+  "layoutPanel": {
+    "backgroundImage": "none",
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "boxShadow": "none",
+    "borderRadius": "0px",
+    "overflow": "visible",
+    "paddingTop": "0px",
+    "paddingLeft": "0px"
+  },
+  "commandMain": {
+    "backgroundImage": "linear-gradient(rgba(56, 189, 248, 0.08), rgba(0, 0, 0, 0) 14%), radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.08), rgba(0, 0, 0, 0) 36%)",
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "boxShadow": "none",
+    "borderRadius": "0px",
+    "overflow": "visible",
+    "paddingTop": "0px",
+    "paddingLeft": "0px"
+  },
+  "probe": {
+    "url": "http://127.0.0.1:8000/dashboard/",
+    "clusterCount": 1
+  }
+}

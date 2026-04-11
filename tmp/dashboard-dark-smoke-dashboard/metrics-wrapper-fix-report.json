@@ -1,0 +1,27 @@
+{
+  "bodyTheme": "dark",
+  "metricsLead": {
+    "display": "grid",
+    "color": "rgb(9, 26, 47)",
+    "background": "rgba(0, 0, 0, 0)",
+    "borderTop": "rgb(9, 26, 47) none 0px",
+    "boxShadow": "none",
+    "gridTemplateColumns": "327.281px 280px"
+  },
+  "firstCard": {
+    "display": "grid",
+    "color": "rgb(9, 26, 47)",
+    "background": "linear-gradient(160deg, rgb(30, 41, 59), rgb(15, 23, 42))",
+    "borderTop": "rgba(148, 163, 184, 0.16) solid 1px",
+    "boxShadow": "rgba(2, 6, 23, 0.38) 0px 28px 52px 0px, rgba(255, 255, 255, 0.05) 0px 1px 0px 0px inset",
+    "gridTemplateColumns": "283.281px"
+  },
+  "secondCard": {
+    "display": "grid",
+    "color": "rgb(9, 26, 47)",
+    "background": "radial-gradient(circle at 100% 0%, color(srgb 0.85098 0.419608 0.764706 / 0.0704), rgba(0, 0, 0, 0) 34%), linear-gradient(145deg, rgba(11, 18, 32, 0.98), rgba(9, 16, 29, 0.98))",
+    "borderTop": "rgba(148, 163, 184, 0.14) solid 1px",
+    "boxShadow": "rgba(0, 0, 0, 0.34) 0px 24px 48px 0px, rgba(255, 255, 255, 0.04) 0px 1px 0px 0px inset",
+    "gridTemplateColumns": "236px"
+  }
+}

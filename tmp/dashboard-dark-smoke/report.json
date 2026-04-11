@@ -1,0 +1,80 @@
+[
+  {
+    "viewport": "desktop",
+    "width": 1440,
+    "height": 1600,
+    "url": "http://127.0.0.1:8000/operacao/owner/",
+    "data": {
+      "bodyTheme": "light",
+      "metricsClusterExists": false,
+      "sessionsBoardExists": false,
+      "searchExists": true,
+      "metricsLeadCols": null,
+      "searchInput": {
+        "color": "rgb(9, 26, 47)",
+        "background": "rgba(0, 0, 0, 0)",
+        "borderColor": "rgb(9, 26, 47)",
+        "opacity": "1"
+      },
+      "metricBad": null,
+      "metricSignalWarning": null,
+      "sessionsTitleStyle": null,
+      "sessionPillScheduled": null,
+      "sessionPillCritical": null,
+      "occupancyLabel": null,
+      "supportCopy": null
+    }
+  },
+  {
+    "viewport": "tablet",
+    "width": 1024,
+    "height": 1600,
+    "url": "http://127.0.0.1:8000/operacao/owner/",
+    "data": {
+      "bodyTheme": "light",
+      "metricsClusterExists": false,
+      "sessionsBoardExists": false,
+      "searchExists": true,
+      "metricsLeadCols": null,
+      "searchInput": {
+        "color": "rgb(9, 26, 47)",
+        "background": "rgba(0, 0, 0, 0)",
+        "borderColor": "rgb(9, 26, 47)",
+        "opacity": "1"
+      },
+      "metricBad": null,
+      "metricSignalWarning": null,
+      "sessionsTitleStyle": null,
+      "sessionPillScheduled": null,
+      "sessionPillCritical": null,
+      "occupancyLabel": null,
+      "supportCopy": null
+    }
+  },
+  {
+    "viewport": "mobile-wide",
+    "width": 768,
+    "height": 1800,
+    "url": "http://127.0.0.1:8000/operacao/owner/",
+    "data": {
+      "bodyTheme": "light",
+      "metricsClusterExists": false,
+      "sessionsBoardExists": false,
+      "searchExists": true,
+      "metricsLeadCols": null,
+      "searchInput": {
+        "color": "rgb(9, 26, 47)",
+        "background": "rgba(0, 0, 0, 0)",
+        "borderColor": "rgb(9, 26, 47)",
+        "opacity": "1"
+      },
+      "metricBad": null,
+      "metricSignalWarning": null,
+      "sessionsTitleStyle": null,
+      "sessionPillScheduled": null,
+      "sessionPillCritical": null,
+      "occupancyLabel": null,
+      "supportCopy": null
+    }
+  }
+]

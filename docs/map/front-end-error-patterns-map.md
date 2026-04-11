@@ -269,6 +269,117 @@ Correcao que mais funcionou:
 2. preferir contrato semantico como `data-panel`
 3. manter layout macro separado da identidade local
 
+## Padrao 10: dark mode colocado por cima de host light-first
+
+Sinais:
+
+1. o componente fica aceitavel no light e dependente de varios remendos no dark
+2. aparecem muitos blocos `body[data-theme="dark"]` dentro do modulo local
+3. surface, border, shadow e copy sao todos reescritos na camada da pagina
+
+Causa raiz provavel:
+
+1. o host compartilhado nao fecha sozinho o contrato dark
+2. a tela local vira um pequeno motor de tema para compensar
+
+Exemplos reais:
+
+1. `metric-card` do dashboard entre [../../static/css/design-system/components/cards.css](../../static/css/design-system/components/cards.css) e [../../static/css/design-system/components/dashboard/metrics.css](../../static/css/design-system/components/dashboard/metrics.css)
+2. `#dashboard-sessions-board` entre [../../static/css/design-system/components/dashboard/sessions_board.css](../../static/css/design-system/components/dashboard/sessions_board.css) e [../../static/css/design-system/components/dashboard/side.css](../../static/css/design-system/components/dashboard/side.css)
+3. topbar antes do ajuste de busca em dark
+
+Correcao que mais funcionou:
+
+1. endurecer primeiro o host compartilhado
+2. depois remover o repaint local que sobrou
+3. impedir que a tela local continue definindo surface base, copy base e sombra base
+
+Analogia:
+
+1. o casaco local estava tapando o furo do uniforme
+2. primeiro costura o uniforme
+3. depois decide se o casaco ainda precisa existir
+
+## Padrao 11: familia semantica sem branch dark completo
+
+Sinais:
+
+1. a classe base tem dark mode
+2. as subclasses reais de status ou ocupacao ficam com contraste torto
+3. o time comeca a corrigir pill por pill em arquivos locais
+
+Causa raiz provavel:
+
+1. o dicionario semantico do shared nao terminou de ensinar o dark mode para todas as familias
+
+Exemplos reais:
+
+1. `class-status-scheduled`
+2. `class-occupancy-critical`
+3. sinais locais de KPI como `card-signal.is-warning`
+
+Correcao que mais funcionou:
+
+1. fechar a semantica no host compartilhado
+2. deixar o local consumir a familia pronta
+3. nao resolver status de dominio dentro do board local
+
+Heuristica:
+
+1. se a tela esta tentando consertar estado semantico no CSS local, quase sempre o shared ficou incompleto
+
+## Padrao 12: shell duplicado em grid aninhado
+
+Sinais:
+
+1. o dark mode para de "vazar", mas nasce uma moldura feia dentro de outra moldura
+2. aparecem dois contornos arredondados no mesmo bloco de KPI ou dashboard
+3. o grid fica com cara de caixa dentro de caixa e o vazio entre cards vira protagonista
+
+Causa raiz provavel:
+
+1. container pai e filho estao pintando surface, border e shadow ao mesmo tempo
+2. a hierarquia estrutural foi promovida duas vezes para hierarquia visual
+
+Exemplos reais:
+
+1. `dashboard-metrics-cluster` e `dashboard-metrics-lead` no dark mode do dashboard
+
+Correcao que mais funcionou:
+
+1. escolher um unico dono da casca visual
+2. deixar o container interno voltar a ser apenas trilho de layout
+3. validar por screenshot, porque esse erro parece "contraste" quando na verdade e "moldura duplicada"
+
+Analogia:
+
+1. nao era falta de tinta
+2. era quadro com duas molduras brigando pelo olho
+
+## Padrao 13: largura magica cortando trilha de progresso
+
+Sinais:
+
+1. a barra de progresso parece curta demais dentro do card
+2. o preenchimento parece certo, mas o trilho inteiro nao acompanha a largura do conteudo
+3. o problema melhora no mobile e piora no desktop
+
+Causa raiz provavel:
+
+1. o componente recebeu `width` fixa ou `min()` com teto em pixels herdado de uma fase antiga
+2. o card cresceu, mas a barra continuou usando uma regua velha
+
+Exemplos reais:
+
+1. `dashboard-session-progress` com `233px` em `side.css`
+2. `#dashboard-sessions-board .dashboard-session-progress` com `214px` em `sessions_board.css`
+
+Correcao que mais funcionou:
+
+1. devolver a largura para `100%`
+2. remover `max-width` artificial
+3. conferir se a diferenca restante e apenas o padding interno do card
+
 ## Sequencia de correcao que mais funcionou
 
 Quando o bug tem cheiro recorrente, a ordem com menor arrependimento foi:
@@ -278,7 +389,8 @@ Quando o bug tem cheiro recorrente, a ordem com menor arrependimento foi:
 3. diferenciar anatomia, contexto e responsividade
 4. remover eco estrutural
 5. ajustar ordem de cascata
-6. so depois pensar em apagar legado ou mexer em token
+6. fechar branch dark nas familias semanticas compartilhadas
+7. so depois pensar em apagar legado ou mexer em token
 
 ## Erro comum de iniciante que gera debito tecnico
 

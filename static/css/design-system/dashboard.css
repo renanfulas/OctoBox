@@ -479,15 +479,11 @@ body[data-theme="dark"] .dashboard-layout-chrome {
 }
 
 body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-command-main {
-    background:
-        linear-gradient(180deg, rgba(56, 189, 248, 0.08), transparent 14%),
-        radial-gradient(circle at top left, rgba(56, 189, 248, 0.08), transparent 36%);
+    background: none;
 }
 
 body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-command-rail {
-    background:
-        linear-gradient(180deg, rgba(217, 70, 239, 0.06), transparent 20%),
-        radial-gradient(circle at top right, rgba(217, 70, 239, 0.08), transparent 34%);
+    background: none;
 }
 
 body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-reading-list .fdw-focus-card.is-primary,
