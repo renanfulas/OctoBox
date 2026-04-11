@@ -7,7 +7,7 @@ POR QUE ELE EXISTE:
 O QUE ESTE ARQUIVO FAZ:
 1. define a atmosfera da pagina e do hero.
 2. ajusta o topbar no escopo do dashboard.
-3. expõe variaveis e animacao usadas pelos modulos de summary, metrics e side.
+3. expÃµe variaveis e animacao usadas pelos modulos de summary, metrics e side.
 */
 
 .dashboard-shell {
@@ -221,15 +221,8 @@ body[data-shell-scope="dashboard"] .page-body {
     border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 18%, var(--theme-glass-border) 82%);
     border-radius: 999px;
     padding: 12px 24px;
-<<<<<<< HEAD
     background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-primary) 90%, white 10%), color-mix(in srgb, var(--theme-accent-support) 82%, black 18%), color-mix(in srgb, var(--theme-accent-premium) 46%, black 54%));
     color: #f6feff;
-=======
-    background:
-        linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-warning) 72%, transparent), color-mix(in srgb, var(--theme-accent-primary) 62%, transparent)),
-        color-mix(in srgb, var(--theme-surface-chrome-strong) 72%, transparent);
-    color: #ffffff;
->>>>>>> codex/student-page-refactor-and-ui-polish
     font-size: 0.9rem;
     font-weight: 600;
     box-shadow:
@@ -251,11 +244,7 @@ body[data-shell-scope="dashboard"] .page-body {
     border: 1px solid color-mix(in srgb, var(--theme-accent-support) 16%, var(--theme-border-soft) 84%);
     border-radius: 999px;
     background:
-<<<<<<< HEAD
         linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-strong) 86%, transparent), color-mix(in srgb, var(--theme-surface-secondary) 80%, var(--theme-accent-support-alpha) 20%));
-=======
-        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-glass) 92%, transparent), color-mix(in srgb, var(--theme-surface-chrome) 80%, transparent));
->>>>>>> codex/student-page-refactor-and-ui-polish
     color: var(--ink);
     font-size: 0.85rem;
     font-weight: 600;
@@ -602,19 +591,19 @@ body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-command-r
 
 /* --- Legacy grids imported from workspace.css agora --- */
 
-/* ──────────────────────────────────────────────────────────────────────
-   FIBONACCI GLANCE CARDS — FINAL AUTHORITY
-   Este bloco está em dashboard.css propositalmente.
-   dashboard.css é carregado SEM @layer (via current_page_assets),
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   FIBONACCI GLANCE CARDS â€” FINAL AUTHORITY
+   Este bloco estÃ¡ em dashboard.css propositalmente.
+   dashboard.css Ã© carregado SEM @layer (via current_page_assets),
    portanto SEMPRE vence regras dentro de @layer(components).
    Qualquer ajuste final de padding/gap/altura dos cards fica aqui.
-───────────────────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .dashboard-summary-topline {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr)); /* Colunas iguais — cards com mesmo tipo de conteúdo */
+    grid-template-columns: repeat(3, minmax(0, 1fr)); /* Colunas iguais â€” cards com mesmo tipo de conteÃºdo */
     grid-auto-rows: 1fr;
     align-items: stretch;
-    gap: 21px; /* fib-4 — autoridade final */
+    gap: 21px; /* fib-4 â€” autoridade final */
 }
 
 .dashboard-summary-topline .dashboard-glance-card {
@@ -627,15 +616,15 @@ body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-command-r
     padding: 18px 22px;
     min-height: 132px;
 }
-/* ──────────────────────────────────────────────────────────────────────
-   VERTICAL RHYTHM — PRIORITY STRIP vs METRICS
-   Autoridade final. O container real é workspace-grid-main.
-───────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   VERTICAL RHYTHM â€” PRIORITY STRIP vs METRICS
+   Autoridade final. O container real Ã© workspace-grid-main.
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-/* Adiciona gap entre os painéis dentro da coluna principal */
+/* Adiciona gap entre os painÃ©is dentro da coluna principal */
 .workspace-grid-main {
     display: grid;
-    gap: 34px; /* fib-5 — separação clara entre priority strip e métricas */
+    gap: 34px; /* fib-5 â€” separaÃ§Ã£o clara entre priority strip e mÃ©tricas */
     align-content: start;
 }
 

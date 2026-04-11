@@ -17,11 +17,7 @@ POR QUE ELE EXISTE:
                     <th scope="col">Metodo</th>
                     <th scope="col" class="is-center">Status</th>
                     <th scope="col" class="is-right">Valor</th>
-<<<<<<< HEAD
                     <th scope="col" class="is-right"><span class="visually-hidden">Acao</span></th>
-=======
-                    <th scope="col" class="is-right"><span class="visually-hidden">Acoes</span></th>
->>>>>>> codex/student-page-refactor-and-ui-polish
                 </tr>
             </thead>
             <tbody>
@@ -46,22 +42,16 @@ POR QUE ELE EXISTE:
                             </div>
                         </div>
                     </td>
-<<<<<<< HEAD
                     <td class="student-page-payments-ledger__date">
                         {{ payment.due_date|date:"d M Y" }}
                     </td>
                     <td class="student-page-payments-ledger__method">{{ payment.get_method_display }}</td>
-=======
-                    <td class="student-page-payments-ledger__date">{{ payment.due_date|date:"d M Y" }}</td>
-                    <td class="student-page-payments-ledger__method">{{ payment.get_method_display|default:"-" }}</td>
->>>>>>> codex/student-page-refactor-and-ui-polish
                     <td class="is-center student-page-payments-ledger__status">
                         <span class="pill student-page-payments-ledger__status-pill {% if payment.status == 'paid' %}success{% elif payment.status == 'overdue' %}warning{% else %}info{% endif %}">
                             {{ payment.get_status_display }}
                         </span>
                     </td>
                     <td class="student-page-payments-ledger__amount is-right">R$ {{ payment.amount|floatformat:2 }}</td>
-<<<<<<< HEAD
                     <td class="student-page-payments-ledger__action-cell is-right">
                         <button
                             class="student-page-payments-ledger__action"
@@ -78,11 +68,6 @@ POR QUE ELE EXISTE:
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path d="m9 6 6 6-6 6"/>
                             </svg>
-=======
-                    <td class="is-right">
-                        <button class="student-page-payments-ledger__action" type="button" data-action="edit-payment" data-payment-id="{{ payment.id }}" aria-label="Abrir detalhes da cobranca">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
->>>>>>> codex/student-page-refactor-and-ui-polish
                         </button>
                     </td>
                 </tr>

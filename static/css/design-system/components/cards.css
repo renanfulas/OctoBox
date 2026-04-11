@@ -28,31 +28,12 @@ REGRA:
     --card-local-glow: var(--card-glow);
     position: relative;
     overflow: hidden;
-<<<<<<< HEAD
     border: 1px solid color-mix(in srgb, var(--card-local-border) 94%, transparent);
     border-radius: var(--radius-panel);
     background: var(--card-local-surface);
     box-shadow: var(--card-local-shadow);
     backdrop-filter: blur(18px) saturate(132%);
     -webkit-backdrop-filter: blur(18px) saturate(132%);
-=======
-    isolation: isolate;
-    --card-local-surface: var(--card-surface);
-    --card-local-border: var(--card-border);
-    --card-local-shadow: var(--card-shadow);
-    --card-local-hover-border: var(--card-hover-border);
-    --card-local-hover-shadow: var(--card-hover-shadow);
-    --card-local-focus-border: var(--card-focus-border);
-    --card-local-focus-shadow: var(--card-focus-shadow);
-    --card-local-top-stripe: var(--card-top-stripe);
-    --card-local-orb: var(--card-orb);
-    border: 1px solid var(--card-local-border);
-    border-radius: var(--radius-panel);
-    background: var(--card-local-surface);
-    box-shadow: var(--card-local-shadow);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
->>>>>>> codex/student-page-refactor-and-ui-polish
     transition:
         box-shadow var(--motion-base) var(--ease-standard),
         border-color var(--motion-base) var(--ease-standard),
@@ -65,14 +46,9 @@ REGRA:
     position: absolute;
     inset: 0 0 auto 0;
     height: 1px;
-<<<<<<< HEAD
     background:
         linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-primary) 52%, transparent), color-mix(in srgb, var(--theme-accent-support) 42%, transparent), color-mix(in srgb, var(--theme-accent-premium) 34%, transparent));
     opacity: 0.9;
-=======
-    background: var(--card-local-top-stripe);
-    opacity: 0.72;
->>>>>>> codex/student-page-refactor-and-ui-polish
     pointer-events: none;
 }
 
@@ -84,20 +60,14 @@ REGRA:
     width: 120px;
     height: 120px;
     border-radius: 999px;
-<<<<<<< HEAD
     background:
         radial-gradient(circle, color-mix(in srgb, var(--card-local-glow) 76%, transparent), transparent 72%);
     opacity: 0.9;
-=======
-    background: var(--card-local-orb);
-    opacity: 0.72;
->>>>>>> codex/student-page-refactor-and-ui-polish
     pointer-events: none;
 }
 
 .card:hover,
 .table-card:hover {
-<<<<<<< HEAD
     border-color: color-mix(in srgb, var(--card-local-border-strong) 96%, transparent);
     box-shadow: var(--card-local-shadow-lift);
 }
@@ -105,21 +75,12 @@ REGRA:
 .card:active,
 .table-card:active {
     transform: translateY(0);
-=======
-    border-color: var(--card-local-hover-border);
-    box-shadow: var(--card-local-hover-shadow);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .card:focus-within,
 .table-card:focus-within {
-<<<<<<< HEAD
     border-color: color-mix(in srgb, var(--theme-accent-support) 44%, transparent);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-support) 10%, transparent), var(--card-local-shadow);
-=======
-    border-color: var(--card-local-focus-border);
-    box-shadow: var(--card-local-focus-shadow);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .card {
@@ -289,7 +250,6 @@ REGRA:
 .metric-card {
     min-height: 100%;
     isolation: isolate;
-<<<<<<< HEAD
     --metric-card-surface:
         linear-gradient(180deg, color-mix(in srgb, var(--theme-card-surface-strong) 94%, transparent), color-mix(in srgb, var(--theme-surface-panel) 92%, transparent));
     --metric-card-border: color-mix(in srgb, var(--theme-card-border) 96%, transparent);
@@ -305,44 +265,13 @@ REGRA:
     background: none;
     opacity: 0;
 }
-=======
-    --metric-card-surface: var(--card-surface-strong);
-    --metric-card-border: color-mix(in srgb, var(--card-border) 92%, transparent);
-    --metric-card-shadow: var(--card-shadow);
-    --metric-card-accent: color-mix(in srgb, var(--theme-accent-support) 34%, transparent);
-    --card-local-surface: var(--metric-card-surface);
-    --card-local-border: var(--metric-card-border);
-    --card-local-shadow: var(--metric-card-shadow);
-    --card-local-hover-border: color-mix(in srgb, var(--metric-card-accent) 52%, transparent);
-    --card-local-hover-shadow:
-        0 28px 68px rgba(15, 23, 42, 0.12),
-        0 12px 24px rgba(15, 23, 42, 0.08),
-        0 0 30px color-mix(in srgb, var(--metric-card-accent) 18%, transparent),
-        inset 0 1px 0 rgba(255, 255, 255, 0.16);
-    --card-local-focus-border: color-mix(in srgb, var(--metric-card-accent) 62%, transparent);
-    --card-local-focus-shadow:
-        0 0 0 3px color-mix(in srgb, var(--metric-card-accent) 16%, transparent),
-        0 28px 68px rgba(15, 23, 42, 0.12),
-        0 12px 24px rgba(15, 23, 42, 0.08),
-        0 0 30px color-mix(in srgb, var(--metric-card-accent) 18%, transparent),
-        inset 0 1px 0 rgba(255, 255, 255, 0.16);
-    --card-local-top-stripe: linear-gradient(90deg, color-mix(in srgb, var(--metric-card-accent) 92%, transparent), color-mix(in srgb, var(--theme-accent-premium) 36%, transparent));
-    --card-local-orb: radial-gradient(circle, color-mix(in srgb, var(--metric-card-accent) 18%, transparent), transparent 72%);
-}
-
-.metric-card::before { opacity: 0.82; }
->>>>>>> codex/student-page-refactor-and-ui-polish
 
 .metric-card::after {
     width: 132px;
     height: 132px;
     inset: auto -34px -42px auto;
-<<<<<<< HEAD
     background: radial-gradient(circle, color-mix(in srgb, var(--metric-card-accent) 28%, transparent), transparent 72%);
     opacity: 0.94;
-=======
-    opacity: 0.92;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .metric-card:hover {
@@ -528,21 +457,10 @@ body[data-theme="dark"] :is(.card, .table-card).card--priority {
     display: grid;
     gap: 16px;
     padding: 18px 20px;
-<<<<<<< HEAD
     border-color: color-mix(in srgb, var(--card-border) 84%, transparent);
     background:
         linear-gradient(180deg, color-mix(in srgb, var(--card-surface-strong) 92%, transparent), color-mix(in srgb, var(--theme-surface) 96%, transparent));
     box-shadow: var(--card-shadow);
-=======
-    border-color: color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
-    background:
-        linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent),
-            color-mix(in srgb, var(--theme-surface-glass) 96%, transparent)
-        );
-    box-shadow: var(--theme-glass-shadow);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .page-reading-panel {
@@ -568,24 +486,11 @@ body[data-theme="dark"] :is(.card, .table-card).card--priority {
     min-height: 100%;
     padding: 16px;
     border-radius: var(--radius-panel);
-<<<<<<< HEAD
     border: 1px solid color-mix(in srgb, var(--card-border) 88%, transparent);
     background: linear-gradient(180deg, color-mix(in srgb, var(--card-surface-strong) 84%, transparent), color-mix(in srgb, var(--theme-surface) 94%, transparent));
     color: inherit;
     text-decoration: none;
     box-shadow: var(--card-shadow);
-=======
-    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
-    background:
-        linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent),
-            color-mix(in srgb, var(--theme-surface-glass) 96%, transparent)
-        );
-    color: inherit;
-    text-decoration: none;
-    box-shadow: var(--theme-glass-shadow);
->>>>>>> codex/student-page-refactor-and-ui-polish
     transition:
         box-shadow var(--motion-base) var(--ease-standard),
         border-color var(--motion-base) var(--ease-standard),
@@ -593,31 +498,16 @@ body[data-theme="dark"] :is(.card, .table-card).card--priority {
 }
 
 .fdw-focus-card:hover {
-<<<<<<< HEAD
     box-shadow: var(--card-shadow-lift);
     border-color: color-mix(in srgb, var(--theme-accent-support) 26%, transparent);
-=======
-    box-shadow: var(--shadow-lift);
-    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 30%, var(--theme-glass-border) 70%);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .fdw-focus-card.is-primary {
     background:
-<<<<<<< HEAD
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 16%, transparent), transparent 36%),
         radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-primary-alpha) 12%, transparent), transparent 42%),
         linear-gradient(160deg, color-mix(in srgb, var(--card-surface-strong) 94%, transparent), color-mix(in srgb, var(--theme-surface) 96%, transparent));
     border-color: color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
-=======
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 10%, transparent), transparent 34%),
-        linear-gradient(
-            160deg,
-            color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent),
-            color-mix(in srgb, var(--theme-surface-glass) 96%, transparent)
-        );
-    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 28%, var(--theme-glass-border) 72%);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .fdw-focus-card-head,
@@ -637,15 +527,9 @@ body[data-theme="dark"] :is(.card, .table-card).card--priority {
     height: 38px;
     padding: 0 10px;
     border-radius: 10px;
-<<<<<<< HEAD
     border: 1px solid color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
     background: color-mix(in srgb, var(--theme-accent-support-alpha) 40%, var(--theme-surface-strong) 60%);
     color: color-mix(in srgb, var(--theme-accent-support) 82%, var(--ink) 18%);
-=======
-    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 86%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-glass-strong) 88%, transparent);
-    color: var(--theme-accent-primary);
->>>>>>> codex/student-page-refactor-and-ui-polish
     font-size: 0.72rem;
     font-weight: 800;
     letter-spacing: 0.12em;
@@ -666,15 +550,9 @@ body[data-theme="dark"] :is(.card, .table-card).card--priority {
     font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.04em;
-<<<<<<< HEAD
     border: 1px solid color-mix(in srgb, var(--card-border) 90%, transparent);
     background: color-mix(in srgb, var(--theme-surface-strong) 72%, transparent);
     color: var(--ink-soft);
-=======
-    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 84%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-glass-strong) 86%, transparent);
-    color: var(--theme-text-secondary);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .fdw-focus-chip.is-warning {
@@ -754,7 +632,7 @@ body[data-theme="dark"] :is(.card, .table-card).card--priority {
 }
 
 .operation-shell .page-reading-list .fdw-focus-card::after {
-    content: "›";
+    content: "â€º";
     position: absolute;
     right: 16px;
     top: 50%;
@@ -966,14 +844,11 @@ body[data-theme="dark"] .table-card {
     .class-grid-scene .table-card,
     .class-grid-scene .dashboard-glance-card {
         box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), 0 1px 4px rgba(15, 23, 42, 0.02);
-<<<<<<< HEAD
         transform: none;
     }
 
     .class-grid-scene .card:hover,
     .class-grid-scene .table-card:hover {
         transform: none;
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
     }
 }

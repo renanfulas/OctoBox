@@ -164,12 +164,12 @@ def _build_dashboard_metric_cards_legacy(metrics, *, pending_intakes_count, toda
     return [
         {
             'card_class': 'dashboard-kpi-card kpi-red is-panel',
-            'eyebrow': 'Cobranças em atraso',
+            'eyebrow': 'CobranÃ§as em atraso',
             'kicker': 'Tudo Certo' if metrics['overdue_payments'] == 0 else 'Precisa do seu olhar',
             'display_value': metrics['overdue_payments'],
             'change': _build_delta_badge(metrics['overdue_payments'], metrics['overdue_payments_previous_day'], label='desde ontem', semantic='negative'),
             'data_action': 'blink-topbar-finance',
-            'note': 'Cada cobrança aqui ainda tem chance. Vou te ajudar a priorizar quem abordar primeiro.',
+            'note': 'Cada cobranÃ§a aqui ainda tem chance. Vou te ajudar a priorizar quem abordar primeiro.',
             'hide_footer': True,
         },
         {
@@ -180,11 +180,11 @@ def _build_dashboard_metric_cards_legacy(metrics, *, pending_intakes_count, toda
             'is_jumbo': True,
             'data_action': 'blink-sidebar-financeiro',
             'sparkline_data': [
-                {'percent': 25, 'label': '6 dias atrás: R$ 850,00'},
-                {'percent': 40, 'label': '5 dias atrás: R$ 1.360,00'},
-                {'percent': 30, 'label': '4 dias atrás: R$ 1.020,00'},
-                {'percent': 55, 'label': '3 dias atrás: R$ 1.870,00'},
-                {'percent': 45, 'label': '2 dias atrás: R$ 1.530,00'},
+                {'percent': 25, 'label': '6 dias atrÃ¡s: R$ 850,00'},
+                {'percent': 40, 'label': '5 dias atrÃ¡s: R$ 1.360,00'},
+                {'percent': 30, 'label': '4 dias atrÃ¡s: R$ 1.020,00'},
+                {'percent': 55, 'label': '3 dias atrÃ¡s: R$ 1.870,00'},
+                {'percent': 45, 'label': '2 dias atrÃ¡s: R$ 1.530,00'},
                 {'percent': 80, 'label': 'Ontem: R$ 2.720,00'},
                 {'percent': 100, 'label': 'Hoje: Cerca de R$ 3.400,00'},
             ],
@@ -195,7 +195,7 @@ def _build_dashboard_metric_cards_legacy(metrics, *, pending_intakes_count, toda
                 formatter=_format_currency,
                 semantic='positive',
             ),
-            'note': 'Esse é o dinheiro real que entrou. Eu te mostro onde está indo bem e onde precisa de atenção.',
+            'note': 'Esse Ã© o dinheiro real que entrou. Eu te mostro onde estÃ¡ indo bem e onde precisa de atenÃ§Ã£o.',
             'hide_footer': True,
         },
         {
@@ -209,7 +209,7 @@ def _build_dashboard_metric_cards_legacy(metrics, *, pending_intakes_count, toda
                 'value': 'Responder hoje' if pending_intakes_count else 'Fila limpa',
                 'label': 'pipeline comercial',
             },
-            'note': 'Cada entrada aqui pode ser alguém que está esperando por você mudar a vida dela.\nVamos cuidar antes que esfrie.',
+            'note': 'Cada entrada aqui pode ser alguÃ©m que estÃ¡ esperando por vocÃª mudar a vida dela.\nVamos cuidar antes que esfrie.',
             'hide_footer': True,
         },
         {
@@ -223,17 +223,17 @@ def _build_dashboard_metric_cards_legacy(metrics, *, pending_intakes_count, toda
                 'label': 'ocupacao media',
             },
             'data_action': 'blink-board-sessions',
-            'note': 'Cuide da lotação para que seu Coach possa entregar uma aula melhor para os alunos.',
+            'note': 'Cuide da lotaÃ§Ã£o para que seu Coach possa entregar uma aula melhor para os alunos.',
             'hide_footer': True,
         },
         {
             'card_class': 'dashboard-kpi-card kpi-green is-rail',
-            'eyebrow': 'Presença no mês',
+            'eyebrow': 'PresenÃ§a no mÃªs',
             'kicker': 'Compromisso que voltou',
             'display_value': metrics['attendance_this_month'],
             'data_action': 'blink-sidebar-alunos',
             'change': _build_delta_badge(metrics['attendance_this_month'], metrics['attendance_previous_month'], label='vs mes anterior', semantic='positive'),
-            'note': 'Cada presença é uma pessoa que escolheu voltar. Você está construindo algo que importa.',
+            'note': 'Cada presenÃ§a Ã© uma pessoa que escolheu voltar. VocÃª estÃ¡ construindo algo que importa.',
             'hide_footer': True,
         },
         {
@@ -243,7 +243,7 @@ def _build_dashboard_metric_cards_legacy(metrics, *, pending_intakes_count, toda
             'display_value': metrics['active_students'],
             'data_action': 'blink-sidebar-alunos',
             'signal': {'tone': 'good', 'value': 'Base viva', 'label': 'comunidade ativa'},
-            'note': 'Essa é a sua comunidade. Cada pessoa aqui confia no que você está construindo.',
+            'note': 'Essa Ã© a sua comunidade. Cada pessoa aqui confia no que vocÃª estÃ¡ construindo.',
             'hide_footer': True,
         },
     ]
@@ -343,10 +343,7 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
                 'value': occupancy_signal_value,
                 'label': 'ocupacao media',
             },
-<<<<<<< HEAD
             'data_action': 'blink-board-sessions',
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
             'note': (
                 'A agenda virou a primeira coordenacao do dia. Vale abrir aqui antes de aprofundar o restante.'
                 if priority_context['dominant_key'] == 'occupancy' and metrics['sessions_today'] > 0 else
@@ -393,7 +390,7 @@ def _decorate_dashboard_sessions(serialized_sessions):
         elif session['booking_closed']:
             session['dashboard_kicker'] = 'Reservas fechadas'
         elif index == 0:
-            session['dashboard_kicker'] = 'Próxima aula'
+            session['dashboard_kicker'] = 'PrÃ³xima aula'
         elif session['occupancy_percent'] >= 90:
             session['dashboard_kicker'] = 'Turma quase lotada'
         else:
@@ -402,8 +399,8 @@ def _decorate_dashboard_sessions(serialized_sessions):
 
 
 def _build_dashboard_payment_alert_snapshot(*, overdue_payments_queryset):
-    # 🚀 Performance de Elite (Ghost Audit): Otimização N+1
-    # Pré-carregamos o contato de WhatsApp mais recente para cada estudante da lista
+    # ðŸš€ Performance de Elite (Ghost Audit): OtimizaÃ§Ã£o N+1
+    # PrÃ©-carregamos o contato de WhatsApp mais recente para cada estudante da lista
     # para evitar 10+ queries extras no loop.
     qs = overdue_payments_queryset.select_related('student').order_by('due_date')
     top_10_payments = list(qs[:10])
@@ -411,7 +408,7 @@ def _build_dashboard_payment_alert_snapshot(*, overdue_payments_queryset):
     
     contacts_map = {}
     if student_ids:
-        # 🧪 Compatibilidade V4.1 (SQLite & Postgres): Deduplicação Determinística em memória
+        # ðŸ§ª Compatibilidade V4.1 (SQLite & Postgres): DeduplicaÃ§Ã£o DeterminÃ­stica em memÃ³ria
         # Ordenamos por estudante e data, depois guardamos apenas o mais recente no mapa.
         latest_contacts_qs = WhatsAppContact.objects.filter(
             linked_student_id__in=student_ids
@@ -439,7 +436,7 @@ def _build_dashboard_payment_alert_snapshot(*, overdue_payments_queryset):
         payment_alerts.append({
             'id': p.id,
             'student': student,
-            'student_full_name': student.full_name if student else 'Estagiário/Anônimo',
+            'student_full_name': student.full_name if student else 'EstagiÃ¡rio/AnÃ´nimo',
             'due_date': p.due_date,
             'amount': p.amount,
             'href': reverse('finance-center'),
@@ -448,7 +445,7 @@ def _build_dashboard_payment_alert_snapshot(*, overdue_payments_queryset):
         })
 
     total_count = qs.count()
-    total_label = f"{total_count} cobrança(s)" if total_count else 'Nenhuma cobrança'
+    total_label = f"{total_count} cobranÃ§a(s)" if total_count else 'Nenhuma cobranÃ§a'
 
     return {
         'payment_alerts': payment_alerts,
@@ -471,9 +468,9 @@ def _build_dashboard_glance_summary(*, metrics, role_slug, upcoming_sessions, pa
             'value': count,
             'indicator': 'Caixa' if role_slug == ROLE_RECEPTION else 'Urgente',
             'copy': (
-                f'{count} cobrança(s) prontas para contato. Eu separei para você. Comece por aqui e o dia flui melhor.'
+                f'{count} cobranÃ§a(s) prontas para contato. Eu separei para vocÃª. Comece por aqui e o dia flui melhor.'
                 if role_slug != ROLE_RECEPTION else
-                f'{count} cobrança(s) cabem agora no seu turno. Uma por uma, você resolve. Estou aqui contigo.'
+                f'{count} cobranÃ§a(s) cabem agora no seu turno. Uma por uma, vocÃª resolve. Estou aqui contigo.'
             ),
         }
 
@@ -482,9 +479,9 @@ def _build_dashboard_glance_summary(*, metrics, role_slug, upcoming_sessions, pa
         starts_at_label = timezone.localtime(primary_session['starts_at']).strftime('%H:%M')
         indicator = primary_session['status_label'] if primary_session['status_label'] == 'Em andamento' else primary_session['occupancy_label']
         copy = (
-            f"{primary_session['object'].title} está rodando agora. Eu cuido do painel, você cuida do salão."
+            f"{primary_session['object'].title} estÃ¡ rodando agora. Eu cuido do painel, vocÃª cuida do salÃ£o."
             if primary_session['status_label'] == 'Em andamento' else
-            f"{primary_session['object'].title} começa às {starts_at_label}. Preparei tudo para você só conferir."
+            f"{primary_session['object'].title} comeÃ§a Ã s {starts_at_label}. Preparei tudo para vocÃª sÃ³ conferir."
         )
         return {
             'href': '#dashboard-sessions-board',
@@ -503,7 +500,7 @@ def _build_dashboard_glance_summary(*, metrics, role_slug, upcoming_sessions, pa
         'kicker': 'Base em foco',
         'value': metrics['active_students'],
         'indicator': 'Comunidade',
-        'copy': 'Sem urgências agora. O melhor presente que você pode dar para o box é cuidar de quem já está aqui.',
+        'copy': 'Sem urgÃªncias agora. O melhor presente que vocÃª pode dar para o box Ã© cuidar de quem jÃ¡ estÃ¡ aqui.',
     }
 
 def build_dashboard_snapshot(*, today, month_start, role_slug=''):
@@ -513,8 +510,8 @@ def build_dashboard_snapshot(*, today, month_start, role_slug=''):
     """
     cache_key = f"dashboard_snapshot:{role_slug}:{today.isoformat()}:{month_start.isoformat()}"
     ttl = getattr(settings, 'SHELL_COUNTS_CACHE_TTL_SECONDS', 60)
-    # 🚀 Performance de Elite (Ghost Hardening): Cache Jitter
-    # Evita que todos os dashboards de todos os usuários expirem no mesmo segundo.
+    # ðŸš€ Performance de Elite (Ghost Hardening): Cache Jitter
+    # Evita que todos os dashboards de todos os usuÃ¡rios expirem no mesmo segundo.
     jittered_ttl = get_cache_ttl_with_jitter(ttl)
 
     def _calculate():
@@ -528,7 +525,7 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
     previous_month_end = month_start - timedelta(days=1)
     previous_month_start = previous_month_end.replace(day=1)
 
-    # 🚀 Otimização Game Dev (Latency Zero): Agregação por Modelo
+    # ðŸš€ OtimizaÃ§Ã£o Game Dev (Latency Zero): AgregaÃ§Ã£o por Modelo
     # Em vez de 11 counts/sums individuais, agora fazemos 4 queries agrupadas.
     
     sessions_today = ClassSession.objects.filter(scheduled_at__date=today)
@@ -607,8 +604,8 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
         prev_month_date = (month_start - timedelta(days=1))
         prev_start, prev_end = _get_week_range(prev_month_date.year, prev_month_date.month, 1)
 
-    # 🚀 Performance de Elite (Ghost Hardening): Multi-Period Aggregation
-    # Uma única viagem ao banco para buscar todos os períodos necessários.
+    # ðŸš€ Performance de Elite (Ghost Hardening): Multi-Period Aggregation
+    # Uma Ãºnica viagem ao banco para buscar todos os perÃ­odos necessÃ¡rios.
     revenue_metrics = Payment.objects.filter(status=PaymentStatus.PAID).aggregate(
         curr_week=Sum('amount', filter=Q(due_date__gte=curr_start, due_date__lte=curr_end)),
         prev_week=Sum('amount', filter=Q(due_date__gte=prev_start, due_date__lte=prev_end))
@@ -637,12 +634,12 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
     if metrics['overdue_payments'] > 0:
         operational_focus.append(
             {
-                'label': 'Caixa curto pede ação agora' if role_slug == ROLE_RECEPTION else 'Cobrança pede ação agora',
-                'chip_label': 'Cobranças' if role_slug != ROLE_RECEPTION else 'Caixa',
+                'label': 'Caixa curto pede aÃ§Ã£o agora' if role_slug == ROLE_RECEPTION else 'CobranÃ§a pede aÃ§Ã£o agora',
+                'chip_label': 'CobranÃ§as' if role_slug != ROLE_RECEPTION else 'Caixa',
                 'summary': (
-                    f"{metrics['overdue_payments']} pagamento(s) já passaram do vencimento e podem pedir abordagem de balcão ainda hoje."
+                    f"{metrics['overdue_payments']} pagamento(s) jÃ¡ passaram do vencimento e podem pedir abordagem de balcÃ£o ainda hoje."
                     if role_slug == ROLE_RECEPTION else
-                    f"{metrics['overdue_payments']} pagamento(s) já passaram do vencimento e pedem contato antes de virarem evasão."
+                    f"{metrics['overdue_payments']} pagamento(s) jÃ¡ passaram do vencimento e pedem contato antes de virarem evasÃ£o."
                 ),
                 'pill_class': 'warning',
                 'href': finance_focus_href,
@@ -652,9 +649,9 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
     else:
         operational_focus.append(
             {
-                'label': 'Caixa curto está sob controle' if role_slug == ROLE_RECEPTION else 'Cobrança está sob controle',
-                'chip_label': 'Cobranças' if role_slug != ROLE_RECEPTION else 'Caixa',
-                'summary': 'Nenhum atraso crítico apareceu no recorte de hoje.' if role_slug != ROLE_RECEPTION else 'Nenhuma cobrança curta crítica apareceu no recorte de hoje.',
+                'label': 'Caixa curto estÃ¡ sob controle' if role_slug == ROLE_RECEPTION else 'CobranÃ§a estÃ¡ sob controle',
+                'chip_label': 'CobranÃ§as' if role_slug != ROLE_RECEPTION else 'Caixa',
+                'summary': 'Nenhum atraso crÃ­tico apareceu no recorte de hoje.' if role_slug != ROLE_RECEPTION else 'Nenhuma cobranÃ§a curta crÃ­tica apareceu no recorte de hoje.',
                 'pill_class': 'success',
                 'href': finance_focus_href,
                 'href_label': finance_review_label,
@@ -664,9 +661,9 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
     if metrics['sessions_today'] > 0:
         operational_focus.append(
             {
-                'label': 'Agenda do dia está viva',
+                'label': 'Agenda do dia estÃ¡ viva',
                 'chip_label': 'Aulas',
-                'summary': f"{metrics['sessions_today']} aula(s) pedem leitura rápida de coach, ocupação e recepção.",
+                'summary': f"{metrics['sessions_today']} aula(s) pedem leitura rÃ¡pida de coach, ocupaÃ§Ã£o e recepÃ§Ã£o.",
                 'pill_class': 'info',
                 'href': reverse('class-grid'),
                 'href_label': 'Ver grade',
@@ -675,9 +672,9 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
     else:
         operational_focus.append(
             {
-                'label': 'Agenda do dia está leve',
+                'label': 'Agenda do dia estÃ¡ leve',
                 'chip_label': 'Aulas',
-                'summary': 'Não há aulas previstas hoje, então o foco pode cair mais em base e financeiro.',
+                'summary': 'NÃ£o hÃ¡ aulas previstas hoje, entÃ£o o foco pode cair mais em base e financeiro.',
                 'pill_class': 'accent',
                 'href': reverse('class-grid'),
                 'href_label': 'Abrir aulas',
@@ -690,9 +687,9 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
                 'label': 'Base ativa exige acompanhamento',
                 'chip_label': 'Base',
                 'summary': (
-                    f"{metrics['active_students']} aluno(s) sustentam a Recepção e pedem leitura de ficha, risco e próxima abordagem."
+                    f"{metrics['active_students']} aluno(s) sustentam a RecepÃ§Ã£o e pedem leitura de ficha, risco e prÃ³xima abordagem."
                     if role_slug == ROLE_RECEPTION else
-                    f"{metrics['active_students']} aluno(s) sustentam a operação e pedem leitura de presença, risco e retenção."
+                    f"{metrics['active_students']} aluno(s) sustentam a operaÃ§Ã£o e pedem leitura de presenÃ§a, risco e retenÃ§Ã£o."
                 ),
                 'pill_class': 'accent',
                 'href': reverse('student-directory'),
@@ -707,7 +704,7 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
         payment_alert_snapshot = {
             'payment_alerts': [],
             'payment_alerts_total_count': total_count,
-            'payment_alerts_total_label': f"{total_count} cobrança(s)" if total_count else 'Nenhuma cobrança',
+            'payment_alerts_total_label': f"{total_count} cobranÃ§a(s)" if total_count else 'Nenhuma cobranÃ§a',
             'actionable_payment_alerts_count': total_count,
             'next_actionable_payment_alert': None,
         }
@@ -717,7 +714,7 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
     ]
     upcoming_sessions = _decorate_dashboard_sessions(serialized_sessions)
     pending_intakes_count = count_pending_intakes()
-    # 🚀 Otimização Game Dev (Latency Zero): Agregação de Ocupação e Saúde
+    # ðŸš€ OtimizaÃ§Ã£o Game Dev (Latency Zero): AgregaÃ§Ã£o de OcupaÃ§Ã£o e SaÃºde
     capacity_metrics = sessions_today.annotate(occupied_slots=Count('attendances')).aggregate(
         total_capacity=Sum('capacity'),
         total_occupied=Sum('occupied_slots')
@@ -740,7 +737,7 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
             filter=Q(attendances__status=AttendanceStatus.ABSENT),
         ),
     )
-    # Buscamos a contagem e os top 8 em uma tacada só (quase)
+    # Buscamos a contagem e os top 8 em uma tacada sÃ³ (quase)
     health_metrics = student_health_queryset.aggregate(at_risk=Count('id', filter=Q(total_absences__gte=1)))
     students_at_risk_count = health_metrics['at_risk']
     student_health = student_health_queryset.order_by('-total_absences', '-total_attendances', 'full_name')[:8]
@@ -752,8 +749,8 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
         role_slug=role_slug,
     )
 
-    # 🚀 Performance AAA (Preloading Preditivo): Aquecimento de Cache
-    # Carregamos os alunos em evidência para que o próximo clique seja instatâneo.
+    # ðŸš€ Performance AAA (Preloading Preditivo): Aquecimento de Cache
+    # Carregamos os alunos em evidÃªncia para que o prÃ³ximo clique seja instatÃ¢neo.
     try:
         hot_students = set()
         # Alunos com alertas de pagamento
@@ -761,7 +758,7 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
             alert_student_ids = [p['student'].id for p in payment_alert_snapshot['payment_alerts'] if p.get('student')]
             hot_students.update(alert_student_ids)
         
-        # Alunos da saúde da base (em risco)
+        # Alunos da saÃºde da base (em risco)
         health_student_ids = [s.id for s in student_health]
         hot_students.update(health_student_ids)
 

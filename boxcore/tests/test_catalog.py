@@ -68,8 +68,8 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Grade de aulas')
         self.assertContains(response, 'WOD 18h')
-        self.assertContains(response, 'Calendário das próximas duas semanas')
-        self.assertContains(response, 'Expandir mês')
+        self.assertContains(response, 'CalendÃ¡rio das prÃ³ximas duas semanas')
+        self.assertContains(response, 'Expandir mÃªs')
         self.assertContains(response, 'Agenda de Hoje')
         self.assertContains(response, 'Planejador recorrente')
 
@@ -864,7 +864,7 @@ class CatalogViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Já existe um aluno cadastrado com este WhatsApp.')
+        self.assertContains(response, 'JÃ¡ existe um aluno cadastrado com este WhatsApp.')
         self.assertEqual(Student.objects.filter(full_name='Bruna Costa Duplicada').count(), 0)
 
     def test_student_quick_create_flow_shows_conversational_recovery_guide_when_invalid(self):
@@ -985,10 +985,7 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertEqual(body['status'], 'success')
-<<<<<<< HEAD
         self.assertEqual(body['selected_payment_id'], payment.id)
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
         self.assertIn('fragments', body)
         self.assertIn('student-payment-checkout-form', body['fragments']['checkout'])
         self.assertIn('student-financial-kpi-card', body['fragments']['kpis'])
@@ -1015,7 +1012,6 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertEqual(body['status'], 'success')
-<<<<<<< HEAD
         self.assertEqual(body['selected_payment_id'], newer_payment.id)
         self.assertIn('ABR-319', body['fragments']['checkout'])
         self.assertIn('319', body['fragments']['checkout'])
@@ -1038,10 +1034,6 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, f'data-payment-id="{overdue_payment.id}"', html=False)
         self.assertContains(response, 'data-action="edit-payment"', html=False)
-=======
-        self.assertIn('ABR-319', body['fragments']['checkout'])
-        self.assertIn('319', body['fragments']['checkout'])
->>>>>>> codex/student-page-refactor-and-ui-polish
 
     def test_student_payment_action_rejects_invalid_action(self):
         self.client.force_login(self.user)
@@ -1205,7 +1197,7 @@ class CatalogViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
-        # Verifica persistência via vínculo direto
+        # Verifica persistÃªncia via vÃ­nculo direto
         contact = WhatsAppContact.objects.filter(linked_student=self.student).first()
         self.assertIsNotNone(contact)
         self.assertTrue(WhatsAppMessageLog.objects.filter(contact=contact, direction='outbound').exists())
@@ -1226,7 +1218,7 @@ class CatalogViewTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertIn('wa.me', response.url)
-        # Verifica log via vínculo direto
+        # Verifica log via vÃ­nculo direto
         self.assertTrue(WhatsAppMessageLog.objects.filter(contact__linked_student=self.student, direction='outbound').exists())
         self.assertTrue(AuditEvent.objects.filter(action='operational_whatsapp_touch_registered').exists())
 

@@ -164,7 +164,6 @@ define quick cards e accent bars
 14. [static/css/catalog/shared.css](../../static/css/catalog/shared.css)
 define utilitarios, grids de formulario e bases compartilhadas do catalogo sem autoridade de tema
 
-<<<<<<< HEAD
 13. [static/css/catalog/students.css](../../static/css/catalog/students.css)
 define apenas o diretorio de alunos e sua vitrine operacional
 
@@ -175,15 +174,6 @@ define a hierarquia propria da ficha do aluno, mapa de leitura, progressao e aca
 define layout, cards, rail, carteira, tendencia e comportamento responsivo do financeiro
 
 16. [static/css/catalog/class-grid.css](../../static/css/catalog/class-grid.css)
-=======
-15. [static/css/catalog/students.css](../../static/css/catalog/students.css)
-define ajustes finais da area de alunos
-
-16. [static/css/catalog/finance/](../../static/css/catalog/finance/)
-define layout, cards, rail, carteira, tendencia e comportamento responsivo do financeiro
-
-17. [static/css/catalog/class-grid.css](../../static/css/catalog/class-grid.css)
->>>>>>> codex/student-page-refactor-and-ui-polish
 define a grade visual de aulas
 
 ## Regra de localizacao
@@ -261,7 +251,6 @@ Quando houver duvida, use esta escada:
 
 Nunca ao contrario.
 
-<<<<<<< HEAD
 ## Regra de escopo premium
 
 Escopo premium nao e um atalho para deixar qualquer tela mais bonita.
@@ -292,26 +281,10 @@ Em linguagem simples:
 
 1. primeiro a casa precisa estar arrumada
 2. depois a gente escolhe qual comodo merece luz de vitrine
-=======
-### Regra de migracao
-
-Quando um modulo local ja estiver usando uma variante oficial no template, o CSS local deve perder a autoridade visual que ficou redundante.
-
-Exemplos do que remover quando a variante ja cobre:
-
-1. `background` estrutural duplicado
-2. `border-color` estrutural duplicado
-3. `box-shadow` estrutural duplicado
-4. override dark que so repete a mesma pele da variante
-
-Em linguagem simples:
-
-1. se o uniforme oficial ja foi entregue, a tela local nao deve costurar outra jaqueta por cima
->>>>>>> codex/student-page-refactor-and-ui-polish
 
 ## Regra de naming
 
-O projeto ja usa um padrão bom: namespace por area e nomes orientados a papel.
+O projeto ja usa um padrÃ£o bom: namespace por area e nomes orientados a papel.
 
 Mantenha assim:
 
@@ -515,7 +488,7 @@ Exemplos que agora sao proibidos:
 
 ## Workflow de debug recomendado
 
-Quando um CSS parecer “estranho”, siga esta ordem:
+Quando um CSS parecer â€œestranhoâ€, siga esta ordem:
 
 1. confirme se nao e erro de sintaxe
 2. compare classes do template com seletores do CSS local e do shared

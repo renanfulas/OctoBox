@@ -1,5 +1,5 @@
 /* Dashboard: metrics / KPI cards (extracted)
-   - Contém: dashboard-metrics-cluster, kpi-card variants and inner card rules
+   - ContÃ©m: dashboard-metrics-cluster, kpi-card variants and inner card rules
 */
 
 .dashboard-metrics-cluster {
@@ -57,7 +57,6 @@
     grid-template-rows: 1fr auto;
     border-radius: var(--dashboard-fib-4, 21px);
     overflow: hidden;
-<<<<<<< HEAD
     transition:
         transform 220ms var(--ease-standard),
         box-shadow 220ms var(--ease-standard),
@@ -68,14 +67,6 @@
     --kpi-bad-border: rgba(249, 115, 22, 0.24);
     --kpi-neutral-surface: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(255, 255, 255, 0.78));
     --kpi-neutral-border: rgba(56, 189, 248, 0.24);
-=======
-    --kpi-good-surface: color-mix(in srgb, var(--theme-accent-success-alpha) 14%, var(--theme-surface-glass-strong) 86%);
-    --kpi-good-border: color-mix(in srgb, var(--theme-accent-success) 24%, var(--theme-glass-border) 76%);
-    --kpi-bad-surface: color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, var(--theme-surface-glass-strong) 86%);
-    --kpi-bad-border: color-mix(in srgb, var(--theme-accent-warning) 24%, var(--theme-glass-border) 76%);
-    --kpi-neutral-surface: color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, var(--theme-surface-glass-strong) 86%);
-    --kpi-neutral-border: color-mix(in srgb, var(--theme-accent-primary) 24%, var(--theme-glass-border) 76%);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .dashboard-kpi-slot.is-primary .dashboard-kpi-card {
@@ -264,15 +255,9 @@
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-copy {
     max-width: 34ch;
-<<<<<<< HEAD
     font-size: 0.84rem;
     line-height: 1.48;
     color: var(--muted-strong);
-=======
-    font-size: 0.88rem;
-    line-height: 1.46;
-    color: var(--legacy-copy);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-content {

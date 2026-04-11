@@ -63,7 +63,6 @@ PONTOS CRITICOS:
     {% endif %}
     <p class="visually-hidden" id="student-lock-live-status" aria-live="assertive" aria-atomic="true"></p>
 
-<<<<<<< HEAD
     {% if page.data.financial_overview.has_student %}
         {% include "includes/catalog/student_page/student_page_header.html" with page=page %}
     {% endif %}
@@ -72,18 +71,6 @@ PONTOS CRITICOS:
         {% if page.data.financial_overview.has_student %}
         {% include "includes/catalog/student_page/student_page_tabs.html" with page=page %}
         {% endif %}
-=======
-    <div data-panel="student-form-hero">
-        {% if page.data.financial_overview.has_student %}
-            {% include "includes/catalog/student_page/student_page_header.html" with page=page %}
-        {% else %}
-            {% include "includes/catalog/student_form/plans/hero.html" with page=page %}
-        {% endif %}
-    </div>
-
-    <section class="student-page-shell" data-student-page-shell data-student-page-default-panel="{% if page.data.financial_overview.has_student %}tab-student-form-financial{% else %}tab-student-form-essential{% endif %}">
-        {% include "includes/catalog/student_page/student_page_tabs.html" with page=page %}
->>>>>>> codex/student-page-refactor-and-ui-polish
 
         <div class="student-page-shell__panels">
             <div class="stack-16 student-form-stage student-page-panel student-page-panel--payments{% if page.data.financial_overview.has_student %} is-active{% endif %}" id="tab-student-form-financial" data-student-page-panel="payments">

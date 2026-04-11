@@ -27,13 +27,8 @@ POR QUE ELE EXISTE:
 }
 
 .quick-card:hover {
-<<<<<<< HEAD
     box-shadow: var(--shadow-lift);
     border-color: var(--brand);
-=======
-    box-shadow: var(--card-hover-shadow);
-    border-color: var(--card-hover-border);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .quick-card::after {

@@ -1,8 +1,8 @@
 /*
-ARQUIVO: estilos da página dedicada de plano (/financeiro/plano/).
+ARQUIVO: estilos da pÃ¡gina dedicada de plano (/financeiro/plano/).
 
 POR QUE ELE EXISTE:
-- Isola layout, form, summary, field grid e ações da página de edição de plano.
+- Isola layout, form, summary, field grid e aÃ§Ãµes da pÃ¡gina de ediÃ§Ã£o de plano.
 - Separado dos plan-cards (em _cards.css) que aparecem na central financeira.
 */
 
@@ -10,7 +10,6 @@ POR QUE ELE EXISTE:
     gap: var(--section-gap);
 }
 
-<<<<<<< HEAD
 .finance-plan-page .finance-plan-hero {
     position: relative;
     overflow: hidden;
@@ -32,10 +31,6 @@ POR QUE ELE EXISTE:
     border-radius: 999px;
     background: radial-gradient(circle, color-mix(in srgb, var(--finance-signature-copper) 20%, transparent), transparent 68%);
     pointer-events: none;
-=======
-.finance-plan-page-hero .operation-hero-panel {
-    background: var(--card-surface);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .finance-plan-page-focus,
@@ -49,7 +44,6 @@ POR QUE ELE EXISTE:
 }
 
 .finance-plan-support-card {
-<<<<<<< HEAD
     position: relative;
     overflow: hidden;
     border-color: var(--finance-signature-line);
@@ -81,9 +75,6 @@ POR QUE ELE EXISTE:
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.84),
         0 18px 36px rgba(19, 33, 50, 0.08);
-=======
-    background: var(--card-surface);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .finance-plan-summary-grid {

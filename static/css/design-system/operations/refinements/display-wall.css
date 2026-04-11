@@ -1,9 +1,9 @@
 /*
-ARQUIVO: refinamentos de hierarquia e composição dos workspaces.
+ARQUIVO: refinamentos de hierarquia e composiÃ§Ã£o dos workspaces.
 
 POR QUE ELE EXISTE:
-- concentra a camada final de prioridade visual para manager, coach e recepção.
-- mantém os passes Front Display Wall fora dos módulos estruturais.
+- concentra a camada final de prioridade visual para manager, coach e recepÃ§Ã£o.
+- mantÃ©m os passes Front Display Wall fora dos mÃ³dulos estruturais.
 */
 
 /* --- Front Display Wall: composicao agressiva dos workspaces --- */
@@ -300,7 +300,6 @@ body[data-theme="dark"] .reception-focus-lane {
         var(--card-surface-strong);
     border-color: var(--card-border);
     box-shadow: var(--card-shadow);
-<<<<<<< HEAD
 }
 
 body[data-theme="dark"] .reception-focus-lane .fdw-focus-card {
@@ -342,8 +341,6 @@ body[data-theme="dark"] .reception-focus-lane .fdw-focus-card.is-tranquil .fdw-f
 body[data-theme="dark"] .reception-focus-lane .fdw-focus-card.severity-tranquil .fdw-focus-action,
 body[data-theme="dark"] .reception-focus-lane .fdw-focus-card.is-tranquil .fdw-focus-action {
     color: color-mix(in srgb, var(--theme-accent-success) 58%, var(--theme-text-muted) 42%);
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 body[data-theme="dark"] .reception-priority-card,

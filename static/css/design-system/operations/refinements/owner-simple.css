@@ -1,9 +1,9 @@
 /*
-ARQUIVO: refinamentos da superfície owner-simple.
+ARQUIVO: refinamentos da superfÃ­cie owner-simple.
 
 POR QUE ELE EXISTE:
 - concentra ajustes tardios visuais e de dark mode do owner simplificado.
-- mantém esse acabamento fora da base estrutural do owner.
+- mantÃ©m esse acabamento fora da base estrutural do owner.
 */
 
 @media (max-width: 1180px) {
@@ -15,16 +15,6 @@ POR QUE ELE EXISTE:
 @media (max-width: 960px) {
     .owner-workspace-strip {
         grid-template-columns: 1fr;
-<<<<<<< HEAD
-=======
-    }
-
-    .dev-scene .operation-hero,
-    .manager-scene .operation-hero,
-    .coach-scene .operation-hero,
-    .owner-scene .operation-hero {
-        padding: 18px;
->>>>>>> codex/student-page-refactor-and-ui-polish
     }
 
     .owner-metrics-panel {

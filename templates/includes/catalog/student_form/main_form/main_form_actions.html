@@ -11,7 +11,6 @@ ARQUIVO: erros globais e acoes finais da ficha do aluno.
 
 <div class="actions actions-tight student-form-actions" aria-label="A&ccedil;&otilde;es do formul&aacute;rio">
     <div class="student-form-actions-rail student-form-actions-rail--secondary">
-<<<<<<< HEAD
         <button class="button secondary student-form-button student-form-button--back" type="button" data-action="prev-step" hidden>Voltar</button>
         {% if student_object and can_open_student_admin %}
         <a class="button secondary student-form-button student-form-button--admin" href="{% url 'admin:boxcore_student_change' student_object.id %}">Editar no Admin</a>
@@ -20,16 +19,6 @@ ARQUIVO: erros globais e acoes finais da ficha do aluno.
     <div class="student-form-actions-rail student-form-actions-rail--primary">
         <button class="button student-form-button student-form-button--submit" type="submit" hidden>{% if page_mode == 'create' %}Finalizar cadastro{% else %}Salvar ajustes{% endif %}</button>
         <button class="button student-form-button student-form-button--next" type="button" data-action="next-step">Ir para plano e pagamento</button>
-=======
-        <button class="button secondary" type="button" data-action="prev-step" hidden>Voltar</button>
-        {% if student_object and can_open_student_admin %}
-        <a class="button secondary" href="{% url 'admin:boxcore_student_change' student_object.id %}">Editar no Admin</a>
-        {% endif %}
-    </div>
-    <div class="student-form-actions-rail student-form-actions-rail--primary">
-        <button class="button" type="button" data-action="next-step">Pr&oacute;ximo: plano e pagamento</button>
-        <button class="button" type="submit" hidden>{% if page_mode == 'create' %}Finalizar cadastro{% else %}Salvar ajustes{% endif %}</button>
->>>>>>> codex/student-page-refactor-and-ui-polish
     </div>
 </div>
 {% if page.data.student_form_handoff %}

@@ -2,7 +2,7 @@
 ARQUIVO: ajustes visuais da Central de Intake.
 
 POR QUE ELE EXISTE:
-- Dá acabamento proprio para a nova area de entradas sem duplicar todo o sistema visual.
+- DÃ¡ acabamento proprio para a nova area de entradas sem duplicar todo o sistema visual.
 */
 
 .intake-scene {
@@ -910,7 +910,6 @@ POR QUE ELE EXISTE:
     align-items: stretch;
 }
 
-<<<<<<< HEAD
 .intake-radar-card {
     position: relative;
     min-height: 88px;
@@ -990,93 +989,6 @@ POR QUE ELE EXISTE:
 
 .intake-radar-card[data-source-key="import"] {
     color: color-mix(in srgb, var(--theme-text-muted) 82%, var(--theme-text-secondary) 18%);
-=======
-.intake-mini-card,
-.intake-rule-card {
-    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
-    border-radius: 18px;
-    padding: 0.9rem 1rem;
-    background: var(--theme-surface-glass);
-    box-shadow: var(--theme-glass-shadow);
-}
-
-body[data-theme="dark"] .intake-scene {
-    --intake-text-primary: var(--theme-text-primary);
-    --intake-text-secondary: var(--theme-text-secondary);
-    --intake-panel-surface:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, transparent), transparent 32%),
-        var(--theme-surface-glass-strong);
-    --intake-panel-border: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
-    --intake-panel-shadow: var(--theme-glass-shadow);
-    --intake-filter-surface:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 32%),
-        var(--theme-surface-glass-strong);
-    --intake-filter-border: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
-}
-
-body[data-theme="dark"] .intake-mini-card,
-body[data-theme="dark"] .intake-rule-card {
-    background: var(--intake-panel-surface);
-    border-color: var(--intake-panel-border);
-    box-shadow: var(--intake-panel-shadow);
-}
-
-body[data-theme="dark"] .intake-directory-surface,
-body[data-theme="dark"] .intake-board,
-body[data-theme="dark"] .intake-filter-card {
-    border-color: var(--intake-panel-border);
-    background: var(--intake-panel-surface);
-    box-shadow: var(--intake-panel-shadow);
-}
-
-body[data-theme="dark"] .intake-filter-card--engine {
-    border-color: var(--intake-filter-border);
-    background: var(--intake-filter-surface);
-}
-
-body[data-theme="dark"] .intake-filter-card input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
-body[data-theme="dark"] .intake-filter-card select,
-body[data-theme="dark"] .intake-filter-card textarea {
-    border-color: color-mix(in srgb, var(--theme-glass-border) 96%, transparent);
-    background:
-        linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--theme-surface-glass-strong) 92%, transparent),
-            color-mix(in srgb, var(--theme-surface-glass) 86%, transparent)
-        );
-    box-shadow:
-        inset 0 1px 0 var(--theme-glass-highlight),
-        0 12px 26px rgba(0, 0, 0, 0.2);
-    color: var(--theme-text-primary);
-}
-
-body[data-theme="dark"] .intake-filter-card input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):focus,
-body[data-theme="dark"] .intake-filter-card select:focus,
-body[data-theme="dark"] .intake-filter-card textarea:focus {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 54%, var(--theme-glass-border) 46%);
-    box-shadow:
-        0 0 0 4px color-mix(in srgb, var(--theme-accent-support) 18%, transparent),
-        inset 0 1px 0 var(--theme-glass-highlight),
-        0 16px 34px rgba(0, 0, 0, 0.24);
-}
-
-body[data-theme="dark"] .intake-board--conversion {
-    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, var(--theme-glass-border) 82%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, transparent), transparent 32%),
-        var(--theme-surface-glass-strong);
-}
-
-body[data-theme="dark"] .intake-board--source {
-    border-color: color-mix(in srgb, var(--theme-accent-success-alpha) 18%, var(--theme-glass-border) 82%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-success-alpha) 16%, transparent), transparent 32%),
-        var(--theme-surface-glass-strong);
-}
-
-body[data-theme="dark"] .table-empty-cell {
-    color: var(--intake-text-secondary);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 body[data-theme="dark"] .intake-directory-table th {
