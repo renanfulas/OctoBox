@@ -11,68 +11,71 @@ POR QUE ELE EXISTE:
             <p class="finance-board-shell-subtitle">Resumo do que a fila sugere, do que o time executa e do que realmente converte.</p>
         </div>
         <div class="finance-churn-trend-legend finance-board-shell-meta" aria-label="Guia do score">
-            <span class="finance-churn-trend-legend-item">{{ page.data.finance_follow_up_analytics_board.score_guide.formula }}</span>
+            <span class="finance-churn-trend-legend-item" title="{{ page.data.finance_follow_up_analytics_board.score_guide.note }}">
+                Score historico: sucesso pesa mais do que execucao.
+            </span>
+            <span class="sr-only">{{ page.data.finance_follow_up_analytics_board.score_guide.formula }}</span>
         </div>
     </div>
 
     <div class="finance-board-shell-body">
-    {% if page.data.finance_follow_up_analytics_board.best_play %}
-    <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft">
-        <span class="eyebrow">{{ page.data.finance_follow_up_analytics_board.best_play.title }}</span>
-        <div class="finance-followup-line">
-            <strong>{{ page.data.finance_follow_up_analytics_board.best_play.action_label }}</strong>
-            <span>{{ page.data.finance_follow_up_analytics_board.best_play.summary }}</span>
+    <div class="finance-guide-grid finance-guide-grid-2 finance-analytics-overview-grid finance-analytics-grid-primary">
+        {% if page.data.finance_follow_up_analytics_board.best_play %}
+        <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft finance-analytics-summary-card">
+            <span class="eyebrow">{{ page.data.finance_follow_up_analytics_board.best_play.title }}</span>
+            <div class="finance-followup-line">
+                <strong>{{ page.data.finance_follow_up_analytics_board.best_play.action_label }}</strong>
+                <span>{{ page.data.finance_follow_up_analytics_board.best_play.summary }}</span>
+            </div>
+            <p>{{ page.data.finance_follow_up_analytics_board.best_play.note }}</p>
         </div>
-        <p>{{ page.data.finance_follow_up_analytics_board.best_play.note }}</p>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    <div class="finance-guide-card finance-board-subsurface">
-        <span class="eyebrow">Aderencia ao turno</span>
-        <div class="finance-followup-line">
-            <strong>{{ page.data.finance_follow_up_analytics_board.turn_recommendation_adherence.adherence_rate }}% de aderencia</strong>
-            <span>{{ page.data.finance_follow_up_analytics_board.turn_recommendation_adherence.aligned_count }} alinhado(s) | {{ page.data.finance_follow_up_analytics_board.turn_recommendation_adherence.divergent_count }} divergente(s)</span>
+        <div class="finance-guide-card finance-board-subsurface finance-analytics-summary-card">
+            <span class="eyebrow">Aderencia ao turno</span>
+            <div class="finance-followup-line">
+                <strong>{{ page.data.finance_follow_up_analytics_board.turn_recommendation_adherence.adherence_rate }}% de aderencia</strong>
+                <span>{{ page.data.finance_follow_up_analytics_board.turn_recommendation_adherence.aligned_count }} alinhado(s) | {{ page.data.finance_follow_up_analytics_board.turn_recommendation_adherence.divergent_count }} divergente(s)</span>
+            </div>
+            <p>{{ page.data.finance_follow_up_analytics_board.turn_recommendation_adherence.tracked_realized_count }} follow-up(s) com briefing comparavel.</p>
         </div>
-        <p>{{ page.data.finance_follow_up_analytics_board.turn_recommendation_adherence.tracked_realized_count }} follow-up(s) realizado(s) com briefing global comparavel.</p>
     </div>
 
-    <div class="finance-guide-grid finance-guide-grid-2 finance-analytics-grid-primary">
-        <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft">
+    <div class="finance-guide-grid finance-guide-grid-2 finance-analytics-outcome-grid finance-analytics-grid-primary">
+        <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft finance-analytics-summary-card">
             <span class="eyebrow">Outcome de quem seguiu</span>
             <div class="finance-followup-line">
                 <strong>{{ page.data.finance_follow_up_analytics_board.turn_recommendation_outcome.aligned.success_rate }}% de sucesso</strong>
                 <span>{{ page.data.finance_follow_up_analytics_board.turn_recommendation_outcome.aligned.succeeded_count }} sucesso(s) | {{ page.data.finance_follow_up_analytics_board.turn_recommendation_outcome.aligned.failed_count }} falha(s)</span>
             </div>
-            <p>{{ page.data.finance_follow_up_analytics_board.turn_recommendation_outcome.aligned.realized_count }} follow-up(s) realizado(s) alinhados ao briefing do turno.</p>
+            <p>{{ page.data.finance_follow_up_analytics_board.turn_recommendation_outcome.aligned.realized_count }} follow-up(s) alinhados.</p>
         </div>
 
-        <div class="finance-guide-card finance-board-subsurface">
+        <div class="finance-guide-card finance-board-subsurface finance-analytics-summary-card">
             <span class="eyebrow">Outcome de quem divergiu</span>
             <div class="finance-followup-line">
                 <strong>{{ page.data.finance_follow_up_analytics_board.turn_recommendation_outcome.divergent.success_rate }}% de sucesso</strong>
                 <span>{{ page.data.finance_follow_up_analytics_board.turn_recommendation_outcome.divergent.succeeded_count }} sucesso(s) | {{ page.data.finance_follow_up_analytics_board.turn_recommendation_outcome.divergent.failed_count }} falha(s)</span>
             </div>
-            <p>{{ page.data.finance_follow_up_analytics_board.turn_recommendation_outcome.divergent.realized_count }} follow-up(s) realizado(s) fora do briefing do turno.</p>
+            <p>{{ page.data.finance_follow_up_analytics_board.turn_recommendation_outcome.divergent.realized_count }} follow-up(s) fora do briefing.</p>
         </div>
-    </div>
 
-    <div class="finance-guide-grid finance-guide-grid-2">
-        <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft">
+        <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft finance-analytics-summary-card">
             <span class="eyebrow">Outcome do turno alinhado</span>
             <div class="finance-followup-line">
                 <strong>{{ page.data.finance_follow_up_analytics_board.turn_priority_outcome.aligned.success_rate }}% de sucesso</strong>
                 <span>{{ page.data.finance_follow_up_analytics_board.turn_priority_outcome.aligned.succeeded_count }} sucesso(s) | {{ page.data.finance_follow_up_analytics_board.turn_priority_outcome.aligned.failed_count }} falha(s)</span>
             </div>
-            <p>{{ page.data.finance_follow_up_analytics_board.turn_priority_outcome.aligned.realized_count }} follow-up(s) nasceram com briefing e bloco dominante apontando para o mesmo lado.</p>
+            <p>{{ page.data.finance_follow_up_analytics_board.turn_priority_outcome.aligned.realized_count }} follow-up(s) no mesmo lado do briefing.</p>
         </div>
 
-        <div class="finance-guide-card finance-board-subsurface">
+        <div class="finance-guide-card finance-board-subsurface finance-analytics-summary-card">
             <span class="eyebrow">Outcome do turno em tensao</span>
             <div class="finance-followup-line">
                 <strong>{{ page.data.finance_follow_up_analytics_board.turn_priority_outcome.tension.success_rate }}% de sucesso</strong>
                 <span>{{ page.data.finance_follow_up_analytics_board.turn_priority_outcome.tension.succeeded_count }} sucesso(s) | {{ page.data.finance_follow_up_analytics_board.turn_priority_outcome.tension.failed_count }} falha(s)</span>
             </div>
-            <p>{{ page.data.finance_follow_up_analytics_board.turn_priority_outcome.tension.realized_count }} follow-up(s) nasceram com briefing global e bloco dominante em conflito.</p>
+            <p>{{ page.data.finance_follow_up_analytics_board.turn_priority_outcome.tension.realized_count }} follow-up(s) com briefing em tensao.</p>
         </div>
     </div>
 
@@ -133,7 +136,7 @@ POR QUE ELE EXISTE:
     <details class="finance-analytics-disclosure">
         <summary>Aprendizados operacionais</summary>
         <div class="finance-analytics-disclosure-body">
-            <div class="finance-guide-grid finance-guide-grid-2">
+            <div class="finance-guide-grid finance-guide-grid-2 finance-analytics-learning-grid">
                 <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft">
                     <span class="eyebrow">{{ page.data.finance_follow_up_analytics_board.turn_recommendation_learning.smart_divergence.headline }}</span>
                     <div class="finance-followup-line">
@@ -153,7 +156,7 @@ POR QUE ELE EXISTE:
                 </div>
             </div>
 
-            <div class="finance-guide-grid finance-guide-grid-2">
+            <div class="finance-guide-grid finance-guide-grid-2 finance-analytics-tension-grid">
                 <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft">
                     <span class="eyebrow">{{ page.data.finance_follow_up_analytics_board.turn_priority_learning.healthy_tension.headline }}</span>
                     <div class="finance-followup-line">
@@ -189,28 +192,30 @@ POR QUE ELE EXISTE:
                 {% endfor %}
             </div>
 
-            <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft">
-                <span class="eyebrow">Acao por timing</span>
-                {% for item in page.data.finance_follow_up_analytics_board.recommendation_timing %}
-                <div class="finance-followup-line">
-                    <strong>{{ item.action_label }}</strong>
-                    <span>{{ item.timing_label }} | sucesso {{ item.success_rate }}% | {{ item.realized_count }} realizado(s)</span>
+            <div class="finance-guide-grid finance-guide-grid-2 finance-analytics-action-grid">
+                <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft">
+                    <span class="eyebrow">Acao por timing</span>
+                    {% for item in page.data.finance_follow_up_analytics_board.recommendation_timing %}
+                    <div class="finance-followup-line">
+                        <strong>{{ item.action_label }}</strong>
+                        <span>{{ item.timing_label }} | sucesso {{ item.success_rate }}% | {{ item.realized_count }} realizado(s)</span>
+                    </div>
+                    {% empty %}
+                    <p>Aguardando amostra suficiente para cruzar acao com timing.</p>
+                    {% endfor %}
                 </div>
-                {% empty %}
-                <p>Aguardando amostra suficiente para cruzar acao com timing.</p>
-                {% endfor %}
-            </div>
 
-            <div class="finance-guide-card finance-board-subsurface">
-                <span class="eyebrow">Acao no tempo certo</span>
-                {% for item in page.data.finance_follow_up_analytics_board.recommendation_window %}
-                <div class="finance-followup-line">
-                    <strong>{{ item.action_label }}</strong>
-                    <span>Janela {{ item.outcome_window }} | sucesso {{ item.success_rate }}% | {{ item.realized_count }} realizado(s)</span>
+                <div class="finance-guide-card finance-board-subsurface">
+                    <span class="eyebrow">Acao no tempo certo</span>
+                    {% for item in page.data.finance_follow_up_analytics_board.recommendation_window %}
+                    <div class="finance-followup-line">
+                        <strong>{{ item.action_label }}</strong>
+                        <span>Janela {{ item.outcome_window }} | sucesso {{ item.success_rate }}% | {{ item.realized_count }} realizado(s)</span>
+                    </div>
+                    {% empty %}
+                    <p>Aguardando amostra suficiente para cruzar acao com janela prevista.</p>
+                    {% endfor %}
                 </div>
-                {% empty %}
-                <p>Aguardando amostra suficiente para cruzar acao com janela prevista.</p>
-                {% endfor %}
             </div>
         </div>
     </details>
@@ -218,76 +223,82 @@ POR QUE ELE EXISTE:
     <details class="finance-analytics-disclosure">
         <summary>Matrizes de contexto</summary>
         <div class="finance-analytics-disclosure-body">
-            <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft">
-                <span class="eyebrow">Tensao por timing</span>
-                {% for item in page.data.finance_follow_up_analytics_board.turn_priority_tension_timing %}
-                <div class="finance-followup-line">
-                    <strong>{{ item.timing_label }}</strong>
-                    <span>{{ item.healthy_tension_rate }}% valeu a pena | {{ item.dangerous_tension_rate }}% virou dispersao | {{ item.realized_count }} caso(s)</span>
+            <div class="finance-guide-grid finance-guide-grid-2 finance-analytics-context-grid">
+                <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft">
+                    <span class="eyebrow">Tensao por timing</span>
+                    {% for item in page.data.finance_follow_up_analytics_board.turn_priority_tension_timing %}
+                    <div class="finance-followup-line">
+                        <strong>{{ item.timing_label }}</strong>
+                        <span>{{ item.healthy_tension_rate }}% valeu a pena | {{ item.dangerous_tension_rate }}% virou dispersao | {{ item.realized_count }} caso(s)</span>
+                    </div>
+                    {% empty %}
+                    <p>Aguardando amostra suficiente para cruzar tensao com timing.</p>
+                    {% endfor %}
                 </div>
-                {% empty %}
-                <p>Aguardando amostra suficiente para cruzar tensao com timing.</p>
-                {% endfor %}
+
+                <div class="finance-guide-card finance-board-subsurface">
+                    <span class="eyebrow">Tensao por gravidade do caso</span>
+                    {% for item in page.data.finance_follow_up_analytics_board.turn_priority_tension_signal_bucket %}
+                    <div class="finance-followup-line">
+                        <strong>{{ item.signal_bucket_label }}</strong>
+                        <span>{{ item.healthy_tension_rate }}% valeu a pena | {{ item.dangerous_tension_rate }}% virou dispersao | {{ item.realized_count }} caso(s)</span>
+                    </div>
+                    {% empty %}
+                    <p>Aguardando amostra suficiente para cruzar tensao com gravidade do caso.</p>
+                    {% endfor %}
+                </div>
             </div>
 
-            <div class="finance-guide-card finance-board-subsurface">
-                <span class="eyebrow">Tensao por gravidade do caso</span>
-                {% for item in page.data.finance_follow_up_analytics_board.turn_priority_tension_signal_bucket %}
-                <div class="finance-followup-line">
-                    <strong>{{ item.signal_bucket_label }}</strong>
-                    <span>{{ item.healthy_tension_rate }}% valeu a pena | {{ item.dangerous_tension_rate }}% virou dispersao | {{ item.realized_count }} caso(s)</span>
+            <div class="finance-guide-grid finance-guide-grid-2 finance-analytics-context-grid">
+                <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft">
+                    <span class="eyebrow">Leitura composta da tensao</span>
+                    {% for item in page.data.finance_follow_up_analytics_board.turn_priority_tension_compound %}
+                    <div class="finance-followup-line">
+                        <strong>{{ item.timing_label }}</strong>
+                        <span>{{ item.signal_bucket_label }} | {{ item.healthy_tension_rate }}% valeu a pena | {{ item.dangerous_tension_rate }}% virou dispersao | {{ item.realized_count }} caso(s)</span>
+                    </div>
+                    {% empty %}
+                    <p>Aguardando amostra suficiente para cruzar timing e gravidade dentro da tensao.</p>
+                    {% endfor %}
                 </div>
-                {% empty %}
-                <p>Aguardando amostra suficiente para cruzar tensao com gravidade do caso.</p>
-                {% endfor %}
+
+                <div class="finance-guide-card finance-board-subsurface">
+                    <span class="eyebrow">Divergencia por timing</span>
+                    {% for item in page.data.finance_follow_up_analytics_board.divergence_timing %}
+                    <div class="finance-followup-line">
+                        <strong>{{ item.timing_label }}</strong>
+                        <span>{{ item.smart_divergence_rate }}% valeu a pena | {{ item.bad_divergence_rate }}% piorou | {{ item.divergent_realized_count }} divergencia(s)</span>
+                    </div>
+                    {% empty %}
+                    <p>Aguardando amostra suficiente para cruzar divergencia com timing.</p>
+                    {% endfor %}
+                </div>
             </div>
 
-            <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft">
-                <span class="eyebrow">Leitura composta da tensao</span>
-                {% for item in page.data.finance_follow_up_analytics_board.turn_priority_tension_compound %}
-                <div class="finance-followup-line">
-                    <strong>{{ item.timing_label }}</strong>
-                    <span>{{ item.signal_bucket_label }} | {{ item.healthy_tension_rate }}% valeu a pena | {{ item.dangerous_tension_rate }}% virou dispersao | {{ item.realized_count }} caso(s)</span>
+            <div class="finance-guide-grid finance-guide-grid-2 finance-analytics-context-grid">
+                <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft">
+                    <span class="eyebrow">Divergencia por acao sugerida</span>
+                    {% for item in page.data.finance_follow_up_analytics_board.divergence_action %}
+                    <div class="finance-followup-line">
+                        <strong>{{ item.action_label }}</strong>
+                        <span>{{ item.smart_divergence_rate }}% valeu a pena | {{ item.bad_divergence_rate }}% piorou | {{ item.divergent_realized_count }} divergencia(s)</span>
+                    </div>
+                    {% empty %}
+                    <p>Aguardando amostra suficiente para cruzar divergencia com acao sugerida.</p>
+                    {% endfor %}
                 </div>
-                {% empty %}
-                <p>Aguardando amostra suficiente para cruzar timing e gravidade dentro da tensao.</p>
-                {% endfor %}
-            </div>
 
-            <div class="finance-guide-card finance-board-subsurface">
-                <span class="eyebrow">Divergencia por timing</span>
-                {% for item in page.data.finance_follow_up_analytics_board.divergence_timing %}
-                <div class="finance-followup-line">
-                    <strong>{{ item.timing_label }}</strong>
-                    <span>{{ item.smart_divergence_rate }}% valeu a pena | {{ item.bad_divergence_rate }}% piorou | {{ item.divergent_realized_count }} divergencia(s)</span>
+                <div class="finance-guide-card finance-board-subsurface">
+                    <span class="eyebrow">Divergencia por gravidade do caso</span>
+                    {% for item in page.data.finance_follow_up_analytics_board.divergence_signal_bucket %}
+                    <div class="finance-followup-line">
+                        <strong>{{ item.signal_bucket_label }}</strong>
+                        <span>{{ item.smart_divergence_rate }}% valeu a pena | {{ item.bad_divergence_rate }}% piorou | {{ item.divergent_realized_count }} divergencia(s)</span>
+                    </div>
+                    {% empty %}
+                    <p>Aguardando amostra suficiente para cruzar divergencia com gravidade do caso.</p>
+                    {% endfor %}
                 </div>
-                {% empty %}
-                <p>Aguardando amostra suficiente para cruzar divergencia com timing.</p>
-                {% endfor %}
-            </div>
-
-            <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft">
-                <span class="eyebrow">Divergencia por acao sugerida</span>
-                {% for item in page.data.finance_follow_up_analytics_board.divergence_action %}
-                <div class="finance-followup-line">
-                    <strong>{{ item.action_label }}</strong>
-                    <span>{{ item.smart_divergence_rate }}% valeu a pena | {{ item.bad_divergence_rate }}% piorou | {{ item.divergent_realized_count }} divergencia(s)</span>
-                </div>
-                {% empty %}
-                <p>Aguardando amostra suficiente para cruzar divergencia com acao sugerida.</p>
-                {% endfor %}
-            </div>
-
-            <div class="finance-guide-card finance-board-subsurface">
-                <span class="eyebrow">Divergencia por gravidade do caso</span>
-                {% for item in page.data.finance_follow_up_analytics_board.divergence_signal_bucket %}
-                <div class="finance-followup-line">
-                    <strong>{{ item.signal_bucket_label }}</strong>
-                    <span>{{ item.smart_divergence_rate }}% valeu a pena | {{ item.bad_divergence_rate }}% piorou | {{ item.divergent_realized_count }} divergencia(s)</span>
-                </div>
-                {% empty %}
-                <p>Aguardando amostra suficiente para cruzar divergencia com gravidade do caso.</p>
-                {% endfor %}
             </div>
 
             <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft">

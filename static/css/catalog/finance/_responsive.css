@@ -35,8 +35,25 @@ POR QUE ELE EXISTE:
 
     .finance-alert-grid,
     .finance-guide-grid-3,
-    .finance-queue-guide-grid {
+    .finance-queue-guide-grid,
+    .finance-analytics-overview-grid,
+    .finance-analytics-outcome-grid,
+    .finance-analytics-learning-grid,
+    .finance-analytics-tension-grid,
+    .finance-analytics-action-grid,
+    .finance-analytics-context-grid {
         grid-template-columns: 1fr;
+    }
+
+    .finance-analytics-disclosure-body {
+        grid-template-columns: 1fr;
+    }
+
+    .finance-followup-analytics-card .finance-analytics-disclosure-body > .finance-guide-grid,
+    .finance-followup-analytics-card .finance-analytics-disclosure-body > .finance-followup-window-strip,
+    .finance-followup-analytics-card .finance-analytics-disclosure-body > .finance-guide-card {
+        grid-column: auto;
+        min-height: auto;
     }
 
     .finance-plan-grid {
