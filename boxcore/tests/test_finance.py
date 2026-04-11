@@ -85,6 +85,12 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'Financeiro')
         self.assertContains(response, 'Cross Gold')
         self.assertContains(response, 'Resumo do Recorte Ativo')
+        self.assertContains(response, 'id="finance-trend-preview-board"')
+        self.assertContains(response, 'Janela')
+        self.assertContains(response, 'Plano')
+        self.assertContains(response, 'Status')
+        self.assertContains(response, 'Metodo')
+        self.assertContains(response, 'Missao')
         self.assertContains(response, 'Handoff de cobranca')
         self.assertContains(response, 'Primeiro agir, depois analisar')
         self.assertContains(response, 'Separar disparo, prioridade e apoio')
@@ -92,7 +98,6 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'Casos semiassistidos prontos para disparo.')
         self.assertContains(response, 'Fila do turno')
         self.assertContains(response, 'Pendencias abertas')
-        self.assertContains(response, 'Churn e crescimento')
         self.assertContains(response, 'Placar de follow-up')
         self.assertContains(response, 'Melhor jogada agora')
         self.assertContains(response, 'Aderencia ao turno')
@@ -116,6 +121,18 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'Acao por timing')
         self.assertContains(response, 'Acao no tempo certo')
         self.assertContains(response, 'Receita mensal')
+        self.assertContains(response, 'Liquido')
+        self.assertContains(response, 'Recebido')
+        self.assertContains(response, 'Gastos')
+        self.assertContains(response, 'Churn')
+        self.assertContains(response, 'Aguardando base')
+        self.assertContains(response, 'Em breve')
+        self.assertContains(response, 'Recebido no recorte')
+        self.assertContains(response, 'data-finance-trend-button="recebido"')
+        self.assertContains(response, 'data-finance-trend-button="churn"')
+        self.assertContains(response, 'data-finance-trend-view="recebido"')
+        self.assertContains(response, 'data-finance-trend-view="churn"')
+        self.assertContains(response, 'finance-trend-metric-pill--pending')
         self.assertContains(response, 'Realizado vs esperado')
         self.assertContains(response, 'Ativacoes vs cancelamentos')
         self.assertContains(response, 'alto risco')
@@ -151,6 +168,13 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'href="#finance-priority-board"')
         self.assertContains(response, 'id="finance-queue-board"')
         self.assertContains(response, 'id="finance-overdue-support-board"')
+        self.assertContains(response, 'id="finance-ai-board"')
+        self.assertContains(response, 'data-finance-mode-button="traditional"')
+        self.assertContains(response, 'data-finance-mode-button="hybrid"')
+        self.assertContains(response, 'data-finance-mode-button="ai"')
+        self.assertNotContains(response, '?mode=traditional')
+        self.assertNotContains(response, '?mode=hybrid')
+        self.assertNotContains(response, '?mode=ai')
         self.assertContains(response, 'href="#finance-portfolio-board"')
         self.assertContains(response, 'Planos ativos')
         self.assertNotContains(response, 'Mix Comercial e Dependencia')
@@ -170,6 +194,8 @@ class FinanceCenterTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Filtros da Leitura Financeira')
         self.assertContains(response, 'Cross Gold')
+        self.assertEqual(response.context['finance_center_page']['behavior']['default_panel'], 'tab-finance-filters')
+        self.assertContains(response, 'Recorte atual: 6 meses | Cross Gold | PIX')
 
     def test_finance_center_filters_queue_by_mission(self):
         self.client.force_login(self.user)
@@ -182,6 +208,31 @@ class FinanceCenterTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Alto risco')
         self.assertContains(response, 'Missao da fila')
+
+    def test_finance_center_restores_last_filter_state_from_session(self):
+        self.client.force_login(self.user)
+
+        self.client.get(
+            reverse('finance-center'),
+            data={
+                'apply_filters': '1',
+                'months': '3',
+                'plan': self.plan.id,
+                'payment_status': '',
+                'payment_method': 'pix',
+                'queue_focus': 'high_signal',
+            },
+        )
+
+        response = self.client.get(reverse('finance-center'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Estamos usando o ultimo recorte salvo desta leitura.')
+        self.assertContains(response, 'Recorte atual: 3 meses | Cross Gold | PIX | Alto risco')
+        self.assertContains(response, '3 meses')
+        self.assertContains(response, 'Cross Gold')
+        self.assertContains(response, 'PIX')
+        self.assertContains(response, 'Alto risco')
 
     def test_finance_center_hides_recent_movements_board_from_the_raiox_tab(self):
         self.client.force_login(self.user)

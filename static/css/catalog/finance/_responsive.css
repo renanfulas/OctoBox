@@ -129,6 +129,24 @@ POR QUE ELE EXISTE:
         align-items: stretch;
     }
 
+    .finance-trend-metric-pills {
+        gap: 5px;
+    }
+
+    .finance-trend-metric-pill {
+        flex-basis: calc(50% - 4px);
+        padding: 9px 10px;
+    }
+
+    .finance-revenue-sparkline {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .finance-revenue-sparkline-visual {
+        height: 38px;
+    }
+
     .finance-board-shell .finance-board-shell-meta,
     .finance-board-shell .badge,
     .finance-portfolio-panel-head .badge {
@@ -137,6 +155,29 @@ POR QUE ELE EXISTE:
 
     .finance-board-shell-body {
         gap: 12px;
+    }
+
+    .finance-revenue-trend-preview-card {
+        padding: 14px 14px 12px;
+    }
+
+    .finance-revenue-trend-preview-card .finance-revenue-trend-head {
+        gap: 8px;
+    }
+
+    .finance-revenue-trend-preview-card .finance-revenue-trend-plot--preview {
+        min-height: 176px;
+        padding: 10px 10px 8px;
+    }
+
+    .finance-revenue-trend-preview-card .finance-revenue-trend-columns--preview {
+        gap: 10px;
+    }
+
+    .finance-revenue-trend-preview-card .finance-revenue-column-bars {
+        max-width: 58px;
+        height: 126px;
+        gap: 5px;
     }
 
     .finance-board-shell.is-rail,

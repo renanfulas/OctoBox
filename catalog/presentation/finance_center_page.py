@@ -14,6 +14,7 @@ from .finance_risk_queue_page import build_finance_risk_queue
 from .finance_traditional_page import (
     build_finance_churn_chart,
     build_finance_filter_summary,
+    build_finance_filter_summary_current,
     build_finance_overdue_rows,
     build_finance_portfolio_panel,
     build_finance_revenue_chart,
@@ -21,7 +22,16 @@ from .finance_traditional_page import (
 from .shared import build_catalog_assets, build_catalog_page_payload
 
 
-def build_finance_center_page(*, snapshot, operational_queue, export_links, current_role_slug, form):
+def build_finance_center_page(
+    *,
+    snapshot,
+    operational_queue,
+    export_links,
+    current_role_slug,
+    form,
+    default_panel_override=None,
+    filter_state_restored=False,
+):
     filter_form = snapshot['filter_form']
     financial_alerts = snapshot['financial_alerts']
     financial_churn_foundation = snapshot.get('financial_churn_foundation', {})
@@ -35,10 +45,10 @@ def build_finance_center_page(*, snapshot, operational_queue, export_links, curr
 
     default_panel = finance_priority_context['default_panel']
     default_action = finance_priority_context['default_action']
+    if default_panel_override == 'tab-finance-filters':
+        default_panel = 'tab-finance-filters'
+        default_action = 'open-tab-finance-filters'
     finance_mode_contract = build_finance_mode_contract(
-        default_panel=default_panel,
-        operational_queue=operational_queue,
-        financial_alerts=financial_alerts,
         finance_follow_up_analytics=finance_follow_up_analytics,
     )
 
@@ -52,6 +62,8 @@ def build_finance_center_page(*, snapshot, operational_queue, export_links, curr
         financial_alerts=financial_alerts,
         finance_pulse=finance_pulse,
     )
+    finance_filter_summary = build_finance_filter_summary(filter_form)
+    finance_trend_foundation = snapshot['finance_trend_foundation']
 
     return build_catalog_page_payload(
         context={
@@ -76,6 +88,11 @@ def build_finance_center_page(*, snapshot, operational_queue, export_links, curr
             'finance_follow_up_analytics': finance_follow_up_analytics,
             'finance_follow_up_analytics_board': finance_follow_up_analytics_board,
             'finance_revenue_chart': build_finance_revenue_chart(snapshot['monthly_comparison'], snapshot['comparison_peaks']),
+            'finance_received_sparkline': finance_trend_foundation['sparkline'],
+            'finance_trend_metric_pills': finance_trend_foundation['metric_pills'],
+            'finance_trend_foundation': finance_trend_foundation,
+            'finance_trend_metric_views': finance_trend_foundation['metric_views'],
+            'finance_trend_default_metric_key': finance_trend_foundation['default_metric_key'],
             'finance_churn_chart': build_finance_churn_chart(snapshot['monthly_comparison'], snapshot['comparison_peaks']),
             'finance_overdue_rows': build_finance_overdue_rows(financial_alerts),
             'interactive_kpis': snapshot.get('interactive_kpis', []),
@@ -87,7 +104,10 @@ def build_finance_center_page(*, snapshot, operational_queue, export_links, curr
             'comparison_peaks': snapshot['comparison_peaks'],
             'financial_alerts': financial_alerts,
             'operational_queue': operational_queue,
-            'finance_filter_summary': build_finance_filter_summary(filter_form),
+            'finance_filter_summary': finance_filter_summary,
+            'finance_filter_summary_current': build_finance_filter_summary_current(finance_filter_summary),
+            'finance_active_window_label': finance_trend_foundation['window_label'],
+            'finance_filter_state_restored': filter_state_restored,
             'form': form,
         },
         actions={

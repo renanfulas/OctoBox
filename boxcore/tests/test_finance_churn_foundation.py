@@ -229,6 +229,18 @@ class FinanceChurnFoundationTests(TestCase):
         self.assertIn('historical_score', contract['queue_contract'])
         self.assertIn('prediction_window', contract['queue_contract'])
         self.assertIn('financial_risk_score', contract['future_inference_contract'])
+        self.assertIn('finance_trend_foundation', snapshot)
+        trend_contract = snapshot['finance_trend_foundation']['contract']
+        self.assertEqual(trend_contract['surface_key'], 'finance_trend_board_v1')
+        self.assertEqual(trend_contract['metric_keys'], ['liquido', 'recebido', 'gastos', 'churn'])
+        self.assertEqual(trend_contract['default_metric_key'], 'recebido')
+        self.assertEqual(trend_contract['interactive_metric_keys'], ['recebido', 'churn'])
+        self.assertEqual(snapshot['finance_trend_foundation']['metric_pills'][0]['availability_status'], 'pending_foundation')
+        self.assertEqual(snapshot['finance_trend_foundation']['metric_pills'][2]['availability_status'], 'pending_foundation')
+        self.assertTrue(snapshot['finance_trend_foundation']['metric_pills'][1]['is_interactive'])
+        self.assertTrue(snapshot['finance_trend_foundation']['metric_pills'][3]['is_interactive'])
+        self.assertEqual(snapshot['finance_trend_foundation']['sparkline']['metric_key'], 'received')
+        self.assertEqual(snapshot['finance_trend_foundation']['metric_views']['churn']['sparkline']['metric_key'], 'churn')
 
     def test_build_finance_snapshot_persists_suggested_follow_up(self):
         student = Student.objects.create(full_name='Teo Follow', phone='5511910000011', status='inactive')

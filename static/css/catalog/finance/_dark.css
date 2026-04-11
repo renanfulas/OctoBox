@@ -34,6 +34,129 @@ body[data-theme="dark"] .finance-plan-form .field-label {
     color: rgba(226, 232, 240, 0.62);
 }
 
+body[data-theme="dark"] .finance-filter-summary-item {
+    border-color: rgba(148, 163, 184, 0.14);
+    background:
+        radial-gradient(circle at top right, rgba(74, 144, 226, 0.08), transparent 34%),
+        linear-gradient(160deg, rgba(11, 18, 31, 0.88), rgba(9, 14, 24, 0.84));
+}
+
+body[data-theme="dark"] .finance-revenue-trend-preview-card {
+    border-color: rgba(148, 163, 184, 0.14);
+    background:
+        radial-gradient(circle at top right, rgba(74, 144, 226, 0.08), transparent 34%),
+        linear-gradient(160deg, rgba(11, 18, 31, 0.9), rgba(9, 14, 24, 0.86));
+    box-shadow:
+        0 18px 34px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .finance-filter-summary-subtitle,
+body[data-theme="dark"] .finance-filter-summary-label {
+    color: rgba(226, 232, 240, 0.68);
+}
+
+body[data-theme="dark"] .finance-filter-summary-current,
+body[data-theme="dark"] .finance-filter-summary-value {
+    color: rgba(248, 250, 252, 0.94);
+}
+
+body[data-theme="dark"] .finance-trend-metric-pills {
+    border-color: rgba(148, 163, 184, 0.14);
+    background: rgba(10, 18, 32, 0.52);
+}
+
+body[data-theme="dark"] .finance-trend-metric-pill {
+    border-color: rgba(148, 163, 184, 0.14);
+    background: rgba(11, 18, 31, 0.9);
+    box-shadow:
+        0 14px 28px rgba(0, 0, 0, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .finance-trend-metric-pill-label,
+body[data-theme="dark"] .finance-trend-metric-pill-delta {
+    color: rgba(226, 232, 240, 0.72);
+}
+
+body[data-theme="dark"] .finance-trend-metric-pill-value {
+    color: rgba(248, 250, 252, 0.94);
+}
+
+body[data-theme="dark"] .finance-trend-metric-pill--accent {
+    border-color: rgba(34, 211, 238, 0.16);
+    background: rgba(8, 47, 73, 0.5);
+    color: #67e8f9;
+}
+
+body[data-theme="dark"] .finance-trend-metric-pill--good {
+    border-color: rgba(16, 185, 129, 0.16);
+    background: rgba(6, 78, 59, 0.46);
+    color: #6ee7b7;
+}
+
+body[data-theme="dark"] .finance-trend-metric-pill--bad {
+    border-color: rgba(244, 63, 94, 0.18);
+    background: rgba(76, 5, 25, 0.44);
+    color: #fda4af;
+}
+
+body[data-theme="dark"] .finance-trend-metric-pill--steady {
+    border-color: rgba(148, 163, 184, 0.16);
+    background: rgba(15, 23, 42, 0.68);
+    color: rgba(226, 232, 240, 0.82);
+}
+
+body[data-theme="dark"] .finance-trend-metric-pill--pending {
+    border-color: rgba(245, 158, 11, 0.16);
+    background: rgba(69, 26, 3, 0.44);
+    color: #fbbf24;
+}
+
+body[data-theme="dark"] .finance-revenue-sparkline-copy strong {
+    color: rgba(248, 250, 252, 0.94);
+}
+
+body[data-theme="dark"] .finance-revenue-sparkline-copy span {
+    color: rgba(226, 232, 240, 0.72);
+}
+
+body[data-theme="dark"] .finance-revenue-sparkline-line {
+    stroke: rgba(148, 163, 184, 0.42);
+}
+
+body[data-theme="dark"] .finance-revenue-sparkline-point {
+    fill: rgba(226, 232, 240, 0.82);
+}
+
+body[data-theme="dark"] .finance-revenue-sparkline-line--expected {
+    stroke: rgba(148, 163, 184, 0.34);
+}
+
+body[data-theme="dark"] .finance-revenue-sparkline-point--expected {
+    fill: rgba(148, 163, 184, 0.78);
+}
+
+body[data-theme="dark"] .finance-revenue-sparkline-point--realized {
+    fill: rgba(226, 232, 240, 0.88);
+}
+
+body[data-theme="dark"] .finance-revenue-sparkline--good .finance-revenue-sparkline-line--realized {
+    stroke: rgba(16, 185, 129, 0.54);
+}
+
+body[data-theme="dark"] .finance-revenue-sparkline--good .finance-revenue-sparkline-point--realized {
+    fill: #34d399;
+}
+
+body[data-theme="dark"] .finance-revenue-sparkline--bad .finance-revenue-sparkline-line--realized {
+    stroke: rgba(244, 63, 94, 0.58);
+}
+
+body[data-theme="dark"] .finance-revenue-sparkline--bad .finance-revenue-sparkline-point--realized {
+    fill: #fb7185;
+}
+
 body[data-theme="dark"] .finance-plan-form input,
 body[data-theme="dark"] .finance-plan-form select,
 body[data-theme="dark"] .finance-plan-form textarea,

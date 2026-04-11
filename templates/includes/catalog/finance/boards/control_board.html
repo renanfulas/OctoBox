@@ -19,6 +19,7 @@ O QUE ESTE ARQUIVO FAZ:
         <span class="badge badge-subtle info">Leitura ativa</span>
     </div>
     <form method="get" class="form-stack" id="finance-filter-form" aria-describedby="finance-filter-status">
+        <input type="hidden" name="apply_filters" value="1">
         <div class="field-grid-200">
             <label>
                 <span class="field-label">{{ page.data.finance_filter_form.months.label }}</span>
@@ -43,15 +44,35 @@ O QUE ESTE ARQUIVO FAZ:
         </div>
         <div class="actions actions-tight operation-hero-action-rail finance-command-actions">
             <button class="button" type="submit">Aplicar filtros</button>
-            <a class="button secondary" href="{% url 'finance-center' %}">Limpar</a>
+            <a class="button secondary" href="{% url 'finance-center' %}?reset_filters=1">Limpar</a>
         </div>
     </form>
 </section>
 
 <section class="card finance-support-card finance-support-card-tight finance-filter-summary-card" id="finance-control-board" data-panel="finance-control-summary" role="status" aria-live="polite" aria-atomic="true">
     <div class="card-head">
-        <h3 class="card-title" id="finance-summary-title">Resumo do Recorte Ativo</h3>
+        <div class="finance-filter-summary-copy">
+            <h3 class="card-title" id="finance-summary-title">Resumo do Recorte Ativo</h3>
+            <p class="finance-filter-summary-subtitle">
+                {% if page.data.finance_filter_state_restored %}
+                Estamos usando o ultimo recorte salvo desta leitura.
+                {% else %}
+                O recorte aparece aqui sem tirar voce da mesma tela.
+                {% endif %}
+            </p>
+        </div>
         <span class="badge badge-subtle info">Contexto visivel</span>
+    </div>
+    <p class="finance-filter-summary-current" data-finance-filter-current>{{ page.data.finance_filter_summary_current }}</p>
+    <div class="finance-filter-summary-grid" data-finance-filter-summary-grid>
+        {% for item in page.data.finance_filter_summary %}
+        <div class="finance-filter-summary-item" data-finance-filter-key="{{ item.key }}">
+            <span class="finance-filter-summary-label">{{ item.label }}</span>
+            <strong class="finance-filter-summary-value">{{ item.value }}</strong>
+        </div>
+        {% endfor %}
     </div>
     <p id="finance-filter-status" class="visually-hidden" aria-live="polite"></p>
 </section>
+
+{% include "includes/catalog/finance/boards/revenue_chart_preview.html" with page=page %}

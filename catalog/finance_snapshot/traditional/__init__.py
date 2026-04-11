@@ -14,6 +14,7 @@ from .metrics import (
     build_finance_pulse,
 )
 from .portfolio import build_plan_mix, build_plan_portfolio
+from .trend_foundation import build_finance_trend_foundation
 
 __all__ = [
     'build_comparison_peaks',
@@ -22,6 +23,7 @@ __all__ = [
     'build_finance_metrics',
     'build_finance_priority_context',
     'build_finance_pulse',
+    'build_finance_trend_foundation',
     'build_plan_mix',
     'build_monthly_comparison',
     'build_plan_portfolio',

@@ -1,0 +1,48 @@
+<!--
+ARQUIVO: preview compacto da tendencia de receita no bloco de filtros.
+
+POR QUE ELE EXISTE:
+- leva a leitura de receita para perto do recorte ativo sem mover o board principal.
+
+O QUE ESTE ARQUIVO FAZ:
+1. mostra um resumo rapido da receita mensal;
+2. reaproveita os mesmos dados do board oficial;
+3. mantém a leitura compacta para contexto de filtro.
+-->
+<article class="card finance-board-trend finance-revenue-trend-preview-card" id="finance-trend-preview-board" aria-label="Preview da receita mensal no recorte atual">
+    <div class="finance-revenue-trend-head finance-revenue-trend-head--preview">
+        <div class="finance-revenue-trend-copy">
+            <h3 class="finance-revenue-trend-title">Receita mensal</h3>
+            <p class="finance-revenue-trend-subtitle">Leitura rapida do recorte atual antes do board completo.</p>
+        </div>
+        <div class="finance-revenue-trend-legend" aria-label="Legenda do preview de receita">
+            <span class="finance-revenue-trend-legend-item">
+                <span class="finance-revenue-trend-legend-dot is-realized" aria-hidden="true"></span>
+                Realizado
+            </span>
+            <span class="finance-revenue-trend-legend-item">
+                <span class="finance-revenue-trend-legend-dot is-expected" aria-hidden="true"></span>
+                Esperado
+            </span>
+        </div>
+    </div>
+    <div class="finance-revenue-trend-chart finance-revenue-trend-chart--preview" aria-label="Preview comparativo de receita mensal">
+        <div class="finance-revenue-trend-axis" aria-hidden="true">
+            {% for tick in page.data.finance_revenue_chart.ticks %}
+            <span>{{ tick.label }}</span>
+            {% endfor %}
+        </div>
+        <div class="finance-revenue-trend-plot finance-revenue-trend-plot--preview">
+            <div class="finance-revenue-trend-gridlines" aria-hidden="true">
+                {% for tick in page.data.finance_revenue_chart.ticks %}
+                <span></span>
+                {% endfor %}
+            </div>
+            <div class="finance-revenue-trend-columns finance-revenue-trend-columns--preview" data-visual-columns="{{ page.data.finance_revenue_chart.items|length|default:1 }}">
+                {% for item in page.data.finance_revenue_chart.items %}
+                {% include "includes/catalog/finance/cards/revenue_chart_column.html" with item=item %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</article>

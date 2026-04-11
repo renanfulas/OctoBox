@@ -4,7 +4,7 @@ ARQUIVO: placar analitico de follow-ups financeiros.
 POR QUE ELE EXISTE:
 - transforma a trilha de sugestao, execucao e outcome em leitura operacional comparativa.
 -->
-<article class="table-card finance-board-shell finance-board-trend-side finance-followup-analytics-card is-analytics" id="finance-ai-board" data-mode-surface="ai">
+<article class="table-card finance-board-shell finance-board-trend-side finance-followup-analytics-card is-analytics" id="finance-ai-board" data-mode-surface="ai" data-finance-mode-visibility="hybrid ai"{% if page.data.finance_mode_contract.active_mode == 'traditional' %} hidden{% endif %}>
     <div class="finance-board-shell-head">
         <div class="finance-board-shell-copy">
             <h3 class="finance-board-shell-title">Placar de follow-up</h3>

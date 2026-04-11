@@ -6,24 +6,25 @@ POR QUE ELE EXISTE:
 """
 
 
-def build_finance_mode_contract(*, default_panel, operational_queue, financial_alerts, finance_follow_up_analytics):
+def build_finance_mode_contract(
+    *,
+    finance_follow_up_analytics,
+):
     analytics_summary = finance_follow_up_analytics.get('summary', {}) or {}
     tracked_realized_count = (
         (finance_follow_up_analytics.get('turn_recommendation_adherence') or {}).get('tracked_realized_count', 0)
         or analytics_summary.get('realized_count', 0)
         or 0
     )
-    active_mode = 'hybrid' if default_panel == 'tab-finance-queue' else 'traditional'
+    active_mode = 'hybrid'
 
     modes = [
         {
             'key': 'traditional',
             'label': 'Modo tradicional',
             'kicker': 'Fato operacional',
-            'summary': 'Metricas, movimentos, carteira e filtros para leitura objetiva do caixa.',
-            'detail': 'O que aconteceu e onde a operacao aperta sem interpretacao assistida.',
-            'href': '#tab-finance-movements',
-            'href_label': 'Abrir leitura factual',
+            'summary': 'Abre so o que e factual e direto para decidir.',
+            'detail': 'Leitura objetiva do que aconteceu, sem a camada de recomendacao assistida.',
             'badge': '3 blocos',
             'is_active': active_mode == 'traditional',
             'surface_count': 3,
@@ -32,43 +33,29 @@ def build_finance_mode_contract(*, default_panel, operational_queue, financial_a
             'key': 'hybrid',
             'label': 'Modo hibrido',
             'kicker': 'Acao com contexto',
-            'summary': 'Fila do turno com regua pronta, prioridade operacional e leitura contextual.',
-            'detail': 'Onde fato e recomendacao assistida aparecem lado a lado para decidir rapido.',
-            'href': '#tab-finance-queue',
-            'href_label': 'Abrir fila guiada',
-            'badge': f"{len(operational_queue) + len(financial_alerts)} caso(s)",
+            'summary': 'Abre o factual junto da leitura assistida no mesmo contexto.',
+            'detail': 'E a visao mais completa do turno, com fato e IA lado a lado para decidir rapido.',
+            'badge': 'Vista completa',
             'is_active': active_mode == 'hybrid',
-            'surface_count': 2,
+            'surface_count': 5,
         },
         {
             'key': 'ai',
             'label': 'Modo IA',
             'kicker': 'Aprendizado historico',
-            'summary': 'Placar de follow-up, melhor jogada do turno e leitura de divergencia acumulada.',
-            'detail': 'Mostra o que o historico sugere, sem confundir isso com verdade transacional.',
-            'href': '#finance-ai-board',
-            'href_label': 'Abrir leitura assistida',
+            'summary': 'Abre so o aprendizado e a leitura assistida da maquina.',
+            'detail': 'Foca no que o historico sugere e no que o time tem aprendido com a execucao.',
             'badge': f'{tracked_realized_count} follow-up(s)',
-            'is_active': False,
+            'is_active': active_mode == 'ai',
             'surface_count': 1,
         },
     ]
 
-    surface_modes = {
-        'tab-finance-movements': 'traditional',
-        'tab-finance-portfolio': 'traditional',
-        'tab-finance-filters': 'traditional',
-        'tab-finance-queue': 'hybrid',
-        'finance-priority-board': 'hybrid',
-        'finance-ai-board': 'ai',
-    }
-
     return {
         'active_mode': active_mode,
-        'headline': 'Escolha a lente antes de afundar nos blocos.',
-        'summary': 'Tradicional mostra o fato. IA mostra o aprendizado. Hibrido junta os dois para orientar a acao.',
+        'headline': 'Escolha como voce quer ler o financeiro.',
+        'summary': 'Tradicional abre o factual. Hibrido junta factual e IA. IA abre so a leitura assistida.',
         'modes': modes,
-        'surface_modes': surface_modes,
     }
 
 

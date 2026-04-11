@@ -11,10 +11,10 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende de item e page.data.comparison_peaks.
 -->
-<div class="finance-revenue-column">
+<div class="finance-revenue-column finance-revenue-column--{{ item.performance_state }}">
     <div class="finance-revenue-column-bars">
-        <div class="finance-revenue-bar is-expected" data-visual-height="{{ item.expected_height }}" title="Esperado: R$ {{ item.expected_value|floatformat:2 }}"></div>
-        <div class="finance-revenue-bar is-realized" data-visual-height="{{ item.realized_height }}" title="Realizado: R$ {{ item.realized_value|floatformat:2 }}"></div>
+        <div class="finance-revenue-bar is-expected" data-visual-height="{{ item.expected_height }}" title="{{ item.performance_label }} | Esperado: R$ {{ item.expected_value|floatformat:2 }}"></div>
+        <div class="finance-revenue-bar is-realized" data-visual-height="{{ item.realized_height }}" title="{{ item.performance_label }} | Realizado: R$ {{ item.realized_value|floatformat:2 }}"></div>
     </div>
     <strong class="finance-revenue-column-label">{{ item.label }}</strong>
 </div>

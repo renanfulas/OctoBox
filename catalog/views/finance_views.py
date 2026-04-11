@@ -8,6 +8,7 @@ POR QUE ELE EXISTE:
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404
+from django.http import QueryDict
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
@@ -36,11 +37,37 @@ from .catalog_base_views import CatalogBaseView
 
 class FinanceWorkspaceContextMixin:
     allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER)
+    finance_filter_keys = ('months', 'plan', 'payment_status', 'payment_method', 'queue_focus')
+    finance_filter_session_key = 'finance_center_last_filter_state_v1'
 
-    def get_finance_export_links(self):
+    def _build_filter_querydict(self, values):
+        params = QueryDict('', mutable=True)
+        for key in self.finance_filter_keys:
+            params[key] = values.get(key, '')
+        return params
+
+    def get_effective_finance_filter_params(self):
+        if self.request.GET.get('reset_filters') == '1':
+            self.request.session.pop(self.finance_filter_session_key, None)
+            return QueryDict('', mutable=True), False, False
+
+        has_explicit_filters = any(key in self.request.GET for key in self.finance_filter_keys)
+        if has_explicit_filters:
+            stored_values = {key: self.request.GET.get(key, '') for key in self.finance_filter_keys}
+            self.request.session[self.finance_filter_session_key] = stored_values
+            return self._build_filter_querydict(stored_values), True, False
+
+        stored_values = self.request.session.get(self.finance_filter_session_key)
+        if stored_values:
+            return self._build_filter_querydict(stored_values), False, True
+
+        return QueryDict('', mutable=True), False, False
+
+    def get_finance_export_links(self, params=None):
+        encoded_params = (params or self.request.GET).urlencode()
         return {
-            'csv': f"{reverse('finance-report-export', args=['csv'])}?{self.request.GET.urlencode()}",
-            'pdf': f"{reverse('finance-report-export', args=['pdf'])}?{self.request.GET.urlencode()}",
+            'csv': f"{reverse('finance-report-export', args=['csv'])}?{encoded_params}" if encoded_params else reverse('finance-report-export', args=['csv']),
+            'pdf': f"{reverse('finance-report-export', args=['pdf'])}?{encoded_params}" if encoded_params else reverse('finance-report-export', args=['pdf']),
         }
 
 
@@ -56,13 +83,17 @@ class FinanceCenterView(FinanceWorkspaceContextMixin, CatalogBaseView, FormView)
         base_context = self.get_base_context()
         context.update(base_context)
         operational_queue = build_operational_queue_snapshot()
-        snapshot = build_finance_snapshot(self.request.GET, operational_queue=operational_queue, persist_follow_ups=True)
+        effective_params, filters_applied_now, filters_restored = self.get_effective_finance_filter_params()
+        default_panel_override = 'tab-finance-filters' if (filters_applied_now or self.request.GET.get('reset_filters') == '1') else None
+        snapshot = build_finance_snapshot(effective_params, operational_queue=operational_queue, persist_follow_ups=True)
         page_payload = build_finance_center_page(
             snapshot=snapshot,
             operational_queue=operational_queue,
-            export_links=self.get_finance_export_links(),
+            export_links=self.get_finance_export_links(effective_params),
             current_role_slug=base_context['current_role'].slug,
             form=kwargs.get('form') or self.get_form(),
+            default_panel_override=default_panel_override,
+            filter_state_restored=filters_restored,
         )
         return attach_catalog_page_payload(
             context,

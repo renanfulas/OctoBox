@@ -35,18 +35,17 @@ PONTOS CRITICOS:
 
     <section class="finance-mode-strip section-gap" aria-label="Modo de leitura do financeiro">
         <div class="finance-mode-strip-copy">
-            <span class="eyebrow">Contrato de leitura</span>
             <strong>{{ page.data.finance_mode_contract.headline }}</strong>
             <p>{{ page.data.finance_mode_contract.summary }}</p>
         </div>
         <div class="finance-mode-grid" data-active-mode="{{ page.behavior.active_mode }}">
             {% for mode in page.data.finance_mode_contract.modes %}
-            <a class="finance-mode-card{% if mode.is_active %} is-active{% endif %}" href="{{ mode.href }}" data-mode-key="{{ mode.key }}">
+            <button class="finance-mode-card finance-mode-card--{{ mode.key }}{% if mode.is_active %} is-active{% endif %}" type="button" data-mode-key="{{ mode.key }}" data-finance-mode-button="{{ mode.key }}" aria-pressed="{% if mode.is_active %}true{% else %}false{% endif %}">
                 <span class="eyebrow">{{ mode.kicker }}</span>
                 <strong>{{ mode.label }}</strong>
                 <p>{{ mode.summary }}</p>
                 <span class="finance-mode-card-meta">{{ mode.badge }} | {{ mode.surface_count }} superficie(s)</span>
-            </a>
+            </button>
             {% endfor %}
         </div>
     </section>
@@ -81,5 +80,7 @@ PONTOS CRITICOS:
 {% block extra_scripts %}
 <script src="{% static 'js/pages/interactive_tabs.js' %}?v={{ static_asset_version }}"></script>
 <script src="{% static 'js/pages/finance/finance-filter-summary.js' %}?v={{ static_asset_version }}"></script>
+<script src="{% static 'js/pages/finance/finance-mode-controller.js' %}?v={{ static_asset_version }}"></script>
+<script src="{% static 'js/pages/finance/finance-trend-board-controller.js' %}?v={{ static_asset_version }}"></script>
 <script src="{% static 'js/pages/finance/finance-priority-carousel.js' %}?v={{ static_asset_version }}"></script>
 {% endblock %}

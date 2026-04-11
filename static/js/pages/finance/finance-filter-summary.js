@@ -10,17 +10,51 @@ document.addEventListener('DOMContentLoaded', function() {
     var form = document.getElementById('finance-filter-form');
     var summaryTitle = document.getElementById('finance-summary-title');
     var statusNode = document.getElementById('finance-filter-status');
+    var summaryGrid = document.querySelector('[data-finance-filter-summary-grid]');
+    var summaryCurrent = document.querySelector('[data-finance-filter-current]');
 
-    if (!form || !summaryTitle) {
+    if (!form || !summaryTitle || !summaryGrid || !summaryCurrent) {
         return;
     }
 
     function getSelectedLabel(selectEl) {
-        if (!selectEl || !selectEl.selectedIndex || selectEl.selectedIndex <= 0) {
-            return null;
+        if (!selectEl || selectEl.selectedIndex < 0) {
+            return '';
         }
 
-        return selectEl.options[selectEl.selectedIndex].text;
+        var selectedText = selectEl.options[selectEl.selectedIndex].text || '';
+        if (selectedText === '---------' || selectedText === '') {
+            return '';
+        }
+
+        return selectedText;
+    }
+
+    function getFallbackValue(selectEl) {
+        if (!selectEl) {
+            return '';
+        }
+
+        var key = selectEl.name;
+        if (key === 'months') {
+            return '6 meses';
+        }
+        if (key === 'plan') {
+            return 'Todos os planos';
+        }
+        if (key === 'payment_status' || key === 'payment_method' || key === 'queue_focus') {
+            return 'Todos';
+        }
+        return '';
+    }
+
+    function updateSummaryValue(key, value) {
+        var node = summaryGrid.querySelector('[data-finance-filter-key="' + key + '"] .finance-filter-summary-value');
+        if (!node) {
+            return;
+        }
+
+        node.textContent = value;
     }
 
     function updateSummary() {
@@ -29,7 +63,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         selects.forEach(function(selectEl) {
             var label = getSelectedLabel(selectEl);
-            if (label && label !== '---------' && label !== 'Todos' && label !== '') {
+            var value = label || getFallbackValue(selectEl);
+            updateSummaryValue(selectEl.name, value);
+
+            if (label && label !== 'Todos') {
                 parts.push(label);
             }
         });
@@ -37,6 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (parts.length > 0) {
             var joinedParts = parts.join(' | ');
             summaryTitle.textContent = 'Recorte ativo: ' + joinedParts;
+            summaryCurrent.textContent = 'Recorte atual: ' + joinedParts;
             if (statusNode) {
                 statusNode.textContent = 'Recorte financeiro atualizado para ' + joinedParts + '.';
             }
@@ -44,6 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         summaryTitle.textContent = 'Resumo do Recorte Ativo';
+        summaryCurrent.textContent = 'Recorte atual: padrao da leitura financeira.';
         if (statusNode) {
             statusNode.textContent = 'Recorte financeiro sem filtros especificos.';
         }

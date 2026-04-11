@@ -38,6 +38,7 @@ from .traditional import (
     build_finance_metrics,
     build_finance_priority_context,
     build_finance_pulse,
+    build_finance_trend_foundation,
     build_monthly_comparison,
     build_plan_portfolio,
 )
@@ -97,6 +98,11 @@ def build_finance_snapshot(params=None, *, operational_queue=None, persist_follo
     finance_follow_up_analytics = build_finance_follow_up_analytics(
         follow_ups=FinanceFollowUp.objects.filter(source_surface='finance_queue')
     )
+    finance_trend_foundation = build_finance_trend_foundation(
+        filter_form=filter_form,
+        finance_metrics=finance_metrics,
+        monthly_comparison=monthly_comparison,
+    )
 
     snapshot = {
         'filter_form': filter_form,
@@ -113,6 +119,7 @@ def build_finance_snapshot(params=None, *, operational_queue=None, persist_follo
         'financial_alerts': financial_alerts,
         'financial_churn_foundation': financial_churn_foundation,
         'finance_follow_up_analytics': finance_follow_up_analytics,
+        'finance_trend_foundation': finance_trend_foundation,
         'recent_movements': enrollments.order_by('-updated_at', '-created_at')[:8],
     }
 
