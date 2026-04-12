@@ -112,7 +112,11 @@ def build_finance_snapshot(params=None, *, operational_queue=None, persist_follo
         'finance_metrics': finance_metrics,
         'finance_pulse': finance_pulse,
         'finance_priority_context': finance_priority_context,
-        'interactive_kpis': build_finance_interactive_kpis(finance_metrics, priority_context=finance_priority_context),
+        'interactive_kpis': build_finance_interactive_kpis(
+            finance_metrics,
+            priority_context=finance_priority_context,
+            plan_portfolio=plan_portfolio,
+        ),
         'plan_portfolio': plan_portfolio,
         'monthly_comparison': monthly_comparison,
         'comparison_peaks': build_comparison_peaks(monthly_comparison),

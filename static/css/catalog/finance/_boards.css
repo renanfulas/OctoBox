@@ -231,7 +231,11 @@ POR QUE ELE EXISTE:
 
 .finance-priority-slide .finance-action-card {
     height: 100%;
-    min-height: clamp(272px, 24vw, 308px);
+    min-height: clamp(248px, 22vw, 288px);
+}
+
+.finance-priority-slide .finance-action-message-copy {
+    max-width: none;
 }
 
 .finance-priority-slide.is-priority-active {
@@ -285,6 +289,7 @@ POR QUE ELE EXISTE:
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
+    align-items: stretch;
 }
 
 .finance-queue-guide-card {
@@ -416,14 +421,11 @@ POR QUE ELE EXISTE:
     min-width: 0;
     display: grid;
     gap: 10px;
-    padding: 12px 14px 14px;
-    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 10%, rgba(148, 163, 184, 0.16) 90%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 8%, transparent), transparent 34%),
-        linear-gradient(160deg, rgba(251, 253, 255, 0.94), rgba(246, 249, 253, 0.9));
-    box-shadow:
-        0 12px 26px rgba(7, 14, 24, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.62);
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
 }
 
 .finance-queue-meta {
@@ -789,8 +791,8 @@ POR QUE ELE EXISTE:
 }
 
 .finance-analytics-disclosure {
-    border-top: 1px solid rgba(148, 163, 184, 0.14);
-    padding-top: 12px;
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+    padding-top: 10px;
 }
 
 .finance-analytics-disclosure + .finance-analytics-disclosure {
@@ -830,7 +832,7 @@ POR QUE ELE EXISTE:
     grid-template-columns: repeat(4, minmax(0, 1fr));
     column-gap: 14px;
     row-gap: 16px;
-    padding-top: 14px;
+    padding-top: 12px;
     align-items: stretch;
 }
 
@@ -1922,9 +1924,7 @@ POR QUE ELE EXISTE:
 
 body[data-theme="dark"] .finance-guide-card,
 body[data-theme="dark"] .finance-guide-card-soft,
-body[data-theme="dark"] .finance-board-shell,
-body[data-theme="dark"] .finance-support-card,
-body[data-theme="dark"] .finance-portfolio-panel-card {
+body[data-theme="dark"] .finance-support-card {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, rgba(148, 163, 184, 0.16) 82%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 34%),
@@ -1952,10 +1952,6 @@ body[data-theme="dark"] .finance-followup-analytics-card .finance-analytics-tens
         0 14px 28px rgba(2, 6, 23, 0.24);
 }
 
-body[data-theme="dark"] .finance-board-shell.is-support {
-    border-style: dashed;
-}
-
 body[data-theme="dark"] .finance-overdue-copy span,
 body[data-theme="dark"] .finance-overdue-age,
 body[data-theme="dark"] .finance-revenue-trend-subtitle,
@@ -1971,10 +1967,13 @@ body[data-theme="dark"] .finance-overdue-amount {
 
 body[data-theme="dark"] .finance-overdue-row:hover,
 body[data-theme="dark"] .finance-overdue-row:focus-visible {
-    background: rgba(148, 163, 184, 0.08);
+    background:
+        radial-gradient(circle at top right, rgba(74, 144, 226, 0.08), transparent 38%),
+        rgba(148, 163, 184, 0.08);
 }
 
-body[data-theme="dark"] .finance-priority-nav {
+body[data-theme="dark"] .finance-priority-nav,
+body[data-theme="dark"] .finance-queue-nav {
     border-color: rgba(144, 181, 205, 0.16);
     background: rgba(10, 18, 32, 0.84);
     color: rgba(248, 250, 252, 0.92);
@@ -1982,6 +1981,12 @@ body[data-theme="dark"] .finance-priority-nav {
 }
 
 body[data-theme="dark"] .finance-priority-counter {
+    border-color: rgba(144, 181, 205, 0.14);
+    background: rgba(10, 18, 32, 0.72);
+    color: rgba(226, 232, 240, 0.78);
+}
+
+body[data-theme="dark"] .finance-queue-counter {
     border-color: rgba(144, 181, 205, 0.14);
     background: rgba(10, 18, 32, 0.72);
     color: rgba(226, 232, 240, 0.78);
@@ -1999,23 +2004,126 @@ body[data-theme="dark"] .finance-priority-dot.is-near {
     background: rgba(100, 116, 139, 0.42);
 }
 
+body[data-theme="dark"] .finance-followup-analytics-card .finance-analytics-summary-card .finance-followup-line span,
+body[data-theme="dark"] .finance-followup-analytics-card .finance-analytics-summary-card p,
+body[data-theme="dark"] .finance-followup-analytics-card .finance-guide-card p,
+body[data-theme="dark"] .finance-followup-window-card span:last-child {
+    color: rgba(226, 232, 240, 0.72);
+}
+
+body[data-theme="dark"] .finance-followup-analytics-card .finance-guide-card strong,
+body[data-theme="dark"] .finance-followup-window-card strong,
+body[data-theme="dark"] .finance-analytics-disclosure summary {
+    color: rgba(248, 250, 252, 0.94);
+}
+
 body[data-theme="dark"] .finance-priority-nav:hover,
-body[data-theme="dark"] .finance-priority-nav:focus-visible {
+body[data-theme="dark"] .finance-priority-nav:focus-visible,
+body[data-theme="dark"] .finance-queue-nav:hover,
+body[data-theme="dark"] .finance-queue-nav:focus-visible {
     background: rgba(15, 23, 42, 0.96);
     border-color: rgba(148, 163, 184, 0.18);
 }
 
 body[data-theme="dark"] .finance-overdue-avatar {
-    background: rgba(100, 116, 139, 0.22);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background:
+        linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.9));
+    color: rgba(248, 250, 252, 0.92);
+    box-shadow:
+        0 10px 20px rgba(2, 6, 23, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .finance-overdue-row {
+    border-bottom-color: rgba(148, 163, 184, 0.1);
 }
 
 body[data-theme="dark"] .finance-portfolio-panel-track {
     background: rgba(148, 163, 184, 0.14);
 }
 
+body[data-theme="dark"] .finance-portfolio-panel-fill {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 0 14px rgba(74, 144, 226, 0.18);
+}
+
 body[data-theme="dark"] .finance-overdue-copy strong,
 body[data-theme="dark"] .finance-portfolio-panel-value strong {
     color: rgba(245, 249, 252, 0.96);
+}
+
+body[data-theme="dark"] .finance-portfolio-panel-label strong,
+body[data-theme="dark"] .finance-portfolio-panel-footer strong,
+body[data-theme="dark"] .finance-filter-summary-current {
+    color: rgba(248, 250, 252, 0.94);
+}
+
+body[data-theme="dark"] .finance-portfolio-panel-value,
+body[data-theme="dark"] .finance-portfolio-panel-footer,
+body[data-theme="dark"] .finance-filter-summary-subtitle,
+body[data-theme="dark"] .finance-filter-summary-label {
+    color: rgba(203, 213, 225, 0.72);
+}
+
+body[data-theme="dark"] .finance-portfolio-panel-value span {
+    color: rgba(203, 213, 225, 0.68);
+}
+
+body[data-theme="dark"] .finance-portfolio-panel-row {
+    padding: 8px 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    background:
+        radial-gradient(circle at top right, rgba(74, 144, 226, 0.06), transparent 40%),
+        linear-gradient(160deg, rgba(12, 19, 32, 0.72), rgba(9, 15, 26, 0.66));
+}
+
+body[data-theme="dark"] .finance-portfolio-panel-card {
+    border-color: rgba(144, 181, 205, 0.16);
+    background:
+        radial-gradient(circle at top right, rgba(74, 144, 226, 0.08), transparent 38%),
+        linear-gradient(160deg, rgba(10, 18, 31, 0.94), rgba(8, 14, 24, 0.9));
+    box-shadow:
+        0 20px 38px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .finance-portfolio-panel-head .finance-revenue-trend-title {
+    color: rgba(248, 250, 252, 0.94);
+}
+
+body[data-theme="dark"] .finance-portfolio-panel-footer {
+    border-top-color: rgba(148, 163, 184, 0.1);
+}
+
+body[data-theme="dark"] .finance-risk-summary--headline .badge {
+    border-color: rgba(148, 163, 184, 0.14);
+    background: rgba(10, 18, 32, 0.72);
+    color: rgba(226, 232, 240, 0.78);
+}
+
+body[data-theme="dark"] .finance-risk-summary-metric--queue {
+    border-color: rgba(34, 211, 238, 0.16);
+    background: rgba(8, 47, 73, 0.42);
+    color: #67e8f9;
+}
+
+body[data-theme="dark"] .finance-risk-summary-metric--high-risk {
+    border-color: rgba(244, 63, 94, 0.18);
+    background: rgba(76, 5, 25, 0.4);
+    color: #fda4af;
+}
+
+body[data-theme="dark"] .finance-risk-summary-metric--inactive {
+    border-color: rgba(245, 158, 11, 0.16);
+    background: rgba(69, 26, 3, 0.4);
+    color: #fbbf24;
+}
+
+body[data-theme="dark"] .finance-risk-summary-metric--recovered {
+    border-color: rgba(16, 185, 129, 0.16);
+    background: rgba(6, 78, 59, 0.4);
+    color: #6ee7b7;
 }
 
 body[data-theme="dark"] .finance-churn-column-balance {
@@ -2121,19 +2229,33 @@ body[data-theme="dark"] .finance-churn-trend-gridlines span {
 
 .finance-risk-queue {
     display: grid;
-    gap: 12px;
+    gap: 14px;
     margin-top: 0;
     margin-bottom: 0;
-    padding: 0;
+    padding: 2px 0 0;
     border-top: 0;
 }
 
 body[data-theme="dark"] .finance-queue-guide-card {
     border-color: rgba(144, 181, 205, 0.16);
-    background: linear-gradient(160deg, rgba(9, 16, 29, 0.94), rgba(12, 18, 29, 0.9));
+    background:
+        radial-gradient(circle at top right, rgba(74, 144, 226, 0.08), transparent 40%),
+        linear-gradient(160deg, rgba(9, 16, 29, 0.94), rgba(12, 18, 29, 0.9));
     box-shadow:
         0 16px 32px rgba(0, 0, 0, 0.22),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .finance-queue-guide-card .finance-followup-line span,
+body[data-theme="dark"] .finance-queue-guide-card p,
+body[data-theme="dark"] .finance-queue-guide-card .finance-guide-note-quiet {
+    color: rgba(203, 213, 225, 0.72);
+}
+
+body[data-theme="dark"] .finance-queue-guide-card .eyebrow,
+body[data-theme="dark"] .finance-queue-guide-card .finance-followup-line strong,
+body[data-theme="dark"] .finance-queue-guide-card > p:not(.finance-guide-note-quiet) {
+    color: rgba(248, 250, 252, 0.94);
 }
 
 body[data-theme="dark"] .finance-queue-guide-card--recommendation {
@@ -2301,6 +2423,80 @@ body[data-theme="dark"] .finance-queue-guide-card--highlight {
     border-color: rgba(100, 116, 139, 0.26);
     background: rgba(241, 245, 249, 0.9);
     color: color-mix(in srgb, var(--ink) 72%, var(--muted) 28%);
+}
+
+body[data-theme="dark"] .finance-queue-slide .finance-queue-card {
+    border-color: rgba(92, 146, 214, 0.16);
+    background:
+        radial-gradient(circle at top right, rgba(74, 144, 226, 0.09), transparent 36%),
+        linear-gradient(160deg, rgba(10, 18, 31, 0.95), rgba(8, 14, 24, 0.92));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 20px 38px rgba(2, 6, 23, 0.26);
+}
+
+body[data-theme="dark"] .finance-queue-card .finance-action-copy .meta-text-sm,
+body[data-theme="dark"] .finance-queue-card .finance-risk-meta,
+body[data-theme="dark"] .finance-queue-card .finance-risk-meta-secondary,
+body[data-theme="dark"] .finance-queue-card .finance-risk-order-hint,
+body[data-theme="dark"] .finance-queue-card .finance-risk-details summary {
+    color: rgba(203, 213, 225, 0.72);
+}
+
+body[data-theme="dark"] .finance-queue-card-badges .badge {
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: rgba(10, 18, 32, 0.62);
+    color: rgba(226, 232, 240, 0.84);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="dark"] .finance-queue-card-badges .badge.info {
+    border-color: rgba(92, 146, 214, 0.18);
+    background: rgba(12, 32, 60, 0.58);
+    color: #93c5fd;
+}
+
+body[data-theme="dark"] .finance-queue-card-badges .badge.warning {
+    border-color: rgba(245, 158, 11, 0.18);
+    background: rgba(69, 26, 3, 0.48);
+    color: #fbbf24;
+}
+
+body[data-theme="dark"] .finance-queue-card-badges .badge.success {
+    border-color: rgba(16, 185, 129, 0.18);
+    background: rgba(6, 78, 59, 0.46);
+    color: #6ee7b7;
+}
+
+body[data-theme="dark"] .finance-queue-card-badges .badge.danger {
+    border-color: rgba(244, 63, 94, 0.18);
+    background: rgba(76, 5, 25, 0.44);
+    color: #fda4af;
+}
+
+body[data-theme="dark"] .finance-queue-card .finance-action-meta-chip .meta-text-sm {
+    color: rgba(241, 245, 249, 0.92);
+    font-variant-numeric: tabular-nums;
+}
+
+body[data-theme="dark"] .finance-queue-card .finance-risk-name-link,
+body[data-theme="dark"] .finance-queue-card .finance-risk-name-link:hover,
+body[data-theme="dark"] .finance-queue-card .finance-risk-name-link:focus-visible {
+    color: rgba(248, 250, 252, 0.94);
+}
+
+body[data-theme="dark"] .finance-queue-card .finance-risk-reason {
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: rgba(10, 18, 32, 0.56);
+    color: rgba(226, 232, 240, 0.78);
+}
+
+body[data-theme="dark"] .finance-queue-card .finance-risk-details {
+    border-top-color: rgba(148, 163, 184, 0.1);
+}
+
+body[data-theme="dark"] .finance-queue-card .finance-risk-details summary::after {
+    color: rgba(148, 163, 184, 0.72);
 }
 
 .finance-risk-row {
@@ -2494,7 +2690,7 @@ body[data-theme="dark"] .finance-queue-guide-card--highlight {
     display: grid;
     gap: 4px;
     padding: 10px 0;
-    border-top: 1px solid rgba(148, 163, 184, 0.12);
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .finance-followup-line:first-of-type {

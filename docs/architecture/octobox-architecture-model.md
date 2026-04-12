@@ -439,9 +439,10 @@ Depois desca para os documentos satelites quando precisar de detalhe:
 2. [signal-mesh.md](signal-mesh.md)
 3. [scaffold-agents.md](scaffold-agents.md)
 4. [../experience/front-display-wall.md](../experience/front-display-wall.md)
-5. [red-beacon.md](red-beacon.md)
-6. [vertical-sky-beam.md](vertical-sky-beam.md)
-7. [alert-siren.md](alert-siren.md)
+5. [deep-access-control-architecture.md](deep-access-control-architecture.md) para a fronteira entre uso normal, acesso elevado e cofre frio do admin
+6. [red-beacon.md](red-beacon.md)
+7. [vertical-sky-beam.md](vertical-sky-beam.md)
+8. [alert-siren.md](alert-siren.md)
 
 Se a pergunta for implementacao e nao apenas conceito, complemente a leitura com:
 

@@ -223,6 +223,34 @@ Correcao que mais funcionou:
 2. reduzir a colisao nominal sem mudar o visual
 3. nao confundir ruido de leitura com duplicacao estrutural
 
+## Padrao 15: casca generica do container achatando host especifico
+
+Sinais:
+
+1. o componente parece ter dark mode proprio, mas no contexto embedado ele fica "lavado"
+2. existe uma regra generica do wrapper pai aplicando `background` e `border-color` em `> *`
+3. a peca melhora fora do drawer, modal ou quick panel, mas piora dentro dele
+
+Causa raiz provavel:
+
+1. o container contextual esta vestindo todos os filhos com a mesma roupa
+2. o host especifico perde sua assinatura visual porque o pai passa um verniz por cima
+
+Exemplo real:
+
+1. `student-quick-panel__fragment-slot > *` achatando `student-financial-drawer student-payment-management-card student-page-payments-checkout-card`
+
+Correcao que mais funcionou:
+
+1. manter a regra generica para os filhos comuns
+2. criar excecao contextual para o host especializado
+3. devolver superficie, borda e sombra ao dono canonico daquele card
+
+Analogia:
+
+1. e como colocar o mesmo uniforme em todas as pessoas da festa
+2. a noiva deixa de parecer noiva porque o cerimonial vestiu todo mundo igual
+
 ## Padrao 8: legado protegido confundido com lixo
 
 Sinais:
@@ -356,7 +384,36 @@ Heuristica:
 
 1. se a tela esta tentando consertar estado semantico no CSS local, quase sempre o shared ficou incompleto
 
-## Padrao 12: shell duplicado em grid aninhado
+## Padrao 13: assinatura tardia repintando primitivo canonico
+
+Sinais:
+
+1. o componente parece certo no modulo canonico, mas fica estranho no runtime
+2. a mudanca feita em `_cards.css` ou `_boards.css` aparentemente nao pega
+3. o ultimo arquivo da cascade, como `_signature.css`, ainda reaplica `background`, `border` ou `color` no mesmo primitivo
+
+Causa raiz provavel:
+
+1. a camada de assinatura, que deveria cuidar de atmosfera e casca macro, desceu para dentro do componente compartilhado
+2. o primitivo canonico passa a ter dois donos: o modulo do componente e a assinatura final
+
+Exemplos reais:
+
+1. `finance-action-message` no handoff de cobranca
+2. `finance-summary-chip` e `finance-alert-stat` no financeiro
+
+Correcao que mais funcionou:
+
+1. devolver o primitivo para o owner canonico, como `_cards.css`
+2. remover esse primitivo da `signature` e do `bulk dark`
+3. manter a `signature` restrita a shell, host e atmosfera
+
+Analogia:
+
+1. o estilista da vitrine escolhe a iluminacao da loja
+2. ele nao deveria costurar a camisa de cada vendedor depois que o uniforme ja foi definido
+
+## Padrao 14: shell duplicado em grid aninhado
 
 Sinais:
 
@@ -407,6 +464,35 @@ Correcao que mais funcionou:
 1. devolver a largura para `100%`
 2. remover `max-width` artificial
 3. conferir se a diferenca restante e apenas o padding interno do card
+
+## Padrao 14: baseline historico ainda pintando host canonico
+
+Sinais:
+
+1. o host moderno parece ter owner claro
+2. um arquivo legado ou de scaffolding ainda aplica `background`, `surface` ou `shadow` na mesma familia
+3. no light isso parece aceitavel, mas no dark a assinatura nova briga com o verniz velho
+
+Causa raiz provavel:
+
+1. a base historica nunca foi totalmente rebaixada depois da chegada da assinatura nova
+2. o host canonico passa a ter um dono atual e um ex-dono que ainda mexe na tinta
+
+Exemplos reais:
+
+1. `finance-board-trend` e `finance-board-trend-side` entre [../../static/css/catalog/finance/_shell.css](../../static/css/catalog/finance/_shell.css) e [../../static/css/catalog/finance/_signature.css](../../static/css/catalog/finance/_signature.css)
+
+Correcao que mais funcionou:
+
+1. reduzir o arquivo historico a scaffolding e compatibilidade
+2. consolidar casca e personalidade no arquivo de assinatura
+3. deixar o dark complementar atuar em contraste e estados, nao na superficie principal
+
+Analogia:
+
+1. e como reformar uma casa bonita, mas esquecer uma camada antiga de verniz por baixo
+2. de longe parece tudo novo
+3. quando bate a luz certa, o acabamento velho reaparece
 
 ## Sequencia de correcao que mais funcionou
 

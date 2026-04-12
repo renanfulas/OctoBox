@@ -33,6 +33,11 @@ POR QUE ELE EXISTE:
     background: linear-gradient(90deg, var(--theme-accent-primary), var(--theme-accent-support), var(--theme-accent-premium));
 }
 
+.class-grid-workspace-panel::after {
+    content: none;
+    display: none;
+}
+
 .class-grid-panel-head {
     display: flex;
     justify-content: space-between;
@@ -108,6 +113,54 @@ body[data-theme="dark"] .class-grid-workspace-panel {
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.05),
         0 20px 40px rgba(0, 0, 0, 0.26);
+}
+
+body[data-theme="dark"] .class-grid-workspace-panel .card-title,
+body[data-theme="dark"] .class-grid-workspace-panel .section-title-sm,
+body[data-theme="dark"] .class-grid-workspace-panel td > strong,
+body[data-theme="dark"] .class-grid-workspace-panel th {
+    color: rgba(248, 250, 252, 0.94);
+}
+
+body[data-theme="dark"] .class-grid-workspace-panel td {
+    color: rgba(226, 232, 240, 0.84);
+}
+
+body[data-theme="dark"] .class-grid-workspace-panel .card-copy,
+body[data-theme="dark"] .class-grid-workspace-panel .field-label,
+body[data-theme="dark"] .class-grid-workspace-panel .meta-text,
+body[data-theme="dark"] .class-day-summary,
+body[data-theme="dark"] .class-grid-meta {
+    color: rgba(203, 213, 225, 0.72);
+}
+
+body[data-theme="dark"] .class-grid-workspace-panel :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    border-color: rgba(148, 163, 184, 0.14);
+    background: rgba(10, 18, 32, 0.72);
+    color: rgba(248, 250, 252, 0.94);
+    caret-color: #93c5fd;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="dark"] .class-grid-workspace-panel :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea)::placeholder {
+    color: rgba(203, 213, 225, 0.62);
+}
+
+body[data-theme="dark"] .class-grid-workspace-panel :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), select, textarea):focus {
+    border-color: rgba(96, 165, 250, 0.42);
+    background: rgba(12, 22, 38, 0.9);
+    box-shadow:
+        0 0 0 4px rgba(59, 130, 246, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .class-grid-workspace-panel select {
+    color-scheme: dark;
+}
+
+body[data-theme="dark"] .class-grid-workspace-panel select option {
+    background: #0b1628;
+    color: rgba(248, 250, 252, 0.94);
 }
 
 .class-day-header {
@@ -186,10 +239,74 @@ body[data-theme="dark"] .class-grid-workspace-panel {
     border: 1px solid rgba(148, 163, 184, 0.16);
 }
 
+body[data-theme="dark"] .class-occupancy-stack.is-closed {
+    border-color: rgba(148, 163, 184, 0.14);
+    background:
+        linear-gradient(180deg, rgba(15, 23, 42, 0.84), rgba(11, 18, 31, 0.8));
+    color: rgba(226, 232, 240, 0.84);
+    box-shadow:
+        0 10px 22px rgba(2, 6, 23, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .class-occupancy-stack.is-closed .class-grid-meta {
+    color: rgba(203, 213, 225, 0.68);
+}
+
+body[data-theme="dark"] .class-occupancy-stack.is-closed .pill {
+    border-color: rgba(148, 163, 184, 0.16);
+    background: rgba(30, 41, 59, 0.88);
+    color: rgba(226, 232, 240, 0.88);
+}
+
+body[data-theme="dark"] .class-occupancy-stack.is-closed .mix-bar-track {
+    background: rgba(30, 41, 59, 0.76);
+    border-color: rgba(148, 163, 184, 0.12);
+}
+
+body[data-theme="dark"] .class-grid-workspace-panel .class-occupancy-stack:not(.is-closed) {
+    padding: 12px;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(11, 18, 31, 0.68));
+    box-shadow:
+        0 10px 22px rgba(2, 6, 23, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="dark"] .class-grid-workspace-panel .class-occupancy-stack:not(.is-closed) .mix-bar-track {
+    background: rgba(30, 41, 59, 0.72);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+body[data-theme="dark"] .class-grid-workspace-panel .class-occupancy-stack:has(.pill.class-occupancy-available) {
+    border-color: rgba(16, 185, 129, 0.18);
+    background: linear-gradient(180deg, rgba(8, 47, 34, 0.46), rgba(11, 18, 31, 0.72));
+}
+
+body[data-theme="dark"] .class-grid-workspace-panel .class-occupancy-stack:has(.pill.class-occupancy-medium) {
+    border-color: rgba(245, 158, 11, 0.18);
+    background: linear-gradient(180deg, rgba(69, 39, 11, 0.42), rgba(11, 18, 31, 0.72));
+}
+
+body[data-theme="dark"] .class-grid-workspace-panel .class-occupancy-stack:has(.pill.class-occupancy-high) {
+    border-color: rgba(249, 115, 22, 0.2);
+    background: linear-gradient(180deg, rgba(67, 30, 12, 0.44), rgba(11, 18, 31, 0.72));
+}
+
+body[data-theme="dark"] .class-grid-workspace-panel .class-occupancy-stack:has(.pill.class-occupancy-critical) {
+    border-color: rgba(244, 63, 94, 0.2);
+    background: linear-gradient(180deg, rgba(76, 5, 25, 0.38), rgba(11, 18, 31, 0.74));
+}
+
 .weekday-picker {
     display: grid;
     grid-template-columns: repeat(10, minmax(0, 1fr));
     gap: 10px;
+    padding: 12px;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--card-border) 88%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-panel) 92%, transparent);
 }
 
 .weekday-picker .weekday-option {
@@ -216,8 +333,9 @@ body[data-theme="dark"] .class-grid-workspace-panel {
 }
 
 body[data-theme="dark"] .weekday-option {
-    background: var(--surface);
-    border-color: var(--line);
+    background: rgba(15, 23, 42, 0.72);
+    border-color: rgba(148, 163, 184, 0.14);
+    color: rgba(226, 232, 240, 0.88);
 }
 
 .weekday-option input,
@@ -233,8 +351,24 @@ body[data-theme="dark"] .weekday-option {
 }
 
 /* --- Dark Mode Absolute Overrides --- */
+body[data-theme="dark"] .weekday-picker {
+    border-color: rgba(148, 163, 184, 0.12);
+    background:
+        linear-gradient(180deg, rgba(15, 23, 42, 0.64), rgba(11, 18, 31, 0.58));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
 body[data-theme="dark"] .weekday-option {
-    background: var(--surface);
-    border-color: var(--line);
-    color: var(--ink);
+    background: rgba(15, 23, 42, 0.72);
+    border-color: rgba(148, 163, 184, 0.14);
+    color: rgba(226, 232, 240, 0.88);
+}
+
+body[data-theme="dark"] .weekday-option:has(input:checked) {
+    border-color: rgba(96, 165, 250, 0.28);
+    background:
+        linear-gradient(180deg, rgba(12, 32, 60, 0.88), rgba(15, 23, 42, 0.86));
+    box-shadow:
+        0 10px 22px rgba(2, 6, 23, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }

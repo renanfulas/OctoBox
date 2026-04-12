@@ -67,6 +67,10 @@ document.addEventListener('DOMContentLoaded', function() {
             profile: false,
             financial: false,
         },
+        fragmentMarkup: {
+            profile: '',
+            financial: '',
+        },
         liveRefreshTimerId: null,
         heartbeatTimerId: null,
         editSessionActive: false,
@@ -616,6 +620,15 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        if (!quickPanelState.fragmentsLoaded[name] && quickPanelState.fragmentMarkup[name]) {
+            if (name === 'profile') {
+                mountDrawerProfileFragment({ fragments: { profile: quickPanelState.fragmentMarkup.profile } });
+            } else if (name === 'financial') {
+                mountDrawerFinancialFragment({ fragments: { financial: quickPanelState.fragmentMarkup.financial } });
+            }
+            return;
+        }
+
         if (quickPanelState.fragmentsLoaded[name]) {
             if (options && options.refresh) {
                 fetchDrawerFragments(quickPanelState.activeRow, {
@@ -1084,6 +1097,10 @@ document.addEventListener('DOMContentLoaded', function() {
             profile: false,
             financial: false,
         };
+        quickPanelState.fragmentMarkup = {
+            profile: '',
+            financial: '',
+        };
         quickPanelState.editSessionActive = false;
         quickPanelState.lastFragmentRefreshAt = 0;
         quickPanelState.currentSnapshotVersion = '';
@@ -1134,6 +1151,10 @@ document.addEventListener('DOMContentLoaded', function() {
         quickPanelState.fragmentsLoaded = {
             profile: false,
             financial: false,
+        };
+        quickPanelState.fragmentMarkup = {
+            profile: '',
+            financial: '',
         };
         quickPanelState.editSessionActive = false;
         quickPanelState.refreshInFlight = false;
@@ -1256,6 +1277,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function showDrawerFragmentLoading(targetTab) {
+        var profileSlot = getQuickPanelNode('[data-student-quick-profile-slot]');
+        var financialSlot = getQuickPanelNode('[data-student-quick-financial-slot]');
+
+        if (!targetTab) {
+            showDrawerFragmentsLoading();
+            return;
+        }
+
+        if (targetTab === 'profile' && profileSlot) {
+            profileSlot.innerHTML = '<p class="student-quick-panel__copy">Carregando perfil...</p>';
+        }
+
+        if (targetTab === 'financial' && financialSlot) {
+            financialSlot.innerHTML = '<p class="student-quick-panel__copy">Carregando financeiro...</p>';
+        }
+    }
+
     function resetQuickPanelFragmentSlots() {
         showDrawerFragmentsLoading();
         closeQuickFinancialDrawers();
@@ -1272,6 +1311,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (profileSlot && typeof payload.fragments.profile === 'string') {
             profileSlot.innerHTML = payload.fragments.profile;
             quickPanelState.fragmentsLoaded.profile = true;
+            quickPanelState.fragmentMarkup.profile = payload.fragments.profile;
             var profileForm = profileSlot.querySelector('[data-student-profile-form]');
             if (profileForm) {
                 setDrawerProfileReadonlyState(profileForm, !quickPanelState.editSessionActive);
@@ -1282,6 +1322,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (financialSlot && typeof payload.fragments.financial === 'string') {
             financialSlot.innerHTML = payload.fragments.financial;
             quickPanelState.fragmentsLoaded.financial = true;
+            quickPanelState.fragmentMarkup.financial = payload.fragments.financial;
         }
     }
 
@@ -1294,6 +1335,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (profileSlot) {
             profileSlot.innerHTML = payload.fragments.profile;
             quickPanelState.fragmentsLoaded.profile = true;
+            quickPanelState.fragmentMarkup.profile = payload.fragments.profile;
             var profileForm = profileSlot.querySelector('[data-student-profile-form]');
             if (profileForm) {
                 setDrawerProfileReadonlyState(profileForm, !quickPanelState.editSessionActive);
@@ -1311,6 +1353,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (financialSlot) {
             financialSlot.innerHTML = payload.fragments.financial;
             quickPanelState.fragmentsLoaded.financial = true;
+            quickPanelState.fragmentMarkup.financial = payload.fragments.financial;
         }
     }
 
@@ -1523,7 +1566,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (!(options && options.skipLoading)) {
-            showDrawerFragmentsLoading();
+            showDrawerFragmentLoading(options && options.targetTab ? options.targetTab : '');
         }
 
         fetch(fragmentsUrl, {
@@ -1547,11 +1590,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 applySnapshotUpdate(payload.snapshot);
                 if (quickPanelState.isOpen && quickPanelState.studentId === Number(payload.snapshot.id || 0)) {
                     if (options && options.targetTab === 'profile') {
-                        mountDrawerProfileFragment(payload);
+                        if (payload.fragments && typeof payload.fragments.profile === 'string') {
+                            mountDrawerProfileFragment(payload);
+                        } else if (payload.fragments) {
+                            mountDrawerFragments(payload);
+                        }
                     } else if (options && options.financialOnly) {
-                        mountDrawerFinancialFragment(payload);
+                        if (payload.fragments && typeof payload.fragments.financial === 'string') {
+                            mountDrawerFinancialFragment(payload);
+                        } else if (payload.fragments) {
+                            mountDrawerFragments(payload);
+                        }
                     } else if (options && options.targetTab === 'financial') {
-                        mountDrawerFinancialFragment(payload);
+                        if (payload.fragments && typeof payload.fragments.financial === 'string') {
+                            mountDrawerFinancialFragment(payload);
+                        } else if (payload.fragments) {
+                            mountDrawerFragments(payload);
+                        }
                     } else {
                         mountDrawerFragments(payload);
                     }

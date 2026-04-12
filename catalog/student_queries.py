@@ -63,6 +63,35 @@ def get_operational_enrollment(student):
     return enrollments[0]
 
 
+def get_operational_payment_status(payment, *, today=None):
+    """
+    Resolve o status financeiro operacional real da cobranca.
+
+    Regra:
+    1. se estiver aberta e a data ja passou, lemos como atrasada
+    2. se estiver aberta e a data ainda nao passou, lemos como pendente
+    3. status fechados preservam o valor persistido
+    """
+    if not payment:
+        return ''
+
+    today = today or timezone.localdate()
+    if payment.status in [PaymentStatus.PENDING, PaymentStatus.OVERDUE]:
+        if payment.due_date and payment.due_date < today:
+            return PaymentStatus.OVERDUE
+        return PaymentStatus.PENDING
+
+    return payment.status
+
+
+def get_operational_payment_status_label(payment, *, today=None):
+    status = get_operational_payment_status(payment, today=today)
+    try:
+        return PaymentStatus(status).label
+    except Exception:
+        return getattr(payment, 'get_status_display', lambda: status)()
+
+
 def compute_fidalgometro_score(student):
     """
     Computa o score de saude (Fidalgometro) do aluno:
@@ -324,14 +353,17 @@ def build_student_financial_snapshot(student):
 
     today = timezone.localdate()
     seven_days_from_now = today + timezone.timedelta(days=7)
+    open_payments_queryset = student.payments.filter(status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE])
 
     proximos_vencimentos_count = 0
     payments_list = []
     for payment in raw_payments:
+        payment.operational_status = get_operational_payment_status(payment, today=today)
+        payment.operational_status_label = get_operational_payment_status_label(payment, today=today)
         payment.is_next_actionable = False
-        if payment.status == PaymentStatus.OVERDUE:
+        if payment.operational_status == PaymentStatus.OVERDUE:
             payment.is_next_actionable = True
-        elif payment.status == PaymentStatus.PENDING and payment.due_date <= seven_days_from_now:
+        elif payment.operational_status == PaymentStatus.PENDING and payment.due_date <= seven_days_from_now:
             payment.is_next_actionable = True
             proximos_vencimentos_count += 1
         payments_list.append(payment)
@@ -347,11 +379,11 @@ def build_student_financial_snapshot(student):
         'fidalgometro': compute_fidalgometro_score(student),
         'metrics': {
             'matriculas_ativas': enrollments.filter(status=EnrollmentStatus.ACTIVE).count(),
-            'pagamentos_pendentes': student.payments.filter(status=PaymentStatus.PENDING).count(),
-            'pagamentos_atrasados': student.payments.filter(status=PaymentStatus.OVERDUE).count(),
+            'pagamentos_pendentes': open_payments_queryset.filter(due_date__gte=today).count(),
+            'pagamentos_atrasados': open_payments_queryset.filter(due_date__lt=today).count(),
             'proximos_vencimentos_count': proximos_vencimentos_count,
         },
     }
 
 
-__all__ = ['build_student_directory_snapshot', 'build_student_financial_snapshot', 'compute_fidalgometro_score', 'get_operational_enrollment']
+__all__ = ['build_student_directory_snapshot', 'build_student_financial_snapshot', 'compute_fidalgometro_score', 'get_operational_enrollment', 'get_operational_payment_status', 'get_operational_payment_status_label']

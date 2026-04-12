@@ -11,15 +11,11 @@ PONTOS CRITICOS:
 
 /* ── Board sections + command/focus dark ── */
 
-body[data-theme="dark"] .finance-board-filter,
-body[data-theme="dark"] .finance-board-trend,
-body[data-theme="dark"] .finance-board-trend-side,
-body[data-theme="dark"] .finance-board-portfolio,
-body[data-theme="dark"] .finance-board-shell {
+body[data-theme="dark"] .finance-board-filter {
     background: var(--surface);
 }
 
-body[data-theme="dark"] .finance-command-card {
+body[data-theme="dark"] .finance-command-card:not(.finance-board-plan) {
     border-color: rgba(148, 163, 184, 0.14);
     background:
         radial-gradient(circle at top right, rgba(74, 144, 226, 0.08), transparent 36%),
@@ -29,9 +25,77 @@ body[data-theme="dark"] .finance-command-card {
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
+body[data-theme="dark"] .finance-filter-summary-card {
+    border-color: rgba(144, 181, 205, 0.16);
+    background:
+        radial-gradient(circle at top right, rgba(74, 144, 226, 0.09), transparent 36%),
+        linear-gradient(160deg, rgba(10, 18, 31, 0.94), rgba(8, 14, 24, 0.9));
+    box-shadow:
+        0 20px 38px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .finance-command-card .card-title,
+body[data-theme="dark"] .finance-filter-summary-card .card-title {
+    color: rgba(248, 250, 252, 0.94);
+}
+
 body[data-theme="dark"] .finance-command-eyebrow,
+body[data-theme="dark"] .finance-board-filter .field-label,
 body[data-theme="dark"] .finance-plan-form .field-label {
     color: rgba(226, 232, 240, 0.62);
+}
+
+body[data-theme="dark"] .finance-board-filter .badge,
+body[data-theme="dark"] .finance-filter-summary-card .badge {
+    border-color: rgba(92, 146, 214, 0.18);
+    background: rgba(12, 32, 60, 0.58);
+    color: #93c5fd;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="dark"] .finance-board-plan .badge {
+    border-color: rgba(92, 146, 214, 0.18);
+    background: rgba(12, 32, 60, 0.58);
+    color: #93c5fd;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="dark"] .finance-board-plan .meta-text,
+body[data-theme="dark"] .finance-board-plan .meta-text-sm {
+    color: rgba(203, 213, 225, 0.74);
+}
+
+body[data-theme="dark"] .finance-plan-grid > label,
+body[data-theme="dark"] .finance-plan-form > label,
+body[data-theme="dark"] #plan-create-delivery {
+    padding: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 16px;
+    background:
+        radial-gradient(circle at top right, rgba(74, 144, 226, 0.05), transparent 36%),
+        linear-gradient(160deg, rgba(10, 18, 31, 0.68), rgba(8, 14, 24, 0.62));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="dark"] .finance-plan-feedback-card {
+    border-color: rgba(244, 63, 94, 0.18);
+    background:
+        radial-gradient(circle at top right, rgba(244, 63, 94, 0.08), transparent 38%),
+        linear-gradient(160deg, rgba(40, 11, 20, 0.92), rgba(24, 8, 14, 0.88));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.03),
+        0 16px 30px rgba(20, 4, 10, 0.26);
+}
+
+body[data-theme="dark"] .finance-plan-feedback-card .eyebrow,
+body[data-theme="dark"] .finance-plan-feedback-card .meta-text,
+body[data-theme="dark"] .finance-plan-feedback-card div {
+    color: rgba(254, 226, 226, 0.88);
+}
+
+body[data-theme="dark"] .finance-board-plan .form-error {
+    color: #fda4af;
 }
 
 body[data-theme="dark"] .finance-filter-summary-item {
@@ -39,6 +103,9 @@ body[data-theme="dark"] .finance-filter-summary-item {
     background:
         radial-gradient(circle at top right, rgba(74, 144, 226, 0.08), transparent 34%),
         linear-gradient(160deg, rgba(11, 18, 31, 0.88), rgba(9, 14, 24, 0.84));
+    box-shadow:
+        0 12px 24px rgba(2, 6, 23, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 body[data-theme="dark"] .finance-revenue-trend-preview-card {
@@ -121,6 +188,42 @@ body[data-theme="dark"] .finance-revenue-sparkline-copy span {
     color: rgba(226, 232, 240, 0.72);
 }
 
+body[data-theme="dark"] .finance-revenue-trend-title,
+body[data-theme="dark"] .finance-churn-trend-title,
+body[data-theme="dark"] .finance-board-shell-title,
+body[data-theme="dark"] .finance-guide-card strong,
+body[data-theme="dark"] .finance-analytics-disclosure summary,
+body[data-theme="dark"] .finance-followup-window-card strong {
+    color: rgba(248, 250, 252, 0.94);
+}
+
+body[data-theme="dark"] .finance-followup-analytics-card .finance-analytics-summary-card .eyebrow,
+body[data-theme="dark"] .finance-followup-analytics-card .finance-analytics-learning-grid .eyebrow,
+body[data-theme="dark"] .finance-followup-analytics-card .finance-analytics-tension-grid .eyebrow {
+    color: rgba(191, 219, 254, 0.84);
+}
+
+body[data-theme="dark"] .finance-revenue-trend-subtitle,
+body[data-theme="dark"] .finance-churn-trend-subtitle,
+body[data-theme="dark"] .finance-churn-trend-legend,
+body[data-theme="dark"] .finance-board-shell-subtitle,
+body[data-theme="dark"] .finance-board-shell-meta,
+body[data-theme="dark"] .finance-guide-card p,
+body[data-theme="dark"] .finance-followup-window-card span:last-child,
+body[data-theme="dark"] .finance-followup-line span {
+    color: rgba(226, 232, 240, 0.72);
+}
+
+body[data-theme="dark"] .finance-churn-trend-legend-item {
+    color: rgba(226, 232, 240, 0.82);
+    border-color: rgba(148, 163, 184, 0.16);
+    background:
+        linear-gradient(180deg, rgba(15, 23, 42, 0.82), rgba(11, 18, 31, 0.78));
+    box-shadow:
+        0 10px 20px rgba(2, 6, 23, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
 body[data-theme="dark"] .finance-revenue-sparkline-line {
     stroke: rgba(148, 163, 184, 0.42);
 }
@@ -158,12 +261,47 @@ body[data-theme="dark"] .finance-revenue-sparkline--bad .finance-revenue-sparkli
 }
 
 body[data-theme="dark"] .finance-plan-form input,
+body[data-theme="dark"] .finance-board-filter input,
 body[data-theme="dark"] .finance-plan-form select,
+body[data-theme="dark"] .finance-board-filter textarea,
 body[data-theme="dark"] .finance-plan-form textarea,
 body[data-theme="dark"] .finance-board-filter select {
     border-color: rgba(148, 163, 184, 0.14);
     background: rgba(10, 18, 32, 0.72);
+    color: rgba(248, 250, 252, 0.94);
+    caret-color: #93c5fd;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="dark"] .finance-plan-form input::placeholder,
+body[data-theme="dark"] .finance-board-filter input::placeholder,
+body[data-theme="dark"] .finance-board-filter textarea::placeholder,
+body[data-theme="dark"] .finance-plan-form textarea::placeholder {
+    color: rgba(203, 213, 225, 0.62);
+}
+
+body[data-theme="dark"] .finance-plan-form input:focus,
+body[data-theme="dark"] .finance-board-filter input:focus,
+body[data-theme="dark"] .finance-plan-form select:focus,
+body[data-theme="dark"] .finance-plan-form textarea:focus,
+body[data-theme="dark"] .finance-board-filter textarea:focus,
+body[data-theme="dark"] .finance-board-filter select:focus {
+    border-color: rgba(96, 165, 250, 0.42);
+    background: rgba(12, 22, 38, 0.9);
+    box-shadow:
+        0 0 0 4px rgba(59, 130, 246, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .finance-plan-form select,
+body[data-theme="dark"] .finance-board-filter select {
+    color-scheme: dark;
+}
+
+body[data-theme="dark"] .finance-plan-form select option,
+body[data-theme="dark"] .finance-board-filter select option {
+    background: #0b1628;
+    color: rgba(248, 250, 252, 0.94);
 }
 
 /* ── Bulk dark mode ── */
@@ -172,30 +310,22 @@ body[data-theme="dark"] .finance-board-filter select {
    este bulk deve cobrir cards genericos do financeiro, mas nao pode voltar a ser
    autoridade principal dos hosts canonicos. Superficies finance-board-shell ficam
    com a assinatura dark em _signature.css. */
-body[data-theme="dark"] .finance-shell .finance-action-card,
+body[data-theme="dark"] .finance-shell .finance-action-card:not(.finance-queue-card),
 body[data-theme="dark"] .finance-shell .finance-alert-card,
-body[data-theme="dark"] .finance-shell .finance-action-message,
 body[data-theme="dark"] .finance-shell .finance-plan-card,
-body[data-theme="dark"] .finance-shell .finance-summary-chip,
-body[data-theme="dark"] .finance-shell .finance-alert-stat,
 body[data-theme="dark"] .finance-shell .finance-plan-stat,
-body[data-theme="dark"] .finance-shell .finance-guide-card,
-body[data-theme="dark"] .finance-shell .finance-board-subsurface {
+body[data-theme="dark"] .finance-shell .finance-guide-card:not(.finance-queue-guide-card),
+body[data-theme="dark"] .finance-shell .finance-board-subsurface:not(.finance-queue-guide-card):not(.finance-queue-card) {
     color: var(--ink);
     border-color: rgba(199, 186, 167, 0.14);
     background: var(--surface);
     box-shadow: 0 20px 42px rgba(0, 0, 0, 0.22);
 }
 
-body[data-theme="dark"] .finance-shell .finance-action-card,
+body[data-theme="dark"] .finance-shell .finance-action-card:not(.finance-queue-card),
 body[data-theme="dark"] .finance-shell .finance-alert-card,
 body[data-theme="dark"] .finance-shell .finance-plan-card {
     background: var(--surface);
-}
-
-body[data-theme="dark"] .finance-shell .finance-action-message {
-    background: var(--surface);
-    border-color: rgba(214, 164, 112, 0.18);
 }
 
 body[data-theme="dark"] .finance-shell .button.secondary {

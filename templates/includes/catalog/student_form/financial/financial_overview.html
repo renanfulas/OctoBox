@@ -188,14 +188,14 @@ O QUE ESTE ARQUIVO FAZ:
 
     {% endif %}
     <div class="slide-over-panel student-page-payments-drawer student-page-payments-drawer--checkout" id="student-payment-checkout-slot" role="dialog" aria-modal="true" aria-labelledby="student-payment-checkout-title" aria-describedby="student-payment-checkout-copy" aria-hidden="true" tabindex="-1">
-        <button class="drawer-close-btn" type="button" data-action="close-drawers" aria-label="Fechar cobrar agora">x</button>
+        <button class="drawer-close-btn" type="button" data-action="close-drawers" aria-label="Fechar cobrar agora">&times;</button>
         <div id="student-payment-checkout-content">
             {% include "includes/catalog/student_form/financial/financial_overview_payment_management.html" with page=page %}
         </div>
     </div>
 
     <div class="slide-over-panel student-page-payments-drawer student-page-payments-drawer--enrollment" id="financial-enrollment-management-slot" role="dialog" aria-modal="true" aria-labelledby="financial-enrollment-management-title" aria-describedby="financial-enrollment-management-copy" aria-hidden="true" tabindex="-1">
-        <button class="drawer-close-btn" type="button" data-action="close-drawers" aria-label="Fechar painel de vinculo">x</button>
+        <button class="drawer-close-btn" type="button" data-action="close-drawers" aria-label="Fechar painel de vinculo">&times;</button>
         <div id="student-enrollment-management-content">
             {% include "includes/catalog/student_form/financial/financial_overview_enrollment_management.html" with page=page %}
         </div>

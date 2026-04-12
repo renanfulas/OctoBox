@@ -113,7 +113,7 @@ POR QUE ELE EXISTE:
                     <td class="student-cell student-cell--due-date" data-label="Vencimento">
                         <span class="student-due-date">
                             {% if student.latest_payment_due_date %}
-                                {{ student.latest_payment_due_date|date:"d M" }}
+                                {{ student.latest_payment_due_date|date:"d/m/y" }}
                             {% else %}
                                 --
                             {% endif %}

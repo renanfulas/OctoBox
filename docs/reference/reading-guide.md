@@ -54,6 +54,8 @@ Se o foco for reduzir a dependencia do negocio em Django sem reescrever o produt
 
 Se o foco for transformar essa direcao em estrategia operacional por ondas, guardrails e criterio de pronto, leia tambem [../architecture/django-core-strategy.md](../architecture/django-core-strategy.md).
 
+Se o foco for separar operacao normal de acesso profundo, tratar o admin como cofre frio e entender a nova tese de liberacao temporaria supervisionada, leia tambem [../architecture/deep-access-control-architecture.md](../architecture/deep-access-control-architecture.md) e [../plans/deep-access-control-rollout-plan.md](../plans/deep-access-control-rollout-plan.md).
+
 Se o foco for entender, em linguagem oficial do projeto, o que passa a ser o centro do sistema e por que Django deixa de ser o core conceitual, leia tambem [../architecture/octobox-conceptual-core.md](../architecture/octobox-conceptual-core.md).
 
 Se o foco for entender o novo andar de comunicacao entre acesso e nucleo interno, leia tambem [../architecture/center-layer.md](../architecture/center-layer.md).

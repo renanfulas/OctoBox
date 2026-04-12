@@ -52,15 +52,10 @@ POR QUE ELE EXISTE:
     background: transparent;
 }
 
-.finance-board-trend,
-.finance-board-trend-side,
 .finance-board-portfolio {
     background: var(--finance-premium-surface-soft);
 }
 
-body[data-theme="dark"] .finance-board-filter,
-body[data-theme="dark"] .finance-board-trend,
-body[data-theme="dark"] .finance-board-trend-side,
-body[data-theme="dark"] .finance-board-portfolio {
+body[data-theme="dark"] .finance-board-filter {
     background: var(--finance-premium-surface-dark);
 }

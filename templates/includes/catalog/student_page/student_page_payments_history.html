@@ -47,8 +47,8 @@ POR QUE ELE EXISTE:
                     </td>
                     <td class="student-page-payments-ledger__method">{{ payment.get_method_display }}</td>
                     <td class="is-center student-page-payments-ledger__status">
-                        <span class="pill student-page-payments-ledger__status-pill {% if payment.status == 'paid' %}success{% elif payment.status == 'overdue' %}warning{% else %}info{% endif %}">
-                            {{ payment.get_status_display }}
+                        <span class="pill student-page-payments-ledger__status-pill {% if payment.operational_status == 'paid' %}success{% elif payment.operational_status == 'overdue' %}warning{% else %}info{% endif %}">
+                            {{ payment.operational_status_label }}
                         </span>
                     </td>
                     <td class="student-page-payments-ledger__amount is-right">R$ {{ payment.amount|floatformat:2 }}</td>
@@ -60,7 +60,7 @@ POR QUE ELE EXISTE:
                             data-payment-id="{{ payment.id }}"
                             data-payment-amount="{{ payment.amount|floatformat:2 }}"
                             data-payment-due="{{ payment.due_date|date:'d/m/Y' }}"
-                            data-payment-status="{{ payment.get_status_display }}"
+                            data-payment-status="{{ payment.operational_status_label }}"
                             aria-controls="student-payment-checkout-slot"
                             aria-expanded="false"
                             aria-label="Abrir pagamento {{ payment.enrollment.plan.name|default:'Mensalidade' }}"

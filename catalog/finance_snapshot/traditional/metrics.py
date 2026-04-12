@@ -178,8 +178,9 @@ def build_finance_priority_context(finance_metrics):
     }
 
 
-def build_finance_interactive_kpis(finance_metrics, *, priority_context=None):
+def build_finance_interactive_kpis(finance_metrics, *, priority_context=None, plan_portfolio=None):
     priority_context = priority_context or build_finance_priority_context(finance_metrics)
+    plan_portfolio = plan_portfolio or []
     cards = {
         'movements': {
             'eyebrow': 'Raio-X Financeiro',
@@ -209,7 +210,7 @@ def build_finance_interactive_kpis(finance_metrics, *, priority_context=None):
         },
         'portfolio': {
             'eyebrow': 'Motor de Carteira',
-            'display_value': str(finance_metrics['Novos contratos no mes']['value']),
+            'display_value': str(len(plan_portfolio)),
             'icon': _finance_kpi_icon('portfolio'),
             'note': (
                 'Portfolio de planos, mix de base e concentracao de receita.'

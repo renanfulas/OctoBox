@@ -278,8 +278,16 @@ POR QUE ELE EXISTE:
 }
 
 .intake-contact-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 40px;
     height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 50%;
+    line-height: 1;
+    text-transform: uppercase;
     font-size: 0.92rem;
     font-weight: 800;
     flex: 0 0 auto;
@@ -650,6 +658,23 @@ POR QUE ELE EXISTE:
     line-height: 1.45;
 }
 
+.intake-create-card .field-label {
+    margin-bottom: 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--theme-text-muted) 78%, var(--ink) 22%);
+}
+
+.intake-create-card input,
+.intake-create-card select,
+.intake-create-card textarea {
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 88%, rgba(148, 163, 184, 0.18) 12%);
+    background: color-mix(in srgb, var(--theme-surface-panel) 94%, white);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68);
+}
+
 .intake-create-form {
     gap: 16px;
 }
@@ -988,6 +1013,39 @@ body[data-theme="dark"] .intake-contact-channel {
     color: rgba(226, 232, 240, 0.62);
 }
 
+body[data-theme="dark"] .avatar-circle.intake-contact-avatar {
+    color: #f8fafc;
+    letter-spacing: 0.04em;
+    text-shadow: none;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: #1e293b;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .avatar-circle.avatar-orange.intake-contact-avatar {
+    color: #fed7aa;
+}
+
+body[data-theme="dark"] .avatar-circle.avatar-purple.intake-contact-avatar {
+    color: #ddd6fe;
+}
+
+body[data-theme="dark"] .avatar-circle.avatar-blue.intake-contact-avatar {
+    color: #bfdbfe;
+}
+
+body[data-theme="dark"] .avatar-circle.avatar-indigo.intake-contact-avatar {
+    color: #c7d2fe;
+}
+
+body[data-theme="dark"] .avatar-circle.avatar-teal.intake-contact-avatar {
+    color: #99f6e4;
+}
+
+body[data-theme="dark"] .avatar-circle.avatar-pink.intake-contact-avatar {
+    color: #fbcfe8;
+}
+
 body[data-theme="dark"] .intake-reading-note {
     color: rgba(226, 232, 240, 0.58);
 }
@@ -1052,8 +1110,50 @@ body[data-theme="dark"] .intake-create-eyebrow {
     color: rgba(125, 211, 252, 0.72);
 }
 
+body[data-theme="dark"] .intake-create-title {
+    color: rgba(248, 250, 252, 0.96);
+}
+
+body[data-theme="dark"] .intake-create-card .field-label {
+    color: rgba(226, 232, 240, 0.62);
+}
+
 body[data-theme="dark"] .intake-create-copy {
     color: rgba(226, 232, 240, 0.72);
+}
+
+body[data-theme="dark"] .intake-create-card input,
+body[data-theme="dark"] .intake-create-card select,
+body[data-theme="dark"] .intake-create-card textarea {
+    border-color: rgba(148, 163, 184, 0.14);
+    background: rgba(10, 18, 32, 0.72);
+    color: rgba(248, 250, 252, 0.94);
+    caret-color: #67e8f9;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="dark"] .intake-create-card input::placeholder,
+body[data-theme="dark"] .intake-create-card textarea::placeholder {
+    color: rgba(203, 213, 225, 0.62);
+}
+
+body[data-theme="dark"] .intake-create-card input:focus,
+body[data-theme="dark"] .intake-create-card select:focus,
+body[data-theme="dark"] .intake-create-card textarea:focus {
+    border-color: rgba(103, 232, 249, 0.36);
+    background: rgba(12, 22, 38, 0.9);
+    box-shadow:
+        0 0 0 4px rgba(34, 211, 238, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .intake-create-card select {
+    color-scheme: dark;
+}
+
+body[data-theme="dark"] .intake-create-card select option {
+    background: #0b1628;
+    color: rgba(248, 250, 252, 0.94);
 }
 
 body[data-theme="dark"] .intake-filter-surface .card-copy {

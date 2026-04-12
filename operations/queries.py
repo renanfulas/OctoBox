@@ -171,7 +171,7 @@ def build_owner_workspace_snapshot(*, today):
         'payments': _build_owner_focus_item(
             key='payments',
             label='Ver cobrancas',
-            chip_label='Cobrancas',
+        chip_label='Cobrança',
             summary=(
                 f"{headline_metrics['overdue_payments']} cobranca(s) estao atrasadas e pedem contato."
                 if headline_metrics['overdue_payments']
