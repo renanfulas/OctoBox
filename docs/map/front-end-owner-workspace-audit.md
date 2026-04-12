@@ -193,3 +193,41 @@ Nao aplicado ainda:
 
 1. considerar esta frente pronta para commit proprio
 2. depois voltar para a correcao separada dos KPIs de alunos em `student_queries.py`
+
+## Padroes visuais encontrados na command lane
+
+1. `semantica parcial de variante`
+   - sintoma: `chip`, `count` ou ponto visual mudam de cor, mas a casca externa do card continua neutra
+   - causa raiz: a variante controla apenas descendentes e deixa `background`, `border-color` e `box-shadow` no host base
+   - traducao simples: e como trocar o volante e o banco do carro, mas deixar a lataria cinza
+   - regra segura: quando uma lane usar variantes como `entries`, `billing` e `structure`, a cor precisa fechar no host e nos filhos
+
+2. `payload semantico brigando com variante local`
+   - sintoma: `owner-command-card--billing` continua puxando vermelho por causa de `.is-danger`
+   - causa raiz: a classe do payload carrega uma semantica antiga que pode vencer ou confundir a variante nova
+   - traducao simples: a etiqueta velha da caixa ainda fala mais alto que a etiqueta nova
+   - regra segura: a variante local do owner deve ser a autoridade final para shell, chip, count e ponto visual
+
+3. `shell de agenda com decoracao vazando`
+   - sintoma: painel de agenda ganha orelhas, brilho sobrando no canto ou cara de caixa dupla no dark
+   - causa raiz: `table-card::after` continua ativo no host local e o painel deixa `overflow` aberto demais
+   - traducao simples: o card esta certo, mas o brilho do abajur passa para fora da cúpula
+   - regra segura: em shells de agenda como `owner-sessions-panel`, o wrapper deve prender o brilho com `overflow: hidden` e desligar a decoracao extra quando ela competir com o tema local
+
+4. `trilha interna com largura magica`
+   - sintoma: barra de ocupacao parece curta demais ou nao acompanha a largura util do card
+   - causa raiz: a progress bar nasce com `width: min(...px, 100%)` e deixa de seguir o espaco real do container
+   - traducao simples: a regua da barra para antes do fim da mesa
+   - regra segura: em cards operacionais, a trilha deve usar `width: 100%` e esticar dentro do padding util do card
+
+5. `state-empty sem branch dark proprio`
+   - sintoma: o estado vazio parece um bloco estranho ou claro demais dentro de um painel dark bem resolvido
+   - causa raiz: o host compartilhado `state-empty` fica neutro demais e o contexto local tenta compensar no painel em volta
+   - traducao simples: a sala esta escura e elegante, mas a placa de "nada aqui" ainda veio impressa no papel do turno da manha
+   - regra segura: primeiro fechar um dark mode canonico em `states.css`; depois, se necessario, aplicar apenas um sotaque local no shell do owner
+
+6. `override local perdendo para host compartilhado`
+   - sintoma: o arquivo local parece correto, mas padding, altura, tipografia ou alinhamento continuam iguais no runtime
+   - causa raiz: o host canonico entra com seletor mais especifico, como `.operation-shell .page-reading-list .fdw-focus-card`, e o modulo local tenta responder com seletor mais curto
+   - traducao simples: o gerente da loja deu a ordem certa, mas o aviso da matriz estava pendurado maior bem na frente
+   - regra segura: em lanes derivadas de `fdw-focus-card`, subir a especificidade do modulo local para o mesmo nivel do host antes de pensar em `!important`

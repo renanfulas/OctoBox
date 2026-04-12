@@ -796,7 +796,12 @@ body[data-theme="dark"] .student-form-shell textarea::placeholder {
 
 body[data-theme="dark"] .student-form-shell select,
 body[data-theme="dark"] .student-form-shell option {
+    background-color: #0b1628;
     color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .student-form-shell select {
+    color-scheme: dark;
 }
 
 body[data-theme="dark"] .student-form-shell input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):focus,
@@ -824,6 +829,14 @@ body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-for
 }
 
 body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-form-step-disclosure > summary {
+    color: var(--student-form-text-primary);
+}
+
+body[data-theme="dark"] .student-form-shell .student-form-step-essential :is(.student-form-step-kicker, .student-form-step-copy, [class~="field-label"], [class~="meta-text"], [class~="meta-text-sm"], .field-help) {
+    color: var(--student-form-text-secondary);
+}
+
+body[data-theme="dark"] .student-form-shell .student-form-step-essential :is(.student-form-step-title, .section-title-sm) {
     color: var(--student-form-text-primary);
 }
 

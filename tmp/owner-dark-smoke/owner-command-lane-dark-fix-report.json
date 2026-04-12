@@ -1,0 +1,31 @@
+{
+  "url": "http://127.0.0.1:8000/operacao/owner/",
+  "primary": {
+    "backgroundImage": "linear-gradient(rgba(10, 18, 32, 0.98), rgba(8, 15, 27, 0.96))",
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderTop": "1px solid oklab(0.697071 -0.00722723 -0.0643109 / 0.146205)",
+    "boxShadow": "rgba(2, 6, 23, 0.28) 0px 19.9173px 35.8512px 0px, rgba(255, 255, 255, 0.04) 0px 0.995865px 0px 0px inset",
+    "color": "rgb(237, 246, 255)"
+  },
+  "count": {
+    "backgroundImage": "none",
+    "backgroundColor": "color(srgb 0.0450089 0.0826511 0.15166 / 0.800627)",
+    "borderTop": "1px solid rgba(148, 163, 184, 0.16)",
+    "boxShadow": "none",
+    "color": "rgba(226, 232, 240, 0.86)"
+  },
+  "title": {
+    "backgroundImage": "none",
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderTop": "0px none color(srgb 0.933647 0.966824 1)",
+    "boxShadow": "none",
+    "color": "color(srgb 0.933647 0.966824 1)"
+  },
+  "summary": {
+    "backgroundImage": "none",
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "borderTop": "0px none rgba(226, 232, 240, 0.76)",
+    "boxShadow": "none",
+    "color": "rgba(226, 232, 240, 0.76)"
+  }
+}

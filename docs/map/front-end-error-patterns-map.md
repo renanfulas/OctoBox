@@ -318,6 +318,34 @@ Exemplos reais:
 2. `class-occupancy-critical`
 3. sinais locais de KPI como `card-signal.is-warning`
 
+## Padrao 12: controle nativo sem contrato dark completo
+
+Sinais:
+
+1. o campo fechado parece correto no dark
+2. ao abrir `select`, `date`, autocomplete nativo ou menu do navegador, os itens ficam ilegiveis
+3. o CSS local define `color`, mas esquece `background-color` ou `color-scheme`
+
+Causa raiz provavel:
+
+1. o componente estilizou a casca do controle, mas nao ensinou o tema ao popup nativo
+2. o navegador ou o sistema operacional escolhe um fundo padrao que entra em choque com a tinta do texto
+
+Exemplos reais:
+
+1. `select` do `student_form_stepper.css` em dark mode
+
+Correcao que mais funcionou:
+
+1. definir `background-color` explicito para `select` e `option` no contexto dark
+2. aplicar `color-scheme: dark` quando o controle realmente pertence ao tema escuro da tela
+3. tratar isso como contrato do controle, nao como bug do label em volta
+
+Analogia:
+
+1. a vitrine da loja estava escura e bonita
+2. mas quando a gaveta abria, por dentro ainda parecia loja de dia
+
 Correcao que mais funcionou:
 
 1. fechar a semantica no host compartilhado

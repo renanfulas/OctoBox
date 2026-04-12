@@ -23,13 +23,13 @@ PONTOS CRITICOS:
     {% for item in panel.items %}
     {% if item.is_clickable|default:True %}
     <a
-        class="fdw-focus-card owner-command-card{% if panel.primary_href %}{% if item.href == panel.primary_href %} is-primary owner-command-card--primary{% endif %}{% elif forloop.first %} is-primary owner-command-card--primary{% endif %}{% if item.severity_class %} {{ item.severity_class }}{% endif %}{% if item.is_tranquil %} is-tranquil{% endif %}"
+        class="fdw-focus-card owner-command-card{% if panel.primary_href %}{% if item.href == panel.primary_href %} is-primary owner-command-card--primary{% endif %}{% elif forloop.first %} is-primary owner-command-card--primary{% endif %}{% if item.href == '/entradas/' %} owner-command-card--entries{% elif item.href == '/financeiro/' %} owner-command-card--billing{% elif item.href == '/alunos/' %} owner-command-card--structure{% endif %}{% if item.severity_class %} {{ item.severity_class }}{% endif %}{% if item.is_tranquil %} is-tranquil{% endif %}"
         href="{{ item.href }}"
         data-slot="owner-command-card"
         {% if item.data_action %}data-action="{{ item.data_action }}"{% endif %}
     >
         <div class="fdw-focus-card-head owner-command-card__head">
-            <span class="fdw-focus-index owner-command-card__index">{{ forloop.counter|stringformat:"02d" }}</span>
+            <span class="fdw-focus-index owner-command-card__index" aria-hidden="true"></span>
             <div class="fdw-focus-meta owner-command-card__meta">
                 {% if item.chip_label %}
                 <span class="fdw-focus-chip owner-command-card__chip{% if item.pill_class %} is-{{ item.pill_class }}{% endif %}">{{ item.chip_label }}</span>
@@ -49,12 +49,12 @@ PONTOS CRITICOS:
     </a>
     {% else %}
     <article
-        class="fdw-focus-card owner-command-card{% if panel.primary_href %}{% if item.href == panel.primary_href %} is-primary owner-command-card--primary{% endif %}{% elif forloop.first %} is-primary owner-command-card--primary{% endif %}{% if item.severity_class %} {{ item.severity_class }}{% endif %}{% if item.is_tranquil %} is-tranquil{% endif %}"
+        class="fdw-focus-card owner-command-card{% if panel.primary_href %}{% if item.href == panel.primary_href %} is-primary owner-command-card--primary{% endif %}{% elif forloop.first %} is-primary owner-command-card--primary{% endif %}{% if item.href == '/entradas/' %} owner-command-card--entries{% elif item.href == '/financeiro/' %} owner-command-card--billing{% elif item.href == '/alunos/' %} owner-command-card--structure{% endif %}{% if item.severity_class %} {{ item.severity_class }}{% endif %}{% if item.is_tranquil %} is-tranquil{% endif %}"
         aria-label="{{ item.label }}"
         data-slot="owner-command-card"
     >
         <div class="fdw-focus-card-head owner-command-card__head">
-            <span class="fdw-focus-index owner-command-card__index">{{ forloop.counter|stringformat:"02d" }}</span>
+            <span class="fdw-focus-index owner-command-card__index" aria-hidden="true"></span>
             <div class="fdw-focus-meta owner-command-card__meta">
                 {% if item.chip_label %}
                 <span class="fdw-focus-chip owner-command-card__chip{% if item.pill_class %} is-{{ item.pill_class }}{% endif %}">{{ item.chip_label }}</span>
