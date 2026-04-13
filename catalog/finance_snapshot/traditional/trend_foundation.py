@@ -56,6 +56,17 @@ def _format_delta_count(current, previous):
     return f'{signal}{delta} vs mes anterior', direction
 
 
+def _format_delta_currency(current, previous):
+    current = Decimal(current or 0)
+    previous = Decimal(previous or 0)
+    delta = (current - previous).quantize(Decimal('0.01'))
+    if delta == 0:
+        return 'Mesmo valor do mes anterior', 'flat'
+    direction = 'up' if delta > 0 else 'down'
+    signal = '+' if delta > 0 else '-'
+    return f'{signal}{_format_currency_compact(abs(delta))} vs mes anterior', direction
+
+
 def _format_svg_number(value):
     decimal_value = Decimal(str(value or 0)).quantize(Decimal('0.01'))
     normalized = format(decimal_value.normalize(), 'f')
@@ -328,9 +339,9 @@ def build_finance_trend_foundation(*, filter_form, finance_metrics, monthly_comp
     else:
         received_semantic = 'steady'
 
-    churn_current = int(current_period.get('cancellations', 0))
-    churn_previous = int(previous_period.get('cancellations', 0))
-    churn_delta_label, churn_direction = _format_delta_count(churn_current, churn_previous)
+    churn_current = Decimal(current_period.get('cancellations_amount', Decimal('0.00')))
+    churn_previous = Decimal(previous_period.get('cancellations_amount', Decimal('0.00')))
+    churn_delta_label, churn_direction = _format_delta_currency(churn_current, churn_previous)
     if churn_direction == 'up':
         churn_semantic = 'bad'
     elif churn_direction == 'down':
@@ -396,12 +407,12 @@ def build_finance_trend_foundation(*, filter_form, finance_metrics, monthly_comp
         _build_ready_metric(
             key='churn',
             label='Churn',
-            raw_value=Decimal(churn_current),
-            previous_raw_value=Decimal(churn_previous),
+            raw_value=churn_current,
+            previous_raw_value=churn_previous,
             delta_label=churn_delta_label,
             direction=churn_direction,
             semantic_state=churn_semantic,
-            help_text='Leitura curta das saidas do recorte atual frente ao mes anterior.',
+            help_text='Mostra a soma do valor dos planos cancelados no recorte atual frente ao mes anterior.',
         ),
     ]
 

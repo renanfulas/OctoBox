@@ -72,11 +72,13 @@ POR QUE ELE EXISTE:
     grid-column: 1 / -1;
 }
 
+.access-overview-card--create,
 .access-overview-card--manage {
     position: relative;
     overflow: hidden;
 }
 
+.access-overview-card--create::before,
 .access-overview-card--manage::before,
 .access-role-card::before {
     content: "";
@@ -87,6 +89,7 @@ POR QUE ELE EXISTE:
     opacity: 0.9;
 }
 
+.access-overview-card--create .operation-card-head,
 .access-overview-card--manage .operation-card-head,
 .access-role-card .operation-card-head {
     gap: 10px;
@@ -94,15 +97,75 @@ POR QUE ELE EXISTE:
     border-bottom: 1px solid color-mix(in srgb, var(--theme-glass-border) 82%, transparent);
 }
 
+.access-overview-card--create .operation-card-title,
 .access-overview-card--manage .operation-card-title,
 .access-role-card .operation-card-title {
     letter-spacing: -0.03em;
 }
 
+.access-overview-card--create .operation-card-copy,
 .access-overview-card--manage .operation-card-copy,
 .access-role-card .operation-card-copy,
 .access-role-card .capability-list {
     color: color-mix(in srgb, var(--theme-text-muted) 86%, var(--ink) 14%);
+}
+
+.access-overview-card--create .form-stack {
+    gap: 14px;
+}
+
+.access-overview-card--create .field-label {
+    color: color-mix(in srgb, var(--theme-text-muted) 72%, var(--ink) 28%);
+}
+
+.access-overview-card--manage .field-label,
+.access-profile-item .field-label {
+    color: color-mix(in srgb, var(--theme-text-muted) 76%, var(--ink) 24%);
+}
+
+.access-overview-card--create label:has(select) .field-label {
+    color: color-mix(in srgb, var(--theme-text) 74%, var(--theme-text-muted) 26%);
+}
+
+.access-overview-card--create .field-grid-200 {
+    gap: 12px 14px;
+}
+
+.access-overview-card--create input,
+.access-overview-card--create select,
+.access-overview-card--create textarea {
+    border-color: color-mix(in srgb, var(--theme-glass-border) 84%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 76%, white 24%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.access-overview-card--create select {
+    appearance: none;
+    padding-right: 2.8rem;
+    color: color-mix(in srgb, var(--theme-text) 88%, var(--ink) 12%);
+    background-image:
+        linear-gradient(45deg, transparent 50%, color-mix(in srgb, var(--theme-text-muted) 74%, var(--ink) 26%) 50%),
+        linear-gradient(135deg, color-mix(in srgb, var(--theme-text-muted) 74%, var(--ink) 26%) 50%, transparent 50%);
+    background-position:
+        calc(100% - 18px) calc(50% - 1px),
+        calc(100% - 12px) calc(50% - 1px);
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+}
+
+.access-overview-card--create input::placeholder,
+.access-overview-card--create textarea::placeholder {
+    color: color-mix(in srgb, var(--theme-text-muted) 68%, transparent);
+}
+
+.access-overview-card--create select:focus,
+.access-overview-card--create input:focus,
+.access-overview-card--create textarea:focus {
+    outline: 0;
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 72%, var(--theme-glass-border) 28%);
+    box-shadow:
+        0 0 0 3px color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 
 .access-overview-card--manage .operation-focus-list {
@@ -185,14 +248,50 @@ POR QUE ELE EXISTE:
     align-self: flex-start;
 }
 
+body[data-theme="dark"] .access-overview-card--create .operation-card-head,
 body[data-theme="dark"] .access-overview-card--manage .operation-card-head,
 body[data-theme="dark"] .access-role-card .operation-card-head {
     border-bottom-color: rgba(255, 255, 255, 0.06);
 }
 
+body[data-theme="dark"] .access-overview-card .operation-card-title,
+body[data-theme="dark"] .access-role-card .operation-card-title {
+    color: #f8fbff;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.22);
+}
+
+body[data-theme="dark"] .access-overview-card--create .operation-card-title {
+    color: #f8fbff;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.22);
+}
+
+body[data-theme="dark"] .access-overview-card .eyebrow,
+body[data-theme="dark"] .access-role-card .eyebrow {
+    color: rgba(226, 232, 240, 0.82);
+}
+
+body[data-theme="dark"] .access-overview-card--create .eyebrow {
+    color: rgba(226, 232, 240, 0.82);
+    letter-spacing: 0.12em;
+}
+
+body[data-theme="dark"] .access-role-card .operation-card-copy,
+body[data-theme="dark"] .access-role-card .capability-list,
+body[data-theme="dark"] .access-overview-card--manage .operation-card-copy {
+    color: rgba(241, 245, 249, 0.88);
+}
+
 body[data-theme="dark"] .access-role-card .capability-list li {
+    color: #f8fbff;
     border-color: color-mix(in srgb, var(--theme-glass-border) 86%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-strong) 82%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 88%, rgba(8, 15, 26, 0.92));
+    box-shadow:
+        0 12px 24px rgba(0, 0, 0, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="dark"] .access-role-card .capability-list li::before {
+    background: rgba(147, 197, 253, 0.92);
 }
 
 body[data-theme="dark"] .access-profile-item {
@@ -201,6 +300,73 @@ body[data-theme="dark"] .access-profile-item {
     box-shadow:
         0 16px 30px rgba(0, 0, 0, 0.16),
         inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="dark"] .access-overview-card--create .field-label {
+    color: rgba(241, 245, 249, 0.92);
+    font-weight: 700;
+}
+
+body[data-theme="dark"] .access-overview-card--manage .field-label,
+body[data-theme="dark"] .access-profile-item .field-label {
+    color: rgba(241, 245, 249, 0.9);
+    font-weight: 700;
+}
+
+body[data-theme="dark"] .access-overview-card--create label:has(select) .field-label {
+    color: #f8fbff;
+}
+
+body[data-theme="dark"] .access-overview-card--create input,
+body[data-theme="dark"] .access-overview-card--create select,
+body[data-theme="dark"] .access-overview-card--create textarea {
+    color: #f8fbff;
+    caret-color: #f8fbff;
+    -webkit-text-fill-color: #f8fbff;
+    border-color: color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 88%, rgba(4, 9, 18, 0.92));
+    box-shadow:
+        0 10px 24px rgba(0, 0, 0, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .access-overview-card--create input::placeholder,
+body[data-theme="dark"] .access-overview-card--create textarea::placeholder {
+    color: color-mix(in srgb, var(--theme-text-muted) 86%, transparent);
+}
+
+body[data-theme="dark"] .access-overview-card--create select {
+    color-scheme: dark;
+    color: var(--theme-text);
+    background-image:
+        linear-gradient(45deg, transparent 50%, color-mix(in srgb, var(--theme-text) 80%, var(--theme-text-muted) 20%) 50%),
+        linear-gradient(135deg, color-mix(in srgb, var(--theme-text) 80%, var(--theme-text-muted) 20%) 50%, transparent 50%);
+}
+
+body[data-theme="dark"] .access-overview-card--create select option {
+    color: #f8fbff;
+    background: #0b1628;
+}
+
+body[data-theme="dark"] .access-overview-card--create select option:checked {
+    color: #08111f;
+    background: #93c5fd;
+}
+
+body[data-theme="dark"] .access-overview-card--create select option:hover,
+body[data-theme="dark"] .access-overview-card--create select option:focus {
+    color: #08111f;
+    background: #bfdbfe;
+}
+
+body[data-theme="dark"] .access-overview-card--create select:focus,
+body[data-theme="dark"] .access-overview-card--create input:focus,
+body[data-theme="dark"] .access-overview-card--create textarea:focus {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 78%, var(--theme-glass-border) 22%);
+    box-shadow:
+        0 0 0 3px rgba(96, 165, 250, 0.18),
+        0 14px 28px rgba(0, 0, 0, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 body[data-theme="dark"] .access-hero {

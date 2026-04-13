@@ -1,0 +1,78 @@
+<!--
+ARQUIVO: lane de comando do manager.
+
+POR QUE ELE EXISTE:
+- separa a variante operacional do manager do host generico de reading list.
+
+O QUE ESTE ARQUIVO FAZ:
+1. renderiza os tres cards de foco da gerencia com hooks locais.
+2. preserva o payload semantico compartilhado.
+3. cria ownership explicito para markup e manutencao da lane.
+
+PONTOS CRITICOS:
+- deve continuar usando o mesmo payload de `reading_panel`.
+- nao deve reinventar o primitivo compartilhado do card.
+-->
+{% if panel.items %}
+<div
+    class="fdw-focus-list page-reading-list manager-reading-panel manager-command-lane manager-command-list{% if panel.class_name %} {{ panel.class_name }}{% endif %}"
+    {% if panel.panel_id %}id="{{ panel.panel_id }}"{% endif %}
+    data-panel="manager-command-lane"
+    data-slot="manager-command-list"
+>
+    {% for item in panel.items %}
+    {% if item.is_clickable|default:True %}
+    <a
+        class="fdw-focus-card manager-command-card{% if panel.primary_href %}{% if item.href == panel.primary_href %} is-primary manager-command-card--primary{% endif %}{% elif forloop.first %} is-primary manager-command-card--primary{% endif %}{% if item.href == '#manager-intake-board' %} manager-command-card--triage{% elif item.href == '#manager-link-board' or item.href == '#manager-enrollment-link-board' %} manager-command-card--links{% elif item.href == '#manager-finance-board' %} manager-command-card--finance{% endif %}{% if item.severity_class %} {{ item.severity_class }}{% endif %}{% if item.is_tranquil %} is-tranquil{% endif %}"
+        href="{{ item.href }}"
+        data-slot="manager-command-card"
+        {% if item.data_action %}data-action="{{ item.data_action }}"{% endif %}
+    >
+        <div class="fdw-focus-card-head manager-command-card__head">
+            <span class="fdw-focus-index manager-command-card__index" aria-hidden="true"></span>
+            <div class="fdw-focus-meta manager-command-card__meta">
+                {% if item.chip_label %}
+                <span class="fdw-focus-chip manager-command-card__chip{% if item.pill_class %} is-{{ item.pill_class }}{% endif %}">{{ item.chip_label }}</span>
+                {% endif %}
+                {% if item.count or item.count == 0 %}
+                <span class="fdw-focus-count manager-command-card__count">{{ item.count }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="fdw-focus-body manager-command-card__body">
+            <h3 class="fdw-focus-title manager-command-card__title">{{ item.label }}</h3>
+            <p class="fdw-focus-summary manager-command-card__summary">{{ item.summary }}</p>
+        </div>
+        <div class="fdw-focus-footer manager-command-card__footer">
+            <span class="fdw-focus-action manager-command-card__action">{{ item.href_label }}</span>
+        </div>
+    </a>
+    {% else %}
+    <article
+        class="fdw-focus-card manager-command-card{% if panel.primary_href %}{% if item.href == panel.primary_href %} is-primary manager-command-card--primary{% endif %}{% elif forloop.first %} is-primary manager-command-card--primary{% endif %}{% if item.href == '#manager-intake-board' %} manager-command-card--triage{% elif item.href == '#manager-link-board' or item.href == '#manager-enrollment-link-board' %} manager-command-card--links{% elif item.href == '#manager-finance-board' %} manager-command-card--finance{% endif %}{% if item.severity_class %} {{ item.severity_class }}{% endif %}{% if item.is_tranquil %} is-tranquil{% endif %}"
+        aria-label="{{ item.label }}"
+        data-slot="manager-command-card"
+    >
+        <div class="fdw-focus-card-head manager-command-card__head">
+            <span class="fdw-focus-index manager-command-card__index" aria-hidden="true"></span>
+            <div class="fdw-focus-meta manager-command-card__meta">
+                {% if item.chip_label %}
+                <span class="fdw-focus-chip manager-command-card__chip{% if item.pill_class %} is-{{ item.pill_class }}{% endif %}">{{ item.chip_label }}</span>
+                {% endif %}
+                {% if item.count or item.count == 0 %}
+                <span class="fdw-focus-count manager-command-card__count">{{ item.count }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="fdw-focus-body manager-command-card__body">
+            <h3 class="fdw-focus-title manager-command-card__title">{{ item.label }}</h3>
+            <p class="fdw-focus-summary manager-command-card__summary">{{ item.summary }}</p>
+        </div>
+        <div class="fdw-focus-footer manager-command-card__footer">
+            <span class="fdw-focus-action manager-command-card__action">{{ item.href_label }}</span>
+        </div>
+    </article>
+    {% endif %}
+    {% endfor %}
+</div>
+{% endif %}

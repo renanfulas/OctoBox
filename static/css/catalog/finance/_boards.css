@@ -95,7 +95,7 @@ POR QUE ELE EXISTE:
 }
 
 .finance-board-shell.is-rail .finance-board-subsurface {
-    border-color: color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, rgba(148, 163, 184, 0.18) 86%);
+    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 10%, rgba(148, 163, 184, 0.18) 90%);
 }
 
 .finance-board-shell.is-analytics .finance-board-subsurface {

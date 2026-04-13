@@ -64,13 +64,21 @@ def build_monthly_comparison(months, selected_plan, payment_status, payment_meth
             cancellations_query = cancellations_query.filter(plan=selected_plan)
         activations = activations_query.count()
         cancellations = cancellations_query.count()
+        activations_amount = activations_query.aggregate(
+            total=Coalesce(Sum('plan__price'), Decimal('0.00'))
+        )['total']
+        cancellations_amount = cancellations_query.aggregate(
+            total=Coalesce(Sum('plan__price'), Decimal('0.00'))
+        )['total']
         series.append(
             {
                 'label': f'{month_abbr[start_date.month].upper()}/{str(start_date.year)[-2:]}',
                 'short_label': PT_MONTH_ABBR[start_date.month],
                 'revenue': revenue,
                 'activations': activations,
+                'activations_amount': activations_amount,
                 'cancellations': cancellations,
+                'cancellations_amount': cancellations_amount,
                 'net_growth': activations - cancellations,
             }
         )

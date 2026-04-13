@@ -7,7 +7,7 @@ POR QUE ELE EXISTE:
 */
 
 .whatsapp-placeholder-scene {
-    gap: calc(var(--section-gap) - 2px);
+    gap: var(--section-gap);
 }
 
 .whatsapp-placeholder-hero {
@@ -24,6 +24,7 @@ POR QUE ELE EXISTE:
 .whatsapp-placeholder-strip {
     display: flex;
     justify-content: center;
+    margin-top: var(--page-opening-panel-margin-top, var(--workspace-fib-4, 21px));
 }
 
 .whatsapp-placeholder-card {

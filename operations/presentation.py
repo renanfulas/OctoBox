@@ -174,7 +174,7 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
             primary_href=manager_decision_entry_context.get('entry_href'),
             pill_label=manager_priority_context.get('pill_label'),
             pill_class=manager_priority_context.get('pill_class'),
-            class_name='manager-focus-lane',
+            class_name='manager-command-panel',
             panel_id='manager-command-lane',
         ),
         'operations-coach': build_page_reading_panel(

@@ -66,7 +66,7 @@ PONTOS CRITICOS:
                         {{ profile_create_form.password }}
                         {{ profile_create_form.password.errors }}
                     </label>
-                    <div class="actions actions-tight">
+                    <div class="actions actions-tight operation-hero-action-rail">
                         <button class="button" type="submit">Criar perfil</button>
                         <a class="button secondary" href="?manage_profiles=1#access-profile-manage">Gerenciar perfis</a>
                         {% if group_admin_url %}
@@ -155,8 +155,9 @@ PONTOS CRITICOS:
                 <article class="table-card access-role-card">
                     <div class="operation-card-head">
                         <div>
-                            <p class="eyebrow">{{ role.label }}</p>
-                            <h2 class="operation-card-title">{{ role.summary }}</h2>
+                            <p class="eyebrow">Papel formal</p>
+                            <h2 class="operation-card-title">{{ role.label }}</h2>
+                            <p class="operation-card-copy">{{ role.summary }}</p>
                         </div>
                         <span class="pill{% if current_role.slug == role.slug %} accent{% else %} info{% endif %}">{% if current_role.slug == role.slug %}papel ativo{% else %}fronteira formal{% endif %}</span>
                     </div>

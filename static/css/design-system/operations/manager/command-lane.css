@@ -1,0 +1,316 @@
+/*
+ARQUIVO: lane de comando da superficie manager.
+
+POR QUE ELE EXISTE:
+- concentra a composicao local dos tres focus cards do manager.
+- reduz dependencia de seletores longos sobre o host generico.
+
+O QUE ESTE ARQUIVO FAZ:
+1. define a lista de comando do manager.
+2. controla o layout local dos cards e do card primario.
+3. centraliza responsividade da lane sem reabrir o primitivo global.
+
+PONTOS CRITICOS:
+- deve complementar `fdw-focus-card`, nao substitui-lo.
+- mudancas aqui nao devem depender de aumentar especificidade no global.
+*/
+
+.operation-shell .manager-command-lane {
+    gap: 4px;
+}
+
+.operation-shell .manager-command-lane .manager-command-card {
+    --manager-command-accent: var(--theme-accent-support);
+    --manager-command-accent-alpha: var(--theme-accent-support-alpha);
+    grid-template-columns: 110px minmax(0, 1fr) auto;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 10px;
+    min-height: 0;
+    height: auto;
+    border-radius: 14px;
+    color: var(--theme-text-primary);
+    transition:
+        transform 220ms var(--ease-standard),
+        box-shadow 220ms var(--ease-standard),
+        border-color 220ms var(--ease-standard);
+}
+
+.operation-shell .manager-command-lane .manager-command-card:hover {
+    transform: translateY(-2px);
+}
+
+.operation-shell .manager-command-lane .manager-command-card--primary {
+    min-height: 0;
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, white), color-mix(in srgb, var(--theme-surface-panel) 95%, white));
+    border-color: color-mix(in srgb, var(--manager-command-accent-alpha) 24%, var(--theme-border-strong) 76%);
+    box-shadow:
+        0 10px 18px rgba(15, 23, 42, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.68);
+}
+
+.operation-shell .manager-command-lane .manager-command-card__head {
+    width: 110px;
+    gap: 8px;
+    align-items: center;
+    align-self: center;
+    justify-content: flex-start;
+}
+
+.operation-shell .manager-command-lane .manager-command-card__index {
+    min-width: 12px;
+    width: 12px;
+    height: 12px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: var(--manager-command-accent);
+    color: var(--manager-command-accent);
+    font-size: 0;
+    letter-spacing: 0;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--manager-command-accent-alpha) 14%, transparent);
+}
+
+.operation-shell .page-reading-list.manager-command-lane .manager-command-card.manager-command-card--triage,
+.operation-shell .page-reading-list.manager-command-lane .manager-command-card.manager-command-card--triage:has(.manager-command-card__chip) {
+    --manager-command-accent: var(--theme-accent-danger);
+    --manager-command-accent-alpha: var(--theme-accent-danger-alpha);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, white 88%, var(--theme-accent-danger-alpha) 12%),
+            color-mix(in srgb, var(--theme-surface-panel) 92%, var(--theme-accent-danger-alpha) 8%)
+        );
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 18%, var(--theme-border-strong) 82%);
+    box-shadow:
+        0 12px 24px color-mix(in srgb, var(--theme-accent-danger-alpha) 8%, rgba(15, 23, 42, 0.08) 92%),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.operation-shell .page-reading-list.manager-command-lane .manager-command-card.manager-command-card--links,
+.operation-shell .page-reading-list.manager-command-lane .manager-command-card.manager-command-card--links:has(.manager-command-card__chip) {
+    --manager-command-accent: var(--theme-accent-support);
+    --manager-command-accent-alpha: var(--theme-accent-support-alpha);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, white 90%, var(--theme-accent-support-alpha) 10%),
+            color-mix(in srgb, var(--theme-surface-panel) 93%, var(--theme-accent-support-alpha) 7%)
+        );
+    border-color: color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-border-strong) 82%);
+    box-shadow:
+        0 12px 24px color-mix(in srgb, var(--theme-accent-support-alpha) 8%, rgba(15, 23, 42, 0.08) 92%),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.operation-shell .page-reading-list.manager-command-lane .manager-command-card.manager-command-card--finance,
+.operation-shell .page-reading-list.manager-command-lane .manager-command-card.manager-command-card--finance:has(.manager-command-card__chip) {
+    --manager-command-accent: var(--theme-accent-warning);
+    --manager-command-accent-alpha: var(--theme-accent-warning-alpha);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, white 89%, var(--theme-accent-warning-alpha) 11%),
+            color-mix(in srgb, var(--theme-surface-panel) 93%, var(--theme-accent-warning-alpha) 7%)
+        );
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 20%, var(--theme-border-strong) 80%);
+    box-shadow:
+        0 12px 24px color-mix(in srgb, var(--theme-accent-warning-alpha) 9%, rgba(15, 23, 42, 0.08) 91%),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.operation-shell .page-reading-list.manager-command-lane .manager-command-card.manager-command-card--triage .manager-command-card__index,
+.operation-shell .page-reading-list.manager-command-lane .manager-command-card.manager-command-card--links .manager-command-card__index,
+.operation-shell .page-reading-list.manager-command-lane .manager-command-card.manager-command-card--finance .manager-command-card__index {
+    background: var(--manager-command-accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--manager-command-accent-alpha) 14%, transparent);
+}
+
+.operation-shell .manager-command-lane .manager-command-card.manager-command-card--triage .manager-command-card__chip,
+.operation-shell .manager-command-lane .manager-command-card.manager-command-card--triage .manager-command-card__count {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 24%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 12%, var(--theme-surface-strong) 88%);
+    color: color-mix(in srgb, var(--theme-accent-danger) 70%, var(--ink) 30%);
+}
+
+.operation-shell .manager-command-lane .manager-command-card.manager-command-card--links .manager-command-card__chip,
+.operation-shell .manager-command-lane .manager-command-card.manager-command-card--links .manager-command-card__count {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-surface-strong) 86%);
+    color: color-mix(in srgb, var(--theme-accent-support) 76%, var(--ink) 24%);
+}
+
+.operation-shell .manager-command-lane .manager-command-card.manager-command-card--finance .manager-command-card__chip,
+.operation-shell .manager-command-lane .manager-command-card.manager-command-card--finance .manager-command-card__count {
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 24%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, var(--theme-surface-strong) 86%);
+    color: color-mix(in srgb, var(--theme-accent-warning) 76%, var(--ink) 24%);
+}
+
+.operation-shell .manager-command-lane .manager-command-card__body {
+    gap: 3px;
+    min-width: 0;
+    padding-inline: 2px;
+    align-self: center;
+    align-content: center;
+}
+
+.operation-shell .manager-command-lane .manager-command-card__title {
+    font-size: 0.88rem;
+    line-height: 1.08;
+    color: var(--theme-text-primary);
+}
+
+.operation-shell .manager-command-lane .manager-command-card__summary {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 0.74rem;
+    line-height: 1.22;
+    color: var(--theme-text-secondary);
+}
+
+.operation-shell .manager-command-lane .manager-command-card__meta {
+    gap: 6px;
+    align-items: center;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    justify-content: start;
+}
+
+.operation-shell .manager-command-lane .manager-command-card__chip,
+.operation-shell .manager-command-lane .manager-command-card__count {
+    min-height: 18px;
+    padding: 1px 6px;
+    font-size: 0.6rem;
+}
+
+.operation-shell .manager-command-lane .manager-command-card__count {
+    min-width: 18px;
+    justify-content: center;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.operation-shell .manager-command-lane .manager-command-card__footer {
+    align-self: center;
+    padding-right: 10px;
+    justify-content: center;
+}
+
+.operation-shell .manager-command-lane .manager-command-card__action {
+    font-size: 0.68rem;
+    color: color-mix(in srgb, var(--manager-command-accent) 62%, var(--theme-text-secondary) 38%);
+}
+
+body[data-theme="dark"] .manager-scene .manager-command-lane.manager-command-panel {
+    background:
+        linear-gradient(180deg, rgba(245, 110, 126, 0.05), transparent 22%),
+        radial-gradient(circle at top left, rgba(245, 110, 126, 0.08), transparent 34%),
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.06), transparent 32%);
+    border-color: rgba(148, 163, 184, 0.12);
+    box-shadow:
+        0 22px 40px rgba(2, 6, 23, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .manager-scene .manager-command-lane .manager-command-card {
+    --manager-command-accent: var(--theme-accent-support);
+    --manager-command-accent-alpha: var(--theme-accent-support-alpha);
+    background:
+        linear-gradient(180deg, rgba(10, 18, 32, 0.98), rgba(8, 15, 27, 0.96));
+    border-color: color-mix(in srgb, rgba(148, 163, 184, 0.14) 78%, var(--theme-accent-support-alpha) 22%);
+    box-shadow:
+        0 20px 36px rgba(2, 6, 23, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .manager-scene .manager-command-lane .manager-command-card.manager-command-card--triage {
+    --manager-command-accent: var(--theme-accent-danger);
+    --manager-command-accent-alpha: var(--theme-accent-danger-alpha);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, rgba(10, 18, 32, 0.98) 92%, var(--theme-accent-danger) 8%), color-mix(in srgb, rgba(8, 15, 27, 0.98) 95%, var(--theme-accent-danger) 5%));
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 24%, rgba(148, 163, 184, 0.14) 76%);
+}
+
+body[data-theme="dark"] .manager-scene .manager-command-lane .manager-command-card.manager-command-card--links {
+    --manager-command-accent: var(--theme-accent-support);
+    --manager-command-accent-alpha: var(--theme-accent-support-alpha);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, rgba(10, 18, 32, 0.98) 92%, var(--theme-accent-support) 8%), color-mix(in srgb, rgba(8, 15, 27, 0.98) 95%, var(--theme-accent-support) 5%));
+    border-color: color-mix(in srgb, var(--theme-accent-support) 22%, rgba(148, 163, 184, 0.14) 78%);
+}
+
+body[data-theme="dark"] .manager-scene .manager-command-lane .manager-command-card.manager-command-card--finance {
+    --manager-command-accent: var(--theme-accent-warning);
+    --manager-command-accent-alpha: var(--theme-accent-warning-alpha);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, rgba(10, 18, 32, 0.98) 92%, var(--theme-accent-warning) 8%), color-mix(in srgb, rgba(8, 15, 27, 0.98) 95%, var(--theme-accent-warning) 5%));
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 22%, rgba(148, 163, 184, 0.14) 78%);
+}
+
+body[data-theme="dark"] .manager-scene .manager-command-card--primary {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--manager-command-accent-alpha) 52%, transparent), transparent 34%),
+        linear-gradient(180deg, rgba(9, 17, 30, 0.99), rgba(7, 15, 28, 0.99));
+    border-color: color-mix(in srgb, var(--manager-command-accent-alpha) 34%, rgba(148, 163, 184, 0.12) 66%);
+    box-shadow:
+        0 28px 52px rgba(2, 6, 23, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"] .manager-scene .manager-command-lane .manager-command-card:hover {
+    box-shadow:
+        0 24px 42px rgba(2, 6, 23, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"] .manager-scene .manager-command-lane .manager-command-card__title {
+    color: color-mix(in srgb, var(--theme-text-primary) 94%, white 6%);
+}
+
+body[data-theme="dark"] .manager-scene .manager-command-lane .manager-command-card__summary {
+    color: rgba(226, 232, 240, 0.76);
+}
+
+body[data-theme="dark"] .manager-scene .manager-command-lane .manager-command-card__action {
+    color: color-mix(in srgb, var(--manager-command-accent) 58%, white 42%);
+}
+
+body[data-theme="dark"] .manager-scene .manager-command-lane .manager-command-card__index {
+    background: color-mix(in srgb, var(--manager-command-accent) 82%, white 18%);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--manager-command-accent-alpha) 14%, transparent);
+}
+
+body[data-theme="dark"] .manager-scene .manager-command-lane .manager-command-card__chip,
+body[data-theme="dark"] .manager-scene .manager-command-lane .manager-command-card__count {
+    border-color: rgba(148, 163, 184, 0.16);
+    background: color-mix(in srgb, rgba(8, 16, 30, 0.96) 80%, var(--manager-command-accent-alpha) 20%);
+    color: rgba(226, 232, 240, 0.86);
+}
+
+@media (max-width: 960px) {
+    .operation-shell .manager-command-lane .manager-command-card,
+    .operation-shell .manager-command-lane .manager-command-card--primary {
+        padding: 9px 12px;
+    }
+}
+
+@media (max-width: 720px) {
+    .operation-shell .manager-command-lane .manager-command-card,
+    .operation-shell .manager-command-lane .manager-command-card--primary {
+        grid-template-columns: 110px minmax(0, 1fr);
+        padding-right: 12px;
+    }
+
+    .operation-shell .manager-command-lane .manager-command-card__footer {
+        grid-column: 2;
+        justify-content: flex-start;
+        padding-right: 0;
+    }
+}

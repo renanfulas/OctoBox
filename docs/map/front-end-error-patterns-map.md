@@ -494,6 +494,91 @@ Analogia:
 2. de longe parece tudo novo
 3. quando bate a luz certa, o acabamento velho reaparece
 
+## Padrao 15: contraste perceptual ruim com cascata tecnicamente correta
+
+Sinais:
+
+1. a regra local esta entrando no runtime
+2. o inspetor mostra `color` aplicada
+3. mesmo assim o texto continua parecendo apagado, lavado ou fraco no dark mode
+
+Causa raiz provavel:
+
+1. a tinta escolhida ficou correta em teoria, mas fraca demais para aquela surface, sombra e blur
+2. o bug nao e de ownership nem de ordem; e de percepcao visual dentro da atmosfera local
+
+Exemplos reais:
+
+1. `operation-card-title` e `field-label` em `/acessos`
+2. `operation-card-copy` e `capability-list` dos cards de papel
+
+Correcao que mais funcionou:
+
+1. trocar `color-mix(...)` timido por tinta mais solida
+2. reduzir glow difuso quando ele piora nitidez
+3. validar a leitura como humano, nao so como cascata
+
+Analogia:
+
+1. a luz do quarto estava ligada
+2. mas a lampada era fraca demais para ler o livro
+
+## Padrao 16: anatomia textual errada disfarcada de bug de dark mode
+
+Sinais:
+
+1. o time fica tentando salvar um bloco com mais contraste
+2. o texto continua estranho mesmo quando a tinta melhora
+3. titulos longos, resumos e copys parecem estar usando o recipiente errado
+
+Causa raiz provavel:
+
+1. o HTML promoveu texto de resumo para classe de titulo
+2. a tela tenta resolver em CSS um erro que nasceu na semantica do template
+
+Exemplos reais:
+
+1. card de papel em `/acessos`, onde `role.summary` estava como `operation-card-title`
+
+Correcao que mais funcionou:
+
+1. devolver nome curto para `operation-card-title`
+2. mover resumo para `operation-card-copy`
+3. so depois recalibrar contraste no dark
+
+Analogia:
+
+1. e como usar uma placa de porta para escrever um paragrafo inteiro
+2. nao adianta trocar a tinta se o quadro continua errado
+
+## Padrao 17: controle nativo no limite do navegador
+
+Sinais:
+
+1. o campo fechado fica correto
+2. o popup aberto de `select` ainda fica parcialmente ilegiveis em alguns navegadores
+3. pequenas mudancas de CSS melhoram uma parte e pioram outra
+
+Causa raiz provavel:
+
+1. parte do popup pertence ao navegador ou ao sistema operacional, nao ao componente
+2. o projeto controla a casca do campo, mas nao 100% da janela aberta
+
+Exemplos reais:
+
+1. `select` de `Papel` em `/acessos`
+
+Correcao que mais funcionou:
+
+1. primeiro levar o nativo ate o maximo seguro com `color`, `background`, `option`, `option:checked`, `option:hover` e `color-scheme`
+2. registrar explicitamente quando o limite restante e do navegador
+3. so construir `custom select` se houver necessidade real e fit visual comprovado
+
+Analogia:
+
+1. a gaveta da frente da loja e sua
+2. o mecanismo la dentro ainda pode ser da fabrica do predio
+
 ## Sequencia de correcao que mais funcionou
 
 Quando o bug tem cheiro recorrente, a ordem com menor arrependimento foi:

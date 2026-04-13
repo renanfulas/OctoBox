@@ -41,6 +41,12 @@
     box-shadow: var(--dashboard-metrics-lead-shadow);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    background-image: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    outline: 0;
+    overflow: visible;
 }
 
 /* Moving .dashboard-instagram-metrics--support to below the main block for specificity override */
@@ -268,7 +274,7 @@
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.status-attention {
-    border-left-color: var(--theme-accent-warning);
+    border-left-color: transparent;
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-blue.status-attention {
@@ -338,6 +344,10 @@
     box-shadow: var(--fdw-shadow);
 }
 
+.dashboard-instagram-metrics.dashboard-instagram-metrics--support .dashboard-kpi-card {
+    box-shadow: none;
+}
+
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card {
     --dashboard-kpi-hover-shadow:
         0 32px 56px rgba(2, 6, 23, 0.42),
@@ -363,6 +373,12 @@ body[data-theme="dark"] .dashboard-metrics-lead {
     --dashboard-metrics-lead-border: transparent;
     --dashboard-metrics-lead-surface: none;
     --dashboard-metrics-lead-shadow: none;
+    background-image: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    outline: 0;
+    overflow: visible;
 }
 
 body[data-theme="dark"] .dashboard-kpi-slot.is-primary .dashboard-kpi-card {
