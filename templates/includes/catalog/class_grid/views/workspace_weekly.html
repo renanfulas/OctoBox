@@ -2,6 +2,9 @@
 ARQUIVO: painel semanal da grade.
 -->
 <section class="card class-grid-surface-card class-weekly-board" id="weekly-board" data-panel="class-grid-weekly-board">
+    <div class="weekly-board-intro">
+        <p class="eyebrow">Calendário das próximas duas semanas</p>
+    </div>
     {% for week in page.data.weekly_calendar|slice:":2" %}
     <section class="weekly-calendar-section" data-panel="class-grid-weekly-section">
         <div class="row-between-md weekly-calendar-header">

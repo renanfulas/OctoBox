@@ -24,7 +24,7 @@ from auditing.models import AuditEvent
 from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
 from onboarding.models import StudentIntake
 from operations.models import Attendance, BehaviorNote, ClassSession
-from operations.queries import build_reception_workspace_snapshot
+from operations.queries import build_owner_workspace_snapshot, build_reception_workspace_snapshot
 from students.models import Student
 
 
@@ -224,6 +224,22 @@ class OperationWorkspaceTests(TestCase):
         response = self.client.get(reverse('reception-workspace'))
 
         self.assertNotContains(response, 'href="/financeiro/"')
+
+    def test_owner_operational_focus_items_with_zero_count_are_non_clickable(self):
+        snapshot = build_owner_workspace_snapshot(today=timezone.localdate())
+
+        zero_count_items = [item for item in snapshot['owner_operational_focus'] if item['count'] == 0]
+
+        self.assertTrue(zero_count_items)
+        for item in zero_count_items:
+            self.assertFalse(item['is_clickable'])
+
+    def test_owner_workspace_snapshot_exposes_owner_upcoming_sessions_contract(self):
+        snapshot = build_owner_workspace_snapshot(today=timezone.localdate())
+
+        self.assertIn('owner_upcoming_sessions', snapshot)
+        self.assertIn('owner_upcoming_sessions_total_label', snapshot)
+        self.assertTrue(snapshot['owner_upcoming_sessions_total_label'].endswith('aula(s)'))
 
     def test_sidebar_keeps_my_operation_immediately_after_dashboard_for_main_roles(self):
         scenarios = [

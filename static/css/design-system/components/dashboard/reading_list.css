@@ -43,7 +43,6 @@ O QUE ESTE ARQUIVO FAZ:
     text-decoration: none;
     overflow: hidden;
     transition:
-        transform var(--motion-base) var(--ease-standard),
         box-shadow var(--motion-base) var(--ease-standard),
         border-color var(--motion-base) var(--ease-standard),
         background var(--motion-base) var(--ease-standard);
@@ -241,7 +240,7 @@ body[data-theme="dark"] .dashboard-reading-card.is-primary {
 }
 
 body[data-theme="dark"] .dashboard-reading-card__eyebrow {
-    color: rgba(191, 219, 254, 0.62);
+    color: color-mix(in srgb, var(--theme-text-muted) 88%, white 12%);
 }
 
 body[data-theme="dark"] .dashboard-reading-card__value {
@@ -250,11 +249,30 @@ body[data-theme="dark"] .dashboard-reading-card__value {
 }
 
 body[data-theme="dark"] .dashboard-reading-card__summary {
-    color: rgba(226, 232, 240, 0.8);
+    color: color-mix(in srgb, var(--theme-text-secondary) 92%, white 8%);
 }
 
 body[data-theme="dark"] .dashboard-reading-card__status {
-    color: rgba(148, 163, 184, 0.86);
+    color: color-mix(in srgb, var(--theme-text-muted) 88%, white 12%);
+}
+
+body[data-theme="dark"] .dashboard-reading-card__chip.is-success {
+    border-color: color-mix(in srgb, var(--theme-accent-success-alpha) 34%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 20%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-success) 72%, white 28%);
+}
+
+body[data-theme="dark"] .dashboard-reading-card__chip.is-warning {
+    border-color: color-mix(in srgb, var(--theme-accent-warning-alpha) 34%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 22%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-warning) 72%, white 28%);
+}
+
+body[data-theme="dark"] .dashboard-reading-card__chip.is-accent,
+body[data-theme="dark"] .dashboard-reading-card__chip.is-info {
+    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 34%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 20%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-primary) 72%, white 28%);
 }
 
 @media (max-width: 1024px) {

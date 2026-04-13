@@ -6,9 +6,9 @@ POR QUE ELE EXISTE:
 */
 
 .pill {
-    --pill-surface: color-mix(in srgb, var(--theme-accent-success) 10%, var(--theme-surface-strong) 90%);
-    --pill-border: color-mix(in srgb, var(--theme-accent-success) 18%, var(--theme-border-soft) 82%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-success) 82%, var(--theme-text-primary) 18%);
+    --pill-background: color-mix(in srgb, var(--theme-accent-success-alpha) 78%, transparent);
+    --pill-border: color-mix(in srgb, var(--card-border) 72%, var(--theme-accent-success-alpha) 28%);
+    --pill-text: var(--theme-accent-success);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -18,155 +18,145 @@ POR QUE ELE EXISTE:
     min-height: 32px;
     font-size: 0.82rem;
     font-weight: 700;
-    background: var(--pill-surface);
-    color: var(--pill-ink);
+    background: var(--pill-background);
+    color: var(--pill-text);
     border: 1px solid var(--pill-border);
     line-height: 1.1;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 
 .pill.warning {
-    --pill-surface: color-mix(in srgb, var(--theme-accent-danger) 10%, var(--theme-surface-strong) 90%);
-    --pill-border: color-mix(in srgb, var(--theme-accent-danger) 18%, var(--theme-border-soft) 82%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-danger) 82%, var(--theme-text-primary) 18%);
+    --pill-background: color-mix(in srgb, var(--theme-accent-danger-alpha) 78%, transparent);
+    --pill-border: color-mix(in srgb, var(--card-border) 70%, var(--theme-accent-danger-alpha) 30%);
+    --pill-text: var(--theme-accent-danger);
 }
 
 .pill.info {
-    --pill-surface: color-mix(in srgb, var(--theme-accent-support) 10%, var(--theme-surface-strong) 90%);
-    --pill-border: color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-border-soft) 82%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-support) 82%, var(--theme-text-primary) 18%);
+    --pill-background: color-mix(in srgb, var(--theme-accent-support-alpha) 78%, transparent);
+    --pill-border: color-mix(in srgb, var(--card-border) 70%, var(--theme-accent-support-alpha) 30%);
+    --pill-text: var(--theme-accent-support);
 }
 
 .pill.success {
-    --pill-surface: color-mix(in srgb, var(--theme-accent-success) 10%, var(--theme-surface-strong) 90%);
-    --pill-border: color-mix(in srgb, var(--theme-accent-success) 18%, var(--theme-border-soft) 82%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-success) 82%, var(--theme-text-primary) 18%);
+    --pill-background: color-mix(in srgb, var(--theme-accent-success-alpha) 78%, transparent);
+    --pill-border: color-mix(in srgb, var(--card-border) 72%, var(--theme-accent-success-alpha) 28%);
+    --pill-text: var(--theme-accent-success);
 }
 
 .pill.accent {
-    --pill-surface: color-mix(in srgb, var(--theme-accent-warning) 12%, var(--theme-surface-strong) 88%);
-    --pill-border: color-mix(in srgb, var(--theme-accent-warning) 20%, var(--theme-border-soft) 80%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-warning) 82%, var(--theme-text-primary) 18%);
+    --pill-background: color-mix(in srgb, var(--theme-accent-premium-alpha) 82%, transparent);
+    --pill-border: color-mix(in srgb, var(--card-border) 68%, var(--theme-accent-premium-alpha) 32%);
+    --pill-text: var(--theme-accent-premium);
 }
 
 .pill.class-status-scheduled {
-    --pill-surface: color-mix(in srgb, var(--theme-accent-support) 10%, var(--theme-surface-strong) 90%);
-    --pill-border: color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-border-soft) 82%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-support) 82%, var(--theme-text-primary) 18%);
+    --pill-background: color-mix(in srgb, var(--theme-accent-support-alpha) 78%, transparent);
+    --pill-border: color-mix(in srgb, var(--card-border) 70%, var(--theme-accent-support-alpha) 30%);
+    --pill-text: var(--theme-accent-support);
 }
 
 .pill.class-status-in-progress {
-    --pill-surface: color-mix(in srgb, var(--theme-accent-success) 10%, var(--theme-surface-strong) 90%);
-    --pill-border: color-mix(in srgb, var(--theme-accent-success) 18%, var(--theme-border-soft) 82%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-success) 82%, var(--theme-text-primary) 18%);
+    --pill-background: color-mix(in srgb, var(--theme-accent-success-alpha) 78%, transparent);
+    --pill-border: color-mix(in srgb, var(--card-border) 72%, var(--theme-accent-success-alpha) 28%);
+    --pill-text: var(--theme-accent-success);
 }
 
 .pill.class-status-completed {
-    --pill-surface: color-mix(in srgb, var(--theme-accent-warning) 12%, var(--theme-surface-strong) 88%);
-    --pill-border: color-mix(in srgb, var(--theme-accent-warning) 22%, var(--theme-border-soft) 78%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-warning) 84%, var(--theme-text-primary) 16%);
+    --pill-background: color-mix(in srgb, var(--theme-accent-premium-alpha) 82%, transparent);
+    --pill-border: color-mix(in srgb, var(--card-border) 68%, var(--theme-accent-premium-alpha) 32%);
+    --pill-text: var(--theme-accent-premium);
 }
 
 .pill.class-status-canceled {
-    --pill-surface: color-mix(in srgb, var(--theme-accent-danger) 10%, var(--theme-surface-strong) 90%);
-    --pill-border: color-mix(in srgb, var(--theme-accent-danger) 18%, var(--theme-border-soft) 82%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-danger) 82%, var(--theme-text-primary) 18%);
+    --pill-background: color-mix(in srgb, var(--theme-accent-danger-alpha) 78%, transparent);
+    --pill-border: color-mix(in srgb, var(--card-border) 70%, var(--theme-accent-danger-alpha) 30%);
+    --pill-text: var(--theme-accent-danger);
 }
 
 .pill.class-occupancy-closed {
-    --pill-surface: color-mix(in srgb, var(--theme-surface-inverse) 88%, var(--theme-surface-strong) 12%);
-    --pill-border: color-mix(in srgb, var(--theme-border-strong) 72%, transparent);
-    --pill-ink: color-mix(in srgb, var(--theme-text-primary) 96%, white 4%);
+    --pill-background: color-mix(in srgb, var(--theme-surface-inverse) 88%, transparent);
+    --pill-border: color-mix(in srgb, var(--card-border) 52%, var(--theme-surface-inverse) 48%);
+    --pill-text: var(--theme-bg-root);
 }
 
 .pill.class-occupancy-available {
-    --pill-surface: color-mix(in srgb, var(--theme-accent-success) 10%, var(--theme-surface-strong) 90%);
-    --pill-border: color-mix(in srgb, var(--theme-accent-success) 18%, var(--theme-border-soft) 82%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-success) 82%, var(--theme-text-primary) 18%);
+    --pill-background: color-mix(in srgb, var(--theme-accent-success-alpha) 78%, transparent);
+    --pill-border: color-mix(in srgb, var(--card-border) 72%, var(--theme-accent-success-alpha) 28%);
+    --pill-text: var(--theme-accent-success);
 }
 
 .pill.class-occupancy-medium {
-    --pill-surface: color-mix(in srgb, var(--theme-accent-warning) 12%, var(--theme-surface-strong) 88%);
-    --pill-border: color-mix(in srgb, var(--theme-accent-warning) 22%, var(--theme-border-soft) 78%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-warning) 84%, var(--theme-text-primary) 16%);
+    --pill-background: color-mix(in srgb, var(--theme-accent-warning-alpha) 78%, transparent);
+    --pill-border: color-mix(in srgb, var(--card-border) 70%, var(--theme-accent-warning-alpha) 30%);
+    --pill-text: var(--theme-accent-warning);
 }
 
 .pill.class-occupancy-high {
-    --pill-surface: color-mix(in srgb, var(--theme-accent-warning) 16%, var(--theme-surface-strong) 84%);
-    --pill-border: color-mix(in srgb, var(--theme-accent-warning) 24%, var(--theme-border-soft) 76%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-warning) 88%, var(--theme-text-primary) 12%);
+    --pill-background: color-mix(in srgb, var(--theme-accent-premium-alpha) 82%, transparent);
+    --pill-border: color-mix(in srgb, var(--card-border) 68%, var(--theme-accent-premium-alpha) 32%);
+    --pill-text: var(--theme-accent-premium);
 }
 
 .pill.class-occupancy-critical {
-    --pill-surface: color-mix(in srgb, var(--theme-accent-danger) 12%, var(--theme-surface-strong) 88%);
-    --pill-border: color-mix(in srgb, var(--theme-accent-danger) 22%, var(--theme-border-soft) 78%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-danger) 84%, var(--theme-text-primary) 16%);
-}
-
-/* Contraste para pills em darkmode */
-body[data-theme="dark"] .pill,
-body[data-theme="dark"] .pill.warning,
-body[data-theme="dark"] .pill.info,
-body[data-theme="dark"] .pill.success,
-body[data-theme="dark"] .pill.accent {
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --pill-background: color-mix(in srgb, var(--theme-accent-danger-alpha) 80%, transparent);
+    --pill-border: color-mix(in srgb, var(--card-border) 68%, var(--theme-accent-danger-alpha) 32%);
+    --pill-text: var(--theme-accent-danger);
 }
 
 body[data-theme="dark"] .pill {
-    --pill-surface: color-mix(in srgb, var(--theme-surface-strong) 82%, var(--theme-accent-success-alpha) 18%);
-    --pill-border: color-mix(in srgb, var(--theme-border-soft) 82%, var(--theme-accent-success) 18%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-success) 74%, white 26%);
+    --pill-background: color-mix(in srgb, var(--card-surface-strong) 34%, transparent);
+    --pill-border: color-mix(in srgb, var(--card-border) 92%, transparent);
+    --pill-text: var(--theme-text-primary);
 }
 
 body[data-theme="dark"] .pill.warning {
-    --pill-surface: color-mix(in srgb, var(--theme-surface-strong) 80%, var(--theme-accent-danger) 20%);
-    --pill-border: color-mix(in srgb, var(--theme-border-soft) 68%, var(--theme-accent-danger) 32%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-danger) 76%, white 24%);
+    --pill-background: color-mix(in srgb, var(--theme-accent-danger-alpha) 88%, var(--card-surface-strong) 12%);
+    --pill-border: color-mix(in srgb, var(--card-border) 64%, var(--theme-accent-danger-alpha) 36%);
+    --pill-text: #ff8da6;
 }
 
 body[data-theme="dark"] .pill.success {
-    --pill-surface: color-mix(in srgb, var(--theme-surface-strong) 80%, var(--theme-accent-success) 20%);
-    --pill-border: color-mix(in srgb, var(--theme-border-soft) 68%, var(--theme-accent-success) 32%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-success) 78%, white 22%);
+    --pill-background: color-mix(in srgb, var(--theme-accent-success-alpha) 88%, var(--card-surface-strong) 12%);
+    --pill-border: color-mix(in srgb, var(--card-border) 64%, var(--theme-accent-success-alpha) 36%);
+    --pill-text: #7cffbe;
 }
 
-body[data-theme="dark"] .pill.info {
-    --pill-surface: color-mix(in srgb, var(--theme-surface-strong) 80%, var(--theme-accent-support) 20%);
-    --pill-border: color-mix(in srgb, var(--theme-border-soft) 68%, var(--theme-accent-support) 32%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-support) 78%, white 22%);
+body[data-theme="dark"] .pill.info,
+body[data-theme="dark"] .pill.class-status-scheduled {
+    --pill-background: color-mix(in srgb, var(--theme-accent-support-alpha) 88%, var(--card-surface-strong) 12%);
+    --pill-border: color-mix(in srgb, var(--card-border) 64%, var(--theme-accent-support-alpha) 36%);
+    --pill-text: #8be7ff;
 }
 
 body[data-theme="dark"] .pill.accent,
 body[data-theme="dark"] .pill.class-status-completed,
-body[data-theme="dark"] .pill.class-occupancy-medium,
 body[data-theme="dark"] .pill.class-occupancy-high {
-    --pill-surface: color-mix(in srgb, var(--theme-surface-strong) 78%, var(--theme-accent-warning) 22%);
-    --pill-border: color-mix(in srgb, var(--theme-border-soft) 64%, var(--theme-accent-warning) 36%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-warning) 80%, white 20%);
-}
-
-body[data-theme="dark"] .pill.class-status-scheduled {
-    --pill-surface: color-mix(in srgb, var(--theme-surface-strong) 78%, var(--theme-accent-support) 22%);
-    --pill-border: color-mix(in srgb, var(--theme-border-soft) 64%, var(--theme-accent-support) 36%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-support) 80%, white 20%);
-}
-
-body[data-theme="dark"] .pill.class-status-in-progress,
-body[data-theme="dark"] .pill.class-occupancy-available {
-    --pill-surface: color-mix(in srgb, var(--theme-surface-strong) 78%, var(--theme-accent-success) 22%);
-    --pill-border: color-mix(in srgb, var(--theme-border-soft) 64%, var(--theme-accent-success) 36%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-success) 80%, white 20%);
+    --pill-background: color-mix(in srgb, var(--theme-accent-premium-alpha) 88%, var(--card-surface-strong) 12%);
+    --pill-border: color-mix(in srgb, var(--card-border) 64%, var(--theme-accent-premium-alpha) 36%);
+    --pill-text: #d7a2ff;
 }
 
 body[data-theme="dark"] .pill.class-status-canceled,
 body[data-theme="dark"] .pill.class-occupancy-critical {
-    --pill-surface: color-mix(in srgb, var(--theme-surface-strong) 78%, var(--theme-accent-danger) 22%);
-    --pill-border: color-mix(in srgb, var(--theme-border-soft) 64%, var(--theme-accent-danger) 36%);
-    --pill-ink: color-mix(in srgb, var(--theme-accent-danger) 80%, white 20%);
+    --pill-background: color-mix(in srgb, var(--theme-accent-danger-alpha) 88%, var(--card-surface-strong) 12%);
+    --pill-border: color-mix(in srgb, var(--card-border) 64%, var(--theme-accent-danger-alpha) 36%);
+    --pill-text: #ff8da6;
+}
+
+body[data-theme="dark"] .pill.class-status-in-progress,
+body[data-theme="dark"] .pill.class-occupancy-available {
+    --pill-background: color-mix(in srgb, var(--theme-accent-success-alpha) 88%, var(--card-surface-strong) 12%);
+    --pill-border: color-mix(in srgb, var(--card-border) 64%, var(--theme-accent-success-alpha) 36%);
+    --pill-text: #7cffbe;
+}
+
+body[data-theme="dark"] .pill.class-occupancy-medium {
+    --pill-background: color-mix(in srgb, var(--theme-accent-warning-alpha) 88%, var(--card-surface-strong) 12%);
+    --pill-border: color-mix(in srgb, var(--card-border) 64%, var(--theme-accent-warning-alpha) 36%);
+    --pill-text: #ffd36f;
 }
 
 body[data-theme="dark"] .pill.class-occupancy-closed {
-    --pill-surface: color-mix(in srgb, var(--theme-surface-inverse) 80%, var(--theme-surface-strong) 20%);
-    --pill-border: color-mix(in srgb, var(--theme-border-strong) 80%, rgba(255, 255, 255, 0.08) 20%);
-    --pill-ink: var(--theme-text-primary);
+    --pill-background: color-mix(in srgb, var(--theme-surface-inverse) 20%, var(--card-surface-strong) 80%);
+    --pill-border: color-mix(in srgb, var(--card-border) 72%, rgba(255, 255, 255, 0.18) 28%);
+    --pill-text: var(--theme-text-primary);
 }

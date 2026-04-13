@@ -49,6 +49,7 @@ Components:
 
 1. aparencia e composicao de hero, card, tabela, pill, action e state
 2. regras visuais reutilizaveis entre varias telas
+3. variantes oficiais de hero e card que ajustam o host por semantica
 
 CSS da tela:
 
@@ -76,3 +77,5 @@ Se a resposta for:
 1. prefira classes locais da pagina para excecoes
 2. evite aumentar especificidade nas camadas globais
 3. use as camadas globais como baseline, nao como lugar de microajuste local
+4. antes de repintar `hero`, `card` ou `table-card` em CSS local, verifique se o caso deve virar variante oficial
+5. se uma variante oficial ja estiver declarada no template, o CSS local nao deve duplicar `background`, `border` ou `box-shadow` estruturais do host

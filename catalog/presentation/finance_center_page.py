@@ -5,7 +5,14 @@ POR QUE ELE EXISTE:
 - preserva o contrato publico da pagina enquanto a Onda 4 separa tradicional, IA e hibrido.
 """
 
+from collections import Counter
+
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
+from communications.application.message_templates import build_operational_message_body
+from django.urls import reverse
+from django.utils import timezone
+from shared_support.page_payloads import build_page_context, build_page_hero
+from shared_support.whatsapp_links import build_whatsapp_message_href
 
 from .finance_ai_page import build_follow_up_analytics_board
 from .finance_hybrid_page import build_finance_hero, build_finance_operational_focus
@@ -67,11 +74,13 @@ def build_finance_center_page(
 
     return build_catalog_page_payload(
         context={
-            'page_key': 'finance-center',
-            'title': 'Financeiro',
-            'subtitle': 'Receita, carteira e sinais operacionais em leitura guiada.',
-            'mode': 'management' if can_manage_finance else 'read-only',
-            'role_slug': current_role_slug,
+            **build_page_context(
+                page_key='finance-center',
+                title='Financeiro',
+                subtitle='Receita, carteira e sinais operacionais em leitura guiada.',
+                mode='management' if can_manage_finance else 'read-only',
+                role_slug=current_role_slug,
+            ),
         },
         data={
             'hero': hero,

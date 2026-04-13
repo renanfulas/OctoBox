@@ -36,7 +36,7 @@ body {
     display: grid;
     place-items: center;
     padding: 24px;
-    font-family: "Aptos", "Segoe UI Variable Text", "Trebuchet MS", sans-serif;
+    font-family: var(--font-body);
     color: #e2e8f0;
     background:
         radial-gradient(circle at top right, rgba(184, 92, 56, 0.28), transparent 20%),
@@ -84,7 +84,7 @@ body {
     font-size: clamp(2.4rem, 4vw, 4rem);
     line-height: 0.95;
     letter-spacing: -0.05em;
-    font-family: "Rockwell", "Aptos Display", serif;
+    font-family: var(--font-display);
 }
 
 .story p {
@@ -175,7 +175,7 @@ body {
     margin: 0 0 10px;
     font-size: 2rem;
     letter-spacing: -0.03em;
-    font-family: "Rockwell", "Aptos Display", serif;
+    font-family: var(--font-display);
 }
 
 .subtitle {

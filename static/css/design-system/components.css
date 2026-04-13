@@ -15,8 +15,10 @@ PONTOS CRITICOS:
 */
 
 @import url("./components/hero.css");
+@import url("./components/hero-variants.css");
 @import url("./components/layout-blocks.css");
 @import url("./components/cards.css");
+@import url("./components/card-variants.css");
 @import url("./components/tables.css");
 @import url("./components/pills.css");
 @import url("./components/actions.css");
