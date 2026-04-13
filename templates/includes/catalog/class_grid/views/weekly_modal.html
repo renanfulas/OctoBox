@@ -14,6 +14,9 @@ POR QUE ELE EXISTE:
             <section class="weekly-calendar-section{% if forloop.first %} weekly-calendar-section--expanded{% else %} weekly-calendar-section--preview{% endif %}" data-panel="class-grid-weekly-modal-section">
                 <div class="row-between-md weekly-calendar-header">
                     <div>
+                        {% if forloop.first %}
+                        <p class="eyebrow">Calendário das próximas duas semanas</p>
+                        {% endif %}
                         <p class="eyebrow" id="class-weekly-modal-title">Grade Semanal</p>
                         <h2 class="section-title-sm">{{ week.label }}</h2>
                     </div>

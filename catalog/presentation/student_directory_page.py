@@ -9,7 +9,7 @@ POR QUE ELE EXISTE:
 from access.navigation_contracts import get_shell_route_url
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from django.urls import reverse
-from shared_support.page_payloads import build_page_hero
+from shared_support.page_payloads import build_page_context, build_page_hero
 
 from .shared import build_catalog_assets, build_catalog_page_payload
 
@@ -19,7 +19,7 @@ def build_student_directory_page(*, student_count, students, student_filter_form
     can_open_student_admin = current_role_slug in (ROLE_OWNER, ROLE_DEV)
     hero_actions = [
         {'label': 'Ver base', 'href': '#tab-students-directory', 'kind': 'primary', 'data_action': 'open-tab-students-directory'},
-        {'label': 'Abrir entradas', 'href': get_shell_route_url('intake', fragment='intake-queue-board'), 'kind': 'secondary'},
+        {'label': 'Abrir intake', 'href': get_shell_route_url('intake', fragment='intake-queue-board'), 'kind': 'secondary', 'data_action': 'open-student-intake-center'},
     ]
 
     if can_manage_students:
@@ -42,11 +42,13 @@ def build_student_directory_page(*, student_count, students, student_filter_form
 
     return build_catalog_page_payload(
         context={
-            'page_key': 'student-directory',
-            'title': 'Alunos',
-            'subtitle': 'Triagem, contexto e proxima acao com leitura limpa.',
-            'mode': 'management' if can_manage_students else 'read-only',
-            'role_slug': current_role_slug,
+            **build_page_context(
+                page_key='student-directory',
+                title='Alunos',
+                subtitle='Triagem, contexto e proxima acao com leitura limpa.',
+                mode='management' if can_manage_students else 'read-only',
+                role_slug=current_role_slug,
+            ),
         },
         data={
             'hero': hero,

@@ -155,17 +155,24 @@ def _build_operation_workspace_hero(page_key, snapshot):
 
 def _build_operation_workspace_reading_panel(page_key, snapshot):
     owner_decision_entry_context = snapshot.get('owner_decision_entry_context') or {}
+    owner_priority_context = snapshot.get('owner_priority_context') or {}
     manager_priority_context = snapshot.get('manager_priority_context') or {}
     manager_decision_entry_context = snapshot.get('manager_decision_entry_context') or {}
     coach_decision_entry_context = snapshot.get('coach_decision_entry_context') or {}
     reception_decision_entry_context = snapshot.get('reception_decision_entry_context') or {}
 
+    def _resolve_primary_href(items, fallback):
+        for item in items or []:
+            if item.get('is_clickable', True):
+                return item.get('href') or fallback
+        return ''
+
     panel_map = {
         'operations-owner': build_page_reading_panel(
             items=snapshot.get('owner_operational_focus'),
             primary_href=resolve_primary_href(snapshot.get('owner_operational_focus'), owner_decision_entry_context.get('entry_href')),
-            pill_label='Agora',
-            pill_class='accent',
+            pill_label=owner_priority_context.get('pill_label'),
+            pill_class=owner_priority_context.get('pill_class'),
             class_name='owner-command-panel',
             panel_id='owner-command-lane',
         ),

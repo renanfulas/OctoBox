@@ -130,12 +130,15 @@ def _build_dashboard_priority_context(*, metrics, pending_intakes_count, today_s
             'reason': 'Existe demanda comercial esperando resposta e ela esfria mais rapido do que o restante.',
             'lead_order': ['intakes', 'overdue', 'revenue', 'occupancy', 'attendance', 'active'],
         }
-    if today_schedule_occupancy_percent >= 95 or metrics['sessions_today'] > 0:
+    # Ter aulas no dia e o estado normal do box. A agenda so deve roubar a
+    # dianteira da receita quando existe pressao operacional de ocupacao
+    # suficiente para virar coordenacao urgente.
+    if metrics['sessions_today'] > 0 and today_schedule_occupancy_percent >= 85:
         return {
             'dominant_key': 'occupancy',
             'label': 'session-pressure',
             'reason': 'A agenda do dia virou o primeiro ponto de coordenacao operacional.',
-            'lead_order': ['occupancy', 'overdue', 'revenue', 'intakes', 'attendance', 'active'],
+            'lead_order': ['occupancy', 'revenue', 'overdue', 'intakes', 'attendance', 'active'],
         }
     return {
         'dominant_key': 'revenue',
@@ -247,6 +250,7 @@ def _build_dashboard_metric_cards_legacy(metrics, *, pending_intakes_count, toda
 
 
 def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, today_schedule_occupancy_percent, actionable_payment_alerts_count, role_slug=''):
+    finance_href = _build_dashboard_finance_href(role_slug)
     occupancy_signal_tone = 'good' if today_schedule_occupancy_percent >= 65 else 'neutral'
     occupancy_signal_value = 'Agenda viva' if today_schedule_occupancy_percent >= 65 else 'Dia leve'
     if today_schedule_occupancy_percent >= 95:
@@ -371,6 +375,9 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
             'status_hint': 'clean',
         },
     }
+
+    if metrics['overdue_payments'] > 0:
+        cards['overdue']['href'] = finance_href
 
     return [cards[key] for key in priority_context['lead_order']], priority_context
 

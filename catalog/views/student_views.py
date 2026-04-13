@@ -547,19 +547,22 @@ class StudentQuickUpdateView(StudentQuickBaseView):
             current_lock = get_student_lock_status(self.object.id)
             if not current_lock or current_lock.get('user_id') != self.request.user.id:
                 if not current_lock:
+                    lock_result = acquire_student_lock(self.object.id, self.request.user, role_slug)
+                    if not lock_result.acquired:
+                        messages.error(
+                            self.request,
+                            'A edicao desta ficha nao esta reservada para voce agora. Entre em modo de edicao novamente antes de salvar.'
+                        )
+                        return redirect(_append_fragment(reverse('student-quick-update', args=[self.object.id]), STUDENT_FORM_ESSENTIAL_FRAGMENT))
+                else:
+                    holder = current_lock
                     messages.error(
                         self.request,
-                        'A edicao desta ficha nao esta reservada para voce agora. Entre em modo de edicao novamente antes de salvar.'
+                        f"{holder.get('user_display', 'Outro usuário')} ({holder.get('role_label', '')}) "
+                        f"assumiu a edição deste aluno enquanto você preenchia. "
+                        f"Suas alterações não foram salvas. Fale com ele para coordenar."
                     )
                     return redirect(_append_fragment(reverse('student-quick-update', args=[self.object.id]), STUDENT_FORM_ESSENTIAL_FRAGMENT))
-                holder = current_lock
-                messages.error(
-                    self.request,
-                    f"{holder.get('user_display', 'Outro usuário')} ({holder.get('role_label', '')}) "
-                    f"assumiu a edição deste aluno enquanto você preenchia. "
-                    f"Suas alterações não foram salvas. Fale com ele para coordenar."
-                )
-                return redirect(_append_fragment(reverse('student-quick-update', args=[self.object.id]), STUDENT_FORM_ESSENTIAL_FRAGMENT))
 
         current_profile_version = build_profile_version(self.object)
         if request_profile_version and current_profile_version and request_profile_version != current_profile_version:
@@ -984,9 +987,13 @@ class StudentEnrollmentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
     @idempotent_action
     def post(self, request, student_id, *args, **kwargs):
         student = get_object_or_404(Student, pk=student_id)
+        expects_json = _expects_json_response(request)
         form = EnrollmentManagementForm(request.POST)
         if not form.is_valid():
-            messages.error(request, 'A acao de matricula nao foi aplicada. Revise os campos enviados.')
+            error_message = 'A acao de matricula nao foi aplicada. Revise os campos enviados.'
+            if expects_json:
+                return _student_financial_json_error(message=error_message, status=400)
+            messages.error(request, error_message)
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
         from django.db import transaction, DatabaseError
@@ -998,12 +1005,18 @@ class StudentEnrollmentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
                     student=student
                 )
         except DatabaseError:
-            messages.error(request, 'Esta matricula está bloqueada para alteracao no momento (outra operacao em curso).')
+            error_message = 'Esta matricula está bloqueada para alteracao no momento (outra operacao em curso).'
+            if expects_json:
+                return _student_financial_json_error(message=error_message, status=409)
+            messages.error(request, error_message)
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
         if form.cleaned_data['action'] == 'cancel-enrollment' and enrollment.status != 'active':
-            messages.error(request, 'Esta matricula já se encontra inativa ou cancelada.')
+            error_message = 'Esta matricula já se encontra inativa ou cancelada.'
+            if expects_json:
+                return _student_financial_json_error(message=error_message, status=400)
+            messages.error(request, error_message)
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
-        updated_enrollment = handle_student_enrollment_action(
+        handle_student_enrollment_action(
             actor=request.user,
             student=student,
             enrollment=enrollment,
@@ -1012,6 +1025,20 @@ class StudentEnrollmentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
             reason=form.cleaned_data['reason'],
         )
 
+        action_success_messages = {
+            'cancel-enrollment': 'Matricula cancelada com sucesso.',
+            'reactivate-enrollment': 'Matricula reativada com sucesso.',
+        }
+        success_message = action_success_messages.get(form.cleaned_data['action'], 'Acao de matricula concluida com sucesso.')
+
+        if expects_json:
+            return _student_financial_json_response(
+                request=request,
+                student=student,
+                message=success_message,
+            )
+
+        messages.success(request, success_message)
         return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
 

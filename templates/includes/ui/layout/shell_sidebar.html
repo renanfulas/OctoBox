@@ -21,10 +21,11 @@ PONTOS CRITICOS:
     <div class="sidebar-body">
         <div class="sidebar-block sidebar-meta">
             <strong class="sidebar-user-name">{{ user.get_full_name|default:user.username }}</strong>
+            <span class="sidebar-role">{{ current_role.label|default:"Sem papel definido" }}</span>
         </div>
         <nav class="sidebar-nav" aria-label="Navegacao principal">
             {% for item in sidebar_navigation %}
-            <a class="nav-link{% if item.is_active %} is-active{% endif %}" data-nav-key="{{ item.nav_key }}" href="{{ item.href }}" {% if item.is_active %}aria-current="page"{% endif %}>
+            <a class="nav-link{% if item.is_active %} is-active{% endif %}" data-nav-key="{{ item.nav_key }}" href="{{ item.href }}"{% if item.is_active %} aria-current="page"{% endif %}>
                 <span class="nav-icon" aria-hidden="true">{{ item.icon|safe }}</span>
                 <span class="nav-label">{{ item.label }}</span>
             </a>

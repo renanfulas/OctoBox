@@ -168,6 +168,38 @@ POR QUE ELE EXISTE:
     font-size: 0.92rem;
     font-weight: 800;
     flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    color: var(--theme-text-primary);
+    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 82%, transparent);
+    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
+    background: color-mix(in srgb, var(--theme-surface-glass-strong) 88%, transparent);
+}
+
+.avatar-orange.student-avatar-circle {
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 26%, var(--theme-surface-glass-strong) 74%);
+}
+
+.avatar-blue.student-avatar-circle {
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 24%, var(--theme-surface-glass-strong) 76%);
+}
+
+.avatar-purple.student-avatar-circle {
+    background: color-mix(in srgb, var(--theme-accent-premium-alpha) 24%, var(--theme-surface-glass-strong) 76%);
+}
+
+.avatar-teal.student-avatar-circle {
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 22%, var(--theme-surface-glass-strong) 78%);
+}
+
+.avatar-pink.student-avatar-circle {
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 22%, var(--theme-surface-glass-strong) 78%);
+}
+
+.avatar-indigo.student-avatar-circle {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-primary-alpha) 20%, transparent), color-mix(in srgb, var(--theme-accent-premium-alpha) 18%, transparent)), color-mix(in srgb, var(--theme-surface-glass-strong) 80%, transparent);
 }
 
 .student-name {
@@ -263,6 +295,20 @@ POR QUE ELE EXISTE:
 
 .student-due-date {
     color: color-mix(in srgb, var(--muted) 90%, var(--ink) 10%);
+}
+
+body[data-theme="dark"] .student-data-panel th {
+    color: color-mix(in srgb, var(--theme-text-muted) 88%, white 12%);
+}
+
+body[data-theme="dark"] .student-name,
+body[data-theme="dark"] .student-plan-name {
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .student-email,
+body[data-theme="dark"] .student-due-date {
+    color: var(--theme-text-secondary);
 }
 
 .student-directory-footer {

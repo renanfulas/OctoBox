@@ -24,7 +24,7 @@ from auditing.models import AuditEvent
 from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
 from onboarding.models import StudentIntake
 from operations.models import Attendance, BehaviorNote, ClassSession
-from operations.queries import build_reception_workspace_snapshot
+from operations.queries import build_owner_workspace_snapshot, build_reception_workspace_snapshot
 from students.models import Student
 
 
@@ -61,12 +61,12 @@ class OperationWorkspaceTests(TestCase):
             status=PaymentStatus.PENDING,
         )
 
-    def test_role_operations_redirects_manager_to_manager_area(self):
+    def test_role_operations_redirects_manager_to_dashboard_when_workspace_disabled(self):
         self.client.force_login(self.manager)
 
         response = self.client.get(reverse('role-operations'))
 
-        self.assertRedirects(response, reverse('manager-workspace'))
+        self.assertRedirects(response, reverse('dashboard'))
 
     def test_role_operations_redirects_dev_to_dev_area(self):
         self.client.force_login(self.dev)
@@ -87,7 +87,7 @@ class OperationWorkspaceTests(TestCase):
 
         response = self.client.get(reverse('manager-workspace'))
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
 
     def test_manager_cannot_access_coach_area(self):
         self.client.force_login(self.manager)
@@ -225,12 +225,26 @@ class OperationWorkspaceTests(TestCase):
 
         self.assertNotContains(response, 'href="/financeiro/"')
 
+    def test_owner_operational_focus_items_with_zero_count_are_non_clickable(self):
+        snapshot = build_owner_workspace_snapshot(today=timezone.localdate())
+
+        zero_count_items = [item for item in snapshot['owner_operational_focus'] if item['count'] == 0]
+
+        self.assertTrue(zero_count_items)
+        for item in zero_count_items:
+            self.assertFalse(item['is_clickable'])
+
+    def test_owner_workspace_snapshot_exposes_owner_upcoming_sessions_contract(self):
+        snapshot = build_owner_workspace_snapshot(today=timezone.localdate())
+
+        self.assertIn('owner_upcoming_sessions', snapshot)
+        self.assertIn('owner_upcoming_sessions_total_label', snapshot)
+        self.assertTrue(snapshot['owner_upcoming_sessions_total_label'].endswith('aula(s)'))
+
     def test_sidebar_keeps_my_operation_immediately_after_dashboard_for_main_roles(self):
         scenarios = [
             (self.owner, 'owner-workspace'),
-            (self.manager, 'manager-workspace'),
             (self.coach, 'coach-workspace'),
-            (self.reception, 'reception-workspace'),
         ]
 
         for user, route_name in scenarios:
@@ -243,10 +257,19 @@ class OperationWorkspaceTests(TestCase):
                 self.assertIn('/operacao/', hrefs)
                 self.assertLess(hrefs.index('/dashboard/'), hrefs.index('/operacao/'))
 
+    def test_reception_sidebar_prioritizes_operation_without_dashboard_link(self):
+        self.client.force_login(self.reception)
+
+        response = self.client.get(reverse('reception-workspace'))
+        hrefs = [item['href'] for item in response.context['sidebar_navigation']]
+
+        self.assertNotIn('/dashboard/', hrefs)
+        self.assertIn('/operacao/', hrefs)
+        self.assertEqual(hrefs[0], '/operacao/')
+
     def test_sidebar_positions_entries_between_finance_and_class_grid_when_visible(self):
         scenarios = [
             (self.owner, 'owner-workspace'),
-            (self.manager, 'manager-workspace'),
         ]
 
         for user, route_name in scenarios:
@@ -260,6 +283,19 @@ class OperationWorkspaceTests(TestCase):
                 self.assertIn('/grade-aulas/', hrefs)
                 self.assertLess(hrefs.index('/financeiro/'), hrefs.index('/entradas/'))
                 self.assertLess(hrefs.index('/entradas/'), hrefs.index('/grade-aulas/'))
+
+    @override_settings(OPERATIONS_MANAGER_WORKSPACE_ENABLED=True)
+    def test_manager_sidebar_positions_entries_between_finance_and_class_grid_when_visible(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.get(reverse('manager-workspace'))
+        hrefs = [item['href'] for item in response.context['sidebar_navigation']]
+
+        self.assertIn('/financeiro/', hrefs)
+        self.assertIn('/entradas/', hrefs)
+        self.assertIn('/grade-aulas/', hrefs)
+        self.assertLess(hrefs.index('/financeiro/'), hrefs.index('/entradas/'))
+        self.assertLess(hrefs.index('/entradas/'), hrefs.index('/grade-aulas/'))
 
     def test_reception_topbar_finance_chip_points_to_reception_queue(self):
         self.client.force_login(self.reception)
@@ -331,6 +367,7 @@ class OperationWorkspaceTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+    @override_settings(OPERATIONS_MANAGER_WORKSPACE_ENABLED=True)
     def test_manager_can_link_payment_to_active_enrollment(self):
         self.client.force_login(self.manager)
 
@@ -370,6 +407,7 @@ class OperationWorkspaceTests(TestCase):
         self.assertNotContains(response, 'Guias de execucao')
         self.assertNotContains(response, 'Fronteiras do papel')
 
+    @override_settings(OPERATIONS_MANAGER_WORKSPACE_ENABLED=True)
     def test_manager_sidebar_hides_coach_links(self):
         self.client.force_login(self.manager)
 
@@ -382,6 +420,7 @@ class OperationWorkspaceTests(TestCase):
         self.assertContains(response, 'Pagamentos')
         self.assertNotContains(response, 'Ocorrências')
 
+    @override_settings(OPERATIONS_MANAGER_WORKSPACE_ENABLED=True)
     def test_manager_workspace_keeps_single_enrollment_link_board(self):
         self.client.force_login(self.manager)
 
@@ -390,15 +429,16 @@ class OperationWorkspaceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'manager-scene')
         self.assertContains(response, 'id="manager-enrollment-link-board"', count=1)
-        self.assertContains(response, 'Estrutura antes de leitura financeira', count=1)
+        self.assertContains(response, 'Cobrancas ainda sem matricula', count=1)
 
+    @override_settings(OPERATIONS_MANAGER_WORKSPACE_ENABLED=True)
     def test_manager_workspace_exposes_priority_surface_and_metric_anchors(self):
         self.client.force_login(self.manager)
 
         response = self.client.get(reverse('manager-workspace'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'data-manager-priority="links"')
+        self.assertContains(response, 'data-manager-priority=')
         self.assertContains(response, 'href="#manager-link-board"')
         self.assertContains(response, 'href="#manager-enrollment-link-board"')
         self.assertContains(response, 'href="#manager-finance-board"')
@@ -429,7 +469,7 @@ class OperationWorkspaceTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Caixa vencido: R$ 299,90')
-        self.assertContains(response, 'Há cobrança atrasada pedindo contato agora.')
+        self.assertContains(response, 'Ha cobranca atrasada pedindo contato agora.')
 
     def test_owner_workspace_exposes_executive_workspace_and_priority(self):
         self.client.force_login(self.owner)
@@ -451,3 +491,6 @@ class OperationWorkspaceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Leitura técnica controlada')
         self.assertContains(response, 'Eventos recentes de auditoria')
+
+
+

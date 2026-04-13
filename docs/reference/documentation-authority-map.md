@@ -168,7 +168,9 @@ Exemplos fortes:
 
 1. [reading-guide.md](reading-guide.md)
 2. [front-end-ownership-map.md](front-end-ownership-map.md)
-3. [functional-circuits-matrix.md](functional-circuits-matrix.md)
+3. [front-end-city-map.md](front-end-city-map.md)
+4. [front-end-card-architecture.md](front-end-card-architecture.md)
+5. [functional-circuits-matrix.md](functional-circuits-matrix.md)
 
 ### 5. Rollout
 

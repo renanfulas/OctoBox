@@ -797,6 +797,7 @@ def build_owner_workspace_snapshot(*, today):
     communications_metrics = build_communications_headline_metrics(today=today)
     overdue_payments = get_overdue_payments_queryset(Payment.objects.all(), today=today)
     overdue_amount = sum_overdue_amount(Payment.objects.all(), today=today)
+    classes_today = ClassSession.objects.filter(scheduled_at__date=today).count()
     current_time = timezone.localtime()
     owner_session_objects = list(
         ClassSession.objects.filter(scheduled_at__date=today)
@@ -880,6 +881,7 @@ def build_owner_workspace_snapshot(*, today):
     return {
         'snapshot_version': snapshot_version,
         'headline_metrics': headline_metrics,
+        'classes_today': classes_today,
         'owner_priority_surface': (owner_operational_focus[0] if owner_operational_focus else {}).get('key', 'structure'),
         'overdue_amount_label': f"R$ {overdue_amount:.2f}".replace('.', ','),
         'owner_upcoming_sessions': owner_upcoming_sessions,

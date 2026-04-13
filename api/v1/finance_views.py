@@ -2,15 +2,84 @@
 API views for the Finance module.
 """
 import json
-from django.db import transaction
-from django.http import JsonResponse
-from django.views import View
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.utils import timezone
 from datetime import timedelta
 
+from django.db import transaction
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+from django.utils import timezone
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+from catalog.forms import EnrollmentManagementForm, PaymentManagementForm
+from catalog.presentation.student_financial_fragments import render_student_financial_fragments
+from catalog.student_queries import build_student_financial_snapshot
 from students.models import Student
-from finance.models import Enrollment, Payment, PaymentStatus, EnrollmentStatus
+from finance.models import PaymentStatus, EnrollmentStatus
+
+
+def _build_payment_management_form(student):
+    latest_payment = student.payments.order_by('-due_date', '-created_at').first()
+    if latest_payment is None:
+        return PaymentManagementForm(
+            initial={
+                'amount': '',
+                'due_date': timezone.localdate().strftime('%d/%m/%Y'),
+            }
+        )
+
+    return PaymentManagementForm(
+        instance=latest_payment,
+        initial={
+            'payment_id': latest_payment.id,
+            'amount': latest_payment.amount,
+            'due_date': latest_payment.due_date,
+            'method': latest_payment.method,
+            'reference': latest_payment.reference,
+            'notes': latest_payment.notes,
+        },
+    )
+
+
+def _build_enrollment_management_form(student):
+    latest_enrollment = student.enrollments.order_by('-start_date', '-created_at').first()
+    if latest_enrollment is None:
+        return None
+
+    return EnrollmentManagementForm(
+        initial={
+            'enrollment_id': latest_enrollment.id,
+            'action_date': timezone.localdate(),
+        }
+    )
+
+
+def _build_financial_fragment_page(student):
+    financial_overview = build_student_financial_snapshot(student)
+    return {
+        'data': {
+            'student_object': student,
+            'financial_overview': financial_overview,
+            'payment_management_form': _build_payment_management_form(student),
+            'enrollment_management_form': _build_enrollment_management_form(student),
+        }
+    }
+
+
+def _render_financial_fragments(request, student):
+    fragments = render_student_financial_fragments(student, request=request)
+    fragments['ledger'] = (
+        '<div class="student-financial-ledger">'
+        f"{fragments.get('ledger', '')}"
+        '</div>'
+    )
+    if not fragments.get('management'):
+        fragments['management'] = (
+            '<div id="student-payment-management-root">'
+            f"{fragments.get('checkout', '')}"
+            '</div>'
+        )
+    return fragments
 
 class StudentFreezeView(LoginRequiredMixin, View):
     """
@@ -42,7 +111,8 @@ class StudentFreezeView(LoginRequiredMixin, View):
 
                 return JsonResponse({
                     'status': 'success',
-                    'message': f'Aluno {student.full_name} congelado por {days} dias com sucesso.'
+                    'message': f'Aluno {student.full_name} congelado por {days} dias com sucesso.',
+                    'fragments': _render_financial_fragments(request, student),
                 })
 
         except Student.DoesNotExist:

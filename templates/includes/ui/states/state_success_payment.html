@@ -1,12 +1,14 @@
-<div class="notice-panel notice-panel--success state-payment-success">
+<div class="notice-panel notice-panel--success state-payment-success{% if compact %} state-payment-success--compact{% endif %}">
     <div class="state-payment-success-head">
-        <div class="state-payment-success-icon" aria-hidden="true">OK</div>
+        <div class="state-payment-success-icon" aria-hidden="true">{% if icon_label %}{{ icon_label }}{% else %}OK{% endif %}</div>
         <div class="state-payment-success-copy">
-            <h2 class="state-payment-success-title">Pagamento confirmado</h2>
-            <p class="state-payment-success-text">O pagamento foi confirmado com sucesso. O aluno ja esta liberado para treinar com tudo.</p>
+            {% if title_tag %}<{{ title_tag }} class="state-payment-success-title">{% else %}<h2 class="state-payment-success-title">{% endif %}{% if title %}{{ title }}{% else %}Pagamento confirmado{% endif %}{% if title_tag %}</{{ title_tag }}>{% else %}</h2>{% endif %}
+            <p class="state-payment-success-text">{% if text %}{{ text }}{% else %}{% if text_prefix %}{{ text_prefix }}{% endif %}{% if text_value %}{{ text_value }}{% else %}O pagamento foi confirmado com sucesso. O aluno ja esta liberado para treinar com tudo.{% endif %}{% if text_suffix %}{{ text_suffix }}{% endif %}{% endif %}</p>
         </div>
     </div>
+    {% if action_href %}
     <div class="state-payment-success-actions">
-        <a class="button secondary" href="">Ver ficha atualizada</a>
+        <a class="button secondary" href="{{ action_href }}">{% if action_label %}{{ action_label }}{% else %}Ver ficha atualizada{% endif %}</a>
     </div>
+    {% endif %}
 </div>

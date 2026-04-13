@@ -14,7 +14,7 @@ PONTOS CRITICOS:
 
 from datetime import timedelta
 
-from django.db.models import Case, CharField, Exists, OuterRef, Q, Subquery, Value, When, Sum, Count, IntegerField, Max
+from django.db.models import Case, CharField, DecimalField, Exists, OuterRef, Q, Subquery, Value, When, Sum, Count, IntegerField, Max
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from operations.models import Attendance
@@ -353,7 +353,16 @@ def build_student_financial_snapshot(student):
 
     today = timezone.localdate()
     seven_days_from_now = today + timezone.timedelta(days=7)
-    open_payments_queryset = student.payments.filter(status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE])
+    all_payments_qs = student.payments.all()
+    open_payments_queryset = all_payments_qs.filter(status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE])
+    next_charge = open_payments_queryset.order_by('due_date', 'created_at').first()
+    recent_presence_total = Attendance.objects.filter(student=student, session__scheduled_at__date__gte=today - timedelta(days=30)).count()
+    recent_presence_attended = Attendance.objects.filter(
+        student=student,
+        session__scheduled_at__date__gte=today - timedelta(days=30),
+        status='attended',
+    ).count()
+    presenca_percentual_30d = round((recent_presence_attended / recent_presence_total) * 100) if recent_presence_total else 0
 
     proximos_vencimentos_count = 0
     payments_list = []
@@ -370,18 +379,41 @@ def build_student_financial_snapshot(student):
 
     payments_list.sort(key=lambda item: item.due_date, reverse=True)
 
+    if next_charge:
+        next_charge.days_overdue = max((today - next_charge.due_date).days, 0) if next_charge.due_date and next_charge.due_date < today else 0
+
+    payment_totals = all_payments_qs.aggregate(
+        total_recebido=Coalesce(Sum('amount', filter=Q(status=PaymentStatus.PAID)), 0, output_field=DecimalField(max_digits=10, decimal_places=2)),
+        total_pendente=Coalesce(Sum('amount', filter=Q(status=PaymentStatus.PENDING)), 0, output_field=DecimalField(max_digits=10, decimal_places=2)),
+        total_atrasado=Coalesce(Sum('amount', filter=Q(status=PaymentStatus.OVERDUE)), 0, output_field=DecimalField(max_digits=10, decimal_places=2)),
+        total_historico=Coalesce(Sum('amount'), 0, output_field=DecimalField(max_digits=10, decimal_places=2)),
+        transacoes_totais=Count('id'),
+        pagamentos_pendentes=Count('id', filter=Q(status=PaymentStatus.PENDING)),
+        pagamentos_atrasados=Count('id', filter=Q(status=PaymentStatus.OVERDUE)),
+    )
+
     return {
         'has_student': True,
         'summary': 'Aqui fica a leitura de plano, status comercial e ultimos movimentos financeiros do aluno.',
         'latest_enrollment': latest_enrollment,
         'enrollment_history': enrollments[:6],
         'payments': payments_list,
+        'next_charge': next_charge,
         'fidalgometro': compute_fidalgometro_score(student),
         'metrics': {
             'matriculas_ativas': enrollments.filter(status=EnrollmentStatus.ACTIVE).count(),
-            'pagamentos_pendentes': open_payments_queryset.filter(due_date__gte=today).count(),
-            'pagamentos_atrasados': open_payments_queryset.filter(due_date__lt=today).count(),
+            'pagamentos_pendentes': payment_totals['pagamentos_pendentes'],
+            'pagamentos_atrasados': payment_totals['pagamentos_atrasados'],
             'proximos_vencimentos_count': proximos_vencimentos_count,
+            'total_recebido': payment_totals['total_recebido'],
+            'total_pendente': payment_totals['total_pendente'],
+            'total_atrasado': payment_totals['total_atrasado'],
+            'total_historico': payment_totals['total_historico'],
+            'transacoes_totais': payment_totals['transacoes_totais'],
+            'proximo_vencimento': next_charge.due_date if next_charge else None,
+            'presenca_total_30d': recent_presence_total,
+            'presenca_atendida_30d': recent_presence_attended,
+            'presenca_percentual_30d': presenca_percentual_30d,
         },
     }
 

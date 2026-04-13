@@ -88,6 +88,9 @@ Linha do tempo deste primeiro ciclo:
 - contrato de identidade WhatsApp com blind index, backfill historico e constraint de unicidade
 - contrato de navegacao do shell estabilizado nas superficies centrais
 - fluxo visual de alunos e financeiro atualizado e protegido por testes de catalogo e financeiro
+- analitica de follow-up financeiro, leitura de fila de retencao e fundacao de churn ja vivem na superficie visual do financeiro
+- diretorio de alunos agora carrega atalhos operacionais por KPI, leitura de crescimento em 30 dias e quick panel expandido
+- superficies de owner, manager, recepcao e dev ja absorvem os contratos mais novos de shell compartilhado e page payload
 - workflow de CI para performance e integridade ja acompanha migrate, fixture loading e baseline de Postgres suportada
 - admin endurecido por caminho privado configuravel e gate centralizado por papel
 - throttle por escopo ativo para login, admin, writes, exports, dashboard, leituras pesadas e autocomplete
@@ -158,6 +161,10 @@ Se quiser entender a declaracao oficial de qual passa a ser o centro conceitual 
 Se quiser entender o novo CENTER arquitetural que separa nivel de acesso e nucleo interno, use [docs/architecture/center-layer.md](docs/architecture/center-layer.md).
 
 Se quiser entender a estrutura complementar de sinais, integracoes e expansao transversal do sistema, use [docs/architecture/signal-mesh.md](docs/architecture/signal-mesh.md).
+
+Se aparecer duvida sobre a pasta espelho `OctoBox/`, trate-a como legado isolado e use [docs/reference/octobox-mirror-legacy-status.md](docs/reference/octobox-mirror-legacy-status.md).
+
+Se aparecer duvida sobre `prompts/`, `prototypes/` ou materiais de apoio e arquivo, use [docs/reference/support-material-map.md](docs/reference/support-material-map.md).
 
 Se quiser entender como a arquitetura trata suportes temporarios de construcao sem confundi-los com a estrutura final, use [docs/architecture/scaffold-agents.md](docs/architecture/scaffold-agents.md).
 

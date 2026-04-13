@@ -19,6 +19,7 @@ from datetime import datetime
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -34,6 +35,7 @@ from students.models import Student
 
 class CatalogViewTests(TestCase):
     def setUp(self):
+        cache.clear()
         self.user = get_user_model().objects.create_superuser(
             username='catalog-owner',
             email='catalog-owner@example.com',
