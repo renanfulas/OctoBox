@@ -1,8 +1,7 @@
 <article
     class="history-entry finance-action-card finance-action-card-compact reception-payment-card"
     data-panel="reception-payment-card"
-    data-student-id="{{ item.student_id }}"
-    data-student-events-stream-url="{{ item.student_events_stream_url }}">
+    data-student-id="{{ item.student_id }}">
     {% url 'reception-payment-action' payment_id=item.payment_id as reception_payment_action_url %}
     {% url 'finance-communication-action' as finance_communication_action_url %}
     <div class="row-between history-header finance-action-head">
@@ -59,7 +58,14 @@
             <a class="button secondary" href="{{ item.student_href }}#student-financial-overview">Abrir ficha</a>
 
             {% if item.clean_phone %}
-                {% if current_role.slug|lower == 'recepcao' and item.is_reception_blocked %}
+                {% if current_role.slug|lower == 'recepcao' and item.is_manager_owned_follow_up %}
+                <div class="reception-payment-whatsapp-slot is-inline-hint" data-slot="reception-whatsapp">
+                    <span class="button secondary button-sm disabled reception-payment-whatsapp-button is-disabled" aria-disabled="true">
+                        Follow-up do manager
+                    </span>
+                    <small class="reception-payment-whatsapp-hint">{{ item.contact_owner_hint|default:'Primeiro toque ja feito. Escale para gerencia ou owner.' }}</small>
+                </div>
+                {% elif current_role.slug|lower == 'recepcao' and item.is_reception_blocked %}
                 <div class="reception-payment-whatsapp-slot is-inline-hint" data-slot="reception-whatsapp">
                     <span class="button secondary button-sm disabled reception-payment-whatsapp-button is-disabled" aria-disabled="true">
                         Zap bloqueado

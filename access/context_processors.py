@@ -148,15 +148,25 @@ def _build_shell_page_context(current_view_name, current_path, role, navigation,
 
 
 def _build_navigation(role_slug, current_view_name):
+    operation_roles = (ROLE_OWNER, ROLE_DEV, ROLE_RECEPTION, ROLE_COACH)
+    if getattr(settings, 'OPERATIONS_MANAGER_WORKSPACE_ENABLED', False):
+        operation_roles = (*operation_roles, ROLE_MANAGER)
+
     base_links = [
         {
             'nav_key': 'dashboard',
             'label': 'Dashboard',
             'href': reverse('dashboard'),
-            'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION, ROLE_COACH),
+            'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_COACH),
             'icon': 'DB',
         },
-        {'nav_key': 'operacao', 'label': 'Minha operacao', 'href': reverse('role-operations'), 'icon': 'OP'},
+        {
+            'nav_key': 'operacao',
+            'label': 'Minha operacao',
+            'href': reverse('role-operations'),
+            'roles': operation_roles,
+            'icon': 'OP',
+        },
         {'nav_key': 'alunos', 'label': 'Alunos', 'href': reverse('student-directory'), 'icon': 'AL'},
         {
             'nav_key': 'financeiro',

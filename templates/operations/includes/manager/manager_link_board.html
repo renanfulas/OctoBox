@@ -1,5 +1,6 @@
 <article class="table-card operation-table-card manager-secondary-card" id="manager-link-board" data-panel="manager-link-board">
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Contatos de WhatsApp sem vínculo" title="Conversas prontas para conexão" copy="Confira nome, resolva vínculo." pill_label=page.data.unlinked_whatsapp|length|add:" contato(s)" %}
+    {% with board=page.data.manager_board_content.links %}
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow=board.header.eyebrow title=board.header.title copy=board.header.copy pill_label=board.header.pill_label pill_class=board.header.pill_class %}
     <div class="operation-table-wrap">
         <table>
             <thead>
@@ -7,16 +8,17 @@
                     <th scope="col">Nome</th>
                     <th scope="col">Telefone</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Próximo passo</th>
+                    <th scope="col">Proxima acao</th>
                 </tr>
             </thead>
             <tbody>
                 {% for contact in page.data.unlinked_whatsapp %}
                 {% include "operations/includes/manager/manager_link_row.html" with contact=contact %}
                 {% empty %}
-                <tr><td colspan="4" class="table-empty-cell">{% include "includes/ui/states/state_empty.html" with compact=True eyebrow="WhatsApp sem vinculo" title="Nenhum contato pendente" copy="Nao ha conversa solta exigindo identificacao ou conexao com aluno agora." badge="Inbox organizado" badge_class="info" %}</td></tr>
+                <tr><td colspan="4" class="table-empty-cell">{% include "includes/ui/states/state_empty.html" with compact=True eyebrow=board.empty.eyebrow title=board.empty.title copy=board.empty.copy badge=board.empty.badge badge_class=board.empty.badge_class %}</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+    {% endwith %}
 </article>

@@ -198,7 +198,7 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
             primary_href=reception_decision_entry_context.get('entry_href'),
             pill_label='Atendimento vivo',
             pill_class='accent',
-            class_name='reception-focus-lane',
+            class_name='reception-focus-lane reception-command-panel',
             panel_id='reception-command-lane',
         ),
     }
@@ -219,6 +219,11 @@ def build_operation_workspace_page(*, page_key, title, subtitle, scope, snapshot
             **snapshot,
             'hero': _build_operation_workspace_hero(page_key, snapshot),
             'reading_panel': _build_operation_workspace_reading_panel(page_key, snapshot),
+        },
+        behavior={
+            'surface_key': page_key,
+            'scope': scope,
+            'snapshot_version': snapshot.get('snapshot_version', ''),
         },
         capabilities=capabilities or {},
         assets=build_page_assets(css=['css/design-system/operations.css']),

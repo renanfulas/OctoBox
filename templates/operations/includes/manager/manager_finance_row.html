@@ -1,7 +1,50 @@
-<tr data-student-id="{{ payment.student.id }}" data-student-events-stream-url="{% url 'student-event-stream' payment.student.id %}">
+<tr data-student-id="{{ payment.student.id }}" data-student-events-stream-url="{% url 'student-event-stream' payment.student.id %}" data-contact-subject-key="{{ payment.contact_subject_key|default:'' }}">
     <td>{{ payment.student.full_name }}</td>
     <td>{{ payment.due_date|date:"d/m/Y" }}</td>
     <td><span class="pill{% if payment.status == 'overdue' or payment.status == 'pending' %} warning{% else %} info{% endif %}">{{ payment.get_status_display }}</span></td>
     <td>R$ {{ payment.amount|floatformat:2 }}</td>
-    <td>{% if is_priority %}<span class="pill warning">Agir agora</span>{% else %}<span class="pill">Monitorar</span>{% endif %}</td>
+    <td>
+        <div class="manager-row-decision">
+            {% if payment.team_touch_label %}
+            <div class="manager-row-signals">
+                <span class="pill info manager-row-signal-pill">{{ payment.team_touch_label }}</span>
+            </div>
+            {% endif %}
+            {% with action=payment.decision_action %}
+            <a
+                class="button secondary button-sm manager-row-cta manager-row-cta--{{ action.tone|default:'preventive' }}"
+                href="{{ action.href|default:'#student-financial-overview' }}"
+                aria-label="{{ action.aria_label|default:'Abrir ficha financeira do aluno' }}"
+            >
+                {{ action.label|default:'Revisar cobranca' }}
+            </a>
+            <p class="manager-row-decision-note">{{ action.note|default:'Leia o vencimento e escolha a melhor abordagem antes do atraso crescer.' }}</p>
+            {% endwith %}
+            {% if payment.team_touch_note %}
+            <p class="manager-row-decision-note manager-row-decision-note--team">{{ payment.team_touch_note }}</p>
+            {% endif %}
+            {% if payment.whatsapp_action %}
+            <div class="manager-row-secondary-actions">
+                <form method="post" action="{% url 'finance-communication-action' %}" class="manager-row-decision-form" data-action="manager-contact-submit" data-contact-subject-key="{{ payment.contact_subject_key|default:'' }}" data-history-surface-label="Cobranca" data-history-subject-label="{{ payment.student.full_name }}" data-history-action-label="{{ payment.whatsapp_action.label|default:'Contato aberto' }}" data-history-channel-label="WhatsApp" target="_blank">
+                    {% csrf_token %}
+                    <input type="hidden" name="open_in_whatsapp" value="1">
+                    <input type="hidden" name="action_kind" value="{{ payment.whatsapp_action.action_kind }}">
+                    <input type="hidden" name="student_id" value="{{ payment.whatsapp_action.student_id }}">
+                    <input type="hidden" name="payment_id" value="{{ payment.whatsapp_action.payment_id }}">
+                    {% if payment.whatsapp_action.enrollment_id %}
+                    <input type="hidden" name="enrollment_id" value="{{ payment.whatsapp_action.enrollment_id }}">
+                    {% endif %}
+                    <button
+                        class="button secondary button-sm manager-row-cta manager-row-cta--whatsapp"
+                        type="submit"
+                        aria-label="{{ payment.whatsapp_action.aria_label }}"
+                        title="{{ payment.whatsapp_action.message_preview }}"
+                    >
+                        {{ payment.whatsapp_action.label }}
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </td>
 </tr>

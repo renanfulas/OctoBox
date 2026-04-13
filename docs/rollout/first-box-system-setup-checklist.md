@@ -39,6 +39,24 @@ Seguir esta ordem sem pular para refinamentos paralelos.
 
 Se um passo critico falhar, corrigir antes de seguir para o proximo.
 
+## Etapa 0. Validar a fronteira do runtime do box
+
+Antes de qualquer usuario entrar, confirmar a identidade do runtime do box piloto.
+
+Checklist:
+
+1. `BOX_RUNTIME_SLUG` definido no ambiente com nome estavel e legivel
+2. `CACHE_KEY_PREFIX` mantido no baseline oficial
+3. `/api/v1/health/` responde `status=ok`
+4. `/api/v1/health/` responde `runtime_slug` coerente com o box piloto
+5. `/api/v1/health/` responde `runtime_namespace` coerente com o prefixo esperado
+
+Regra pratica:
+
+1. o slug do runtime e a etiqueta da casa
+2. ele precisa existir antes da mudanca, nao depois do incidente
+3. se o runtime nao souber qual box e qual celula representa, o isolamento forte comeca torto
+
 ## Etapa 1. Validar acesso base
 
 Confirmar:

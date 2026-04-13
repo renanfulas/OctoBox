@@ -67,6 +67,11 @@ ARQUIVO: densidade e leitura dos boards do manager.
     padding-bottom: 9px;
 }
 
+.manager-priority-card tr.manager-row-is-optimistic-hidden,
+.manager-secondary-card tr.manager-row-is-optimistic-hidden {
+    display: none;
+}
+
 .manager-priority-card th,
 .manager-secondary-card th {
     font-size: 0.72rem;
@@ -75,6 +80,81 @@ ARQUIVO: densidade e leitura dos boards do manager.
 .manager-priority-card .pill,
 .manager-secondary-card .pill {
     padding: 5px 9px;
+}
+
+.manager-row-decision {
+    display: grid;
+    gap: 6px;
+    justify-items: start;
+}
+
+.manager-row-signals {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.manager-row-signal-pill {
+    padding: 4px 8px;
+}
+
+.manager-row-decision-form {
+    margin: 0;
+}
+
+.manager-row-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    max-width: 100%;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.manager-row-secondary-actions {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.manager-row-cta--urgent {
+    border-color: color-mix(in srgb, var(--danger) 26%, var(--card-border) 74%);
+    color: color-mix(in srgb, var(--danger) 88%, var(--ink) 12%);
+    background: color-mix(in srgb, var(--danger) 9%, var(--surface-strong) 91%);
+}
+
+.manager-row-cta--structural {
+    border-color: color-mix(in srgb, var(--brand) 24%, var(--card-border) 76%);
+    color: color-mix(in srgb, var(--brand) 90%, var(--ink) 10%);
+    background: color-mix(in srgb, var(--brand) 9%, var(--surface-strong) 91%);
+}
+
+.manager-row-cta--preventive {
+    border-color: color-mix(in srgb, var(--accent) 20%, var(--card-border) 80%);
+    color: color-mix(in srgb, var(--accent) 86%, var(--ink) 14%);
+    background: color-mix(in srgb, var(--accent) 8%, var(--surface-strong) 92%);
+}
+
+.manager-row-cta--whatsapp {
+    border-color: color-mix(in srgb, #25d366 30%, var(--card-border) 70%);
+    color: color-mix(in srgb, #0f7d42 88%, var(--ink) 12%);
+    background: color-mix(in srgb, #25d366 10%, var(--surface-strong) 90%);
+}
+
+.manager-row-decision-note {
+    margin: 0;
+    max-width: 24ch;
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    line-height: 1.35;
+}
+
+.manager-row-decision-note--team {
+    max-width: 28ch;
+    color: color-mix(in srgb, var(--brand) 60%, var(--text-muted) 40%);
 }
 
 .manager-priority-card .button,
@@ -143,6 +223,10 @@ ARQUIVO: densidade e leitura dos boards do manager.
     background: var(--danger);
 }
 
+[data-panel="manager-history-board"]::before {
+    background: var(--brand);
+}
+
 [data-panel="manager-intake-board"] {
     box-shadow: var(--shadow-lift);
 }
@@ -158,6 +242,67 @@ ARQUIVO: densidade e leitura dos boards do manager.
 
 [data-panel="manager-link-board"] {
     align-self: start;
+}
+
+.manager-history-card .operation-card-copy {
+    max-width: 34ch;
+}
+
+.manager-board-context-note {
+    margin: -2px 0 10px;
+    max-width: 52ch;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.manager-history-list {
+    display: grid;
+    gap: 10px;
+}
+
+.manager-history-item {
+    display: grid;
+    gap: 6px;
+    padding: 12px 13px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--card-border) 88%, transparent);
+    background: color-mix(in srgb, var(--surface-strong) 94%, transparent);
+}
+
+.manager-history-item--pending {
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--brand) 24%, var(--card-border) 76%);
+    background: color-mix(in srgb, var(--brand) 7%, var(--surface-strong) 93%);
+}
+
+.manager-history-item-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.manager-history-item-time {
+    color: var(--text-muted);
+    font-size: 0.76rem;
+}
+
+.manager-history-item-title {
+    color: var(--ink);
+    font-size: 0.94rem;
+    line-height: 1.35;
+}
+
+.manager-history-item-copy {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.manager-history-empty {
+    padding-top: 4px;
 }
 
 .manager-priority-card::after,
@@ -197,6 +342,56 @@ body[data-theme="dark"] .manager-secondary-card {
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.05),
         0 20px 38px rgba(0, 0, 0, 0.24);
+}
+
+body[data-theme="dark"] .manager-row-cta--urgent {
+    border-color: rgba(245, 110, 126, 0.28);
+    background: rgba(245, 110, 126, 0.1);
+    color: #ffd6dd;
+}
+
+body[data-theme="dark"] .manager-row-cta--structural {
+    border-color: rgba(110, 179, 255, 0.26);
+    background: rgba(110, 179, 255, 0.1);
+    color: #d7e9ff;
+}
+
+body[data-theme="dark"] .manager-row-cta--preventive {
+    border-color: rgba(117, 214, 188, 0.24);
+    background: rgba(117, 214, 188, 0.09);
+    color: #d9fff4;
+}
+
+body[data-theme="dark"] .manager-row-cta--whatsapp {
+    border-color: rgba(37, 211, 102, 0.34);
+    background: rgba(37, 211, 102, 0.12);
+    color: #d8ffe7;
+}
+
+body[data-theme="dark"] .manager-row-decision-note {
+    color: rgba(224, 232, 245, 0.78);
+}
+
+body[data-theme="dark"] .manager-row-decision-note--team {
+    color: rgba(176, 214, 255, 0.88);
+}
+
+body[data-theme="dark"] .manager-history-item {
+    border-color: rgba(110, 179, 255, 0.18);
+    background: rgba(11, 21, 37, 0.78);
+}
+
+body[data-theme="dark"] .manager-history-item-time,
+body[data-theme="dark"] .manager-history-item-copy {
+    color: rgba(224, 232, 245, 0.74);
+}
+
+body[data-theme="dark"] .manager-history-item-title {
+    color: #f7fbff;
+}
+
+body[data-theme="dark"] .manager-board-context-note {
+    color: rgba(224, 232, 245, 0.78);
 }
 
 @keyframes manager-live-pill-pulse {

@@ -29,6 +29,7 @@ from finance.models import Payment, PaymentStatus
 from integrations.whatsapp.contracts import WhatsAppInboundPollVote
 from integrations.whatsapp.services import process_poll_vote_webhook
 from integrations.stripe.services import create_checkout_session
+from shared_support.box_runtime import get_box_runtime_namespace, get_box_runtime_slug
 from students.models import Student
 
 
@@ -60,6 +61,8 @@ class ApiV1HealthView(View):
                 'version': 'v1',
                 'product': 'OctoBox Control',
                 'api_boundary': 'stable-entrypoint',
+                'runtime_slug': get_box_runtime_slug(),
+                'runtime_namespace': get_box_runtime_namespace(),
             }
         )
 

@@ -15,6 +15,16 @@ PONTOS CRITICOS:
 
 
 def build_operational_message_body(*, action_kind, first_name, payment_due_date=None, payment_amount=None, plan_name=None):
+    if action_kind == 'intake-first-touch':
+        return (
+            f'Oi, {first_name}. Vi seu interesse aqui no box e queria te ajudar a encontrar o melhor jeito de conhecer '
+            f'nossa rotina. Se fizer sentido, seguimos por aqui.'
+        )
+    if action_kind == 'intake-follow-up':
+        return (
+            f'Oi, {first_name}. Retomando nossa conversa sobre o box: se ainda fizer sentido para voce, eu consigo te '
+            f'ajudar por aqui a dar o proximo passo.'
+        )
     if action_kind == 'upcoming':
         return (
             f'Oi, {first_name}. Seu pagamento do box vence em '

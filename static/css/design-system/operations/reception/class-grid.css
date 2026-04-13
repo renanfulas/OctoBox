@@ -3,6 +3,13 @@ ARQUIVO: grade de aulas e leitura rápida da recepção.
 */
 
 .reception-grid-board {
+    --reception-board-surface-dark:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, transparent), transparent 32%),
+        linear-gradient(158deg, rgba(10, 19, 33, 0.98), rgba(8, 15, 26, 0.96) 60%, rgba(7, 13, 23, 0.94));
+    --reception-board-border-dark: color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, var(--theme-border-soft) 86%);
+    --reception-board-shadow-dark:
+        0 18px 32px rgba(0, 0, 0, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
     position: relative;
     overflow: hidden;
     background:
@@ -10,6 +17,17 @@ ARQUIVO: grade de aulas e leitura rápida da recepção.
         linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-panel) 96%, white), color-mix(in srgb, var(--theme-surface) 98%, white));
     border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, var(--theme-border-soft) 86%);
     box-shadow: 0 14px 28px rgba(7, 14, 24, 0.06);
+}
+
+.reception-grid-board .operation-card-title,
+.reception-class-session-card .operation-card-title {
+    color: var(--theme-text-primary);
+}
+
+.reception-grid-board .operation-card-copy,
+.reception-class-session-card .meta-text,
+.reception-class-session-card .meta-text-sm {
+    color: var(--theme-text-secondary);
 }
 
 .reception-grid-board::before {
@@ -46,6 +64,27 @@ ARQUIVO: grade de aulas e leitura rápida da recepção.
     box-shadow: inset 0 1px 0 color-mix(in srgb, white 16%, transparent);
 }
 
+.reception-grade-card .finance-alert-stat {
+    padding: 10px 11px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, var(--theme-border-soft) 82%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 10%, transparent), transparent 42%),
+        color-mix(in srgb, var(--theme-surface-panel) 92%, white 8%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.reception-grade-card .finance-alert-stat strong {
+    display: block;
+    margin-top: 4px;
+    color: var(--theme-text-primary);
+    line-height: 1.25;
+}
+
+.reception-grade-card .finance-alert-stat .operation-mini-label {
+    color: var(--theme-text-muted);
+}
+
 .reception-class-session-card {
     min-height: 100%;
     align-content: start;
@@ -58,6 +97,7 @@ ARQUIVO: grade de aulas e leitura rápida da recepção.
 
 .reception-class-session-time {
     margin: 0;
+    color: var(--theme-text-secondary);
 }
 
 .reception-class-session-notes {
@@ -91,4 +131,33 @@ body[data-theme="dark"] .reception-grid-board {
     box-shadow:
         0 16px 30px rgba(0, 0, 0, 0.18),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .reception-grid-board .operation-card-title,
+body[data-theme="dark"] .reception-class-session-card .operation-card-title {
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .reception-grid-board .operation-card-copy,
+body[data-theme="dark"] .reception-class-session-time,
+body[data-theme="dark"] .reception-class-session-card .meta-text {
+    color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .reception-grade-card .finance-alert-stat {
+    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, var(--theme-border-soft) 84%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent), transparent 42%),
+        linear-gradient(160deg, rgba(10, 18, 31, 0.9), rgba(8, 14, 24, 0.86));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 12px 24px rgba(2, 6, 23, 0.14);
+}
+
+body[data-theme="dark"] .reception-grade-card .finance-alert-stat strong {
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .reception-grade-card .finance-alert-stat .operation-mini-label {
+    color: color-mix(in srgb, var(--theme-text-muted) 88%, white 12%);
 }

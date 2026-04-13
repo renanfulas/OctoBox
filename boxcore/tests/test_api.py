@@ -13,6 +13,9 @@ PONTOS CRITICOS:
 - Essas rotas viram contrato para mobile e integracoes futuras.
 """
 
+import os
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.urls import reverse
 
@@ -38,3 +41,11 @@ class ApiFoundationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['status'], 'ok')
         self.assertEqual(response.json()['api_boundary'], 'stable-entrypoint')
+
+    def test_api_v1_health_exposes_runtime_boundary(self):
+        with patch.dict(os.environ, {'BOX_RUNTIME_SLUG': 'box-piloto-centro'}, clear=False):
+            response = self.client.get(reverse('api-v1-health'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['runtime_slug'], 'box-piloto-centro')
+        self.assertEqual(response.json()['runtime_namespace'], 'octobox:box-piloto-centro')

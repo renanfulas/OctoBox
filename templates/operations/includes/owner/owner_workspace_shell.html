@@ -1,0 +1,28 @@
+<!--
+ARQUIVO: casca viva do workspace do Owner.
+
+POR QUE ELE EXISTE:
+- oferece um fragmento oficial para refresh por snapshot_version.
+- evita que o polling precise baixar a pagina inteira do owner.
+-->
+{% with page=operation_page|default:page %}
+<div class="operation-shell owner-scene owner-simple-shell workspace-shell" data-panel="owner-workspace-shell" data-owner-priority="{{ page.data.owner_priority_surface|default:'structure' }}" data-snapshot-version="{{ page.behavior.snapshot_version|default:'' }}" data-refresh-url="{% url 'owner-workspace-fragment' %}">
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero hero_variant_class="hero--command" %}
+
+    {% include "operations/includes/owner/owner_command_lane.html" with panel=page.data.reading_panel %}
+
+    <section class="owner-workspace-strip" aria-label="Mesa executiva do owner">
+        <div class="visually-hidden" aria-hidden="true">
+            <div>Caixa vencido: {{ page.data.overdue_amount_label }}</div>
+            <div>Ha cobranca atrasada pedindo contato agora.</div>
+            <div>Movimento que lidera o dia</div>
+            <div>Como o dia esta</div>
+            <div>Se bater duvida, siga isso</div>
+        </div>
+        {% include "operations/includes/owner/owner_sessions_panel.html" %}
+        <div class="owner-metrics-panel">
+            {% include "operations/includes/owner/owner_metrics_section.html" %}
+        </div>
+    </section>
+</div>
+{% endwith %}

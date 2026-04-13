@@ -1,0 +1,23 @@
+<article class="table-card operation-table-card manager-secondary-card manager-history-card" id="manager-history-board" data-panel="manager-history-board">
+    {% with board=page.data.manager_board_content.history %}
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow=board.header.eyebrow title=board.header.title copy=board.header.copy pill_label=board.header.pill_label pill_class=board.header.pill_class %}
+    {% if page.data.manager_recent_history %}
+    <div class="manager-history-list" aria-label="Pegadas recentes da gerencia" data-role="manager-history-list">
+        {% for item in page.data.manager_recent_history %}
+        <article class="manager-history-item" data-subject-key="{{ item.subject_key|default:'' }}">
+            <div class="manager-history-item-head">
+                <span class="pill info">{{ item.surface_label }}</span>
+                <span class="manager-history-item-time">{{ item.timestamp_label }}</span>
+            </div>
+            <strong class="manager-history-item-title">{{ item.subject_label }}</strong>
+            <p class="manager-history-item-copy">{{ item.action_label }} via {{ item.channel_label }}.</p>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="manager-history-empty" data-role="manager-history-empty">
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow=board.empty.eyebrow title=board.empty.title copy=board.empty.copy badge=board.empty.badge badge_class=board.empty.badge_class %}
+    </div>
+    {% endif %}
+    {% endwith %}
+</article>

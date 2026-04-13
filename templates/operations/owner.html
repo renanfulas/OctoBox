@@ -2,7 +2,7 @@
 ARQUIVO: tela operacional do Owner.
 
 POR QUE ELE EXISTE:
-- Entrega uma visão executiva para o dono da academia.
+- entrega uma visao executiva para o dono da academia.
 
 O QUE ESTE ARQUIVO FAZ:
 1. Hero de comando: frase de acao + 3 stats compactos.
@@ -10,31 +10,16 @@ O QUE ESTE ARQUIVO FAZ:
 3. Pulso do box: 4 metricas-chave com status semantico.
 
 PONTOS CRITICOS:
-- Cada numero aparece exatamente 1 vez na tela.
-- Depende do contexto semanticamente enxuto montado em operation_page.
+- cada numero aparece exatamente 1 vez na tela.
+- depende do contexto semanticamente enxuto montado em operation_page.
 -->
 {% extends "layouts/base.html" %}
+{% load static %}
 
 {% block content %}
-{% with page=operation_page %}
-<div class="operation-shell owner-scene owner-simple-shell workspace-shell" data-owner-priority="{{ page.data.owner_priority_surface|default:'structure' }}">
-    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero hero_variant_class="hero--command" %}
+{% include "operations/includes/owner/owner_workspace_shell.html" with page=operation_page %}
+{% endblock %}
 
-    {% include "operations/includes/owner/owner_command_lane.html" with panel=page.data.reading_panel %}
-
-    <section class="owner-workspace-strip" aria-label="Mesa executiva do owner">
-        <div class="visually-hidden" aria-hidden="true">
-            <div>Caixa vencido: {{ page.data.overdue_amount_label }}</div>
-            <div>Há cobrança atrasada pedindo contato agora.</div>
-            <div>Movimento que lidera o dia</div>
-            <div>Como o dia esta</div>
-            <div>Se bater duvida, siga isso</div>
-        </div>
-        {% include "operations/includes/owner/owner_sessions_panel.html" %}
-        <div class="owner-metrics-panel">
-            {% include "operations/includes/owner/owner_metrics_section.html" %}
-        </div>
-    </section>
-</div>
-{% endwith %}
+{% block extra_scripts %}
+<script src="{% static 'js/pages/operations/owner-workspace.js' %}?v={{ static_asset_version }}"></script>
 {% endblock %}

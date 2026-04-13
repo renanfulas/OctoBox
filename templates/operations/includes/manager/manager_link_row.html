@@ -2,5 +2,18 @@
     <td>{{ contact.display_name|default:"Sem nome" }}</td>
     <td>{{ contact.phone }}</td>
     <td><span class="pill info">{{ contact.get_status_display }}</span></td>
-    <td>{% if contact.display_name %}<span class="pill accent">Vincular aluno</span>{% else %}<span class="pill warning">Identificar contato</span>{% endif %}</td>
+    <td>
+        <div class="manager-row-decision">
+            {% with action=contact.decision_action %}
+            <a
+                class="button secondary button-sm manager-row-cta manager-row-cta--{{ action.tone|default:'structural' }}"
+                href="{{ action.href|default:'#manager-link-board' }}"
+                aria-label="{{ action.aria_label|default:'Abrir diretorio de alunos' }}"
+            >
+                {{ action.label|default:'Revisar vinculo' }}
+            </a>
+            <p class="manager-row-decision-note">{{ action.note|default:'Descubra se este contato ja pode sair do limbo operacional.' }}</p>
+            {% endwith %}
+        </div>
+    </td>
 </tr>
