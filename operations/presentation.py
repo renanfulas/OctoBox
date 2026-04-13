@@ -198,7 +198,7 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
             primary_href=reception_decision_entry_context.get('entry_href'),
             pill_label='Atendimento vivo',
             pill_class='accent',
-            class_name='reception-focus-lane reception-command-panel',
+            class_name='reception-command-panel',
             panel_id='reception-command-lane',
         ),
     }

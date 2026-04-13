@@ -85,6 +85,28 @@ ARQUIVO: atalhos e cards de apoio da recepção.
     align-content: space-between;
 }
 
+.operation-shell .page-reading-list.reception-command-panel {
+    position: relative;
+    overflow: hidden;
+    margin-top: -2px;
+    padding: 18px;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-panel);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 30%),
+        var(--card-surface-strong);
+    box-shadow: var(--card-shadow);
+}
+
+.operation-shell .page-reading-list.reception-command-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 3px;
+    background: var(--brand);
+}
+
 .operation-shell .reception-command-lane {
     display: grid;
     gap: 10px;
