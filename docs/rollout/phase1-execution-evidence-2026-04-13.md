@@ -316,3 +316,37 @@ Leitura:
 2. os fluxos centrais da Fase 1 continuam de pe em `api`, `catalog`, `dashboard` e `operations`
 3. o gargalo restante da Fase 1 nao esta mais no codigo do repositorio
 4. o bloqueador real continua sendo a homologacao PostgreSQL com restore executado de verdade
+
+### 14. Provisionamento local da homologacao PostgreSQL e restore real
+
+Passos executados:
+
+1. PostgreSQL 15 instalado localmente
+2. Redis local instalado e respondendo `PONG`
+3. bancos criados:
+   - `octobox_homolog`
+   - `octobox_restore_test`
+4. arquivo de ambiente gerado em `.env.homolog.local`
+5. `migrate` executado com sucesso usando a `.venv`
+6. `sync_runtime_assets --collectstatic` executado com sucesso
+7. `bootstrap_roles` executado com sucesso
+8. usuarios de teste criados no banco principal:
+   - `owner_homolog`
+   - `manager_homolog`
+   - `recepcao_homolog`
+9. dump PostgreSQL gerado em `backups/octobox-20260414-013716.dump`
+10. restore real executado para `octobox_restore_test`
+11. validacao no banco restaurado:
+   - `auth_user = 3`
+   - `auth_group = 6`
+12. validacao da aplicacao apontando para o banco restaurado:
+   - `manage.py check` verde
+   - `/api/v1/health/` = `200`
+   - `/operacao/owner/` = `200`
+
+Leitura:
+
+1. a homologacao PostgreSQL local foi provada de verdade
+2. o restore real deixou de ser hipotese e virou evidencia
+3. a Fase 1 nao tem mais bloqueador tecnico no trilho de backup/restore
+4. os proximos passos passam a ser operacionais do piloto, nao fundacao da homologacao

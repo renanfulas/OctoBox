@@ -8,14 +8,15 @@ POR QUE ELE EXISTE:
 
 O QUE ESTE ARQUIVO FAZ:
 1. Verifica se o PowerShell esta elevado como administrador.
-2. Instala PostgreSQL 15 com command line tools, se necessario.
-3. Instala Redis local, se necessario.
-4. Garante os bancos `octobox_homolog` e `octobox_restore_test`.
-5. Gera um `.env.homolog.local` com DATABASE_URL, REDIS_URL e chaves basicas.
+2. Repara ou instala o Visual C++ Runtime 2015-2022 via winget.
+3. Instala PostgreSQL 15 com command line tools, se necessario.
+4. Instala Redis local, se necessario.
+5. Garante os bancos `octobox_homolog` e `octobox_restore_test`.
+6. Gera um `.env.homolog.local` com DATABASE_URL, REDIS_URL e chaves basicas.
 
 PONTOS CRITICOS:
 - Este script e para homologacao local. Nao usar cegamente em producao.
-- Ele depende de `choco` e de permissao de administrador.
+- Ele depende de `choco`, `winget` e de permissao de administrador.
 - A senha passada aqui e para homologacao local; troque em ambiente serio.
 #>
 
@@ -56,6 +57,20 @@ function Ensure-Command {
 
     Write-Host "$Name ausente. Instalando..."
     & $Installer
+}
+
+function Ensure-WingetPackage {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$PackageId
+    )
+
+    if (-not (Get-Command winget.exe -ErrorAction SilentlyContinue)) {
+        throw "winget nao encontrado. Ele e necessario para reparar o Visual C++ Runtime antes do PostgreSQL."
+    }
+
+    Write-Host "Garantindo pacote $PackageId via winget..."
+    & winget install --id $PackageId --exact --accept-package-agreements --accept-source-agreements --silent --disable-interactivity
 }
 
 function Add-PostgresBinToPath {
@@ -128,6 +143,10 @@ if (-not (Test-IsAdministrator)) {
 if (-not (Get-Command choco.exe -ErrorAction SilentlyContinue)) {
     throw "Chocolatey nao encontrado. Instale o choco antes de rodar este script."
 }
+
+# Corrige o caso comum em Windows: cache quebrado do VC++ impede a instalacao do PostgreSQL.
+Ensure-WingetPackage -PackageId "Microsoft.VCRedist.2015+.x86"
+Ensure-WingetPackage -PackageId "Microsoft.VCRedist.2015+.x64"
 
 Ensure-Command -Name "psql" -Installer {
     choco install $PostgresPackage -y --params "'/Password:$PostgresPassword /Port:$PostgresPort'" --ia "'--enable-components server,commandlinetools'"
