@@ -845,43 +845,6 @@ body[data-theme="dark"] :is(.card, .table-card).card--priority {
     font-weight: 600;
 }
 
-.operation-shell .page-reading-list .fdw-focus-card.is-primary,
-.operation-shell .page-reading-list .fdw-focus-card:has(.fdw-focus-chip.is-warning) {
-    border-color: color-mix(in srgb, var(--danger) 36%, transparent);
-    background:
-        linear-gradient(180deg, color-mix(in srgb, var(--danger) 7%, var(--surface) 93%), color-mix(in srgb, var(--danger) 4%, var(--surface-strong) 96%));
-}
-
-.operation-shell .page-reading-list .fdw-focus-card:has(.fdw-focus-chip.is-warning) .fdw-focus-index,
-.operation-shell .page-reading-list .fdw-focus-card.is-primary .fdw-focus-index {
-    background: color-mix(in srgb, var(--danger) 86%, transparent);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 12%, transparent);
-}
-
-.operation-shell .page-reading-list .fdw-focus-card:has(.fdw-focus-chip.is-info),
-.operation-shell .page-reading-list .fdw-focus-card:has(.fdw-focus-chip.is-accent) {
-    border-color: color-mix(in srgb, var(--brand) 30%, transparent);
-    background:
-        linear-gradient(180deg, color-mix(in srgb, var(--brand) 6%, var(--surface) 94%), color-mix(in srgb, var(--brand) 3%, var(--surface-strong) 97%));
-}
-
-.operation-shell .page-reading-list .fdw-focus-card:has(.fdw-focus-chip.is-info) .fdw-focus-index,
-.operation-shell .page-reading-list .fdw-focus-card:has(.fdw-focus-chip.is-accent) .fdw-focus-index {
-    background: color-mix(in srgb, var(--brand) 82%, transparent);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 12%, transparent);
-}
-
-.operation-shell .page-reading-list .fdw-focus-card:has(.fdw-focus-chip.is-success) {
-    border-color: color-mix(in srgb, var(--accent) 30%, transparent);
-    background:
-        linear-gradient(180deg, color-mix(in srgb, var(--accent) 6%, var(--surface) 94%), color-mix(in srgb, var(--accent) 3%, var(--surface-strong) 97%));
-}
-
-.operation-shell .page-reading-list .fdw-focus-card:has(.fdw-focus-chip.is-success) .fdw-focus-index {
-    background: color-mix(in srgb, var(--accent) 82%, transparent);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
-}
-
 @media (max-width: 720px) {
     .operation-shell .page-reading-list .fdw-focus-card {
         grid-template-columns: auto minmax(0, 1fr);

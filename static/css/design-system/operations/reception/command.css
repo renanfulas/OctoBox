@@ -115,6 +115,11 @@ ARQUIVO: atalhos e cards de apoio da recepção.
 .operation-shell .reception-command-lane .reception-command-card {
     --reception-command-accent: var(--theme-accent-support);
     --reception-command-accent-alpha: var(--theme-accent-support-alpha);
+    --reception-command-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--reception-command-accent-alpha) 8%, transparent), transparent 38%),
+        linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-panel) 95%, white), color-mix(in srgb, var(--theme-surface) 96%, white));
+    --reception-command-border: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-border-soft) 84%);
+    --reception-command-shadow: 0 12px 24px rgba(7, 14, 24, 0.06);
     position: relative;
     grid-template-columns: 110px minmax(0, 1fr) auto;
     align-items: center;
@@ -122,11 +127,9 @@ ARQUIVO: atalhos e cards de apoio da recepção.
     min-height: 0;
     height: auto;
     border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--reception-command-accent-alpha) 16%, var(--theme-border-soft) 84%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--reception-command-accent-alpha) 10%, transparent), transparent 38%),
-        linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-panel) 95%, white), color-mix(in srgb, var(--theme-surface) 96%, white));
-    box-shadow: 0 12px 24px rgba(7, 14, 24, 0.06);
+    border: 1px solid var(--reception-command-border);
+    background: var(--reception-command-surface);
+    box-shadow: var(--reception-command-shadow);
     color: var(--theme-text-primary);
     transition:
         transform 220ms var(--ease-standard),
@@ -134,8 +137,22 @@ ARQUIVO: atalhos e cards de apoio da recepção.
         border-color 220ms var(--ease-standard);
 }
 
+.operation-shell .reception-command-lane .reception-command-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--reception-command-accent) 72%, transparent);
+    opacity: 0.9;
+}
+
 .operation-shell .reception-command-lane .reception-command-card:hover {
     transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--reception-command-accent-alpha) 20%, var(--theme-border-soft) 80%);
+    box-shadow:
+        0 16px 28px rgba(7, 14, 24, 0.08),
+        0 0 0 1px color-mix(in srgb, var(--reception-command-accent-alpha) 8%, transparent);
 }
 
 .operation-shell .reception-command-lane .reception-command-card.reception-command-card--primary {
@@ -175,8 +192,8 @@ ARQUIVO: atalhos e cards de apoio da recepção.
 }
 
 .operation-shell .page-reading-list.reception-command-lane .reception-command-card.reception-command-card--structure {
-    --reception-command-accent: var(--theme-accent-success);
-    --reception-command-accent-alpha: var(--theme-accent-success-alpha);
+    --reception-command-accent: var(--theme-accent-support);
+    --reception-command-accent-alpha: var(--theme-accent-support-alpha);
 }
 
 .operation-shell .reception-command-lane .reception-command-card.reception-command-card--entries .reception-command-card__chip,
@@ -195,9 +212,9 @@ ARQUIVO: atalhos e cards de apoio da recepção.
 
 .operation-shell .reception-command-lane .reception-command-card.reception-command-card--structure .reception-command-card__chip,
 .operation-shell .reception-command-lane .reception-command-card.reception-command-card--structure .reception-command-card__count {
-    border-color: color-mix(in srgb, var(--theme-accent-success) 24%, transparent);
-    background: color-mix(in srgb, var(--theme-accent-success-alpha) 12%, var(--theme-surface-strong) 88%);
-    color: color-mix(in srgb, var(--theme-accent-success) 72%, var(--ink) 28%);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-surface-strong) 88%);
+    color: color-mix(in srgb, var(--theme-accent-support) 72%, var(--ink) 28%);
 }
 
 .operation-shell .reception-command-lane .reception-command-card .reception-command-card__body {
@@ -329,13 +346,16 @@ body[data-theme="dark"] .operation-shell .page-reading-list.reception-command-pa
 }
 
 body[data-theme="dark"] .operation-shell .reception-command-lane .reception-command-card {
-    border-color: color-mix(in srgb, var(--reception-command-accent-alpha) 18%, var(--theme-border-soft) 82%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--reception-command-accent-alpha) 18%, transparent), transparent 38%),
+    --reception-command-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--reception-command-accent-alpha) 14%, transparent), transparent 40%),
         linear-gradient(160deg, rgba(10, 19, 33, 0.96), rgba(8, 15, 27, 0.94));
-    box-shadow:
+    --reception-command-border: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, rgba(148, 163, 184, 0.14) 82%);
+    --reception-command-shadow:
         0 14px 28px rgba(0, 0, 0, 0.18),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    border-color: var(--reception-command-border);
+    background: var(--reception-command-surface);
+    box-shadow: var(--reception-command-shadow);
 }
 
 body[data-theme="dark"] .operation-shell .reception-command-lane .reception-command-card:hover,
@@ -356,33 +376,21 @@ body[data-theme="dark"] .operation-shell .page-reading-list.reception-command-la
 
 body[data-theme="dark"] .operation-shell .page-reading-list.reception-command-lane .reception-command-card.reception-command-card--primary,
 body[data-theme="dark"] .operation-shell .page-reading-list.reception-command-lane .reception-command-card.reception-command-card--entries {
-    border-color: color-mix(in srgb, var(--theme-accent-danger) 28%, rgba(148, 163, 184, 0.14) 72%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-danger-alpha) 30%, transparent), transparent 38%),
-        linear-gradient(160deg, rgba(28, 11, 20, 0.98), rgba(21, 11, 19, 0.96) 54%, rgba(14, 12, 21, 0.94));
-    box-shadow:
-        0 16px 30px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --reception-command-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-danger-alpha) 18%, transparent), transparent 40%),
+        linear-gradient(160deg, rgba(10, 19, 33, 0.96), rgba(8, 15, 27, 0.94));
 }
 
 body[data-theme="dark"] .operation-shell .page-reading-list.reception-command-lane .reception-command-card.reception-command-card--billing {
-    border-color: color-mix(in srgb, var(--theme-accent-warning) 28%, rgba(148, 163, 184, 0.14) 72%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 30%, transparent), transparent 38%),
-        linear-gradient(160deg, rgba(30, 19, 10, 0.98), rgba(24, 17, 10, 0.96) 54%, rgba(14, 12, 20, 0.94));
-    box-shadow:
-        0 16px 30px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --reception-command-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, transparent), transparent 40%),
+        linear-gradient(160deg, rgba(10, 19, 33, 0.96), rgba(8, 15, 27, 0.94));
 }
 
 body[data-theme="dark"] .operation-shell .page-reading-list.reception-command-lane .reception-command-card.reception-command-card--structure {
-    border-color: color-mix(in srgb, var(--theme-accent-primary) 28%, rgba(148, 163, 184, 0.14) 72%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 28%, transparent), transparent 38%),
-        linear-gradient(160deg, rgba(10, 20, 36, 0.98), rgba(10, 18, 32, 0.96) 54%, rgba(10, 14, 25, 0.94));
-    box-shadow:
-        0 16px 30px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --reception-command-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 40%),
+        linear-gradient(160deg, rgba(10, 19, 33, 0.96), rgba(8, 15, 27, 0.94));
 }
 
 body[data-theme="dark"] .operation-shell .reception-command-lane .reception-command-card .reception-command-card__index {
@@ -420,9 +428,9 @@ body[data-theme="dark"] .operation-shell .reception-command-lane .reception-comm
 
 body[data-theme="dark"] .operation-shell .reception-command-lane .reception-command-card.reception-command-card--structure .reception-command-card__chip,
 body[data-theme="dark"] .operation-shell .reception-command-lane .reception-command-card.reception-command-card--structure .reception-command-card__count {
-    border-color: color-mix(in srgb, var(--theme-accent-primary) 24%, rgba(148, 163, 184, 0.14) 76%);
-    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 24%, rgba(8, 16, 30, 0.94) 76%);
-    color: color-mix(in srgb, var(--theme-accent-primary) 78%, white 22%);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, rgba(148, 163, 184, 0.14) 76%);
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 24%, rgba(8, 16, 30, 0.94) 76%);
+    color: color-mix(in srgb, var(--theme-accent-support) 78%, white 22%);
 }
 
 body[data-theme="dark"] .operation-shell .reception-command-lane .reception-command-card .reception-command-card__title {
