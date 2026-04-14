@@ -19,7 +19,7 @@ import calendar
 from datetime import date
 
 from django.core.cache import cache
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Model, Q, QuerySet, Sum
 from django.urls import reverse
 from django.utils import timezone
 from shared_support.performance import get_cache_ttl_with_jitter
@@ -398,6 +398,81 @@ def _decorate_dashboard_sessions(serialized_sessions):
     return visible_sessions
 
 
+def _serialize_dashboard_session(session_snapshot):
+    session_object = session_snapshot.get('object')
+    return {
+        **session_snapshot,
+        'session_id': getattr(session_object, 'id', None),
+        'title': getattr(session_object, 'title', ''),
+        'object': None,
+    }
+
+
+def _serialize_payment_alert(payment, *, student, is_actionable):
+    return {
+        'id': payment.id,
+        'student_id': student.id if student else None,
+        'student_full_name': student.full_name if student else 'Estagiario/Anonimo',
+        'due_date': payment.due_date,
+        'amount': payment.amount,
+        'href': reverse('finance-center'),
+        'is_actionable': is_actionable,
+        'dashboard_requires_whatsapp_followup': not is_actionable,
+    }
+
+
+def _serialize_student_health_entry(student):
+    return {
+        'id': getattr(student, 'id', None),
+        'full_name': getattr(student, 'full_name', ''),
+        'status': getattr(student, 'status', ''),
+        'total_attendances': getattr(student, 'total_attendances', 0) or 0,
+        'total_absences': getattr(student, 'total_absences', 0) or 0,
+    }
+
+
+def _sanitize_dashboard_snapshot_value(value):
+    if isinstance(value, QuerySet):
+        return [_sanitize_dashboard_snapshot_value(item) for item in value]
+
+    if isinstance(value, list):
+        return [_sanitize_dashboard_snapshot_value(item) for item in value]
+
+    if isinstance(value, tuple):
+        return [_sanitize_dashboard_snapshot_value(item) for item in value]
+
+    if isinstance(value, Payment):
+        return _serialize_payment_alert(value, student=getattr(value, 'student', None), is_actionable=True)
+
+    if isinstance(value, Student):
+        return _serialize_student_health_entry(value)
+
+    if isinstance(value, Model):
+        return value.pk
+
+    if isinstance(value, dict):
+        sanitized = {}
+        session_object = value.get('object')
+        student_object = value.get('student')
+
+        for key, item in value.items():
+            if key in {'object', 'student'}:
+                continue
+            sanitized[key] = _sanitize_dashboard_snapshot_value(item)
+
+        if session_object is not None:
+            sanitized['session_id'] = getattr(session_object, 'id', None)
+            sanitized['title'] = getattr(session_object, 'title', '')
+
+        if student_object is not None:
+            sanitized['student_id'] = getattr(student_object, 'id', None)
+            sanitized['student_full_name'] = getattr(student_object, 'full_name', sanitized.get('student_full_name', ''))
+
+        return sanitized
+
+    return value
+
+
 def _build_dashboard_payment_alert_snapshot(*, overdue_payments_queryset):
     # 🚀 Performance de Elite (Ghost Audit): Otimização N+1
     # Pré-carregamos o contato de WhatsApp mais recente para cada estudante da lista
@@ -755,7 +830,11 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
         hot_students = set()
         # Alunos com alertas de pagamento
         if 'payment_alert_snapshot' in locals():
-            alert_student_ids = [p['student'].id for p in payment_alert_snapshot['payment_alerts'] if p.get('student')]
+            alert_student_ids = [
+                p.get('student_id') or getattr(p.get('student'), 'id', None)
+                for p in payment_alert_snapshot['payment_alerts']
+            ]
+            alert_student_ids = [student_id for student_id in alert_student_ids if student_id]
             hot_students.update(alert_student_ids)
         
         # Alunos da saúde da base (em risco)
@@ -767,7 +846,7 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
     except Exception:
         pass
 
-    return {
+    snapshot = {
         'metrics': metrics,
         'hero_stats': [
             {'label': 'Comunidade ativa', 'value': metrics['active_students']},
@@ -792,6 +871,8 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
         'operational_focus': operational_focus,
         'student_health': student_health,
     }
+
+    return _sanitize_dashboard_snapshot_value(snapshot)
 
 
 __all__ = ['build_dashboard_snapshot']

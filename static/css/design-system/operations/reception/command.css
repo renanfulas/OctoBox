@@ -142,6 +142,57 @@ ARQUIVO: atalhos e cards de apoio da recepção.
     min-height: 0;
 }
 
+.operation-shell .page-reading-list.reception-command-lane .reception-command-card.reception-command-card--entries,
+.operation-shell .page-reading-list.reception-command-lane .reception-command-card.reception-command-card--entries:has(.reception-command-card__chip) {
+    --reception-command-accent: var(--theme-accent-danger);
+    --reception-command-accent-alpha: var(--theme-accent-danger-alpha);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 18%, var(--theme-border-strong) 82%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-danger-alpha) 12%, transparent), transparent 38%),
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, white 88%, var(--theme-accent-danger-alpha) 12%),
+            color-mix(in srgb, var(--theme-surface-panel) 92%, var(--theme-accent-danger-alpha) 8%)
+        );
+    box-shadow:
+        0 12px 24px color-mix(in srgb, var(--theme-accent-danger-alpha) 8%, rgba(15, 23, 42, 0.08) 92%),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.operation-shell .page-reading-list.reception-command-lane .reception-command-card.reception-command-card--billing,
+.operation-shell .page-reading-list.reception-command-lane .reception-command-card.reception-command-card--billing:has(.reception-command-card__chip) {
+    --reception-command-accent: var(--theme-accent-warning);
+    --reception-command-accent-alpha: var(--theme-accent-warning-alpha);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 20%, var(--theme-border-strong) 80%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 12%, transparent), transparent 38%),
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, white 89%, var(--theme-accent-warning-alpha) 11%),
+            color-mix(in srgb, var(--theme-surface-panel) 93%, var(--theme-accent-warning-alpha) 7%)
+        );
+    box-shadow:
+        0 12px 24px color-mix(in srgb, var(--theme-accent-warning-alpha) 9%, rgba(15, 23, 42, 0.08) 91%),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.operation-shell .page-reading-list.reception-command-lane .reception-command-card.reception-command-card--structure,
+.operation-shell .page-reading-list.reception-command-lane .reception-command-card.reception-command-card--structure:has(.reception-command-card__chip) {
+    --reception-command-accent: var(--theme-accent-success);
+    --reception-command-accent-alpha: var(--theme-accent-success-alpha);
+    border-color: color-mix(in srgb, var(--theme-accent-success) 12%, var(--theme-border-strong) 88%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-success-alpha) 10%, transparent), transparent 38%),
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, white 92%, var(--theme-accent-success-alpha) 8%),
+            color-mix(in srgb, var(--theme-surface-panel) 95%, var(--theme-accent-success-alpha) 5%)
+        );
+    box-shadow:
+        0 12px 24px color-mix(in srgb, var(--theme-accent-success-alpha) 5%, rgba(15, 23, 42, 0.08) 95%),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
 .operation-shell .reception-command-lane .reception-command-card .reception-command-card__head {
     width: 110px;
     gap: 8px;

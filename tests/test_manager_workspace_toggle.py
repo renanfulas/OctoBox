@@ -44,6 +44,7 @@ class ManagerWorkspaceDisabledToggleTests(TestCase):
         self.assertNotIn(reverse("role-operations"), hrefs)
 
 
+
 @override_settings(OPERATIONS_MANAGER_WORKSPACE_ENABLED=True)
 class ManagerWorkspaceEnabledToggleTests(TestCase):
     def setUp(self):

@@ -23,6 +23,27 @@ from shared_support.page_payloads import (
 READING_CARD_SEVERITY_ORDER = ('emergency', 'warning', 'risk')
 
 
+def _get_student_name(student):
+    if isinstance(student, dict):
+        return student.get('full_name') or 'Alguem'
+    return getattr(student, 'full_name', 'Alguem')
+
+
+def _get_student_absences(student):
+    if isinstance(student, dict):
+        return student.get('total_absences', 0) or 0
+    return getattr(student, 'total_absences', 0) or 0
+
+
+def _get_payment_alert_student_name(payment_alert):
+    if not payment_alert:
+        return 'Alguem'
+    if isinstance(payment_alert, dict):
+        return payment_alert.get('student_full_name') or 'Alguem'
+    student = getattr(payment_alert, 'student', None)
+    return getattr(student, 'full_name', 'Alguem')
+
+
 
 
 def _build_dashboard_hero_actions(role_slug):
@@ -341,7 +362,7 @@ def build_dashboard_layout(role_slug, *, stored_layout_state=None):
 def _build_dashboard_execution_focus(role_slug, *, next_session, next_payment_alert, highest_risk_student, actionable_payment_alerts_count):
     finance_label = 'Cuido do caixa contigo. Comece por aqui'
     finance_summary = (
-        f'{actionable_payment_alerts_count} cobranca(s) pedem contato. {next_payment_alert.student.full_name} e o melhor ponto pra comecar. Voce consegue resolver isso.'
+        f'{actionable_payment_alerts_count} cobranca(s) pedem contato. {_get_payment_alert_student_name(next_payment_alert)} e o melhor ponto pra comecar. Voce consegue resolver isso.'
         if next_payment_alert else
         'Nenhuma cobranca critica agora. O caixa esta bem e voce pode respirar.'
     )
@@ -351,7 +372,7 @@ def _build_dashboard_execution_focus(role_slug, *, next_session, next_payment_al
     if role_slug == ROLE_RECEPTION:
         finance_label = 'Essa cobranca cabe no seu turno. Vamos juntos'
         finance_summary = (
-            f'{actionable_payment_alerts_count} cobranca(s) pedem sua atencao. {next_payment_alert.student.full_name} e quem mais precisa de voce agora.'
+            f'{actionable_payment_alerts_count} cobranca(s) pedem sua atencao. {_get_payment_alert_student_name(next_payment_alert)} e quem mais precisa de voce agora.'
             if next_payment_alert else
             'O caixa curto esta tranquilo. Voce esta dando conta.'
         )
@@ -372,7 +393,7 @@ def _build_dashboard_execution_focus(role_slug, *, next_session, next_payment_al
             'label': 'A agenda esta pronta pra voce conferir',
             'chip_label': 'Aulas',
             'summary': (
-                f"{next_session['object'].title} e a proxima. Deixei tudo organizado pra voce so confirmar."
+                f"{next_session['title']} e a proxima. Deixei tudo organizado pra voce so confirmar."
                 if next_session else
                 'Sem aulas no radar agora. Aproveita esse respiro, voce merece.'
             ),
@@ -384,7 +405,7 @@ def _build_dashboard_execution_focus(role_slug, *, next_session, next_payment_al
             'label': 'Tem alguem que precisa de voce' if role_slug != ROLE_RECEPTION else 'Feche com quem pede acolhimento',
             'chip_label': 'Risco' if role_slug != ROLE_RECEPTION else 'Retencao',
             'summary': (
-                f'{highest_risk_student.full_name} sumiu um pouco com {highest_risk_student.total_absences} falta(s). Um contato seu pode trazer de volta. Voce consegue.'
+                f'{_get_student_name(highest_risk_student)} sumiu um pouco com {_get_student_absences(highest_risk_student)} falta(s). Um contato seu pode trazer de volta. Voce consegue.'
                 if highest_risk_student else
                 ('A base esta firme. Ninguem mostra sinal de esfriamento. Voce esta cuidando bem.' if role_slug != ROLE_RECEPTION else 'Ninguem precisa de resgate agora. O balcao esta acolhendo bem.')
             ),
@@ -422,10 +443,7 @@ def _build_dashboard_priority_cards(
 
     student_name = 'Alguem'
     if primary_payment_alert:
-        if isinstance(primary_payment_alert, dict):
-            student_name = primary_payment_alert.get('student_full_name') or 'Alguem'
-        else:
-            student_name = primary_payment_alert.student.full_name if hasattr(primary_payment_alert, 'student') else 'Alguem'
+        student_name = _get_payment_alert_student_name(primary_payment_alert)
 
     if actionable_payment_alerts_count > 0 and primary_payment_alert:
         emergency_card = build_priority_card(
@@ -507,15 +525,15 @@ def _build_dashboard_priority_cards(
             kicker='Urgente',
             indicator='Turno',
             copy=(
-                f"{pressured_session['object'].title} esta acontecendo agora. Eu cuido da leitura, voce cuida da equipe."
+                f"{pressured_session['title']} esta acontecendo agora. Eu cuido da leitura, voce cuida da equipe."
                 if pressured_session['status_label'] == 'Em andamento' else
-                f"{pressured_session['object'].title} comeca as {starts_at_label} e precisa de atencao. Vou te levar pra agenda."
+                f"{pressured_session['title']} comeca as {starts_at_label} e precisa de atencao. Vou te levar pra agenda."
             ),
         )
-    elif highest_risk_student and highest_risk_student.total_absences >= 1:
+    elif highest_risk_student and _get_student_absences(highest_risk_student) >= 1:
         urgency_card = build_priority_card(
             severity='warning',
-            value=highest_risk_student.total_absences,
+            value=_get_student_absences(highest_risk_student),
             surface='students',
             href=get_shell_route_url('students'),
             href_label='Abrir alunos em atencao',
@@ -524,9 +542,9 @@ def _build_dashboard_priority_cards(
             kicker='Urgente',
             indicator='Retencao' if role_slug != ROLE_RECEPTION else 'Cuidado',
             copy=(
-                f'{highest_risk_student.full_name} sumiu um pouco, {highest_risk_student.total_absences} falta(s). Uma mensagem sua pode ser o que faltava pra voltar.'
+                f'{_get_student_name(highest_risk_student)} sumiu um pouco, {_get_student_absences(highest_risk_student)} falta(s). Uma mensagem sua pode ser o que faltava pra voltar.'
                 if role_slug != ROLE_RECEPTION else
-                f'{highest_risk_student.full_name} precisa sentir que alguem notou, {highest_risk_student.total_absences} falta(s). Seu acolhimento pode mudar tudo.'
+                f'{_get_student_name(highest_risk_student)} precisa sentir que alguem notou, {_get_student_absences(highest_risk_student)} falta(s). Seu acolhimento pode mudar tudo.'
             ),
         )
     else:
@@ -556,9 +574,9 @@ def _build_dashboard_priority_cards(
             kicker='Risco',
             indicator='Rotina',
             copy=(
-                f'{occurrences_count} ocorrencia(s) no mes e {highest_risk_student.full_name} com {highest_risk_student.total_absences} falta(s). Eu organizo os dados, voce decide a acao. Juntos resolvemos.'
+                f'{occurrences_count} ocorrencia(s) no mes e {_get_student_name(highest_risk_student)} com {_get_student_absences(highest_risk_student)} falta(s). Eu organizo os dados, voce decide a acao. Juntos resolvemos.'
                 if role_slug != ROLE_RECEPTION else
-                f'{occurrences_count} ocorrencia(s) no mes e {highest_risk_student.full_name} pede acolhimento. Eu te mostro por onde comecar.'
+                f'{occurrences_count} ocorrencia(s) no mes e {_get_student_name(highest_risk_student)} pede acolhimento. Eu te mostro por onde comecar.'
             ),
         )
     elif occurrences_count > 0:
@@ -637,7 +655,7 @@ def build_dashboard_page(*, request_user, role_slug, snapshot, stored_layout_sta
     next_session = upcoming_sessions[0] if upcoming_sessions else None
     actionable_payment_alerts_count = snapshot.get('actionable_payment_alerts_count', 0)
     next_payment_alert = snapshot.get('next_actionable_payment_alert')
-    highest_risk_student = next((student for student in student_health if student.total_absences >= 1), None)
+    highest_risk_student = next((student for student in student_health if _get_student_absences(student) >= 1), None)
     execution_focus = _build_dashboard_execution_focus(
         role_slug,
         next_session=next_session,
