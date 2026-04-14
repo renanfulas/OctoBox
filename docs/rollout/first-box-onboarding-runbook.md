@@ -51,6 +51,8 @@ Nao ampliar escopo no meio do onboarding.
 
 Antes de comecar, preencher a ficha de coleta em [first-box-pilot-intake-sheet.md](first-box-pilot-intake-sheet.md).
 
+Se o box piloto atual for a Endorfina Cross, usar o plano preenchido em [first-box-endorfina-cross-setup-plan.md](first-box-endorfina-cross-setup-plan.md) como trilho operacional do dia 1.
+
 No dia da implantacao, executar o setup interno seguindo [first-box-system-setup-checklist.md](first-box-system-setup-checklist.md).
 
 ### 1. Validar homologacao
