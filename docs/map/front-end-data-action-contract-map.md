@@ -203,7 +203,6 @@ Locais:
 1. [../../templates/includes/ui/layout/hero_stat_panel.html](../../templates/includes/ui/layout/hero_stat_panel.html)
 2. [../../templates/includes/ui/layout/dashboard_reading_list.html](../../templates/includes/ui/layout/dashboard_reading_list.html)
 3. [../../templates/includes/ui/layout/page_reading_list.html](../../templates/includes/ui/layout/page_reading_list.html)
-4. [../../templates/includes/ui/layout/page_reading_panel.html](../../templates/includes/ui/layout/page_reading_panel.html)
 
 Razao:
 
@@ -312,7 +311,6 @@ Alvos naturais de inspeção futura:
 1. [../../templates/includes/ui/layout/hero_stat_panel.html](../../templates/includes/ui/layout/hero_stat_panel.html)
 2. [../../templates/includes/ui/layout/dashboard_reading_list.html](../../templates/includes/ui/layout/dashboard_reading_list.html)
 3. [../../templates/includes/ui/layout/page_reading_list.html](../../templates/includes/ui/layout/page_reading_list.html)
-4. [../../templates/includes/ui/layout/page_reading_panel.html](../../templates/includes/ui/layout/page_reading_panel.html)
 
 ## Fechamento
 

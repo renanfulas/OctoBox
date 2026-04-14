@@ -660,14 +660,6 @@ body[data-theme="dark"] :is(.card, .table-card).card--priority {
     border-color: color-mix(in srgb, var(--theme-accent-support) 26%, transparent);
 }
 
-.fdw-focus-card.is-primary {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 16%, transparent), transparent 36%),
-        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-primary-alpha) 12%, transparent), transparent 42%),
-        linear-gradient(160deg, color-mix(in srgb, var(--card-surface-strong) 94%, transparent), color-mix(in srgb, var(--theme-surface) 96%, transparent));
-    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
-}
-
 .fdw-focus-card-head,
 .fdw-focus-meta,
 .fdw-focus-footer {
