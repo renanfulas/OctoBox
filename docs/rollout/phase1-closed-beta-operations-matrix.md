@@ -10,6 +10,8 @@ AUTORIDADE:
 DOCUMENTOS IRMAOS:
 - [first-box-production-execution-checklist.md](first-box-production-execution-checklist.md)
 - [restore-and-rollback-drill.md](restore-and-rollback-drill.md)
+- [postgres-homolog-provisioning-checklist.md](postgres-homolog-provisioning-checklist.md)
+- [postgres-homolog-provisioning-round-2026-04-13.md](postgres-homolog-provisioning-round-2026-04-13.md)
 - [../plans/phase1-closed-beta-20-boxes-corda.md](../plans/phase1-closed-beta-20-boxes-corda.md)
 
 QUANDO USAR:
@@ -61,16 +63,16 @@ Status permitidos:
 | Baseline de throttles | `validado` | Engenharia | settings e docs de seguranca alinhados | Revisar so com telemetria real |
 | Admin protegido | `parcial` | Engenharia / Ops | `DJANGO_ADMIN_URL_PATH` definido em producao | Confirmar valor real no ambiente alvo |
 | HTTPS e trusted origins | `parcial` | Ops | variaveis de ambiente do deploy | Validar host final do go-live |
-| Backup do banco | `parcial` | Ops | backup local SQLite gerado em `backups/db-20260413-050155.sqlite3` em `2026-04-13` | Gerar backup PostgreSQL real do ambiente alvo e registrar timestamp |
-| Restore testado | `parcial` | Ops / Engenharia | drill local SQLite validado com `integrity=ok`, `table_count=28` e `django_migrations=40` em `2026-04-13` | Rodar o mesmo drill em PostgreSQL na homologacao/producao |
+| Backup do banco | `parcial` | Ops | backup local SQLite gerado em `backups/db-20260413-050155.sqlite3` em `2026-04-13`; rodada de provisionamento preenchida em [postgres-homolog-provisioning-round-2026-04-13.md](postgres-homolog-provisioning-round-2026-04-13.md) | Gerar backup PostgreSQL real do ambiente alvo e registrar timestamp |
+| Restore testado | `parcial` | Ops / Engenharia | drill local SQLite validado com `integrity=ok`, `table_count=28` e `django_migrations=40` em `2026-04-13`; bloqueador atual documentado em [postgres-homolog-provisioning-round-2026-04-13.md](postgres-homolog-provisioning-round-2026-04-13.md) | Provisionar a homologacao com [postgres-homolog-provisioning-checklist.md](postgres-homolog-provisioning-checklist.md) e rodar o mesmo drill em PostgreSQL |
 | Rollback ensaiado | `validado` | Ops / Engenharia | rollback drill executado no worktree limpo entre `dc5ef8a` e `9e0e2bb`, com `manage.py check` verde e smoke central `200` nos dois lados | Repetir o ritual na homologacao oficial quando ela existir |
-| Checklist de homologacao | `parcial` | Engenharia | doc existente | Rodar inteiro no ambiente alvo e registrar evidencia |
+| Checklist de homologacao | `parcial` | Engenharia | docs de homologacao e provisionamento existem; rodada preenchida de status criada em [postgres-homolog-provisioning-round-2026-04-13.md](postgres-homolog-provisioning-round-2026-04-13.md) | Rodar [postgres-homolog-provisioning-checklist.md](postgres-homolog-provisioning-checklist.md) e depois o checklist de homologacao no ambiente alvo |
 | Setup interno do primeiro box | `parcial` | Operacao / CS | checklist existente | Executar com o box piloto real |
-| Smoke funcional do go-live | `parcial` | Engenharia / Operacao | smoke local validado com `localhost`; `owner`, `reception`, `alunos`, `grade` e `health` em `200`; `manager` tambem validado com `OPERATIONS_MANAGER_WORKSPACE_ENABLED=1` | Repetir no ambiente alvo com a flag do manager ligada se o piloto incluir esse papel |
+| Smoke funcional do go-live | `parcial` | Engenharia / Operacao | smoke local validado com `localhost`; `owner`, `reception`, `alunos`, `grade` e `health` em `200`; `manager` tambem validado com `OPERATIONS_MANAGER_WORKSPACE_ENABLED=1`; bateria ampla de `111 tests` verde em `2026-04-13` | Repetir no ambiente alvo com a flag do manager ligada se o piloto incluir esse papel |
 | War room dos primeiros 7 a 14 dias | `parcial` | Operacao / Engenharia | playbook existente | Definir canal, dono e horario de triagem |
 | Isolamento de cache por box | `validado` | Engenharia | prefixo com `BOX_RUNTIME_SLUG` | Expandir a mesma clareza para logs e exports |
 | Fronteira de logs/exports/storage por box | `parcial` | Engenharia / Ops | intencao arquitetural definida | Formalizar namespace e evidencia operacional |
-| Observabilidade por superficie | `parcial` | Engenharia | healthcheck, logs e playbooks | Registrar latencia/erro por superficie no piloto |
+| Observabilidade por superficie | `parcial` | Engenharia | healthcheck, logs e playbooks; validacao interna ampla verde em `api`, `catalog`, `dashboard` e `operations` em `2026-04-13` | Registrar latencia/erro por superficie no piloto |
 
 ---
 

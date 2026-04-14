@@ -14,6 +14,7 @@ DOCUMENTOS IRMAOS:
 - [beta-internal-release-gate.md](beta-internal-release-gate.md)
 - [phase1-closed-beta-operations-matrix.md](phase1-closed-beta-operations-matrix.md)
 - [restore-and-rollback-drill.md](restore-and-rollback-drill.md)
+- [postgres-homolog-provisioning-checklist.md](postgres-homolog-provisioning-checklist.md)
 - [../plans/scale-transition-20-100-open-multitenancy-plan.md](../plans/scale-transition-20-100-open-multitenancy-plan.md)
 
 QUANDO USAR:
@@ -118,6 +119,7 @@ Bloqueador:
 Referencia:
 
 1. [homologation-deploy-checklist.md](homologation-deploy-checklist.md)
+2. [postgres-homolog-provisioning-checklist.md](postgres-homolog-provisioning-checklist.md)
 
 ---
 
@@ -202,21 +204,24 @@ Checklist:
 1. backup inicial do banco gerado
 2. arquivo de backup com timestamp confirmado
 3. local do backup documentado
-4. restore testado ao menos uma vez em ambiente isolado ou homolog
-5. rollback de aplicacao descrito
-6. responsavel pelo rollback definido
+4. homologacao PostgreSQL provisionada com banco principal, banco isolado de restore, Redis e envs criticas
+5. restore testado ao menos uma vez em ambiente isolado ou homolog
+6. rollback de aplicacao descrito
+7. responsavel pelo rollback definido
 
 Bloqueador:
 
 1. backup inexistente
-2. restore nunca testado
-3. rollback dependendo de improviso
+2. homologacao PostgreSQL ainda nao provisionada para o drill real
+3. restore nunca testado
+4. rollback dependendo de improviso
 
 Referencia:
 
 1. [backup-guide.md](backup-guide.md)
 2. [restore-and-rollback-drill.md](restore-and-rollback-drill.md)
 3. [postgres-homolog-restore-runbook.md](postgres-homolog-restore-runbook.md)
+4. [postgres-homolog-provisioning-checklist.md](postgres-homolog-provisioning-checklist.md)
 
 ---
 

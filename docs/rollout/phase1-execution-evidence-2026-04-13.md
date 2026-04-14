@@ -292,3 +292,27 @@ Observacao:
 
 1. o ensaio usou SQLite restaurado e ambiente controlado
 2. ele nao substitui o restore PostgreSQL real da homologacao/producao
+
+### 13. Rodada final de validacao interna do repositorio
+
+Comandos:
+
+```powershell
+py manage.py check
+py manage.py sync_runtime_assets --collectstatic
+py manage.py test boxcore.tests.test_api boxcore.tests.test_catalog boxcore.tests.test_dashboard boxcore.tests.test_operations tests.test_manager_workspace_toggle --verbosity 1
+```
+
+Resultado:
+
+1. `py manage.py check` respondeu sem issues
+2. `sync_runtime_assets --collectstatic` sincronizou `static/css` e `static/js` com `staticfiles`
+3. a bateria ampla executou `111 tests`
+4. resultado final da bateria ampla: `OK`
+
+Leitura:
+
+1. o runtime local continua coerente depois dos merges recentes em `main`
+2. os fluxos centrais da Fase 1 continuam de pe em `api`, `catalog`, `dashboard` e `operations`
+3. o gargalo restante da Fase 1 nao esta mais no codigo do repositorio
+4. o bloqueador real continua sendo a homologacao PostgreSQL com restore executado de verdade
