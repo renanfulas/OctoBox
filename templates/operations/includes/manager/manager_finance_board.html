@@ -1,15 +1,19 @@
 <article class="table-card operation-table-card manager-secondary-card" id="manager-finance-board" data-panel="manager-finance-board">
+    {% with board=page.data.manager_board_content.finance %}
     <div class="operation-card-head">
         <div>
-            <p class="eyebrow">Alertas financeiros</p>
-            <h2 class="operation-card-title">Cobranca e retencao sob pressao</h2>
-            <p class="operation-card-copy">Evite que a cobranca escale silenciosamente.</p>
+            <p class="eyebrow">{{ board.header.eyebrow }}</p>
+            <h2 class="operation-card-title">{{ board.header.title }}</h2>
+            <p class="operation-card-copy">{{ board.header.copy }}</p>
         </div>
         <div class="manager-board-head-pills">
-            <span class="pill neutral manager-live-pill" data-role="manager-live-pill">Escuta pronta</span>
-            <span class="pill warning">{{ page.data.financial_alerts|length }} alerta(s)</span>
+            <span class="pill {{ board.header.live_pill_class|default:'neutral' }} manager-live-pill" data-role="manager-live-pill">{{ board.header.live_pill_label|default:'Escuta pronta' }}</span>
+            <span class="pill {{ board.header.pill_class|default:'warning' }}">{{ board.header.pill_label }}</span>
         </div>
     </div>
+    {% if board.header.context_note %}
+    <p class="manager-board-context-note">{{ board.header.context_note }}</p>
+    {% endif %}
     <div class="operation-table-wrap">
         <table>
             <thead>
@@ -18,16 +22,17 @@
                     <th scope="col">Vencimento</th>
                     <th scope="col">Status</th>
                     <th scope="col">Valor</th>
-                    <th scope="col">Leitura rapida</th>
+                    <th scope="col">Proxima acao</th>
                 </tr>
             </thead>
             <tbody>
                 {% for payment in page.data.financial_alerts %}
-                {% include "operations/includes/manager/manager_finance_row.html" with payment=payment is_priority=forloop.first %}
+                {% include "operations/includes/manager/manager_finance_row.html" with payment=payment %}
                 {% empty %}
-                <tr><td colspan="5" class="table-empty-cell">{% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Alertas financeiros" title="Nenhum alerta financeiro" copy="A gerencia nao tem atraso ou cobranca pressionando acompanhamento agora." badge="Carteira respirando" badge_class="accent" %}</td></tr>
+                <tr><td colspan="5" class="table-empty-cell">{% include "includes/ui/states/state_empty.html" with compact=True eyebrow=board.empty.eyebrow title=board.empty.title copy=board.empty.copy badge=board.empty.badge badge_class=board.empty.badge_class %}</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+    {% endwith %}
 </article>

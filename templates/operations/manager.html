@@ -17,7 +17,7 @@ PONTOS CRITICOS:
 
 {% block content %}
 {% with page=operation_page %}
-<div class="operation-shell manager-scene workspace-shell" data-manager-priority="{{ page.data.manager_priority_surface|default:'finance' }}" data-manager-events-stream-url="{% url 'manager-event-stream' %}">
+<div class="operation-shell manager-scene workspace-shell" data-manager-priority="{{ page.data.manager_priority_surface|default:'finance' }}" data-manager-events-stream-url="{% url 'manager-event-stream' %}" data-snapshot-version="{{ page.behavior.snapshot_version|default:'' }}">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% include "operations/includes/manager/manager_command_lane.html" with panel=page.data.reading_panel %}
     <div class="visually-hidden" aria-hidden="true">

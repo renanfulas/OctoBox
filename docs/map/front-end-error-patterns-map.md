@@ -620,3 +620,119 @@ Em resumo:
 1. bugs recorrentes de UI nesta base costumam ser problemas de autoridade
 2. a correcao mais segura quase sempre passa por ownership
 3. antes de "mudar CSS", vale descobrir "quem deveria mandar"
+
+## Padrao 18: card de status descrevendo o problema sem traduzir a proxima acao
+
+Sinais:
+
+1. o card parece informativo, mas nao ajuda a decidir
+2. aparecem palavras como `monitorar`, `ver`, `acompanhar` ou sequencias como `comece`, `depois`, `feche`
+3. o usuario entende o tema do problema, mas nao entende o melhor proximo clique
+
+Causa raiz provavel:
+
+1. o card foi escrito como mini-relatorio de situacao, nao como copiloto operacional
+2. o payload descreve dominio e volume, mas nao transforma isso em urgencia, impacto e acao
+
+Exemplos reais:
+
+1. lane do manager em `manager_operational_focus`
+
+Correcao que mais funcionou:
+
+1. estruturar cada card como `sinal -> impacto -> proxima acao`
+2. trocar headline de navegacao por headline de decisao
+3. usar CTA com verbo imperativo especifico, como `priorizar`, `corrigir` ou `atacar`
+4. ordenar os cards por pressao operacional real, nao por ordem fixa de cadastro
+
+Analogia:
+
+1. um relatorio diz "ha transito na estrada"
+2. um copiloto diz "pega a proxima saida agora"
+
+## Padrao 19: lane evoluida com board principal ainda preso em header hardcoded
+
+Sinais:
+
+1. a lane parece mais inteligente, mas o usuario olha a pagina e sente que nada mudou
+2. o board principal ainda mostra textos genericos como nome de secao
+3. lane e board do mesmo dominio contam historias diferentes
+
+Causa raiz provavel:
+
+1. o cerebro semantico foi promovido na lane ou no hero
+2. os includes principais continuam com `eyebrow`, `title` e `copy` fixos no template
+
+Exemplos reais:
+
+1. manager, onde a `command lane` evoluiu antes dos boards principais
+
+Correcao que mais funcionou:
+
+1. criar contrato de `board content` no snapshot
+2. fazer os boards consumirem esse contrato
+3. preservar ids, anchors e estrutura de tabela
+4. deixar o template renderizar e o backend decidir a semantica
+
+Analogia:
+
+1. a torre de controle fala um plano novo no radio
+2. mas as placas dentro do aeroporto continuam impressas com o mapa antigo
+
+## Padrao 20: dark mode local correto sendo achatado por refinamento global tardio
+
+Sinais:
+
+1. o board tem dark mode proprio no arquivo local
+2. mesmo assim o runtime mostra uma versao mais generica, mais lavada ou com sotaque errado
+3. o inspetor revela que um refinamento importado mais tarde reaplicou `background`, `border-color` ou `box-shadow`
+
+Causa raiz provavel:
+
+1. a camada global de refinamento esta descendo para dentro de um host que ja tinha owner local legitimo
+2. o card passa a ter dois donos no dark mode: o modulo da superficie e o "verniz final" da display wall
+
+Exemplos reais:
+
+1. `reception-priority-card`, `reception-secondary-card` e `reception-support-card` em `/operacao/recepcao/`
+2. `display-wall.css` repintando boards que ja tinham contrato local em `reception/scene.css`, `reception/payment.css` e `reception/class-grid.css`
+
+Correcao que mais funcionou:
+
+1. manter o refinamento global como trilho, nao como repintura obrigatoria
+2. devolver a autoridade visual ao modulo local por variaveis ou hooks explicitos
+3. deixar o global cair para fallback, em vez de vencer no grito sobre o dark mode local
+
+Analogia:
+
+1. o arquiteto da fachada escolhe a iluminacao do predio
+2. ele nao deveria entrar depois no quarto e trocar a lampada que ja estava certa
+
+## Padrao 21: superficie operacional usando classe emprestada sem carregar o dono original
+
+Sinais:
+
+1. um card de uma area reaproveita classes de outra, como financeiro dentro da recepcao
+2. no HTML parece tudo reaproveitado de forma elegante, mas a pagina nao carrega o CSS dono daquela familia
+3. o light ou dark mode fica dependente de heranca casual, coincidencia de nome ou cobertura parcial do design system
+
+Causa raiz provavel:
+
+1. o template reutilizou um host sem trazer junto o contrato visual completo
+2. a superficie local ficou apoiada em "roupa emprestada" sem fechar seu proprio sotaque
+
+Exemplos reais:
+
+1. `reception-class-session-card` usando `finance-alert-stat`
+2. `reception-payment-card` usando `finance-action-card`, `history-entry` e `payment-primary-summary` enquanto a recepcao carrega apenas `operations.css`
+
+Correcao que mais funcionou:
+
+1. decidir se a familia deve subir para owner compartilhado de verdade
+2. se nao subir, fechar explicitamente o contrato local da superficie hospedeira
+3. registrar no CSS local como texto, stat, subcard e controle nativo devem se comportar em light e dark
+
+Analogia:
+
+1. pegar emprestado o uniforme do financeiro pode servir para um ensaio
+2. para trabalhar de verdade, a recepcao precisa da propria roupa ajustada ao corpo

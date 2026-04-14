@@ -18,9 +18,11 @@ from django.utils.functional import cached_property
 from django.utils import timezone
 from django.views import View
 from django.views.generic import TemplateView
+from django.http import Http404
 
 from access.permissions import RoleRequiredMixin
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
+from operations.availability import is_manager_workspace_enabled
 
 
 class RoleOperationRedirectView(LoginRequiredMixin, View):
@@ -33,10 +35,19 @@ class RoleOperationRedirectView(LoginRequiredMixin, View):
         if role.slug == ROLE_DEV:
             return redirect('dev-workspace')
         if role.slug == ROLE_MANAGER:
+            if not is_manager_workspace_enabled():
+                return redirect('dashboard')
             return redirect('manager-workspace')
         if role.slug == ROLE_RECEPTION:
             return redirect('reception-workspace')
         return redirect('coach-workspace')
+
+
+class ManagerWorkspaceAvailabilityMixin:
+    def dispatch(self, request, *args, **kwargs):
+        if not is_manager_workspace_enabled():
+            raise Http404()
+        return super().dispatch(request, *args, **kwargs)
 
 
 class OperationBaseView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):

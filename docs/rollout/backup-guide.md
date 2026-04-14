@@ -57,8 +57,9 @@ $securePassword = Read-Host "Senha do banco" -AsSecureString
 ## Restauracao PostgreSQL
 
 ```powershell
-$env:PGPASSWORD="sua_senha"
-pg_restore -h localhost -U postgres -d octobox_control --clean --if-exists backups/octobox-AAAAmmdd-HHmmss.dump
+Set-ExecutionPolicy -Scope Process Bypass
+$securePassword = Read-Host "Senha do banco" -AsSecureString
+./scripts/restore_postgres.ps1 -DbHost localhost -Port 5432 -Database octobox_restore_test -User postgres -BackupFile backups/octobox-AAAAmmdd-HHmmss.dump -Password $securePassword
 ```
 
 ## O que validar depois do backup
@@ -71,3 +72,4 @@ pg_restore -h localhost -U postgres -d octobox_control --clean --if-exists backu
 
 1. [scripts/backup_sqlite.ps1](../../scripts/backup_sqlite.ps1)
 2. [scripts/backup_postgres.ps1](../../scripts/backup_postgres.ps1)
+3. [scripts/restore_postgres.ps1](../../scripts/restore_postgres.ps1)

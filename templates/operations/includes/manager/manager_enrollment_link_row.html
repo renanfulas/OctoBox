@@ -2,11 +2,21 @@
     <td>{{ payment.student.full_name }}</td>
     <td>{{ payment.due_date|date:"d/m/Y" }}</td>
     <td><span class="pill{% if payment.status == 'overdue' or payment.status == 'pending' %} warning{% else %} info{% endif %}">{{ payment.get_status_display }}</span></td>
-    <td>{% if is_priority %}<span class="pill warning">Prioridade</span>{% else %}<span class="pill">Depois</span>{% endif %}</td>
     <td>
-        <form method="post" action="/operacao/pagamento/{{ payment.id }}/vincular-matricula/">
-            {% csrf_token %}
-            <button class="button secondary" type="submit">Vincular matrícula ativa</button>
-        </form>
+        <div class="manager-row-decision">
+            {% with action=payment.decision_action %}
+            <form method="post" action="{{ action.post_url|default:'#' }}" class="manager-row-decision-form">
+                {% csrf_token %}
+                <button
+                    class="button secondary button-sm manager-row-cta manager-row-cta--{{ action.tone|default:'structural' }}"
+                    type="submit"
+                    aria-label="{{ action.aria_label|default:'Vincular matricula ativa' }}"
+                >
+                    {{ action.label|default:'Corrigir vinculo' }}
+                </button>
+            </form>
+            <p class="manager-row-decision-note">{{ action.note|default:'Ajuste a matricula para o financeiro voltar a ler a cobranca corretamente.' }}</p>
+            {% endwith %}
+        </div>
     </td>
 </tr>

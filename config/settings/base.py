@@ -22,6 +22,7 @@ from pathlib import Path
 
 import dj_database_url
 from config.env_loader import load_project_env
+from shared_support.box_runtime import build_box_cache_key_prefix
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ACTIVE_SETTINGS_MODULE = os.getenv('DJANGO_SETTINGS_MODULE', '').strip().lower()
@@ -111,6 +112,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 def build_cache_config():
     cache_url = env_str('REDIS_URL') or env_str('CACHE_URL')
+    cache_key_prefix = build_box_cache_key_prefix(env_str('CACHE_KEY_PREFIX', 'octobox'))
     if cache_url:
         return {
             'BACKEND': 'django_redis.cache.RedisCache',
@@ -123,7 +125,7 @@ def build_cache_config():
                 # caso o servidor Redis venha a ser comprometido.
                 'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
             },
-            'KEY_PREFIX': env_str('CACHE_KEY_PREFIX', 'octobox'),
+            'KEY_PREFIX': cache_key_prefix,
         }
 
     # 🚀 Performance de Elite (Epic 8): Garante Redis em Produção
@@ -132,13 +134,14 @@ def build_cache_config():
 
     return {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'octobox-default',
+        'LOCATION': build_box_cache_key_prefix('octobox-default'),
     }
 
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'role-operations'
 LOGOUT_REDIRECT_URL = 'login'
+OPERATIONS_MANAGER_WORKSPACE_ENABLED = env_bool('OPERATIONS_MANAGER_WORKSPACE_ENABLED', False)
 
 # 🚀 Segurança de Elite (Fintech Hardening): Session Lifecycle
 # Sessão expira em 30 minutos de inatividade para evitar sessões órfãs.

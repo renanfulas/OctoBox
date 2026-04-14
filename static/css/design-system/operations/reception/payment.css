@@ -16,6 +16,13 @@ PONTOS CRITICOS:
 */
 
 .reception-payment-board {
+    --reception-board-surface-dark:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, transparent), transparent 30%),
+        linear-gradient(158deg, rgba(12, 22, 36, 0.98), rgba(8, 15, 26, 0.97) 60%, rgba(7, 12, 22, 0.95));
+    --reception-board-border-dark: color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-border-soft) 82%);
+    --reception-board-shadow-dark:
+        0 20px 36px rgba(0, 0, 0, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
     position: relative;
     overflow: hidden;
     background:
@@ -74,8 +81,15 @@ PONTOS CRITICOS:
     gap: 3px;
 }
 
+.reception-payment-card .finance-action-copy strong {
+    color: var(--theme-text-primary);
+    font-size: 1rem;
+    line-height: 1.2;
+}
+
 .reception-payment-card .finance-action-copy .meta-text-sm {
     line-height: 1.35;
+    color: var(--theme-text-secondary);
 }
 
 .reception-payment-card .pill {
@@ -102,7 +116,7 @@ PONTOS CRITICOS:
     font-size: 0.72rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: var(--theme-text-muted);
     font-weight: 700;
 }
 
@@ -113,7 +127,7 @@ PONTOS CRITICOS:
 }
 
 .payment-primary-summary.reception-payment-highlight .payment-primary-summary__currency {
-    color: var(--muted);
+    color: var(--theme-text-muted);
     font-size: 1rem;
     font-weight: 700;
 }
@@ -142,10 +156,15 @@ PONTOS CRITICOS:
 
 .payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta-item strong {
     line-height: 1.2;
+    color: var(--theme-text-primary);
 }
 
 .reception-payment-card .finance-action-message {
     padding: 10px 12px;
+}
+
+.reception-payment-card .note-panel.note-panel-cream.finance-action-message.finance-action-message-compact::before {
+    content: none;
 }
 
 .reception-payment-card .finance-action-message .meta-text {
@@ -193,11 +212,15 @@ PONTOS CRITICOS:
 .reception-payment-primary-button {
     width: 100%;
     justify-content: center;
-    min-height: 44px;
-    border-radius: 14px;
-    font-size: 0.94rem;
-    font-weight: 800;
-    box-shadow: 0 12px 24px rgba(234, 88, 12, 0.18);
+    min-height: 36px;
+    padding: 8px 13px;
+    border-radius: 999px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--theme-surface-panel) 64%, transparent);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    color: color-mix(in srgb, var(--ink) 82%, var(--theme-text-secondary) 18%);
+    box-shadow: none;
 }
 
 .reception-payment-actions-support {
@@ -224,6 +247,41 @@ PONTOS CRITICOS:
     white-space: nowrap;
 }
 
+.reception-payment-actions-support .button,
+.reception-payment-actions-support .reception-payment-whatsapp-button,
+.reception-payment-actions-support .reception-payment-whatsapp-slot .button {
+    min-height: 36px;
+    padding: 8px 13px;
+    border-radius: 999px;
+    font-size: 0.92rem;
+    font-weight: 500;
+    box-shadow: none;
+}
+
+.reception-payment-actions-support .button.secondary,
+.reception-payment-actions-support .reception-payment-whatsapp-button {
+    background: transparent;
+    border-color: transparent;
+    color: color-mix(in srgb, var(--theme-text-muted) 84%, var(--ink) 16%);
+}
+
+.reception-payment-actions-primary .button:hover,
+.reception-payment-actions-primary .button:focus-visible,
+.reception-payment-actions-support .button:hover,
+.reception-payment-actions-support .button:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 72%, transparent);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    box-shadow: none;
+}
+
+.reception-payment-actions-support .button.secondary:hover,
+.reception-payment-actions-support .button.secondary:focus-visible,
+.reception-payment-actions-support .reception-payment-whatsapp-button:hover,
+.reception-payment-actions-support .reception-payment-whatsapp-button:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 42%, transparent);
+    border-color: transparent;
+}
+
 .reception-payment-whatsapp-button.is-disabled {
     pointer-events: none;
 }
@@ -233,7 +291,7 @@ PONTOS CRITICOS:
     font-size: 0.62rem;
     line-height: 1.2;
     font-weight: 700;
-    color: #ba3030;
+    color: color-mix(in srgb, var(--theme-accent-danger) 78%, var(--theme-text-primary) 22%);
     opacity: 0;
     transition: opacity 0.2s ease;
     pointer-events: none;
@@ -255,6 +313,7 @@ PONTOS CRITICOS:
 .reception-payment-form .field-label {
     margin-bottom: 4px;
     font-size: 0.72rem;
+    color: var(--theme-text-muted);
 }
 
 .reception-payment-form input,
@@ -277,7 +336,7 @@ PONTOS CRITICOS:
     cursor: pointer;
     font-size: 0.78rem;
     font-weight: 700;
-    color: var(--brand-dark);
+    color: color-mix(in srgb, var(--theme-accent-warning) 68%, var(--theme-text-primary) 32%);
     list-style: none;
 }
 
@@ -343,6 +402,11 @@ PONTOS CRITICOS:
 
 .reception-payment-board .operation-card-copy {
     max-width: 52ch;
+    color: var(--theme-text-secondary);
+}
+
+.reception-payment-board .operation-card-title {
+    color: var(--theme-text-primary);
 }
 
 body[data-theme="dark"] .reception-payment-board,
@@ -359,6 +423,26 @@ body[data-theme="dark"] .reception-payment-board {
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
+body[data-theme="dark"] .reception-payment-board .operation-card-title {
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .reception-payment-board .operation-card-copy {
+    color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .reception-payment-card {
+    box-shadow:
+        0 18px 34px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .reception-payment-primary-button {
+    background: rgba(10, 18, 32, 0.72);
+    border-color: rgba(148, 163, 184, 0.12);
+    color: rgba(248, 250, 252, 0.92);
+}
+
 body[data-theme="dark"] .payment-primary-summary.reception-payment-highlight {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, transparent), transparent 34%),
@@ -369,12 +453,86 @@ body[data-theme="dark"] .payment-primary-summary.reception-payment-highlight .pa
     color: rgba(255, 248, 239, 0.98);
 }
 
+body[data-theme="dark"] .payment-primary-summary.reception-payment-highlight :is(.payment-primary-summary__label, .payment-primary-summary__currency) {
+    color: color-mix(in srgb, var(--theme-text-muted) 82%, white 18%);
+}
+
 body[data-theme="dark"] .payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta-item {
     background: rgba(10, 17, 28, 0.72);
+    border-color: color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, var(--theme-border-soft) 86%);
 }
 
 body[data-theme="dark"] .reception-payment-advanced {
     background: rgba(10, 17, 28, 0.72);
+    border-top-color: color-mix(in srgb, var(--theme-border-soft) 56%, transparent);
+}
+
+body[data-theme="dark"] .reception-payment-card .finance-action-copy strong {
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .reception-payment-card .finance-action-copy .meta-text-sm,
+body[data-theme="dark"] .reception-payment-card .finance-action-message .meta-text,
+body[data-theme="dark"] .reception-payment-form .field-label {
+    color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .reception-payment-actions-support .button.secondary,
+body[data-theme="dark"] .reception-payment-actions-support .reception-payment-whatsapp-button {
+    background: transparent;
+    border-color: transparent;
+    color: rgba(226, 232, 240, 0.76);
+}
+
+body[data-theme="dark"] .reception-payment-form :is(input, select) {
+    background: linear-gradient(180deg, rgba(10, 19, 33, 0.92), rgba(8, 15, 27, 0.94));
+    border-color: color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-border-soft) 82%);
+    color: var(--theme-text-primary);
+    caret-color: var(--theme-text-primary);
+    -webkit-text-fill-color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .reception-payment-form :is(input, select)::placeholder {
+    color: color-mix(in srgb, var(--theme-text-muted) 88%, white 12%);
+}
+
+body[data-theme="dark"] .reception-payment-method-shell select,
+body[data-theme="dark"] .reception-payment-form select {
+    color-scheme: dark;
+}
+
+body[data-theme="dark"] .reception-payment-form select option {
+    background: #0b1625;
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .reception-payment-form select option:checked {
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 28%, #0b1625 72%);
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .reception-payment-form select option:hover,
+body[data-theme="dark"] .reception-payment-form select option:focus {
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 20%, #102033 80%);
+}
+
+body[data-theme="dark"] .reception-payment-advanced summary {
+    color: color-mix(in srgb, var(--theme-accent-warning) 76%, white 24%);
+}
+
+body[data-theme="dark"] .reception-payment-advanced summary::after {
+    color: var(--theme-text-muted);
+}
+
+body[data-theme="dark"] .reception-payment-whatsapp-hint {
+    color: color-mix(in srgb, var(--theme-accent-danger) 66%, white 34%);
+}
+
+body[data-theme="dark"] .reception-payment-actions-primary .button:hover,
+body[data-theme="dark"] .reception-payment-actions-primary .button:focus-visible,
+body[data-theme="dark"] .reception-payment-actions-support .button:hover,
+body[data-theme="dark"] .reception-payment-actions-support .button:focus-visible {
+    background: rgba(15, 23, 42, 0.84);
 }
 
 @keyframes reception-live-pill-pulse {

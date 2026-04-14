@@ -1,0 +1,39 @@
+<!--
+ARQUIVO: lane de comando da recepcao.
+
+POR QUE ELE EXISTE:
+- separa a variante visual da recepcao do host generico de reading list.
+
+O QUE ESTE ARQUIVO FAZ:
+1. renderiza a sequencia curta de leitura da recepcao com ownership local.
+2. reaproveita a mesma linguagem visual canonica do owner para manter coesao.
+3. preserva o payload semantico compartilhado da lane.
+
+PONTOS CRITICOS:
+- a mudanca aqui deve ficar so na casca visual.
+- os dados continuam vindo do mesmo `reading_panel`.
+-->
+{% if panel.items %}
+<div
+    class="fdw-focus-list page-reading-list reception-reading-panel reception-command-lane reception-command-list{% if panel.class_name %} {{ panel.class_name }}{% endif %}"
+    {% if panel.panel_id %}id="{{ panel.panel_id }}"{% endif %}
+    data-panel="reception-command-lane"
+    data-slot="reception-command-list"
+>
+    {% for item in panel.items %}
+    {% if item.href == '#reception-intake-board' %}
+        {% with tone_class='reception-command-card--entries' %}
+            {% include "operations/includes/reception/reception_command_lane_card.html" with item=item panel=panel tone_class=tone_class %}
+        {% endwith %}
+    {% elif item.href == '#reception-payment-board' %}
+        {% with tone_class='reception-command-card--billing' %}
+            {% include "operations/includes/reception/reception_command_lane_card.html" with item=item panel=panel tone_class=tone_class %}
+        {% endwith %}
+    {% else %}
+        {% with tone_class='reception-command-card--structure' %}
+            {% include "operations/includes/reception/reception_command_lane_card.html" with item=item panel=panel tone_class=tone_class %}
+        {% endwith %}
+    {% endif %}
+    {% endfor %}
+</div>
+{% endif %}

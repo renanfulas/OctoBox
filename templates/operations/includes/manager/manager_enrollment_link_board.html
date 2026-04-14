@@ -1,13 +1,14 @@
 <article class="table-card operation-table-card manager-priority-card" id="manager-enrollment-link-board" data-panel="manager-enrollment-link-board">
+    {% with board=page.data.manager_board_content.enrollment_links %}
     <div class="operation-card-head">
         <div>
-            <p class="eyebrow">Pagamentos sem vinculo de matricula</p>
-            <h2 class="operation-card-title">Estrutura antes de leitura financeira</h2>
-            <p class="operation-card-copy">Resolva vencimentos mais proximos primeiro.</p>
+            <p class="eyebrow">{{ board.header.eyebrow }}</p>
+            <h2 class="operation-card-title">{{ board.header.title }}</h2>
+            <p class="operation-card-copy">{{ board.header.copy }}</p>
         </div>
         <div class="manager-board-head-pills">
-            <span class="pill neutral manager-live-pill" data-role="manager-live-pill">Escuta pronta</span>
-            <span class="pill accent">{{ page.data.payments_without_enrollment|length }} pendencia(s)</span>
+            <span class="pill {{ board.header.live_pill_class|default:'neutral' }} manager-live-pill" data-role="manager-live-pill">{{ board.header.live_pill_label|default:'Escuta pronta' }}</span>
+            <span class="pill {{ board.header.pill_class|default:'accent' }}">{{ board.header.pill_label }}</span>
         </div>
     </div>
     <div class="operation-table-wrap">
@@ -17,17 +18,17 @@
                     <th scope="col">Aluno</th>
                     <th scope="col">Vencimento</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Leitura rapida</th>
-                    <th scope="col">Acao</th>
+                    <th scope="col">Proxima acao</th>
                 </tr>
             </thead>
             <tbody>
                 {% for payment in page.data.payments_without_enrollment %}
-                {% include "operations/includes/manager/manager_enrollment_link_row.html" with payment=payment is_priority=forloop.first %}
+                {% include "operations/includes/manager/manager_enrollment_link_row.html" with payment=payment %}
                 {% empty %}
-                <tr><td colspan="5" class="table-empty-cell">{% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Pagamentos sem matricula" title="Nenhum pagamento aguardando vinculo" copy="A estrutura financeira nao tem cobranca solta sem matricula ativa neste recorte." badge="Estrutura coerente" badge_class="accent" %}</td></tr>
+                <tr><td colspan="4" class="table-empty-cell">{% include "includes/ui/states/state_empty.html" with compact=True eyebrow=board.empty.eyebrow title=board.empty.title copy=board.empty.copy badge=board.empty.badge badge_class=board.empty.badge_class %}</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+    {% endwith %}
 </article>

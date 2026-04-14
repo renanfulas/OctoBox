@@ -1,5 +1,9 @@
 <article class="table-card operation-table-card operation-span-full manager-priority-card" id="manager-intake-board" data-panel="manager-intake-board">
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Fila de entrada de alunos" title="Quem chegou e pede encaminhamento" copy="Primeira linha destrava a fila." pill_label=page.data.pending_intakes|length|add:" item(ns)" pill_class="info" %}
+    {% with board=page.data.manager_board_content.intake %}
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow=board.header.eyebrow title=board.header.title copy=board.header.copy pill_label=board.header.pill_label pill_class=board.header.pill_class %}
+    {% if board.header.context_note %}
+    <p class="manager-board-context-note">{{ board.header.context_note }}</p>
+    {% endif %}
     <div class="operation-table-wrap">
         <table>
             <thead>
@@ -8,16 +12,17 @@
                     <th scope="col">Telefone</th>
                     <th scope="col">Origem</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Leitura rápida</th>
+                    <th scope="col">Proxima acao</th>
                 </tr>
             </thead>
             <tbody>
                 {% for intake in page.data.pending_intakes %}
-                {% include "operations/includes/manager/manager_intake_row.html" with intake=intake is_priority=forloop.first %}
+                {% include "operations/includes/manager/manager_intake_row.html" with intake=intake %}
                 {% empty %}
-                <tr><td colspan="5" class="table-empty-cell">{% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Fila de entrada" title="Nenhuma entrada pendente" copy="A triagem inicial nao tem novo contato aguardando encaminhamento agora." badge="Base limpa" badge_class="accent" %}</td></tr>
+                <tr><td colspan="5" class="table-empty-cell">{% include "includes/ui/states/state_empty.html" with compact=True eyebrow=board.empty.eyebrow title=board.empty.title copy=board.empty.copy badge=board.empty.badge badge_class=board.empty.badge_class %}</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+    {% endwith %}
 </article>

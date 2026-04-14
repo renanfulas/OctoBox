@@ -227,6 +227,11 @@ def build_operation_workspace_page(*, page_key, title, subtitle, scope, snapshot
             'hero': _build_operation_workspace_hero(page_key, snapshot),
             'reading_panel': _build_operation_workspace_reading_panel(page_key, snapshot),
         },
+        behavior={
+            'surface_key': page_key,
+            'scope': scope,
+            'snapshot_version': snapshot.get('snapshot_version', ''),
+        },
         capabilities=capabilities or {},
         assets=build_page_assets(css=['css/design-system/operations.css']),
     )

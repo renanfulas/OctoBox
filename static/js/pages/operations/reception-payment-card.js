@@ -13,13 +13,18 @@ POR QUE ELE EXISTE:
         return;
     }
 
-    const eventSources = new Map();
     let pendingRefreshTimeout = 0;
     let isRefreshingBoard = false;
     let hasDeferredRefresh = false;
+    let backgroundRefreshTimer = 0;
+    const BACKGROUND_REFRESH_MS = 25000;
 
     function getReceptionPaymentBoard() {
         return pageRoot.querySelector('#reception-payment-board');
+    }
+
+    function getReceptionSnapshotVersion() {
+        return getReceptionPaymentBoard()?.dataset.snapshotVersion || pageRoot.dataset.snapshotVersion || '';
     }
 
     function getReceptionLivePill() {
@@ -130,17 +135,6 @@ POR QUE ELE EXISTE:
         return Boolean(activeElement && activeElement.closest('[data-action="manage-reception-payment"]'));
     }
 
-    function closeStudentEventStreams() {
-        eventSources.forEach((source) => {
-            try {
-                source.close();
-            } catch (error) {
-                // noop
-            }
-        });
-        eventSources.clear();
-    }
-
     function queueBoardRefresh(reason) {
         if (pendingRefreshTimeout) {
             window.clearTimeout(pendingRefreshTimeout);
@@ -152,40 +146,27 @@ POR QUE ELE EXISTE:
         }, 140);
     }
 
+    function scheduleBackgroundRefresh() {
+        if (backgroundRefreshTimer) {
+            window.clearInterval(backgroundRefreshTimer);
+            backgroundRefreshTimer = 0;
+        }
+
+        if (document.visibilityState !== 'visible') {
+            return;
+        }
+
+        backgroundRefreshTimer = window.setInterval(() => {
+            refreshReceptionPaymentBoard('background-refresh');
+        }, BACKGROUND_REFRESH_MS);
+    }
+
     function connectStudentEventStreams() {
-        closeStudentEventStreams();
-
-        const cards = pageRoot.querySelectorAll('[data-panel="reception-payment-card"][data-student-events-stream-url]');
-        const handledEventTypes = [
-            'student.payment.updated',
-            'student.enrollment.updated',
-            'student.profile.updated',
-        ];
-
-        cards.forEach((card) => {
-            const streamUrl = card.dataset.studentEventsStreamUrl;
-
-            if (!streamUrl || eventSources.has(streamUrl) || typeof window.EventSource !== 'function') {
-                return;
-            }
-
-            const source = new window.EventSource(streamUrl);
-            eventSources.set(streamUrl, source);
-
-            handledEventTypes.forEach((eventType) => {
-                source.addEventListener(eventType, () => {
-                    queueBoardRefresh(eventType);
-                });
-            });
-
-            source.onerror = function () {
-                setLivePillState('Reconectando', 'warning', true);
-            };
-
-            source.onopen = function () {
-                setLivePillState('Escuta pronta', 'neutral', false);
-            };
-        });
+        // A recepcao nao deve abrir um SSE por card de pagamento.
+        // Isso dispara varias leituras individuais de aluno ao mesmo tempo e
+        // colide com a blindagem anti-exfiltracao da rota do aluno.
+        // Aqui usamos refresh leve do board como trilho oficial.
+        setLivePillState('Escuta pronta', 'neutral', false);
     }
 
     async function refreshReceptionPaymentBoard(reason) {
@@ -226,10 +207,26 @@ POR QUE ELE EXISTE:
                 throw new Error('refresh-board-missing');
             }
 
+            const currentVersion = getReceptionSnapshotVersion();
+            const nextVersion = nextBoard.dataset.snapshotVersion || '';
+
+            if (currentVersion && nextVersion && currentVersion === nextVersion) {
+                hasDeferredRefresh = false;
+                scheduleBackgroundRefresh();
+                setLivePillState('Ja sincronizado', 'success', true);
+                window.setTimeout(() => {
+                    setLivePillState('Escuta pronta', 'neutral', false);
+                }, 1800);
+                return;
+            }
+
             currentBoard.replaceWith(nextBoard);
+            if (nextVersion) {
+                pageRoot.dataset.snapshotVersion = nextVersion;
+            }
             syncAllReceptionSubmitLabels();
-            connectStudentEventStreams();
             hasDeferredRefresh = false;
+            scheduleBackgroundRefresh();
             setLivePillState(reason === 'manual-dirty-release' ? 'Fila atualizada' : 'Atualizado agora', 'success', true);
             window.setTimeout(() => {
                 setLivePillState('Escuta pronta', 'neutral', false);
@@ -243,6 +240,7 @@ POR QUE ELE EXISTE:
 
     syncAllReceptionSubmitLabels();
     connectStudentEventStreams();
+    scheduleBackgroundRefresh();
 
     pageRoot.addEventListener('change', function (event) {
         const methodSelect = event.target.closest('[data-role="reception-payment-method"]');
@@ -263,6 +261,17 @@ POR QUE ELE EXISTE:
         if (hasDeferredRefresh && !isReceptionFormBeingEdited()) {
             refreshReceptionPaymentBoard('manual-dirty-release');
         }
+    });
+
+    document.addEventListener('visibilitychange', function () {
+        scheduleBackgroundRefresh();
+        if (document.visibilityState === 'visible') {
+            queueBoardRefresh('background-refresh');
+        }
+    });
+
+    window.addEventListener('focus', function () {
+        queueBoardRefresh('background-refresh');
     });
 
     pageRoot.addEventListener('click', function (event) {
@@ -289,5 +298,9 @@ POR QUE ELE EXISTE:
         registerOperationalContact(button);
     });
 
-    window.addEventListener('beforeunload', closeStudentEventStreams);
+    window.addEventListener('beforeunload', function () {
+        if (backgroundRefreshTimer) {
+            window.clearInterval(backgroundRefreshTimer);
+        }
+    });
 })();

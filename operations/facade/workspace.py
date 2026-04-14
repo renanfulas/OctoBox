@@ -59,8 +59,8 @@ def build_dev_workspace_snapshot():
     return _build_dev_workspace_snapshot()
 
 
-def build_manager_workspace_snapshot():
-    return _build_manager_workspace_snapshot()
+def build_manager_workspace_snapshot(*, actor=None):
+    return _build_manager_workspace_snapshot(actor=actor)
 
 
 def build_coach_workspace_snapshot(*, today):

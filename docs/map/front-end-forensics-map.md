@@ -73,6 +73,7 @@ Regra pratica:
 4. se os dados ja chegam errados, o problema costuma estar do presenter para tras
 5. se o sintoma for "texto escuro, pill estranha, card lavado ou board pesado no dashboard dark", abra antes o [dashboard-darkmode-cascade-roadmap.md](dashboard-darkmode-cascade-roadmap.md)
 6. se o sintoma for "moldura dupla em grid dark" ou "barra de progresso curta dentro do card", consulte tambem [front-end-error-patterns-map.md](front-end-error-patterns-map.md) antes de mexer em HTML
+7. se o sintoma for "board da recepcao tinha dark mode local, mas ficou generico no runtime" ou "subcard da recepcao so parece correto porque herdou classe do financeiro", consulte primeiro os Padroes 20 e 21 em [front-end-error-patterns-map.md](front-end-error-patterns-map.md)
 
 ## Perguntas que resolvem metade da investigacao
 

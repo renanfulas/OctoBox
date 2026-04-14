@@ -8,7 +8,8 @@ POR QUE ELE EXISTE:
     class="table-card operation-table-card reception-payment-board reception-secondary-card"
     id="reception-payment-board"
     data-panel="reception-payment-board"
-    data-refresh-url="{% url 'reception-payment-board-fragment' %}">
+    data-refresh-url="{% url 'reception-payment-board-fragment' %}"
+    data-snapshot-version="{{ page.behavior.snapshot_version|default:'' }}">
     <div class="operation-card-head">
         <div>
             <p class="eyebrow">Pagamentos de hoje</p>
