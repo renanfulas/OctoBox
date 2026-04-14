@@ -113,7 +113,7 @@ def _build_operation_workspace_hero(page_key, snapshot):
             eyebrow='Coach',
             title='Turno ativo.',
             copy='Veja agenda, presença e ocorrência sem ruído.',
-            actions=_build_hero_actions_from_entry_context(snapshot.get('coach_decision_entry_context')),
+            actions=_build_hero_actions_from_entry_context(snapshot.get('coach_decision_entry_context'))[:1],
             aria_label='Panorama do coach',
             classes=['coach-hero'],
             data_panel='coach-hero',
@@ -186,11 +186,10 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
         ),
         'operations-coach': build_page_reading_panel(
             items=snapshot.get('coach_operational_focus'),
-            primary_href=coach_decision_entry_context.get('entry_href'),
+            primary_href='',
             pill_label='Ritmo do coach',
             pill_class='accent',
-            class_name='coach-focus-lane',
-            panel_id='coach-command-lane',
+            unwrap=True,
         ),
         'operations-dev': build_page_reading_panel(
             items=snapshot.get('dev_operational_focus'),

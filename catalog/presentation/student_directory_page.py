@@ -7,7 +7,7 @@ POR QUE ELE EXISTE:
 """
 
 from access.navigation_contracts import get_shell_route_url
-from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
+from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from django.urls import reverse
 from shared_support.page_payloads import build_page_context, build_page_hero
 
@@ -19,8 +19,17 @@ def build_student_directory_page(*, student_count, students, student_filter_form
     can_open_student_admin = current_role_slug in (ROLE_OWNER, ROLE_DEV)
     hero_actions = [
         {'label': 'Ver base', 'href': '#tab-students-directory', 'kind': 'primary', 'data_action': 'open-tab-students-directory'},
-        {'label': 'Abrir intake', 'href': get_shell_route_url('intake', fragment='intake-queue-board'), 'kind': 'secondary', 'data_action': 'open-student-intake-center'},
     ]
+
+    if current_role_slug != ROLE_COACH:
+        hero_actions.append(
+            {
+                'label': 'Abrir intake',
+                'href': get_shell_route_url('intake', fragment='intake-queue-board'),
+                'kind': 'secondary',
+                'data_action': 'open-student-intake-center',
+            }
+        )
 
     if can_manage_students:
         hero_actions.append(
