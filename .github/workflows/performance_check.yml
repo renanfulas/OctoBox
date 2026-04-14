@@ -32,7 +32,14 @@ jobs:
         echo "Auditando drift entre static/ e staticfiles/."
         echo "Se houver divergencia, a UI pode servir assets visuais antigos mesmo com CSS novo no repositorio."
 
-    - name: 5. Generate Pedagogical Drift Report
+    - name: 5. Sync Runtime Assets Mirror
+      env:
+        DJANGO_SECRET_KEY: 'a-dummy-secret-key-for-ci'
+        PHONE_BLIND_INDEX_KEY: 'ci-only-blind-index-key'
+      run: |
+        python manage.py sync_runtime_assets --collectstatic --settings=config.settings.test
+
+    - name: 6. Generate Pedagogical Drift Report
       env:
         DJANGO_SECRET_KEY: 'a-dummy-secret-key-for-ci'
         PHONE_BLIND_INDEX_KEY: 'ci-only-blind-index-key'
@@ -51,13 +58,13 @@ jobs:
           echo '```'
         } >> "$GITHUB_STEP_SUMMARY"
 
-    - name: 6. Upload Drift Report Artifact
+    - name: 7. Upload Drift Report Artifact
       uses: actions/upload-artifact@v4
       with:
         name: static-drift-report
         path: static-drift-report.txt
 
-    - name: 7. Enforce Zero Drift
+    - name: 8. Enforce Zero Drift
       env:
         DJANGO_SECRET_KEY: 'a-dummy-secret-key-for-ci'
         PHONE_BLIND_INDEX_KEY: 'ci-only-blind-index-key'
@@ -71,7 +78,7 @@ jobs:
     # Define os serviços de dependência (banco de dados e cache)
     services:
       postgres:
-        image: postgres:13
+        image: postgres:15
         # Opções de saúde para garantir que o postgres esteja pronto antes dos testes
         options: >-
           --health-cmd pg_isready
