@@ -78,7 +78,7 @@ jobs:
     # Define os serviços de dependência (banco de dados e cache)
     services:
       postgres:
-        image: postgres:13
+        image: postgres:15
         # Opções de saúde para garantir que o postgres esteja pronto antes dos testes
         options: >-
           --health-cmd pg_isready
