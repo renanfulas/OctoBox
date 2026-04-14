@@ -7,7 +7,7 @@ POR QUE ELE EXISTE:
 """
 
 from access.admin import admin_changelist_url
-from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
+from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from shared_support.page_payloads import build_page_hero
 
 from .shared import build_catalog_assets, build_catalog_page_payload
@@ -33,6 +33,7 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
     role_slug = base_context['current_role'].slug
     can_manage_classes = role_slug in (ROLE_OWNER, ROLE_MANAGER)
     can_open_class_admin = role_slug in (ROLE_OWNER, ROLE_DEV)
+    planner_hero_action = [] if role_slug in (ROLE_COACH, ROLE_RECEPTION) else [{'label': 'Abrir planejamento', 'href': '#planner-board', 'kind': 'secondary'}]
     hero = build_page_hero(
         eyebrow='Aulas',
         title='Grade em leitura.',
@@ -41,7 +42,7 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
             {'label': 'Ver hoje', 'href': '#today-board'},
             {'label': 'Ver semana', 'href': '#class-weekly-modal', 'kind': 'secondary', 'data_action': 'open-weekly-modal-full'},
             {'label': 'Expandir mês', 'href': '#class-monthly-modal', 'kind': 'secondary', 'data_action': 'open-monthly-calendar'},
-            {'label': 'Abrir planejamento', 'href': '#planner-board', 'kind': 'secondary'},
+            *planner_hero_action,
         ],
         aria_label='Panorama da grade',
         classes=['class-grid-hero'],
