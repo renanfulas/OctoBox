@@ -619,11 +619,13 @@ def _select_dashboard_reading_cards(priority_cards):
     return ordered_cards
 
 
-def _build_dashboard_reading_panel(priority_cards):
+def _build_dashboard_reading_panel(priority_cards, *, role_slug=''):
     selected_cards = _select_dashboard_reading_cards(priority_cards)
     items = []
     for card in selected_cards:
         is_tranquil = not card.get('is_actionable')
+        if role_slug == ROLE_MANAGER and is_tranquil and (card.get('value') or 0) == 0:
+            continue
         items.append(
             {
                 'chip_label': card.get('indicator') or card.get('kicker'),
@@ -700,7 +702,7 @@ def build_dashboard_page(*, request_user, role_slug, snapshot, stored_layout_sta
         data={
             **snapshot,
             'hero': hero,
-            'reading_panel': _build_dashboard_reading_panel(priority_cards),
+            'reading_panel': _build_dashboard_reading_panel(priority_cards, role_slug=role_slug),
             'dashboard_layout': dashboard_layout,
             'dashboard_role_mode': 'reception' if role_slug == ROLE_RECEPTION else 'default',
             'dashboard_can_register_finance_whatsapp': _can_register_finance_whatsapp(role_slug),
