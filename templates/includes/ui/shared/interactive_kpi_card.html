@@ -14,7 +14,7 @@ O QUE ESTE ARQUIVO FAZ:
     <div class="card-body card-body-metric student-metric-card-body">
         {% if card.icon %}
         <div class="icon-box student-kpi-icon-box kpi-card-icon-box" aria-hidden="true">
-            {{ card.icon|safe }}
+            {% include 'includes/ui/shared/kpi_icon.html' with icon_name=card.icon %}
         </div>
         {% endif %}
         <div class="card-value-stack">

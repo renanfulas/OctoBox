@@ -13,7 +13,7 @@ PONTOS CRITICOS:
     <div class="card-body card-body-metric">
         {% if card.icon %}
         <div class="icon-box neon-glow-{{ card.change.tone|default:'primary' }}">
-            {{ card.icon|safe }}
+            {% include 'includes/ui/shared/kpi_icon.html' with icon_name=card.icon %}
         </div>
         {% endif %}
         <div class="card-value-stack">
