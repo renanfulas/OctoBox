@@ -1,17 +1,40 @@
-**Resumo das mudanças**
-- Aumenta TTL de cache para contagens do shell e usa o setting configurável.
+## Tipo
 
-**Arquivos principais modificados**
-- `config/settings/base.py`
-- `access/shell_actions.py`
+- [ ] feature
+- [ ] fix
+- [ ] ops
+- [ ] docs
+- [ ] refactor
 
-**Por que esta mudança é necessária**
-- Reduz pressão no banco de dados para métricas globais (shell counts) em picos de uso.
+## Trilha principal
 
-**Como testar**
-1. Verificar que `SHELL_COUNTS_CACHE_TTL_SECONDS` está definido no settings (ou usar default 60).
-2. Reiniciar cache/backend e acessar páginas que exibem `shell_action_buttons` para validar contagens.
+- [ ] frontend
+- [ ] backend
+- [ ] infra
+- [ ] rollout
 
-**Checklist**
-- [ ] Removi arquivos sensíveis do repositório e purguei histórico se necessário.
-- [ ] Adicionei entry no `CHANGELOG.md`.
+## O que muda
+
+- 
+
+## Por que
+
+- 
+
+## Como validar
+
+1. `py manage.py check`
+2. 
+
+## Risco
+
+- risco: `low | medium | high`
+- observacoes:
+
+## Checklist
+
+- [ ] A branch trata um assunto principal so.
+- [ ] Removi arquivos temporarios, dumps, prints e lixo de bancada.
+- [ ] Rodei validacao minima local do circuito alterado.
+- [ ] Atualizei documentacao ou runbook quando necessario.
+- [ ] Deixei claro se existe follow-up pendente fora desta PR.

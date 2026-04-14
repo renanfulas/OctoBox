@@ -70,11 +70,9 @@ Se o foco for entender qual e o tema visual oficial do produto, qual linguagem e
 
 Se o foco for reorganizar o front-end agora, com convergencia entre fachada visual, contratos de tela e o plano de longo prazo de desacoplamento do backend, leia tambem [../plans/front-end-restructuring-guide.md](../plans/front-end-restructuring-guide.md).
 
-<<<<<<< HEAD
-Se o foco for implantar esse tema em ordem pratica, por ondas, com baixo risco e criterio de aceite claro, leia tambem [../plans/theme-implementation-final.md](../plans/theme-implementation-final.md).
-=======
 Se o foco for navegar o front como mapa vivo de ownership, pontos de entrada e encaixe entre shell, shared e domain, leia tambem [front-end-city-map.md](front-end-city-map.md) e [front-end-card-architecture.md](front-end-card-architecture.md).
->>>>>>> codex/student-page-refactor-and-ui-polish
+
+Se o foco for implantar esse tema em ordem pratica, por ondas, com baixo risco e criterio de aceite claro, leia tambem [../plans/theme-implementation-final.md](../plans/theme-implementation-final.md).
 
 Se o foco for saber quem e o dono local de cada funcionalidade e quais testes sobem quando uma tela precisa continuar se comunicando com as outras, leia tambem [functional-circuits-matrix.md](functional-circuits-matrix.md).
 
