@@ -160,6 +160,11 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
     manager_decision_entry_context = snapshot.get('manager_decision_entry_context') or {}
     coach_decision_entry_context = snapshot.get('coach_decision_entry_context') or {}
     reception_decision_entry_context = snapshot.get('reception_decision_entry_context') or {}
+    reception_focus_visible = [
+        item
+        for item in (snapshot.get('reception_focus') or [])
+        if (item.get('count') or 0) > 0
+    ]
 
     def _resolve_primary_href(items, fallback):
         for item in items or []:
@@ -200,8 +205,8 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
             panel_id='dev-command-lane',
         ),
         'operations-reception': build_page_reading_panel(
-            items=snapshot.get('reception_focus'),
-            primary_href=reception_decision_entry_context.get('entry_href'),
+            items=reception_focus_visible,
+            primary_href=resolve_primary_href(reception_focus_visible, reception_decision_entry_context.get('entry_href')),
             pill_label='Atendimento vivo',
             pill_class='accent',
             class_name='reception-command-panel',
