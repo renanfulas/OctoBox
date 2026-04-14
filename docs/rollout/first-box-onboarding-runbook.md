@@ -53,6 +53,8 @@ Antes de comecar, preencher a ficha de coleta em [first-box-pilot-intake-sheet.m
 
 Se o box piloto atual for a Endorfina Cross, usar o plano preenchido em [first-box-endorfina-cross-setup-plan.md](first-box-endorfina-cross-setup-plan.md) como trilho operacional do dia 1.
 
+No onboarding da Endorfina Cross em `15/04/2026 as 15:00`, usar tambem [first-box-endorfina-onboarding-day-checklist-2026-04-15.md](first-box-endorfina-onboarding-day-checklist-2026-04-15.md) como folha de execucao da sessao.
+
 No dia da implantacao, executar o setup interno seguindo [first-box-system-setup-checklist.md](first-box-system-setup-checklist.md).
 
 ### 1. Validar homologacao

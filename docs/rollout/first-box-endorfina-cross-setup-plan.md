@@ -11,6 +11,7 @@ DOCUMENTOS IRMAOS:
 - [first-box-pilot-intake-sheet.md](first-box-pilot-intake-sheet.md)
 - [first-box-system-setup-checklist.md](first-box-system-setup-checklist.md)
 - [first-box-onboarding-runbook.md](first-box-onboarding-runbook.md)
+- [first-box-endorfina-onboarding-day-checklist-2026-04-15.md](first-box-endorfina-onboarding-day-checklist-2026-04-15.md)
 - [first-box-production-execution-checklist.md](first-box-production-execution-checklist.md)
 - [phase1-closed-beta-operations-matrix.md](phase1-closed-beta-operations-matrix.md)
 
@@ -345,6 +346,10 @@ Em linguagem simples: se a gente tentar encher a piscina, montar o parquinho e f
 5. montar as aulas reais informadas
 6. testar Recepcao com `Fernando`
 7. rodar smoke por papel
+
+Checklist operacional da sessao:
+
+1. usar [first-box-endorfina-onboarding-day-checklist-2026-04-15.md](first-box-endorfina-onboarding-day-checklist-2026-04-15.md)
 
 ### Depois
 
