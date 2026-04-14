@@ -19,7 +19,7 @@ PONTOS CRITICOS:
 {% with page=operation_page %}
 <div class="operation-shell manager-scene workspace-shell" data-manager-priority="{{ page.data.manager_priority_surface|default:'finance' }}" data-manager-events-stream-url="{% url 'manager-event-stream' %}">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
-    {% include "includes/ui/layout/page_reading_list.html" with panel=page.data.reading_panel %}
+    {% include "operations/includes/manager/manager_command_lane.html" with panel=page.data.reading_panel %}
     <div class="visually-hidden" aria-hidden="true">
         <a href="#manager-link-board">Ver vínculos pendentes</a>
         <a href="#manager-enrollment-link-board">Ver pagamentos sem matrícula</a>

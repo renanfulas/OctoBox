@@ -2,53 +2,158 @@
 ARQUIVO: painel de tendencia de receita do financeiro.
 
 POR QUE ELE EXISTE:
-- Mostra a receita real recebida nos ultimos 6 meses.
+- mostra a leitura executiva do board tradicional com alternancia local por metrica.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Exibe grafico de barras de receita mensal.
-2. Ajuda a visualizar tendencia de caixa.
+1. exibe pills executivas no topo;
+2. alterna entre receita e churn sem navegar;
+3. mantem o grafico como apoio da metrica escolhida.
 
 PONTOS CRITICOS:
-- Depende do contexto de monthly_comparison.
+- depende do contrato de finance_trend_foundation e do recorte global ativo.
 -->
-<<<<<<< HEAD
-<article class="table-card finance-board-trend finance-revenue-trend-card" id="finance-trend-board">
-=======
-<article class="table-card finance-glass-panel finance-board-trend finance-board-trend--revenue finance-revenue-trend-card" id="finance-trend-board">
->>>>>>> codex/student-page-refactor-and-ui-polish
+<article class="table-card finance-board-trend finance-revenue-trend-card" id="finance-trend-board" data-finance-mode-visibility="traditional hybrid" data-finance-trend-board data-finance-trend-active="{{ page.data.finance_trend_default_metric_key }}">
     <div class="finance-revenue-trend-head">
         <div class="finance-revenue-trend-copy">
-            <h3 class="finance-revenue-trend-title">Receita mensal</h3>
-            <p class="finance-revenue-trend-subtitle">Realizado vs esperado &mdash; ultimos 6 meses</p>
-        </div>
-        <div class="finance-revenue-trend-legend" aria-label="Legenda do grafico">
-            <span class="finance-revenue-trend-legend-item">
-                <span class="finance-revenue-trend-legend-dot is-realized" aria-hidden="true"></span>
-                Realizado
-            </span>
-            <span class="finance-revenue-trend-legend-item">
-                <span class="finance-revenue-trend-legend-dot is-expected" aria-hidden="true"></span>
-                Esperado
-            </span>
+            <h3 class="finance-revenue-trend-title" data-finance-trend-title>{{ page.data.finance_trend_metric_views.recebido.title }}</h3>
+            <p class="finance-revenue-trend-subtitle" data-finance-trend-subtitle>{{ page.data.finance_trend_metric_views.recebido.subtitle }}</p>
         </div>
     </div>
-    <div class="finance-revenue-trend-chart" aria-label="Grafico comparativo de receita mensal">
-        <div class="finance-revenue-trend-axis" aria-hidden="true">
-            {% for tick in page.data.finance_revenue_chart.ticks %}
-            <span>{{ tick.label }}</span>
-            {% endfor %}
-        </div>
-        <div class="finance-revenue-trend-plot">
-            <div class="finance-revenue-trend-gridlines" aria-hidden="true">
-                {% for tick in page.data.finance_revenue_chart.ticks %}
-                <span></span>
-                {% endfor %}
+
+    <div class="finance-trend-metric-pills" aria-label="Leitura executiva do card de receita">
+        {% for metric in page.data.finance_trend_metric_pills %}
+        <button
+            class="finance-trend-metric-pill finance-trend-metric-pill--{{ metric.semantic_state }}{% if metric.availability_status != 'ready' %} is-pending{% endif %}{% if metric.is_active %} is-active{% endif %}"
+            type="button"
+            {% if metric.is_interactive %}
+            data-finance-trend-button="{{ metric.key }}"
+            data-trend-title="{{ metric.view.title }}"
+            data-trend-subtitle="{{ metric.view.subtitle }}"
+            data-trend-legend-primary="{{ metric.view.legend.primary }}"
+            data-trend-legend-primary-state="{{ metric.view.legend.primary_state }}"
+            data-trend-legend-secondary="{{ metric.view.legend.secondary }}"
+            data-trend-legend-secondary-state="{{ metric.view.legend.secondary_state }}"
+            aria-pressed="{% if metric.is_active %}true{% else %}false{% endif %}"
+            {% else %}
+            disabled
+            aria-disabled="true"
+            title="{{ metric.help_text }}"
+            {% endif %}
+        >
+            <span class="finance-trend-metric-pill-head">
+                <span class="finance-trend-metric-pill-label">{{ metric.label }}</span>
+                {% if metric.direction == 'up' %}
+                <span class="finance-trend-metric-pill-arrow" aria-hidden="true">&uarr;</span>
+                {% elif metric.direction == 'down' %}
+                <span class="finance-trend-metric-pill-arrow" aria-hidden="true">&darr;</span>
+                {% else %}
+                <span class="finance-trend-metric-pill-arrow" aria-hidden="true">&bull;</span>
+                {% endif %}
+            </span>
+            <strong class="finance-trend-metric-pill-value">{{ metric.display_value }}</strong>
+            <span class="finance-trend-metric-pill-delta">{{ metric.delta_label }}</span>
+        </button>
+        {% endfor %}
+    </div>
+
+    <div class="finance-trend-metric-views">
+        <section class="finance-trend-metric-view is-active" data-finance-trend-view="recebido">
+            <div class="finance-revenue-trend-chart" aria-label="Grafico comparativo de receita mensal">
+                <div class="finance-revenue-trend-axis" aria-hidden="true">
+                    {% for tick in page.data.finance_revenue_chart.ticks %}
+                    <span>{{ tick.label }}</span>
+                    {% endfor %}
+                </div>
+                <div class="finance-revenue-trend-plot">
+                    <div class="finance-revenue-trend-gridlines" aria-hidden="true">
+                        {% for tick in page.data.finance_revenue_chart.ticks %}
+                        <span></span>
+                        {% endfor %}
+                    </div>
+                    <div class="finance-revenue-trend-columns" data-visual-columns="{{ page.data.finance_revenue_chart.items|length|default:1 }}">
+                        {% for item in page.data.finance_revenue_chart.items %}
+                        {% include "includes/catalog/finance/cards/revenue_chart_column.html" with item=item %}
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
-            <div class="finance-revenue-trend-columns" data-visual-columns="{{ page.data.finance_revenue_chart.items|length|default:1 }}">
-                {% for item in page.data.finance_revenue_chart.items %}
-                {% include "includes/catalog/finance/cards/revenue_chart_column.html" with item=item %}
-                {% endfor %}
+            <div class="finance-revenue-sparkline finance-revenue-sparkline--recebido finance-revenue-sparkline--{{ page.data.finance_trend_metric_views.recebido.sparkline.semantic_state }}" data-finance-trend-sparkline="recebido">
+                <div class="finance-revenue-sparkline-copy">
+                    <strong>{{ page.data.finance_trend_metric_views.recebido.sparkline.headline }}</strong>
+                    <span>{{ page.data.finance_trend_metric_views.recebido.sparkline.summary }}</span>
+                </div>
+                <div class="finance-revenue-sparkline-visual" aria-label="Tendencia de recebido no recorte atual">
+                    <svg viewBox="0 0 377 36" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                        <polyline points="{{ page.data.finance_trend_metric_views.recebido.sparkline.expected_polyline_points }}" class="finance-revenue-sparkline-line finance-revenue-sparkline-line--expected"></polyline>
+                        <polyline points="{{ page.data.finance_trend_metric_views.recebido.sparkline.realized_polyline_points }}" class="finance-revenue-sparkline-line finance-revenue-sparkline-line--realized"></polyline>
+                        {% for point in page.data.finance_trend_metric_views.recebido.sparkline.expected_points %}
+                        <circle cx="{{ point.svg_x }}" cy="{{ point.svg_y }}" r="1.5" class="finance-revenue-sparkline-point finance-revenue-sparkline-point--expected">
+                            <title>{{ point.tooltip }}</title>
+                        </circle>
+                        {% endfor %}
+                        {% for point in page.data.finance_trend_metric_views.recebido.sparkline.realized_points %}
+                        <circle cx="{{ point.svg_x }}" cy="{{ point.svg_y }}" r="1.9" class="finance-revenue-sparkline-point finance-revenue-sparkline-point--realized">
+                            <title>{{ point.tooltip }}</title>
+                        </circle>
+                        {% endfor %}
+                    </svg>
+                </div>
             </div>
-        </div>
+        </section>
+
+        <section class="finance-trend-metric-view" data-finance-trend-view="churn" hidden>
+            <div class="finance-churn-trend-chart finance-churn-trend-chart--embedded" aria-label="Grafico comparativo de ativacoes e cancelamentos">
+                <div class="finance-churn-trend-axis" aria-hidden="true">
+                    {% for tick in page.data.finance_churn_chart.ticks %}
+                    <span>{{ tick.label }}</span>
+                    {% endfor %}
+                </div>
+                <div class="finance-churn-trend-plot">
+                    <div class="finance-churn-trend-gridlines" aria-hidden="true">
+                        {% for tick in page.data.finance_churn_chart.ticks %}
+                        <span></span>
+                        {% endfor %}
+                    </div>
+                    <div class="finance-churn-trend-columns" data-visual-columns="{{ page.data.finance_churn_chart.items|length|default:1 }}">
+                        {% for item in page.data.finance_churn_chart.items %}
+                        <div class="finance-churn-column finance-churn-column--{{ item.performance_state }}">
+                            <div class="finance-churn-column-bars">
+                                <div class="finance-churn-bar is-cancellation" data-visual-height="{{ item.cancellation_height }}" title="{{ item.performance_label }} | Cancelamentos: {{ item.cancellations }}"></div>
+                                <div class="finance-churn-bar is-activation" data-visual-height="{{ item.activation_height }}" title="{{ item.performance_label }} | Ativacoes: {{ item.activations }}"></div>
+                            </div>
+                            <div class="finance-churn-column-meta">
+                                <strong class="finance-churn-column-label">{{ item.label }}</strong>
+                                <span class="finance-churn-column-balance{% if item.net_growth < 0 %} is-negative{% elif item.net_growth > 0 %} is-positive{% endif %}" title="{{ item.performance_label }}">
+                                    Saldo {{ item.net_growth }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="finance-revenue-sparkline finance-revenue-sparkline--churn finance-revenue-sparkline--{{ page.data.finance_trend_metric_views.churn.sparkline.semantic_state }}" data-finance-trend-sparkline="churn">
+                <div class="finance-revenue-sparkline-copy">
+                    <strong>{{ page.data.finance_trend_metric_views.churn.sparkline.headline }}</strong>
+                    <span>{{ page.data.finance_trend_metric_views.churn.sparkline.summary }}</span>
+                </div>
+                <div class="finance-revenue-sparkline-visual" aria-label="Tendencia de churn no recorte atual">
+                    <svg viewBox="0 0 377 36" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                        <polyline points="{{ page.data.finance_trend_metric_views.churn.sparkline.expected_polyline_points }}" class="finance-revenue-sparkline-line finance-revenue-sparkline-line--expected"></polyline>
+                        <polyline points="{{ page.data.finance_trend_metric_views.churn.sparkline.realized_polyline_points }}" class="finance-revenue-sparkline-line finance-revenue-sparkline-line--realized"></polyline>
+                        {% for point in page.data.finance_trend_metric_views.churn.sparkline.expected_points %}
+                        <circle cx="{{ point.svg_x }}" cy="{{ point.svg_y }}" r="1.5" class="finance-revenue-sparkline-point finance-revenue-sparkline-point--expected">
+                            <title>{{ point.tooltip }}</title>
+                        </circle>
+                        {% endfor %}
+                        {% for point in page.data.finance_trend_metric_views.churn.sparkline.realized_points %}
+                        <circle cx="{{ point.svg_x }}" cy="{{ point.svg_y }}" r="1.9" class="finance-revenue-sparkline-point finance-revenue-sparkline-point--realized">
+                            <title>{{ point.tooltip }}</title>
+                        </circle>
+                        {% endfor %}
+                    </svg>
+                </div>
+            </div>
+        </section>
     </div>
 </article>

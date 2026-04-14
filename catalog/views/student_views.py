@@ -51,20 +51,12 @@ from catalog.forms import (
     StudentSourceDeclarationCaptureForm,
 )
 from catalog.presentation import build_student_directory_page, build_student_form_page
-<<<<<<< HEAD
 from catalog.presentation.student_financial_fragments import render_student_financial_fragments
-=======
-from catalog.presentation.student_financial_fragments import (
-    build_student_enrollment_management_form,
-    build_student_payment_management_form,
-    render_student_financial_fragments,
-)
->>>>>>> codex/student-page-refactor-and-ui-polish
 from catalog.presentation.shared import attach_catalog_page_payload
 from catalog.services.student_enrollment_actions import handle_student_enrollment_action
 from catalog.services.student_payment_actions import handle_student_payment_action
 from catalog.services.student_workflows import run_student_quick_create_workflow, run_student_quick_update_workflow, run_student_express_create_workflow
-from catalog.student_queries import build_student_directory_snapshot, build_student_financial_snapshot
+from catalog.student_queries import build_student_directory_snapshot, build_student_financial_snapshot, get_operational_enrollment
 from shared_support.redis_snapshots import prewarm_student_snapshots
 from finance.models import Enrollment, Payment
 from monitoring.student_realtime_metrics import record_student_save_conflict
@@ -190,6 +182,10 @@ def _serialize_student_browser_snapshot(*, request, student):
 def _serialize_student_directory_search_entry(student):
     latest_payment_due_date = getattr(student, 'latest_payment_due_date', None)
     due_label = latest_payment_due_date.strftime('%d/%m/%Y') if latest_payment_due_date else ''
+    created_at = getattr(student, 'created_at', None)
+    is_new_30d = getattr(student, 'is_new_30d', None)
+    if is_new_30d is None:
+        is_new_30d = bool(created_at and created_at >= timezone.now() - timezone.timedelta(days=30))
 
     return {
         'id': student.id,
@@ -197,6 +193,7 @@ def _serialize_student_directory_search_entry(student):
         'email': student.email or '',
         'phone': student.phone or '',
         'status': student.status,
+        'is_new_30d': is_new_30d,
         'latest_plan_name': getattr(student, 'latest_plan_name', '') or '',
         'payment_status': getattr(student, 'operational_payment_status', '') or '',
         'presence_percent': getattr(student, 'presence_percent', 0) or 0,
@@ -226,6 +223,7 @@ def _build_student_drawer_fragments(*, request, student, form=None):
         current_role_slug=role_slug,
         browser_snapshot=_serialize_student_browser_snapshot(request=request, student=student),
     )
+    page['context']['surface_mode'] = 'drawer'
     page['data']['source_snapshot']['capture_url'] = _build_student_source_capture_url(request=request, student=student)
     context = {'page': page}
 
@@ -295,7 +293,7 @@ class StudentDirectoryView(CatalogBaseView):
             base_query_string=base_query_string,
             directory_search={
                 'cache_key': index_params.urlencode() or 'all',
-                'refresh_token': timezone.now().isoformat(),
+                'refresh_token': search_snapshot.get('directory_refresh_token', ''),
                 'index': directory_search_entries,
             },
         )
@@ -361,7 +359,6 @@ class StudentQuickBaseView(CatalogBaseView, FormView):
     def get_payment_management_form(self):
         if not self.object:
             return None
-        return build_student_payment_management_form(self.object)
         from django.utils import timezone
         latest_payment = self.object.payments.order_by('-due_date', '-created_at').first()
         if latest_payment is None:
@@ -386,8 +383,7 @@ class StudentQuickBaseView(CatalogBaseView, FormView):
     def get_enrollment_management_form(self):
         if not self.object:
             return None
-        return build_student_enrollment_management_form(self.object)
-        latest_enrollment = self.object.enrollments.order_by('-start_date', '-created_at').first()
+        latest_enrollment = get_operational_enrollment(self.object)
         if latest_enrollment is None:
             return None
         return EnrollmentManagementForm(
@@ -551,19 +547,22 @@ class StudentQuickUpdateView(StudentQuickBaseView):
             current_lock = get_student_lock_status(self.object.id)
             if not current_lock or current_lock.get('user_id') != self.request.user.id:
                 if not current_lock:
+                    lock_result = acquire_student_lock(self.object.id, self.request.user, role_slug)
+                    if not lock_result.acquired:
+                        messages.error(
+                            self.request,
+                            'A edicao desta ficha nao esta reservada para voce agora. Entre em modo de edicao novamente antes de salvar.'
+                        )
+                        return redirect(_append_fragment(reverse('student-quick-update', args=[self.object.id]), STUDENT_FORM_ESSENTIAL_FRAGMENT))
+                else:
+                    holder = current_lock
                     messages.error(
                         self.request,
-                        'A edicao desta ficha nao esta reservada para voce agora. Entre em modo de edicao novamente antes de salvar.'
+                        f"{holder.get('user_display', 'Outro usuário')} ({holder.get('role_label', '')}) "
+                        f"assumiu a edição deste aluno enquanto você preenchia. "
+                        f"Suas alterações não foram salvas. Fale com ele para coordenar."
                     )
                     return redirect(_append_fragment(reverse('student-quick-update', args=[self.object.id]), STUDENT_FORM_ESSENTIAL_FRAGMENT))
-                holder = current_lock
-                messages.error(
-                    self.request,
-                    f"{holder.get('user_display', 'Outro usuário')} ({holder.get('role_label', '')}) "
-                    f"assumiu a edição deste aluno enquanto você preenchia. "
-                    f"Suas alterações não foram salvas. Fale com ele para coordenar."
-                )
-                return redirect(_append_fragment(reverse('student-quick-update', args=[self.object.id]), STUDENT_FORM_ESSENTIAL_FRAGMENT))
 
         current_profile_version = build_profile_version(self.object)
         if request_profile_version and current_profile_version and request_profile_version != current_profile_version:
@@ -834,39 +833,16 @@ class StudentDrawerProfileSaveView(LoginRequiredMixin, RoleRequiredMixin, View):
 class StudentPaymentActionView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
     allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
 
-    @staticmethod
-    def _wants_json(request):
-        return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-
-    def _success_json(self, request, student, *, selected_payment=None, message=''):
-        return JsonResponse(
-            {
-                'status': 'success',
-                'message': message,
-                'fragments': render_student_financial_fragments(
-                    student,
-                    request=request,
-                    selected_payment=selected_payment,
-                ),
-            }
-        )
-
     @idempotent_action
     def post(self, request, student_id, *args, **kwargs):
         student = get_object_or_404(Student, pk=student_id)
         expects_json = _expects_json_response(request)
         action_form = StudentPaymentActionForm(request.POST)
         if not action_form.is_valid():
-<<<<<<< HEAD
             error_message = 'A acao financeira enviada para o aluno nao e valida neste fluxo.'
             if expects_json:
                 return _student_financial_json_error(message=error_message, status=400)
             messages.error(request, error_message)
-=======
-            if self._wants_json(request):
-                return JsonResponse({'status': 'error', 'message': 'A acao financeira enviada para o aluno nao e valida neste fluxo.'}, status=400)
-            messages.error(request, 'A acao financeira enviada para o aluno nao e valida neste fluxo.')
->>>>>>> codex/student-page-refactor-and-ui-polish
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
         action = action_form.cleaned_data['action']
@@ -881,7 +857,6 @@ class StudentPaymentActionView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
                 payload=request.POST
             )
             if new_payment:
-<<<<<<< HEAD
                 success_message = 'Cobranca avulsa criada e recebimento confirmado via Balcao.'
                 if expects_json:
                     return _student_financial_json_response(
@@ -896,20 +871,6 @@ class StudentPaymentActionView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
                 if expects_json:
                     return _student_financial_json_error(message=error_message, status=400)
                 messages.error(request, error_message)
-=======
-                if self._wants_json(request):
-                    return self._success_json(
-                        request,
-                        student,
-                        selected_payment=new_payment,
-                        message='Cobranca avulsa criada e recebimento confirmado via balcao.',
-                    )
-                messages.success(request, 'Cobranca avulsa criada e recebimento confirmado via Balcao.')
-            else:
-                if self._wants_json(request):
-                    return JsonResponse({'status': 'error', 'message': 'Erro ao criar cobranca avulsa.'}, status=400)
-                messages.error(request, 'Erro ao criar cobranca avulsa.')
->>>>>>> codex/student-page-refactor-and-ui-polish
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
         # --- FLUXO 2: ATUALIZACAO/RECEBIMENTO DE EXISTENTE ---
@@ -924,35 +885,22 @@ class StudentPaymentActionView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
                     student=student
                 )
         except DatabaseError:
-<<<<<<< HEAD
             error_message = 'Esta operacao financeira esta sendo processada em outra aba ou por outro administrador. Tente novamente em 15 segundos.'
             if expects_json:
                 return _student_financial_json_error(message=error_message, status=409)
             messages.error(request, error_message)
-=======
-            if self._wants_json(request):
-                return JsonResponse({'status': 'error', 'message': 'Esta operacao financeira esta sendo processada em outra aba ou por outro administrador.'}, status=409)
-            messages.error(request, 'Esta operacao financeira está sendo processada em outra aba ou por outro administrador. Tente novamente em 15 segundos.')
->>>>>>> codex/student-page-refactor-and-ui-polish
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
         restricted_actions = {'refund-payment', 'cancel-payment', 'regenerate-payment'}
         if action in restricted_actions and getattr(get_user_role(request.user), 'slug', '') == ROLE_RECEPTION:
-<<<<<<< HEAD
             error_message = 'A Recepcao so pode salvar cobranca ou confirmar pagamento neste fluxo.'
             if expects_json:
                 return _student_financial_json_error(message=error_message, status=403)
             messages.error(request, error_message)
-=======
-            if self._wants_json(request):
-                return JsonResponse({'status': 'error', 'message': 'A recepcao so pode salvar cobranca ou confirmar pagamento neste fluxo.'}, status=403)
-            messages.error(request, 'A Recepcao so pode salvar cobranca ou confirmar pagamento neste fluxo.')
->>>>>>> codex/student-page-refactor-and-ui-polish
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
         if action == 'update-payment':
             form = PaymentManagementForm(request.POST)
-<<<<<<< HEAD
             if not form.is_valid():
                 error_message = 'A cobranca nao foi atualizada. Revise valor, vencimento e campos enviados.'
                 if expects_json:
@@ -972,20 +920,6 @@ class StudentPaymentActionView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
             success_message = 'Cobranca atualizada com sucesso.'
         else:
             updated_payment = handle_student_payment_action(
-=======
-            if form.is_valid():
-                payment = handle_student_payment_action(
-                    actor=request.user,
-                    student=student,
-                    payment=payment,
-                    action=action,
-                    payload=form.cleaned_data,
-                )
-            elif self._wants_json(request):
-                return JsonResponse({'status': 'error', 'message': 'Os ajustes da cobranca nao puderam ser salvos.'}, status=400)
-        else:
-            payment = handle_student_payment_action(
->>>>>>> codex/student-page-refactor-and-ui-polish
                 actor=request.user,
                 student=student,
                 payment=payment,
@@ -1001,7 +935,6 @@ class StudentPaymentActionView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
             }
             success_message = action_success_messages.get(action, 'Acao financeira concluida com sucesso.')
 
-<<<<<<< HEAD
         if expects_json:
             return _student_financial_json_response(
                 request=request,
@@ -1015,33 +948,11 @@ class StudentPaymentActionView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
 
 
 class StudentPaymentDrawerView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
-=======
-        if self._wants_json(request):
-            success_messages = {
-                'mark-paid': 'Pagamento confirmado. A tela ja foi atualizada.',
-                'update-payment': 'Detalhes da cobranca salvos.',
-                'refund-payment': 'Pagamento estornado com sucesso.',
-                'cancel-payment': 'Cobranca cancelada com sucesso.',
-                'regenerate-payment': 'Cobranca regenerada com sucesso.',
-            }
-            return self._success_json(
-                request,
-                student,
-                selected_payment=payment,
-                message=success_messages.get(action, 'Acao financeira concluida com sucesso.'),
-            )
-
-        return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
-
-
-class StudentPaymentDrawerView(LoginRequiredMixin, RoleRequiredMixin, View):
->>>>>>> codex/student-page-refactor-and-ui-polish
     allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
 
     def get(self, request, student_id, payment_id, *args, **kwargs):
         student = get_object_or_404(Student, pk=student_id)
         payment = get_object_or_404(Payment, pk=payment_id, student=student)
-<<<<<<< HEAD
 
         if not _expects_json_response(request):
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
@@ -1051,18 +962,6 @@ class StudentPaymentDrawerView(LoginRequiredMixin, RoleRequiredMixin, View):
             student=student,
             message=f'Cobranca de {payment.due_date:%d/%m/%Y} carregada para revisao.',
             selected_payment=payment,
-=======
-        return JsonResponse(
-            {
-                'status': 'success',
-                'message': f'Cobranca de R$ {payment.amount:.2f} pronta para revisar.',
-                'fragments': render_student_financial_fragments(
-                    student,
-                    request=request,
-                    selected_payment=payment,
-                ),
-            }
->>>>>>> codex/student-page-refactor-and-ui-polish
         )
 
 
@@ -1085,18 +984,16 @@ class StudentDirectoryExportView(LoginRequiredMixin, RoleRequiredMixin, View):
 class StudentEnrollmentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
     allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
 
-    @staticmethod
-    def _wants_json(request):
-        return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-
     @idempotent_action
     def post(self, request, student_id, *args, **kwargs):
         student = get_object_or_404(Student, pk=student_id)
+        expects_json = _expects_json_response(request)
         form = EnrollmentManagementForm(request.POST)
         if not form.is_valid():
-            if self._wants_json(request):
-                return JsonResponse({'status': 'error', 'message': 'A acao de matricula nao foi aplicada. Revise os campos enviados.'}, status=400)
-            messages.error(request, 'A acao de matricula nao foi aplicada. Revise os campos enviados.')
+            error_message = 'A acao de matricula nao foi aplicada. Revise os campos enviados.'
+            if expects_json:
+                return _student_financial_json_error(message=error_message, status=400)
+            messages.error(request, error_message)
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
         from django.db import transaction, DatabaseError
@@ -1108,20 +1005,18 @@ class StudentEnrollmentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
                     student=student
                 )
         except DatabaseError:
-            if self._wants_json(request):
-                return JsonResponse({'status': 'error', 'message': 'Esta matricula esta bloqueada para alteracao no momento.'}, status=409)
-            messages.error(request, 'Esta matricula está bloqueada para alteracao no momento (outra operacao em curso).')
+            error_message = 'Esta matricula está bloqueada para alteracao no momento (outra operacao em curso).'
+            if expects_json:
+                return _student_financial_json_error(message=error_message, status=409)
+            messages.error(request, error_message)
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
         if form.cleaned_data['action'] == 'cancel-enrollment' and enrollment.status != 'active':
-            if self._wants_json(request):
-                return JsonResponse({'status': 'error', 'message': 'Esta matricula ja se encontra inativa ou cancelada.'}, status=400)
-            messages.error(request, 'Esta matricula já se encontra inativa ou cancelada.')
+            error_message = 'Esta matricula já se encontra inativa ou cancelada.'
+            if expects_json:
+                return _student_financial_json_error(message=error_message, status=400)
+            messages.error(request, error_message)
             return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
-<<<<<<< HEAD
-        updated_enrollment = handle_student_enrollment_action(
-=======
-        enrollment = handle_student_enrollment_action(
->>>>>>> codex/student-page-refactor-and-ui-polish
+        handle_student_enrollment_action(
             actor=request.user,
             student=student,
             enrollment=enrollment,
@@ -1130,17 +1025,20 @@ class StudentEnrollmentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
             reason=form.cleaned_data['reason'],
         )
 
-        if self._wants_json(request):
-            message = 'Matricula cancelada.' if form.cleaned_data['action'] == 'cancel-enrollment' else 'Matricula reativada.'
-            return JsonResponse(
-                {
-                    'status': 'success',
-                    'message': message,
-                    'fragments': render_student_financial_fragments(student, request=request),
-                    'enrollment_id': getattr(enrollment, 'id', None),
-                }
+        action_success_messages = {
+            'cancel-enrollment': 'Matricula cancelada com sucesso.',
+            'reactivate-enrollment': 'Matricula reativada com sucesso.',
+        }
+        success_message = action_success_messages.get(form.cleaned_data['action'], 'Acao de matricula concluida com sucesso.')
+
+        if expects_json:
+            return _student_financial_json_response(
+                request=request,
+                student=student,
+                message=success_message,
             )
 
+        messages.success(request, success_message)
         return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
 

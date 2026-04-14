@@ -43,7 +43,6 @@
 
   function refreshWorkspaceUi() {
     decoratePaymentForm();
-<<<<<<< HEAD
     syncSelectedPaymentIdFromDom();
   }
 
@@ -158,8 +157,6 @@
     }
 
     document.dispatchEvent(new CustomEvent('student-profile-edit-request'));
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
   }
 
   function setFinancialWorkspaceExpanded(expanded) {
@@ -219,7 +216,6 @@
 
   async function handleJsonAction(url, options) {
     const response = await fetch(url, options);
-<<<<<<< HEAD
     const contentType = response.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
       const rawBody = await response.text();
@@ -236,32 +232,23 @@
       throw new Error('O servidor respondeu em um formato inesperado para esta acao. HTTP ' + response.status + '.');
     }
 
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
     const payload = await response.json();
     if (!response.ok || payload.status !== 'success') {
       throw new Error(payload.message || 'Nao foi possivel concluir a acao agora.');
     }
     applyFinancialFragments(payload.fragments);
-<<<<<<< HEAD
     if (typeof payload.selected_payment_id !== 'undefined') {
       selectedPaymentId = payload.selected_payment_id || null;
     } else {
       syncSelectedPaymentIdFromDom();
     }
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
     return payload;
   }
 
   async function submitFinancialForm(form) {
     const formData = new FormData(form);
-<<<<<<< HEAD
     const actionUrl = form.getAttribute('action') || form.action;
     const payload = await handleJsonAction(actionUrl, {
-=======
-    const payload = await handleJsonAction(form.action, {
->>>>>>> codex/student-page-refactor-and-ui-polish
       method: 'POST',
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
@@ -283,10 +270,7 @@
       return;
     }
 
-<<<<<<< HEAD
     selectedPaymentId = Number(paymentId);
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
     const payload = await handleJsonAction(`/alunos/${studentId}/financeiro/cobranca/${paymentId}/drawer/`, {
       method: 'GET',
       headers: {
@@ -294,13 +278,10 @@
       },
     });
 
-<<<<<<< HEAD
     if (payload.selected_payment_id && Number(payload.selected_payment_id) !== Number(paymentId)) {
       throw new Error('A cobranca carregada nao corresponde ao item selecionado.');
     }
 
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
     openDrawer('student-payment-checkout-slot', trigger);
     const statusMsg = document.getElementById('student-payment-checkout-status');
     if (statusMsg && payload.message) {
@@ -494,23 +475,6 @@
           }
         });
       });
-<<<<<<< HEAD
-=======
-
-      submitPaymentTrigger.classList.remove('is-disabled');
-      submitPaymentTrigger.classList.add('is-active');
-      submitPaymentTrigger.removeAttribute('aria-disabled');
-
-      updatePaymentCheckoutStatus(methodValue);
-
-      submitFinancialForm(form).catch(function (error) {
-        const statusMsg = document.getElementById('student-payment-checkout-status');
-        if (statusMsg) {
-          statusMsg.hidden = false;
-          statusMsg.textContent = error.message;
-        }
-      });
->>>>>>> codex/student-page-refactor-and-ui-polish
       return;
     }
 

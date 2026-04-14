@@ -65,17 +65,9 @@ POR QUE ELE EXISTE:
 }
 
 body[data-theme="dark"] .operation-hero {
-<<<<<<< HEAD
     --operation-hero-actions-surface: transparent;
     --operation-hero-actions-border: 0 solid transparent;
     --operation-hero-actions-shadow: none;
-=======
-    --operation-hero-actions-surface: color-mix(in srgb, var(--theme-surface-chrome-strong) 88%, transparent);
-    --operation-hero-actions-border: 1px solid color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
-    --operation-hero-actions-shadow:
-        inset 0 1px 0 var(--theme-glass-highlight),
-        0 10px 24px rgba(0, 0, 0, 0.14);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 @media (max-width: 960px) {
@@ -251,25 +243,6 @@ body[data-theme="dark"] .operation-hero-copy {
 body[data-theme="dark"] .operation-mini-stat {
     border-color: var(--line);
     background: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
-<<<<<<< HEAD
-=======
-}
-
-body[data-theme="dark"] .operation-hero-action-rail .button:not(.secondary) {
-    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 28%, transparent);
-    background:
-        linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-warning) 58%, transparent), color-mix(in srgb, var(--theme-accent-primary) 62%, transparent)),
-        color-mix(in srgb, var(--theme-surface-chrome-strong) 68%, transparent);
-    box-shadow:
-        0 12px 24px color-mix(in srgb, var(--theme-accent-primary) 18%, transparent),
-        inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
-}
-
-body[data-theme="dark"] .operation-hero-action-rail .button.secondary {
-    background: color-mix(in srgb, var(--theme-surface-glass) 90%, transparent);
-    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
-    color: var(--theme-text-primary);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 body[data-theme="dark"] .operation-hero-action-rail .button:not(.secondary) {

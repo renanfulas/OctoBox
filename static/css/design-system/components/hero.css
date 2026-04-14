@@ -11,7 +11,6 @@ REGRA:
 */
 
 .hero {
-<<<<<<< HEAD
     --hero-surface:
         linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-panel) 96%, transparent));
     --hero-border: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
@@ -29,21 +28,6 @@ REGRA:
     --hero-gap: var(--operation-hero-gap, 16px);
     --hero-padding: var(--operation-hero-padding, clamp(16px, 1.8vw, 20px));
     --hero-radius: var(--operation-hero-radius, clamp(20px, 2.2vw, 24px));
-=======
-    --hero-surface: var(--theme-surface-glass-strong);
-    --hero-border: color-mix(in srgb, var(--theme-glass-border) 92%, transparent);
-    --hero-shadow: var(--theme-glass-shadow);
-    --hero-rail: linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-premium) 92%, transparent), color-mix(in srgb, var(--theme-accent-support) 88%, transparent));
-    --hero-halo:
-        radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--theme-accent-support) 12%, transparent), transparent 70%),
-        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--theme-accent-premium) 10%, transparent), transparent 62%);
-    --hero-ink: var(--ink);
-    --hero-copy: var(--legacy-copy);
-    --hero-eyebrow: color-mix(in srgb, var(--theme-accent-support) 62%, var(--ink) 38%);
-    --hero-gap: var(--operation-hero-gap, 20px);
-    --hero-padding: var(--operation-hero-padding, clamp(20px, 2vw, 30px));
-    --hero-radius: var(--operation-hero-radius, var(--radius-shell));
->>>>>>> codex/student-page-refactor-and-ui-polish
     --hero-before-inset: 0 auto 0 0;
     --hero-before-width: 0;
     --hero-before-height: auto;
@@ -62,7 +46,6 @@ REGRA:
     --hero-panel-backdrop-filter: blur(14px);
     --hero-isolation: isolate;
     --hero-side-width: var(--operation-hero-side-width, min(100%, 340px));
-<<<<<<< HEAD
     --hero-panel-surface: color-mix(in srgb, var(--theme-surface-strong) 82%, transparent);
     --hero-panel-border: color-mix(in srgb, var(--card-border) 88%, transparent);
     --hero-panel-shadow:
@@ -77,22 +60,6 @@ REGRA:
     --hero-badge-ink: color-mix(in srgb, var(--theme-accent-primary) 54%, var(--ink) 46%);
     --hero-pulse-surface: color-mix(in srgb, var(--theme-accent-primary) 8%, transparent);
     --hero-pulse-border: color-mix(in srgb, var(--theme-accent-support) 18%, transparent);
-=======
-    --hero-panel-surface: color-mix(in srgb, var(--card-surface-strong) 76%, transparent);
-    --hero-panel-border: color-mix(in srgb, var(--card-border) 86%, transparent);
-    --hero-panel-shadow: inset 0 1px 0 var(--theme-glass-highlight);
-    --hero-panel-ink: var(--ink);
-    --hero-panel-copy: var(--legacy-copy);
-    --hero-panel-stat-surface: color-mix(in srgb, var(--card-surface-strong) 68%, transparent);
-    --hero-panel-stat-border: color-mix(in srgb, var(--card-border) 86%, transparent);
-    --hero-badge-surface: color-mix(in srgb, var(--theme-accent-support) 10%, transparent);
-    --hero-badge-border: color-mix(in srgb, var(--theme-accent-support) 20%, transparent);
-    --hero-badge-ink: color-mix(in srgb, var(--theme-accent-support) 72%, var(--ink) 28%);
-    --hero-pulse-surface: color-mix(in srgb, var(--theme-accent-support) 6%, transparent);
-    --hero-pulse-border: color-mix(in srgb, var(--theme-accent-support) 14%, transparent);
-    display: flex;
-    justify-content: space-between;
->>>>>>> codex/student-page-refactor-and-ui-polish
     gap: var(--hero-gap);
     margin-bottom: 0;
     padding: var(--hero-padding);
@@ -166,12 +133,6 @@ REGRA:
     color: var(--hero-eyebrow);
 }
 
-.hero .operation-hero-side {
-    width: var(--hero-side-width);
-    position: relative;
-    z-index: 1;
-}
-
 .hero .operation-hero-panel {
     padding: var(--operation-hero-panel-padding, 16px 18px);
     border-radius: var(--radius-card);
@@ -185,44 +146,6 @@ REGRA:
 
 .hero .operation-hero-panel .operation-card-copy {
     color: var(--hero-panel-copy);
-}
-
-.hero-side-stack {
-    display: grid;
-    gap: 12px;
-}
-
-.hero-side-stat-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    margin-top: 2px;
-}
-
-.hero-side-stat {
-    min-height: 74px;
-    padding: 12px;
-    border-radius: 14px;
-    border: 1px solid var(--hero-panel-stat-border);
-    background: var(--hero-panel-stat-surface);
-}
-
-.hero-side-stat span {
-    display: block;
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--hero-panel-copy);
-    font-weight: 700;
-}
-
-.hero-side-stat strong {
-    display: block;
-    margin-top: 4px;
-    font-size: clamp(0.96rem, 1.2vw, 1.12rem);
-    line-height: 1.1;
-    letter-spacing: -0.03em;
-    color: var(--hero-panel-ink);
 }
 
 .operation-hero-panel-head {
@@ -260,7 +183,7 @@ REGRA:
     gap: 14px;
     margin-top: 16px;
     padding-top: 14px;
-    border-top: 1px solid color-mix(in srgb, var(--card-border) 72%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
 }
 
 .hero.hero--command {
@@ -386,27 +309,14 @@ body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:
     gap: 10px;
 }
 
-.front-command-intro {
-    display: grid;
-    gap: 6px;
-    max-width: 42ch;
-}
-
-.front-command-card,
-.front-command-summary {
+.front-command-card {
     padding: 14px 15px;
     border-radius: 18px;
-<<<<<<< HEAD
     border: 1px solid color-mix(in srgb, var(--card-border) 88%, transparent);
     background: color-mix(in srgb, var(--theme-surface-strong) 74%, transparent);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.06),
         0 10px 24px color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent);
-=======
-    border: 1px solid color-mix(in srgb, var(--card-border) 86%, transparent);
-    background: color-mix(in srgb, var(--card-surface-strong) 76%, transparent);
-    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .front-command-card {
@@ -414,8 +324,7 @@ body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:
     gap: 10px;
 }
 
-.front-command-card-head,
-.front-command-summary-head {
+.front-command-card-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -428,7 +337,7 @@ body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:
 }
 
 .front-command-card-body h3,
-.front-command-summary-item dd {
+.front-command-card-body dd {
     margin: 0;
     color: var(--ink);
     font-size: 0.98rem;
@@ -436,28 +345,11 @@ body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:
     letter-spacing: -0.03em;
 }
 
-.front-command-card-body p,
-.front-command-copy,
-.front-command-summary-item dt {
+.front-command-card-body p {
     margin: 0;
-    color: var(--legacy-copy);
+    color: var(--muted);
     font-size: 0.84rem;
     line-height: 1.48;
-}
-
-.front-command-kicker {
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: color-mix(in srgb, var(--theme-accent-primary) 60%, var(--theme-accent-support) 40%);
-}
-
-.front-command-count {
-    font-size: 1.05rem;
-    line-height: 1;
-    letter-spacing: -0.04em;
-    color: var(--ink);
 }
 
 .front-command-link {
@@ -472,34 +364,11 @@ body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:
     text-decoration: underline;
 }
 
-.front-command-summary-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    margin: 0;
-}
-
-.front-command-summary-item {
-    display: grid;
-    gap: 4px;
-    padding: 10px 0 0;
-    border-top: 1px solid color-mix(in srgb, var(--card-border) 74%, transparent);
-}
-
 @media (max-width: 960px) {
     .hero {
         padding: 20px;
         flex-direction: column;
         gap: 18px;
-    }
-
-    .hero .operation-hero-side {
-        width: 100%;
-    }
-
-    .hero-side-stat-grid,
-    .front-command-summary-grid {
-        grid-template-columns: 1fr 1fr;
     }
 
     .front-command-grid {
@@ -524,14 +393,8 @@ body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:
         border-radius: 24px;
     }
 
-    .operation-hero-panel-head,
-    .front-command-summary-head {
+    .operation-hero-panel-head {
         align-items: flex-start;
         flex-direction: column;
-    }
-
-    .hero-side-stat-grid,
-    .front-command-summary-grid {
-        grid-template-columns: 1fr;
     }
 }

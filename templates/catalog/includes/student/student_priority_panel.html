@@ -29,10 +29,10 @@ POR QUE ELE EXISTE:
                 <div class="card-footer">
                     <div class="actions actions-tight">
                         {% if page.capabilities.can_manage_students %}
-                        <a class="button secondary" href="{% url 'student-quick-update' student.id %}#student-financial-overview" data-action="open-priority-student-form">Abrir ficha</a>
+                        <a class="button secondary" href="{% url 'student-quick-update' student.id %}#student-financial-overview">Abrir ficha</a>
                         {% endif %}
                         {% if page.capabilities.can_open_student_admin %}
-                        <a class="button secondary" href="{% url 'admin:boxcore_student_change' student.id %}" data-action="open-priority-student-admin">Admin</a>
+                        <a class="button secondary" href="{% url 'admin:boxcore_student_change' student.id %}">Admin</a>
                         {% endif %}
                     </div>
                 </div>

@@ -30,10 +30,6 @@ POR QUE ELE EXISTE:
         grid-template-columns: 1fr;
     }
 
-    .operation-focus-actions {
-        justify-items: stretch;
-    }
-
     .operation-shell {
         gap: 18px;
     }
@@ -42,16 +38,8 @@ POR QUE ELE EXISTE:
         grid-template-columns: 1fr;
     }
 
-    .operation-hero-side {
-        width: 100%;
-    }
-
     .operation-grid-3,
     .operation-grid-wide {
-        grid-template-columns: 1fr;
-    }
-
-    .operation-table-guide-grid {
         grid-template-columns: 1fr;
     }
 
@@ -63,13 +51,6 @@ POR QUE ELE EXISTE:
         justify-content: flex-start;
     }
 
-    .operation-card-head {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .reception-payment-meta,
-    .reception-preview-payment-meta,
     .reception-grade-stats,
     .reception-preview-grade-stats,
     .reception-command-card .actions {
@@ -78,18 +59,10 @@ POR QUE ELE EXISTE:
 }
 
 @media (max-width: 720px) {
-    .operation-card-head,
-    .operation-table-guide-head {
-        grid-template-columns: 1fr;
-        display: grid;
-    }
-
     .reception-payment-grid,
-    .reception-preview-payment-grid,
     .reception-grade-grid,
     .reception-preview-grade-grid,
-    .reception-payment-actions-primary,
-    .reception-preview-payment-actions-primary {
+    .reception-payment-actions-primary {
         grid-template-columns: 1fr;
     }
 

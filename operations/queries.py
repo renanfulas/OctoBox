@@ -84,30 +84,6 @@ def _build_decision_entry_context(entry_item=None, secondary_item=None):
     }
 
 
-def _build_owner_priority_context(primary_focus):
-    primary_key = (primary_focus or {}).get('key')
-    if primary_key == 'intakes':
-        return {
-            'title': 'Entre pela fila que traz nova receita.',
-            'copy': 'Existe demanda esperando resposta agora.',
-            'pill_label': 'Agora',
-            'pill_class': 'accent',
-        }
-    if primary_key == 'payments':
-        return {
-            'title': 'Proteja a receita antes do restante.',
-            'copy': 'Há cobrança atrasada pedindo contato agora.',
-            'pill_label': 'Agora',
-            'pill_class': 'accent',
-        }
-    return {
-        'title': 'Confirme a estrutura que sustenta o box.',
-        'copy': 'Veja se WhatsApp, historico e estrutura continuam coerentes.',
-        'pill_label': 'Agora',
-        'pill_class': 'accent',
-    }
-
-
 def _decorate_operational_sessions(serialized_sessions):
     visible_sessions = [session for session in serialized_sessions if session['status_label'] != 'Finalizada']
     for index, session in enumerate(visible_sessions):
@@ -196,7 +172,7 @@ def build_owner_workspace_snapshot(*, today):
         'payments': _build_owner_focus_item(
             key='payments',
             label='Ver cobrancas',
-            chip_label='Cobrancas',
+        chip_label='Cobrança',
             summary=(
                 f"{headline_metrics['overdue_payments']} cobranca(s) estao atrasadas e pedem contato."
                 if headline_metrics['overdue_payments']
@@ -227,7 +203,6 @@ def build_owner_workspace_snapshot(*, today):
     else:
         focus_order = ['structure', 'intakes', 'payments']
     owner_operational_focus = [focus_map[key] for key in focus_order]
-    owner_priority_context = _build_owner_priority_context(owner_operational_focus[0] if owner_operational_focus else None)
     owner_decision_entry_context = _build_decision_entry_context(
         owner_operational_focus[0] if owner_operational_focus else None,
         owner_operational_focus[1] if len(owner_operational_focus) > 1 else None,
@@ -235,16 +210,13 @@ def build_owner_workspace_snapshot(*, today):
     return {
         'headline_metrics': headline_metrics,
         'classes_today': classes_today,
-<<<<<<< HEAD
         'owner_priority_surface': (owner_operational_focus[0] if owner_operational_focus else {}).get('key', 'structure'),
         'overdue_amount_label': f"R$ {overdue_amount:.2f}".replace('.', ','),
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
         'owner_upcoming_sessions': owner_upcoming_sessions,
         'owner_upcoming_sessions_total_label': f"{len(owner_upcoming_sessions)} aula(s)",
         'metric_cards': [
             {
-                **_build_metric_card('operation-kpi-card owner-green', 'Total de alunos', headline_metrics['students']),
+                **_build_metric_card('operation-kpi-card owner-emerald', 'Total de alunos', headline_metrics['students']),
                 'status_hint': 'neutral',
                 'href': reverse('student-directory'),
             },
@@ -254,7 +226,7 @@ def build_owner_workspace_snapshot(*, today):
                 'href': reverse('intake-center'),
             },
             {
-                **_build_metric_card('operation-kpi-card owner-green', 'WhatsApp pronto', headline_metrics['whatsapp_contacts']),
+                **_build_metric_card('operation-kpi-card owner-whatsapp', 'WhatsApp pronto', headline_metrics['whatsapp_contacts']),
                 'status_hint': 'neutral',
                 'href': reverse('whatsapp-workspace'),
             },
@@ -264,10 +236,8 @@ def build_owner_workspace_snapshot(*, today):
                 'href': reverse('finance-center'),
             },
         ],
-        'owner_priority_context': owner_priority_context,
         'owner_decision_entry_context': owner_decision_entry_context,
         'owner_operational_focus': owner_operational_focus,
-        'owner_secondary_focus': owner_operational_focus[1:],
     }
 
 

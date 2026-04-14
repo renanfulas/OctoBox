@@ -17,13 +17,11 @@ from finance.models import FinanceFollowUp, PaymentStatus
 from finance.follow_up_tracker import sync_finance_follow_up_suggestions
 
 from ..forms import FinanceFilterForm
-from .base import build_finance_base
-from .churn_foundation import build_financial_churn_foundation
-from .comparison import build_comparison_peaks, build_monthly_comparison
-from .follow_up_analytics import (
+from .ai import (
     build_best_action_by_timing_map,
     build_best_prediction_window_by_action_map,
     build_contextual_recommendation_map,
+    build_financial_churn_foundation,
     build_finance_follow_up_analytics,
     build_recommendation_historical_score_map,
     build_recommendation_timing_lookup_map,
@@ -31,63 +29,19 @@ from .follow_up_analytics import (
     build_turn_recommendation,
     build_timing_recommendation_override_map,
 )
-from .metrics import build_finance_interactive_kpis, build_finance_metrics, build_finance_priority_context, build_finance_pulse
-from .portfolio import build_plan_portfolio
 from django.utils import timezone
-
-
-def build_finance_flow_bridge(*, priority_context, operational_queue, financial_alerts):
-    assisted_count = len(operational_queue or [])
-    queue_count = len(financial_alerts or [])
-    dominant_key = priority_context['dominant_key']
-
-    if dominant_key == 'queue':
-        if assisted_count > 0:
-            return {
-                'eyebrow': 'Primeiro movimento',
-                'title': 'Abra a regua assistida antes de descer para a fila automatica.',
-                'copy': f'{assisted_count} caso(s) ja chegam com abordagem sugerida. Resolva essa camada primeiro e deixe a fila de {queue_count} alerta(s) para o que realmente sobrar de pressao.',
-                'href': '#finance-priority-board',
-                'href_label': 'Abrir regua ativa',
-                'data_action': 'open-tab-finance-queue',
-                'entry_surface': 'priority-rail',
-                'entry_reason': 'Existe abordagem semiassistida pronta antes da fila automatica.',
-                'secondary_surface': 'queue-board',
-            }
-        return {
-            'eyebrow': 'Primeiro movimento',
-            'title': 'A fila automatica virou a primeira porta desta leitura.',
-            'copy': f'Nao ha regua assistida aberta agora. Entre direto na fila com {queue_count} alerta(s) e proteja o caixa antes de abrir carteira ou filtros.',
-            'href': '#finance-queue-board',
-            'href_label': 'Abrir fila financeira',
-            'data_action': 'open-tab-finance-queue',
-            'entry_surface': 'queue-board',
-            'entry_reason': 'A pressao de caixa pede leitura direta da fila automatica.',
-            'secondary_surface': 'portfolio-board',
-        }
-    if dominant_key == 'movements':
-        return {
-            'eyebrow': 'Primeiro movimento',
-            'title': 'Leia o caixa realizado e use a tendencia para escolher o proximo mergulho.',
-            'copy': 'Comece pelo raio-X financeiro, confirme movimentos recentes e so depois desca para fila ou carteira se o recorte pedir.',
-            'href': '#finance-movements-board',
-            'href_label': 'Abrir raio-X financeiro',
-            'data_action': 'open-tab-finance-movements',
-            'entry_surface': 'movements-board',
-            'entry_reason': 'Sem pressao dominante na fila, o caixa realizado explica melhor o recorte.',
-            'secondary_surface': 'queue-board',
-        }
-    return {
-        'eyebrow': 'Primeiro movimento',
-        'title': 'Comece pela carteira e deixe a fila para a segunda leitura.',
-        'copy': 'Sem pressao dominante na fila ou no caixa, portfolio e mix explicam melhor o momento antes de abrir filtros ou cobrancas.',
-        'href': '#finance-portfolio-board',
-        'href_label': 'Abrir carteira ativa',
-        'data_action': 'open-tab-finance-portfolio',
-        'entry_surface': 'portfolio-board',
-        'entry_reason': 'Carteira e mix explicam mais do que movimentos curtos neste recorte.',
-        'secondary_surface': 'queue-board',
-    }
+from .hybrid.flow_bridge import build_finance_flow_bridge
+from .traditional import (
+    build_comparison_peaks,
+    build_finance_base,
+    build_finance_interactive_kpis,
+    build_finance_metrics,
+    build_finance_priority_context,
+    build_finance_pulse,
+    build_finance_trend_foundation,
+    build_monthly_comparison,
+    build_plan_portfolio,
+)
 
 
 def build_finance_snapshot(params=None, *, operational_queue=None, persist_follow_ups=False):
@@ -144,6 +98,11 @@ def build_finance_snapshot(params=None, *, operational_queue=None, persist_follo
     finance_follow_up_analytics = build_finance_follow_up_analytics(
         follow_ups=FinanceFollowUp.objects.filter(source_surface='finance_queue')
     )
+    finance_trend_foundation = build_finance_trend_foundation(
+        filter_form=filter_form,
+        finance_metrics=finance_metrics,
+        monthly_comparison=monthly_comparison,
+    )
 
     snapshot = {
         'filter_form': filter_form,
@@ -153,13 +112,18 @@ def build_finance_snapshot(params=None, *, operational_queue=None, persist_follo
         'finance_metrics': finance_metrics,
         'finance_pulse': finance_pulse,
         'finance_priority_context': finance_priority_context,
-        'interactive_kpis': build_finance_interactive_kpis(finance_metrics, priority_context=finance_priority_context),
+        'interactive_kpis': build_finance_interactive_kpis(
+            finance_metrics,
+            priority_context=finance_priority_context,
+            plan_portfolio=plan_portfolio,
+        ),
         'plan_portfolio': plan_portfolio,
         'monthly_comparison': monthly_comparison,
         'comparison_peaks': build_comparison_peaks(monthly_comparison),
         'financial_alerts': financial_alerts,
         'financial_churn_foundation': financial_churn_foundation,
         'finance_follow_up_analytics': finance_follow_up_analytics,
+        'finance_trend_foundation': finance_trend_foundation,
         'recent_movements': enrollments.order_by('-updated_at', '-created_at')[:8],
     }
 

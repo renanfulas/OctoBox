@@ -15,6 +15,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 from django.utils import timezone
 
 from finance.models import FinanceFollowUp, FinanceFollowUpOutcomeStatus, FinanceFollowUpStatus, PaymentStatus
@@ -137,27 +138,31 @@ def sync_finance_follow_up_suggestions(*, items, source_surface='finance_queue',
     for item in queue_items:
         suggestion_key = build_finance_follow_up_suggestion_key(item)
         suggestion_keys.add(suggestion_key)
-        if suggestion_key in existing_by_key:
-            continue
-        FinanceFollowUp.objects.create(
-            student_id=item['student_id'],
-            payment_id=item.get('payment_id'),
-            enrollment_id=item.get('enrollment_id'),
-            suggestion_key=suggestion_key,
-            source_surface=source_surface,
-            signal_bucket=item.get('signal_bucket', ''),
-            recommended_action=item.get('recommended_action', ''),
-            priority_rank=item.get('priority_rank', 0) or 0,
-            confidence=item.get('confidence', ''),
-            prediction_window=item.get('prediction_window', ''),
-            rule_version=item.get('rule_version', ''),
-            suggestion_window_stage=(item.get('recommendation_momentum') or {}).get('decay_stage', ''),
-            suggestion_window_label=(item.get('recommendation_momentum') or {}).get('decay_label', ''),
-            suggestion_window_age_days=(item.get('recommendation_momentum') or {}).get('window_age_days'),
-            suggestion_queue_assist_score=Decimal(str(item.get('queue_assist_score', 0.0) or 0.0)),
-            suggested_at=now,
-            outcome_window=RECOMMENDATION_OUTCOME_WINDOWS.get(item.get('recommended_action', ''), '7d'),
-            payload={
+        defaults = {
+            'student_id': item['student_id'],
+            'payment_id': item.get('payment_id'),
+            'enrollment_id': item.get('enrollment_id'),
+            'source_surface': source_surface,
+            'signal_bucket': item.get('signal_bucket', ''),
+            'recommended_action': item.get('recommended_action', ''),
+            'priority_rank': item.get('priority_rank', 0) or 0,
+            'confidence': item.get('confidence', ''),
+            'prediction_window': item.get('prediction_window', ''),
+            'rule_version': item.get('rule_version', ''),
+            'suggestion_window_stage': (item.get('recommendation_momentum') or {}).get('decay_stage', ''),
+            'suggestion_window_label': (item.get('recommendation_momentum') or {}).get('decay_label', ''),
+            'suggestion_window_age_days': (item.get('recommendation_momentum') or {}).get('window_age_days'),
+            'suggestion_queue_assist_score': Decimal(str(item.get('queue_assist_score', 0.0) or 0.0)),
+            'suggested_at': now,
+            'status': FinanceFollowUpStatus.SUGGESTED,
+            'resolved_at': None,
+            'resolved_by': None,
+            'realized_action_kind': '',
+            'outcome_status': FinanceFollowUpOutcomeStatus.PENDING,
+            'outcome_checked_at': None,
+            'outcome_window': RECOMMENDATION_OUTCOME_WINDOWS.get(item.get('recommended_action', ''), '7d'),
+            'outcome_reason': '',
+            'payload': {
                 'student_name': item.get('student_name', ''),
                 'priority_label': item.get('priority_label', ''),
                 'reason_codes': list(item.get('reason_codes') or []),
@@ -183,8 +188,30 @@ def sync_finance_follow_up_suggestions(*, items, source_surface='finance_queue',
                 'turn_recommendation': dict(turn_recommendation or {}),
                 'turn_priority': dict(turn_priority_payload or {}),
             },
-        )
-        created_count += 1
+        }
+        existing_record = existing_by_key.get(suggestion_key)
+        if existing_record is not None:
+            for field, value in defaults.items():
+                setattr(existing_record, field, value)
+            existing_record.save(update_fields=[*defaults.keys(), 'updated_at'])
+            continue
+
+        try:
+            follow_up, created = FinanceFollowUp.objects.get_or_create(
+                suggestion_key=suggestion_key,
+                defaults=defaults,
+            )
+        except IntegrityError:
+            follow_up = FinanceFollowUp.objects.get(suggestion_key=suggestion_key)
+            created = False
+
+        if created:
+            created_count += 1
+        else:
+            for field, value in defaults.items():
+                setattr(follow_up, field, value)
+            follow_up.save(update_fields=[*defaults.keys(), 'updated_at'])
+        existing_by_key[suggestion_key] = follow_up
 
     stale = existing.exclude(suggestion_key__in=suggestion_keys)
     stale.update(status=FinanceFollowUpStatus.SUPERSEDED, resolved_at=now)

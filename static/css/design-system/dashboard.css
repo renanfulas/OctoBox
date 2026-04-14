@@ -44,17 +44,17 @@ O QUE ESTE ARQUIVO FAZ:
     isolation: isolate;
 }
 
-body[data-shell-scope="dashboard"] .content {
+body[data-shell-scope="dashboard"] .content-area {
     padding-top: 2px;
 }
 
-body[data-shell-scope="dashboard"] .content::before {
+body[data-shell-scope="dashboard"] .content-area::before {
     background: transparent;
     border: 0;
     box-shadow: none;
 }
 
-body[data-shell-scope="dashboard"] .content::after {
+body[data-shell-scope="dashboard"] .content-area::after {
     opacity: 0;
 }
 
@@ -114,16 +114,9 @@ body[data-shell-scope="dashboard"] .page-body {
 }
 
 .dashboard-hero {
-    --hero-gap: clamp(18px, 2vw, 28px);
-    --hero-padding: clamp(26px, 3vw, 38px);
-    --hero-radius: clamp(24px, 2.4vw, 32px);
     position: relative;
     grid-template-columns: minmax(0, 1fr);
     justify-content: stretch;
-}
-
-.dashboard-command-main::before {
-    content: none;
 }
 
 .dashboard-shell--futuristic-luxury .dashboard-reading-list {
@@ -159,7 +152,7 @@ body[data-shell-scope="dashboard"] .page-body {
     align-items: flex-end;
     justify-content: space-between;
     gap: 28px;
-    min-height: clamp(220px, 24vw, 300px);
+    padding: 44px;
     margin-bottom: 48px;
     overflow: hidden;
 }
@@ -175,7 +168,7 @@ body[data-shell-scope="dashboard"] .page-body {
     position: absolute;
     inset: 0 auto 0 40px;
     width: 140px;
-    opacity: 0.06;
+    opacity: 0.05;
     pointer-events: none;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M10,80 L10,60 L30,40 L50,50 L70,20 L90,30" fill="none" stroke="%23000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><rect x="15" y="50" width="10" height="30" rx="2" fill="%23000"/><rect x="45" y="40" width="10" height="40" rx="2" fill="%23000"/><rect x="75" y="20" width="10" height="60" rx="2" fill="%23000"/></svg>');
     background-repeat: no-repeat;
@@ -202,7 +195,7 @@ body[data-shell-scope="dashboard"] .page-body {
     color: var(--ink);
     font-size: clamp(2.35rem, 4vw, 2.9rem);
     font-weight: 800;
-    line-height: 1.04;
+    line-height: 1.1;
     letter-spacing: -0.02em;
 }
 
@@ -222,18 +215,11 @@ body[data-shell-scope="dashboard"] .page-body {
 }
 
 .dashboard-advisor-manifesto-trigger {
-    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 18%, var(--theme-glass-border) 82%);
+    border: 0;
     border-radius: 999px;
     padding: 12px 24px;
-<<<<<<< HEAD
     background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-primary) 90%, white 10%), color-mix(in srgb, var(--theme-accent-support) 82%, black 18%), color-mix(in srgb, var(--theme-accent-premium) 46%, black 54%));
     color: #f6feff;
-=======
-    background:
-        linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-warning) 72%, transparent), color-mix(in srgb, var(--theme-accent-primary) 62%, transparent)),
-        color-mix(in srgb, var(--theme-surface-chrome-strong) 72%, transparent);
-    color: #ffffff;
->>>>>>> codex/student-page-refactor-and-ui-polish
     font-size: 0.9rem;
     font-weight: 600;
     box-shadow:
@@ -255,11 +241,7 @@ body[data-shell-scope="dashboard"] .page-body {
     border: 1px solid color-mix(in srgb, var(--theme-accent-support) 16%, var(--theme-border-soft) 84%);
     border-radius: 999px;
     background:
-<<<<<<< HEAD
         linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-strong) 86%, transparent), color-mix(in srgb, var(--theme-surface-secondary) 80%, var(--theme-accent-support-alpha) 20%));
-=======
-        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-glass) 92%, transparent), color-mix(in srgb, var(--theme-surface-chrome) 80%, transparent));
->>>>>>> codex/student-page-refactor-and-ui-polish
     color: var(--ink);
     font-size: 0.85rem;
     font-weight: 600;
@@ -487,24 +469,6 @@ body[data-shell-scope="dashboard"] .page-body {
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-support) 16%, transparent), 0 10px 24px color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
 }
 
-body[data-theme="dark"] .dashboard-shell::before {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 48%, transparent), transparent 20%),
-        radial-gradient(circle at 12% 34%, color-mix(in srgb, var(--theme-accent-support-alpha) 48%, transparent), transparent 18%),
-        radial-gradient(circle at 50% 0%, color-mix(in srgb, white 4%, transparent), transparent 20%);
-}
-
-body[data-theme="dark"] .dashboard-shell::after {
-    background:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 24%, transparent), transparent 36%),
-        linear-gradient(135deg, color-mix(in srgb, white 2%, transparent), transparent 60%);
-}
-
-body[data-theme="dark"] .dashboard-command-main::before,
-body[data-theme="dark"] .dashboard-command-rail::before {
-    border-color: rgba(148, 163, 184, 0.08);
-}
-
 body[data-theme="dark"] .dashboard-layout-chrome {
     background:
         linear-gradient(145deg, rgba(8, 15, 27, 0.92), rgba(10, 18, 32, 0.94));
@@ -515,15 +479,11 @@ body[data-theme="dark"] .dashboard-layout-chrome {
 }
 
 body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-command-main {
-    background:
-        linear-gradient(180deg, rgba(56, 189, 248, 0.08), transparent 14%),
-        radial-gradient(circle at top left, rgba(56, 189, 248, 0.08), transparent 36%);
+    background: none;
 }
 
 body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-command-rail {
-    background:
-        linear-gradient(180deg, rgba(217, 70, 239, 0.06), transparent 20%),
-        radial-gradient(circle at top right, rgba(217, 70, 239, 0.08), transparent 34%);
+    background: none;
 }
 
 body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-reading-list .fdw-focus-card.is-primary,
@@ -539,10 +499,6 @@ body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-command-r
 }
 
 @media (max-width: 960px) {
-    .dashboard-command-workspace::before {
-        display: none;
-    }
-
     .dashboard-hero {
         min-height: 0;
     }
@@ -575,10 +531,11 @@ body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-command-r
     }
 
     .dashboard-hero {
-        --hero-padding: var(--dashboard-rhythm-3);
+        padding: var(--dashboard-rhythm-3);
     }
 
     .dashboard-advisor-narrative {
+        padding: var(--dashboard-rhythm-3);
         margin-bottom: 32px;
     }
 

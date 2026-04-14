@@ -8,14 +8,10 @@ POR QUE ELE EXISTE:
 
 .student-page-shell {
     display: grid;
-<<<<<<< HEAD
     gap: 12px;
-=======
-    gap: 20px;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
-.student-page-shell :is(.field-label, .meta-text, .meta-text-sm) {
+.student-page-shell :is(.field-label, [class~="meta-text"], [class~="meta-text-sm"]) {
     color: var(--legacy-copy);
 }
 
@@ -27,8 +23,7 @@ POR QUE ELE EXISTE:
     letter-spacing: 0.01em;
 }
 
-.student-page-shell .meta-text,
-.student-page-shell .meta-text-sm {
+.student-page-shell :is([class~="meta-text"], [class~="meta-text-sm"]) {
     line-height: 1.45;
 }
 
@@ -105,7 +100,6 @@ POR QUE ELE EXISTE:
     accent-color: var(--theme-accent-support);
 }
 
-<<<<<<< HEAD
 .student-page-header {
     --student-page-header-shell-accent: color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
     position: relative;
@@ -147,14 +141,6 @@ POR QUE ELE EXISTE:
 .student-page-header-card.student-page-header__card::before,
 .student-page-header-card.student-page-header__card::after {
     display: none;
-=======
-.student-page-header__card {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-    gap: 22px 18px;
-    padding: 24px 24px 24px;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-header__identity,
@@ -167,21 +153,13 @@ POR QUE ELE EXISTE:
 }
 
 .student-page-header__identity {
-<<<<<<< HEAD
     gap: 14px;
-=======
-    gap: 18px;
->>>>>>> codex/student-page-refactor-and-ui-polish
     min-width: 0;
 }
 
 .student-page-header__copy {
     display: grid;
-<<<<<<< HEAD
     gap: 8px;
-=======
-    gap: 10px;
->>>>>>> codex/student-page-refactor-and-ui-polish
     min-width: 0;
     flex: 1;
 }
@@ -203,23 +181,14 @@ POR QUE ELE EXISTE:
 }
 
 .student-page-header__title-row {
-<<<<<<< HEAD
     gap: 8px 12px;
-=======
-    gap: 10px 14px;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-header__title {
     margin: 0;
     color: var(--theme-text-primary);
-<<<<<<< HEAD
     font-size: clamp(1.5rem, 2.4vw, 1.92rem);
     line-height: 0.98;
-=======
-    font-size: clamp(1.72rem, 2.9vw, 2.18rem);
-    line-height: 1;
->>>>>>> codex/student-page-refactor-and-ui-polish
     letter-spacing: -0.026em;
 }
 
@@ -227,33 +196,19 @@ POR QUE ELE EXISTE:
     display: flex;
     align-items: center;
     justify-content: center;
-<<<<<<< HEAD
     width: 56px;
     height: 56px;
     border-radius: 18px;
-=======
-    width: 64px;
-    height: 64px;
-    border-radius: 20px;
->>>>>>> codex/student-page-refactor-and-ui-polish
     background:
         linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-support) 24%, transparent), color-mix(in srgb, var(--theme-accent-primary) 10%, transparent)),
         color-mix(in srgb, var(--theme-surface-glass) 86%, transparent);
     border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 22%, var(--theme-glass-border) 78%);
     color: var(--theme-accent-support);
-<<<<<<< HEAD
     font-size: 1.14rem;
     font-weight: 800;
     box-shadow:
         inset 0 1px 0 var(--theme-glass-highlight),
         0 8px 18px rgba(7, 14, 24, 0.06);
-=======
-    font-size: 1.3rem;
-    font-weight: 800;
-    box-shadow:
-        inset 0 1px 0 var(--theme-glass-highlight),
-        0 12px 24px rgba(7, 14, 24, 0.08);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-header__status-pill {
@@ -280,24 +235,15 @@ POR QUE ELE EXISTE:
 .student-page-header__meta {
     gap: 9px 10px;
     color: var(--legacy-copy);
-<<<<<<< HEAD
     font-size: 0.78rem;
-=======
-    font-size: 0.82rem;
->>>>>>> codex/student-page-refactor-and-ui-polish
     line-height: 1.3;
 }
 
 .student-page-header__meta-item {
     display: inline-flex;
     align-items: center;
-<<<<<<< HEAD
     min-height: 28px;
     padding: 0 10px;
-=======
-    min-height: 30px;
-    padding: 0 11px;
->>>>>>> codex/student-page-refactor-and-ui-polish
     border-radius: 999px;
     border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
     background: color-mix(in srgb, var(--theme-surface-glass) 78%, transparent);
@@ -316,7 +262,6 @@ POR QUE ELE EXISTE:
     gap: 10px;
 }
 
-<<<<<<< HEAD
 .student-page-header__actions-group.operation-hero-action-rail {
     gap: 6px;
 }
@@ -324,12 +269,6 @@ POR QUE ELE EXISTE:
 .student-page-header__actions .button,
 .student-page-form-actions .button,
 .student-page-plan-action-row .button {
-=======
-.student-page-header__actions .button,
-.student-page-form-actions .button,
-.student-page-plan-action-row .button,
-.student-page-charge-card__footer .button {
->>>>>>> codex/student-page-refactor-and-ui-polish
     min-height: 44px;
     padding: 0 18px;
     border-radius: 14px;
@@ -347,7 +286,6 @@ POR QUE ELE EXISTE:
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
 }
 
-<<<<<<< HEAD
 .student-page-header__actions .operation-hero-action-rail .button {
     min-height: 32px;
     padding: 6px 10px;
@@ -381,8 +319,6 @@ POR QUE ELE EXISTE:
     background: color-mix(in srgb, var(--theme-surface-strong) 42%, transparent);
 }
 
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
 .student-page-header__action-icon {
     flex: 0 0 auto;
 }
@@ -390,7 +326,6 @@ POR QUE ELE EXISTE:
 .student-page-header__stats {
     grid-column: 1 / -1;
     display: grid;
-<<<<<<< HEAD
     grid-template-columns: repeat(4, minmax(0, 210px));
     gap: 8px;
     width: 100%;
@@ -402,38 +337,21 @@ POR QUE ELE EXISTE:
     margin-top: 0;
     border-top: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
     align-items: stretch;
-=======
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 13px;
-    padding-top: 20px;
-    border-top: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-header__stat {
     display: grid;
-<<<<<<< HEAD
     gap: 6px;
-=======
-    gap: 8px;
->>>>>>> codex/student-page-refactor-and-ui-polish
     min-width: 0;
     align-content: start;
 }
 
 .student-page-header__stat-card {
-<<<<<<< HEAD
     --student-page-stat-border-accent: color-mix(in srgb, var(--theme-accent-support-alpha) 11%, var(--theme-glass-border) 89%);
     padding: 12px 12px 10px;
     min-height: 88px;
     border-radius: 16px;
     border: 1px solid var(--student-page-stat-border-accent);
-=======
-    padding: 15px 15px 13px;
-    min-height: 108px;
-    border-radius: 18px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 11%, var(--theme-glass-border) 89%);
->>>>>>> codex/student-page-refactor-and-ui-polish
     background:
         linear-gradient(
             180deg,
@@ -445,7 +363,6 @@ POR QUE ELE EXISTE:
         0 10px 24px rgba(7, 14, 24, 0.04);
 }
 
-<<<<<<< HEAD
 .student-page-header__stat-card.is-danger {
     --student-page-stat-border-accent: color-mix(in srgb, var(--theme-accent-danger) 52%, var(--theme-glass-border) 48%);
     box-shadow:
@@ -462,8 +379,6 @@ POR QUE ELE EXISTE:
         0 10px 24px rgba(7, 14, 24, 0.04);
 }
 
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
 .student-page-header__stat-card--plan,
 .student-page-header__stat-card--money {
     background:
@@ -475,13 +390,7 @@ POR QUE ELE EXISTE:
         );
 }
 
-<<<<<<< HEAD
 .student-page-header__stat-label {
-=======
-.student-page-header__stat-label,
-.student-page-charge-card__footer,
-.student-page-charge-card__value span {
->>>>>>> codex/student-page-refactor-and-ui-polish
     color: var(--legacy-copy);
     font-size: 0.76rem;
 }
@@ -489,22 +398,14 @@ POR QUE ELE EXISTE:
 .student-page-header__stat-label {
     font-weight: 700;
     letter-spacing: 0.01em;
-<<<<<<< HEAD
     text-transform: uppercase;
     font-size: 0.7rem;
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-header__stat-value {
     color: var(--theme-text-primary);
-<<<<<<< HEAD
     font-size: 1rem;
     line-height: 1.1;
-=======
-    font-size: 1.18rem;
-    line-height: 1.04;
->>>>>>> codex/student-page-refactor-and-ui-polish
     letter-spacing: -0.02em;
 }
 
@@ -514,7 +415,6 @@ POR QUE ELE EXISTE:
 
 .student-page-header__stat-meta {
     color: var(--legacy-copy);
-<<<<<<< HEAD
     font-size: 0.72rem;
     line-height: 1.3;
 }
@@ -522,19 +422,11 @@ POR QUE ELE EXISTE:
 .student-page-header__stat-card .student-page-header__stat {
     height: 100%;
     align-content: start;
-=======
-    font-size: 0.79rem;
-    line-height: 1.4;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-shell__panels {
     min-width: 0;
-<<<<<<< HEAD
     display: block;
-=======
-    display: grid;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-panel {
@@ -551,13 +443,8 @@ POR QUE ELE EXISTE:
     flex-wrap: wrap;
     gap: 6px;
     max-width: 100%;
-<<<<<<< HEAD
     padding: 4px;
     border-radius: 18px;
-=======
-    padding: 6px;
-    border-radius: 20px;
->>>>>>> codex/student-page-refactor-and-ui-polish
     border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-glass-border) 86%);
     background: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
     box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
@@ -567,19 +454,11 @@ POR QUE ELE EXISTE:
     display: inline-flex;
     align-items: center;
     justify-content: center;
-<<<<<<< HEAD
     min-height: 38px;
     padding: 0 16px;
     border-radius: 12px;
     color: var(--legacy-copy);
     font-size: 0.88rem;
-=======
-    min-height: 42px;
-    padding: 0 18px;
-    border-radius: 14px;
-    color: var(--legacy-copy);
-    font-size: 0.92rem;
->>>>>>> codex/student-page-refactor-and-ui-polish
     font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
@@ -612,18 +491,6 @@ POR QUE ELE EXISTE:
     color: var(--theme-text-primary);
 }
 
-.student-page-section-card {
-    transition: border-color 0.18s ease, box-shadow 0.18s ease;
-}
-
-.student-page-section-card:hover {
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
-    box-shadow:
-        0 18px 38px rgba(7, 14, 24, 0.08),
-        inset 0 1px 0 var(--theme-glass-highlight);
-    background: inherit;
-}
-
 .student-page-card__head {
     display: flex;
     justify-content: space-between;
@@ -647,7 +514,7 @@ POR QUE ELE EXISTE:
     min-width: 0;
 }
 
-.student-page-panel-heading__copy .meta-text {
+.student-page-panel-heading__copy [class~="meta-text"] {
     max-width: 60ch;
 }
 
@@ -660,7 +527,6 @@ POR QUE ELE EXISTE:
     gap: 18px;
 }
 
-<<<<<<< HEAD
 .student-page-plan-summary-card,
 .student-page-plan-actions-card {
     position: relative;
@@ -674,14 +540,11 @@ POR QUE ELE EXISTE:
     color: var(--theme-text-primary);
 }
 
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
 .student-page-plan-summary,
 .student-page-plan-actions {
     overflow: hidden;
 }
 
-<<<<<<< HEAD
 .student-page-plan-summary-card .student-page-card__head {
     padding: 15px 16px 12px;
     gap: 10px;
@@ -717,37 +580,19 @@ POR QUE ELE EXISTE:
     background: inherit;
 }
 
-=======
-.student-page-profile-panel {
-    display: grid;
-    gap: 18px;
-}
-
-.student-page-profile-intro-card,
->>>>>>> codex/student-page-refactor-and-ui-polish
 .student-page-profile-section-card {
     overflow: hidden;
 }
 
-<<<<<<< HEAD
 .student-page-profile-form {
     display: grid;
     gap: 10px;
-=======
-.student-page-profile-intro {
-    display: grid;
-    gap: 12px;
-    max-width: 56ch;
-    padding-top: 18px;
-    padding-bottom: 18px;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-profile-kicker {
     letter-spacing: 0.08em;
 }
 
-<<<<<<< HEAD
 .student-page-profile-toolbar {
     display: flex;
     justify-content: flex-end;
@@ -764,27 +609,16 @@ POR QUE ELE EXISTE:
 
 .student-page-profile-edit-toggle__icon {
     flex: 0 0 auto;
-=======
-.student-page-profile-intro__copy {
-    font-size: 0.92rem;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-profile-section-card .student-page-card__head {
     align-items: end;
-<<<<<<< HEAD
     padding: 14px 16px 12px;
 }
 
 .student-page-profile-section-card .student-page-card__body {
     gap: 10px;
     padding: 14px 16px 16px;
-=======
-}
-
-.student-page-profile-section-card .student-page-card__body {
-    gap: 16px;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-profile-panel form,
@@ -792,7 +626,6 @@ POR QUE ELE EXISTE:
     min-width: 0;
 }
 
-<<<<<<< HEAD
 .student-page-profile-section-surface .student-page-card__body > .field-grid-220,
 .student-page-profile-section-surface .student-page-card__body > .field-grid-240 {
     align-items: start;
@@ -835,11 +668,11 @@ POR QUE ELE EXISTE:
     width: 100%;
     pointer-events: none;
     color: color-mix(in srgb, var(--theme-text-primary) 92%, var(--legacy-copy) 8%);
-    background: transparent !important;
-    border: 0 !important;
-    box-shadow: none !important;
-    outline: 0 !important;
-    padding: 0 !important;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    outline: 0;
+    padding: 0;
     min-height: auto;
     border-radius: 0;
 }
@@ -854,7 +687,7 @@ POR QUE ELE EXISTE:
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    background-image: none !important;
+    background-image: none;
 }
 
 .student-page-profile-form .field-label {
@@ -877,11 +710,6 @@ POR QUE ELE EXISTE:
 .student-page-profile-actions {
     padding-top: 0;
     border-top: none;
-=======
-.student-page-section-card .student-page-card__body > .field-grid-220,
-.student-page-section-card .student-page-card__body > .field-grid-240 {
-    align-items: start;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-alert-banner {
@@ -906,7 +734,6 @@ POR QUE ELE EXISTE:
     box-shadow: 0 10px 22px rgba(190, 24, 93, 0.18);
 }
 
-<<<<<<< HEAD
 .student-page-alert-banner .operation-hero-action-rail,
 .student-page-payments-ghost-action-rail {
     display: flex;
@@ -952,85 +779,6 @@ POR QUE ELE EXISTE:
 .student-page-payments-ghost-action-rail .button.secondary:hover,
 .student-page-payments-ghost-action-rail .button.secondary:focus-visible {
     background: color-mix(in srgb, var(--theme-surface-strong) 42%, transparent);
-=======
-.student-page-charge-card {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 18px 20px;
-    padding: 18px 20px 20px;
-}
-
-.student-page-charge-card.is-danger {
-    border-color: color-mix(in srgb, var(--theme-accent-danger) 24%, var(--theme-glass-border) 76%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-danger-alpha) 14%, transparent), transparent 32%),
-        var(--theme-surface-glass-strong);
-}
-
-.student-page-charge-card__copy,
-.student-page-charge-card__value {
-    display: grid;
-    gap: 8px;
-}
-
-.student-page-charge-card__title {
-    letter-spacing: -0.018em;
-}
-
-.student-page-charge-card__eyebrow {
-    letter-spacing: 0.08em;
-}
-
-.student-page-charge-card__support {
-    max-width: 42ch;
-    line-height: 1.5;
-}
-
-.student-page-charge-card__value {
-    align-content: start;
-    justify-items: end;
-    text-align: right;
-}
-
-.student-page-charge-card__value strong {
-    color: var(--theme-text-primary);
-    font-size: clamp(1.5rem, 2.2vw, 2rem);
-    line-height: 1;
-}
-
-.student-page-charge-card__meta {
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-}
-
-.student-page-charge-card__bar {
-    grid-column: 1 / -1;
-    height: 6px;
-    border-radius: 999px;
-    background:
-        linear-gradient(90deg, var(--theme-accent-support), color-mix(in srgb, var(--theme-accent-support) 60%, var(--theme-accent-success) 40%));
-}
-
-.student-page-charge-card__bar.is-danger {
-    background: linear-gradient(90deg, var(--theme-accent-danger), color-mix(in srgb, var(--theme-accent-danger) 64%, var(--theme-accent-warning) 36%));
-}
-
-.student-page-charge-card__footer {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-}
-
-.student-page-charge-card__footer > :first-child {
-    min-width: 0;
-}
-
-.student-page-charge-card__footnote {
-    line-height: 1.4;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-payments-ledger__table {
@@ -1051,30 +799,15 @@ POR QUE ELE EXISTE:
     text-transform: uppercase;
 }
 
-<<<<<<< HEAD
 .student-page-payments-ledger__row td {
     padding-top: 16px;
     padding-bottom: 16px;
-=======
-.student-page-payments-ledger__method {
-    color: var(--theme-text-primary);
-    font-size: 0.84rem;
-    font-weight: 600;
-}
-
-.student-page-payments-ledger__row td {
-    padding-top: 12px;
-    padding-bottom: 12px;
->>>>>>> codex/student-page-refactor-and-ui-polish
     vertical-align: middle;
     border-top: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 8%, var(--theme-glass-border) 92%);
 }
 
 .student-page-payments-ledger__row {
-<<<<<<< HEAD
     font-size: 0.84rem;
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
     transition: background-color 0.18s ease, transform 0.18s ease;
 }
 
@@ -1120,7 +853,6 @@ POR QUE ELE EXISTE:
 .student-page-payments-ledger__copy span,
 .student-page-payments-ledger__date {
     color: var(--legacy-copy);
-<<<<<<< HEAD
     font-size: 0.8rem;
 }
 
@@ -1141,15 +873,6 @@ POR QUE ELE EXISTE:
     font-weight: 700;
     letter-spacing: -0.01em;
     white-space: nowrap;
-=======
-    font-size: 0.78rem;
-}
-
-.student-page-payments-ledger__amount {
-    font-size: 0.92rem;
-    font-weight: 700;
-    letter-spacing: -0.01em;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-payments-ledger__status {
@@ -1157,93 +880,46 @@ POR QUE ELE EXISTE:
 }
 
 .student-page-payments-ledger__status-pill {
-<<<<<<< HEAD
     min-width: 78px;
     justify-content: center;
     font-size: 0.62rem;
-=======
-    min-width: 74px;
-    justify-content: center;
-    font-size: 0.7rem;
->>>>>>> codex/student-page-refactor-and-ui-polish
     font-weight: 700;
     letter-spacing: 0.03em;
     text-transform: uppercase;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
-<<<<<<< HEAD
 .student-page-payments-ledger__action-cell {
     width: 1%;
     white-space: nowrap;
 }
 
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
 .student-page-payments-ledger__action {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 34px;
     height: 34px;
-<<<<<<< HEAD
     border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
     border-radius: 12px;
     background: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
     color: var(--theme-text-primary);
     box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
     transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
-=======
-    border-radius: 12px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
-    background: color-mix(in srgb, var(--theme-surface-glass) 82%, transparent);
-    color: var(--legacy-copy);
-    transition: transform 0.18s ease, background-color 0.18s ease, color 0.18s ease;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-payments-ledger__action:hover,
 .student-page-payments-ledger__action:focus-visible {
     transform: translateX(2px);
-<<<<<<< HEAD
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
     background: color-mix(in srgb, var(--theme-surface-glass-strong) 88%, transparent);
     outline: none;
-=======
-    background: color-mix(in srgb, var(--theme-surface-glass) 78%, transparent);
-    color: var(--theme-text-primary);
->>>>>>> codex/student-page-refactor-and-ui-polish
-}
-
-.student-page-ghost-action {
-    width: 100%;
-    min-height: 52px;
-    border-radius: 16px;
-    border: 1px dashed color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
-    background: transparent;
-    color: var(--legacy-copy);
-    font-weight: 600;
-    transition: border-color 0.18s ease, color 0.18s ease, background-color 0.18s ease;
-}
-
-.student-page-ghost-action:hover,
-.student-page-ghost-action:focus-visible {
-    color: var(--theme-text-primary);
-    border-color: color-mix(in srgb, var(--theme-accent-support) 22%, var(--theme-glass-border) 78%);
-    background: color-mix(in srgb, var(--theme-surface-glass) 72%, transparent);
-    outline: 2px solid color-mix(in srgb, var(--theme-accent-support) 20%, transparent);
-    outline-offset: 2px;
-    box-shadow: 0 12px 24px rgba(7, 14, 24, 0.06);
 }
 
 .student-page-plan-meta {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-<<<<<<< HEAD
     gap: 10px;
-=======
-    gap: 14px;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-plan-meta--wide {
@@ -1252,15 +928,9 @@ POR QUE ELE EXISTE:
 
 .student-page-plan-meta__item {
     display: grid;
-<<<<<<< HEAD
     gap: 7px;
     padding: 11px 12px 10px;
     border-radius: 15px;
-=======
-    gap: 10px;
-    padding: 15px 15px 14px;
-    border-radius: 18px;
->>>>>>> codex/student-page-refactor-and-ui-polish
     border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 36%),
@@ -1279,27 +949,16 @@ POR QUE ELE EXISTE:
 
 .student-page-plan-meta__label {
     color: var(--legacy-copy);
-<<<<<<< HEAD
     font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 0.04em;
-=======
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
->>>>>>> codex/student-page-refactor-and-ui-polish
     text-transform: uppercase;
 }
 
 .student-page-plan-meta__value {
     color: var(--theme-text-primary);
-<<<<<<< HEAD
     font-size: 0.96rem;
     line-height: 1.16;
-=======
-    font-size: 1.04rem;
-    line-height: 1.2;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-plan-kicker {
@@ -1308,7 +967,6 @@ POR QUE ELE EXISTE:
 
 .student-page-plan-summary__hero {
     display: grid;
-<<<<<<< HEAD
     gap: 4px;
     max-width: 52ch;
 }
@@ -1320,67 +978,34 @@ POR QUE ELE EXISTE:
 .student-page-plan-summary__support {
     max-width: 52ch;
     line-height: 1.38;
-=======
-    gap: 7px;
-    max-width: 48ch;
-}
-
-.student-page-plan-summary__copy {
-    font-size: 0.92rem;
-}
-
-.student-page-plan-summary__support {
-    max-width: 44ch;
-    line-height: 1.52;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-plan-title {
     margin: 0;
     color: var(--theme-text-primary);
-<<<<<<< HEAD
     font-size: clamp(1.28rem, 1.8vw, 1.58rem);
     line-height: 1.02;
-=======
-    font-size: clamp(1.52rem, 2.15vw, 1.94rem);
-    line-height: 1.04;
->>>>>>> codex/student-page-refactor-and-ui-polish
     letter-spacing: -0.02em;
 }
 
 .student-page-plan-price {
     display: grid;
-<<<<<<< HEAD
     gap: 2px;
     justify-items: end;
     text-align: right;
     padding: 4px 0 0;
-=======
-    gap: 5px;
-    justify-items: end;
-    text-align: right;
-    padding: 8px 0 0;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-plan-price strong {
     color: var(--theme-text-primary);
-<<<<<<< HEAD
     font-size: clamp(1.48rem, 2vw, 1.84rem);
-=======
-    font-size: clamp(1.95rem, 2.55vw, 2.45rem);
->>>>>>> codex/student-page-refactor-and-ui-polish
     line-height: 1;
     letter-spacing: -0.03em;
 }
 
 .student-page-plan-price span {
     color: var(--legacy-copy);
-<<<<<<< HEAD
     font-size: 0.72rem;
-=======
-    font-size: 0.78rem;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .student-page-plan-actions__list {
@@ -1411,7 +1036,6 @@ POR QUE ELE EXISTE:
     letter-spacing: -0.01em;
 }
 
-<<<<<<< HEAD
 .student-page-plan-action-row .button {
     min-height: 34px;
     padding: 0 12px;
@@ -1444,8 +1068,6 @@ POR QUE ELE EXISTE:
     background: color-mix(in srgb, var(--theme-surface-strong) 42%, transparent);
 }
 
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
 .student-page-plan-action-row + .student-page-plan-action-row {
     border-top: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
 }
@@ -1469,18 +1091,9 @@ POR QUE ELE EXISTE:
 .student-page-profile-actions {
     padding-top: 4px;
     border-top: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 10%, var(--theme-glass-border) 90%);
-<<<<<<< HEAD
     justify-content: flex-end;
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
-.student-page-profile-actions__copy {
-    max-width: 54ch;
-    line-height: 1.5;
-}
-
-.student-page-form-actions__secondary,
 .student-page-form-actions__primary {
     display: flex;
     flex-wrap: wrap;
@@ -1488,7 +1101,6 @@ POR QUE ELE EXISTE:
     min-width: 0;
 }
 
-<<<<<<< HEAD
 .student-page-profile-actions.operation-hero-action-rail .button {
     min-height: 32px;
     padding: 6px 12px;
@@ -1510,8 +1122,6 @@ POR QUE ELE EXISTE:
     box-shadow: none;
 }
 
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
 .student-page-empty-state {
     padding: 16px 18px;
     border-radius: 16px;
@@ -1524,12 +1134,11 @@ POR QUE ELE EXISTE:
 }
 
 .student-page-payments-panel .student-financial-command-actions [data-action="toggle-financial-workspace"],
-.student-page-payments-panel .student-financial-command-actions [data-action="open-tab-student-form-essential"] {
+.student-page-payments-panel .student-financial-command-actions [data-student-page-target="tab-student-form-essential"] {
     display: none;
 }
 
 .student-page-payments-panel {
-<<<<<<< HEAD
     display: block;
     gap: 0;
     padding: 0;
@@ -1564,25 +1173,12 @@ POR QUE ELE EXISTE:
     box-shadow: none;
 }
 
-=======
-    padding-top: 0;
-}
-
->>>>>>> codex/student-page-refactor-and-ui-polish
 .student-form-shell .student-page-payments-panel {
     padding-top: 4px;
 }
 
-<<<<<<< HEAD
-=======
-.student-page-payments-panel .student-page-payments-workspace__content[hidden] {
-    display: block !important;
-}
-
->>>>>>> codex/student-page-refactor-and-ui-polish
 .student-page-payments-panel :is(
     .student-payment-management-card,
-    .student-page-payments-management-card,
     .student-page-payments-enrollment-card
 ) {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
@@ -1592,13 +1188,11 @@ POR QUE ELE EXISTE:
 .student-page-payments-history-card,
 .student-page-payments-drawer,
 .student-page-payments-checkout-card,
-.student-page-payments-management-card,
 .student-page-payments-enrollment-card {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
     box-shadow: var(--theme-glass-shadow);
 }
 
-<<<<<<< HEAD
 .student-page-payments-history-card {
     border-color: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
 }
@@ -1607,8 +1201,6 @@ POR QUE ELE EXISTE:
     display: none;
 }
 
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
 .student-page-payments-panel {
     --student-page-drawer-top: 122px;
     --student-page-drawer-right: 24px;
@@ -1672,10 +1264,6 @@ POR QUE ELE EXISTE:
     width: min(488px, calc(100vw - (var(--student-page-drawer-right) * 2)));
 }
 
-.student-page-payments-drawer--management.slide-over-panel {
-    width: min(620px, calc(100vw - (var(--student-page-drawer-right) * 2)));
-}
-
 .student-page-payments-drawer--enrollment.slide-over-panel {
     width: min(536px, calc(100vw - (var(--student-page-drawer-right) * 2)));
 }
@@ -1705,7 +1293,6 @@ body[data-theme="dark"] .student-page-card {
     color: var(--theme-text-primary);
 }
 
-<<<<<<< HEAD
 body[data-theme="dark"] .student-page-header.is-danger {
     --student-page-header-shell-accent: color-mix(in srgb, var(--theme-accent-danger) 23%, transparent);
 }
@@ -1742,13 +1329,10 @@ body[data-theme="dark"] .student-page-header-card.student-page-header__card {
     color: var(--theme-text-primary);
 }
 
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
 body[data-theme="dark"] .student-page-card__head {
     border-bottom-color: color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-glass-border) 88%);
 }
 
-<<<<<<< HEAD
 body[data-theme="dark"] .student-page-profile-section-surface:hover,
 body[data-theme="dark"] .student-page-plan-meta__item:hover,
 body[data-theme="dark"] .student-page-plan-action-row:hover,
@@ -1757,24 +1341,11 @@ body[data-theme="dark"] .student-page-payments-ledger__row:hover {
 }
 
 body[data-theme="dark"] .student-page-profile-section-surface:hover,
-=======
-body[data-theme="dark"] .student-page-section-card:hover,
-body[data-theme="dark"] .student-page-plan-meta__item:hover,
-body[data-theme="dark"] .student-page-plan-action-row:hover,
-body[data-theme="dark"] .student-page-payments-ledger__row:hover,
-body[data-theme="dark"] .student-page-payments-ledger__action:hover,
-body[data-theme="dark"] .student-page-payments-ledger__action:focus-visible {
-    background: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
-}
-
-body[data-theme="dark"] .student-page-section-card:hover,
->>>>>>> codex/student-page-refactor-and-ui-polish
 body[data-theme="dark"] .student-page-plan-meta__item:hover,
 body[data-theme="dark"] .student-page-plan-action-row:hover {
     background: inherit;
 }
 
-<<<<<<< HEAD
 body[data-theme="dark"] .student-page-plan-action-row .button:not(.secondary) {
     background: rgba(10, 18, 32, 0.72);
     border-color: rgba(148, 163, 184, 0.12);
@@ -1791,11 +1362,8 @@ body[data-theme="dark"] .student-page-plan-action-row .button:focus-visible {
     background: rgba(15, 23, 42, 0.84);
 }
 
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
 body[data-theme="dark"] .student-page-payments-panel :is(
     .student-payment-management-card,
-    .student-page-payments-management-card,
     .student-page-payments-enrollment-card
 ) {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
@@ -1806,20 +1374,16 @@ body[data-theme="dark"] :is(
     .student-page-payments-history-card,
     .student-page-payments-drawer,
     .student-page-payments-checkout-card,
-    .student-page-payments-management-card,
     .student-page-payments-enrollment-card
 ) {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
     box-shadow: var(--theme-glass-shadow);
 }
 
-<<<<<<< HEAD
 body[data-theme="dark"] .student-page-payments-history-card {
     border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
 }
 
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
 body[data-theme="dark"] .student-page-payments-panel > .slide-overlay {
     background: rgba(2, 6, 14, 0.3);
 }
@@ -1835,13 +1399,7 @@ body[data-theme="dark"] .student-page-payments-drawer.slide-over-panel {
 
 body[data-theme="dark"] .student-page-header__meta,
 body[data-theme="dark"] .student-page-header__stat-meta,
-<<<<<<< HEAD
 body[data-theme="dark"] .student-page-header__stat-label {
-=======
-body[data-theme="dark"] .student-page-header__stat-label,
-body[data-theme="dark"] .student-page-charge-card__footer,
-body[data-theme="dark"] .student-page-charge-card__value span {
->>>>>>> codex/student-page-refactor-and-ui-polish
     color: var(--theme-text-secondary);
 }
 
@@ -1852,15 +1410,10 @@ body[data-theme="dark"] .student-page-payments-ledger__amount {
     color: var(--theme-text-primary);
 }
 
-body[data-theme="dark"] .student-page-panel-heading__copy .meta-text,
+body[data-theme="dark"] .student-page-panel-heading__copy [class~="meta-text"],
 body[data-theme="dark"] .student-page-payments-ledger__head th,
 body[data-theme="dark"] .student-page-payments-ledger__copy span,
-<<<<<<< HEAD
 body[data-theme="dark"] .student-page-payments-ledger__date {
-=======
-body[data-theme="dark"] .student-page-payments-ledger__date,
-body[data-theme="dark"] .student-page-payments-ledger__action {
->>>>>>> codex/student-page-refactor-and-ui-polish
     color: var(--theme-text-secondary);
 }
 
@@ -1918,18 +1471,11 @@ body[data-theme="dark"] .student-page-alert-banner {
 
     .student-page-header__actions {
         justify-content: flex-start;
-<<<<<<< HEAD
         width: 100%;
     }
 
     .student-page-header__actions-group {
         width: 100%;
-=======
-    }
-
-    .student-page-header__actions-group {
-        width: auto;
->>>>>>> codex/student-page-refactor-and-ui-polish
     }
 
     .student-page-header__title {
@@ -1946,33 +1492,12 @@ body[data-theme="dark"] .student-page-alert-banner {
         padding-top: 2px;
     }
 
-<<<<<<< HEAD
-=======
-    .student-page-charge-card {
-        grid-template-columns: 1fr;
-    }
-
->>>>>>> codex/student-page-refactor-and-ui-polish
     .student-page-header__stats,
     .student-page-plan-meta {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-<<<<<<< HEAD
-=======
-    .student-page-charge-card__value,
-    .student-page-charge-card__footer {
-        justify-items: start;
-        text-align: left;
-    }
-
-    .student-page-charge-card__footer {
-        flex-wrap: wrap;
-    }
-
-    .student-page-charge-card__support,
->>>>>>> codex/student-page-refactor-and-ui-polish
-    .student-page-panel-heading__copy .meta-text {
+    .student-page-panel-heading__copy [class~="meta-text"] {
         max-width: none;
     }
 }
@@ -2014,7 +1539,6 @@ body[data-theme="dark"] .student-page-alert-banner {
         align-items: stretch;
     }
 
-    .student-page-form-actions__secondary,
     .student-page-form-actions__primary {
         width: 100%;
     }
@@ -2030,23 +1554,16 @@ body[data-theme="dark"] .student-page-alert-banner {
     .student-page-form-actions .button,
     .student-page-plan-action-row .button,
     .student-page-alert-banner .button,
-<<<<<<< HEAD
-=======
-    .student-page-charge-card__footer .button,
->>>>>>> codex/student-page-refactor-and-ui-polish
     .student-page-header__actions .button {
         width: 100%;
         justify-content: center;
     }
 
-<<<<<<< HEAD
     .student-page-alert-banner .operation-hero-action-rail,
     .student-page-payments-ghost-action-rail {
         width: 100%;
     }
 
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
     .student-page-plan-price {
         justify-items: start;
         text-align: left;
@@ -2054,13 +1571,11 @@ body[data-theme="dark"] .student-page-alert-banner {
 }
 
 body[data-theme="dark"] .student-page-plan-meta__item,
-body[data-theme="dark"] .student-page-empty-state,
-body[data-theme="dark"] .student-page-ghost-action {
+body[data-theme="dark"] .student-page-empty-state {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-glass-border) 84%);
     background: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
 }
 
-<<<<<<< HEAD
 body[data-theme="dark"] .student-page-alert-banner .operation-hero-action-rail .button:not(.secondary),
 body[data-theme="dark"] .student-page-payments-ghost-action-rail .button:not(.secondary) {
     background: rgba(10, 18, 32, 0.72);
@@ -2095,10 +1610,6 @@ body[data-theme="dark"] .student-page-header__actions .operation-hero-action-rai
 body[data-theme="dark"] .student-page-header__actions .operation-hero-action-rail .button:hover,
 body[data-theme="dark"] .student-page-header__actions .operation-hero-action-rail .button:focus-visible {
     background: rgba(15, 23, 42, 0.84);
-=======
-body[data-theme="dark"] .student-page-charge-card.is-danger {
-    border-color: color-mix(in srgb, var(--theme-accent-danger) 30%, var(--theme-glass-border) 70%);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 @media (max-width: 720px) {
@@ -2137,21 +1648,11 @@ body[data-theme="dark"] .student-page-charge-card.is-danger {
     }
 
     .student-page-header__stats,
-<<<<<<< HEAD
     .student-page-plan-meta {
         grid-template-columns: 1fr;
     }
 
     .student-page-alert-banner {
-=======
-    .student-page-plan-meta,
-    .student-page-charge-card {
-        grid-template-columns: 1fr;
-    }
-
-    .student-page-alert-banner,
-    .student-page-charge-card__footer {
->>>>>>> codex/student-page-refactor-and-ui-polish
         flex-direction: column;
         align-items: stretch;
     }
@@ -2179,27 +1680,16 @@ body[data-theme="dark"] .student-page-charge-card.is-danger {
         min-width: 0;
     }
 
-<<<<<<< HEAD
-=======
-    .student-page-charge-card__value,
-    .student-page-charge-card__copy {
-        gap: 6px;
-    }
-
->>>>>>> codex/student-page-refactor-and-ui-polish
     .student-page-payments-ledger__head th,
     .student-page-payments-ledger__copy span,
     .student-page-payments-ledger__date {
         font-size: 0.75rem;
     }
-<<<<<<< HEAD
 
     .student-page-payments-ledger__method,
     .student-page-payments-ledger__amount {
         font-size: 0.78rem;
     }
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 @media (max-width: 480px) {
@@ -2243,12 +1733,7 @@ body[data-theme="dark"] .student-page-charge-card.is-danger {
     }
 
     .student-page-card__head,
-<<<<<<< HEAD
     .student-page-card__body {
-=======
-    .student-page-card__body,
-    .student-page-charge-card {
->>>>>>> codex/student-page-refactor-and-ui-polish
         padding: 14px;
     }
 
@@ -2265,10 +1750,6 @@ body[data-theme="dark"] .student-page-charge-card.is-danger {
         font-size: 0.98rem;
     }
 
-<<<<<<< HEAD
-=======
-    .student-page-charge-card__value strong,
->>>>>>> codex/student-page-refactor-and-ui-polish
     .student-page-plan-price strong {
         font-size: 1.55rem;
     }

@@ -1,0 +1,25 @@
+{
+  "session_user": "codex-qa",
+  "views": [
+    {
+      "viewport": "desktop",
+      "bodyTheme": "dark",
+      "title": "Entrar | OctoBox Control",
+      "url": "http://127.0.0.1:8000/login/?next=/financeiro/",
+      "loginForm": true,
+      "modeCards": [],
+      "kpis": [],
+      "boards": []
+    },
+    {
+      "viewport": "tablet",
+      "bodyTheme": "dark",
+      "title": "Entrar | OctoBox Control",
+      "url": "http://127.0.0.1:8000/login/?next=/financeiro/",
+      "loginForm": true,
+      "modeCards": [],
+      "kpis": [],
+      "boards": []
+    }
+  ]
+}

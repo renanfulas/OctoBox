@@ -155,8 +155,16 @@ POR QUE ELE EXISTE:
 }
 
 .student-avatar-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 40px;
     height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 50%;
+    line-height: 1;
+    text-transform: uppercase;
     font-size: 0.92rem;
     font-weight: 800;
     flex: 0 0 auto;
@@ -376,6 +384,39 @@ body[data-theme="dark"] .student-plan-name {
 body[data-theme="dark"] .student-email,
 body[data-theme="dark"] .student-due-date {
     color: rgba(226, 232, 240, 0.58);
+}
+
+body[data-theme="dark"] .avatar-circle.student-avatar-circle {
+    color: #f8fafc;
+    letter-spacing: 0.04em;
+    text-shadow: none;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: #1e293b;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .avatar-circle.avatar-orange.student-avatar-circle {
+    color: #fed7aa;
+}
+
+body[data-theme="dark"] .avatar-circle.avatar-purple.student-avatar-circle {
+    color: #ddd6fe;
+}
+
+body[data-theme="dark"] .avatar-circle.avatar-blue.student-avatar-circle {
+    color: #bfdbfe;
+}
+
+body[data-theme="dark"] .avatar-circle.avatar-indigo.student-avatar-circle {
+    color: #c7d2fe;
+}
+
+body[data-theme="dark"] .avatar-circle.avatar-teal.student-avatar-circle {
+    color: #99f6e4;
+}
+
+body[data-theme="dark"] .avatar-circle.avatar-pink.student-avatar-circle {
+    color: #fbcfe8;
 }
 
 body[data-theme="dark"] .student-directory-footer {

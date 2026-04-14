@@ -38,6 +38,7 @@ POR QUE ELE EXISTE:
                     data-student-plan="{{ student.latest_plan_name|default:'' }}"
                     data-student-due-label="{% if student.latest_payment_due_date %}{{ student.latest_payment_due_date|date:'d/m/Y' }}{% endif %}"
                     data-student-status="{{ student.status }}"
+                    data-student-new-30d="{{ student.is_new_30d|yesno:'true,false' }}"
                     data-payment-status="{{ student.operational_payment_status|default:'' }}"
                     data-presence-percent="{{ student.presence_percent|default:0 }}"
                     data-search-index="{{ student.full_name|lower }} {{ student.email|default:student.phone|lower }} {{ student.latest_plan_name|default:'--'|lower }}"
@@ -112,7 +113,7 @@ POR QUE ELE EXISTE:
                     <td class="student-cell student-cell--due-date" data-label="Vencimento">
                         <span class="student-due-date">
                             {% if student.latest_payment_due_date %}
-                                {{ student.latest_payment_due_date|date:"d M" }}
+                                {{ student.latest_payment_due_date|date:"d/m/y" }}
                             {% else %}
                                 --
                             {% endif %}
@@ -130,7 +131,7 @@ POR QUE ELE EXISTE:
         </table>
     </div>
 
-    <footer class="student-directory-footer" aria-label="Paginacao do diretorio de alunos">
+    <footer class="student-directory-footer" aria-label="Paginacao do diretorio de alunos"{% if page.data.student_filter_form.query.value %} hidden{% endif %}>
         <div class="student-directory-footer-side student-directory-footer-side--left">
             {% if page.data.students.has_previous %}
             <a href="?page={{ page.data.students.previous_page_number }}&{{ page.data.base_query_string }}" class="student-pagination-button student-pagination-button--ghost">Anterior</a>

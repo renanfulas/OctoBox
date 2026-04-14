@@ -3,15 +3,50 @@
 */
 
 .dashboard-metrics-cluster {
+    --dashboard-metrics-cluster-padding-inline: 0;
+    --dashboard-metrics-cluster-padding-block: 0;
+    --dashboard-metrics-cluster-radius: 0;
+    --dashboard-metrics-cluster-border: transparent;
+    --dashboard-metrics-cluster-surface: none;
+    --dashboard-metrics-cluster-shadow: none;
     display: grid;
     min-width: 0;
     gap: var(--dashboard-rhythm-3);
+    padding:
+        var(--dashboard-metrics-cluster-padding-block)
+        var(--dashboard-metrics-cluster-padding-inline)
+        var(--dashboard-metrics-cluster-padding-block);
+    border: 1px solid var(--dashboard-metrics-cluster-border);
+    border-radius: var(--dashboard-metrics-cluster-radius);
+    background: var(--dashboard-metrics-cluster-surface);
+    box-shadow: var(--dashboard-metrics-cluster-shadow);
+    overflow: hidden;
 }
 
 .dashboard-metrics-lead {
+    --dashboard-metrics-lead-padding: 0;
+    --dashboard-metrics-lead-radius: 0;
+    --dashboard-metrics-lead-border: transparent;
+    --dashboard-metrics-lead-surface: none;
+    --dashboard-metrics-lead-shadow: none;
     display: grid;
-    grid-template-columns: minmax(0, 13fr) minmax(0, 8fr);
+    grid-template-columns: minmax(0, 1.18fr) minmax(280px, 0.82fr);
     gap: var(--dashboard-rhythm-3);
+    align-items: stretch;
+    padding: var(--dashboard-metrics-lead-padding);
+    margin: 0;
+    border: 1px solid var(--dashboard-metrics-lead-border);
+    border-radius: var(--dashboard-metrics-lead-radius);
+    background: var(--dashboard-metrics-lead-surface);
+    box-shadow: var(--dashboard-metrics-lead-shadow);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-image: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    outline: 0;
+    overflow: visible;
 }
 
 /* Moving .dashboard-instagram-metrics--support to below the main block for specificity override */
@@ -20,7 +55,7 @@
 }
 
 .dashboard-kpi-slot--lead .dashboard-kpi-card {
-    min-height: 198px;
+    min-height: clamp(180px, 18vw, 212px);
 }
 
 .dashboard-kpi-slot--lead .dashboard-kpi-card .card-value {
@@ -29,6 +64,58 @@
 
 .dashboard-kpi-slot--lead .dashboard-kpi-card .card-copy {
     max-width: 30ch;
+}
+
+.dashboard-kpi-slot--primary {
+    min-width: 0;
+}
+
+.dashboard-kpi-slot--primary .dashboard-kpi-card {
+    min-height: clamp(196px, 19vw, 224px);
+}
+
+.dashboard-kpi-slot--primary .dashboard-kpi-card .card-copy {
+    max-width: 32ch;
+}
+
+.dashboard-kpi-slot--support {
+    min-width: 0;
+}
+
+.dashboard-kpi-slot--support .dashboard-kpi-card {
+    min-height: clamp(172px, 16vw, 196px);
+    padding: var(--dashboard-rhythm-4) var(--dashboard-rhythm-4) var(--dashboard-rhythm-3);
+}
+
+.dashboard-kpi-slot--support .dashboard-kpi-card::after {
+    width: 112px;
+    height: 112px;
+    opacity: 0.52;
+    inset: auto -20px -30px auto;
+}
+
+.dashboard-kpi-slot--support .dashboard-kpi-card .card-body-metric {
+    gap: var(--dashboard-fib-2, 8px);
+}
+
+.dashboard-kpi-slot--support .dashboard-kpi-card .card-value {
+    font-size: clamp(2rem, 2.8vw, 2.72rem);
+}
+
+.dashboard-kpi-slot--support .dashboard-kpi-card .card-copy {
+    max-width: 24ch;
+    font-size: 0.8rem;
+    line-height: 1.42;
+}
+
+.dashboard-kpi-slot--support .dashboard-kpi-card .card-signal {
+    font-size: 0.64rem;
+}
+
+.dashboard-kpi-slot--support .dashboard-kpi-card .dashboard-kpi-sparkline {
+    height: 32px;
+    min-height: 32px;
+    margin-top: 10px;
 }
 
 .dashboard-instagram-metrics {
@@ -57,87 +144,49 @@
     grid-template-rows: 1fr auto;
     border-radius: var(--dashboard-fib-4, 21px);
     overflow: hidden;
-<<<<<<< HEAD
-    transition:
-        transform 220ms var(--ease-standard),
-        box-shadow 220ms var(--ease-standard),
-        border-color 220ms var(--ease-standard);
-    --kpi-good-surface: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(255, 255, 255, 0.78));
-    --kpi-good-border: rgba(16, 185, 129, 0.24);
-    --kpi-bad-surface: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(255, 255, 255, 0.78));
-    --kpi-bad-border: rgba(249, 115, 22, 0.24);
-    --kpi-neutral-surface: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(255, 255, 255, 0.78));
-    --kpi-neutral-border: rgba(56, 189, 248, 0.24);
-=======
-    --kpi-good-surface: color-mix(in srgb, var(--theme-accent-success-alpha) 14%, var(--theme-surface-glass-strong) 86%);
-    --kpi-good-border: color-mix(in srgb, var(--theme-accent-success) 24%, var(--theme-glass-border) 76%);
-    --kpi-bad-surface: color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, var(--theme-surface-glass-strong) 86%);
-    --kpi-bad-border: color-mix(in srgb, var(--theme-accent-warning) 24%, var(--theme-glass-border) 76%);
-    --kpi-neutral-surface: color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, var(--theme-surface-glass-strong) 86%);
-    --kpi-neutral-border: color-mix(in srgb, var(--theme-accent-primary) 24%, var(--theme-glass-border) 76%);
->>>>>>> codex/student-page-refactor-and-ui-polish
+    --dashboard-kpi-hover-shadow:
+        0 28px 48px rgba(2, 8, 23, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    --dashboard-kpi-footer-border: rgba(148, 163, 184, 0.12);
 }
 
 .dashboard-kpi-slot.is-primary .dashboard-kpi-card {
-    background:
+    --metric-card-surface:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 66%, transparent), transparent 34%),
-        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-panel) 96%, transparent), color-mix(in srgb, var(--theme-surface-strong) 92%, transparent));
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 26%, var(--theme-border-soft) 74%);
-    box-shadow:
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-secondary) 92%, transparent));
+    --metric-card-border: color-mix(in srgb, var(--theme-accent-support-alpha) 26%, var(--theme-border-soft) 74%);
+    --metric-card-shadow:
         0 24px 42px rgba(2, 8, 23, 0.12),
         inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    --metric-card-accent: color-mix(in srgb, var(--theme-accent-support) 44%, transparent);
 }
 
 .dashboard-kpi-slot--lead:not(.is-primary) .dashboard-kpi-card {
-    background:
+    --metric-card-surface:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 34%, transparent), transparent 34%),
-        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-panel) 94%, transparent), color-mix(in srgb, var(--theme-surface-strong) 90%, transparent));
-    border-color: color-mix(in srgb, var(--theme-accent-premium-alpha) 16%, var(--theme-border-soft) 84%);
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-strong) 94%, transparent), color-mix(in srgb, var(--theme-surface-secondary) 90%, transparent));
+    --metric-card-border: color-mix(in srgb, var(--theme-accent-premium-alpha) 16%, var(--theme-border-soft) 84%);
+    --metric-card-accent: color-mix(in srgb, var(--theme-accent-premium) 42%, transparent);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber {
-    --kpi-good-surface: linear-gradient(135deg, rgba(245, 158, 11, 0.14), rgba(16, 185, 129, 0.08));
-    --kpi-good-border: rgba(180, 83, 9, 0.24);
-    --kpi-bad-surface: linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(249, 115, 22, 0.09));
-    --kpi-bad-border: rgba(194, 65, 12, 0.24);
-    --kpi-neutral-surface: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(56, 189, 248, 0.08));
-    --kpi-neutral-border: rgba(180, 83, 9, 0.22);
+    --metric-card-accent: color-mix(in srgb, var(--theme-accent-warning) 40%, transparent);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-red {
-    --kpi-good-surface: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(16, 185, 129, 0.08));
-    --kpi-good-border: rgba(220, 38, 38, 0.24);
-    --kpi-bad-surface: linear-gradient(135deg, rgba(254, 226, 226, 0.92), rgba(249, 115, 22, 0.08));
-    --kpi-bad-border: rgba(220, 38, 38, 0.24);
-    --kpi-neutral-surface: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(56, 189, 248, 0.05));
-    --kpi-neutral-border: rgba(220, 38, 38, 0.14);
+    --metric-card-accent: color-mix(in srgb, var(--theme-accent-danger) 42%, transparent);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-blue {
-    --kpi-good-surface: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(16, 185, 129, 0.08));
-    --kpi-good-border: rgba(37, 99, 235, 0.22);
-    --kpi-bad-surface: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(249, 115, 22, 0.08));
-    --kpi-bad-border: rgba(37, 99, 235, 0.22);
-    --kpi-neutral-surface: linear-gradient(135deg, rgba(59, 130, 246, 0.14), rgba(125, 211, 252, 0.1));
-    --kpi-neutral-border: rgba(37, 99, 235, 0.24);
+    --metric-card-accent: color-mix(in srgb, var(--theme-accent-support) 42%, transparent);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-green {
-    --kpi-good-surface: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(45, 212, 191, 0.09));
-    --kpi-good-border: rgba(5, 150, 105, 0.24);
-    --kpi-bad-surface: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(249, 115, 22, 0.08));
-    --kpi-bad-border: rgba(5, 150, 105, 0.22);
-    --kpi-neutral-surface: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(56, 189, 248, 0.05));
-    --kpi-neutral-border: rgba(5, 150, 105, 0.14);
+    --metric-card-accent: color-mix(in srgb, var(--theme-accent-success) 40%, transparent);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-slate {
-    --kpi-good-surface: linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(16, 185, 129, 0.08));
-    --kpi-good-border: rgba(15, 118, 110, 0.22);
-    --kpi-bad-surface: linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(249, 115, 22, 0.08));
-    --kpi-bad-border: rgba(15, 118, 110, 0.22);
-    --kpi-neutral-surface: linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(56, 189, 248, 0.08));
-    --kpi-neutral-border: rgba(15, 118, 110, 0.22);
+    --metric-card-accent: color-mix(in srgb, var(--theme-accent-primary) 38%, transparent);
 }
 
 .dashboard-instagram-metrics .dashboard-kpi-card {
@@ -146,33 +195,21 @@
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card::after {
-    content: "";
-    position: absolute;
-    inset: auto -26px -42px auto;
     width: 144px;
     height: 144px;
-    border-radius: 999px;
-    background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent), transparent 72%);
     opacity: 0.7;
-    pointer-events: none;
+    inset: auto -26px -42px auto;
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, transparent), transparent 30%),
-        var(--card-surface-strong);
-    border: 1px solid var(--card-border);
-    color: var(--theme-text-primary);
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage .card-kicker {
-    background: color-mix(in srgb, var(--card-surface-strong) 72%, transparent);
-    color: var(--legacy-copy-strong);
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage .card-copy,
-.dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage .card-value {
-    color: var(--theme-text-primary);
+    --metric-card-surface:
+        linear-gradient(160deg, rgba(247, 250, 255, 0.96), rgba(240, 246, 252, 0.98)),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+    --metric-card-border: rgba(148, 163, 184, 0.14);
+    --metric-card-accent: color-mix(in srgb, var(--theme-accent-warning) 42%, transparent);
+    --metric-card-kicker-surface: rgba(255, 255, 255, 0.46);
+    --metric-card-kicker-ink: var(--muted-strong);
+    --metric-card-copy-ink: var(--metric-card-value-ink);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-body-metric {
@@ -187,7 +224,6 @@
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-label {
-    color: var(--legacy-copy);
     font-size: 0.68rem;
     letter-spacing: 0.16em;
     font-weight: 800;
@@ -195,11 +231,6 @@
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-kicker {
     margin: 0;
-    width: fit-content;
-    padding: 3px 9px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--card-surface-strong) 72%, transparent);
-    color: var(--legacy-copy-strong);
     letter-spacing: 0.08em;
 }
 
@@ -217,62 +248,19 @@
     font-weight: 500;
     line-height: 0.85;
     letter-spacing: -0.04em;
-    color: var(--ink);
     text-wrap: balance;
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-signal {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 28px;
-    padding: 5px 12px;
-    border-radius: 999px;
-    border: 1px solid transparent;
     font-size: 0.68rem;
     font-weight: 800;
     letter-spacing: 0.1em;
-    text-transform: uppercase;
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card .card-signal-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: currentColor;
-    box-shadow: 0 0 8px currentColor;
-    opacity: 0.9;
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card .card-signal.is-good {
-    color: #10b981;
-    border-color: var(--kpi-good-border);
-    background: var(--kpi-good-surface);
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card .card-signal.is-bad {
-    color: #f97316;
-    border-color: var(--kpi-bad-border);
-    background: var(--kpi-bad-surface);
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card .card-signal.is-neutral {
-    color: #38bdf8;
-    border-color: var(--kpi-neutral-border);
-    background: var(--kpi-neutral-surface);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-copy {
     max-width: 34ch;
-<<<<<<< HEAD
     font-size: 0.84rem;
     line-height: 1.48;
-    color: var(--muted-strong);
-=======
-    font-size: 0.88rem;
-    line-height: 1.46;
-    color: var(--legacy-copy);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card .card-content {
@@ -282,15 +270,11 @@
 .dashboard-metrics-cluster .dashboard-kpi-card .card-footer {
     margin-top: var(--dashboard-fib-3, 13px);
     padding-top: var(--dashboard-fib-2, 8px);
-    border-top: 1px solid color-mix(in srgb, var(--card-border) 82%, transparent);
-}
-
-.dashboard-metrics-cluster .dashboard-kpi-card .card-action {
-    background: color-mix(in srgb, var(--card-surface-strong) 78%, transparent);
+    border-top: 1px solid var(--dashboard-kpi-footer-border);
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.status-attention {
-    border-left-color: var(--theme-accent-warning);
+    border-left-color: transparent;
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card.kpi-blue.status-attention {
@@ -298,9 +282,28 @@
 }
 
 .dashboard-metrics-cluster .dashboard-kpi-card:hover {
-    box-shadow:
-        0 28px 48px rgba(2, 8, 23, 0.14),
-        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    box-shadow: var(--dashboard-kpi-hover-shadow);
+}
+
+@media (max-width: 1180px) {
+    .dashboard-metrics-lead {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-kpi-slot--primary .dashboard-kpi-card,
+    .dashboard-kpi-slot--support .dashboard-kpi-card {
+        min-height: 176px;
+    }
+
+    .dashboard-kpi-slot--support .dashboard-kpi-card {
+        padding: var(--dashboard-rhythm-5) var(--dashboard-rhythm-5) var(--dashboard-rhythm-3);
+    }
+
+    .dashboard-kpi-slot--support .dashboard-kpi-card .card-copy {
+        max-width: 30ch;
+        font-size: 0.84rem;
+        line-height: 1.48;
+    }
 }
 
 @media (max-width: 960px) {
@@ -341,132 +344,67 @@
     box-shadow: var(--fdw-shadow);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .dashboard-instagram-metrics .dashboard-kpi-card {
-        animation: fdw-rise-in 650ms var(--ease-standard) both;
-    }
-
-    .dashboard-instagram-metrics .dashboard-kpi-card:nth-child(2) {
-        animation-delay: 60ms;
-    }
-
-    .dashboard-instagram-metrics .dashboard-kpi-card:nth-child(3) {
-        animation-delay: 120ms;
-    }
+.dashboard-instagram-metrics.dashboard-instagram-metrics--support .dashboard-kpi-card {
+    box-shadow: none;
 }
 
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card {
-    --kpi-good-surface: linear-gradient(135deg, rgba(16, 185, 129, 0.16), rgba(15, 23, 42, 0.8));
-    --kpi-good-border: rgba(16, 185, 129, 0.15);
-    --kpi-bad-surface: linear-gradient(135deg, rgba(249, 115, 22, 0.16), rgba(15, 23, 42, 0.8));
-    --kpi-bad-border: rgba(249, 115, 22, 0.15);
-    --kpi-neutral-surface: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(15, 23, 42, 0.8));
-    --kpi-neutral-border: rgba(56, 189, 248, 0.15);
+    --dashboard-kpi-hover-shadow:
+        0 32px 56px rgba(2, 6, 23, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --dashboard-kpi-footer-border: rgba(148, 163, 184, 0.14);
+}
+
+body[data-theme="dark"] .dashboard-metrics-cluster {
+    --dashboard-metrics-cluster-padding-inline: clamp(10px, 1.2vw, 14px);
+    --dashboard-metrics-cluster-padding-block: clamp(10px, 1.2vw, 14px);
+    --dashboard-metrics-cluster-radius: calc(var(--dashboard-fib-4, 21px) + 10px);
+    --dashboard-metrics-cluster-border: rgba(148, 163, 184, 0.07);
+    --dashboard-metrics-cluster-surface:
+        linear-gradient(180deg, rgba(7, 13, 24, 0.92), rgba(5, 10, 19, 0.88));
+    --dashboard-metrics-cluster-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.03),
+        0 22px 42px rgba(2, 6, 23, 0.24);
+}
+
+body[data-theme="dark"] .dashboard-metrics-lead {
+    --dashboard-metrics-lead-padding: 0;
+    --dashboard-metrics-lead-radius: 0;
+    --dashboard-metrics-lead-border: transparent;
+    --dashboard-metrics-lead-surface: none;
+    --dashboard-metrics-lead-shadow: none;
+    background-image: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    outline: 0;
+    overflow: visible;
 }
 
 body[data-theme="dark"] .dashboard-kpi-slot.is-primary .dashboard-kpi-card {
-    background:
+    --metric-card-surface:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 74%, transparent), transparent 34%),
         linear-gradient(145deg, rgba(8, 16, 29, 0.98), rgba(7, 14, 26, 0.98));
-    border-color: rgba(125, 211, 252, 0.18);
-    box-shadow:
+    --metric-card-border: rgba(125, 211, 252, 0.18);
+    --metric-card-shadow:
         0 28px 52px rgba(2, 6, 23, 0.38),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --metric-card-accent: color-mix(in srgb, var(--theme-accent-support) 52%, transparent);
 }
 
 body[data-theme="dark"] .dashboard-kpi-slot--lead:not(.is-primary) .dashboard-kpi-card {
-    background:
+    --metric-card-surface:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 44%, transparent), transparent 34%),
         linear-gradient(145deg, rgba(11, 18, 32, 0.98), rgba(9, 16, 29, 0.98));
-    border-color: rgba(148, 163, 184, 0.14);
-}
-
-body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber {
-    --kpi-good-surface: linear-gradient(135deg, rgba(245, 158, 11, 0.14), rgba(30, 41, 59, 1));
-    --kpi-neutral-surface: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(30, 41, 59, 1));
-    --kpi-bad-surface: linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(30, 41, 59, 1));
+    --metric-card-border: rgba(148, 163, 184, 0.14);
+    --metric-card-accent: color-mix(in srgb, var(--theme-accent-premium) 50%, transparent);
 }
 
 body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 22%, transparent), transparent 30%),
-        linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--theme-accent-warning-alpha) 10%, rgba(22, 29, 45, 0.94) 90%),
-            rgba(16, 20, 31, 0.92)
-        );
-    border-color: color-mix(in srgb, var(--theme-accent-warning) 22%, var(--theme-glass-border) 78%);
-    box-shadow:
-        inset 0 1px 0 var(--theme-glass-highlight),
-        0 18px 42px rgba(0, 0, 0, 0.24);
-    color: var(--theme-text-primary);
-}
-
-body[data-theme="dark"] .dashboard-metrics-cluster .metric-card.dashboard-kpi-card.kpi-amber.is-stage {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 22%, transparent), transparent 30%),
-        linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--theme-accent-warning-alpha) 10%, rgba(22, 29, 45, 0.94) 90%),
-            rgba(16, 20, 31, 0.94)
-        );
-    border-color: color-mix(in srgb, var(--theme-accent-warning) 22%, var(--theme-glass-border) 78%);
-    color: var(--theme-text-primary);
-}
-
-body[data-theme="dark"] .dashboard-metrics-cluster .metric-card.dashboard-kpi-card.kpi-amber.is-stage .metric-number,
-body[data-theme="dark"] .dashboard-metrics-cluster .metric-card.dashboard-kpi-card.kpi-amber.is-stage .card-value,
-body[data-theme="dark"] .dashboard-metrics-cluster .metric-card.dashboard-kpi-card.kpi-amber.is-stage .card-title,
-body[data-theme="dark"] .dashboard-metrics-cluster .metric-card.dashboard-kpi-card.kpi-amber.is-stage .card-copy {
-    color: var(--theme-text-primary);
-}
-
-body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card.kpi-red {
-    --kpi-good-surface: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(30, 41, 59, 1));
-    --kpi-bad-surface: linear-gradient(135deg, rgba(239, 68, 68, 0.16), rgba(30, 41, 59, 1));
-    --kpi-neutral-surface: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(30, 41, 59, 1));
-}
-
-body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card.kpi-blue {
-    --kpi-good-surface: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(30, 41, 59, 1));
-    --kpi-bad-surface: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(30, 41, 59, 1));
-    --kpi-neutral-surface: linear-gradient(135deg, rgba(59, 130, 246, 0.14), rgba(30, 41, 59, 1));
-}
-
-body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card.kpi-green {
-    --kpi-good-surface: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(30, 41, 59, 1));
-    --kpi-bad-surface: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(30, 41, 59, 1));
-    --kpi-neutral-surface: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(30, 41, 59, 1));
-}
-
-/* Dark mode text element overrides */
-body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-value {
-    color: #f8fafc;
-    text-shadow: 0 0 18px color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent);
-}
-
-body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-label {
-    color: rgba(226, 232, 240, 0.75);
-}
-
-body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-kicker,
-body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card.kpi-amber.is-stage .card-kicker {
-    background: color-mix(in srgb, var(--card-surface-strong) 24%, transparent);
-    color: var(--theme-text-primary);
-}
-
-body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-copy {
-    color: rgba(226, 232, 240, 0.88);
-}
-
-body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card .card-action {
-    background: color-mix(in srgb, var(--card-surface-strong) 20%, transparent);
-}
-
-body[data-theme="dark"] .dashboard-metrics-cluster .dashboard-kpi-card:hover {
-    box-shadow:
-        0 32px 56px rgba(2, 6, 23, 0.42),
-        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --metric-card-surface: linear-gradient(160deg, rgba(30, 41, 59, 1), rgba(15, 23, 42, 1));
+    --metric-card-border: rgba(148, 163, 184, 0.16);
+    --metric-card-kicker-surface: rgba(255, 255, 255, 0.08);
+    --metric-card-kicker-ink: var(--theme-text-primary);
 }
 
 /* --- VIP TYPOGRAPHY: JUMBO CARDS --- */

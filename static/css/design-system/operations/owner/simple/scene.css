@@ -11,8 +11,3 @@ POR QUE ELE EXISTE:
     --owner-shell-radius: clamp(20px, 2.4vw, 28px);
     --owner-shell-gap: clamp(18px, 2vw, 26px);
 }
-
-.owner-workspace {
-    display: grid;
-    gap: 32px;
-}

@@ -3,16 +3,11 @@ ARQUIVO: shell_sidebar.html
 POR QUE ELE EXISTE:
 - Exibe a barra lateral principal do shell do sistema.
 O QUE ESTE ARQUIVO FAZ:
-<<<<<<< HEAD
 - Renderiza marca, identidade do usuario e navegacao principal do shell.
-=======
-- Renderiza marca, usuario, navegacao e destaques rapidos.
->>>>>>> codex/student-page-refactor-and-ui-polish
 PONTOS CRITICOS:
 - Depende do usuario autenticado, navegacao e contadores do shell.
 -->
 <aside class="sidebar" data-slot="sidebar" data-ui="sidebar">
-<<<<<<< HEAD
     <div class="sidebar-head">
         <div class="brand-wrap">
             <div class="brand-mark" aria-hidden="true">OB</div>
@@ -26,33 +21,17 @@ PONTOS CRITICOS:
     <div class="sidebar-body">
         <div class="sidebar-block sidebar-meta">
             <strong class="sidebar-user-name">{{ user.get_full_name|default:user.username }}</strong>
-=======
-    <div class="brand-wrap">
-        <div class="brand-mark">OB</div>
-        <div>
-            <p class="brand">OctoBox Control</p>
-            <p class="tagline">Gest&atilde;o viva do box com energia, leitura comercial e rotina operacional clara.</p>
-        </div>
-    </div>
-    {% if user.is_authenticated %}
-    <div class="sidebar-block sidebar-meta">
-        <strong>{{ user.get_full_name|default:user.username }}</strong>
-        <span class="sidebar-role">{{ current_role.label|default:"Sem papel definido" }}</span>
-        <div class="sidebar-highlight">
-            <strong>Leitura r&aacute;pida</strong>
-            <span>{{ shell_counts.pending_intakes }} entradas pendentes e {{ shell_counts.overdue_payments }} pagamentos em atraso.</span>
->>>>>>> codex/student-page-refactor-and-ui-polish
+            <span class="sidebar-role">{{ current_role.label|default:"Sem papel definido" }}</span>
         </div>
         <nav class="sidebar-nav" aria-label="Navegacao principal">
             {% for item in sidebar_navigation %}
-            <a class="nav-link{% if item.is_active %} is-active{% endif %}" data-nav-key="{{ item.nav_key }}" href="{{ item.href }}" {% if item.is_active %}aria-current="page"{% endif %}>
+            <a class="nav-link{% if item.is_active %} is-active{% endif %}" data-nav-key="{{ item.nav_key }}" href="{{ item.href }}"{% if item.is_active %} aria-current="page"{% endif %}>
                 <span class="nav-icon" aria-hidden="true">{{ item.icon|safe }}</span>
                 <span class="nav-label">{{ item.label }}</span>
             </a>
             {% endfor %}
         </nav>
     </div>
-<<<<<<< HEAD
     {% else %}
     <nav class="sidebar-nav" aria-label="Navegacao principal">
         <a class="nav-link" href="{% url 'login' %}">
@@ -60,14 +39,5 @@ PONTOS CRITICOS:
             <span class="nav-label">Entrar</span>
         </a>
     </nav>
-=======
-    {% for item in sidebar_navigation %}
-    <a class="nav-link{% if item.is_active %} is-active{% endif %}" data-nav-key="{{ item.nav_key }}" href="{{ item.href }}"{% if item.is_active %} aria-current="page"{% endif %}>
-        <span class="nav-icon">{{ item.icon|safe }}</span>{{ item.label }}
-    </a>
-    {% endfor %}
-    {% else %}
-    <a class="nav-link" href="{% url 'login' %}"><span class="nav-icon">&#128273;</span>Entrar</a>
->>>>>>> codex/student-page-refactor-and-ui-polish
     {% endif %}
 </aside>

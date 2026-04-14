@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from catalog.finance_snapshot import build_financial_churn_foundation, build_finance_snapshot
-from catalog.finance_snapshot.follow_up_analytics import (
+from catalog.finance_snapshot.ai import (
     build_contextual_recommendation_map,
     build_finance_follow_up_analytics,
     build_turn_priority_tension_context_map,
@@ -229,6 +229,29 @@ class FinanceChurnFoundationTests(TestCase):
         self.assertIn('historical_score', contract['queue_contract'])
         self.assertIn('prediction_window', contract['queue_contract'])
         self.assertIn('financial_risk_score', contract['future_inference_contract'])
+        self.assertIn('finance_trend_foundation', snapshot)
+        trend_contract = snapshot['finance_trend_foundation']['contract']
+        self.assertEqual(trend_contract['surface_key'], 'finance_trend_board_v1')
+        self.assertEqual(trend_contract['metric_keys'], ['liquido', 'recebido', 'gastos', 'churn'])
+        self.assertEqual(trend_contract['default_metric_key'], 'recebido')
+        self.assertEqual(trend_contract['interactive_metric_keys'], ['recebido', 'churn'])
+        self.assertEqual(snapshot['finance_trend_foundation']['metric_pills'][0]['availability_status'], 'pending_foundation')
+        self.assertEqual(snapshot['finance_trend_foundation']['metric_pills'][2]['availability_status'], 'pending_foundation')
+        self.assertTrue(snapshot['finance_trend_foundation']['metric_pills'][1]['is_interactive'])
+        self.assertTrue(snapshot['finance_trend_foundation']['metric_pills'][3]['is_interactive'])
+        self.assertEqual(snapshot['finance_trend_foundation']['metric_views']['churn']['sparkline']['metric_key'], 'churn')
+        self.assertEqual(snapshot['finance_trend_foundation']['metric_views']['recebido']['sparkline']['metric_key'], 'received')
+
+    def test_finance_trend_foundation_formats_svg_coordinates_with_dot_decimal(self):
+        snapshot = build_finance_snapshot()
+
+        received_sparkline = snapshot['finance_trend_foundation']['metric_views']['recebido']['sparkline']
+        churn_sparkline = snapshot['finance_trend_foundation']['metric_views']['churn']['sparkline']
+
+        for sparkline in (received_sparkline, churn_sparkline):
+            for point in sparkline['realized_points'] + sparkline['expected_points']:
+                self.assertNotIn(',', point['svg_x'])
+                self.assertNotIn(',', point['svg_y'])
 
     def test_build_finance_snapshot_persists_suggested_follow_up(self):
         student = Student.objects.create(full_name='Teo Follow', phone='5511910000011', status='inactive')
@@ -298,6 +321,42 @@ class FinanceChurnFoundationTests(TestCase):
         self.assertEqual(follow_up.realized_action_kind, 'overdue')
         self.assertEqual(follow_up.resolved_by, self.user)
         self.assertEqual(follow_up.outcome_status, FinanceFollowUpOutcomeStatus.PENDING)
+
+    def test_build_finance_snapshot_reuses_existing_suggestion_key_after_status_transition(self):
+        student = Student.objects.create(full_name='Kai Reaparece', phone='5511910000099', status='inactive')
+        enrollment = Enrollment.objects.create(
+            student=student,
+            plan=self.plan,
+            start_date=self.today - timezone.timedelta(days=90),
+            end_date=self.today - timezone.timedelta(days=4),
+            status=EnrollmentStatus.CANCELED,
+        )
+        Payment.objects.create(
+            student=student,
+            enrollment=enrollment,
+            due_date=self.today - timezone.timedelta(days=12),
+            amount='299.90',
+            status=PaymentStatus.PENDING,
+            method=PaymentMethod.PIX,
+        )
+
+        build_finance_snapshot(persist_follow_ups=True)
+        follow_up = FinanceFollowUp.objects.get(student=student)
+        original_id = follow_up.id
+        follow_up.status = FinanceFollowUpStatus.SUPERSEDED
+        follow_up.resolved_at = timezone.now()
+        follow_up.outcome_reason = 'queue_shifted'
+        follow_up.save(update_fields=['status', 'resolved_at', 'outcome_reason', 'updated_at'])
+
+        build_finance_snapshot(persist_follow_ups=True)
+
+        follow_up.refresh_from_db()
+        self.assertEqual(follow_up.id, original_id)
+        self.assertEqual(follow_up.status, FinanceFollowUpStatus.SUGGESTED)
+        self.assertIsNone(follow_up.resolved_at)
+        self.assertEqual(follow_up.outcome_reason, '')
+        self.assertEqual(follow_up.outcome_status, FinanceFollowUpOutcomeStatus.PENDING)
+        self.assertEqual(FinanceFollowUp.objects.filter(student=student).count(), 1)
 
     def test_evaluate_finance_follow_up_outcome_marks_payment_recovered(self):
         student = Student.objects.create(full_name='Nico Pago', phone='5511910000013', status='active')

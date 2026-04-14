@@ -20,9 +20,7 @@ PONTOS CRITICOS:
 <div class="operation-shell workspace-shell catalog-scene student-scene" data-page="students" data-screen="catalog-students" data-slot="page-root">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
-    <div class="students-kpi-panel deferred-surface" data-panel="students-interactive-kpis-shell">
-        {% include "catalog/includes/student/student_interactive_kpis.html" %}
-    </div>
+    {% include "catalog/includes/student/student_interactive_kpis.html" %}
 
     <div class="interactive-tab-container students-tab-workspace" data-default-panel="{{ page.behavior.default_panel }}">
         <div class="stack-16 deferred-surface deferred-surface--dense students-tab-panel students-tab-panel--filters{% if page.behavior.default_panel == 'tab-students-filters' %} is-tab-active{% endif %}" id="tab-students-filters" aria-label="Motor de busca da base">

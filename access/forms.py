@@ -16,7 +16,14 @@ PONTOS CRITICOS:
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 
-from .roles import ROLE_DEFINITIONS
+from .roles import ROLE_DEFINITIONS, ROLE_HONEYPOT
+
+
+OPERATIONAL_ROLE_CHOICES = [
+    (role.slug, role.label)
+    for role in ROLE_DEFINITIONS
+    if role.slug != ROLE_HONEYPOT
+]
 
 
 class AccessAuthenticationForm(AuthenticationForm):
@@ -43,7 +50,7 @@ class AccessProfileCreateForm(forms.Form):
     password = forms.CharField(label='Senha provisoria', widget=forms.PasswordInput(render_value=True), max_length=128)
     role = forms.ChoiceField(
         label='Papel',
-        choices=[(role.slug, role.label) for role in ROLE_DEFINITIONS],
+        choices=OPERATIONAL_ROLE_CHOICES,
     )
 
     def __init__(self, *args, **kwargs):
@@ -65,7 +72,7 @@ class AccessProfileUpdateForm(forms.Form):
     email = forms.EmailField(label='E-mail', required=False)
     role = forms.ChoiceField(
         label='Papel',
-        choices=[(role.slug, role.label) for role in ROLE_DEFINITIONS],
+        choices=OPERATIONAL_ROLE_CHOICES,
     )
 
     def __init__(self, *args, **kwargs):

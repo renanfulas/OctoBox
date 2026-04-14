@@ -53,8 +53,8 @@ class StudentDirectoryFilterForm(forms.Form):
         required=False,
         label='Janela de criacao',
         choices=(
-            ('', 'Todas'),
-            ('30d', 'Novos (30 dias)'),
+            ('', 'Tudo'),
+            ('30d', 'Novos 30 dias'),
         ),
     )
     student_status = forms.ChoiceField(
@@ -80,7 +80,7 @@ class StudentDirectoryFilterForm(forms.Form):
 
 class StudentQuickForm(forms.ModelForm):
     acquisition_source = forms.ChoiceField(
-        required=True,
+        required=False,
         label='Origem de aquisicao',
         choices=tuple(choice for choice in ACQUISITION_CHANNEL_CHOICES if choice[0] not in ('legacy',)),
     )
@@ -300,6 +300,8 @@ class StudentQuickForm(forms.ModelForm):
             val = sum(int(raw_cpf[num]) * ((i+1) - num) for num in range(0, i))
             digit = ((val * 10) % 11) % 10
             if digit != int(raw_cpf[i]):
+                if self.instance.pk:
+                    break
                 raise forms.ValidationError('CPF inválido (Dígito verificador incorreto).')
 
         # 2. Validar Duplicidade
@@ -311,6 +313,12 @@ class StudentQuickForm(forms.ModelForm):
 
     def clean_acquisition_source(self):
         acquisition_source = normalize_acquisition_channel(self.cleaned_data.get('acquisition_source'))
+        if not acquisition_source and self.instance.pk:
+            acquisition_source = (
+                self.instance.acquisition_source
+                or self.instance.resolved_acquisition_source
+                or 'unidentified'
+            )
         if not acquisition_source:
             raise forms.ValidationError('Escolha a origem de aquisicao antes de continuar.')
         return acquisition_source

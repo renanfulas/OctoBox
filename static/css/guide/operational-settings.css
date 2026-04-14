@@ -2,6 +2,10 @@
 ARQUIVO: refinamentos locais da tela operational-settings.
 */
 
+.system-map-section > .table-card {
+    min-height: 100%;
+}
+
 .operational-settings-import-form {
     --form-gap: 12px;
 }
@@ -9,6 +13,12 @@ ARQUIVO: refinamentos locais da tela operational-settings.
 .operational-settings-field,
 .operational-settings-file-input {
     width: 100%;
+}
+
+.system-map-section .operation-hero-action-rail {
+    --operation-hero-button-min-height: 38px;
+    --operation-hero-button-padding: 9px 14px;
+    --operation-hero-button-font-size: 0.88rem;
 }
 
 .operational-settings-file-input {
@@ -21,4 +31,54 @@ ARQUIVO: refinamentos locais da tela operational-settings.
 .operational-settings-submit {
     width: 100%;
     justify-content: center;
+}
+
+body[data-theme="dark"] .system-map-section > .table-card {
+    border-color: rgba(148, 163, 184, 0.14);
+    background:
+        radial-gradient(circle at top right, rgba(74, 144, 226, 0.08), transparent 34%),
+        linear-gradient(160deg, rgba(10, 18, 31, 0.94), rgba(8, 14, 24, 0.9));
+    box-shadow:
+        0 20px 38px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .system-map-section > .table-card h3,
+body[data-theme="dark"] .system-map-section > .table-card .field-label {
+    color: rgba(248, 250, 252, 0.94);
+}
+
+body[data-theme="dark"] .system-map-section > .table-card .eyebrow {
+    color: rgba(148, 163, 184, 0.72);
+}
+
+body[data-theme="dark"] .system-map-copy,
+body[data-theme="dark"] .system-map-section > .table-card p,
+body[data-theme="dark"] .system-map-section > .table-card li {
+    color: rgba(203, 213, 225, 0.76);
+}
+
+body[data-theme="dark"] .operational-settings-field,
+body[data-theme="dark"] .operational-settings-file-input,
+body[data-theme="dark"] .system-map-section select {
+    color: rgba(248, 250, 252, 0.94);
+    background: rgba(10, 18, 32, 0.72);
+    border-color: rgba(148, 163, 184, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="dark"] .operational-settings-file-input {
+    border-style: dashed;
+}
+
+body[data-theme="dark"] .system-map-section select:focus,
+body[data-theme="dark"] .operational-settings-file-input:focus {
+    border-color: rgba(96, 165, 250, 0.3);
+    outline: 2px solid rgba(96, 165, 250, 0.18);
+    outline-offset: 2px;
+}
+
+body[data-theme="dark"] .system-map-section select option {
+    background: #0b1628;
+    color: rgba(248, 250, 252, 0.94);
 }

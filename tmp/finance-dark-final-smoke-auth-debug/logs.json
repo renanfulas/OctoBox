@@ -1,0 +1,12 @@
+[
+  {
+    "event": "response",
+    "status": 500,
+    "url": "http://127.0.0.1:8000/financeiro/"
+  },
+  {
+    "event": "console",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  }
+]

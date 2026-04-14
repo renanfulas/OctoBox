@@ -40,7 +40,7 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
         actions=[
             {'label': 'Ver hoje', 'href': '#today-board'},
             {'label': 'Ver semana', 'href': '#class-weekly-modal', 'kind': 'secondary', 'data_action': 'open-weekly-modal-full'},
-            {'label': 'Ver m\u00eas', 'href': '#class-monthly-modal', 'kind': 'secondary', 'data_action': 'open-monthly-calendar'},
+            {'label': 'Expandir mês', 'href': '#class-monthly-modal', 'kind': 'secondary', 'data_action': 'open-monthly-calendar'},
             {'label': 'Abrir planejamento', 'href': '#planner-board', 'kind': 'secondary'},
         ],
         aria_label='Panorama da grade',

@@ -15,13 +15,6 @@ POR QUE ELE EXISTE:
     gap: calc(var(--section-gap) - 2px);
 }
 
-<<<<<<< HEAD
-=======
-.student-form-hero .operation-hero-panel {
-    background: var(--card-surface-strong);
-}
-
->>>>>>> codex/student-page-refactor-and-ui-polish
 .student-form-focus-card,
 .student-form-main-card {
     min-height: 100%;
@@ -173,15 +166,6 @@ POR QUE ELE EXISTE:
     padding: 10px 12px;
 }
 
-<<<<<<< HEAD
-=======
-body[data-theme="dark"] .student-form-hero .operation-hero-panel {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 30%),
-        var(--card-surface-strong);
-}
-
->>>>>>> codex/student-page-refactor-and-ui-polish
 body[data-theme="dark"] .student-form-main-card {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 30%),

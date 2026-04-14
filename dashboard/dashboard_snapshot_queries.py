@@ -138,7 +138,7 @@ def _build_dashboard_priority_context(*, metrics, pending_intakes_count, today_s
             'dominant_key': 'occupancy',
             'label': 'session-pressure',
             'reason': 'A agenda do dia virou o primeiro ponto de coordenacao operacional.',
-            'lead_order': ['occupancy', 'overdue', 'revenue', 'intakes', 'attendance', 'active'],
+            'lead_order': ['occupancy', 'revenue', 'overdue', 'intakes', 'attendance', 'active'],
         }
     return {
         'dominant_key': 'revenue',
@@ -250,6 +250,7 @@ def _build_dashboard_metric_cards_legacy(metrics, *, pending_intakes_count, toda
 
 
 def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, today_schedule_occupancy_percent, actionable_payment_alerts_count, role_slug=''):
+    finance_href = _build_dashboard_finance_href(role_slug)
     occupancy_signal_tone = 'good' if today_schedule_occupancy_percent >= 65 else 'neutral'
     occupancy_signal_value = 'Agenda viva' if today_schedule_occupancy_percent >= 65 else 'Dia leve'
     if today_schedule_occupancy_percent >= 95:
@@ -337,16 +338,12 @@ def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, to
             'eyebrow': 'Aproveitamento da agenda hoje',
             'kicker': 'Primeira coordenacao do turno' if priority_context['dominant_key'] == 'occupancy' and metrics['sessions_today'] > 0 else 'Pulso do dia',
             'display_value': _format_percent(today_schedule_occupancy_percent),
-            'data_action': 'blink-board-sessions',
             'signal': {
                 'tone': occupancy_signal_tone,
                 'value': occupancy_signal_value,
                 'label': 'ocupacao media',
             },
-<<<<<<< HEAD
             'data_action': 'blink-board-sessions',
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
             'note': (
                 'A agenda virou a primeira coordenacao do dia. Vale abrir aqui antes de aprofundar o restante.'
                 if priority_context['dominant_key'] == 'occupancy' and metrics['sessions_today'] > 0 else

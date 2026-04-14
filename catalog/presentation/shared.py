@@ -20,11 +20,11 @@ def build_catalog_page_payload(*, context, shell_context=None, data=None, action
     )
 
 
-def build_catalog_assets(*, css=None, js=None, include_operations=True, include_catalog_shared=False):
+def build_catalog_assets(*, css=None, js=None, include_operations=True, operations_entry='css/design-system/catalog-operation-contract.css', include_catalog_shared=False):
     css_paths = []
 
     if include_operations:
-        css_paths.append('css/design-system/operations.css')
+        css_paths.append(operations_entry)
     if include_catalog_shared:
         css_paths.append('css/catalog/shared.css')
 

@@ -12,28 +12,20 @@ POR QUE ELE EXISTE:
 }
 
 .quick-card {
-    --quick-card-surface: var(--card-surface);
-    --quick-card-border: var(--card-border);
-    --quick-card-shadow: var(--card-shadow);
     padding: 24px;
     border-radius: var(--radius-panel);
-    border: 1px solid var(--quick-card-border);
-    background: var(--quick-card-surface);
-    box-shadow: var(--quick-card-shadow);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
     text-decoration: none;
-    transition: box-shadow 0.18s ease, border-color 0.18s ease;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
     position: relative;
     overflow: hidden;
 }
 
 .quick-card:hover {
-<<<<<<< HEAD
     box-shadow: var(--shadow-lift);
     border-color: var(--brand);
-=======
-    box-shadow: var(--card-hover-shadow);
-    border-color: var(--card-hover-border);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .quick-card::after {
@@ -43,9 +35,8 @@ POR QUE ELE EXISTE:
     width: 128px;
     height: 128px;
     border-radius: 999px;
-    background: var(--card-orb);
+    background: transparent;
     pointer-events: none;
-    opacity: 0.78;
 }
 
 .quick-card strong {
@@ -57,18 +48,18 @@ POR QUE ELE EXISTE:
 
 .quick-card p {
     margin: 0;
-    color: var(--card-text-secondary);
+    color: var(--muted);
     line-height: 1.65;
 }
 
 body[data-theme="dark"] .quick-card {
-    background: var(--quick-card-surface);
-    border-color: var(--quick-card-border);
-    box-shadow: var(--quick-card-shadow);
+    background: var(--surface);
+    border-color: var(--line);
+    box-shadow: var(--shadow-soft);
 }
 
 body[data-theme="dark"] .quick-card:hover {
-    border-color: var(--card-hover-border);
+    border-color: rgba(120, 170, 255, 0.26);
 }
 
 .accent-bar {

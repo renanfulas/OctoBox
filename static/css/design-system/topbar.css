@@ -22,59 +22,25 @@ REGRA:
     --topbar-item-pad-x: 12px;
     --topbar-radius: 21px;
     --topbar-top: 16px;
-<<<<<<< HEAD
     --topbar-margin-bottom: 12px;
-    --topbar-surface: color-mix(in srgb, var(--theme-surface-panel-strong) 94%, var(--theme-accent-support-alpha) 6%);
+    --topbar-surface: color-mix(in srgb, var(--theme-surface-strong) 92%, var(--theme-accent-support-alpha) 8%);
     --topbar-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-border-soft) 82%);
     --topbar-shadow: 0 14px 28px rgba(3, 8, 20, 0.12), 0 2px 6px rgba(15, 23, 42, 0.03);
     --topbar-search-radius: 16px;
-    --topbar-search-surface: color-mix(in srgb, var(--theme-surface-panel) 88%, var(--theme-accent-support-alpha) 12%);
+    --topbar-search-surface: color-mix(in srgb, var(--theme-surface-secondary) 90%, var(--theme-accent-support-alpha) 10%);
     --topbar-search-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-border-soft) 84%);
     --topbar-search-shadow: inset 0 1px 0 color-mix(in srgb, white 14%, transparent), 0 0 0 1px color-mix(in srgb, var(--theme-accent-support) 5%, transparent);
-    --topbar-manifesto-surface: color-mix(in srgb, var(--theme-surface-secondary) 92%, var(--theme-accent-support-alpha) 8%);
-    --topbar-manifesto-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
-    --topbar-manifesto-shadow: inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
-    --topbar-manifesto-kicker-ink: color-mix(in srgb, var(--theme-accent-primary) 48%, var(--theme-accent-support) 52%);
-=======
-    --topbar-margin-bottom: 13px;
-    --topbar-surface: var(--theme-surface-chrome);
-    --topbar-border-color: color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
-    --topbar-shadow: var(--theme-glass-shadow);
-    --topbar-overlay-glow:
-        radial-gradient(circle at 96% 20%, color-mix(in srgb, var(--theme-accent-premium-alpha) 70%, transparent), transparent 58%),
-        radial-gradient(circle at 6% 78%, color-mix(in srgb, var(--theme-accent-support-alpha) 56%, transparent), transparent 54%);
-    --topbar-search-radius: 17px;
-    --topbar-search-surface: color-mix(in srgb, var(--theme-surface-chrome-strong) 88%, transparent);
-    --topbar-search-border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
-    --topbar-search-shadow: inset 0 1px 0 var(--theme-glass-highlight);
-    --topbar-manifesto-surface: color-mix(in srgb, var(--theme-surface-secondary) 80%, transparent);
-    --topbar-manifesto-border-color: color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
-    --topbar-manifesto-shadow: inset 0 1px 0 var(--theme-glass-highlight);
-    --topbar-manifesto-kicker-ink: color-mix(in srgb, var(--theme-accent-support) 58%, var(--theme-text-muted) 42%);
->>>>>>> codex/student-page-refactor-and-ui-polish
-    --topbar-manifesto-copy-ink: var(--theme-text-secondary);
     --topbar-toggle-surface: color-mix(in srgb, var(--theme-surface-secondary) 94%, var(--theme-accent-support-alpha) 6%);
     --topbar-toggle-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
     --topbar-toggle-ink: var(--theme-text-muted);
-<<<<<<< HEAD
     --topbar-toggle-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent), 0 3px 8px color-mix(in srgb, var(--chrome-glow) 8%, transparent);
     --topbar-toggle-surface-hover: color-mix(in srgb, var(--theme-surface-strong) 92%, var(--theme-accent-support-alpha) 8%);
     --topbar-toggle-border-hover: color-mix(in srgb, var(--theme-accent-primary) 18%, var(--theme-accent-support) 12%, transparent 70%);
     --topbar-toggle-ink-hover: var(--theme-text-primary);
     --topbar-profile-radius: var(--radius-panel);
-    --topbar-profile-surface: color-mix(in srgb, var(--theme-surface-panel) 86%, var(--theme-accent-support-alpha) 14%);
+    --topbar-profile-surface: color-mix(in srgb, var(--theme-surface-secondary) 86%, var(--theme-accent-support-alpha) 14%);
     --topbar-profile-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-border-soft) 84%);
     --topbar-profile-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent), 0 4px 10px color-mix(in srgb, var(--chrome-glow) 8%, transparent);
-=======
-    --topbar-toggle-shadow: inset 0 1px 0 var(--theme-glass-highlight);
-    --topbar-toggle-surface-hover: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
-    --topbar-toggle-border-hover: color-mix(in srgb, var(--theme-border-strong) 92%, transparent);
-    --topbar-toggle-ink-hover: var(--theme-text-primary);
-    --topbar-profile-radius: var(--radius-panel);
-    --topbar-profile-surface: color-mix(in srgb, var(--theme-surface-chrome-strong) 82%, transparent);
-    --topbar-profile-border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
-    --topbar-profile-shadow: inset 0 1px 0 var(--theme-glass-highlight);
->>>>>>> codex/student-page-refactor-and-ui-polish
     --topbar-profile-meta-copy: var(--theme-text-muted);
     position: sticky;
     top: var(--topbar-top);
@@ -261,41 +227,14 @@ REGRA:
     width: 100%;
     min-height: auto;
     color: var(--theme-text-primary);
+    caret-color: var(--theme-accent-primary);
+    -webkit-text-fill-color: currentColor;
 }
 
 .global-search input::placeholder {
-    text-overflow: ellipsis;
     color: var(--theme-text-muted);
     opacity: 1;
-}
-
-.topbar-manifesto {
-    grid-area: manifesto;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 7px 12px;
-    border-radius: 16px;
-    background: var(--topbar-manifesto-surface);
-    border: 1px solid var(--topbar-manifesto-border-color);
-    box-shadow: var(--topbar-manifesto-shadow);
-}
-
-.topbar-manifesto-kicker {
-    font-size: 0.63rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--topbar-manifesto-kicker-ink);
-}
-
-.topbar-manifesto-copy {
-    font-size: 0.82rem;
-    line-height: 1.16;
-    letter-spacing: -0.02em;
-    flex: 1 1 auto;
-    color: var(--topbar-manifesto-copy-ink);
-    text-wrap: balance;
+    text-overflow: ellipsis;
 }
 
 .search-autocomplete-list {
@@ -306,8 +245,8 @@ REGRA:
     margin: 0;
     padding: 8px 0;
     list-style: none;
-    background: color-mix(in srgb, var(--theme-surface-panel-strong) 92%, transparent);
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 94%, var(--theme-accent-support-alpha) 6%);
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 90%, var(--theme-accent-support-alpha) 10%);
     border-radius: var(--radius-card);
     box-shadow: var(--theme-shadow-lift);
     z-index: 900;
@@ -315,44 +254,7 @@ REGRA:
     overflow-y: auto;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-}
-
-body[data-theme="dark"] .topbar {
-    --topbar-surface:
-        linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-chrome-strong) 92%, transparent), color-mix(in srgb, var(--theme-surface-glass-strong) 84%, transparent));
-    --topbar-border-color: color-mix(in srgb, var(--theme-glass-border) 96%, transparent);
-    --topbar-shadow:
-        0 18px 40px rgba(0, 0, 0, 0.28),
-        inset 0 1px 0 var(--theme-glass-highlight);
-    --topbar-search-surface:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-glass) 88%, transparent));
-    --topbar-search-border-color: color-mix(in srgb, var(--theme-glass-border) 96%, transparent);
-    --topbar-search-shadow:
-        inset 0 1px 0 var(--theme-glass-highlight),
-        0 10px 20px rgba(0, 0, 0, 0.16);
-    --topbar-profile-surface: color-mix(in srgb, var(--theme-surface-glass-strong) 88%, transparent);
-    --topbar-profile-border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
-    --topbar-profile-meta-copy: var(--theme-text-secondary);
-}
-
-body[data-theme="dark"] .global-search {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 12%, transparent), transparent 38%),
-        var(--topbar-search-surface);
-}
-
-body[data-theme="dark"] .global-search input {
     color: var(--theme-text-primary);
-}
-
-body[data-theme="dark"] .global-search input::placeholder {
-    color: color-mix(in srgb, var(--theme-text-muted) 92%, white 8%);
-}
-
-body[data-theme="dark"] .search-autocomplete-list {
-    background: color-mix(in srgb, var(--theme-surface-panel-dark) 94%, transparent);
-    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
-    box-shadow: var(--theme-shadow-lift);
 }
 
 .search-autocomplete-item {
@@ -366,7 +268,7 @@ body[data-theme="dark"] .search-autocomplete-list {
 
 .search-autocomplete-item:hover,
 .search-autocomplete-item.is-active {
-    background: color-mix(in srgb, var(--theme-surface-strong) 88%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 74%, var(--theme-accent-support-alpha) 26%);
 }
 
 .search-ac-name {
@@ -429,28 +331,18 @@ body[data-theme="dark"] .search-autocomplete-list {
     border: 1px solid transparent;
 }
 
+/* Dynamic contract: `topbar-quick-link--*` is emitted by topbar_actions.html from link.kind. */
 .topbar-quick-link--primary {
-<<<<<<< HEAD
     background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-primary) 82%, white 18%), color-mix(in srgb, var(--theme-accent-support) 76%, black 24%), color-mix(in srgb, var(--theme-accent-premium) 42%, black 58%));
     color: #f7feff;
     border-color: color-mix(in srgb, var(--theme-accent-support) 12%, transparent);
     box-shadow: 0 8px 16px color-mix(in srgb, var(--theme-accent-support-alpha) 26%, transparent);
-=======
-    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-support) 88%, black 12%), color-mix(in srgb, var(--theme-accent-premium) 82%, black 18%));
-    color: var(--theme-surface-inverse);
-    box-shadow: var(--theme-glow-premium);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .topbar-quick-link--primary:hover,
 .topbar-quick-link--primary:focus-visible {
-<<<<<<< HEAD
     background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-primary) 86%, white 14%), color-mix(in srgb, var(--theme-accent-support) 80%, black 20%), color-mix(in srgb, var(--theme-accent-premium) 48%, black 52%));
     transform: none;
-=======
-    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent-support) 92%, black 8%), color-mix(in srgb, var(--theme-accent-premium) 88%, black 12%));
-    transform: translateY(-1px);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .topbar-quick-link--secondary {
@@ -895,25 +787,22 @@ body[data-theme="dark"] .search-autocomplete-list {
 }
 
 [data-theme="dark"] .topbar {
-    --topbar-surface: color-mix(in srgb, #0a1422 90%, var(--theme-surface-panel-strong) 10%);
+    --topbar-surface: color-mix(in srgb, #0a1422 90%, var(--theme-surface-strong) 10%);
     --topbar-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.2) 74%, rgba(255, 255, 255, 0.04) 26%);
     --topbar-shadow: 0 18px 32px rgba(2, 6, 18, 0.24), 0 4px 12px rgba(0, 0, 0, 0.14);
-    --topbar-search-surface: color-mix(in srgb, #0d1828 90%, var(--theme-surface-panel) 10%);
+    --topbar-search-surface: color-mix(in srgb, #0d1828 84%, var(--theme-surface-strong) 16%);
     --topbar-search-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.18) 72%, rgba(255, 255, 255, 0.05) 28%);
     --topbar-search-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 0 1px rgba(74, 144, 226, 0.06);
-    --topbar-manifesto-surface: color-mix(in srgb, #0f1a2b 90%, var(--theme-surface-secondary) 10%);
-    --topbar-manifesto-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.14) 72%, rgba(255, 255, 255, 0.04) 28%);
     --topbar-toggle-surface: color-mix(in srgb, #101a2b 92%, var(--theme-surface-secondary) 8%);
     --topbar-toggle-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.14) 72%, rgba(255, 255, 255, 0.04) 28%);
     --topbar-toggle-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 3px 10px rgba(0, 0, 0, 0.16);
     --topbar-toggle-surface-hover: color-mix(in srgb, #142235 90%, var(--theme-surface-strong) 10%);
-    --topbar-profile-surface: color-mix(in srgb, #101a2b 90%, var(--theme-surface-panel) 10%);
+    --topbar-profile-surface: color-mix(in srgb, #101a2b 84%, var(--theme-surface-secondary) 16%);
     --topbar-profile-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.18) 74%, rgba(255, 255, 255, 0.04) 26%);
     --topbar-profile-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 12px rgba(0, 0, 0, 0.16);
     --topbar-profile-meta-copy: color-mix(in srgb, var(--theme-text-secondary) 82%, white 18%);
 }
 
-[data-theme="dark"] .topbar-manifesto-copy,
 [data-theme="dark"] .topbar-quick-link--secondary,
 [data-theme="dark"] .alert-chip {
     color: color-mix(in srgb, var(--theme-text-secondary) 88%, white 12%);
@@ -958,6 +847,24 @@ body[data-theme="dark"] .search-autocomplete-list {
     box-shadow:
         0 0 0 3px rgba(0, 229, 255, 0.08),
         var(--topbar-search-shadow);
+}
+
+[data-theme="dark"] .global-search input::placeholder {
+    color: var(--theme-text-muted);
+    opacity: 0.92;
+}
+
+[data-theme="dark"] .search-autocomplete-list {
+    background: color-mix(in srgb, #081220 88%, var(--theme-surface-strong) 12%);
+    border-color: color-mix(in srgb, rgba(92, 146, 214, 0.22) 72%, rgba(255, 255, 255, 0.06) 28%);
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.34),
+        0 0 0 1px rgba(74, 144, 226, 0.08);
+}
+
+[data-theme="dark"] .search-autocomplete-item:hover,
+[data-theme="dark"] .search-autocomplete-item.is-active {
+    background: color-mix(in srgb, rgba(74, 144, 226, 0.18) 48%, var(--theme-surface-strong) 52%);
 }
 
 [data-theme="dark"] .topbar-profile:hover .avatar,
@@ -1041,19 +948,6 @@ body[data-theme="dark"] .search-autocomplete-list {
 @media (max-width: 720px) {
     .alert-chip span:not(.alert-dot) {
         font-size: 0.72rem;
-    }
-
-    .topbar-manifesto {
-        gap: 6px;
-        padding: 7px 11px;
-    }
-
-    .topbar-manifesto-kicker {
-        display: none;
-    }
-
-    .topbar-manifesto-copy {
-        font-size: 0.76rem;
     }
 
     .topbar {

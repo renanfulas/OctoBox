@@ -54,31 +54,9 @@ POR QUE ELE EXISTE:
         justify-content: start;
     }
 
-    .class-planner-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .class-grid-workspace-bottom-split {
-        grid-template-columns: 1fr;
-    }
-
     .monthly-calendar-grid,
     .weekly-calendar-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .class-grid-workspace-head {
-        align-items: start;
-    }
-
-    .class-grid-workspace-head .actions {
-        width: 100%;
-    }
-
-    .class-grid-workspace-head .button,
-    .class-grid-workspace-head .pill {
-        width: 100%;
-        justify-content: center;
     }
 
     .weekly-day-card,
@@ -116,10 +94,6 @@ POR QUE ELE EXISTE:
 
     .class-day-header {
         flex-direction: column;
-    }
-
-    .class-grid-workspace-stack {
-        gap: 12px;
     }
 
     .class-grid-workspace-panel {
@@ -246,23 +220,17 @@ POR QUE ELE EXISTE:
         width: 100%;
     }
 
-    .monthly-preview-button {
-        text-align: inherit;
-    }
-
     .monthly-calendar-head {
         display: none;
     }
 
-    .monthly-calendar-grid,
-    .monthly-calendar-grid-preview {
+    .monthly-calendar-grid {
         grid-template-columns: 1fr;
         gap: 8px;
         margin-top: 0;
     }
 
-    .monthly-calendar-grid + .monthly-calendar-grid,
-    .monthly-calendar-grid-preview + .monthly-calendar-grid-preview {
+    .monthly-calendar-grid + .monthly-calendar-grid {
         margin-top: 8px;
     }
 
@@ -271,10 +239,6 @@ POR QUE ELE EXISTE:
         padding: 12px 14px;
         gap: 8px;
         border-radius: 16px;
-    }
-
-    .monthly-day-card.is-preview.is-empty:not(.is-today) {
-        display: none;
     }
 
     .monthly-day-head {
@@ -290,8 +254,7 @@ POR QUE ELE EXISTE:
         gap: 5px;
     }
 
-    .monthly-session-chip,
-    .monthly-session-chip-preview {
+    .monthly-session-chip {
         padding: 8px 10px;
         border-radius: 12px;
     }

@@ -311,6 +311,7 @@ Use:
 1. [reading-guide.md](reading-guide.md)
 2. [front-end-ownership-map.md](front-end-ownership-map.md)
 3. [functional-circuits-matrix.md](functional-circuits-matrix.md)
+4. [../plans/finance-visual-bridge-risk-inventory.md](../plans/finance-visual-bridge-risk-inventory.md) quando a duvida for sobre override, dupla moldura ou ghost rule no financeiro
 
 ### Beta, rollout e liberacao
 

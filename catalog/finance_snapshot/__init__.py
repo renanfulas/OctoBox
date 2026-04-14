@@ -11,7 +11,8 @@ PONTOS CRITICOS:
 - a assinatura publica precisa continuar estavel para views e exportacoes.
 """
 
-from .churn_foundation import build_financial_churn_foundation
-from .snapshot import build_finance_flow_bridge, build_finance_snapshot
+from .ai import build_financial_churn_foundation
+from .hybrid import build_finance_flow_bridge
+from .snapshot import build_finance_snapshot
 
 __all__ = ['build_financial_churn_foundation', 'build_finance_flow_bridge', 'build_finance_snapshot']

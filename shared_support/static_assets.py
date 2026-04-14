@@ -1,9 +1,10 @@
-"""Helpers para expandir manifestos CSS em folhas runtime versionaveis."""
+"""Helpers para expandir manifestos CSS e auditar drift de assets estaticos."""
 
 from __future__ import annotations
 
 import re
 import shutil
+from hashlib import sha256
 from pathlib import Path
 
 from django.conf import settings
@@ -40,6 +41,50 @@ def clear_runtime_css_cache():
     _CSS_EXPANSION_CACHE.clear()
 
 
+def detect_static_drift(*, subpaths=None):
+    """Detecta divergencias entre `static/` e `staticfiles/`.
+
+    O objetivo e localizar rapidamente quando o runtime local ou um ambiente
+    servido por artifacts coletados esta usando arquivos desatualizados.
+    """
+    static_root = (settings.BASE_DIR / 'static').resolve()
+    staticfiles_root = (settings.BASE_DIR / 'staticfiles').resolve()
+    selected_subpaths = list(subpaths or ['css', 'js'])
+
+    drift = []
+    for subpath in selected_subpaths:
+        source_root = (static_root / subpath).resolve()
+        target_root = (staticfiles_root / subpath).resolve()
+        if not source_root.exists():
+            continue
+
+        for source_file in source_root.rglob('*'):
+            if not source_file.is_file():
+                continue
+
+            relative_path = source_file.relative_to(static_root).as_posix()
+            target_file = target_root / source_file.relative_to(source_root)
+
+            if not target_file.exists():
+                drift.append(
+                    {
+                        'path': relative_path,
+                        'reason': 'missing',
+                    }
+                )
+                continue
+
+            if source_file.stat().st_size != target_file.stat().st_size or _file_digest(source_file) != _file_digest(target_file):
+                drift.append(
+                    {
+                        'path': relative_path,
+                        'reason': 'stale',
+                    }
+                )
+
+    return drift
+
+
 def _expand_css_manifest(stylesheet_path, *, stack):
     asset_file = settings.BASE_DIR / 'static' / stylesheet_path
 
@@ -66,6 +111,14 @@ def _resolve_import_path(parent_asset_path, import_path):
     parent_dir = Path(parent_asset_path).parent
     static_root = (settings.BASE_DIR / 'static').resolve()
     return (static_root / parent_dir / import_path).resolve().relative_to(static_root).as_posix()
+
+
+def _file_digest(path):
+    digest = sha256()
+    with path.open('rb') as file_handle:
+        for chunk in iter(lambda: file_handle.read(65536), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def sync_static_to_staticfiles(*, subpaths=None, clear=False):

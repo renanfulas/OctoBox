@@ -15,6 +15,9 @@ POR QUE ELE EXISTE:
         {% if request.GET.payment_status %}
             <input type="hidden" name="payment_status" value="{{ request.GET.payment_status }}">
         {% endif %}
+        {% if request.GET.created_window %}
+            <input type="hidden" name="created_window" value="{{ request.GET.created_window }}">
+        {% endif %}
 
         <label class="student-filter-search" aria-label="Buscar aluno">
             <span class="student-filter-search-icon" aria-hidden="true">
@@ -34,6 +37,7 @@ POR QUE ELE EXISTE:
         <button type="button" class="student-filter-pill is-active" data-student-filter="all" aria-pressed="true">Todos</button>
         <button type="button" class="student-filter-pill" data-student-filter="active" aria-pressed="false">Ativos</button>
         <button type="button" class="student-filter-pill" data-student-sort="presence" data-sort-direction="desc" aria-pressed="false">Presen&ccedil;a</button>
+        <button type="button" class="student-filter-pill" data-student-filter="paused" aria-pressed="false">Pausados</button>
         <button type="button" class="student-filter-pill" data-student-filter="overdue" data-filter-scope="payment" aria-pressed="false">Inadimplentes</button>
         <button type="button" class="student-filter-pill" data-student-filter="inactive" aria-pressed="false">Inativos</button>
     </nav>

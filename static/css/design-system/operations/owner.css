@@ -6,10 +6,9 @@ POR QUE ELE EXISTE:
 - mantém um único ponto de import para operations.css.
 
 PONTOS CRITICOS:
-- a ordem dos imports preserva a cascade do owner.
+- importa apenas a superfície viva do runtime principal.
 - novos ajustes devem entrar no submódulo correto.
 */
 
 @import url("./owner/scene.css");
-@import url("./owner/notion.css");
 @import url("./owner/simple.css");

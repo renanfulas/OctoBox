@@ -11,6 +11,8 @@ ARQUIVO: densidade e leitura dos boards do manager.
     min-width: 0;
     position: relative;
     overflow: hidden;
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--card-border);
 }
 
 .manager-priority-card .operation-card-head,
@@ -105,6 +107,57 @@ ARQUIVO: densidade e leitura dos boards do manager.
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.78),
         0 16px 30px rgba(19, 33, 50, 0.06);
+}
+
+.manager-priority-card::before,
+.manager-secondary-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 3px;
+    background: color-mix(in srgb, var(--card-border) 92%, transparent);
+}
+
+.manager-priority-card::before {
+    height: 4px;
+}
+
+.manager-secondary-card::before {
+    opacity: 0.9;
+}
+
+[data-panel="manager-intake-board"]::before {
+    background: var(--danger);
+}
+
+[data-panel="manager-enrollment-link-board"]::before {
+    background: var(--warning);
+}
+
+[data-panel="manager-link-board"]::before {
+    background: var(--brand);
+}
+
+[data-panel="manager-finance-board"]::before {
+    background: var(--danger);
+}
+
+[data-panel="manager-intake-board"] {
+    box-shadow: var(--shadow-lift);
+}
+
+[data-panel="manager-intake-board"] .operation-card-title {
+    max-width: 20ch;
+}
+
+[data-panel="manager-enrollment-link-board"] .operation-card-title,
+[data-panel="manager-finance-board"] .operation-card-title {
+    max-width: 24ch;
+}
+
+[data-panel="manager-link-board"] {
+    align-self: start;
 }
 
 .manager-priority-card::after,

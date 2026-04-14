@@ -16,17 +16,8 @@ POR QUE ELE EXISTE:
         justify-self: start;
     }
 
-    .student-toolbar-import {
-        width: 100%;
-        justify-content: center;
-    }
-
     .student-kpi-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .student-focus-item {
-        grid-template-columns: 1fr;
     }
 
     .student-scene .metric-card {
@@ -41,33 +32,14 @@ POR QUE ELE EXISTE:
         grid-template-columns: 1fr;
     }
 
-    .student-focus-actions {
-        justify-items: stretch;
-    }
-
-    .student-utility-actions {
-        align-items: stretch;
-        justify-content: stretch;
-    }
-
-    .student-filter-actions-secondary {
-        justify-content: stretch;
-    }
-
     .student-filter-card {
-        padding-inline: 20px !important;
+        padding-inline: 20px;
     }
 
     .student-filter-card .field-grid-200 {
         grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
     }
 
-    .student-inline-summary {
-        display: grid;
-    }
-
-    .student-cell--updated,
-    .student-cell--actions,
     .student-directory-table thead th:nth-child(5),
     .student-directory-table thead th:nth-child(6) {
         display: none;
@@ -84,12 +56,6 @@ POR QUE ELE EXISTE:
         padding: 12px 8px;
     }
 
-    .student-cell-stack,
-    .student-row-actions {
-        justify-items: start;
-        justify-content: flex-start;
-        text-align: left;
-    }
 }
 
 @media (max-width: 640px) {
@@ -121,41 +87,6 @@ POR QUE ELE EXISTE:
         width: 100%;
     }
 
-    .student-directory-header {
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 16px;
-    }
-
-    .student-directory-actions {
-        width: 100%;
-        flex-wrap: wrap;
-        align-items: stretch !important;
-        gap: 12px !important;
-    }
-
-    .student-directory-actions > * {
-        flex: 1 1 100%;
-        min-width: 0;
-    }
-
-    .student-directory-actions .button,
-    .student-directory-import label {
-        width: 100%;
-        justify-content: center;
-    }
-
-    .student-filter-bar {
-        flex-direction: column !important;
-        align-items: stretch !important;
-    }
-
-    .student-filter-primary {
-        flex-direction: column !important;
-        align-items: stretch !important;
-        min-width: 0;
-    }
-
     .student-filter-search {
         width: 100%;
         max-width: none;
@@ -174,31 +105,12 @@ POR QUE ELE EXISTE:
         white-space: normal;
     }
 
-    .student-filter-toggle {
-        width: 100%;
-        justify-content: center;
-    }
-
-    .student-filter-actions {
-        width: 100%;
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .student-filter-actions > * {
-        width: 100%;
-    }
-
     .student-data-panel {
         padding-inline: 20px;
     }
 
     .student-filter-card {
-        padding-inline: 16px !important;
-    }
-
-    .student-utility-actions {
-        flex-direction: column;
+        padding-inline: 16px;
     }
 
     .student-table-scroll {
@@ -257,23 +169,6 @@ POR QUE ELE EXISTE:
         grid-column: 1 / -1;
     }
 
-    .student-inline-summary {
-        display: none;
-    }
-
-    .student-directory-table .student-cell--updated,
-    .student-directory-table .student-cell--actions {
-        display: grid;
-    }
-
-    .student-directory-table .student-cell--actions {
-        grid-column: 1 / -1;
-    }
-
-    .student-directory-table .student-cell--actions .button {
-        width: 100%;
-    }
-
     .student-data-panel th,
     .student-data-panel td {
         padding: 10px 8px;
@@ -308,8 +203,7 @@ POR QUE ELE EXISTE:
 
 @media (prefers-reduced-motion: reduce) {
     .student-row,
-    .priority-student-card,
-    .student-focus-item {
+    .priority-student-card {
         transition: none;
     }
 }

@@ -6,16 +6,40 @@
     position: relative;
     min-height: 100%;
     border-radius: var(--dashboard-surface-radius, 18px);
-<<<<<<< HEAD
     transition:
         transform 220ms var(--ease-standard),
         box-shadow 220ms var(--ease-standard),
         border-color 220ms var(--ease-standard);
-=======
-    background: inherit;
-    border-color: inherit;
-    box-shadow: inherit;
->>>>>>> codex/student-page-refactor-and-ui-polish
+    --dashboard-support-card-surface: var(--dashboard-support-surface, var(--fdw-panel-strong));
+    --dashboard-support-card-border: var(--dashboard-surface-border, var(--fdw-line));
+    --dashboard-support-card-shadow: var(--dashboard-surface-shadow, var(--fdw-shadow));
+    --dashboard-support-eyebrow-ink: var(--muted-strong);
+    --dashboard-support-title-ink: var(--theme-text-primary);
+    --dashboard-support-copy-ink: var(--muted-strong);
+    --dashboard-session-card-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(248, 250, 252, 0.74));
+    --dashboard-session-card-border: rgba(80, 102, 128, 0.12);
+    --dashboard-session-card-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.78),
+        0 6px 14px rgba(15, 23, 42, 0.035);
+    --dashboard-session-card-hover-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.86),
+        0 14px 24px rgba(15, 23, 42, 0.08);
+    --dashboard-session-card-primary-surface:
+        radial-gradient(circle at top right, rgba(37, 85, 220, 0.06), transparent 34%),
+        linear-gradient(160deg, rgba(251, 253, 255, 0.98), rgba(244, 248, 255, 0.94));
+    --dashboard-session-card-primary-border: rgba(96, 165, 250, 0.2);
+    --dashboard-session-card-primary-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.86),
+        0 8px 18px rgba(37, 99, 235, 0.05);
+    --dashboard-session-time-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(233, 242, 255, 0.92));
+    --dashboard-session-time-border: rgba(96, 165, 250, 0.14);
+    --dashboard-session-time-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    --dashboard-session-time-ink: var(--brand);
+    --dashboard-session-heading-ink: var(--theme-text-primary);
+    --dashboard-session-muted-ink: var(--muted);
+    --dashboard-session-copy-ink: var(--muted);
+    --dashboard-session-note-ink: var(--muted-strong);
+    --dashboard-session-progress-surface: rgba(148, 163, 184, 0.14);
 }
 
 .dashboard-focus-card {
@@ -26,19 +50,12 @@
     min-height: 100%;
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--dashboard-focus-accent-alpha) 72%, transparent), transparent 30%),
-<<<<<<< HEAD
         radial-gradient(circle at bottom left, color-mix(in srgb, white 6%, transparent), transparent 26%),
         linear-gradient(170deg, color-mix(in srgb, var(--theme-surface-strong) 86%, transparent), color-mix(in srgb, var(--theme-surface) 96%, transparent));
     border-color: color-mix(in srgb, var(--dashboard-focus-accent) 26%, var(--theme-border-soft) 74%);
     box-shadow:
         0 22px 40px rgba(2, 8, 23, 0.16),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
-=======
-        radial-gradient(circle at bottom left, var(--theme-glass-highlight), transparent 26%),
-        color-mix(in srgb, var(--dashboard-focus-accent-alpha) 10%, var(--theme-surface-glass-strong) 90%);
-    border-color: color-mix(in srgb, var(--dashboard-focus-accent) 26%, var(--theme-glass-border) 74%);
-    box-shadow: var(--theme-glass-shadow);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .dashboard-focus-card--danger {
@@ -111,7 +128,7 @@
     margin: 0;
     font-size: 0.85rem;
     line-height: 1.5;
-    color: var(--legacy-copy);
+    color: var(--muted);
 }
 
 .dashboard-advisor-subheading--spaced {
@@ -131,8 +148,8 @@
     padding: 16px;
     border-radius: 12px;
     background:
-        color-mix(in srgb, var(--theme-surface-glass) 78%, var(--theme-surface-strong) 22%);
-    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 82%, var(--theme-accent-support-alpha) 18%);
+        linear-gradient(150deg, color-mix(in srgb, var(--theme-surface-secondary) 72%, transparent), color-mix(in srgb, var(--theme-surface-strong) 64%, transparent));
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, rgba(125, 211, 252, 0.14) 18%);
     transition:
         transform 0.4s ease,
         opacity 0.4s ease,
@@ -206,7 +223,7 @@
 .dashboard-advisor-checkin-time {
     margin-top: 2px;
     font-size: 0.8rem;
-    color: var(--legacy-copy);
+    color: var(--muted);
 }
 
 .dashboard-advisor-checkin-time {
@@ -223,7 +240,7 @@
 .dashboard-advisor-pill--warning {
     background: color-mix(in srgb, var(--theme-accent-warning-alpha) 70%, transparent);
     border-color: color-mix(in srgb, var(--theme-accent-warning) 32%, transparent);
-    color: color-mix(in srgb, var(--theme-accent-warning) 84%, var(--theme-text-primary) 16%);
+    color: color-mix(in srgb, var(--theme-accent-warning) 80%, white 20%);
 }
 
 .dashboard-advisor-insight {
@@ -240,7 +257,7 @@
 }
 
 .dashboard-advisor-insight-kicker {
-    color: color-mix(in srgb, var(--theme-accent-support) 84%, var(--theme-text-primary) 16%);
+    color: color-mix(in srgb, var(--theme-accent-support) 78%, white 22%);
 }
 
 .dashboard-advisor-actions {
@@ -253,9 +270,9 @@
 }
 
 .dashboard-advisor-cta--whatsapp {
-    background: color-mix(in srgb, var(--theme-accent-success) 82%, black 18%);
-    color: var(--theme-surface-inverse);
-    border-color: color-mix(in srgb, var(--theme-accent-success) 88%, transparent);
+    background: #25d366;
+    color: #ffffff;
+    border-color: #25d366;
 }
 
 .dashboard-advisor-cta--full {
@@ -283,7 +300,7 @@
     background: color-mix(in srgb, var(--theme-surface-muted) 70%, transparent);
     border-radius: 999px;
     overflow: hidden;
-    box-shadow: inset 0 1px 3px color-mix(in srgb, var(--theme-border-soft) 58%, transparent);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .dashboard-advisor-progress-fill {
@@ -318,22 +335,22 @@
 
 .dashboard-advisor-checkin-avatar--brand {
     background: var(--brand);
-    color: var(--theme-surface-inverse);
+    color: #fff;
 }
 
 .dashboard-advisor-checkin-avatar--violet {
-    background: color-mix(in srgb, var(--theme-accent-premium) 78%, black 22%);
-    color: var(--theme-surface-inverse);
+    background: #4338ca;
+    color: #fff;
 }
 
 .dashboard-advisor-checkin-avatar--success {
-    background: color-mix(in srgb, var(--theme-accent-success) 72%, black 28%);
-    color: var(--theme-surface-inverse);
+    background: #059669;
+    color: #fff;
 }
 
 .dashboard-advisor-item--success {
-    background: color-mix(in srgb, var(--theme-accent-success-alpha) 24%, var(--theme-surface-glass-strong) 76%);
-    border-color: color-mix(in srgb, var(--theme-accent-success) 28%, var(--theme-glass-border) 72%);
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 42%, var(--theme-surface) 58%);
+    border-color: color-mix(in srgb, var(--theme-accent-success) 28%, var(--theme-border-soft) 72%);
 }
 
 .dashboard-advisor-item--processing {
@@ -378,19 +395,17 @@
 }
 
 .dashboard-advisor-success-copy {
-    color: var(--legacy-copy);
+    color: var(--muted);
     font-size: 0.9rem;
     margin-top: 4px;
 }
 
 .dashboard-support-card {
-    --layout-panel-gap: var(--dashboard-rhythm-3, 13px);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 14%, transparent), transparent 26%),
-        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 24%),
-        var(--theme-surface-glass);
-    border-color: color-mix(in srgb, var(--theme-glass-border) 90%, transparent);
-    box-shadow: var(--theme-glass-shadow);
+    --card-local-surface: var(--dashboard-support-card-surface);
+    --card-local-border: var(--dashboard-support-card-border);
+    --card-local-border-strong: color-mix(in srgb, var(--dashboard-support-card-border) 84%, var(--theme-border-strong) 16%);
+    --card-local-shadow: var(--dashboard-support-card-shadow);
+    --card-local-shadow-lift: var(--dashboard-support-card-shadow);
 }
 
 .dashboard-side-card-sticky {
@@ -408,35 +423,23 @@
     grid-template-columns: auto auto minmax(0, 1fr) auto;
     align-items: center;
     border-radius: 18px;
-<<<<<<< HEAD
-    border: 1px solid rgba(80, 102, 128, 0.12);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(248, 250, 252, 0.74));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.78),
-        0 6px 14px rgba(15, 23, 42, 0.035);
+    border: 1px solid var(--dashboard-session-card-border);
+    background: var(--dashboard-session-card-surface);
+    box-shadow: var(--dashboard-session-card-shadow);
     transition:
         transform 220ms var(--ease-standard),
         box-shadow 220ms var(--ease-standard),
         border-color 220ms var(--ease-standard);
-=======
-    border: 1px solid color-mix(in srgb, var(--theme-glass-border) 88%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
-    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .dashboard-session-card.is-primary {
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 34%, transparent), transparent 34%),
-        color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-surface-glass-strong) 88%);
-    border-color: color-mix(in srgb, var(--theme-accent-support) 20%, var(--theme-glass-border) 80%);
-    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
+    background: var(--dashboard-session-card-primary-surface);
+    border-color: var(--dashboard-session-card-primary-border);
+    box-shadow: var(--dashboard-session-card-primary-shadow);
 }
 
 .dashboard-session-card:hover {
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.86),
-        0 14px 24px rgba(15, 23, 42, 0.08);
+    box-shadow: var(--dashboard-session-card-hover-shadow);
 }
 
 .dashboard-session-time-block {
@@ -453,10 +456,10 @@
     height: 32px;
     padding: 0 13px;
     border-radius: var(--dashboard-fib-3, 13px);
-    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 16%, var(--theme-glass-border) 84%);
-    background: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-surface-glass-strong) 82%);
-    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
-    color: var(--brand);
+    border: 1px solid var(--dashboard-session-time-border);
+    background: var(--dashboard-session-time-surface);
+    box-shadow: var(--dashboard-session-time-shadow);
+    color: var(--dashboard-session-time-ink);
     font-weight: 800;
     letter-spacing: -0.03em;
 }
@@ -466,7 +469,7 @@
     font-size: 0.73rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--legacy-copy);
+    color: var(--dashboard-session-muted-ink);
 }
 
 .dashboard-session-body {
@@ -480,33 +483,39 @@
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--legacy-copy);
+    color: var(--dashboard-session-muted-ink);
 }
 
 .dashboard-session-body strong {
     font-size: 1rem;
     line-height: 1.2;
     letter-spacing: -0.02em;
+    color: var(--dashboard-session-heading-ink);
     overflow-wrap: break-word;
 }
 
 .dashboard-session-body p {
     margin: 0;
-    color: var(--legacy-copy);
+    color: var(--dashboard-session-copy-ink);
     font-size: 0.84rem;
     overflow-wrap: break-word;
 }
 
 .dashboard-session-note {
-    color: var(--muted-strong);
+    color: var(--dashboard-session-note-ink);
 }
 
 .dashboard-session-progress {
-    width: min(233px, 100%);
+    display: block;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    justify-self: stretch;
+    align-self: stretch;
     height: 7px;
     overflow: hidden;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--theme-surface-muted) 82%, transparent);
+    background: var(--dashboard-session-progress-surface);
 }
 
 .dashboard-session-progress-fill {
@@ -514,20 +523,20 @@
     width: var(--dynamic-visual-width, 0%);
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-support) 92%, transparent), color-mix(in srgb, var(--theme-accent-premium) 72%, transparent));
+    background: linear-gradient(90deg, rgba(37, 99, 235, 0.88), rgba(14, 165, 233, 0.9));
 }
 
 .dashboard-session-progress-fill.class-occupancy-medium {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-support) 82%, transparent), color-mix(in srgb, var(--theme-accent-success) 54%, transparent));
+    background: linear-gradient(90deg, rgba(14, 165, 233, 0.88), rgba(6, 182, 212, 0.9));
 }
 
 .dashboard-session-progress-fill.class-occupancy-high {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-warning) 90%, transparent), color-mix(in srgb, var(--theme-accent-primary) 72%, transparent));
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.9), rgba(249, 115, 22, 0.92));
 }
 
 .dashboard-session-progress-fill.class-occupancy-critical,
 .dashboard-session-progress-fill.class-occupancy-closed {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-danger) 94%, transparent), color-mix(in srgb, var(--theme-accent-warning) 74%, transparent));
+    background: linear-gradient(90deg, rgba(220, 38, 38, 0.92), rgba(249, 115, 22, 0.92));
 }
 
 .dashboard-session-meta {
@@ -541,7 +550,7 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--legacy-copy);
+    color: var(--dashboard-session-muted-ink);
 }
 
 .dashboard-session-card--featured {
@@ -562,11 +571,12 @@
     margin-top: 2px;
     font-size: 1.0rem;
     line-height: 1.16;
+    color: var(--dashboard-session-heading-ink);
 }
 
 .dashboard-session-feature-meta-row p {
     margin: 0;
-    color: var(--legacy-copy);
+    color: var(--dashboard-session-copy-ink);
     font-size: 0.84rem;
 }
 
@@ -606,81 +616,39 @@
 }
 
 /* Dark theme overrides for side */
-body[data-theme="dark"] .dashboard-support-card {
-<<<<<<< HEAD
-    border-color: rgba(148, 163, 184, 0.14);
-    background: var(--dashboard-support-surface-dark, var(--surface));
-    box-shadow:
+body[data-theme="dark"] .dashboard-side-card {
+    --dashboard-support-card-surface: var(--dashboard-support-surface-dark, var(--surface));
+    --dashboard-support-card-border: rgba(148, 163, 184, 0.14);
+    --dashboard-support-card-shadow:
         0 24px 42px rgba(2, 6, 23, 0.34),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
-=======
-    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 20%, transparent), transparent 26%),
-        radial-gradient(circle at 14% 18%, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 24%),
-        var(--theme-surface-glass-strong);
-    box-shadow:
-        inset 0 1px 0 var(--theme-glass-highlight),
-        0 18px 42px rgba(0, 0, 0, 0.24);
->>>>>>> codex/student-page-refactor-and-ui-polish
-}
-
-body[data-theme="dark"] .dashboard-session-card {
-    background: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
-    border-color: color-mix(in srgb, var(--theme-glass-border) 92%, transparent);
-    box-shadow: inset 0 1px 0 var(--theme-glass-highlight);
-}
-
-body[data-theme="dark"] .dashboard-session-card.is-primary {
-    background:
-<<<<<<< HEAD
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 44%, transparent), transparent 32%),
-        linear-gradient(155deg, rgba(19, 39, 70, 0.78), rgba(255, 255, 255, 0.04));
-=======
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 36%, transparent), transparent 32%),
-        color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-surface-glass-strong) 86%);
->>>>>>> codex/student-page-refactor-and-ui-polish
-}
-
-body[data-theme="dark"] .dashboard-session-window,
-body[data-theme="dark"] .dashboard-session-occupancy-label {
-    color: color-mix(in srgb, var(--theme-text-muted) 90%, white 10%);
-}
-
-body[data-theme="dark"] .dashboard-session-time {
-    color: color-mix(in srgb, var(--theme-accent-support) 84%, white 16%);
-    background: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-surface-glass-strong) 80%);
-    border-color: color-mix(in srgb, var(--theme-accent-support) 22%, var(--theme-glass-border) 78%);
-    box-shadow: none;
-}
-
-body[data-theme="dark"] .dashboard-session-progress {
-    background: color-mix(in srgb, var(--theme-surface-muted) 84%, transparent);
-}
-
-body[data-theme="dark"] .dashboard-support-card .card-label,
-body[data-theme="dark"] .dashboard-support-card .operation-card-copy,
-body[data-theme="dark"] .dashboard-advisor-subheading,
-body[data-theme="dark"] .dashboard-advisor-person-meta,
-body[data-theme="dark"] .dashboard-advisor-checkin-time,
-body[data-theme="dark"] .dashboard-session-kicker,
-body[data-theme="dark"] .dashboard-session-body p,
-body[data-theme="dark"] .dashboard-session-note {
-    color: var(--theme-text-secondary);
-}
-
-body[data-theme="dark"] .dashboard-support-card .operation-card-title,
-body[data-theme="dark"] .dashboard-session-body strong,
-body[data-theme="dark"] .dashboard-advisor-heading,
-body[data-theme="dark"] .dashboard-advisor-person-name,
-body[data-theme="dark"] .dashboard-advisor-checkin-name {
-    color: var(--theme-text-primary);
-}
-
-body[data-theme="dark"] .dashboard-session-card:hover {
-    box-shadow:
+    --dashboard-support-eyebrow-ink: color-mix(in srgb, var(--theme-text-secondary) 84%, white 16%);
+    --dashboard-support-title-ink: color-mix(in srgb, var(--theme-text-primary) 94%, white 6%);
+    --dashboard-support-copy-ink: color-mix(in srgb, var(--theme-text-secondary) 88%, white 12%);
+    --dashboard-session-card-surface: rgba(255, 255, 255, 0.04);
+    --dashboard-session-card-border: rgba(148, 163, 184, 0.14);
+    --dashboard-session-card-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 16px 24px rgba(0, 0, 0, 0.16);
+    --dashboard-session-card-hover-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.06),
         0 22px 32px rgba(2, 6, 23, 0.22);
+    --dashboard-session-card-primary-surface:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 44%, transparent), transparent 32%),
+        linear-gradient(155deg, rgba(19, 39, 70, 0.78), rgba(255, 255, 255, 0.04));
+    --dashboard-session-card-primary-border: rgba(96, 165, 250, 0.18);
+    --dashboard-session-card-primary-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 18px 28px rgba(2, 6, 23, 0.18);
+    --dashboard-session-time-surface: rgba(59, 130, 246, 0.12);
+    --dashboard-session-time-border: rgba(59, 130, 246, 0.25);
+    --dashboard-session-time-shadow: none;
+    --dashboard-session-time-ink: #60a5fa;
+    --dashboard-session-heading-ink: color-mix(in srgb, var(--theme-text-primary) 94%, white 6%);
+    --dashboard-session-muted-ink: rgba(226, 232, 240, 0.68);
+    --dashboard-session-copy-ink: rgba(226, 232, 240, 0.82);
+    --dashboard-session-note-ink: rgba(226, 232, 240, 0.76);
+    --dashboard-session-progress-surface: rgba(148, 163, 184, 0.14);
 }
 
 @media (max-width: 960px) {
@@ -786,11 +754,12 @@ body[data-theme="dark"] .dashboard-session-card:hover {
 }
 
 .dashboard-support-card .card-label {
-    color: var(--legacy-copy-strong);
+    color: var(--dashboard-support-eyebrow-ink);
     letter-spacing: 0.12em;
 }
 
 .dashboard-support-card .operation-card-title {
+    color: var(--dashboard-support-title-ink);
     font-size: 1.12rem;
     line-height: 1.08;
     letter-spacing: -0.04em;
@@ -799,18 +768,8 @@ body[data-theme="dark"] .dashboard-session-card:hover {
 .dashboard-support-card .operation-card-copy {
     margin-top: 0;
     max-width: 29ch;
-    color: var(--legacy-copy);
+    color: var(--dashboard-support-copy-ink);
     font-size: 0.88rem;
     line-height: 1.52;
 }
 
-#dashboard-sessions-board,
-#owner-sessions-board {
-    --layout-panel-gap: var(--dashboard-rhythm-3, 13px);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-    .dashboard-side-card {
-        animation: fdw-rise-in 650ms var(--ease-standard) both;
-    }
-}

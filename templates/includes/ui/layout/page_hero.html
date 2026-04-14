@@ -7,11 +7,7 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende do objeto 'hero' e seus atributos.
 -->
-<<<<<<< HEAD
 <section class="hero hero--system operation-hero{% if hero_variant_class %} {{ hero_variant_class }}{% endif %}{% for class_name in hero.classes %} {{ class_name }}{% endfor %}" aria-label="{{ hero.aria_label }}"{% if hero.data_slot %} data-slot="{{ hero.data_slot }}"{% endif %}{% if hero.data_panel %} data-panel="{{ hero.data_panel }}"{% endif %}>
-=======
-<section class="hero operation-hero{% if hero_variant_class %} {{ hero_variant_class }}{% endif %}{% for class_name in hero.classes %} {{ class_name }}{% endfor %}" aria-label="{{ hero.aria_label }}"{% if hero.data_slot %} data-slot="{{ hero.data_slot }}"{% endif %}{% if hero.data_panel %} data-panel="{{ hero.data_panel }}"{% endif %}>
->>>>>>> codex/student-page-refactor-and-ui-polish
     <div class="operation-hero-main">
         <div class="operation-hero-copy-block">
             <p class="operation-hero-eyebrow eyebrow">{{ hero.eyebrow }}</p>
@@ -26,7 +22,7 @@ PONTOS CRITICOS:
             {% if hero.actions %}
             <div class="operation-hero-action-rail"{% if hero.actions_slot %} data-slot="{{ hero.actions_slot }}"{% endif %}>
                 {% for action in hero.actions %}
-                <a class="button{% if action.kind == 'secondary' %} secondary{% endif %}{% if action.class_name %} {{ action.class_name }}{% endif %}" href="{{ action.href }}"{% if action.data_action %} data-action="{{ action.data_action }}"{% endif %}>{{ action.label }}</a>
+                <a class="button{% if action.kind == 'secondary' %} secondary{% endif %}{% if action.class_name %} {{ action.class_name }}{% endif %}" href="{{ action.href }}"{% if action.data_action %} data-action="{{ action.data_action }}"{% endif %}{% if action.target_panel %} data-student-page-tab-trigger data-student-page-target="{{ action.target_panel }}"{% endif %}>{{ action.label }}</a>
                 {% endfor %}
             </div>
             {% endif %}

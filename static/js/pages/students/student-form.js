@@ -32,13 +32,10 @@ POR QUE ELE EXISTE:
   var studentPageShell = document.querySelector('[data-student-page-shell]');
   var studentPagePanels = studentPageShell ? Array.from(studentPageShell.querySelectorAll('[data-student-page-panel]')) : [];
   var studentPageTriggers = studentPageShell ? Array.from(studentPageShell.querySelectorAll('[data-student-page-tab-trigger]')) : [];
-<<<<<<< HEAD
   var studentProfileForm = document.querySelector('[data-student-profile-form]');
   var pageRoot = document.querySelector('[data-page="student-form"][data-student-id]');
   var browserSnapshot = pagePayload.student_browser_snapshot || null;
   var navigationHintKey = 'octobox.student.navigation-hint.v1';
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
 
   var initialPlanId = planField ? planField.value : null;
   var initialPrice = (planField && planPriceMap) ? parseAmount(planPriceMap[initialPlanId]) : 0;
@@ -334,7 +331,6 @@ POR QUE ELE EXISTE:
     activateStudentPagePanel(getStudentPagePanelFromHash(window.location.hash));
   }
 
-<<<<<<< HEAD
   function supportsSessionStorage() {
     try {
       return typeof window.sessionStorage !== 'undefined';
@@ -452,8 +448,6 @@ POR QUE ELE EXISTE:
     document.dispatchEvent(new CustomEvent('student-profile-edit-stop'));
   }
 
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
   if (studentPageShell) {
     studentPageShell.addEventListener('click', function(event) {
       var drawerTrigger = event.target.closest('[data-student-page-open-drawer]');
@@ -467,7 +461,6 @@ POR QUE ELE EXISTE:
         return;
       }
 
-<<<<<<< HEAD
       var profileEditTrigger = event.target.closest('[data-action="toggle-student-profile-edit"]');
       if (profileEditTrigger) {
         event.preventDefault();
@@ -479,8 +472,6 @@ POR QUE ELE EXISTE:
         return;
       }
 
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
       var tabTrigger = event.target.closest('[data-student-page-tab-trigger]');
       if (!tabTrigger) {
         return;
@@ -498,26 +489,17 @@ POR QUE ELE EXISTE:
 
     document.addEventListener('click', function(event) {
       var confirmTrigger = event.target.closest('button[type="submit"][data-confirm="true"]');
-      if (confirmTrigger) {
-        var confirmMessage = confirmTrigger.getAttribute('data-confirm-message') || 'Tem certeza que deseja continuar com esta acao?';
-        if (!window.confirm(confirmMessage)) {
-          event.preventDefault();
-        }
+      if (!confirmTrigger) {
         return;
       }
 
-      var legacyTrigger = event.target.closest('[data-action="open-tab-student-form-essential"]');
-      if (!legacyTrigger) {
-        return;
+      var confirmMessage = confirmTrigger.getAttribute('data-confirm-message') || 'Tem certeza que deseja continuar com esta acao?';
+      if (!window.confirm(confirmMessage)) {
+        event.preventDefault();
       }
-
-      event.preventDefault();
-      activateStudentPagePanel('tab-student-form-essential');
-      syncStudentPageHash('tab-student-form-essential');
     });
   }
 
-<<<<<<< HEAD
   document.addEventListener('student-profile-lock-state', function(event) {
     var detail = event.detail || {};
     var shouldUnlock = Boolean(detail.editable);
@@ -535,8 +517,6 @@ POR QUE ELE EXISTE:
   persistBrowserSnapshot();
   reconcileNavigationHint();
 
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
   if (planField && amountField && planPriceField && billingStrategyField && installmentTotalField && installmentSelectorShell && installmentSelector && installmentPreview) {
     planField.addEventListener('change', syncConnectedPlanPrice);
     billingStrategyField.addEventListener('change', syncBillingStrategyState);
@@ -551,10 +531,7 @@ POR QUE ELE EXISTE:
   }
 
   resetPlanSwapFeedback();
-<<<<<<< HEAD
   setStudentProfileReadonlyState(true);
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
   applyWorkspacePanelFromHash();
   applyHashFocusMode();
   window.addEventListener('hashchange', applyWorkspacePanelFromHash);

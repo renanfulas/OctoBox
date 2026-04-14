@@ -98,11 +98,7 @@ def build_student_form_recovery_guide(form):
     }
 
 
-<<<<<<< HEAD
 def build_student_form_page(*, form, student_object, selected_intake, financial_overview, page_mode, current_role_slug, browser_snapshot=None):
-=======
-def build_student_form_page(*, form, student_object, selected_intake, financial_overview, page_mode, current_role_slug):
->>>>>>> codex/student-page-refactor-and-ui-polish
     latest_enrollment = financial_overview.get('latest_enrollment')
     recent_payments = financial_overview.get('payments', [])
     financial_ready = financial_overview.get('has_student', False)
@@ -162,7 +158,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'copy': f'Assim que salvar esta etapa, desca para o workspace financeiro e revise {enrollment_name}, historico e proxima acao sem quebrar o contexto da ficha.',
             'href': '#student-form-financial',
             'href_label': 'Seguir para o financeiro',
-            'data_action': 'open-tab-student-form-financial',
+            'target_panel': 'tab-student-form-financial',
         }
     hero = build_page_hero(
         eyebrow='Cadastro',
@@ -171,12 +167,12 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'Abra o essencial, feche o comercial e desca para o financeiro sem retrabalho.'
         ),
         actions=[
-            {'label': 'Abrir essencial', 'href': '#student-form-essential', 'kind': 'primary', 'data_action': 'open-tab-student-form-essential'},
+            {'label': 'Abrir essencial', 'href': '#student-form-essential', 'kind': 'primary', 'target_panel': 'tab-student-form-essential'},
             {
                 'label': 'Abrir financeiro' if financial_ready else 'Abrir fechamento',
                 'href': '#student-form-financial' if financial_ready else '#student-form-essential',
                 'kind': 'secondary',
-                'data_action': 'open-tab-student-form-financial' if financial_ready else 'open-tab-student-form-essential',
+                'target_panel': 'tab-student-form-financial' if financial_ready else 'tab-student-form-essential',
             },
             {'label': 'Ver base', 'href': get_shell_route_url('students'), 'kind': 'secondary'},
         ],
@@ -194,6 +190,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
                 else 'Ajuste rapidamente o cadastro sem cair no admin bruto.'
             ),
             'mode': page_mode,
+            'surface_mode': 'full',
             'role_slug': current_role_slug,
         },
         data={

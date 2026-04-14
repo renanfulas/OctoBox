@@ -142,7 +142,6 @@ def _build_operation_workspace_hero(page_key, snapshot):
                     'label': 'Ver grade em leitura',
                     'href': '#reception-class-grid-board',
                     'kind': 'secondary',
-                    'data_action': 'jump-reception-class-grid',
                 },
             ),
             aria_label='Panorama da recepcao',
@@ -155,8 +154,8 @@ def _build_operation_workspace_hero(page_key, snapshot):
 
 
 def _build_operation_workspace_reading_panel(page_key, snapshot):
-    owner_priority_context = snapshot.get('owner_priority_context') or {}
     owner_decision_entry_context = snapshot.get('owner_decision_entry_context') or {}
+    owner_priority_context = snapshot.get('owner_priority_context') or {}
     manager_priority_context = snapshot.get('manager_priority_context') or {}
     manager_decision_entry_context = snapshot.get('manager_decision_entry_context') or {}
     coach_decision_entry_context = snapshot.get('coach_decision_entry_context') or {}
@@ -171,11 +170,7 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
     panel_map = {
         'operations-owner': build_page_reading_panel(
             items=snapshot.get('owner_operational_focus'),
-<<<<<<< HEAD
             primary_href=resolve_primary_href(snapshot.get('owner_operational_focus'), owner_decision_entry_context.get('entry_href')),
-=======
-            primary_href=_resolve_primary_href(snapshot.get('owner_operational_focus'), owner_decision_entry_context.get('entry_href')),
->>>>>>> codex/student-page-refactor-and-ui-polish
             pill_label=owner_priority_context.get('pill_label'),
             pill_class=owner_priority_context.get('pill_class'),
             class_name='owner-command-panel',
@@ -186,7 +181,7 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
             primary_href=manager_decision_entry_context.get('entry_href'),
             pill_label=manager_priority_context.get('pill_label'),
             pill_class=manager_priority_context.get('pill_class'),
-            class_name='manager-focus-lane',
+            class_name='manager-command-panel',
             panel_id='manager-command-lane',
         ),
         'operations-coach': build_page_reading_panel(
@@ -210,7 +205,7 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
             primary_href=reception_decision_entry_context.get('entry_href'),
             pill_label='Atendimento vivo',
             pill_class='accent',
-            class_name='reception-focus-lane',
+            class_name='reception-command-panel',
             panel_id='reception-command-lane',
         ),
     }

@@ -4,7 +4,22 @@ ARQUIVO: utilitários visuais compartilhados do catálogo.
 POR QUE ELE EXISTE:
 - reúne tipografia, grids, cards genéricos, gráficos, notas e disclosure panels.
 - sustenta a base visual comum das telas de catálogo fora do overview financeiro.
+
+O QUE ESTE ARQUIVO FAZ:
+1. define helpers compartilhados de formulário, tipografia e layout do catálogo.
+2. hospeda componentes leves que ainda não justificam módulo próprio.
+3. concentra hotspots históricos de override que precisam de migração gradual.
+
+PONTOS CRITICOS:
+- este arquivo não é autoridade de tema.
+- `note-panel*` não mora mais aqui; apenas complementos de layout são permitidos.
+- blocos de override existem por compatibilidade e devem ser tratados como área de exceção.
 */
+
+/* ==========================================================================
+   CAMADA 1: HELPERS NEUTROS DE TEXTO E FORMULÁRIO
+   Ownership: catálogo compartilhado
+   ========================================================================== */
 
 .body-copy {
     line-height: 1.6;
@@ -58,6 +73,12 @@ POR QUE ELE EXISTE:
     gap: 16px;
 }
 
+/* ==========================================================================
+   CAMADA 2: SURFACES E CARDS COMPARTILHADOS DO CATÁLOGO
+   Ownership: catálogo compartilhado
+   Observação: ainda não virar design system sem prova de reuso canônico
+   ========================================================================== */
+
 .student-priority-panel,
 .plan-card,
 .priority-student-card,
@@ -67,85 +88,6 @@ POR QUE ELE EXISTE:
     backdrop-filter: blur(14px);
 }
 
-.metric-card,
-.finance-metric-card {
-    position: relative;
-    overflow: hidden;
-}
-
-<<<<<<< HEAD
-=======
-.primary-glow,
-.orange-glow,
-.secondary-glow,
-.green-glow,
-.blue-glow,
-.info-card {
-    background: var(--card-surface);
-}
-
-.primary-glow,
-.orange-glow {
-    border-color: rgba(215, 157, 116, 0.24);
-}
-
-.secondary-glow,
-.green-glow {
-    border-color: rgba(113, 176, 161, 0.22);
-}
-
-.blue-glow,
-.info-card {
-    border-color: rgba(122, 153, 198, 0.24);
-}
-
-.info-card {
-    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 32%, var(--card-border) 68%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 34%),
-        linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent),
-            color-mix(in srgb, var(--theme-surface-glass) 96%, transparent)
-        );
-    box-shadow: var(--card-shadow);
-}
-
-.info-card .eyebrow {
-    color: var(--theme-accent-support);
-}
-
-.info-card .class-day-summary,
-.info-card .card-copy,
-.info-card .meta-text {
-    color: var(--legacy-copy);
-}
-
-body[data-theme="dark"] .info-card {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 26%, var(--theme-glass-border) 74%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 34%),
-        linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--theme-surface-glass-strong) 92%, transparent),
-            color-mix(in srgb, var(--theme-surface-glass) 88%, transparent)
-        );
-    box-shadow:
-        inset 0 1px 0 var(--theme-glass-highlight),
-        0 16px 34px rgba(0, 0, 0, 0.2);
-}
-
-body[data-theme="dark"] .info-card .eyebrow {
-    color: var(--theme-accent-support);
-}
-
-body[data-theme="dark"] .info-card .class-day-summary,
-body[data-theme="dark"] .info-card .card-copy,
-body[data-theme="dark"] .info-card .meta-text {
-    color: var(--theme-text-secondary);
-}
-
->>>>>>> codex/student-page-refactor-and-ui-polish
 .metric-pulse,
 .metric-spark {
     position: absolute;
@@ -202,17 +144,6 @@ body[data-theme="dark"] .info-card .meta-text {
     border-color: rgba(249, 115, 22, 0.18);
 }
 
-.plan-card.is-selected-plan {
-    border-color: var(--accent-primary) !important;
-    background: var(--accent-primary-alpha) !important;
-    box-shadow: 0 0 10px var(--accent-primary-alpha) !important;
-}
-
-.plan-swap-status[hidden],
-.price-delta-indicator[hidden] {
-    display: none !important;
-}
-
 .plan-swap-status {
     display: inline-flex;
     align-items: center;
@@ -224,10 +155,6 @@ body[data-theme="dark"] .info-card .meta-text {
 
 .price-delta-indicator.is-negative {
     color: var(--danger);
-}
-
-.student-table-wrap table tbody tr:last-child td {
-    border-bottom: 0;
 }
 
 .student-row {
@@ -251,17 +178,15 @@ body[data-theme="dark"] .info-card .meta-text {
     margin-bottom: 16px;
 }
 
-.student-table-wrap td {
-    vertical-align: top;
-}
-
-.student-table-wrap strong,
 .plan-stats strong,
 .plan-stats span {
     display: block;
 }
 
-
+/* ==========================================================================
+   CAMADA 3: LAYOUTS E MÉTRICAS COMPARTILHADAS
+   Ownership: catálogo compartilhado
+   ========================================================================== */
 
 .row-between,
 .row-between-sm,
@@ -296,20 +221,10 @@ body[data-theme="dark"] .info-card .meta-text {
 }
 
 .plan-stats span,
-.meta-text,
-.meta-text-sm,
-.chart-column span,
+[class~="meta-text"],
+[class~="meta-text-sm"],
 .delta-label {
     color: var(--legacy-copy);
-}
-
-.meta-text {
-    margin: 0;
-    line-height: 1.6;
-}
-
-.meta-text-sm {
-    margin: 4px 0;
 }
 
 .mix-bar-track {
@@ -349,52 +264,6 @@ body[data-theme="dark"] .info-card .meta-text {
     background: #6b7280;
 }
 
-.chart-grid {
-    display: grid;
-    grid-template-columns: repeat(var(--dynamic-visual-columns, var(--chart-columns, 1)), minmax(0, 1fr));
-    gap: 14px;
-    align-items: end;
-    min-height: 260px;
-}
-
-.chart-column {
-    display: grid;
-    gap: 8px;
-    text-align: center;
-}
-
-.chart-column span {
-    font-size: 0.88rem;
-}
-
-.chart-bar-wrap {
-    height: 190px;
-    display: flex;
-    align-items: end;
-    justify-content: center;
-    padding: 0 8px;
-    border-radius: var(--radius-panel);
-    background: color-mix(in srgb, var(--card-surface) 94%, transparent);
-    border: 1px solid var(--card-border);
-}
-
-.chart-bar {
-    width: 100%;
-    height: var(--dynamic-visual-height, var(--bar-height, 10px));
-    min-height: 10px;
-    border-radius: 16px 16px 8px 8px;
-    transition: height 0.25s ease, transform 0.18s ease;
-}
-
-.chart-bar.revenue {
-    background: var(--brand);
-    box-shadow: 0 16px 24px rgba(37, 99, 235, 0.18);
-}
-
-.chart-column:hover .chart-bar {
-    transform: translateY(-3px);
-}
-
 .delta-track-group,
 .history-stack {
     display: grid;
@@ -406,21 +275,11 @@ body[data-theme="dark"] .info-card .meta-text {
     font-size: 0.86rem;
 }
 
-.timeline-row {
-    display: grid;
-    grid-template-columns: 18px 1fr;
-    gap: 12px;
-    align-items: start;
-}
-
-.timeline-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 999px;
-    margin-top: 6px;
-    background: var(--brand);
-    box-shadow: 0 0 0 5px rgba(184, 92, 56, 0.12);
-}
+/* ==========================================================================
+   CAMADA 4: COMPLEMENTOS DE ESTADO E DISCLOSURE
+   Ownership: catálogo compartilhado
+   Guarda: não redefinir famílias canônicas como `note-panel*`
+   ========================================================================== */
 
 /*
 REGRA:
@@ -464,10 +323,6 @@ REGRA:
     box-shadow: var(--card-shadow);
 }
 
-.installment-shell[hidden] {
-    display: none;
-}
-
 .installment-preview {
     padding: 12px 14px;
     border-radius: 14px;
@@ -499,86 +354,32 @@ REGRA:
     }
 }
 
-
-/* 🚀 ENGINE DE UTILITÁRIOS AAA - OCTOBOX */
+/* ==========================================================================
+   CAMADA 5: ENGINE UTILITÁRIA DE COMPATIBILIDADE
+   Ownership: legado controlado / hotspot de override
+   Regra: manter comportamento enquanto a migração por ownership não termina
+   ========================================================================== */
 
 /* Spacing Engine */
-.mt-1 { margin-top: 0.25rem !important; }
-.mt-2 { margin-top: 0.5rem !important; }
-.mt-3 { margin-top: 1rem !important; }
-.mt-4 { margin-top: 1.5rem !important; }
-.mt-6 { margin-top: 2rem !important; }
-
-.mb-1 { margin-bottom: 0.25rem !important; }
-.mb-2 { margin-bottom: 0.5rem !important; }
-.mb-3 { margin-bottom: 1rem !important; }
-.mb-4 { margin-bottom: 1.5rem !important; }
-
-.p-2 { padding: 0.5rem !important; }
-.p-3 { padding: 1rem !important; }
-.p-4 { padding: 1.5rem !important; }
-
-.gap-1 { gap: 0.25rem !important; }
-.gap-2 { gap: 0.5rem !important; }
-.gap-3 { gap: 1rem !important; }
+.gap-2 { gap: 0.5rem; }
 
 /* Flexbox Engine */
-.flex-row { display: flex !important; flex-direction: row !important; }
-.flex-col { display: flex !important; flex-direction: column !important; }
-.flex-center { display: flex !important; align-items: center !important; justify-content: center !important; }
-.flex-between { display: flex !important; align-items: center !important; justify-content: space-between !important; }
-.flex-1 { flex: 1 !important; }
-.items-center { align-items: center !important; }
+.flex-col { display: flex; flex-direction: column; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
 
 /* Typography Engine */
-.text-xs { font-size: 0.75rem !important; }
-.text-sm { font-size: 0.875rem !important; }
-.text-lg { font-size: 1.125rem !important; }
-.text-xl { font-size: 1.25rem !important; }
-.text-bold { font-weight: 700 !important; }
-.text-dimmed { color: var(--legacy-copy) !important; opacity: 0.8; }
-body[data-theme="dark"] .text-dimmed { color: var(--theme-text-muted) !important; opacity: 1; }
-<<<<<<< HEAD
+.text-xs { font-size: 0.75rem; }
+.text-sm { font-size: 0.875rem; }
+.text-bold { font-weight: 700; }
+.text-dimmed { color: var(--legacy-copy); opacity: 0.8; }
+body[data-theme="dark"] .text-dimmed { color: var(--theme-text-muted); opacity: 1; }
 
-/* Surface Engine */
-=======
-.text-premium { color: var(--brand) !important; }
+/* ==========================================================================
+   CAMADA 6: ADAPTAÇÕES DE TEMA ESCURO
+   Ownership: catálogo compartilhado
+   Regra: apenas ajustar superfícies locais deste arquivo
+   ========================================================================== */
 
-/* Surface Engine */
-.glass-card {
-    background: var(--card-surface);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-panel);
-}
-
-body[data-theme="dark"] .glass-card {
-    background: var(--card-surface);
-    border-color: var(--card-border);
-}
-
->>>>>>> codex/student-page-refactor-and-ui-polish
-.surface-tonal { background: var(--surface-low); }
-
-/* Interactive Engine */
-.hover-lift { transition: box-shadow 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
-
-<<<<<<< HEAD
-=======
-/* Button Premium */
-.btn-premium {
-    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
-    color: white !important;
-    border: none;
-    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.25);
-}
-
-.btn-premium:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 6px 16px rgba(249, 115, 22, 0.35);
-}
-
->>>>>>> codex/student-page-refactor-and-ui-polish
 body[data-theme="dark"] .disclosure-panel:not(.student-form-step-disclosure),
 body[data-theme="dark"] .installment-shell,
 body[data-theme="dark"] .installment-preview {

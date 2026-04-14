@@ -21,47 +21,43 @@ POR QUE ELE EXISTE:
         min-height: 288px;
     }
 
-    .finance-plan-support-grid,
-    .finance-board {
+    .finance-plan-support-grid {
         grid-template-columns: 1fr;
-    }
-
-    .finance-board > article,
-    .finance-board > div,
-    .finance-board > section {
-        grid-column: 1 / -1;
     }
 
     .finance-metric-strip {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-<<<<<<< HEAD
     .finance-plan-layout-grid {
-=======
-    .finance-command-layout,
-    .finance-priority-layout,
-    .finance-trend-layout,
-    .finance-portfolio-scene,
-    .finance-plan-layout {
->>>>>>> codex/student-page-refactor-and-ui-polish
         grid-template-columns: 1fr;
     }
 
     .finance-alert-grid,
-    .finance-action-list,
-    .finance-alert-list,
     .finance-guide-grid-3,
-    .finance-filter-rule-list {
+    .finance-queue-guide-grid,
+    .finance-analytics-overview-grid,
+    .finance-analytics-outcome-grid,
+    .finance-analytics-learning-grid,
+    .finance-analytics-tension-grid,
+    .finance-analytics-action-grid,
+    .finance-analytics-context-grid {
         grid-template-columns: 1fr;
+    }
+
+    .finance-analytics-disclosure-body {
+        grid-template-columns: 1fr;
+    }
+
+    .finance-followup-analytics-card .finance-analytics-disclosure-body > .finance-guide-grid,
+    .finance-followup-analytics-card .finance-analytics-disclosure-body > .finance-followup-window-strip,
+    .finance-followup-analytics-card .finance-analytics-disclosure-body > .finance-guide-card {
+        grid-column: auto;
+        min-height: auto;
     }
 
     .finance-plan-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .finance-plan-focus-item {
-        grid-template-columns: 1fr;
     }
 
 }
@@ -76,7 +72,8 @@ POR QUE ELE EXISTE:
         gap: 8px;
     }
 
-    .finance-priority-meta {
+    .finance-priority-meta,
+    .finance-queue-meta {
         justify-content: center;
     }
 
@@ -86,7 +83,16 @@ POR QUE ELE EXISTE:
         padding-inline: 0;
     }
 
+    .finance-queue-track {
+        grid-auto-columns: 100%;
+        padding-inline: 0;
+    }
+
     .finance-priority-slide .finance-action-card {
+        min-height: 0;
+    }
+
+    .finance-queue-slide .finance-queue-card {
         min-height: 0;
     }
 
@@ -104,7 +110,8 @@ POR QUE ELE EXISTE:
         max-width: none;
     }
 
-    .finance-priority-nav {
+    .finance-priority-nav,
+    .finance-queue-nav {
         width: 34px;
         height: 34px;
     }
@@ -132,17 +139,137 @@ POR QUE ELE EXISTE:
         -webkit-line-clamp: 3;
     }
 
-<<<<<<< HEAD
-    .finance-board-rail .card-head,
-    .finance-board-queue .card-head,
+    .finance-board-shell > .card-head,
+    .finance-board-shell > .finance-board-shell-head,
     .finance-portfolio-panel-head {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .finance-board-rail .badge,
-    .finance-board-queue .badge {
+    .finance-trend-metric-pills {
+        gap: 5px;
+    }
+
+    .finance-trend-metric-pill {
+        flex-basis: calc(50% - 4px);
+        padding: 9px 10px;
+    }
+
+    .finance-revenue-sparkline {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .finance-revenue-sparkline-visual {
+        height: 38px;
+    }
+
+    .finance-board-shell .finance-board-shell-meta,
+    .finance-board-shell .badge,
+    .finance-portfolio-panel-head .badge {
         align-self: flex-start;
+    }
+
+    .finance-board-shell-body {
+        gap: 12px;
+    }
+
+    .finance-revenue-trend-preview-card {
+        padding: 14px 14px 12px;
+    }
+
+    .finance-revenue-trend-preview-card .finance-revenue-trend-head {
+        gap: 8px;
+    }
+
+    .finance-revenue-trend-preview-card .finance-revenue-trend-plot--preview {
+        min-height: 176px;
+        padding: 10px 10px 8px;
+    }
+
+    .finance-revenue-trend-preview-card .finance-revenue-trend-columns--preview {
+        gap: 10px;
+    }
+
+    .finance-revenue-trend-preview-card .finance-revenue-column-bars {
+        max-width: 58px;
+        height: 126px;
+        gap: 5px;
+    }
+
+    .finance-board-shell.is-rail,
+    .finance-board-shell.is-queue,
+    .finance-board-shell.is-support {
+        padding: 14px 14px 12px;
+        border-radius: 20px;
+    }
+
+    .finance-risk-summary {
+        gap: 6px;
+    }
+
+    .finance-risk-summary--headline .badge {
+        padding: 3px 7px;
+        font-size: 0.66rem;
+    }
+
+    .finance-guide-card-compact {
+        padding: 10px 12px;
+    }
+
+    .finance-risk-row {
+        gap: 8px;
+        padding: 10px 9px 9px;
+        border-radius: 16px;
+    }
+
+    .finance-risk-copy {
+        gap: 6px;
+    }
+
+    .finance-risk-meta {
+        gap: 5px;
+        font-size: 0.78rem;
+    }
+
+    .finance-risk-meta-secondary,
+    .finance-risk-side-secondary {
+        display: none;
+    }
+
+    .finance-risk-note {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        overflow: hidden;
+    }
+
+    .finance-risk-reasons {
+        gap: 5px;
+    }
+
+    .finance-risk-reason {
+        padding: 5px 8px;
+        font-size: 0.72rem;
+    }
+
+    .finance-risk-details {
+        padding-top: 8px;
+    }
+
+    .finance-risk-actions {
+        margin-top: 0;
+    }
+
+    .finance-risk-actions .button,
+    .finance-risk-actions-inline .button {
+        width: 100%;
+    }
+
+    .finance-board-overdue-support .finance-overdue-list {
+        max-height: 320px;
+        overflow: auto;
+        padding-right: 4px;
     }
 
     .finance-overdue-row {
@@ -169,31 +296,5 @@ POR QUE ELE EXISTE:
     .finance-portfolio-panel-value {
         justify-self: start;
         justify-content: flex-start;
-=======
-    .finance-board-mix,
-    .finance-board-plan,
-    .finance-portfolio-panel-card {
-        padding: 16px;
->>>>>>> codex/student-page-refactor-and-ui-polish
-    }
-}
-
-@media (max-width: 960px) {
-    .finance-focus-item,
-    .finance-plan-focus-item {
-        grid-template-columns: 1fr;
-    }
-
-    .finance-focus-actions {
-        justify-items: stretch;
-    }
-
-    .finance-plan-focus-item {
-        justify-items: stretch;
-    }
-
-    .finance-plan-focus-item .pill {
-        width: fit-content;
-        max-width: 100%;
     }
 }

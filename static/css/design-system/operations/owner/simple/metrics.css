@@ -10,7 +10,6 @@ POR QUE ELE EXISTE:
     margin-top: var(--workspace-fib-4);
     display: grid;
     grid-template-columns: minmax(0, 1.45fr) minmax(320px, 420px);
-<<<<<<< HEAD
     gap: clamp(18px, 2vw, 26px);
     align-items: start;
     position: relative;
@@ -20,19 +19,11 @@ POR QUE ELE EXISTE:
         linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-support-alpha) 8%, transparent), transparent 20%),
         radial-gradient(circle at top left, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 32%),
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 30%);
-=======
-    gap: 18px;
-    align-items: start;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .owner-metrics-panel {
     margin-top: 0;
-<<<<<<< HEAD
-    width: min(100%, 380px);
-=======
-    width: min(100%, 420px);
->>>>>>> codex/student-page-refactor-and-ui-polish
+    width: min(100%, 336px);
     margin-left: auto;
     justify-self: end;
     position: sticky;
@@ -54,14 +45,19 @@ POR QUE ELE EXISTE:
 
 .owner-sessions-panel {
     min-width: 0;
+    overflow: hidden;
+    isolation: isolate;
     background:
-<<<<<<< HEAD
         var(--theme-surface-glass);
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
     box-shadow:
         0 14px 26px rgba(15, 23, 42, 0.06),
         inset 0 1px 0 rgba(255, 255, 255, 0.6);
     min-height: clamp(300px, 30vw, 360px);
+}
+
+.owner-sessions-panel::after {
+    display: none;
 }
 
 .owner-sessions-panel .operation-card-head {
@@ -108,6 +104,7 @@ POR QUE ELE EXISTE:
     align-items: center;
     gap: 14px;
     padding: 16px;
+    overflow: hidden;
     border-radius: 20px;
     border: 1px solid color-mix(in srgb, var(--theme-glass-border) 88%, transparent);
     background:
@@ -219,8 +216,11 @@ POR QUE ELE EXISTE:
 }
 
 .owner-session-progress {
-    width: min(220px, 100%);
+    width: 100%;
+    max-width: none;
     height: 7px;
+    justify-self: stretch;
+    align-self: stretch;
     overflow: hidden;
     border-radius: 999px;
     background: color-mix(in srgb, var(--theme-surface-muted) 72%, transparent);
@@ -272,26 +272,123 @@ POR QUE ELE EXISTE:
     background: var(--scrollbar-thumb-hover);
 }
 
-.owner-simple-shell .owner-metric-grid .operation-kpi-card {
+.owner-simple-shell .owner-metric-grid .operation-kpi-card,
+.owner-simple-shell .owner-metric-grid .operation-kpi-compact {
+    --owner-kpi-accent: var(--theme-accent-support);
+    --owner-kpi-accent-alpha: var(--theme-accent-support-alpha);
+    --owner-kpi-surface-top: color-mix(in srgb, var(--theme-surface-panel-strong) 92%, var(--owner-kpi-accent) 8%);
+    --owner-kpi-surface-bottom: color-mix(in srgb, var(--theme-surface-panel) 94%, var(--owner-kpi-accent) 6%);
+    --owner-kpi-border: color-mix(in srgb, var(--owner-kpi-accent-alpha) 26%, var(--theme-border-soft) 74%);
+    --owner-kpi-shadow: color-mix(in srgb, var(--owner-kpi-accent-alpha) 14%, rgba(15, 23, 42, 0.08) 86%);
     min-height: 124px;
     height: 100%;
     border-radius: 22px;
+    padding: 18px 18px 16px;
+    border-color: var(--owner-kpi-border);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--owner-kpi-accent-alpha) 24%, transparent), transparent 34%),
+        linear-gradient(160deg, var(--owner-kpi-surface-top), var(--owner-kpi-surface-bottom));
+    box-shadow:
+        0 18px 34px var(--owner-kpi-shadow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.76);
     transition:
         transform 220ms var(--ease-standard),
         box-shadow 220ms var(--ease-standard),
         border-color 220ms var(--ease-standard);
 }
 
+.owner-simple-shell .owner-metric-grid .metric-card-link {
+    min-width: 0;
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card .card-body-metric {
+    display: grid;
+    grid-template-rows: auto;
+    align-content: start;
+    gap: 10px;
+    min-height: 0;
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card .card-value-stack {
+    display: grid;
+    gap: 8px;
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card .card-value-row {
+    order: 1;
+    align-items: baseline;
+    justify-content: flex-start;
+    gap: 0;
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card .card-label {
+    order: 0;
+    margin: 0;
+    color: color-mix(in srgb, var(--owner-kpi-accent) 28%, var(--muted-strong) 72%);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card .card-value {
+    font-size: clamp(2.05rem, 2.2vw, 2.45rem);
+    line-height: 0.92;
+    letter-spacing: -0.055em;
+    font-weight: 800;
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card .metric-number {
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in srgb, var(--owner-kpi-accent) 82%, var(--ink) 18%);
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card .card-content {
+    display: none;
+}
+
+.owner-simple-shell .owner-metric-grid .metric-card .card-kicker,
+.owner-simple-shell .owner-metric-grid .metric-card .card-copy,
+.owner-simple-shell .owner-metric-grid .metric-card .card-footer,
+.owner-simple-shell .owner-metric-grid .metric-card .card-meta,
+.owner-simple-shell .owner-metric-grid .metric-card .card-signal {
+    display: none;
+}
+
 .owner-simple-shell .owner-metric-grid .operation-kpi-card:hover {
     box-shadow:
-        0 20px 36px rgba(15, 23, 42, 0.12),
+        0 22px 38px color-mix(in srgb, var(--owner-kpi-accent-alpha) 18%, rgba(15, 23, 42, 0.12) 82%),
         inset 0 1px 0 rgba(255, 255, 255, 0.74);
 }
 
-.owner-simple-shell .owner-metric-grid .operation-kpi-card:first-child {
-    background:
-        linear-gradient(155deg, color-mix(in srgb, var(--theme-surface-panel-strong) 96%, transparent), color-mix(in srgb, var(--theme-surface-panel) 90%, transparent));
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 22%, var(--theme-border-soft) 78%);
+.owner-simple-shell .owner-metric-grid .operation-kpi-card.owner-emerald {
+    --owner-kpi-accent: var(--theme-accent-success);
+    --owner-kpi-accent-alpha: var(--theme-accent-success-alpha);
+    --owner-kpi-surface-top: color-mix(in srgb, var(--theme-surface-panel-strong) 88%, var(--theme-accent-success) 12%);
+    --owner-kpi-surface-bottom: color-mix(in srgb, var(--theme-surface-panel) 92%, var(--theme-accent-success) 8%);
+}
+
+.owner-simple-shell .owner-metric-grid .operation-kpi-card.owner-blue {
+    --owner-kpi-accent: var(--theme-accent-primary);
+    --owner-kpi-accent-alpha: var(--theme-accent-primary-alpha);
+    --owner-kpi-surface-top: color-mix(in srgb, var(--theme-surface-panel-strong) 88%, var(--theme-accent-primary) 12%);
+    --owner-kpi-surface-bottom: color-mix(in srgb, var(--theme-surface-panel) 92%, var(--theme-accent-primary) 8%);
+}
+
+.owner-simple-shell .owner-metric-grid .operation-kpi-card.owner-whatsapp {
+    --owner-kpi-accent: #25d366;
+    --owner-kpi-accent-alpha: rgba(37, 211, 102, 0.28);
+    --owner-kpi-surface-top: color-mix(in srgb, var(--theme-surface-panel-strong) 86%, #25d366 14%);
+    --owner-kpi-surface-bottom: color-mix(in srgb, var(--theme-surface-panel) 92%, #25d366 8%);
+    --owner-kpi-border: color-mix(in srgb, rgba(37, 211, 102, 0.26) 46%, var(--theme-border-soft) 54%);
+}
+
+.owner-simple-shell .owner-metric-grid .operation-kpi-card.owner-ruby {
+    --owner-kpi-accent: var(--theme-accent-danger);
+    --owner-kpi-accent-alpha: var(--theme-accent-danger-alpha);
+    --owner-kpi-surface-top: color-mix(in srgb, var(--theme-surface-panel-strong) 88%, var(--theme-accent-danger) 12%);
+    --owner-kpi-surface-bottom: color-mix(in srgb, var(--theme-surface-panel) 92%, var(--theme-accent-danger) 8%);
 }
 
 @media (max-width: 960px) {
@@ -352,14 +449,6 @@ POR QUE ELE EXISTE:
         overflow: visible;
         padding-right: 0;
     }
-=======
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 26%),
-        var(--theme-surface-glass);
-}
-
-.owner-sessions-panel .operation-card-copy {
-    max-width: 36ch;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 body[data-theme="dark"] .owner-sessions-panel {
@@ -376,7 +465,22 @@ body[data-theme="dark"] .owner-sessions-panel {
 body[data-theme="dark"] .owner-sessions-panel .operation-card-copy {
     color: var(--theme-text-secondary);
 }
-<<<<<<< HEAD
+
+body[data-theme="dark"] .owner-sessions-panel .state-empty {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 26%, transparent), transparent 34%),
+        linear-gradient(180deg, rgba(11, 21, 36, 0.98), rgba(8, 16, 29, 0.96));
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 24%, rgba(148, 163, 184, 0.12) 76%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 18px 30px rgba(2, 6, 23, 0.22);
+}
+
+body[data-theme="dark"] .owner-sessions-panel .operation-card-title,
+body[data-theme="dark"] .owner-sessions-panel .owner-session-feature-head strong,
+body[data-theme="dark"] .owner-sessions-panel .owner-session-body strong {
+    color: var(--theme-text-primary);
+}
 
 body[data-theme="dark"] .owner-session-card {
     background:
@@ -418,5 +522,3 @@ body[data-theme="dark"] .owner-session-note {
 body[data-theme="dark"] .owner-session-progress {
     background: rgba(148, 163, 184, 0.14);
 }
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish

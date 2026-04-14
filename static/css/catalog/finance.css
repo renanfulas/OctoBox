@@ -7,18 +7,20 @@ POR QUE ELE EXISTE:
 
 ORDEM DA CASCADE:
 1. shell
-2. hero
-3. métricas
-4. cards
-5. boards
-6. página de plano
-7. movimentos
-8. dark mode
-9. responsividade
-10. assinatura visual
+2. modos
+3. hero
+4. métricas
+5. cards
+6. boards
+7. página de plano
+8. movimentos
+9. dark mode
+10. responsividade
+11. assinatura visual
 */
 
 @import url("./finance/_shell.css");
+@import url("./finance/_modes.css");
 @import url("./finance/_metrics.css");
 @import url("./finance/_cards.css");
 @import url("./finance/_boards.css");

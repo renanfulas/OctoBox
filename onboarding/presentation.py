@@ -19,7 +19,7 @@ from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from shared_support.page_payloads import build_page_assets, build_page_context, build_page_hero, build_page_payload
 
 
-def build_intake_center_page(*, snapshot, current_role_slug):
+def build_intake_center_page(*, snapshot, current_role_slug, intake_search=None):
     can_manage_students = current_role_slug in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
     can_resolve_queue = current_role_slug in (ROLE_OWNER, ROLE_MANAGER)
     can_work_queue = current_role_slug in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
@@ -86,6 +86,9 @@ def build_intake_center_page(*, snapshot, current_role_slug):
             'can_view_as_read_only': current_role_slug == ROLE_DEV,
             'can_manage_students': can_manage_students,
             'can_work_queue': can_work_queue,
+        },
+        behavior={
+            'intake_search': intake_search or {},
         },
         assets=build_page_assets(
             css=['css/design-system/operations.css', 'css/catalog/shared.css', 'css/catalog/students.css', 'css/onboarding/intakes.css'],

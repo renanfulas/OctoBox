@@ -24,7 +24,7 @@ def build_student_directory_page(*, student_count, students, student_filter_form
 
     if can_manage_students:
         hero_actions.append(
-            {'label': 'Novo aluno', 'href': f"{reverse('student-quick-create')}#student-form-essential", 'kind': 'secondary', 'data_action': 'open-student-create'}
+            {'label': 'Novo aluno', 'href': f"{reverse('student-quick-create')}#student-form-essential", 'kind': 'secondary'}
         )
 
     hero = build_page_hero(
@@ -74,5 +74,8 @@ def build_student_directory_page(*, student_count, students, student_filter_form
             'can_manage_students': can_manage_students,
             'can_open_student_admin': can_open_student_admin,
         },
-        assets=build_catalog_assets(css=['css/catalog/students.css'], include_catalog_shared=True),
+        assets=build_catalog_assets(
+            css=['css/catalog/students.css'],
+            include_catalog_shared=True,
+        ),
     )

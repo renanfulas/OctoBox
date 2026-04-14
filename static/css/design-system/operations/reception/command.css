@@ -34,6 +34,8 @@ ARQUIVO: atalhos e cards de apoio da recepção.
 
 .reception-command-card .actions,
 .reception-preview-command-card .actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
 }
 
@@ -44,6 +46,7 @@ ARQUIVO: atalhos e cards de apoio da recepção.
 
 .reception-command-card .button,
 .reception-preview-command-card .button {
+    width: 100%;
     min-height: 34px;
     padding: 7px 12px;
 }

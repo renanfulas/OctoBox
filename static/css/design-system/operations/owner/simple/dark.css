@@ -7,19 +7,58 @@ POR QUE ELE EXISTE:
 */
 
 body[data-theme="dark"] .owner-simple-shell .operation-hero,
-body[data-theme="dark"] .owner-simple-shell .owner-metric-grid .operation-kpi-card,
-body[data-theme="dark"] .owner-simple-shell .owner-secondary-item,
-body[data-theme="dark"] .owner-simple-shell .owner-status-item,
-body[data-theme="dark"] .owner-simple-shell .owner-step-card,
-body[data-theme="dark"] .owner-simple-shell .owner-summary-card .capability-list li {
-    border-color: color-mix(in srgb, var(--theme-glass-border) 92%, transparent);
-    background: var(--theme-surface-glass);
-    box-shadow: var(--theme-glass-shadow);
-<<<<<<< HEAD
+body[data-theme="dark"] .owner-simple-shell .owner-metric-grid .operation-kpi-card {
+    border-color: color-mix(in srgb, var(--owner-kpi-accent-alpha, var(--theme-accent-support-alpha)) 30%, var(--theme-glass-border) 70%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--owner-kpi-accent-alpha, var(--theme-accent-support-alpha)) 30%, transparent), transparent 34%),
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, rgba(10, 18, 32, 0.98) 92%, var(--owner-kpi-accent, var(--theme-accent-support)) 8%),
+            color-mix(in srgb, rgba(8, 15, 27, 0.98) 95%, var(--owner-kpi-accent, var(--theme-accent-support)) 5%)
+        );
+    box-shadow:
+        0 24px 44px rgba(2, 6, 23, 0.26),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 body[data-theme="dark"] .owner-simple-shell .operation-hero {
     --operation-hero-border: rgba(148, 163, 184, 0.12);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card {
+    --owner-command-accent: var(--theme-accent-support);
+    --owner-command-accent-alpha: var(--theme-accent-support-alpha);
+    background:
+        linear-gradient(180deg, rgba(10, 18, 32, 0.98), rgba(8, 15, 27, 0.96));
+    border-color: color-mix(in srgb, rgba(148, 163, 184, 0.14) 78%, var(--theme-accent-support-alpha) 22%);
+    box-shadow:
+        0 20px 36px rgba(2, 6, 23, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card.owner-command-card--entries {
+    --owner-command-accent: var(--theme-accent-danger);
+    --owner-command-accent-alpha: var(--theme-accent-danger-alpha);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, rgba(10, 18, 32, 0.98) 92%, var(--theme-accent-danger) 8%), color-mix(in srgb, rgba(8, 15, 27, 0.98) 95%, var(--theme-accent-danger) 5%));
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 24%, rgba(148, 163, 184, 0.14) 76%);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card.owner-command-card--billing {
+    --owner-command-accent: var(--theme-accent-warning);
+    --owner-command-accent-alpha: var(--theme-accent-warning-alpha);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, rgba(10, 18, 32, 0.98) 92%, var(--theme-accent-warning) 8%), color-mix(in srgb, rgba(8, 15, 27, 0.98) 95%, var(--theme-accent-warning) 5%));
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 22%, rgba(148, 163, 184, 0.14) 78%);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card.owner-command-card--structure {
+    --owner-command-accent: var(--theme-accent-success);
+    --owner-command-accent-alpha: var(--theme-accent-success-alpha);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, rgba(10, 18, 32, 0.98) 92%, var(--theme-accent-success) 8%), color-mix(in srgb, rgba(8, 15, 27, 0.98) 95%, var(--theme-accent-success) 5%));
+    border-color: color-mix(in srgb, var(--theme-accent-success) 22%, rgba(148, 163, 184, 0.14) 78%);
 }
 
 body[data-theme="dark"] .owner-simple-shell .owner-command-card--primary,
@@ -39,26 +78,127 @@ body[data-theme="dark"] .owner-workspace-strip {
 
 body[data-theme="dark"] .owner-simple-shell .owner-command-card--primary {
     background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--owner-command-accent-alpha) 52%, transparent), transparent 34%),
         linear-gradient(180deg, rgba(9, 17, 30, 0.99), rgba(7, 15, 28, 0.99));
-    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 28%, rgba(148, 163, 184, 0.12) 72%);
+    border-color: color-mix(in srgb, var(--owner-command-accent-alpha) 34%, rgba(148, 163, 184, 0.12) 66%);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card:hover {
+    box-shadow:
+        0 24px 42px rgba(2, 6, 23, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card__title {
+    color: color-mix(in srgb, var(--theme-text-primary) 94%, white 6%);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card__summary {
+    color: rgba(226, 232, 240, 0.76);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card__action {
+    color: color-mix(in srgb, var(--owner-command-accent) 58%, white 42%);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card__index {
+    border-color: color-mix(in srgb, var(--owner-command-accent) 22%, rgba(148, 163, 184, 0.12) 78%);
+    background: color-mix(in srgb, var(--owner-command-accent-alpha) 52%, rgba(8, 15, 27, 0.48) 48%);
+    color: color-mix(in srgb, var(--owner-command-accent) 78%, white 22%);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--owner-command-accent-alpha) 14%, transparent);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card__chip,
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card__count {
+    border-color: rgba(148, 163, 184, 0.16);
+    background: color-mix(in srgb, rgba(8, 16, 30, 0.96) 80%, var(--owner-command-accent-alpha) 20%);
+    color: rgba(226, 232, 240, 0.86);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card__chip.is-warning {
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 24%, rgba(148, 163, 184, 0.16) 76%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 20%, rgba(8, 16, 30, 0.96) 80%);
+    color: color-mix(in srgb, var(--theme-accent-warning) 64%, white 36%);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card__chip.is-danger {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 24%, rgba(148, 163, 184, 0.16) 76%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 20%, rgba(8, 16, 30, 0.96) 80%);
+    color: color-mix(in srgb, var(--theme-accent-danger) 64%, white 36%);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card__chip.is-success {
+    border-color: color-mix(in srgb, var(--theme-accent-success) 22%, rgba(148, 163, 184, 0.16) 78%);
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 18%, rgba(8, 16, 30, 0.96) 82%);
+    color: color-mix(in srgb, var(--theme-accent-success) 62%, white 38%);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card__chip.is-info,
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card__chip.is-accent {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, rgba(148, 163, 184, 0.16) 76%);
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, rgba(8, 16, 30, 0.96) 80%);
+    color: color-mix(in srgb, var(--theme-accent-support) 66%, white 34%);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card.owner-command-card--entries .owner-command-card__count {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 24%, rgba(148, 163, 184, 0.16) 76%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 20%, rgba(8, 16, 30, 0.96) 80%);
+    color: color-mix(in srgb, var(--theme-accent-danger) 64%, white 36%);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card.owner-command-card--entries .owner-command-card__index {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 22%, rgba(148, 163, 184, 0.12) 78%);
+    background: color-mix(in srgb, var(--theme-accent-danger) 82%, white 18%);
+    color: color-mix(in srgb, var(--theme-accent-danger) 78%, white 22%);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--theme-accent-danger-alpha) 14%, transparent);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card.owner-command-card--entries .owner-command-card__chip {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 24%, rgba(148, 163, 184, 0.16) 76%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 20%, rgba(8, 16, 30, 0.96) 80%);
+    color: color-mix(in srgb, var(--theme-accent-danger) 64%, white 36%);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card.owner-command-card--billing .owner-command-card__count {
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 24%, rgba(148, 163, 184, 0.16) 76%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 20%, rgba(8, 16, 30, 0.96) 80%);
+    color: color-mix(in srgb, var(--theme-accent-warning) 66%, white 34%);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card.owner-command-card--billing .owner-command-card__index {
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 22%, rgba(148, 163, 184, 0.12) 78%);
+    background: color-mix(in srgb, var(--theme-accent-warning) 84%, white 16%);
+    color: color-mix(in srgb, var(--theme-accent-warning) 78%, white 22%);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, transparent);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card.owner-command-card--billing .owner-command-card__chip {
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 24%, rgba(148, 163, 184, 0.16) 76%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 20%, rgba(8, 16, 30, 0.96) 80%);
+    color: color-mix(in srgb, var(--theme-accent-warning) 66%, white 34%);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card.owner-command-card--structure .owner-command-card__count {
+    border-color: color-mix(in srgb, var(--theme-accent-success) 22%, rgba(148, 163, 184, 0.16) 78%);
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 18%, rgba(8, 16, 30, 0.96) 82%);
+    color: color-mix(in srgb, var(--theme-accent-success) 62%, white 38%);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card.owner-command-card--structure .owner-command-card__index {
+    border-color: color-mix(in srgb, var(--theme-accent-success) 22%, rgba(148, 163, 184, 0.12) 78%);
+    background: color-mix(in srgb, var(--theme-accent-success) 82%, white 18%);
+    color: color-mix(in srgb, var(--theme-accent-success) 76%, white 24%);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--theme-accent-success-alpha) 14%, transparent);
+}
+
+body[data-theme="dark"] .owner-simple-shell .owner-command-lane .owner-command-card.owner-command-card--structure .owner-command-card__chip {
+    border-color: color-mix(in srgb, var(--theme-accent-success) 22%, rgba(148, 163, 184, 0.16) 78%);
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 18%, rgba(8, 16, 30, 0.96) 82%);
+    color: color-mix(in srgb, var(--theme-accent-success) 62%, white 38%);
 }
 
 body[data-theme="dark"] .owner-simple-shell .owner-metric-grid .operation-kpi-card:hover {
     box-shadow:
-        0 30px 54px rgba(2, 6, 23, 0.38),
+        0 30px 54px color-mix(in srgb, var(--owner-kpi-accent-alpha, var(--theme-accent-support-alpha)) 14%, rgba(2, 6, 23, 0.38) 86%),
         inset 0 1px 0 rgba(255, 255, 255, 0.06);
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
-}
-
-body[data-theme="dark"] .owner-next-steps-title {
-    color: rgba(243, 244, 246, 0.96);
-}
-
-body[data-theme="dark"] .owner-step-number {
-    color: rgba(209, 213, 219, 0.62);
-}
-
-body[data-theme="dark"] .owner-step-body strong {
-    color: rgba(243, 244, 246, 0.96);
 }

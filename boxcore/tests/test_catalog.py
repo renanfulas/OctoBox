@@ -19,6 +19,7 @@ from datetime import datetime
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -34,6 +35,7 @@ from students.models import Student
 
 class CatalogViewTests(TestCase):
     def setUp(self):
+        cache.clear()
         self.user = get_user_model().objects.create_superuser(
             username='catalog-owner',
             email='catalog-owner@example.com',
@@ -985,10 +987,7 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertEqual(body['status'], 'success')
-<<<<<<< HEAD
         self.assertEqual(body['selected_payment_id'], payment.id)
-=======
->>>>>>> codex/student-page-refactor-and-ui-polish
         self.assertIn('fragments', body)
         self.assertIn('student-payment-checkout-form', body['fragments']['checkout'])
         self.assertIn('student-financial-kpi-card', body['fragments']['kpis'])
@@ -1015,7 +1014,6 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertEqual(body['status'], 'success')
-<<<<<<< HEAD
         self.assertEqual(body['selected_payment_id'], newer_payment.id)
         self.assertIn('ABR-319', body['fragments']['checkout'])
         self.assertIn('319', body['fragments']['checkout'])
@@ -1038,10 +1036,6 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, f'data-payment-id="{overdue_payment.id}"', html=False)
         self.assertContains(response, 'data-action="edit-payment"', html=False)
-=======
-        self.assertIn('ABR-319', body['fragments']['checkout'])
-        self.assertIn('319', body['fragments']['checkout'])
->>>>>>> codex/student-page-refactor-and-ui-polish
 
     def test_student_payment_action_rejects_invalid_action(self):
         self.client.force_login(self.user)

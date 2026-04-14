@@ -6,42 +6,6 @@ POR QUE ELE EXISTE:
 - preserva juntas as regras de triagem e próxima ação.
 */
 
-.student-focus-card {
-    background: var(--card-surface);
-}
-
-.student-focus-list {
-    display: grid;
-    gap: 10px;
-}
-
-.student-focus-item {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 12px;
-    align-items: center;
-    padding: 14px 0;
-    border-top: 1px solid color-mix(in srgb, var(--card-border) 84%, transparent);
-}
-
-.student-focus-item:first-child {
-    padding-top: 4px;
-    border-top: 0;
-}
-
-.student-focus-copy p:last-child {
-    margin: 6px 0 0;
-    color: var(--muted);
-    line-height: 1.48;
-    max-width: 48ch;
-}
-
-.student-focus-actions {
-    display: grid;
-    gap: 8px;
-    justify-items: end;
-}
-
 .student-priority-panel .operation-card-head {
     margin-bottom: 12px;
 }
@@ -91,8 +55,4 @@ POR QUE ELE EXISTE:
 .priority-student-card .actions .button {
     min-height: 34px;
     padding: 7px 11px;
-}
-
-body[data-theme="dark"] .student-focus-item {
-    border-top-color: color-mix(in srgb, var(--card-border) 76%, transparent);
 }

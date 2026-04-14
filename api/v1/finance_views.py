@@ -12,6 +12,7 @@ from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from catalog.forms import EnrollmentManagementForm, PaymentManagementForm
+from catalog.presentation.student_financial_fragments import render_student_financial_fragments
 from catalog.student_queries import build_student_financial_snapshot
 from students.models import Student
 from finance.models import PaymentStatus, EnrollmentStatus
@@ -66,16 +67,19 @@ def _build_financial_fragment_page(student):
 
 
 def _render_financial_fragments(request, student):
-    page = _build_financial_fragment_page(student)
-    context = {'page': page}
-    return {
-        'id_card': render_to_string('includes/catalog/student_form/financial/financial_overview_id_card.html', context),
-        'kpis': render_to_string('includes/catalog/student_form/financial/financial_overview_kpis.html', context),
-        'ledger': render_to_string('includes/catalog/student_form/financial/stripe_elite_ledger.html', context),
-        'management': render_to_string('includes/catalog/student_form/financial/billing_console.html', context),
-        'checkout': render_to_string('includes/catalog/student_form/financial/financial_overview_payment_management.html', context),
-        'enrollment': render_to_string('includes/catalog/student_form/financial/financial_overview_enrollment_management.html', context),
-    }
+    fragments = render_student_financial_fragments(student, request=request)
+    fragments['ledger'] = (
+        '<div class="student-financial-ledger">'
+        f"{fragments.get('ledger', '')}"
+        '</div>'
+    )
+    if not fragments.get('management'):
+        fragments['management'] = (
+            '<div id="student-payment-management-root">'
+            f"{fragments.get('checkout', '')}"
+            '</div>'
+        )
+    return fragments
 
 class StudentFreezeView(LoginRequiredMixin, View):
     """

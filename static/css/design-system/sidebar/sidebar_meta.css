@@ -1,5 +1,4 @@
 /*
-<<<<<<< HEAD
 ARQUIVO: bloco de identificacao e meta-dados de perfil do usuario.
 
 POR QUE ELE EXISTE:
@@ -10,20 +9,6 @@ O QUE ESTE ARQUIVO FAZ:
 1. Define o bloco integrado `.sidebar-meta`.
 2. Estiliza avatar textual, nome, papel e resumo rapido.
 3. Sustenta a leitura silenciosa do topo da sidebar.
-=======
-ARQUIVO: bloco de perfil e destaque rapido da sidebar.
-
-POR QUE ELE EXISTE:
-- Isola a caixa do usuario logado e o resumo rapido da shell.
-
-O QUE ESTE ARQUIVO FAZ:
-1. Define o container `.sidebar-meta`.
-2. Estiliza nome, papel e destaque contextual.
-3. Mantem a fachada visual do bloco sem contaminar a navegacao.
-
-PONTOS CRITICOS:
-- Este arquivo nao deve controlar hover dos links nem o drawer mobile.
->>>>>>> codex/student-page-refactor-and-ui-polish
 */
 
 .sidebar-block {
@@ -31,23 +16,13 @@ PONTOS CRITICOS:
 }
 
 .sidebar-meta {
-<<<<<<< HEAD
     padding: 0 0 10px;
     border-bottom: 1px solid rgba(148, 163, 184, 0.08);
     color: var(--sidebar-ink);
-=======
-    padding: 13px;
-    border-radius: 14px;
-    color: var(--sidebar-ink);
-    border: 1px solid rgba(148, 163, 184, 0.14);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .sidebar-user-name {
     display: block;
-<<<<<<< HEAD
     margin: 0;
     font-size: 0.9rem;
     font-weight: 600;
@@ -55,29 +30,4 @@ PONTOS CRITICOS:
     letter-spacing: -0.025em;
     overflow-wrap: break-word;
     color: color-mix(in srgb, var(--sidebar-ink) 90%, var(--sidebar-muted) 10%);
-=======
-    margin-bottom: 4px;
-    font-size: 0.875rem;
-}
-
-.sidebar-role {
-    color: var(--sidebar-muted);
-    font-size: 0.8rem;
-    word-break: break-all;
-}
-
-.sidebar-highlight {
-    margin-top: 12px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    color: #e0ecff;
-    font-size: 0.8rem;
-    border: 1px solid rgba(96, 165, 250, 0.08);
-    background: linear-gradient(135deg, rgba(29, 78, 216, 0.18), rgba(15, 118, 110, 0.16));
-}
-
-.sidebar-highlight strong {
-    display: block;
-    margin-bottom: 4px;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }

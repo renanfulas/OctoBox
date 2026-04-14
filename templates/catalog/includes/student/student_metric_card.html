@@ -1,23 +1,25 @@
+{% with resolved_card_extra_classes=card_extra_classes|default:'' %}
 {% if card.href %}<a href="{{ card.href }}" class="metric-card-link">{% endif %}
-<article class="card metric-card kpi-family-card students-kpi-card students-interactive-kpi {{ card.card_class }} {{ card.tone_class }} {{ card_extra_classes }}{% if card.data_action %} has-action cursor-pointer{% endif %}{% if card.href %} has-href{% endif %}" data-panel="metric-card" data-slot="students-interactive-kpi-card"{% if card.data_action %} data-action="{{ card.data_action }}"{% endif %}>
-    <div class="card-body card-body-metric students-kpi-card-body">
+<article class="card metric-card kpi-family-card student-kpi-card student-interactive-kpi {{ card.card_class }} {{ card.tone_class }} {{ resolved_card_extra_classes }}{% if card.data_action %} has-action cursor-pointer{% endif %}{% if card.href %} has-href{% endif %}" data-panel="metric-card" data-slot="student-interactive-kpi-card"{% if card.data_action %} data-action="{{ card.data_action }}"{% endif %}{% if card.target_panel %} data-target-panel="{{ card.target_panel }}"{% endif %}{% if card.student_filter %} data-student-kpi-filter="{{ card.student_filter }}"{% endif %}>
+    <div class="card-body card-body-metric student-kpi-card-body">
         {% if card.icon %}
-        <div class="icon-box students-kpi-icon-box kpi-card-icon-box" aria-hidden="true">
+        <div class="icon-box student-kpi-icon-box kpi-card-icon-box" aria-hidden="true">
             {{ card.icon|safe }}
         </div>
         {% endif %}
         <div class="card-value-stack">
-            <div class="students-kpi-card-head">
-                <p class="eyebrow card-label students-kpi-card-label">
+            <div class="student-kpi-card-head">
+                <p class="eyebrow card-label student-kpi-card-label">
                     {% if card.eyebrow %}{{ card.eyebrow }}{% else %}{{ card.label }}{% endif %}
                 </p>
             </div>
             <div class="card-value-row{% if card.is_jumbo %} is-jumbo{% endif %}">
                 <p class="metric card-value">
-                    <span class="metric-number students-kpi-card-value{% if card.value_class %} {{ card.value_class }}{% endif %}">{{ card.display_value }}</span>
+                    <span class="metric-number student-kpi-card-value{% if card.value_class %} {{ card.value_class }}{% endif %}">{{ card.display_value }}</span>
                 </p>
             </div>
         </div>
     </div>
 </article>
 {% if card.href %}</a>{% endif %}
+{% endwith %}

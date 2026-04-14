@@ -7,7 +7,7 @@ POR QUE ELE EXISTE:
 */
 
 .whatsapp-placeholder-scene {
-    gap: calc(var(--section-gap) - 2px);
+    gap: var(--section-gap);
 }
 
 .whatsapp-placeholder-hero {
@@ -24,6 +24,7 @@ POR QUE ELE EXISTE:
 .whatsapp-placeholder-strip {
     display: flex;
     justify-content: center;
+    margin-top: var(--page-opening-panel-margin-top, var(--workspace-fib-4, 21px));
 }
 
 .whatsapp-placeholder-card {
@@ -31,6 +32,16 @@ POR QUE ELE EXISTE:
     border-color: color-mix(in srgb, rgba(37, 211, 102, 0.16) 70%, var(--theme-glass-border) 30%);
     background: var(--theme-surface-glass);
     box-shadow: var(--theme-glass-shadow);
+}
+
+.whatsapp-placeholder-card .operation-card-title,
+.whatsapp-placeholder-card .whatsapp-placeholder-note strong {
+    color: var(--theme-text-primary);
+}
+
+.whatsapp-placeholder-card .operation-card-copy,
+.whatsapp-placeholder-card .whatsapp-placeholder-note p:last-child {
+    color: var(--theme-text-secondary);
 }
 
 .whatsapp-placeholder-panel {
@@ -65,6 +76,13 @@ POR QUE ELE EXISTE:
 .whatsapp-placeholder-panel-copy {
     display: grid;
     gap: 8px;
+}
+
+.whatsapp-placeholder-panel .operation-hero-badge {
+    background: rgba(37, 211, 102, 0.1);
+    border-color: rgba(37, 211, 102, 0.18);
+    color: #15803d;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34);
 }
 
 .whatsapp-placeholder-grid {
@@ -106,6 +124,43 @@ body[data-theme="dark"] .whatsapp-placeholder-note {
         radial-gradient(circle at top right, rgba(37, 211, 102, 0.12), transparent 30%),
         linear-gradient(158deg, rgba(12, 22, 36, 0.98), rgba(8, 15, 26, 0.97) 60%, rgba(7, 12, 22, 0.95));
     border-color: color-mix(in srgb, rgba(37, 211, 102, 0.18) 70%, var(--theme-glass-border) 30%);
+}
+
+body[data-theme="dark"] .whatsapp-placeholder-hero .operation-hero-title {
+    color: rgba(248, 250, 252, 0.98);
+}
+
+body[data-theme="dark"] .whatsapp-placeholder-hero .operation-hero-copy,
+body[data-theme="dark"] .whatsapp-placeholder-card .operation-card-copy,
+body[data-theme="dark"] .whatsapp-placeholder-card .whatsapp-placeholder-note p:last-child {
+    color: rgba(203, 213, 225, 0.76);
+}
+
+body[data-theme="dark"] .whatsapp-placeholder-hero .operation-hero-eyebrow,
+body[data-theme="dark"] .whatsapp-placeholder-card .eyebrow {
+    color: rgba(110, 231, 183, 0.76);
+}
+
+body[data-theme="dark"] .whatsapp-placeholder-panel .operation-hero-badge {
+    background: rgba(21, 128, 61, 0.28);
+    border-color: rgba(74, 222, 128, 0.22);
+    color: rgba(220, 252, 231, 0.94);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .whatsapp-placeholder-card {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 22px 42px rgba(2, 6, 23, 0.3);
+}
+
+body[data-theme="dark"] .whatsapp-placeholder-card .operation-card-title,
+body[data-theme="dark"] .whatsapp-placeholder-card .whatsapp-placeholder-note strong {
+    color: rgba(248, 250, 252, 0.94);
+}
+
+body[data-theme="dark"] .whatsapp-placeholder-footer {
+    border-top-color: rgba(148, 163, 184, 0.12);
 }
 
 @media (max-width: 720px) {

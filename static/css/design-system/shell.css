@@ -6,7 +6,7 @@ POR QUE ELE EXISTE:
 
 O QUE ESTE ARQUIVO FAZ:
 1. Grid do .shell (sidebar + main).
-2. Container .content com max-width.
+2. Container .content-area com max-width.
 3. .page-body e scroll-margin dos IDs.
 4. Sidebar backdrop para mobile.
 
@@ -18,30 +18,23 @@ PONTOS CRITICOS:
     min-height: 100vh;
     display: grid;
     grid-template-columns: 320px minmax(0, 1fr);
-    gap: 18px;
-    padding: 18px;
     scrollbar-gutter: stable;
 }
 
-.content {
+.content-area {
     width: min(100%, var(--content-max));
     margin: 0 auto;
-    padding: 10px 14px 34px 8px;
     position: relative;
 }
 
-.content::before {
+.content-area::before {
     content: "";
     position: absolute;
-    inset: 8px 0 0;
-    border-radius: 36px;
-    background: transparent;
     pointer-events: none;
 }
 
 .page-body {
     display: grid;
-    gap: var(--section-gap);
     position: relative;
 }
 
@@ -53,25 +46,13 @@ PONTOS CRITICOS:
     scroll-margin-top: 148px;
 }
 
-.sidebar-backdrop {
-    display: none;
-}
-
 @media (max-width: 960px) {
     .shell {
         grid-template-columns: 1fr;
-        padding: 12px;
-        gap: 12px;
     }
 
-    .content {
+    .content-area {
         width: 100%;
-        padding: 8px 6px 26px;
-    }
-
-    .content::before {
-        inset: 0;
-        border-radius: 28px;
     }
 }
 
@@ -104,63 +85,25 @@ PONTOS CRITICOS:
     padding: 24px;
 }
 
-.content {
+.content-area {
     padding: 8px 8px 34px 8px; /* Simétrico: 8px em ambos os lados para fit perfeito */
 }
 
-.content::before {
+.content-area::before {
     inset: 0;
     border-radius: 40px;
-<<<<<<< HEAD
     background: transparent;
     border: 0;
     box-shadow: none;
 }
 
-.content::after {
+.content-area::after {
     content: none;
-=======
-    background: linear-gradient(180deg, var(--theme-glass-highlight), transparent 72%), var(--theme-surface-glass-strong);
-    border: 1px solid var(--theme-glass-border);
-    box-shadow: var(--theme-glass-shadow);
-}
-
-.content::after {
-    content: "";
-    position: absolute;
-    inset: 18px 16px auto;
-    height: 64px;
-    border-radius: 28px;
-    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-premium-alpha) 42%, transparent), transparent 30%, color-mix(in srgb, var(--theme-accent-support-alpha) 42%, transparent) 70%, transparent);
-    pointer-events: none;
-    z-index: 0;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .page-body {
     gap: calc(var(--section-gap) + 4px);
     padding: 0;
-}
-
-body[data-theme="dark"] .content::before {
-<<<<<<< HEAD
-    border-color: transparent;
-    background: transparent;
-    box-shadow: none;
-}
-
-body[data-theme="dark"] .content::after {
-    content: none;
-=======
-    border-color: var(--theme-glass-border);
-    background: linear-gradient(180deg, var(--theme-glass-highlight), transparent 72%), var(--theme-surface-glass-strong);
-    box-shadow: var(--theme-glass-shadow);
-}
-
-body[data-theme="dark"] .content::after {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-premium-alpha) 62%, transparent), transparent 28%, color-mix(in srgb, var(--theme-accent-support-alpha) 62%, transparent) 70%, transparent);
-    opacity: 0.4;
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 @media (max-width: 960px) {
@@ -169,15 +112,15 @@ body[data-theme="dark"] .content::after {
         padding: 13px;
     }
 
-    .content {
+    .content-area {
         padding: 0 4px 21px;
     }
 
-    .content::before {
+    .content-area::before {
         border-radius: 24px;
     }
 
-    .content::after {
+    .content-area::after {
         content: none;
     }
 }

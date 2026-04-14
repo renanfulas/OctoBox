@@ -19,7 +19,7 @@ PONTOS CRITICOS:
 {% block content %}
 {% with page=finance_center_page %}
 <div class="operation-shell finance-shell workspace-shell" data-page="finance" data-screen="catalog-finance" data-slot="page-root">
-    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero hero_variant_class="hero--command" %}
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
     <div class="finance-kpi-panel section-gap" data-panel="finance-interactive-kpis">
         <section class="finance-kpi-grid interactive-tab-triggers" aria-label="Navegacao principal financeira">
@@ -33,58 +33,43 @@ PONTOS CRITICOS:
         </section>
     </div>
 
+    <section class="finance-mode-strip section-gap" aria-label="Modo de leitura do financeiro">
+        <div class="finance-mode-strip-copy">
+            <strong>{{ page.data.finance_mode_contract.headline }}</strong>
+            <p>{{ page.data.finance_mode_contract.summary }}</p>
+        </div>
+        <div class="finance-mode-grid" data-active-mode="{{ page.behavior.active_mode }}">
+            {% for mode in page.data.finance_mode_contract.modes %}
+            <button class="finance-mode-card finance-mode-card--{{ mode.key }}{% if mode.is_active %} is-active{% endif %}" type="button" data-mode-key="{{ mode.key }}" data-finance-mode-button="{{ mode.key }}" aria-pressed="{% if mode.is_active %}true{% else %}false{% endif %}">
+                <span class="eyebrow">{{ mode.kicker }}</span>
+                <strong>{{ mode.label }}</strong>
+                <p>{{ mode.summary }}</p>
+                <span class="finance-mode-card-meta">{{ mode.badge }} | {{ mode.surface_count }} superficie(s)</span>
+            </button>
+            {% endfor %}
+        </div>
+    </section>
+
     <div class="interactive-tab-container" data-default-panel="{{ page.behavior.default_panel }}">
-        <div class="stack-16 deferred-surface deferred-surface--dense{% if page.behavior.default_panel == 'tab-finance-movements' %} is-tab-active{% endif %}" id="tab-finance-movements" aria-label="Raio-X financeiro">
+        <div class="stack-16 deferred-surface deferred-surface--dense{% if page.behavior.default_panel == 'tab-finance-movements' %} is-tab-active{% endif %}" id="tab-finance-movements" data-mode-surface="traditional" aria-label="Raio-X financeiro">
             {% include "includes/catalog/finance/boards/trend_boards.html" %}
         </div>
 
-<<<<<<< HEAD
-        <div class="stack-16 deferred-surface deferred-surface--dense{% if page.behavior.default_panel == 'tab-finance-queue' %} is-tab-active{% endif %}" id="tab-finance-queue" aria-label="Handoff de cobranca">
-            <section class="finance-section-intro finance-queue-intro" aria-label="Leitura da aba de cobranca">
-                <div class="finance-queue-intro-column">
-                    <span class="eyebrow">Execucao pronta</span>
-                    <strong>Acoes prontas do turno</strong>
-                    <p>Casos semiassistidos que ja chegam mastigados para disparo.</p>
-                </div>
-                <div class="finance-queue-intro-column">
-                    <span class="eyebrow">Decisao assistida</span>
-                    <strong>Fila assistida</strong>
-                    <p>Casos que pedem leitura de prioridade, timing e contexto antes do proximo toque.</p>
-                </div>
-            </section>
+        <div class="stack-16 deferred-surface deferred-surface--dense{% if page.behavior.default_panel == 'tab-finance-queue' %} is-tab-active{% endif %}" id="tab-finance-queue" data-mode-surface="hybrid" aria-label="Handoff de cobranca">
             {% if page.data.operational_queue %}
-=======
-        <div class="stack-16 deferred-surface deferred-surface--dense finance-deferred-surface finance-deferred-surface--queue{% if page.behavior.default_panel == 'tab-finance-queue' %} is-tab-active{% endif %}" id="tab-finance-queue" aria-label="Handoff de cobranca">
->>>>>>> codex/student-page-refactor-and-ui-polish
             {% include "includes/catalog/finance/views/priority_rail.html" %}
             {% endif %}
             {% include "includes/catalog/finance/boards/queue_board.html" %}
         </div>
 
-        <div class="stack-16 deferred-surface deferred-surface--xl{% if page.behavior.default_panel == 'tab-finance-portfolio' %} is-tab-active{% endif %}" id="tab-finance-portfolio" aria-label="Motor de carteira">
-<<<<<<< HEAD
+        <div class="stack-16 deferred-surface deferred-surface--xl{% if page.behavior.default_panel == 'tab-finance-portfolio' %} is-tab-active{% endif %}" id="tab-finance-portfolio" data-mode-surface="traditional" aria-label="Motor de carteira">
             {% include "includes/catalog/finance/boards/portfolio_board.html" %}
             {% if page.capabilities.can_manage_finance %}
             {% include "includes/catalog/finance/engine/plan_engine.html" %}
             {% endif %}
-=======
-            <div class="finance-portfolio-scene">
-                <div class="finance-portfolio-analysis">
-                    {% include "includes/catalog/finance/boards/portfolio_board.html" %}
-                    {% include "includes/catalog/finance/boards/mix_board.html" %}
-                </div>
-                <div class="finance-portfolio-engine">
-                    {% if page.capabilities.can_manage_finance %}
-                    {% include "includes/catalog/finance/engine/plan_engine.html" %}
-                    {% else %}
-                    {% include "includes/catalog/finance/engine/plan_engine.html" %}
-                    {% endif %}
-                </div>
-            </div>
->>>>>>> codex/student-page-refactor-and-ui-polish
         </div>
 
-        <div class="stack-16 deferred-surface{% if page.behavior.default_panel == 'tab-finance-filters' %} is-tab-active{% endif %}" id="tab-finance-filters" aria-label="Filtros e contexto">
+        <div class="stack-16 deferred-surface{% if page.behavior.default_panel == 'tab-finance-filters' %} is-tab-active{% endif %}" id="tab-finance-filters" data-mode-surface="traditional" aria-label="Filtros e contexto">
             {% include "includes/catalog/finance/boards/control_board.html" %}
         </div>
     </div>
@@ -95,5 +80,7 @@ PONTOS CRITICOS:
 {% block extra_scripts %}
 <script src="{% static 'js/pages/interactive_tabs.js' %}?v={{ static_asset_version }}"></script>
 <script src="{% static 'js/pages/finance/finance-filter-summary.js' %}?v={{ static_asset_version }}"></script>
+<script src="{% static 'js/pages/finance/finance-mode-controller.js' %}?v={{ static_asset_version }}"></script>
+<script src="{% static 'js/pages/finance/finance-trend-board-controller.js' %}?v={{ static_asset_version }}"></script>
 <script src="{% static 'js/pages/finance/finance-priority-carousel.js' %}?v={{ static_asset_version }}"></script>
 {% endblock %}

@@ -38,7 +38,6 @@ POR QUE ELE EXISTE:
     font-size: 0.875rem;
     line-height: 1.2;
     text-align: center;
-<<<<<<< HEAD
     letter-spacing: -0.01em;
     box-shadow:
         0 16px 28px color-mix(in srgb, var(--theme-accent-support-alpha) 58%, transparent),
@@ -49,10 +48,6 @@ POR QUE ELE EXISTE:
         background var(--motion-base) var(--ease-standard),
         border-color var(--motion-base) var(--ease-standard),
         color var(--motion-base) var(--ease-standard);
-=======
-    box-shadow: var(--card-shadow);
-    transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
->>>>>>> codex/student-page-refactor-and-ui-polish
     cursor: pointer;
 }
 
@@ -67,7 +62,6 @@ POR QUE ELE EXISTE:
 
 .button:focus-visible {
     outline: none;
-<<<<<<< HEAD
     box-shadow:
         0 0 0 3px color-mix(in srgb, var(--theme-accent-support) 24%, transparent),
         0 18px 30px color-mix(in srgb, var(--theme-accent-support-alpha) 58%, transparent);
@@ -86,27 +80,11 @@ POR QUE ELE EXISTE:
     border-color: color-mix(in srgb, var(--theme-accent-support) 34%, transparent);
     color: color-mix(in srgb, var(--theme-accent-support) 76%, var(--ink) 24%);
     background: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
-=======
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3), var(--card-shadow);
-}
-
-.button.secondary {
-    background: var(--card-surface);
-    color: var(--ink);
-    border: 1px solid var(--card-border);
-    box-shadow: none;
-}
-
-.button.secondary:hover {
-    border-color: var(--brand);
-    color: var(--brand);
-    background: var(--card-surface);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .button.ghost {
     background: transparent;
-    color: var(--legacy-copy);
+    color: var(--muted);
     border: 1px solid transparent;
     box-shadow: none;
 }
@@ -117,24 +95,15 @@ POR QUE ELE EXISTE:
 }
 
 body[data-theme="dark"] .button.secondary {
-<<<<<<< HEAD
     background: color-mix(in srgb, var(--chrome-surface) 88%, transparent);
     color: var(--ink);
     border-color: color-mix(in srgb, var(--chrome-border) 96%, transparent);
-=======
-    background: var(--theme-surface-glass-strong);
-    color: var(--theme-text-primary);
-    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
-    box-shadow:
-        inset 0 1px 0 var(--theme-glass-highlight),
-        0 10px 24px rgba(0, 0, 0, 0.18);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 .capability-list {
     margin: 0;
     padding-left: 18px;
-    color: var(--legacy-copy);
+    color: var(--muted);
     line-height: 1.6;
 }
 
@@ -163,44 +132,4 @@ body[data-theme="dark"] .button.secondary {
 .button:active {
     transform: translateY(0) scale(0.985);
     transition-duration: var(--motion-fast);
-}
-
-<<<<<<< HEAD
-=======
-/* --- Front Display Wall facade actions pass --- */
-.button {
-    background: linear-gradient(135deg, #b87a54, #c98960);
-    border: 1px solid rgba(196, 91, 45, 0.18);
-    box-shadow: 0 10px 18px rgba(196, 91, 45, 0.12);
-}
-
-.button:hover {
-    background: linear-gradient(135deg, #b85b2f, #cb6227);
-}
-
-.button.secondary {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.86));
-    border-color: rgba(80, 102, 128, 0.16);
-}
-
-.button.secondary:hover {
-    border-color: rgba(29, 78, 216, 0.22);
-    color: var(--fdw-sky);
-}
-
-body[data-theme="dark"] .button.secondary {
-    background: color-mix(in srgb, var(--theme-surface-glass) 88%, transparent);
-    border-color: color-mix(in srgb, var(--theme-glass-border) 94%, transparent);
-    color: var(--theme-text-primary);
-}
-
-body[data-theme="dark"] .button.secondary:hover {
-    background: var(--theme-surface-glass-strong);
-    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 34%, var(--theme-glass-border) 66%);
-    color: color-mix(in srgb, var(--theme-accent-primary) 78%, white 22%);
-}
-
->>>>>>> codex/student-page-refactor-and-ui-polish
-.button-pill {
-    border-radius: 9999px;
 }

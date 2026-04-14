@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var filterForm = document.getElementById('student-directory-filter-form');
     var searchInput = filterForm ? filterForm.querySelector('input[name="query"]') : null;
     var pills = Array.from(document.querySelectorAll('[data-student-filter], [data-student-sort]'));
+    var kpiFilters = Array.from(document.querySelectorAll('[data-student-kpi-filter]'));
     var rows = Array.from(document.querySelectorAll('[data-student-row]'));
     var tbody = document.querySelector('[data-student-directory-body]');
     var countNode = document.querySelector('[data-student-count]');
@@ -45,9 +46,10 @@ document.addEventListener('DOMContentLoaded', function() {
         sortBy: '',
         sortDirection: 'desc',
         searchQuery: '',
+        searchListAllCommand: false,
     };
+    var currentSearchParams = new URLSearchParams(window.location.search || '');
     var rowPrefetchTimers = new WeakMap();
-    var searchSubmitTimerId = null;
     var serverRows = rows.slice();
     var directorySearchCacheKey = 'octobox.student.directory.search-index.v1.' + String(directorySearchConfig.cache_key || 'all');
     var directorySearchStaleKey = 'octobox.student.directory.search-index.stale.v1.' + String(directorySearchConfig.cache_key || 'all');
@@ -64,6 +66,10 @@ document.addEventListener('DOMContentLoaded', function() {
         fragmentsLoaded: {
             profile: false,
             financial: false,
+        },
+        fragmentMarkup: {
+            profile: '',
+            financial: '',
         },
         liveRefreshTimerId: null,
         heartbeatTimerId: null,
@@ -84,6 +90,53 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window.__octoboxStudentRealtimeTelemetry = realtimeTelemetry;
+
+    function setDirectoryFooterVisibility(shouldShow) {
+        if (!directoryFooter) {
+            return;
+        }
+
+        directoryFooter.hidden = !shouldShow;
+        directoryFooter.style.display = shouldShow ? '' : 'none';
+    }
+
+    function hasServerScopedFilters() {
+        return currentSearchParams.has('student_status')
+            || currentSearchParams.has('commercial_status')
+            || currentSearchParams.has('payment_status')
+            || currentSearchParams.has('created_window');
+    }
+
+    function buildDirectoryFilterUrl(nextFilter) {
+        var nextParams = new URLSearchParams(window.location.search || '');
+        var liveQueryValue = searchInput ? String(searchInput.value || '').trim() : '';
+
+        nextParams.delete('student_status');
+        nextParams.delete('commercial_status');
+        nextParams.delete('payment_status');
+        nextParams.delete('created_window');
+        nextParams.delete('page');
+        nextParams.delete('keep_open');
+
+        if (liveQueryValue) {
+            nextParams.set('query', liveQueryValue);
+        } else {
+            nextParams.delete('query');
+        }
+
+        if (nextFilter === 'active') {
+            nextParams.set('student_status', 'active');
+        } else if (nextFilter === 'paused') {
+            nextParams.set('student_status', 'paused');
+        } else if (nextFilter === 'inactive') {
+            nextParams.set('student_status', 'inactive');
+        } else if (nextFilter === 'overdue') {
+            nextParams.set('payment_status', 'overdue');
+        }
+
+        var queryString = nextParams.toString();
+        return window.location.pathname + (queryString ? ('?' + queryString) : '') + '#tab-students-directory';
+    }
 
     function supportsSessionStorage() {
         try {
@@ -136,6 +189,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!cacheEntry || !Array.isArray(cacheEntry.index)) {
             return [];
         }
+
+        if ((cacheEntry.refresh_token || '') !== String(directorySearchConfig.refresh_token || '')) {
+            return [];
+        }
+
         return cacheEntry.index;
     }
 
@@ -559,6 +617,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function ensureQuickPanelTabContent(name, options) {
         if (!quickPanelState.isOpen || !quickPanelState.activeRow || !name) {
+            return;
+        }
+
+        if (!quickPanelState.fragmentsLoaded[name] && quickPanelState.fragmentMarkup[name]) {
+            if (name === 'profile') {
+                mountDrawerProfileFragment({ fragments: { profile: quickPanelState.fragmentMarkup.profile } });
+            } else if (name === 'financial') {
+                mountDrawerFinancialFragment({ fragments: { financial: quickPanelState.fragmentMarkup.financial } });
+            }
             return;
         }
 
@@ -1030,6 +1097,10 @@ document.addEventListener('DOMContentLoaded', function() {
             profile: false,
             financial: false,
         };
+        quickPanelState.fragmentMarkup = {
+            profile: '',
+            financial: '',
+        };
         quickPanelState.editSessionActive = false;
         quickPanelState.lastFragmentRefreshAt = 0;
         quickPanelState.currentSnapshotVersion = '';
@@ -1081,6 +1152,10 @@ document.addEventListener('DOMContentLoaded', function() {
             profile: false,
             financial: false,
         };
+        quickPanelState.fragmentMarkup = {
+            profile: '',
+            financial: '',
+        };
         quickPanelState.editSessionActive = false;
         quickPanelState.refreshInFlight = false;
         quickPanelState.sseConnected = false;
@@ -1099,13 +1174,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function warmStudentRow(row) {
+    function warmStudentRow(row, options) {
         if (!row || row.hidden) {
             return;
         }
 
         cacheStudentHint(row);
-        fetchSnapshotForRow(row);
+        if (!(options && options.skipSnapshot)) {
+            fetchSnapshotForRow(row);
+        }
         prefetchStudentDocument(row.getAttribute('data-href') || '');
     }
 
@@ -1200,6 +1277,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function showDrawerFragmentLoading(targetTab) {
+        var profileSlot = getQuickPanelNode('[data-student-quick-profile-slot]');
+        var financialSlot = getQuickPanelNode('[data-student-quick-financial-slot]');
+
+        if (!targetTab) {
+            showDrawerFragmentsLoading();
+            return;
+        }
+
+        if (targetTab === 'profile' && profileSlot) {
+            profileSlot.innerHTML = '<p class="student-quick-panel__copy">Carregando perfil...</p>';
+        }
+
+        if (targetTab === 'financial' && financialSlot) {
+            financialSlot.innerHTML = '<p class="student-quick-panel__copy">Carregando financeiro...</p>';
+        }
+    }
+
     function resetQuickPanelFragmentSlots() {
         showDrawerFragmentsLoading();
         closeQuickFinancialDrawers();
@@ -1216,6 +1311,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (profileSlot && typeof payload.fragments.profile === 'string') {
             profileSlot.innerHTML = payload.fragments.profile;
             quickPanelState.fragmentsLoaded.profile = true;
+            quickPanelState.fragmentMarkup.profile = payload.fragments.profile;
             var profileForm = profileSlot.querySelector('[data-student-profile-form]');
             if (profileForm) {
                 setDrawerProfileReadonlyState(profileForm, !quickPanelState.editSessionActive);
@@ -1226,6 +1322,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (financialSlot && typeof payload.fragments.financial === 'string') {
             financialSlot.innerHTML = payload.fragments.financial;
             quickPanelState.fragmentsLoaded.financial = true;
+            quickPanelState.fragmentMarkup.financial = payload.fragments.financial;
         }
     }
 
@@ -1238,6 +1335,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (profileSlot) {
             profileSlot.innerHTML = payload.fragments.profile;
             quickPanelState.fragmentsLoaded.profile = true;
+            quickPanelState.fragmentMarkup.profile = payload.fragments.profile;
             var profileForm = profileSlot.querySelector('[data-student-profile-form]');
             if (profileForm) {
                 setDrawerProfileReadonlyState(profileForm, !quickPanelState.editSessionActive);
@@ -1255,6 +1353,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (financialSlot) {
             financialSlot.innerHTML = payload.fragments.financial;
             quickPanelState.fragmentsLoaded.financial = true;
+            quickPanelState.fragmentMarkup.financial = payload.fragments.financial;
         }
     }
 
@@ -1467,7 +1566,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (!(options && options.skipLoading)) {
-            showDrawerFragmentsLoading();
+            showDrawerFragmentLoading(options && options.targetTab ? options.targetTab : '');
         }
 
         fetch(fragmentsUrl, {
@@ -1491,11 +1590,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 applySnapshotUpdate(payload.snapshot);
                 if (quickPanelState.isOpen && quickPanelState.studentId === Number(payload.snapshot.id || 0)) {
                     if (options && options.targetTab === 'profile') {
-                        mountDrawerProfileFragment(payload);
+                        if (payload.fragments && typeof payload.fragments.profile === 'string') {
+                            mountDrawerProfileFragment(payload);
+                        } else if (payload.fragments) {
+                            mountDrawerFragments(payload);
+                        }
                     } else if (options && options.financialOnly) {
-                        mountDrawerFinancialFragment(payload);
+                        if (payload.fragments && typeof payload.fragments.financial === 'string') {
+                            mountDrawerFinancialFragment(payload);
+                        } else if (payload.fragments) {
+                            mountDrawerFragments(payload);
+                        }
                     } else if (options && options.targetTab === 'financial') {
-                        mountDrawerFinancialFragment(payload);
+                        if (payload.fragments && typeof payload.fragments.financial === 'string') {
+                            mountDrawerFinancialFragment(payload);
+                        } else if (payload.fragments) {
+                            mountDrawerFragments(payload);
+                        }
                     } else {
                         mountDrawerFragments(payload);
                     }
@@ -1708,7 +1819,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .filter(function(row) { return !row.hidden; })
                 .slice(0, idlePrefetchLimit)
                 .forEach(function(row) {
-                    warmStudentRow(row);
+                    warmStudentRow(row, { skipSnapshot: true });
                 });
         };
 
@@ -1745,6 +1856,20 @@ document.addEventListener('DOMContentLoaded', function() {
             .toLowerCase()
             .replace(/\s+/g, ' ')
             .trim();
+    }
+
+    function isListAllSearchCommand(value) {
+        return String(value || '').trim() === '/';
+    }
+
+    function setSearchStateFromInputValue(value) {
+        filterState.searchListAllCommand = isListAllSearchCommand(value);
+        filterState.searchQuery = filterState.searchListAllCommand ? '' : normalizeSearchText(value);
+        if (filterState.searchListAllCommand) {
+            filterState.filter = 'all';
+            filterState.sortBy = '';
+            filterState.sortDirection = 'desc';
+        }
     }
 
     function getRowSearchIndex(row) {
@@ -1796,6 +1921,7 @@ document.addEventListener('DOMContentLoaded', function() {
             status: entry.status || '',
             latest_plan_name: entry.latest_plan_name || '',
             payment_status: entry.payment_status || '',
+            is_new_30d: Boolean(entry.is_new_30d),
             presence_percent: Number(entry.presence_percent || 0),
             due_label: entry.due_label || '',
             href: entry.href || '',
@@ -1808,6 +1934,10 @@ document.addEventListener('DOMContentLoaded', function() {
             lock_heartbeat_url: entry.lock_heartbeat_url || '',
             lock_status_url: entry.lock_status_url || '',
         };
+    }
+
+    function isDirectoryBaseStatus(status) {
+        return status !== 'lead';
     }
 
     function buildDirectoryRowMarkup(entry) {
@@ -1881,6 +2011,7 @@ document.addEventListener('DOMContentLoaded', function() {
         row.setAttribute('data-student-plan', student.latest_plan_name || '');
         row.setAttribute('data-student-due-label', student.due_label || '');
         row.setAttribute('data-student-status', student.status || '');
+        row.setAttribute('data-student-new-30d', student.is_new_30d ? 'true' : 'false');
         row.setAttribute('data-payment-status', student.payment_status || '');
         row.setAttribute('data-presence-percent', String(student.presence_percent || 0));
         row.setAttribute('data-search-index', (student.full_name + ' ' + (student.email || student.phone || '') + ' ' + (student.latest_plan_name || '--')).toLowerCase());
@@ -1902,9 +2033,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         rows = serverRows.slice();
         directorySearchState.isUsingSearchIndex = false;
-        if (directoryFooter) {
-            directoryFooter.hidden = false;
-        }
+        setDirectoryFooterVisibility(true);
     }
 
     function renderDirectorySearchRows() {
@@ -1913,16 +2042,19 @@ document.addEventListener('DOMContentLoaded', function() {
             var paymentStatus = entry.payment_status || '';
             var studentStatus = entry.status || '';
             var searchIndexValue = normalizeSearchText(entry.full_name + ' ' + (entry.email || entry.phone || '') + ' ' + (entry.latest_plan_name || '--'));
-            var matchesQuery = !filterState.searchQuery || searchIndexValue.indexOf(filterState.searchQuery) !== -1;
+            var matchesQuery = filterState.searchListAllCommand || !filterState.searchQuery || searchIndexValue.indexOf(filterState.searchQuery) !== -1;
             if (!matchesQuery) {
                 return false;
             }
 
             if (filterState.filter === 'all') {
-                return true;
+                return isDirectoryBaseStatus(studentStatus);
             }
             if (filterState.filter === 'overdue') {
                 return paymentStatus === 'overdue';
+            }
+            if (filterState.filter === 'new-30d') {
+                return Boolean(entry.is_new_30d);
             }
             return studentStatus === filterState.filter;
         });
@@ -1959,47 +2091,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         directorySearchState.isUsingSearchIndex = true;
-        if (directoryFooter) {
-            directoryFooter.hidden = true;
-        }
-    }
-
-    function submitDirectorySearchForm() {
-        if (!filterForm) {
-            return;
-        }
-
-        if (searchSubmitTimerId) {
-            window.clearTimeout(searchSubmitTimerId);
-            searchSubmitTimerId = null;
-        }
-
-        if (typeof filterForm.requestSubmit === 'function') {
-            filterForm.requestSubmit();
-            return;
-        }
-
-        filterForm.submit();
-    }
-
-    function scheduleDirectorySearchSubmit() {
-        if (!filterForm || !searchInput) {
-            return;
-        }
-
-        var nextQuery = normalizeSearchText(searchInput.value);
-        var currentQuery = normalizeSearchText(searchInput.defaultValue || '');
-        if (nextQuery === currentQuery) {
-            return;
-        }
-
-        if (searchSubmitTimerId) {
-            window.clearTimeout(searchSubmitTimerId);
-        }
-
-        searchSubmitTimerId = window.setTimeout(function() {
-            submitDirectorySearchForm();
-        }, 280);
+        setDirectoryFooterVisibility(false);
     }
 
     function bindRowInteractions(row) {
@@ -2063,24 +2155,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function sortRowsIfNeeded(visibleRows) {
-        if (!tbody || filterState.sortBy !== 'presence') {
+        if (!tbody) {
             return;
         }
 
         visibleRows.sort(function(a, b) {
-            var leftValue = getPresenceValue(a);
-            var rightValue = getPresenceValue(b);
-            var compare = leftValue - rightValue;
+            if (filterState.sortBy === 'presence') {
+                var leftValue = getPresenceValue(a);
+                var rightValue = getPresenceValue(b);
+                var compare = leftValue - rightValue;
 
-            if (filterState.sortDirection === 'desc') {
-                compare *= -1;
+                if (filterState.sortDirection === 'desc') {
+                    compare *= -1;
+                }
+
+                if (compare !== 0) {
+                    return compare;
+                }
             }
 
-            if (compare !== 0) {
-                return compare;
-            }
-
-            return a.innerText.localeCompare(b.innerText, 'pt-BR');
+            var leftName = String(a.getAttribute('data-student-name') || a.innerText || '');
+            var rightName = String(b.getAttribute('data-student-name') || b.innerText || '');
+            return leftName.localeCompare(rightName, 'pt-BR');
         });
 
         visibleRows.forEach(function(row) {
@@ -2098,23 +2194,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function matchesFilter(row) {
         if (filterState.filter === 'all') {
-            return true;
+            return isDirectoryBaseStatus(row.getAttribute('data-student-status') || '');
         }
 
         if (filterState.filter === 'overdue') {
             return row.getAttribute('data-payment-status') === 'overdue';
         }
 
+        if (filterState.filter === 'new-30d') {
+            return row.getAttribute('data-student-new-30d') === 'true';
+        }
+
         return row.getAttribute('data-student-status') === filterState.filter;
     }
 
     function applyLocalDirectoryState() {
-        if (filterState.searchQuery) {
-            if (isDirectorySearchStale()) {
-                scheduleDirectorySearchSubmit();
-                return;
-            }
+        var shouldUseSearchIndex = filterState.searchQuery || filterState.searchListAllCommand;
+        setDirectoryFooterVisibility(!shouldUseSearchIndex);
 
+        if (shouldUseSearchIndex) {
             if (getDirectorySearchIndex().length) {
                 renderDirectorySearchRows();
                 return;
@@ -2159,21 +2257,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (filterForm && searchInput) {
         filterForm.addEventListener('submit', function(event) {
-            if (searchSubmitTimerId) {
-                window.clearTimeout(searchSubmitTimerId);
-                searchSubmitTimerId = null;
-            }
-        });
-
-        searchInput.addEventListener('input', function() {
-            filterState.searchQuery = normalizeSearchText(searchInput.value);
-            if (!filterState.searchQuery && directorySearchState.isUsingSearchIndex) {
-                restoreServerRows();
-            }
+            event.preventDefault();
+            setSearchStateFromInputValue(searchInput.value);
+            syncPills();
             applyLocalDirectoryState();
         });
 
-        filterState.searchQuery = normalizeSearchText(searchInput.value);
+        searchInput.addEventListener('input', function() {
+            setSearchStateFromInputValue(searchInput.value);
+            if (!filterState.searchQuery && !filterState.searchListAllCommand && directorySearchState.isUsingSearchIndex) {
+                restoreServerRows();
+            }
+            syncPills();
+            applyLocalDirectoryState();
+        });
+
+        setSearchStateFromInputValue(searchInput.value);
+    }
+
+    if (currentSearchParams.get('payment_status') === 'overdue') {
+        filterState.filter = 'overdue';
+    } else if (currentSearchParams.get('student_status') === 'inactive') {
+        filterState.filter = 'inactive';
+    } else if (currentSearchParams.get('student_status') === 'paused') {
+        filterState.filter = 'paused';
+    } else if (currentSearchParams.get('student_status') === 'active') {
+        filterState.filter = 'active';
     }
 
     pills.forEach(function(pill) {
@@ -2186,10 +2295,40 @@ document.addEventListener('DOMContentLoaded', function() {
                     filterState.sortDirection = pill.getAttribute('data-sort-direction') || 'desc';
                 }
             } else {
-                filterState.filter = pill.getAttribute('data-student-filter') || 'all';
+                var nextFilter = pill.getAttribute('data-student-filter') || 'all';
+                if (filterState.filter === nextFilter && filterState.sortBy === 'presence') {
+                    filterState.sortBy = '';
+                    filterState.sortDirection = 'desc';
+                    filterState.filter = nextFilter;
+                    syncPills();
+                    applyLocalDirectoryState();
+                    return;
+                }
+                if (hasServerScopedFilters()) {
+                    window.location.assign(buildDirectoryFilterUrl(nextFilter));
+                    return;
+                }
+                filterState.filter = nextFilter;
             }
 
             syncPills();
+            applyLocalDirectoryState();
+        });
+    });
+
+    kpiFilters.forEach(function(card) {
+        card.addEventListener('click', function() {
+            var nextFilter = card.getAttribute('data-student-kpi-filter') || 'all';
+            filterState.filter = nextFilter;
+            if (filterState.sortBy === 'presence') {
+                filterState.sortBy = '';
+                filterState.sortDirection = 'desc';
+            }
+            syncPills();
+            if (getDirectorySearchIndex().length) {
+                renderDirectorySearchRows();
+                return;
+            }
             applyLocalDirectoryState();
         });
     });

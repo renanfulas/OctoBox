@@ -1,0 +1,102 @@
+﻿<!--
+ARQUIVO: tela de login.
+
+POR QUE ELE EXISTE:
+- É a porta de entrada visual do sistema.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Renderiza o formulário de autenticação.
+2. Explica os papéis principais do sistema.
+3. Encaminha o usuário para a área protegida após login.
+
+PONTOS CRITICOS:
+- Alterações nos campos precisam respeitar o formulário padrão de autenticação do Django.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Entrar | OctoBox Control</title>
+    
+    <link rel="stylesheet" href="/static/css/design-system/pages/login.css?v=1776009233342550800">
+</head>
+<body data-page="login" data-screen="entry-auth" data-ui="login-body">
+    <main data-slot="login-root">
+    <div class="login-shell" data-panel="login-shell">
+        <section class="story" aria-label="Apresentacao do sistema" data-panel="login-story">
+            <div class="brand-chip">
+                <span>OctoBox Control</span>
+                <span>Fitness SaaS</span>
+            </div>
+            <h1>OctoBox Control</h1>
+            <p>
+                A operação do box em um sistema que organiza energia comercial, rotina técnica e leitura financeira sem ruído visual.
+            </p>
+            <div class="story-rhythm">
+                <span class="story-pill">Entrada clara</span>
+                <span class="story-pill">Fronteiras por papel</span>
+                <span class="story-pill">Energia comercial com ordem</span>
+            </div>
+            <div class="story-grid">
+                <div class="story-stat">
+                    <strong>Owner</strong>
+                    <span>Visão estratégica do box com leitura de operação, receita e crescimento.</span>
+                </div>
+                <div class="story-stat">
+                    <strong>Manager</strong>
+                        <span>Grade, intake, alunos, cobrança e acompanhamento operacional sem assumir a rotina técnica do coach.</span>
+                </div>
+                <div class="story-stat">
+                    <strong>Coach</strong>
+                    <span>Presença, rotina de treino, aula e leitura viva da operação técnica.</span>
+                </div>
+            </div>
+        </section>
+        <section class="form-wrap" aria-label="Formulario de login" data-panel="login-form">
+            <h2>Entrar no sistema</h2>
+            <p class="subtitle">Use um usuário interno da academia para acessar o painel.</p>
+            <div class="form-shell" data-slot="login-form-shell">
+                <div class="entry-focus" data-slot="login-entry-guide">
+                    <article class="entry-focus-item">
+                        <div>
+                            <strong>Comece pelo usuário correto</strong>
+                            <span>O login deve abrir o papel certo sem misturar recepção, coach, manutenção e dono no mesmo acesso.</span>
+                        </div>
+                        <span class="entry-badge">passo 1</span>
+                    </article>
+                    <article class="entry-focus-item">
+                        <div>
+                            <strong>Entre para a rotina certa</strong>
+                            <span>Depois do login, a ideia é cair direto numa leitura útil, não numa tela que obriga interpretação longa logo na entrada.</span>
+                        </div>
+                        <span class="entry-badge info">passo 2</span>
+                    </article>
+                </div>
+                <form method="post" data-slot="login-form-fields">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="2Aw1qmh0ODkHWvLrdFOwO8USHWa1wUPHF3kHzKNVxzkRQk9XGPWXJv8Ys1vhUPRB">
+                    
+                    <label for="id_username">Usuário</label>
+                    <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" placeholder="Seu usuario interno" spellcheck="false" aria-describedby="login-username-note" required id="id_username">
+                    
+                    <p class="field-note" id="login-username-note">Use o identificador interno da academia. Evite email pessoal ou apelido solto.</p>
+                    <label for="id_password">Senha</label>
+                    <input type="password" name="password" autocomplete="current-password" placeholder="Sua senha" aria-describedby="login-password-note" required id="id_password">
+                    
+                    <p class="field-note" id="login-password-note">Entre com a senha do usuário interno para cair direto no papel certo.</p>
+                    <button type="submit">Entrar</button>
+                    <input type="hidden" name="next" value="/financeiro/" autocomplete="off">
+                </form>
+                <div class="helper-card" data-panel="login-support-card">
+                    <strong>Primeira preparação</strong>
+                    <p class="helper">
+                        Primeiro acesso: rode o comando de grupos, crie os usuários e associe cada pessoa ao papel correto no admin.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </div>
+    </main>
+</body>
+</html>
+

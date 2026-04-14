@@ -14,8 +14,8 @@ PONTO CRITICO:
     color-scheme: light;
 
     /* Typography */
-    --font-body: "Inter", sans-serif;
-    --font-display: "Inter", sans-serif;
+    --font-body: "Inter", "Aptos", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    --font-display: "Inter", "Aptos Display", "Iowan Old Style", "Palatino Linotype", serif;
 
     --font-size-h1: 28px;
     --font-size-h2: 22px;
@@ -51,13 +51,8 @@ PONTO CRITICO:
 
     /* Canonical theme tokens */
     --theme-bg-root: #f5f7fb;
-<<<<<<< HEAD
     --theme-bg-depth: #e7edf7;
     --theme-bg-stage: linear-gradient(180deg, #f8fafe 0%, #f2f6fb 42%, #edf2f8 100%);
-=======
-    --theme-bg-depth: #e9eef7;
-    --theme-bg-stage: linear-gradient(180deg, #fbfcff 0%, #f4f7fc 42%, #edf2f9 100%);
->>>>>>> codex/student-page-refactor-and-ui-polish
     --theme-bg-stage-depth:
         radial-gradient(circle at 10% 14%, rgba(255, 255, 255, 0.92), transparent 24%),
         radial-gradient(circle at 86% 12%, rgba(95, 143, 247, 0.08), transparent 20%),
@@ -65,7 +60,6 @@ PONTO CRITICO:
         radial-gradient(circle at 72% 72%, rgba(95, 143, 247, 0.05), transparent 24%);
 
     --theme-surface: rgba(255, 255, 255, 0.88);
-<<<<<<< HEAD
     --theme-surface-secondary: rgba(246, 249, 253, 0.92);
     --theme-surface-strong: rgba(255, 255, 255, 0.96);
     --theme-surface-muted: rgba(240, 245, 252, 0.88);
@@ -83,19 +77,6 @@ PONTO CRITICO:
     --theme-chrome-surface: color-mix(in srgb, rgba(255, 255, 255, 0.88) 90%, transparent);
     --theme-chrome-border: rgba(110, 133, 173, 0.2);
     --theme-chrome-glow: rgba(95, 143, 247, 0.08);
-=======
-    --theme-surface-secondary: rgba(246, 249, 254, 0.94);
-    --theme-surface-strong: rgba(255, 255, 255, 0.98);
-    --theme-surface-muted: rgba(241, 245, 252, 0.9);
-    --theme-surface-inverse: #0b1220;
-    --theme-surface-panel: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 249, 255, 0.95));
-    --theme-surface-panel-strong: linear-gradient(160deg, rgba(255, 255, 255, 1), rgba(241, 246, 253, 0.98));
-    --theme-surface-panel-dark: linear-gradient(180deg, rgba(12, 21, 38, 0.98), rgba(16, 27, 47, 0.96));
-    --theme-surface-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(245, 248, 253, 0.6));
-    --theme-surface-glass-strong: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(245, 249, 255, 0.82));
-    --theme-surface-chrome: color-mix(in srgb, var(--theme-surface-panel) 82%, transparent);
-    --theme-surface-chrome-strong: color-mix(in srgb, var(--theme-surface-strong) 88%, transparent);
->>>>>>> codex/student-page-refactor-and-ui-polish
 
     --theme-text-primary: #091a2f;
     --theme-text-secondary: #29415f;
@@ -110,78 +91,20 @@ PONTO CRITICO:
     --theme-shadow-lift: 0 20px 48px rgba(17, 27, 56, 0.12), 0 8px 20px rgba(17, 27, 56, 0.07);
     --theme-shadow-xl: 0 32px 68px rgba(14, 22, 47, 0.16), 0 12px 26px rgba(14, 22, 47, 0.09);
 
-<<<<<<< HEAD
     --theme-accent-primary: #68d9ee;
     --theme-accent-support: #5f8ff7;
     --theme-accent-premium: #d96bc3;
     --theme-accent-success: #29d398;
     --theme-accent-warning: #f7b84d;
     --theme-accent-danger: #ff5f7e;
-=======
-    --theme-accent-primary: #00d4ff;
-    --theme-accent-support: #00d4ff;
-    --theme-accent-success: #00ff88;
-    --theme-accent-warning: #ffb020;
-    --theme-accent-danger: #ff0844;
-    --theme-accent-premium: #af52de;
->>>>>>> codex/student-page-refactor-and-ui-polish
     --theme-accent-primary-alpha: color-mix(in srgb, var(--theme-accent-primary) 16%, transparent);
     --theme-accent-support-alpha: color-mix(in srgb, var(--theme-accent-support) 16%, transparent);
     --theme-accent-premium-alpha: color-mix(in srgb, var(--theme-accent-premium) 16%, transparent);
     --theme-accent-success-alpha: color-mix(in srgb, var(--theme-accent-success) 16%, transparent);
     --theme-accent-warning-alpha: color-mix(in srgb, var(--theme-accent-warning) 16%, transparent);
     --theme-accent-danger-alpha: color-mix(in srgb, var(--theme-accent-danger) 16%, transparent);
-    --theme-accent-premium-alpha: color-mix(in srgb, var(--theme-accent-premium) 16%, transparent);
     --theme-focus-ring: color-mix(in srgb, var(--theme-accent-support) 36%, transparent);
-<<<<<<< HEAD
     --theme-selection: rgba(95, 143, 247, 0.16);
-=======
-    --theme-selection: color-mix(in srgb, var(--theme-accent-support) 20%, transparent);
-    --theme-glow-primary: 0 0 24px color-mix(in srgb, var(--theme-accent-primary) 18%, transparent);
-    --theme-glow-success: 0 0 24px color-mix(in srgb, var(--theme-accent-success) 18%, transparent);
-    --theme-glow-warning: 0 0 24px color-mix(in srgb, var(--theme-accent-warning) 18%, transparent);
-    --theme-glow-danger: 0 0 24px color-mix(in srgb, var(--theme-accent-danger) 18%, transparent);
-    --theme-glow-premium: 0 0 24px color-mix(in srgb, var(--theme-accent-premium) 18%, transparent);
-    --theme-glass-border: color-mix(in srgb, white 56%, var(--theme-border-soft) 44%);
-    --theme-glass-highlight: rgba(255, 255, 255, 0.44);
-    --theme-glass-shadow: 0 16px 42px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.03);
-    --theme-scrollbar-track: color-mix(in srgb, var(--theme-surface-secondary) 78%, transparent);
-    --theme-scrollbar-thumb: color-mix(in srgb, var(--theme-text-muted) 40%, transparent);
-    --theme-scrollbar-thumb-hover: color-mix(in srgb, var(--theme-accent-premium) 38%, var(--theme-text-muted) 62%);
-
-    /* Canonical premium card surface */
-    --card-surface:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 97%, transparent), color-mix(in srgb, var(--theme-surface-glass) 90%, transparent)),
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 36%),
-        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 14%, transparent), transparent 42%);
-    --card-surface-strong:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent)),
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 22%, transparent), transparent 34%),
-        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 16%, transparent), transparent 40%);
-    --card-border: color-mix(in srgb, var(--theme-glass-border) 84%, rgba(96, 165, 250, 0.18));
-    --card-shadow:
-        0 20px 48px rgba(15, 23, 42, 0.08),
-        0 8px 18px rgba(15, 23, 42, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.14);
-    --card-hover-border: color-mix(in srgb, var(--theme-accent-support) 30%, var(--card-border) 70%);
-    --card-hover-shadow:
-        0 28px 64px rgba(15, 23, 42, 0.12),
-        0 12px 26px rgba(15, 23, 42, 0.08),
-        0 0 28px color-mix(in srgb, var(--theme-accent-support) 10%, transparent),
-        inset 0 1px 0 rgba(255, 255, 255, 0.16);
-    --card-focus-border: color-mix(in srgb, var(--theme-accent-support) 42%, var(--card-border) 58%);
-    --card-focus-shadow:
-        0 0 0 3px color-mix(in srgb, var(--theme-accent-support) 14%, transparent),
-        0 28px 64px rgba(15, 23, 42, 0.12),
-        0 12px 26px rgba(15, 23, 42, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.16);
-    --card-top-stripe:
-        linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-primary) 84%, transparent), color-mix(in srgb, var(--theme-accent-premium) 58%, transparent));
-    --card-orb:
-        radial-gradient(circle, color-mix(in srgb, var(--theme-accent-premium) 14%, transparent), transparent 72%);
-    --card-text-primary: var(--theme-text-primary);
-    --card-text-secondary: var(--theme-text-secondary);
->>>>>>> codex/student-page-refactor-and-ui-polish
 
     /* Sidebar */
     --sidebar-bg: #08111f;
@@ -215,23 +138,11 @@ PONTO CRITICO:
     --shadow-soft: var(--theme-shadow-soft);
     --shadow-lift: var(--theme-shadow-lift);
     --shadow-xl: var(--theme-shadow-xl);
-    --legacy-panel-fill: var(--theme-surface);
-    --legacy-panel-fill-strong: var(--theme-surface-strong);
-    --legacy-panel-surface: var(--card-surface);
-    --legacy-panel-surface-strong: var(--card-surface-strong);
-    --legacy-panel-border: var(--card-border);
-    --legacy-panel-shadow: var(--card-shadow);
-    --legacy-copy: var(--theme-text-secondary);
-    --legacy-copy-strong: var(--theme-text-muted);
 
     --brand: var(--theme-accent-support);
-<<<<<<< HEAD
     --brand-dark: #3374e0;
-=======
-    --brand-dark: #0094cc;
->>>>>>> codex/student-page-refactor-and-ui-polish
     --accent: var(--theme-accent-success);
-    --accent-2: var(--theme-accent-premium);
+    --accent-2: #0f8278;
     --accent-primary: var(--theme-accent-primary);
     --accent-primary-alpha: var(--theme-accent-primary-alpha);
     --success: var(--theme-accent-success);
@@ -245,11 +156,7 @@ PONTO CRITICO:
     --border-100: var(--theme-border-soft);
 
     /* Front Display Wall compatibility */
-<<<<<<< HEAD
     --fdw-copper: var(--theme-accent-premium);
-=======
-    --fdw-copper: var(--theme-accent-primary);
->>>>>>> codex/student-page-refactor-and-ui-polish
     --fdw-copper-soft: var(--theme-accent-premium-alpha);
     --fdw-sky: var(--theme-accent-support);
     --fdw-sky-soft: var(--theme-accent-support-alpha);
@@ -283,7 +190,6 @@ PONTO CRITICO:
 body[data-theme="dark"] {
     color-scheme: dark;
 
-<<<<<<< HEAD
     --theme-bg-root: #08111e;
     --theme-bg-depth: #0d1729;
     --theme-bg-stage: linear-gradient(180deg, #07101c 0%, #0b1625 42%, #101c2e 100%);
@@ -332,87 +238,6 @@ body[data-theme="dark"] {
     --sidebar-active: rgba(95, 143, 247, 0.18);
     --sidebar-hover: rgba(255, 255, 255, 0.06);
     --sidebar-focus: rgba(94, 162, 255, 0.32);
-=======
-    --theme-bg-root: #0a0a0f;
-    --theme-bg-depth: #10131d;
-    --theme-bg-stage: linear-gradient(180deg, #090a10 0%, #0d1018 42%, #101724 100%);
-    --theme-bg-stage-depth:
-        radial-gradient(circle at 10% 12%, rgba(0, 212, 255, 0.12), transparent 24%),
-        radial-gradient(circle at 88% 14%, rgba(175, 82, 222, 0.1), transparent 18%),
-        radial-gradient(circle at 18% 82%, rgba(0, 255, 136, 0.08), transparent 20%),
-        radial-gradient(circle at 74% 68%, rgba(255, 8, 68, 0.06), transparent 18%);
-
-    --theme-surface: rgba(14, 18, 29, 0.82);
-    --theme-surface-secondary: rgba(18, 24, 38, 0.88);
-    --theme-surface-strong: rgba(24, 31, 48, 0.94);
-    --theme-surface-muted: rgba(12, 16, 27, 0.9);
-    --theme-surface-inverse: #f8fafc;
-    --theme-surface-panel: linear-gradient(180deg, rgba(14, 18, 29, 0.92), rgba(18, 24, 38, 0.9));
-    --theme-surface-panel-strong: linear-gradient(160deg, rgba(18, 24, 38, 0.97), rgba(24, 31, 48, 0.94));
-    --theme-surface-panel-dark: linear-gradient(180deg, rgba(10, 10, 15, 0.98), rgba(16, 19, 29, 0.96));
-    --theme-surface-glass: linear-gradient(180deg, rgba(18, 24, 38, 0.78), rgba(13, 17, 28, 0.56));
-    --theme-surface-glass-strong: linear-gradient(180deg, rgba(22, 29, 45, 0.9), rgba(16, 20, 31, 0.78));
-    --theme-surface-chrome: color-mix(in srgb, var(--theme-surface-panel) 84%, transparent);
-    --theme-surface-chrome-strong: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
-
-    --theme-text-primary: #edf3ff;
-    --theme-text-secondary: #c9d3e7;
-    --theme-text-muted: #92a0bb;
-    --theme-text-soft: #d7e1f0;
-
-    --theme-border-soft: rgba(146, 160, 188, 0.18);
-    --theme-border-strong: rgba(166, 182, 216, 0.28);
-    --theme-border-glow: rgba(0, 212, 255, 0.3);
-
-    --theme-shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.18), 0 4px 10px rgba(0, 0, 0, 0.1);
-    --theme-shadow-lift: 0 18px 44px rgba(0, 0, 0, 0.26), 0 8px 18px rgba(0, 0, 0, 0.16);
-    --theme-shadow-xl: 0 26px 64px rgba(0, 0, 0, 0.34), 0 12px 26px rgba(0, 0, 0, 0.18);
-    --theme-glass-border: rgba(255, 255, 255, 0.09);
-    --theme-glass-highlight: rgba(255, 255, 255, 0.06);
-    --theme-glass-shadow: 0 18px 46px rgba(0, 0, 0, 0.28), 0 6px 16px rgba(0, 0, 0, 0.18);
-    --theme-scrollbar-track: rgba(255, 255, 255, 0.035);
-    --theme-scrollbar-thumb: rgba(146, 160, 188, 0.34);
-    --theme-scrollbar-thumb-hover: color-mix(in srgb, var(--theme-accent-premium) 42%, rgba(146, 160, 188, 0.46));
-
-    --card-surface:
-        linear-gradient(180deg, rgba(11, 16, 29, 0.97), rgba(7, 11, 24, 0.94)),
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support) 24%, transparent), transparent 34%),
-        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium) 18%, transparent), transparent 42%);
-    --card-surface-strong:
-        linear-gradient(180deg, rgba(13, 19, 34, 0.98), rgba(8, 12, 26, 0.95)),
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support) 28%, transparent), transparent 32%),
-        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium) 20%, transparent), transparent 40%);
-    --card-border: color-mix(in srgb, var(--theme-glass-border) 78%, rgba(56, 189, 248, 0.28));
-    --card-shadow:
-        0 24px 58px rgba(0, 0, 0, 0.3),
-        0 10px 22px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    --card-hover-border: color-mix(in srgb, var(--theme-accent-support) 46%, var(--card-border) 54%);
-    --card-hover-shadow:
-        0 30px 72px rgba(0, 0, 0, 0.36),
-        0 14px 28px rgba(0, 0, 0, 0.24),
-        0 0 36px color-mix(in srgb, var(--theme-accent-support) 18%, transparent),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    --card-focus-border: color-mix(in srgb, var(--theme-accent-support) 54%, var(--card-border) 46%);
-    --card-focus-shadow:
-        0 0 0 3px color-mix(in srgb, var(--theme-accent-support) 16%, transparent),
-        0 30px 72px rgba(0, 0, 0, 0.36),
-        0 14px 28px rgba(0, 0, 0, 0.24),
-        0 0 36px color-mix(in srgb, var(--theme-accent-support) 18%, transparent),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    --card-top-stripe:
-        linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-support) 88%, transparent), color-mix(in srgb, var(--theme-accent-premium) 72%, transparent));
-    --card-orb:
-        radial-gradient(circle, color-mix(in srgb, var(--theme-accent-premium) 22%, transparent), transparent 70%);
-
-    --sidebar-bg: #07111f;
-    --sidebar-line: rgba(146, 160, 188, 0.12);
-    --sidebar-ink: #edf3ff;
-    --sidebar-muted: rgba(182, 198, 223, 0.72);
-    --sidebar-active: rgba(0, 212, 255, 0.16);
-    --sidebar-hover: rgba(255, 255, 255, 0.06);
-    --sidebar-focus: rgba(0, 212, 255, 0.26);
->>>>>>> codex/student-page-refactor-and-ui-polish
 }
 
 body[data-theme="dark"] {
@@ -430,39 +255,6 @@ body[data-theme="dark"] input::placeholder,
 body[data-theme="dark"] textarea::placeholder {
     color: var(--ink);
     opacity: 0.85;
-}
-
-/* Browser autofill can override dark surfaces with light paint and dark ink.
-   We restyle it here at the token layer so every form inherits the same contrast contract. */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-textarea:-webkit-autofill,
-textarea:-webkit-autofill:hover,
-textarea:-webkit-autofill:focus,
-select:-webkit-autofill,
-select:-webkit-autofill:hover,
-select:-webkit-autofill:focus {
-    -webkit-text-fill-color: var(--theme-text-primary);
-    caret-color: var(--theme-text-primary);
-    box-shadow: inset 0 0 0 1000px var(--theme-surface-strong);
-    transition: background-color 9999s ease-in-out 0s;
-}
-
-body[data-theme="dark"] input:-webkit-autofill,
-body[data-theme="dark"] input:-webkit-autofill:hover,
-body[data-theme="dark"] input:-webkit-autofill:focus,
-body[data-theme="dark"] textarea:-webkit-autofill,
-body[data-theme="dark"] textarea:-webkit-autofill:hover,
-body[data-theme="dark"] textarea:-webkit-autofill:focus,
-body[data-theme="dark"] select:-webkit-autofill,
-body[data-theme="dark"] select:-webkit-autofill:hover,
-body[data-theme="dark"] select:-webkit-autofill:focus {
-    -webkit-text-fill-color: var(--theme-text-primary);
-    caret-color: var(--theme-text-primary);
-    box-shadow:
-        inset 0 0 0 1000px color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent),
-        inset 0 1px 0 var(--theme-glass-highlight);
 }
 
 * {
@@ -496,33 +288,6 @@ body::after {
     inset: 0;
     pointer-events: none;
     z-index: -1;
-}
-
-html {
-    scrollbar-color: var(--theme-scrollbar-thumb) var(--theme-scrollbar-track);
-    scrollbar-width: thin;
-}
-
-*::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-}
-
-*::-webkit-scrollbar-track {
-    background: var(--theme-scrollbar-track);
-}
-
-*::-webkit-scrollbar-thumb {
-    background: var(--theme-scrollbar-thumb);
-    border-radius: 999px;
-    border: 2px solid transparent;
-    background-clip: padding-box;
-}
-
-*::-webkit-scrollbar-thumb:hover {
-    background: var(--theme-scrollbar-thumb-hover);
-    border: 2px solid transparent;
-    background-clip: padding-box;
 }
 
 body::before,
@@ -567,7 +332,6 @@ h1,
 h2,
 h3,
 .metric,
-.operation-card-title,
 .section-title,
 .section-title-sm,
 .brand {
@@ -620,11 +384,20 @@ button,
     font-weight: var(--weight-body);
 }
 
+.meta-text {
+    margin: 0;
+    line-height: 1.6;
+}
+
 small,
 .meta-text-sm {
     font-size: var(--font-size-small);
     line-height: 1.45;
     font-weight: var(--weight-body);
+}
+
+.meta-text-sm {
+    margin: 4px 0;
 }
 
 .skip-link {

@@ -21,12 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepMeta = [
         {
             nextLabel: 'Ir para plano e pagamento',
-<<<<<<< HEAD
-=======
-        },
-        {
-            nextLabel: 'Continuar',
->>>>>>> codex/student-page-refactor-and-ui-polish
         },
     ];
 
@@ -174,60 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-<<<<<<< HEAD
-=======
-function selectPlanCard(planId) {
-    const select = document.getElementById('id_selected_plan');
-    if (!select) return;
-
-    select.value = planId;
-
-    document.querySelectorAll('.plan-card').forEach(card => {
-        card.classList.toggle('is-selected-plan', card.getAttribute('data-plan-id') === planId);
-    });
-
-    select.dispatchEvent(new Event('change'));
-}
-
-document.addEventListener('click', (e) => {
-    const planCard = e.target.closest('[data-action="select-plan"]');
-    if (planCard) {
-        const planId = planCard.getAttribute('data-plan-id');
-        if (planId) selectPlanCard(planId);
-    }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    const payloadElement = document.getElementById('current-page-behavior');
-    if (payloadElement) {
-        try {
-            const pagePayload = JSON.parse(payloadElement.textContent || '{}');
-        const planPriceMap = pagePayload.plan_price_map || {};
-
-            const currencyFormatter = new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            });
-
-            document.querySelectorAll('.plan-card').forEach(card => {
-                const planId = card.getAttribute('data-plan-id');
-                const priceDiv = card.querySelector('.plan-card-price');
-                if (priceDiv && planPriceMap[planId]) {
-                    priceDiv.textContent = currencyFormatter.format(planPriceMap[planId]);
-                }
-            });
-        } catch (e) {
-            console.error('Erro ao interpretar o payload dos preços do plano:', e);
-        }
-    }
-
-    const select = document.getElementById('id_selected_plan');
-    if (select && select.value) {
-        selectPlanCard(select.value);
-    }
-});
-
->>>>>>> codex/student-page-refactor-and-ui-polish
 async function generatePaymentLink(paymentId) {
     const btn = document.querySelector(`[data-payment-id="${paymentId}"]`);
     if (!btn || btn.disabled) return;
@@ -264,11 +204,7 @@ async function generatePaymentLink(paymentId) {
                 btn.disabled = false;
             }, 3000);
         } else {
-<<<<<<< HEAD
             throw new Error('URL nao encontrada');
-=======
-            throw new Error('URL n\u00e3o encontrada');
->>>>>>> codex/student-page-refactor-and-ui-polish
         }
     } catch (err) {
         console.error('Erro ao gerar link:', err);

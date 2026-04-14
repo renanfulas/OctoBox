@@ -47,7 +47,6 @@
                     type="submit"
                     name="action"
                     value="mark-paid"
-                    data-action="confirm-reception-payment"
                     data-role="reception-payment-submit"
                     data-default-label="Confirmar pagamento"
                     data-pix-label="Receber com Pix">
@@ -57,7 +56,7 @@
         </section>
 
         <div class="actions actions-tight finance-card-actions-compact reception-payment-actions reception-payment-actions-support">
-            <a class="button secondary" href="{{ item.student_href }}#student-financial-overview" data-action="open-student-financial-overview">Abrir ficha</a>
+            <a class="button secondary" href="{{ item.student_href }}#student-financial-overview">Abrir ficha</a>
 
             {% if item.clean_phone %}
                 {% if current_role.slug|lower == 'recepcao' and item.is_reception_blocked %}
@@ -113,7 +112,7 @@
                 </label>
             </div>
             <div class="actions actions-tight finance-card-actions-compact reception-payment-actions">
-                <button class="button secondary" type="submit" name="action" value="update-payment" data-action="save-reception-payment-update">Salvar ajuste</button>
+                <button class="button secondary" type="submit" name="action" value="update-payment">Salvar ajuste</button>
             </div>
         </details>
     </form>

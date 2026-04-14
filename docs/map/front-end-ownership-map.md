@@ -55,6 +55,12 @@ Contrato rapido do design system:
 
 1. [design-system-contract.md](design-system-contract.md)
 
+Mapas complementares desta frente:
+
+1. [front-end-forensics-map.md](front-end-forensics-map.md) para bugs visuais, overrides, legado e hotspots de CSS
+2. [front-end-contract-forensics-map.md](front-end-contract-forensics-map.md) para bugs de backend visual, payload, presenter e contrato de tela
+3. [front-end-forensics-checklist.md](front-end-forensics-checklist.md) para auditoria operacional recorrente de UI
+
 ## Taxonomia oficial dos heroes
 
 Use esta classificacao antes de criar, refatorar ou diagnosticar qualquer hero.
@@ -221,6 +227,26 @@ Financeiro:
 3. views: [../../catalog/views/finance_views.py](../../catalog/views/finance_views.py)
 4. presenter: [../../catalog/presentation/finance_center_page.py](../../catalog/presentation/finance_center_page.py)
 5. CSS: [../../static/css/catalog/finance/](../../static/css/catalog/finance/)
+
+### Mapa curto de ghost overrides do financeiro
+
+Quando a central financeira estiver com shell correto, mas a composicao ainda parecer fora do padrao, revise nesta ordem:
+
+1. hosts locais: [../../static/css/catalog/finance/_boards.css](../../static/css/catalog/finance/_boards.css)
+2. subcards locais: [../../static/css/catalog/finance/_cards.css](../../static/css/catalog/finance/_cards.css)
+3. assinatura final: [../../static/css/catalog/finance/_signature.css](../../static/css/catalog/finance/_signature.css)
+4. cobertura dark: [../../static/css/catalog/finance/_dark.css](../../static/css/catalog/finance/_dark.css)
+5. baselines historicos de board: [../../static/css/catalog/finance/_shell.css](../../static/css/catalog/finance/_shell.css)
+
+Heuristica:
+
+1. se o shell estiver certo e o card ainda parecer errado, procure primeiro por `border-top + padding-top + margin-top` em blocos internos
+2. se rail, queue e support terminarem parecidos demais, procure depois em `_signature.css` e `_dark.css`
+3. se o problema parecer nascer do miolo e nao da casca, compare `finance-board-shell-body` com o container interno real da area
+
+Inventario curto desta frente:
+
+1. [../plans/finance-visual-bridge-risk-inventory.md](../plans/finance-visual-bridge-risk-inventory.md)
 
 Grade de aulas:
 

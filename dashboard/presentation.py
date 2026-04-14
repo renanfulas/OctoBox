@@ -482,8 +482,13 @@ def _build_dashboard_priority_cards(
     pressured_session = next(
         (
             session for session in upcoming_sessions
-            # Uma aula so vira prioridade quando existe pressao real de carga, nao apenas estado de runtime.
-            if session.get('occupied_slots', 0) > 0 and (session['occupancy_percent'] >= 90 or session['booking_closed'])
+            # Uma aula vira prioridade quando o turno esta sob pressao real:
+            # lotacao alta, reservas fechadas ou runtime ao vivo pedindo coordenacao.
+            if (
+                session.get('status_label') == 'Em andamento'
+                or session.get('occupancy_percent', 0) >= 90
+                or session.get('booking_closed')
+            )
         ),
         None,
     )
@@ -535,7 +540,7 @@ def _build_dashboard_priority_cards(
             indicator_class='is-base',
             kicker='Urgente',
             indicator='Estavel',
-            copy='Tudo tranquilo na retencao. A comunidade esta bem e voce pode focar no que quiser.',
+            copy='Tudo tranquilo na reten. A comunidade esta bem e voce pode focar no que quiser.',
         )
 
     occurrences_count = metrics['occurrences_this_month']
@@ -587,13 +592,13 @@ def _build_dashboard_priority_cards(
 
 
 def _select_dashboard_reading_cards(priority_cards):
-    """Aplica a hierarquia operacional do slot dominante: emergency > warning > risk."""
-    return select_priority_items(
-        priority_cards,
-        priority_order=READING_CARD_SEVERITY_ORDER,
-        priority_key='severity',
-        actionable_key='is_actionable',
-    )
+    """Mantem a faixa de leitura completa na ordem operacional: emergency > warning > risk."""
+    ordered_cards = []
+    for priority in READING_CARD_SEVERITY_ORDER:
+        selected_item = next((item for item in list(priority_cards or []) if item.get('severity') == priority), None)
+        if selected_item:
+            ordered_cards.append(selected_item)
+    return ordered_cards
 
 
 def _build_dashboard_reading_panel(priority_cards):

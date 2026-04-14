@@ -1,0 +1,29 @@
+[
+  {
+    "classes": "fdw-focus-card owner-command-card is-primary owner-command-card--primary",
+    "backgroundImage": "linear-gradient(color(srgb 0.11749 0.0951889 0.155522 / 0.981961), color(srgb 0.0807232 0.0748075 0.125663 / 0.981373))",
+    "borderTop": "1px solid oklab(0.686921 0.134322 0.0106746 / 0.347347)",
+    "color": "rgb(237, 246, 255)",
+    "chipClasses": "fdw-focus-chip owner-command-card__chip is-danger",
+    "chipBackground": "none",
+    "chipColor": "color(srgb 1 0.598431 0.676235)"
+  },
+  {
+    "classes": "fdw-focus-card owner-command-card",
+    "backgroundImage": "linear-gradient(color(srgb 0.11749 0.0951889 0.155522 / 0.981961), color(srgb 0.0807232 0.0748075 0.125663 / 0.981373))",
+    "borderTop": "1px solid oklab(0.686664 0.133823 0.0104164 / 0.346468)",
+    "color": "rgb(237, 246, 255)",
+    "chipClasses": "fdw-focus-chip owner-command-card__chip is-danger",
+    "chipBackground": "none",
+    "chipColor": "color(srgb 1 0.598431 0.676235)"
+  },
+  {
+    "classes": "fdw-focus-card owner-command-card",
+    "backgroundImage": "linear-gradient(color(srgb 0.0491198 0.13225 0.163829 / 0.981961), color(srgb 0.037966 0.0979844 0.130857 / 0.981373))",
+    "borderTop": "1px solid oklab(0.741502 -0.11561 0.0165045 / 0.329993)",
+    "color": "rgb(237, 246, 255)",
+    "chipClasses": "fdw-focus-chip owner-command-card__chip is-success",
+    "chipBackground": "none",
+    "chipColor": "color(srgb 0.479686 0.89302 0.749569)"
+  }
+]

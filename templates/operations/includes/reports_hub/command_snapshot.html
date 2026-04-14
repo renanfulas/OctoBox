@@ -10,7 +10,7 @@
                 <p>{{ item.summary }}</p>
             </div>
             {% if item.href %}
-            <a class="front-command-link" href="{{ item.href }}" data-action="open-report-focus">{{ item.href_label|default:'Abrir leitura' }}</a>
+            <a class="front-command-link" href="{{ item.href }}">{{ item.href_label|default:'Abrir leitura' }}</a>
             {% endif %}
         </article>
         {% endfor %}

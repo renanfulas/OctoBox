@@ -17,7 +17,7 @@ POR QUE ELE EXISTE:
 }
 
 .interactive-tab-container > *:not(.is-tab-active) {
-    display: none !important;
+    display: none;
 }
 
 .interactive-tab-container > *.is-tab-active {

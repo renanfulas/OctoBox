@@ -146,6 +146,12 @@ If you want to study the codebase in pedagogical order, use [docs/reference/read
 
 If you want to understand how the project's CSS should be organized, expanded, and debugged without turning into accumulated patchwork, use [docs/experience/css-guide.md](docs/experience/css-guide.md).
 
+If a visual change appears in `static/` but does not show up in the UI, audit static drift before assuming the CSS is wrong:
+
+1. run `.\.venv\Scripts\python.exe .\manage.py check_static_drift --strict`
+2. if drift is detected, run `.\.venv\Scripts\python.exe .\manage.py collectstatic --noinput`
+3. for fast local mirroring, use `.\.venv\Scripts\python.exe .\manage.py sync_runtime_assets --collectstatic`
+
 If you want to understand the official visual theme of the product, which aesthetic language wins when there is conflict, and how OctoBox defines its Futuristic Luxury 2050 signature, use [docs/architecture/themeOctoBox.md](docs/architecture/themeOctoBox.md).
 
 If you want to understand specifically what still holds historical state inside `boxcore`, use [docs/architecture/boxcore-model-state-plan.md](docs/architecture/boxcore-model-state-plan.md) and [docs/architecture/boxcore-state-residue-inventory.md](docs/architecture/boxcore-state-residue-inventory.md).

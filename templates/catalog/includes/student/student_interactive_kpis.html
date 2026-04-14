@@ -1,14 +1,14 @@
 <!--
-ARQUIVO: bloco consolidado de abas/kpis da pagina de alunos.
+ARQUIVO: bloco consolidado de KPIs da pagina de alunos.
 
 POR QUE ELE EXISTE:
-- Renderiza 4 KPI cards que funcionam como os triggers das abas de operação (busca, prioridades, intake, diretório geral).
+- Renderiza 4 KPI cards de acao seguindo o contrato interativo dos KPIs de Entradas.
 -->
-<div class="students-kpi-overview" data-panel="students-interactive-kpis">
-    <section class="students-kpi-grid interactive-tab-triggers"
+<div class="student-kpi-overview deferred-surface" data-panel="students-interactive-kpis">
+    <section class="student-kpi-grid interactive-tab-triggers"
         aria-label="Navegacao principal de alunos">
         {% for card in page.data.interactive_kpis %}
-        {% if card.data_action == page.behavior.default_action %}
+        {% if card.is_selected or card.data_action == page.behavior.default_action %}
         {% include "catalog/includes/student/student_metric_card.html" with card=card card_extra_classes="is-selected-tab" %}
         {% else %}
         {% include "catalog/includes/student/student_metric_card.html" with card=card %}

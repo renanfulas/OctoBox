@@ -121,7 +121,6 @@ POR QUE ELE EXISTE:
             : (submitButton.dataset.defaultLabel || 'Confirmar pagamento');
     }
 
-<<<<<<< HEAD
     function syncAllReceptionSubmitLabels() {
         pageRoot.querySelectorAll('[data-action="manage-reception-payment"]').forEach(syncReceptionSubmitLabel);
     }
@@ -244,14 +243,10 @@ POR QUE ELE EXISTE:
 
     syncAllReceptionSubmitLabels();
     connectStudentEventStreams();
-=======
-    pageRoot.querySelectorAll('[data-action="manage-reception-payment"]').forEach(syncReceptionSubmitLabel);
->>>>>>> codex/student-page-refactor-and-ui-polish
 
     pageRoot.addEventListener('change', function (event) {
         const methodSelect = event.target.closest('[data-role="reception-payment-method"]');
 
-<<<<<<< HEAD
         if (methodSelect) {
             const form = methodSelect.closest('[data-action="manage-reception-payment"]');
 
@@ -268,19 +263,6 @@ POR QUE ELE EXISTE:
         if (hasDeferredRefresh && !isReceptionFormBeingEdited()) {
             refreshReceptionPaymentBoard('manual-dirty-release');
         }
-=======
-        if (!methodSelect) {
-            return;
-        }
-
-        const form = methodSelect.closest('[data-action="manage-reception-payment"]');
-
-        if (!form) {
-            return;
-        }
-
-        syncReceptionSubmitLabel(form);
->>>>>>> codex/student-page-refactor-and-ui-polish
     });
 
     pageRoot.addEventListener('click', function (event) {
