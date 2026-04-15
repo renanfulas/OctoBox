@@ -2763,3 +2763,10 @@ body[data-theme="dark"] .finance-queue-card .finance-risk-details summary::after
         grid-template-columns: 1fr;
     }
 }
+
+@media (max-width: 620px) {
+    .finance-priority-track,
+    .finance-queue-track {
+        grid-auto-columns: 100%;
+    }
+}

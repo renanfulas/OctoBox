@@ -1637,13 +1637,15 @@ body[data-theme="dark"] .student-page-header__actions .operation-hero-action-rai
 
     .student-page-tabs {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         width: 100%;
+        gap: 8px;
     }
 
     .student-page-tab {
         width: 100%;
         min-width: 0;
+        min-height: 40px;
         padding: 0 12px;
     }
 
@@ -1717,7 +1719,7 @@ body[data-theme="dark"] .student-page-header__actions .operation-hero-action-rai
 
     .student-page-header__card {
         padding: 14px;
-        gap: 16px;
+        gap: 14px;
     }
 
     .student-page-tabs {

@@ -467,4 +467,10 @@ POR QUE ELE EXISTE:
       }
     }
   });
+
+  window.addEventListener('resize', function() {
+    if (window.innerWidth > 960 && body.classList.contains('sidebar-open')) {
+      closeSidebar();
+    }
+  });
 }());

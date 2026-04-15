@@ -71,6 +71,21 @@
     transform: translateY(0) scale(1);
 }
 
+@media (max-width: 640px) {
+    .profile-dropdown {
+        width: min(calc(100vw - 28px), 320px);
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-dropdown {
+        left: 0;
+        right: auto;
+        width: min(calc(100vw - 28px), 320px);
+        transform-origin: top left;
+    }
+}
+
 /* Modo Escuro */
 [data-theme="dark"] .profile-dropdown {
     background: color-mix(in srgb, #0e1828 92%, var(--theme-surface-panel) 8%);

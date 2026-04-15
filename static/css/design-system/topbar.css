@@ -298,6 +298,7 @@ REGRA:
 .topbar-quick-actions {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 6px;
     padding: 0;
     border-radius: 0;
@@ -318,6 +319,7 @@ REGRA:
     line-height: 1;
     text-decoration: none;
     white-space: nowrap;
+    max-width: 100%;
     transition:
         background var(--motion-base) var(--ease-standard),
         border-color var(--motion-base) var(--ease-standard),
@@ -929,6 +931,16 @@ REGRA:
         padding: 13px 14px;
     }
 
+    .topbar-left,
+    .topbar-right {
+        width: 100%;
+        align-items: center;
+    }
+
+    .topbar-right {
+        justify-content: flex-start;
+    }
+
     .shell-celebration-stack {
         top: 14px;
         right: 14px;
@@ -963,13 +975,13 @@ REGRA:
 
     .topbar-left,
     .topbar-right,
-    .topbar-alerts,
-    .topbar-profile {
+    .topbar-alerts {
         width: 100%;
     }
 
     .topbar-right {
-        justify-content: space-between;
+        justify-content: flex-start;
+        align-items: center;
     }
 
     .global-search {
@@ -978,6 +990,105 @@ REGRA:
 
     .topbar-profile {
         justify-content: flex-start;
+    }
+
+    .profile-meta span {
+        display: none;
+    }
+
+    .topbar-quick-actions,
+    .topbar-alerts {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        width: 100%;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+    }
+
+    .topbar-quick-actions::-webkit-scrollbar,
+    .topbar-alerts::-webkit-scrollbar {
+        display: none;
+    }
+
+    .topbar-quick-actions {
+        order: 1;
+    }
+
+    .topbar-alerts {
+        order: 2;
+    }
+
+    .theme-toggle {
+        order: 3;
+    }
+
+    .profile-menu-container {
+        order: 4;
+        margin-left: auto;
+        width: auto;
+        max-width: 100%;
+    }
+
+    .topbar-quick-link,
+    .alert-chip {
+        flex: 0 0 auto;
+        justify-content: center;
+        min-height: 38px;
+        padding-inline: 14px;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .topbar {
+        --topbar-top: 8px;
+        --topbar-padding-inline: 12px;
+        --topbar-padding-block: 10px;
+        --topbar-gap: 10px;
+        border-radius: 20px;
+    }
+
+    .topbar-left {
+        gap: 10px;
+    }
+
+    .sidebar-toggle,
+    .theme-toggle {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+    }
+
+    .sidebar-toggle-icon,
+    .sidebar-toggle-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .global-search {
+        width: 100%;
+        min-width: 0;
+        padding: 10px 12px;
+    }
+
+    .topbar-profile {
+        width: auto;
+        min-height: 48px;
+        padding: 8px 12px 8px 10px;
+        gap: 10px;
+    }
+
+    .avatar {
+        width: 36px;
+        height: 36px;
+        flex-basis: 36px;
+    }
+
+    .topbar-quick-link,
+    .alert-chip {
+        font-size: 0.74rem;
     }
 }
 

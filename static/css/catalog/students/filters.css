@@ -138,3 +138,34 @@ body[data-theme="dark"] .student-filter-pill.is-active {
 body[data-theme="dark"] .student-filter-count {
     color: rgba(226, 232, 240, 0.58);
 }
+
+@media (max-width: 480px) {
+    .student-filter-bar {
+        gap: 12px;
+        padding: 16px 16px 18px;
+    }
+
+    .student-filter-search-input {
+        min-height: 42px;
+        padding-right: 14px;
+    }
+
+    .student-filter-pills {
+        width: 100%;
+        padding: 3px;
+        gap: 4px;
+    }
+
+    .student-filter-pill {
+        min-height: 34px;
+        padding-inline: 12px;
+        font-size: 0.82rem;
+    }
+
+    .student-filter-count {
+        width: 100%;
+        text-align: left;
+        justify-self: stretch;
+        font-size: 0.88rem;
+    }
+}

@@ -1,11 +1,11 @@
 <tr>
-    <td>
+    <td data-label="Contato">
         <strong>{{ intake.full_name }}</strong>
         <p class="meta-text-sm">{{ intake.phone }}{% if intake.email %} | {{ intake.email }}{% endif %}</p>
     </td>
-    <td>{{ intake.source_label }}</td>
-    <td><span class="pill info">{{ intake.status_label }}</span></td>
-    <td>
+    <td data-label="Origem">{{ intake.source_label }}</td>
+    <td data-label="Status"><span class="pill info">{{ intake.status_label }}</span></td>
+    <td data-label="Proximo passo">
         <a class="button secondary button-sm" href="{{ intake.student_quick_create_href }}">Abrir cadastro</a>
     </td>
 </tr>

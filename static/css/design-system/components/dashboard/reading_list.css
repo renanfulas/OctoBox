@@ -295,3 +295,36 @@ body[data-theme="dark"] .dashboard-reading-card__chip.is-info {
         min-height: 0;
     }
 }
+
+@media (max-width: 480px) {
+    .dashboard-reading-panel {
+        margin-top: 12px;
+    }
+
+    .dashboard-reading-panel__grid {
+        gap: 12px;
+    }
+
+    .dashboard-reading-card {
+        gap: 12px;
+        padding: 16px;
+        border-radius: 18px;
+    }
+
+    .dashboard-reading-card__head,
+    .dashboard-reading-card__footer {
+        gap: 10px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .dashboard-reading-card__value {
+        font-size: clamp(1.9rem, 10vw, 2.25rem);
+    }
+
+    .dashboard-reading-card__summary {
+        max-width: none;
+        font-size: 0.84rem;
+        line-height: 1.48;
+    }
+}

@@ -376,7 +376,10 @@ body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:
     }
 
     .hero.hero--command .operation-hero-action-rail .button {
-        width: 100%;
+        width: fit-content;
+        max-width: 100%;
+        min-width: 0;
+        flex: 0 0 auto;
         justify-content: center;
     }
 }

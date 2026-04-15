@@ -169,6 +169,17 @@ POR QUE ELE EXISTE:
         grid-column: 1 / -1;
     }
 
+    .student-identity {
+        align-items: flex-start;
+    }
+
+    .student-name,
+    .student-email {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
+
     .student-data-panel th,
     .student-data-panel td {
         padding: 10px 8px;
@@ -186,6 +197,66 @@ POR QUE ELE EXISTE:
 
     .student-directory-table tbody tr {
         grid-template-columns: 1fr;
+    }
+
+    .student-directory-table tbody {
+        gap: 10px;
+    }
+
+    .student-directory-table tbody tr {
+        gap: 10px;
+        padding: 14px;
+        border-radius: 16px;
+    }
+
+    .student-avatar-circle {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+        font-size: 0.84rem;
+    }
+
+    .student-status-pill {
+        min-height: 28px;
+        padding-inline: 10px;
+        font-size: 0.82rem;
+    }
+
+    .student-presence-value,
+    .student-plan-name,
+    .student-payment-state,
+    .student-due-date {
+        font-size: 0.92rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .student-filter-pills > a,
+    .student-filter-pills > button {
+        flex-basis: 100%;
+    }
+
+    .student-data-panel {
+        padding-inline: 16px;
+    }
+
+    .student-filter-card {
+        padding-inline: 14px;
+    }
+
+    .student-directory-table td::before {
+        font-size: 0.62rem;
+    }
+
+    .student-signal-strip {
+        gap: 4px;
+    }
+
+    .student-signal {
+        min-height: 20px;
+        padding-inline: 7px;
+        font-size: 0.62rem;
     }
 }
 

@@ -565,6 +565,70 @@ body[data-theme="dark"] .dashboard-shell--futuristic-luxury .dashboard-command-r
     }
 }
 
+@media (max-width: 640px) {
+    .dashboard-shell {
+        gap: 12px;
+    }
+
+    .dashboard-command-workspace {
+        gap: 14px;
+    }
+
+    .dashboard-layout-toolbar {
+        margin-bottom: 12px;
+    }
+
+    .dashboard-layout-toolbar .actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .dashboard-layout-toolbar .button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .workspace-grid-main {
+        gap: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-shell {
+        gap: 10px;
+    }
+
+    .dashboard-command-workspace {
+        gap: 12px;
+    }
+
+    .dashboard-advisor-narrative {
+        gap: 16px;
+        padding: 16px;
+        margin-bottom: 22px;
+    }
+
+    .dashboard-advisor-narrative-title {
+        font-size: clamp(1.55rem, 8vw, 1.9rem);
+    }
+
+    .dashboard-advisor-narrative-body {
+        font-size: 0.94rem;
+        line-height: 1.58;
+    }
+
+    .dashboard-advisor-manifesto-head,
+    .dashboard-advisor-manifesto-body,
+    .dashboard-advisor-manifesto-foot {
+        padding-inline: 16px;
+    }
+
+    .workspace-grid-main {
+        gap: 14px;
+    }
+}
+
 @media (prefers-reduced-motion: no-preference) {
     .dashboard-hero {
         animation: fdw-rise-in 650ms var(--ease-standard) both;

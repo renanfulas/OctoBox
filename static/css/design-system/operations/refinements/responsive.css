@@ -87,7 +87,9 @@ POR QUE ELE EXISTE:
     .operation-inline-actions form,
     .operation-note-form .actions .button,
     .operation-hero-action-rail .button {
-        width: auto;
+        width: fit-content;
+        max-width: 100%;
+        flex: 0 0 auto;
     }
 
     .operation-hero-tags .pill {
@@ -106,5 +108,19 @@ POR QUE ELE EXISTE:
         padding-top: var(--operation-hero-panel-padding-mobile-top, 20px);
         padding-bottom: var(--operation-hero-panel-padding-mobile-bottom, 20px);
         border-radius: var(--operation-hero-panel-radius-mobile, var(--operation-hero-panel-radius, var(--radius-card)));
+    }
+}
+
+@media (max-width: 480px) {
+    .operation-hero-action-rail {
+        justify-content: flex-start;
+        align-items: flex-start;
+    }
+
+    .operation-hero-action-rail .button {
+        width: fit-content;
+        max-width: 100%;
+        min-width: 0;
+        justify-content: center;
     }
 }

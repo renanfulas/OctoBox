@@ -56,6 +56,7 @@ PONTOS CRITICOS:
     .card-head,
     .topbar-left,
     .topbar-right,
+    .topbar-quick-actions,
     .topbar-alerts,
     [class$="-actions"],
     [class*="-actions "]
@@ -69,6 +70,7 @@ PONTOS CRITICOS:
     .card-head,
     .topbar-left,
     .topbar-right,
+    .topbar-quick-actions,
     .topbar-alerts,
     [class$="-actions"],
     [class*="-actions "]
@@ -115,6 +117,10 @@ PONTOS CRITICOS:
         width: 100%;
     }
 
+    :where(.topbar-quick-actions) {
+        width: 100%;
+    }
+
     :where(.operation-card-head) {
         flex-direction: column;
         align-items: flex-start;
@@ -140,7 +146,18 @@ PONTOS CRITICOS:
     }
 
     :where(.actions) > :where(.button, button, a),
-    :where(.topbar-alerts > .alert-chip) {
+    :where(.topbar-alerts > .alert-chip),
+    :where(.topbar-quick-actions > a) {
         width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    :where(.topbar-right) {
+        justify-content: stretch;
+    }
+
+    :where(.topbar-quick-actions, .topbar-alerts) > :where(a, button) {
+        min-width: 0;
     }
 }

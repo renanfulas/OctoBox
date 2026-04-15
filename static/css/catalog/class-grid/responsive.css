@@ -276,3 +276,43 @@ POR QUE ELE EXISTE:
         min-width: 0;
     }
 }
+
+@media (max-width: 480px) {
+    .class-grid-workspace-panel {
+        border-radius: 20px;
+    }
+
+    .class-grid-panel-head {
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .class-grid-head-badges {
+        gap: 8px;
+    }
+
+    .class-grid-head-badges .pill,
+    .class-grid-head-badges .button {
+        width: 100%;
+    }
+
+    .class-grid-planner-panel .actions.operation-hero-action-rail {
+        width: 100%;
+    }
+
+    .class-grid-planner-panel .actions.operation-hero-action-rail .button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .class-day-summary,
+    .class-grid-meta {
+        font-size: 0.88rem;
+        line-height: 1.5;
+    }
+
+    .weekly-day-card,
+    .monthly-day-card {
+        padding: 12px;
+    }
+}

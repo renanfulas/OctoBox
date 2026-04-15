@@ -1555,7 +1555,8 @@ body[data-theme="dark"] .student-financial-ledger__date-tertiary {
 
 @media (max-width: 680px) {
     .student-financial-workspace {
-        padding: 18px;
+        gap: 14px;
+        padding: 16px;
     }
 
     .student-financial-kpi-grid {
@@ -1622,5 +1623,24 @@ body[data-theme="dark"] .student-financial-ledger__date-tertiary {
     #student-page-payments-summary-slot .operation-hero-action-rail .button {
         width: 100%;
         justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .student-financial-workspace,
+    .student-financial-workspace--embedded {
+        gap: 12px;
+        padding: 14px;
+    }
+
+    .student-financial-panel-head,
+    .student-financial-command-strip,
+    .student-financial-peek,
+    .student-financial-id-card,
+    .student-financial-workspace--embedded .student-financial-peek,
+    .student-financial-workspace--embedded .student-financial-command-strip,
+    .student-financial-workspace--embedded .student-financial-id-card {
+        padding: 14px;
+        border-radius: 20px;
     }
 }

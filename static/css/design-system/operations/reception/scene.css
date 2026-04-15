@@ -259,7 +259,60 @@ body[data-theme="dark"] .reception-metric-grid .operation-kpi-card {
         padding: 14px;
     }
 
-    .reception-scene .operation-table-wrap table {
-        min-width: 520px;
+    .reception-scene [data-panel="reception-intake-board"] .operation-table-wrap {
+        overflow-x: visible;
+        padding: 0;
+    }
+
+    .reception-scene [data-panel="reception-intake-board"] table {
+        min-width: 0;
+        width: 100%;
+        display: block;
+    }
+
+    .reception-scene [data-panel="reception-intake-board"] thead {
+        display: none;
+    }
+
+    .reception-scene [data-panel="reception-intake-board"] tbody {
+        display: grid;
+        gap: 10px;
+    }
+
+    .reception-scene [data-panel="reception-intake-board"] tbody tr {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 14px;
+        border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-border-soft) 88%);
+        border-radius: 18px;
+        background: color-mix(in srgb, var(--theme-surface-panel) 92%, white 8%);
+        box-shadow: 0 12px 24px rgba(7, 14, 24, 0.06);
+    }
+
+    .reception-scene [data-panel="reception-intake-board"] tbody td {
+        display: grid;
+        gap: 5px;
+        padding: 0;
+        border: 0;
+        min-width: 0;
+    }
+
+    .reception-scene [data-panel="reception-intake-board"] tbody td::before {
+        content: attr(data-label);
+        font-size: 0.64rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--theme-text-muted);
+    }
+
+    .reception-scene [data-panel="reception-intake-board"] tbody td:last-child .button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .reception-scene [data-panel="reception-intake-board"] .table-empty-cell {
+        padding: 0;
     }
 }

@@ -127,14 +127,18 @@ body[data-theme="dark"] .operation-hero {
 
 .operation-hero-title {
     max-width: var(--operation-hero-heading-max-width, 15ch);
+    font-family: var(--font-display-critical, var(--font-display));
     font-size: var(--operation-hero-heading-size, clamp(2rem, 3.2vw, 2.8rem));
     line-height: var(--operation-hero-heading-line-height, 0.96);
     letter-spacing: var(--operation-hero-heading-letter-spacing, -0.05em);
     max-inline-size: 100%;
-    white-space: nowrap;
+    white-space: normal;
     overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
+    display: -webkit-box;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    text-wrap: balance;
 }
 
 .operation-hero-copy {
@@ -144,10 +148,25 @@ body[data-theme="dark"] .operation-hero {
     line-height: var(--operation-hero-copy-line-height, 1.48);
     color: color-mix(in srgb, var(--theme-text-secondary) 90%, white 10%);
     max-inline-size: 100%;
-    white-space: nowrap;
+    white-space: normal;
     overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
+    display: -webkit-box;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+/* O contrato do hero declara linhas maximas; aqui tornamos a regra visual verdadeira. */
+.operation-hero-title[data-max-lines="1"],
+.operation-hero-copy[data-max-lines="1"] {
+    line-clamp: 1;
+    -webkit-line-clamp: 1;
+}
+
+.operation-hero-title[data-max-lines="2"],
+.operation-hero-copy[data-max-lines="2"] {
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
 }
 
 .operation-hero-action-rail {
@@ -278,6 +297,19 @@ body[data-theme="dark"] .operation-hero-action-rail .button:focus-visible {
     .operation-hero-copy-block {
         grid-template-rows: auto auto auto;
         min-height: auto;
+    }
+
+    .operation-hero .operation-hero-action-rail {
+        width: fit-content;
+        max-width: 100%;
+    }
+
+    .operation-hero .operation-hero-action-rail .button,
+    .operation-hero .operation-hero-action-rail .button.secondary {
+        width: fit-content;
+        max-width: 100%;
+        min-width: 0;
+        flex: 0 0 auto;
     }
 }
 
