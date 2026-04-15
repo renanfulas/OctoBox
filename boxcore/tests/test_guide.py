@@ -39,9 +39,9 @@ class GuideViewTests(TestCase):
         self.assertContains(response, 'Sidebar ou atalhos errados para o papel')
         self.assertContains(response, 'Auditoria')
         self.assertContains(response, 'DEV')
-        self.assertContains(response, 'href="#system-flow-board"')
-        self.assertContains(response, 'href="#system-reading-board"')
-        self.assertContains(response, 'href="#system-bug-board"')
+        self.assertContains(response, 'data-panel="system-flow-grid"')
+        self.assertContains(response, 'id="system-reading-board"')
+        self.assertContains(response, 'id="system-bug-board"')
 
     def test_operational_settings_renders_for_authenticated_user(self):
         self.client.force_login(self.user)
@@ -49,7 +49,7 @@ class GuideViewTests(TestCase):
         response = self.client.get(reverse('operational-settings'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Configuracoes operacionais')
+        self.assertContains(response, 'Operacao configurada.')
         self.assertContains(response, 'Salvar bloqueio do WhatsApp')
         self.assertContains(response, 'Criar perfis de acesso')
 
