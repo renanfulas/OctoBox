@@ -1,0 +1,15 @@
+[Unit]
+Description=OctoBOX runtime health, disk and backup freshness check
+After=network-online.target octobox-gunicorn.service nginx.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=OCTOBOX_APP_HOME=/srv/octobox
+Environment=OCTOBOX_DOMAIN=app.octoboxfit.com.br
+EnvironmentFile=-/srv/octobox/shared/octobox.env
+ExecStart=/srv/octobox/app/scripts/linux/check_octobox_runtime.sh
+User=root
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily OctoBOX PostgreSQL backup and remote sync
+
+[Timer]
+OnCalendar=*-*-* 03:15:00
+Persistent=true
+Unit=octobox-backup.service
+
+[Install]
+WantedBy=timers.target

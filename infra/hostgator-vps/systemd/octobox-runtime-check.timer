@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodic OctoBOX runtime check
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+Persistent=true
+Unit=octobox-runtime-check.service
+
+[Install]
+WantedBy=timers.target

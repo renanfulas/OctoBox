@@ -1,0 +1,15 @@
+[Unit]
+Description=OctoBOX PostgreSQL backup and remote sync
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=OCTOBOX_APP_HOME=/srv/octobox
+Environment=OCTOBOX_APP_USER=octobox
+EnvironmentFile=-/srv/octobox/shared/octobox.env
+ExecStart=/srv/octobox/app/scripts/linux/backup_and_sync_postgres.sh
+User=root
+
+[Install]
+WantedBy=multi-user.target
