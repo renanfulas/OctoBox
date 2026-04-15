@@ -2,10 +2,14 @@
 ARQUIVO: bloco de recuperacao/intermediacao do formulario.
 -->
 {% if student_form_recovery_guide %}
-<div class="note-panel note-panel-danger student-form-recovery-panel" role="alert">
-    <p class="eyebrow">Guia de recupera&ccedil;&atilde;o</p>
-    <p class="no-margin"><strong>{{ student_form_recovery_guide.title }}</strong></p>
-    <p class="meta-text">{{ student_form_recovery_guide.copy }}</p>
+<div class="note-panel note-panel-danger student-form-recovery-panel" role="alert" aria-labelledby="student-form-recovery-title">
+    <div class="student-form-recovery-header">
+        <p class="eyebrow">Guia de recupera&ccedil;&atilde;o</p>
+        <p class="student-form-recovery-title" id="student-form-recovery-title">
+            <strong>{{ student_form_recovery_guide.title }}</strong>
+        </p>
+        <p class="meta-text student-form-recovery-copy">{{ student_form_recovery_guide.copy }}</p>
+    </div>
     <div class="stack-14 section-gap-top-xs student-form-recovery-list">
         {% for item in student_form_recovery_guide.items %}
         <div class="student-form-recovery-item">
@@ -14,6 +18,13 @@ ARQUIVO: bloco de recuperacao/intermediacao do formulario.
                 {% if item.step %}<span class="pill info student-form-recovery-pill">Etapa {{ item.step }}</span>{% endif %}
             </p>
             <p class="meta-text">{{ item.summary }}</p>
+            {% if item.errors %}
+            <ul class="student-form-recovery-errors" aria-label="Erros desta etapa">
+                {% for error in item.errors %}
+                <li><strong>{{ error.field }}:</strong> {{ error.message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
         </div>
         {% endfor %}
     </div>

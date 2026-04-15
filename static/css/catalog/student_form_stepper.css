@@ -529,22 +529,49 @@ form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-fo
 
 .student-form-recovery-panel {
     display: grid;
-    gap: 10px;
-    padding: 18px 20px;
-    border-radius: 22px;
+    align-items: start;
+    gap: 16px;
+    margin: 2px clamp(2px, 0.6vw, 8px) 20px;
+    padding: clamp(20px, 2vw, 26px) clamp(20px, 2.4vw, 30px) clamp(22px, 2.6vw, 30px) clamp(28px, 3vw, 34px);
+    border-radius: 20px;
     border: 1px solid color-mix(in srgb, var(--theme-accent-warning-alpha) 14%, var(--theme-glass-border) 86%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, transparent), transparent 28%),
         var(--theme-surface-glass-strong);
     box-shadow: var(--theme-glass-shadow);
+    overflow: hidden;
+}
+
+.student-form-recovery-header {
+    display: grid;
+    gap: 7px;
+    max-width: 70ch;
+}
+
+.student-form-recovery-header .eyebrow,
+.student-form-recovery-title,
+.student-form-recovery-copy {
+    margin: 0;
+}
+
+.student-form-recovery-title {
+    color: var(--student-form-text-primary);
+    line-height: 1.25;
+}
+
+.student-form-recovery-copy {
+    line-height: 1.55;
 }
 
 .student-form-recovery-list {
-    gap: 10px;
+    gap: 12px;
+    margin-top: 0;
 }
 
 .student-form-recovery-item {
-    padding: 10px 12px;
+    display: grid;
+    gap: 6px;
+    padding: 14px 16px;
     border-radius: 14px;
     background: color-mix(in srgb, var(--theme-surface-glass) 82%, transparent);
     border: 1px solid color-mix(in srgb, var(--theme-glass-border) 86%, transparent);
@@ -555,6 +582,31 @@ form[data-action="submit-student-form"]:not([data-current-step="1"]) .student-fo
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
+}
+
+.student-form-recovery-item .meta-text {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.student-form-recovery-errors {
+    display: grid;
+    gap: 6px;
+    margin: 4px 0 0;
+    padding: 10px 12px 10px 28px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-danger-alpha) 18%, var(--theme-glass-border) 82%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 16%, transparent);
+    color: var(--student-form-text-primary);
+    line-height: 1.45;
+}
+
+.student-form-recovery-errors li::marker {
+    color: var(--theme-accent-danger);
+}
+
+.student-form-recovery-errors strong {
+    color: var(--student-form-text-primary);
 }
 
 .student-form-recovery-pill {
@@ -749,6 +801,11 @@ body[data-theme="dark"] .student-form-recovery-item {
     border-color: color-mix(in srgb, var(--theme-glass-border) 84%, transparent);
 }
 
+body[data-theme="dark"] .student-form-recovery-errors {
+    border-color: color-mix(in srgb, var(--theme-accent-danger-alpha) 24%, var(--theme-glass-border) 76%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 18%, rgba(7, 13, 24, 0.46));
+}
+
 body[data-theme="dark"] .student-form-handoff {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
     background:
@@ -898,6 +955,17 @@ body[data-theme="dark"] .student-form-shell details.disclosure-panel.student-for
     .student-form-recovery-panel,
     .student-form-step-essential {
         padding: 16px;
+    }
+
+    .student-form-recovery-panel {
+        gap: 14px;
+        margin-inline: 0;
+        padding: 18px 16px 18px 22px;
+        border-radius: 18px;
+    }
+
+    .student-form-recovery-item {
+        padding: 12px 14px;
     }
 
     .student-form-step-disclosure > summary {

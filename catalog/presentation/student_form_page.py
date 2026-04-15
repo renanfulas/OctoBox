@@ -68,13 +68,25 @@ def build_student_form_recovery_guide(form):
 
     items = []
     for step in STUDENT_FORM_GUIDE_STEPS:
-        if any(form.errors.get(field_name) for field_name in step['fields']):
+        step_errors = []
+        for field_name in step['fields']:
+            for error in form.errors.get(field_name, []):
+                field = form.fields.get(field_name)
+                step_errors.append(
+                    {
+                        'field': getattr(field, 'label', None) or field_name,
+                        'message': str(error),
+                    }
+                )
+
+        if step_errors:
             items.append(
                 {
                     'label': step['label'],
                     'href': step['href'],
                     'step': step['step'],
                     'summary': step['summary'],
+                    'errors': step_errors,
                 }
             )
 
@@ -85,6 +97,10 @@ def build_student_form_recovery_guide(form):
                 'href': '#student-form-billing',
                 'step': 2,
                 'summary': 'Existe uma combinacao de dados que trava o fluxo. Revise os campos marcados abaixo.',
+                'errors': [
+                    {'field': 'Regra geral', 'message': str(error)}
+                    for error in form.non_field_errors()
+                ],
             }
         )
 
