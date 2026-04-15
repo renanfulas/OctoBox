@@ -171,7 +171,7 @@ def _build_navigation(role_slug, current_view_name):
             'nav_key': 'dashboard',
             'label': 'Dashboard',
             'href': reverse('dashboard'),
-            'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_COACH),
+            'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER),
             'icon': 'DB',
         },
         {
@@ -207,9 +207,7 @@ def _build_navigation(role_slug, current_view_name):
         ROLE_MANAGER: [
             {'nav_key': 'whatsapp', 'label': 'WhatsApp', 'href': reverse('whatsapp-workspace'), 'icon': 'WA'},
         ],
-        ROLE_COACH: [
-            {'nav_key': 'operacao', 'label': 'Ocorrencias', 'href': reverse('role-operations') + '#coach-boundary-board', 'icon': 'OC'},
-        ],
+        ROLE_COACH: [],
         ROLE_RECEPTION: [],
     }
 

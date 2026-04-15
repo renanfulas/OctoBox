@@ -4,18 +4,20 @@ ARQUIVO: grade de aulas e leitura rápida da recepção.
 
 .reception-grid-board {
     --reception-board-surface-dark:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, transparent), transparent 32%),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent), transparent 32%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 30%),
         linear-gradient(158deg, rgba(10, 19, 33, 0.98), rgba(8, 15, 26, 0.96) 60%, rgba(7, 13, 23, 0.94));
-    --reception-board-border-dark: color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, var(--theme-border-soft) 86%);
+    --reception-board-border-dark: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
     --reception-board-shadow-dark:
         0 18px 32px rgba(0, 0, 0, 0.16),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
     position: relative;
     overflow: hidden;
     background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 10%, transparent), transparent 28%),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 28%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 8%, transparent), transparent 28%),
         linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-panel) 96%, white), color-mix(in srgb, var(--theme-surface) 98%, white));
-    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, var(--theme-border-soft) 86%);
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
     box-shadow: 0 14px 28px rgba(7, 14, 24, 0.06);
 }
 
@@ -35,7 +37,7 @@ ARQUIVO: grade de aulas e leitura rápida da recepção.
     position: absolute;
     inset: 0 0 auto;
     height: 4px;
-    background: linear-gradient(90deg, var(--theme-accent-primary), var(--theme-accent-support), var(--theme-accent-premium));
+    background: linear-gradient(90deg, var(--theme-accent-support), var(--theme-accent-premium), color-mix(in srgb, var(--theme-accent-support) 62%, white 38%));
 }
 
 .reception-grid-board .operation-card-head {
@@ -52,24 +54,54 @@ ARQUIVO: grade de aulas e leitura rápida da recepção.
     gap: 12px;
 }
 
+.reception-grid-board .operation-empty-card {
+    min-height: 100%;
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 30%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 8%, transparent), transparent 30%),
+        color-mix(in srgb, var(--theme-surface-panel) 92%, white 8%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.reception-grid-board .operation-empty-card .state-empty {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.reception-grid-board .operation-empty-card .state-empty-title {
+    color: var(--theme-text-primary);
+}
+
+.reception-grid-board .operation-empty-card .state-empty-copy,
+.reception-grid-board .operation-empty-card .state-empty-hint {
+    color: var(--theme-text-secondary);
+}
+
 .reception-grade-card {
     display: grid;
     gap: 12px;
     padding: 16px;
     border-radius: var(--radius-card);
-    border: 1px solid rgba(37, 99, 235, 0.14);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
     background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 8%, transparent), transparent 28%),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 8%, transparent), transparent 28%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 7%, transparent), transparent 26%),
         linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-panel) 96%, white), color-mix(in srgb, var(--theme-surface) 98%, white));
-    box-shadow: inset 0 1px 0 color-mix(in srgb, white 16%, transparent);
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, white 16%, transparent),
+        0 10px 22px rgba(7, 14, 24, 0.05);
 }
 
 .reception-grade-card .finance-alert-stat {
     padding: 10px 11px;
     border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, var(--theme-border-soft) 82%);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-border-soft) 82%);
     background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 10%, transparent), transparent 42%),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 42%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 8%, transparent), transparent 36%),
         color-mix(in srgb, var(--theme-surface-panel) 92%, white 8%);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
@@ -122,9 +154,10 @@ ARQUIVO: grade de aulas e leitura rápida da recepção.
 body[data-theme="dark"] .reception-grid-board,
 body[data-theme="dark"] .reception-grade-card {
     background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, transparent), transparent 30%),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 30%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, transparent), transparent 28%),
         linear-gradient(158deg, rgba(12, 22, 36, 0.98), rgba(8, 15, 26, 0.97) 60%, rgba(7, 12, 22, 0.95));
-    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, var(--theme-border-soft) 84%);
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-border-soft) 84%);
 }
 
 body[data-theme="dark"] .reception-grid-board {
@@ -145,9 +178,10 @@ body[data-theme="dark"] .reception-class-session-card .meta-text {
 }
 
 body[data-theme="dark"] .reception-grade-card .finance-alert-stat {
-    border-color: color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, var(--theme-border-soft) 84%);
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-border-soft) 84%);
     background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent), transparent 42%),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 42%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, transparent), transparent 36%),
         linear-gradient(160deg, rgba(10, 18, 31, 0.9), rgba(8, 14, 24, 0.86));
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.04),
@@ -160,4 +194,30 @@ body[data-theme="dark"] .reception-grade-card .finance-alert-stat strong {
 
 body[data-theme="dark"] .reception-grade-card .finance-alert-stat .operation-mini-label {
     color: color-mix(in srgb, var(--theme-text-muted) 88%, white 12%);
+}
+
+body[data-theme="dark"] .reception-grid-board .operation-empty-card {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, rgba(148, 163, 184, 0.12) 82%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 20%, transparent), transparent 34%),
+        radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, transparent), transparent 32%),
+        linear-gradient(160deg, rgba(10, 18, 31, 0.94), rgba(8, 14, 24, 0.9));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 14px 26px rgba(2, 6, 23, 0.14);
+}
+
+body[data-theme="dark"] .reception-grid-board .operation-empty-card .state-empty {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+body[data-theme="dark"] .reception-grid-board .operation-empty-card .state-empty-title {
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .reception-grid-board .operation-empty-card .state-empty-copy,
+body[data-theme="dark"] .reception-grid-board .operation-empty-card .state-empty-hint {
+    color: var(--theme-text-secondary);
 }

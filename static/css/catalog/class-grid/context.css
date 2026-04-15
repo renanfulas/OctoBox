@@ -69,12 +69,9 @@ POR QUE ELE EXISTE:
     line-height: 1.35;
 }
 
-.class-grid-metric-card::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto;
-    height: 4px;
-    background: linear-gradient(90deg, var(--theme-accent-primary), var(--theme-accent-support), var(--theme-accent-premium));
+.class-grid-metrics-panel .class-grid-metric-card::before {
+    content: none;
+    display: none;
 }
 
 body[data-theme="dark"] .class-grid-metric-card {

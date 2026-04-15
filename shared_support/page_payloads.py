@@ -124,6 +124,7 @@ def build_page_reading_panel(
     pill_class=None,
     class_name=None,
     panel_id=None,
+    unwrap=False,
 ):
     return {
         'eyebrow': eyebrow or PAGE_READING_PANEL_RULES['eyebrow'],
@@ -135,6 +136,7 @@ def build_page_reading_panel(
         'pill_class': pill_class,
         'class_name': class_name,
         'panel_id': panel_id,
+        'unwrap': unwrap,
     }
 
 
