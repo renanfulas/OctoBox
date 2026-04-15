@@ -1272,6 +1272,7 @@ class CatalogViewTests(TestCase):
         self.assertContains(response, 'Dados cadastrais')
         self.assertContains(response, 'Historico de pagamentos')
         self.assertContains(response, 'Salvar perfil')
+        self.assertIn('js/core/forms.js', response.context['current_page_assets']['js'])
 
     def test_student_update_page_renders_date_inputs_in_iso_format(self):
         self.client.force_login(self.user)

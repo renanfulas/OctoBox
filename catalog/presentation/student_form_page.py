@@ -276,6 +276,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
                 'css/design-system/financial.css',
             ],
             js=[
+                'js/core/forms.js',
                 'js/pages/students/student-form.js',
                 'js/pages/students/student-form-stepper.js',
                 'js/pages/interactive_tabs.js',
