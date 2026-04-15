@@ -79,10 +79,10 @@
 
 @media (max-width: 480px) {
     .profile-dropdown {
-        left: 0;
-        right: auto;
+        right: 0;
+        left: auto;
         width: min(calc(100vw - 28px), 320px);
-        transform-origin: top left;
+        transform-origin: top right;
     }
 }
 

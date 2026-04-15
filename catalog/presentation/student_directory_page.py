@@ -84,7 +84,18 @@ def build_student_directory_page(*, student_count, students, student_filter_form
             'can_open_student_admin': can_open_student_admin,
         },
         assets=build_catalog_assets(
-            css=['css/catalog/students.css'],
-            include_catalog_shared=True,
+            css=[
+                'css/catalog/shared/scene.css',
+                'css/catalog/students/scene.css',
+                'css/catalog/students/filters.css',
+                'css/catalog/students/intake-directory.css',
+                'css/catalog/students/responsive.css',
+            ],
+            deferred_css=[
+                'bundle:css/catalog/students-deferred.css',
+            ],
+            enhancement_css=[
+                'bundle:css/catalog/students-enhancement.css',
+            ],
         ),
     )

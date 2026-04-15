@@ -1,0 +1,9 @@
+/*
+ARQUIVO: camada cosmetica progressiva do financeiro.
+
+POR QUE ELE EXISTE:
+- deixa assinatura visual pesada fora do primeiro paint.
+- mantem o acabamento premium carregando sem bloquear a primeira leitura.
+*/
+
+@import url("./finance/_signature.css");

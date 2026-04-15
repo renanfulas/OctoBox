@@ -123,13 +123,21 @@ def compute_fidalgometro_score(student):
 
 def build_student_directory_snapshot(params=None, for_export=False):
     now = timezone.now()
+    today = timezone.localdate()
     thirty_days_ago = now - timedelta(days=30)
     latest_enrollment_status = Enrollment.objects.filter(student=OuterRef('pk')).order_by('-start_date', '-created_at').values('status')[:1]
     latest_plan_name = Enrollment.objects.filter(student=OuterRef('pk')).order_by('-start_date', '-created_at').values('plan__name')[:1]
     latest_payment_status = Payment.objects.filter(student=OuterRef('pk')).order_by('-due_date', '-created_at').values('status')[:1]
     latest_payment_due_date = Payment.objects.filter(student=OuterRef('pk')).order_by('-due_date', '-created_at').values('due_date')[:1]
-    overdue_payment_exists = Payment.objects.filter(student=OuterRef('pk'), status=PaymentStatus.OVERDUE)
-    pending_payment_exists = Payment.objects.filter(student=OuterRef('pk'), status=PaymentStatus.PENDING)
+    overdue_payment_exists = Payment.objects.filter(student=OuterRef('pk')).filter(
+        Q(status=PaymentStatus.OVERDUE)
+        | Q(status=PaymentStatus.PENDING, due_date__lt=today)
+    )
+    pending_payment_exists = Payment.objects.filter(
+        student=OuterRef('pk'),
+        status=PaymentStatus.PENDING,
+        due_date__gte=today,
+    )
 
     students = Student.objects.annotate(
         latest_enrollment_status=Subquery(latest_enrollment_status),
@@ -178,7 +186,10 @@ def build_student_directory_snapshot(params=None, for_export=False):
         ).order_by('-check_in_at').values('check_in_at')[:1]
         amount_paid_sum = Payment.objects.filter(student=OuterRef('pk'), status=PaymentStatus.PAID).order_by().values('student').annotate(total=Sum('amount')).values('total')
         amount_open_sum = Payment.objects.filter(student=OuterRef('pk'), status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE]).order_by().values('student').annotate(total=Sum('amount')).values('total')
-        overdue_count = Payment.objects.filter(student=OuterRef('pk'), status=PaymentStatus.OVERDUE).order_by().values('student').annotate(c=Count('id')).values('c')
+        overdue_count = Payment.objects.filter(student=OuterRef('pk')).filter(
+            Q(status=PaymentStatus.OVERDUE)
+            | Q(status=PaymentStatus.PENDING, due_date__lt=today)
+        ).order_by().values('student').annotate(c=Count('id')).values('c')
 
         students = students.annotate(
             report_last_check_in=Subquery(last_check_in),

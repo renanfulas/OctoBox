@@ -74,11 +74,9 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, 'class="dashboard-reading-panel"', html=False)
         self.assertContains(response, "dashboard-reading-panel__grid", html=False)
         self.assertContains(response, "dashboard-reading-card", html=False)
-        self.assertContains(response, "Emergencia")
-        self.assertContains(response, "Urgente")
         self.assertContains(response, "Risco")
-        self.assertContains(response, "Caixa limpo.", html=False)
-        self.assertContains(response, "Tudo tranquilo na reten", html=False)
+        self.assertNotContains(response, "Emergencia")
+        self.assertNotContains(response, "Urgente")
         self.assertContains(response, "Rotina limpa.", html=False)
         self.assertContains(response, "Sem acao imediata", html=False)
         self.assertContains(response, 'id="dashboard"', html=False)
@@ -176,7 +174,7 @@ class DashboardViewTests(TestCase):
         self.assertEqual(focus[2]["href"], "/alunos/")
         self.assertEqual(focus[2]["href_label"], "Abrir alunos que pedem cuidado")
 
-    def test_manager_reading_panel_hides_tranquil_priority_cards_with_zero_value(self):
+    def test_manager_reading_panel_keeps_only_the_risk_fallback_when_everything_is_quiet(self):
         priority_cards = [
             {
                 "severity": "emergency",
@@ -215,7 +213,9 @@ class DashboardViewTests(TestCase):
 
         panel = _build_dashboard_reading_panel(priority_cards, role_slug=ROLE_MANAGER)
 
-        self.assertEqual(panel["items"], [])
+        self.assertEqual(len(panel["items"]), 1)
+        self.assertEqual(panel["items"][0]["label"], "Risco")
+        self.assertTrue(panel["items"][0]["is_tranquil"])
 
     def test_dashboard_layout_update_persists_user_preference(self):
         self.client.force_login(self.user)

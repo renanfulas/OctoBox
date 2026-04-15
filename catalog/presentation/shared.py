@@ -20,7 +20,19 @@ def build_catalog_page_payload(*, context, shell_context=None, data=None, action
     )
 
 
-def build_catalog_assets(*, css=None, js=None, include_operations=True, operations_entry='css/design-system/catalog-operation-contract.css', include_catalog_shared=False):
+def build_catalog_assets(
+    *,
+    css=None,
+    js=None,
+    include_operations=True,
+    operations_entry='css/design-system/catalog-operation-contract.css',
+    include_catalog_shared=False,
+    critical_css=None,
+    deferred_css=None,
+    enhancement_css=None,
+    critical_js=None,
+    deferred_js=None,
+):
     css_paths = []
 
     if include_operations:
@@ -32,7 +44,15 @@ def build_catalog_assets(*, css=None, js=None, include_operations=True, operatio
         if asset_path not in css_paths:
             css_paths.append(asset_path)
 
-    return build_page_assets(css=css_paths, js=js)
+    return build_page_assets(
+        css=css_paths,
+        js=js,
+        critical_css=critical_css,
+        deferred_css=deferred_css,
+        enhancement_css=enhancement_css,
+        critical_js=critical_js,
+        deferred_js=deferred_js,
+    )
 
 
 def attach_catalog_page_payload(context, *, payload_key, payload, include_sections=None):

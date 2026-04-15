@@ -870,6 +870,11 @@ body[data-theme="dark"] .student-quick-confirm-dialog__card {
         border-right: 0;
         border-bottom: 0;
         border-left: 0;
+        transform: translateY(calc(100% + 24px));
+    }
+
+    .student-quick-panel.is-open {
+        transform: translateY(0);
     }
 
     .student-quick-panel__scroll {

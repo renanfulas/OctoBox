@@ -7,7 +7,7 @@ POR QUE ELE EXISTE:
 O QUE ESTE ARQUIVO FAZ:
 1. valida a ordem de prioridade emergency > warning > risk.
 2. garante que cards nao acionaveis nao ocupem o slot.
-3. confirma que a tela pode ficar limpa quando nao houver nada acionavel.
+3. confirma que o fallback final continua sendo o card de risco.
 
 PONTOS CRITICOS:
 - se este teste quebrar, a leitura dominante do dashboard pode voltar a competir no mesmo espaco.
@@ -58,7 +58,7 @@ class DashboardReadingPriorityTest(unittest.TestCase):
 
         self.assertEqual([card['severity'] for card in selected], ['risk'])
 
-    def test_no_card_is_selected_when_everything_is_quiet(self):
+    def test_risk_is_the_fallback_when_everything_is_quiet(self):
         cards = [
             {'severity': 'emergency', 'is_actionable': False},
             {'severity': 'warning', 'is_actionable': False},
@@ -67,7 +67,7 @@ class DashboardReadingPriorityTest(unittest.TestCase):
 
         selected = _select_dashboard_reading_cards(cards)
 
-        self.assertEqual(selected, [])
+        self.assertEqual([card['severity'] for card in selected], ['risk'])
 
 
 if __name__ == '__main__':

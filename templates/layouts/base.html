@@ -5,21 +5,52 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>OctoBox Control</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    {% for font_path in shell_critical_font_preloads %}
+    <link rel="preload" href="{% static font_path %}?v={{ static_asset_version }}" as="font" type="font/woff2" crossorigin>
+    {% endfor %}
     {% for stylesheet in shell_core_stylesheets %}
     <link rel="stylesheet" href="{% static stylesheet %}?v={{ static_asset_version }}">
     {% endfor %}
     <link rel="stylesheet" href="{% static 'css/design-system/components/topbar_profile_menu.css' %}?v={{ static_asset_version }}">
     <link rel="icon" href="{% static 'images/favicon.svg' %}?v={{ static_asset_version }}" type="image/svg+xml">
-    {% if current_page_assets.css_runtime %}
+    {% if current_page_assets.has_runtime_css_groups %}
+    {% for stylesheet in current_page_assets.critical_css_runtime %}
+    <link rel="stylesheet" href="{% static stylesheet %}?v={{ static_asset_version }}">
+    {% endfor %}
+    {% else %}
+    {% for stylesheet in current_page_assets.critical_css %}
+    <link rel="stylesheet" href="{% static stylesheet %}?v={{ static_asset_version }}">
+    {% endfor %}
+    {% endif %}
+    {% if current_page_assets.has_runtime_css_groups %}
     {% for stylesheet in current_page_assets.css_runtime %}
     <link rel="stylesheet" href="{% static stylesheet %}?v={{ static_asset_version }}">
     {% endfor %}
     {% else %}
     {% for stylesheet in current_page_assets.css %}
     <link rel="stylesheet" href="{% static stylesheet %}?v={{ static_asset_version }}">
+    {% endfor %}
+    {% endif %}
+    {% if current_page_assets.has_runtime_css_groups %}
+    {% for stylesheet in current_page_assets.deferred_css_runtime %}
+    <link rel="preload" href="{% static stylesheet %}?v={{ static_asset_version }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{% static stylesheet %}?v={{ static_asset_version }}"></noscript>
+    {% endfor %}
+    {% else %}
+    {% for stylesheet in current_page_assets.deferred_css %}
+    <link rel="preload" href="{% static stylesheet %}?v={{ static_asset_version }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{% static stylesheet %}?v={{ static_asset_version }}"></noscript>
+    {% endfor %}
+    {% endif %}
+    {% if current_page_assets.has_runtime_css_groups %}
+    {% for stylesheet in current_page_assets.enhancement_css_runtime %}
+    <link rel="preload" href="{% static stylesheet %}?v={{ static_asset_version }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{% static stylesheet %}?v={{ static_asset_version }}"></noscript>
+    {% endfor %}
+    {% else %}
+    {% for stylesheet in current_page_assets.enhancement_css %}
+    <link rel="preload" href="{% static stylesheet %}?v={{ static_asset_version }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{% static stylesheet %}?v={{ static_asset_version }}"></noscript>
     {% endfor %}
     {% endif %}
     {% block extra_head %}{% endblock %}
@@ -83,15 +114,23 @@
 
     <button class="sidebar-backdrop" type="button" id="sidebar-backdrop" data-ui="sidebar-backdrop" aria-label="Fechar menu lateral"></button>
 
-    <script src="{% static 'js/core/dynamic-visuals.js' %}?v={{ static_asset_version }}"></script>
+    <script src="{% static 'js/core/dynamic-visuals-loader.js' %}?v={{ static_asset_version }}"></script>
     {% block extra_scripts %}{% endblock %}
     {% if current_page_behavior %}
     {{ current_page_behavior|json_script:"current-page-behavior" }}
     {% endif %}
+    {% for script_path in current_page_assets.critical_js %}
+    <script src="{% static script_path %}?v={{ static_asset_version }}"></script>
+    {% endfor %}
     {% for script_path in current_page_assets.js %}
     <script src="{% static script_path %}?v={{ static_asset_version }}"></script>
     {% endfor %}
-    <script src="{% static 'js/core/search.js' %}?v={{ static_asset_version }}"></script>
+    {% for script_path in current_page_assets.deferred_js %}
+    <script defer src="{% static script_path %}?v={{ static_asset_version }}"></script>
+    {% endfor %}
+    <script src="{% static 'js/core/search-loader.js' %}?v={{ static_asset_version }}"></script>
     <script src="{% static 'js/core/shell.js' %}?v={{ static_asset_version }}"></script>
+    <script src="{% static 'js/core/shell-interactions.js' %}?v={{ static_asset_version }}"></script>
+    <script src="{% static 'js/core/shell-effects-loader.js' %}?v={{ static_asset_version }}"></script>
 </body>
 </html>

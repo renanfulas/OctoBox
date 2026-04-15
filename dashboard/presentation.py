@@ -622,12 +622,34 @@ def _build_dashboard_priority_cards(
 
 
 def _select_dashboard_reading_cards(priority_cards):
-    """Mantem a faixa de leitura completa na ordem operacional: emergency > warning > risk."""
+    """
+    Mantem a faixa de leitura com um unico card dominante.
+
+    Regra viva:
+    1. Emergencia vence quando tem valor acionavel.
+    2. Se Emergencia zerar, Urgencia assume.
+    3. Se Urgencia tambem zerar, Risco ocupa o mesmo slot.
+    """
     ordered_cards = []
+    cards_by_severity = {
+        item.get('severity'): item
+        for item in list(priority_cards or [])
+        if item.get('severity')
+    }
+
+    dominant_card = None
     for priority in READING_CARD_SEVERITY_ORDER:
-        selected_item = next((item for item in list(priority_cards or []) if item.get('severity') == priority), None)
-        if selected_item:
-            ordered_cards.append(selected_item)
+        candidate = cards_by_severity.get(priority)
+        if candidate and candidate.get('is_actionable'):
+            dominant_card = candidate
+            break
+
+    if dominant_card is None:
+        dominant_card = cards_by_severity.get('risk')
+
+    if dominant_card:
+        ordered_cards.append(dominant_card)
+
     return ordered_cards
 
 
@@ -636,8 +658,6 @@ def _build_dashboard_reading_panel(priority_cards, *, role_slug=''):
     items = []
     for card in selected_cards:
         is_tranquil = not card.get('is_actionable')
-        if role_slug == ROLE_MANAGER and is_tranquil and (card.get('value') or 0) == 0:
-            continue
         items.append(
             {
                 'chip_label': card.get('indicator') or card.get('kicker'),

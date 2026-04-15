@@ -362,6 +362,7 @@ def role_navigation(request):
         'sidebar_navigation': sidebar_navigation,
         'profile_navigation': profile_navigation,
         'global_search_action': global_search_action,
+        'shell_critical_font_preloads': ['fonts/manrope/manrope-latin-variable.woff2'],
         'shell_core_stylesheets': resolve_runtime_css_paths(['css/design-system.css']),
         'static_asset_version': _build_static_asset_version(),
         'topbar_alert_links': topbar_alert_links,

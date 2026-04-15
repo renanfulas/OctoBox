@@ -29,10 +29,48 @@ def build_page_payload(*, context, shell_context=None, data=None, actions=None, 
     }
 
 
-def build_page_assets(*, css=None, js=None):
+ASSET_GROUPS = (
+    'css',
+    'js',
+    'critical_css',
+    'deferred_css',
+    'enhancement_css',
+    'critical_js',
+    'deferred_js',
+)
+
+
+def _resolve_deduped_runtime_css(paths, *, seen=None):
+    if seen is None:
+        seen = set()
+    resolved_paths = []
+
+    for asset_path in resolve_runtime_css_paths(paths):
+        if asset_path not in seen:
+            resolved_paths.append(asset_path)
+            seen.add(asset_path)
+
+    return resolved_paths
+
+
+def build_page_assets(
+    *,
+    css=None,
+    js=None,
+    critical_css=None,
+    deferred_css=None,
+    enhancement_css=None,
+    critical_js=None,
+    deferred_js=None,
+):
     return {
         'css': css or [],
         'js': js or [],
+        'critical_css': critical_css or [],
+        'deferred_css': deferred_css or [],
+        'enhancement_css': enhancement_css or [],
+        'critical_js': critical_js or [],
+        'deferred_js': deferred_js or [],
     }
 
 
@@ -145,12 +183,30 @@ def attach_page_payload(context, *, payload_key, payload, include_sections=None)
     context[payload_key] = payload
 
     payload_assets = payload.get('assets') or {}
-    current_page_assets = context.get('current_page_assets') or {'css': [], 'js': []}
+    existing_page_assets = context.get('current_page_assets') or {}
     current_page_assets = {
-        'css': _merge_asset_lists(current_page_assets.get('css'), payload_assets.get('css')),
-        'js': _merge_asset_lists(current_page_assets.get('js'), payload_assets.get('js')),
+        group_name: _merge_asset_lists(existing_page_assets.get(group_name), payload_assets.get(group_name))
+        for group_name in ASSET_GROUPS
     }
-    current_page_assets['css_runtime'] = resolve_runtime_css_paths(current_page_assets.get('css'))
+
+    rendered_css_assets = set()
+    current_page_assets['critical_css_runtime'] = _resolve_deduped_runtime_css(
+        current_page_assets.get('critical_css'),
+        seen=rendered_css_assets,
+    )
+    current_page_assets['css_runtime'] = _resolve_deduped_runtime_css(
+        current_page_assets.get('css'),
+        seen=rendered_css_assets,
+    )
+    current_page_assets['deferred_css_runtime'] = _resolve_deduped_runtime_css(
+        current_page_assets.get('deferred_css'),
+        seen=rendered_css_assets,
+    )
+    current_page_assets['enhancement_css_runtime'] = _resolve_deduped_runtime_css(
+        current_page_assets.get('enhancement_css'),
+        seen=rendered_css_assets,
+    )
+    current_page_assets['has_runtime_css_groups'] = True
     context['current_page_assets'] = current_page_assets
     context['page_assets'] = current_page_assets
 

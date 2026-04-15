@@ -1,0 +1,16 @@
+/*
+ARQUIVO: bundle progressivo da tela de alunos.
+
+POR QUE ELE EXISTE:
+- reduz links de CSS nao critico sem apagar ownership modular.
+- agrupa utilitarios e paineis que podem carregar depois da primeira leitura.
+
+PONTOS CRITICOS:
+- carregar via `bundle:css/catalog/students-deferred.css` para preservar este manifesto como um unico link.
+- manter os ajustes fonte nos arquivos importados.
+*/
+
+@import url("./shared/utilities.css");
+@import url("./shared/responsive.css");
+@import url("./shared/lock-banner.css");
+@import url("./students/focus-priority.css");

@@ -10,12 +10,23 @@ PONTO CRITICO:
 - este arquivo deve ser a unica autoridade de tokens do tema
 */
 
+@font-face {
+    font-family: "Manrope";
+    font-style: normal;
+    font-weight: 400 800;
+    font-display: swap;
+    src: url("../../fonts/manrope/manrope-latin-variable.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+        U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191,
+        U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
     color-scheme: light;
 
     /* Typography */
-    --font-body: "Inter", "Aptos", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
-    --font-display: "Inter", "Aptos Display", "Iowan Old Style", "Palatino Linotype", serif;
+    --font-body: "Manrope", system-ui, sans-serif;
+    --font-display: "Object Sans", "Manrope", system-ui, sans-serif;
     --font-display-critical: "Aptos Display", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
 
     --font-size-h1: 28px;

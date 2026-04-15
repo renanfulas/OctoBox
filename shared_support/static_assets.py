@@ -11,6 +11,7 @@ from django.conf import settings
 
 
 _CSS_IMPORT_RE = re.compile(r'@import\s+url\(["\'](?P<path>[^"\']+\.css)["\']\)')
+_CSS_BUNDLE_PREFIX = 'bundle:'
 
 _CSS_EXPANSION_CACHE = {}
 
@@ -27,7 +28,13 @@ def resolve_runtime_css_paths(stylesheet_paths):
     seen_paths = set()
 
     for stylesheet_path in stylesheet_paths:
-        for runtime_path in _expand_css_manifest(_normalize_asset_path(stylesheet_path), stack=()):
+        normalized_path = _normalize_asset_path(stylesheet_path)
+        if _is_bundled_css(normalized_path):
+            runtime_paths = [_strip_bundle_prefix(normalized_path)]
+        else:
+            runtime_paths = _expand_css_manifest(normalized_path, stack=())
+
+        for runtime_path in runtime_paths:
             if runtime_path in seen_paths:
                 continue
             seen_paths.add(runtime_path)
@@ -104,7 +111,21 @@ def _expand_css_manifest(stylesheet_path, *, stack):
 
 
 def _normalize_asset_path(asset_path):
-    return str(Path(asset_path).as_posix())
+    asset_path = str(asset_path).replace('\\', '/')
+    if _is_bundled_css(asset_path):
+        return f"{_CSS_BUNDLE_PREFIX}{Path(_strip_bundle_prefix(asset_path)).as_posix()}"
+    return Path(asset_path).as_posix()
+
+
+def _is_bundled_css(asset_path):
+    return str(asset_path).startswith(_CSS_BUNDLE_PREFIX)
+
+
+def _strip_bundle_prefix(asset_path):
+    asset_path = str(asset_path)
+    if _is_bundled_css(asset_path):
+        return asset_path[len(_CSS_BUNDLE_PREFIX) :]
+    return asset_path
 
 
 def _resolve_import_path(parent_asset_path, import_path):

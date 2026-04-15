@@ -490,17 +490,23 @@ body[data-theme="dark"] .student-pagination-button--ghost {
     }
 
     .student-directory-table td {
-        display: grid;
-        gap: 6px;
+        display: block;
+        width: 100%;
+        min-width: 0;
         padding: 0;
         border: 0;
-        align-content: start;
-        justify-items: start;
         text-align: left;
+    }
+
+    .student-directory-table tbody tr > td:nth-child(n) {
+        inline-size: 100%;
+        width: 100%;
     }
 
     .student-directory-table td::before {
         content: attr(data-label);
+        display: block;
+        margin-bottom: 6px;
         font-size: 0.66rem;
         font-weight: 800;
         letter-spacing: 0.12em;

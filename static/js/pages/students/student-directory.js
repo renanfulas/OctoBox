@@ -133,6 +133,8 @@ document.addEventListener('DOMContentLoaded', function() {
             nextParams.set('student_status', 'inactive');
         } else if (nextFilter === 'overdue') {
             nextParams.set('payment_status', 'overdue');
+        } else if (nextFilter === 'new-30d') {
+            nextParams.set('created_window', '30d');
         }
 
         var queryString = nextParams.toString();
@@ -2351,7 +2353,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     applyLocalDirectoryState();
                     return;
                 }
-                if (hasServerScopedFilters()) {
+                if (hasServerScopedFilters() || !hasFullDirectorySearchIndex) {
                     window.location.assign(buildDirectoryFilterUrl(nextFilter));
                     return;
                 }
@@ -2368,6 +2370,10 @@ document.addEventListener('DOMContentLoaded', function() {
             event.preventDefault();
             event.stopPropagation();
             var nextFilter = card.getAttribute('data-student-kpi-filter') || 'all';
+            if (!hasFullDirectorySearchIndex) {
+                window.location.assign(buildDirectoryFilterUrl(nextFilter));
+                return;
+            }
             filterState.filter = nextFilter;
             if (filterState.sortBy === 'presence') {
                 filterState.sortBy = '';

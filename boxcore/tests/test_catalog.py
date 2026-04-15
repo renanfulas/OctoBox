@@ -16,6 +16,7 @@ PONTOS CRITICOS:
 """
 
 from datetime import datetime
+from pathlib import Path
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -61,6 +62,72 @@ class CatalogViewTests(TestCase):
         self.assertContains(response, 'Bruna Costa')
         self.assertContains(response, 'Novo aluno')
         self.assertContains(response, '1 alunos')
+        self.assertNotContains(response, 'fonts.googleapis.com')
+        self.assertNotContains(response, 'fonts.gstatic.com')
+        self.assertContains(response, 'js/core/search-loader.js')
+        self.assertNotContains(response, 'js/core/search.js')
+        self.assertContains(response, 'js/core/dynamic-visuals-loader.js')
+        self.assertNotContains(response, 'js/core/dynamic-visuals.js')
+        self.assertContains(response, 'js/core/shell.js')
+        self.assertContains(response, 'js/core/shell-interactions.js')
+        self.assertContains(response, 'js/core/shell-effects-loader.js')
+        self.assertNotContains(response, 'js/core/shell-effects.js')
+        self.assertIn('css/catalog/students/scene.css', response.context['current_page_assets']['css'])
+        self.assertIn('css/catalog/students/intake-directory.css', response.context['current_page_assets']['css'])
+        self.assertEqual(response.context['current_page_assets']['deferred_css'], ['bundle:css/catalog/students-deferred.css'])
+        self.assertEqual(response.context['current_page_assets']['enhancement_css'], ['bundle:css/catalog/students-enhancement.css'])
+        self.assertEqual(response.context['current_page_assets']['deferred_css_runtime'], ['css/catalog/students-deferred.css'])
+        self.assertEqual(response.context['current_page_assets']['enhancement_css_runtime'], ['css/catalog/students-enhancement.css'])
+        self.assertNotIn('css/catalog/shared.css', response.context['current_page_assets']['css'])
+        self.assertNotIn('css/catalog/students.css', response.context['current_page_assets']['css'])
+
+    def test_student_directory_treats_expired_pending_payment_as_overdue(self):
+        overdue_student = Student.objects.create(full_name='Aline Atrasada', phone='5511977777777')
+        overdue_enrollment = Enrollment.objects.create(student=overdue_student, plan=self.plan)
+        Payment.objects.create(
+            student=overdue_student,
+            enrollment=overdue_enrollment,
+            due_date=timezone.localdate() - timezone.timedelta(days=1),
+            amount='289.90',
+            status=PaymentStatus.PENDING,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('student-directory'))
+        page = response.context['student_directory_page']
+        overdue_kpi = next(
+            card
+            for card in page['data']['interactive_kpis']
+            if card['student_filter'] == 'overdue'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(overdue_kpi['display_value'], 1)
+        self.assertContains(response, 'data-student-name="Aline Atrasada"')
+        self.assertContains(response, 'data-payment-status="overdue"')
+        self.assertContains(response, 'Atrasado')
+
+        filtered_response = self.client.get(reverse('student-directory'), data={'payment_status': PaymentStatus.OVERDUE})
+        self.assertEqual(filtered_response.status_code, 200)
+        self.assertContains(filtered_response, 'Aline Atrasada')
+        self.assertNotContains(filtered_response, 'Bruna Costa')
+        self.assertEqual(filtered_response.context['student_directory_page']['data']['total_students'], 1)
+
+    def test_student_directory_pills_and_kpis_redirect_when_full_index_is_missing(self):
+        script = (
+            Path(__file__).resolve().parents[2]
+            / 'static'
+            / 'js'
+            / 'pages'
+            / 'students'
+            / 'student-directory.js'
+        ).read_text(encoding='utf-8')
+
+        self.assertIn("nextParams.set('payment_status', 'overdue');", script)
+        self.assertIn("nextParams.set('created_window', '30d');", script)
+        self.assertIn('if (hasServerScopedFilters() || !hasFullDirectorySearchIndex)', script)
+        self.assertIn('if (!hasFullDirectorySearchIndex) {', script)
+        self.assertIn('window.location.assign(buildDirectoryFilterUrl(nextFilter));', script)
 
     def test_class_grid_renders(self):
         self.client.force_login(self.user)

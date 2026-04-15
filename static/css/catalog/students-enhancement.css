@@ -1,0 +1,15 @@
+/*
+ARQUIVO: bundle de enhancement da tela de alunos.
+
+POR QUE ELE EXISTE:
+- concentra CSS acionado por intencao do usuario, como drawer rapido e leitura financeira.
+- reduz fragmentacao operacional sem transformar o CSS fonte em um arquivo opaco.
+
+PONTOS CRITICOS:
+- carregar via `bundle:css/catalog/students-enhancement.css` para preservar este manifesto como um unico link.
+- nao mover para o caminho critico sem nova medicao.
+*/
+
+@import url("./shared/student-financial.css");
+@import url("./shared/student-financial-foundations.css");
+@import url("./students/quick-panel.css");

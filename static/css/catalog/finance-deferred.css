@@ -1,0 +1,12 @@
+/*
+ARQUIVO: manifesto progressivo do financeiro.
+
+POR QUE ELE EXISTE:
+- tira quadros densos, carteira e motor de planos do caminho render-blocking inicial.
+- preserva a cascade em um bundle controlado para a tela financeira.
+*/
+
+@import url("./finance/_cards.css");
+@import url("./finance/_boards.css");
+@import url("./finance/_plan-page.css");
+@import url("./finance/_dark.css");

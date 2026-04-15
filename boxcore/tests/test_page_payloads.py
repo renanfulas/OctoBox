@@ -95,7 +95,90 @@ class PagePayloadBridgeContractTests(SimpleTestCase):
             result['current_page_assets']['css_runtime'],
             resolve_runtime_css_paths(['css/shared/base.css', 'css/catalog/students.css']),
         )
+        self.assertTrue(result['current_page_assets']['has_runtime_css_groups'])
         self.assertEqual(result['page_assets'], result['current_page_assets'])
+
+    def test_attach_page_payload_tracks_priority_asset_groups(self):
+        context = {
+            'current_page_assets': {
+                'css': ['css/shared/base.css'],
+                'js': ['js/shared/base.js'],
+                'critical_css': ['css/design-system/tokens.css'],
+                'deferred_css': ['css/design-system/topbar.css'],
+                'enhancement_css': [],
+                'critical_js': ['js/core/base.js'],
+                'deferred_js': [],
+            }
+        }
+        payload = build_page_payload(
+            context={
+                'page_key': 'students',
+                'title': 'Alunos',
+            },
+            assets=build_page_assets(
+                css=['css/catalog/students.css'],
+                js=['js/pages/student-form.js'],
+                critical_css=['css/design-system/components/hero.css'],
+                deferred_css=['css/design-system/sidebar/base.css'],
+                enhancement_css=['css/design-system/neon.css'],
+                critical_js=['js/core/page-critical.js'],
+                deferred_js=['js/pages/page-deferred.js'],
+            ),
+        )
+
+        result = attach_page_payload(context, payload_key='student_directory_page', payload=payload)
+        current_page_assets = result['current_page_assets']
+
+        self.assertEqual(
+            current_page_assets['critical_css'],
+            ['css/design-system/tokens.css', 'css/design-system/components/hero.css'],
+        )
+        self.assertEqual(
+            current_page_assets['deferred_css'],
+            ['css/design-system/topbar.css', 'css/design-system/sidebar/base.css'],
+        )
+        self.assertEqual(
+            current_page_assets['enhancement_css'],
+            ['css/design-system/neon.css'],
+        )
+        self.assertEqual(
+            current_page_assets['critical_js'],
+            ['js/core/base.js', 'js/core/page-critical.js'],
+        )
+        self.assertEqual(
+            current_page_assets['deferred_js'],
+            ['js/pages/page-deferred.js'],
+        )
+        self.assertEqual(
+            current_page_assets['critical_css_runtime'],
+            resolve_runtime_css_paths(['css/design-system/tokens.css', 'css/design-system/components/hero.css']),
+        )
+        self.assertEqual(
+            current_page_assets['deferred_css_runtime'],
+            resolve_runtime_css_paths(['css/design-system/topbar.css', 'css/design-system/sidebar/base.css']),
+        )
+        self.assertEqual(
+            current_page_assets['enhancement_css_runtime'],
+            resolve_runtime_css_paths(['css/design-system/neon.css']),
+        )
+
+    def test_attach_page_payload_dedupes_rendered_css_between_priority_groups(self):
+        payload = build_page_payload(
+            context={
+                'page_key': 'students',
+                'title': 'Alunos',
+            },
+            assets=build_page_assets(
+                critical_css=['css/design-system/tokens.css'],
+                css=['css/design-system.css'],
+            ),
+        )
+
+        result = attach_page_payload({}, payload_key='student_directory_page', payload=payload)
+        current_page_assets = result['current_page_assets']
+
+        self.assertIn('css/design-system/tokens.css', current_page_assets['critical_css_runtime'])
+        self.assertNotIn('css/design-system/tokens.css', current_page_assets['css_runtime'])
 
     def test_resolve_runtime_css_paths_expands_manifest_imports(self):
         resolved = resolve_runtime_css_paths(['css/design-system.css'])
@@ -103,6 +186,11 @@ class PagePayloadBridgeContractTests(SimpleTestCase):
         self.assertIn('css/design-system/tokens.css', resolved)
         self.assertIn('css/design-system/components/hero.css', resolved)
         self.assertNotIn('css/design-system.css', resolved)
+
+    def test_resolve_runtime_css_paths_preserves_bundled_manifest(self):
+        resolved = resolve_runtime_css_paths(['bundle:css/catalog/students-deferred.css'])
+
+        self.assertEqual(resolved, ['css/catalog/students-deferred.css'])
 
     def test_clear_runtime_css_cache_allows_recompute(self):
         first = resolve_runtime_css_paths(['css/design-system.css'])

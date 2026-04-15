@@ -169,6 +169,8 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
     metrics_queryset = base_queryset
     active_panel = (params.get('panel') or '').strip()
     semantic_stage = ''
+    created_window = ''
+    assignment = ''
     filter_form = IntakeCenterFilterForm(
         params or None,
         status_choices=tuple(choice for choice in IntakeStatus.choices if choice[0] != IntakeStatus.MATCHED),
@@ -183,6 +185,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         source = filter_form.cleaned_data.get('source')
         sort = filter_form.cleaned_data.get('sort')
         semantic_stage = filter_form.cleaned_data.get('semantic_stage') or ''
+        created_window = filter_form.cleaned_data.get('created_window') or ''
         assignment = filter_form.cleaned_data.get('assignment')
 
         if query:
@@ -201,6 +204,9 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
             queue_queryset = queue_queryset.filter(status__in=[IntakeStatus.REVIEWING, IntakeStatus.MATCHED])
         elif semantic_stage == 'resolved':
             queue_queryset = queue_queryset.filter(status__in=[IntakeStatus.APPROVED, IntakeStatus.REJECTED])
+        if created_window == 'today':
+            queue_queryset = queue_queryset.filter(created_at__date=today)
+            metrics_queryset = metrics_queryset.filter(created_at__date=today)
         if assignment == 'assigned':
             queue_queryset = queue_queryset.exclude(assigned_to__isnull=True)
             metrics_queryset = metrics_queryset.exclude(assigned_to__isnull=True)
@@ -281,19 +287,19 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
                 'label': 'Hoje',
                 'display_value': str(created_today),
                 'note': 'Conta apenas os leads e contatos em conversa que entraram hoje; na virada do dia esse numero reinicia.',
-                'data_action': 'open-tab-intake-source',
+                'href': '?panel=tab-intake-queue&created_window=today',
                 'tone_class': 'kpi-emerald',
                 'icon': _intake_kpi_icon('today'),
-                'is_selected': active_panel == 'tab-intake-source',
+                'is_selected': active_panel == 'tab-intake-queue' and created_window == 'today',
             },
             {
                 'label': 'Atribuidos',
                 'display_value': str(assigned_count),
                 'note': 'Mostra quantas entradas ja estao com alguem dono do atendimento.',
-                'data_action': 'open-tab-intake-filters',
+                'href': '?panel=tab-intake-queue&assignment=assigned',
                 'tone_class': 'kpi-purple',
                 'icon': _intake_kpi_icon('owners'),
-                'is_selected': active_panel == 'tab-intake-filters',
+                'is_selected': active_panel == 'tab-intake-queue' and assignment == 'assigned',
             },
         ],
         'hero_stats': [

@@ -183,9 +183,9 @@ class RequestSecurityMiddleware:
         csp_policy = (
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "style-src 'self' 'unsafe-inline'; "
             "img-src 'self' data: https://*; "
-            "font-src 'self' https://fonts.gstatic.com; "
+            "font-src 'self'; "
             "frame-ancestors 'none'; "
             "object-src 'none';"
         )

@@ -30,6 +30,11 @@ SEMANTIC_STAGE_CHOICES = (
     ('resolved', 'Resolvido'),
 )
 
+CREATED_WINDOW_CHOICES = (
+    ('', 'Todas as datas'),
+    ('today', 'Hoje'),
+)
+
 SORT_CHOICES = (
     ('', 'Ordem padrao'),
     ('registration-oldest', 'Registro mais antigo'),
@@ -43,6 +48,7 @@ class IntakeCenterFilterForm(forms.Form):
     source = forms.ChoiceField(required=False, label='Origem', choices=())
     sort = forms.ChoiceField(required=False, label='Ordenacao', choices=SORT_CHOICES)
     semantic_stage = forms.ChoiceField(required=False, label='Leitura comercial', choices=SEMANTIC_STAGE_CHOICES)
+    created_window = forms.ChoiceField(required=False, label='Data de entrada', choices=CREATED_WINDOW_CHOICES)
     assignment = forms.ChoiceField(
         required=False,
         label='Atribuicao',
@@ -100,6 +106,7 @@ class IntakeQueueActionForm(forms.Form):
 
 
 __all__ = [
+    'CREATED_WINDOW_CHOICES',
     'INTAKE_ACTION_CHOICES',
     'IntakeCenterFilterForm',
     'IntakeQuickCreateForm',

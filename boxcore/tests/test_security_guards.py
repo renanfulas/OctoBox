@@ -70,6 +70,17 @@ class SecurityGuardTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    def test_csp_does_not_allow_external_font_hosts(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('student-directory'))
+
+        self.assertIn('Content-Security-Policy', response)
+        csp_policy = response['Content-Security-Policy']
+        self.assertIn("font-src 'self'", csp_policy)
+        self.assertNotIn('fonts.googleapis.com', csp_policy)
+        self.assertNotIn('fonts.gstatic.com', csp_policy)
+
     @override_settings(LOGIN_RATE_LIMIT_MAX_REQUESTS=2, LOGIN_RATE_LIMIT_WINDOW_SECONDS=60)
     def test_login_blocks_short_burst_attempts(self):
         payload = {

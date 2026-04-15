@@ -134,8 +134,26 @@ def build_finance_center_page(
             'can_export_finance': current_role_slug in (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER),
         },
         assets=build_catalog_assets(
-            css=['css/catalog/finance.css', 'css/design-system/financial.css'],
-            include_catalog_shared=True,
+            css=[
+                'css/catalog/shared/scene.css',
+                'css/catalog/finance/_shell.css',
+                'css/catalog/finance/_modes.css',
+                'css/catalog/finance/_metrics.css',
+                'css/catalog/finance/_responsive.css',
+            ],
+            deferred_css=[
+                'bundle:css/catalog/finance-deferred.css',
+            ],
+            enhancement_css=[
+                'bundle:css/catalog/finance-enhancement.css',
+            ],
+            deferred_js=[
+                'js/pages/interactive_tabs.js',
+                'js/pages/finance/finance-filter-summary.js',
+                'js/pages/finance/finance-mode-controller.js',
+                'js/pages/finance/finance-trend-board-controller.js',
+                'js/pages/finance/finance-priority-carousel.js',
+            ],
         ),
     )
 

@@ -18,6 +18,7 @@ from django.core.cache import cache
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from access.roles import ROLE_RECEPTION
 from onboarding.models import IntakeStatus, StudentIntake
@@ -67,7 +68,7 @@ class IntakeCenterViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'id="intake-queue-board"')
         self.assertContains(response, 'Navegacao principal de entradas')
-        self.assertContains(response, 'Buscar contato, telefone ou e-mail...')
+        self.assertContains(response, 'Buscar por nome...')
         self.assertContains(response, 'Lead Central')
         self.assertContains(response, 'Lead aberto')
         self.assertContains(response, 'pode abrir a ficha definitiva direto daqui')
@@ -131,6 +132,47 @@ class IntakeCenterViewTests(TestCase):
         self.assertNotContains(response, 'Lead Central')
         self.assertContains(response, 'aria-label="Fila: 1.', html=False)
         self.assertNotContains(response, 'pulse-pending has-count')
+
+    def test_intake_center_kpis_link_to_server_scoped_queue_filters(self):
+        self.convertible_intake.assigned_to = self.reception
+        self.convertible_intake.save(update_fields=['assigned_to'])
+        old_intake = StudentIntake.objects.create(
+            full_name='Lead Antigo',
+            phone='5511999995555',
+            email='lead.antigo@example.com',
+            source='manual',
+            status=IntakeStatus.NEW,
+        )
+        StudentIntake.objects.filter(pk=old_intake.pk).update(
+            created_at=timezone.now() - timezone.timedelta(days=3),
+            updated_at=timezone.now() - timezone.timedelta(days=3),
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('intake-center'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'href="?panel=tab-intake-queue&amp;created_window=today"')
+        self.assertContains(response, 'href="?panel=tab-intake-queue&amp;assignment=assigned"')
+
+        today_response = self.client.get(
+            reverse('intake-center'),
+            {'panel': 'tab-intake-queue', 'created_window': 'today'},
+        )
+        self.assertEqual(today_response.status_code, 200)
+        self.assertContains(today_response, 'Lead Central')
+        self.assertContains(today_response, 'Triado Central')
+        self.assertNotContains(today_response, 'Lead Antigo')
+        self.assertContains(today_response, 'aria-label="Fila: 2.', html=False)
+
+        assigned_response = self.client.get(
+            reverse('intake-center'),
+            {'panel': 'tab-intake-queue', 'assignment': 'assigned'},
+        )
+        self.assertEqual(assigned_response.status_code, 200)
+        self.assertContains(assigned_response, 'Triado Central')
+        self.assertNotContains(assigned_response, 'Lead Central')
+        self.assertContains(assigned_response, 'aria-label="Fila: 1.', html=False)
 
     def test_reception_can_reject_from_intake_center(self):
         self.client.force_login(self.reception)
