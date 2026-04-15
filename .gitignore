@@ -55,6 +55,8 @@ Thumbs.db
 # Logs
 *.log
 /server_log.txt
+dump.rdb
+*.rdb
 
 # Backups locais e sobras de merge
 backups/

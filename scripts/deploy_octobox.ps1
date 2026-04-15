@@ -8,6 +8,11 @@ if (-not $env:OCTOBOX_BRANCH) {
     $env:OCTOBOX_BRANCH = 'main'
 }
 
+$confirmation = Read-Host "Voce quer fazer deploy em PRODUCAO para $($env:OCTOBOX_DOMAIN) usando a branch $($env:OCTOBOX_BRANCH)? Digite DEPLOY para continuar"
+if ($confirmation -ne 'DEPLOY') {
+    throw 'Deploy cancelado pelo usuario.'
+}
+
 $securePassword = Read-Host "Digite a senha da VPS (${env:OCTOBOX_VPS_USER}@${env:OCTOBOX_VPS_HOST})" -AsSecureString
 $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword)
 $plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
