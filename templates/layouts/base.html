@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>OctoBox Control</title>
     {% for font_path in shell_critical_font_preloads %}
-    <link rel="preload" href="{% static font_path %}?v={{ static_asset_version }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{% static font_path %}" as="font" type="font/woff2" crossorigin>
     {% endfor %}
     {% for stylesheet in shell_core_stylesheets %}
     <link rel="stylesheet" href="{% static stylesheet %}?v={{ static_asset_version }}">

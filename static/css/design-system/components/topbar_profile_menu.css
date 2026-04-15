@@ -71,13 +71,40 @@
     transform: translateY(0) scale(1);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 960px) {
+    .profile-menu-container {
+        width: 48px;
+        justify-self: end;
+    }
+
+    .profile-menu-container .topbar-profile {
+        width: 48px;
+        min-width: 48px;
+        min-height: 48px;
+        height: 48px;
+        justify-content: center;
+        padding: 5px;
+        gap: 0;
+    }
+
     .profile-dropdown {
         width: min(calc(100vw - 28px), 320px);
     }
 }
 
 @media (max-width: 480px) {
+    .profile-menu-container,
+    .profile-menu-container .topbar-profile {
+        width: 44px;
+        min-width: 44px;
+    }
+
+    .profile-menu-container .topbar-profile {
+        min-height: 44px;
+        height: 44px;
+        padding: 4px;
+    }
+
     .profile-dropdown {
         right: 0;
         left: auto;

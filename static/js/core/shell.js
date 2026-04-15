@@ -169,7 +169,7 @@ O QUE ESTE ARQUIVO FAZ:
   });
 
   window.addEventListener('resize', function() {
-    if (window.innerWidth > 960 && body.classList.contains('sidebar-open')) {
+    if (window.innerWidth > 1130 && body.classList.contains('sidebar-open')) {
       closeSidebar();
     }
   });

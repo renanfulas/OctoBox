@@ -48,6 +48,7 @@ class FrontendPerformanceBudgetTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('fonts/manrope/manrope-latin-variable.woff2', html)
+        self.assertNotIn('fonts/manrope/manrope-latin-variable.woff2?v=', html)
         self.assertIn('as="font"', html)
         self.assertIn('type="font/woff2"', html)
         self.assertIn('crossorigin', html)
@@ -152,6 +153,7 @@ class FrontendPerformanceBudgetTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('fonts/manrope/manrope-latin-variable.woff2', html)
+        self.assertNotIn('fonts/manrope/manrope-latin-variable.woff2?v=', html)
         self.assertIn('as="font"', html)
         self.assertNotIn('fonts.googleapis.com', html)
         self.assertNotIn('fonts.gstatic.com', html)

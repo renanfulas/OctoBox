@@ -124,7 +124,7 @@ O QUE ESTE ARQUIVO FAZ:
     display: none;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1130px) {
     .sidebar {
         position: fixed;
         inset: 0 auto 0 0;

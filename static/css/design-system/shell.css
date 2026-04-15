@@ -11,7 +11,7 @@ O QUE ESTE ARQUIVO FAZ:
 4. Sidebar backdrop para mobile.
 
 PONTOS CRITICOS:
-- Breakpoint 960px colapsa a sidebar.
+- Breakpoint 1130px colapsa a sidebar.
 */
 
 .shell {
@@ -50,7 +50,7 @@ body.sidebar-open {
     overflow: hidden;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1130px) {
     .shell {
         grid-template-columns: 1fr;
     }
@@ -110,7 +110,7 @@ body.sidebar-open {
     padding: 0;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1130px) {
     .shell {
         gap: 13px;
         padding: 13px;
