@@ -36,6 +36,47 @@ POR QUE ELE EXISTE:
     margin-top: 0;
 }
 
+.operation-shell .reports-hub-reading-panel {
+    gap: 8px;
+}
+
+.operation-shell .reports-hub-reading-panel .fdw-focus-card {
+    --reports-focus-accent: var(--theme-accent-support);
+    --reports-focus-accent-alpha: var(--theme-accent-support-alpha);
+    border-color: color-mix(in srgb, var(--theme-glass-border) 88%, transparent);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--reports-focus-accent-alpha) 12%, transparent), transparent 40%),
+        linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-panel) 96%, white), color-mix(in srgb, var(--theme-surface-strong) 94%, white));
+    box-shadow: 0 16px 30px rgba(7, 14, 24, 0.07);
+}
+
+.operation-shell .reports-hub-reading-panel .fdw-focus-card.is-primary {
+    --reports-focus-accent: var(--theme-accent-premium);
+    --reports-focus-accent-alpha: var(--theme-accent-premium-alpha);
+    border-color: color-mix(in srgb, var(--theme-accent-premium) 22%, var(--theme-glass-border) 78%);
+}
+
+.operation-shell .reports-hub-reading-panel .fdw-focus-card:has(.fdw-focus-chip.is-warning) {
+    --reports-focus-accent: var(--theme-accent-warning);
+    --reports-focus-accent-alpha: var(--theme-accent-warning-alpha);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 22%, var(--theme-glass-border) 78%);
+}
+
+.operation-shell .reports-hub-reading-panel .fdw-focus-index {
+    background: color-mix(in srgb, var(--reports-focus-accent) 80%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--reports-focus-accent-alpha) 18%, transparent);
+}
+
+.operation-shell .reports-hub-reading-panel .fdw-focus-chip,
+.operation-shell .reports-hub-reading-panel .fdw-focus-count {
+    border-color: color-mix(in srgb, var(--reports-focus-accent) 20%, var(--theme-glass-border) 80%);
+    background: color-mix(in srgb, var(--reports-focus-accent-alpha) 12%, var(--theme-surface-strong) 88%);
+}
+
+.operation-shell .reports-hub-reading-panel .fdw-focus-action {
+    color: color-mix(in srgb, var(--reports-focus-accent) 76%, var(--theme-text-secondary) 24%);
+}
+
 .reports-hub-strip {
     margin-top: var(--workspace-fib-4);
     display: grid;
@@ -225,6 +266,40 @@ body[data-theme="dark"] .reports-hub-card {
 
 body[data-theme="dark"] .reports-hub-summary-list li {
     background: rgba(10, 17, 28, 0.72);
+}
+
+body[data-theme="dark"] .operation-shell .reports-hub-reading-panel .fdw-focus-card {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-border-soft) 82%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--reports-focus-accent-alpha) 18%, transparent), transparent 40%),
+        linear-gradient(158deg, rgba(12, 22, 36, 0.98), rgba(8, 15, 26, 0.97) 60%, rgba(7, 12, 22, 0.95));
+    box-shadow:
+        0 18px 34px rgba(0, 0, 0, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .operation-shell .reports-hub-reading-panel .fdw-focus-card.is-primary {
+    border-color: color-mix(in srgb, var(--theme-accent-premium) 22%, rgba(148, 163, 184, 0.14) 78%);
+}
+
+body[data-theme="dark"] .operation-shell .reports-hub-reading-panel .fdw-focus-card:has(.fdw-focus-chip.is-warning) {
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 22%, rgba(148, 163, 184, 0.14) 78%);
+}
+
+body[data-theme="dark"] .operation-shell .reports-hub-reading-panel .fdw-focus-index {
+    background: color-mix(in srgb, var(--reports-focus-accent) 84%, white 16%);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--reports-focus-accent-alpha) 22%, transparent);
+}
+
+body[data-theme="dark"] .operation-shell .reports-hub-reading-panel .fdw-focus-chip,
+body[data-theme="dark"] .operation-shell .reports-hub-reading-panel .fdw-focus-count {
+    border-color: color-mix(in srgb, var(--reports-focus-accent) 20%, rgba(148, 163, 184, 0.14) 80%);
+    background: color-mix(in srgb, var(--reports-focus-accent-alpha) 22%, rgba(8, 16, 30, 0.94) 78%);
+    color: color-mix(in srgb, var(--reports-focus-accent) 76%, white 24%);
+}
+
+body[data-theme="dark"] .operation-shell .reports-hub-reading-panel .fdw-focus-action {
+    color: color-mix(in srgb, var(--reports-focus-accent) 78%, white 22%);
 }
 
 @media (max-width: 960px) {
