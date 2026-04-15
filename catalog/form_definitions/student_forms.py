@@ -49,7 +49,7 @@ def _student_phone_exists(*, normalized_phone, instance_pk=None):
 
 
 class StudentDirectoryFilterForm(forms.Form):
-    query = forms.CharField(required=False, label='Busca')
+    query = forms.CharField(required=False, label='Busca', max_length=50)
     created_window = forms.ChoiceField(
         required=False,
         label='Janela de criacao',
@@ -76,7 +76,7 @@ class StudentDirectoryFilterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        apply_text_input_attrs(self.fields['query'], placeholder='Nome, WhatsApp ou CPF', maxlength=150)
+        apply_text_input_attrs(self.fields['query'], placeholder='Nome, WhatsApp ou CPF', maxlength=50)
 
 
 class StudentQuickForm(forms.ModelForm):

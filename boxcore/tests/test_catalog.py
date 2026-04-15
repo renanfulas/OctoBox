@@ -97,6 +97,11 @@ class CatalogViewTests(TestCase):
         self.assertContains(response, 'js/core/dynamic-visuals-loader.js')
         self.assertNotContains(response, 'js/core/dynamic-visuals.js')
         self.assertContains(response, 'js/core/shell.js')
+        self.assertContains(response, 'id="global-search-input" type="search" name="query" placeholder="Buscar aluno, telefone ou CPF" maxlength="50"', html=False)
+        self.assertContains(response, 'name="query"', html=False)
+        self.assertContains(response, 'placeholder="Buscar aluno, e-mail ou telefone..."', html=False)
+        self.assertContains(response, 'class="student-filter-search-input"', html=False)
+        self.assertContains(response, 'maxlength="50"', html=False)
         self.assertContains(response, 'js/core/shell-interactions.js')
         self.assertContains(response, 'js/core/shell-effects-loader.js')
         self.assertNotContains(response, 'js/core/shell-effects.js')
@@ -108,6 +113,7 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.context['current_page_assets']['enhancement_css_runtime'], ['css/catalog/students-enhancement.css'])
         self.assertNotIn('css/catalog/shared.css', response.context['current_page_assets']['css'])
         self.assertNotIn('css/catalog/students.css', response.context['current_page_assets']['css'])
+        self.assertEqual(response.context['student_directory_page']['data']['student_filter_form'].fields['query'].max_length, 50)
 
     def test_student_directory_treats_expired_pending_payment_as_overdue(self):
         overdue_student = Student.objects.create(full_name='Aline Atrasada', phone='5511977777777')

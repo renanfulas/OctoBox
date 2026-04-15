@@ -69,6 +69,9 @@ class IntakeCenterViewTests(TestCase):
         self.assertContains(response, 'id="intake-queue-board"')
         self.assertContains(response, 'Navegacao principal de entradas')
         self.assertContains(response, 'Buscar por nome...')
+        self.assertContains(response, 'class="intake-queue-search-input"', html=False)
+        self.assertContains(response, 'maxlength="50"', html=False)
+        self.assertContains(response, 'id="global-search-input" type="search" name="query" placeholder="Buscar aluno, telefone ou CPF" maxlength="50"', html=False)
         self.assertContains(response, 'Lead Central')
         self.assertContains(response, 'Lead aberto')
         self.assertContains(response, 'pode abrir a ficha definitiva direto daqui')
@@ -77,6 +80,7 @@ class IntakeCenterViewTests(TestCase):
         self.assertContains(response, 'Conversar no WhatsApp')
         self.assertContains(response, 'Novo Lead')
         self.assertContains(response, 'Novo Intake')
+        self.assertEqual(response.context['intake_center_page']['data']['filter_form'].fields['query'].max_length, 50)
 
     def test_owner_can_create_lead_inside_intake_center(self):
         self.client.force_login(self.user)
