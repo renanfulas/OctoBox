@@ -922,6 +922,18 @@ class CatalogViewTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('birth_date', form.errors)
 
+    def test_student_quick_form_limits_notes_to_300_characters(self):
+        form = StudentQuickForm(data=self._student_quick_form_data(notes='x' * 301))
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('notes', form.errors)
+
+    def test_student_quick_form_renders_notes_with_300_char_limit(self):
+        form = StudentQuickForm()
+
+        self.assertEqual(form.fields['notes'].max_length, 300)
+        self.assertEqual(form.fields['notes'].widget.attrs.get('maxlength'), '300')
+
     def test_student_quick_form_blocks_duplicate_phone_after_normalization(self):
         form = StudentQuickForm(
             data={

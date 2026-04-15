@@ -130,6 +130,11 @@ class StudentQuickForm(forms.ModelForm):
         min_year=1900,
         widget=forms.DateInput(attrs={'type': 'text'}, format='%d/%m/%Y'),
     )
+    notes = forms.CharField(
+        required=False,
+        max_length=300,
+        widget=forms.Textarea(attrs={'rows': 4}),
+    )
     payment_reference = forms.CharField(
         required=False,
         label='Referencia comercial',
@@ -229,7 +234,11 @@ class StudentQuickForm(forms.ModelForm):
         )
         apply_cpf_input_attrs(self.fields['cpf'], placeholder='Ex.: 123.456.789-00')
         apply_text_input_attrs(self.fields['acquisition_source_detail'], placeholder='Ex.: indicacao do Joao, Google Maps, passou na frente', maxlength=120)
-        apply_text_input_attrs(self.fields['notes'], placeholder='Descreva o problema de saude ou deixe em branco.')
+        apply_text_input_attrs(
+            self.fields['notes'],
+            placeholder='Descreva o problema de saude ou deixe em branco.',
+            maxlength=300,
+        )
         apply_text_input_attrs(self.fields['payment_reference'], placeholder='Ex.: PIX-MAR-2026', maxlength=100)
         apply_currency_input_attrs(self.fields['initial_payment_amount'], placeholder='Ex.: 289.90')
         apply_integer_input_attrs(self.fields['installment_total'], placeholder='Ex.: 3', min_value=1, max_value=12, maxlength=2)
