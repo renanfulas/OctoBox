@@ -52,6 +52,7 @@ fi
 
 mkdir -p "${OCTOBOX_APP_HOME}/app" "${OCTOBOX_APP_HOME}/shared" "${OCTOBOX_APP_HOME}/backups" /run/octobox /var/www/certbot
 chown -R "${OCTOBOX_APP_USER}:${OCTOBOX_APP_GROUP}" "${OCTOBOX_APP_HOME}" /run/octobox
+chmod 751 "${OCTOBOX_APP_HOME}"
 
 if [[ ! -d "${OCTOBOX_APP_HOME}/app/.git" ]]; then
   sudo -u "${OCTOBOX_APP_USER}" git clone --branch "${OCTOBOX_BRANCH}" "${OCTOBOX_REPO}" "${OCTOBOX_APP_HOME}/app"
@@ -248,6 +249,9 @@ sudo -u "${OCTOBOX_APP_USER}" bash -lc "cd '${OCTOBOX_APP_HOME}/app' && set -a &
 sudo -u "${OCTOBOX_APP_USER}" bash -lc "cd '${OCTOBOX_APP_HOME}/app' && set -a && source '${OCTOBOX_APP_HOME}/shared/octobox.env' && set +a && '${OCTOBOX_APP_HOME}/venv/bin/python' manage.py collectstatic --noinput"
 sudo -u "${OCTOBOX_APP_USER}" bash -lc "cd '${OCTOBOX_APP_HOME}/app' && set -a && source '${OCTOBOX_APP_HOME}/shared/octobox.env' && set +a && '${OCTOBOX_APP_HOME}/venv/bin/python' manage.py bootstrap_roles"
 sudo -u "${OCTOBOX_APP_USER}" bash -lc "cd '${OCTOBOX_APP_HOME}/app' && set -a && source '${OCTOBOX_APP_HOME}/shared/octobox.env' && set +a && '${OCTOBOX_APP_HOME}/venv/bin/python' manage.py check"
+chmod 755 "${OCTOBOX_APP_HOME}/app"
+find "${OCTOBOX_APP_HOME}/app/staticfiles" -type d -exec chmod 755 {} \;
+find "${OCTOBOX_APP_HOME}/app/staticfiles" -type f -exec chmod 644 {} \;
 
 systemctl daemon-reload
 systemctl enable --now octobox-gunicorn
