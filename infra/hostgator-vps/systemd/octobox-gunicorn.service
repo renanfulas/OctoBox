@@ -1,0 +1,28 @@
+[Unit]
+Description=OctoBOX Gunicorn service
+After=network.target postgresql.service redis-server.service
+Requires=postgresql.service redis-server.service
+
+[Service]
+Type=simple
+User=octobox
+Group=octobox
+WorkingDirectory=/srv/octobox/app
+EnvironmentFile=/srv/octobox/shared/octobox.env
+RuntimeDirectory=octobox
+RuntimeDirectoryMode=0755
+ExecStart=/srv/octobox/venv/bin/gunicorn \
+  --workers 2 \
+  --bind unix:/run/octobox/gunicorn.sock \
+  --access-logfile - \
+  --error-logfile - \
+  --capture-output \
+  config.wsgi
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+KillMode=mixed
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
