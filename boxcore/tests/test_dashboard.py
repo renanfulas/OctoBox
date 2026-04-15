@@ -24,10 +24,10 @@ from django.urls import reverse
 from django.utils import timezone
 
 from communications.models import WhatsAppContact
-from access.roles import ROLE_COACH, ROLE_OWNER, ROLE_RECEPTION
+from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from dashboard.dashboard_snapshot_queries import _build_dashboard_priority_context
 from dashboard.models import DashboardLayoutPreference
-from dashboard.presentation import _build_dashboard_execution_focus, _build_dashboard_layout, _build_dashboard_priority_cards
+from dashboard.presentation import _build_dashboard_execution_focus, _build_dashboard_layout, _build_dashboard_priority_cards, _build_dashboard_reading_panel
 from dashboard.dashboard_snapshot_queries import build_dashboard_snapshot
 from finance.models import Enrollment, MembershipPlan, Payment, PaymentMethod, PaymentStatus
 from operations.models import Attendance, ClassSession, SessionStatus
@@ -175,6 +175,47 @@ class DashboardViewTests(TestCase):
         self.assertEqual(focus[1]["href"], "#dashboard-sessions-board")
         self.assertEqual(focus[2]["href"], "/alunos/")
         self.assertEqual(focus[2]["href_label"], "Abrir alunos que pedem cuidado")
+
+    def test_manager_reading_panel_hides_tranquil_priority_cards_with_zero_value(self):
+        priority_cards = [
+            {
+                "severity": "emergency",
+                "value": 0,
+                "surface": "finance",
+                "is_actionable": False,
+                "href": "/financeiro/",
+                "href_label": "Abrir financeiro",
+                "kicker": "Emergencia",
+                "indicator": "Estavel",
+                "copy": "Caixa limpo.",
+            },
+            {
+                "severity": "warning",
+                "value": 0,
+                "surface": "students",
+                "is_actionable": False,
+                "href": "/alunos/",
+                "href_label": "Abrir alunos",
+                "kicker": "Urgente",
+                "indicator": "Estavel",
+                "copy": "Tudo tranquilo na reten.",
+            },
+            {
+                "severity": "risk",
+                "value": 0,
+                "surface": "students",
+                "is_actionable": False,
+                "href": "/alunos/",
+                "href_label": "Abrir alunos",
+                "kicker": "Risco",
+                "indicator": "Estavel",
+                "copy": "Rotina limpa.",
+            },
+        ]
+
+        panel = _build_dashboard_reading_panel(priority_cards, role_slug=ROLE_MANAGER)
+
+        self.assertEqual(panel["items"], [])
 
     def test_dashboard_layout_update_persists_user_preference(self):
         self.client.force_login(self.user)
