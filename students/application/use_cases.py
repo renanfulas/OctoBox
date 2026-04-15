@@ -36,6 +36,7 @@ from .ports import (
     UnitOfWorkPort,
 )
 from .results import (
+    EnrollmentSyncRecord,
     StudentEnrollmentActionResult,
     StudentPaymentActionResult,
     StudentPaymentRegenerationResult,
