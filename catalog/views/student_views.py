@@ -241,20 +241,10 @@ class StudentDirectoryView(CatalogBaseView):
         base_context = self.get_base_context()
         context.update(base_context)
         snapshot = build_student_directory_snapshot(self.request.GET)
-        index_params = self.request.GET.copy()
-        if 'query' in index_params:
-            del index_params['query']
-        if 'page' in index_params:
-            del index_params['page']
-        students = snapshot['students']
+        students_queryset = snapshot['students']
         student_count = snapshot['total_students']
         current_role_slug = base_context['current_role'].slug
-        context['students'] = students
-        search_snapshot = snapshot if not self.request.GET.get('query') else build_student_directory_snapshot(index_params)
-        directory_search_entries = [
-            _serialize_student_directory_search_entry(student)
-            for student in search_snapshot['students']
-        ]
+        thirty_days_ago = timezone.now() - timezone.timedelta(days=30)
 
         from django.core.paginator import Paginator
         
@@ -275,14 +265,34 @@ class StudentDirectoryView(CatalogBaseView):
         except (ValueError, TypeError):
             page_size = STUDENT_DIRECTORY_PAGE_SIZE
 
-        paginator = PrecountedPaginator(students, page_size)
+        paginator = PrecountedPaginator(students_queryset, page_size)
         page_number = self.request.GET.get('page')
         page_obj = paginator.get_page(page_number)
+        page_students = list(page_obj.object_list)
+        for student in page_students:
+            student.is_new_30d = bool(student.created_at and student.created_at >= thirty_days_ago)
+            total_presence = getattr(student, 'recent_presence_total', 0) or 0
+            attended_presence = getattr(student, 'recent_presence_attended', 0) or 0
+            if total_presence > 0:
+                student.presence_percent = round((attended_presence / total_presence) * 100)
+            else:
+                student.presence_percent = 0
+        page_obj.object_list = page_students
+        context['students'] = page_obj
 
+        search_cache_params = self.request.GET.copy()
+        if 'query' in search_cache_params:
+            del search_cache_params['query']
         query_params = self.request.GET.copy()
         if 'page' in query_params:
             del query_params['page']
+        if 'page' in search_cache_params:
+            del search_cache_params['page']
         base_query_string = query_params.urlencode()
+        directory_search_entries = [
+            _serialize_student_directory_search_entry(student)
+            for student in page_students
+        ]
 
         page_payload = build_student_directory_page(
             student_count=student_count,
@@ -292,9 +302,10 @@ class StudentDirectoryView(CatalogBaseView):
             current_role_slug=current_role_slug,
             base_query_string=base_query_string,
             directory_search={
-                'cache_key': index_params.urlencode() or 'all',
-                'refresh_token': search_snapshot.get('directory_refresh_token', ''),
+                'cache_key': search_cache_params.urlencode() or 'all',
+                'refresh_token': snapshot.get('directory_refresh_token', ''),
                 'index': directory_search_entries,
+                'full_index_available': False,
             },
         )
 

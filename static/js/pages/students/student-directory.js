@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var quickFeedback = document.querySelector('[data-student-quick-feedback]');
     var prefetchConfig = pageBehavior.student_prefetch || {};
     var directorySearchConfig = pageBehavior.directory_search || {};
+    var hasFullDirectorySearchIndex = directorySearchConfig.full_index_available !== false;
     var prefetchEnabled = prefetchConfig.enabled !== false;
     var prefetchHoverDelayMs = Number(prefetchConfig.hover_delay_ms || 120);
     var prefetchCacheTtlMs = Number(prefetchConfig.cache_ttl_ms || 120000);
@@ -225,6 +226,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function getDirectorySearchIndex() {
+        if (!hasFullDirectorySearchIndex) {
+            return [];
+        }
+
         if (directorySearchState.index.length) {
             return directorySearchState.index;
         }
@@ -2255,8 +2260,46 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    function syncKpiFilters() {
+        kpiFilters.forEach(function(card) {
+            var nextFilter = card.getAttribute('data-student-kpi-filter') || 'all';
+            var isActive = nextFilter === filterState.filter;
+            card.classList.toggle('is-selected-tab', isActive);
+            card.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+    }
+
+    function ensureKpiTargetPanel(card) {
+        if (!card) {
+            return;
+        }
+
+        var targetPanelId = card.getAttribute('data-target-panel');
+        if (!targetPanelId) {
+            return;
+        }
+
+        var targetPanel = document.getElementById(targetPanelId);
+        if (!targetPanel) {
+            return;
+        }
+
+        var container = targetPanel.closest('.interactive-tab-container');
+        if (container) {
+            Array.from(container.children).forEach(function(child) {
+                child.classList.remove('is-tab-active');
+            });
+        }
+
+        targetPanel.classList.add('is-tab-active');
+    }
+
     if (filterForm && searchInput) {
         filterForm.addEventListener('submit', function(event) {
+            if (!hasFullDirectorySearchIndex) {
+                return;
+            }
+
             event.preventDefault();
             setSearchStateFromInputValue(searchInput.value);
             syncPills();
@@ -2264,6 +2307,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         searchInput.addEventListener('input', function() {
+            if (!hasFullDirectorySearchIndex) {
+                return;
+            }
+
             setSearchStateFromInputValue(searchInput.value);
             if (!filterState.searchQuery && !filterState.searchListAllCommand && directorySearchState.isUsingSearchIndex) {
                 restoreServerRows();
@@ -2317,7 +2364,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     kpiFilters.forEach(function(card) {
-        card.addEventListener('click', function() {
+        card.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
             var nextFilter = card.getAttribute('data-student-kpi-filter') || 'all';
             filterState.filter = nextFilter;
             if (filterState.sortBy === 'presence') {
@@ -2325,11 +2374,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 filterState.sortDirection = 'desc';
             }
             syncPills();
+            syncKpiFilters();
+            ensureKpiTargetPanel(card);
             if (getDirectorySearchIndex().length) {
                 renderDirectorySearchRows();
                 return;
             }
             applyLocalDirectoryState();
+        }, true);
+
+        card.addEventListener('keydown', function(event) {
+            if (event.key !== 'Enter' && event.key !== ' ') {
+                return;
+            }
+
+            event.preventDefault();
+            card.click();
         });
     });
 
@@ -2562,13 +2622,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    if (Array.isArray(directorySearchConfig.index) && directorySearchConfig.index.length) {
+    if (hasFullDirectorySearchIndex && Array.isArray(directorySearchConfig.index) && directorySearchConfig.index.length) {
         persistDirectorySearchIndex(directorySearchConfig.index);
     } else {
         directorySearchState.index = getDirectorySearchIndexFromCache();
     }
 
     syncPills();
+    syncKpiFilters();
     applyLocalDirectoryState();
     prefetchInitialRows();
 });

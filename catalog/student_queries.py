@@ -262,18 +262,9 @@ def build_student_directory_snapshot(params=None, for_export=False):
     )
     priority_students = priority_students_queryset.order_by('full_name')[:6]
 
-    visible_students = list(students)
-    for student in visible_students:
-        student.is_new_30d = bool(student.created_at and student.created_at >= thirty_days_ago)
-        total_presence = getattr(student, 'recent_presence_total', 0) or 0
-        attended_presence = getattr(student, 'recent_presence_attended', 0) or 0
-        if total_presence > 0:
-            student.presence_percent = round((attended_presence / total_presence) * 100)
-        else:
-            student.presence_percent = 0
-
     return {
-        'students': visible_students,
+        # Mantemos a queryset viva para que a view pagine no banco antes de materializar a pagina atual.
+        'students': students,
         'total_students': total_students,
         'filter_form': filter_form,
         'interactive_kpis': [
