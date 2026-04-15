@@ -169,12 +169,17 @@ class CatalogViewTests(TestCase):
         response = self.client.get(reverse('class-grid'))
 
         self.assertEqual(response.status_code, 200)
+        self.assertIn('js/core/forms.js', response.context['current_page_assets']['js'])
         self.assertContains(response, 'Grade de aulas')
         self.assertContains(response, 'WOD 18h')
         self.assertContains(response, 'Calendário das próximas duas semanas')
         self.assertContains(response, 'Expandir mês')
         self.assertContains(response, 'Agenda de Hoje')
         self.assertContains(response, 'Planejador recorrente')
+        self.assertContains(response, 'name="start_time"', html=False)
+        self.assertContains(response, 'data-mask="time"', html=False)
+        self.assertContains(response, 'name="anchor_date"', html=False)
+        self.assertContains(response, 'data-year-digits="2"', html=False)
 
     def test_class_grid_can_create_recurring_schedule(self):
         self.client.force_login(self.user)
@@ -293,6 +298,77 @@ class CatalogViewTests(TestCase):
 
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data['start_time'].strftime('%H:%M'), '08:00')
+
+    def test_class_schedule_form_accepts_compact_short_dates(self):
+        form = ClassScheduleRecurringForm(
+            data={
+                'title': 'WOD 08h',
+                'coach': '',
+                'start_date': '110326',
+                'end_date': '180326',
+                'weekdays': ['0'],
+                'start_time': '07:00',
+                'sequence_count': 0,
+                'duration_minutes': 60,
+                'capacity': 18,
+                'status': SessionStatus.SCHEDULED,
+                'notes': '',
+                'skip_existing': 'on',
+            },
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['start_date'].strftime('%d/%m/%y'), '11/03/26')
+        self.assertEqual(form.cleaned_data['end_date'].strftime('%d/%m/%y'), '18/03/26')
+
+    def test_class_schedule_form_rejects_invalid_short_date(self):
+        form = ClassScheduleRecurringForm(
+            data={
+                'title': 'WOD 08h',
+                'coach': '',
+                'start_date': '111726',
+                'end_date': '180326',
+                'weekdays': ['0'],
+                'start_time': '07:00',
+                'sequence_count': 0,
+                'duration_minutes': 60,
+                'capacity': 18,
+                'status': SessionStatus.SCHEDULED,
+                'notes': '',
+                'skip_existing': 'on',
+            },
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('start_date', form.errors)
+
+    def test_class_schedule_form_limits_notes_to_300_characters(self):
+        start_date = timezone.localdate() + timezone.timedelta(days=1)
+        form = ClassScheduleRecurringForm(
+            data={
+                'title': 'WOD 08h',
+                'coach': '',
+                'start_date': start_date.strftime('%d/%m/%y'),
+                'end_date': start_date.strftime('%d/%m/%y'),
+                'weekdays': [str(start_date.weekday())],
+                'start_time': '07:00',
+                'sequence_count': 0,
+                'duration_minutes': 60,
+                'capacity': 18,
+                'status': SessionStatus.SCHEDULED,
+                'notes': 'x' * 301,
+                'skip_existing': 'on',
+            },
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('notes', form.errors)
+
+    def test_class_schedule_form_renders_notes_with_300_char_limit(self):
+        form = ClassScheduleRecurringForm()
+
+        self.assertEqual(form.fields['notes'].max_length, 300)
+        self.assertEqual(form.fields['notes'].widget.attrs.get('maxlength'), '300')
 
     def test_class_session_snapshot_uses_second_name_when_first_is_generic_coach_title(self):
         titled_coach = get_user_model().objects.create_user(

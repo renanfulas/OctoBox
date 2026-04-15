@@ -91,7 +91,7 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
         },
         assets=build_catalog_assets(
             css=['css/catalog/class-grid.css'],
-            js=['js/pages/class-grid/class-grid.js'],
+            js=['js/core/forms.js', 'js/pages/class-grid/class-grid.js'],
             include_catalog_shared=True,
         ),
     )

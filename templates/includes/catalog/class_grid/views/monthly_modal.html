@@ -63,10 +63,15 @@ ARQUIVO: modal expandido do calendario mensal.
                 <label>
                     <span class="field-label">{{ page.data.schedule_form.start_time.label }}</span>
                     <input
-                        type="time"
+                        type="text"
                         name="start_time"
                         value="{{ page.data.weekend_rotation_state.start_time }}"
                         placeholder="07:00"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        maxlength="5"
+                        pattern="([01]\d|2[0-3]):[0-5]\d"
+                        data-mask="time"
                     >
                     {% for error in page.data.schedule_form.start_time.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
                 </label>
@@ -100,9 +105,18 @@ ARQUIVO: modal expandido do calendario mensal.
                 <label>
                     <span class="field-label">{{ page.data.schedule_form.anchor_date.label }}</span>
                     <input
-                        type="date"
+                        type="text"
                         name="anchor_date"
                         value="{{ page.data.weekend_rotation_state.anchor_date }}"
+                        placeholder="11/04/26"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        maxlength="8"
+                        pattern="\d{2}/\d{2}/\d{2}"
+                        data-mask="date"
+                        data-year-digits="2"
+                        data-date-invalid-message="Use uma data valida no formato dd/mm/aa."
+                        data-date-incomplete-message="Use a data no formato dd/mm/aa. Ex.: 11/04/26."
                     >
                     <small class="meta-text">{{ page.data.schedule_form.anchor_date.help_text }}</small>
                     {% for error in page.data.schedule_form.anchor_date.errors %}<span class="form-error">{{ error }}</span>{% endfor %}

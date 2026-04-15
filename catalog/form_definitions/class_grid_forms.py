@@ -22,6 +22,7 @@ from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
 from operations.domain import build_class_grid_session_policy
 from operations.models import ClassSession, SessionStatus
 from shared_support.form_inputs import (
+    LenientDateField,
     LenientTimeField,
     apply_date_input_attrs,
     apply_integer_input_attrs,
@@ -90,12 +91,14 @@ class ClassScheduleRecurringForm(forms.ModelForm):
         (21, '21 dias'),
     )
 
-    start_date = forms.DateField(
+    start_date = LenientDateField(
         label='Primeiro dia (dd/mm/aa)',
+        year_digits=2,
         input_formats=['%d/%m/%y', '%d/%m/%Y', '%Y-%m-%d'],
         error_messages={
             'required': 'Informe o primeiro dia da recorrencia.',
             'invalid': 'Use a data no formato dd/mm/aa. Ex.: 11/03/26.',
+            'incomplete': 'Use a data no formato dd/mm/aa. Ex.: 11/03/26.',
         },
         widget=forms.DateInput(
             format='%d/%m/%y',
@@ -109,12 +112,14 @@ class ClassScheduleRecurringForm(forms.ModelForm):
             },
         ),
     )
-    end_date = forms.DateField(
+    end_date = LenientDateField(
         label='Data final (dd/mm/aa)',
+        year_digits=2,
         input_formats=['%d/%m/%y', '%d/%m/%Y', '%Y-%m-%d'],
         error_messages={
             'required': 'Informe a data final da recorrencia.',
             'invalid': 'Use a data no formato dd/mm/aa. Ex.: 08/04/26.',
+            'incomplete': 'Use a data no formato dd/mm/aa. Ex.: 08/04/26.',
         },
         widget=forms.DateInput(
             format='%d/%m/%y',
@@ -152,9 +157,10 @@ class ClassScheduleRecurringForm(forms.ModelForm):
         choices=WEEKDAY_CHOICES,
         widget=forms.CheckboxSelectMultiple,
     )
-    anchor_date = forms.DateField(
+    anchor_date = LenientDateField(
         required=False,
         label='Data base do rodizio',
+        year_digits=2,
         input_formats=['%d/%m/%y', '%d/%m/%Y', '%Y-%m-%d'],
         widget=forms.DateInput(
             format='%d/%m/%y',
@@ -167,6 +173,11 @@ class ClassScheduleRecurringForm(forms.ModelForm):
                 'data-mask': 'date',
             },
         ),
+    )
+    notes = forms.CharField(
+        required=False,
+        max_length=300,
+        widget=forms.Textarea(attrs={'rows': 3}),
     )
     interval_days = forms.TypedChoiceField(
         required=False,
@@ -229,7 +240,11 @@ class ClassScheduleRecurringForm(forms.ModelForm):
         apply_time_input_attrs(self.fields['start_time'])
         apply_integer_input_attrs(self.fields['duration_minutes'], placeholder='Ex.: 60', min_value=1, maxlength=3)
         apply_integer_input_attrs(self.fields['capacity'], placeholder='Ex.: 20', min_value=1, maxlength=3)
-        apply_text_input_attrs(self.fields['notes'], placeholder='Ex.: aula de alta demanda; abrir check-in 15 min antes.')
+        apply_text_input_attrs(
+            self.fields['notes'],
+            placeholder='Ex.: aula de alta demanda; abrir check-in 15 min antes.',
+            maxlength=300,
+        )
         apply_date_input_attrs(self.fields['start_date'], placeholder='11/03/26', maxlength=8, pattern=r'\d{2}/\d{2}/\d{2}')
         apply_date_input_attrs(self.fields['end_date'], placeholder='08/04/26', maxlength=8, pattern=r'\d{2}/\d{2}/\d{2}')
         apply_date_input_attrs(self.fields['anchor_date'], placeholder='11/04/26', maxlength=8, pattern=r'\d{2}/\d{2}/\d{2}')
@@ -300,6 +315,12 @@ class ClassSessionQuickEditForm(forms.ModelForm):
         widget=forms.TimeInput(format='%H:%M'),
     )
 
+    notes = forms.CharField(
+        required=False,
+        max_length=300,
+        widget=forms.Textarea(attrs={'rows': 3}),
+    )
+
     class Meta:
         model = ClassSession
         fields = [
@@ -336,7 +357,11 @@ class ClassSessionQuickEditForm(forms.ModelForm):
         apply_time_input_attrs(self.fields['start_time'])
         apply_integer_input_attrs(self.fields['duration_minutes'], placeholder='Ex.: 60', min_value=1, maxlength=3)
         apply_integer_input_attrs(self.fields['capacity'], placeholder='Ex.: 20', min_value=1, maxlength=3)
-        apply_text_input_attrs(self.fields['notes'], placeholder='Explique qualquer ajuste importante desta aula.')
+        apply_text_input_attrs(
+            self.fields['notes'],
+            placeholder='Explique qualquer ajuste importante desta aula.',
+            maxlength=300,
+        )
         if session_policy is not None:
             self.fields['status'].choices = session_policy.quick_edit_status_choices
         if self.instance.pk:

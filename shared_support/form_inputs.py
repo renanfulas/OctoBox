@@ -161,6 +161,8 @@ class LenientDateField(forms.DateField):
             return None
         if isinstance(value, date):
             return value
+        if isinstance(value, str) and any(not character.isdigit() for character in value.strip()):
+            return super().to_python(value)
         try:
             return parse_lenient_date_value(
                 value,
