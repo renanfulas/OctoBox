@@ -22,6 +22,7 @@ from onboarding.attribution import extract_acquisition_channel
 from shared_support.crypto_fields import generate_blind_index
 from shared_support.acquisition import ACQUISITION_CHANNEL_CHOICES, normalize_acquisition_channel
 from shared_support.form_inputs import (
+    LenientDateField,
     apply_cpf_input_attrs,
     apply_currency_input_attrs,
     apply_date_input_attrs,
@@ -123,6 +124,12 @@ class StudentQuickForm(forms.ModelForm):
         label='Vencimento da primeira cobranca',
         widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
     )
+    birth_date = LenientDateField(
+        required=False,
+        label='Nascimento (dd/mm/aaaa)',
+        min_year=1900,
+        widget=forms.DateInput(attrs={'type': 'text'}, format='%d/%m/%Y'),
+    )
     payment_reference = forms.CharField(
         required=False,
         label='Referencia comercial',
@@ -212,7 +219,14 @@ class StudentQuickForm(forms.ModelForm):
         apply_text_input_attrs(self.fields['full_name'], placeholder='Ex.: Mariana Souza', maxlength=150, autocomplete='name')
         apply_phone_input_attrs(self.fields['phone'], placeholder='Ex.: 5511999999999')
         apply_text_input_attrs(self.fields['email'], placeholder='Opcional neste momento', maxlength=254, autocomplete='email')
-        apply_date_input_attrs(self.fields['birth_date'], placeholder='dd/mm/aaaa', maxlength=10, pattern=r'\d{2}/\d{2}/\d{4}')
+        apply_date_input_attrs(
+            self.fields['birth_date'],
+            placeholder='dd/mm/aaaa',
+            maxlength=10,
+            pattern=r'\d{2}/\d{2}/\d{4}',
+            min_year=1900,
+            max_year=timezone.localdate().year,
+        )
         apply_cpf_input_attrs(self.fields['cpf'], placeholder='Ex.: 123.456.789-00')
         apply_text_input_attrs(self.fields['acquisition_source_detail'], placeholder='Ex.: indicacao do Joao, Google Maps, passou na frente', maxlength=120)
         apply_text_input_attrs(self.fields['notes'], placeholder='Descreva o problema de saude ou deixe em branco.')
@@ -310,6 +324,12 @@ class StudentQuickForm(forms.ModelForm):
             raise forms.ValidationError('Já existe um aluno cadastrado com este CPF.')
 
         return f'{raw_cpf[:3]}.{raw_cpf[3:6]}.{raw_cpf[6:9]}-{raw_cpf[9:]}'
+
+    def clean_birth_date(self):
+        birth_date = self.cleaned_data.get('birth_date')
+        if birth_date and birth_date > timezone.localdate():
+            raise forms.ValidationError('A data de nascimento nao pode ficar no futuro.')
+        return birth_date
 
     def clean_acquisition_source(self):
         acquisition_source = normalize_acquisition_channel(self.cleaned_data.get('acquisition_source'))

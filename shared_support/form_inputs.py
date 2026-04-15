@@ -13,6 +13,8 @@ PONTOS CRITICOS:
 - mudancas aqui afetam a experiencia de digitacao em varias telas.
 """
 
+from datetime import date
+
 from django import forms
 
 
@@ -89,7 +91,88 @@ def apply_integer_input_attrs(field, *, placeholder=None, min_value=None, max_va
     )
 
 
-def apply_date_input_attrs(field, *, placeholder=None, maxlength=None, pattern=None):
+class DateInputValidationError(ValueError):
+    def __init__(self, code):
+        self.code = code
+        super().__init__(code)
+
+
+def parse_lenient_date_value(raw_value, *, year_digits=4, min_year=None, max_year=None):
+    text = str(raw_value or '').strip()
+    if not text:
+        return None
+
+    accepted_year_digits = 2 if year_digits == 2 else 4
+    max_digits = 4 + accepted_year_digits
+    digits = ''.join(character for character in text if character.isdigit())
+    if len(digits) != max_digits:
+        raise DateInputValidationError('incomplete')
+
+    try:
+        day = int(digits[:2])
+        month = int(digits[2:4])
+        raw_year = int(digits[4:max_digits])
+    except ValueError as exc:
+        raise DateInputValidationError('invalid') from exc
+
+    year = 2000 + raw_year if accepted_year_digits == 2 else raw_year
+    if min_year is not None and year < int(min_year):
+        raise DateInputValidationError('min_year')
+    if max_year is not None and year > int(max_year):
+        raise DateInputValidationError('max_year')
+
+    try:
+        return date(year, month, day)
+    except ValueError as exc:
+        raise DateInputValidationError('invalid') from exc
+
+
+def normalize_date_value(raw_value, *, year_digits=4, min_year=None, max_year=None):
+    parsed_date = parse_lenient_date_value(
+        raw_value,
+        year_digits=year_digits,
+        min_year=min_year,
+        max_year=max_year,
+    )
+    if parsed_date is None:
+        return ''
+    if year_digits == 2:
+        return parsed_date.strftime('%d/%m/%y')
+    return parsed_date.strftime('%d/%m/%Y')
+
+
+class LenientDateField(forms.DateField):
+    default_error_messages = {
+        'invalid': 'Informe uma data valida no formato dd/mm/aaaa.',
+        'incomplete': 'Use a data no formato dd/mm/aaaa. Ex.: 21/11/1995.',
+        'min_year': 'O ano precisa estar dentro do intervalo permitido.',
+        'max_year': 'O ano precisa estar dentro do intervalo permitido.',
+    }
+
+    def __init__(self, *args, year_digits=4, min_year=None, max_year=None, **kwargs):
+        self.year_digits = 2 if year_digits == 2 else 4
+        self.min_year = min_year
+        self.max_year = max_year
+        kwargs.setdefault('input_formats', ['%d/%m/%Y'] if self.year_digits == 4 else ['%d/%m/%y'])
+        super().__init__(*args, **kwargs)
+
+    def to_python(self, value):
+        if value in self.empty_values:
+            return None
+        if isinstance(value, date):
+            return value
+        try:
+            return parse_lenient_date_value(
+                value,
+                year_digits=self.year_digits,
+                min_year=self.min_year,
+                max_year=self.max_year,
+            )
+        except DateInputValidationError as exc:
+            raise forms.ValidationError(self.error_messages[exc.code], code=exc.code) from exc
+
+
+def apply_date_input_attrs(field, *, placeholder=None, maxlength=None, pattern=None, min_year=None, max_year=None):
     year_digits = '4'
     if maxlength == 8:
         year_digits = '2'
@@ -103,7 +186,15 @@ def apply_date_input_attrs(field, *, placeholder=None, maxlength=None, pattern=N
         autocomplete='off',
         maxlength=maxlength,
         pattern=pattern,
-        **{'data-mask': 'date', 'data-year-digits': year_digits},
+        **{
+            'data-mask': 'date',
+            'data-year-digits': year_digits,
+            'data-min-year': min_year,
+            'data-max-year': max_year,
+            'data-date-invalid-message': 'Informe uma data valida no formato dd/mm/aaaa.',
+            'data-date-incomplete-message': 'Use a data no formato dd/mm/aaaa. Ex.: 21/11/1995.',
+            'data-date-range-message': 'O ano precisa estar dentro do intervalo permitido.',
+        },
     )
 
 
@@ -174,6 +265,7 @@ class LenientTimeField(forms.TimeField):
 
 
 __all__ = [
+    'LenientDateField',
     'LenientTimeField',
     'apply_cpf_input_attrs',
     'apply_currency_input_attrs',
@@ -183,5 +275,7 @@ __all__ = [
     'apply_text_input_attrs',
     'apply_time_input_attrs',
     'apply_widget_attrs',
+    'normalize_date_value',
     'normalize_time_value',
+    'parse_lenient_date_value',
 ]

@@ -15,7 +15,7 @@ PONTOS CRITICOS:
 - Se estes testes quebrarem, a operacao diaria perde o fluxo principal fora do admin.
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -51,6 +51,34 @@ class CatalogViewTests(TestCase):
         self.intake = StudentIntake.objects.create(full_name='Lead Bruna', phone='5511970000000', email='lead@example.com')
         ClassSession.objects.create(title='WOD 18h', scheduled_at=timezone.now())
         self.coach = self.user
+
+    def _student_quick_form_data(self, **overrides):
+        data = {
+            'full_name': 'Mateus Oliveira',
+            'phone': '5511966666666',
+            'status': 'active',
+            'email': '',
+            'gender': '',
+            'birth_date': '',
+            'health_issue_status': '',
+            'cpf': '',
+            'acquisition_source': 'instagram',
+            'acquisition_source_detail': '',
+            'notes': '',
+            'selected_plan': '',
+            'enrollment_status': 'pending',
+            'payment_method': PaymentMethod.PIX,
+            'confirm_payment_now': 'False',
+            'payment_due_date': '',
+            'payment_reference': '',
+            'initial_payment_amount': '',
+            'billing_strategy': 'single',
+            'installment_total': 1,
+            'recurrence_cycles': 3,
+            'intake_record': '',
+        }
+        data.update(overrides)
+        return data
 
     def test_student_directory_renders(self):
         self.client.force_login(self.user)
@@ -868,6 +896,31 @@ class CatalogViewTests(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data['phone'], '11977777777')
         self.assertEqual(form.cleaned_data['cpf'], self.valid_cpf)
+
+    def test_student_quick_form_accepts_compact_birth_date(self):
+        form = StudentQuickForm(data=self._student_quick_form_data(birth_date='21111995'))
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['birth_date'], date(1995, 11, 21))
+
+    def test_student_quick_form_rejects_invalid_birth_month(self):
+        form = StudentQuickForm(data=self._student_quick_form_data(birth_date='21171995'))
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('birth_date', form.errors)
+
+    def test_student_quick_form_rejects_implausible_birth_year(self):
+        form = StudentQuickForm(data=self._student_quick_form_data(birth_date='21111800'))
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('birth_date', form.errors)
+
+    def test_student_quick_form_rejects_future_birth_date(self):
+        future_birth_date = timezone.localdate() + timezone.timedelta(days=1)
+        form = StudentQuickForm(data=self._student_quick_form_data(birth_date=future_birth_date.strftime('%d/%m/%Y')))
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('birth_date', form.errors)
 
     def test_student_quick_form_blocks_duplicate_phone_after_normalization(self):
         form = StudentQuickForm(

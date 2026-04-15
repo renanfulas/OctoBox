@@ -15,13 +15,17 @@ POR QUE ELE EXISTE:
     return String(value || '').replace(/\D/g, '');
   }
 
-  function clamp(value, min, max) {
-    return Math.min(Math.max(value, min), max);
-  }
-
   function getDateYearDigits(field) {
     var parsed = Number(field.dataset.yearDigits || '4');
     return parsed === 2 ? 2 : 4;
+  }
+
+  function parseOptionalNumber(value) {
+    if (value === undefined || value === null || value === '') {
+      return null;
+    }
+    var parsed = Number(value);
+    return Number.isNaN(parsed) ? null : parsed;
   }
 
   function formatDateValueForField(value, field) {
@@ -37,27 +41,73 @@ POR QUE ELE EXISTE:
     return digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4, maxDigits);
   }
 
-  function normalizeDateValue(value, field) {
+  function parseDateCandidate(value, field) {
     var yearDigits = getDateYearDigits(field);
     var maxDigits = 4 + yearDigits;
     var digits = digitsOnly(value).slice(0, maxDigits);
+    if (!digits.length) {
+      return { status: 'empty' };
+    }
     if (digits.length < maxDigits) {
-      return formatDateValueForField(digits, field);
+      return { status: 'incomplete' };
     }
 
-    var rawDay = Number(digits.slice(0, 2));
-    var rawMonth = Number(digits.slice(2, 4));
+    var day = Number(digits.slice(0, 2));
+    var month = Number(digits.slice(2, 4));
     var rawYear = Number(digits.slice(4, maxDigits));
-    if (Number.isNaN(rawDay) || Number.isNaN(rawMonth) || Number.isNaN(rawYear)) {
-      return formatDateValueForField(digits, field);
+    if (Number.isNaN(day) || Number.isNaN(month) || Number.isNaN(rawYear)) {
+      return { status: 'invalid' };
     }
 
-    var month = clamp(rawMonth || 1, 1, 12);
-    var fullYear = yearDigits === 2 ? 2000 + clamp(rawYear, 0, 99) : clamp(rawYear, 1900, 9999);
-    var maxDay = new Date(fullYear, month, 0).getDate();
-    var day = clamp(rawDay || 1, 1, maxDay);
+    var fullYear = yearDigits === 2 ? 2000 + rawYear : rawYear;
+    var minYear = parseOptionalNumber(field.dataset.minYear);
+    var maxYear = parseOptionalNumber(field.dataset.maxYear);
+    if ((minYear !== null && fullYear < minYear) || (maxYear !== null && fullYear > maxYear)) {
+      return { status: 'range' };
+    }
+
+    var candidate = new Date(fullYear, month - 1, day);
+    if (
+      candidate.getFullYear() !== fullYear ||
+      candidate.getMonth() !== month - 1 ||
+      candidate.getDate() !== day
+    ) {
+      return { status: 'invalid' };
+    }
+
     var yearText = yearDigits === 2 ? String(fullYear % 100).padStart(2, '0') : String(fullYear).padStart(4, '0');
-    return String(day).padStart(2, '0') + '/' + String(month).padStart(2, '0') + '/' + yearText;
+    return {
+      status: 'valid',
+      value: String(day).padStart(2, '0') + '/' + String(month).padStart(2, '0') + '/' + yearText,
+    };
+  }
+
+  function normalizeDateValue(value, field) {
+    var parsed = parseDateCandidate(value, field);
+    if (parsed.status === 'valid') {
+      return parsed.value;
+    }
+    return formatDateValueForField(value, field);
+  }
+
+  function validateDateField(field, shouldValidateIncomplete) {
+    var parsed = parseDateCandidate(field.value, field);
+    var message = '';
+    if (parsed.status === 'incomplete' && shouldValidateIncomplete) {
+      message = field.dataset.dateIncompleteMessage || 'Use a data no formato dd/mm/aaaa.';
+    } else if (parsed.status === 'invalid') {
+      message = field.dataset.dateInvalidMessage || 'Informe uma data valida.';
+    } else if (parsed.status === 'range') {
+      message = field.dataset.dateRangeMessage || 'O ano precisa estar dentro do intervalo permitido.';
+    }
+
+    field.setCustomValidity(message);
+    if (message) {
+      field.setAttribute('aria-invalid', 'true');
+    } else {
+      field.removeAttribute('aria-invalid');
+    }
+    return !message;
   }
 
   function formatTimeTyping(value) {
@@ -168,6 +218,7 @@ POR QUE ELE EXISTE:
     field.addEventListener('input', function() {
       if (field.dataset.mask === 'date' && field.type !== 'date') {
         field.value = formatDateValueForField(field.value, field);
+        validateDateField(field, false);
         return;
       }
 
@@ -199,6 +250,7 @@ POR QUE ELE EXISTE:
     field.addEventListener('blur', function() {
       if (field.dataset.mask === 'date' && field.type !== 'date') {
         field.value = normalizeDateValue(field.value, field);
+        validateDateField(field, true);
         return;
       }
 
