@@ -16,8 +16,10 @@ USERNAME = os.environ.get("OCTOBOX_VPS_USER", "root")
 PASSWORD = os.environ.get("OCTOBOX_VPS_PASSWORD")
 DOMAIN = os.environ.get("OCTOBOX_DOMAIN", "app.octoboxfit.com.br")
 BRANCH = os.environ.get("OCTOBOX_BRANCH", "main")
+ACTION = os.environ.get("OCTOBOX_ACTION", "deploy").strip().lower()
 
 DEPLOY_SCRIPT_PATH = Path(__file__).with_name("linux").joinpath("deploy_octobox.sh")
+ROLLBACK_SCRIPT_PATH = Path(__file__).with_name("linux").joinpath("rollback_octobox.sh")
 
 
 def main() -> int:
@@ -25,13 +27,19 @@ def main() -> int:
         print("Defina OCTOBOX_VPS_PASSWORD antes de executar.", file=sys.stderr)
         return 2
 
-    script = DEPLOY_SCRIPT_PATH.read_text(encoding="utf-8")
+    if ACTION == "deploy":
+        script = DEPLOY_SCRIPT_PATH.read_text(encoding="utf-8")
+    elif ACTION == "rollback":
+        script = ROLLBACK_SCRIPT_PATH.read_text(encoding="utf-8")
+    else:
+        print(f"ACTION invalida: {ACTION}. Use deploy ou rollback.", file=sys.stderr)
+        return 2
     remote_command = (
         f"export OCTOBOX_DOMAIN='{DOMAIN}'\n"
         f"export OCTOBOX_BRANCH='{BRANCH}'\n"
-        "bash -s <<'__CODEX_DEPLOY__'\n"
+        "bash -s <<'__CODEX_RELEASE__'\n"
         f"{script}\n"
-        "__CODEX_DEPLOY__\n"
+        "__CODEX_RELEASE__\n"
     )
 
     client = paramiko.SSHClient()
