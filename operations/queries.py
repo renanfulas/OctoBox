@@ -330,6 +330,108 @@ def _decorate_operational_sessions(serialized_sessions):
     return visible_sessions
 
 
+def _serialize_manager_intake(intake):
+    return {
+        'id': intake.id,
+        'full_name': intake.full_name,
+        'phone': intake.phone,
+        'email': getattr(intake, 'email', ''),
+        'source': getattr(intake, 'source', ''),
+        'source_label': intake.get_source_display(),
+        'status': getattr(intake, 'status', ''),
+        'status_label': intake.get_status_display(),
+        'contact_subject_key': getattr(intake, 'contact_subject_key', ''),
+        'decision_action': getattr(intake, 'decision_action', {}),
+    }
+
+
+def _serialize_manager_contact(contact):
+    return {
+        'id': contact.id,
+        'display_name': getattr(contact, 'display_name', ''),
+        'phone': getattr(contact, 'phone', ''),
+        'status': getattr(contact, 'status', ''),
+        'status_label': contact.get_status_display(),
+        'contact_subject_key': getattr(contact, 'contact_subject_key', ''),
+        'decision_action': getattr(contact, 'decision_action', {}),
+    }
+
+
+def _serialize_manager_payment(payment):
+    return {
+        'id': payment.id,
+        'student_id': payment.student.id,
+        'student_full_name': payment.student.full_name,
+        'student_event_stream_url': reverse('student-event-stream', args=[payment.student.id]),
+        'contact_subject_key': getattr(payment, 'contact_subject_key', ''),
+        'due_date': payment.due_date,
+        'due_date_label': payment.due_date.strftime('%d/%m/%Y') if payment.due_date else '',
+        'status': payment.status,
+        'status_label': payment.get_status_display(),
+        'status_class': 'warning' if payment.status in [PaymentStatus.OVERDUE, PaymentStatus.PENDING] else 'info',
+        'amount': payment.amount,
+        'amount_label': f'R$ {payment.amount:.2f}',
+        'decision_action': getattr(payment, 'decision_action', {}),
+        'team_touch_label': getattr(payment, 'team_touch_label', ''),
+        'team_touch_note': getattr(payment, 'team_touch_note', ''),
+        'whatsapp_action': getattr(payment, 'whatsapp_action', None),
+    }
+
+
+def _serialize_attendance(attendance):
+    return {
+        'id': attendance.id,
+        'student_id': attendance.student.id,
+        'student_full_name': attendance.student.full_name,
+        'status': attendance.status,
+        'status_label': attendance.get_status_display(),
+        'notes': attendance.notes,
+        'check_in_url': reverse('attendance-action', args=[attendance.id, 'check-in']),
+        'check_out_url': reverse('attendance-action', args=[attendance.id, 'check-out']),
+        'absent_url': reverse('attendance-action', args=[attendance.id, 'absent']),
+        'behavior_note_url': reverse('technical-behavior-note-create', args=[attendance.student.id]),
+    }
+
+
+def _serialize_coach_session(session):
+    attendances = [_serialize_attendance(attendance) for attendance in session.attendances.all()]
+    return {
+        'id': session.id,
+        'title': session.title,
+        'scheduled_at': session.scheduled_at,
+        'duration_minutes': session.duration_minutes,
+        'attendance_count': len(attendances),
+        'attendances': attendances,
+    }
+
+
+def _serialize_behavior_categories():
+    return [{'value': value, 'label': label} for value, label in BehaviorCategory.choices]
+
+
+def _serialize_reception_intake(intake):
+    return {
+        'id': intake.id,
+        'full_name': intake.full_name,
+        'phone': intake.phone,
+        'email': getattr(intake, 'email', ''),
+        'source_label': intake.get_source_display(),
+        'status_label': intake.get_status_display(),
+        'student_quick_create_href': f"{reverse('student-quick-create')}?intake={intake.id}#student-form-essential",
+    }
+
+
+def _serialize_reception_session(session):
+    attendance_count = len(list(session.attendances.all()))
+    return {
+        'id': session.id,
+        'title': session.title,
+        'scheduled_at': session.scheduled_at,
+        'notes': session.notes,
+        'attendance_count': attendance_count,
+    }
+
+
 def _build_manager_focus_item(
     *,
     key,
@@ -878,6 +980,9 @@ def build_owner_workspace_snapshot(*, today):
         {'key': 'overdue', 'count': headline_metrics['overdue_payments']},
         {'key': 'sessions', 'items': owner_session_objects, 'count': len(owner_upcoming_sessions)},
     )
+    transport_payload = {
+        'owner_upcoming_sessions': owner_upcoming_sessions,
+    }
     return {
         'snapshot_version': snapshot_version,
         'headline_metrics': headline_metrics,
@@ -910,6 +1015,7 @@ def build_owner_workspace_snapshot(*, today):
         ],
         'owner_decision_entry_context': owner_decision_entry_context,
         'owner_operational_focus': owner_operational_focus,
+        'transport_payload': transport_payload,
     }
 
 
@@ -1107,6 +1213,13 @@ def build_manager_workspace_snapshot(*, actor=None):
         {'key': 'enrollment_links', 'items': payments_without_enrollment, 'count': len(payments_without_enrollment)},
         {'key': 'history', 'items': manager_history_events, 'count': len(manager_history_events)},
     )
+    transport_payload = {
+        'pending_intakes': [_serialize_manager_intake(intake) for intake in pending_intakes],
+        'unlinked_whatsapp': [_serialize_manager_contact(contact) for contact in unlinked_whatsapp],
+        'financial_alerts': [_serialize_manager_payment(payment) for payment in financial_alerts],
+        'payments_without_enrollment': [_serialize_manager_payment(payment) for payment in payments_without_enrollment],
+        'manager_recent_history': manager_recent_history,
+    }
     return {
         'snapshot_version': snapshot_version,
         'pending_intakes': pending_intakes,
@@ -1131,6 +1244,7 @@ def build_manager_workspace_snapshot(*, actor=None):
             _build_metric_card('operation-kpi-card manager-steel', 'Alertas financeiros', len(financial_alerts)),
         ],
         'manager_operational_focus': manager_operational_focus,
+        'transport_payload': transport_payload,
     }
 
 
@@ -1162,6 +1276,10 @@ def build_coach_workspace_snapshot(*, today):
             'summary': f'{len(BehaviorCategory.choices)} categoria(s) cobrem o registro técnico sem misturar treino com financeiro ou recepção.',
         },
     )
+    transport_payload = {
+        'sessions_today': [_serialize_coach_session(session) for session in sessions],
+        'behavior_categories': _serialize_behavior_categories(),
+    }
     return {
         'sessions_today': sessions,
         'hero_stats': [
@@ -1207,6 +1325,7 @@ def build_coach_workspace_snapshot(*, today):
         ],
         'coach_decision_entry_context': coach_decision_entry_context,
         'behavior_categories': BehaviorCategory.choices,
+        'transport_payload': transport_payload,
     }
 
 
@@ -1401,6 +1520,12 @@ def build_reception_workspace_snapshot(*, today):
         {'key': 'sessions', 'items': data['sessions'], 'count': len(data['sessions'])},
     )
 
+    transport_payload = {
+        'reception_queue': data['queue'],
+        'reception_intakes': [_serialize_reception_intake(intake) for intake in data['intakes']],
+        'reception_sessions': [_serialize_reception_session(session) for session in data['sessions']],
+        'reception_payment_methods': [{'value': value, 'label': label} for value, label in data['payment_methods']],
+    }
     return {
         'snapshot_version': snapshot_version,
         'hero_stats': data['hero_stats'],
@@ -1459,6 +1584,7 @@ def build_reception_workspace_snapshot(*, today):
         'reception_queue': data['queue'],
         'reception_intakes': data['intakes'],
         'reception_sessions': data['sessions'],
+        'transport_payload': transport_payload,
     }
 
 

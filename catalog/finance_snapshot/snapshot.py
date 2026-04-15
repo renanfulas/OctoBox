@@ -11,6 +11,8 @@ O QUE ESTE ARQUIVO FAZ:
 
 PONTOS CRITICOS:
 - a estrutura de saida precisa permanecer estavel para templates e relatorios.
+- `filter_form`, `payments`, `enrollments` e `plans` continuam server-only por enquanto.
+- listas de leitura para UI e transporte devem preferir estruturas JSON-safe em `transport_payload`.
 """
 
 from finance.models import FinanceFollowUp, PaymentStatus
@@ -30,6 +32,7 @@ from .ai import (
     build_timing_recommendation_override_map,
 )
 from django.utils import timezone
+from django.urls import reverse
 from .hybrid.flow_bridge import build_finance_flow_bridge
 from .traditional import (
     build_comparison_peaks,
@@ -42,6 +45,43 @@ from .traditional import (
     build_monthly_comparison,
     build_plan_portfolio,
 )
+
+
+def _serialize_financial_alert(payment):
+    enrollment = getattr(payment, 'enrollment', None)
+    student = getattr(payment, 'student', None)
+    return {
+        'id': payment.id,
+        'student_id': getattr(student, 'id', None),
+        'student_full_name': getattr(student, 'full_name', 'Aluno'),
+        'student_url': f"{reverse('student-quick-update', args=[student.id])}#student-financial-overview" if student else '',
+        'plan_name': enrollment.plan.name if enrollment and getattr(enrollment, 'plan', None) else 'Sem vinculo de plano',
+        'due_date': payment.due_date,
+        'amount': payment.amount,
+        'status': payment.status,
+    }
+
+
+def _serialize_recent_movement(enrollment):
+    student = getattr(enrollment, 'student', None)
+    plan = getattr(enrollment, 'plan', None)
+    return {
+        'id': enrollment.id,
+        'student_id': getattr(student, 'id', None),
+        'student_full_name': getattr(student, 'full_name', 'Aluno'),
+        'plan_name': getattr(plan, 'name', 'Plano'),
+        'status': enrollment.status,
+        'start_date': enrollment.start_date,
+        'updated_at': enrollment.updated_at,
+        'student_url': f"{reverse('student-quick-update', args=[student.id])}#student-financial-overview" if student else '',
+    }
+
+
+def _build_finance_transport_payload(*, financial_alerts, recent_movements):
+    return {
+        'financial_alerts': [_serialize_financial_alert(payment) for payment in financial_alerts],
+        'recent_movements': [_serialize_recent_movement(enrollment) for enrollment in recent_movements],
+    }
 
 
 def build_finance_snapshot(params=None, *, operational_queue=None, persist_follow_ups=False):
@@ -104,6 +144,12 @@ def build_finance_snapshot(params=None, *, operational_queue=None, persist_follo
         monthly_comparison=monthly_comparison,
     )
 
+    recent_movements = list(enrollments.order_by('-updated_at', '-created_at')[:8])
+    transport_payload = _build_finance_transport_payload(
+        financial_alerts=financial_alerts,
+        recent_movements=recent_movements,
+    )
+
     snapshot = {
         'filter_form': filter_form,
         'payments': payments,
@@ -124,7 +170,8 @@ def build_finance_snapshot(params=None, *, operational_queue=None, persist_follo
         'financial_churn_foundation': financial_churn_foundation,
         'finance_follow_up_analytics': finance_follow_up_analytics,
         'finance_trend_foundation': finance_trend_foundation,
-        'recent_movements': enrollments.order_by('-updated_at', '-created_at')[:8],
+        'recent_movements': recent_movements,
+        'transport_payload': transport_payload,
     }
 
     if operational_queue is not None:

@@ -3,10 +3,10 @@
         <div>
             <p class="eyebrow">Turma do dia</p>
             <h2 class="operation-session-title">{{ session.title }}</h2>
-            <p class="operation-session-meta">{{ session.scheduled_at|date:"d/m/Y H:i" }}{% if session.duration_minutes %} • {{ session.duration_minutes }} min{% endif %}</p>
+            <p class="operation-session-meta">{{ session.scheduled_at|date:"d/m/Y H:i" }}{% if session.duration_minutes %} - {{ session.duration_minutes }} min{% endif %}</p>
         </div>
         <div class="operation-session-badges">
-            <span class="pill info">{{ session.attendances.all|length }} presença(s)</span>
+            <span class="pill info">{{ session.attendance_count }} presenca(s)</span>
             <span class="pill accent">Registro em tempo real</span>
         </div>
     </div>
@@ -17,37 +17,37 @@
                     <tr>
                         <th scope="col">Aluno</th>
                         <th scope="col">Status</th>
-                        <th scope="col">Ações</th>
-                        <th scope="col">Ocorrência técnica</th>
+                        <th scope="col">Acoes</th>
+                        <th scope="col">Ocorrencia tecnica</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for attendance in session.attendances.all %}
+                    {% for attendance in session.attendances %}
                     <tr>
-                        <td>{{ attendance.student.full_name }}</td>
-                        <td>{{ attendance.get_status_display }}</td>
+                        <td>{{ attendance.student_full_name }}</td>
+                        <td>{{ attendance.status_label }}</td>
                         <td>
                             <div class="actions operation-inline-actions">
-                                <form method="post" action="/operacao/presenca/{{ attendance.id }}/check-in/">
+                                <form method="post" action="{{ attendance.check_in_url }}">
                                     {% csrf_token %}
                                     <button class="button" type="submit">Check-in</button>
                                 </form>
-                                <form method="post" action="/operacao/presenca/{{ attendance.id }}/check-out/">
+                                <form method="post" action="{{ attendance.check_out_url }}">
                                     {% csrf_token %}
                                     <button class="button secondary" type="submit">Check-out</button>
                                 </form>
-                                <form method="post" action="/operacao/presenca/{{ attendance.id }}/absent/">
+                                <form method="post" action="{{ attendance.absent_url }}">
                                     {% csrf_token %}
                                     <button class="button secondary" type="submit">Falta</button>
                                 </form>
                             </div>
                         </td>
                         <td>
-                            <form class="operation-note-form coach-note-form" method="post" action="/operacao/aluno/{{ attendance.student.id }}/ocorrencia-tecnica/">
+                            <form class="operation-note-form coach-note-form" method="post" action="{{ attendance.behavior_note_url }}">
                                 {% csrf_token %}
                                 <select name="category">
-                                    {% for value, label in page.data.behavior_categories %}
-                                    <option value="{{ value }}">{{ label }}</option>
+                                    {% for category in page.data.behavior_categories %}
+                                    <option value="{{ category.value }}">{{ category.label }}</option>
                                     {% endfor %}
                                 </select>
                                 <textarea name="description" rows="2" maxlength="280" placeholder="Explique a ocorrencia tecnica em uma frase curta.">{{ attendance.notes }}</textarea>

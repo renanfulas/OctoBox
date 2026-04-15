@@ -1,8 +1,8 @@
-<tr data-student-id="{{ payment.student.id }}" data-student-events-stream-url="{% url 'student-event-stream' payment.student.id %}" data-contact-subject-key="{{ payment.contact_subject_key|default:'' }}">
-    <td>{{ payment.student.full_name }}</td>
-    <td>{{ payment.due_date|date:"d/m/Y" }}</td>
-    <td><span class="pill{% if payment.status == 'overdue' or payment.status == 'pending' %} warning{% else %} info{% endif %}">{{ payment.get_status_display }}</span></td>
-    <td>R$ {{ payment.amount|floatformat:2 }}</td>
+<tr data-student-id="{{ payment.student_id }}" data-student-events-stream-url="{{ payment.student_event_stream_url }}" data-contact-subject-key="{{ payment.contact_subject_key|default:'' }}">
+    <td>{{ payment.student_full_name }}</td>
+    <td>{{ payment.due_date_label }}</td>
+    <td><span class="pill {{ payment.status_class|default:'info' }}">{{ payment.status_label }}</span></td>
+    <td>{{ payment.amount_label }}</td>
     <td>
         <div class="manager-row-decision">
             {% if payment.team_touch_label %}
@@ -25,7 +25,7 @@
             {% endif %}
             {% if payment.whatsapp_action %}
             <div class="manager-row-secondary-actions">
-                <form method="post" action="{% url 'finance-communication-action' %}" class="manager-row-decision-form" data-action="manager-contact-submit" data-contact-subject-key="{{ payment.contact_subject_key|default:'' }}" data-history-surface-label="Cobranca" data-history-subject-label="{{ payment.student.full_name }}" data-history-action-label="{{ payment.whatsapp_action.label|default:'Contato aberto' }}" data-history-channel-label="WhatsApp" target="_blank">
+                <form method="post" action="{% url 'finance-communication-action' %}" class="manager-row-decision-form" data-action="manager-contact-submit" data-contact-subject-key="{{ payment.contact_subject_key|default:'' }}" data-history-surface-label="Cobranca" data-history-subject-label="{{ payment.student_full_name }}" data-history-action-label="{{ payment.whatsapp_action.label|default:'Contato aberto' }}" data-history-channel-label="WhatsApp" target="_blank">
                     {% csrf_token %}
                     <input type="hidden" name="open_in_whatsapp" value="1">
                     <input type="hidden" name="action_kind" value="{{ payment.whatsapp_action.action_kind }}">

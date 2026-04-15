@@ -433,6 +433,7 @@ Guias novos:
 - baseline de seguranca de producao: [docs/reference/production-security-baseline.md](docs/reference/production-security-baseline.md)
 - checklist de validacao mobile real: [docs/experience/mobile-real-validation-checklist.md](docs/experience/mobile-real-validation-checklist.md)
 - scripts de backup: [scripts/backup_sqlite.ps1](scripts/backup_sqlite.ps1) e [scripts/backup_postgres.ps1](scripts/backup_postgres.ps1)
+- deploy de producao em Hostinger VPS: [docs/rollout/hostinger-vps-production-deploy.md](docs/rollout/hostinger-vps-production-deploy.md)
 
 ## Importacao inicial de alunos
 

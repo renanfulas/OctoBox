@@ -40,7 +40,8 @@ def build_finance_center_page(
     filter_state_restored=False,
 ):
     filter_form = snapshot['filter_form']
-    financial_alerts = snapshot['financial_alerts']
+    transport_payload = snapshot.get('transport_payload') or {}
+    financial_alerts = transport_payload.get('financial_alerts') or snapshot['financial_alerts']
     financial_churn_foundation = snapshot.get('financial_churn_foundation', {})
     finance_follow_up_analytics = snapshot.get('finance_follow_up_analytics', {})
     finance_follow_up_analytics_board = build_follow_up_analytics_board(finance_follow_up_analytics)
@@ -111,6 +112,8 @@ def build_finance_center_page(
             'monthly_comparison': snapshot['monthly_comparison'],
             'comparison_peaks': snapshot['comparison_peaks'],
             'financial_alerts': financial_alerts,
+            'recent_movements': transport_payload.get('recent_movements') or snapshot.get('recent_movements') or [],
+            'finance_transport_payload': transport_payload,
             'operational_queue': operational_queue,
             'finance_filter_summary': finance_filter_summary,
             'finance_filter_summary_current': build_finance_filter_summary_current(finance_filter_summary),

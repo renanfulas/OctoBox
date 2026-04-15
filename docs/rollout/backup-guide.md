@@ -19,7 +19,7 @@ POR QUE ELE EXISTE:
 O QUE ESTE ARQUIVO FAZ:
 1. Explica a estrategia minima de backup.
 2. Mostra fluxo para SQLite e PostgreSQL.
-3. Referencia os scripts reais incluidos no projeto.
+3. Referencia os scripts reais incluidos no projeto para Windows e Linux.
 
 PONTOS CRITICOS:
 - Backup sem teste de restauracao vira documentacao decorativa e nao protecao real.
@@ -54,6 +54,12 @@ $securePassword = Read-Host "Senha do banco" -AsSecureString
 ./scripts/backup_postgres.ps1 -DbHost localhost -Port 5432 -Database octobox_control -User postgres -Password $securePassword
 ```
 
+Em Linux/VPS, use:
+
+```bash
+PGPASSWORD='troque-esta-senha' ./scripts/linux/backup_postgres.sh --host 127.0.0.1 --port 5432 --database octobox_control --user octobox_app --output-dir /srv/octobox/backups
+```
+
 ## Restauracao PostgreSQL
 
 ```powershell
@@ -73,3 +79,4 @@ $securePassword = Read-Host "Senha do banco" -AsSecureString
 1. [scripts/backup_sqlite.ps1](../../scripts/backup_sqlite.ps1)
 2. [scripts/backup_postgres.ps1](../../scripts/backup_postgres.ps1)
 3. [scripts/restore_postgres.ps1](../../scripts/restore_postgres.ps1)
+4. [scripts/linux/backup_postgres.sh](../../scripts/linux/backup_postgres.sh)

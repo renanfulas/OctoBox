@@ -214,6 +214,7 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
 
 def build_operation_workspace_page(*, page_key, title, subtitle, scope, snapshot, current_role_slug, focus_key, capabilities=None):
     focus = snapshot.get(focus_key) or []
+    transport_payload = snapshot.get('transport_payload') or {}
     return build_page_payload(
         context={
             'page_key': page_key,
@@ -224,6 +225,8 @@ def build_operation_workspace_page(*, page_key, title, subtitle, scope, snapshot
         },
         data={
             **snapshot,
+            **transport_payload,
+            'transport_payload': transport_payload,
             'hero': _build_operation_workspace_hero(page_key, snapshot),
             'reading_panel': _build_operation_workspace_reading_panel(page_key, snapshot),
         },

@@ -112,18 +112,30 @@ def build_finance_overdue_rows(financial_alerts):
     rows = []
 
     for payment in financial_alerts:
-        student_name = payment.student.full_name
-        initials = ''.join(part[0] for part in student_name.split()[:2]).upper()
-        due_date = payment.due_date
-        overdue_days = max((today - due_date).days, 0)
+        if isinstance(payment, dict):
+            student_name = payment.get('student_full_name') or 'Aluno'
+            student_url = payment.get('student_url') or ''
+            initials = ''.join(part[0] for part in student_name.split()[:2]).upper()
+            due_date = payment.get('due_date')
+            overdue_days = max((today - due_date).days, 0) if due_date else 0
+            amount = payment.get('amount')
+            plan_name = payment.get('plan_name') or 'Sem vinculo de plano'
+        else:
+            student_name = payment.student.full_name
+            student_url = f"{reverse('student-quick-update', args=[payment.student.id])}#student-financial-overview"
+            initials = ''.join(part[0] for part in student_name.split()[:2]).upper()
+            due_date = payment.due_date
+            overdue_days = max((today - due_date).days, 0)
+            amount = payment.amount
+            plan_name = payment.enrollment.plan.name if payment.enrollment else 'Sem vinculo de plano'
 
         rows.append(
             {
                 'student_name': student_name,
-                'student_url': f"{reverse('student-quick-update', args=[payment.student.id])}#student-financial-overview",
+                'student_url': student_url,
                 'initials': initials[:2],
-                'plan_name': payment.enrollment.plan.name if payment.enrollment else 'Sem vinculo de plano',
-                'amount': payment.amount,
+                'plan_name': plan_name,
+                'amount': amount,
                 'overdue_days': overdue_days,
                 'badge': 'Urgente' if overdue_days >= 7 else 'Atencao',
             }
