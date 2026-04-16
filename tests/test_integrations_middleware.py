@@ -1,0 +1,61 @@
+"""
+ARQUIVO: testes do middleware de idempotencia de integracoes.
+
+POR QUE ELE EXISTE:
+- protege correlation id transversal e header de resposta da borda de webhook.
+"""
+
+import json
+from unittest.mock import patch
+
+from django.http import JsonResponse
+from django.test import RequestFactory, SimpleTestCase
+
+from integrations.middleware import WebhookIdempotencyMiddleware
+
+
+class IntegrationsMiddlewareTests(SimpleTestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    @patch('integrations.middleware.WebhookEvent.objects.filter')
+    @patch('integrations.middleware.build_correlation_id')
+    def test_process_webhook_sets_correlation_header_on_normal_flow(
+        self,
+        build_correlation_id_mock,
+        webhook_filter_mock,
+    ):
+        build_correlation_id_mock.return_value = 'corr-webhook-1'
+        webhook_filter_mock.return_value.exists.return_value = False
+        request = self.factory.post(
+            '/api/v1/integrations/whatsapp/webhook/poll-vote/',
+            data=json.dumps({'event_id': 'evt-1'}),
+            content_type='application/json',
+        )
+        middleware = WebhookIdempotencyMiddleware(lambda req: JsonResponse({'accepted': True}))
+
+        response = middleware(request)
+
+        self.assertEqual(response['X-OctoBox-Correlation-Id'], 'corr-webhook-1')
+        self.assertEqual(request.octobox_correlation_id, 'corr-webhook-1')
+
+    @patch('integrations.middleware.WebhookEvent.objects.filter')
+    @patch('integrations.middleware.build_correlation_id')
+    def test_process_webhook_duplicate_response_includes_canonical_idempotency_key(
+        self,
+        build_correlation_id_mock,
+        webhook_filter_mock,
+    ):
+        build_correlation_id_mock.return_value = 'corr-webhook-2'
+        webhook_filter_mock.return_value.exists.return_value = True
+        request = self.factory.post(
+            '/api/v1/integrations/whatsapp/webhook/poll-vote/',
+            data=json.dumps({'event_id': 'evt-77', 'external_id': 'ext-77'}),
+            content_type='application/json',
+        )
+        middleware = WebhookIdempotencyMiddleware(lambda req: JsonResponse({'accepted': True}))
+
+        response = middleware(request)
+
+        payload = json.loads(response.content)
+        self.assertEqual(payload['idempotency_key'], 'evt-77')

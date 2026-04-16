@@ -14,9 +14,11 @@ PONTOS CRITICOS:
 
 from django.urls import path
 
-from .views import ApiV1HealthView, ApiV1ManifestView, StudentAutocompleteView, WhatsAppPollWebhookView, init_system_view, PaymentLinkView
-from .finance_views import StudentFreezeView
+from .finance_views import PaymentLinkView, StudentFreezeView
+from .integrations_views import WhatsAppPollWebhookView
+from .internal_views import init_system_view
 from .jobs_views import SecureExportDownloadView
+from .views import ApiV1HealthView, ApiV1ManifestView, StudentAutocompleteView
 
 
 urlpatterns = [

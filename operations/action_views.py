@@ -220,6 +220,8 @@ class ReceptionPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
     allowed_roles = (ROLE_OWNER, ROLE_RECEPTION)
 
     def post(self, request, payment_id, *args, **kwargs):
+        # Esta rota mora em operations por ergonomia de shell, mas a mutacao
+        # continua pertencendo ao corredor financeiro canonico do catalogo.
         return _handle_reception_payment_action(
             request,
             payment_id=payment_id,

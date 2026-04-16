@@ -5,7 +5,8 @@ from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
-from api.v1.views import RoleRequiredMixin, ROLE_OWNER, ROLE_MANAGER
+from access.permissions.mixins import RoleRequiredMixin
+from access.roles import ROLE_MANAGER, ROLE_OWNER
 
 class GenericBulkActionView(RoleRequiredMixin, View):
     """

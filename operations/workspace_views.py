@@ -30,15 +30,40 @@ from .base_views import ManagerWorkspaceAvailabilityMixin, OperationBaseView
 from django.views import View
 
 
+def _attach_operation_workspace_payload(
+    context,
+    *,
+    page_key,
+    title,
+    subtitle,
+    scope,
+    snapshot,
+    focus_key,
+    capabilities=None,
+):
+    payload = build_operation_workspace_page(
+        page_key=page_key,
+        title=title,
+        subtitle=subtitle,
+        scope=scope,
+        snapshot=snapshot,
+        current_role_slug=context['current_role'].slug,
+        focus_key=focus_key,
+        capabilities=capabilities or {},
+    )
+    attach_page_payload(context, payload_key='operation_page', payload=payload)
+    return payload
+
+
 def _build_reception_workspace_payload(context):
     snapshot = build_reception_workspace_snapshot(today=context['today'])
-    return build_operation_workspace_page(
+    return _attach_operation_workspace_payload(
+        context,
         page_key='operations-reception',
         title='Minha operacao',
         subtitle='Chegada, agenda e cobranca curta no balcao.',
         scope='operations-reception',
         snapshot=snapshot,
-        current_role_slug=context['current_role'].slug,
         focus_key='reception_focus',
         capabilities={'can_manage_reception_payments': context['current_role'].slug in (ROLE_OWNER, ROLE_RECEPTION)},
     )
@@ -47,13 +72,13 @@ def _build_reception_workspace_payload(context):
 def _build_manager_workspace_payload(context):
     request = context.get('request')
     snapshot = build_manager_workspace_snapshot(actor=getattr(request, 'user', None) or context.get('user'))
-    return build_operation_workspace_page(
+    return _attach_operation_workspace_payload(
+        context,
         page_key='operations-manager',
         title='Minha operacao',
         subtitle='Triagem, vinculo e cobranca em ordem curta.',
         scope='operations-manager',
         snapshot=snapshot,
-        current_role_slug=context['current_role'].slug,
         focus_key='manager_operational_focus',
     )
 
@@ -68,16 +93,15 @@ class OwnerWorkspaceView(OperationBaseView):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
         snapshot = build_owner_workspace_snapshot(today=context['today'])
-        payload = build_operation_workspace_page(
+        _attach_operation_workspace_payload(
+            context,
             page_key='operations-owner',
             title=self.page_title,
             subtitle=self.page_subtitle,
             scope='operations-owner',
             snapshot=snapshot,
-            current_role_slug=context['current_role'].slug,
             focus_key='owner_operational_focus',
         )
-        attach_page_payload(context, payload_key='operation_page', payload=payload)
         return context
 
 
@@ -89,16 +113,15 @@ class OwnerWorkspacePartialView(OperationBaseView):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
         snapshot = build_owner_workspace_snapshot(today=context['today'])
-        payload = build_operation_workspace_page(
+        _attach_operation_workspace_payload(
+            context,
             page_key='operations-owner',
             title='Minha operacao',
             subtitle='Crescimento, caixa e estrutura sem leitura longa.',
             scope='operations-owner',
             snapshot=snapshot,
-            current_role_slug=context['current_role'].slug,
             focus_key='owner_operational_focus',
         )
-        attach_page_payload(context, payload_key='operation_page', payload=payload)
         context['page'] = context['operation_page']
         return context
 
@@ -113,16 +136,15 @@ class DevWorkspaceView(OperationBaseView):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
         snapshot = build_dev_workspace_snapshot()
-        payload = build_operation_workspace_page(
+        _attach_operation_workspace_payload(
+            context,
             page_key='operations-dev',
             title=self.page_title,
             subtitle=self.page_subtitle,
-            scope='operations-owner',
+            scope='operations-dev',
             snapshot=snapshot,
-            current_role_slug=context['current_role'].slug,
             focus_key='dev_operational_focus',
         )
-        attach_page_payload(context, payload_key='operation_page', payload=payload)
         return context
 
 
@@ -135,7 +157,7 @@ class ManagerWorkspaceView(ManagerWorkspaceAvailabilityMixin, OperationBaseView)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
-        attach_page_payload(context, payload_key='operation_page', payload=_build_manager_workspace_payload(context))
+        _build_manager_workspace_payload(context)
         return context
 
 
@@ -146,7 +168,7 @@ class ManagerBoardsPartialView(ManagerWorkspaceAvailabilityMixin, OperationBaseV
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
-        attach_page_payload(context, payload_key='operation_page', payload=_build_manager_workspace_payload(context))
+        _build_manager_workspace_payload(context)
         context['page'] = context['operation_page']
         return context
 
@@ -168,16 +190,15 @@ class CoachWorkspaceView(OperationBaseView):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
         snapshot = build_coach_workspace_snapshot(today=context['today'])
-        payload = build_operation_workspace_page(
+        _attach_operation_workspace_payload(
+            context,
             page_key='operations-coach',
             title=self.page_title,
             subtitle=self.page_subtitle,
             scope='operations-coach',
             snapshot=snapshot,
-            current_role_slug=context['current_role'].slug,
             focus_key='coach_operational_focus',
         )
-        attach_page_payload(context, payload_key='operation_page', payload=payload)
         return context
 
 
@@ -190,8 +211,7 @@ class ReceptionWorkspaceView(OperationBaseView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
-        payload = _build_reception_workspace_payload(context)
-        attach_page_payload(context, payload_key='operation_page', payload=payload)
+        _build_reception_workspace_payload(context)
         return context
 
 
@@ -202,7 +222,7 @@ class ReceptionPaymentBoardPartialView(OperationBaseView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
-        attach_page_payload(context, payload_key='operation_page', payload=_build_reception_workspace_payload(context))
+        _build_reception_workspace_payload(context)
         context['page'] = context['operation_page']
         return context
 

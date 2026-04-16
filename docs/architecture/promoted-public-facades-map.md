@@ -109,6 +109,11 @@ Use `boxcore/*` apenas em tres casos:
 - communications/facade/messaging.py
   substitui o acesso direto de integracoes e services historicos a communications.infrastructure para inbound WhatsApp, toque operacional e fila financeira
 
+### Reporting
+
+- reporting/facade/__init__.py
+  cria a entrada publica estavel das exportacoes HTTP de relatorio e substitui imports diretos de reporting.infrastructure nas cascas consumidoras
+
 ### Integrations
 
 - integrations/whatsapp/contracts.py
@@ -197,3 +202,31 @@ Ao revisar codigo novo:
 1. prefira imports por students, finance, operations, auditing, onboarding, communications, integrations, access e catalog quando houver superficie ja promovida
 2. trate imports de boxcore.* no runtime como suspeitos por padrao
 3. so aceite boxcore.* quando o uso for claramente historico, estrutural ou ainda sem substituto real
+
+## Guardrail de revisao para bordas externas
+
+Quando o codigo novo tocar qualquer fluxo externo ou casca de entrega, use esta ordem:
+
+1. view HTTP, endpoint de API, webhook, admin action, job disparado externamente e adaptador de integracao devem preferir facade publica ou adaptador fino ja promovido
+2. a borda nao deve importar `*.infrastructure` diretamente quando existir corredor oficial promovido
+3. se ainda nao existir facade boa o bastante, o bypass deve nascer explicitamente classificado em plano ou inventario ativo
+
+Traducao pratica:
+
+1. a borda pode conhecer contrato estavel, payload normalizado e resultado pequeno
+2. a borda nao deve conhecer adapter concreto, detalhe tecnico de transporte ou wiring interno
+3. se a borda precisar descer para `infrastructure`, isso deixa de ser detalhe e vira excecao documentada
+
+## Checklist curto de PR para fronteiras
+
+Antes de aprovar um PR que toca borda externa, conferir:
+
+1. o novo fluxo entra por facade publica quando ela ja existe
+2. o modulo de borda nao importou `*.infrastructure` sem justificativa escrita
+3. o eventual bypass foi registrado em doc ativo com motivo, risco e corredor desejado
+4. a mudanca preservou compatibilidade por adaptador fino quando o corte nao podia ser brusco
+
+Se qualquer item acima falhar, a regra padrao e:
+
+1. pedir reancoragem para facade publica
+2. ou pedir classificacao explicita do bypass antes de aprovar

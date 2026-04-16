@@ -26,6 +26,12 @@ def register_inbound_whatsapp_message(*, inbound_message: WhatsAppInboundMessage
         reason=result.reason,
         contact_id=result.contact_id,
         message_log_id=result.message_log_id,
+        failure_kind=getattr(result, 'failure_kind', ''),
+        retryable=getattr(result, 'retryable', False),
+        retry_action=getattr(result, 'retry_action', ''),
+        attempt_number=getattr(result, 'attempt_number', 0),
+        max_attempts=getattr(result, 'max_attempts', 0),
+        next_retry_at=getattr(result, 'next_retry_at', ''),
     )
 
 
@@ -35,3 +41,6 @@ def process_poll_vote_webhook(*, poll_vote: WhatsAppInboundPollVote) -> WhatsApp
     """
     # Encaminha para o processador dedicado
     return run_process_poll_vote_webhook(poll_vote=poll_vote)
+
+
+__all__ = ['process_poll_vote_webhook', 'register_inbound_whatsapp_message']

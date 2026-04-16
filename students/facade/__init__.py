@@ -31,6 +31,8 @@ from .student_lifecycle import (
 )
 from .student_attribution import (
     StudentSourceDeclarationFacadeResult,
+    run_student_source_capture_token_build,
+    run_student_source_capture_token_read,
     run_student_source_declaration_record,
 )
 
@@ -43,6 +45,8 @@ __all__ = [
     'StudentPaymentScheduleFacadeResult',
     'StudentQuickWorkflowFacadeResult',
     'StudentSourceDeclarationFacadeResult',
+    'run_student_source_capture_token_build',
+    'run_student_source_capture_token_read',
     'run_student_enrollment_action',
     'run_student_enrollment_sync',
     'run_student_intake_sync',

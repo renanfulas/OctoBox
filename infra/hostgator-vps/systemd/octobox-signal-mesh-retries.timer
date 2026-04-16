@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodic OctoBOX Signal Mesh retry sweep
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=1min
+Persistent=true
+Unit=octobox-signal-mesh-retries.service
+
+[Install]
+WantedBy=timers.target

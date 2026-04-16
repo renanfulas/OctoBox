@@ -33,7 +33,7 @@ from catalog.services.membership_plan_workflows import (
 from catalog.services.operational_queue import build_operational_queue_snapshot
 from finance.models import MembershipPlan, Payment
 from reporting.application.catalog_reports import build_finance_report
-from reporting.infrastructure import build_report_response
+from reporting.facade import run_report_response_build
 from shared_support.cascade.contracts import build_cascade_intent, merge_cascade_metadata
 from shared_support.cascade.ownership import resolve_actor_box_id, resolve_box_owner_user_id
 from shared_support.manager_event_stream import publish_manager_stream_event
@@ -149,7 +149,7 @@ class FinanceReportExportView(LoginRequiredMixin, RoleRequiredMixin, View):
 
         snapshot = build_finance_snapshot(request.GET)
         try:
-            return build_report_response(build_finance_report(snapshot=snapshot, report_format=report_format))
+            return run_report_response_build(build_finance_report(snapshot=snapshot, report_format=report_format))
         except ValueError as exc:
             raise Http404(str(exc)) from exc
 

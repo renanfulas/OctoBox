@@ -32,6 +32,7 @@ from finance.overdue_metrics import get_overdue_payments_queryset
 from operations.models import Attendance, AttendanceStatus, BehaviorNote, ClassSession
 from operations.session_snapshots import serialize_class_session, sync_runtime_statuses
 from students.models import Student, StudentStatus
+from monitoring.beacon_snapshot import build_red_beacon_snapshot
 
 
 def _build_delta_badge(current, previous, *, label, formatter=str, semantic='neutral'):
@@ -861,6 +862,7 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
         'next_actionable_payment_alert': payment_alert_snapshot['next_actionable_payment_alert'],
         'operational_focus': operational_focus,
         'student_health': student_health,
+        'red_beacon_snapshot': build_red_beacon_snapshot(),
     }
 
     return _sanitize_dashboard_snapshot_value(snapshot)

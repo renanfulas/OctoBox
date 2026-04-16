@@ -1,12 +1,21 @@
 """
-API views for the Finance module.
+ARQUIVO: views da capacidade financeira na API v1.
+
+POR QUE ELE EXISTE:
+- Reune endpoints financeiros versionados sem misturar manifesto, integracao ou jobs.
+
+O QUE ESTE ARQUIVO FAZ:
+1. expõe operacoes financeiras controladas na API.
+2. concentra fluxos HTTP que pertencem ao dominio financeiro.
+
+PONTOS CRITICOS:
+- endpoints daqui devem continuar pequenos e previsiveis.
 """
 import json
 from datetime import timedelta
 
 from django.db import transaction
 from django.http import JsonResponse
-from django.template.loader import render_to_string
 from django.utils import timezone
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -14,8 +23,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from catalog.forms import EnrollmentManagementForm, PaymentManagementForm
 from catalog.presentation.student_financial_fragments import render_student_financial_fragments
 from catalog.student_queries import build_student_financial_snapshot
+from finance.models import EnrollmentStatus, Payment, PaymentStatus
+from integrations.stripe.services import create_checkout_session
 from students.models import Student
-from finance.models import PaymentStatus, EnrollmentStatus
 
 
 def _build_payment_management_form(student):
@@ -78,8 +88,26 @@ def _render_financial_fragments(request, student):
             '<div id="student-payment-management-root">'
             f"{fragments.get('checkout', '')}"
             '</div>'
-        )
+    )
     return fragments
+
+
+class PaymentLinkView(LoginRequiredMixin, View):
+    """Gera um link de checkout do Stripe para compartilhamento manual."""
+
+    def get(self, request, payment_id, *args, **kwargs):
+        payment = Payment.objects.filter(pk=payment_id).first()
+        if not payment:
+            return JsonResponse({'error': 'Payment not found'}, status=404)
+
+        if payment.status == PaymentStatus.PAID:
+            return JsonResponse({'error': 'Payment already paid'}, status=400)
+
+        try:
+            url = create_checkout_session(payment, request)
+            return JsonResponse({'url': url})
+        except Exception as exc:
+            return JsonResponse({'error': str(exc)}, status=500)
 
 class StudentFreezeView(LoginRequiredMixin, View):
     """

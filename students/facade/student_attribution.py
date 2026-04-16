@@ -10,6 +10,10 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from students.infrastructure.django_attribution import record_student_source_declaration
+from students.infrastructure.source_capture_links import (
+    build_student_source_capture_token,
+    read_student_source_capture_token,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,4 +55,17 @@ def run_student_source_declaration_record(
     )
 
 
-__all__ = ['StudentSourceDeclarationFacadeResult', 'run_student_source_declaration_record']
+def run_student_source_capture_token_build(*, student_id: int) -> str:
+    return build_student_source_capture_token(student_id=student_id)
+
+
+def run_student_source_capture_token_read(*, token: str, max_age: int = 60 * 60 * 24 * 30) -> int:
+    return read_student_source_capture_token(token=token, max_age=max_age)
+
+
+__all__ = [
+    'StudentSourceDeclarationFacadeResult',
+    'run_student_source_capture_token_build',
+    'run_student_source_capture_token_read',
+    'run_student_source_declaration_record',
+]

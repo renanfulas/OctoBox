@@ -31,6 +31,8 @@ from dashboard.dashboard_snapshot_queries import build_dashboard_snapshot
 from finance.models import Payment, PaymentStatus
 from operations.models import Attendance, AttendanceStatus, ClassSession
 from students.models import Student
+from integrations.whatsapp.models import WebhookEvent
+from monitoring.signal_mesh_runtime import remember_signal_mesh_sweep
 
 
 class DashboardSnapshotSerializationTests(TestCase):
@@ -83,6 +85,23 @@ class DashboardSnapshotSerializationTests(TestCase):
             duration_minutes=60,
             capacity=15,
         )
+        WebhookEvent.objects.create(
+            event_id='evt-dashboard-1',
+            provider='evolution',
+            payload={'kind': 'poll_vote', 'raw_payload': {}},
+            status='pending',
+            next_retry_at=now - timedelta(minutes=1),
+        )
+        remember_signal_mesh_sweep(
+            channel='jobs',
+            result={
+                'checked_at': now.isoformat(),
+                'due_backlog': 1,
+                'dispatched_count': 1,
+                'skipped_count': 1,
+                'skipped': [{'reason': 'missing-dispatch-context'}],
+            },
+        )
 
         snapshot = build_dashboard_snapshot(
             today=today,
@@ -97,6 +116,9 @@ class DashboardSnapshotSerializationTests(TestCase):
         self.assertIsInstance(snapshot["next_actionable_payment_alert"], dict)
         self.assertEqual(snapshot["payment_alerts"][0]["student_full_name"], "Aluno Snapshot")
         self.assertEqual(snapshot["upcoming_sessions"][0]["title"], "Turma futura")
+        self.assertEqual(snapshot["red_beacon_snapshot"]["signal_mesh"]["total_due_backlog"], 1)
+        self.assertEqual(snapshot["red_beacon_snapshot"]["signal_mesh"]["channels"][0]["label"], "Jobs")
+        self.assertEqual(snapshot["red_beacon_snapshot"]["alert_siren"]["level"], "low")
         self.assertIn('"student_health"', encoded)
 
     def test_authenticated_dashboard_request_returns_ok(self):

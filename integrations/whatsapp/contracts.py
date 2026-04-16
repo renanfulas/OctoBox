@@ -43,6 +43,12 @@ class WhatsAppWebhookProcessingResult:
     reason: str = ''
     contact_id: int | None = None
     message_log_id: int | None = None
+    failure_kind: str = ''
+    retryable: bool = False
+    retry_action: str = ''
+    attempt_number: int = 0
+    max_attempts: int = 0
+    next_retry_at: str = ''
 
 
 @dataclass(slots=True)
@@ -51,4 +57,5 @@ class WhatsAppInboundPollVote:
     poll_title: str      # ex: "Check in - 23.MAR"
     option_voted: str    # ex: "18h" ou "19h"
     external_id: str = '' # id do voto ou da mensagem
+    event_id: str = ''    # id unico do webhook para idempotencia
     raw_payload: dict[str, Any] = field(default_factory=dict)

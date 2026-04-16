@@ -63,10 +63,13 @@ from monitoring.student_realtime_metrics import record_student_save_conflict
 from onboarding.attribution import extract_acquisition_channel
 from onboarding.models import StudentIntake
 from reporting.application.catalog_reports import build_student_directory_report
-from reporting.infrastructure import build_report_response
+from reporting.facade import run_report_response_build
 from shared_support.security import check_export_quota
-from students.facade import run_student_source_declaration_record
-from students.infrastructure.source_capture_links import build_student_source_capture_token, read_student_source_capture_token
+from students.facade import (
+    run_student_source_capture_token_build,
+    run_student_source_capture_token_read,
+    run_student_source_declaration_record,
+)
 from students.models import Student
 
 from .catalog_base_views import CatalogBaseView
@@ -115,7 +118,7 @@ def _student_financial_json_error(*, message, status=400):
 
 
 def _build_student_source_capture_url(*, request, student):
-    token = build_student_source_capture_token(student_id=student.id)
+    token = run_student_source_capture_token_build(student_id=student.id)
     return f"{request.build_absolute_uri(reverse('student-source-capture'))}?token={token}"
 
 
@@ -987,7 +990,7 @@ class StudentDirectoryExportView(LoginRequiredMixin, RoleRequiredMixin, View):
 
         students = build_student_directory_snapshot(request.GET, for_export=True)['students']
         try:
-            return build_report_response(build_student_directory_report(students=students, report_format=report_format))
+            return run_report_response_build(build_student_directory_report(students=students, report_format=report_format))
         except ValueError as exc:
             raise Http404(str(exc)) from exc
 
@@ -1201,7 +1204,7 @@ class StudentSourceCaptureView(View):
     template_name = 'catalog/student-source-capture.html'
 
     def _resolve_student(self, token: str):
-        student_id = read_student_source_capture_token(token=token)
+        student_id = run_student_source_capture_token_read(token=token)
         return get_object_or_404(Student, pk=student_id)
 
     def get(self, request, *args, **kwargs):

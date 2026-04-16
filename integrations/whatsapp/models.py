@@ -1,6 +1,10 @@
 import uuid
+
 from django.db import models
+
 from model_support.base import TimeStampedModel
+
+from integrations.mesh import FAILURE_KIND_RETRYABLE, decide_retry
 
 class WebhookDeliveryStatus(models.TextChoices):
     PENDING = 'pending', 'Pending'
@@ -32,18 +36,35 @@ class WebhookEvent(TimeStampedModel):
             models.Index(fields=['webhook_fingerprint']),
         ]
 
+    def register_failure(self, *, failure_kind: str, error_message: str = '', reason: str = ''):
+        decision = decide_retry(
+            failure_kind=failure_kind or FAILURE_KIND_RETRYABLE,
+            attempts=self.attempts,
+            max_attempts=self.max_retries,
+            reason=reason,
+        )
+
+        self.attempts = decision.attempt_number
+        self.last_error_message = error_message or reason
+        self.next_retry_at = decision.next_retry_at
+        self.status = (
+            WebhookDeliveryStatus.PENDING if decision.should_retry else WebhookDeliveryStatus.FAILED
+        )
+        self.save(update_fields=['attempts', 'last_error_message', 'next_retry_at', 'status'])
+        return decision
+
+    def mark_processed(self):
+        self.status = WebhookDeliveryStatus.PROCESSED
+        self.next_retry_at = None
+        self.last_error_message = ''
+        self.save(update_fields=['status', 'next_retry_at', 'last_error_message'])
+
     def increment_retry_with_backoff(self):
         """
-        Calcula o Backoff Exponencial (2^attempts * base_delay)
+        Compatibilidade: delega o backoff para a policy canônica da mesh.
         """
-        import datetime
-        from django.utils import timezone
-        
-        self.attempts += 1
-        if self.attempts >= self.max_retries:
-            self.status = WebhookDeliveryStatus.FAILED
-        else:
-            base_delay_seconds = 10
-            delay = base_delay_seconds * (2 ** (self.attempts - 1))
-            self.next_retry_at = timezone.now() + datetime.timedelta(seconds=delay)
-        self.save(update_fields=['attempts', 'status', 'next_retry_at'])
+        return self.register_failure(
+            failure_kind=FAILURE_KIND_RETRYABLE,
+            error_message='retry-scheduled',
+            reason='retry-scheduled',
+        )
