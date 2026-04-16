@@ -6,6 +6,10 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
+    var QUICK_PANEL_FALLBACK_POLL_MS = 45000;
+    var QUICK_PANEL_MIN_READ_REFRESH_INTERVAL_MS = 12000;
+    var QUICK_PANEL_FRAGMENT_REFRESH_INTERVAL_MS = 45000;
+
     var payloadElement = document.getElementById('current-page-behavior');
     var pageBehavior = {};
     if (payloadElement) {
@@ -31,9 +35,11 @@ document.addEventListener('DOMContentLoaded', function() {
     var quickClose = document.querySelector('[data-student-quick-close]');
     var quickTabButtons = Array.from(document.querySelectorAll('[data-student-quick-tab]'));
     var quickFeedback = document.querySelector('[data-student-quick-feedback]');
+    var devPanel = document.querySelector('[data-student-search-dev-panel]');
     var prefetchConfig = pageBehavior.student_prefetch || {};
     var directorySearchConfig = pageBehavior.directory_search || {};
-    var hasFullDirectorySearchIndex = directorySearchConfig.full_index_available !== false;
+    var hasDirectorySearchEndpoint = Boolean(directorySearchConfig.page_url);
+    var hasFullDirectorySearchIndex = directorySearchConfig.full_index_available !== false || hasDirectorySearchEndpoint;
     var prefetchEnabled = prefetchConfig.enabled !== false;
     var prefetchHoverDelayMs = Number(prefetchConfig.hover_delay_ms || 120);
     var prefetchCacheTtlMs = Number(prefetchConfig.cache_ttl_ms || 120000);
@@ -57,6 +63,14 @@ document.addEventListener('DOMContentLoaded', function() {
     var directorySearchState = {
         index: [],
         isUsingSearchIndex: false,
+        preferIndexRendering: false,
+        hasNext: Boolean(directorySearchConfig.has_next),
+        nextOffset: Object.prototype.hasOwnProperty.call(directorySearchConfig, 'next_offset') ? directorySearchConfig.next_offset : null,
+        total: Number(directorySearchConfig.total || 0),
+        isLoadingNext: false,
+        isHydratingFilters: false,
+        idleHydrationScheduled: false,
+        idleHydrationCompleted: false,
     };
     var quickPanelState = {
         studentId: null,
@@ -76,6 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
         heartbeatTimerId: null,
         editSessionActive: false,
         refreshInFlight: false,
+        lastReadRefreshAt: 0,
         lastFragmentRefreshAt: 0,
         eventSource: null,
         sseConnected: false,
@@ -89,8 +104,79 @@ document.addEventListener('DOMContentLoaded', function() {
         profileEventsDeferred: 0,
         conflictResponses: 0,
     };
+    var performanceTelemetry = {
+        idleHydrationScheduled: 0,
+        idleHydrationStarted: 0,
+        idleHydrationCompleted: 0,
+        idleHydrationSkipped: 0,
+        idleHydrationDurationMs: [],
+        clickWaitsForHydration: 0,
+        clickWaitDurationMs: [],
+        manualNextPageLoads: 0,
+        totalIndexEntries: Number(directorySearchConfig.index && directorySearchConfig.index.length ? directorySearchConfig.index.length : 0),
+        latestTotalEntries: Number(directorySearchConfig.index && directorySearchConfig.index.length ? directorySearchConfig.index.length : 0),
+    };
 
     window.__octoboxStudentRealtimeTelemetry = realtimeTelemetry;
+    window.__octoboxStudentSearchTelemetry = performanceTelemetry;
+
+    function getLastPerformanceSample(list) {
+        if (!Array.isArray(list) || !list.length) {
+            return 0;
+        }
+        return list[list.length - 1] || 0;
+    }
+
+    function syncDevPanel() {
+        if (!devPanel) {
+            return;
+        }
+
+        function writeMetric(name, value) {
+            var node = devPanel.querySelector('[data-student-search-metric="' + name + '"]');
+            if (node) {
+                node.textContent = String(value);
+            }
+        }
+
+        writeMetric('entries', performanceTelemetry.latestTotalEntries);
+        writeMetric('click-waits', performanceTelemetry.clickWaitsForHydration);
+        writeMetric('idle-completed', performanceTelemetry.idleHydrationCompleted);
+        writeMetric('idle-last-ms', getLastPerformanceSample(performanceTelemetry.idleHydrationDurationMs) + ' ms');
+        writeMetric('click-last-ms', getLastPerformanceSample(performanceTelemetry.clickWaitDurationMs) + ' ms');
+    }
+
+    function shouldLogPerformanceTelemetry() {
+        var params = new URLSearchParams(window.location.search || '');
+        if (params.get('debug_performance') === '1') {
+            return true;
+        }
+
+        try {
+            return window.localStorage.getItem('octobox.debug.performance') === '1'
+                || window.sessionStorage.getItem('octobox.debug.performance') === '1';
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function recordPerformanceSample(list, value) {
+        if (!Array.isArray(list) || typeof value !== 'number' || Number.isNaN(value)) {
+            return;
+        }
+        list.push(Math.round(value));
+        if (list.length > 20) {
+            list.splice(0, list.length - 20);
+        }
+    }
+
+    function logPerformanceTelemetry(eventName, data) {
+        if (!shouldLogPerformanceTelemetry() || !window.console || typeof window.console.debug !== 'function') {
+            return;
+        }
+
+        window.console.debug('[OctoBox][Students][SearchTelemetry]', eventName, data || {});
+    }
 
     function setDirectoryFooterVisibility(shouldShow) {
         if (!directoryFooter) {
@@ -106,6 +192,14 @@ document.addEventListener('DOMContentLoaded', function() {
             || currentSearchParams.has('commercial_status')
             || currentSearchParams.has('payment_status')
             || currentSearchParams.has('created_window');
+    }
+
+    function clearServerScopedFilters() {
+        currentSearchParams.delete('student_status');
+        currentSearchParams.delete('commercial_status');
+        currentSearchParams.delete('payment_status');
+        currentSearchParams.delete('created_window');
+        currentSearchParams.delete('page');
     }
 
     function buildDirectoryFilterUrl(nextFilter) {
@@ -197,21 +291,34 @@ document.addEventListener('DOMContentLoaded', function() {
             return [];
         }
 
+        directorySearchState.hasNext = Object.prototype.hasOwnProperty.call(cacheEntry, 'has_next') ? Boolean(cacheEntry.has_next) : Boolean(directorySearchConfig.has_next);
+        directorySearchState.nextOffset = Object.prototype.hasOwnProperty.call(cacheEntry, 'next_offset') ? cacheEntry.next_offset : directorySearchConfig.next_offset;
+        directorySearchState.total = Number(cacheEntry.total || directorySearchConfig.total || cacheEntry.index.length || 0);
         return cacheEntry.index;
     }
 
-    function persistDirectorySearchIndex(index) {
+    function persistDirectorySearchIndex(index, meta) {
         var normalizedIndex = Array.isArray(index) ? index : [];
+        var resolvedMeta = meta || {};
         directorySearchState.index = normalizedIndex;
+        directorySearchState.hasNext = typeof resolvedMeta.has_next === 'boolean' ? resolvedMeta.has_next : directorySearchState.hasNext;
+        directorySearchState.nextOffset = Object.prototype.hasOwnProperty.call(resolvedMeta, 'next_offset') ? resolvedMeta.next_offset : directorySearchState.nextOffset;
+        directorySearchState.total = Number(resolvedMeta.total || directorySearchState.total || normalizedIndex.length);
+        performanceTelemetry.latestTotalEntries = normalizedIndex.length;
+        performanceTelemetry.totalIndexEntries = Math.max(performanceTelemetry.totalIndexEntries, normalizedIndex.length);
         writeSessionJson(directorySearchCacheKey, {
             index: normalizedIndex,
             refresh_token: directorySearchConfig.refresh_token || '',
+            has_next: directorySearchState.hasNext,
+            next_offset: directorySearchState.nextOffset,
+            total: directorySearchState.total,
             saved_at: Date.now(),
         });
         writeSessionJson(directorySearchStaleKey, {
             stale: false,
             marked_at: '',
         });
+        syncDevPanel();
     }
 
     function isDirectorySearchStale() {
@@ -243,11 +350,171 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (Array.isArray(directorySearchConfig.index) && directorySearchConfig.index.length) {
-            persistDirectorySearchIndex(directorySearchConfig.index);
+            persistDirectorySearchIndex(directorySearchConfig.index, {
+                has_next: Boolean(directorySearchConfig.has_next),
+                next_offset: Object.prototype.hasOwnProperty.call(directorySearchConfig, 'next_offset') ? directorySearchConfig.next_offset : null,
+                total: Number(directorySearchConfig.total || directorySearchConfig.index.length || 0),
+            });
             return directorySearchState.index;
         }
 
         return [];
+    }
+
+    function buildNextDirectorySearchPageUrl() {
+        if (!directorySearchConfig.page_url || directorySearchState.nextOffset === null || directorySearchState.nextOffset === undefined) {
+            return '';
+        }
+
+        var url = new URL(directorySearchConfig.page_url, window.location.origin);
+        var params = new URLSearchParams(window.location.search || '');
+        params.delete('query');
+        params.delete('page');
+        params.delete('student_status');
+        params.delete('commercial_status');
+        params.delete('payment_status');
+        params.delete('created_window');
+        params.delete('offset');
+        params.forEach(function(value, key) {
+            url.searchParams.append(key, value);
+        });
+        url.searchParams.set('offset', String(directorySearchState.nextOffset));
+        return url.toString();
+    }
+
+    function mergeDirectorySearchIndexPage(pageEntries) {
+        var seenIds = new Set();
+        var mergedEntries = [];
+
+        getDirectorySearchIndex().concat(Array.isArray(pageEntries) ? pageEntries : []).forEach(function(entry) {
+            var entryId = String(entry && entry.id ? entry.id : '');
+            if (!entryId || seenIds.has(entryId)) {
+                return;
+            }
+            seenIds.add(entryId);
+            mergedEntries.push(entry);
+        });
+
+        return mergedEntries;
+    }
+
+    function loadNextDirectorySearchPage() {
+        var nextUrl = buildNextDirectorySearchPageUrl();
+        if (!nextUrl || directorySearchState.isLoadingNext || !directorySearchState.hasNext) {
+            return Promise.resolve(false);
+        }
+
+        directorySearchState.isLoadingNext = true;
+        return fetch(nextUrl, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Falha ao carregar proxima pagina do indice de alunos.');
+                }
+                return response.json();
+            })
+            .then(function(payload) {
+                var nextIndex = mergeDirectorySearchIndexPage(payload.index || []);
+                if (String(payload.refresh_token || '') !== String(directorySearchConfig.refresh_token || '')) {
+                    nextIndex = Array.isArray(payload.index) ? payload.index : [];
+                    directorySearchConfig.refresh_token = payload.refresh_token || '';
+                }
+                persistDirectorySearchIndex(nextIndex, {
+                    has_next: Boolean(payload.has_next),
+                    next_offset: Object.prototype.hasOwnProperty.call(payload, 'next_offset') ? payload.next_offset : null,
+                    total: Number(payload.total || nextIndex.length || 0),
+                });
+                return true;
+            })
+            .catch(function() {
+                return false;
+            })
+            .finally(function() {
+                directorySearchState.isLoadingNext = false;
+            });
+    }
+
+    function hydrateDirectorySearchIndexForLocalFilters() {
+        if (!directorySearchState.hasNext || directorySearchState.isHydratingFilters) {
+            return Promise.resolve(false);
+        }
+
+        directorySearchState.isHydratingFilters = true;
+        return (function loadRemainingPages() {
+            if (!directorySearchState.hasNext) {
+                return Promise.resolve(true);
+            }
+            return loadNextDirectorySearchPage().then(function(didLoadPage) {
+                if (!didLoadPage) {
+                    return false;
+                }
+                return loadRemainingPages();
+            });
+        })().finally(function() {
+            directorySearchState.isHydratingFilters = false;
+            if (!directorySearchState.hasNext) {
+                directorySearchState.idleHydrationCompleted = true;
+            }
+        });
+    }
+
+    function shouldHydrateDirectoryIndexInIdle() {
+        return hasFullDirectorySearchIndex
+            && directorySearchState.hasNext
+            && !directorySearchState.isHydratingFilters
+            && !directorySearchState.idleHydrationCompleted
+            && !document.hidden;
+    }
+
+    function scheduleIdleDirectorySearchHydration() {
+        if (directorySearchState.idleHydrationScheduled || !shouldHydrateDirectoryIndexInIdle()) {
+            performanceTelemetry.idleHydrationSkipped += 1;
+            return;
+        }
+
+        directorySearchState.idleHydrationScheduled = true;
+        performanceTelemetry.idleHydrationScheduled += 1;
+        logPerformanceTelemetry('idle-scheduled', {
+            next_offset: directorySearchState.nextOffset,
+            loaded_entries: directorySearchState.index.length,
+        });
+
+        function runIdleHydration() {
+            directorySearchState.idleHydrationScheduled = false;
+            if (!shouldHydrateDirectoryIndexInIdle()) {
+                performanceTelemetry.idleHydrationSkipped += 1;
+                return;
+            }
+            performanceTelemetry.idleHydrationStarted += 1;
+            var startedAt = performance.now();
+            hydrateDirectorySearchIndexForLocalFilters().then(function(didHydrate) {
+                var durationMs = performance.now() - startedAt;
+                recordPerformanceSample(performanceTelemetry.idleHydrationDurationMs, durationMs);
+                if (didHydrate) {
+                    performanceTelemetry.idleHydrationCompleted += 1;
+                }
+                syncDevPanel();
+                logPerformanceTelemetry('idle-finished', {
+                    hydrated: Boolean(didHydrate),
+                    duration_ms: Math.round(durationMs),
+                    loaded_entries: directorySearchState.index.length,
+                    has_next: directorySearchState.hasNext,
+                });
+                if (didHydrate && directorySearchState.isUsingSearchIndex) {
+                    renderDirectorySearchRows();
+                }
+            });
+        }
+
+        if (typeof window.requestIdleCallback === 'function') {
+            window.requestIdleCallback(runIdleHydration, { timeout: 1500 });
+            return;
+        }
+
+        window.setTimeout(runIdleHydration, 600);
     }
 
     function buildStudentHint(row) {
@@ -849,6 +1116,31 @@ document.addEventListener('DOMContentLoaded', function() {
         quickPanelState.sseConnected = false;
     }
 
+    function shouldUseQuickPanelPollingFallback() {
+        return quickPanelState.isOpen
+            && !quickPanelState.editSessionActive
+            && !quickPanelState.sseConnected;
+    }
+
+    function shouldThrottleQuickPanelReadRefresh(options) {
+        var forceImmediate = Boolean(options && options.forceImmediate);
+        if (forceImmediate) {
+            return false;
+        }
+
+        if (quickPanelState.sseConnected) {
+            return true;
+        }
+
+        var now = Date.now();
+        return quickPanelState.lastReadRefreshAt > 0
+            && (now - quickPanelState.lastReadRefreshAt) < QUICK_PANEL_MIN_READ_REFRESH_INTERVAL_MS;
+    }
+
+    function markQuickPanelReadRefreshCompleted() {
+        quickPanelState.lastReadRefreshAt = Date.now();
+    }
+
     function handleQuickPanelStreamPayload(payload) {
         if (!payload || Number(payload.student_id || 0) !== Number(quickPanelState.studentId || 0)) {
             return;
@@ -931,6 +1223,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         eventSource.addEventListener('stream.ready', function() {
             quickPanelState.sseConnected = true;
+            stopQuickPanelReadPolling();
         });
         eventSource.addEventListener('student.lock.acquired', onStudentEvent);
         eventSource.addEventListener('student.lock.released', onStudentEvent);
@@ -940,11 +1233,18 @@ document.addEventListener('DOMContentLoaded', function() {
         eventSource.addEventListener('student.profile.updated', onStudentEvent);
         eventSource.onerror = function() {
             quickPanelState.sseConnected = false;
+            if (shouldUseQuickPanelPollingFallback()) {
+                startQuickPanelReadPolling();
+            }
         };
     }
 
     function refreshQuickPanelReadState(options) {
         if (!quickPanelState.isOpen || !quickPanelState.activeRow || quickPanelState.editSessionActive || document.hidden || quickPanelState.refreshInFlight) {
+            return;
+        }
+
+        if (shouldThrottleQuickPanelReadRefresh(options)) {
             return;
         }
 
@@ -984,7 +1284,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetchSnapshotForRow(quickPanelState.activeRow, { force: true });
                 if (options && options.forceFragments && !quickPanelState.editSessionActive && hasLoadedQuickPanelFragments()) {
                     var now = Date.now();
-                    if ((now - quickPanelState.lastFragmentRefreshAt) > 45000) {
+                    if ((now - quickPanelState.lastFragmentRefreshAt) > QUICK_PANEL_FRAGMENT_REFRESH_INTERVAL_MS) {
                         quickPanelState.lastFragmentRefreshAt = now;
                         fetchDrawerFragments(quickPanelState.activeRow, {
                             skipLoading: true,
@@ -998,6 +1298,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
 
+                markQuickPanelReadRefreshCompleted();
                 quickPanelState.refreshInFlight = false;
                 clearQuickLiveState();
             });
@@ -1005,15 +1306,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function startQuickPanelReadPolling() {
         stopQuickPanelReadPolling();
-        if (!quickPanelState.isOpen || quickPanelState.editSessionActive) {
+        if (!shouldUseQuickPanelPollingFallback()) {
             return;
         }
 
         quickPanelState.liveRefreshTimerId = window.setInterval(function() {
+            if (!shouldUseQuickPanelPollingFallback() || document.hidden) {
+                return;
+            }
             refreshQuickPanelReadState({
                 forceFragments: true,
+                reason: 'polling-fallback',
             });
-        }, 25000);
+        }, QUICK_PANEL_FALLBACK_POLL_MS);
     }
 
     function handleLostDrawerLock(payload) {
@@ -1109,6 +1414,7 @@ document.addEventListener('DOMContentLoaded', function() {
             financial: '',
         };
         quickPanelState.editSessionActive = false;
+        quickPanelState.lastReadRefreshAt = 0;
         quickPanelState.lastFragmentRefreshAt = 0;
         quickPanelState.currentSnapshotVersion = '';
         quickPanelState.currentProfileVersion = '';
@@ -1134,7 +1440,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         connectQuickPanelEventStream();
-        startQuickPanelReadPolling();
+        if (!quickPanelState.eventSource) {
+            startQuickPanelReadPolling();
+        }
     }
 
     function closeQuickPanel(options) {
@@ -1165,6 +1473,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         quickPanelState.editSessionActive = false;
         quickPanelState.refreshInFlight = false;
+        quickPanelState.lastReadRefreshAt = 0;
         quickPanelState.sseConnected = false;
         quickPanelState.currentSnapshotVersion = '';
         quickPanelState.currentProfileVersion = '';
@@ -2040,6 +2349,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         rows = serverRows.slice();
         directorySearchState.isUsingSearchIndex = false;
+        directorySearchState.preferIndexRendering = false;
         setDirectoryFooterVisibility(true);
     }
 
@@ -2080,6 +2390,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         tbody.replaceChildren();
+        var shouldShowNextPage = directorySearchState.hasNext && (filterState.searchQuery || filterState.searchListAllCommand);
         if (!filteredEntries.length) {
             var emptyRow = document.createElement('tr');
             emptyRow.innerHTML = '<td colspan="6" class="table-empty-cell p-10 text-center text-dimmed text-sm" data-student-empty-state>Nenhum aluno encontrado para este filtro.</td>';
@@ -2093,6 +2404,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 tbody.appendChild(row);
                 return row;
             });
+            if (shouldShowNextPage) {
+                tbody.insertAdjacentHTML(
+                    'beforeend',
+                    '<tr data-student-search-next-row><td colspan="6" class="table-empty-cell p-6 text-center"><button type="button" class="student-pagination-button student-pagination-button--ghost" data-student-search-next>Carregar proximos 200 alunos</button></td></tr>'
+                );
+            }
             rows = renderedRows;
             updateCount(renderedRows.length);
         }
@@ -2216,7 +2533,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function applyLocalDirectoryState() {
-        var shouldUseSearchIndex = filterState.searchQuery || filterState.searchListAllCommand;
+        var shouldUseSearchIndex = filterState.searchQuery || filterState.searchListAllCommand || directorySearchState.preferIndexRendering;
         setDirectoryFooterVisibility(!shouldUseSearchIndex);
 
         if (shouldUseSearchIndex) {
@@ -2269,6 +2586,55 @@ document.addEventListener('DOMContentLoaded', function() {
             card.classList.toggle('is-selected-tab', isActive);
             card.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
+    }
+
+    function getKpiDisplayValue(card) {
+        return Number(card ? (card.getAttribute('data-kpi-display-value') || '0') : '0');
+    }
+
+    function shouldResolveNewStudentsLocally(card, nextFilter) {
+        return nextFilter === 'new-30d' && getKpiDisplayValue(card) <= 0;
+    }
+
+    function applyLocalFilter(nextFilter) {
+        var hadServerScopedFilters = hasServerScopedFilters();
+        filterState.filter = nextFilter;
+        if (filterState.sortBy === 'presence') {
+            filterState.sortBy = '';
+            filterState.sortDirection = 'desc';
+        }
+        clearServerScopedFilters();
+        directorySearchState.preferIndexRendering = hadServerScopedFilters || nextFilter !== 'all' || (!directorySearchState.hasNext && directorySearchState.index.length > serverRows.length);
+        syncPills();
+        syncKpiFilters();
+        applyLocalDirectoryState();
+    }
+
+    function resolveDirectoryFilterLocally(nextFilter, options) {
+        var shouldHydrate = Boolean(options && options.ensureFullIndex) && directorySearchState.hasNext;
+        if (shouldHydrate) {
+            performanceTelemetry.clickWaitsForHydration += 1;
+            var waitStartedAt = performance.now();
+            return hydrateDirectorySearchIndexForLocalFilters().then(function(didHydrate) {
+                var waitDurationMs = performance.now() - waitStartedAt;
+                recordPerformanceSample(performanceTelemetry.clickWaitDurationMs, waitDurationMs);
+                syncDevPanel();
+                logPerformanceTelemetry('click-wait-finished', {
+                    next_filter: nextFilter,
+                    hydrated: Boolean(didHydrate),
+                    wait_duration_ms: Math.round(waitDurationMs),
+                    loaded_entries: directorySearchState.index.length,
+                });
+                if (didHydrate === false && directorySearchState.hasNext) {
+                    window.location.assign(buildDirectoryFilterUrl(nextFilter));
+                    return false;
+                }
+                applyLocalFilter(nextFilter);
+                return true;
+            });
+        }
+        applyLocalFilter(nextFilter);
+        return Promise.resolve(true);
     }
 
     function ensureKpiTargetPanel(card) {
@@ -2353,11 +2719,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     applyLocalDirectoryState();
                     return;
                 }
-                if (hasServerScopedFilters() || !hasFullDirectorySearchIndex) {
+                if (!hasFullDirectorySearchIndex) {
                     window.location.assign(buildDirectoryFilterUrl(nextFilter));
                     return;
                 }
-                filterState.filter = nextFilter;
+                resolveDirectoryFilterLocally(nextFilter, {
+                    ensureFullIndex: hasServerScopedFilters() || nextFilter !== 'all',
+                });
+                return;
             }
 
             syncPills();
@@ -2370,23 +2739,21 @@ document.addEventListener('DOMContentLoaded', function() {
             event.preventDefault();
             event.stopPropagation();
             var nextFilter = card.getAttribute('data-student-kpi-filter') || 'all';
+            if (shouldResolveNewStudentsLocally(card, nextFilter)) {
+                ensureKpiTargetPanel(card);
+                resolveDirectoryFilterLocally(nextFilter, {
+                    ensureFullIndex: false,
+                });
+                return;
+            }
             if (!hasFullDirectorySearchIndex) {
                 window.location.assign(buildDirectoryFilterUrl(nextFilter));
                 return;
             }
-            filterState.filter = nextFilter;
-            if (filterState.sortBy === 'presence') {
-                filterState.sortBy = '';
-                filterState.sortDirection = 'desc';
-            }
-            syncPills();
-            syncKpiFilters();
             ensureKpiTargetPanel(card);
-            if (getDirectorySearchIndex().length) {
-                renderDirectorySearchRows();
-                return;
-            }
-            applyLocalDirectoryState();
+            resolveDirectoryFilterLocally(nextFilter, {
+                ensureFullIndex: nextFilter !== 'all' || hasServerScopedFilters(),
+            });
         }, true);
 
         card.addEventListener('keydown', function(event) {
@@ -2404,6 +2771,28 @@ document.addEventListener('DOMContentLoaded', function() {
     if (quickClose) {
         quickClose.addEventListener('click', function() {
             closeQuickPanel();
+        });
+    }
+
+    if (tbody) {
+        tbody.addEventListener('click', function(event) {
+            var nextButton = event.target.closest('[data-student-search-next]');
+            if (!nextButton) {
+                return;
+            }
+
+            event.preventDefault();
+            nextButton.disabled = true;
+            nextButton.textContent = 'Carregando...';
+            performanceTelemetry.manualNextPageLoads += 1;
+            syncDevPanel();
+            loadNextDirectorySearchPage().then(function() {
+                logPerformanceTelemetry('manual-next-page-finished', {
+                    loaded_entries: directorySearchState.index.length,
+                    has_next: directorySearchState.hasNext,
+                });
+                renderDirectorySearchRows();
+            });
         });
     }
 
@@ -2430,8 +2819,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             ensureQuickPanelTabContent(nextTab);
 
-            if (quickPanelState.fragmentsLoaded[nextTab] && !quickPanelState.editSessionActive) {
-                refreshQuickPanelReadState({ forceFragments: true });
+            if (quickPanelState.fragmentsLoaded[nextTab] && !quickPanelState.editSessionActive && !quickPanelState.sseConnected) {
+                refreshQuickPanelReadState({
+                    forceFragments: true,
+                    reason: 'tab-switch',
+                });
             }
         });
     });
@@ -2599,6 +2991,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            scheduleIdleDirectorySearchHydration();
+        }
+
         if (!quickPanelState.isOpen || document.hidden) {
             return;
         }
@@ -2608,12 +3004,19 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        if (quickPanelState.sseConnected) {
+            return;
+        }
+
         refreshQuickPanelReadState({
             forceFragments: true,
+            reason: 'visibility-refresh',
         });
     });
 
     window.addEventListener('focus', function() {
+        scheduleIdleDirectorySearchHydration();
+
         if (!quickPanelState.isOpen) {
             return;
         }
@@ -2623,13 +3026,22 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        if (quickPanelState.sseConnected) {
+            return;
+        }
+
         refreshQuickPanelReadState({
             forceFragments: true,
+            reason: 'focus-refresh',
         });
     });
 
     if (hasFullDirectorySearchIndex && Array.isArray(directorySearchConfig.index) && directorySearchConfig.index.length) {
-        persistDirectorySearchIndex(directorySearchConfig.index);
+        persistDirectorySearchIndex(directorySearchConfig.index, {
+            has_next: Boolean(directorySearchConfig.has_next),
+            next_offset: Object.prototype.hasOwnProperty.call(directorySearchConfig, 'next_offset') ? directorySearchConfig.next_offset : null,
+            total: Number(directorySearchConfig.total || directorySearchConfig.index.length || 0),
+        });
     } else {
         directorySearchState.index = getDirectorySearchIndexFromCache();
     }
@@ -2638,6 +3050,8 @@ document.addEventListener('DOMContentLoaded', function() {
     syncKpiFilters();
     applyLocalDirectoryState();
     prefetchInitialRows();
+    syncDevPanel();
+    scheduleIdleDirectorySearchHydration();
 });
         function getQuickPaymentMethodLabel(methodValue) {
             if (methodValue === 'pix') return 'Pix';

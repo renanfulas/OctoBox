@@ -7,10 +7,12 @@ POR QUE ELE EXISTE:
 */
 
 (function () {
-    const BACKGROUND_REFRESH_MS = 25000;
+    const BACKGROUND_REFRESH_MS = 45000;
+    const MIN_REFRESH_INTERVAL_MS = 10000;
     let refreshTimer = 0;
     let pendingRefreshTimeout = 0;
     let isRefreshing = false;
+    let lastRefreshAt = 0;
 
     function getOwnerScene() {
         return document.querySelector('.owner-scene[data-panel="owner-workspace-shell"]');
@@ -21,6 +23,9 @@ POR QUE ELE EXISTE:
     }
 
     function queueRefresh(reason) {
+        if (lastRefreshAt && (Date.now() - lastRefreshAt) < MIN_REFRESH_INTERVAL_MS) {
+            return;
+        }
         if (pendingRefreshTimeout) {
             window.clearTimeout(pendingRefreshTimeout);
         }
@@ -81,11 +86,13 @@ POR QUE ELE EXISTE:
             const nextVersion = nextScene.dataset.snapshotVersion || '';
 
             if (currentVersion && nextVersion && currentVersion === nextVersion) {
+                lastRefreshAt = Date.now();
                 scheduleBackgroundRefresh();
                 return;
             }
 
             currentScene.replaceWith(nextScene);
+            lastRefreshAt = Date.now();
             scheduleBackgroundRefresh();
         } catch (error) {
             if (reason === 'visibility-refresh') {

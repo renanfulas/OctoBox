@@ -130,6 +130,31 @@ class SecurityGuardTests(TestCase):
         self.assertEqual(blocked_response.status_code, 429)
         self.assertEqual(blocked_response['Retry-After'], '60')
 
+    @override_settings(ANTI_EXFILTRATION_MAX_REQUESTS=1, ANTI_EXFILTRATION_WINDOW_SECONDS=60)
+    def test_student_profile_read_blocks_short_burst_attempts(self):
+        self.client.force_login(self.user)
+
+        first_response = self.client.get(reverse('student-quick-update', args=[self.student.id]))
+        blocked_response = self.client.get(reverse('student-quick-update', args=[self.student.id]))
+
+        self.assertEqual(first_response.status_code, 200)
+        self.assertEqual(blocked_response.status_code, 429)
+        self.assertEqual(blocked_response['Retry-After'], '60')
+
+    @override_settings(ANTI_EXFILTRATION_MAX_REQUESTS=1, ANTI_EXFILTRATION_WINDOW_SECONDS=60)
+    def test_student_internal_read_endpoints_do_not_consume_profile_quota(self):
+        self.client.force_login(self.user)
+
+        snapshot_response = self.client.get(reverse('student-read-snapshot', args=[self.student.id]))
+        fragments_response = self.client.get(reverse('student-drawer-fragments', args=[self.student.id]))
+        status_response = self.client.get(reverse('student-lock-status', args=[self.student.id]))
+        profile_response = self.client.get(reverse('student-quick-update', args=[self.student.id]))
+
+        self.assertEqual(snapshot_response.status_code, 200)
+        self.assertEqual(fragments_response.status_code, 200)
+        self.assertEqual(status_response.status_code, 200)
+        self.assertEqual(profile_response.status_code, 200)
+
     @override_settings(SECURITY_BLOCKED_IP_RANGES=['10.10.0.0/16'])
     def test_blocked_ip_range_stops_request_before_view(self):
         self.client.force_login(self.user)

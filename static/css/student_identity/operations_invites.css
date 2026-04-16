@@ -1,0 +1,137 @@
+.student-invite-operations {
+    align-items: start;
+}
+
+.field-help {
+    display: block;
+    margin-top: 0.35rem;
+    color: var(--text-muted, #6b7280);
+    font-size: 0.92rem;
+}
+
+.student-invite-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.student-invite-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.student-stalled-board {
+    border-color: rgba(239, 68, 68, 0.18);
+    background: linear-gradient(180deg, rgba(254, 242, 242, 0.92), rgba(255, 255, 255, 0.96));
+}
+
+.student-stalled-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.student-stalled-item {
+    border: 1px solid rgba(239, 68, 68, 0.16);
+    border-radius: 18px;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.student-stalled-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.student-invite-item {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 18px;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.86);
+}
+
+.student-invite-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.85rem;
+}
+
+.student-invite-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.student-invite-pill-ok {
+    background: rgba(16, 185, 129, 0.14);
+    color: #047857;
+}
+
+.student-invite-pill-attention {
+    background: rgba(245, 158, 11, 0.16);
+    color: #b45309;
+}
+
+.student-invite-pill-muted {
+    background: rgba(100, 116, 139, 0.14);
+    color: #475569;
+}
+
+.student-invite-pill-danger {
+    background: rgba(239, 68, 68, 0.14);
+    color: #b91c1c;
+}
+
+.student-invite-url-field input {
+    width: 100%;
+}
+
+.student-invite-detail {
+    margin: 0.75rem 0 0;
+    color: var(--text-muted, #6b7280);
+    font-size: 0.92rem;
+}
+
+.student-invite-actions {
+    margin-top: 0.85rem;
+}
+
+.student-invite-inline-form {
+    margin: 0;
+}
+
+.student-invite-guidance {
+    margin: 0.75rem 0 0;
+    border-radius: 14px;
+    padding: 0.8rem 0.9rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.student-invite-guidance-ok {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+}
+
+.student-invite-guidance-attention {
+    background: rgba(245, 158, 11, 0.14);
+    color: #b45309;
+}
+
+.student-invite-guidance-danger {
+    background: rgba(239, 68, 68, 0.12);
+    color: #b91c1c;
+}
+
+.student-invite-guidance-muted {
+    background: rgba(100, 116, 139, 0.1);
+    color: #475569;
+}

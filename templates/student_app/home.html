@@ -1,0 +1,43 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}Meu Box | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-hero">
+    <p class="student-eyebrow">{{ dashboard.box_root_slug }}</p>
+    <h1>Bem-vindo, {{ dashboard.student_name }}.</h1>
+    <p class="student-copy">Um app dedicado ao aluno: um box raiz, uma experiencia limpa, leitura rapida da grade e um caminho claro para treino e RM.</p>
+    <nav class="student-actions">
+        <a href="{% url 'student-app-workout' %}" class="student-button">Calcular treino</a>
+        <a href="{% url 'student-app-settings' %}" class="student-button student-button--ghost">Configurações</a>
+    </nav>
+ </section>
+
+<section class="student-grid">
+    <article class="student-card">
+        <h2>Plano atual</h2>
+        <p class="student-stat">{{ dashboard.membership_label }}</p>
+    </article>
+    <article class="student-card">
+        <h2>Próximas aulas</h2>
+        <div class="student-session-list">
+            {% for session in dashboard.next_sessions %}
+            <article class="student-session-card">
+                <strong>{{ session.title }}</strong>
+                <span>{{ session.scheduled_label }}</span>
+                <span>{{ session.coach_name }}</span>
+                <span>{{ session.attendance_status }}</span>
+                {% if session.notes %}<p>{{ session.notes }}</p>{% endif %}
+            </article>
+            {% empty %}
+            <p>Nenhuma aula futura publicada ainda.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+<form method="post" action="{% url 'student-identity-logout' %}" class="student-logout-form">
+    {% csrf_token %}
+    <button type="submit" class="student-button student-button--danger">Sair do app do aluno</button>
+</form>
+{% endblock %}

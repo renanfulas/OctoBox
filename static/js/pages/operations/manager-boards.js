@@ -8,6 +8,7 @@ POR QUE ELE EXISTE:
 
 (function () {
     const pageRoot = document.querySelector('.manager-scene');
+    const MIN_REFRESH_INTERVAL_MS = 5000;
 
     if (!pageRoot) {
         return;
@@ -17,6 +18,8 @@ POR QUE ELE EXISTE:
     let pendingRefreshTimeout = 0;
     let isRefreshingBoards = false;
     let backgroundRefreshTimer = 0;
+    let isStreamConnected = false;
+    let lastRefreshAt = 0;
     const optimisticActions = new Map();
     const BACKGROUND_REFRESH_MS = 20000;
     const POST_SUBMIT_RECOVERY_DELAYS_MS = [220, 1200, 3200];
@@ -73,9 +76,32 @@ POR QUE ELE EXISTE:
         }
 
         managerEventSource = null;
+        isStreamConnected = false;
+    }
+
+    function markRefreshCompleted() {
+        lastRefreshAt = Date.now();
+    }
+
+    function shouldSkipRefresh(reason) {
+        const now = Date.now();
+        const isSoftRefresh = reason === 'background-refresh' || reason === 'focus-refresh' || reason === 'visibility-refresh';
+
+        if (reason === 'background-refresh' && isStreamConnected) {
+            return true;
+        }
+
+        if (isSoftRefresh && lastRefreshAt && (now - lastRefreshAt) < MIN_REFRESH_INTERVAL_MS) {
+            return true;
+        }
+
+        return false;
     }
 
     function queueBoardsRefresh(reason) {
+        if (shouldSkipRefresh(reason)) {
+            return;
+        }
         if (pendingRefreshTimeout) {
             window.clearTimeout(pendingRefreshTimeout);
         }
@@ -273,10 +299,14 @@ POR QUE ELE EXISTE:
         });
 
         managerEventSource.onerror = function () {
+            isStreamConnected = false;
+            scheduleBackgroundRefresh();
             setLivePillState('Reconectando', 'warning', true);
         };
 
         managerEventSource.onopen = function () {
+            isStreamConnected = true;
+            scheduleBackgroundRefresh();
             setLivePillState('Escuta pronta', 'neutral', false);
         };
     }
@@ -287,7 +317,7 @@ POR QUE ELE EXISTE:
             backgroundRefreshTimer = 0;
         }
 
-        if (document.visibilityState !== 'visible') {
+        if (document.visibilityState !== 'visible' || isStreamConnected) {
             return;
         }
 
@@ -332,6 +362,7 @@ POR QUE ELE EXISTE:
             const nextVersion = nextBoards.dataset.snapshotVersion || '';
 
             if (currentVersion && nextVersion && currentVersion === nextVersion) {
+                markRefreshCompleted();
                 reconcileOptimisticState();
                 scheduleBackgroundRefresh();
                 setLivePillState('Ja sincronizado', 'success', true);
@@ -345,6 +376,7 @@ POR QUE ELE EXISTE:
             if (nextVersion) {
                 pageRoot.dataset.snapshotVersion = nextVersion;
             }
+            markRefreshCompleted();
             reconcileOptimisticState();
             scheduleBackgroundRefresh();
             setLivePillState(

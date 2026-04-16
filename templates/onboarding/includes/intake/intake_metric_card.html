@@ -1,5 +1,5 @@
 {% if card.href %}<a href="{{ card.href }}" class="metric-card-link">{% endif %}
-<article class="card metric-card kpi-family-card intake-kpi-card intake-interactive-kpi {{ card.card_class }} {{ card.tone_class }} {{ card_extra_classes }}{% if card.data_action %} has-action cursor-pointer{% endif %}{% if card.href %} has-href{% endif %}" data-panel="metric-card" data-slot="intake-interactive-kpi-card"{% if card.data_action %} data-action="{{ card.data_action }}"{% endif %}>
+<article class="card metric-card kpi-family-card intake-kpi-card intake-interactive-kpi {{ card.card_class }} {{ card.tone_class }} {{ card_extra_classes }}{% if card.data_action %} has-action cursor-pointer{% endif %}{% if card.href %} has-href{% endif %}" data-panel="metric-card" data-slot="intake-interactive-kpi-card"{% if card.data_action %} data-action="{{ card.data_action }}"{% endif %}{% if card.target_panel %} data-target-panel="{{ card.target_panel }}"{% endif %} data-kpi-display-value="{{ card.display_value }}"{% if card.label %} data-intake-kpi-key="{{ card.label }}"{% endif %} role="button" tabindex="0" aria-pressed="{% if 'is-selected-tab' in card_extra_classes %}true{% else %}false{% endif %}">
     <div class="card-body card-body-metric intake-kpi-card-body">
         {% if card.icon %}
         <div class="icon-box intake-kpi-icon-box kpi-card-icon-box" aria-hidden="true">

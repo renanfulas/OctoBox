@@ -20,6 +20,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils import timezone
 from django.views import View
 from django.views.generic import TemplateView
 
@@ -46,6 +47,9 @@ def _serialize_intake_search_entry(*, item, request):
         'id': intake.id,
         'full_name': intake.full_name,
         'registration_age_days': item['registration_age_days'],
+        'semantic_stage': item['semantic_state']['semantic_stage'],
+        'created_today': bool(getattr(intake, 'created_at', None) and intake.created_at.date() == timezone.localdate()),
+        'assigned': bool(getattr(intake, 'assigned_to_id', None)),
         'row_html': render_to_string(
             'onboarding/includes/intake/intake_queue_row.html',
             {
@@ -58,7 +62,7 @@ def _serialize_intake_search_entry(*, item, request):
 
 def _clean_intake_search_index_params(params):
     index_params = params.copy()
-    for key in ('query', 'panel', 'offset'):
+    for key in ('query', 'panel', 'offset', 'status', 'semantic_stage', 'created_window', 'assignment'):
         if key in index_params:
             del index_params[key]
     return index_params

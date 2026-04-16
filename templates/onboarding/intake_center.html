@@ -22,6 +22,20 @@ PONTOS CRITICOS:
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% endif %}
 
+    {% if page.context.role_slug == 'dev' %}
+    <section class="note-panel note-panel-cream" data-intake-search-dev-panel aria-label="Diagnostico de performance do indice local">
+        <strong>Diagnostico Dev: indice local de entradas</strong>
+        <p class="mt-2 mb-0 text-sm text-dimmed">Mostra se o clique ainda esperou hidratação, quantas páginas extras foram carregadas e o tempo recente da hidratação em segundo plano.</p>
+        <div class="mt-3 text-sm">
+            <span><strong>Entradas no indice:</strong> <span data-intake-search-metric="entries">0</span></span>
+            <span class="ml-3"><strong>Cliques esperando:</strong> <span data-intake-search-metric="click-waits">0</span></span>
+            <span class="ml-3"><strong>Hidratacoes idle concluidas:</strong> <span data-intake-search-metric="idle-completed">0</span></span>
+            <span class="ml-3"><strong>Ultimo tempo idle:</strong> <span data-intake-search-metric="idle-last-ms">0 ms</span></span>
+            <span class="ml-3"><strong>Ultima espera de clique:</strong> <span data-intake-search-metric="click-last-ms">0 ms</span></span>
+        </div>
+    </section>
+    {% endif %}
+
     {% if page.data.interactive_kpis %}
     <div class="intake-kpi-overview deferred-surface" data-panel="intake-kpi-triggers">
         <section class="intake-kpi-grid interactive-tab-triggers" aria-label="Navegacao principal de entradas">

@@ -5,6 +5,9 @@
     data-intake-id="{{ intake.id }}"
     data-registration-age-days="{{ item.registration_age_days }}"
     data-search-index="{{ intake.full_name }}"
+    data-semantic-stage="{{ semantic.semantic_stage }}"
+    data-created-today="{% if item.registration_age_days == 0 %}true{% else %}false{% endif %}"
+    data-assigned="{% if intake.assigned_to %}true{% else %}false{% endif %}"
 >
     <td class="intake-queue-col--contact" data-label="Contato">
         <div class="intake-contact-identity">

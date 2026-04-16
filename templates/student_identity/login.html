@@ -1,0 +1,32 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}Entrar | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-hero">
+    <p class="student-eyebrow">OctoBox Aluno</p>
+    <h1>Seu box na palma da mao.</h1>
+    <p class="student-copy">Esta superficie foi criada do zero para o aluno: acesso proprio, box raiz unico, grade, treino e RM sem depender do shell interno da equipe.</p>
+</section>
+
+<section class="student-card student-auth-card">
+    <header class="student-card-header">
+        <h2>Entrar com identidade social</h2>
+        <p>Google e Apple validam quem voce e. O OctoBox decide se esse aluno pode entrar neste box.</p>
+    </header>
+    <div class="student-provider-stack">
+        <a href="{{ google_start_url }}{% if invite_token %}?invite={{ invite_token }}{% endif %}" class="student-button">Continuar com Google</a>
+        <a href="{{ apple_start_url }}{% if invite_token %}?invite={{ invite_token }}{% endif %}" class="student-button student-button--ghost">Continuar com Apple</a>
+    </div>
+    <p class="student-form-note">Nesta primeira base, o convite do box ou o email ja cadastrado validam a autorizacao do aluno depois da identidade social.</p>
+    {% if invite_token %}
+    <p class="student-form-note">Convite ativo: {{ invite_token }}</p>
+    {% endif %}
+    {% if not google_available or not apple_available %}
+    <div class="student-form-errors">
+        {% if not google_available %}<p>Google ainda nao foi configurado neste ambiente. O botao continua ativo para o sistema responder com o diagnostico certo.</p>{% endif %}
+        {% if not apple_available %}<p>Apple ainda nao foi configurada neste ambiente. O botao continua ativo para o sistema responder com o diagnostico certo.</p>{% endif %}
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

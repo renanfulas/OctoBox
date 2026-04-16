@@ -30,6 +30,11 @@ from integrations.whatsapp.contracts import WhatsAppInboundPollVote
 from integrations.whatsapp.services import process_poll_vote_webhook
 from integrations.stripe.services import create_checkout_session
 from shared_support.box_runtime import get_box_runtime_namespace, get_box_runtime_slug
+from student_identity.resend_webhooks import (
+    ResendWebhookHeaders,
+    ResendWebhookVerificationError,
+    process_resend_webhook,
+)
 from students.models import Student
 
 
@@ -43,6 +48,7 @@ class ApiV1ManifestView(View):
                     'health': reverse('api-v1-health'),
                     'student_autocomplete': reverse('api-v1-student-autocomplete'),
                     'whatsapp_poll_webhook': reverse('api-v1-whatsapp-poll-webhook'),
+                    'student_invitation_resend_webhook': reverse('api-v1-resend-student-invitations-webhook'),
                 },
                 'scope': [
                     'foundation',
@@ -151,6 +157,25 @@ class WhatsAppPollWebhookView(View):
 
         status_code = 200 if result.accepted else 400
         return JsonResponse({'accepted': result.accepted, 'reason': result.reason}, status=status_code)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ResendInvitationWebhookView(View):
+    def post(self, request, *args, **kwargs):
+        headers = ResendWebhookHeaders(
+            webhook_id=request.headers.get('svix-id', '').strip(),
+            timestamp=request.headers.get('svix-timestamp', '').strip(),
+            signature=request.headers.get('svix-signature', '').strip(),
+        )
+        if not headers.webhook_id or not headers.timestamp or not headers.signature:
+            return JsonResponse({'accepted': False, 'reason': 'Missing Svix headers'}, status=400)
+
+        try:
+            result = process_resend_webhook(payload=request.body, headers=headers)
+        except ResendWebhookVerificationError as exc:
+            return JsonResponse({'accepted': False, 'reason': str(exc)}, status=400)
+
+        return JsonResponse(result, status=200)
 
 from django.core.management import call_command
 from django.contrib.auth.models import User

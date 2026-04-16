@@ -1,0 +1,178 @@
+:root {
+    --student-ink: #0f172a;
+    --student-copy: #334155;
+    --student-bg: #f4efe6;
+    --student-card: rgba(255, 255, 255, 0.78);
+    --student-card-border: rgba(15, 23, 42, 0.08);
+    --student-accent: #d97706;
+    --student-accent-strong: #0f172a;
+    --student-danger: #b91c1c;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body.student-app-body {
+    margin: 0;
+    font-family: "Manrope", system-ui, sans-serif;
+    color: var(--student-ink);
+    background:
+        radial-gradient(circle at top left, rgba(217, 119, 6, 0.18), transparent 32%),
+        linear-gradient(180deg, #fbf7ef 0%, var(--student-bg) 100%);
+    min-height: 100vh;
+}
+
+.student-shell {
+    width: min(1080px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 32px 0 64px;
+}
+
+.student-hero,
+.student-card {
+    border: 1px solid var(--student-card-border);
+    border-radius: 28px;
+    background: var(--student-card);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+}
+
+.student-hero {
+    padding: 32px;
+    margin-bottom: 24px;
+}
+
+.student-card {
+    padding: 28px;
+    margin-bottom: 24px;
+}
+
+.student-eyebrow {
+    margin: 0 0 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    color: var(--student-accent);
+    font-weight: 800;
+}
+
+.student-copy,
+.student-card p,
+.student-form-note,
+.student-settings-list,
+.student-session-card p {
+    color: var(--student-copy);
+}
+
+.student-actions,
+.student-grid,
+.student-provider-stack {
+    display: grid;
+    gap: 16px;
+}
+
+.student-actions {
+    grid-template-columns: repeat(auto-fit, minmax(180px, max-content));
+    margin-top: 24px;
+}
+
+.student-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.student-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 18px;
+    border-radius: 999px;
+    border: none;
+    background: var(--student-accent-strong);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.student-button--ghost {
+    background: transparent;
+    color: var(--student-accent-strong);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.student-button--danger {
+    background: var(--student-danger);
+}
+
+.student-form {
+    display: grid;
+    gap: 12px;
+}
+
+.student-form input,
+.student-form select {
+    width: 100%;
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    padding: 14px 16px;
+    font: inherit;
+    background: rgba(255, 255, 255, 0.88);
+}
+
+.student-form-errors,
+.student-flash {
+    border-radius: 18px;
+    padding: 14px 16px;
+}
+
+.student-form-errors {
+    background: rgba(185, 28, 28, 0.08);
+    color: #7f1d1d;
+}
+
+.student-flash-stack {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.student-flash {
+    background: rgba(15, 23, 42, 0.08);
+}
+
+.student-session-list,
+.student-settings-list {
+    display: grid;
+    gap: 12px;
+}
+
+.student-session-card,
+.student-prescription {
+    padding: 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.student-stat {
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.student-logout-form {
+    margin-top: 8px;
+}
+
+@media (max-width: 720px) {
+    .student-shell {
+        width: min(100% - 20px, 1080px);
+        padding-top: 18px;
+    }
+
+    .student-hero,
+    .student-card {
+        padding: 22px;
+        border-radius: 22px;
+    }
+}

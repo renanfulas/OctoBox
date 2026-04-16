@@ -282,6 +282,7 @@ def build_operational_settings_page():
                 {'value': 0, 'label': '0h', 'summary': 'Libera repeticao imediata quando a operacao precisar.'},
             ],
             'access_overview_href': '/acessos/#access-profile-create',
+            'student_invites_href': '/configuracoes-operacionais/aluno/convites/',
         },
         assets=build_page_assets(css=['css/guide/system-map.css']),
     )

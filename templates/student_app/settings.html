@@ -1,0 +1,18 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}Configurações | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-card">
+    <p class="student-eyebrow">Conta do aluno</p>
+    <h1>Configurações do acesso</h1>
+    <ul class="student-settings-list">
+        <li><strong>Aluno:</strong> {{ student_identity.student.full_name }}</li>
+        <li><strong>Email:</strong> {{ student_identity.email }}</li>
+        <li><strong>Provedor:</strong> {{ student_identity.get_provider_display }}</li>
+        <li><strong>Box raiz:</strong> {{ box_runtime_slug }}</li>
+        <li><strong>Status:</strong> {{ student_identity.get_status_display }}</li>
+    </ul>
+    <p class="student-form-note">Nesta V1, o aluno pertence a um unico box. Mudanca de box deve passar por transferencia.</p>
+</section>
+{% endblock %}

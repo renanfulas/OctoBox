@@ -19,6 +19,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from ipaddress import ip_address, ip_network
 from logging import getLogger
+import re
 
 from django.conf import settings
 from django.core.cache import cache
@@ -71,6 +72,7 @@ HEAVY_READ_PATH_RULES = (
     ('/operacao/recepcao/', 'operations-reception-read'),
     ('/alunos/', 'student-detail-read'), # Rota individual de aluno
 )
+STUDENT_PROFILE_READ_PATH_RE = re.compile(r'^/alunos/\d+/editar/?$')
 
 
 @dataclass(frozen=True, slots=True)
@@ -293,8 +295,8 @@ class RequestSecurityMiddleware:
 
             # 🛡️ Blindagem de Elite: Anti-Scraping Visual (Data Exfiltration)
             # Detectamos se alguém está abrindo perfis individuais rápido demais.
-            if path.startswith('/alunos/') and '/editar/' not in path and '/financeiro/' not in path:
-                 return RateLimitRule(
+            if STUDENT_PROFILE_READ_PATH_RE.match(path):
+                return RateLimitRule(
                     scope='anti-exfiltration',
                     limit=settings.ANTI_EXFILTRATION_MAX_REQUESTS,
                     window_seconds=settings.ANTI_EXFILTRATION_WINDOW_SECONDS,
