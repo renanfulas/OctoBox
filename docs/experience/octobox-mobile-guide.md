@@ -205,4 +205,6 @@ Ele passa a acompanhar a rotina da pessoa na mao, no bolso e no reflexo diario d
 
 Por isso, este guia deve ser lido como direcao oficial de experiencia para o aplicativo do celular.
 
+Para transformar esta direcao em arquitetura tecnica oficial, use [../architecture/octobox-mobile-architecture.md](../architecture/octobox-mobile-architecture.md).
+
 Para transformar esta direcao em estrutura concreta de telas, navegacao e ordem de prototipacao, use [../plans/octobox-mobile-screen-blueprint.md](../plans/octobox-mobile-screen-blueprint.md).

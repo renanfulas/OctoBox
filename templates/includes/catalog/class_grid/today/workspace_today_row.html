@@ -8,7 +8,7 @@ PONTOS CRITICOS:
 - Depende de item e page.
 -->
 <tr class="class-grid-row">
-    <td>
+    <td data-label="Aula">
         <strong>{{ item.object.title }}</strong>
         <p class="class-grid-meta">{{ item.object.duration_minutes }} min de aula</p>
         {% if page.capabilities.can_manage_classes %}
@@ -18,19 +18,19 @@ PONTOS CRITICOS:
         </div>
         {% endif %}
     </td>
-    <td>
+    <td data-label="Coach">
         {{ item.coach_name }}
         {% if item.object.notes %}
         <p class="class-grid-meta">{{ item.object.notes }}</p>
         {% endif %}
     </td>
-    <td>
+    <td data-label="Horario">
         {{ item.starts_at|date:"H:i" }} - {{ item.ends_at|date:"H:i" }}
     </td>
-    <td>
+    <td data-label="Status">
         <span class="pill{% if item.status_pill_class %} {{ item.status_pill_class }}{% endif %}">{{ item.status_label }}</span>
     </td>
-    <td>
+    <td data-label="Ocupacao">
         <div class="class-occupancy-stack{% if item.booking_closed %} is-closed{% endif %}">
             <div class="row-between-sm class-occupancy-labels">
                 <span>{{ item.occupied_slots }}/{{ item.capacity }}</span>
