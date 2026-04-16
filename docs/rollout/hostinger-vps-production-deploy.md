@@ -141,6 +141,8 @@ Depois:
 2. configurar chave SSH
 3. evitar usar `root` como rotina
 4. ligar o firewall
+5. validar qual e a interface publica real da VPS com `ip a`
+6. revisar `cat /etc/netplan/*.yaml` e `grep -R "ens3\|ens4\|network:" -n /etc/cloud /etc/netplan` para garantir que `cloud-init` e `netplan` apontem para a mesma interface
 
 Exemplo:
 
@@ -281,6 +283,7 @@ O deploy so passa quando:
 2. login funciona
 3. assets carregam
 4. as rotas centrais nao retornam `500`
+5. um reboot controlado devolve rede, SSH e HTTPS sem ajuste manual de interface
 
 ---
 

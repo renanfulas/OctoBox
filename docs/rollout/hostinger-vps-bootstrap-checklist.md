@@ -54,6 +54,15 @@ Use:
 - [ ] `redis-server` instalado
 - [ ] `postgresql`, `redis-server` e `nginx` iniciam no boot
 
+## 3.1 Rede basal da VPS
+
+- [ ] `ip a` mostra a interface publica real da VPS com IPv4 valido
+- [ ] `ip route` mostra rota default funcional
+- [ ] `cat /etc/netplan/*.yaml` aponta para a interface real da maquina, sem nome legado como `ens4` quando a interface viva e `ens3`
+- [ ] `grep -R "ens3\|ens4\|network:" -n /etc/cloud /etc/netplan` revisado para evitar conflito entre `cloud-init` e `netplan`
+- [ ] `systemd-networkd` ou o gerenciador de rede escolhido administra a interface publica, sem estado `unmanaged`
+- [ ] reboot de prova validado com rede, SSH e HTTPS voltando sem intervencao manual
+
 ## 4. Estrutura do OctoBOX
 
 - [ ] `/srv/octobox/app` criado

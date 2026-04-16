@@ -204,6 +204,33 @@ Sempre registrar:
 6. resultado
 7. se houve rollback
 
+## Incidente de referencia: mismatch de interface de rede
+
+Em `2026-04-15`, a VPS do OctoBox ficou fora do ar nao por falha do Django, mas por mismatch entre a interface real da maquina e a interface declarada na configuracao de rede.
+
+Leitura objetiva do incidente:
+
+1. a interface publica viva da VPS era `ens3`
+2. o `netplan` ativo e o `cloud-init` legado ainda apontavam para `ens4`
+3. apos reboot, `ens3` ficou `unmanaged`, sem IPv4 e sem rota default
+4. com isso, SSH `22022` e HTTPS `443` ficaram indisponiveis ao mesmo tempo
+5. `nginx` e `octobox-gunicorn` continuavam saudaveis localmente, mas isolados da rede
+
+Correcao aplicada:
+
+1. corrigir `/etc/netplan/50-cloud-init.yaml` para `ens3`
+2. corrigir `/etc/cloud/cloud.cfg.d/90-installer-network.cfg` para `ens3`
+3. alinhar o backup local `/etc/netplan/50-cloud-init.yaml.bak`
+4. aplicar `netplan generate` e `netplan apply`
+5. validar `ip a`, `ip route`, `ping 8.8.8.8`, SSH, HTTPS e healthcheck
+
+Checklist de prevencao antes de qualquer reboot:
+
+1. `ip a` confirma a interface publica real
+2. `cat /etc/netplan/*.yaml` e `grep -R "ens3\|ens4\|network:" -n /etc/cloud /etc/netplan` nao mostram nome legado conflitante
+3. `networkctl status <interface>` nao mostra `unmanaged`
+4. SSH e HTTPS sao testados novamente apos reboot controlado
+
 ## Formula curta
 
 Se a equipe nao consegue atualizar e voltar sem panico, a operacao ainda nao esta pronta para producao assistida.
