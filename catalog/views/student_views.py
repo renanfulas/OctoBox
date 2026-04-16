@@ -79,6 +79,7 @@ STUDENT_FORM_ESSENTIAL_FRAGMENT = 'student-form-essential'
 STUDENT_FINANCIAL_FRAGMENT = 'student-financial-overview'
 STUDENT_DIRECTORY_FRAGMENT = 'student-directory-board'
 STUDENT_DIRECTORY_PAGE_SIZE = 15
+STUDENT_SEARCH_INDEX_LIMIT = 200
 
 
 def _append_fragment(url, fragment):
@@ -213,6 +214,34 @@ def _serialize_student_directory_search_entry(student):
     }
 
 
+def _clean_student_search_index_params(params):
+    index_params = params.copy()
+    for key in ('query', 'page', 'student_status', 'commercial_status', 'payment_status', 'created_window'):
+        if key in index_params:
+            del index_params[key]
+    return index_params
+
+
+def _parse_non_negative_int(value, default=0):
+    try:
+        parsed_value = int(value)
+    except (TypeError, ValueError):
+        return default
+    return max(parsed_value, 0)
+
+
+def _annotate_directory_page_students(students, *, thirty_days_ago):
+    for student in students:
+        student.is_new_30d = bool(student.created_at and student.created_at >= thirty_days_ago)
+        total_presence = getattr(student, 'recent_presence_total', 0) or 0
+        attended_presence = getattr(student, 'recent_presence_attended', 0) or 0
+        if total_presence > 0:
+            student.presence_percent = round((attended_presence / total_presence) * 100)
+        else:
+            student.presence_percent = 0
+    return students
+
+
 def _build_student_drawer_fragments(*, request, student, form=None):
     role = get_user_role(request.user)
     role_slug = getattr(role, 'slug', ROLE_RECEPTION)
@@ -271,30 +300,26 @@ class StudentDirectoryView(CatalogBaseView):
         paginator = PrecountedPaginator(students_queryset, page_size)
         page_number = self.request.GET.get('page')
         page_obj = paginator.get_page(page_number)
-        page_students = list(page_obj.object_list)
-        for student in page_students:
-            student.is_new_30d = bool(student.created_at and student.created_at >= thirty_days_ago)
-            total_presence = getattr(student, 'recent_presence_total', 0) or 0
-            attended_presence = getattr(student, 'recent_presence_attended', 0) or 0
-            if total_presence > 0:
-                student.presence_percent = round((attended_presence / total_presence) * 100)
-            else:
-                student.presence_percent = 0
+        page_students = _annotate_directory_page_students(list(page_obj.object_list), thirty_days_ago=thirty_days_ago)
         page_obj.object_list = page_students
         context['students'] = page_obj
 
-        search_cache_params = self.request.GET.copy()
-        if 'query' in search_cache_params:
-            del search_cache_params['query']
+        index_params = _clean_student_search_index_params(self.request.GET)
+        if index_params.urlencode() == self.request.GET.copy().urlencode():
+            search_snapshot = snapshot
+        else:
+            search_snapshot = build_student_directory_snapshot(index_params)
+        search_page_students = _annotate_directory_page_students(
+            list(search_snapshot['students'][:STUDENT_SEARCH_INDEX_LIMIT]),
+            thirty_days_ago=thirty_days_ago,
+        )
         query_params = self.request.GET.copy()
         if 'page' in query_params:
             del query_params['page']
-        if 'page' in search_cache_params:
-            del search_cache_params['page']
         base_query_string = query_params.urlencode()
         directory_search_entries = [
             _serialize_student_directory_search_entry(student)
-            for student in page_students
+            for student in search_page_students
         ]
 
         page_payload = build_student_directory_page(
@@ -305,10 +330,15 @@ class StudentDirectoryView(CatalogBaseView):
             current_role_slug=current_role_slug,
             base_query_string=base_query_string,
             directory_search={
-                'cache_key': search_cache_params.urlencode() or 'all',
-                'refresh_token': snapshot.get('directory_refresh_token', ''),
+                'cache_key': index_params.urlencode() or 'all',
+                'refresh_token': search_snapshot.get('directory_refresh_token', ''),
+                'page_url': reverse('student-search-index-page'),
+                'page_size': STUDENT_SEARCH_INDEX_LIMIT,
+                'total': search_snapshot.get('total_students', 0),
+                'has_next': search_snapshot.get('total_students', 0) > len(search_page_students),
+                'next_offset': len(search_page_students) if search_snapshot.get('total_students', 0) > len(search_page_students) else None,
                 'index': directory_search_entries,
-                'full_index_available': False,
+                'full_index_available': True,
             },
         )
 
@@ -325,6 +355,37 @@ class StudentDirectoryView(CatalogBaseView):
             payload_key='student_directory_page',
             payload=page_payload,
             include_sections=('context', 'shell'),
+        )
+
+
+class StudentSearchIndexPageView(LoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION)
+
+    def get(self, request, *args, **kwargs):
+        offset = _parse_non_negative_int(request.GET.get('offset'), default=0)
+        index_params = _clean_student_search_index_params(request.GET)
+        snapshot = build_student_directory_snapshot(index_params)
+        thirty_days_ago = timezone.now() - timezone.timedelta(days=30)
+        next_offset = offset + STUDENT_SEARCH_INDEX_LIMIT
+        students = _annotate_directory_page_students(
+            list(snapshot['students'][offset:next_offset]),
+            thirty_days_ago=thirty_days_ago,
+        )
+        total_students = snapshot.get('total_students', 0)
+
+        return JsonResponse(
+            {
+                'cache_key': index_params.urlencode() or 'all',
+                'refresh_token': snapshot.get('directory_refresh_token', ''),
+                'page_size': STUDENT_SEARCH_INDEX_LIMIT,
+                'total': total_students,
+                'has_next': next_offset < total_students,
+                'next_offset': next_offset if next_offset < total_students else None,
+                'index': [
+                    _serialize_student_directory_search_entry(student)
+                    for student in students
+                ],
+            }
         )
 
 

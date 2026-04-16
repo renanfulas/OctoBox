@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}OctoBox Aluno{% endblock %}</title>
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="OctoBox">
+    <link rel="manifest" href="{% url 'student-app-manifest' %}">
+    <link rel="apple-touch-icon" href="{% static 'images/student-app-apple-touch-icon.png' %}">
+    <link rel="icon" href="{% static 'images/student-app-icon.svg' %}" type="image/svg+xml">
+    <link rel="icon" href="{% static 'images/student-app-icon-192.png' %}" sizes="192x192" type="image/png">
+    <link rel="stylesheet" href="{% static 'css/student_app/app.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="student-app-body" data-student-app="true" data-student-pwa-scope="/aluno/">
+    <main class="student-shell">
+        {% if messages %}
+        <section class="student-flash-stack" aria-live="polite">
+            {% for message in messages %}
+            <article class="student-flash student-flash--{{ message.tags|default:'info' }}">{{ message }}</article>
+            {% endfor %}
+        </section>
+        {% endif %}
+        {% block body %}{% endblock %}
+    </main>
+    <script src="{% static 'js/student_app/pwa.js' %}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

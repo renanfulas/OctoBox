@@ -13,10 +13,16 @@ PONTOS CRITICOS:
 
 from django.urls import path
 
+from student_identity.staff_views import StudentInvitationOperationsView
 from .views import OperationalSettingsView, SystemMapView, OperationalSettingsAutoImportApiView
 
 urlpatterns = [
     path('mapa-sistema/', SystemMapView.as_view(), name='system-map'),
     path('configuracoes-operacionais/', OperationalSettingsView.as_view(), name='operational-settings'),
+    path(
+        'configuracoes-operacionais/aluno/convites/',
+        StudentInvitationOperationsView.as_view(),
+        name='student-invitation-operations',
+    ),
     path('configuracoes-operacionais/api/importar/', OperationalSettingsAutoImportApiView.as_view(), name='operational-settings-api-import'),
 ]

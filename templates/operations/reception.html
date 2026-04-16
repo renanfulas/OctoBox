@@ -18,7 +18,7 @@ PONTOS CRITICOS:
 
 {% block content %}
 {% with page=operation_page %}
-<div class="operation-shell reception-scene" data-page="reception" data-screen="operations-reception" data-slot="page-root" data-snapshot-version="{{ page.behavior.snapshot_version|default:'' }}">
+<div class="operation-shell reception-scene" data-page="reception" data-screen="operations-reception" data-slot="page-root" data-snapshot-version="{{ page.behavior.snapshot_version|default:'' }}" data-operations-events-stream-url="{% url 'operation-event-stream' %}">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     <div class="visually-hidden" aria-hidden="true">Seu balcão.</div>
 

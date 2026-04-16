@@ -25,6 +25,7 @@ install_admin_site_gate()
 urlpatterns = [
     path('', include('access.urls')),
     path('api/', include('api.urls')),
+    path('aluno/', include('student_app.urls')),
     path('', include('dashboard.urls')),
     path('', include('onboarding.urls')),
     path('', include('catalog.urls')),

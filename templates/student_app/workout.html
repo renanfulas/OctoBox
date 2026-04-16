@@ -1,0 +1,36 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}Treino e RM | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-card">
+    <p class="student-eyebrow">RM e Carga</p>
+    <h1>Calcule o peso do treino do dia.</h1>
+    <p>Se o RM do aluno for 100kg e o treino pedir 75%, o sistema te devolve 75kg arredondado do jeito certo.</p>
+    <form method="post" class="student-form">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+        <div class="student-form-errors">
+            {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <label for="{{ form.exercise_slug.id_for_label }}">Exercício</label>
+        {{ form.exercise_slug }}
+        <label for="{{ form.percentage.id_for_label }}">Percentual do treino</label>
+        {{ form.percentage }}
+        <button type="submit" class="student-button">Calcular</button>
+    </form>
+    {% if prescription %}
+    <article class="student-prescription">
+        <h2>{{ prescription.exercise_label }}</h2>
+        <p><strong>Percentual:</strong> {{ prescription.percentage_label }}</p>
+        <p><strong>RM:</strong> {{ prescription.one_rep_max_label }}</p>
+        <p><strong>Carga bruta:</strong> {{ prescription.raw_load_label }}</p>
+        <p><strong>Carga prescrita:</strong> {{ prescription.rounded_load_label }}</p>
+        <p>{{ prescription.observation }}</p>
+    </article>
+    {% endif %}
+</section>
+{% endblock %}

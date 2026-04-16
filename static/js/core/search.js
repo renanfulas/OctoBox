@@ -6,6 +6,11 @@ POR QUE ELE EXISTE:
 */
 
 (function() {
+  var MIN_QUERY_LENGTH = 2;
+  var AUTOCOMPLETE_DEBOUNCE_MS = 200;
+  var AUTOCOMPLETE_CACHE_TTL_MS = 30000;
+  var AUTOCOMPLETE_CACHE_LIMIT = 12;
+
   var input = document.querySelector('[data-ui="global-search-input"]') || document.getElementById('global-search-input');
   var list = document.querySelector('[data-ui="global-search-results"]') || document.getElementById('search-autocomplete-list');
   var form = document.querySelector('[data-ui="global-search-form"]') || (input ? input.closest('form') : null);
@@ -18,7 +23,10 @@ POR QUE ELE EXISTE:
   var activeIndex = -1;
   var lastRequestId = 0;
   var activeRequestController = null;
+  var activeQuery = '';
+  var activeNormalizedQuery = '';
   var autocompleteUrl = form.getAttribute('data-autocomplete-url');
+  var autocompleteCache = new Map();
   
   if (!autocompleteUrl) {
     console.warn('Busca global desabilitada: data-autocomplete-url não encontrado no DOM. Roteamento de fallback removido.');
@@ -57,6 +65,42 @@ POR QUE ELE EXISTE:
 
     activeRequestController.abort();
     activeRequestController = null;
+    activeQuery = '';
+    activeNormalizedQuery = '';
+  }
+
+  function normalizeQuery(query) {
+    return (query || '').trim().toLowerCase();
+  }
+
+  function getCachedResults(query) {
+    var entry = autocompleteCache.get(query);
+    if (!entry) {
+      return null;
+    }
+
+    if (Date.now() - entry.createdAt > AUTOCOMPLETE_CACHE_TTL_MS) {
+      autocompleteCache.delete(query);
+      return null;
+    }
+
+    return entry.results;
+  }
+
+  function setCachedResults(query, results) {
+    if (!query) {
+      return;
+    }
+
+    autocompleteCache.delete(query);
+    autocompleteCache.set(query, {
+      createdAt: Date.now(),
+      results: Array.isArray(results) ? results : []
+    });
+
+    while (autocompleteCache.size > AUTOCOMPLETE_CACHE_LIMIT) {
+      autocompleteCache.delete(autocompleteCache.keys().next().value);
+    }
   }
 
   function renderResults(results) {
@@ -117,19 +161,35 @@ POR QUE ELE EXISTE:
 
   input.addEventListener('input', function() {
     var query = input.value.trim();
+    var normalizedQuery = normalizeQuery(query);
     clearTimeout(debounceTimer);
-    if (query.length < 2) {
+    if (query.length < MIN_QUERY_LENGTH) {
       abortPendingRequest();
       setStatus(query.length ? 'Digite pelo menos 2 caracteres para abrir a busca global.' : '');
       hideList();
       return;
     }
 
+    if (normalizedQuery === activeNormalizedQuery && activeRequestController) {
+      return;
+    }
+
     debounceTimer = setTimeout(function() {
+      var cachedResults = getCachedResults(normalizedQuery);
+      if (cachedResults) {
+        activeQuery = query;
+        activeNormalizedQuery = normalizedQuery;
+        setStatus('Resultados recentes carregados do cache local.');
+        renderResults(cachedResults);
+        return;
+      }
+
       var requestId = lastRequestId + 1;
       lastRequestId = requestId;
       abortPendingRequest();
       activeRequestController = typeof AbortController === 'function' ? new AbortController() : null;
+      activeQuery = query;
+      activeNormalizedQuery = normalizedQuery;
       setStatus('Buscando alunos e contatos relacionados.');
       fetch(autocompleteUrl + '?q=' + encodeURIComponent(query), {
           credentials: 'same-origin',
@@ -151,6 +211,7 @@ POR QUE ELE EXISTE:
           }
 
           activeRequestController = null;
+          setCachedResults(normalizedQuery, data.results || []);
 
           renderResults(data.results || []);
         })
@@ -160,10 +221,12 @@ POR QUE ELE EXISTE:
           }
 
           activeRequestController = null;
+          activeQuery = '';
+          activeNormalizedQuery = '';
           setStatus('A busca global nao respondeu agora. Use Enter para abrir a lista completa.');
           hideList();
         });
-    }, 200);
+    }, AUTOCOMPLETE_DEBOUNCE_MS);
   });
 
   input.addEventListener('keydown', function(event) {

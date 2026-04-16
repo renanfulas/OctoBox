@@ -253,4 +253,14 @@ def _handle_reception_payment_action(request, *, payment_id, fallback_url, succe
     else:
         messages.success(request, f'Ajustes rapidos de {payment.student.full_name} salvos sem sair do balcao.')
 
+    publish_manager_stream_event(
+        event_type='student.payment.updated',
+        meta={
+            'student_id': payment.student_id,
+            'payment_id': payment.id,
+            'action': action,
+            'surface': 'reception-payment-board',
+        },
+    )
+
     return _redirect_back(request, fallback_url=fallback_url, fragment='reception-payment-board')

@@ -32,8 +32,8 @@ PONTOS CRITICOS:
         </form>
 
         <nav class="intake-queue-filter-pills intake-filter-pills" aria-label="Filtros rapidos da fila de entradas">
-            <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}" class="intake-queue-filter-pill {% if not request.GET.status %}is-active{% endif %}">Todos</a>
-            <a href="?panel=tab-intake-queue{% if page.data.filter_form.query.value %}&query={{ page.data.filter_form.query.value|urlencode }}{% endif %}&status=new" class="intake-queue-filter-pill {% if request.GET.status == 'new' %}is-active{% endif %}">Novos</a>
+            <button type="button" class="intake-queue-filter-pill {% if not request.GET.status and not request.GET.semantic_stage %}is-active{% endif %}" data-intake-filter="all" aria-pressed="{% if not request.GET.status and not request.GET.semantic_stage %}true{% else %}false{% endif %}">Todos</button>
+            <button type="button" class="intake-queue-filter-pill {% if request.GET.semantic_stage == 'new-leads' or request.GET.status == 'new' %}is-active{% endif %}" data-intake-filter="new-leads" aria-pressed="{% if request.GET.semantic_stage == 'new-leads' or request.GET.status == 'new' %}true{% else %}false{% endif %}">Novos</button>
             <button type="button" class="intake-queue-filter-pill" data-intake-sort="registration" data-sort-direction="desc" aria-pressed="false">Data</button>
         </nav>
 

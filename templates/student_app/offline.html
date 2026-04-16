@@ -1,0 +1,12 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}Sem conexão | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-card">
+    <p class="student-eyebrow">Modo online-first</p>
+    <h1>Sem conexão agora.</h1>
+    <p>O app do aluno foi desenhado para abrir como app, mas continuar usando a verdade do servidor quando houver rede. A shell continua viva; os dados operacionais esperam a conexão voltar.</p>
+    <a href="{% url 'student-app-home' %}" class="student-button">Tentar novamente</a>
+</section>
+{% endblock %}

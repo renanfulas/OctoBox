@@ -8,6 +8,7 @@ O QUE ESTE ARQUIVO FAZ:
 1. Publica o manifesto da versao v1.
 2. Publica um endpoint de saude estavel.
 3. Publica o autocomplete de busca global de alunos.
+4. Publica o webhook do Resend para convites do app do aluno.
 
 PONTOS CRITICOS:
 - Este modulo nao deve voltar a virar corredor misto de integracoes, debug e financeiro.
@@ -21,6 +22,11 @@ from django.urls import reverse
 from django.views import View
 
 from shared_support.box_runtime import get_box_runtime_namespace, get_box_runtime_slug
+from student_identity.resend_webhooks import (
+    ResendWebhookHeaders,
+    ResendWebhookVerificationError,
+    process_resend_webhook,
+)
 from students.models import Student
 
 
@@ -34,6 +40,7 @@ class ApiV1ManifestView(View):
                     'health': reverse('api-v1-health'),
                     'student_autocomplete': reverse('api-v1-student-autocomplete'),
                     'whatsapp_poll_webhook': reverse('api-v1-whatsapp-poll-webhook'),
+                    'student_invitation_resend_webhook': reverse('api-v1-resend-student-invitations-webhook'),
                 },
                 'scope': [
                     'foundation',
@@ -92,3 +99,21 @@ class StudentAutocompleteView(LoginRequiredMixin, View):
         ]
 
         return JsonResponse({'results': results})
+
+
+class ResendInvitationWebhookView(View):
+    def post(self, request, *args, **kwargs):
+        headers = ResendWebhookHeaders(
+            webhook_id=request.headers.get('svix-id', '').strip(),
+            timestamp=request.headers.get('svix-timestamp', '').strip(),
+            signature=request.headers.get('svix-signature', '').strip(),
+        )
+        if not headers.webhook_id or not headers.timestamp or not headers.signature:
+            return JsonResponse({'accepted': False, 'reason': 'Missing Svix headers'}, status=400)
+
+        try:
+            result = process_resend_webhook(payload=request.body, headers=headers)
+        except ResendWebhookVerificationError as exc:
+            return JsonResponse({'accepted': False, 'reason': str(exc)}, status=400)
+
+        return JsonResponse(result, status=200)

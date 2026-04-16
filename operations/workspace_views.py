@@ -180,6 +180,13 @@ class ManagerEventStreamView(ManagerWorkspaceAvailabilityMixin, OperationBaseVie
         return build_manager_event_stream()
 
 
+class OperationEventStreamView(OperationBaseView, View):
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
+
+    def get(self, request, *args, **kwargs):
+        return build_manager_event_stream()
+
+
 class CoachWorkspaceView(OperationBaseView):
     allowed_roles = (ROLE_COACH,)
     template_name = 'operations/coach.html'

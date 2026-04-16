@@ -1,0 +1,137 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block content %}
+{% with page=student_invitation_operations_page %}
+{% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+
+<section class="layout-grid student-invite-operations" aria-label="Convites operacionais do app do aluno">
+    <article class="table-card">
+        <p class="eyebrow">Gerar convite</p>
+        <h3>Box raiz: {{ page.data.box_root_slug }}</h3>
+        <p class="system-map-copy">Pense nisso como entregar uma chave temporaria para a porta certa. A chave abre so este apartamento, nao o predio inteiro.</p>
+        <form method="post" class="form-stack section-gap-top-sm">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <label>
+                <span class="field-label">{{ form.student.label }}</span>
+                {{ form.student }}
+                {% if form.student.help_text %}<small class="field-help">{{ form.student.help_text }}</small>{% endif %}
+                {{ form.student.errors }}
+            </label>
+            <label>
+                <span class="field-label">{{ form.invited_email.label }}</span>
+                {{ form.invited_email }}
+                {% if form.invited_email.help_text %}<small class="field-help">{{ form.invited_email.help_text }}</small>{% endif %}
+                {{ form.invited_email.errors }}
+            </label>
+            <label>
+                <span class="field-label">{{ form.expires_in_days.label }}</span>
+                {{ form.expires_in_days }}
+                {{ form.expires_in_days.errors }}
+            </label>
+            <div class="actions actions-tight operation-hero-action-rail">
+                <button class="button" type="submit">Gerar convite do app do aluno</button>
+            </div>
+        </form>
+    </article>
+
+    <article class="table-card">
+        <p class="eyebrow">Guardrails</p>
+        <ul class="capability-list">
+            {% for item in page.data.guardrails %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+        <div class="actions actions-tight operation-hero-action-rail section-gap-top-xs">
+            <a class="button secondary" href="/admin/student_identity/studentappinvitation/">Abrir admin dos convites</a>
+        </div>
+    </article>
+</section>
+
+{% if page.data.stalled_invites %}
+<section class="table-card section-gap-top-sm student-stalled-board" aria-label="Convites travados esperando mensagem">
+    <div class="student-invite-list-header">
+        <div>
+            <p class="eyebrow">Fila quente</p>
+            <h3>Alunos travados esperando mensagem</h3>
+            <p class="system-map-copy">Aqui ficam os convites cujo e-mail bateu na parede e ainda nao passaram pelo corredor do WhatsApp.</p>
+        </div>
+    </div>
+    <div class="student-stalled-list">
+        {% for stalled in page.data.stalled_invites %}
+        <article class="student-stalled-item">
+            <div class="student-stalled-meta">
+                <strong>{{ stalled.student_name }}</strong>
+                <span class="student-invite-pill student-invite-pill-danger">{{ stalled.email_status_label }}</span>
+                <span class="student-invite-pill student-invite-pill-{{ stalled.priority_tone }}">{{ stalled.priority_label }}</span>
+            </div>
+            <p class="student-invite-detail">{{ stalled.reason_label }}</p>
+            <p class="student-invite-detail">{{ stalled.stalled_since_label }}</p>
+            <form method="post" class="student-invite-inline-form section-gap-top-xs">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="open-whatsapp">
+                <input type="hidden" name="invitation_id" value="{{ stalled.invitation_id }}">
+                <button class="button" type="submit">{{ stalled.whatsapp_action_label }}</button>
+            </form>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section class="table-card section-gap-top-sm" aria-label="Convites recentes">
+    <div class="student-invite-list-header">
+        <div>
+            <p class="eyebrow">Convites recentes</p>
+            <h3>Ultimos links emitidos para o app do aluno</h3>
+        </div>
+    </div>
+    <div class="student-invite-list">
+        {% for invite in page.data.recent_invites %}
+        <article class="student-invite-item">
+            <div class="student-invite-meta">
+                <strong>{{ invite.student_name }}</strong>
+                <span>{{ invite.invited_email }}</span>
+                <span class="student-invite-pill student-invite-pill-{{ invite.status_tone }}">{{ invite.status_label }}</span>
+                <span class="student-invite-pill student-invite-pill-{{ invite.last_email_delivery_status_tone }}">{{ invite.last_email_delivery_status_label }}</span>
+                <span class="student-invite-pill student-invite-pill-{{ invite.last_whatsapp_delivery_status_tone }}">{{ invite.last_whatsapp_delivery_status_label }}</span>
+            </div>
+            <label class="student-invite-url-field">
+                <span class="field-label">Link pronto</span>
+                <input type="text" readonly value="{{ invite.invite_url }}" onclick="this.select();">
+            </label>
+            <div class="actions actions-tight student-invite-actions">
+                {% if invite.can_open_whatsapp and invite.whatsapp_url %}
+                <form method="post" class="student-invite-inline-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="open-whatsapp">
+                    <input type="hidden" name="invitation_id" value="{{ invite.id|default:'' }}">
+                    <button class="button secondary" type="submit">Enviar mensagem</button>
+                </form>
+                {% endif %}
+                {% if invite.can_send_email %}
+                <form method="post" class="student-invite-inline-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="send-email">
+                    <input type="hidden" name="invitation_id" value="{{ invite.id|default:'' }}">
+                    <button class="button secondary" type="submit">Enviar e-mail</button>
+                </form>
+                {% endif %}
+            </div>
+            <p class="student-invite-detail">
+                Expira em {{ invite.expires_at|date:"d/m/Y H:i" }}{% if invite.accepted_at %} • Aceito em {{ invite.accepted_at|date:"d/m/Y H:i" }}{% endif %}{% if invite.created_by_name %} • Gerado por {{ invite.created_by_name }}{% endif %}
+            </p>
+            <p class="student-invite-detail">{{ invite.last_email_delivery_label }}</p>
+            <p class="student-invite-detail">{{ invite.last_whatsapp_delivery_label }}</p>
+            <p class="student-invite-guidance student-invite-guidance-{{ invite.email_action_recommendation_tone }}">
+                {{ invite.email_action_recommendation_label }}
+            </p>
+        </article>
+        {% empty %}
+        <p class="system-map-copy">Nenhum convite foi emitido ainda para este box.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endwith %}
+{% endblock %}

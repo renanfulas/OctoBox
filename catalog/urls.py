@@ -19,6 +19,7 @@ from .views.student_views import (
     StudentDrawerProfileSaveView,
     StudentEditSessionReleaseView,
     StudentEventStreamView,
+    StudentSearchIndexPageView,
     StudentReadSnapshotView,
     StudentEditSessionStartView,
     StudentEnrollmentActionView,
@@ -37,6 +38,7 @@ from finance.views.stripe_webhooks import stripe_webhook_receiver
 
 urlpatterns = [
     path('alunos/', StudentDirectoryView.as_view(), name='student-directory'),
+    path('alunos/busca/paginas/', StudentSearchIndexPageView.as_view(), name='student-search-index-page'),
     path('alunos/lote/', StudentBulkActionView.as_view(), name='student-bulk-action'),
     path('alunos/importar/', StudentImportView.as_view(), name='student-import'),
     path('alunos/importar/progresso/<str:job_id>/', StudentImportProgressView.as_view(), name='student-import-progress'),

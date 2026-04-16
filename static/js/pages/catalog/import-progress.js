@@ -1,4 +1,9 @@
 (function() {
+  var BASE_POLLING_DELAY_MS = 1000;
+  var STABLE_POLLING_DELAY_MS = 3000;
+  var HIDDEN_POLLING_DELAY_MS = 15000;
+  var MAX_ERROR_POLLING_DELAY_MS = 5000;
+
   function setText(node, value) {
     if (!node) {
       return;
@@ -59,7 +64,11 @@
     var completionActions = document.getElementById('completion-actions');
     var errorContainer = document.getElementById('error-report-container');
     var errorList = document.getElementById('error-list');
-    var pollingInterval = null;
+    var pollingDelayMs = BASE_POLLING_DELAY_MS;
+    var pollingTimeout = null;
+    var consecutiveStablePolls = 0;
+    var lastProgressValue = -1;
+    var lastStatusValue = '';
 
     if (!progressApiUrl || !progressBar || !percentageLabel || !statusLabel || !processedCount || !failedCount || !completionActions || !errorContainer || !errorList) {
       return;
@@ -78,14 +87,24 @@
       setText(processedCount, progress + ' / ' + total);
       setText(failedCount, String(failures.length));
 
+      if (progress === lastProgressValue && job.status === lastStatusValue) {
+        consecutiveStablePolls += 1;
+      } else {
+        consecutiveStablePolls = 0;
+      }
+
+      lastProgressValue = progress;
+      lastStatusValue = job.status || '';
+
       if (!isFinished) {
         setText(statusLabel, 'Processando lote em background...');
         setStatusTone(statusLabel, 'is-running');
         setStatusTone(progressBar, 'is-running');
+        pollingDelayMs = consecutiveStablePolls >= 5 ? STABLE_POLLING_DELAY_MS : BASE_POLLING_DELAY_MS;
         return;
       }
 
-      clearInterval(pollingInterval);
+      stopPolling();
       setText(statusLabel, job.status === 'completed' ? 'Concluido' : 'Falha fatal');
       setStatusTone(statusLabel, job.status === 'completed' ? 'is-success' : 'is-danger');
       setStatusTone(progressBar, job.status === 'completed' ? 'is-success' : 'is-danger');
@@ -104,7 +123,49 @@
       setElementHidden(errorContainer, false);
     }
 
+    function stopPolling() {
+      if (pollingTimeout) {
+        clearTimeout(pollingTimeout);
+        pollingTimeout = null;
+      }
+    }
+
+    function isJobFinished() {
+      return lastStatusValue === 'completed' || lastStatusValue === 'failed';
+    }
+
+    function getNextPollingDelay() {
+      if (document.hidden) {
+        return HIDDEN_POLLING_DELAY_MS;
+      }
+
+      return pollingDelayMs;
+    }
+
+    function scheduleNextPoll(options) {
+      var force = options && options.force;
+      if (pollingTimeout || isJobFinished()) {
+        return;
+      }
+
+      if (document.hidden && !force) {
+        return;
+      }
+
+      pollingTimeout = setTimeout(function() {
+        pollingTimeout = null;
+        pollProgress();
+      }, getNextPollingDelay());
+    }
+
     function pollProgress() {
+      if (document.hidden) {
+        scheduleNextPoll({
+          force: true
+        });
+        return;
+      }
+
       fetch(progressApiUrl)
         .then(function(response) {
           return response.json();
@@ -116,10 +177,28 @@
         })
         .catch(function(error) {
           console.error('Polling error:', error);
+          pollingDelayMs = Math.min(pollingDelayMs + BASE_POLLING_DELAY_MS, MAX_ERROR_POLLING_DELAY_MS);
+        })
+        .finally(function() {
+          if (!isJobFinished()) {
+            scheduleNextPoll();
+          }
         });
     }
 
-    pollingInterval = setInterval(pollProgress, 1000);
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        stopPolling();
+        scheduleNextPoll({
+          force: true
+        });
+        return;
+      }
+
+      stopPolling();
+      pollProgress();
+    });
+
     pollProgress();
   });
 }());
