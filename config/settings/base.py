@@ -206,8 +206,6 @@ LOCAL_APPS = [
     'jobs.apps.JobsConfig',
     'integrations.apps.IntegrationsConfig',
     'operations.apps.OperationsConfig',
-    'student_identity.apps.StudentIdentityConfig',
-    'student_app.apps.StudentAppConfig',
     'students.apps.StudentsConfig',
     'boxcore.apps.BoxcoreConfig',
     'shared_support.apps.SharedSupportConfig',
