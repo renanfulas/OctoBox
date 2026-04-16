@@ -264,6 +264,8 @@ O parecer sincero e este:
 3. `aprovado com ressalvas` como arquitetura superior do OctoBox
 4. `nao completo` como estado final de maturidade
 
+Para decidir quando essa trilha pode abrir a proxima rodada sem ansiedade arquitetural, usar a regua operacional registrada em [top-layer-architecture-execution-plan.md](top-layer-architecture-execution-plan.md), na secao `Regra operacional para abrir a proxima rodada`.
+
 ## Resumo executivo
 
 Se for preciso dizer isso em uma frase:

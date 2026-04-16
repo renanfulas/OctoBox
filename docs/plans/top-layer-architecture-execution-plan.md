@@ -122,6 +122,78 @@ Anti-padroes proibidos:
 4. fazer Red Beacon nascer como endpoint de debug disfarçado
 5. disparar Vertical Sky Beam por empolgacao ou estetica
 
+## Regra operacional para abrir a proxima rodada
+
+Esta trilha nao deve abrir nova rodada por ansiedade arquitetural.
+
+Ela abre quando:
+
+1. a producao atual provou estabilidade suficiente
+2. o proximo gargalo ficou legivel
+3. a proxima fatia cabe em um corredor pequeno e verificavel
+
+### Abrir
+
+Abrir a proxima rodada quando estes sinais aparecerem juntos:
+
+1. `estabilidade`
+2. `pressao real`
+3. `clareza de alvo`
+
+Thresholds simples:
+
+1. pelo menos uma janela curta de operacao sem erro novo relevante em login, dashboard, jobs, retries e health
+2. `Red Beacon`, `Alert Siren`, smoke operacional e logs contam uma historia coerente sobre onde esta o proximo atrito
+3. existe um proximo bloco pequeno e fechado para atacar, por exemplo:
+4. `Scaffold Agents`
+5. ampliacao controlada da `Alert Siren`
+6. consolidacao do `Red Beacon` por capacidade
+
+Regra pratica:
+
+1. se a producao esta estavel e o proximo gargalo esta obvio, abrir
+
+### Aguardar
+
+Aguardar quando a base parece boa, mas ainda falta confianca operacional suficiente para mexer de novo.
+
+Sinais:
+
+1. producao sem falha grave, mas com pouco tempo de observacao
+2. sinais operacionais ainda curtos demais para mostrar um gargalo dominante
+3. mais de um proximo caminho parece plausivel e ainda nao ficou claro qual vence
+
+Thresholds simples:
+
+1. smoke tests verdes, mas janela de observacao ainda recente
+2. sem erro grave, mas sem repeticao suficiente para chamar o proximo alvo de obvio
+3. a pergunta ainda e `qual bloco abrir?` e nao `quando comecamos este bloco?`
+
+Regra pratica:
+
+1. se a producao esta limpa, mas o proximo gargalo ainda nao ficou nitido, aguardar
+
+### Nao abrir
+
+Nao abrir a proxima rodada quando a base atual ainda esta instavel ou quando a proxima fase ainda seria abstracao demais.
+
+Sinais:
+
+1. regressao ou surpresa em producao
+2. drift de schema, integridade historica ou smoke falhando
+3. necessidade de hotfix corretivo antes de qualquer evolucao nova
+4. vontade de abrir varias frentes ao mesmo tempo sem um corredor dominante
+
+Thresholds simples:
+
+1. `check`, migrate, smoke, health ou dashboard falham
+2. `Alert Siren` ou `Red Beacon` contam historia incoerente com o runtime
+3. a operacao ainda esta corrigindo parafuso da rodada anterior
+
+Regra pratica:
+
+1. se a base ainda pede correcao ou se a proxima fase ainda seria discurso demais, nao abrir
+
 ## Guardrail de revisao durante a Fase 1
 
 Enquanto a Fase 1 estiver aberta, toda mudanca em borda externa deve obedecer estas regras:
