@@ -4,14 +4,14 @@
 
 {% block body %}
 <section class="student-hero">
-    <p class="student-eyebrow">{{ dashboard.box_root_slug }}</p>
+    <p class="student-eyebrow">{{ student_active_box_root_slug }}</p>
     <h1>Bem-vindo, {{ dashboard.student_name }}.</h1>
-    <p class="student-copy">Um app dedicado ao aluno: um box raiz, uma experiencia limpa, leitura rapida da grade e um caminho claro para treino e RM.</p>
+    <p class="student-copy">Um app dedicado ao aluno: box principal, contexto ativo e uma experiencia limpa para treino, grade e rotina no corredor certo.</p>
     <nav class="student-actions">
         <a href="{% url 'student-app-workout' %}" class="student-button">Calcular treino</a>
-        <a href="{% url 'student-app-settings' %}" class="student-button student-button--ghost">Configurações</a>
+        <a href="{% url 'student-app-settings' %}" class="student-button student-button--ghost">Configuracoes</a>
     </nav>
- </section>
+</section>
 
 <section class="student-grid">
     <article class="student-card">
@@ -19,7 +19,7 @@
         <p class="student-stat">{{ dashboard.membership_label }}</p>
     </article>
     <article class="student-card">
-        <h2>Próximas aulas</h2>
+        <h2>Proximas aulas</h2>
         <div class="student-session-list">
             {% for session in dashboard.next_sessions %}
             <article class="student-session-card">

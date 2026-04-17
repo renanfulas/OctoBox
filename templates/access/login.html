@@ -17,7 +17,7 @@ PONTOS CRITICOS:
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Entrar | OctoBox Control</title>
+    <title>Entrar como funcionario | OctoBox Control</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/design-system/pages/login.css' %}?v={{ static_asset_version }}">
 </head>
@@ -54,8 +54,8 @@ PONTOS CRITICOS:
             </div>
         </section>
         <section class="form-wrap" aria-label="Formulario de login" data-panel="login-form">
-            <h2>Entrar no sistema</h2>
-            <p class="subtitle">Use um usuário interno da academia para acessar o painel.</p>
+            <h2>Entrar como funcionario</h2>
+            <p class="subtitle">Use um usuario interno da academia para acessar o painel. Se preferir, salve esta pagina nos favoritos para entrar mais rapido no dia a dia.</p>
             <div class="form-shell" data-slot="login-form-shell">
                 <div class="entry-focus" data-slot="login-entry-guide">
                     <article class="entry-focus-item">
@@ -117,6 +117,9 @@ PONTOS CRITICOS:
                     <strong>Primeira preparação</strong>
                     <p class="helper">
                         Primeiro acesso: rode o comando de grupos, crie os usuários e associe cada pessoa ao papel correto no admin.
+                    </p>
+                    <p class="helper">
+                        Se voce tambem usa o app do aluno, volte para a <a href="{% url 'login' %}">porta principal de entrada</a> e escolha o corredor certo.
                     </p>
                 </div>
             </div>

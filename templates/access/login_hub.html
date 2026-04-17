@@ -1,0 +1,72 @@
+<!--
+ARQUIVO: hub publico de entrada.
+
+POR QUE ELE EXISTE:
+- separa a fachada de entrada entre aluno e funcionario sem misturar os corredores internos.
+
+O QUE ESTE ARQUIVO FAZ:
+1. oferece a porta social do aluno diretamente na fachada.
+2. aponta a equipe para o login interno em rota estavel.
+3. preserva clareza de UX antes da autenticacao.
+
+PONTOS CRITICOS:
+- esta tela nao deve tentar autenticar funcionario diretamente.
+- o CTA do funcionario deve continuar apontando para a rota estavel do staff.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Entrar | OctoBox</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/design-system/pages/login-hub.css' %}?v={{ static_asset_version }}">
+</head>
+<body data-page="login-hub" data-screen="entry-choice" data-ui="login-hub-body">
+    <main class="entry-shell" aria-label="Escolha de entrada do OctoBox">
+        <section class="entry-story" aria-label="Apresentacao do OctoBox">
+            <div class="entry-brand-chip">
+                <span>OctoBox</span>
+                <span>Entrada oficial</span>
+            </div>
+            <h1>Como voce quer entrar?</h1>
+            <p class="entry-copy">
+                O aluno entra pelo app social. A equipe entra pelo painel interno. Uma fachada clara, dois corredores diferentes.
+            </p>
+            <div class="entry-pill-row">
+                <span class="entry-pill">Aluno por Google ou Apple</span>
+                <span class="entry-pill">Equipe por usuario e senha</span>
+                <span class="entry-pill">Contexto certo desde a entrada</span>
+            </div>
+        </section>
+
+        <section class="entry-panel" aria-label="Opcoes de acesso">
+            <div class="entry-card entry-card--student">
+                <p class="entry-eyebrow">Entrar como aluno</p>
+                <h2>Seu box na palma da mao.</h2>
+                <p class="entry-text">
+                    Continue com Google ou Apple para acessar o app do aluno com o contexto certo do seu box.
+                </p>
+                <div class="entry-actions">
+                    <a href="{{ student_google_url }}" class="entry-button entry-button--primary">Continuar com Google</a>
+                    <a href="{{ student_apple_url }}" class="entry-button entry-button--ghost">Continuar com Apple</a>
+                </div>
+            </div>
+
+            <div class="entry-card entry-card--staff">
+                <p class="entry-eyebrow">Entrar como funcionario</p>
+                <h2>Painel interno da equipe.</h2>
+                <p class="entry-text">
+                    Use seu usuario interno e sua senha para acessar operacao, recepcao, coach, manager e owner no corredor certo.
+                </p>
+                <div class="entry-actions">
+                    <a href="{{ staff_login_url }}" class="entry-button entry-button--staff">Entrar com usuario e senha</a>
+                </div>
+                <p class="entry-note">
+                    Dica para a equipe: salve esta pagina de login interno nos favoritos para entrar mais rapido no dia a dia.
+                </p>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

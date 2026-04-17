@@ -46,6 +46,11 @@ class StudentInvitationChannel(models.TextChoices):
     WHATSAPP = 'whatsapp', 'WhatsApp'
 
 
+class StudentInvitationType(models.TextChoices):
+    INDIVIDUAL = 'individual', 'Individual'
+    OPEN_BOX = 'open_box', 'Box com aprovacao'
+
+
 class StudentInvitationDeliveryStatus(models.TextChoices):
     SENT = 'sent', 'Enviado'
     FAILED = 'failed', 'Falhou'
@@ -56,9 +61,19 @@ class StudentInvitationDeliveryStatus(models.TextChoices):
     SUPPRESSED = 'suppressed', 'Suprimido'
 
 
+class StudentBoxMembershipStatus(models.TextChoices):
+    PENDING_APPROVAL = 'pending_approval', 'Aguardando aprovacao'
+    ACTIVE = 'active', 'Ativo'
+    INACTIVE = 'inactive', 'Inativo'
+    SUSPENDED_FINANCIAL = 'suspended_financial', 'Suspenso financeiro'
+    REVOKED = 'revoked', 'Revogado'
+    EXPIRED = 'expired', 'Expirado'
+
+
 class StudentIdentity(TimeStampedModel):
     student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='app_identity')
     box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)
+    primary_box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)
     provider = models.CharField(max_length=16, choices=StudentIdentityProvider.choices)
     provider_subject = models.CharField(max_length=255, unique=True)
     email = models.EmailField(db_index=True)
@@ -93,8 +108,70 @@ class StudentIdentity(TimeStampedModel):
         return f'{self.student.full_name} [{self.box_root_slug}]'
 
 
+class StudentBoxMembership(TimeStampedModel):
+    identity = models.ForeignKey(StudentIdentity, on_delete=models.CASCADE, related_name='memberships')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='box_memberships')
+    box_root_slug = models.CharField(max_length=64, db_index=True)
+    status = models.CharField(
+        max_length=24,
+        choices=StudentBoxMembershipStatus.choices,
+        default=StudentBoxMembershipStatus.PENDING_APPROVAL,
+        db_index=True,
+    )
+    created_from_invite = models.ForeignKey(
+        'StudentAppInvitation',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='memberships_created',
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approved_student_box_memberships',
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    last_access_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    revoked_reason = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ['student__full_name', 'box_root_slug']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['identity', 'box_root_slug'],
+                name='unique_student_membership_per_identity_box',
+            ),
+        ]
+
+    def mark_active(self):
+        now = timezone.now()
+        self.status = StudentBoxMembershipStatus.ACTIVE
+        self.approved_at = self.approved_at or now
+        self.last_access_at = now
+
+    def mark_suspended_financial(self):
+        self.status = StudentBoxMembershipStatus.SUSPENDED_FINANCIAL
+
+    def mark_revoked(self, *, reason: str = ''):
+        self.status = StudentBoxMembershipStatus.REVOKED
+        self.revoked_at = timezone.now()
+        self.revoked_reason = reason
+
+    def __str__(self):
+        return f'{self.student.full_name} [{self.box_root_slug}] ({self.status})'
+
+
 class StudentAppInvitation(TimeStampedModel):
     token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    invite_type = models.CharField(
+        max_length=16,
+        choices=StudentInvitationType.choices,
+        default=StudentInvitationType.INDIVIDUAL,
+        db_index=True,
+    )
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='app_invitations')
     box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)
     invited_email = models.EmailField(blank=True)

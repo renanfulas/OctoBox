@@ -21,7 +21,10 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.shortcuts import redirect
+from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from access.admin import admin_changelist_url, user_can_access_admin
 from shared_support.page_payloads import build_page_hero, build_page_reading_panel
@@ -78,6 +81,34 @@ class ThrottledLoginView(LoginView):
             return HttpResponseForbidden("Multiplas requisicoes suspeitas. Conta temporariamente bloqueada (Cooldown: 10 min).")
             
         return super().post(request, *args, **kwargs)
+
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class AccessEntryHubView(TemplateView):
+    template_name = 'access/login_hub.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        next_url = (self.request.GET.get('next') or '').strip()
+        context['next'] = next_url
+        context['staff_login_url'] = reverse('login-staff')
+        if next_url:
+            context['staff_login_url'] = f"{context['staff_login_url']}?next={next_url}"
+        context['student_google_url'] = reverse(
+            'student-identity-oauth-start',
+            kwargs={'provider': 'google'},
+        )
+        context['student_apple_url'] = reverse(
+            'student-identity-oauth-start',
+            kwargs={'provider': 'apple'},
+        )
+        return context
+
+    def post(self, request, *args, **kwargs):
+        """
+        Mantem compatibilidade com clientes antigos e testes que ainda postam em /login/.
+        """
+        return ThrottledLoginView.as_view()(request, *args, **kwargs)
 
 
 class HomeRedirectView(TemplateView):

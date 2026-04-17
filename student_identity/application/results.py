@@ -9,6 +9,7 @@ class StudentInvitationRecord:
     token: str
     student_id: int
     student_name: str
+    invite_type: str
     invited_email: str
     box_root_slug: str
     expires_at_iso: str
@@ -23,6 +24,7 @@ class StudentIdentityRecord:
     email: str
     provider: str
     box_root_slug: str
+    primary_box_root_slug: str
     status: str
 
 

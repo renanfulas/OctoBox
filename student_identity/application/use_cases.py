@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from datetime import timedelta
+
+from django.conf import settings
+from django.utils import timezone
+
 from .commands import (
     AuthenticateStudentWithProviderCommand,
     CreateStudentInvitationCommand,
@@ -26,10 +31,25 @@ class CreateStudentInvitation:
         if existing_identity is not None and existing_identity.box_root_slug != command.box_root_slug:
             return StudentInvitationResult(success=False, invitation=None, failure_reason='student-box-mismatch')
 
+        if command.invite_type == 'open_box':
+            window_hours = max(1, int(getattr(settings, 'STUDENT_OPEN_BOX_INVITE_WINDOW_HOURS', 24)))
+            limit = max(1, int(getattr(settings, 'STUDENT_OPEN_BOX_INVITE_LIMIT_PER_WINDOW', 25)))
+            recent_open_box_invites = self.repository.count_open_box_invites_since(
+                box_root_slug=command.box_root_slug,
+                since=timezone.now() - timedelta(hours=window_hours),
+            )
+            if recent_open_box_invites >= limit:
+                return StudentInvitationResult(
+                    success=False,
+                    invitation=None,
+                    failure_reason='open-box-rate-limit-exceeded',
+                )
+
         invitation = self.repository.create_invitation(
             student=student,
             invited_email=invited_email,
             box_root_slug=command.box_root_slug,
+            invite_type=command.invite_type,
             expires_in_days=command.expires_in_days,
             actor_id=command.actor_id,
         )

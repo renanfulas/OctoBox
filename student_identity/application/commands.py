@@ -8,6 +8,7 @@ class CreateStudentInvitationCommand:
     student_id: int
     invited_email: str
     box_root_slug: str
+    invite_type: str = 'individual'
     expires_in_days: int = 7
     actor_id: int | None = None
 

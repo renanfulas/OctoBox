@@ -1,17 +1,17 @@
 """
-ARQUIVO: testes do módulo de acesso.
+ARQUIVO: testes do modulo de acesso.
 
 POR QUE ELE EXISTE:
-- Valida o fluxo de entrada, visão de papéis e bootstrap de grupos.
+- Valida o fluxo de entrada, visao de papeis e bootstrap de grupos.
 
 O QUE ESTE ARQUIVO FAZ:
 1. Testa redirecionamento inicial.
-2. Testa renderização da tela de acessos.
-3. Testa criação dos grupos padrão.
-4. Testa presença do papel DEV e permissões importantes do sistema.
+2. Testa renderizacao da tela de acessos.
+3. Testa criacao dos grupos padrao.
+4. Testa presenca do papel DEV e permissoes importantes do sistema.
 
 PONTOS CRITICOS:
-- Se esses testes quebrarem, normalmente houve impacto em login, roles ou permissões.
+- Se esses testes quebrarem, normalmente houve impacto em login, roles ou permissoes.
 """
 
 from django.contrib.auth import get_user_model
@@ -36,13 +36,28 @@ class AccessViewTests(TestCase):
 
         self.assertRedirects(response, reverse('login'))
 
+    def test_login_route_renders_entry_hub(self):
+        response = self.client.get(reverse('login'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Como voce quer entrar?')
+        self.assertContains(response, 'Continuar com Google')
+        self.assertContains(response, reverse('login-staff'))
+
+    def test_staff_login_route_renders_internal_form(self):
+        response = self.client.get(reverse('login-staff'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Entrar como funcionario')
+        self.assertContains(response, 'name="username"', html=False)
+
     def test_access_overview_renders_role_matrix(self):
         self.client.force_login(self.user)
 
         response = self.client.get(reverse('access-overview'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Papéis e acessos')
+        self.assertContains(response, 'Papeis e acessos')
         self.assertContains(response, 'DEV')
         self.assertContains(response, 'Recepcao')
         self.assertNotContains(response, 'Editar e ativar perfis sem admin')
@@ -64,7 +79,11 @@ class AccessViewTests(TestCase):
         self.assertContains(response, 'method="post"')
         self.assertContains(response, 'action="{}"'.format(reverse('logout')))
         self.assertContains(response, 'csrfmiddlewaretoken')
-        self.assertContains(response, '<button type="submit" class="profile-menu-item is-danger" role="menuitem">Sair</button>', html=True)
+        self.assertContains(
+            response,
+            '<button type="submit" class="profile-menu-item is-danger" role="menuitem">Sair</button>',
+            html=True,
+        )
 
     def test_owner_can_create_access_profile_without_admin(self):
         self.client.force_login(self.user)

@@ -19,6 +19,44 @@
 </head>
 <body class="student-app-body" data-student-app="true" data-student-pwa-scope="/aluno/">
     <main class="student-shell">
+        {% if student_identity %}
+        <header class="student-topbar">
+            <div class="student-topbar-copy">
+                <p class="student-topbar-eyebrow">OctoBox Aluno</p>
+                <strong>{{ student_identity.student.full_name }}</strong>
+                <span>Box atual: {{ student_active_box_root_slug|default:"Sem box ativo" }}</span>
+            </div>
+            <div class="student-topbar-actions">
+                {% if student_can_switch_box %}
+                <details class="student-box-switcher">
+                    <summary>Trocar box</summary>
+                    <div class="student-box-switcher-panel">
+                        <p class="student-form-note">Troque o contexto ativo sem relogar. O box principal continua sendo {{ student_primary_box_root_slug }}.</p>
+                        <div class="student-box-switcher-list">
+                            {% for box_choice in student_box_choices %}
+                            <form method="post" action="{% url 'student-app-switch-box' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="box_root_slug" value="{{ box_choice.box_root_slug }}">
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button
+                                    type="submit"
+                                    class="student-box-switch-button{% if box_choice.is_active %} is-active{% endif %}"
+                                    {% if box_choice.is_active %}disabled{% endif %}
+                                >
+                                    <span>{{ box_choice.box_root_slug }}</span>
+                                    {% if box_choice.is_primary %}<small>principal</small>{% endif %}
+                                    {% if box_choice.is_active %}<small>ativo</small>{% endif %}
+                                </button>
+                            </form>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </details>
+                {% endif %}
+                <a href="{% url 'student-app-settings' %}" class="student-topbar-link">Configuracoes</a>
+            </div>
+        </header>
+        {% endif %}
         {% if messages %}
         <section class="student-flash-stack" aria-live="polite">
             {% for message in messages %}

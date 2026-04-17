@@ -1,0 +1,24 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}Sem box ativo | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-card">
+    <p class="student-eyebrow">Sem box ativo</p>
+    <h1>Seu acesso esta sem nenhum box ativo agora.</h1>
+    <p class="student-copy">
+        Pense nisso como uma pulseira valida, mas sem catraca liberada neste momento. Sua identidade continua existindo, so nao ha um box ativo para operar no app agora.
+    </p>
+    {% if inactive_memberships %}
+    <ul class="student-settings-list">
+        {% for membership in inactive_memberships %}
+        <li>
+            <strong>{{ membership.box_root_slug }}</strong>: {{ membership.get_status_display }}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    <p class="student-form-note">Se isso nao era esperado, fale com a equipe do seu box para revisar aprovacao, financeiro ou revogacao.</p>
+</section>
+{% include "student_app/partials/invite_entry_card.html" with eyebrow="Novo acesso" title="Entrar em outro box com convite" copy="Se outro box ja te liberou, cole o convite aqui. E como mostrar um novo bilhete na portaria para abrir outra catraca valida." %}
+{% endblock %}

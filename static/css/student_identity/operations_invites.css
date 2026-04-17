@@ -27,6 +27,39 @@
     background: linear-gradient(180deg, rgba(254, 242, 242, 0.92), rgba(255, 255, 255, 0.96));
 }
 
+.student-observability-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.student-observability-card {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 18px;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.88);
+}
+
+.student-observability-card strong {
+    display: block;
+    margin-top: 0.45rem;
+    font-size: 1.5rem;
+    line-height: 1.1;
+}
+
+.student-observability-card-ok {
+    border-color: rgba(16, 185, 129, 0.18);
+}
+
+.student-observability-card-attention {
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+.student-observability-card-danger {
+    border-color: rgba(239, 68, 68, 0.2);
+    background: linear-gradient(180deg, rgba(254, 242, 242, 0.92), rgba(255, 255, 255, 0.96));
+}
+
 .student-stalled-list {
     display: grid;
     gap: 1rem;
@@ -134,4 +167,34 @@
 .student-invite-guidance-muted {
     background: rgba(100, 116, 139, 0.1);
     color: #475569;
+}
+
+.student-governance-grid {
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-top: 0.85rem;
+}
+
+.student-governance-grid label {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.student-governance-grid input,
+.student-revoke-form input {
+    width: 100%;
+}
+
+.student-revoke-form {
+    display: grid;
+    gap: 0.65rem;
+    grid-template-columns: minmax(200px, 1fr) auto;
+    align-items: center;
+}
+
+@media (max-width: 720px) {
+    .student-revoke-form {
+        grid-template-columns: 1fr;
+    }
 }

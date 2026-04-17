@@ -1,0 +1,21 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}Acesso suspenso | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-card student-card--alert">
+    <p class="student-eyebrow">Financeiro</p>
+    <h1>Seu acesso esta suspenso por agora.</h1>
+    <p class="student-copy">
+        Sua identidade continua valida, mas os boxes abaixo estao com a catraca financeira fechada. Em termos simples: sua pulseira ainda existe, mas a entrada desse corredor precisa ser regularizada.
+    </p>
+    <ul class="student-settings-list">
+        {% for membership in suspended_memberships %}
+        <li><strong>{{ membership.box_root_slug }}</strong>: {{ membership.get_status_display }}</li>
+        {% endfor %}
+    </ul>
+    <p class="student-form-note">Regularize com a equipe do box. Assim que o membership for reativado, o app volta a te deixar entrar normalmente.</p>
+</section>
+
+{% include "student_app/partials/invite_entry_card.html" with eyebrow="Outro box" title="Entrar em outro box com convite" copy="Se voce tambem treina em outro box com acesso liberado, cole o convite aqui para tentar abrir um novo contexto sem depender deste corredor suspenso." %}
+{% endblock %}

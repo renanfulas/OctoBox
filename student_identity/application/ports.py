@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Protocol
 
 from .results import StudentIdentityRecord, StudentInvitationRecord
@@ -27,12 +28,16 @@ class StudentIdentityRepositoryPort(Protocol):
     def find_student_candidates_by_email(self, *, email: str):
         ...
 
+    def count_open_box_invites_since(self, *, box_root_slug: str, since: datetime) -> int:
+        ...
+
     def create_invitation(
         self,
         *,
         student,
         invited_email: str,
         box_root_slug: str,
+        invite_type: str,
         expires_in_days: int,
         actor_id: int | None,
     ) -> StudentInvitationRecord:

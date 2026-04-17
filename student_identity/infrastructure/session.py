@@ -15,9 +15,20 @@ def get_student_session_max_age() -> int:
     return int(getattr(settings, 'STUDENT_APP_SESSION_COOKIE_AGE', 604800))
 
 
-def build_student_session_value(*, identity_id: int, box_root_slug: str) -> str:
+def build_student_session_value(
+    *,
+    identity_id: int,
+    box_root_slug: str,
+    active_box_root_slug: str | None = None,
+    device_fingerprint: str | None = None,
+) -> str:
     return signing.dumps(
-        {'identity_id': int(identity_id), 'box_root_slug': box_root_slug},
+        {
+            'identity_id': int(identity_id),
+            'box_root_slug': box_root_slug,
+            'active_box_root_slug': active_box_root_slug or box_root_slug,
+            'device_fingerprint': device_fingerprint or '',
+        },
         salt=SESSION_SALT,
         compress=True,
     )
@@ -36,10 +47,22 @@ def read_student_session_value(raw_value: str | None):
         return None
 
 
-def attach_student_session_cookie(response, *, identity_id: int, box_root_slug: str):
+def attach_student_session_cookie(
+    response,
+    *,
+    identity_id: int,
+    box_root_slug: str,
+    active_box_root_slug: str | None = None,
+    device_fingerprint: str | None = None,
+):
     response.set_cookie(
         get_student_session_cookie_name(),
-        build_student_session_value(identity_id=identity_id, box_root_slug=box_root_slug),
+        build_student_session_value(
+            identity_id=identity_id,
+            box_root_slug=box_root_slug,
+            active_box_root_slug=active_box_root_slug,
+            device_fingerprint=device_fingerprint,
+        ),
         max_age=get_student_session_max_age(),
         httponly=True,
         secure=bool(getattr(settings, 'SESSION_COOKIE_SECURE', False)),

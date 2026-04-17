@@ -1,0 +1,20 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}Aguardando aprovacao | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-card">
+    <p class="student-eyebrow">Acesso em revisao</p>
+    <h1>Seu acesso esta aguardando aprovacao do box.</h1>
+    <p class="student-copy">
+        Sua identidade social ja foi validada. Agora a equipe do box precisa aprovar o vinculo antes de liberar a entrada completa no app.
+    </p>
+    <ul class="student-settings-list">
+        <li><strong>Box solicitado:</strong> {{ student_active_box_root_slug }}</li>
+        <li><strong>Box principal atual:</strong> {{ student_primary_box_root_slug }}</li>
+        {% if pending_membership %}<li><strong>Status:</strong> {{ pending_membership.get_status_display }}</li>{% endif %}
+    </ul>
+    <p class="student-form-note">Se o box ja aprovou e esta tela ainda aparece, feche e abra o app novamente ou fale com a equipe.</p>
+</section>
+{% include "student_app/partials/invite_entry_card.html" with eyebrow="Outro caminho" title="Entrar em outro box com convite" copy="Se este box ainda nao aprovou e voce ja tem convite de outra unidade, cole aqui. O app tenta te levar para o corredor que ja esta pronto." %}
+{% endblock %}

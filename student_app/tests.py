@@ -1,6 +1,7 @@
 from datetime import timedelta
 from decimal import Decimal
 import json
+import uuid
 
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -9,8 +10,14 @@ from django.utils import timezone
 from operations.models import ClassSession
 from student_app.application.use_cases import GetStudentWorkoutPrescription
 from student_app.models import StudentExerciseMax
-from student_identity.infrastructure.session import build_student_session_value
-from student_identity.models import StudentIdentity, StudentIdentityProvider, StudentIdentityStatus
+from student_identity.infrastructure.session import build_student_session_value, read_student_session_value
+from student_identity.models import (
+    StudentBoxMembership,
+    StudentBoxMembershipStatus,
+    StudentIdentity,
+    StudentIdentityProvider,
+    StudentIdentityStatus,
+)
 from students.models import Student
 
 
@@ -25,10 +32,17 @@ class StudentAppExperienceTests(TestCase):
         self.identity = StudentIdentity.objects.create(
             student=self.student,
             box_root_slug='control',
+            primary_box_root_slug='control',
             provider=StudentIdentityProvider.GOOGLE,
             provider_subject='provider-subject-app',
             email='app@example.com',
             status=StudentIdentityStatus.ACTIVE,
+        )
+        StudentBoxMembership.objects.create(
+            identity=self.identity,
+            student=self.student,
+            box_root_slug='control',
+            status=StudentBoxMembershipStatus.ACTIVE,
         )
         self.client.cookies['octobox_student_session'] = build_student_session_value(
             identity_id=self.identity.id,
@@ -42,7 +56,7 @@ class StudentAppExperienceTests(TestCase):
 
     def test_student_home_renders_without_staff_shell(self):
         ClassSession.objects.create(
-            title='Cross de terça',
+            title='Cross de terca',
             scheduled_at=timezone.now() + timedelta(days=1),
             status='scheduled',
         )
@@ -51,7 +65,9 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Meu Box')
         self.assertNotContains(response, 'Abrir menu lateral')
-        self.assertContains(response, 'Cross de terça')
+        self.assertContains(response, 'Cross de terca')
+        self.assertContains(response, 'Box atual: control')
+        self.assertNotContains(response, 'Trocar box')
 
     def test_workout_prescription_returns_expected_rounded_load(self):
         StudentExerciseMax.objects.create(
@@ -95,3 +111,141 @@ class StudentAppExperienceTests(TestCase):
         cookie = response.cookies['octobox_student_session']
         self.assertEqual(cookie['path'], '/aluno/')
         self.assertTrue(cookie['httponly'])
+        payload = read_student_session_value(cookie.value)
+        self.assertEqual(payload['active_box_root_slug'], 'control')
+        self.assertTrue(payload['device_fingerprint'])
+
+    def test_student_home_redirects_to_login_when_device_fingerprint_changes(self):
+        warmup_response = self.client.get(reverse('student-app-home'), HTTP_USER_AGENT='OctoBox Test Browser A')
+        session_cookie = warmup_response.cookies['octobox_student_session'].value
+        self.client.cookies['octobox_student_session'] = session_cookie
+
+        response = self.client.get(
+            reverse('student-app-home'),
+            HTTP_USER_AGENT='OctoBox Test Browser B',
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('student-identity-login'))
+        self.assertIn('octobox_student_session', response.cookies)
+        self.assertEqual(response.cookies['octobox_student_session'].value, '')
+
+    def test_student_home_shows_box_switcher_when_multiple_memberships_exist(self):
+        StudentBoxMembership.objects.create(
+            identity=self.identity,
+            student=self.student,
+            box_root_slug='box-secundario',
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
+
+        response = self.client.get(reverse('student-app-home'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Trocar box')
+        self.assertContains(response, 'box-secundario')
+
+    def test_switch_box_updates_active_box_in_cookie(self):
+        StudentBoxMembership.objects.create(
+            identity=self.identity,
+            student=self.student,
+            box_root_slug='box-secundario',
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
+
+        response = self.client.post(
+            reverse('student-app-switch-box'),
+            {
+                'box_root_slug': 'box-secundario',
+                'next': reverse('student-app-home'),
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('student-app-home'))
+        self.assertIn('octobox_student_session', response.cookies)
+        payload = read_student_session_value(response.cookies['octobox_student_session'].value)
+        self.assertEqual(payload['active_box_root_slug'], 'box-secundario')
+
+    def test_student_home_redirects_to_suspended_financial_when_membership_is_suspended(self):
+        membership = StudentBoxMembership.objects.get(identity=self.identity, box_root_slug='control')
+        membership.status = StudentBoxMembershipStatus.SUSPENDED_FINANCIAL
+        membership.save(update_fields=['status'])
+
+        response = self.client.get(reverse('student-app-home'))
+
+        self.assertRedirects(response, reverse('student-app-suspended-financial'))
+
+    def test_no_active_box_page_renders_membership_statuses(self):
+        membership = StudentBoxMembership.objects.get(identity=self.identity, box_root_slug='control')
+        membership.status = StudentBoxMembershipStatus.REVOKED
+        membership.save(update_fields=['status'])
+
+        response = self.client.get(reverse('student-app-no-active-box'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Seu acesso esta sem nenhum box ativo agora.')
+        self.assertContains(response, 'Revogado')
+        self.assertContains(response, 'Entrar em outro box com convite')
+
+    def test_runtime_falls_back_to_another_active_membership_when_current_one_is_revoked(self):
+        current_membership = StudentBoxMembership.objects.get(identity=self.identity, box_root_slug='control')
+        current_membership.status = StudentBoxMembershipStatus.REVOKED
+        current_membership.save(update_fields=['status'])
+        StudentBoxMembership.objects.create(
+            identity=self.identity,
+            student=self.student,
+            box_root_slug='box-secundario',
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
+
+        response = self.client.get(reverse('student-app-home'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Box atual: box-secundario')
+
+    def test_student_home_redirects_to_suspended_financial_page_when_all_memberships_are_suspended(self):
+        membership = StudentBoxMembership.objects.get(identity=self.identity, box_root_slug='control')
+        membership.status = StudentBoxMembershipStatus.SUSPENDED_FINANCIAL
+        membership.save(update_fields=['status'])
+
+        response = self.client.get(reverse('student-app-home'))
+
+        self.assertRedirects(response, reverse('student-app-suspended-financial'))
+
+    def test_suspended_financial_page_renders_guidance(self):
+        membership = StudentBoxMembership.objects.get(identity=self.identity, box_root_slug='control')
+        membership.status = StudentBoxMembershipStatus.SUSPENDED_FINANCIAL
+        membership.save(update_fields=['status'])
+
+        response = self.client.get(reverse('student-app-suspended-financial'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Seu acesso esta suspenso por agora.')
+        self.assertContains(response, 'Entrar em outro box com convite')
+
+    def test_invite_entry_redirects_from_raw_token_to_invite_landing(self):
+        token = str(uuid.uuid4())
+
+        response = self.client.post(
+            reverse('student-app-enter-invite'),
+            {
+                'invite_token_or_url': token,
+            },
+        )
+
+        self.assertRedirects(response, reverse('student-identity-invite', kwargs={'token': token}))
+
+    def test_invite_entry_redirects_from_full_url_to_invite_landing(self):
+        token = str(uuid.uuid4())
+        invite_url = f'https://app.octoboxfit.com.br/aluno/auth/invite/{token}/'
+
+        response = self.client.post(
+            reverse('student-app-enter-invite'),
+            {
+                'invite_token_or_url': invite_url,
+            },
+        )
+
+        self.assertRedirects(response, reverse('student-identity-invite', kwargs={'token': token}))

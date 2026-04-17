@@ -8,8 +8,11 @@ from django.utils import timezone
 from student_identity.application.results import StudentIdentityRecord, StudentInvitationRecord
 from student_identity.models import (
     StudentAppInvitation,
+    StudentBoxMembership,
+    StudentBoxMembershipStatus,
     StudentIdentity,
     StudentIdentityStatus,
+    StudentInvitationType,
     StudentTransfer,
     StudentTransferStatus,
 )
@@ -24,6 +27,7 @@ def _identity_record(identity: StudentIdentity) -> StudentIdentityRecord:
         email=identity.email,
         provider=identity.provider,
         box_root_slug=identity.box_root_slug,
+        primary_box_root_slug=identity.primary_box_root_slug,
         status=identity.status,
     )
 
@@ -34,6 +38,7 @@ def _invitation_record(invitation: StudentAppInvitation) -> StudentInvitationRec
         token=str(invitation.token),
         student_id=invitation.student_id,
         student_name=invitation.student.full_name,
+        invite_type=invitation.invite_type,
         invited_email=invitation.invited_email,
         box_root_slug=invitation.box_root_slug,
         expires_at_iso=invitation.expires_at.isoformat(),
@@ -42,6 +47,38 @@ def _invitation_record(invitation: StudentAppInvitation) -> StudentInvitationRec
 
 
 class DjangoStudentIdentityRepository:
+    def _ensure_membership_status(
+        self,
+        *,
+        identity: StudentIdentity,
+        student: Student,
+        box_root_slug: str,
+        invitation=None,
+        actor_id: int | None = None,
+        status: str = StudentBoxMembershipStatus.ACTIVE,
+    ) -> StudentBoxMembership:
+        membership, _ = StudentBoxMembership.objects.get_or_create(
+            identity=identity,
+            box_root_slug=box_root_slug,
+            defaults={
+                'student': student,
+                'status': status,
+                'created_from_invite': invitation,
+                'approved_by_id': actor_id,
+            },
+        )
+        membership.student = student
+        if invitation is not None and membership.created_from_invite_id is None:
+            membership.created_from_invite = invitation
+        if status == StudentBoxMembershipStatus.ACTIVE:
+            membership.mark_active()
+            if actor_id is not None and membership.approved_by_id is None:
+                membership.approved_by_id = actor_id
+        else:
+            membership.status = status
+        membership.save()
+        return membership
+
     def find_student_by_id(self, student_id: int):
         return Student.objects.filter(pk=student_id).first()
 
@@ -83,6 +120,13 @@ class DjangoStudentIdentityRepository:
     def find_student_candidates_by_email(self, *, email: str):
         return list(Student.objects.filter(email__iexact=(email or '').strip()).order_by('id'))
 
+    def count_open_box_invites_since(self, *, box_root_slug: str, since):
+        return StudentAppInvitation.objects.filter(
+            box_root_slug=box_root_slug,
+            invite_type=StudentInvitationType.OPEN_BOX,
+            created_at__gte=since,
+        ).count()
+
     @transaction.atomic
     def create_invitation(
         self,
@@ -90,6 +134,7 @@ class DjangoStudentIdentityRepository:
         student,
         invited_email: str,
         box_root_slug: str,
+        invite_type: str,
         expires_in_days: int,
         actor_id: int | None,
     ) -> StudentInvitationRecord:
@@ -107,6 +152,7 @@ class DjangoStudentIdentityRepository:
         invitation = StudentAppInvitation.objects.create(
             student=student,
             box_root_slug=box_root_slug,
+            invite_type=invite_type,
             invited_email=(invited_email or '').strip().lower(),
             expires_at=now + timedelta(days=max(1, expires_in_days)),
             created_by_id=actor_id,
@@ -130,6 +176,7 @@ class DjangoStudentIdentityRepository:
             identity = StudentIdentity(
                 student=student,
                 box_root_slug=box_root_slug,
+                primary_box_root_slug=box_root_slug,
                 provider=provider,
                 provider_subject=provider_subject,
                 email=(email or '').strip().lower(),
@@ -140,11 +187,24 @@ class DjangoStudentIdentityRepository:
             identity.provider = provider
             identity.provider_subject = provider_subject
             identity.email = (email or '').strip().lower()
+            if not identity.primary_box_root_slug:
+                identity.primary_box_root_slug = box_root_slug
             if invitation is not None and identity.invited_at is None:
                 identity.invited_at = timezone.now()
 
         identity.mark_authenticated()
         identity.save()
+        membership_status = StudentBoxMembershipStatus.ACTIVE
+        if invitation is not None and invitation.invite_type == StudentInvitationType.OPEN_BOX:
+            membership_status = StudentBoxMembershipStatus.PENDING_APPROVAL
+
+        self._ensure_membership_status(
+            identity=identity,
+            student=student,
+            box_root_slug=box_root_slug,
+            invitation=invitation,
+            status=membership_status,
+        )
 
         if invitation is not None and invitation.accepted_at is None:
             invitation.accepted_at = timezone.now()
@@ -160,6 +220,12 @@ class DjangoStudentIdentityRepository:
     def mark_authenticated(self, identity) -> StudentIdentityRecord:
         identity.mark_authenticated()
         identity.save(update_fields=['status', 'activated_at', 'last_authenticated_at'])
+        self._ensure_membership_status(
+            identity=identity,
+            student=identity.student,
+            box_root_slug=identity.box_root_slug,
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
         return _identity_record(identity)
 
     @transaction.atomic
@@ -182,7 +248,35 @@ class DjangoStudentIdentityRepository:
             reason=reason,
             audit_summary=f'Transferencia concluida de {identity.box_root_slug} para {to_box_root_slug}.',
         )
+        previous_box_root_slug = identity.box_root_slug
+        previous_membership = (
+            StudentBoxMembership.objects
+            .filter(identity=identity, box_root_slug=previous_box_root_slug)
+            .first()
+        )
+        if previous_membership is None:
+            previous_membership = StudentBoxMembership.objects.create(
+                identity=identity,
+                student=identity.student,
+                box_root_slug=previous_box_root_slug,
+                status=StudentBoxMembershipStatus.INACTIVE,
+                revoked_reason=reason,
+                revoked_at=timezone.now(),
+            )
+        else:
+            previous_membership.status = StudentBoxMembershipStatus.INACTIVE
+            previous_membership.revoked_reason = reason
+            previous_membership.revoked_at = timezone.now()
+            previous_membership.save(update_fields=['status', 'revoked_reason', 'revoked_at', 'updated_at'])
         identity.box_root_slug = to_box_root_slug
+        identity.primary_box_root_slug = to_box_root_slug
         identity.last_authenticated_at = timezone.now()
-        identity.save(update_fields=['box_root_slug', 'last_authenticated_at'])
+        identity.save(update_fields=['box_root_slug', 'primary_box_root_slug', 'last_authenticated_at'])
+        self._ensure_membership_status(
+            identity=identity,
+            student=identity.student,
+            box_root_slug=to_box_root_slug,
+            actor_id=actor_id,
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
         return _identity_record(identity), transfer.id

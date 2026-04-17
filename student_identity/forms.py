@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from django import forms
 
+from student_identity.models import StudentInvitationType
 from students.models import Student, StudentStatus
 
 
@@ -15,6 +16,12 @@ class StudentInvitationCreateForm(forms.Form):
         label='E-mail do convite',
         required=False,
         help_text='Se vazio, o sistema tenta usar o e-mail ja cadastrado no aluno.',
+    )
+    invite_type = forms.ChoiceField(
+        label='Tipo de convite',
+        choices=StudentInvitationType.choices,
+        initial=StudentInvitationType.INDIVIDUAL,
+        help_text='Convite individual libera o aluno ao fechar a identidade. Convite do box pede aprovacao depois.',
     )
     expires_in_days = forms.TypedChoiceField(
         label='Validade',

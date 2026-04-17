@@ -26,6 +26,12 @@
                 {{ form.invited_email.errors }}
             </label>
             <label>
+                <span class="field-label">{{ form.invite_type.label }}</span>
+                {{ form.invite_type }}
+                {% if form.invite_type.help_text %}<small class="field-help">{{ form.invite_type.help_text }}</small>{% endif %}
+                {{ form.invite_type.errors }}
+            </label>
+            <label>
                 <span class="field-label">{{ form.expires_in_days.label }}</span>
                 {{ form.expires_in_days }}
                 {{ form.expires_in_days.errors }}
@@ -48,6 +54,34 @@
         </div>
     </article>
 </section>
+
+{% if page.data.observability_cards %}
+<section class="table-card section-gap-top-sm" aria-label="Observabilidade dos convites do aluno">
+    <div class="student-invite-list-header">
+        <div>
+            <p class="eyebrow">Observabilidade</p>
+            <h3>Painel de temperatura dos convites</h3>
+            <p class="system-map-copy">Esses numeros sao o painel do carro. Se a agulha sobe, o sistema avisa antes de fumacar no acostamento.</p>
+        </div>
+    </div>
+    <div class="student-observability-grid">
+        {% for card in page.data.observability_cards %}
+        <article class="student-observability-card student-observability-card-{{ card.tone }}">
+            <p class="eyebrow">{{ card.eyebrow }}</p>
+            <strong>{{ card.value }}</strong>
+            <p class="student-invite-detail">{{ card.detail }}</p>
+        </article>
+        {% endfor %}
+    </div>
+    {% if page.data.observability_alerts %}
+    <div class="student-observability-alerts section-gap-top-sm">
+        {% for alert in page.data.observability_alerts %}
+        <article class="student-invite-guidance student-invite-guidance-attention">{{ alert }}</article>
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
+{% endif %}
 
 {% if page.data.stalled_invites %}
 <section class="table-card section-gap-top-sm student-stalled-board" aria-label="Convites travados esperando mensagem">
@@ -80,6 +114,112 @@
 </section>
 {% endif %}
 
+{% if page.data.pending_memberships %}
+<section class="table-card section-gap-top-sm" aria-label="Aprovacoes pendentes do app do aluno">
+    <div class="student-invite-list-header">
+        <div>
+            <p class="eyebrow">Aguardando aprovacao</p>
+            <h3>Alunos que fecharam a identidade e agora esperam o box</h3>
+            <p class="system-map-copy">Pense nisso como a recepcao vendo quem chegou no predio certo, mas ainda precisa liberar a catraca.</p>
+        </div>
+    </div>
+    <div class="student-invite-list">
+        {% for membership in page.data.pending_memberships %}
+        <article class="student-invite-item">
+            <div class="student-invite-meta">
+                <strong>{{ membership.student_name }}</strong>
+                <span>{{ membership.invited_email }}</span>
+                <span class="student-invite-pill student-invite-pill-attention">{{ membership.invite_type_label }}</span>
+                <span class="student-invite-pill student-invite-pill-attention">Aguardando aprovacao</span>
+            </div>
+            <p class="student-invite-detail">
+                Solicitado em {{ membership.created_at|date:"d/m/Y H:i" }} para o box {{ membership.box_root_slug }}.
+            </p>
+            <div class="actions actions-tight student-invite-actions">
+                <form method="post" class="student-invite-inline-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="approve-membership">
+                    <input type="hidden" name="membership_id" value="{{ membership.id }}">
+                    <button class="button" type="submit">Aprovar acesso</button>
+                </form>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if page.data.managed_memberships %}
+<section class="table-card section-gap-top-sm" aria-label="Governanca operacional do acesso do aluno">
+    <div class="student-invite-list-header">
+        <div>
+            <p class="eyebrow">Governanca</p>
+            <h3>Acessos ativos, suspensos e revogados neste box</h3>
+            <p class="system-map-copy">Aqui fica a cabine de controle: trocar e-mail com trilha, suspender por financeiro e revogar acesso sem deixar o app perder o norte.</p>
+        </div>
+    </div>
+    <div class="student-invite-list">
+        {% for membership in page.data.managed_memberships %}
+        <article class="student-invite-item">
+            <div class="student-invite-meta">
+                <strong>{{ membership.student_name }}</strong>
+                <span>{{ membership.identity_email }}</span>
+                <span class="student-invite-pill student-invite-pill-{{ membership.status_tone }}">{{ membership.status_label }}</span>
+                {% if membership.is_primary %}<span class="student-invite-pill student-invite-pill-muted">box principal</span>{% endif %}
+                <span class="student-invite-pill student-invite-pill-muted">{{ membership.invite_type_label }}</span>
+            </div>
+            <p class="student-invite-detail">Aluno: {{ membership.student_email|default:"Sem e-mail no cadastro do aluno." }}</p>
+            {% if membership.can_change_email %}
+            <form method="post" class="student-governance-grid section-gap-top-xs">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="change-email">
+                <input type="hidden" name="membership_id" value="{{ membership.id }}">
+                <label>
+                    <span class="field-label">Novo e-mail canonico</span>
+                    <input type="email" name="new_email" value="{{ membership.identity_email }}" required>
+                </label>
+                <label>
+                    <span class="field-label">Motivo</span>
+                    <input type="text" name="change_reason" placeholder="Ex.: aluno trocou o e-mail principal">
+                </label>
+                <div class="actions actions-tight">
+                    <button class="button secondary" type="submit">Trocar e-mail</button>
+                </div>
+            </form>
+            {% endif %}
+            <div class="actions actions-tight student-invite-actions">
+                {% if membership.can_suspend_financial %}
+                <form method="post" class="student-invite-inline-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="suspend-membership">
+                    <input type="hidden" name="membership_id" value="{{ membership.id }}">
+                    <button class="button secondary" type="submit">Suspender financeiro</button>
+                </form>
+                {% endif %}
+                {% if membership.can_reactivate %}
+                <form method="post" class="student-invite-inline-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reactivate-membership">
+                    <input type="hidden" name="membership_id" value="{{ membership.id }}">
+                    <button class="button secondary" type="submit">Reativar acesso</button>
+                </form>
+                {% endif %}
+                {% if membership.can_revoke %}
+                <form method="post" class="student-invite-inline-form student-revoke-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="revoke-membership">
+                    <input type="hidden" name="membership_id" value="{{ membership.id }}">
+                    <input type="text" name="revoke_reason" placeholder="Motivo da revogacao">
+                    <button class="button secondary" type="submit">Revogar acesso</button>
+                </form>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
 <section class="table-card section-gap-top-sm" aria-label="Convites recentes">
     <div class="student-invite-list-header">
         <div>
@@ -93,6 +233,7 @@
             <div class="student-invite-meta">
                 <strong>{{ invite.student_name }}</strong>
                 <span>{{ invite.invited_email }}</span>
+                <span class="student-invite-pill student-invite-pill-muted">{{ invite.invite_type_label }}</span>
                 <span class="student-invite-pill student-invite-pill-{{ invite.status_tone }}">{{ invite.status_label }}</span>
                 <span class="student-invite-pill student-invite-pill-{{ invite.last_email_delivery_status_tone }}">{{ invite.last_email_delivery_status_label }}</span>
                 <span class="student-invite-pill student-invite-pill-{{ invite.last_whatsapp_delivery_status_tone }}">{{ invite.last_whatsapp_delivery_status_label }}</span>

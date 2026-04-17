@@ -29,6 +29,132 @@ body.student-app-body {
     padding: 32px 0 64px;
 }
 
+.student-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 18px;
+    padding: 18px 22px;
+    border: 1px solid var(--student-card-border);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+}
+
+.student-topbar-copy {
+    display: grid;
+    gap: 4px;
+}
+
+.student-topbar-copy strong {
+    font-size: 1rem;
+}
+
+.student-topbar-copy span {
+    color: var(--student-copy);
+    font-size: 0.92rem;
+}
+
+.student-topbar-eyebrow {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.72rem;
+    color: var(--student-accent);
+    font-weight: 800;
+}
+
+.student-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.student-topbar-link {
+    color: var(--student-accent-strong);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.student-box-switcher {
+    position: relative;
+}
+
+.student-box-switcher > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 12px 16px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.08);
+    color: var(--student-accent-strong);
+    font-weight: 700;
+}
+
+.student-box-switcher > summary::-webkit-details-marker {
+    display: none;
+}
+
+.student-box-switcher[open] > summary {
+    background: rgba(15, 23, 42, 0.12);
+}
+
+.student-box-switcher-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 10px);
+    width: min(320px, calc(100vw - 48px));
+    padding: 16px;
+    border-radius: 22px;
+    border: 1px solid var(--student-card-border);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 24px 50px rgba(15, 23, 42, 0.12);
+    z-index: 3;
+}
+
+.student-box-switcher-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.student-box-switcher-list form {
+    margin: 0;
+}
+
+.student-box-switch-button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    background: rgba(255, 255, 255, 0.86);
+    color: var(--student-ink);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.student-box-switch-button small {
+    color: var(--student-copy);
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.student-box-switch-button.is-active,
+.student-box-switch-button:disabled {
+    cursor: default;
+    opacity: 0.72;
+    background: rgba(217, 119, 6, 0.12);
+}
+
 .student-hero,
 .student-card {
     border: 1px solid var(--student-card-border);
@@ -46,6 +172,12 @@ body.student-app-body {
 .student-card {
     padding: 28px;
     margin-bottom: 24px;
+}
+
+.student-card--alert {
+    border-color: rgba(185, 28, 28, 0.16);
+    background:
+        linear-gradient(180deg, rgba(255, 244, 244, 0.92), rgba(255, 255, 255, 0.9));
 }
 
 .student-eyebrow {
@@ -120,6 +252,12 @@ body.student-app-body {
     background: rgba(255, 255, 255, 0.88);
 }
 
+.student-invite-entry-form {
+    grid-template-columns: minmax(240px, 1fr) auto;
+    align-items: end;
+    margin-top: 18px;
+}
+
 .student-form-errors,
 .student-flash {
     border-radius: 18px;
@@ -170,9 +308,31 @@ body.student-app-body {
         padding-top: 18px;
     }
 
+    .student-topbar {
+        padding: 16px 18px;
+        border-radius: 20px;
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .student-topbar-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .student-box-switcher-panel {
+        position: static;
+        width: 100%;
+        margin-top: 10px;
+    }
+
     .student-hero,
     .student-card {
         padding: 22px;
         border-radius: 22px;
+    }
+
+    .student-invite-entry-form {
+        grid-template-columns: 1fr;
     }
 }
