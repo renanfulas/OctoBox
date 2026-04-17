@@ -57,10 +57,10 @@ database = (parsed.path or '/').lstrip('/')
 username = parsed.username or ''
 password = parsed.password or ''
 
-timestamp = datetime.utcnow().strftime('%Y%m%d-%H%M%S')
-destination = Path('${OCTOBOX_APP_HOME}/backups') / f'predeploy-{timestamp}.dump'
 env = os.environ.copy()
 env['PGPASSWORD'] = password
+backup_dir = Path('${OCTOBOX_APP_HOME}/backups')
+before = {path.resolve() for path in backup_dir.glob('octobox-*.dump')}
 
 cmd = [
     'bash',
@@ -73,9 +73,10 @@ cmd = [
 ]
 subprocess.run(cmd, check=True, env=env)
 
-created = sorted(Path('${OCTOBOX_APP_HOME}/backups').glob('octobox-*.dump'))
+after = {path.resolve() for path in backup_dir.glob('octobox-*.dump')}
+created = sorted(after - before, key=lambda path: path.stat().st_mtime)
 if not created:
-    raise SystemExit('Backup nao foi criado.')
+    raise SystemExit('Backup novo nao foi identificado.')
 print(created[-1])
 PY" | tail -n 1)"
 echo "Backup criado em: ${backup_path}"
