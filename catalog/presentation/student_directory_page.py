@@ -10,6 +10,7 @@ from access.navigation_contracts import get_shell_route_url
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from django.urls import reverse
 from shared_support.page_payloads import build_page_context, build_page_hero
+from shared_support.surface_runtime_contracts import build_asset_behavior, build_surface_behavior, build_surface_runtime_contract
 
 from .shared import build_catalog_assets, build_catalog_page_payload
 
@@ -29,6 +30,7 @@ def build_student_directory_page(
     can_manage_students = current_role_slug in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
     can_open_student_admin = current_role_slug in (ROLE_OWNER, ROLE_DEV)
     support_data = support_snapshot or {}
+    directory_search_payload = directory_search or {}
     hero_actions = [
         {'label': 'Ver base', 'href': '#tab-students-directory', 'kind': 'primary', 'data_action': 'open-tab-students-directory'},
     ]
@@ -59,6 +61,52 @@ def build_student_directory_page(
         data_slot='hero',
         data_panel='students-hero',
         actions_slot='students-hero-actions',
+    )
+    surface_runtime_contract = build_surface_runtime_contract(
+        surface_behavior=build_surface_behavior(
+            surface_key='student-directory',
+            role_slug=current_role_slug,
+            storage_tier='session',
+            cache_enabled=True,
+            cache_key=directory_search_payload.get('cache_key') or 'all',
+            refresh_token=directory_search_payload.get('refresh_token') or '',
+            ttl_ms=120000,
+            bootstrap_mode='minimal',
+            bootstrap_item_count=len(directory_search_payload.get('index') or []),
+            bootstrap_has_more=directory_search_payload.get('has_next', False),
+            bootstrap_next_offset=directory_search_payload.get('next_offset'),
+            hydration_mode='idle',
+            hydration_page_url=directory_search_payload.get('page_url') or '',
+            hydration_page_size=directory_search_payload.get('page_size') or 0,
+            hydration_prefetch_limit=3,
+            hydration_max_parallel_requests=1,
+            local_filters=['query', 'status', 'sort'],
+            server_filters=['student_status', 'commercial_status', 'payment_status', 'created_window'],
+            events_primary='none',
+            events_fallback='none',
+            data_classification='operational',
+            persist_to_disk=False,
+            requires_server_revalidation_before_commit=True,
+        ),
+        asset_behavior=build_asset_behavior(
+            critical_css=[
+                'catalog-shared-scene',
+                'students-scene',
+                'students-filters',
+                'students-intake-directory',
+                'students-responsive',
+            ],
+            deferred_css=['students-secondary-panels'],
+            enhancement_css=['students-quick-panel'],
+            progressive_js=['surface-runtime', 'student-directory'],
+            interaction_triggers={
+                'quick_panel': 'click',
+                'search_hydration': 'idle',
+            },
+        ),
+        telemetry_key='student-directory',
+        surface_budget_key='students-hot-path',
+        expected_hot_path='cache-hit-after-first-load',
     )
 
     return build_catalog_page_payload(
@@ -94,8 +142,9 @@ def build_student_directory_page(
                 'cache_ttl_ms': 120000,
                 'idle_prefetch_limit': 3,
             },
-            'directory_search': directory_search or {},
+            'directory_search': directory_search_payload,
             'performance_timing': performance_timing or {},
+            'surface_runtime': surface_runtime_contract,
         },
         capabilities={
             'can_manage_students': can_manage_students,

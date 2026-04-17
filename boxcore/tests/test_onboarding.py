@@ -12,6 +12,8 @@ PONTOS CRITICOS:
 - Se falhar, o sistema pode continuar com a rota antiga em Alunos e perder a nova fronteira canonica de intake.
 """
 
+from pathlib import Path
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.cache import cache
@@ -80,7 +82,39 @@ class IntakeCenterViewTests(TestCase):
         self.assertContains(response, 'Conversar no WhatsApp')
         self.assertContains(response, 'Novo Lead')
         self.assertContains(response, 'Novo Intake')
+        self.assertContains(response, 'js/core/surface-runtime.js')
         self.assertEqual(response.context['intake_center_page']['data']['filter_form'].fields['query'].max_length, 50)
+        self.assertEqual(
+            response.context['intake_center_page']['behavior']['surface_runtime']['surface_behavior']['surface_key'],
+            'intake-center',
+        )
+        self.assertEqual(
+            response.context['intake_center_page']['behavior']['surface_runtime']['surface_behavior']['scope']['storage_tier'],
+            'session',
+        )
+        intake_search = response.context['intake_center_page']['behavior']['intake_search']
+        self.assertLessEqual(len(intake_search['index']), 24)
+        self.assertEqual(intake_search['page_size'], 50)
+        self.assertNotIn('row_html', intake_search['index'][0])
+        self.assertIn('conversion', intake_search['index'][0])
+        self.assertIn('permissions', intake_search['index'][0])
+
+    def test_intake_center_frontend_uses_surface_runtime_and_structured_rows(self):
+        script = (
+            Path(__file__).resolve().parents[2]
+            / 'static'
+            / 'js'
+            / 'pages'
+            / 'onboarding'
+            / 'intake-center.js'
+        ).read_text(encoding='utf-8')
+
+        self.assertIn("surfaceRuntime.writeCacheEntry('intake-search-index', value);", script)
+        self.assertIn("surfaceRuntime.writeCacheEntry('intake-search-stale', value);", script)
+        self.assertIn("surfaceRuntime.readCacheEntry('intake-search-index');", script)
+        self.assertIn("surfaceRuntime.readCacheEntry('intake-search-stale');", script)
+        self.assertIn('return buildSearchRowHtml(entry);', script)
+        self.assertNotIn('return entry.row_html || \'\';', script)
 
     def test_owner_can_create_lead_inside_intake_center(self):
         self.client.force_login(self.user)
@@ -130,10 +164,11 @@ class IntakeCenterViewTests(TestCase):
         self.client.force_login(self.user)
 
         response = self.client.get(reverse('intake-center'), {'status': IntakeStatus.REVIEWING})
+        queue_names = [item['object'].full_name for item in response.context['intake_center_page']['data']['queue_items']]
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Triado Central')
-        self.assertNotContains(response, 'Lead Central')
+        self.assertEqual(queue_names, ['Triado Central'])
         self.assertContains(response, 'aria-label="Fila: 1.', html=False)
         self.assertNotContains(response, 'pulse-pending has-count')
 
@@ -163,19 +198,21 @@ class IntakeCenterViewTests(TestCase):
             reverse('intake-center'),
             {'panel': 'tab-intake-queue', 'created_window': 'today'},
         )
+        today_queue_names = [item['object'].full_name for item in today_response.context['intake_center_page']['data']['queue_items']]
         self.assertEqual(today_response.status_code, 200)
         self.assertContains(today_response, 'Lead Central')
         self.assertContains(today_response, 'Triado Central')
-        self.assertNotContains(today_response, 'Lead Antigo')
+        self.assertNotIn('Lead Antigo', today_queue_names)
         self.assertContains(today_response, 'aria-label="Fila: 2.', html=False)
 
         assigned_response = self.client.get(
             reverse('intake-center'),
             {'panel': 'tab-intake-queue', 'assignment': 'assigned'},
         )
+        assigned_queue_names = [item['object'].full_name for item in assigned_response.context['intake_center_page']['data']['queue_items']]
         self.assertEqual(assigned_response.status_code, 200)
         self.assertContains(assigned_response, 'Triado Central')
-        self.assertNotContains(assigned_response, 'Lead Central')
+        self.assertEqual(assigned_queue_names, ['Triado Central'])
         self.assertContains(assigned_response, 'aria-label="Fila: 1.', html=False)
 
     def test_reception_can_reject_from_intake_center(self):

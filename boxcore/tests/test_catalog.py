@@ -97,6 +97,7 @@ class CatalogViewTests(TestCase):
         self.assertContains(response, 'js/core/dynamic-visuals-loader.js')
         self.assertNotContains(response, 'js/core/dynamic-visuals.js')
         self.assertContains(response, 'js/core/shell.js')
+        self.assertContains(response, 'js/core/surface-runtime.js')
         self.assertContains(response, 'id="global-search-input" type="search" name="query" placeholder="Buscar aluno, telefone ou CPF" maxlength="50"', html=False)
         self.assertContains(response, 'name="query"', html=False)
         self.assertContains(response, 'placeholder="Buscar aluno, e-mail ou telefone..."', html=False)
@@ -114,6 +115,14 @@ class CatalogViewTests(TestCase):
         self.assertNotIn('css/catalog/shared.css', response.context['current_page_assets']['css'])
         self.assertNotIn('css/catalog/students.css', response.context['current_page_assets']['css'])
         self.assertEqual(response.context['student_directory_page']['data']['student_filter_form'].fields['query'].max_length, 50)
+        self.assertEqual(
+            response.context['student_directory_page']['behavior']['surface_runtime']['surface_behavior']['surface_key'],
+            'student-directory',
+        )
+        self.assertEqual(
+            response.context['student_directory_page']['behavior']['surface_runtime']['surface_behavior']['scope']['storage_tier'],
+            'session',
+        )
 
     def test_student_directory_treats_expired_pending_payment_as_overdue(self):
         overdue_student = Student.objects.create(full_name='Aline Atrasada', phone='5511977777777')
@@ -162,6 +171,22 @@ class CatalogViewTests(TestCase):
         self.assertIn('if (hasServerScopedFilters() || !hasFullDirectorySearchIndex)', script)
         self.assertIn('if (!hasFullDirectorySearchIndex) {', script)
         self.assertIn('window.location.assign(buildDirectoryFilterUrl(nextFilter));', script)
+
+    def test_student_directory_uses_surface_runtime_for_cache_and_stale_state(self):
+        script = (
+            Path(__file__).resolve().parents[2]
+            / 'static'
+            / 'js'
+            / 'pages'
+            / 'students'
+            / 'student-directory.js'
+        ).read_text(encoding='utf-8')
+
+        self.assertIn("surfaceRuntime.writeCacheEntry('directory-search-index', value);", script)
+        self.assertIn("surfaceRuntime.writeCacheEntry('directory-search-stale', value);", script)
+        self.assertIn("surfaceRuntime.readCacheEntry('directory-search-index');", script)
+        self.assertIn("surfaceRuntime.readCacheEntry('directory-search-stale');", script)
+        self.assertIn("surfaceRuntime.broadcastInvalidation(reason || 'mutation', {", script)
 
     def test_class_grid_renders(self):
         self.client.force_login(self.user)

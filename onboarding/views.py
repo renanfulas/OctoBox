@@ -18,7 +18,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import redirect
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.views import View
@@ -38,25 +37,49 @@ from .presentation import build_intake_center_page
 from .queries import build_intake_center_snapshot
 
 
-INTAKE_SEARCH_INDEX_LIMIT = 200
+INTAKE_SEARCH_BOOTSTRAP_LIMIT = 24
+INTAKE_SEARCH_PAGE_LIMIT = 50
 
 
 def _serialize_intake_search_entry(*, item, request):
     intake = item['object']
+    conversion = item['conversion']
+    permissions = item['action_permissions']
+    can_manage_students = getattr(request, 'intake_page_capabilities', {}).get('can_manage_students', False)
+    can_work_queue = getattr(request, 'intake_page_capabilities', {}).get('can_work_queue', False)
+    conversion_href = ''
+    if can_manage_students and conversion['can_convert'] and conversion['action_type'] == 'convert-student':
+        conversion_href = f"{reverse('student-quick-create')}?intake={intake.id}#student-form-essential"
     return {
         'id': intake.id,
         'full_name': intake.full_name,
+        'channel_label': intake.email or intake.phone or '',
+        'source_label': intake.get_source_display(),
         'registration_age_days': item['registration_age_days'],
+        'registration_age_label': item['registration_age_label'],
         'semantic_stage': item['semantic_state']['semantic_stage'],
+        'semantic_label': item['semantic_state']['semantic_label'],
+        'conversion_reason': conversion['reason'],
         'created_today': bool(getattr(intake, 'created_at', None) and intake.created_at.date() == timezone.localdate()),
         'assigned': bool(getattr(intake, 'assigned_to_id', None)),
-        'row_html': render_to_string(
-            'onboarding/includes/intake/intake_queue_row.html',
-            {
-                'item': item,
-            },
-            request=request,
+        'assigned_label': (
+            intake.assigned_to.get_full_name() or intake.assigned_to.username
+            if getattr(intake, 'assigned_to', None)
+            else 'Aguardando'
         ),
+        'whatsapp_href': item['whatsapp_href'],
+        'conversion': {
+            'can_convert': bool(conversion['can_convert']),
+            'action_type': conversion['action_type'],
+            'action_label': conversion['action_label'],
+            'href': conversion_href,
+            'requires_post': bool(
+                can_work_queue and conversion['can_convert'] and conversion['action_type'] == 'move-to-conversation'
+            ),
+        },
+        'permissions': {
+            'can_reject': bool(can_work_queue and permissions.get('can_reject')),
+        },
     }
 
 
@@ -135,10 +158,14 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
         current_role = self._get_current_role()
         snapshot = kwargs.get('snapshot') or self._build_snapshot()
         index_params = _clean_intake_search_index_params(self.request.GET)
+        self.request.intake_page_capabilities = {
+            'can_manage_students': getattr(current_role, 'slug', '') in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION),
+            'can_work_queue': getattr(current_role, 'slug', '') in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION),
+        }
         search_snapshot = build_intake_center_snapshot(
             params=index_params,
             actor_role_slug=getattr(current_role, 'slug', ''),
-            queue_limit=INTAKE_SEARCH_INDEX_LIMIT,
+            queue_limit=INTAKE_SEARCH_BOOTSTRAP_LIMIT,
         )
         page_payload = build_intake_center_page(
             snapshot=snapshot,
@@ -147,7 +174,7 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
                 'cache_key': index_params.urlencode() or 'all',
                 'refresh_token': search_snapshot.get('queue_refresh_token', ''),
                 'page_url': reverse('intake-search-index-page'),
-                'page_size': INTAKE_SEARCH_INDEX_LIMIT,
+                'page_size': INTAKE_SEARCH_PAGE_LIMIT,
                 'total': search_snapshot.get('queue_total_count', 0),
                 'has_next': search_snapshot.get('queue_has_next', False),
                 'next_offset': search_snapshot.get('queue_next_offset'),
@@ -260,14 +287,18 @@ class IntakeSearchIndexPageView(LoginRequiredMixin, RoleRequiredMixin, View):
         snapshot = build_intake_center_snapshot(
             params=index_params,
             actor_role_slug=getattr(current_role, 'slug', ''),
-            queue_limit=INTAKE_SEARCH_INDEX_LIMIT,
+            queue_limit=INTAKE_SEARCH_PAGE_LIMIT,
             queue_offset=offset,
         )
+        request.intake_page_capabilities = {
+            'can_manage_students': getattr(current_role, 'slug', '') in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION),
+            'can_work_queue': getattr(current_role, 'slug', '') in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION),
+        }
         return JsonResponse(
             {
                 'cache_key': index_params.urlencode() or 'all',
                 'refresh_token': snapshot.get('queue_refresh_token', ''),
-                'page_size': INTAKE_SEARCH_INDEX_LIMIT,
+                'page_size': INTAKE_SEARCH_PAGE_LIMIT,
                 'total': snapshot.get('queue_total_count', 0),
                 'has_next': snapshot.get('queue_has_next', False),
                 'next_offset': snapshot.get('queue_next_offset'),

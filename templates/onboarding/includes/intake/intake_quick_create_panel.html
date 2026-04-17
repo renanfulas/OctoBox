@@ -34,7 +34,7 @@ PONTOS CRITICOS:
             <span class="pill {% if entry_kind == 'lead' %}accent{% else %}info{% endif %}">{% if entry_kind == 'lead' %}Lead{% else %}Intake{% endif %}</span>
         </div>
     </div>
-    <form method="post" class="form-stack intake-create-form">
+    <form method="post" class="form-stack intake-create-form" data-form-kind="intake-quick-create">
         {% csrf_token %}
         <input type="hidden" name="form_kind" value="quick-create">
         <input type="hidden" name="entry_kind" value="{{ entry_kind }}">

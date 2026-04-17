@@ -3,11 +3,24 @@
 <tr
     class="intake-directory-row"
     data-intake-id="{{ intake.id }}"
+    data-full-name="{{ intake.full_name }}"
+    data-channel-label="{{ intake.email|default:intake.phone }}"
+    data-source-label="{{ intake.get_source_display }}"
     data-registration-age-days="{{ item.registration_age_days }}"
+    data-registration-age-label="{{ item.registration_age_label }}"
     data-search-index="{{ intake.full_name }}"
     data-semantic-stage="{{ semantic.semantic_stage }}"
+    data-semantic-label="{{ semantic.semantic_label }}"
+    data-conversion-reason="{{ conversion.reason }}"
     data-created-today="{% if item.registration_age_days == 0 %}true{% else %}false{% endif %}"
     data-assigned="{% if intake.assigned_to %}true{% else %}false{% endif %}"
+    data-assigned-label="{% if intake.assigned_to %}{{ intake.assigned_to.get_full_name|default:intake.assigned_to.username }}{% else %}Aguardando{% endif %}"
+    data-whatsapp-href="{{ item.whatsapp_href|default:'' }}"
+    data-conversion-action-type="{{ conversion.action_type }}"
+    data-conversion-action-label="{{ conversion.action_label }}"
+    data-conversion-action-href="{% if page.capabilities.can_manage_students and conversion.can_convert and conversion.action_type == 'convert-student' %}{{ student_quick_create_url }}?intake={{ intake.id }}#student-form-essential{% endif %}"
+    data-conversion-action-post="{% if page.capabilities.can_work_queue and conversion.can_convert and conversion.action_type == 'move-to-conversation' %}true{% else %}false{% endif %}"
+    data-can-reject="{% if page.capabilities.can_work_queue and permissions.can_reject %}true{% else %}false{% endif %}"
 >
     <td class="intake-queue-col--contact" data-label="Contato">
         <div class="intake-contact-identity">

@@ -13,6 +13,7 @@ from django.test import SimpleTestCase
 
 from shared_support.page_payloads import PAGE_HERO_CONTENT_RULES, attach_page_payload, build_page_assets, build_page_hero, build_page_payload
 from shared_support.static_assets import clear_runtime_css_cache, resolve_runtime_css_paths, sync_static_to_staticfiles
+from shared_support.surface_runtime_contracts import build_asset_behavior, build_surface_behavior, build_surface_runtime_contract
 
 
 class PageHeroContractTests(SimpleTestCase):
@@ -203,3 +204,42 @@ class PagePayloadBridgeContractTests(SimpleTestCase):
         synced = sync_static_to_staticfiles(subpaths=['css'])
 
         self.assertTrue(any(item['target'].endswith('staticfiles\\css') for item in synced))
+
+
+class SurfaceRuntimeContractTests(SimpleTestCase):
+    def test_build_surface_runtime_contract_keeps_backend_as_source_of_truth(self):
+        contract = build_surface_runtime_contract(
+            surface_behavior=build_surface_behavior(
+                surface_key='student-directory',
+                role_slug='Owner',
+                cache_key='all',
+                refresh_token='students:v1',
+                bootstrap_item_count=15,
+                bootstrap_has_more=True,
+                hydration_mode='idle',
+                hydration_page_url='/alunos/busca/paginas/',
+                hydration_page_size=50,
+                local_filters=['query', 'status'],
+                server_filters=['payment_status'],
+            ),
+            asset_behavior=build_asset_behavior(
+                critical_css=['students-scene'],
+                deferred_css=['students-secondary-panels'],
+                progressive_js=['surface-runtime', 'student-directory'],
+            ),
+            telemetry_key='student-directory',
+            surface_budget_key='students-hot-path',
+            expected_hot_path='cache-hit-after-first-load',
+        )
+
+        self.assertEqual(contract['surface_behavior']['surface_key'], 'student-directory')
+        self.assertEqual(contract['surface_behavior']['scope']['role_slug'], 'Owner')
+        self.assertEqual(contract['surface_behavior']['cache']['refresh_token'], 'students:v1')
+        self.assertEqual(contract['surface_behavior']['bootstrap']['item_count'], 15)
+        self.assertEqual(contract['surface_behavior']['hydration']['mode'], 'idle')
+        self.assertEqual(contract['surface_behavior']['filters']['local'], ['query', 'status'])
+        self.assertEqual(contract['surface_behavior']['filters']['server'], ['payment_status'])
+        self.assertTrue(contract['surface_behavior']['invalidation']['on_refresh_token_change'])
+        self.assertFalse(contract['surface_behavior']['safety']['persist_to_disk'])
+        self.assertEqual(contract['asset_behavior']['progressive_js'], ['surface-runtime', 'student-directory'])
+        self.assertEqual(contract['observability']['surface_budget_key'], 'students-hot-path')

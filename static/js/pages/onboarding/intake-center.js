@@ -1,5 +1,8 @@
 (function() {
     function supportsSessionStorage() {
+        if (window.OctoBoxSurfaceRuntime && typeof window.OctoBoxSurfaceRuntime.supportsSessionStorage === 'function') {
+            return window.OctoBoxSurfaceRuntime.supportsSessionStorage();
+        }
         try {
             return typeof window.sessionStorage !== 'undefined';
         } catch (error) {
@@ -8,6 +11,14 @@
     }
 
     function readSessionJson(key) {
+        if (surfaceRuntime) {
+            if (key === intakeSearchCacheKey) {
+                return surfaceRuntime.readCacheEntry('intake-search-index');
+            }
+            if (key === intakeSearchStaleKey) {
+                return surfaceRuntime.readCacheEntry('intake-search-stale');
+            }
+        }
         if (!supportsSessionStorage()) {
             return null;
         }
@@ -21,6 +32,16 @@
     }
 
     function writeSessionJson(key, value) {
+        if (surfaceRuntime) {
+            if (key === intakeSearchCacheKey) {
+                surfaceRuntime.writeCacheEntry('intake-search-index', value);
+                return;
+            }
+            if (key === intakeSearchStaleKey) {
+                surfaceRuntime.writeCacheEntry('intake-search-stale', value);
+                return;
+            }
+        }
         if (!supportsSessionStorage()) {
             return;
         }
@@ -72,6 +93,10 @@
     var emptySearchMessage = emptySearchRow ? emptySearchRow.querySelector('td') : null;
     var intakeKpiCards = Array.prototype.slice.call(pageRoot.querySelectorAll('[data-slot="intake-interactive-kpi-card"]'));
     var intakeSearchConfig = pageBehavior.intake_search || {};
+    var surfaceRuntimeContract = pageBehavior.surface_runtime || {};
+    var surfaceRuntime = window.OctoBoxSurfaceRuntime && typeof window.OctoBoxSurfaceRuntime.createSurfaceRuntime === 'function'
+        ? window.OctoBoxSurfaceRuntime.createSurfaceRuntime(surfaceRuntimeContract)
+        : null;
     var initialServerFilterKey = getActiveServerFilterKey();
 
     if (!queueBoard || !tbody || !filterForm || !searchInput || !sortPill) {
@@ -79,7 +104,12 @@
     }
 
     var serverRows = Array.prototype.slice.call(tbody.querySelectorAll('.intake-directory-row'));
-    var intakeSearchCacheKey = 'octobox.intake.queue.search-index.v1.' + String(intakeSearchConfig.cache_key || 'all');
+    var intakeSearchCacheKey = surfaceRuntime
+        ? surfaceRuntime.buildStorageKey('intake-search-index')
+        : 'octobox.intake.queue.search-index.v1.' + String(intakeSearchConfig.cache_key || 'all');
+    var intakeSearchStaleKey = surfaceRuntime
+        ? surfaceRuntime.buildStorageKey('intake-search-stale')
+        : 'octobox.intake.queue.search-index.stale.v1.' + String(intakeSearchConfig.cache_key || 'all');
     var searchState = {
         query: '',
         listAllCommand: false,
@@ -115,6 +145,21 @@
     };
 
     window.__octoboxIntakeSearchTelemetry = performanceTelemetry;
+
+    if (surfaceRuntime && typeof surfaceRuntime.subscribeInvalidation === 'function') {
+        surfaceRuntime.subscribeInvalidation(function(invalidationEvent) {
+            if (!invalidationEvent || invalidationEvent.payload && invalidationEvent.payload.scope !== 'intake-search') {
+                return;
+            }
+            searchState.index = [];
+            searchState.idleHydrationCompleted = false;
+            writeSessionJson(intakeSearchStaleKey, {
+                stale: true,
+                marked_at: Date.now(),
+                reason: invalidationEvent.reason || 'cross-tab',
+            });
+        });
+    }
 
     function getLastPerformanceSample(list) {
         if (!Array.isArray(list) || !list.length) {
@@ -198,17 +243,146 @@
 
     function buildCurrentServerIndex() {
         return serverRows.map(function(row) {
-            var nameNode = row.querySelector('.intake-contact-name');
             return {
                 id: Number(row.getAttribute('data-intake-id') || 0),
-                full_name: nameNode ? nameNode.textContent.trim() : '',
+                full_name: row.getAttribute('data-full-name') || '',
+                channel_label: row.getAttribute('data-channel-label') || '',
+                source_label: row.getAttribute('data-source-label') || '',
                 registration_age_days: Number(row.getAttribute('data-registration-age-days') || '0'),
+                registration_age_label: row.getAttribute('data-registration-age-label') || '',
                 semantic_stage: row.getAttribute('data-semantic-stage') || '',
+                semantic_label: row.getAttribute('data-semantic-label') || '',
+                conversion_reason: row.getAttribute('data-conversion-reason') || '',
                 created_today: row.getAttribute('data-created-today') === 'true',
                 assigned: row.getAttribute('data-assigned') === 'true',
-                row_html: row.outerHTML,
+                assigned_label: row.getAttribute('data-assigned-label') || 'Aguardando',
+                whatsapp_href: row.getAttribute('data-whatsapp-href') || '',
+                conversion: {
+                    action_type: row.getAttribute('data-conversion-action-type') || '',
+                    action_label: row.getAttribute('data-conversion-action-label') || '',
+                    href: row.getAttribute('data-conversion-action-href') || '',
+                    requires_post: row.getAttribute('data-conversion-action-post') === 'true',
+                },
+                permissions: {
+                    can_reject: row.getAttribute('data-can-reject') === 'true',
+                },
             };
         });
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function getCsrfToken() {
+        var csrfNode = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        return csrfNode ? String(csrfNode.value || '') : '';
+    }
+
+    function getQueueReturnQuery() {
+        var currentParams = new URLSearchParams(window.location.search || '');
+        if (!currentParams.has('panel')) {
+            currentParams.set('panel', 'tab-intake-queue');
+        }
+        return currentParams.toString();
+    }
+
+    function buildAvatarTone(entryId) {
+        var tones = ['orange', 'blue', 'purple', 'teal', 'pink', 'indigo'];
+        var normalizedId = Math.abs(Number(entryId || 0)) || 0;
+        return tones[normalizedId % tones.length];
+    }
+
+    function buildSemanticPillClass(entry) {
+        if (String(entry.semantic_stage || '') === 'new-leads') {
+            return 'student-status-pill--blue';
+        }
+        if (String(entry.semantic_stage || '') === 'lead-open') {
+            return 'student-status-pill--orange';
+        }
+        return 'student-status-pill--gray';
+    }
+
+    function buildConversionActionHtml(entry) {
+        if (!entry || !entry.conversion) {
+            return '';
+        }
+
+        if (entry.conversion.href) {
+            return '<a class="button intake-convert-button" href="' + escapeHtml(entry.conversion.href) + '">' + escapeHtml(entry.conversion.action_label) + '</a>';
+        }
+
+        if (entry.conversion.requires_post) {
+            return [
+                '<form method="post" class="intake-row-form" data-action="intake-queue-actions">',
+                '<input type="hidden" name="csrfmiddlewaretoken" value="', escapeHtml(getCsrfToken()), '">',
+                '<input type="hidden" name="intake_id" value="', escapeHtml(entry.id), '">',
+                '<input type="hidden" name="return_query" value="', escapeHtml(getQueueReturnQuery()), '">',
+                '<button class="button intake-convert-button" type="submit" name="action" value="move-to-conversation">',
+                escapeHtml(entry.conversion.action_label),
+                '</button>',
+                '</form>',
+            ].join('');
+        }
+
+        return '';
+    }
+
+    function buildRejectActionHtml(entry) {
+        if (!entry || !entry.permissions || !entry.permissions.can_reject) {
+            return '';
+        }
+
+        return [
+            '<form method="post" class="intake-row-form" data-action="intake-queue-actions">',
+            '<input type="hidden" name="csrfmiddlewaretoken" value="', escapeHtml(getCsrfToken()), '">',
+            '<input type="hidden" name="intake_id" value="', escapeHtml(entry.id), '">',
+            '<input type="hidden" name="return_query" value="', escapeHtml(getQueueReturnQuery()), '">',
+            '<button class="button secondary" type="submit" name="action" value="reject-intake">Recusar</button>',
+            '</form>',
+        ].join('');
+    }
+
+    function buildWhatsappActionHtml(entry) {
+        if (!entry || !entry.whatsapp_href) {
+            return '';
+        }
+
+        return [
+            '<div class="intake-whatsapp-slot">',
+            '<a class="button secondary intake-whatsapp-button" href="', escapeHtml(entry.whatsapp_href), '" target="_blank" rel="noopener" aria-label="Conversar com ', escapeHtml(entry.full_name), ' no WhatsApp" title="Conversar no WhatsApp">',
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" aria-hidden="true" focusable="false">',
+            '<path fill="currentColor" d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.1-16.4-14.6-27.4-32.7-30.6-38.2-3.2-5.6-.3-8.6 2.4-11.4 2.5-2.5 5.5-6.5 8.3-9.8 2.8-3.3 3.7-5.6 5.5-9.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.8 23.5 9.2 31.5 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.7z"/>',
+            '</svg>',
+            '</a>',
+            '</div>',
+        ].join('');
+    }
+
+    function buildSearchRowHtml(entry) {
+        var initials = String(entry.full_name || '').trim().slice(0, 2).toUpperCase() || '--';
+        return [
+            '<tr class="intake-directory-row" data-intake-id="', escapeHtml(entry.id), '" data-registration-age-days="', escapeHtml(entry.registration_age_days), '" data-search-index="', escapeHtml(entry.full_name), '" data-semantic-stage="', escapeHtml(entry.semantic_stage), '" data-created-today="', entry.created_today ? 'true' : 'false', '" data-assigned="', entry.assigned ? 'true' : 'false', '">',
+            '<td class="intake-queue-col--contact" data-label="Contato">',
+            '<div class="intake-contact-identity">',
+            '<div class="avatar-circle avatar-', buildAvatarTone(entry.id), ' intake-contact-avatar">', escapeHtml(initials), '</div>',
+            '<div class="intake-contact-copy"><strong class="intake-contact-name">', escapeHtml(entry.full_name), '</strong><span class="intake-contact-channel">', escapeHtml(entry.channel_label), '</span></div>',
+            '</div></td>',
+            '<td class="intake-queue-col--source" data-label="Origem"><span class="intake-table-text">', escapeHtml(entry.source_label), '</span></td>',
+            '<td class="intake-queue-col--stage" data-label="Leitura"><div class="intake-reading-stack"><span class="student-status-pill ', buildSemanticPillClass(entry), '">', escapeHtml(entry.semantic_label), '</span><span class="intake-reading-note">', escapeHtml(entry.conversion_reason), '</span></div></td>',
+            '<td class="intake-queue-col--owner" data-label="Responsavel"><span class="intake-table-text">', escapeHtml(entry.assigned_label || 'Aguardando'), '</span></td>',
+            '<td class="intake-queue-col--registration" data-label="Registro"><span class="intake-table-text">', escapeHtml(entry.registration_age_label), '</span></td>',
+            '<td class="intake-queue-col--actions" data-label="Proxima acao"><div class="operation-hero-action-rail intake-row-actions">',
+            buildConversionActionHtml(entry),
+            buildRejectActionHtml(entry),
+            buildWhatsappActionHtml(entry),
+            '</div></td></tr>',
+        ].join('');
     }
 
     function persistSearchIndex(index, meta) {
@@ -222,13 +396,23 @@
         performanceTelemetry.totalIndexEntries = Math.max(performanceTelemetry.totalIndexEntries, normalizedIndex.length);
         writeSessionJson(intakeSearchCacheKey, {
             index: normalizedIndex,
+            cached_at: Date.now(),
             refresh_token: intakeSearchConfig.refresh_token || '',
             has_next: searchState.hasNext,
             next_offset: searchState.nextOffset,
             total: searchState.total,
             saved_at: Date.now(),
         });
+        writeSessionJson(intakeSearchStaleKey, {
+            stale: false,
+            marked_at: '',
+        });
         syncDevPanel();
+    }
+
+    function isSearchIndexStale() {
+        var staleState = readSessionJson(intakeSearchStaleKey);
+        return Boolean(staleState && staleState.stale);
     }
 
     function getSearchIndexFromCache() {
@@ -237,8 +421,14 @@
             return [];
         }
 
-        if ((cacheEntry.refresh_token || '') !== String(intakeSearchConfig.refresh_token || '')) {
-            return [];
+        if (surfaceRuntime && typeof surfaceRuntime.isFresh === 'function') {
+            if (!surfaceRuntime.isFresh(cacheEntry, { refreshToken: intakeSearchConfig.refresh_token }) || isSearchIndexStale()) {
+                return [];
+            }
+        } else {
+            if ((cacheEntry.refresh_token || '') !== String(intakeSearchConfig.refresh_token || '') || isSearchIndexStale()) {
+                return [];
+            }
         }
 
         searchState.hasNext = Object.prototype.hasOwnProperty.call(cacheEntry, 'has_next') ? Boolean(cacheEntry.has_next) : Boolean(intakeSearchConfig.has_next);
@@ -248,6 +438,10 @@
     }
 
     function getSearchIndex() {
+        if (isSearchIndexStale()) {
+            searchState.index = [];
+        }
+
         if (searchState.index.length) {
             return searchState.index;
         }
@@ -556,8 +750,9 @@
 
     function renderSearchRows(entries) {
         var html = entries.map(function(entry) {
-            return entry.row_html || '';
+            return buildSearchRowHtml(entry);
         }).join('');
+        var nextPageLabel = 'Carregar proximas ' + String(intakeSearchConfig.page_size || 50) + ' entradas';
         var shouldShowNextPage = searchState.hasNext && (searchState.query || searchState.listAllCommand);
 
         serverRows.forEach(function(row) {
@@ -572,7 +767,7 @@
         if (shouldShowNextPage) {
             tbody.insertAdjacentHTML(
                 'beforeend',
-                '<tr data-intake-search-next-row><td colspan="6" class="table-empty-cell p-6 text-center"><button type="button" class="button secondary" data-intake-search-next>Carregar proximas 200 entradas</button></td></tr>'
+                '<tr data-intake-search-next-row><td colspan="6" class="table-empty-cell p-6 text-center"><button type="button" class="button secondary" data-intake-search-next>' + escapeHtml(nextPageLabel) + '</button></td></tr>'
             );
         }
 
@@ -583,7 +778,27 @@
         searchState.isUsingSearchIndex = true;
     }
 
+    function markSearchIndexStale(reason) {
+        var stalePayload = {
+            stale: true,
+            marked_at: Date.now(),
+            reason: reason || 'mutation',
+        };
+        writeSessionJson(intakeSearchStaleKey, stalePayload);
+        if (surfaceRuntime && typeof surfaceRuntime.broadcastInvalidation === 'function') {
+            surfaceRuntime.broadcastInvalidation(reason || 'mutation', {
+                scope: 'intake-search',
+                refresh_token: String(intakeSearchConfig.refresh_token || ''),
+            });
+        }
+    }
+
     function applyLocalQueueState() {
+        if (isSearchIndexStale() && (searchState.query || searchState.listAllCommand || searchState.filterKey)) {
+            window.location.assign(window.location.pathname + window.location.search);
+            return;
+        }
+
         if (localZeroKpiState.key) {
             restoreServerRows();
             serverRows.forEach(function(row) {
@@ -737,6 +952,16 @@
             applyLocalQueueState();
         });
     });
+
+    pageRoot.addEventListener('submit', function(event) {
+        var targetForm = event.target;
+        if (!targetForm || !(targetForm instanceof HTMLFormElement)) {
+            return;
+        }
+        if (targetForm.matches('.intake-row-form') || targetForm.getAttribute('data-form-kind') === 'intake-quick-create') {
+            markSearchIndexStale('mutation');
+        }
+    }, true);
 
     document.addEventListener('visibilitychange', function() {
         if (!document.hidden) {

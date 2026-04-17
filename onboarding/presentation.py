@@ -17,6 +17,7 @@ from django.urls import reverse
 
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from shared_support.page_payloads import build_page_assets, build_page_context, build_page_hero, build_page_payload
+from shared_support.surface_runtime_contracts import build_asset_behavior, build_surface_behavior, build_surface_runtime_contract
 
 
 def build_intake_center_page(*, snapshot, current_role_slug, intake_search=None):
@@ -66,6 +67,45 @@ def build_intake_center_page(*, snapshot, current_role_slug, intake_search=None)
         data_panel='intake-hero',
         actions_slot='intake-hero-actions',
     )
+    intake_search_payload = intake_search or {}
+    surface_runtime_contract = build_surface_runtime_contract(
+        surface_behavior=build_surface_behavior(
+            surface_key='intake-center',
+            role_slug=current_role_slug,
+            storage_tier='session',
+            cache_enabled=True,
+            cache_key=intake_search_payload.get('cache_key') or 'all',
+            refresh_token=intake_search_payload.get('refresh_token') or '',
+            ttl_ms=120000,
+            bootstrap_mode='minimal',
+            bootstrap_item_count=len(intake_search_payload.get('index') or []),
+            bootstrap_has_more=intake_search_payload.get('has_next', False),
+            bootstrap_next_offset=intake_search_payload.get('next_offset'),
+            hydration_mode='idle',
+            hydration_page_url=intake_search_payload.get('page_url') or '',
+            hydration_page_size=intake_search_payload.get('page_size') or 0,
+            hydration_prefetch_limit=2,
+            hydration_max_parallel_requests=1,
+            local_filters=['query', 'semantic-stage:new-leads', 'sort:registration'],
+            server_filters=['status', 'source', 'created_window', 'assignment'],
+            events_primary='none',
+            events_fallback='none',
+            data_classification='operational',
+            persist_to_disk=False,
+            requires_server_revalidation_before_commit=True,
+        ),
+        asset_behavior=build_asset_behavior(
+            critical_css=['operations-shell', 'catalog-shared', 'students-shared', 'intake-scene'],
+            progressive_js=['surface-runtime', 'intake-center'],
+            interaction_triggers={
+                'queue_search': 'input',
+                'queue_hydration': 'idle',
+            },
+        ),
+        telemetry_key='intake-center',
+        surface_budget_key='intake-hot-path',
+        expected_hot_path='cache-hit-after-first-load',
+    )
 
     return build_page_payload(
         context={
@@ -88,7 +128,8 @@ def build_intake_center_page(*, snapshot, current_role_slug, intake_search=None)
             'can_work_queue': can_work_queue,
         },
         behavior={
-            'intake_search': intake_search or {},
+            'intake_search': intake_search_payload,
+            'surface_runtime': surface_runtime_contract,
         },
         assets=build_page_assets(
             css=['css/design-system/operations.css', 'css/catalog/shared.css', 'css/catalog/students.css', 'css/onboarding/intakes.css'],

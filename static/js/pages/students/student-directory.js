@@ -39,6 +39,10 @@ document.addEventListener('DOMContentLoaded', function() {
     var prefetchConfig = pageBehavior.student_prefetch || {};
     var directorySearchConfig = pageBehavior.directory_search || {};
     var performanceTimingConfig = pageBehavior.performance_timing || {};
+    var surfaceRuntimeContract = pageBehavior.surface_runtime || {};
+    var surfaceRuntime = window.OctoBoxSurfaceRuntime && typeof window.OctoBoxSurfaceRuntime.createSurfaceRuntime === 'function'
+        ? window.OctoBoxSurfaceRuntime.createSurfaceRuntime(surfaceRuntimeContract)
+        : null;
     var hasDirectorySearchEndpoint = Boolean(directorySearchConfig.page_url);
     var hasFullDirectorySearchIndex = directorySearchConfig.full_index_available !== false || hasDirectorySearchEndpoint;
     var prefetchEnabled = prefetchConfig.enabled !== false;
@@ -59,8 +63,12 @@ document.addEventListener('DOMContentLoaded', function() {
     var currentSearchParams = new URLSearchParams(window.location.search || '');
     var rowPrefetchTimers = new WeakMap();
     var serverRows = rows.slice();
-    var directorySearchCacheKey = 'octobox.student.directory.search-index.v1.' + String(directorySearchConfig.cache_key || 'all');
-    var directorySearchStaleKey = 'octobox.student.directory.search-index.stale.v1.' + String(directorySearchConfig.cache_key || 'all');
+    var directorySearchCacheKey = surfaceRuntime
+        ? surfaceRuntime.buildStorageKey('directory-search-index')
+        : 'octobox.student.directory.search-index.v1.' + String(directorySearchConfig.cache_key || 'all');
+    var directorySearchStaleKey = surfaceRuntime
+        ? surfaceRuntime.buildStorageKey('directory-search-stale')
+        : 'octobox.student.directory.search-index.stale.v1.' + String(directorySearchConfig.cache_key || 'all');
     var directorySearchState = {
         index: [],
         isUsingSearchIndex: false,
@@ -125,6 +133,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.__octoboxStudentRealtimeTelemetry = realtimeTelemetry;
     window.__octoboxStudentSearchTelemetry = performanceTelemetry;
+
+    if (surfaceRuntime && typeof surfaceRuntime.subscribeInvalidation === 'function') {
+        surfaceRuntime.subscribeInvalidation(function(invalidationEvent) {
+            if (!invalidationEvent || invalidationEvent.payload && invalidationEvent.payload.scope !== 'directory-search') {
+                return;
+            }
+            writeSessionJson(directorySearchStaleKey, {
+                stale: true,
+                marked_at: Date.now(),
+                reason: invalidationEvent.reason || 'cross-tab',
+            });
+        });
+    }
 
     function getLastPerformanceSample(list) {
         if (!Array.isArray(list) || !list.length) {
@@ -247,6 +268,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function supportsSessionStorage() {
+        if (window.OctoBoxSurfaceRuntime && typeof window.OctoBoxSurfaceRuntime.supportsSessionStorage === 'function') {
+            return window.OctoBoxSurfaceRuntime.supportsSessionStorage();
+        }
         try {
             return typeof window.sessionStorage !== 'undefined';
         } catch (error) {
@@ -259,6 +283,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function writeSessionJson(key, value) {
+        if (surfaceRuntime) {
+            if (key === directorySearchCacheKey) {
+                surfaceRuntime.writeCacheEntry('directory-search-index', value);
+                return;
+            }
+            if (key === directorySearchStaleKey) {
+                surfaceRuntime.writeCacheEntry('directory-search-stale', value);
+                return;
+            }
+        }
         if (!supportsSessionStorage()) {
             return;
         }
@@ -271,6 +305,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function readSessionJson(key) {
+        if (surfaceRuntime) {
+            if (key === directorySearchCacheKey) {
+                return surfaceRuntime.readCacheEntry('directory-search-index');
+            }
+            if (key === directorySearchStaleKey) {
+                return surfaceRuntime.readCacheEntry('directory-search-stale');
+            }
+        }
         if (!supportsSessionStorage()) {
             return null;
         }
@@ -298,7 +340,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return [];
         }
 
-        if ((cacheEntry.refresh_token || '') !== String(directorySearchConfig.refresh_token || '')) {
+        if (surfaceRuntime && typeof surfaceRuntime.isFresh === 'function') {
+            if (!surfaceRuntime.isFresh(cacheEntry, { refreshToken: directorySearchConfig.refresh_token })) {
+                return [];
+            }
+        } else if ((cacheEntry.refresh_token || '') !== String(directorySearchConfig.refresh_token || '')) {
             return [];
         }
 
@@ -319,6 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
         performanceTelemetry.totalIndexEntries = Math.max(performanceTelemetry.totalIndexEntries, normalizedIndex.length);
         writeSessionJson(directorySearchCacheKey, {
             index: normalizedIndex,
+            cached_at: Date.now(),
             refresh_token: directorySearchConfig.refresh_token || '',
             has_next: directorySearchState.hasNext,
             next_offset: directorySearchState.nextOffset,
@@ -338,11 +385,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function markDirectorySearchIndexStale(reason) {
-        writeSessionJson(directorySearchStaleKey, {
+        var stalePayload = {
             stale: true,
             marked_at: Date.now(),
             reason: reason || 'mutation',
-        });
+        };
+        writeSessionJson(directorySearchStaleKey, stalePayload);
+        if (surfaceRuntime && typeof surfaceRuntime.broadcastInvalidation === 'function') {
+            surfaceRuntime.broadcastInvalidation(reason || 'mutation', {
+                scope: 'directory-search',
+                refresh_token: String(directorySearchConfig.refresh_token || ''),
+            });
+        }
     }
 
     function getDirectorySearchIndex() {
