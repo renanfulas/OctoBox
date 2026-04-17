@@ -1,0 +1,26 @@
+{
+  "url": "https://app.octoboxfit.com.br/entradas/",
+  "status_code": 200,
+  "request_elapsed_ms": 373.62,
+  "html_bytes": 57803,
+  "encoded_body_bytes": 13097,
+  "headers": {
+    "content_type": "text/html; charset=utf-8",
+    "content_encoding": "gzip",
+    "cache_control": null,
+    "vary": "Cookie",
+    "etag": null,
+    "last_modified": null,
+    "content_length": null,
+    "transfer_encoding": "chunked"
+  },
+  "current_page_behavior_bytes": 4517,
+  "current_page_behavior_present": true,
+  "directory_search_bytes": 2,
+  "directory_search_index_entries": 0,
+  "directory_search_total": null,
+  "directory_search_has_next": null,
+  "listing_snapshot_ms": null,
+  "support_snapshot_ms": null,
+  "view_total_ms": null
+}

@@ -1,0 +1,26 @@
+{
+  "url": "https://app.octoboxfit.com.br/alunos/",
+  "status_code": 200,
+  "request_elapsed_ms": 748.86,
+  "html_bytes": 57278,
+  "encoded_body_bytes": 12224,
+  "headers": {
+    "content_type": "text/html; charset=utf-8",
+    "content_encoding": "gzip",
+    "cache_control": null,
+    "vary": "Cookie",
+    "etag": null,
+    "last_modified": null,
+    "content_length": null,
+    "transfer_encoding": "chunked"
+  },
+  "current_page_behavior_bytes": 2646,
+  "current_page_behavior_present": true,
+  "directory_search_bytes": 2311,
+  "directory_search_index_entries": 3,
+  "directory_search_total": 3,
+  "directory_search_has_next": false,
+  "listing_snapshot_ms": null,
+  "support_snapshot_ms": null,
+  "view_total_ms": null
+}
