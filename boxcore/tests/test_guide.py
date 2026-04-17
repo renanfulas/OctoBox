@@ -12,13 +12,30 @@ PONTOS CRITICOS:
 - Se esses testes falharem, a página de orientação interna pode ter quebrado ou perdido contexto.
 """
 
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.contrib.auth.models import Group
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from guide.models import OperationalRuntimeSetting
-from student_identity.models import StudentAppInvitation, StudentInvitationDelivery, StudentInvitationDeliveryStatus
+from onboarding.models import StudentIntake
+from operations.models import LeadImportJob, LeadImportJobStatus, LeadImportProcessingMode
+from shared_support.box_runtime import get_box_runtime_slug
+from student_identity.models import (
+    StudentAppInvitation,
+    StudentBoxMembership,
+    StudentBoxMembershipStatus,
+    StudentIdentity,
+    StudentIdentityProvider,
+    StudentIdentityStatus,
+    StudentInvitationDelivery,
+    StudentInvitationDeliveryStatus,
+    StudentInvitationType,
+)
 from students.models import Student
 
 
@@ -56,6 +73,8 @@ class GuideViewTests(TestCase):
         self.assertContains(response, 'Salvar bloqueio do WhatsApp')
         self.assertContains(response, 'Criar perfis de acesso')
         self.assertContains(response, 'Abrir convites do aluno')
+        self.assertContains(response, 'Faixa declarada')
+        self.assertContains(response, 'Ate 200 leads')
 
     def test_operational_settings_can_update_whatsapp_repeat_window(self):
         self.client.force_login(self.user)
@@ -67,6 +86,146 @@ class GuideViewTests(TestCase):
             OperationalRuntimeSetting.objects.get(key='whatsapp_repeat_block_hours').value,
             '12',
         )
+
+    def test_operational_settings_can_import_contacts_csv(self):
+        self.client.force_login(self.user)
+        contacts_file = SimpleUploadedFile(
+            'contatos.csv',
+            b'Nome,Telefone,Email\nMaria Silva,(11) 99888-7766,maria@example.com\n',
+            content_type='text/csv',
+        )
+
+        response = self.client.post(
+            reverse('operational-settings'),
+            {
+                'source_platform': 'whatsapp',
+                'declared_range': 'up_to_200',
+                'contacts_file': contacts_file,
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '1 contatos importados com sucesso.')
+        self.assertTrue(StudentIntake.objects.filter(full_name='Maria Silva').exists())
+        job = LeadImportJob.objects.get(created_by=self.user)
+        self.assertEqual(job.processing_mode, LeadImportProcessingMode.SYNC)
+        self.assertEqual(job.status, LeadImportJobStatus.COMPLETED)
+
+    def test_operational_settings_persists_duplicate_log_for_sync_import(self):
+        self.client.force_login(self.user)
+        StudentIntake.objects.create(
+            full_name='Lead Existente',
+            phone='5511998887766',
+            email='existente@example.com',
+        )
+        contacts_file = SimpleUploadedFile(
+            'contatos_duplicados.csv',
+            b'Nome,Telefone,Email\nMaria Silva,(11) 99888-7766,maria@example.com\n',
+            content_type='text/csv',
+        )
+
+        response = self.client.post(
+            reverse('operational-settings'),
+            {
+                'source_platform': 'whatsapp',
+                'declared_range': 'up_to_200',
+                'contacts_file': contacts_file,
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '1 contatos ja existiam no banco e foram ignorados.')
+        job = LeadImportJob.objects.get(created_by=self.user)
+        self.assertEqual(job.status, LeadImportJobStatus.COMPLETED_WITH_WARNINGS)
+        self.assertEqual(job.duplicate_count, 1)
+        self.assertEqual(job.duplicate_details[0]['reason'], 'duplicate_in_database_phone')
+        self.assertEqual(job.duplicate_details[0]['normalized_phone'], '5511998887766')
+
+    @patch('guide.views.run_lead_import_job.delay')
+    def test_operational_settings_routes_medium_import_to_background(self, delay_mock):
+        self.client.force_login(self.user)
+        rows = [
+            f'Aluno {index},(11) 97000-{index:04d},lead{index}@example.com'
+            for index in range(1, 250)
+        ]
+        contacts_file = SimpleUploadedFile(
+            'contatos_medios.csv',
+            ('Nome,Telefone,Email\n' + '\n'.join(rows) + '\n').encode('utf-8'),
+            content_type='text/csv',
+        )
+
+        response = self.client.post(
+            reverse('operational-settings'),
+            {
+                'source_platform': 'tecnofit',
+                'declared_range': 'from_201_to_500',
+                'contacts_file': contacts_file,
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Sua importacao foi enviada para processamento em background.')
+        job = LeadImportJob.objects.get(created_by=self.user)
+        self.assertEqual(job.processing_mode, LeadImportProcessingMode.ASYNC_NOW)
+        self.assertEqual(job.status, LeadImportJobStatus.QUEUED)
+        delay_mock.assert_called_once_with(job.id)
+
+    def test_operational_settings_shows_policy_rejection_message(self):
+        self.client.force_login(self.user)
+        rows = [
+            f'Aluno {index},(11) 98000-{index:04d},lead{index}@example.com'
+            for index in range(1, 2050)
+        ]
+        contacts_file = SimpleUploadedFile(
+            'contatos_grandes.csv',
+            ('Nome,Telefone,Email\n' + '\n'.join(rows) + '\n').encode('utf-8'),
+            content_type='text/csv',
+        )
+
+        response = self.client.post(
+            reverse('operational-settings'),
+            {
+                'source_platform': 'whatsapp',
+                'declared_range': 'from_501_to_2000',
+                'contacts_file': contacts_file,
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Este arquivo excede o limite de 2000 leads para importacao.')
+        job = LeadImportJob.objects.get(created_by=self.user)
+        self.assertEqual(job.status, LeadImportJobStatus.REJECTED)
+
+    def test_dev_workspace_renders_signal_mesh_board_only_for_dev(self):
+        dev_user = get_user_model().objects.create_user(
+            username='dev-runtime',
+            email='dev-runtime@example.com',
+            password='senha-forte-123',
+        )
+        dev_group, _ = Group.objects.get_or_create(name='DEV')
+        dev_user.groups.add(dev_group)
+        self.client.force_login(dev_user)
+
+        response = self.client.get(reverse('dev-workspace'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Estado operacional do Red Beacon')
+        self.assertContains(response, 'Red Beacon')
+
+    def test_dashboard_and_owner_workspace_do_not_render_red_beacon_anymore(self):
+        self.client.force_login(self.user)
+
+        dashboard_response = self.client.get(reverse('dashboard'))
+        owner_response = self.client.get(reverse('owner-workspace'))
+
+        self.assertEqual(dashboard_response.status_code, 200)
+        self.assertEqual(owner_response.status_code, 200)
+        self.assertNotContains(dashboard_response, 'Estado operacional do Red Beacon')
+        self.assertNotContains(owner_response, 'Estado operacional do Red Beacon')
 
     def test_student_invitation_operations_renders_for_owner(self):
         self.client.force_login(self.user)
@@ -90,6 +249,7 @@ class GuideViewTests(TestCase):
             {
                 'student': str(student.id),
                 'invited_email': '',
+                'invite_type': StudentInvitationType.INDIVIDUAL,
                 'expires_in_days': '7',
             },
         )
@@ -97,7 +257,83 @@ class GuideViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         invitation = StudentAppInvitation.objects.get(student=student)
         self.assertEqual(invitation.invited_email, 'aluno.convite@example.com')
+        self.assertEqual(invitation.invite_type, StudentInvitationType.INDIVIDUAL)
         self.assertGreater(invitation.expires_at, timezone.now())
+
+    def test_student_invitation_operations_renders_pending_membership_board(self):
+        self.client.force_login(self.user)
+        student = Student.objects.create(
+            full_name='Aluno Pendente Operacional',
+            phone='5511932109876',
+            email='pendente.operacional@example.com',
+        )
+        box_root_slug = get_box_runtime_slug()
+        identity = StudentIdentity.objects.create(
+            student=student,
+            box_root_slug=box_root_slug,
+            primary_box_root_slug=box_root_slug,
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-pendente-operacional',
+            email='pendente.operacional@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        invitation = StudentAppInvitation.objects.create(
+            student=student,
+            invited_email='pendente.operacional@example.com',
+            invite_type=StudentInvitationType.OPEN_BOX,
+            box_root_slug=box_root_slug,
+            expires_at=timezone.now() + timezone.timedelta(days=7),
+            created_by=self.user,
+        )
+        StudentBoxMembership.objects.create(
+            identity=identity,
+            student=student,
+            box_root_slug=box_root_slug,
+            status=StudentBoxMembershipStatus.PENDING_APPROVAL,
+            created_from_invite=invitation,
+        )
+
+        response = self.client.get(reverse('student-invitation-operations'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Alunos que fecharam a identidade e agora esperam o box')
+        self.assertContains(response, 'Aluno Pendente Operacional')
+        self.assertContains(response, 'Aprovar acesso')
+
+    @override_settings(
+        STUDENT_OPEN_BOX_INVITE_LIMIT_PER_WINDOW=2,
+        STUDENT_OPEN_BOX_INVITE_WINDOW_HOURS=24,
+    )
+    def test_student_invitation_operations_renders_observability_alert_when_open_box_window_is_hot(self):
+        self.client.force_login(self.user)
+        student = Student.objects.create(
+            full_name='Aluno Janela Quente',
+            phone='5511931112222',
+            email='janela.quente@example.com',
+        )
+        StudentAppInvitation.objects.create(
+            student=student,
+            invited_email='janela.quente@example.com',
+            invite_type=StudentInvitationType.OPEN_BOX,
+            box_root_slug=get_box_runtime_slug(),
+            expires_at=timezone.now() + timezone.timedelta(days=7),
+            created_by=self.user,
+        )
+        StudentAppInvitation.objects.create(
+            student=student,
+            invited_email='janela.quente@example.com',
+            invite_type=StudentInvitationType.OPEN_BOX,
+            box_root_slug=get_box_runtime_slug(),
+            expires_at=timezone.now() + timezone.timedelta(days=7),
+            created_by=self.user,
+        )
+
+        response = self.client.get(reverse('student-invitation-operations'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Painel de temperatura dos convites')
+        self.assertContains(response, '2/2')
+        self.assertContains(response, 'limite tecnico de convites abertos')
 
     def test_student_invitation_operations_shows_delivery_status_badges(self):
         self.client.force_login(self.user)

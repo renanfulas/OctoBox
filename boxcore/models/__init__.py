@@ -39,6 +39,11 @@ from .operations import (
     BehaviorCategory,
     BehaviorNote,
     ClassSession,
+    LeadImportDeclaredRange,
+    LeadImportJob,
+    LeadImportJobStatus,
+    LeadImportProcessingMode,
+    LeadImportSourceType,
     SessionStatus,
 )
 from .students import HealthIssueStatus, Student, StudentGender, StudentStatus
@@ -55,6 +60,11 @@ __all__ = [
     'EnrollmentStatus',
     'IntakeSource',
     'IntakeStatus',
+    'LeadImportDeclaredRange',
+    'LeadImportJob',
+    'LeadImportJobStatus',
+    'LeadImportProcessingMode',
+    'LeadImportSourceType',
     'MessageDirection',
     'MessageKind',
     'MembershipPlan',

@@ -49,6 +49,37 @@ class BehaviorCategory(models.TextChoices):
     SUPPORT = 'support', 'Acompanhamento'
 
 
+class LeadImportSourceType(models.TextChoices):
+    WHATSAPP_LIST = 'whatsapp_list', 'Lista do WhatsApp'
+    TECNOFIT_EXPORT = 'tecnofit_export', 'Exportacao Tecnofit'
+    NEXTFIT_EXPORT = 'nextfit_export', 'Exportacao Nextfit'
+    IPHONE_VCF = 'iphone_vcf', 'VCF - iPhone'
+
+
+class LeadImportDeclaredRange(models.TextChoices):
+    UP_TO_200 = 'up_to_200', 'Ate 200'
+    FROM_201_TO_500 = 'from_201_to_500', '201 a 500'
+    FROM_501_TO_2000 = 'from_501_to_2000', '501 a 2000'
+
+
+class LeadImportProcessingMode(models.TextChoices):
+    SYNC = 'sync', 'Processamento imediato'
+    ASYNC_NOW = 'async_now', 'Background imediato'
+    ASYNC_NIGHT = 'async_night', 'Agendamento noturno'
+
+
+class LeadImportJobStatus(models.TextChoices):
+    RECEIVED = 'received', 'Recebido'
+    VALIDATING = 'validating', 'Validando'
+    QUEUED = 'queued', 'Na fila'
+    SCHEDULED = 'scheduled', 'Agendado'
+    RUNNING = 'running', 'Processando'
+    COMPLETED = 'completed', 'Concluido'
+    COMPLETED_WITH_WARNINGS = 'completed_with_warnings', 'Concluido com alertas'
+    REJECTED = 'rejected', 'Rejeitado'
+    FAILED = 'failed', 'Falha'
+
+
 class ClassSession(TimeStampedModel):
     title = models.CharField(max_length=100)
     coach = models.ForeignKey(
@@ -138,6 +169,56 @@ class BehaviorNote(TimeStampedModel):
         return f'{self.student} - {self.get_category_display()}'
 
 
+class LeadImportJob(TimeStampedModel):
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lead_import_jobs',
+    )
+    source_type = models.CharField(
+        max_length=32,
+        choices=LeadImportSourceType.choices,
+        db_index=True,
+    )
+    declared_range = models.CharField(
+        max_length=24,
+        choices=LeadImportDeclaredRange.choices,
+        db_index=True,
+    )
+    processing_mode = models.CharField(
+        max_length=16,
+        choices=LeadImportProcessingMode.choices,
+        default=LeadImportProcessingMode.SYNC,
+        db_index=True,
+    )
+    status = models.CharField(
+        max_length=32,
+        choices=LeadImportJobStatus.choices,
+        default=LeadImportJobStatus.RECEIVED,
+        db_index=True,
+    )
+    original_filename = models.CharField(max_length=255, blank=True, default='')
+    file_path = models.CharField(max_length=500, blank=True, default='')
+    detected_lead_count = models.PositiveIntegerField(default=0)
+    success_count = models.PositiveIntegerField(default=0)
+    duplicate_count = models.PositiveIntegerField(default=0)
+    error_count = models.PositiveIntegerField(default=0)
+    duplicate_details = models.JSONField(blank=True, default=list)
+    error_details = models.JSONField(blank=True, default=list)
+    scheduled_for = models.DateTimeField(null=True, blank=True, db_index=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        app_label = HISTORICAL_BOXCORE_APP_LABEL
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.get_source_type_display()} - {self.get_status_display()}'
+
+
 __all__ = [
     'Attendance',
     'AttendanceStatus',
@@ -147,5 +228,10 @@ __all__ = [
     'HISTORICAL_BOXCORE_APP_LABEL',
     'HISTORICAL_BOXCORE_CLASS_SESSION_MODEL',
     'HISTORICAL_BOXCORE_STUDENT_MODEL',
+    'LeadImportDeclaredRange',
+    'LeadImportJob',
+    'LeadImportJobStatus',
+    'LeadImportProcessingMode',
+    'LeadImportSourceType',
     'SessionStatus',
 ]

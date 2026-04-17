@@ -18,6 +18,11 @@ from operations.model_definitions import (
     BehaviorCategory,
     BehaviorNote,
     ClassSession,
+    LeadImportDeclaredRange,
+    LeadImportJob,
+    LeadImportJobStatus,
+    LeadImportProcessingMode,
+    LeadImportSourceType,
     SessionStatus,
 )
 
@@ -27,5 +32,10 @@ __all__ = [
     'BehaviorCategory',
     'BehaviorNote',
     'ClassSession',
+    'LeadImportDeclaredRange',
+    'LeadImportJob',
+    'LeadImportJobStatus',
+    'LeadImportProcessingMode',
+    'LeadImportSourceType',
     'SessionStatus',
 ]

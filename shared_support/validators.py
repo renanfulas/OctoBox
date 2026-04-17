@@ -28,7 +28,7 @@ def validate_file_security(file_path: str, max_size_mb: int = 15, allowed_mimes:
             detected_mime = mime.from_file(file_path)
         except ImportError:
             import mimetypes
-            detected_mime, _ = mimetypes.guess_type(file_path)
+            detected_mime, guessed_encoding = mimetypes.guess_type(file_path)
             logging.getLogger('octobox.security').warning(
                 "python-magic não instalado. Usando mimetypes (menos seguro). Instale libmagic para proteção real."
             )

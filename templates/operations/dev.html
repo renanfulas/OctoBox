@@ -26,6 +26,53 @@ PONTOS CRITICOS:
         {% endfor %}
     </section>
 
+    {% with beacon=page.data.red_beacon_snapshot signal_mesh=page.data.red_beacon_snapshot.signal_mesh siren=page.data.red_beacon_snapshot.alert_siren %}
+    <section class="dashboard-signal-mesh-board tone-{{ beacon.tone }}" aria-label="Estado operacional do Red Beacon">
+        <header class="dashboard-signal-mesh-board__header">
+            <div>
+                <p class="dashboard-signal-mesh-board__eyebrow">{{ beacon.label }}</p>
+                <h3 class="dashboard-signal-mesh-board__title">{{ beacon.headline }}</h3>
+            </div>
+            <div class="dashboard-signal-mesh-board__badge">
+                {{ signal_mesh.total_due_backlog }} vencido(s)
+            </div>
+        </header>
+        <p class="dashboard-signal-mesh-board__summary">{{ beacon.summary }}</p>
+        <section class="dashboard-signal-mesh-board__siren tone-{{ siren.tone }}" aria-label="Estado da Alert Siren">
+            <div class="dashboard-signal-mesh-board__siren-header">
+                <strong>{{ siren.label }}</strong>
+                <span class="dashboard-signal-mesh-board__siren-badge">{{ siren.level }}</span>
+            </div>
+            <p class="dashboard-signal-mesh-board__summary">{{ siren.summary }}</p>
+            <ul class="dashboard-signal-mesh-board__actions">
+                {% for action in siren.actions %}
+                <li><strong>{{ action.label }}:</strong> {{ action.summary }}</li>
+                {% endfor %}
+            </ul>
+        </section>
+        <div class="dashboard-signal-mesh-board__grid">
+            {% for channel in signal_mesh.channels %}
+            <article class="dashboard-signal-mesh-channel">
+                <div class="dashboard-signal-mesh-channel__top">
+                    <strong>{{ channel.label }}</strong>
+                    <span>{{ channel.due_backlog }} vencido(s)</span>
+                </div>
+                <p class="dashboard-signal-mesh-channel__meta">
+                    Ultimo sweep: {{ channel.last_dispatched_count }} reencaminhado(s), {{ channel.last_skipped_count }} ignorado(s).
+                </p>
+                {% if channel.skip_reasons %}
+                <ul class="dashboard-signal-mesh-channel__reasons">
+                    {% for reason in channel.skip_reasons %}
+                    <li>{{ reason.reason }}: {{ reason.count }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endwith %}
+
     {% include "operations/includes/dev_realtime_metrics_board.html" %}
 
     <section class="table-card operation-table-card dev-audit-card" id="dev-audit-board" aria-label="Eventos de auditoria">

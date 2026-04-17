@@ -19,10 +19,28 @@ from integrations.mesh import SignalEnvelope, build_signal_envelope
 from integrations.mesh import classify_duplicate, classify_retryable, decide_retry
 from jobs.base import build_job_result
 from jobs.models import AsyncJob
+from operations.services.lead_import_jobs import dispatch_due_nightly_lead_import_jobs, run_lead_import_job as run_lead_import_job_service
 from operations.services.contact_importer import import_contacts_from_stream
 from operations.services.student_importer import StudentImporter
 
 logger = logging.getLogger('octobox.jobs')
+
+
+@shared_task()
+def run_lead_import_job(lead_import_job_id):
+    job = run_lead_import_job_service(job_id=lead_import_job_id)
+    return {
+        'job_id': job.id,
+        'status': job.status,
+        'success_count': job.success_count,
+        'duplicate_count': job.duplicate_count,
+        'error_count': job.error_count,
+    }
+
+
+@shared_task()
+def dispatch_nightly_lead_import_jobs(limit=25):
+    return dispatch_due_nightly_lead_import_jobs(limit=limit)
 
 
 def _hydrate_signal_envelope(payload: dict | None, *, fallback_source_channel: str) -> SignalEnvelope:

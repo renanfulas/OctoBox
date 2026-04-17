@@ -15,7 +15,7 @@ PONTOS CRITICOS:
 from .audit import AuditEventAdmin
 from .finance import EnrollmentAdmin, MembershipPlanAdmin, PaymentAdmin
 from .onboarding import StudentIntakeAdmin, WhatsAppContactAdmin, WhatsAppMessageLogAdmin
-from .operations import AttendanceAdmin, BehaviorNoteAdmin, ClassSessionAdmin
+from .operations import AttendanceAdmin, BehaviorNoteAdmin, ClassSessionAdmin, LeadImportJobAdmin
 from .students import StudentAdmin
 
 __all__ = [
@@ -24,6 +24,7 @@ __all__ = [
     'BehaviorNoteAdmin',
     'ClassSessionAdmin',
     'EnrollmentAdmin',
+    'LeadImportJobAdmin',
     'MembershipPlanAdmin',
     'PaymentAdmin',
     'StudentIntakeAdmin',

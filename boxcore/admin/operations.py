@@ -11,7 +11,7 @@ PONTOS CRITICOS:
 - Este arquivo nao deve voltar a concentrar registros novos do admin.
 """
 
-from operations.admin import AttendanceAdmin, BehaviorNoteAdmin, ClassSessionAdmin
+from operations.admin import AttendanceAdmin, BehaviorNoteAdmin, ClassSessionAdmin, LeadImportJobAdmin
 
 
-__all__ = ['AttendanceAdmin', 'BehaviorNoteAdmin', 'ClassSessionAdmin']
+__all__ = ['AttendanceAdmin', 'BehaviorNoteAdmin', 'ClassSessionAdmin', 'LeadImportJobAdmin']

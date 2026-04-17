@@ -76,21 +76,6 @@ def _build_metric_card(card_class, eyebrow, value, note=None):
     return card
 
 
-def _build_signal_mesh_workspace_card(*, card_class, red_beacon_snapshot, href):
-    signal_mesh_snapshot = red_beacon_snapshot.get('signal_mesh', {})
-    total_due_backlog = signal_mesh_snapshot.get('total_due_backlog', 0)
-    return {
-        **_build_metric_card(
-            card_class,
-            'Red Beacon',
-            total_due_backlog,
-            note=red_beacon_snapshot.get('summary', ''),
-        ),
-        'status_hint': 'clean' if total_due_backlog == 0 else 'attention',
-        'href': href,
-    }
-
-
 def _with_fragment(url, fragment):
     return f'{url}{fragment}' if fragment else url
 
@@ -912,7 +897,6 @@ def _attach_manager_finance_decision(payment, *, today, is_priority, enrollment_
 
 
 def build_owner_workspace_snapshot(*, today):
-    red_beacon_snapshot = build_red_beacon_snapshot()
     communications_metrics = build_communications_headline_metrics(today=today)
     overdue_payments = get_overdue_payments_queryset(Payment.objects.all(), today=today)
     overdue_amount = sum_overdue_amount(Payment.objects.all(), today=today)
@@ -1029,20 +1013,15 @@ def build_owner_workspace_snapshot(*, today):
                 'status_hint': 'clean' if headline_metrics['overdue_payments'] == 0 else 'attention',
                 'href': reverse('finance-center'),
             },
-            _build_signal_mesh_workspace_card(
-                card_class='operation-kpi-card owner-steel',
-                red_beacon_snapshot=red_beacon_snapshot,
-                href=reverse('dashboard'),
-            ),
         ],
         'owner_decision_entry_context': owner_decision_entry_context,
         'owner_operational_focus': owner_operational_focus,
-        'red_beacon_snapshot': red_beacon_snapshot,
         'transport_payload': transport_payload,
     }
 
 
 def build_dev_workspace_snapshot():
+    red_beacon_snapshot = build_red_beacon_snapshot()
     technical_metrics = {
         'eventos_auditados': AuditEvent.objects.count(),
         'eventos_24h': AuditEvent.objects.filter(created_at__gte=timezone.now() - timedelta(days=1)).count(),
@@ -1055,6 +1034,7 @@ def build_dev_workspace_snapshot():
         'technical_metrics': technical_metrics,
         'student_realtime_metrics': student_realtime_metrics,
         'manager_realtime_metrics': manager_realtime_metrics,
+        'red_beacon_snapshot': red_beacon_snapshot,
         'hero_stats': [
             _build_hero_stat('Auditados', technical_metrics['eventos_auditados']),
             _build_hero_stat('Ultimas 24h', technical_metrics['eventos_24h']),
@@ -1145,7 +1125,6 @@ def build_dev_workspace_snapshot():
 
 
 def build_manager_workspace_snapshot(*, actor=None):
-    red_beacon_snapshot = build_red_beacon_snapshot()
     today = timezone.localdate()
     cooldown_intake_ids, cooldown_payment_ids = _build_recent_contact_subject_sets(actor=actor)
 
@@ -1266,14 +1245,8 @@ def build_manager_workspace_snapshot(*, actor=None):
             _build_metric_card('operation-kpi-card manager-sky', 'Contatos sem vinculo', len(unlinked_whatsapp)),
             _build_metric_card('operation-kpi-card manager-gold', 'Pagamentos sem matricula', len(payments_without_enrollment)),
             _build_metric_card('operation-kpi-card manager-steel', 'Alertas financeiros', len(financial_alerts)),
-            _build_signal_mesh_workspace_card(
-                card_class='operation-kpi-card manager-steel',
-                red_beacon_snapshot=red_beacon_snapshot,
-                href=reverse('dashboard'),
-            ),
         ],
         'manager_operational_focus': manager_operational_focus,
-        'red_beacon_snapshot': red_beacon_snapshot,
         'transport_payload': transport_payload,
     }
 

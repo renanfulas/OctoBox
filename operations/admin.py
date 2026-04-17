@@ -16,7 +16,7 @@ PONTOS CRITICOS:
 from django.contrib import admin
 
 from auditing.admin_mixins import AuditedAdminMixin
-from operations.models import Attendance, BehaviorNote, ClassSession
+from operations.models import Attendance, BehaviorNote, ClassSession, LeadImportJob
 
 
 @admin.register(ClassSession)
@@ -43,4 +43,29 @@ class BehaviorNoteAdmin(AuditedAdminMixin, admin.ModelAdmin):
     autocomplete_fields = ('student', 'author')
 
 
-__all__ = ['AttendanceAdmin', 'BehaviorNoteAdmin', 'ClassSessionAdmin']
+@admin.register(LeadImportJob)
+class LeadImportJobAdmin(AuditedAdminMixin, admin.ModelAdmin):
+    list_display = (
+        'id',
+        'source_type',
+        'declared_range',
+        'processing_mode',
+        'status',
+        'detected_lead_count',
+        'created_by',
+        'created_at',
+    )
+    list_filter = ('source_type', 'declared_range', 'processing_mode', 'status', 'created_at')
+    search_fields = ('original_filename', 'file_path', 'created_by__username', 'created_by__email')
+    autocomplete_fields = ('created_by',)
+    readonly_fields = (
+        'created_at',
+        'updated_at',
+        'started_at',
+        'finished_at',
+        'duplicate_details',
+        'error_details',
+    )
+
+
+__all__ = ['AttendanceAdmin', 'BehaviorNoteAdmin', 'ClassSessionAdmin', 'LeadImportJobAdmin']

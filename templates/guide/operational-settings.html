@@ -50,7 +50,7 @@ POR QUE ELE EXISTE:
     <article class="table-card" id="operational-settings-import">
         <p class="eyebrow">Importar Contatos</p>
         <h3>Listas Externas</h3>
-        <p class="system-map-copy">Suba uma lista para rodar a higienizacao de telefone e criar leads automaticos (Leads) no OctoBOX.</p>
+        <p class="system-map-copy">Suba uma lista para rodar a higienizacao de telefone e criar leads automaticos no OctoBOX. Ate 200 leads entram na hora, de 201 a 500 vao para background e acima disso seguem para a janela noturna.</p>
         <form method="post" enctype="multipart/form-data" class="form-stack section-gap-top-sm operational-settings-import-form">
             {% csrf_token %}
             <label>
@@ -63,9 +63,18 @@ POR QUE ELE EXISTE:
                 </select>
             </label>
             <label>
+                <span class="field-label">Faixa declarada</span>
+                <select name="declared_range" class="operational-settings-field">
+                    <option value="up_to_200">Ate 200 leads</option>
+                    <option value="from_201_to_500">201 a 500 leads</option>
+                    <option value="from_501_to_2000">501 a 2000 leads</option>
+                </select>
+            </label>
+            <label>
                 <span class="field-label">Arquivo de Contatos (.csv ou .vcf)</span>
                 <input type="file" name="contacts_file" accept=".csv, .vcf, .vcard, text/vcard" required class="operational-settings-file-input">
             </label>
+            <p class="system-map-copy">Cada tipo permite 1 upload por dia e ate 3 por mes. O backend valida a contagem real para decidir o trilho final.</p>
             <div class="actions actions-tight operation-hero-action-rail section-gap-top-xs">
                 <button class="button operational-settings-submit" type="submit">Iniciar Importacao Inteligente</button>
             </div>
