@@ -16,6 +16,8 @@ from datetime import timedelta
 
 from django.db.models import Case, CharField, DecimalField, Exists, OuterRef, Q, Subquery, Value, When, Sum, Count, IntegerField, Max
 from django.db.models.functions import Coalesce
+import time
+
 from django.utils import timezone
 from operations.models import Attendance
 from finance.models import Enrollment, EnrollmentStatus, Payment, PaymentStatus
@@ -254,26 +256,53 @@ def _apply_student_directory_filters(students, filter_form, *, thirty_days_ago):
     return students
 
 
-def _build_student_directory_metrics(students, *, thirty_days_ago):
-    metrics = students.aggregate(
-        total=Count('id', distinct=True),
-        ativos=Count('id', filter=Q(status=StudentStatus.ACTIVE), distinct=True),
-        em_dia=Count('id', filter=Q(status=StudentStatus.ACTIVE, operational_payment_status=PaymentStatus.PAID), distinct=True),
-        inadimplentes=Count('id', filter=Q(operational_payment_status=PaymentStatus.OVERDUE), distinct=True),
-        pendentes=Count('id', filter=Q(operational_payment_status=PaymentStatus.PENDING), distinct=True),
-        inativos=Count('id', filter=Q(status=StudentStatus.INACTIVE), distinct=True),
-        novos_30d=Count('id', filter=Q(created_at__gte=thirty_days_ago), distinct=True),
-        latest_student_updated_at=Max('updated_at'),
-        latest_enrollment_updated_at=Max('enrollments__updated_at'),
-        latest_payment_updated_at=Max('payments__updated_at'),
-        latest_attendance_updated_at=Max('attendances__updated_at'),
+def _build_student_directory_refresh_token(*, student_ids_subquery, total_students):
+    latest_student_updated_at = Student.objects.filter(pk__in=Subquery(student_ids_subquery)).aggregate(
+        value=Max('updated_at')
+    )['value']
+    latest_enrollment_updated_at = Enrollment.objects.filter(student_id__in=Subquery(student_ids_subquery)).aggregate(
+        value=Max('updated_at')
+    )['value']
+    latest_payment_updated_at = Payment.objects.filter(student_id__in=Subquery(student_ids_subquery)).aggregate(
+        value=Max('updated_at')
+    )['value']
+    latest_attendance_updated_at = Attendance.objects.filter(student_id__in=Subquery(student_ids_subquery)).aggregate(
+        value=Max('updated_at')
+    )['value']
+
+    return '{total}:{student}:{enrollment}:{payment}:{attendance}'.format(
+        total=total_students or 0,
+        student=(latest_student_updated_at.isoformat() if latest_student_updated_at else ''),
+        enrollment=(latest_enrollment_updated_at.isoformat() if latest_enrollment_updated_at else ''),
+        payment=(latest_payment_updated_at.isoformat() if latest_payment_updated_at else ''),
+        attendance=(latest_attendance_updated_at.isoformat() if latest_attendance_updated_at else ''),
     )
-    metrics['directory_refresh_token'] = '{total}:{student}:{enrollment}:{payment}:{attendance}'.format(
-        total=metrics['total'] or 0,
-        student=(metrics['latest_student_updated_at'].isoformat() if metrics['latest_student_updated_at'] else ''),
-        enrollment=(metrics['latest_enrollment_updated_at'].isoformat() if metrics['latest_enrollment_updated_at'] else ''),
-        payment=(metrics['latest_payment_updated_at'].isoformat() if metrics['latest_payment_updated_at'] else ''),
-        attendance=(metrics['latest_attendance_updated_at'].isoformat() if metrics['latest_attendance_updated_at'] else ''),
+
+
+def _build_student_directory_metrics(students, *, thirty_days_ago):
+    filtered_students = students.order_by()
+    student_ids_subquery = filtered_students.values('pk')
+    student_pool = Student.objects.filter(pk__in=Subquery(student_ids_subquery))
+
+    metrics = {
+        'total': student_pool.count(),
+        'ativos': student_pool.filter(status=StudentStatus.ACTIVE).count(),
+        'em_dia': filtered_students.filter(
+            status=StudentStatus.ACTIVE,
+            operational_payment_status=PaymentStatus.PAID,
+        ).count(),
+        'inadimplentes': filtered_students.filter(
+            operational_payment_status=PaymentStatus.OVERDUE,
+        ).count(),
+        'pendentes': filtered_students.filter(
+            operational_payment_status=PaymentStatus.PENDING,
+        ).count(),
+        'inativos': student_pool.filter(status=StudentStatus.INACTIVE).count(),
+        'novos_30d': student_pool.filter(created_at__gte=thirty_days_ago).count(),
+    }
+    metrics['directory_refresh_token'] = _build_student_directory_refresh_token(
+        student_ids_subquery=student_ids_subquery,
+        total_students=metrics['total'],
     )
     return metrics
 
@@ -341,11 +370,15 @@ def _build_student_directory_support_surfaces(students):
 
 
 def build_student_directory_listing_snapshot(params=None, for_export=False):
+    timing_started_at = time.perf_counter()
     now = timezone.now()
     today = timezone.localdate()
     thirty_days_ago = now - timedelta(days=30)
+    form_started_at = time.perf_counter()
     filter_form = StudentDirectoryFilterForm(params or None)
+    filter_form_duration_ms = round((time.perf_counter() - form_started_at) * 1000, 2)
     include_commercial_status = bool(filter_form.is_valid() and filter_form.cleaned_data.get('commercial_status'))
+    base_queryset_started_at = time.perf_counter()
     if for_export:
         students = _build_student_directory_base_queryset(
             today=today,
@@ -357,12 +390,17 @@ def build_student_directory_listing_snapshot(params=None, for_export=False):
             today=today,
             include_commercial_status=include_commercial_status,
         )
+    base_queryset_duration_ms = round((time.perf_counter() - base_queryset_started_at) * 1000, 2)
+    filters_started_at = time.perf_counter()
     students = _apply_student_directory_filters(
         students,
         filter_form,
         thirty_days_ago=thirty_days_ago,
     )
+    filters_duration_ms = round((time.perf_counter() - filters_started_at) * 1000, 2)
+    metrics_started_at = time.perf_counter()
     metrics = _build_student_directory_metrics(students, thirty_days_ago=thirty_days_ago)
+    metrics_duration_ms = round((time.perf_counter() - metrics_started_at) * 1000, 2)
 
     return {
         'students': students,
@@ -372,6 +410,13 @@ def build_student_directory_listing_snapshot(params=None, for_export=False):
         'em_dia_count': metrics['em_dia'],
         'pendentes_count': metrics['pendentes'],
         'directory_refresh_token': metrics['directory_refresh_token'],
+        'timings': {
+            'filter_form_ms': filter_form_duration_ms,
+            'base_queryset_ms': base_queryset_duration_ms,
+            'filter_application_ms': filters_duration_ms,
+            'metrics_ms': metrics_duration_ms,
+            'listing_snapshot_ms': round((time.perf_counter() - timing_started_at) * 1000, 2),
+        },
     }
 
 

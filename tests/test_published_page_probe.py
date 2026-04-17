@@ -62,3 +62,27 @@ class PublishedPageProbeTests(unittest.TestCase):
 
     def test_extract_json_script_text_returns_none_when_payload_absent(self):
         self.assertIsNone(extract_json_script_text("<html><body>sem payload</body></html>"))
+
+    def test_summarize_published_html_probe_accepts_current_timing_keys(self):
+        html = """
+        <html>
+          <body>
+            <script id="current-page-behavior" type="application/json">
+              {"performance_timing":{"listing_snapshot_ms":12.8,"support_snapshot_ms":7.4,"view_total_ms":44.1}}
+            </script>
+          </body>
+        </html>
+        """
+
+        summary = summarize_published_html_probe(
+            url="https://example.com/alunos/",
+            status_code=200,
+            html=html,
+            headers={},
+            request_elapsed_ms=90,
+            encoded_body_bytes=1024,
+        )
+
+        self.assertEqual(summary["listing_snapshot_ms"], 12.8)
+        self.assertEqual(summary["support_snapshot_ms"], 7.4)
+        self.assertEqual(summary["view_total_ms"], 44.1)

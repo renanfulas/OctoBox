@@ -324,13 +324,17 @@ class StudentDirectoryView(CatalogBaseView):
         except (ValueError, TypeError):
             page_size = STUDENT_DIRECTORY_PAGE_SIZE
 
+        page_slice_started_at = time.perf_counter()
         paginator = PrecountedPaginator(students_queryset, page_size)
         page_number = self.request.GET.get('page')
         page_obj = paginator.get_page(page_number)
+        page_slice_duration_ms = round((time.perf_counter() - page_slice_started_at) * 1000, 2)
+        page_enrich_started_at = time.perf_counter()
         page_students = _annotate_directory_page_students(
             _enrich_student_directory_display_students(list(page_obj.object_list), thirty_days_ago=thirty_days_ago),
             thirty_days_ago=thirty_days_ago,
         )
+        page_enrich_duration_ms = round((time.perf_counter() - page_enrich_started_at) * 1000, 2)
         page_obj.object_list = page_students
         context['students'] = page_obj
 
@@ -344,6 +348,7 @@ class StudentDirectoryView(CatalogBaseView):
             search_snapshot = snapshot
         else:
             search_snapshot = build_student_directory_listing_snapshot(index_params)
+        search_bootstrap_started_at = time.perf_counter()
         search_page_students = _annotate_directory_page_students(
             _enrich_student_directory_display_students(
                 list(search_snapshot['students'][:STUDENT_SEARCH_BOOTSTRAP_LIMIT]),
@@ -351,6 +356,7 @@ class StudentDirectoryView(CatalogBaseView):
             ),
             thirty_days_ago=thirty_days_ago,
         )
+        search_bootstrap_duration_ms = round((time.perf_counter() - search_bootstrap_started_at) * 1000, 2)
         query_params = self.request.GET.copy()
         if 'page' in query_params:
             del query_params['page']
@@ -382,7 +388,14 @@ class StudentDirectoryView(CatalogBaseView):
             },
             performance_timing={
                 'listing_snapshot_ms': listing_duration_ms,
+                'listing_metrics_ms': snapshot.get('timings', {}).get('metrics_ms'),
+                'listing_base_queryset_ms': snapshot.get('timings', {}).get('base_queryset_ms'),
+                'listing_filter_application_ms': snapshot.get('timings', {}).get('filter_application_ms'),
+                'listing_filter_form_ms': snapshot.get('timings', {}).get('filter_form_ms'),
                 'support_snapshot_ms': support_duration_ms,
+                'page_slice_ms': page_slice_duration_ms,
+                'page_enrich_ms': page_enrich_duration_ms,
+                'search_bootstrap_ms': search_bootstrap_duration_ms,
                 'view_total_ms': total_view_duration_ms,
             },
         )

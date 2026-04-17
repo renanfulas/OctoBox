@@ -60,6 +60,15 @@ def _pick_header(headers: dict[str, str], name: str) -> str | None:
     return None
 
 
+def _pick_timing_value(performance_timing: dict[str, Any], *names: str) -> Any:
+    if not isinstance(performance_timing, dict):
+        return None
+    for name in names:
+        if name in performance_timing:
+            return performance_timing.get(name)
+    return None
+
+
 def summarize_published_html_probe(
     *,
     url: str,
@@ -106,8 +115,20 @@ def summarize_published_html_probe(
         "directory_search_has_next": directory_search.get("has_next")
         if isinstance(directory_search, dict)
         else None,
-        "listing_snapshot_ms": performance_timing.get("listing_duration_ms"),
-        "support_snapshot_ms": performance_timing.get("support_duration_ms"),
-        "view_total_ms": performance_timing.get("total_view_duration_ms"),
+        "listing_snapshot_ms": _pick_timing_value(
+            performance_timing,
+            "listing_snapshot_ms",
+            "listing_duration_ms",
+        ),
+        "support_snapshot_ms": _pick_timing_value(
+            performance_timing,
+            "support_snapshot_ms",
+            "support_duration_ms",
+        ),
+        "view_total_ms": _pick_timing_value(
+            performance_timing,
+            "view_total_ms",
+            "total_view_duration_ms",
+        ),
     }
     return summary
