@@ -41,7 +41,6 @@ echo "Current commit: ${current_commit}"
 echo "== Pre-deploy backup =="
 backup_path="$(sudo -u "${OCTOBOX_APP_USER}" bash -lc "cd '${APP_DIR}' && set -a && source '${ENV_FILE}' && set +a && python3 - <<'PY'
 import os
-import shlex
 import subprocess
 from pathlib import Path
 from urllib.parse import urlparse
@@ -78,7 +77,7 @@ created = sorted(Path('${OCTOBOX_APP_HOME}/backups').glob('octobox-*.dump'))
 if not created:
     raise SystemExit('Backup nao foi criado.')
 print(created[-1])
-PY")"
+PY" | tail -n 1)"
 echo "Backup criado em: ${backup_path}"
 printf '%s\n' "${backup_path}" > "${LAST_BACKUP_FILE}"
 
