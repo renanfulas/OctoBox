@@ -206,6 +206,7 @@ LOCAL_APPS = [
     'jobs.apps.JobsConfig',
     'integrations.apps.IntegrationsConfig',
     'operations.apps.OperationsConfig',
+    'quick_sales.apps.QuickSalesConfig',
     'student_identity.apps.StudentIdentityConfig',
     'student_app.apps.StudentAppConfig',
     'students.apps.StudentsConfig',

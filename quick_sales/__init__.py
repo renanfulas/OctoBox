@@ -1,0 +1,1 @@
+"""Quick sales domain package."""
