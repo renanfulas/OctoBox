@@ -6,26 +6,27 @@ POR QUE ELE EXISTE:
 -->
 {% if page.data.payment_management_form %}
 <div class="card card--sci-fi student-financial-drawer student-payment-management-card student-page-payments-checkout-card" data-selected-payment-id="{{ page.data.selected_payment_id|default:'' }}">
-    <header class="student-financial-drawer__header">
-        <div class="student-financial-drawer__identity">
-            <div class="student-financial-drawer__avatar" aria-hidden="true">
-                {{ page.data.student_object.full_name|slice:":1"|upper }}
-            </div>
-            <div class="stack-2">
-                <p class="eyebrow">Cobrar agora</p>
-                <h3 class="section-title-sm" id="student-payment-checkout-title">{{ page.data.student_object.full_name }}</h3>
-            <p class="meta-text" id="student-payment-checkout-copy">Confira valor, vencimento e forma de pagamento para concluir o atendimento com menos passos.</p>
-                <div class="student-financial-drawer__identity-meta">
-                    {% if page.data.financial_overview.latest_enrollment %}
-                    <span class="pill">{{ page.data.financial_overview.latest_enrollment.get_status_display }}</span>
-                    <span class="meta-text">{{ page.data.financial_overview.latest_enrollment.plan.name }}</span>
-                    {% else %}
-                    <span class="pill info">Sem matricula</span>
-                    {% endif %}
-                </div>
-            </div>
+    <header class="student-financial-drawer__header student-quick-panel__hero student-payment-checkout-header__hero">
+        <div class="student-quick-panel__avatar student-financial-drawer__avatar" aria-hidden="true">
+            {{ page.data.student_object.full_name|slice:":1"|upper }}
+        </div>
+        <div class="student-quick-panel__identity student-payment-checkout-header__identity">
+            <p class="student-quick-panel__eyebrow">{% if page.data.standalone_payment %}Pagamento avulso{% else %}Cobrar agora{% endif %}</p>
+            <h3 class="student-quick-panel__title section-title-sm" id="student-payment-checkout-title">{{ page.data.student_object.full_name }}</h3>
+            <p class="student-quick-panel__copy meta-text" id="student-payment-checkout-copy">{% if page.data.standalone_payment %}Preencha valor, vencimento e forma de pagamento para registrar um recebimento excepcional com liberdade total.{% else %}Confira valor, vencimento e forma de pagamento para concluir o atendimento com menos passos.{% endif %}</p>
         </div>
     </header>
+    <div class="student-quick-panel__status-strip student-payment-checkout-header__status-strip" aria-label="Resumo rapido da cobranca">
+        {% if page.data.standalone_payment %}
+        <span class="pill info">Manual</span>
+        <span class="student-quick-chip student-payment-checkout-header__chip">Pagamento avulso</span>
+        {% elif page.data.financial_overview.latest_enrollment %}
+        <span class="pill">{{ page.data.financial_overview.latest_enrollment.get_status_display }}</span>
+        <span class="student-quick-chip student-payment-checkout-header__chip">{{ page.data.financial_overview.latest_enrollment.plan.name }}</span>
+        {% else %}
+        <span class="pill info">Sem matricula</span>
+        {% endif %}
+    </div>
 
     <div class="student-financial-drawer__body">
         <form method="post" id="student-payment-checkout-form" action="{% url 'student-payment-action' page.data.student_object.id %}" class="student-payment-management-form" aria-describedby="student-payment-checkout-status">
@@ -104,6 +105,8 @@ POR QUE ELE EXISTE:
             <div id="student-payment-checkout-status" class="student-payment-management-status" role="status" aria-live="polite" aria-atomic="true">
                 {% if page.data.payment_management_form.instance and page.data.payment_management_form.instance.status == 'paid' %}
                 Pagamento ja registrado. Se precisar, confira os detalhes abaixo.
+                {% elif page.data.standalone_payment %}
+                Preencha os campos e escolha a forma de pagamento para registrar um lancamento avulso.
                 {% else %}
                 Escolha a forma de pagamento para continuar.
                 {% endif %}

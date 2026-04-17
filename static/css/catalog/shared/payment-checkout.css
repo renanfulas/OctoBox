@@ -19,6 +19,50 @@ POR QUE ELE EXISTE:
     min-height: 80px;
 }
 
+.student-payment-checkout-header__hero {
+    padding-right: 32px;
+}
+
+.student-payment-checkout-header__identity {
+    min-width: 0;
+}
+
+.student-payment-checkout-header__status-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 16px;
+}
+
+.student-payment-checkout-header__chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.student-payment-checkout-header__hero .student-quick-panel__avatar {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+}
+
+.student-payment-checkout-header__hero .student-quick-panel__eyebrow {
+    margin: 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.student-payment-checkout-header__hero .student-quick-panel__title,
+.student-payment-checkout-header__hero .student-quick-panel__copy {
+    margin: 0;
+}
+
 .student-payment-primary-summary {
     --card-local-border: var(--student-financial-panel-border, var(--card-border));
     --card-local-surface: var(--student-financial-panel-surface-muted, var(--card-surface));
@@ -98,6 +142,198 @@ POR QUE ELE EXISTE:
     border: 1px solid color-mix(in srgb, var(--theme-accent-support) 12%, var(--student-financial-panel-border) 88%);
 }
 
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card {
+    --student-financial-panel-surface:
+        radial-gradient(circle at top, rgba(59, 130, 246, 0.14), transparent 42%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 252, 0.98));
+    --student-financial-panel-surface-muted: rgba(255, 255, 255, 0.76);
+    --student-financial-panel-border: rgba(148, 163, 184, 0.18);
+    --student-financial-panel-shadow:
+        0 24px 80px rgba(15, 23, 42, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    border-color: var(--student-financial-panel-border);
+    background: var(--student-financial-panel-surface);
+    box-shadow: var(--student-financial-panel-shadow);
+    color: #0f172a;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-financial-drawer__header + .student-financial-drawer__body {
+    border-top-color: rgba(148, 163, 184, 0.12);
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-financial-drawer__avatar {
+    width: 58px;
+    height: 58px;
+    border-radius: 20px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #0f172a, #2563eb);
+    color: white;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .pill {
+    border-color: rgba(34, 197, 94, 0.18);
+    background: rgba(220, 252, 231, 0.96);
+    color: #166534;
+    box-shadow: none;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-checkout-header__hero {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-checkout-header__status-strip {
+    margin: 0 20px;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: rgba(248, 250, 252, 0.72);
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-checkout-header__chip {
+    background: rgba(226, 232, 240, 0.82);
+    color: #334155;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-quick-panel__eyebrow {
+    color: #64748b;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-quick-panel__title {
+    color: #0f172a;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-quick-panel__copy {
+    color: #475569;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-checkout-header__status-strip + .student-financial-drawer__body {
+    border-top-color: rgba(148, 163, 184, 0.12);
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card :is(.section-title-sm, .payment-primary-summary__amount-field strong, .student-payment-management-summary__field strong, .field-label) {
+    color: #0f172a;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card :is(.eyebrow, .meta-text, .payment-primary-summary__label, .payment-primary-summary__currency, .student-payment-management-summary__row span, .payment-secondary-details summary) {
+    color: #64748b;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-primary-summary,
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .payment-secondary-details {
+    border-color: rgba(148, 163, 184, 0.18);
+    background: rgba(255, 255, 255, 0.76);
+    box-shadow: none;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-primary-summary .payment-primary-summary__amount {
+    gap: 10px;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-primary-summary .payment-primary-summary__amount-field {
+    gap: 10px;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-primary-summary .payment-primary-summary__meta-item {
+    padding-top: 2px;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-primary-summary .payment-primary-summary__meta-item strong {
+    color: color-mix(in srgb, var(--theme-text-primary) 92%, var(--ink) 8%);
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .payment-primary-summary__currency {
+    font-size: 1.18rem;
+    color: #334155;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .payment-secondary-details {
+    border-top-style: solid;
+    padding: 14px 16px;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .payment-secondary-details summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .payment-secondary-details summary::after {
+    color: #2563eb;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .payment-secondary-details__grid {
+    padding-top: 4px;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-management-summary__row {
+    align-items: start;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-management-notes {
+    gap: 10px;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-method-button {
+    border-color: rgba(148, 163, 184, 0.18);
+    background: rgba(255, 255, 255, 0.76);
+    color: #1e293b;
+    box-shadow: none;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-method-button.is-active {
+    border-color: rgba(59, 130, 246, 0.22);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-method-button:hover,
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-method-button:focus-visible {
+    border-color: rgba(148, 163, 184, 0.24);
+    background: rgba(255, 255, 255, 0.88);
+    color: #0f172a;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    border-color: rgba(191, 219, 254, 0.9);
+    background: rgba(255, 255, 255, 0.72);
+    color: #0f172a;
+    box-shadow: none;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-management-total__input {
+    min-height: 52px;
+    padding-inline: 18px;
+    border-radius: 18px;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-management-summary__input,
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card textarea {
+    min-height: 44px;
+    padding: 11px 14px;
+    border-radius: 16px;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card textarea {
+    min-height: 108px;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea)::placeholder {
+    color: #94a3b8;
+}
+
+body:not([data-theme="dark"]) .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-management-status {
+    color: #334155;
+    background: rgba(255, 255, 255, 0.76);
+    border-color: rgba(148, 163, 184, 0.18);
+    box-shadow: none;
+}
+
 body[data-theme="dark"] .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card {
     --student-financial-panel-surface:
         radial-gradient(circle at top right, rgba(14, 165, 233, 0.14), transparent 34%),
@@ -112,6 +348,29 @@ body[data-theme="dark"] .student-financial-drawer.student-payment-management-car
     background: var(--student-financial-panel-surface);
     box-shadow: var(--student-financial-panel-shadow);
     color: #f8fafc;
+}
+
+body[data-theme="dark"] .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-checkout-header__hero {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+body[data-theme="dark"] .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-checkout-header__status-strip {
+    margin: 0 20px;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.78), rgba(11, 18, 31, 0.72));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="dark"] .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-checkout-header__chip {
+    background: rgba(30, 41, 59, 0.84);
+    color: rgba(226, 232, 240, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+body[data-theme="dark"] .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-payment-checkout-header__status-strip + .student-financial-drawer__body {
+    border-top-color: rgba(148, 163, 184, 0.12);
 }
 
 body[data-theme="dark"] .student-financial-drawer.student-payment-management-card.student-page-payments-checkout-card .student-financial-drawer__header + .student-financial-drawer__body {
@@ -175,8 +434,349 @@ body[data-theme="dark"] .student-payment-primary-summary .payment-primary-summar
     color: var(--theme-text-primary);
 }
 
+.student-quick-sale-memory {
+    display: grid;
+    gap: 14px;
+}
+
+.student-quick-sale-memory__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.student-quick-sale-chip {
+    display: grid;
+    gap: 4px;
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(255, 255, 255, 0.72);
+    color: #1e293b;
+    text-align: left;
+    transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.student-quick-sale-chip strong {
+    color: #0f172a;
+    font-size: 0.95rem;
+}
+
+.student-quick-sale-chip:hover,
+.student-quick-sale-chip:focus-visible {
+    border-color: rgba(96, 165, 250, 0.24);
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-1px);
+}
+
+.student-quick-sale-summary__field,
+.student-quick-sale-summary__notes {
+    min-width: 0;
+}
+
+.student-quick-sale-summary__field .student-payment-management-summary__input,
+.student-quick-sale-summary__notes .student-payment-management-summary__input {
+    width: 100%;
+}
+
+.student-quick-sale-recognition {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 0.86rem;
+    color: #475569;
+}
+
+.student-quick-sale-recognition__badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 700;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(248, 250, 252, 0.94);
+    color: #475569;
+}
+
+.student-quick-sale-recognition--recognized .student-quick-sale-recognition__badge {
+    border-color: rgba(34, 197, 94, 0.18);
+    background: rgba(220, 252, 231, 0.96);
+    color: #166534;
+}
+
+.student-quick-sale-recognition--suggested .student-quick-sale-recognition__badge {
+    border-color: rgba(59, 130, 246, 0.18);
+    background: rgba(219, 234, 254, 0.96);
+    color: #1d4ed8;
+}
+
+.student-quick-sale-autocomplete {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(248, 250, 252, 0.72);
+    text-align: left;
+}
+
+.student-quick-sale-autocomplete__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.student-quick-sale-autocomplete__label,
+.student-quick-sale-suggestion__meta {
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 700;
+}
+
+.student-quick-sale-autocomplete__results {
+    display: grid;
+    gap: 8px;
+}
+
+.student-quick-sale-suggestion {
+    display: grid;
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(255, 255, 255, 0.94);
+    color: #1e293b;
+    text-align: left;
+    transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.student-quick-sale-suggestion strong {
+    color: #0f172a;
+}
+
+.student-quick-sale-suggestion:hover,
+.student-quick-sale-suggestion:focus-visible {
+    border-color: rgba(96, 165, 250, 0.26);
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-1px);
+}
+
+.student-quick-sale-suggestion.is-recognized {
+    border-color: rgba(34, 197, 94, 0.18);
+    background: rgba(240, 253, 244, 0.96);
+}
+
+.student-quick-sale-history {
+    display: grid;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(255, 255, 255, 0.68);
+}
+
+.student-quick-sale-history__head {
+    display: grid;
+    gap: 2px;
+}
+
+.student-quick-sale-history__list {
+    display: grid;
+    gap: 10px;
+}
+
+.student-quick-sale-history__empty {
+    display: grid;
+    place-items: center;
+    min-height: 56px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px dashed rgba(148, 163, 184, 0.24);
+    color: #64748b;
+    background: rgba(248, 250, 252, 0.56);
+    text-align: center;
+    font-size: 0.88rem;
+}
+
+.student-quick-sale-history__item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    background: rgba(248, 250, 252, 0.84);
+}
+
+.student-quick-sale-history__copy {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.student-quick-sale-history__copy strong {
+    color: #0f172a;
+}
+
+.student-quick-sale-history__copy span {
+    color: #64748b;
+    font-size: 0.84rem;
+}
+
+.student-quick-sale-history__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.student-quick-sale-history__status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(255, 255, 255, 0.92);
+    color: #475569;
+}
+
+.student-quick-sale-history__status--paid {
+    border-color: rgba(34, 197, 94, 0.18);
+    background: rgba(220, 252, 231, 0.96);
+    color: #166534;
+}
+
+.student-quick-sale-history__status--canceled,
+.student-quick-sale-history__status--refunded {
+    border-color: rgba(248, 113, 113, 0.18);
+    background: rgba(254, 226, 226, 0.96);
+    color: #b91c1c;
+}
+
+.student-quick-sale-status-form {
+    margin: 0;
+}
+
+.student-quick-sale-history__action {
+    min-height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(255, 255, 255, 0.92);
+    color: #334155;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.student-quick-sale-history__action:hover,
+.student-quick-sale-history__action:focus-visible {
+    border-color: rgba(59, 130, 246, 0.22);
+    color: #0f172a;
+}
+
+body[data-theme="dark"] .student-quick-sale-chip {
+    border-color: rgba(148, 163, 184, 0.14);
+    background: rgba(15, 23, 42, 0.78);
+    color: #e2e8f0;
+}
+
+body[data-theme="dark"] .student-quick-sale-chip strong {
+    color: #f8fafc;
+}
+
+body[data-theme="dark"] .student-quick-sale-recognition {
+    color: rgba(226, 232, 240, 0.78);
+}
+
+body[data-theme="dark"] .student-quick-sale-recognition__badge {
+    border-color: rgba(148, 163, 184, 0.16);
+    background: rgba(30, 41, 59, 0.84);
+    color: rgba(226, 232, 240, 0.84);
+}
+
+body[data-theme="dark"] .student-quick-sale-autocomplete {
+    border-color: rgba(148, 163, 184, 0.14);
+    background: rgba(15, 23, 42, 0.76);
+}
+
+body[data-theme="dark"] :is(.student-quick-sale-autocomplete__label, .student-quick-sale-suggestion__meta) {
+    color: rgba(226, 232, 240, 0.7);
+}
+
+body[data-theme="dark"] .student-quick-sale-suggestion {
+    border-color: rgba(148, 163, 184, 0.14);
+    background: rgba(30, 41, 59, 0.88);
+    color: rgba(248, 250, 252, 0.92);
+}
+
+body[data-theme="dark"] .student-quick-sale-suggestion strong {
+    color: #f8fafc;
+}
+
+body[data-theme="dark"] .student-quick-sale-suggestion.is-recognized {
+    border-color: rgba(34, 197, 94, 0.22);
+    background: rgba(20, 83, 45, 0.28);
+}
+
+body[data-theme="dark"] .student-quick-sale-history {
+    border-color: rgba(148, 163, 184, 0.14);
+    background: rgba(15, 23, 42, 0.74);
+}
+
+body[data-theme="dark"] .student-quick-sale-history__item {
+    border-color: rgba(148, 163, 184, 0.14);
+    background: rgba(30, 41, 59, 0.78);
+}
+
+body[data-theme="dark"] .student-quick-sale-history__empty {
+    border-color: rgba(148, 163, 184, 0.2);
+    background: rgba(15, 23, 42, 0.72);
+    color: rgba(226, 232, 240, 0.7);
+}
+
+body[data-theme="dark"] .student-quick-sale-history__copy strong {
+    color: #f8fafc;
+}
+
+body[data-theme="dark"] .student-quick-sale-history__copy span {
+    color: rgba(226, 232, 240, 0.68);
+}
+
+body[data-theme="dark"] .student-quick-sale-history__status,
+body[data-theme="dark"] .student-quick-sale-history__action {
+    border-color: rgba(148, 163, 184, 0.16);
+    background: rgba(15, 23, 42, 0.92);
+    color: rgba(248, 250, 252, 0.92);
+}
+
 @media (max-width: 680px) {
     .student-payment-primary-summary .payment-primary-summary__meta-item {
         grid-template-columns: 1fr;
+    }
+
+    .student-quick-sale-memory__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .student-quick-sale-history__item {
+        grid-template-columns: 1fr;
+    }
+
+    .student-quick-sale-history__meta {
+        justify-content: flex-start;
     }
 }

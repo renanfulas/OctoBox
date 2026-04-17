@@ -57,6 +57,14 @@ from catalog.services.student_enrollment_actions import handle_student_enrollmen
 from catalog.services.student_payment_actions import handle_student_payment_action
 from catalog.services.student_workflows import run_student_quick_create_workflow, run_student_quick_update_workflow, run_student_express_create_workflow
 from catalog.student_queries import build_student_directory_snapshot, build_student_financial_snapshot, get_operational_enrollment
+from quick_sales.facade import (
+    run_quick_sale_cancel,
+    run_quick_sale_create,
+    run_quick_sale_memory_snapshot,
+    run_quick_sale_refund,
+)
+from quick_sales.forms import QuickSaleActionForm, QuickSaleManagementForm
+from quick_sales.models import QuickSale
 from shared_support.redis_snapshots import prewarm_student_snapshots
 from finance.models import Enrollment, Payment
 from monitoring.student_realtime_metrics import record_student_save_conflict
@@ -92,7 +100,7 @@ def _expects_json_response(request):
     return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
 
-def _student_financial_json_response(*, request, student, message, selected_payment=None, status=200):
+def _student_financial_json_response(*, request, student, message, selected_payment=None, standalone_payment=False, status=200):
     return JsonResponse(
         {
             'status': 'success',
@@ -102,6 +110,7 @@ def _student_financial_json_response(*, request, student, message, selected_paym
                 student,
                 request=request,
                 selected_payment=selected_payment,
+                standalone_payment=standalone_payment,
             ),
         },
         status=status,
@@ -924,12 +933,20 @@ class StudentPaymentActionView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
         
         # --- FLUXO 1: CRIACAO AVULSA (1-Clique Balcao) ---
         if action == 'create-payment':
+            form = PaymentManagementForm(request.POST)
+            if not form.is_valid():
+                error_message = 'A cobranca avulsa nao foi registrada. Revise valor, vencimento e campos enviados.'
+                if expects_json:
+                    return _student_financial_json_error(message=error_message, status=400)
+                messages.error(request, error_message)
+                return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
+
             # Nao tentar dar lock em payment existente
             from catalog.services.student_payment_actions import handle_student_payment_creation
             new_payment = handle_student_payment_creation(
                 actor=request.user,
                 student=student,
-                payload=request.POST
+                payload=form.cleaned_data,
             )
             if new_payment:
                 success_message = 'Cobranca avulsa criada e recebimento confirmado via Balcao.'
@@ -1038,6 +1055,138 @@ class StudentPaymentDrawerView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
             message=f'Cobranca de {payment.due_date:%d/%m/%Y} carregada para revisao.',
             selected_payment=payment,
         )
+
+
+class StudentPaymentCheckoutDrawerView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
+
+    def get(self, request, student_id, *args, **kwargs):
+        student = get_object_or_404(Student, pk=student_id)
+
+        if not _expects_json_response(request):
+            return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
+
+        return _student_financial_json_response(
+            request=request,
+            student=student,
+            message='Checkout padrao carregado para revisao.',
+        )
+
+
+class StudentStandalonePaymentDrawerView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
+
+    def get(self, request, student_id, *args, **kwargs):
+        student = get_object_or_404(Student, pk=student_id)
+
+        if not _expects_json_response(request):
+            return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
+
+        return _student_financial_json_response(
+            request=request,
+            student=student,
+            message='Pagamento avulso pronto para preenchimento.',
+            standalone_payment=True,
+        )
+
+
+class StudentQuickSaleDrawerView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
+
+    def get(self, request, student_id, *args, **kwargs):
+        student = get_object_or_404(Student, pk=student_id)
+
+        if not _expects_json_response(request):
+            return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
+
+        return _student_financial_json_response(
+            request=request,
+            student=student,
+            message='Pagamentos rapidos carregados para registro no balcao.',
+        )
+
+
+class StudentQuickSaleSuggestionsView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
+
+    def get(self, request, student_id, *args, **kwargs):
+        student = get_object_or_404(Student, pk=student_id)
+
+        if not _expects_json_response(request):
+            return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
+
+        return JsonResponse(
+            {
+                'status': 'success',
+                'memory': run_quick_sale_memory_snapshot(
+                    student_id=student.id,
+                    query=(request.GET.get('q') or '').strip(),
+                ),
+            }
+        )
+
+
+class StudentQuickSaleActionView(AjaxLoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
+
+    @idempotent_action
+    def post(self, request, student_id, *args, **kwargs):
+        student = get_object_or_404(Student, pk=student_id)
+        expects_json = _expects_json_response(request)
+
+        action_form = QuickSaleActionForm(request.POST)
+        if not action_form.is_valid():
+            error_message = 'O pagamento rapido nao foi aplicado. Revise os campos enviados.'
+            if expects_json:
+                return _student_financial_json_error(message=error_message, status=400)
+            messages.error(request, error_message)
+            return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
+
+        action = action_form.cleaned_data['action']
+
+        try:
+            if action == 'create-quick-sale':
+                form = QuickSaleManagementForm(request.POST)
+                if not form.is_valid():
+                    error_message = 'O pagamento rapido nao foi registrado. Revise descricao, valor e metodo.'
+                    if expects_json:
+                        return _student_financial_json_error(message=error_message, status=400)
+                    messages.error(request, error_message)
+                    return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
+
+                run_quick_sale_create(
+                    actor=request.user,
+                    student=student,
+                    payload=form.cleaned_data,
+                )
+                success_message = 'Pagamento rapido registrado com sucesso.'
+            else:
+                quick_sale = get_object_or_404(
+                    QuickSale,
+                    pk=action_form.cleaned_data['quick_sale_id'],
+                    student=student,
+                )
+                if action == 'cancel-quick-sale':
+                    run_quick_sale_cancel(actor=request.user, student=student, quick_sale=quick_sale, payload={})
+                    success_message = 'Pagamento rapido cancelado com sucesso.'
+                else:
+                    run_quick_sale_refund(actor=request.user, student=student, quick_sale=quick_sale, payload={})
+                    success_message = 'Pagamento rapido estornado com sucesso.'
+        except ValueError as exc:
+            if expects_json:
+                return _student_financial_json_error(message=str(exc), status=400)
+            messages.error(request, str(exc))
+            return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
+
+        if expects_json:
+            return _student_financial_json_response(
+                request=request,
+                student=student,
+                message=success_message,
+            )
+
+        messages.success(request, success_message)
+        return redirect(_append_fragment(reverse('student-quick-update', args=[student.id]), STUDENT_FINANCIAL_FRAGMENT))
 
 
 class StudentDirectoryExportView(LoginRequiredMixin, RoleRequiredMixin, View):

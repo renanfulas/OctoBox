@@ -25,7 +25,7 @@ POR QUE ELE EXISTE:
         </span>
         {% endif %}
 
-        {% if due_value %}
+        {% if due_input or due_value %}
         <span class="payment-primary-summary__meta-item">
             <span class="payment-primary-summary__label">{% if due_label %}{{ due_label }}{% else %}Vencimento{% endif %}</span>
             {% if due_input %}

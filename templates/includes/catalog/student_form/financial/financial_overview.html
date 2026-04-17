@@ -66,7 +66,7 @@ O QUE ESTE ARQUIVO FAZ:
         </section>
 
         <div class="actions actions-tight operation-hero-action-rail student-page-payments-ghost-action-rail">
-            <button class="button secondary student-page-payments-ghost-action" type="button" data-action="open-drawer" data-drawer-id="student-payment-checkout-slot" aria-controls="student-payment-checkout-slot" aria-expanded="false">
+            <button class="button secondary student-page-payments-ghost-action" type="button" data-action="open-standalone-payment" aria-controls="student-payment-checkout-slot" aria-expanded="false">
                 Registrar pagamento avulso
             </button>
         </div>
@@ -78,7 +78,7 @@ O QUE ESTE ARQUIVO FAZ:
             <p class="meta-text">Veja o que pede atencao, acompanhe o historico e abra o fluxo ideal sem poluir a ficha do aluno.</p>
         </div>
         <div class="actions actions-tight operation-hero-action-rail student-financial-command-actions">
-            <button class="button" type="button" data-action="open-drawer" data-drawer-id="student-payment-checkout-slot" aria-controls="student-payment-checkout-slot" aria-expanded="false">
+            <button class="button" type="button" data-action="open-payment-checkout" aria-controls="student-payment-checkout-slot" aria-expanded="false">
                 Cobrar agora
             </button>
             <button class="button secondary" type="button" data-action="open-drawer" data-drawer-id="financial-enrollment-management-slot" aria-controls="financial-enrollment-management-slot" aria-expanded="false">
@@ -140,7 +140,7 @@ O QUE ESTE ARQUIVO FAZ:
                         <p class="meta-text">A carteira deste aluno esta organizada. Use os atalhos abaixo apenas quando precisar registrar ou revisar algo.</p>
                     {% endif %}
                     <div class="student-financial-quick-actions actions actions-tight operation-hero-action-rail">
-                        <button class="button" type="button" data-action="open-drawer" data-drawer-id="student-payment-checkout-slot" aria-controls="student-payment-checkout-slot" aria-expanded="false">
+                        <button class="button" type="button" data-action="open-payment-checkout" aria-controls="student-payment-checkout-slot" aria-expanded="false">
                             Cobrar agora
                         </button>
                         <button class="button secondary" type="button" data-action="open-drawer" data-drawer-id="financial-enrollment-management-slot" aria-controls="financial-enrollment-management-slot" aria-expanded="false">
@@ -191,6 +191,13 @@ O QUE ESTE ARQUIVO FAZ:
         <button class="drawer-close-btn" type="button" data-action="close-drawers" aria-label="Fechar cobrar agora">&times;</button>
         <div id="student-payment-checkout-content">
             {% include "includes/catalog/student_form/financial/financial_overview_payment_management.html" with page=page %}
+        </div>
+    </div>
+
+    <div class="slide-over-panel student-page-payments-drawer student-page-payments-drawer--checkout" id="student-quick-sale-slot" role="dialog" aria-modal="true" aria-labelledby="student-quick-sale-title" aria-describedby="student-quick-sale-copy" aria-hidden="true" tabindex="-1">
+        <button class="drawer-close-btn" type="button" data-action="close-drawers" aria-label="Fechar pagamento rapido">&times;</button>
+        <div id="student-quick-sale-content">
+            {% include "includes/catalog/student_form/financial/financial_overview_quick_sales.html" with page=page %}
         </div>
     </div>
 

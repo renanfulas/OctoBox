@@ -1,0 +1,182 @@
+<!--
+ARQUIVO: drawer de pagamentos rapidos da ficha do aluno.
+
+POR QUE ELE EXISTE:
+- registra vendas de balcao sem misturar o backend com mensalidades.
+- reaproveita a familia visual do checkout ja conhecida pelo operador.
+-->
+<div class="card card--sci-fi student-financial-drawer student-payment-management-card student-page-payments-checkout-card student-quick-sale-card">
+    <header class="student-quick-panel__hero student-quick-sale-card__hero">
+        <div class="student-quick-panel__avatar" aria-hidden="true">
+            {{ page.data.student_object.full_name|slice:":1"|upper }}
+        </div>
+        <div class="student-quick-panel__identity">
+            <p class="student-quick-panel__eyebrow">Pagamento rapido</p>
+            <h3 class="student-quick-panel__title" id="student-quick-sale-title">{{ page.data.student_object.full_name }}</h3>
+            <p class="student-quick-panel__copy" id="student-quick-sale-copy">Registre itens de balcao como agua, energetico ou barra em poucos passos.</p>
+        </div>
+    </header>
+
+    <div class="student-quick-panel__status-strip student-quick-sale-card__status-strip">
+        <span class="student-quick-chip student-quick-chip--success">Balcao</span>
+        <span class="student-quick-chip">Pagamento rapido</span>
+    </div>
+
+    <div class="student-financial-drawer__body">
+        <form method="post" id="student-quick-sale-form" action="{% url 'student-quick-sale-action' page.data.student_object.id %}" class="student-payment-management-form" aria-describedby="student-quick-sale-status">
+            {% csrf_token %}
+            {{ page.data.quick_sale_management_form.template_id }}
+            <input type="hidden" name="action" value="create-quick-sale">
+            {{ page.data.quick_sale_management_form.method.as_hidden }}
+
+            <section class="student-quick-sale-memory stack-12" aria-label="Sugestoes rapidas">
+                {% if page.data.quick_sale_memory_snapshot.templates %}
+                <div class="stack-6">
+                    <p class="eyebrow">Produtos</p>
+                    <div class="student-quick-sale-memory__grid">
+                        {% for item in page.data.quick_sale_memory_snapshot.templates %}
+                        <button
+                            class="student-quick-sale-chip"
+                            type="button"
+                            data-action="apply-quick-sale-memory"
+                            data-template-id="{{ item.template_id }}"
+                            data-description="{{ item.label }}"
+                            data-amount="{{ item.unit_price }}"
+                        >
+                            <span>{{ item.label }}</span>
+                            <strong>R$ {{ item.unit_price }}</strong>
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if page.data.quick_sale_memory_snapshot.recent %}
+                <div class="stack-6">
+                    <p class="eyebrow">Recentes</p>
+                    <div class="student-quick-sale-memory__grid">
+                        {% for item in page.data.quick_sale_memory_snapshot.recent %}
+                        <button
+                            class="student-quick-sale-chip student-quick-sale-chip--recent"
+                            type="button"
+                            data-action="apply-quick-sale-memory"
+                            data-template-id="{{ item.template_id|default:'' }}"
+                            data-description="{{ item.label }}"
+                            data-amount="{{ item.unit_price }}"
+                        >
+                            <span>{{ item.label }}</span>
+                            <strong>R$ {{ item.unit_price }}</strong>
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+
+            <section class="payment-primary-summary student-payment-primary-summary student-quick-sale-summary" aria-label="Resumo do pagamento rapido">
+                <div class="payment-primary-summary__amount">
+                    <span class="payment-primary-summary__label">Descricao</span>
+                    <div class="student-quick-sale-summary__field">
+                        {{ page.data.quick_sale_management_form.description }}
+                        <div class="student-quick-sale-recognition student-quick-sale-recognition--manual" id="student-quick-sale-recognition" data-mode="manual">
+                            <span class="student-quick-sale-recognition__badge" id="student-quick-sale-recognition-badge">Manual</span>
+                            <span class="student-quick-sale-recognition__copy" id="student-quick-sale-recognition-copy">O sistema ainda nao reconheceu um produto salvo.</span>
+                        </div>
+                        <div class="student-quick-sale-autocomplete" id="student-quick-sale-autocomplete" hidden>
+                            <div class="student-quick-sale-autocomplete__head">
+                                <span class="student-quick-sale-autocomplete__label">Sugestoes inteligentes</span>
+                            </div>
+                            <div class="student-quick-sale-autocomplete__results" id="student-quick-sale-suggestions" aria-live="polite"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="payment-primary-summary__amount">
+                    <span class="payment-primary-summary__label">Valor</span>
+                    <div class="payment-primary-summary__amount-field">
+                        <span class="payment-primary-summary__currency">R$</span>
+                        {{ page.data.quick_sale_management_form.amount }}
+                    </div>
+                </div>
+
+                <div class="payment-primary-summary__meta">
+                    <span class="payment-primary-summary__meta-item">
+                        <span class="payment-primary-summary__label">Referencia</span>
+                        <span class="payment-primary-summary__field">{{ page.data.quick_sale_management_form.reference }}</span>
+                    </span>
+                    <span class="payment-primary-summary__meta-item">
+                        <span class="payment-primary-summary__label">Observacao</span>
+                        <span class="payment-primary-summary__field student-quick-sale-summary__notes">{{ page.data.quick_sale_management_form.notes }}</span>
+                    </span>
+                </div>
+            </section>
+
+            <section class="student-payment-methods">
+                <div class="stack-4">
+                    <p class="eyebrow">Metodo</p>
+                    <h4 class="section-title-sm">Como foi pago?</h4>
+                </div>
+                <div class="student-payment-methods__grid">
+                    <button type="button" class="student-payment-method-button is-pix flex-center gap-2" data-action="submit-quick-sale" data-method="pix">
+                        <span>Pix</span>
+                    </button>
+                    <button type="button" class="student-payment-method-button is-card flex-center gap-2" data-action="submit-quick-sale" data-method="credit_card">
+                        <span>Credito</span>
+                    </button>
+                    <button type="button" class="student-payment-method-button is-debit flex-center gap-2" data-action="submit-quick-sale" data-method="debit_card">
+                        <span>Debito</span>
+                    </button>
+                    <button type="button" class="student-payment-method-button is-cash flex-center gap-2" data-action="submit-quick-sale" data-method="cash">
+                        <span>Dinheiro</span>
+                    </button>
+                </div>
+            </section>
+
+            <div id="student-quick-sale-status" class="student-payment-management-status" role="status" aria-live="polite" aria-atomic="true">
+                Escolha um produto rapido ou digite a descricao para registrar o pagamento.
+            </div>
+
+            <section class="student-quick-sale-history" aria-label="Historico rapido de pagamentos de balcao">
+                <div class="student-quick-sale-history__head">
+                    <p class="eyebrow">Historico discreto</p>
+                    <span class="meta-text">Corrija ou estorne os ultimos registros sem sair daqui.</span>
+                </div>
+                {% if page.data.quick_sale_history_snapshot %}
+                <div class="student-quick-sale-history__list">
+                    {% for item in page.data.quick_sale_history_snapshot %}
+                    <article class="student-quick-sale-history__item">
+                        <div class="student-quick-sale-history__copy">
+                            <strong>{{ item.label }}</strong>
+                            <span>R$ {{ item.unit_price }} • {{ item.sold_at_label }}</span>
+                        </div>
+                        <div class="student-quick-sale-history__meta">
+                            <span class="student-quick-sale-history__status student-quick-sale-history__status--{{ item.status }}">{{ item.status_label }}</span>
+                            {% if item.can_cancel %}
+                            <form method="post" action="{% url 'student-quick-sale-action' page.data.student_object.id %}" class="student-quick-sale-status-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="quick_sale_id" value="{{ item.quick_sale_id }}">
+                                <input type="hidden" name="action" value="cancel-quick-sale">
+                                <button type="submit" class="student-quick-sale-history__action" data-confirm="true" data-confirm-message="Deseja cancelar este pagamento rapido?">Cancelar</button>
+                            </form>
+                            {% endif %}
+                            {% if item.can_refund %}
+                            <form method="post" action="{% url 'student-quick-sale-action' page.data.student_object.id %}" class="student-quick-sale-status-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="quick_sale_id" value="{{ item.quick_sale_id }}">
+                                <input type="hidden" name="action" value="refund-quick-sale">
+                                <button type="submit" class="student-quick-sale-history__action" data-confirm="true" data-confirm-message="Deseja estornar este pagamento rapido?">Estornar</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="student-quick-sale-history__empty">
+                    <span>Nenhum pagamento rapido registrado ainda.</span>
+                </div>
+                {% endif %}
+            </section>
+        </form>
+    </div>
+</div>

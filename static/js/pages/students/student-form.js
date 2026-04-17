@@ -448,16 +448,29 @@ POR QUE ELE EXISTE:
     document.dispatchEvent(new CustomEvent('student-profile-edit-stop'));
   }
 
+  function handleStudentPageDrawerTrigger(event) {
+    if (event.__studentDrawerHandled) {
+      return true;
+    }
+
+    var drawerTrigger = event.target.closest('[data-student-page-open-drawer]');
+    if (!drawerTrigger) {
+      return false;
+    }
+
+    event.__studentDrawerHandled = true;
+    event.preventDefault();
+    activateStudentPagePanel('tab-student-form-financial');
+    syncStudentPageHash('tab-student-form-financial');
+    if (typeof window.openStudentFinancialDrawer === 'function') {
+      window.openStudentFinancialDrawer(drawerTrigger.getAttribute('data-student-page-open-drawer'), drawerTrigger);
+    }
+    return true;
+  }
+
   if (studentPageShell) {
     studentPageShell.addEventListener('click', function(event) {
-      var drawerTrigger = event.target.closest('[data-student-page-open-drawer]');
-      if (drawerTrigger) {
-        event.preventDefault();
-        activateStudentPagePanel('tab-student-form-financial');
-        syncStudentPageHash('tab-student-form-financial');
-        if (typeof window.openStudentFinancialDrawer === 'function') {
-          window.openStudentFinancialDrawer(drawerTrigger.getAttribute('data-student-page-open-drawer'), drawerTrigger);
-        }
+      if (handleStudentPageDrawerTrigger(event)) {
         return;
       }
 
@@ -499,6 +512,10 @@ POR QUE ELE EXISTE:
       }
     });
   }
+
+  document.addEventListener('click', function(event) {
+    handleStudentPageDrawerTrigger(event);
+  });
 
   document.addEventListener('student-profile-lock-state', function(event) {
     var detail = event.detail || {};

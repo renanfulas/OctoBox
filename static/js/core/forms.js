@@ -6,11 +6,6 @@ POR QUE ELE EXISTE:
 */
 
 (function() {
-  var maskedFields = document.querySelectorAll('input[data-mask], textarea[data-mask]');
-  if (!maskedFields.length) {
-    return;
-  }
-
   function digitsOnly(value) {
     return String(value || '').replace(/\D/g, '');
   }
@@ -185,36 +180,36 @@ POR QUE ELE EXISTE:
   }
 
   function normalizeCurrencyValue(value, isBlur, field) {
-    var rawValue = String(value || '').replace(',', '.');
+    var rawValue = String(value || '').replace(/\./g, ',');
     var integerLimit = Number(field && field.dataset.currencyMaxIntegerDigits || '4');
     var decimalPlaces = Number(field && field.dataset.decimalPlaces || '2');
-    var sanitized = rawValue.replace(/[^\d.]/g, '');
-    var firstDotIndex = sanitized.indexOf('.');
-    var hasDecimalSeparator = firstDotIndex >= 0;
-    var rawInteger = hasDecimalSeparator ? sanitized.slice(0, firstDotIndex) : sanitized;
-    var rawDecimal = hasDecimalSeparator ? sanitized.slice(firstDotIndex + 1).replace(/\./g, '') : '';
+    var sanitized = rawValue.replace(/[^\d,]/g, '');
+    var firstCommaIndex = sanitized.indexOf(',');
+    var hasDecimalSeparator = firstCommaIndex >= 0;
+    var rawInteger = hasDecimalSeparator ? sanitized.slice(0, firstCommaIndex) : sanitized;
+    var rawDecimal = hasDecimalSeparator ? sanitized.slice(firstCommaIndex + 1).replace(/,/g, '') : '';
     var integerPart = digitsOnly(rawInteger).slice(0, integerLimit);
     var decimalPart = digitsOnly(rawDecimal).slice(0, decimalPlaces);
 
     var normalized = integerPart;
     if (hasDecimalSeparator) {
-      normalized += '.' + decimalPart;
+      normalized += ',' + decimalPart;
     }
 
-    if (!isBlur || !normalized || normalized === '.') {
+    if (!isBlur || !normalized || normalized === ',') {
       return normalized;
     }
 
-    var parsedValue = Number(normalized);
-    if (Number.isNaN(parsedValue)) {
-      return normalized;
-    }
-
-    var maxValue = Number('9'.repeat(integerLimit) + (decimalPlaces > 0 ? '.' + '9'.repeat(decimalPlaces) : ''));
-    return Math.min(parsedValue, maxValue).toFixed(decimalPlaces);
+    var integerValue = integerPart || '0';
+    var paddedDecimal = decimalPart.padEnd(decimalPlaces, '0').slice(0, decimalPlaces);
+    return decimalPlaces > 0 ? integerValue + ',' + paddedDecimal : integerValue;
   }
 
-  maskedFields.forEach(function(field) {
+  function bindMaskedField(field) {
+    if (!field || field.dataset.maskBound === 'true') {
+      return;
+    }
+
     field.addEventListener('input', function() {
       if (field.dataset.mask === 'date' && field.type !== 'date') {
         field.value = formatDateValueForField(field.value, field);
@@ -263,5 +258,22 @@ POR QUE ELE EXISTE:
         field.value = normalizeCurrencyValue(field.value, true, field);
       }
     });
-  });
+
+    field.dataset.maskBound = 'true';
+  }
+
+  function applyMaskedFields(root) {
+    var scope = root && root.querySelectorAll ? root : document;
+    var maskedFields = scope.querySelectorAll('input[data-mask], textarea[data-mask]');
+    if (!maskedFields.length) {
+      return;
+    }
+
+    maskedFields.forEach(bindMaskedField);
+  }
+
+  window.OctoForms = window.OctoForms || {};
+  window.OctoForms.applyMaskedFields = applyMaskedFields;
+
+  applyMaskedFields(document);
 }());

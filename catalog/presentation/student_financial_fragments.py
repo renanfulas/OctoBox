@@ -20,6 +20,9 @@ from django.utils import timezone
 
 from catalog.forms import EnrollmentManagementForm, PaymentManagementForm
 from catalog.student_queries import build_student_financial_snapshot, get_operational_enrollment
+from quick_sales.forms import QuickSaleManagementForm
+from quick_sales.facade import run_quick_sale_memory_snapshot
+from quick_sales.queries import build_student_quick_sale_history_snapshot
 
 
 def resolve_student_payment_selection_id(form):
@@ -36,13 +39,16 @@ def resolve_student_payment_selection_id(form):
         return None
 
 
-def build_student_payment_management_form(student, payment=None):
-    latest_payment = payment or student.payments.order_by('-due_date', '-created_at').first()
+def build_student_payment_management_form(student, payment=None, *, standalone=False):
+    latest_payment = None if standalone else payment or student.payments.order_by('-due_date', '-created_at').first()
     if latest_payment is None:
         return PaymentManagementForm(
             initial={
                 'amount': '',
                 'due_date': timezone.localdate().strftime('%d/%m/%Y'),
+                'method': 'pix',
+                'reference': '',
+                'notes': '',
             }
         )
 
@@ -72,22 +78,47 @@ def build_student_enrollment_management_form(student):
     )
 
 
-def build_student_financial_fragment_page(student, *, selected_payment=None):
+def build_student_quick_sale_management_form(student):
+    return QuickSaleManagementForm(
+        initial={
+            'template_id': '',
+            'description': '',
+            'amount': '',
+            'method': 'pix',
+            'reference': '',
+            'notes': '',
+        }
+    )
+
+
+def build_student_financial_fragment_page(student, *, selected_payment=None, standalone_payment=False):
     financial_overview = build_student_financial_snapshot(student)
-    payment_management_form = build_student_payment_management_form(student, payment=selected_payment)
+    payment_management_form = build_student_payment_management_form(
+        student,
+        payment=selected_payment,
+        standalone=standalone_payment,
+    )
     return {
         'data': {
             'student_object': student,
             'financial_overview': financial_overview,
             'payment_management_form': payment_management_form,
             'selected_payment_id': resolve_student_payment_selection_id(payment_management_form),
+            'standalone_payment': standalone_payment,
+            'quick_sale_management_form': build_student_quick_sale_management_form(student),
+            'quick_sale_memory_snapshot': run_quick_sale_memory_snapshot(student_id=student.id),
+            'quick_sale_history_snapshot': build_student_quick_sale_history_snapshot(student.id),
             'enrollment_management_form': build_student_enrollment_management_form(student),
         }
     }
 
 
-def render_student_financial_fragments(student, *, request=None, selected_payment=None):
-    page = build_student_financial_fragment_page(student, selected_payment=selected_payment)
+def render_student_financial_fragments(student, *, request=None, selected_payment=None, standalone_payment=False):
+    page = build_student_financial_fragment_page(
+        student,
+        selected_payment=selected_payment,
+        standalone_payment=standalone_payment,
+    )
     context = {'page': page}
     render_kwargs = {'context': context}
     if request is not None:
@@ -103,6 +134,7 @@ def render_student_financial_fragments(student, *, request=None, selected_paymen
         'quick_ledger': render_to_string('catalog/includes/student/student_quick_financial_history.html', **render_kwargs),
         'management': '',
         'checkout': render_to_string('includes/catalog/student_form/financial/financial_overview_payment_management.html', **render_kwargs),
+        'quick_sales': render_to_string('includes/catalog/student_form/financial/financial_overview_quick_sales.html', **render_kwargs),
         'enrollment': render_to_string('includes/catalog/student_form/financial/financial_overview_enrollment_management.html', **render_kwargs),
     }
 
@@ -111,6 +143,7 @@ __all__ = [
     'build_student_enrollment_management_form',
     'build_student_financial_fragment_page',
     'build_student_payment_management_form',
+    'build_student_quick_sale_management_form',
     'render_student_financial_fragments',
     'resolve_student_payment_selection_id',
 ]

@@ -26,6 +26,8 @@
     'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
   let lastTrigger = null;
   let selectedPaymentId = null;
+  let quickSaleSuggestionTimer = null;
+  let quickSaleSuggestionController = null;
 
   function decoratePaymentForm() {
     const amountInput = document.querySelector('#student-payment-checkout-form [name="amount"]');
@@ -41,8 +43,31 @@
       });
   }
 
+  function decorateQuickSaleForm() {
+    const descriptionInput = document.querySelector('#student-quick-sale-form [name="description"]');
+    if (descriptionInput) {
+      descriptionInput.classList.add('student-payment-management-summary__input');
+    }
+
+    const amountInput = document.querySelector('#student-quick-sale-form [name="amount"]');
+    if (amountInput) {
+      amountInput.classList.add('student-payment-management-total__input');
+      amountInput.placeholder = '0,00';
+    }
+
+    document
+      .querySelectorAll('#student-quick-sale-form [name="reference"], #student-quick-sale-form [name="notes"]')
+      .forEach(function (input) {
+        input.classList.add('student-payment-management-summary__input');
+      });
+  }
+
   function refreshWorkspaceUi() {
     decoratePaymentForm();
+    decorateQuickSaleForm();
+    if (window.OctoForms && typeof window.OctoForms.applyMaskedFields === 'function') {
+      window.OctoForms.applyMaskedFields(document);
+    }
     syncSelectedPaymentIdFromDom();
   }
 
@@ -200,6 +225,7 @@
     replaceFragment('student-financial-ledger-slot', fragments.ledger);
     replaceFragment('student-payment-management-content', fragments.management);
     replaceFragment('student-payment-checkout-content', fragments.checkout);
+    replaceFragment('student-quick-sale-content', fragments.quick_sales);
     replaceFragment('student-enrollment-management-content', fragments.enrollment);
     refreshWorkspaceUi();
   }
@@ -257,7 +283,9 @@
       body: formData,
     });
 
-    const statusMsg = document.getElementById('student-payment-checkout-status');
+    const statusMsg = form.id === 'student-quick-sale-form'
+      ? document.getElementById('student-quick-sale-status')
+      : document.getElementById('student-payment-checkout-status');
     if (statusMsg && payload.message) {
       statusMsg.hidden = false;
       statusMsg.textContent = payload.message;
@@ -290,6 +318,70 @@
     }
   }
 
+  async function loadCheckoutDrawer(trigger) {
+    if (!studentId) {
+      openDrawer('student-payment-checkout-slot', trigger);
+      return;
+    }
+
+    const payload = await handleJsonAction(`/alunos/${studentId}/financeiro/cobranca/drawer/`, {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    });
+
+    openDrawer('student-payment-checkout-slot', trigger);
+    const statusMsg = document.getElementById('student-payment-checkout-status');
+    if (statusMsg && payload.message) {
+      statusMsg.hidden = false;
+      statusMsg.textContent = payload.message;
+    }
+  }
+
+  async function loadStandalonePaymentDrawer(trigger) {
+    if (!studentId) {
+      openDrawer('student-payment-checkout-slot', trigger);
+      return;
+    }
+
+    selectedPaymentId = null;
+    const payload = await handleJsonAction(`/alunos/${studentId}/financeiro/cobranca/avulsa/drawer/`, {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    });
+
+    openDrawer('student-payment-checkout-slot', trigger);
+    const statusMsg = document.getElementById('student-payment-checkout-status');
+    if (statusMsg && payload.message) {
+      statusMsg.hidden = false;
+      statusMsg.textContent = payload.message;
+    }
+  }
+
+  async function loadQuickSaleDrawer(trigger) {
+    if (!studentId) {
+      openDrawer('student-quick-sale-slot', trigger);
+      return;
+    }
+
+    const payload = await handleJsonAction(`/alunos/${studentId}/pagamentos-rapidos/drawer/`, {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    });
+
+    openDrawer('student-quick-sale-slot', trigger);
+    const statusMsg = document.getElementById('student-quick-sale-status');
+    if (statusMsg && payload.message) {
+      statusMsg.hidden = false;
+      statusMsg.textContent = payload.message;
+    }
+  }
+
   function updatePaymentCheckoutStatus(methodValue) {
     const statusMsg = document.getElementById('student-payment-checkout-status');
 
@@ -299,6 +391,221 @@
 
     statusMsg.hidden = false;
     statusMsg.textContent = methodValue === 'pix' ? 'Registrando o pagamento com Pix. Aguarde um instante.' : 'Registrando o pagamento. Aguarde um instante.';
+  }
+
+  function updateQuickSaleStatus(message) {
+    const statusMsg = document.getElementById('student-quick-sale-status');
+    if (!statusMsg) {
+      return;
+    }
+    statusMsg.hidden = false;
+    statusMsg.textContent = message;
+  }
+
+  function setQuickSaleRecognition(mode, copy) {
+    const rootElement = document.getElementById('student-quick-sale-recognition');
+    const badge = document.getElementById('student-quick-sale-recognition-badge');
+    const text = document.getElementById('student-quick-sale-recognition-copy');
+    if (!rootElement || !badge || !text) {
+      return;
+    }
+
+    rootElement.dataset.mode = mode;
+    rootElement.classList.remove(
+      'student-quick-sale-recognition--manual',
+      'student-quick-sale-recognition--recognized',
+      'student-quick-sale-recognition--suggested'
+    );
+    rootElement.classList.add('student-quick-sale-recognition--' + mode);
+
+    if (mode === 'recognized') {
+      badge.textContent = 'Reconhecido';
+    } else if (mode === 'suggested') {
+      badge.textContent = 'Sugestao';
+    } else {
+      badge.textContent = 'Manual';
+    }
+    text.textContent = copy;
+  }
+
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function getQuickSaleAutocompleteElements() {
+    return {
+      panel: document.getElementById('student-quick-sale-autocomplete'),
+      results: document.getElementById('student-quick-sale-suggestions'),
+    };
+  }
+
+  function hideQuickSaleSuggestions() {
+    const elements = getQuickSaleAutocompleteElements();
+    if (elements.panel) {
+      elements.panel.hidden = true;
+    }
+    if (elements.results) {
+      elements.results.innerHTML = '';
+    }
+  }
+
+  function renderQuickSaleSuggestions(memory) {
+    const elements = getQuickSaleAutocompleteElements();
+    if (!elements.panel || !elements.results) {
+      return;
+    }
+
+    const match = memory && memory.match ? memory.match : null;
+    const suggestions = match && Array.isArray(match.suggestions) ? match.suggestions : [];
+
+    if (!match || (!suggestions.length && !match.resolved_template_id)) {
+      hideQuickSaleSuggestions();
+      setQuickSaleRecognition('manual', 'O sistema ainda nao reconheceu um produto salvo.');
+      return;
+    }
+
+    const cards = [];
+
+    if (match.resolved_template_id) {
+      const exactLabel = match.resolution_mode === 'exact_alias' ? 'Alias reconhecido' : 'Produto reconhecido';
+      const exactPrice = match.resolved_template_unit_price || '';
+      const exactDescription = match.resolved_template_label || 'Produto salvo';
+      cards.push(
+        '<button class="student-quick-sale-suggestion is-recognized" type="button" data-action="apply-quick-sale-memory" data-template-id="' +
+          escapeHtml(match.resolved_template_id) +
+          '" data-description="' +
+          escapeHtml(exactDescription) +
+          '" data-amount="' +
+          escapeHtml(exactPrice) +
+          '">' +
+          '<span class="student-quick-sale-suggestion__meta">' + escapeHtml(exactLabel) + '</span>' +
+          '<strong>' + escapeHtml(exactDescription) + '</strong>' +
+          (exactPrice ? '<span>R$ ' + escapeHtml(exactPrice) + '</span>' : '<span>Use o valor que voce digitar.</span>') +
+        '</button>'
+      );
+    }
+
+    suggestions.forEach(function (item) {
+      cards.push(
+        '<button class="student-quick-sale-suggestion" type="button" data-action="apply-quick-sale-memory" data-template-id="' +
+          escapeHtml(item.template_id) +
+          '" data-description="' +
+          escapeHtml(item.label) +
+          '" data-amount="' +
+          escapeHtml(item.unit_price) +
+          '">' +
+          '<span class="student-quick-sale-suggestion__meta">Parecido com ' + escapeHtml(Math.round((item.confidence || 0) * 100)) + '%</span>' +
+          '<strong>' + escapeHtml(item.label) + '</strong>' +
+          '<span>R$ ' + escapeHtml(item.unit_price) + '</span>' +
+        '</button>'
+      );
+    });
+
+    if (!cards.length) {
+      hideQuickSaleSuggestions();
+      return;
+    }
+
+    elements.panel.hidden = false;
+    elements.results.innerHTML = cards.join('');
+
+    if (match.resolved_template_id) {
+      setQuickSaleRecognition('recognized', 'Produto conhecido na base. Um clique preenche descricao e valor padrao.');
+      return;
+    }
+
+    setQuickSaleRecognition('suggested', 'Existe algo parecido salvo. Revise a sugestao antes de confirmar.');
+  }
+
+  async function fetchQuickSaleSuggestions(query) {
+    if (!studentId) {
+      return null;
+    }
+
+    if (quickSaleSuggestionController) {
+      quickSaleSuggestionController.abort();
+    }
+
+    quickSaleSuggestionController = new AbortController();
+    const response = await fetch(`/alunos/${studentId}/pagamentos-rapidos/sugestoes/?q=${encodeURIComponent(query)}`, {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      signal: quickSaleSuggestionController.signal,
+    });
+
+    const payload = await response.json();
+    if (!response.ok || payload.status !== 'success') {
+      throw new Error(payload.message || 'Nao foi possivel carregar as sugestoes agora.');
+    }
+    return payload.memory;
+  }
+
+  function scheduleQuickSaleSuggestions(query) {
+    const normalizedQuery = String(query || '').trim();
+    if (quickSaleSuggestionTimer) {
+      window.clearTimeout(quickSaleSuggestionTimer);
+      quickSaleSuggestionTimer = null;
+    }
+
+    if (!normalizedQuery || normalizedQuery.length < 2) {
+      if (quickSaleSuggestionController) {
+        quickSaleSuggestionController.abort();
+      }
+      hideQuickSaleSuggestions();
+      setQuickSaleRecognition('manual', 'O sistema ainda nao reconheceu um produto salvo.');
+      return;
+    }
+
+    quickSaleSuggestionTimer = window.setTimeout(function () {
+      fetchQuickSaleSuggestions(normalizedQuery)
+        .then(function (memory) {
+          renderQuickSaleSuggestions(memory);
+          if (memory && memory.match && memory.match.resolved_template_id) {
+            updateQuickSaleStatus('Produto reconhecido. Se quiser, clique na sugestao para preencher tudo mais rapido.');
+          }
+        })
+        .catch(function (error) {
+          if (error && error.name === 'AbortError') {
+            return;
+          }
+          hideQuickSaleSuggestions();
+        });
+    }, 220);
+  }
+
+  function applyQuickSaleMemory(trigger) {
+    const form = document.getElementById('student-quick-sale-form');
+    if (!form || !trigger) {
+      return;
+    }
+
+    const descriptionField = form.querySelector('[name="description"]');
+    const amountField = form.querySelector('[name="amount"]');
+    const templateField = form.querySelector('[name="template_id"]');
+    const description = trigger.getAttribute('data-description') || '';
+    const amount = trigger.getAttribute('data-amount') || '';
+    const templateId = trigger.getAttribute('data-template-id') || '';
+
+    if (descriptionField) {
+      descriptionField.value = description;
+    }
+    if (amountField) {
+      amountField.value = amount.replace('.', ',');
+    }
+    if (templateField) {
+      templateField.value = templateId;
+    }
+
+    hideQuickSaleSuggestions();
+    setQuickSaleRecognition(templateId ? 'recognized' : 'manual', templateId ? 'Produto reconhecido e carregado da memoria.' : 'Item preenchido manualmente.');
+    updateQuickSaleStatus('Produto rapido carregado: ' + description + '. Ajuste o valor se quiser antes de confirmar.');
   }
 
   function showPaymentSelectionStatus(dataset) {
@@ -399,7 +706,23 @@
     focusDrawer(drawer);
   }
 
-  window.openStudentFinancialDrawer = openDrawer;
+  window.openStudentFinancialDrawer = function (drawerId, trigger) {
+    if (drawerId === 'student-payment-checkout-slot') {
+      loadCheckoutDrawer(trigger).catch(function () {
+        openDrawer(drawerId, trigger);
+      });
+      return;
+    }
+
+    if (drawerId === 'student-quick-sale-slot') {
+      loadQuickSaleDrawer(trigger).catch(function () {
+        openDrawer(drawerId, trigger);
+      });
+      return;
+    }
+
+    openDrawer(drawerId, trigger);
+  };
   window.applyStudentFinancialFragments = applyFinancialFragments;
 
   root.addEventListener('click', function (event) {
@@ -432,9 +755,39 @@
       return;
     }
 
+    const openCheckoutTrigger = event.target.closest('[data-action="open-payment-checkout"]');
+    if (openCheckoutTrigger) {
+      loadCheckoutDrawer(openCheckoutTrigger).catch(function () {
+        openDrawer('student-payment-checkout-slot', openCheckoutTrigger);
+      });
+      return;
+    }
+
+    const openQuickSaleTrigger = event.target.closest('[data-action="open-quick-sale-drawer"]');
+    if (openQuickSaleTrigger) {
+      loadQuickSaleDrawer(openQuickSaleTrigger).catch(function () {
+        openDrawer('student-quick-sale-slot', openQuickSaleTrigger);
+      });
+      return;
+    }
+
+    const openStandaloneTrigger = event.target.closest('[data-action="open-standalone-payment"]');
+    if (openStandaloneTrigger) {
+      loadStandalonePaymentDrawer(openStandaloneTrigger).catch(function () {
+        openDrawer('student-payment-checkout-slot', openStandaloneTrigger);
+      });
+      return;
+    }
+
     const closeDrawerTrigger = event.target.closest('[data-action="close-drawers"]');
     if (closeDrawerTrigger) {
       closeDrawers();
+      return;
+    }
+
+    const quickSaleMemoryTrigger = event.target.closest('[data-action="apply-quick-sale-memory"]');
+    if (quickSaleMemoryTrigger) {
+      applyQuickSaleMemory(quickSaleMemoryTrigger);
       return;
     }
 
@@ -478,6 +831,42 @@
       return;
     }
 
+    const submitQuickSaleTrigger = event.target.closest('[data-action="submit-quick-sale"]');
+    if (submitQuickSaleTrigger) {
+      const methodValue = submitQuickSaleTrigger.getAttribute('data-method');
+      const form = document.getElementById('student-quick-sale-form');
+      const methodField = document.querySelector('#student-quick-sale-form [name="method"]');
+
+      if (!form || !methodValue) return;
+
+      askPaymentConfirmation(methodValue).then(function (confirmed) {
+        if (!confirmed) {
+          return;
+        }
+
+        if (methodField) {
+          methodField.value = methodValue;
+        }
+
+        document.querySelectorAll('#student-quick-sale-form .student-payment-method-button').forEach(function (button) {
+          button.classList.add('is-disabled');
+          button.classList.remove('is-active');
+          button.setAttribute('aria-disabled', 'true');
+        });
+
+        submitQuickSaleTrigger.classList.remove('is-disabled');
+        submitQuickSaleTrigger.classList.add('is-active');
+        submitQuickSaleTrigger.removeAttribute('aria-disabled');
+
+        updateQuickSaleStatus(methodValue === 'pix' ? 'Registrando o pagamento rapido com Pix. Aguarde um instante.' : 'Registrando o pagamento rapido. Aguarde um instante.');
+
+        submitFinancialForm(form).catch(function (error) {
+          updateQuickSaleStatus(error.message);
+        });
+      });
+      return;
+    }
+
     const editPaymentTrigger = event.target.closest('[data-action="edit-payment"]');
     if (editPaymentTrigger) {
       loadPaymentIntoDrawer(editPaymentTrigger.getAttribute('data-payment-id'), editPaymentTrigger).catch(function () {
@@ -508,13 +897,28 @@
     trapDrawerFocus(activeDrawer, event);
   });
 
+  root.addEventListener('input', function (event) {
+    const descriptionField = event.target.closest('#student-quick-sale-form [name="description"]');
+    if (!descriptionField) {
+      return;
+    }
+
+    const form = descriptionField.closest('form');
+    const templateField = form ? form.querySelector('[name="template_id"]') : null;
+    if (templateField) {
+      templateField.value = '';
+    }
+
+    scheduleQuickSaleSuggestions(descriptionField.value);
+  });
+
   root.addEventListener('submit', function (event) {
     const form = event.target;
     if (!(form instanceof HTMLFormElement)) {
       return;
     }
 
-    if (!form.matches('#student-payment-checkout-form, .student-enrollment-management-form')) {
+    if (!form.matches('#student-payment-checkout-form, #student-quick-sale-form, .student-enrollment-management-form, .student-quick-sale-status-form')) {
       return;
     }
 
@@ -526,5 +930,5 @@
 
   window.refreshStudentFinancialWorkspaceUi = refreshWorkspaceUi;
   setFinancialWorkspaceExpanded(root.dataset.financialExpanded === 'true');
-  decoratePaymentForm();
+  refreshWorkspaceUi();
 })();
