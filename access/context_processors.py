@@ -261,6 +261,7 @@ def _build_topbar_alert_links(role_slug):
 
 
 def role_navigation(request):
+    context_started_at = time.perf_counter()
     role = get_user_role(request.user)
     role_slug = getattr(role, 'slug', '')
     user_display_name = ''
@@ -280,7 +281,9 @@ def role_navigation(request):
 
     if request.user.is_authenticated:
         user_display_name = request.user.get_full_name() or request.user.username
-        shell_counts = get_shell_counts()
+        shell_counts, shell_counts_telemetry = get_shell_counts(return_telemetry=True)
+        if hasattr(request, '_octobox_request_perf'):
+            request._octobox_request_perf['shell_counts'] = shell_counts_telemetry
         sidebar_navigation = _build_navigation(role_slug, current_view_name=view_name)
 
         if role_slug in (ROLE_OWNER, ROLE_DEV):
@@ -354,6 +357,9 @@ def role_navigation(request):
         page=shell_page_context,
         counts=shell_counts,
     )
+
+    if hasattr(request, '_octobox_request_perf'):
+        request._octobox_request_perf['role_navigation_ms'] = round((time.perf_counter() - context_started_at) * 1000, 2)
 
     return {
         'can_access_admin': user_can_access_admin(request.user),

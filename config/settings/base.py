@@ -225,6 +225,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'shared_support.request_timing_middleware.RequestTimingMiddleware',
     'shared_support.security.honeypot_middleware.HoneypotMiddleware',
     'shared_support.security.fingerprint_middleware.SessionFingerprintMiddleware',
     'shared_support.security.RequestSecurityMiddleware',
