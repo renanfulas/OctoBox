@@ -1,0 +1,18 @@
+[Unit]
+Description=OctoBOX nightly lead import sweep
+After=network-online.target octobox-gunicorn.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/octobox/app
+Environment=OCTOBOX_APP_HOME=/srv/octobox
+Environment=OCTOBOX_ENV_FILE=/srv/octobox/shared/octobox.env
+Environment=OCTOBOX_APP_DIR=/srv/octobox/app
+Environment=OCTOBOX_VENV_PYTHON=/srv/octobox/venv/bin/python
+EnvironmentFile=-/srv/octobox/shared/octobox.env
+ExecStart=/srv/octobox/app/scripts/linux/run_due_nightly_lead_import_jobs.sh
+User=root
+
+[Install]
+WantedBy=multi-user.target

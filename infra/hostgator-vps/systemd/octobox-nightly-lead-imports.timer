@@ -1,0 +1,18 @@
+[Unit]
+Description=Periodic OctoBOX nightly lead import sweep
+
+[Timer]
+OnBootSec=10min
+OnCalendar=*-*-* 00:00:00
+OnCalendar=*-*-* 00:30:00
+OnCalendar=*-*-* 01:00:00
+OnCalendar=*-*-* 01:30:00
+OnCalendar=*-*-* 02:00:00
+OnCalendar=*-*-* 02:30:00
+OnCalendar=*-*-* 03:00:00
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+Unit=octobox-nightly-lead-imports.service
+
+[Install]
+WantedBy=timers.target
