@@ -14,9 +14,21 @@ from shared_support.page_payloads import build_page_context, build_page_hero
 from .shared import build_catalog_assets, build_catalog_page_payload
 
 
-def build_student_directory_page(*, student_count, students, student_filter_form, snapshot, current_role_slug, base_query_string, directory_search=None):
+def build_student_directory_page(
+    *,
+    student_count,
+    students,
+    student_filter_form,
+    snapshot,
+    support_snapshot=None,
+    current_role_slug,
+    base_query_string,
+    directory_search=None,
+    performance_timing=None,
+):
     can_manage_students = current_role_slug in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
     can_open_student_admin = current_role_slug in (ROLE_OWNER, ROLE_DEV)
+    support_data = support_snapshot or {}
     hero_actions = [
         {'label': 'Ver base', 'href': '#tab-students-directory', 'kind': 'primary', 'data_action': 'open-tab-students-directory'},
     ]
@@ -66,6 +78,11 @@ def build_student_directory_page(*, student_count, students, student_filter_form
             'student_filter_form': student_filter_form,
             'interactive_kpis': snapshot.get('interactive_kpis', {}),
             'total_students': student_count,
+            'priority_students': support_data.get('priority_students', []),
+            'intake_queue': support_data.get('intake_queue', []),
+            'pending_intakes_count': support_data.get('pending_intakes_count', 0),
+            'em_dia_count': snapshot.get('em_dia_count', 0),
+            'pendentes_count': snapshot.get('pendentes_count', 0),
         },
         actions={},
         behavior={
@@ -78,6 +95,7 @@ def build_student_directory_page(*, student_count, students, student_filter_form
                 'idle_prefetch_limit': 3,
             },
             'directory_search': directory_search or {},
+            'performance_timing': performance_timing or {},
         },
         capabilities={
             'can_manage_students': can_manage_students,

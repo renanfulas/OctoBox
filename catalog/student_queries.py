@@ -37,6 +37,349 @@ def _catalog_kpi_icon(name):
     return build_kpi_icon(icon_map.get(name, ''))
 
 
+def _build_student_directory_base_queryset(*, today, thirty_days_ago, for_export=False):
+    latest_enrollment_status = Enrollment.objects.filter(student=OuterRef('pk')).order_by('-start_date', '-created_at').values('status')[:1]
+    latest_plan_name = Enrollment.objects.filter(student=OuterRef('pk')).order_by('-start_date', '-created_at').values('plan__name')[:1]
+    latest_payment_status = Payment.objects.filter(student=OuterRef('pk')).order_by('-due_date', '-created_at').values('status')[:1]
+    latest_payment_due_date = Payment.objects.filter(student=OuterRef('pk')).order_by('-due_date', '-created_at').values('due_date')[:1]
+    overdue_payment_exists = Payment.objects.filter(student=OuterRef('pk')).filter(
+        Q(status=PaymentStatus.OVERDUE)
+        | Q(status=PaymentStatus.PENDING, due_date__lt=today)
+    )
+    pending_payment_exists = Payment.objects.filter(
+        student=OuterRef('pk'),
+        status=PaymentStatus.PENDING,
+        due_date__gte=today,
+    )
+
+    students = Student.objects.annotate(
+        latest_enrollment_status=Subquery(latest_enrollment_status),
+        latest_plan_name=Subquery(latest_plan_name),
+        latest_payment_status=Subquery(latest_payment_status),
+        latest_payment_due_date=Subquery(latest_payment_due_date),
+        has_overdue_payment=Exists(overdue_payment_exists),
+        has_pending_payment=Exists(pending_payment_exists),
+    ).annotate(
+        operational_payment_status=Case(
+            When(has_overdue_payment=True, then=Value(PaymentStatus.OVERDUE)),
+            When(has_pending_payment=True, then=Value(PaymentStatus.PENDING)),
+            default=Subquery(latest_payment_status),
+            output_field=CharField(),
+        ),
+        recent_presence_total=Coalesce(
+            Count(
+                'attendances',
+                filter=Q(
+                    attendances__session__scheduled_at__gte=thirty_days_ago,
+                    attendances__status__in=['checked_in', 'checked_out', 'absent'],
+                ),
+                distinct=True,
+            ),
+            0,
+            output_field=IntegerField(),
+        ),
+        recent_presence_attended=Coalesce(
+            Count(
+                'attendances',
+                filter=Q(
+                    attendances__session__scheduled_at__gte=thirty_days_ago,
+                    attendances__status__in=['checked_in', 'checked_out'],
+                ),
+                distinct=True,
+            ),
+            0,
+            output_field=IntegerField(),
+        ),
+    )
+
+    if not for_export:
+        return students.defer('cpf', 'notes', 'health_issue_status', 'updated_at').order_by('full_name')
+
+    last_check_in = Attendance.objects.filter(
+        student=OuterRef('pk'),
+        check_in_at__isnull=False,
+    ).order_by('-check_in_at').values('check_in_at')[:1]
+    amount_paid_sum = Payment.objects.filter(student=OuterRef('pk'), status=PaymentStatus.PAID).order_by().values('student').annotate(total=Sum('amount')).values('total')
+    amount_open_sum = Payment.objects.filter(student=OuterRef('pk'), status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE]).order_by().values('student').annotate(total=Sum('amount')).values('total')
+    overdue_count = Payment.objects.filter(student=OuterRef('pk')).filter(
+        Q(status=PaymentStatus.OVERDUE)
+        | Q(status=PaymentStatus.PENDING, due_date__lt=today)
+    ).order_by().values('student').annotate(c=Count('id')).values('c')
+
+    return students.annotate(
+        report_last_check_in=Subquery(last_check_in),
+        report_amount_paid=Subquery(amount_paid_sum),
+        report_amount_open=Subquery(amount_open_sum),
+        report_overdue_count=Subquery(overdue_count),
+    ).defer('cpf', 'notes', 'health_issue_status', 'updated_at').order_by('full_name')
+
+
+def _build_student_directory_listing_base_queryset(*, today, include_commercial_status=False):
+    latest_payment_status = Payment.objects.filter(student=OuterRef('pk')).order_by('-due_date', '-created_at').values('status')[:1]
+    overdue_payment_exists = Payment.objects.filter(student=OuterRef('pk')).filter(
+        Q(status=PaymentStatus.OVERDUE)
+        | Q(status=PaymentStatus.PENDING, due_date__lt=today)
+    )
+    pending_payment_exists = Payment.objects.filter(
+        student=OuterRef('pk'),
+        status=PaymentStatus.PENDING,
+        due_date__gte=today,
+    )
+
+    annotations = {
+        'latest_payment_status': Subquery(latest_payment_status),
+        'has_overdue_payment': Exists(overdue_payment_exists),
+        'has_pending_payment': Exists(pending_payment_exists),
+    }
+    if include_commercial_status:
+        latest_enrollment_status = Enrollment.objects.filter(student=OuterRef('pk')).order_by('-start_date', '-created_at').values('status')[:1]
+        annotations['latest_enrollment_status'] = Subquery(latest_enrollment_status)
+
+    return Student.objects.annotate(
+        **annotations,
+    ).annotate(
+        operational_payment_status=Case(
+            When(has_overdue_payment=True, then=Value(PaymentStatus.OVERDUE)),
+            When(has_pending_payment=True, then=Value(PaymentStatus.PENDING)),
+            default=Subquery(latest_payment_status),
+            output_field=CharField(),
+        ),
+    ).defer('cpf', 'notes', 'health_issue_status', 'updated_at').order_by('full_name')
+
+
+def _enrich_student_directory_display_students(students, *, thirty_days_ago):
+    student_list = list(students or [])
+    if not student_list:
+        return []
+
+    student_ids = [student.id for student in student_list]
+    latest_plan_name = Enrollment.objects.filter(student=OuterRef('pk')).order_by('-start_date', '-created_at').values('plan__name')[:1]
+    latest_payment_due_date = Payment.objects.filter(student=OuterRef('pk')).order_by('-due_date', '-created_at').values('due_date')[:1]
+
+    enriched_by_id = {
+        student.id: student
+        for student in Student.objects.filter(id__in=student_ids).annotate(
+            latest_plan_name=Subquery(latest_plan_name),
+            latest_payment_due_date=Subquery(latest_payment_due_date),
+            recent_presence_total=Coalesce(
+                Count(
+                    'attendances',
+                    filter=Q(
+                        attendances__session__scheduled_at__gte=thirty_days_ago,
+                        attendances__status__in=['checked_in', 'checked_out', 'absent'],
+                    ),
+                    distinct=True,
+                ),
+                0,
+                output_field=IntegerField(),
+            ),
+            recent_presence_attended=Coalesce(
+                Count(
+                    'attendances',
+                    filter=Q(
+                        attendances__session__scheduled_at__gte=thirty_days_ago,
+                        attendances__status__in=['checked_in', 'checked_out'],
+                    ),
+                    distinct=True,
+                ),
+                0,
+                output_field=IntegerField(),
+            ),
+        )
+    }
+
+    for student in student_list:
+        enriched = enriched_by_id.get(student.id)
+        student.latest_plan_name = getattr(enriched, 'latest_plan_name', '') or ''
+        student.latest_payment_due_date = getattr(enriched, 'latest_payment_due_date', None)
+        student.recent_presence_total = getattr(enriched, 'recent_presence_total', 0) or 0
+        student.recent_presence_attended = getattr(enriched, 'recent_presence_attended', 0) or 0
+
+    return student_list
+
+
+def _build_student_directory_support_queryset(params=None):
+    now = timezone.now()
+    today = timezone.localdate()
+    thirty_days_ago = now - timedelta(days=30)
+    filter_form = StudentDirectoryFilterForm(params or None)
+    students = _build_student_directory_base_queryset(
+        today=today,
+        thirty_days_ago=thirty_days_ago,
+        for_export=False,
+    )
+    return _apply_student_directory_filters(
+        students,
+        filter_form,
+        thirty_days_ago=thirty_days_ago,
+    )
+
+
+def _apply_student_directory_filters(students, filter_form, *, thirty_days_ago):
+    if not filter_form.is_valid():
+        return students
+
+    query = (filter_form.cleaned_data.get('query') or '').strip()
+    if query == '/':
+        query = ''
+    created_window = filter_form.cleaned_data.get('created_window')
+    student_status = filter_form.cleaned_data.get('student_status')
+    commercial_status = filter_form.cleaned_data.get('commercial_status')
+    payment_status = filter_form.cleaned_data.get('payment_status')
+
+    if query:
+        normalized_query = query.lower()
+        clean_digits = ''.join(filter(str.isdigit, query))
+
+        query_filter = Q(full_name__icontains=query) | Q(email__icontains=query)
+
+        if clean_digits:
+            query_filter |= Q(phone__icontains=clean_digits)
+            query_filter |= Q(whatsapp__icontains=clean_digits)
+            query_filter |= Q(cpf__icontains=clean_digits)
+
+        query_filter |= Q(enrollments__plan__name__icontains=query)
+        query_filter |= Q(status__icontains=normalized_query)
+
+        students = students.filter(query_filter).distinct()
+    if student_status:
+        students = students.filter(status=student_status)
+    if commercial_status:
+        students = students.filter(latest_enrollment_status=commercial_status)
+    if payment_status:
+        students = students.filter(operational_payment_status=payment_status)
+    if created_window == '30d':
+        students = students.filter(created_at__gte=thirty_days_ago)
+
+    return students
+
+
+def _build_student_directory_metrics(students, *, thirty_days_ago):
+    metrics = students.aggregate(
+        total=Count('id', distinct=True),
+        ativos=Count('id', filter=Q(status=StudentStatus.ACTIVE), distinct=True),
+        em_dia=Count('id', filter=Q(status=StudentStatus.ACTIVE, operational_payment_status=PaymentStatus.PAID), distinct=True),
+        inadimplentes=Count('id', filter=Q(operational_payment_status=PaymentStatus.OVERDUE), distinct=True),
+        pendentes=Count('id', filter=Q(operational_payment_status=PaymentStatus.PENDING), distinct=True),
+        inativos=Count('id', filter=Q(status=StudentStatus.INACTIVE), distinct=True),
+        novos_30d=Count('id', filter=Q(created_at__gte=thirty_days_ago), distinct=True),
+        latest_student_updated_at=Max('updated_at'),
+        latest_enrollment_updated_at=Max('enrollments__updated_at'),
+        latest_payment_updated_at=Max('payments__updated_at'),
+        latest_attendance_updated_at=Max('attendances__updated_at'),
+    )
+    metrics['directory_refresh_token'] = '{total}:{student}:{enrollment}:{payment}:{attendance}'.format(
+        total=metrics['total'] or 0,
+        student=(metrics['latest_student_updated_at'].isoformat() if metrics['latest_student_updated_at'] else ''),
+        enrollment=(metrics['latest_enrollment_updated_at'].isoformat() if metrics['latest_enrollment_updated_at'] else ''),
+        payment=(metrics['latest_payment_updated_at'].isoformat() if metrics['latest_payment_updated_at'] else ''),
+        attendance=(metrics['latest_attendance_updated_at'].isoformat() if metrics['latest_attendance_updated_at'] else ''),
+    )
+    return metrics
+
+
+def _build_student_directory_interactive_kpis(metrics):
+    return [
+        {
+            'label': 'Ativos',
+            'display_value': metrics['ativos'],
+            'note': 'Mostra a leitura da base ativa e abre o diretorio principal sem navegar para outra URL.',
+            'icon': _catalog_kpi_icon('active'),
+            'tone_class': 'kpi-green',
+            'data_action': 'open-tab-students-active',
+            'target_panel': 'tab-students-directory',
+            'student_filter': 'active',
+            'is_selected': True,
+        },
+        {
+            'label': 'Inadimplentes',
+            'display_value': metrics['inadimplentes'],
+            'note': 'Mostra a leitura de atraso e aplica o recorte financeiro no diretorio sem trocar de pagina.',
+            'icon': _catalog_kpi_icon('overdue'),
+            'tone_class': 'kpi-red',
+            'data_action': 'open-tab-students-overdue',
+            'target_panel': 'tab-students-directory',
+            'student_filter': 'overdue',
+            'is_selected': False,
+        },
+        {
+            'label': 'Novos (30D)',
+            'display_value': metrics['novos_30d'],
+            'note': 'Mostra alunos criados nos ultimos 30 dias e aplica o recorte no diretorio sem navegar.',
+            'icon': _catalog_kpi_icon('growth'),
+            'tone_class': 'kpi-cyan',
+            'data_action': 'open-tab-students-new',
+            'target_panel': 'tab-students-directory',
+            'student_filter': 'new-30d',
+            'is_selected': False,
+        },
+        {
+            'label': 'Inativos',
+            'display_value': metrics['inativos'],
+            'note': 'Mostra a leitura de alunos inativos e abre a base principal sem trocar de pagina.',
+            'icon': _catalog_kpi_icon('inactive'),
+            'tone_class': 'kpi-purple',
+            'data_action': 'open-tab-students-inactive',
+            'target_panel': 'tab-students-directory',
+            'student_filter': 'inactive',
+            'is_selected': False,
+        },
+    ]
+
+
+def _build_student_directory_support_surfaces(students):
+    priority_students_queryset = students.filter(
+        Q(operational_payment_status=PaymentStatus.OVERDUE)
+        | Q(status=StudentStatus.LEAD)
+        | Q(latest_enrollment_status=EnrollmentStatus.PENDING)
+    )
+    return {
+        'priority_students': priority_students_queryset.order_by('full_name')[:6],
+        'pending_intakes_count': count_pending_intakes(),
+        'intake_queue': list(get_intake_conversion_queue(limit=6)),
+    }
+
+
+def build_student_directory_listing_snapshot(params=None, for_export=False):
+    now = timezone.now()
+    today = timezone.localdate()
+    thirty_days_ago = now - timedelta(days=30)
+    filter_form = StudentDirectoryFilterForm(params or None)
+    include_commercial_status = bool(filter_form.is_valid() and filter_form.cleaned_data.get('commercial_status'))
+    if for_export:
+        students = _build_student_directory_base_queryset(
+            today=today,
+            thirty_days_ago=thirty_days_ago,
+            for_export=True,
+        )
+    else:
+        students = _build_student_directory_listing_base_queryset(
+            today=today,
+            include_commercial_status=include_commercial_status,
+        )
+    students = _apply_student_directory_filters(
+        students,
+        filter_form,
+        thirty_days_ago=thirty_days_ago,
+    )
+    metrics = _build_student_directory_metrics(students, thirty_days_ago=thirty_days_ago)
+
+    return {
+        'students': students,
+        'total_students': metrics['total'],
+        'filter_form': filter_form,
+        'interactive_kpis': _build_student_directory_interactive_kpis(metrics),
+        'em_dia_count': metrics['em_dia'],
+        'pendentes_count': metrics['pendentes'],
+        'directory_refresh_token': metrics['directory_refresh_token'],
+    }
+
+
+def build_student_directory_support_snapshot(params=None):
+    students = _build_student_directory_support_queryset(params)
+    return _build_student_directory_support_surfaces(students)
+
+
 def get_operational_enrollment(student):
     """
     Resolve a matricula que deve governar a leitura operacional atual.
@@ -122,214 +465,13 @@ def compute_fidalgometro_score(student):
 
 
 def build_student_directory_snapshot(params=None, for_export=False):
-    now = timezone.now()
-    today = timezone.localdate()
-    thirty_days_ago = now - timedelta(days=30)
-    latest_enrollment_status = Enrollment.objects.filter(student=OuterRef('pk')).order_by('-start_date', '-created_at').values('status')[:1]
-    latest_plan_name = Enrollment.objects.filter(student=OuterRef('pk')).order_by('-start_date', '-created_at').values('plan__name')[:1]
-    latest_payment_status = Payment.objects.filter(student=OuterRef('pk')).order_by('-due_date', '-created_at').values('status')[:1]
-    latest_payment_due_date = Payment.objects.filter(student=OuterRef('pk')).order_by('-due_date', '-created_at').values('due_date')[:1]
-    overdue_payment_exists = Payment.objects.filter(student=OuterRef('pk')).filter(
-        Q(status=PaymentStatus.OVERDUE)
-        | Q(status=PaymentStatus.PENDING, due_date__lt=today)
-    )
-    pending_payment_exists = Payment.objects.filter(
-        student=OuterRef('pk'),
-        status=PaymentStatus.PENDING,
-        due_date__gte=today,
-    )
-
-    students = Student.objects.annotate(
-        latest_enrollment_status=Subquery(latest_enrollment_status),
-        latest_plan_name=Subquery(latest_plan_name),
-        latest_payment_status=Subquery(latest_payment_status),
-        latest_payment_due_date=Subquery(latest_payment_due_date),
-        has_overdue_payment=Exists(overdue_payment_exists),
-        has_pending_payment=Exists(pending_payment_exists),
-    ).annotate(
-        operational_payment_status=Case(
-            When(has_overdue_payment=True, then=Value(PaymentStatus.OVERDUE)),
-            When(has_pending_payment=True, then=Value(PaymentStatus.PENDING)),
-            default=Subquery(latest_payment_status),
-            output_field=CharField(),
-        ),
-        recent_presence_total=Coalesce(
-            Count(
-                'attendances',
-                filter=Q(
-                    attendances__session__scheduled_at__gte=thirty_days_ago,
-                    attendances__status__in=['checked_in', 'checked_out', 'absent'],
-                ),
-                distinct=True,
-            ),
-            0,
-            output_field=IntegerField(),
-        ),
-        recent_presence_attended=Coalesce(
-            Count(
-                'attendances',
-                filter=Q(
-                    attendances__session__scheduled_at__gte=thirty_days_ago,
-                    attendances__status__in=['checked_in', 'checked_out'],
-                ),
-                distinct=True,
-            ),
-            0,
-            output_field=IntegerField(),
-        ),
-    )
-
-    if for_export:
-        last_check_in = Attendance.objects.filter(
-            student=OuterRef('pk'),
-            check_in_at__isnull=False,
-        ).order_by('-check_in_at').values('check_in_at')[:1]
-        amount_paid_sum = Payment.objects.filter(student=OuterRef('pk'), status=PaymentStatus.PAID).order_by().values('student').annotate(total=Sum('amount')).values('total')
-        amount_open_sum = Payment.objects.filter(student=OuterRef('pk'), status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE]).order_by().values('student').annotate(total=Sum('amount')).values('total')
-        overdue_count = Payment.objects.filter(student=OuterRef('pk')).filter(
-            Q(status=PaymentStatus.OVERDUE)
-            | Q(status=PaymentStatus.PENDING, due_date__lt=today)
-        ).order_by().values('student').annotate(c=Count('id')).values('c')
-
-        students = students.annotate(
-            report_last_check_in=Subquery(last_check_in),
-            report_amount_paid=Subquery(amount_paid_sum),
-            report_amount_open=Subquery(amount_open_sum),
-            report_overdue_count=Subquery(overdue_count),
-        )
-
-    students = students.defer('cpf', 'notes', 'health_issue_status', 'updated_at').order_by('full_name')
-    filter_form = StudentDirectoryFilterForm(params or None)
-
-    if filter_form.is_valid():
-        query = (filter_form.cleaned_data.get('query') or '').strip()
-        if query == '/':
-            query = ''
-        created_window = filter_form.cleaned_data.get('created_window')
-        student_status = filter_form.cleaned_data.get('student_status')
-        commercial_status = filter_form.cleaned_data.get('commercial_status')
-        payment_status = filter_form.cleaned_data.get('payment_status')
-
-        if query:
-            normalized_query = query.lower()
-            clean_digits = ''.join(filter(str.isdigit, query))
-
-            query_filter = Q(full_name__icontains=query) | Q(email__icontains=query)
-
-            if clean_digits:
-                query_filter |= Q(phone__icontains=clean_digits)
-                query_filter |= Q(whatsapp__icontains=clean_digits)
-                query_filter |= Q(cpf__icontains=clean_digits)
-
-            query_filter |= Q(enrollments__plan__name__icontains=query)
-            query_filter |= Q(status__icontains=normalized_query)
-
-            students = students.filter(query_filter).distinct()
-        if student_status:
-            students = students.filter(status=student_status)
-        if commercial_status:
-            students = students.filter(latest_enrollment_status=commercial_status)
-        if payment_status:
-            students = students.filter(operational_payment_status=payment_status)
-        if created_window == '30d':
-            students = students.filter(created_at__gte=thirty_days_ago)
-
-    metrics = students.aggregate(
-        total=Count('id', distinct=True),
-        ativos=Count('id', filter=Q(status=StudentStatus.ACTIVE), distinct=True),
-        em_dia=Count('id', filter=Q(status=StudentStatus.ACTIVE, operational_payment_status=PaymentStatus.PAID), distinct=True),
-        inadimplentes=Count('id', filter=Q(operational_payment_status=PaymentStatus.OVERDUE), distinct=True),
-        pendentes=Count('id', filter=Q(operational_payment_status=PaymentStatus.PENDING), distinct=True),
-        inativos=Count('id', filter=Q(status=StudentStatus.INACTIVE), distinct=True),
-        novos_30d=Count('id', filter=Q(created_at__gte=thirty_days_ago), distinct=True),
-        latest_student_updated_at=Max('updated_at'),
-        latest_enrollment_updated_at=Max('enrollments__updated_at'),
-        latest_payment_updated_at=Max('payments__updated_at'),
-        latest_attendance_updated_at=Max('attendances__updated_at'),
-    )
-
-    total_students = metrics['total']
-    ativos_count = metrics['ativos']
-    em_dia_count = metrics['em_dia']
-    inadimplentes_count = metrics['inadimplentes']
-    pendentes_count = metrics['pendentes']
-    inativos_count = metrics['inativos']
-    novos_30d_count = metrics['novos_30d']
-    directory_refresh_token = '{total}:{student}:{enrollment}:{payment}:{attendance}'.format(
-        total=total_students or 0,
-        student=(metrics['latest_student_updated_at'].isoformat() if metrics['latest_student_updated_at'] else ''),
-        enrollment=(metrics['latest_enrollment_updated_at'].isoformat() if metrics['latest_enrollment_updated_at'] else ''),
-        payment=(metrics['latest_payment_updated_at'].isoformat() if metrics['latest_payment_updated_at'] else ''),
-        attendance=(metrics['latest_attendance_updated_at'].isoformat() if metrics['latest_attendance_updated_at'] else ''),
-    )
-
-    pending_intakes_count = count_pending_intakes()
-    intake_queue = list(get_intake_conversion_queue(limit=6))
-
-    priority_students_queryset = students.filter(
-        Q(operational_payment_status=PaymentStatus.OVERDUE)
-        | Q(status=StudentStatus.LEAD)
-        | Q(latest_enrollment_status=EnrollmentStatus.PENDING)
-    )
-    priority_students = priority_students_queryset.order_by('full_name')[:6]
-
+    listing_snapshot = build_student_directory_listing_snapshot(params=params, for_export=for_export)
+    support_surfaces = build_student_directory_support_snapshot(params=params)
     return {
-        # Mantemos a queryset viva para que a view pagine no banco antes de materializar a pagina atual.
-        'students': students,
-        'total_students': total_students,
-        'filter_form': filter_form,
-        'interactive_kpis': [
-            {
-                'label': 'Ativos',
-                'display_value': ativos_count,
-                'note': 'Mostra a leitura da base ativa e abre o diretorio principal sem navegar para outra URL.',
-                'icon': _catalog_kpi_icon('active'),
-                'tone_class': 'kpi-green',
-                'data_action': 'open-tab-students-active',
-                'target_panel': 'tab-students-directory',
-                'student_filter': 'active',
-                'is_selected': True,
-            },
-            {
-                'label': 'Inadimplentes',
-                'display_value': inadimplentes_count,
-                'note': 'Mostra a leitura de atraso e aplica o recorte financeiro no diretorio sem trocar de pagina.',
-                'icon': _catalog_kpi_icon('overdue'),
-                'tone_class': 'kpi-red',
-                'data_action': 'open-tab-students-overdue',
-                'target_panel': 'tab-students-directory',
-                'student_filter': 'overdue',
-                'is_selected': False,
-            },
-            {
-                'label': 'Novos (30D)',
-                'display_value': novos_30d_count,
-                'note': 'Mostra alunos criados nos ultimos 30 dias e aplica o recorte no diretorio sem navegar.',
-                'icon': _catalog_kpi_icon('growth'),
-                'tone_class': 'kpi-cyan',
-                'data_action': 'open-tab-students-new',
-                'target_panel': 'tab-students-directory',
-                'student_filter': 'new-30d',
-                'is_selected': False,
-            },
-            {
-                'label': 'Inativos',
-                'display_value': inativos_count,
-                'note': 'Mostra a leitura de alunos inativos e abre a base principal sem trocar de pagina.',
-                'icon': _catalog_kpi_icon('inactive'),
-                'tone_class': 'kpi-purple',
-                'data_action': 'open-tab-students-inactive',
-                'target_panel': 'tab-students-directory',
-                'student_filter': 'inactive',
-                'is_selected': False,
-            },
-        ],
-        'priority_students': priority_students,
-        'intake_queue': intake_queue,
-        'pending_intakes_count': pending_intakes_count,
-        'em_dia_count': em_dia_count,
-        'pendentes_count': pendentes_count,
-        'directory_refresh_token': directory_refresh_token,
+        **listing_snapshot,
+        'priority_students': support_surfaces['priority_students'],
+        'intake_queue': support_surfaces['intake_queue'],
+        'pending_intakes_count': support_surfaces['pending_intakes_count'],
     }
 
 
@@ -420,4 +562,13 @@ def build_student_financial_snapshot(student):
     }
 
 
-__all__ = ['build_student_directory_snapshot', 'build_student_financial_snapshot', 'compute_fidalgometro_score', 'get_operational_enrollment', 'get_operational_payment_status', 'get_operational_payment_status_label']
+__all__ = [
+    'build_student_directory_listing_snapshot',
+    'build_student_directory_support_snapshot',
+    'build_student_directory_snapshot',
+    'build_student_financial_snapshot',
+    'compute_fidalgometro_score',
+    'get_operational_enrollment',
+    'get_operational_payment_status',
+    'get_operational_payment_status_label',
+]

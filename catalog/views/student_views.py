@@ -17,6 +17,7 @@ PONTOS CRITICOS:
 """
 
 import json
+import time
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -56,7 +57,14 @@ from catalog.presentation.shared import attach_catalog_page_payload
 from catalog.services.student_enrollment_actions import handle_student_enrollment_action
 from catalog.services.student_payment_actions import handle_student_payment_action
 from catalog.services.student_workflows import run_student_quick_create_workflow, run_student_quick_update_workflow, run_student_express_create_workflow
-from catalog.student_queries import build_student_directory_snapshot, build_student_financial_snapshot, get_operational_enrollment
+from catalog.student_queries import (
+    _enrich_student_directory_display_students,
+    build_student_directory_listing_snapshot,
+    build_student_directory_snapshot,
+    build_student_directory_support_snapshot,
+    build_student_financial_snapshot,
+    get_operational_enrollment,
+)
 from quick_sales.facade import (
     run_quick_sale_cancel,
     run_quick_sale_create,
@@ -65,7 +73,6 @@ from quick_sales.facade import (
 )
 from quick_sales.forms import QuickSaleActionForm, QuickSaleManagementForm
 from quick_sales.models import QuickSale
-from shared_support.redis_snapshots import prewarm_student_snapshots
 from finance.models import Enrollment, Payment
 from monitoring.student_realtime_metrics import record_student_save_conflict
 from onboarding.attribution import extract_acquisition_channel
@@ -87,6 +94,7 @@ STUDENT_FORM_ESSENTIAL_FRAGMENT = 'student-form-essential'
 STUDENT_FINANCIAL_FRAGMENT = 'student-financial-overview'
 STUDENT_DIRECTORY_FRAGMENT = 'student-directory-board'
 STUDENT_DIRECTORY_PAGE_SIZE = 15
+STUDENT_SEARCH_BOOTSTRAP_LIMIT = 15
 STUDENT_SEARCH_INDEX_LIMIT = 200
 
 
@@ -231,6 +239,13 @@ def _clean_student_search_index_params(params):
     return index_params
 
 
+def _has_server_scoped_student_filters(params):
+    return any(
+        params.get(key)
+        for key in ('student_status', 'commercial_status', 'payment_status', 'created_window')
+    )
+
+
 def _parse_non_negative_int(value, default=0):
     try:
         parsed_value = int(value)
@@ -278,10 +293,13 @@ class StudentDirectoryView(CatalogBaseView):
     template_name = 'catalog/students.html'
 
     def get_context_data(self, **kwargs):
+        view_started_at = time.perf_counter()
         context = super().get_context_data(**kwargs)
         base_context = self.get_base_context()
         context.update(base_context)
-        snapshot = build_student_directory_snapshot(self.request.GET)
+        listing_started_at = time.perf_counter()
+        snapshot = build_student_directory_listing_snapshot(self.request.GET)
+        listing_duration_ms = round((time.perf_counter() - listing_started_at) * 1000, 2)
         students_queryset = snapshot['students']
         student_count = snapshot['total_students']
         current_role_slug = base_context['current_role'].slug
@@ -309,17 +327,28 @@ class StudentDirectoryView(CatalogBaseView):
         paginator = PrecountedPaginator(students_queryset, page_size)
         page_number = self.request.GET.get('page')
         page_obj = paginator.get_page(page_number)
-        page_students = _annotate_directory_page_students(list(page_obj.object_list), thirty_days_ago=thirty_days_ago)
+        page_students = _annotate_directory_page_students(
+            _enrich_student_directory_display_students(list(page_obj.object_list), thirty_days_ago=thirty_days_ago),
+            thirty_days_ago=thirty_days_ago,
+        )
         page_obj.object_list = page_students
         context['students'] = page_obj
 
-        index_params = _clean_student_search_index_params(self.request.GET)
+        support_started_at = time.perf_counter()
+        support_snapshot = build_student_directory_support_snapshot(params=self.request.GET)
+        support_duration_ms = round((time.perf_counter() - support_started_at) * 1000, 2)
+
+        has_server_scoped_filters = _has_server_scoped_student_filters(self.request.GET)
+        index_params = self.request.GET.copy() if has_server_scoped_filters else _clean_student_search_index_params(self.request.GET)
         if index_params.urlencode() == self.request.GET.copy().urlencode():
             search_snapshot = snapshot
         else:
-            search_snapshot = build_student_directory_snapshot(index_params)
+            search_snapshot = build_student_directory_listing_snapshot(index_params)
         search_page_students = _annotate_directory_page_students(
-            list(search_snapshot['students'][:STUDENT_SEARCH_INDEX_LIMIT]),
+            _enrich_student_directory_display_students(
+                list(search_snapshot['students'][:STUDENT_SEARCH_BOOTSTRAP_LIMIT]),
+                thirty_days_ago=thirty_days_ago,
+            ),
             thirty_days_ago=thirty_days_ago,
         )
         query_params = self.request.GET.copy()
@@ -330,12 +359,14 @@ class StudentDirectoryView(CatalogBaseView):
             _serialize_student_directory_search_entry(student)
             for student in search_page_students
         ]
+        total_view_duration_ms = round((time.perf_counter() - view_started_at) * 1000, 2)
 
         page_payload = build_student_directory_page(
             student_count=student_count,
             students=page_obj,
             student_filter_form=snapshot['filter_form'],
             snapshot=snapshot,
+            support_snapshot=support_snapshot,
             current_role_slug=current_role_slug,
             base_query_string=base_query_string,
             directory_search={
@@ -349,15 +380,12 @@ class StudentDirectoryView(CatalogBaseView):
                 'index': directory_search_entries,
                 'full_index_available': True,
             },
+            performance_timing={
+                'listing_snapshot_ms': listing_duration_ms,
+                'support_snapshot_ms': support_duration_ms,
+                'view_total_ms': total_view_duration_ms,
+            },
         )
-
-        # 🚀 Performance AAA (Preloading Preditivo): Aquecimento de Cache
-        # Carregamos os Snapshots Fantasma dos alunos desta página para cliques instantâneos.
-        try:
-            page_student_ids = [s.id for s in page_obj]
-            prewarm_student_snapshots(page_student_ids)
-        except Exception:
-            pass
 
         return attach_catalog_page_payload(
             context,
@@ -373,11 +401,14 @@ class StudentSearchIndexPageView(LoginRequiredMixin, RoleRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         offset = _parse_non_negative_int(request.GET.get('offset'), default=0)
         index_params = _clean_student_search_index_params(request.GET)
-        snapshot = build_student_directory_snapshot(index_params)
+        snapshot = build_student_directory_listing_snapshot(index_params)
         thirty_days_ago = timezone.now() - timezone.timedelta(days=30)
         next_offset = offset + STUDENT_SEARCH_INDEX_LIMIT
         students = _annotate_directory_page_students(
-            list(snapshot['students'][offset:next_offset]),
+            _enrich_student_directory_display_students(
+                list(snapshot['students'][offset:next_offset]),
+                thirty_days_ago=thirty_days_ago,
+            ),
             thirty_days_ago=thirty_days_ago,
         )
         total_students = snapshot.get('total_students', 0)

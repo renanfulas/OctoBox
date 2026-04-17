@@ -27,10 +27,59 @@ POR QUE ELE EXISTE:
   var activeNormalizedQuery = '';
   var autocompleteUrl = form.getAttribute('data-autocomplete-url');
   var autocompleteCache = new Map();
+  var telemetry = {
+    cacheHits: 0,
+    cacheMisses: 0,
+    requestsSent: 0,
+    requestsAvoided: 0,
+    duplicateInFlightSuppressed: 0,
+    emptyResults: 0,
+    resultsRendered: 0,
+    errors: 0,
+    lastQuery: '',
+    lastResultsCount: 0,
+    lastRequestDurationMs: 0,
+    recentRequestDurationMs: []
+  };
+
+  window.__octoboxGlobalSearchTelemetry = telemetry;
   
   if (!autocompleteUrl) {
     console.warn('Busca global desabilitada: data-autocomplete-url não encontrado no DOM. Roteamento de fallback removido.');
     return;
+  }
+
+  function shouldLogPerformanceTelemetry() {
+    var params = new URLSearchParams(window.location.search || '');
+    if (params.get('debug_performance') === '1') {
+      return true;
+    }
+
+    try {
+      return window.localStorage.getItem('octobox.debug.performance') === '1'
+        || window.sessionStorage.getItem('octobox.debug.performance') === '1';
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function recordPerformanceSample(list, value) {
+    if (!Array.isArray(list) || typeof value !== 'number' || Number.isNaN(value)) {
+      return;
+    }
+
+    list.push(Math.round(value));
+    if (list.length > 20) {
+      list.splice(0, list.length - 20);
+    }
+  }
+
+  function logPerformanceTelemetry(eventName, data) {
+    if (!shouldLogPerformanceTelemetry() || !window.console || typeof window.console.debug !== 'function') {
+      return;
+    }
+
+    window.console.debug('[OctoBox][GlobalSearch][Telemetry]', eventName, data || {});
   }
 
   function setStatus(message) {
@@ -84,7 +133,7 @@ POR QUE ELE EXISTE:
       return null;
     }
 
-    return entry.results;
+    return entry;
   }
 
   function setCachedResults(query, results) {
@@ -106,6 +155,8 @@ POR QUE ELE EXISTE:
   function renderResults(results) {
     clearList();
     if (!results.length) {
+      telemetry.emptyResults += 1;
+      telemetry.lastResultsCount = 0;
       setStatus('Nenhum resultado encontrado na busca global.');
       hideList();
       return;
@@ -133,6 +184,8 @@ POR QUE ELE EXISTE:
       list.appendChild(li);
     });
 
+    telemetry.resultsRendered += results.length;
+    telemetry.lastResultsCount = results.length;
     setStatus(results.length + ' resultado(s) prontos para navegacao rapida.');
     showList();
   }
@@ -171,25 +224,42 @@ POR QUE ELE EXISTE:
     }
 
     if (normalizedQuery === activeNormalizedQuery && activeRequestController) {
+      telemetry.duplicateInFlightSuppressed += 1;
+      telemetry.requestsAvoided += 1;
+      logPerformanceTelemetry('duplicate-suppressed', {
+        query: normalizedQuery
+      });
       return;
     }
 
     debounceTimer = setTimeout(function() {
-      var cachedResults = getCachedResults(normalizedQuery);
-      if (cachedResults) {
+      var cachedEntry = getCachedResults(normalizedQuery);
+      telemetry.lastQuery = normalizedQuery;
+      if (cachedEntry) {
+        telemetry.cacheHits += 1;
+        telemetry.requestsAvoided += 1;
         activeQuery = query;
         activeNormalizedQuery = normalizedQuery;
         setStatus('Resultados recentes carregados do cache local.');
-        renderResults(cachedResults);
+        logPerformanceTelemetry('cache-hit', {
+          query: normalizedQuery,
+          results: Array.isArray(cachedEntry.results) ? cachedEntry.results.length : 0,
+          cache_age_ms: Date.now() - cachedEntry.createdAt
+        });
+        renderResults(cachedEntry.results || []);
         return;
       }
 
+      telemetry.cacheMisses += 1;
+
       var requestId = lastRequestId + 1;
+      var requestStartedAt = Date.now();
       lastRequestId = requestId;
       abortPendingRequest();
       activeRequestController = typeof AbortController === 'function' ? new AbortController() : null;
       activeQuery = query;
       activeNormalizedQuery = normalizedQuery;
+      telemetry.requestsSent += 1;
       setStatus('Buscando alunos e contatos relacionados.');
       fetch(autocompleteUrl + '?q=' + encodeURIComponent(query), {
           credentials: 'same-origin',
@@ -211,7 +281,14 @@ POR QUE ELE EXISTE:
           }
 
           activeRequestController = null;
+          telemetry.lastRequestDurationMs = Date.now() - requestStartedAt;
+          recordPerformanceSample(telemetry.recentRequestDurationMs, telemetry.lastRequestDurationMs);
           setCachedResults(normalizedQuery, data.results || []);
+          logPerformanceTelemetry('network-response', {
+            query: normalizedQuery,
+            results: Array.isArray(data.results) ? data.results.length : 0,
+            duration_ms: telemetry.lastRequestDurationMs
+          });
 
           renderResults(data.results || []);
         })
@@ -223,7 +300,11 @@ POR QUE ELE EXISTE:
           activeRequestController = null;
           activeQuery = '';
           activeNormalizedQuery = '';
+          telemetry.errors += 1;
           setStatus('A busca global nao respondeu agora. Use Enter para abrir a lista completa.');
+          logPerformanceTelemetry('network-error', {
+            query: normalizedQuery
+          });
           hideList();
         });
     }, AUTOCOMPLETE_DEBOUNCE_MS);

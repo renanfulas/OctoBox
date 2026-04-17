@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var devPanel = document.querySelector('[data-student-search-dev-panel]');
     var prefetchConfig = pageBehavior.student_prefetch || {};
     var directorySearchConfig = pageBehavior.directory_search || {};
+    var performanceTimingConfig = pageBehavior.performance_timing || {};
     var hasDirectorySearchEndpoint = Boolean(directorySearchConfig.page_url);
     var hasFullDirectorySearchIndex = directorySearchConfig.full_index_available !== false || hasDirectorySearchEndpoint;
     var prefetchEnabled = prefetchConfig.enabled !== false;
@@ -115,6 +116,11 @@ document.addEventListener('DOMContentLoaded', function() {
         manualNextPageLoads: 0,
         totalIndexEntries: Number(directorySearchConfig.index && directorySearchConfig.index.length ? directorySearchConfig.index.length : 0),
         latestTotalEntries: Number(directorySearchConfig.index && directorySearchConfig.index.length ? directorySearchConfig.index.length : 0),
+        quickPanelColdOpens: 0,
+        quickPanelHintOpens: 0,
+        quickPanelSnapshotOpens: 0,
+        quickPanelFetchRequests: 0,
+        quickPanelFetchSkippedByCache: 0,
     };
 
     window.__octoboxStudentRealtimeTelemetry = realtimeTelemetry;
@@ -144,6 +150,11 @@ document.addEventListener('DOMContentLoaded', function() {
         writeMetric('idle-completed', performanceTelemetry.idleHydrationCompleted);
         writeMetric('idle-last-ms', getLastPerformanceSample(performanceTelemetry.idleHydrationDurationMs) + ' ms');
         writeMetric('click-last-ms', getLastPerformanceSample(performanceTelemetry.clickWaitDurationMs) + ' ms');
+        writeMetric('quick-cold', performanceTelemetry.quickPanelColdOpens);
+        writeMetric('quick-cached', performanceTelemetry.quickPanelSnapshotOpens);
+        writeMetric('listing-ms', String(performanceTimingConfig.listing_snapshot_ms || 0) + ' ms');
+        writeMetric('support-ms', String(performanceTimingConfig.support_snapshot_ms || 0) + ' ms');
+        writeMetric('view-ms', String(performanceTimingConfig.view_total_ms || 0) + ' ms');
     }
 
     function shouldLogPerformanceTelemetry() {
@@ -595,6 +606,14 @@ document.addEventListener('DOMContentLoaded', function() {
             expires_at: Date.now() + prefetchCacheTtlMs,
             payload: normalizeStudentSnapshot(snapshot),
         });
+    }
+
+    function isHintOnlySnapshot(snapshot) {
+        if (!snapshot) {
+            return true;
+        }
+
+        return String(snapshot.source || '') === 'table-row';
     }
 
     function getCachedSnapshot(studentId) {
@@ -1505,11 +1524,30 @@ document.addEventListener('DOMContentLoaded', function() {
     function fetchSnapshotForRow(row, options) {
         var snapshotUrl = row.getAttribute('data-student-snapshot-url');
         var forceRefresh = Boolean(options && options.force);
+        if (!forceRefresh) {
+            var studentId = Number(row.getAttribute('data-student-id') || '0');
+            var cachedSnapshot = studentId ? getCachedSnapshot(studentId) : null;
+            if (cachedSnapshot && !isHintOnlySnapshot(cachedSnapshot)) {
+                performanceTelemetry.quickPanelFetchSkippedByCache += 1;
+                syncDevPanel();
+                logPerformanceTelemetry('quick-panel-fetch-skipped', {
+                    student_id: studentId,
+                    reason: 'snapshot-cache',
+                });
+                if (quickPanelState.isOpen && quickPanelState.studentId === studentId) {
+                    applySnapshotUpdate(cachedSnapshot);
+                }
+                return;
+            }
+        }
+
         if (!snapshotUrl || ((!forceRefresh && prefetchedSnapshotSet.has(snapshotUrl)) || inFlightSnapshotSet.has(snapshotUrl))) {
             return;
         }
 
         inFlightSnapshotSet.add(snapshotUrl);
+        performanceTelemetry.quickPanelFetchRequests += 1;
+        syncDevPanel();
 
         fetch(snapshotUrl, {
             method: 'GET',
@@ -2427,9 +2465,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function openRowTarget() {
             var cachedSnapshot = studentId ? getCachedSnapshot(studentId) : null;
+            if (!cachedSnapshot) {
+                performanceTelemetry.quickPanelColdOpens += 1;
+                logPerformanceTelemetry('quick-panel-open', {
+                    student_id: Number(studentId || '0'),
+                    source: 'cold',
+                });
+            } else if (isHintOnlySnapshot(cachedSnapshot)) {
+                performanceTelemetry.quickPanelHintOpens += 1;
+                logPerformanceTelemetry('quick-panel-open', {
+                    student_id: Number(studentId || '0'),
+                    source: 'hint-cache',
+                });
+            } else {
+                performanceTelemetry.quickPanelSnapshotOpens += 1;
+                logPerformanceTelemetry('quick-panel-open', {
+                    student_id: Number(studentId || '0'),
+                    source: 'snapshot-cache',
+                });
+            }
+            syncDevPanel();
             openQuickPanelForRow(row, cachedSnapshot);
 
-            if (!cachedSnapshot) {
+            if (!cachedSnapshot || isHintOnlySnapshot(cachedSnapshot)) {
                 fetchSnapshotForRow(row);
             }
         }
@@ -2719,12 +2777,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     applyLocalDirectoryState();
                     return;
                 }
-                if (!hasFullDirectorySearchIndex) {
+                if (hasServerScopedFilters() || !hasFullDirectorySearchIndex) {
                     window.location.assign(buildDirectoryFilterUrl(nextFilter));
                     return;
                 }
                 resolveDirectoryFilterLocally(nextFilter, {
-                    ensureFullIndex: hasServerScopedFilters() || nextFilter !== 'all',
+                    ensureFullIndex: nextFilter !== 'all',
                 });
                 return;
             }
