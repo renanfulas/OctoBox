@@ -13,6 +13,7 @@ from django.views.generic import FormView, TemplateView, View
 from shared_support.box_runtime import get_box_runtime_slug
 from student_app.application.use_cases import GetStudentDashboard, GetStudentWorkoutPrescription
 from student_app.forms import WorkoutPrescriptionForm
+from student_app.models import StudentExerciseMax
 from student_identity.models import StudentBoxMembership, StudentBoxMembershipStatus
 from student_identity.infrastructure.repositories import DjangoStudentIdentityRepository
 from student_identity.security import build_student_device_fingerprint
@@ -59,6 +60,8 @@ class StudentIdentityRequiredMixin:
         context['student_active_box_root_slug'] = self.request.student_active_box_root_slug
         context['student_primary_box_root_slug'] = self.request.student_identity.primary_box_root_slug
         context['student_memberships'] = list(self.request.student_box_memberships)
+        context.setdefault('student_shell_nav', 'home')
+        context.setdefault('student_shell_title', 'Inicio')
         context['student_box_choices'] = [
             {
                 'box_root_slug': membership.box_root_slug,
@@ -145,13 +148,30 @@ class StudentHomeView(StudentIdentityRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['dashboard'] = GetStudentDashboard().execute(identity=self.request.student_identity)
-        context['page_title'] = 'Meu Box'
+        dashboard = GetStudentDashboard().execute(identity=self.request.student_identity)
+        context['dashboard'] = dashboard
+        context['student_shell_nav'] = 'home'
+        context['student_shell_title'] = 'Inicio'
+        context['student_home_mode'] = 'schedule_default'
+        context['student_next_session'] = dashboard.next_sessions[0] if dashboard.next_sessions else None
         return self._attach_student_shell_context(context)
 
 
-class StudentWorkoutView(StudentIdentityRequiredMixin, FormView):
-    template_name = 'student_app/workout.html'
+class StudentGradeView(StudentIdentityRequiredMixin, TemplateView):
+    template_name = 'student_app/grade.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        dashboard = GetStudentDashboard().execute(identity=self.request.student_identity)
+        context['dashboard'] = dashboard
+        context['student_shell_nav'] = 'grade'
+        context['student_shell_title'] = 'Grade'
+        context['student_next_session'] = dashboard.next_sessions[0] if dashboard.next_sessions else None
+        return self._attach_student_shell_context(context)
+
+
+class StudentWodView(StudentIdentityRequiredMixin, FormView):
+    template_name = 'student_app/wod.html'
     form_class = WorkoutPrescriptionForm
 
     def get_form_kwargs(self):
@@ -170,6 +190,27 @@ class StudentWorkoutView(StudentIdentityRequiredMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        dashboard = GetStudentDashboard().execute(identity=self.request.student_identity)
+        context['dashboard'] = dashboard
+        context['student_shell_nav'] = 'wod'
+        context['student_shell_title'] = 'WOD'
+        context['student_next_session'] = dashboard.next_sessions[0] if dashboard.next_sessions else None
+        context['student_rm_preview'] = (
+            StudentExerciseMax.objects.filter(student=self.request.student_identity.student).order_by('exercise_label').first()
+        )
+        return self._attach_student_shell_context(context)
+
+
+class StudentRmView(StudentIdentityRequiredMixin, TemplateView):
+    template_name = 'student_app/rm.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['student_shell_nav'] = 'rm'
+        context['student_shell_title'] = 'RM'
+        context['rm_records'] = tuple(
+            StudentExerciseMax.objects.filter(student=self.request.student_identity.student).order_by('exercise_label')
+        )
         return self._attach_student_shell_context(context)
 
 
@@ -179,6 +220,8 @@ class StudentSettingsView(StudentIdentityRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['box_runtime_slug'] = get_box_runtime_slug()
+        context['student_shell_nav'] = 'settings'
+        context['student_shell_title'] = 'Perfil'
         return self._attach_student_shell_context(context)
 
 

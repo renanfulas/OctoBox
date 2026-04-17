@@ -1,0 +1,115 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}WOD | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-page-head">
+    <div>
+        <p class="student-eyebrow">WOD</p>
+        <h1>Treino do dia com leitura rapida e carga pessoal.</h1>
+        <p class="student-copy">Essa tela ja nasce como modo de execucao. Hoje ela abre um placeholder honesto com a calculadora de porcentagem embaixo. Depois entra o WOD publicado do coach sem reescrever a estrutura.</p>
+    </div>
+    <div class="student-head-chip-group">
+        <span class="student-head-chip">Modo de treino</span>
+        {% if student_next_session %}
+        <span class="student-head-chip">{{ student_next_session.scheduled_label }}</span>
+        {% endif %}
+    </div>
+</section>
+
+<section class="student-surface-grid">
+    <article class="student-card student-card--feature">
+        <div class="student-section-head">
+            <div>
+                <p class="student-eyebrow">Bloco principal</p>
+                <h2>Forca do dia</h2>
+            </div>
+            <span class="student-status-badge">Placeholder vivo</span>
+        </div>
+        <div class="student-wod-block-list">
+            <article class="student-wod-block">
+                <strong>Aquecimento</strong>
+                <p>Mobilidade curta, ativacao e leitura do corpo antes da carga principal.</p>
+            </article>
+            <article class="student-wod-block">
+                <strong>Deadlift</strong>
+                <p>5 x 10 @ 70% do RM. Aqui vai entrar a prescricao publicada do coach com sua recomendacao pessoal por baixo.</p>
+            </article>
+            <article class="student-wod-block">
+                <strong>Metcon</strong>
+                <p>Bloco de condicionamento rapido para consulta no meio da aula.</p>
+            </article>
+        </div>
+    </article>
+
+    <article class="student-card student-card--soft">
+        <p class="student-eyebrow">Consulta de carga</p>
+        <h2>Use a sua base de RM sem fazer conta mental.</h2>
+        <p class="student-copy">Por enquanto a calculadora vive aqui dentro. Depois ela vai virar recomendacao automatica por bloco do WOD.</p>
+        {% if student_rm_preview %}
+        <div class="student-rm-preview">
+            <strong>{{ student_rm_preview.exercise_label }}</strong>
+            <span>{{ student_rm_preview.one_rep_max_kg }} kg</span>
+            <small>Seu RM mais proximo para consulta rapida.</small>
+        </div>
+        {% endif %}
+    </article>
+</section>
+
+<section class="student-card">
+    <div class="student-section-head">
+        <div>
+            <p class="student-eyebrow">Calculadora</p>
+            <h2>Percentual do treino</h2>
+        </div>
+        <a href="{% url 'student-app-rm' %}" class="student-inline-link">Ver todos os RMs</a>
+    </div>
+    <form method="post" class="student-form student-form--wod">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+        <div class="student-form-errors">
+            {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="student-form-grid">
+            <div>
+                <label for="{{ form.exercise_slug.id_for_label }}">Movimento</label>
+                {{ form.exercise_slug }}
+            </div>
+            <div>
+                <label for="{{ form.percentage.id_for_label }}">Percentual do treino</label>
+                {{ form.percentage }}
+            </div>
+        </div>
+        <button type="submit" class="student-button">Calcular carga</button>
+    </form>
+    {% if prescription %}
+    <article class="student-prescription">
+        <div class="student-section-head">
+            <div>
+                <p class="student-eyebrow">Carga recomendada</p>
+                <h2>{{ prescription.exercise_label }}</h2>
+            </div>
+            <span class="student-status-badge">{{ prescription.percentage_label }}</span>
+        </div>
+        <div class="student-prescription-grid">
+            <div>
+                <small>RM atual</small>
+                <strong>{{ prescription.one_rep_max_label }}</strong>
+            </div>
+            <div>
+                <small>Carga bruta</small>
+                <strong>{{ prescription.raw_load_label }}</strong>
+            </div>
+            <div>
+                <small>Carga prescrita</small>
+                <strong>{{ prescription.rounded_load_label }}</strong>
+            </div>
+        </div>
+        <p class="student-copy">{{ prescription.observation }}</p>
+    </article>
+    {% endif %}
+</section>
+{% endblock %}

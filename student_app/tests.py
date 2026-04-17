@@ -63,11 +63,47 @@ class StudentAppExperienceTests(TestCase):
         response = self.client.get(reverse('student-app-home'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Meu Box')
+        self.assertContains(response, 'Inicio')
         self.assertNotContains(response, 'Abrir menu lateral')
         self.assertContains(response, 'Cross de terca')
         self.assertContains(response, 'Box atual: control')
         self.assertNotContains(response, 'Trocar box')
+        self.assertContains(response, 'Grade')
+        self.assertContains(response, 'WOD')
+        self.assertContains(response, 'RM')
+
+    def test_student_grade_and_rm_routes_render_new_shell(self):
+        StudentExerciseMax.objects.create(
+            student=self.student,
+            exercise_slug='deadlift',
+            exercise_label='Deadlift',
+            one_rep_max_kg=Decimal('100.00'),
+        )
+
+        grade_response = self.client.get(reverse('student-app-grade'))
+        rm_response = self.client.get(reverse('student-app-rm'))
+
+        self.assertEqual(grade_response.status_code, 200)
+        self.assertEqual(rm_response.status_code, 200)
+        self.assertContains(grade_response, 'Sua rotina no box')
+        self.assertContains(grade_response, 'Proxima aula')
+        self.assertContains(rm_response, 'Seus records maximos')
+        self.assertContains(rm_response, 'Deadlift')
+
+    def test_student_wod_route_keeps_workout_calculator_inside_new_shell(self):
+        StudentExerciseMax.objects.create(
+            student=self.student,
+            exercise_slug='deadlift',
+            exercise_label='Deadlift',
+            one_rep_max_kg=Decimal('100.00'),
+        )
+
+        response = self.client.get(reverse('student-app-wod'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Treino do dia com leitura rapida e carga pessoal.')
+        self.assertContains(response, 'Percentual do treino')
+        self.assertContains(response, 'Deadlift')
 
     def test_workout_prescription_returns_expected_rounded_load(self):
         StudentExerciseMax.objects.create(

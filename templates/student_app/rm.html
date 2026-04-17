@@ -1,0 +1,60 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}RM | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-page-head">
+    <div>
+        <p class="student-eyebrow">RM</p>
+        <h1>Seus records maximos, prontos para conversar com o WOD.</h1>
+        <p class="student-copy">Essa tela nasce simples de proposito. O foco agora e deixar o aluno localizar seus movimentos, entender o RM atual e preparar o terreno para a recomendacao automatica de carga.</p>
+    </div>
+    <div class="student-head-chip-group">
+        <span class="student-head-chip">{{ rm_records|length }} movimento(s)</span>
+        <span class="student-head-chip">Base de personalizacao</span>
+    </div>
+</section>
+
+<section class="student-surface-grid">
+    <article class="student-card student-card--feature">
+        <div class="student-section-head">
+            <div>
+                <p class="student-eyebrow">Lista viva</p>
+                <h2>Seus movimentos</h2>
+            </div>
+            <button type="button" class="student-button student-button--ghost">Adicionar RM</button>
+        </div>
+        <div class="student-rm-list">
+            {% for record in rm_records %}
+            <article class="student-rm-card">
+                <div>
+                    <strong>{{ record.exercise_label }}</strong>
+                    <p class="student-copy">Atualizado em {{ record.updated_at|date:"d/m/Y" }}</p>
+                </div>
+                <div class="student-rm-value">
+                    <span>{{ record.one_rep_max_kg }} kg</span>
+                    <button type="button" class="student-inline-link student-inline-link--button">Atualizar</button>
+                </div>
+            </article>
+            {% empty %}
+            <article class="student-rm-empty">
+                <strong>Voce ainda nao registrou seus RMs.</strong>
+                <p class="student-copy">Quando eles entrarem aqui, o app passa a sugerir a carga ideal quando o WOD usar porcentagem.</p>
+                <button type="button" class="student-button">Registrar primeiro RM</button>
+            </article>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="student-card student-card--soft">
+        <p class="student-eyebrow">Como isso ajuda</p>
+        <h2>O coach manda a regra. O app traduz para voce.</h2>
+        <p class="student-copy">Se o WOD pedir 70% do seu deadlift e o seu RM for 100 kg, o app mostra 70 kg sem obrigar o aluno a parar no meio da aula para virar calculadora humana.</p>
+        <div class="student-insight-stack">
+            <div class="student-insight-pill">Deadlift 100 kg</div>
+            <div class="student-insight-pill">WOD 70%</div>
+            <div class="student-insight-pill">Carga recomendada 70 kg</div>
+        </div>
+    </article>
+</section>
+{% endblock %}

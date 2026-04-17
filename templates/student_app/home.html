@@ -1,25 +1,57 @@
 {% extends "student_app/layout.html" %}
 
-{% block title %}Meu Box | OctoBox Aluno{% endblock %}
+{% block title %}Inicio | OctoBox Aluno{% endblock %}
 
 {% block body %}
-<section class="student-hero">
-    <p class="student-eyebrow">{{ student_active_box_root_slug }}</p>
-    <h1>Bem-vindo, {{ dashboard.student_name }}.</h1>
-    <p class="student-copy">Um app dedicado ao aluno: box principal, contexto ativo e uma experiencia limpa para treino, grade e rotina no corredor certo.</p>
-    <nav class="student-actions">
-        <a href="{% url 'student-app-workout' %}" class="student-button">Calcular treino</a>
-        <a href="{% url 'student-app-settings' %}" class="student-button student-button--ghost">Configuracoes</a>
-    </nav>
+<section class="student-page-head">
+    <div>
+        <p class="student-eyebrow">Inicio</p>
+        <h1>Seu app muda junto com o seu momento no box.</h1>
+        <p class="student-copy">Agora a home nasce no modo Grade. Quando a presenca e o treino estiverem ativos, ela vira WOD para o aluno abrir rapido e seguir a aula sem cacar informacao.</p>
+    </div>
+    <div class="student-head-chip-group">
+        <span class="student-head-chip">Modo atual: Grade</span>
+        <span class="student-head-chip">Box principal: {{ student_primary_box_root_slug }}</span>
+    </div>
 </section>
 
-<section class="student-grid">
-    <article class="student-card">
-        <h2>Plano atual</h2>
-        <p class="student-stat">{{ dashboard.membership_label }}</p>
+<section class="student-home-grid">
+    <article class="student-card student-card--feature">
+        <p class="student-eyebrow">{{ student_active_box_root_slug }}</p>
+        <h2>{% if student_next_session %}{{ student_next_session.title }}{% else %}Nenhuma aula imediata{% endif %}</h2>
+        <p class="student-copy">
+            {% if student_next_session %}
+            {{ student_next_session.scheduled_label }} · {{ student_next_session.coach_name }} · {{ student_next_session.attendance_status }}
+            {% else %}
+            Sua proxima aula vai aparecer aqui assim que a grade publicada estiver pronta para este contexto.
+            {% endif %}
+        </p>
+        <div class="student-hero-actions">
+            <a href="{% url 'student-app-grade' %}" class="student-button">Abrir grade</a>
+            <a href="{% url 'student-app-wod' %}" class="student-button student-button--ghost">Ver WOD</a>
+        </div>
     </article>
+
+    <article class="student-card student-card--soft">
+        <p class="student-eyebrow">Proximo passo</p>
+        <h2>Grade antes da aula. WOD durante o treino.</h2>
+        <p class="student-copy">Pensa como uma mochila organizada: na chegada voce precisa da agenda; no meio da aula voce precisa da licao e do peso certo. O app vai seguir essa logica para parecer natural na sua mao.</p>
+        <div class="student-inline-links">
+            <a href="{% url 'student-app-grade' %}">Ir para Grade</a>
+            <a href="{% url 'student-app-rm' %}">Ver seus RMs</a>
+        </div>
+    </article>
+</section>
+
+<section class="student-surface-grid">
     <article class="student-card">
-        <h2>Proximas aulas</h2>
+        <div class="student-section-head">
+            <div>
+                <p class="student-eyebrow">Grade</p>
+                <h2>Chegada e rotina</h2>
+            </div>
+            <a href="{% url 'student-app-grade' %}" class="student-inline-link">Abrir</a>
+        </div>
         <div class="student-session-list">
             {% for session in dashboard.next_sessions %}
             <article class="student-session-card">
@@ -30,14 +62,25 @@
                 {% if session.notes %}<p>{{ session.notes }}</p>{% endif %}
             </article>
             {% empty %}
-            <p>Nenhuma aula futura publicada ainda.</p>
+            <p class="student-copy">Nenhuma aula futura publicada ainda.</p>
             {% endfor %}
         </div>
     </article>
-</section>
 
-<form method="post" action="{% url 'student-identity-logout' %}" class="student-logout-form">
-    {% csrf_token %}
-    <button type="submit" class="student-button student-button--danger">Sair do app do aluno</button>
-</form>
+    <article class="student-card">
+        <div class="student-section-head">
+            <div>
+                <p class="student-eyebrow">WOD e RM</p>
+                <h2>Execucao e carga personalizada</h2>
+            </div>
+            <a href="{% url 'student-app-wod' %}" class="student-inline-link">Abrir</a>
+        </div>
+        <p class="student-copy">O coach manda a regra do treino. O app consulta o seu RM e prepara a carga recomendada. Assim o treino deixa de ser quadro na parede e vira ferramenta pessoal.</p>
+        <div class="student-insight-stack">
+            <div class="student-insight-pill">WOD do dia</div>
+            <div class="student-insight-pill">Recomendacao por % RM</div>
+            <div class="student-insight-pill">Consulta rapida no meio da aula</div>
+        </div>
+    </article>
+</section>
 {% endblock %}

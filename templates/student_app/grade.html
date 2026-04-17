@@ -1,0 +1,69 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}Grade | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-page-head">
+    <div>
+        <p class="student-eyebrow">Grade</p>
+        <h1>Sua rotina no box, sem cara de tabela fria.</h1>
+        <p class="student-copy">Aqui mora o modo de chegada. O aluno bate o olho, entende a proxima aula e sabe o que precisa fazer antes do treino ficar ativo.</p>
+    </div>
+    <div class="student-head-chip-group">
+        <span class="student-head-chip">{{ dashboard.membership_label }}</span>
+        <span class="student-head-chip">{{ dashboard.next_sessions|length }} aula(s) no radar</span>
+    </div>
+</section>
+
+<section class="student-surface-grid">
+    <article class="student-card student-card--feature">
+        <div class="student-section-head">
+            <div>
+                <p class="student-eyebrow">Proxima aula</p>
+                <h2>{% if student_next_session %}{{ student_next_session.title }}{% else %}Nenhuma aula agendada agora{% endif %}</h2>
+            </div>
+            <span class="student-status-badge">{% if student_next_session %}{{ student_next_session.attendance_status }}{% else %}Livre{% endif %}</span>
+        </div>
+        <p class="student-copy">
+            {% if student_next_session %}
+            {{ student_next_session.scheduled_label }} · {{ student_next_session.coach_name }}
+            {% else %}
+            Quando sua agenda ganhar um novo horario, ele sobe primeiro aqui.
+            {% endif %}
+        </p>
+        <div class="student-hero-actions">
+            <button type="button" class="student-button">Confirmar presenca</button>
+            <a href="{% url 'student-app-wod' %}" class="student-button student-button--ghost">Ir para WOD</a>
+        </div>
+    </article>
+
+    <article class="student-card student-card--soft">
+        <p class="student-eyebrow">Janela do treino</p>
+        <h2>Quando a presenca fechar, o WOD sobe para o Inicio.</h2>
+        <p class="student-copy">Essa pagina organiza a chegada. O WOD assume o centro quando a aula entrar em modo de execucao. E como trocar do ingresso para o filme no momento certo.</p>
+    </article>
+</section>
+
+<section class="student-card">
+    <div class="student-section-head">
+        <div>
+            <p class="student-eyebrow">Agenda curta</p>
+            <h2>Proximas aulas</h2>
+        </div>
+        <span class="student-section-kicker">Leitura rapida</span>
+    </div>
+    <div class="student-session-list">
+        {% for session in dashboard.next_sessions %}
+        <article class="student-session-card">
+            <strong>{{ session.title }}</strong>
+            <span>{{ session.scheduled_label }}</span>
+            <span>{{ session.coach_name }}</span>
+            <span>{{ session.attendance_status }}</span>
+            {% if session.notes %}<p>{{ session.notes }}</p>{% endif %}
+        </article>
+        {% empty %}
+        <p class="student-copy">Nenhuma aula futura publicada ainda.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
