@@ -6,6 +6,7 @@ POR QUE ELE EXISTE:
 """
 
 from datetime import timedelta
+from time import perf_counter
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -100,13 +101,28 @@ class FinanceCenterView(FinanceWorkspaceContextMixin, CatalogBaseView, FormView)
         return reverse('finance-center')
 
     def get_context_data(self, **kwargs):
+        started_at = perf_counter()
         context = super().get_context_data(**kwargs)
         base_context = self.get_base_context()
         context.update(base_context)
+
+        operational_queue_started_at = perf_counter()
         operational_queue = build_operational_queue_snapshot()
+        operational_queue_ms = round((perf_counter() - operational_queue_started_at) * 1000, 2)
+
         effective_params, filters_applied_now, filters_restored = self.get_effective_finance_filter_params()
         default_panel_override = 'tab-finance-filters' if (filters_applied_now or self.request.GET.get('reset_filters') == '1') else None
+
+        snapshot_started_at = perf_counter()
         snapshot = build_finance_snapshot(effective_params, operational_queue=operational_queue, persist_follow_ups=True)
+        snapshot_ms = round((perf_counter() - snapshot_started_at) * 1000, 2)
+
+        presenter_started_at = perf_counter()
+        performance_timing = {
+            **(snapshot.get('performance_timing') or {}),
+            'operational_queue_ms': operational_queue_ms,
+            'snapshot_build_ms': snapshot_ms,
+        }
         page_payload = build_finance_center_page(
             snapshot=snapshot,
             operational_queue=operational_queue,
@@ -115,7 +131,11 @@ class FinanceCenterView(FinanceWorkspaceContextMixin, CatalogBaseView, FormView)
             form=kwargs.get('form') or self.get_form(),
             default_panel_override=default_panel_override,
             filter_state_restored=filters_restored,
+            performance_timing=performance_timing,
         )
+        performance_timing['presenter_ms'] = round((perf_counter() - presenter_started_at) * 1000, 2)
+        performance_timing['view_total_ms'] = round((perf_counter() - started_at) * 1000, 2)
+        page_payload['behavior']['performance_timing'] = performance_timing
         return attach_catalog_page_payload(
             context,
             payload_key='finance_center_page',

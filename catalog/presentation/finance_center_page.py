@@ -38,6 +38,7 @@ def build_finance_center_page(
     form,
     default_panel_override=None,
     filter_state_restored=False,
+    performance_timing=None,
 ):
     filter_form = snapshot['filter_form']
     transport_payload = snapshot.get('transport_payload') or {}
@@ -128,6 +129,7 @@ def build_finance_center_page(
             'default_panel': default_panel,
             'default_action': default_action,
             'active_mode': finance_mode_contract['active_mode'],
+            'performance_timing': performance_timing or {},
         },
         capabilities={
             'can_manage_finance': can_manage_finance,

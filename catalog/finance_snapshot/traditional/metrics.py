@@ -8,8 +8,7 @@ from decimal import Decimal
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
-from finance.models import EnrollmentStatus, Payment, PaymentStatus
-from finance.overdue_metrics import count_overdue_students, get_overdue_payments_queryset, sum_overdue_amount
+from finance.models import EnrollmentStatus, PaymentStatus
 from shared_support.kpi_icons import build_kpi_icon
 
 
@@ -34,7 +33,7 @@ def build_finance_metrics(payments, enrollments):
     previous_month_end = month_start - timezone.timedelta(days=1)
     previous_month_start = previous_month_end.replace(day=1)
 
-    summary = payments.aggregate(
+    payment_summary = payments.aggregate(
         revenue_this_month=Coalesce(
             Sum('amount', filter=Q(status=PaymentStatus.PAID, due_date__gte=month_start)),
             Decimal('0.00'),
@@ -44,24 +43,63 @@ def build_finance_metrics(payments, enrollments):
             Decimal('0.00'),
         ),
         paid_count=Count('id', filter=Q(status=PaymentStatus.PAID, due_date__gte=month_start)),
+        revenue_previous_month=Coalesce(
+            Sum(
+                'amount',
+                filter=Q(
+                    status=PaymentStatus.PAID,
+                    due_date__gte=previous_month_start,
+                    due_date__lte=previous_month_end,
+                ),
+            ),
+            Decimal('0.00'),
+        ),
+        overdue_students=Count(
+            'student_id',
+            filter=Q(
+                status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE],
+                due_date__lt=today,
+            ),
+            distinct=True,
+        ),
+        overdue_payments=Count(
+            'id',
+            filter=Q(
+                status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE],
+                due_date__lt=today,
+            ),
+        ),
+        overdue_amount=Coalesce(
+            Sum(
+                'amount',
+                filter=Q(
+                    status__in=[PaymentStatus.PENDING, PaymentStatus.OVERDUE],
+                    due_date__lt=today,
+                ),
+            ),
+            Decimal('0.00'),
+        ),
+    )
+    enrollment_summary = enrollments.aggregate(
+        active_growth=Count(
+            'id',
+            filter=Q(status=EnrollmentStatus.ACTIVE, start_date__gte=month_start),
+        ),
+        cancellations=Count(
+            'id',
+            filter=Q(status=EnrollmentStatus.CANCELED, updated_at__date__gte=month_start),
+        ),
     )
 
-    revenue_this_month = summary['revenue_this_month']
-    open_revenue = summary['open_revenue']
-    paid_count = summary['paid_count']
-
-    revenue_previous_month = Payment.objects.filter(
-        status=PaymentStatus.PAID,
-        due_date__gte=previous_month_start,
-        due_date__lte=previous_month_end,
-    ).aggregate(total=Coalesce(Sum('amount'), Decimal('0.00')))['total']
-
-    active_growth = enrollments.filter(status=EnrollmentStatus.ACTIVE, start_date__gte=month_start).count()
-    cancellations = enrollments.filter(status=EnrollmentStatus.CANCELED, updated_at__date__gte=month_start).count()
-
-    overdue_students = count_overdue_students(payments, today=today)
-    overdue_payments = get_overdue_payments_queryset(payments, today=today)
-    overdue_amount = sum_overdue_amount(payments, today=today)
+    revenue_this_month = payment_summary['revenue_this_month']
+    open_revenue = payment_summary['open_revenue']
+    paid_count = payment_summary['paid_count']
+    revenue_previous_month = payment_summary['revenue_previous_month']
+    active_growth = enrollment_summary['active_growth']
+    cancellations = enrollment_summary['cancellations']
+    overdue_students = payment_summary['overdue_students']
+    overdue_payments = payment_summary['overdue_payments']
+    overdue_amount = payment_summary['overdue_amount']
 
     return OrderedDict(
         [
@@ -114,7 +152,7 @@ def build_finance_metrics(payments, enrollments):
                         'label': 'Valor vencido',
                         'value': f'R$ {_format_currency_br(overdue_amount)}',
                     },
-                    'note': f'{overdue_payments.count()} cobranca(s) ja passaram do vencimento e pedem acao de cobranca e cuidado comercial.',
+                    'note': f'{overdue_payments} cobranca(s) ja passaram do vencimento e pedem acao de cobranca e cuidado comercial.',
                     'is_currency': False,
                 },
             ),
