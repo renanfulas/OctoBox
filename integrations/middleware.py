@@ -1,6 +1,8 @@
 import json
 import logging
+from functools import lru_cache
 
+from django.db import DatabaseError, connections, router
 from django.db.models import Q
 from django.http import JsonResponse
 
@@ -8,6 +10,17 @@ from integrations.mesh import build_correlation_id, calculate_signal_fingerprint
 from integrations.whatsapp.models import WebhookDeliveryStatus, WebhookEvent
 
 logger = logging.getLogger('octobox.integrations')
+
+
+@lru_cache(maxsize=8)
+def _get_known_tables(using: str) -> tuple[str, ...]:
+    connection = connections[using]
+    return tuple(connection.introspection.table_names())
+
+
+def _webhook_event_table_available() -> bool:
+    using = router.db_for_read(WebhookEvent)
+    return WebhookEvent._meta.db_table in _get_known_tables(using)
 
 
 class WebhookIdempotencyMiddleware:
@@ -59,10 +72,15 @@ class WebhookIdempotencyMiddleware:
         if fingerprint:
             query |= Q(webhook_fingerprint=fingerprint)
 
-        existing_event = WebhookEvent.objects.filter(
-            query,
-            status=WebhookDeliveryStatus.PROCESSED,
-        ).exists()
+        existing_event = False
+        if _webhook_event_table_available():
+            try:
+                existing_event = WebhookEvent.objects.filter(
+                    query,
+                    status=WebhookDeliveryStatus.PROCESSED,
+                ).exists()
+            except DatabaseError:
+                existing_event = False
 
         if existing_event:
             logger.info('Deduplicacao ativada: %s filtrado em %s', idempotency_key or fingerprint, request.path)
