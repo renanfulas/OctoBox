@@ -16,7 +16,6 @@ PONTOS CRITICOS:
 import json
 from datetime import timedelta
 from decimal import Decimal
-from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -32,6 +31,7 @@ from dashboard.dashboard_snapshot_queries import build_dashboard_snapshot
 from finance.models import Payment, PaymentStatus
 from operations.models import Attendance, AttendanceStatus, ClassSession
 from students.models import Student
+from integrations.whatsapp.models import WebhookEvent
 from monitoring.signal_mesh_runtime import remember_signal_mesh_sweep
 
 
@@ -43,12 +43,12 @@ class DashboardSnapshotSerializationTests(TestCase):
         self.coach = user_model.objects.create_user(
             username="dashboard-serialization-coach",
             email="dashboard-serialization@example.com",
-            password="test",
+            password="senha-forte-123",
         )
         self.owner = user_model.objects.create_user(
             username="dashboard-owner",
             email="dashboard-owner@example.com",
-            password="test",
+            password="senha-forte-123",
         )
         self.owner.groups.add(Group.objects.get(name=ROLE_OWNER))
 
@@ -85,6 +85,13 @@ class DashboardSnapshotSerializationTests(TestCase):
             duration_minutes=60,
             capacity=15,
         )
+        WebhookEvent.objects.create(
+            event_id='evt-dashboard-1',
+            provider='evolution',
+            payload={'kind': 'poll_vote', 'raw_payload': {}},
+            status='pending',
+            next_retry_at=now - timedelta(minutes=1),
+        )
         remember_signal_mesh_sweep(
             channel='jobs',
             result={
@@ -95,23 +102,12 @@ class DashboardSnapshotSerializationTests(TestCase):
                 'skipped': [{'reason': 'missing-dispatch-context'}],
             },
         )
-        remember_signal_mesh_sweep(
-            channel='webhooks',
-            result={
-                'checked_at': now.isoformat(),
-                'due_backlog': 1,
-                'dispatched_count': 0,
-                'skipped_count': 0,
-                'skipped': [],
-            },
-        )
 
-        with patch('monitoring.beacon_snapshot._model_table_exists', return_value=False):
-            snapshot = build_dashboard_snapshot(
-                today=today,
-                month_start=today.replace(day=1),
-                role_slug="owner",
-            )
+        snapshot = build_dashboard_snapshot(
+            today=today,
+            month_start=today.replace(day=1),
+            role_slug="owner",
+        )
 
         encoded = json.dumps(snapshot, cls=DjangoJSONEncoder)
 
@@ -120,7 +116,7 @@ class DashboardSnapshotSerializationTests(TestCase):
         self.assertIsInstance(snapshot["next_actionable_payment_alert"], dict)
         self.assertEqual(snapshot["payment_alerts"][0]["student_full_name"], "Aluno Snapshot")
         self.assertEqual(snapshot["upcoming_sessions"][0]["title"], "Turma futura")
-        self.assertEqual(snapshot["red_beacon_snapshot"]["signal_mesh"]["total_due_backlog"], 2)
+        self.assertEqual(snapshot["red_beacon_snapshot"]["signal_mesh"]["total_due_backlog"], 1)
         self.assertEqual(snapshot["red_beacon_snapshot"]["signal_mesh"]["channels"][0]["label"], "Jobs")
         self.assertEqual(snapshot["red_beacon_snapshot"]["alert_siren"]["level"], "low")
         self.assertIn('"student_health"', encoded)

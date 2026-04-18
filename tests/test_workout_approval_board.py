@@ -417,7 +417,7 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
         other_coach = get_user_model().objects.create_user(
             username='coach-outro',
             email='coach-outro@example.com',
-            password='test',
+            password='senha-forte-123',
         )
         other_coach.groups.add(Group.objects.get(name=ROLE_COACH))
         other_session = ClassSession.objects.create(
