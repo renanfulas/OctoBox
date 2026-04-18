@@ -15,7 +15,7 @@ class ManagerWorkspaceDisabledToggleTests(TestCase):
         user_model = get_user_model()
         self.user = user_model.objects.create_user(
             username="manager_toggle_user",
-            password="P@ssw0rd!234",
+            password="test",
             email="manager-toggle@example.com",
         )
         self.user.groups.add(Group.objects.get(name=ROLE_MANAGER))
@@ -52,12 +52,12 @@ class ManagerWorkspaceEnabledToggleTests(TestCase):
         self.manager = user_model.objects.create_user(
             username="manager-toggle",
             email="manager-toggle@example.com",
-            password="senha-forte-123",
+            password="test",
         )
         self.reception = user_model.objects.create_user(
             username="reception-toggle",
             email="reception-toggle@example.com",
-            password="senha-forte-123",
+            password="test",
         )
         self.manager.groups.add(Group.objects.get(name=ROLE_MANAGER))
         self.reception.groups.add(Group.objects.get(name=ROLE_RECEPTION))

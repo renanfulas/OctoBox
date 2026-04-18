@@ -22,21 +22,21 @@ class WorkoutFlowBaseTestCase(TestCase):
         cls.coach = user_model.objects.create_user(
             username='coach-wod',
             email='coach-wod@example.com',
-            password='senha-forte-123',
+            password='test',
         )
         cls.coach.groups.add(Group.objects.get(name=ROLE_COACH))
 
         cls.manager = user_model.objects.create_user(
             username='manager-wod',
             email='manager-wod@example.com',
-            password='senha-forte-123',
+            password='test',
         )
         cls.manager.groups.add(Group.objects.get(name=ROLE_MANAGER))
 
         cls.owner = user_model.objects.create_user(
             username='owner-wod',
             email='owner-wod@example.com',
-            password='senha-forte-123',
+            password='test',
         )
         cls.owner.groups.add(Group.objects.get(name=ROLE_OWNER))
 

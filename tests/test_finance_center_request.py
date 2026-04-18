@@ -38,7 +38,7 @@ class FinanceCenterRequestTests(TestCase):
         self.owner = user_model.objects.create_user(
             username="finance-owner",
             email="finance-owner@example.com",
-            password="senha-forte-123",
+            password="test",
         )
         self.owner.groups.add(Group.objects.get(name=ROLE_OWNER))
 

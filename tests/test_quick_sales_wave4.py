@@ -17,7 +17,7 @@ class QuickSalesWave4Tests(TestCase):
         call_command('bootstrap_roles')
         self.user = get_user_model().objects.create_user(
             username='quick-sales-wave4-owner',
-            password='CodexTemp!2026',
+            password='test',
         )
         self.user.groups.add(Group.objects.get(name=ROLE_OWNER))
         self.client.force_login(self.user)

@@ -15,7 +15,7 @@ class QuickSalesWave3Tests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             username='quick-sales-wave3-owner',
-            password='CodexTemp!2026',
+            password='test',
         )
         self.student = Student.objects.create(
             full_name='Aluno Quick Sale Wave 3',

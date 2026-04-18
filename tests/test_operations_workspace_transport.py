@@ -41,12 +41,12 @@ class OperationsWorkspaceTransportTests(TestCase):
         self.manager = user_model.objects.create_user(
             username="ops-manager",
             email="ops-manager@example.com",
-            password="senha-forte-123",
+            password="test",
         )
         self.reception = user_model.objects.create_user(
             username="ops-reception",
             email="ops-reception@example.com",
-            password="senha-forte-123",
+            password="test",
         )
         self.manager.groups.add(Group.objects.get(name=ROLE_MANAGER))
         self.reception.groups.add(Group.objects.get(name=ROLE_RECEPTION))

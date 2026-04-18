@@ -10,7 +10,7 @@ User = get_user_model()
 
 @pytest.fixture
 def perf_user(db):
-    user = User.objects.create_user(username='perf_tester', password='password123')
+    user = User.objects.create_user(username='perf_tester', password='test')
     group, _ = Group.objects.get_or_create(name='Owner')
     user.groups.add(group)
     return user
