@@ -6,12 +6,25 @@ POR QUE ELE EXISTE:
 - prepara a emissao superior sem vazar telemetria bruta.
 """
 
-from django.db import DatabaseError
+from functools import lru_cache
+
+from django.db import DatabaseError, connections, router
 from django.utils import timezone
 
 from integrations.whatsapp.models import WebhookDeliveryStatus, WebhookEvent
 from jobs.models import AsyncJob, JobStatus
 from monitoring.signal_mesh_runtime import get_signal_mesh_runtime_snapshot
+
+
+@lru_cache(maxsize=8)
+def _get_known_tables(using: str) -> tuple[str, ...]:
+    connection = connections[using]
+    return tuple(connection.introspection.table_names())
+
+
+def _model_table_exists(model) -> bool:
+    using = router.db_for_read(model)
+    return model._meta.db_table in _get_known_tables(using)
 
 
 def _summarize_skips(skipped_items):
@@ -26,6 +39,9 @@ def _summarize_skips(skipped_items):
 
 
 def _count_due_async_jobs():
+    if not _model_table_exists(AsyncJob):
+        runtime_snapshot = get_signal_mesh_runtime_snapshot()
+        return runtime_snapshot.get('jobs', {}).get('due_backlog', 0)
     try:
         return AsyncJob.objects.filter(
             status=JobStatus.PENDING,
@@ -38,6 +54,9 @@ def _count_due_async_jobs():
 
 
 def _count_due_webhooks():
+    if not _model_table_exists(WebhookEvent):
+        runtime_snapshot = get_signal_mesh_runtime_snapshot()
+        return runtime_snapshot.get('webhooks', {}).get('due_backlog', 0)
     try:
         return WebhookEvent.objects.filter(
             status=WebhookDeliveryStatus.PENDING,
