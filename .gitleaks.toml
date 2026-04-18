@@ -1,0 +1,12 @@
+title = "OctoBox Gitleaks Baseline"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test fixture directories use placeholder credentials and fake payloads."
+paths = [
+  '''(^|[\\/])tests[\\/].*$''',
+  '''(^|[\\/])boxcore[\\/]tests[\\/].*$''',
+  '''(^|[\\/])student_identity[\\/]tests\.py$''',
+]

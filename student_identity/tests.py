@@ -104,7 +104,7 @@ class StudentIdentityFlowTests(TestCase):
         STUDENT_APPLE_OAUTH_CLIENT_ID='com.octobox.student',
         STUDENT_APPLE_OAUTH_TEAM_ID='TEAM123',
         STUDENT_APPLE_OAUTH_KEY_ID='KEY123',
-        STUDENT_APPLE_OAUTH_PRIVATE_KEY='-----BEGIN PRIVATE KEY-----\nMIIBVwIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEAzQ==\n-----END PRIVATE KEY-----',
+        STUDENT_APPLE_OAUTH_PRIVATE_KEY='apple-private-key-placeholder',
     )
     @patch('student_identity.views.build_provider')
     def test_student_can_authenticate_with_apple_invitation_when_student_email_is_blank(self, build_provider_mock):

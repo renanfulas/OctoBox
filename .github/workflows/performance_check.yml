@@ -15,10 +15,10 @@ jobs:
 
     steps:
     - name: 1. Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
 
     - name: 2. Set up Python Environment
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.12'
 
@@ -59,7 +59,7 @@ jobs:
         } >> "$GITHUB_STEP_SUMMARY"
 
     - name: 7. Upload Drift Report Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: static-drift-report
         path: static-drift-report.txt
@@ -103,10 +103,10 @@ jobs:
 
     steps:
     - name: 1. Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
 
     - name: 2. Set up Python Environment
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.12'
 

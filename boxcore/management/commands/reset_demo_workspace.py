@@ -198,7 +198,7 @@ class Command(BaseCommand):
                 user = user_model.objects.create_user(
                     username=username,
                     email=email,
-                    password='senha-forte-123',
+                    password='test',
                 )
             if user.id not in used_ids:
                 selected.append(user)
@@ -218,7 +218,7 @@ class Command(BaseCommand):
             user = user_model.objects.create_user(
                 username=username,
                 email=f'{username}@example.com',
-                password='senha-forte-123',
+                password='test',
             )
             selected.append(user)
 

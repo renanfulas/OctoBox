@@ -21,14 +21,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run k6 snapshot stress (docker)
         run: |
           docker run --rm -v ${{ github.workspace }}:/scripts -e HOST=${{ github.event.inputs.host }} -e TEST_USER=${{ github.event.inputs.user }} -e TEST_PASS=${{ github.event.inputs.pass }} loadimpact/k6 run --summary-export=/scripts/load_tests/summary_snap.json /scripts/load_tests/k6_snapshot_stress.js
 
       - name: Upload k6 snapshot summary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k6-snapshot-summary
           path: load_tests/summary_snap.json

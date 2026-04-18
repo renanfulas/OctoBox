@@ -14,7 +14,7 @@ from auditing import log_audit_event
 from finance.models import Payment
 from integrations.mesh import build_idempotency_key
 
-stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', 'sk_test_placeholder')
+stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', 'stripe-key-placeholder')
 
 
 def generate_idempotency_key(payment: Payment, action: str) -> str:
