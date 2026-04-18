@@ -38,11 +38,15 @@ def _count_due_async_jobs():
 
 
 def _count_due_webhooks():
-    return WebhookEvent.objects.filter(
-        status=WebhookDeliveryStatus.PENDING,
-        next_retry_at__isnull=False,
-        next_retry_at__lte=timezone.now(),
-    ).count()
+    try:
+        return WebhookEvent.objects.filter(
+            status=WebhookDeliveryStatus.PENDING,
+            next_retry_at__isnull=False,
+            next_retry_at__lte=timezone.now(),
+        ).count()
+    except DatabaseError:
+        runtime_snapshot = get_signal_mesh_runtime_snapshot()
+        return runtime_snapshot.get('webhooks', {}).get('due_backlog', 0)
 
 
 def build_signal_mesh_beacon_snapshot():

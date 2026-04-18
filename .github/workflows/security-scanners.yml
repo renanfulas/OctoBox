@@ -35,8 +35,16 @@ jobs:
       - name: Run Pip-Audit (Dependency Scan)
         run: pip-audit
         
-      - name: Run Safety (Vulnerability Database)
-        run: safety check
+      - name: Run Safety Scan (Vulnerability Database)
+        env:
+          SAFETY_API_KEY: ${{ secrets.SAFETY_API_KEY }}
+        run: |
+          if [ -z "${SAFETY_API_KEY}" ]; then
+            echo "SAFETY_API_KEY nao configurada; pulando Safety Scan moderno."
+            echo "Configure o secret SAFETY_API_KEY para habilitar o comando safety scan no CI."
+            exit 0
+          fi
+          safety --stage cicd --key "${SAFETY_API_KEY}" scan --target . --output screen
       - name: Gitleaks Scan (Secret Detection)
         uses: gitleaks/gitleaks-action@v2
         env:

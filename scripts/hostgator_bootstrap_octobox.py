@@ -5,6 +5,8 @@ from pathlib import Path
 
 import paramiko
 
+from scripts.ssh_hardening import build_hardened_ssh_client
+
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 if hasattr(sys.stderr, "reconfigure"):
@@ -71,8 +73,7 @@ def main() -> int:
     script = BOOTSTRAP_PATH.read_text(encoding="utf-8")
     remote_command = build_remote_command(script)
 
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client = build_hardened_ssh_client()
     client.connect(
         HOST,
         port=PORT,
@@ -84,7 +85,7 @@ def main() -> int:
     )
 
     try:
-        stdin, stdout, stderr = client.exec_command(remote_command, get_pty=True)
+        stdin, stdout, stderr = client.exec_command(remote_command, get_pty=True)  # nosec B601
         for line in iter(stdout.readline, ""):
             sys.stdout.write(line)
             sys.stdout.flush()

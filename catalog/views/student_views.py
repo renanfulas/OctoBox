@@ -339,7 +339,10 @@ class StudentDirectoryView(CatalogBaseView):
         context['students'] = page_obj
 
         support_started_at = time.perf_counter()
-        support_snapshot = build_student_directory_support_snapshot(params=self.request.GET)
+        support_snapshot = build_student_directory_support_snapshot(
+            params=self.request.GET,
+            pending_intakes_count=(base_context.get('shell_counts') or {}).get('pending_intakes'),
+        )
         support_duration_ms = round((time.perf_counter() - support_started_at) * 1000, 2)
 
         has_server_scoped_filters = _has_server_scoped_student_filters(self.request.GET)

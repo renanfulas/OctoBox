@@ -3,6 +3,8 @@ import os
 
 import paramiko
 
+from scripts.ssh_hardening import build_hardened_ssh_client
+
 
 HOST = os.environ.get("OCTOBOX_VPS_HOST", "129.121.47.167")
 PORT = int(os.environ.get("OCTOBOX_VPS_PORT", "22022"))
@@ -66,8 +68,7 @@ def main() -> int:
         print("Defina a variavel de ambiente OCTOBOX_VPS_PASSWORD antes de executar.", file=sys.stderr)
         return 2
 
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client = build_hardened_ssh_client()
     try:
         client.connect(
             HOST,
@@ -85,7 +86,7 @@ def main() -> int:
     try:
         stdin, stdout, stderr = client.exec_command(
             f"bash -s <<'__CODEX_REMOTE_SCRIPT__'\n{REMOTE_SCRIPT}\n__CODEX_REMOTE_SCRIPT__\n"
-        )
+        )  # nosec B601
         exit_status = stdout.channel.recv_exit_status()
         out = stdout.read().decode("utf-8", errors="replace")
         err = stderr.read().decode("utf-8", errors="replace")

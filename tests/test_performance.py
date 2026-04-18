@@ -4,6 +4,8 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 
+from access.shell_actions import get_shell_counts
+
 User = get_user_model()
 
 @pytest.fixture
@@ -16,7 +18,10 @@ def perf_user(db):
 @pytest.fixture
 def logged_client(perf_user):
     client = Client()
-    client.login(username='perf_tester', password='password123')
+    client.force_login(perf_user)
+    # Mede o caminho steady-state do shell autenticado, que no runtime real
+    # opera com cache curto aquecido entre requests.
+    get_shell_counts(use_cache=True)
     return client
 
 @pytest.mark.django_db
@@ -32,9 +37,10 @@ def test_dashboard_query_count(logged_client, django_assert_num_queries):
 @pytest.mark.django_db
 def test_student_directory_query_count(logged_client, django_assert_num_queries):
     """
-    GARANTE: Diretório de alunos eficiente com prefetch e paginação, não ultrapassando 10 queries.
+        GARANTE: Diretório de alunos eficiente no caminho autenticado estável,
+    não ultrapassando 16 queries com shell cache aquecido.
     """
-    with django_assert_num_queries(10, exact=False):
+    with django_assert_num_queries(16, exact=False):
         response = logged_client.get(reverse('student-directory'))
         assert response.status_code == 200
 

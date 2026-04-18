@@ -356,7 +356,7 @@ def _build_student_directory_interactive_kpis(metrics):
     ]
 
 
-def _build_student_directory_support_surfaces(students):
+def _build_student_directory_support_surfaces(students, *, pending_intakes_count=None):
     priority_students_queryset = students.filter(
         Q(operational_payment_status=PaymentStatus.OVERDUE)
         | Q(status=StudentStatus.LEAD)
@@ -364,7 +364,9 @@ def _build_student_directory_support_surfaces(students):
     )
     return {
         'priority_students': priority_students_queryset.order_by('full_name')[:6],
-        'pending_intakes_count': count_pending_intakes(),
+        'pending_intakes_count': (
+            pending_intakes_count if pending_intakes_count is not None else count_pending_intakes()
+        ),
         'intake_queue': list(get_intake_conversion_queue(limit=6)),
     }
 
@@ -420,9 +422,12 @@ def build_student_directory_listing_snapshot(params=None, for_export=False):
     }
 
 
-def build_student_directory_support_snapshot(params=None):
+def build_student_directory_support_snapshot(params=None, *, pending_intakes_count=None):
     students = _build_student_directory_support_queryset(params)
-    return _build_student_directory_support_surfaces(students)
+    return _build_student_directory_support_surfaces(
+        students,
+        pending_intakes_count=pending_intakes_count,
+    )
 
 
 def get_operational_enrollment(student):

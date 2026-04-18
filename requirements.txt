@@ -11,4 +11,7 @@ sentry-sdk==2.12.0
 prometheus-client==0.22.1
 python-magic==0.4.27
 stripe==15.0.0
-cryptography
+cryptography==46.0.7
+# Security floor for transitive environment dependencies flagged by Safety.
+pillow==12.2.0
+requests==2.33.1

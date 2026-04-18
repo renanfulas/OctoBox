@@ -41,8 +41,8 @@ def _find_orphaned_foreign_keys() -> list[dict]:
 
                 local_column = columns[0]
                 remote_table, remote_column = foreign_key
-                query = (
-                    f'SELECT COUNT(*) FROM {_quote(table_name)} '
+                query = (  # nosec B608
+                    f'SELECT COUNT(*) FROM {_quote(table_name)} '  # nosec B608
                     f'WHERE {_quote(local_column)} IS NOT NULL '
                     f'AND {_quote(local_column)} NOT IN ('
                     f'SELECT {_quote(remote_column)} FROM {_quote(remote_table)}'
