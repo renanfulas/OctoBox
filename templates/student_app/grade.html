@@ -32,7 +32,16 @@
             {% endif %}
         </p>
         <div class="student-hero-actions">
-            <button type="button" class="student-button">Confirmar presenca</button>
+            {% if student_next_session and student_next_session.can_confirm_presence %}
+            <form method="post" action="{% url 'student-app-confirm-attendance' %}" class="student-inline-form">
+                {% csrf_token %}
+                <input type="hidden" name="session_id" value="{{ student_next_session.session_id }}">
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="student-button">Confirmar presenca</button>
+            </form>
+            {% else %}
+            <span class="student-status-badge">Presenca ja registrada</span>
+            {% endif %}
             <a href="{% url 'student-app-wod' %}" class="student-button student-button--ghost">Ir para WOD</a>
         </div>
     </article>

@@ -239,7 +239,7 @@ def build_system_map_page():
     )
 
 
-def build_operational_settings_page():
+def build_operational_settings_page(*, latest_lead_import_status=None):
     operational_focus = [
         {'href': '#operational-settings-window', 'summary': 'Ajustar a janela de bloqueio do WhatsApp sem editar variavel de ambiente.'},
         {'href': '#operational-settings-access', 'summary': 'Criar perfis de acesso sem depender do admin do Django.'},
@@ -276,6 +276,7 @@ def build_operational_settings_page():
                 'Quando bloqueado, o ultimo log valido e reaproveitado para manter rastreabilidade.',
                 'Papeis somente leitura nao recebem CTA de disparo no Dashboard.',
             ],
+            'latest_lead_import_status': latest_lead_import_status,
             'repeat_block_options': [
                 {'value': 24, 'label': '24h', 'summary': 'Trava diaria padrao para evitar repeticao no mesmo dia.'},
                 {'value': 12, 'label': '12h', 'summary': 'Janela intermediaria para uma retomada mais curta.'},

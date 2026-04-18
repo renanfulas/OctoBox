@@ -16,6 +16,8 @@ Em linguagem simples:
 
 1. este doc mostra a cidade
 2. o [front-end-card-architecture.md](C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\front-end-card-architecture.md) explica a lei da cidade
+3. o [front-end-octobox-organization-standard.md](C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\front-end-octobox-organization-standard.md) explica como uma obra nova deve nascer sem virar puxadinho nem overengineering
+4. o [pr-front-end-checklist.md](C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\pr-front-end-checklist.md) transforma essa lei em triagem curta de PR
 
 ## Mapa da cidade
 

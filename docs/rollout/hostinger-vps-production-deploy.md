@@ -262,9 +262,13 @@ sudo systemctl restart nginx
 
 1. apontar DNS para a VPS
 2. manter o proxy do Cloudflare ativo
-3. ativar WAF
-4. aplicar as regras de [../reference/cloudflare-edge-rules.md](../reference/cloudflare-edge-rules.md)
-5. preencher `SECURITY_TRUSTED_PROXY_IPS` apenas quando houver confirmacao dos proxies reais
+3. configurar SSL/TLS em `Full (strict)`
+4. manter `/static/*` como superficie forte de cache
+5. manter HTML autenticado em `bypass cache`
+6. validar login, POST e navegacao autenticada antes de subir regras mais agressivas
+7. ativar WAF
+8. aplicar as regras de [../reference/cloudflare-edge-rules.md](../reference/cloudflare-edge-rules.md)
+9. preencher `SECURITY_TRUSTED_PROXY_IPS` apenas quando houver confirmacao dos proxies reais
 
 ### Etapa 12. Validar a publicacao
 
@@ -284,6 +288,8 @@ O deploy so passa quando:
 3. assets carregam
 4. as rotas centrais nao retornam `500`
 5. um reboot controlado devolve rede, SSH e HTTPS sem ajuste manual de interface
+6. Cloudflare nao cacheia HTML autenticado por engano
+7. a regua de primeiro hit e hit quente de `Financeiro` e `Alunos` nao regride
 
 ---
 

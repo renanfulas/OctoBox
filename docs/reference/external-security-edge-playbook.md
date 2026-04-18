@@ -9,6 +9,7 @@ O QUE ESTE ARQUIVO FAZ:
 1. define o que fica no app e o que sobe para o edge.
 2. lista regras objetivas para Cloudflare ou proxy equivalente na frente do Render.
 3. define sinais minimos de observabilidade e resposta a abuso.
+4. registra a politica de cache segura para apps autenticados.
 
 PONTOS CRITICOS:
 - o app nao deve confiar em X-Forwarded-For sem proxy confiavel configurado.
@@ -45,6 +46,28 @@ Regra pratica:
 
 1. o usuario nunca deve falar direto com a origem publica sem a camada de edge controlada
 2. o app deve confiar em IP encaminhado apenas se SECURITY_TRUSTED_PROXY_IPS estiver preenchido com os proxies reais
+
+## Cache e sessao no edge
+
+No edge, separar claramente:
+
+1. assets estaticos
+2. HTML autenticado
+
+Contrato recomendado:
+
+1. `/static/*` com cache forte
+2. HTML autenticado em `bypass cache`
+3. nada de `Cache Everything` no dominio inteiro do app
+4. `Full (strict)` como modo padrao de SSL/TLS
+
+Rotas que devem ficar fora de cache forçado:
+
+1. `/login/`
+2. `/dashboard/`
+3. `/alunos/`
+4. `/financeiro/`
+5. `/operacao/*`
 
 ## Regras de rate limit no edge
 
@@ -99,6 +122,8 @@ No edge, monitorar:
 2. picos de 429 por caminho
 3. origem por IP, faixa, ASN e pais
 4. volume por user-agent e assinatura de bot
+5. presenca de `cf-ray` nas respostas apos ativacao do proxy
+6. diferenca entre primeiro hit e hit quente nas superficies autenticadas
 
 No app, monitorar:
 
@@ -141,3 +166,5 @@ Esta camada so pode ser considerada encaixada quando:
 3. SECURITY_TRUSTED_PROXY_IPS estiver configurado com proxies reais
 4. logs de bloqueio e throttle estiverem visiveis no runtime
 5. o time conseguir bloquear um IP ou CIDR sem novo deploy de codigo
+6. login e sessao estiverem estaveis com o proxy ativo
+7. HTML autenticado estiver fora de cache indevido

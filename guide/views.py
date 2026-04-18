@@ -29,7 +29,7 @@ from django.views.generic import TemplateView
 
 from access.permissions import RoleRequiredMixin
 from access.roles import ROLE_DEV, ROLE_OWNER
-from operations.models import LeadImportDeclaredRange, LeadImportJobStatus, LeadImportProcessingMode, LeadImportSourceType
+from operations.models import LeadImportDeclaredRange, LeadImportJob, LeadImportJobStatus, LeadImportProcessingMode, LeadImportSourceType
 from operations.services.contact_importer import import_contacts_from_list, import_contacts_from_stream
 from operations.services.lead_import_orchestrator import orchestrate_lead_import_submission
 from operations.tasks import run_lead_import_job
@@ -46,10 +46,60 @@ SOURCE_PLATFORM_TO_IMPORT_SOURCE = {
     'ios_vcard': LeadImportSourceType.IPHONE_VCF,
 }
 
+LEAD_IMPORT_STATUS_TTL_HOURS = 24
+
 DECLARED_RANGE_FORM_TO_MODEL = {
     'up_to_200': LeadImportDeclaredRange.UP_TO_200,
     'from_201_to_500': LeadImportDeclaredRange.FROM_201_TO_500,
     'from_501_to_2000': LeadImportDeclaredRange.FROM_501_TO_2000,
+}
+
+LEAD_IMPORT_STATUS_UI = {
+    LeadImportJobStatus.RECEIVED: {
+        'title': 'Arquivo de leads recebido',
+        'summary': 'A lista foi recebida e esta entrando na trilha de validacao.',
+        'tone': 'info',
+    },
+    LeadImportJobStatus.VALIDATING: {
+        'title': 'Arquivo de leads sendo avaliado',
+        'summary': 'O sistema esta conferindo volume e regra de processamento da lista.',
+        'tone': 'info',
+    },
+    LeadImportJobStatus.QUEUED: {
+        'title': 'Arquivo de leads na fila',
+        'summary': 'A lista esta aguardando o worker iniciar o processamento.',
+        'tone': 'info',
+    },
+    LeadImportJobStatus.SCHEDULED: {
+        'title': 'Arquivo de leads agendado para a madrugada',
+        'summary': 'A lista ficou na trilha economica noturna e sera processada na janela configurada.',
+        'tone': 'info',
+    },
+    LeadImportJobStatus.RUNNING: {
+        'title': 'Arquivo de leads sendo avaliado',
+        'summary': 'O processamento da lista esta em andamento agora.',
+        'tone': 'info',
+    },
+    LeadImportJobStatus.COMPLETED: {
+        'title': 'Importacao de leads concluida',
+        'summary': 'A ultima lista terminou sem alertas operacionais.',
+        'tone': 'success',
+    },
+    LeadImportJobStatus.COMPLETED_WITH_WARNINGS: {
+        'title': 'Importacao de leads concluida com alertas',
+        'summary': 'A lista terminou, mas houve duplicatas ou avisos para revisar.',
+        'tone': 'warning',
+    },
+    LeadImportJobStatus.REJECTED: {
+        'title': 'Importacao de leads bloqueada',
+        'summary': 'A ultima tentativa nao entrou no pipeline por causa da policy ou do volume.',
+        'tone': 'warning',
+    },
+    LeadImportJobStatus.FAILED: {
+        'title': 'Importacao de leads falhou',
+        'summary': 'A lista entrou no pipeline, mas a execucao nao terminou com sucesso.',
+        'tone': 'danger',
+    },
 }
 
 
@@ -168,6 +218,47 @@ class OperationalSettingsView(LoginRequiredMixin, RoleRequiredMixin, TemplateVie
     def _dispatch_async_now_import(self, *, job):
         run_lead_import_job.delay(job.id)
 
+    def _build_latest_lead_import_status(self):
+        status_cutoff = timezone.now() - timezone.timedelta(hours=LEAD_IMPORT_STATUS_TTL_HOURS)
+        latest_job = (
+            LeadImportJob.objects.filter(
+                created_by=self.request.user,
+                created_at__gte=status_cutoff,
+            )
+            .order_by('-created_at')
+            .first()
+        )
+        if latest_job is None:
+            return None
+
+        status_meta = LEAD_IMPORT_STATUS_UI.get(
+            latest_job.status,
+            {
+                'title': 'Status da importacao de leads',
+                'summary': 'Existe uma lista recente no pipeline operacional.',
+                'tone': 'info',
+            },
+        )
+        return {
+            'title': status_meta['title'],
+            'summary': status_meta['summary'],
+            'tone': status_meta['tone'],
+            'job_id': latest_job.id,
+            'source_type_label': latest_job.get_source_type_display(),
+            'status_label': latest_job.get_status_display(),
+            'processing_mode_label': latest_job.get_processing_mode_display(),
+            'original_filename': latest_job.original_filename,
+            'detected_lead_count': latest_job.detected_lead_count,
+            'success_count': latest_job.success_count,
+            'duplicate_count': latest_job.duplicate_count,
+            'error_count': latest_job.error_count,
+            'created_at': timezone.localtime(latest_job.created_at).strftime('%d/%m/%Y %H:%M'),
+            'finished_at': (
+                timezone.localtime(latest_job.finished_at).strftime('%d/%m/%Y %H:%M')
+                if latest_job.finished_at else ''
+            ),
+        }
+
     def post(self, request, *args, **kwargs):
         if 'contacts_file' in request.FILES:
             file_obj = request.FILES['contacts_file']
@@ -220,7 +311,9 @@ class OperationalSettingsView(LoginRequiredMixin, RoleRequiredMixin, TemplateVie
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        page_payload = build_operational_settings_page()
+        page_payload = build_operational_settings_page(
+            latest_lead_import_status=self._build_latest_lead_import_status(),
+        )
         attach_page_payload(
             context,
             payload_key='operational_settings_page',

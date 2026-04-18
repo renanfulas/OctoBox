@@ -56,17 +56,17 @@ def get_user_role(user):
     if cached_role is not None:
         return cached_role
 
+    if user.is_superuser:
+        role = ROLE_MAP[ROLE_OWNER]
+        setattr(user, _ROLE_CACHE_ATTR, role)
+        return role
+
     # 🚀 Performance AAA (Shadow Role): Ler do Redis em vez do Banco
     cache_key = f"octobox:user_role_slug:uid_{user.id}"
     cached_slug = cache.get(cache_key)
     
     if cached_slug and cached_slug in ROLE_MAP:
         role = ROLE_MAP[cached_slug]
-        setattr(user, _ROLE_CACHE_ATTR, role)
-        return role
-    if user.is_superuser:
-        role = ROLE_MAP[ROLE_OWNER]
-        cache.set(cache_key, role.slug, timeout=86400)
         setattr(user, _ROLE_CACHE_ATTR, role)
         return role
 

@@ -59,6 +59,7 @@ from shared_support.operational_contact_memory import (
 from shared_support.phone_numbers import normalize_phone_number
 from shared_support.workspace_snapshot_versions import build_workspace_snapshot_version
 from students.models import Student
+from student_app.models import SessionWorkoutStatus
 
 
 def _build_hero_stat(label, value):
@@ -396,6 +397,23 @@ def _serialize_attendance(attendance):
 
 def _serialize_coach_session(session):
     attendances = [_serialize_attendance(attendance) for attendance in session.attendances.all()]
+    workout = getattr(session, 'workout', None)
+    workout_status_label = workout.get_status_display() if workout else 'Sem WOD'
+    if workout is None:
+        workout_status_class = 'info'
+        workout_action_label = 'Criar WOD'
+    elif workout.status == SessionWorkoutStatus.PUBLISHED:
+        workout_status_class = 'success'
+        workout_action_label = 'Editar WOD'
+    elif workout.status == SessionWorkoutStatus.PENDING_APPROVAL:
+        workout_status_class = 'warning'
+        workout_action_label = 'Revisar WOD'
+    elif workout.status == SessionWorkoutStatus.REJECTED:
+        workout_status_class = 'danger'
+        workout_action_label = 'Ajustar WOD'
+    else:
+        workout_status_class = 'info'
+        workout_action_label = 'Continuar WOD'
     return {
         'id': session.id,
         'title': session.title,
@@ -403,6 +421,10 @@ def _serialize_coach_session(session):
         'duration_minutes': session.duration_minutes,
         'attendance_count': len(attendances),
         'attendances': attendances,
+        'workout_editor_url': reverse('coach-session-workout-editor', args=[session.id]),
+        'workout_status_label': workout_status_label,
+        'workout_status_class': workout_status_class,
+        'workout_action_label': workout_action_label,
     }
 
 
@@ -1252,12 +1274,36 @@ def build_manager_workspace_snapshot(*, actor=None):
 
 
 def build_coach_workspace_snapshot(*, today):
-    sessions = (
+    sessions = list(
         ClassSession.objects.filter(scheduled_at__date=today)
+        .select_related('workout')
         .prefetch_related('attendances__student')
         .annotate(attendance_cnt=Count('attendances'))
         .order_by('scheduled_at')
     )
+    for session in sessions:
+        workout = getattr(session, 'workout', None)
+        session.workout_editor_url = reverse('coach-session-workout-editor', args=[session.id])
+        if workout is None:
+            session.workout_status_label = 'Sem WOD'
+            session.workout_status_class = 'info'
+            session.workout_action_label = 'Criar WOD'
+        elif workout.status == SessionWorkoutStatus.PUBLISHED:
+            session.workout_status_label = 'Publicado'
+            session.workout_status_class = 'success'
+            session.workout_action_label = 'Editar WOD'
+        elif workout.status == SessionWorkoutStatus.PENDING_APPROVAL:
+            session.workout_status_label = 'Aguardando aprovacao'
+            session.workout_status_class = 'warning'
+            session.workout_action_label = 'Revisar WOD'
+        elif workout.status == SessionWorkoutStatus.REJECTED:
+            session.workout_status_label = 'Rejeitado'
+            session.workout_status_class = 'danger'
+            session.workout_action_label = 'Ajustar WOD'
+        else:
+            session.workout_status_label = 'Rascunho'
+            session.workout_status_class = 'info'
+            session.workout_action_label = 'Continuar WOD'
     total_attendances = sum(session.attendance_cnt for session in sessions)
     sessions_with_students = sum(1 for session in sessions if session.attendance_cnt > 0)
     pending_checkins = sum(max(session.attendance_cnt, 0) for session in sessions)

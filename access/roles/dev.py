@@ -41,4 +41,9 @@ DEV_PERMISSIONS = {
     'whatsappcontact': {'view'},
     'whatsappmessagelog': {'view'},
     'auditevent': {'view'},
+    'studentidentity': {'view'},
+    'studentappinvitation': {'view'},
+    'studentinvitationdelivery': {'view'},
+    'studentinvitationdeliveryevent': {'view'},
+    'studenttransfer': {'view'},
 }

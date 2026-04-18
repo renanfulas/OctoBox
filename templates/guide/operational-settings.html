@@ -51,6 +51,33 @@ POR QUE ELE EXISTE:
         <p class="eyebrow">Importar Contatos</p>
         <h3>Listas Externas</h3>
         <p class="system-map-copy">Suba uma lista para rodar a higienizacao de telefone e criar leads automaticos no OctoBOX. Ate 200 leads entram na hora, de 201 a 500 vao para background e acima disso seguem para a janela noturna.</p>
+        {% if page.data.latest_lead_import_status %}
+        <div class="section-gap-top-xs" data-panel="lead-import-status-card">
+            <p class="eyebrow">Status atual da importacao</p>
+            <h4>{{ page.data.latest_lead_import_status.title }}</h4>
+            <p class="system-map-copy">{{ page.data.latest_lead_import_status.summary }}</p>
+            <ul class="capability-list section-gap-top-xs">
+                <li>Status: {{ page.data.latest_lead_import_status.status_label }}</li>
+                <li>Origem: {{ page.data.latest_lead_import_status.source_type_label }}</li>
+                <li>Trilho: {{ page.data.latest_lead_import_status.processing_mode_label }}</li>
+                <li>Arquivo: {{ page.data.latest_lead_import_status.original_filename|default:"Arquivo temporario sem nome" }}</li>
+                <li>Leads detectados: {{ page.data.latest_lead_import_status.detected_lead_count }}</li>
+                {% if page.data.latest_lead_import_status.success_count %}
+                <li>Importados: {{ page.data.latest_lead_import_status.success_count }}</li>
+                {% endif %}
+                {% if page.data.latest_lead_import_status.duplicate_count %}
+                <li>Duplicados: {{ page.data.latest_lead_import_status.duplicate_count }}</li>
+                {% endif %}
+                {% if page.data.latest_lead_import_status.error_count %}
+                <li>Erros: {{ page.data.latest_lead_import_status.error_count }}</li>
+                {% endif %}
+                <li>Recebido em: {{ page.data.latest_lead_import_status.created_at }}</li>
+                {% if page.data.latest_lead_import_status.finished_at %}
+                <li>Finalizado em: {{ page.data.latest_lead_import_status.finished_at }}</li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
         <form method="post" enctype="multipart/form-data" class="form-stack section-gap-top-sm operational-settings-import-form">
             {% csrf_token %}
             <label>

@@ -34,16 +34,15 @@ OctoBox is an operational hub for boxes and gyms that need to move beyond improv
 
 ## Visual Preview
 
-Below are glimpses of OctoBox's modern interface.
+Below are recent product snapshots from the current runtime: the owner command surface, the finance queue, and the mobile-first command view.
 
 <p align="center">
-  <img src="docs/screenshots/dashboard-dark.png" width="48%" alt="Dashboard Dark" />
-  <img src="docs/screenshots/dashboard-light.png" width="48%" alt="Dashboard Light" />
+  <img src="docs/screenshots/dashboard-current.png" width="48%" alt="Owner command surface" />
+  <img src="docs/screenshots/finance-current.png" width="48%" alt="Finance queue surface" />
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/class-grid-dark.png" width="48%" alt="Class Grid" />
-  <img src="docs/screenshots/students-list-dark.png" width="48%" alt="Student Management" />
+  <img src="docs/screenshots/dashboard-mobile-current.png" width="34%" alt="Mobile command surface" />
 </p>
 
 ## The problem OctoBox solves
@@ -79,6 +78,10 @@ Timeline of this first cycle:
 - built-in authentication with owner, dev, manager, reception, and coach roles
 - role-filtered navigation
 - audit trail for login, logout, admin changes, and sensitive product actions
+- student app with identity, invite entry, active-box switching, online-first PWA shell, class grid, WOD, RM, settings, and offline support
+- finance queue with follow-up analytics, risk reading, and semi-assisted operational outreach
+- quick sales surface connected into student finance operations
+- lead import pipeline with guided volume routing, operational policy, and nightly scheduling path
 
 ## Current operational state
 
@@ -94,6 +97,21 @@ Timeline of this first cycle:
 - scope-based throttling active for login, admin, writes, exports, dashboard, heavy reads, and autocomplete
 - optional shared cache through Redis, with local fallback and safe degradation when external cache fails
 - presenters and page payloads consolidated across the main dashboard, catalog, guide, and operations surfaces
+- student app identity and membership flows already promoted, including invite-based access and box switching
+- student app navigation now already carries the Grade, WOD, and RM direction in the current shell
+- lead import execution now already includes a documented pipeline, background path, and nightly scheduler support
+- published-page probes, request timing, and finance snapshot timing telemetry already inform the current performance work
+- docs now also have a guided architecture layer in `docs/guides/` for onboarding by topic and by profile
+
+## Current project snapshot
+
+Today the project is best described as:
+
+1. a domain-oriented modular monolith
+2. with `boxcore` preserved as historical Django state, not as the best explanation of the current runtime
+3. with stronger public facades, page-payload contracts, and presenter-based screen assembly
+4. with a real mobile/PWA student surface already in motion alongside the main web operation
+5. with active work focused on performance discipline, operational imports, student experience, and safer production rollout
 
 ## How to use the documentation
 
@@ -101,10 +119,11 @@ Use the docs by question level:
 
 1. this README explains the product, current state, and overall direction
 2. [docs/reference/documentation-authority-map.md](docs/reference/documentation-authority-map.md) tells you which doc wins when there is conflict, age, or ambiguity
-3. docs in [docs/architecture](docs/architecture) define the thesis, principles, and structural direction
-4. docs in [docs/plans](docs/plans) define active fronts and execution order
-5. [docs/reference/reading-guide.md](docs/reference/reading-guide.md) is for navigating the code and debugging the codebase, not for defining product direction
-6. docs in [docs/rollout](docs/rollout) are for release, staging, and field operations
+3. [docs/guides/README.md](docs/guides/README.md) gives a guided reading layer for architecture, methodology, backend, frontend, CSS, performance, security, and profile-based onboarding
+4. docs in [docs/architecture](docs/architecture) define the thesis, principles, and structural direction
+5. docs in [docs/plans](docs/plans) define active fronts and execution order
+6. [docs/reference/reading-guide.md](docs/reference/reading-guide.md) is for navigating the code and debugging the codebase, not for defining product direction
+7. docs in [docs/rollout](docs/rollout) are for release, staging, and field operations
 
 ## OctoBox governance
 
@@ -122,11 +141,12 @@ Practical translation:
 
 ## Quick product reading
 
-Today the system has three main layers:
+Today the system has four main product layers:
 
 1. role-based operations
 2. visual catalog for students and finance
-3. admin back office and auditing
+3. student app and identity surface
+4. admin back office and auditing
 
 Important for the current technical reading:
 
@@ -206,106 +226,39 @@ If you want to study the architectural criteria behind the decisions, reapply th
 
 If you want to understand the reasoning behind the first delivery, the decisions taken, and what I learned during the process, see [docs/history/v1-retrospective.md](docs/history/v1-retrospective.md).
 
-## Project map
+## Architecture snapshot
 
-```text
-boxcore/
-|-- access/
-|   |-- context_processors.py    -> builds sidebar and global context by role
-|   |-- roles/                   -> rules and capabilities for owner, dev, manager, and coach
-|   |-- urls.py                  -> login, logout, access, and system entry
-|   `-- views.py                 -> access pages and role views
-|-- auditing/
-|   |-- __init__.py              -> auditing entry point
-|   `-- services.py              -> records sensitive events in a standardized way
-|-- admin/
-|   |-- audit.py                 -> audit trail admin
-|   |-- finance.py               -> plans, enrollments, and payments admin
-|   |-- onboarding.py            -> intake center admin
-|   |-- operations.py            -> operational admin
-|   |-- students.py              -> student admin
-|   `-- __init__.py              -> registers everything in Django admin
-|-- catalog/
-|   |-- forms.py                 -> lightweight forms for students, finance, and class grid
-|   |-- student_queries.py       -> student area snapshots and reads
-|   |-- finance_queries.py       -> finance area snapshots and reads
-|   |-- class_grid_queries.py    -> class grid reads
-|   |-- urls.py                  -> visual catalog screen routes
-|   |-- views/
-|   |   |-- catalog_base_views.py -> shared catalog HTTP base
-|   |   |-- student_views.py      -> directory, lightweight registration, and student record
-|   |   |-- finance_views.py      -> visual finance, plans, and communications
-|   |   `-- class_grid_views.py   -> visual class grid
-|   `-- services/
-|       |-- student_workflows.py             -> lightweight student creation and edit flow
-|       |-- student_enrollment_actions.py    -> enrollment actions in the student record
-|       |-- student_payment_actions.py       -> billing actions in the student record
-|       |-- finance_communication_actions.py -> finance communication and follow-up
-|       |-- membership_plan_workflows.py     -> plan creation and editing
-|       |-- class_schedule_workflows.py      -> recurring creation and class grid limits
-|       |-- class_grid_commands.py           -> operational commands for the class grid
-|       |-- class_grid_dispatcher.py         -> form_kind and class grid action dispatcher
-|       |-- class_grid_policy.py             -> class grid edit and deletion rules
-|       |-- class_grid_messages.py           -> centralized operational messages for the class grid
-|       `-- operational_queue.py             -> operational queue and retention metrics
-|-- dashboard/
-|   |-- dashboard_snapshot_queries.py -> consolidated main panel snapshot
-|   |-- dashboard_views.py            -> panel HTTP layer
-|   |-- urls.py                  -> panel routes
-|   `-- __init__.py              -> dashboard package marker
-|-- guide/
-|   |-- urls.py                  -> internal system map route
-|   `-- views.py                 -> pedagogical context for the visual map
-|-- management/commands/
-|   |-- bootstrap_roles.py       -> creates access groups
-|   `-- import_students_csv.py   -> imports students by CSV using WhatsApp as the key
-|-- models/
-|   |-- audit.py                 -> audit events and traceability
-|   |-- base.py                  -> shared base classes
-|   |-- communications.py        -> contact base and WhatsApp logs
-|   |-- finance.py               -> plans, enrollments, and payments
-|   |-- onboarding.py            -> intake and provisional entry
-|   |-- operations.py            -> classes, attendance, and incidents
-|   |-- students.py              -> students and registration data
-|   `-- __init__.py              -> exports app models
-|-- operations/
-|   |-- workspace_snapshot_queries.py -> operational area snapshots by role
-|   |-- base_views.py                -> shared operations HTTP base
-|   |-- workspace_views.py           -> owner, dev, manager, and coach workspaces
-|   |-- action_views.py              -> mutable operation endpoints
-|   |-- actions.py                   -> operational action handlers
-|   |-- urls.py                  -> operational area routes by role
-|   `-- __init__.py              -> operational package marker
-`-- tests/
-	|-- test_access.py           -> login and roles
-	|-- test_catalog.py          -> students, billing, enrollments, and visual class grid
-	|-- test_catalog_services.py -> catalog services and workflows
-	|-- test_dashboard.py        -> main panel
-	|-- test_finance.py          -> visual finance center
-	|-- test_guide.py            -> system map
-	|-- test_import_students.py  -> CSV import
-	|-- test_operations_services.py -> operation handlers and services
-	`-- test_operations.py       -> role-based operation
+At a public level, the repository is easier to understand in six slices:
 
-templates/
-|-- access/                      -> login and access views
-|-- catalog/                     -> students, student form, finance, class grid, and plan editing
-|-- dashboard/                   -> main panel
-|-- guide/                       -> visual system map
-|-- layouts/                     -> base layout and global navigation
-`-- operations/                  -> operational screens by role
-```
+1. `access`, `dashboard`, `catalog`, `operations`
+   main web operation, role-based workspaces, students, finance, and class scheduling
+2. `student_app`, `student_identity`
+   student-facing PWA shell, identity, invite entry, active-box switching, Grade, WOD, RM, and offline support
+3. `communications`, `integrations`, `api`, `jobs`
+   external boundaries, messaging, webhooks, API surface, and asynchronous work
+4. `shared_support`, `monitoring`, `reporting`, `model_support`
+   cross-cutting contracts, performance, runtime helpers, observability, and shared base structures
+5. `boxcore`
+   historical Django state, migrations anchor, and compatibility surface
+6. `docs`, `.specs`, `tests`, `scripts`
+   governance, plans, rollout, technical reading, validation, and operational tooling
 
-## Most important visual routes
+If you need the code-level reading order, ownership map, and debugging entry points, jump to [docs/reference/reading-guide.md](docs/reference/reading-guide.md) instead of using this README as a file-by-file inventory.
+
+## Core product surfaces
 
 - /dashboard/ -> operation summary
+- /operacao/owner/ or role-based operation routes -> command surfaces by role
 - /alunos/ -> main student base, funnel, and commercial search
 - /alunos/novo/ -> lightweight student creation with plan and billing
 - /alunos/<id>/editar/ -> commercial student record
 - /financeiro/ -> management view of plans, revenue, churn, and finance queue
 - /grade-aulas/ -> visual class grid
+- /aluno/ -> student app home
+- /aluno/grade/ -> student app schedule
+- /aluno/wod/ and /aluno/rm/ -> student workout and personal record surfaces
 
-## Technical boundaries already opened for growth
+## External and growth boundaries
 
 - /api/ -> official entry point of the product API
 - /api/v1/ -> first version API manifesto
@@ -313,88 +266,11 @@ templates/
 - channel identity already prefers explicit WhatsApp contact and external provider id before the legacy phone fallback
 - intake payloads and message logs are now stored as sanitized JSON, with limits and sensitive key masking
 
-## What the class grid delivers today
-
-The [templates/catalog/class-grid.html](templates/catalog/class-grid.html) screen already works as an operational scheduling hub outside the admin.
-
-Today it delivers:
-
-1. today's schedule with coach, time, status, and occupancy reading
-2. the next two weeks calendar with quick access to editing
-3. compact monthly view and expanded calendar
-4. recurring planner with time sequences and blocking by daily, weekly, and monthly limits
-5. quick class editing with protection against improper reopening and deletion with history
-6. visual indicators for capacity and real-time state during class execution
-
-## Comment and header convention
-
-## License
-
-This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). See [LICENSE](LICENSE).
+## Engineering conventions
 
 Every relevant file should quickly explain its role at the top.
 
-Markdown files use HTML comments. Python files use docstrings in the same format. The full reference is [docs/reference/new-file-template.md](docs/reference/new-file-template.md).
-
-Standard for Python files:
-
-```python
-"""
-FILE: file name and general purpose.
-
-WHY IT EXISTS:
-- reason why the file exists in the project.
-
-WHAT THIS FILE DOES:
-1. main block 1
-2. main block 2
-3. main block 3
-
-CRITICAL POINTS:
-- what is risky to touch
-- what can break if changed carelessly
-"""
-```
-
-Standard for HTML templates:
-
-```html
-<!--
-FILE: template name and general purpose.
-
-WHY IT EXISTS:
-- reason why the template exists.
-
-WHAT THIS FILE DOES:
-1. main block 1
-2. main block 2
-3. main block 3
- 
-CRITICAL POINTS:
-- what is risky to touch
-- what can break if changed carelessly
--->
-```
-
-Standard for Markdown files:
-
-```html
-<!--
-FILE: file name and general purpose.
-
-WHY IT EXISTS:
-- reason why the document exists.
-
-WHAT THIS FILE DOES:
-1. gives context about the system area.
-2. guides reading, maintenance, or operation.
-3. records risks and cautions for whoever edits it.
-
-CRITICAL POINTS:
-- keep it aligned with the real project structure.
-- always review when files or flows are renamed.
--->
-```
+For the header pattern and the official file-template standard, use [docs/reference/new-file-template.md](docs/reference/new-file-template.md).
 
 ## Current system roles
 
@@ -442,6 +318,10 @@ New guides:
 - real mobile validation checklist: [docs/experience/mobile-real-validation-checklist.md](docs/experience/mobile-real-validation-checklist.md)
 - backup scripts: [scripts/backup_sqlite.ps1](scripts/backup_sqlite.ps1) and [scripts/backup_postgres.ps1](scripts/backup_postgres.ps1)
 - Hostinger VPS production deploy: [docs/rollout/hostinger-vps-production-deploy.md](docs/rollout/hostinger-vps-production-deploy.md)
+
+## License
+
+This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). See [LICENSE](LICENSE).
 
 ## Initial student import
 

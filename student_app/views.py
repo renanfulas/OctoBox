@@ -2,18 +2,21 @@ from __future__ import annotations
 
 import json
 import re
+from django.db.models import F
+from django.utils import timezone
 
 from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponse
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.views.generic import FormView, TemplateView, View
 
+from operations.models import Attendance, AttendanceStatus, ClassSession, SessionStatus
 from shared_support.box_runtime import get_box_runtime_slug
-from student_app.application.use_cases import GetStudentDashboard, GetStudentWorkoutPrescription
+from student_app.application.use_cases import GetStudentDashboard, GetStudentWorkoutDay, GetStudentWorkoutPrescription
 from student_app.forms import WorkoutPrescriptionForm
-from student_app.models import StudentExerciseMax
+from student_app.models import SessionWorkout, SessionWorkoutStatus, StudentExerciseMax, StudentWorkoutView
 from student_identity.models import StudentBoxMembership, StudentBoxMembershipStatus
 from student_identity.infrastructure.repositories import DjangoStudentIdentityRepository
 from student_identity.security import build_student_device_fingerprint
@@ -152,8 +155,9 @@ class StudentHomeView(StudentIdentityRequiredMixin, TemplateView):
         context['dashboard'] = dashboard
         context['student_shell_nav'] = 'home'
         context['student_shell_title'] = 'Inicio'
-        context['student_home_mode'] = 'schedule_default'
-        context['student_next_session'] = dashboard.next_sessions[0] if dashboard.next_sessions else None
+        context['student_home_mode'] = dashboard.home_mode
+        context['student_next_session'] = dashboard.focal_session
+        context['student_active_wod_session'] = dashboard.active_wod_session
         return self._attach_student_shell_context(context)
 
 
@@ -173,6 +177,24 @@ class StudentGradeView(StudentIdentityRequiredMixin, TemplateView):
 class StudentWodView(StudentIdentityRequiredMixin, FormView):
     template_name = 'student_app/wod.html'
     form_class = WorkoutPrescriptionForm
+
+    def _track_workout_view(self, *, workout):
+        view, created = StudentWorkoutView.objects.get_or_create(
+            student=self.request.student_identity.student,
+            workout=workout,
+            defaults={
+                'first_viewed_at': timezone.now(),
+                'last_viewed_at': timezone.now(),
+                'view_count': 1,
+            },
+        )
+        if created:
+            return
+        StudentWorkoutView.objects.filter(pk=view.pk).update(
+            last_viewed_at=timezone.now(),
+            view_count=F('view_count') + 1,
+            updated_at=timezone.now(),
+        )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -195,6 +217,22 @@ class StudentWodView(StudentIdentityRequiredMixin, FormView):
         context['student_shell_nav'] = 'wod'
         context['student_shell_title'] = 'WOD'
         context['student_next_session'] = dashboard.next_sessions[0] if dashboard.next_sessions else None
+        target_session = dashboard.active_wod_session or dashboard.focal_session
+        context['student_workout_day'] = (
+            GetStudentWorkoutDay().execute(
+                student=self.request.student_identity.student,
+                session_id=target_session.session_id,
+            )
+            if target_session is not None else None
+        )
+        if target_session is not None and context['student_workout_day'] is not None:
+            workout = (
+                SessionWorkout.objects.filter(session_id=target_session.session_id, status=SessionWorkoutStatus.PUBLISHED)
+                .only('id')
+                .first()
+            )
+            if workout is not None:
+                self._track_workout_view(workout=workout)
         context['student_rm_preview'] = (
             StudentExerciseMax.objects.filter(student=self.request.student_identity.student).order_by('exercise_label').first()
         )
@@ -312,6 +350,38 @@ class StudentSwitchBoxView(StudentIdentityRequiredMixin, View):
         )
         messages.success(request, f'Agora voce esta no contexto do box {target_membership.box_root_slug}.')
         return response
+
+
+class StudentConfirmAttendanceView(StudentIdentityRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        session_id = request.POST.get('session_id')
+        if not session_id:
+            messages.error(request, 'Nao consegui identificar a aula para confirmar sua presenca.')
+            return redirect('student-app-grade')
+
+        session = get_object_or_404(
+            ClassSession.objects.select_related('coach'),
+            pk=session_id,
+            status__in=[SessionStatus.SCHEDULED, SessionStatus.OPEN],
+        )
+        attendance, created = Attendance.objects.get_or_create(
+            student=request.student_identity.student,
+            session=session,
+            defaults={
+                'status': AttendanceStatus.BOOKED,
+                'reservation_source': 'student_app',
+            },
+        )
+        if not created and attendance.status in {AttendanceStatus.ABSENT, AttendanceStatus.CANCELED}:
+            attendance.status = AttendanceStatus.BOOKED
+            attendance.reservation_source = 'student_app'
+            attendance.save(update_fields=['status', 'reservation_source', 'updated_at'])
+
+        messages.success(
+            request,
+            f'Sua presenca em {session.title} foi confirmada. Quando a janela do treino abrir, o WOD sobe para o Inicio.',
+        )
+        return redirect(request.POST.get('next') or request.META.get('HTTP_REFERER') or 'student-app-grade')
 
 
 class StudentManifestView(View):

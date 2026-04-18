@@ -7,10 +7,18 @@
         </div>
         <div class="operation-session-badges">
             <span class="pill info">{{ session.attendance_count }} presenca(s)</span>
+            <span class="pill {{ session.workout_status_class }}">{{ session.workout_status_label }}</span>
             <span class="pill accent">Registro em tempo real</span>
         </div>
     </div>
     <div class="operation-session-body">
+        <div class="coach-session-toolbar">
+            <div>
+                <p class="eyebrow">WOD da aula</p>
+                <p class="operation-session-meta">Monte o treino do encontro sem sair do corredor do coach.</p>
+            </div>
+            <a class="button secondary" href="{{ session.workout_editor_url }}">{{ session.workout_action_label }}</a>
+        </div>
         <div class="operation-table-wrap">
             <table>
                 <thead>

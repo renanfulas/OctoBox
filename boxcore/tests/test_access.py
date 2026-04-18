@@ -57,7 +57,7 @@ class AccessViewTests(TestCase):
         response = self.client.get(reverse('access-overview'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Papeis e acessos')
+        self.assertContains(response, 'Criar perfil sem abrir o admin')
         self.assertContains(response, 'DEV')
         self.assertContains(response, 'Recepcao')
         self.assertNotContains(response, 'Editar e ativar perfis sem admin')
@@ -178,3 +178,18 @@ class BootstrapRolesCommandTests(TestCase):
         dev_group = Group.objects.get(name=ROLE_DEV)
 
         self.assertTrue(dev_group.permissions.filter(codename='view_auditevent').exists())
+
+    def test_owner_group_receives_student_invitation_admin_permissions(self):
+        call_command('bootstrap_roles')
+
+        owner_group = Group.objects.get(name=ROLE_OWNER)
+
+        self.assertTrue(owner_group.permissions.filter(codename='view_studentappinvitation').exists())
+        self.assertTrue(owner_group.permissions.filter(codename='change_studentappinvitation').exists())
+
+    def test_dev_group_receives_student_invitation_visibility(self):
+        call_command('bootstrap_roles')
+
+        dev_group = Group.objects.get(name=ROLE_DEV)
+
+        self.assertTrue(dev_group.permissions.filter(codename='view_studentappinvitation').exists())

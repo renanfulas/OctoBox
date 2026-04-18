@@ -333,6 +333,10 @@ a {
     margin-bottom: 16px;
 }
 
+.student-section-head--compact {
+    margin-bottom: 10px;
+}
+
 .student-section-head > div {
     display: grid;
     gap: 6px;
@@ -357,6 +361,10 @@ a {
 .student-hero-actions,
 .student-actions {
     margin-top: 20px;
+}
+
+.student-inline-form {
+    margin: 0;
 }
 
 .student-actions,
@@ -432,6 +440,7 @@ a {
 .student-session-card,
 .student-prescription,
 .student-wod-block,
+.student-wod-movement-card,
 .student-rm-card,
 .student-rm-empty,
 .student-rm-preview {
@@ -439,6 +448,39 @@ a {
     border-radius: 20px;
     border: 1px solid var(--student-border);
     background: rgba(255, 255, 255, 0.74);
+}
+
+.student-wod-movement-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.student-wod-movement-card {
+    display: grid;
+    gap: 14px;
+    background: rgba(248, 250, 252, 0.9);
+}
+
+.student-wod-movement-copy {
+    display: grid;
+    gap: 4px;
+}
+
+.student-wod-movement-copy span,
+.student-wod-movement-copy p,
+.student-wod-movement-metrics small,
+.student-wod-movement-metrics span {
+    color: var(--student-copy);
+}
+
+.student-wod-movement-metrics {
+    display: grid;
+    gap: 4px;
+}
+
+.student-wod-movement-metrics strong {
+    font-size: 1.05rem;
 }
 
 .student-session-card,
@@ -623,6 +665,11 @@ a {
     .student-surface-grid,
     .student-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .student-wod-movement-card {
+        grid-template-columns: minmax(0, 1.3fr) minmax(180px, 0.9fr);
+        align-items: center;
     }
 
     .student-form-grid {

@@ -39,4 +39,9 @@ OWNER_PERMISSIONS = {
     'behaviornote': {'add', 'change', 'delete', 'view'},
     'whatsappcontact': {'add', 'change', 'delete', 'view'},
     'whatsappmessagelog': {'add', 'change', 'delete', 'view'},
+    'studentidentity': {'add', 'change', 'delete', 'view'},
+    'studentappinvitation': {'add', 'change', 'delete', 'view'},
+    'studentinvitationdelivery': {'add', 'change', 'delete', 'view'},
+    'studentinvitationdeliveryevent': {'add', 'change', 'delete', 'view'},
+    'studenttransfer': {'add', 'change', 'delete', 'view'},
 }

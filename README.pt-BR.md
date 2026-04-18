@@ -36,16 +36,15 @@ OctoBox e uma central operacional para boxes e academias que precisam sair do im
 
 ## Preview Visual
 
-Abaixo, os vislumbres da interface moderna do OctoBox.
+Abaixo estao capturas recentes do runtime atual: a superficie de comando do owner, a fila financeira e a visao mobile-first de comando.
 
 <p align="center">
-  <img src="docs/screenshots/dashboard-dark.png" width="48%" alt="Dashboard Dark" />
-  <img src="docs/screenshots/dashboard-light.png" width="48%" alt="Dashboard Light" />
+  <img src="docs/screenshots/dashboard-current.png" width="48%" alt="Superficie de comando do owner" />
+  <img src="docs/screenshots/finance-current.png" width="48%" alt="Superficie da fila financeira" />
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/class-grid-dark.png" width="48%" alt="Grade de Aulas" />
-  <img src="docs/screenshots/students-list-dark.png" width="48%" alt="Gestao de Alunos" />
+  <img src="docs/screenshots/dashboard-mobile-current.png" width="34%" alt="Superficie mobile de comando" />
 </p>
 
 ## Problema que o OctoBox resolve
@@ -81,6 +80,10 @@ Linha do tempo deste primeiro ciclo:
 - autenticacao propria com papeis owner, dev, manager, recepcao e coach
 - navegacao filtrada por papel
 - trilha de auditoria para login, logout, mudancas no admin e acoes sensiveis do produto
+- app do aluno com identidade propria, entrada por convite, troca de box ativo, shell PWA online-first, grade, WOD, RM, configuracoes e suporte offline
+- fila financeira com analitica de follow-up, leitura de risco e outreach operacional semiassistido
+- superficie de quick sales integrada ao financeiro do aluno
+- pipeline de importacao de leads com roteamento por volume, policy operacional e trilho noturno de execucao
 
 ## Estado operacional atual
 
@@ -96,6 +99,21 @@ Linha do tempo deste primeiro ciclo:
 - throttle por escopo ativo para login, admin, writes, exports, dashboard, leituras pesadas e autocomplete
 - cache compartilhada opcional via Redis, com fallback local e degradacao segura quando o cache externo falhar
 - presenters e page payloads consolidados nas superficies centrais de dashboard, catalogo, guide e operations
+- fluxos de identidade e membership do app do aluno ja promovidos, incluindo convite e troca de box
+- shell atual do app do aluno ja absorve a direcao de Grade, WOD e RM
+- execucao de importacao de leads ja possui pipeline documentado, trilho em background e suporte a scheduler noturno
+- probes de pagina publicada, request timing e telemetria de timing do snapshot financeiro ja informam a frente atual de performance
+- a documentacao agora tambem possui uma camada guiada em `docs/guides/` para onboarding por tema e por perfil
+
+## Fotografia atual do projeto
+
+Hoje o projeto e melhor descrito como:
+
+1. um monolito modular orientado por dominio
+2. com `boxcore` preservado como estado historico do Django, e nao como a melhor explicacao do runtime atual
+3. com fachadas publicas mais fortes, contratos de page payload e montagem de tela orientada por presenter
+4. com uma superficie real de app do aluno e PWA ja em movimento ao lado da operacao web principal
+5. com trabalho ativo concentrado em disciplina de performance, importacao operacional, experiencia do aluno e rollout de producao mais seguro
 
 ## Como usar a documentacao
 
@@ -103,10 +121,11 @@ Use os docs por nivel de pergunta:
 
 1. este README explica o produto, o estado atual e a direcao geral
 2. o [docs/reference/documentation-authority-map.md](docs/reference/documentation-authority-map.md) diz qual doc vence quando houver conflito, idade ou ambiguidade
-3. os docs em [docs/architecture](docs/architecture) definem tese, principios e rumo estrutural
-4. os docs em [docs/plans](docs/plans) definem frentes ativas e ordem de execucao
-5. o [docs/reference/reading-guide.md](docs/reference/reading-guide.md) serve para navegar no codigo e depurar a base, nao para definir direcao de produto
-6. os docs em [docs/rollout](docs/rollout) servem para publicacao, homologacao e operacao de campo
+3. o [docs/guides/README.md](docs/guides/README.md) entrega uma camada guiada de leitura para arquitetura, metodologia, backend, frontend, CSS, performance, seguranca e onboarding por perfil
+4. os docs em [docs/architecture](docs/architecture) definem tese, principios e rumo estrutural
+5. os docs em [docs/plans](docs/plans) definem frentes ativas e ordem de execucao
+6. o [docs/reference/reading-guide.md](docs/reference/reading-guide.md) serve para navegar no codigo e depurar a base, nao para definir direcao de produto
+7. os docs em [docs/rollout](docs/rollout) servem para publicacao, homologacao e operacao de campo
 
 ## Governanca OctoBox
 
@@ -124,11 +143,12 @@ Traducao pratica:
 
 ## Leitura rapida do produto
 
-Hoje o sistema tem tres camadas principais:
+Hoje o sistema tem quatro camadas principais de produto:
 
 1. operacao por papel
 2. catalogo visual para alunos e financeiro
-3. backoffice admin e auditoria
+3. app do aluno e superficie de identidade
+4. backoffice admin e auditoria
 
 Importante para leitura tecnica atual:
 
@@ -198,106 +218,39 @@ Se quiser estudar o criterio arquitetural por tras das decisoes, reaplicar esse 
 
 Se quiser entender o raciocinio da primeira entrega, as decisoes tomadas e o que eu aprendi no processo, veja [docs/history/v1-retrospective.md](docs/history/v1-retrospective.md).
 
-## Mapa do projeto
+## Fotografia arquitetural
 
-```text
-boxcore/
-|-- access/
-|   |-- context_processors.py    -> monta sidebar e contexto global por papel
-|   |-- roles/                   -> regras e capacidades de owner, dev, manager e coach
-|   |-- urls.py                  -> login, logout, acessos e entrada do sistema
-|   `-- views.py                 -> paginas de acesso e visao de papeis
-|-- auditing/
-|   |-- __init__.py              -> ponto de entrada da auditoria
-|   `-- services.py              -> grava eventos sensiveis de forma padronizada
-|-- admin/
-|   |-- audit.py                 -> admin da trilha de auditoria
-|   |-- finance.py               -> admin de planos, matriculas e pagamentos
-|   |-- onboarding.py            -> admin da central de intake
-|   |-- operations.py            -> admin operacional
-|   |-- students.py              -> admin de alunos
-|   `-- __init__.py              -> registra tudo no Django admin
-|-- catalog/
-|   |-- forms.py                 -> formularios leves de alunos, financeiro e grade de aulas
-|   |-- student_queries.py       -> snapshots e leituras da area de alunos
-|   |-- finance_queries.py       -> snapshots e leituras da area financeira
-|   |-- class_grid_queries.py    -> leituras da grade de aulas
-|   |-- urls.py                  -> rotas das telas visuais de catalogo
-|   |-- views/
-|   |   |-- catalog_base_views.py -> base HTTP compartilhada do catalogo
-|   |   |-- student_views.py      -> diretorio, cadastro leve e ficha do aluno
-|   |   |-- finance_views.py      -> financeiro visual, planos e comunicacoes
-|   |   `-- class_grid_views.py   -> grade visual de aulas
-|   `-- services/
-|       |-- student_workflows.py             -> fluxo leve de criacao e edicao de aluno
-|       |-- student_enrollment_actions.py    -> acoes de matricula na ficha do aluno
-|       |-- student_payment_actions.py       -> acoes de cobranca na ficha do aluno
-|       |-- finance_communication_actions.py -> comunicacao financeira e follow-up
-|       |-- membership_plan_workflows.py     -> criacao e edicao de planos
-|       |-- class_schedule_workflows.py      -> criacao recorrente e limites da grade
-|       |-- class_grid_commands.py           -> comandos operacionais da grade de aulas
-|       |-- class_grid_dispatcher.py         -> despacho de form_kind e acoes da grade
-|       |-- class_grid_policy.py             -> regras de edicao e exclusao da grade
-|       |-- class_grid_messages.py           -> mensagens operacionais centralizadas da grade
-|       `-- operational_queue.py             -> fila operacional e metricas de retencao
-|-- dashboard/
-|   |-- dashboard_snapshot_queries.py -> snapshot consolidado do painel principal
-|   |-- dashboard_views.py            -> camada HTTP do painel
-|   |-- urls.py                  -> rotas do painel
-|   `-- __init__.py              -> marcador do pacote de dashboard
-|-- guide/
-|   |-- urls.py                  -> rota do mapa interno do sistema
-|   `-- views.py                 -> contexto pedagogico do mapa visual
-|-- management/commands/
-|   |-- bootstrap_roles.py       -> cria grupos de acesso
-|   `-- import_students_csv.py   -> importa alunos por CSV usando WhatsApp como chave
-|-- models/
-|   |-- audit.py                 -> eventos de auditoria e rastreabilidade
-|   |-- base.py                  -> classes base compartilhadas
-|   |-- communications.py        -> base de contatos e logs de WhatsApp
-|   |-- finance.py               -> planos, matriculas e pagamentos
-|   |-- onboarding.py            -> intake e entrada provisoria
-|   |-- operations.py            -> aulas, presenca e ocorrencias
-|   |-- students.py              -> alunos e dados cadastrais
-|   `-- __init__.py              -> exporta os modelos do app
-|-- operations/
-|   |-- workspace_snapshot_queries.py -> snapshots das areas operacionais por papel
-|   |-- base_views.py                -> base HTTP compartilhada de operations
-|   |-- workspace_views.py           -> workspaces de owner, dev, manager e coach
-|   |-- action_views.py              -> endpoints mutaveis da operacao
-|   |-- actions.py                   -> handlers das acoes operacionais
-|   |-- urls.py                  -> rotas das areas operacionais por papel
-|   `-- __init__.py              -> marcador do pacote operacional
-`-- tests/
-	|-- test_access.py           -> login e papeis
-	|-- test_catalog.py          -> alunos, cobrancas, matriculas e grade visual
-	|-- test_catalog_services.py -> services e workflows do catalogo
-	|-- test_dashboard.py        -> painel principal
-	|-- test_finance.py          -> centro financeiro visual
-	|-- test_guide.py            -> mapa do sistema
-	|-- test_import_students.py  -> importacao por CSV
-	|-- test_operations_services.py -> handlers e services de operations
-	`-- test_operations.py       -> operacao por papel
+Em nivel publico, o repositorio fica mais facil de entender em seis fatias:
 
-templates/
-|-- access/                      -> login e visao de acessos
-|-- catalog/                     -> alunos, aluno-form, financeiro, grade de aulas e edicao de plano
-|-- dashboard/                   -> painel principal
-|-- guide/                       -> mapa visual do sistema
-|-- layouts/                     -> layout base e navegacao global
-`-- operations/                  -> telas operacionais por papel
-```
+1. `access`, `dashboard`, `catalog`, `operations`
+   operacao web principal, workspaces por papel, alunos, financeiro e grade de aulas
+2. `student_app`, `student_identity`
+   shell PWA do aluno, identidade, convite, troca de box ativo, Grade, WOD, RM e suporte offline
+3. `communications`, `integrations`, `api`, `jobs`
+   fronteiras externas, mensageria, webhooks, superficie de API e trabalho assincrono
+4. `shared_support`, `monitoring`, `reporting`, `model_support`
+   contratos transversais, performance, helpers de runtime, observabilidade e estruturas base
+5. `boxcore`
+   estado historico do Django, ancora de migrations e superficie de compatibilidade
+6. `docs`, `.specs`, `tests`, `scripts`
+   governanca, planos, rollout, leitura tecnica, validacao e ferramental operacional
 
-## Rotas visuais mais importantes
+Se voce precisar da ordem de leitura em nivel de codigo, ownership e pontos de depuracao, pule para [docs/reference/reading-guide.md](docs/reference/reading-guide.md) em vez de usar este README como inventario arquivo por arquivo.
+
+## Superficies centrais do produto
 
 - /dashboard/ -> resumo da operacao
+- /operacao/owner/ ou rotas operacionais por papel -> superficies de comando por papel
 - /alunos/ -> base principal, funil e busca comercial
 - /alunos/novo/ -> cadastro leve de aluno com plano e cobranca
 - /alunos/<id>/editar/ -> ficha comercial do aluno
 - /financeiro/ -> leitura gerencial de planos, receita, churn e fila financeira
 - /grade-aulas/ -> grade visual de aulas
+- /aluno/ -> home do app do aluno
+- /aluno/grade/ -> agenda do app do aluno
+- /aluno/wod/ e /aluno/rm/ -> treino e recordes pessoais do aluno
 
-## Fronteiras tecnicas ja abertas para crescimento
+## Fronteiras externas e de crescimento
 
 - /api/ -> entrada oficial da API do produto
 - /api/v1/ -> manifesto da primeira versao da API
@@ -305,88 +258,11 @@ templates/
 - identidade de canal ja prefere contato explicito de WhatsApp e id externo do provedor antes do fallback legado por telefone
 - payloads de intake e logs de mensagem passam a ser gravados como JSON saneado, com limite e mascara de chaves sensiveis
 
-## O que a grade de aulas entrega hoje
-
-A tela [templates/catalog/class-grid.html](templates/catalog/class-grid.html) ja funciona como uma central operacional de agenda fora do admin.
-
-Hoje ela entrega:
-
-1. agenda de hoje com leitura de coach, horario, status e ocupacao
-2. calendario das proximas duas semanas com acesso rapido a edicao
-3. visao mensal compacta e calendario expandido
-4. planejador recorrente com sequencia de horarios e bloqueio por limites diario, semanal e mensal
-5. edicao rapida de aula com protecao para reabertura indevida e exclusao com historico
-6. indicadores visuais de lotacao e estado em tempo real durante a execucao da aula
-
-## Convencao de comentarios e cabecalhos
-
-## Licenca
-
-Este projeto esta licenciado sob a GNU Affero General Public License v3.0 (AGPL-3.0). Veja [LICENSE](LICENSE).
+## Convencoes de engenharia
 
 Todo arquivo relevante deve explicar rapidamente seu papel no topo.
 
-Arquivos Markdown usam comentario HTML. Arquivos Python usam docstring no mesmo formato. A referencia completa e [docs/reference/new-file-template.md](docs/reference/new-file-template.md).
-
-Padrao para arquivos Python:
-
-```python
-"""
-ARQUIVO: nome e funcao geral do arquivo.
-
-POR QUE ELE EXISTE:
-- motivo da existencia do arquivo no projeto.
-
-O QUE ESTE ARQUIVO FAZ:
-1. bloco principal 1
-2. bloco principal 2
-3. bloco principal 3
-
-PONTOS CRITICOS:
-- o que e perigoso mexer
-- o que pode quebrar se for alterado sem cuidado
-"""
-```
-
-Padrao para templates HTML:
-
-```html
-<!--
-ARQUIVO: nome e funcao geral do template.
-
-POR QUE ELE EXISTE:
-- motivo da existencia do template.
-
-O QUE ESTE ARQUIVO FAZ:
-1. bloco principal 1
-2. bloco principal 2
-3. bloco principal 3
- 
-PONTOS CRITICOS:
-- o que e perigoso mexer
-- o que pode quebrar se for alterado sem cuidado
--->
-```
-
-Padrao para arquivos Markdown:
-
-```html
-<!--
-ARQUIVO: nome e funcao geral do arquivo.
-
-POR QUE ELE EXISTE:
-- motivo da existencia do documento.
-
-O QUE ESTE ARQUIVO FAZ:
-1. contextualiza a area do sistema.
-2. orienta leitura, manutencao ou operacao.
-3. registra riscos e cuidados para quem editar.
-
-PONTOS CRITICOS:
-- manter aderencia com a estrutura real do projeto.
-- revisar sempre que arquivos ou fluxos forem renomeados.
--->
-```
+Para o padrao de cabecalho e o template oficial de arquivos, use [docs/reference/new-file-template.md](docs/reference/new-file-template.md).
 
 ## Papeis atuais do sistema
 
@@ -434,6 +310,10 @@ Guias novos:
 - checklist de validacao mobile real: [docs/experience/mobile-real-validation-checklist.md](docs/experience/mobile-real-validation-checklist.md)
 - scripts de backup: [scripts/backup_sqlite.ps1](scripts/backup_sqlite.ps1) e [scripts/backup_postgres.ps1](scripts/backup_postgres.ps1)
 - deploy de producao em Hostinger VPS: [docs/rollout/hostinger-vps-production-deploy.md](docs/rollout/hostinger-vps-production-deploy.md)
+
+## Licenca
+
+Este projeto esta licenciado sob a GNU Affero General Public License v3.0 (AGPL-3.0). Veja [LICENSE](LICENSE).
 
 ## Importacao inicial de alunos
 

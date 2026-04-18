@@ -23,7 +23,14 @@ from .action_views import (
     TechnicalBehaviorNoteCreateView,
 )
 from .base_views import RoleOperationRedirectView
+from .workout_action_views import (
+    WorkoutApprovalActionView,
+    WorkoutFollowUpActionView,
+    WorkoutOperationalMemoryCreateView,
+    WorkoutWeeklyCheckpointUpdateView,
+)
 from .workspace_views import (
+    CoachSessionWorkoutEditorView,
     CoachWorkspaceView,
     DevWorkspaceView,
     ManagerBoardsPartialView,
@@ -34,6 +41,7 @@ from .workspace_views import (
     OwnerWorkspaceView,
     ReceptionPaymentBoardPartialView,
     ReceptionWorkspaceView,
+    WorkoutApprovalBoardView,
     WhatsAppWorkspaceView,
 )
 
@@ -52,6 +60,12 @@ urlpatterns = [
     path('operacao/recepcao/', ReceptionWorkspaceView.as_view(), name='reception-workspace'),
     path('operacao/recepcao/fragmentos/pagamentos/', ReceptionPaymentBoardPartialView.as_view(), name='reception-payment-board-fragment'),
     path('operacao/coach/', CoachWorkspaceView.as_view(), name='coach-workspace'),
+    path('operacao/coach/aula/<int:session_id>/wod/', CoachSessionWorkoutEditorView.as_view(), name='coach-session-workout-editor'),
+    path('operacao/wod/aprovacoes/', WorkoutApprovalBoardView.as_view(), name='workout-approval-board'),
+    path('operacao/wod/aprovacoes/checkpoint-semanal/', WorkoutWeeklyCheckpointUpdateView.as_view(), name='workout-weekly-checkpoint-update'),
+    path('operacao/wod/<int:workout_id>/follow-up/', WorkoutFollowUpActionView.as_view(), name='workout-follow-up-action'),
+    path('operacao/wod/<int:workout_id>/memory/', WorkoutOperationalMemoryCreateView.as_view(), name='workout-operational-memory-create'),
+    path('operacao/wod/<int:workout_id>/<str:action>/', WorkoutApprovalActionView.as_view(), name='workout-approval-action'),
     path('operacao/whatsapp/', WhatsAppWorkspaceView.as_view(), name='whatsapp-workspace'),
     path('operacao/recepcao/pagamento/<int:payment_id>/acao/', ReceptionPaymentActionView.as_view(), name='reception-payment-action'),
     path('operacao/pagamento/<int:payment_id>/vincular-matricula/', PaymentEnrollmentLinkView.as_view(), name='payment-enrollment-link'),

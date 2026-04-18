@@ -48,6 +48,8 @@ Confirmar que o deploy nao apenas subiu, mas ficou operacional.
 - [ ] `/admin/` nao e o caminho real
 - [ ] Cloudflare esta ativo na frente do dominio
 - [ ] cabecalhos de proxy nao quebraram POST nem login
+- [ ] respostas trazem `cf-ray` quando o proxy estiver ativo
+- [ ] HTML autenticado nao esta vindo de cache indevido
 
 ## Runtime e servicos
 
@@ -72,3 +74,10 @@ Confirmar que o deploy nao apenas subiu, mas ficou operacional.
 ## Gate final
 
 So liberar para o primeiro cliente se todos os blocos acima estiverem verdes ao mesmo tempo.
+
+## Regua de performance depois do proxy
+
+- [ ] repetir a medicao autenticada de `/financeiro/`
+- [ ] repetir a medicao autenticada de `/alunos/`
+- [ ] comparar `elapsed_ms`, `req-total` e `view_total_ms`
+- [ ] confirmar que o gap do primeiro hit caiu ou, no minimo, nao piorou

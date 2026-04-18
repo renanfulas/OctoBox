@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from access.admin import admin_changelist_url
 from shared_support.page_payloads import build_page_assets, build_page_hero, build_page_payload
 
 
@@ -38,6 +39,7 @@ def build_student_invitation_operations_page(
                 'Um novo convite fecha a janela do convite anterior ainda aberto para o mesmo aluno.',
                 'O link nao entrega acesso sozinho; ele ainda precisa fechar com a identidade social do aluno.',
             ],
+            'admin_invites_href': admin_changelist_url('student_identity', 'studentappinvitation'),
             'observability_cards': observability_cards,
             'observability_alerts': observability_alerts,
             'stalled_invites': stalled_invites,

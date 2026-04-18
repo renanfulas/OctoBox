@@ -21,9 +21,10 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from access.admin import admin_changelist_url
 from guide.models import OperationalRuntimeSetting
 from onboarding.models import StudentIntake
-from operations.models import LeadImportJob, LeadImportJobStatus, LeadImportProcessingMode
+from operations.models import LeadImportDeclaredRange, LeadImportJob, LeadImportJobStatus, LeadImportProcessingMode, LeadImportSourceType
 from shared_support.box_runtime import get_box_runtime_slug
 from student_identity.models import (
     StudentAppInvitation,
@@ -75,6 +76,47 @@ class GuideViewTests(TestCase):
         self.assertContains(response, 'Abrir convites do aluno')
         self.assertContains(response, 'Faixa declarada')
         self.assertContains(response, 'Ate 200 leads')
+        self.assertNotContains(response, 'Status atual da importacao')
+
+    def test_operational_settings_shows_latest_lead_import_status_when_job_exists(self):
+        self.client.force_login(self.user)
+        LeadImportJob.objects.create(
+            created_by=self.user,
+            source_type=LeadImportSourceType.WHATSAPP_LIST,
+            declared_range=LeadImportDeclaredRange.FROM_201_TO_500,
+            processing_mode=LeadImportProcessingMode.ASYNC_NOW,
+            status=LeadImportJobStatus.RUNNING,
+            original_filename='lista-whatsapp.csv',
+            detected_lead_count=320,
+        )
+
+        response = self.client.get(reverse('operational-settings'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Status atual da importacao')
+        self.assertContains(response, 'Arquivo de leads sendo avaliado')
+        self.assertContains(response, 'lista-whatsapp.csv')
+        self.assertContains(response, 'Leads detectados: 320')
+
+    def test_operational_settings_hides_lead_import_status_after_24_hours(self):
+        self.client.force_login(self.user)
+        job = LeadImportJob.objects.create(
+            created_by=self.user,
+            source_type=LeadImportSourceType.WHATSAPP_LIST,
+            declared_range=LeadImportDeclaredRange.FROM_201_TO_500,
+            processing_mode=LeadImportProcessingMode.ASYNC_NOW,
+            status=LeadImportJobStatus.RUNNING,
+            original_filename='lista-antiga.csv',
+            detected_lead_count=320,
+        )
+        stale_time = timezone.now() - timezone.timedelta(hours=25)
+        LeadImportJob.objects.filter(pk=job.pk).update(created_at=stale_time, updated_at=stale_time)
+
+        response = self.client.get(reverse('operational-settings'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Status atual da importacao')
+        self.assertNotContains(response, 'lista-antiga.csv')
 
     def test_operational_settings_can_update_whatsapp_repeat_window(self):
         self.client.force_login(self.user)
@@ -235,6 +277,10 @@ class GuideViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Convites operacionais prontos.')
         self.assertContains(response, 'Gerar convite do app do aluno')
+        self.assertContains(
+            response,
+            admin_changelist_url('student_identity', 'studentappinvitation'),
+        )
 
     def test_student_invitation_operations_can_create_invite(self):
         self.client.force_login(self.user)

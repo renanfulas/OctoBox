@@ -172,6 +172,30 @@ Exemplos fortes:
 4. [front-end-card-architecture.md](front-end-card-architecture.md)
 5. [functional-circuits-matrix.md](functional-circuits-matrix.md)
 
+### 4.5 Guides
+
+Pasta:
+
+1. [../guides](../guides)
+
+Papel:
+
+1. onboarding arquitetural
+2. sintese do estado vivo
+3. trilha curta para explicar o projeto sem mergulhar cedo demais em docs profundos
+
+Autoridade:
+
+1. media para orientacao
+2. baixa para substituir architecture, plans ou reference especializado
+
+Regra:
+
+1. guides resumem e conectam
+2. guides nao vencem docs canonicos de tese, plano ou ownership
+3. se um guide divergir de um doc mais alto na hierarquia, o guide deve ser corrigido
+4. trilhas por perfil em `guides/profiles/*` organizam onboarding e prioridade de leitura, nao ownership tecnico final
+
 ### 5. Rollout
 
 Pasta:

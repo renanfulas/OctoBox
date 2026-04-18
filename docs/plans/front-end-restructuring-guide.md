@@ -71,6 +71,8 @@ O alvo e este:
 4. encaixe natural com `Center Layer`, `snapshots`, `facades` e `use cases`
 5. caminho limpo para o dia em que Django deixar de ser o centro explicativo da entrega
 
+Para a regra operacional de onde uma feature nova deve nascer hoje, sem virar nem puxadinho nem overengineering, leia tambem [../reference/front-end-octobox-organization-standard.md](../reference/front-end-octobox-organization-standard.md).
+
 ## Regra oficial de velocidade percebida
 
 O front-end do OctoBox nao pode apenas parecer organizado.

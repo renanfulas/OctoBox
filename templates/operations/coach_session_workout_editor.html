@@ -1,0 +1,314 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+{% with page=operation_page %}
+<div class="operation-shell coach-scene workspace-shell coach-wod-editor-shell">
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+
+    <section class="coach-wod-editor-grid" aria-label="Editor de WOD da aula">
+        <article class="table-card coach-wod-editor-card">
+            <div class="coach-wod-editor-head">
+                <div>
+                    <p class="eyebrow">Aula</p>
+                    <h2>{{ session.title }}</h2>
+                    <p class="operation-session-meta">{{ session.scheduled_at|date:"d/m/Y H:i" }}{% if session.duration_minutes %} - {{ session.duration_minutes }} min{% endif %}</p>
+                </div>
+                <div class="coach-wod-editor-pills">
+                    <span class="pill info">{{ session.attendances.count }} presenca(s)</span>
+                    {% if workout %}
+                    <span class="pill {% if workout.status == 'published' %}success{% elif workout.status == 'pending_approval' %}warning{% elif workout.status == 'rejected' %}danger{% else %}info{% endif %}">{{ workout.get_status_display }}</span>
+                    <span class="pill accent">v{{ workout.version }}</span>
+                    {% else %}
+                    <span class="pill info">Sem WOD</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <form method="post" class="coach-wod-form-stack">
+                {% csrf_token %}
+                <input type="hidden" name="intent" value="save_workout">
+                <div class="coach-wod-form-grid">
+                    <label>
+                        <span>Titulo do WOD</span>
+                        {{ workout_form.title }}
+                    </label>
+                </div>
+                <label>
+                    <span>Mensagem do coach</span>
+                    {{ workout_form.coach_notes }}
+                </label>
+                <div class="actions">
+                    <button class="button" type="submit">Salvar rascunho</button>
+                </div>
+            </form>
+            {% if workout and workout.rejection_reason %}
+            <div class="coach-wod-empty-state">
+                <p><strong>Motivo da rejeicao:</strong> {{ workout.rejection_reason }}</p>
+            </div>
+            {% endif %}
+            {% if workout %}
+            <form method="post" class="coach-wod-submit-form">
+                {% csrf_token %}
+                <input type="hidden" name="intent" value="submit_for_approval">
+                <div class="actions">
+                    <button class="button" type="submit">Enviar para aprovacao</button>
+                    <a class="button secondary" href="{% url 'workout-approval-board' %}">Ver fila de aprovacao</a>
+                </div>
+            </form>
+            <form method="post" class="coach-wod-form-stack coach-wod-duplicate-form">
+                {% csrf_token %}
+                <input type="hidden" name="intent" value="duplicate_workout">
+                <div class="coach-wod-form-grid coach-wod-form-grid--two">
+                    <label>
+                        <span>Duplicar para outra aula</span>
+                        <select name="target_session_id">
+                            <option value="">Escolha a aula de destino</option>
+                            {% for target_session in duplicate_sessions %}
+                            <option value="{{ target_session.id }}">{{ target_session.scheduled_at|date:"d/m H:i" }} - {{ target_session.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+                <div class="actions">
+                    <button class="button secondary" type="submit">Duplicar WOD</button>
+                </div>
+            </form>
+            {% endif %}
+        </article>
+
+        <article class="table-card coach-wod-editor-card">
+            <div class="coach-wod-editor-head">
+                <div>
+                    <p class="eyebrow">Blocos</p>
+                    <h2>Estrutura do treino</h2>
+                    <p class="operation-session-meta">Cada bloco funciona como um capitulo do treino: aquecimento, forca, skill ou metcon.</p>
+                </div>
+            </div>
+
+            <form method="post" class="coach-wod-form-stack">
+                {% csrf_token %}
+                <input type="hidden" name="intent" value="add_block">
+                <div class="coach-wod-form-grid coach-wod-form-grid--three">
+                    <label>
+                        <span>Titulo</span>
+                        {{ block_form.title }}
+                    </label>
+                    <label>
+                        <span>Tipo</span>
+                        {{ block_form.kind }}
+                    </label>
+                    <label>
+                        <span>Ordem</span>
+                        {{ block_form.sort_order }}
+                    </label>
+                </div>
+                <label>
+                    <span>Orientacao do bloco</span>
+                    {{ block_form.notes }}
+                </label>
+                <div class="actions">
+                    <button class="button secondary" type="submit">Adicionar bloco</button>
+                </div>
+            </form>
+
+            <div class="coach-wod-block-list">
+                {% for block in workout.blocks.all %}
+                <section class="coach-wod-block-card">
+                    <div class="coach-wod-block-head">
+                        <form method="post" class="coach-wod-inline-form coach-wod-inline-form--block">
+                            {% csrf_token %}
+                            <input type="hidden" name="intent" value="update_block">
+                            <input type="hidden" name="block_id" value="{{ block.id }}">
+                            <div class="coach-wod-form-grid coach-wod-form-grid--three">
+                                <label>
+                                    <span>Titulo</span>
+                                    <input type="text" name="title" value="{{ block.title }}" maxlength="120">
+                                </label>
+                                <label>
+                                    <span>Tipo</span>
+                                    <select name="kind">
+                                        {% for value, label in block_form.fields.kind.choices %}
+                                        <option value="{{ value }}" {% if block.kind == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </label>
+                                <label>
+                                    <span>Ordem</span>
+                                    <input type="number" name="sort_order" min="1" value="{{ block.sort_order }}">
+                                </label>
+                            </div>
+                            <label>
+                                <span>Notas</span>
+                                <textarea name="notes" rows="2">{{ block.notes }}</textarea>
+                            </label>
+                            <div class="actions">
+                                <button class="button secondary" type="submit">Salvar bloco</button>
+                            </div>
+                        </form>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="intent" value="delete_block">
+                            <input type="hidden" name="block_id" value="{{ block.id }}">
+                            <button class="button tertiary" type="submit">Remover bloco</button>
+                        </form>
+                    </div>
+
+                    <div class="coach-wod-movement-list">
+                        {% for movement in block.movements.all %}
+                        <article class="coach-wod-movement-card">
+                            <form method="post" class="coach-wod-inline-form coach-wod-inline-form--movement">
+                                {% csrf_token %}
+                                <input type="hidden" name="intent" value="update_movement">
+                                <input type="hidden" name="movement_id" value="{{ movement.id }}">
+                                <div class="coach-wod-form-grid coach-wod-form-grid--three">
+                                    <label>
+                                        <span>Bloco</span>
+                                        <select name="block_id">
+                                            {% for candidate_block in workout.blocks.all %}
+                                            <option value="{{ candidate_block.id }}" {% if candidate_block.id == block.id %}selected{% endif %}>{{ candidate_block.sort_order }}. {{ candidate_block.title }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </label>
+                                    <label>
+                                        <span>Slug</span>
+                                        <input type="text" name="movement_slug" value="{{ movement.movement_slug }}" maxlength="64">
+                                    </label>
+                                    <label>
+                                        <span>Nome</span>
+                                        <input type="text" name="movement_label" value="{{ movement.movement_label }}" maxlength="120">
+                                    </label>
+                                </div>
+                                <div class="coach-wod-form-grid coach-wod-form-grid--four">
+                                    <label>
+                                        <span>Series</span>
+                                        <input type="number" name="sets" min="1" value="{{ movement.sets|default_if_none:'' }}">
+                                    </label>
+                                    <label>
+                                        <span>Repeticoes</span>
+                                        <input type="number" name="reps" min="1" value="{{ movement.reps|default_if_none:'' }}">
+                                    </label>
+                                    <label>
+                                        <span>Tipo de carga</span>
+                                        <select name="load_type">
+                                            {% for value, label in movement_form.fields.load_type.choices %}
+                                            <option value="{{ value }}" {% if movement.load_type == value %}selected{% endif %}>{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </label>
+                                    <label>
+                                        <span>Valor</span>
+                                        <input type="number" name="load_value" min="0" step="0.01" value="{{ movement.load_value|default_if_none:'' }}">
+                                    </label>
+                                </div>
+                                <div class="coach-wod-form-grid coach-wod-form-grid--two">
+                                    <label>
+                                        <span>Observacao</span>
+                                        <input type="text" name="notes" value="{{ movement.notes }}" maxlength="255">
+                                    </label>
+                                    <label>
+                                        <span>Ordem</span>
+                                        <input type="number" name="sort_order" min="1" value="{{ movement.sort_order }}">
+                                    </label>
+                                </div>
+                                <div class="actions">
+                                    <button class="button secondary" type="submit">Salvar movimento</button>
+                                </div>
+                            </form>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="intent" value="delete_movement">
+                                <input type="hidden" name="movement_id" value="{{ movement.id }}">
+                                <button class="button tertiary" type="submit">Remover</button>
+                            </form>
+                        </article>
+                        {% empty %}
+                        <div class="coach-wod-empty-state">
+                            <p>Nenhum movimento neste bloco ainda.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% empty %}
+                <div class="coach-wod-empty-state">
+                    <p>O WOD ainda nao tem blocos. Salve o cabecalho e crie o primeiro bloco para comecar.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="table-card coach-wod-editor-card">
+            <div class="coach-wod-editor-head">
+                <div>
+                    <p class="eyebrow">Movimentos</p>
+                    <h2>Adicionar em um bloco</h2>
+                    <p class="operation-session-meta">Aqui o coach encaixa o exercicio com sets, reps e tipo de carga.</p>
+                </div>
+            </div>
+
+            {% if workout and workout.blocks.exists %}
+            <form method="post" class="coach-wod-form-stack">
+                {% csrf_token %}
+                <input type="hidden" name="intent" value="add_movement">
+                <div class="coach-wod-form-grid coach-wod-form-grid--three">
+                    <label>
+                        <span>Bloco</span>
+                        <select name="block_id">
+                            {% for block in workout.blocks.all %}
+                            <option value="{{ block.id }}" {% if movement_form.block_id.value|stringformat:"s" == block.id|stringformat:"s" %}selected{% endif %}>{{ block.sort_order }}. {{ block.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        <span>Slug</span>
+                        {{ movement_form.movement_slug }}
+                    </label>
+                    <label>
+                        <span>Nome visivel</span>
+                        {{ movement_form.movement_label }}
+                    </label>
+                </div>
+
+                <div class="coach-wod-form-grid coach-wod-form-grid--four">
+                    <label>
+                        <span>Series</span>
+                        {{ movement_form.sets }}
+                    </label>
+                    <label>
+                        <span>Repeticoes</span>
+                        {{ movement_form.reps }}
+                    </label>
+                    <label>
+                        <span>Tipo de carga</span>
+                        {{ movement_form.load_type }}
+                    </label>
+                    <label>
+                        <span>Valor da carga</span>
+                        {{ movement_form.load_value }}
+                    </label>
+                </div>
+
+                <div class="coach-wod-form-grid coach-wod-form-grid--two">
+                    <label>
+                        <span>Observacao</span>
+                        {{ movement_form.notes }}
+                    </label>
+                    <label>
+                        <span>Ordem</span>
+                        {{ movement_form.sort_order }}
+                    </label>
+                </div>
+
+                <div class="actions">
+                    <button class="button" type="submit">Adicionar movimento</button>
+                </div>
+            </form>
+            {% else %}
+            <div class="coach-wod-empty-state">
+                <p>Crie pelo menos um bloco antes de adicionar movimentos.</p>
+            </div>
+            {% endif %}
+        </article>
+    </section>
+</div>
+{% endwith %}
+{% endblock %}

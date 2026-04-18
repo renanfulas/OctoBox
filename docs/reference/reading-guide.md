@@ -46,6 +46,10 @@ Leitura estrutural importante para esta fase:
 
 Para a direcao de medio e longo prazo da arquitetura, leia tambem [../architecture/architecture-growth-plan.md](../architecture/architecture-growth-plan.md).
 
+Se o foco for primeiro entender o estado vivo do projeto em uma trilha guiada, com menos espalhamento inicial e linguagem mais direta, leia tambem [../guides/README.md](../guides/README.md).
+
+Se o foco for descobrir rapidamente a ordem de leitura certa por perfil do time, leia tambem [../guides/governance-reading-index.md](../guides/governance-reading-index.md).
+
 Se o foco for preparar a quebra do atual boxcore em apps Django reais com baixo risco, leia tambem [../architecture/app-split-plan.md](../architecture/app-split-plan.md).
 
 Se o foco for evitar regressao de imports historicos e saber qual caminho canonico usar no runtime atual, leia tambem [../architecture/promoted-public-facades-map.md](../architecture/promoted-public-facades-map.md).
@@ -75,6 +79,12 @@ Se o foco for navegar o front como mapa vivo de ownership, pontos de entrada e e
 Se o foco for implantar esse tema em ordem pratica, por ondas, com baixo risco e criterio de aceite claro, leia tambem [../plans/theme-implementation-final.md](../plans/theme-implementation-final.md).
 
 Se o foco for saber quem e o dono local de cada funcionalidade e quais testes sobem quando uma tela precisa continuar se comunicando com as outras, leia tambem [functional-circuits-matrix.md](functional-circuits-matrix.md).
+
+Se o foco for navegar especificamente o corredor de WOD operacional depois da refatoracao das waves de `operations/workspace_views.py`, leia tambem [operations-wod-ownership-map.md](operations-wod-ownership-map.md).
+
+Se o foco for alinhar a suite de testes do WOD com esse ownership novo, leia tambem [../plans/wod-test-ownership-split-corda.md](../plans/wod-test-ownership-split-corda.md).
+
+Se o foco for consultar o mapa final da suite do WOD depois do split, leia tambem [wod-test-suite-ownership.md](wod-test-suite-ownership.md).
 
 Se o foco for revisar PRs por circuito ou organizar smoke manual por papel do beta, leia tambem [pr-circuit-checklist.md](pr-circuit-checklist.md) e [../rollout/beta-role-test-agenda.md](../rollout/beta-role-test-agenda.md).
 

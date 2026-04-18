@@ -7,7 +7,13 @@
     <div>
         <p class="student-eyebrow">WOD</p>
         <h1>Treino do dia com leitura rapida e carga pessoal.</h1>
-        <p class="student-copy">Essa tela ja nasce como modo de execucao. Hoje ela abre um placeholder honesto com a calculadora de porcentagem embaixo. Depois entra o WOD publicado do coach sem reescrever a estrutura.</p>
+        <p class="student-copy">
+            {% if student_workout_day %}
+            O treino do coach ja esta publicado para esta aula. O app organiza os blocos e, quando houver percentual, traduz para o seu peso recomendado.
+            {% else %}
+            Essa tela ja nasce como modo de execucao. Enquanto o coach ainda nao publicou o treino do dia, ela segura um placeholder honesto com a calculadora de porcentagem embaixo.
+            {% endif %}
+        </p>
     </div>
     <div class="student-head-chip-group">
         <span class="student-head-chip">Modo de treino</span>
@@ -22,10 +28,45 @@
         <div class="student-section-head">
             <div>
                 <p class="student-eyebrow">Bloco principal</p>
-                <h2>Forca do dia</h2>
+                <h2>{% if student_workout_day %}{{ student_workout_day.workout_title }}{% else %}Forca do dia{% endif %}</h2>
             </div>
-            <span class="student-status-badge">Placeholder vivo</span>
+            <span class="student-status-badge">{% if student_workout_day %}Publicado{% else %}Placeholder vivo{% endif %}</span>
         </div>
+        {% if student_workout_day %}
+        <p class="student-copy">{{ student_workout_day.session_title }} · {{ student_workout_day.session_scheduled_label }} · {{ student_workout_day.coach_name }}</p>
+        {% if student_workout_day.coach_notes %}
+        <p class="student-copy">{{ student_workout_day.coach_notes }}</p>
+        {% endif %}
+        <div class="student-wod-block-list">
+            {% for block in student_workout_day.blocks %}
+            <article class="student-wod-block">
+                <div class="student-section-head student-section-head--compact">
+                    <div>
+                        <p class="student-eyebrow">{{ block.kind_label }}</p>
+                        <h2>{{ block.title }}</h2>
+                    </div>
+                </div>
+                {% if block.notes %}<p class="student-copy">{{ block.notes }}</p>{% endif %}
+                <div class="student-wod-movement-list">
+                    {% for movement in block.movements %}
+                    <article class="student-wod-movement-card">
+                        <div class="student-wod-movement-copy">
+                            <strong>{{ movement.movement_label }}</strong>
+                            <span>{{ movement.prescription_label }}</span>
+                            {% if movement.notes %}<p>{{ movement.notes }}</p>{% endif %}
+                        </div>
+                        <div class="student-wod-movement-metrics">
+                            <small>{{ movement.load_context_label }}</small>
+                            <strong>{{ movement.recommendation_label }}</strong>
+                            <span>{{ movement.recommendation_copy }}</span>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
         <div class="student-wod-block-list">
             <article class="student-wod-block">
                 <strong>Aquecimento</strong>
@@ -40,6 +81,7 @@
                 <p>Bloco de condicionamento rapido para consulta no meio da aula.</p>
             </article>
         </div>
+        {% endif %}
     </article>
 
     <article class="student-card student-card--soft">
