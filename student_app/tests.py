@@ -642,14 +642,18 @@ class PublicWorkoutPwaTests(TestCase):
     def test_public_workout_service_worker_and_offline_route_are_available(self):
         sw_response = self.client.get(reverse('public-workout-sw'))
         offline_response = self.client.get(reverse('public-workout-offline'))
+        sw_content = sw_response.content.decode('utf-8')
 
         self.assertEqual(sw_response.status_code, 200)
         self.assertEqual(sw_response['Service-Worker-Allowed'], '/renan/')
-        self.assertIn('/renan/juliana', sw_response.content.decode('utf-8'))
-        self.assertIn('/renan/juliana/manifest.webmanifest', sw_response.content.decode('utf-8'))
-        self.assertIn('/renan/bruno', sw_response.content.decode('utf-8'))
-        self.assertIn('/renan/bruno/manifest.webmanifest', sw_response.content.decode('utf-8'))
-        self.assertIn('/renan/offline/', sw_response.content.decode('utf-8'))
+        self.assertIn('/renan/juliana', sw_content)
+        self.assertIn('/renan/juliana/manifest.webmanifest', sw_content)
+        self.assertIn('/renan/bruno', sw_content)
+        self.assertIn('/renan/bruno/manifest.webmanifest', sw_content)
+        self.assertIn('/renan/offline/', sw_content)
+        self.assertIn('const PAGE_CACHE', sw_content)
+        self.assertIn('normalizedWorkoutPath', sw_content)
+        self.assertIn("'/renan/juliana?source=pwa'", sw_content)
         self.assertEqual(offline_response.status_code, 200)
         self.assertContains(offline_response, 'Sem conexão agora.')
 
@@ -660,3 +664,14 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(response, 'public-workout-install')
         self.assertContains(response, 'beforeinstallprompt')
         self.assertContains(response, 'Adicionar à Tela de Início')
+
+    def test_juliana_week_order_reflects_rest_on_friday(self):
+        response = self.client.get('/renan/juliana')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "goDay('qua',this)")
+        self.assertContains(response, '<div class="dn">Qua</div><div class="dt">Superior</div>', html=True)
+        self.assertContains(response, '<div class="dn">Qui</div><div class="dt">Lower</div>', html=True)
+        self.assertContains(response, '<div class="dn">Sex</div><div class="dt">Rest</div>', html=True)
+        self.assertContains(response, 'Quarta · ~55 min · Peito, Costas, Ombros, Bíceps, Tríceps')
+        self.assertContains(response, 'Quinta · ~60 min · Quad, Posterior, Glúteo, Panturrilha, Core')

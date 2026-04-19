@@ -947,12 +947,15 @@ class PublicWorkoutServiceWorkerView(View):
         routes = ''.join(
             [
                 f"  '/renan/{slug}',\n"
+                f"  '/renan/{slug}/',\n"
+                f"  '/renan/{slug}?source=pwa',\n"
                 f"  '/renan/{slug}/manifest.webmanifest',\n"
                 for slug in PUBLIC_WORKOUT_LIBRARY
             ]
         )
         js = f"""const VERSION = 'public-workouts-{getattr(settings, 'STATIC_ASSET_VERSION', '1')}';
 const STATIC_CACHE = `${{VERSION}}-static`;
+const PAGE_CACHE = `${{VERSION}}-pages`;
 const OFFLINE_URL = '{PUBLIC_WORKOUT_OFFLINE_URL}';
 const APP_SCOPE = '{PUBLIC_WORKOUT_SCOPE}';
 const ALLOWLIST = [
@@ -969,6 +972,16 @@ function isAllowedStaticAsset(requestUrl) {{
     return false;
   }}
   return ALLOWLIST.includes(requestUrl.pathname);
+}}
+
+function normalizedWorkoutPath(pathname) {{
+  if (!pathname.startsWith(APP_SCOPE)) {{
+    return pathname;
+  }}
+  if (pathname === APP_SCOPE || pathname === OFFLINE_URL) {{
+    return pathname;
+  }}
+  return pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
 }}
 
 self.addEventListener('install', (event) => {{
@@ -998,10 +1011,50 @@ self.addEventListener('fetch', (event) => {{
       return;
     }}
     event.respondWith(
-      fetch(request).catch(async () => {{
-        const cache = await caches.open(STATIC_CACHE);
-        return cache.match(request, {{ ignoreSearch: true }}) || cache.match(OFFLINE_URL, {{ ignoreSearch: true }});
-      }})
+      (async () => {{
+        const pageCache = await caches.open(PAGE_CACHE);
+        const cacheKey = normalizedWorkoutPath(requestUrl.pathname);
+        try {{
+          const response = await fetch(request);
+          if (response.ok) {{
+            pageCache.put(cacheKey, response.clone());
+          }}
+          return response;
+        }} catch (error) {{
+          return (
+            await pageCache.match(cacheKey, {{ ignoreSearch: true }})
+            || await pageCache.match(requestUrl.pathname, {{ ignoreSearch: true }})
+            || await caches.match(cacheKey, {{ ignoreSearch: true }})
+            || await caches.match(request, {{ ignoreSearch: true }})
+            || await caches.match(OFFLINE_URL, {{ ignoreSearch: true }})
+          );
+        }}
+      }})()
+    );
+    return;
+  }}
+
+  if (requestUrl.origin !== self.location.origin) {{
+    return;
+  }}
+
+  if (requestUrl.pathname.startsWith(APP_SCOPE)) {{
+    event.respondWith(
+      (async () => {{
+        const cacheName = requestUrl.pathname.endsWith('.webmanifest') ? STATIC_CACHE : PAGE_CACHE;
+        const cache = await caches.open(cacheName);
+        const cacheKey = normalizedWorkoutPath(requestUrl.pathname);
+        const cached = await cache.match(cacheKey, {{ ignoreSearch: true }}) || await cache.match(request, {{ ignoreSearch: true }});
+        try {{
+          const response = await fetch(request);
+          if (response.ok) {{
+            cache.put(cacheKey, response.clone());
+          }}
+          return cached || response;
+        }} catch (error) {{
+          return cached || caches.match(OFFLINE_URL, {{ ignoreSearch: true }});
+        }}
+      }})()
     );
     return;
   }}
