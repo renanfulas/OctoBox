@@ -18,6 +18,7 @@ PONTOS CRITICOS:
 
 import json
 import time
+from urllib.parse import unquote
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -102,6 +103,36 @@ def _append_fragment(url, fragment):
     if not fragment:
         return url
     return f'{url}#{fragment}'
+
+
+def _build_student_return_context(request):
+    context_key = (request.GET.get('context') or '').strip()
+    return_to = (request.GET.get('return_to') or '').strip()
+    if not context_key or not return_to:
+        return None
+
+    context_map = {
+        'reception-payment': {
+            'eyebrow': 'Voce veio do balcao',
+            'title': 'Resolva a cobranca e volte para a fila sem perder o contexto.',
+            'copy': 'A recepcao abriu esta ficha a partir da cobranca curta. Feche o necessario aqui e volte para o mesmo ponto do balcao.',
+            'href_label': 'Voltar para cobranca',
+        },
+        'reception-intake': {
+            'eyebrow': 'Voce veio do balcao',
+            'title': 'Resolva o cadastro e volte para a fila de atendimento.',
+            'copy': 'A recepcao abriu esta ficha a partir da fila de entrada. Feche o essencial sem perder o compasso do balcao.',
+            'href_label': 'Voltar para entradas',
+        },
+    }
+    if context_key not in context_map:
+        return None
+
+    return {
+        'key': context_key,
+        'href': unquote(return_to),
+        **context_map[context_key],
+    }
 
 
 def _expects_json_response(request):
@@ -552,6 +583,7 @@ class StudentQuickBaseView(CatalogBaseView, FormView):
             page_mode=self.page_mode,
             current_role_slug=role_slug,
             browser_snapshot=_serialize_student_browser_snapshot(request=self.request, student=self.object) if self.object else None,
+            return_context=_build_student_return_context(self.request),
         )
         if self.object is not None:
             page_payload['data']['source_snapshot']['capture_url'] = _build_student_source_capture_url(request=self.request, student=self.object)

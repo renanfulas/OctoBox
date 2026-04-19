@@ -1,0 +1,62 @@
+name: Smoke Environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      public_paths:
+        description: Paths publicos separados por virgula
+        required: false
+        default: /api/v1/health/,/login/
+      private_paths:
+        description: Paths autenticados separados por virgula
+        required: false
+        default: /dashboard/,/alunos/,/operacao/
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Run HTTP smoke suite
+        shell: bash
+        env:
+          SMOKE_BASE_URL: ${{ secrets.SMOKE_BASE_URL }}
+          SMOKE_USERNAME: ${{ secrets.SMOKE_USERNAME }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+          PUBLIC_PATHS: ${{ inputs.public_paths }}
+          PRIVATE_PATHS: ${{ inputs.private_paths }}
+        run: |
+          test -n "$SMOKE_BASE_URL"
+
+          public_args=()
+          private_args=()
+
+          IFS=',' read -ra public_paths <<< "$PUBLIC_PATHS"
+          for path in "${public_paths[@]}"; do
+            trimmed="$(echo "$path" | xargs)"
+            if [ -n "$trimmed" ]; then
+              public_args+=(--public-path "$trimmed")
+            fi
+          done
+
+          IFS=',' read -ra private_paths <<< "$PRIVATE_PATHS"
+          for path in "${private_paths[@]}"; do
+            trimmed="$(echo "$path" | xargs)"
+            if [ -n "$trimmed" ]; then
+              private_args+=(--private-path "$trimmed")
+            fi
+          done
+
+          python scripts/smoke_http.py \
+            --base-url "$SMOKE_BASE_URL" \
+            --username "$SMOKE_USERNAME" \
+            --password "$SMOKE_PASSWORD" \
+            "${public_args[@]}" \
+            "${private_args[@]}"

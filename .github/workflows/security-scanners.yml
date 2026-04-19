@@ -6,35 +6,40 @@ on:
   pull_request:
     branches: [ main, master, develop ]
   schedule:
-    - cron: '0 0 * * 1' # Weekly scan
+    - cron: '0 0 * * 1'
 
 jobs:
   security-audit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-          
+
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install bandit pip-audit safety
-          
+
+      - name: Explain Security Gate
+        run: |
+          echo "Este workflow e o gate unico de seguranca antes do deploy."
+          echo "Bandit cobre codigo, pip-audit e Safety cobrem dependencias e Gitleaks cobre segredos."
+
       - name: Run Bandit (Static Analysis)
         run: >
           bandit -r access api auditing boxcore catalog communications config
           dashboard finance guide integrations jobs model_support monitoring
           onboarding operations reporting scripts security shared_support
           students -x ./.venv,./tests,./*migrations* -ll
-        
+
       - name: Run Pip-Audit (Dependency Scan)
         run: pip-audit
-        
+
       - name: Run Safety Scan (Vulnerability Database)
         env:
           SAFETY_API_KEY: ${{ secrets.SAFETY_API_KEY }}
@@ -45,6 +50,7 @@ jobs:
             exit 0
           fi
           safety --stage cicd --key "${SAFETY_API_KEY}" scan --target . --output screen
+
       - name: Install Gitleaks CLI
         env:
           GITLEAKS_VERSION: 8.24.3

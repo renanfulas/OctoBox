@@ -10,8 +10,8 @@ POR QUE ELE EXISTE:
     {% url 'class-grid' as class_grid_url %}
     {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Atalhos de atendimento" title="Atalhos de atendimento" copy="Destinos de fluxo curto sem sair do compasso." pill_label="Fluxo curto" pill_class="info" %}
     <div class="actions actions-tight reception-shortcuts-actions">
-        {% include "operations/includes/reception/reception_shortcut_link.html" with href=students_directory_url label="Abrir alunos" %}
-        {% include "operations/includes/reception/reception_shortcut_link.html" with href=student_quick_create_url|add:'#student-form-essential' label="Novo aluno" %}
-        {% include "operations/includes/reception/reception_shortcut_link.html" with href=class_grid_url label="Abrir aulas" %}
+        {% include "operations/includes/reception/reception_shortcut_link.html" with href=students_directory_url label="Buscar aluno" %}
+        {% include "operations/includes/reception/reception_shortcut_link.html" with href=student_quick_create_url|add:'?context=reception-intake&return_to=%2Foperacao%2Frecepcao%2F%23reception-intake-board#student-form-essential' label="Cadastrar aluno" %}
+        {% include "operations/includes/reception/reception_shortcut_link.html" with href=class_grid_url label="Ver proximas aulas" %}
     </div>
 </article>

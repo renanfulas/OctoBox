@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Protocol
 
-from .results import StudentIdentityRecord, StudentInvitationRecord
+from .results import StudentBoxInviteLinkRecord, StudentIdentityRecord, StudentInvitationRecord
 
 
 class StudentIdentityRepositoryPort(Protocol):
@@ -38,9 +38,20 @@ class StudentIdentityRepositoryPort(Protocol):
         invited_email: str,
         box_root_slug: str,
         invite_type: str,
+        onboarding_journey: str,
         expires_in_days: int,
         actor_id: int | None,
     ) -> StudentInvitationRecord:
+        ...
+
+    def create_or_replace_box_invite_link(
+        self,
+        *,
+        box_root_slug: str,
+        expires_in_days: int,
+        max_uses: int,
+        actor_id: int | None,
+    ) -> StudentBoxInviteLinkRecord:
         ...
 
     def save_identity(

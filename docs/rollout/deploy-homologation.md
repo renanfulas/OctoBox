@@ -54,6 +54,7 @@ Variaveis minimas recomendadas:
 DJANGO_ENV=production
 DJANGO_DEBUG=False
 DJANGO_SECRET_KEY=coloque-uma-chave-forte-aqui
+PHONE_BLIND_INDEX_KEY=coloque-uma-chave-forte-separada-aqui
 DJANGO_ALLOWED_HOSTS=homolog.seudominio.com
 DJANGO_CSRF_TRUSTED_ORIGINS=https://homolog.seudominio.com
 DATABASE_URL=postgresql://postgres:senha@host:5432/octobox_control
@@ -95,13 +96,16 @@ Leitura pratica desse fluxo:
 3. o blueprint inclui tambem uma Key Value para a cache compartilhada
 4. o processo web sobe com Gunicorn
 5. o healthcheck usa `/api/v1/health/`
+6. o `autoDeploy` fica desligado para que a publicacao venha do gate do GitHub Actions, e nao de qualquer push isolado na branch
 
 Observacoes importantes para Render:
 
 1. o superuser continua sendo manual e deve ser criado depois do primeiro deploy
-2. `RENDER_EXTERNAL_HOSTNAME` e absorvido automaticamente pelo Django para `ALLOWED_HOSTS` e `CSRF_TRUSTED_ORIGINS`
-3. `DJANGO_ADMIN_URL_PATH` deve ser preenchido com um caminho nao obvio antes de abrir o ambiente
-4. se quiser dominio proprio, configure-o no Render e mantenha `DJANGO_ALLOWED_HOSTS` e `DJANGO_CSRF_TRUSTED_ORIGINS` como sobreposicao explicita quando necessario
+2. `PHONE_BLIND_INDEX_KEY` precisa ser preenchida manualmente no servico ou no Blueprint antes do primeiro build
+3. `DJANGO_ALLOWED_HOSTS` e `DJANGO_CSRF_TRUSTED_ORIGINS` continuam aceitando sobreposicao explicita e o runtime agora tambem absorve `RENDER_EXTERNAL_HOSTNAME` quando esse hostname existir
+4. `DJANGO_ADMIN_URL_PATH` deve ser preenchido com um caminho nao obvio antes de abrir o ambiente
+5. se quiser dominio proprio, configure-o no Render e mantenha `DJANGO_ALLOWED_HOSTS` e `DJANGO_CSRF_TRUSTED_ORIGINS` como sobreposicao explicita quando necessario
+6. para gate real de deploy, o repositorio agora espera publicar via `Render Production Gate & Deploy`, usando `RENDER_DEPLOY_HOOK_URL` e um GitHub Environment `production`
 
 ## Static files
 
@@ -142,21 +146,22 @@ DATABASE_URL=postgresql://postgres:senha@localhost:5432/octobox_control
 ## Checklist minimo antes de abrir para usuarios reais
 
 1. DJANGO_SECRET_KEY forte e fora do repositorio
-2. DEBUG=False
-3. ALLOWED_HOSTS preenchido
-4. CSRF_TRUSTED_ORIGINS preenchido com HTTPS
-5. PostgreSQL configurado
-6. cache compartilhada configurada ou fallback local conscientemente aceito
-7. admin privado configurado por `DJANGO_ADMIN_URL_PATH`
-8. collectstatic executado
-9. bootstrap_roles executado
-10. superuser criado
-11. backup do banco testado
+2. PHONE_BLIND_INDEX_KEY forte e fora do repositorio
+3. DEBUG=False
+4. ALLOWED_HOSTS preenchido
+5. CSRF_TRUSTED_ORIGINS preenchido com HTTPS ou garantido via `RENDER_EXTERNAL_HOSTNAME`
+6. PostgreSQL configurado
+7. cache compartilhada configurada ou fallback local conscientemente aceito
+8. admin privado configurado por `DJANGO_ADMIN_URL_PATH`
+9. collectstatic executado
+10. bootstrap_roles executado
+11. superuser criado
+12. backup do banco testado
 
 ## Proximo nivel depois disso
 
 1. Sentry ou monitoramento de erro
 2. logs estruturados
 3. healthcheck dedicado
-4. CI para testes e check antes de deploy
+4. gate de CI e deploy via GitHub Actions antes de publicar
 5. storage externo para media quando a aplicacao crescer

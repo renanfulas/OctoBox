@@ -5,8 +5,13 @@
 {% block body %}
 <section class="student-card">
     <p class="student-eyebrow">Convite do Box</p>
-    <h1>Seu acesso ao app do aluno esta pronto.</h1>
+    {% if mass_invite_mode %}
+    <h1>Seu box abriu a porta para o cadastro no app.</h1>
+    <p>Entre com Google ou Apple e complete seu cadastro. Pense nisso como passar pela portaria antes de subir para o apartamento certo.</p>
+    {% else %}
+    <h1>Seu acesso ao app do {{ journey_label }} esta pronto.</h1>
     <p>Este convite ancora a identidade do aluno no box raiz correto. Isso evita bagunca e impede que um aluno entre na casa errada.</p>
+    {% endif %}
     <a href="{{ login_url }}" class="student-button">Entrar com Google ou Apple</a>
     <p class="student-form-note">Se voce recebeu so o token, esta tela ja fez o trabalho chato de montar a porta certa. Agora e so autenticar.</p>
     <p class="student-form-note">Token do convite: {{ invite_token }}</p>

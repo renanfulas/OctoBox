@@ -440,7 +440,13 @@ def _serialize_reception_intake(intake):
         'email': getattr(intake, 'email', ''),
         'source_label': intake.get_source_display(),
         'status_label': intake.get_status_display(),
-        'student_quick_create_href': f"{reverse('student-quick-create')}?intake={intake.id}#student-form-essential",
+        'student_quick_create_href': (
+            f"{reverse('student-quick-create')}"
+            f"?intake={intake.id}"
+            f"&context=reception-intake"
+            f"&return_to={quote('/operacao/recepcao/#reception-intake-board')}"
+            f"#student-form-essential"
+        ),
     }
 
 
@@ -1532,12 +1538,12 @@ def build_reception_workspace_snapshot(*, today):
         {
             'key': 'intakes',
             'href': '#reception-intake-board',
-            'href_label': 'Ver entradas',
-            'label': 'Comece por quem acabou de chegar',
+            'href_label': 'Abrir fila',
+            'label': 'Atenda agora',
             'summary': (
-                f'{first_intake.full_name} abre a fila e mostra o melhor ponto para acolher, localizar e converter sem esfriar o atendimento.'
+                f'{first_intake.full_name} abre a fila e mostra quem deve ser atendido primeiro no balcao.'
                 if first_intake else
-                'Sem entrada pendente agora, entao o balcao pode priorizar caixa curto e orientacao de aulas.'
+                'Sem entrada pendente agora. O balcao pode seguir para cobrancas curtas e orientacao de aulas.'
             ),
             'count': len(data['intakes']),
             'pill_class': 'warning' if first_intake else 'success',
@@ -1545,12 +1551,12 @@ def build_reception_workspace_snapshot(*, today):
         {
             'key': 'payments',
             'href': '#reception-payment-board',
-            'href_label': 'Ver cobranca curta',
-            'label': 'Depois resolva o caixa curto',
+            'href_label': 'Abrir cobranca',
+            'label': 'Cobranca rapida',
             'summary': (
-                f'{first_payment.student.full_name} aparece primeiro na fila e ajuda a validar se a cobranca esta clara o suficiente para ser resolvida no balcao.'
+                f'{first_payment.student.full_name} aparece primeiro na fila curta de cobranca para resolver sem abrir o financeiro completo.'
                 if first_payment else
-                'Sem cobranca curta em fila agora, entao o atendimento pode seguir sem pressao financeira imediata.'
+                'Sem cobranca curta em fila agora. O atendimento pode seguir sem pressao financeira imediata.'
             ),
         },
     )
@@ -1573,45 +1579,45 @@ def build_reception_workspace_snapshot(*, today):
         'reception_focus': [
             {
                 **_build_reception_focus_signal(count=len(data['intakes']), active_class='severity-ruby'),
-                'label': 'Comece por quem acabou de chegar',
+                'label': 'Atenda agora',
                 'chip_label': 'Chegada',
                 'summary': (
-                    f'{first_intake.full_name} abre a fila e mostra o melhor ponto para acolher, localizar e converter sem esfriar o atendimento.'
+                    f'{first_intake.full_name} abre a fila e mostra quem deve ser atendido primeiro no balcao.'
                     if first_intake else
-                    'Sem entrada pendente agora, entao o balcao pode priorizar caixa curto e orientacao de aulas.'
+                    'Sem entrada pendente agora. O balcao pode seguir para cobrancas curtas e orientacao de aulas.'
                 ),
                 'count': len(data['intakes']),
                 'pill_class': 'warning' if first_intake else 'success',
                 'href': '#reception-intake-board',
-                'href_label': 'Ver entradas',
+                'href_label': 'Abrir fila',
             },
             {
                 **_build_reception_focus_signal(count=len(data['queue']), active_class='severity-amber'),
-                'label': 'Depois resolva o caixa curto',
+                'label': 'Cobranca rapida',
                 'chip_label': 'Cobrancas',
                 'summary': (
-                    f'{first_payment.student.full_name} aparece primeiro na fila e ajuda a validar se a cobranca esta clara o suficiente para ser resolvida no balcao.'
+                    f'{first_payment.student.full_name} aparece primeiro na fila curta de cobranca para resolver sem abrir o financeiro completo.'
                     if first_payment else
-                    'Sem cobranca curta em fila agora, entao o atendimento pode seguir sem pressao financeira imediata.'
+                    'Sem cobranca curta em fila agora. O atendimento pode seguir sem pressao financeira imediata.'
                 ),
                 'count': len(data['queue']),
                 'pill_class': 'warning' if first_payment else 'info',
                 'href': '#reception-payment-board',
-                'href_label': 'Ver cobranca curta',
+                'href_label': 'Abrir cobranca',
             },
             {
                 **_build_reception_focus_signal(count=len(data['sessions']), active_class='severity-cyan'),
-                'label': 'Feche orientando a proxima aula',
+                'label': 'Aulas do turno',
                 'chip_label': 'Aulas',
                 'summary': (
-                    f'{next_session.title} e a proxima aula visivel para responder horario, coach e duvida rapida sem abrir gestao de agenda.'
+                    f'{next_session.title} e a proxima aula visivel para orientar horario, coach e duvida rapida no balcao.'
                     if next_session else
-                    'Sem aula futura no recorte atual, entao a leitura da grade nao e o ponto de pressao desta rodada.'
+                    'Sem aula futura no recorte atual. A grade fica em leitura para orientar o atendimento quando preciso.'
                 ),
                 'count': len(data['sessions']),
                 'pill_class': 'accent',
                 'href': '#reception-class-grid-board',
-                'href_label': 'Ver grade em leitura',
+                'href_label': 'Ver proximas aulas',
             },
         ],
         'reception_decision_entry_context': reception_decision_entry_context,

@@ -67,6 +67,30 @@ def env_list_alias(names, default=''):
     return env_list(names[0], default)
 
 
+def build_https_trusted_origins(hosts):
+    origins = []
+    for host in hosts:
+        normalized_host = host.strip()
+        if not normalized_host:
+            continue
+        origins.append(f'https://{normalized_host}')
+    return sorted(dict.fromkeys(origins))
+
+
+def merge_public_host_contract(allowed_hosts, trusted_origins, extra_hosts=()):
+    merged_hosts = [host.strip() for host in allowed_hosts if host and host.strip()]
+    merged_origins = [origin.strip().rstrip('/') for origin in trusted_origins if origin and origin.strip()]
+
+    for host in extra_hosts:
+        normalized_host = host.strip()
+        if not normalized_host:
+            continue
+        merged_hosts.append(normalized_host)
+        merged_origins.append(f'https://{normalized_host}')
+
+    return sorted(dict.fromkeys(merged_hosts)), sorted(dict.fromkeys(merged_origins))
+
+
 def is_local_runtime_mode():
     return env_bool('DJANGO_DEBUG', False) or env_str('DJANGO_ENV').lower() == 'development'
 
@@ -177,6 +201,12 @@ if is_local_runtime_mode():
         local_trusted_origins.append(f'http://{host}')
         local_trusted_origins.append(f'https://{host}')
     CSRF_TRUSTED_ORIGINS = sorted(dict.fromkeys([*CSRF_TRUSTED_ORIGINS, *local_trusted_origins]))
+
+ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS = merge_public_host_contract(
+    ALLOWED_HOSTS,
+    CSRF_TRUSTED_ORIGINS,
+    extra_hosts=[env_str('RENDER_EXTERNAL_HOSTNAME')],
+)
 
 # 🚀 Segurança de Elite (Ghost Hardening): CSRF Fail-Safe
 if not is_local_runtime_mode() and not CSRF_TRUSTED_ORIGINS:

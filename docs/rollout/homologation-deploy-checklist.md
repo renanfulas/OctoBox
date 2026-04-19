@@ -78,6 +78,7 @@ Variaveis minimas obrigatorias:
 DJANGO_ENV=production
 DJANGO_DEBUG=False
 DJANGO_SECRET_KEY=coloque-uma-chave-forte-aqui
+PHONE_BLIND_INDEX_KEY=coloque-uma-chave-forte-separada-aqui
 DJANGO_ALLOWED_HOSTS=homolog.seudominio.com
 DJANGO_CSRF_TRUSTED_ORIGINS=https://homolog.seudominio.com
 DATABASE_URL=postgresql://postgres:senha@host:5432/octobox_control
@@ -88,10 +89,11 @@ DJANGO_SECURE_SSL_REDIRECT=True
 Checklist:
 
 1. `DJANGO_SECRET_KEY` forte e fora do repositorio
-2. `DJANGO_ALLOWED_HOSTS` preenchido com o host real
-3. `DJANGO_CSRF_TRUSTED_ORIGINS` com HTTPS real
-4. `DATABASE_URL` validada
-5. `DB_SSL_REQUIRE` coerente com o provedor do banco
+2. `PHONE_BLIND_INDEX_KEY` forte e fora do repositorio
+3. `DJANGO_ALLOWED_HOSTS` preenchido com o host real ou coberto por `RENDER_EXTERNAL_HOSTNAME`
+4. `DJANGO_CSRF_TRUSTED_ORIGINS` com HTTPS real ou derivado do host publicado
+5. `DATABASE_URL` validada
+6. `DB_SSL_REQUIRE` coerente com o provedor do banco
 
 ## Etapa 2: preparar o banco
 
@@ -136,9 +138,12 @@ No Render, a configuracao esperada fica assim:
 
 1. criar Blueprint a partir do repositorio
 2. deixar o web service apontando para `render.yaml`
-3. confirmar que o banco `octobox-control-db` foi criado
-4. rodar o primeiro deploy
-5. criar superuser manualmente no shell do servico apos o deploy
+3. preencher `PHONE_BLIND_INDEX_KEY` antes do primeiro build
+4. confirmar que o banco `octobox-control-db` foi criado
+5. desligar Auto-Deploy no servico ja existente, se ele tiver nascido antes do gate atual
+6. configurar o deploy hook do Render no secret `RENDER_DEPLOY_HOOK_URL` do GitHub Environment alvo
+7. rodar o primeiro deploy
+8. criar superuser manualmente no shell do servico apos o deploy
 
 ## Etapa 4: validar o processo web
 
@@ -146,8 +151,9 @@ Checklist:
 
 1. processo da aplicacao sobe sem exception de startup
 2. `DJANGO_SECRET_KEY` nao dispara fail-fast
-3. WhiteNoise serve assets corretamente
-4. root URL abre sem erro 500
+3. `PHONE_BLIND_INDEX_KEY` nao dispara fail-fast
+4. WhiteNoise serve assets corretamente
+5. root URL abre sem erro 500
 
 Arquivos centrais desta validacao:
 
@@ -168,6 +174,7 @@ Executar e validar manualmente:
 7. abrir `/api/v1/health/`
 8. confirmar que CSS e layout carregaram corretamente
 9. confirmar que logout funciona
+10. confirmar que o workflow `Smoke Environment` consegue repetir esse teste com o GitHub Environment correto
 
 Checklist de resultado:
 

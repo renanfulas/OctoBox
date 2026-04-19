@@ -15,6 +15,7 @@ PONTOS CRITICOS:
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.conf import settings
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import redirect
@@ -27,9 +28,19 @@ from access.permissions import RoleRequiredMixin
 from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION, get_user_role
 from monitoring.lead_attribution_metrics import record_lead_attribution_capture
 from onboarding.attribution import build_intake_attribution_payload, normalize_acquisition_channel
-from onboarding.models import IntakeStatus
+from onboarding.models import IntakeStatus, StudentIntake
+from shared_support.box_runtime import get_box_runtime_slug
 from shared_support.manager_event_stream import publish_manager_stream_event
 from shared_support.page_payloads import attach_page_payload
+from shared_support.crypto_fields import generate_blind_index
+from student_identity.application.commands import CreateStudentInvitationCommand
+from student_identity.application.use_cases import CreateStudentInvitation
+from student_identity.delivery_audit import record_student_invitation_whatsapp_handoff
+from student_identity.funnel_events import record_student_onboarding_event
+from student_identity.infrastructure.repositories import DjangoStudentIdentityRepository
+from student_identity.models import StudentAppInvitation, StudentOnboardingJourney
+from student_identity.notifications import build_invitation_whatsapp_url
+from students.models import Student, StudentStatus
 
 from .forms import IntakeQueueActionForm, IntakeQuickCreateForm
 from .facade import run_intake_queue_action
@@ -192,6 +203,8 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         role_slug = self._get_current_role_slug()
+        if request.POST.get('action') == 'send-whatsapp-invite':
+            return self._handle_send_whatsapp_invite(request, role_slug=role_slug)
         if request.POST.get('form_kind') == 'quick-create':
             if role_slug not in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION):
                 messages.error(request, 'Seu papel atual pode consultar a central, mas nao cadastrar entradas por esta tela.')
@@ -275,6 +288,96 @@ class IntakeCenterView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
             )
 
         return redirect(self._get_success_url(form.cleaned_data.get('return_query', '')))
+
+    def _handle_send_whatsapp_invite(self, request, *, role_slug: str):
+        if role_slug not in (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION):
+            messages.error(request, 'Seu papel atual nao pode disparar convites do app para leads.')
+            return redirect(self._get_success_url(request.POST.get('return_query', '')))
+
+        daily_limit = max(1, int(getattr(settings, 'STUDENT_IMPORTED_LEAD_WHATSAPP_DAILY_LIMIT', 25)))
+        invites_today = StudentAppInvitation.objects.filter(
+            created_by=request.user,
+            onboarding_journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            created_at__date=timezone.localdate(),
+        ).count()
+        if invites_today >= daily_limit:
+            messages.error(request, f'O limite operacional de {daily_limit} convites por dia para leads importados foi alcancado.')
+            return redirect(self._get_success_url(request.POST.get('return_query', '')))
+
+        intake = StudentIntake.objects.select_for_update().select_related('linked_student').filter(
+            pk=request.POST.get('intake_id')
+        ).first()
+        if intake is None:
+            messages.error(request, 'Nao encontrei esse lead para disparar o convite por WhatsApp.')
+            return redirect(self._get_success_url(request.POST.get('return_query', '')))
+        if not intake.phone:
+            messages.error(request, 'Esse lead nao tem WhatsApp utilizavel para convite.')
+            return redirect(self._get_success_url(request.POST.get('return_query', '')))
+
+        student = intake.linked_student or self._resolve_or_create_student_from_intake(intake=intake)
+        if intake.linked_student_id is None:
+            intake.linked_student = student
+            intake.status = IntakeStatus.MATCHED
+            intake.save(update_fields=['linked_student', 'status', 'updated_at'])
+
+        result = CreateStudentInvitation(DjangoStudentIdentityRepository()).execute(
+            CreateStudentInvitationCommand(
+                student_id=student.id,
+                invited_email=(student.email or '').strip().lower(),
+                box_root_slug=get_box_runtime_slug(),
+                onboarding_journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+                actor_id=request.user.id,
+            )
+        )
+        if not result.success or result.invitation is None:
+            messages.error(request, 'Nao foi possivel preparar o convite do lead para o app agora.')
+            return redirect(self._get_success_url(request.POST.get('return_query', '')))
+
+        invitation = StudentAppInvitation.objects.select_related('student').get(pk=result.invitation.id)
+        invite_url = request.build_absolute_uri(reverse('student-identity-invite', kwargs={'token': invitation.token}))
+        whatsapp_url = build_invitation_whatsapp_url(invitation=invitation, invite_url=invite_url)
+        if not whatsapp_url:
+            messages.error(request, 'Nao foi possivel abrir o WhatsApp para esse lead agora.')
+            return redirect(self._get_success_url(request.POST.get('return_query', '')))
+
+        record_student_invitation_whatsapp_handoff(
+            invitation=invitation,
+            actor=request.user,
+            recipient=student.phone,
+            metadata={'invite_url': invite_url, 'source': 'intake_center'},
+        )
+        record_student_onboarding_event(
+            actor=request.user,
+            actor_role=role_slug,
+            journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            event='whatsapp_handoff_opened',
+            target_model='student_identity.StudentAppInvitation',
+            target_id=str(invitation.id),
+            target_label=student.full_name,
+            description='Handoff do WhatsApp aberto a partir da Central de Entradas.',
+            metadata={
+                'box_root_slug': get_box_runtime_slug(),
+                'student_id': student.id,
+                'invitation_id': invitation.id,
+                'intake_id': intake.id,
+                'source_surface': 'intake_center',
+            },
+        )
+        return redirect(whatsapp_url)
+
+    def _resolve_or_create_student_from_intake(self, *, intake: StudentIntake):
+        phone_lookup_index = generate_blind_index(intake.phone)
+        student = None
+        if phone_lookup_index:
+            student = Student.objects.filter(phone_lookup_index=phone_lookup_index).first()
+        if student is not None:
+            return student
+        return Student.objects.create(
+            full_name=intake.full_name,
+            phone=intake.phone,
+            email=getattr(intake, 'email', '') or '',
+            status=StudentStatus.LEAD,
+        )
 
 
 class IntakeSearchIndexPageView(LoginRequiredMixin, RoleRequiredMixin, View):

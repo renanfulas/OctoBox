@@ -12,10 +12,10 @@
         <span class="pill {{ item.status_class }}">{{ item.status_label }}</span>
     </div>
 
-    {% include "includes/ui/finance/payment_primary_summary.html" with summary_class="reception-payment-highlight" amount_label="Valor" amount_text=item.amount|floatformat:2 due_label="Vencimento" due_value=item.due_date|date:"d/m/Y" method_label="Metodo atual" method_value=item.method_label %}
+    {% include "includes/ui/finance/payment_primary_summary.html" with summary_class="reception-payment-highlight" amount_label="Valor a cobrar" amount_text=item.amount|floatformat:2 due_label="Prazo" due_value=item.due_date|date:"d/m/Y" method_label="Forma de pagamento" method_value=item.method_label %}
 
     <div class="note-panel note-panel-cream finance-action-message finance-action-message-compact">
-        <p class="eyebrow">Leitura de balcao</p>
+        <p class="eyebrow">Leitura do balcao</p>
         <p class="meta-text">{{ item.reason }}</p>
     </div>
 
@@ -47,15 +47,15 @@
                     name="action"
                     value="mark-paid"
                     data-role="reception-payment-submit"
-                    data-default-label="Confirmar pagamento"
-                    data-pix-label="Receber com Pix">
-                    {% if item.method == 'pix' %}Receber com Pix{% else %}Confirmar pagamento{% endif %}
+                    data-default-label="Registrar pagamento"
+                    data-pix-label="Confirmar Pix">
+                    {% if item.method == 'pix' %}Confirmar Pix{% else %}Registrar pagamento{% endif %}
                 </button>
             </div>
         </section>
 
         <div class="actions actions-tight finance-card-actions-compact reception-payment-actions reception-payment-actions-support">
-            <a class="button secondary" href="{{ item.student_href }}#student-financial-overview">Abrir ficha</a>
+            <a class="button secondary" href="{{ item.student_href }}?context=reception-payment&return_to=%2Foperacao%2Frecepcao%2F%23reception-payment-board#student-financial-overview">Ver ficha do aluno</a>
 
             {% if item.clean_phone %}
                 {% if current_role.slug|lower == 'recepcao' and item.is_manager_owned_follow_up %}
@@ -94,7 +94,7 @@
                     data-operator-name="{{ user.first_name|default:'Equipe' }}"
                     data-is-late-10-days="{% if item.is_late_10_days %}1{% else %}0{% endif %}"
                     title="Enviar mensagem de cobranca no WhatsApp">
-                    Enviar WhatsApp
+                    Cobrar no WhatsApp
                 </button>
                     {% endif %}
                 {% endif %}
@@ -102,7 +102,7 @@
         </div>
 
         <details class="reception-payment-advanced">
-            <summary>Ajustes do pagamento</summary>
+            <summary>Ajustes avancados</summary>
             <div class="field-grid-220 reception-payment-form-secondary">
                 <label>
                     <span class="field-label">Vencimento</span>

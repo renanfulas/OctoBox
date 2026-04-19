@@ -7,11 +7,12 @@ from django.utils import timezone
 
 from .commands import (
     AuthenticateStudentWithProviderCommand,
+    CreateStudentBoxInviteLinkCommand,
     CreateStudentInvitationCommand,
     TransferStudentToBoxCommand,
 )
 from .ports import StudentIdentityRepositoryPort
-from .results import StudentIdentityAuthResult, StudentInvitationResult, StudentTransferResult
+from .results import StudentBoxInviteLinkRecord, StudentIdentityAuthResult, StudentInvitationResult, StudentTransferResult
 
 
 class CreateStudentInvitation:
@@ -24,7 +25,7 @@ class CreateStudentInvitation:
             return StudentInvitationResult(success=False, invitation=None, failure_reason='student-not-found')
 
         invited_email = (command.invited_email or getattr(student, 'email', '') or '').strip().lower()
-        if not invited_email:
+        if not invited_email and command.onboarding_journey != 'imported_lead_invite':
             return StudentInvitationResult(success=False, invitation=None, failure_reason='email-required')
 
         existing_identity = self.repository.find_live_by_student_id(student.id)
@@ -50,10 +51,24 @@ class CreateStudentInvitation:
             invited_email=invited_email,
             box_root_slug=command.box_root_slug,
             invite_type=command.invite_type,
+            onboarding_journey=command.onboarding_journey,
             expires_in_days=command.expires_in_days,
             actor_id=command.actor_id,
         )
         return StudentInvitationResult(success=True, invitation=invitation)
+
+
+class CreateStudentBoxInviteLink:
+    def __init__(self, repository: StudentIdentityRepositoryPort):
+        self.repository = repository
+
+    def execute(self, command: CreateStudentBoxInviteLinkCommand) -> StudentBoxInviteLinkRecord:
+        return self.repository.create_or_replace_box_invite_link(
+            box_root_slug=command.box_root_slug,
+            expires_in_days=command.expires_in_days,
+            max_uses=command.max_uses,
+            actor_id=command.actor_id,
+        )
 
 
 class AuthenticateStudentWithProvider:

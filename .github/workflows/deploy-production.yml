@@ -1,0 +1,103 @@
+name: Render Production Gate & Deploy
+
+on:
+  workflow_run:
+    workflows:
+      - OctoBox CI Checks (Performance & Integrity)
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: render-production-main
+  cancel-in-progress: false
+
+jobs:
+  verify-required-gates:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify CI and security gates for the same commit
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const headSha = context.payload.workflow_run.head_sha;
+            const branch = context.payload.workflow_run.head_branch;
+            const requiredWorkflows = [
+              "OctoBox CI Checks (Performance & Integrity)",
+              "Security Scanners 🛡️",
+            ];
+            const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+            let missing = [...requiredWorkflows];
+            for (let attempt = 1; attempt <= 20; attempt += 1) {
+              const { data } = await github.rest.actions.listWorkflowRunsForRepo({
+                owner,
+                repo,
+                branch,
+                head_sha: headSha,
+                per_page: 50,
+              });
+
+              missing = requiredWorkflows.filter((workflowName) => {
+                const run = data.workflow_runs.find((candidate) => candidate.name === workflowName);
+                return !run || run.conclusion !== "success";
+              });
+
+              if (!missing.length) {
+                core.info(`Todos os gates obrigatorios passaram para ${headSha}.`);
+                return;
+              }
+
+              core.info(`Aguardando workflows para ${headSha}: ${missing.join(", ")} (tentativa ${attempt}/20).`);
+              await sleep(30000);
+            }
+
+            core.setFailed(`Gate incompleto para ${headSha}. Ainda faltam workflows verdes: ${missing.join(", ")}`);
+
+  deploy-render:
+    needs: verify-required-gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Trigger Render deploy hook
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          test -n "$RENDER_DEPLOY_HOOK_URL"
+          curl --fail --silent --show-error --request POST "$RENDER_DEPLOY_HOOK_URL"
+
+      - name: Wait for Render rollout
+        run: sleep 45
+
+      - name: Run production smoke suite
+        env:
+          SMOKE_BASE_URL: ${{ secrets.SMOKE_BASE_URL }}
+          SMOKE_USERNAME: ${{ secrets.SMOKE_USERNAME }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+        run: |
+          test -n "$SMOKE_BASE_URL"
+          python scripts/smoke_http.py \
+            --base-url "$SMOKE_BASE_URL" \
+            --username "$SMOKE_USERNAME" \
+            --password "$SMOKE_PASSWORD" \
+            --public-path /api/v1/health/ \
+            --public-path /login/ \
+            --private-path /dashboard/ \
+            --private-path /alunos/ \
+            --private-path /operacao/

@@ -7,7 +7,7 @@ services:
     startCommand: gunicorn config.wsgi --log-file -
     preDeployCommand: python manage.py migrate && python manage.py bootstrap_roles
     healthCheckPath: /api/v1/health/
-    autoDeploy: true
+    autoDeploy: false
     envVars:
       - key: DJANGO_ENV
         value: production
@@ -15,6 +15,8 @@ services:
         value: "False"
       - key: DJANGO_SECRET_KEY
         generateValue: true
+      - key: PHONE_BLIND_INDEX_KEY
+        sync: false
       - key: DATABASE_URL
         fromDatabase:
           name: octobox-control-db

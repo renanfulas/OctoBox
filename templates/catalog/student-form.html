@@ -63,6 +63,19 @@ PONTOS CRITICOS:
     {% endif %}
     <p class="visually-hidden" id="student-lock-live-status" aria-live="assertive" aria-atomic="true"></p>
 
+    {% if page.data.return_context %}
+    <section class="student-return-banner" aria-label="Contexto de retorno operacional">
+        <div class="student-return-banner__copy">
+            <span class="student-return-banner__eyebrow">{{ page.data.return_context.eyebrow }}</span>
+            <h2 class="student-return-banner__title">{{ page.data.return_context.title }}</h2>
+            <p class="student-return-banner__text">{{ page.data.return_context.copy }}</p>
+        </div>
+        <div class="student-return-banner__actions actions actions-tight">
+            <a class="button secondary student-return-banner__action" href="{{ page.data.return_context.href }}">{{ page.data.return_context.href_label }}</a>
+        </div>
+    </section>
+    {% endif %}
+
     {% if page.data.financial_overview.has_student %}
         {% include "includes/catalog/student_page/student_page_header.html" with page=page %}
     {% endif %}

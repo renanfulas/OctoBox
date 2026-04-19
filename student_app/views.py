@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
@@ -12,12 +13,24 @@ from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.views.generic import FormView, TemplateView, View
 
+from finance.models import Enrollment, EnrollmentStatus
 from operations.models import Attendance, AttendanceStatus, ClassSession, SessionStatus
 from shared_support.box_runtime import get_box_runtime_slug
+from student_identity.funnel_events import record_student_onboarding_event
 from student_app.application.use_cases import GetStudentDashboard, GetStudentWorkoutDay, GetStudentWorkoutPrescription
-from student_app.forms import WorkoutPrescriptionForm
+from student_app.forms import (
+    ImportedLeadOnboardingForm,
+    MassInviteOnboardingForm,
+    StudentProfileEditForm,
+    WorkoutPrescriptionForm,
+)
 from student_app.models import SessionWorkout, SessionWorkoutStatus, StudentExerciseMax, StudentWorkoutView
-from student_identity.models import StudentBoxMembership, StudentBoxMembershipStatus
+from student_identity.models import (
+    StudentBoxInviteLink,
+    StudentBoxMembership,
+    StudentBoxMembershipStatus,
+    StudentOnboardingJourney,
+)
 from student_identity.infrastructure.repositories import DjangoStudentIdentityRepository
 from student_identity.security import build_student_device_fingerprint
 from student_identity.infrastructure.session import (
@@ -26,6 +39,8 @@ from student_identity.infrastructure.session import (
     read_student_session_value,
     clear_student_session_cookie,
 )
+from student_app.onboarding_state import clear_pending_student_onboarding, read_pending_student_onboarding
+from students.models import Student, StudentStatus
 
 
 STUDENT_APP_SCOPE = '/aluno/'
@@ -37,6 +52,28 @@ STUDENT_APP_ICON_512 = '/static/images/student-app-icon-512.png'
 STUDENT_APP_ICON_MASKABLE_512 = '/static/images/student-app-icon-maskable-512.png'
 STUDENT_APP_APPLE_TOUCH_ICON = '/static/images/student-app-apple-touch-icon.png'
 UUID_TOKEN_PATTERN = re.compile(r'(?P<token>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})')
+
+
+def _ensure_pending_enrollment(*, student: Student, plan, source_note: str):
+    if plan is None:
+        return None
+    enrollment = (
+        Enrollment.objects.filter(
+            student=student,
+            plan=plan,
+            status__in=[EnrollmentStatus.PENDING, EnrollmentStatus.ACTIVE],
+        )
+        .order_by('-created_at')
+        .first()
+    )
+    if enrollment is not None:
+        return enrollment
+    return Enrollment.objects.create(
+        student=student,
+        plan=plan,
+        status=EnrollmentStatus.PENDING,
+        notes=source_note,
+    )
 
 
 class StudentIdentityRequiredMixin:
@@ -252,8 +289,17 @@ class StudentRmView(StudentIdentityRequiredMixin, TemplateView):
         return self._attach_student_shell_context(context)
 
 
-class StudentSettingsView(StudentIdentityRequiredMixin, TemplateView):
+class StudentSettingsView(StudentIdentityRequiredMixin, FormView):
     template_name = 'student_app/settings.html'
+    form_class = StudentProfileEditForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        student = self.request.student_identity.student
+        kwargs['instance'] = student
+        initial = kwargs.setdefault('initial', {})
+        initial.setdefault('email', self.request.student_identity.email or student.email)
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -261,6 +307,232 @@ class StudentSettingsView(StudentIdentityRequiredMixin, TemplateView):
         context['student_shell_nav'] = 'settings'
         context['student_shell_title'] = 'Perfil'
         return self._attach_student_shell_context(context)
+
+    def form_valid(self, form):
+        student = form.save(commit=False)
+        email = form.cleaned_data.get('email', '')
+        student.email = email
+        student.save()
+        if self.request.student_identity.email != email and email:
+            self.request.student_identity.email = email
+            self.request.student_identity.save(update_fields=['email', 'updated_at'])
+        messages.success(self.request, 'Seu perfil foi atualizado.')
+        return redirect('student-app-settings')
+
+
+class StudentOnboardingWizardView(FormView):
+    template_name = 'student_app/onboarding_wizard.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.pending_onboarding = read_pending_student_onboarding(request)
+        if self.pending_onboarding is None:
+            messages.info(request, 'Nenhum onboarding pendente foi encontrado por aqui.')
+            return redirect('student-app-home')
+        if not self.pending_onboarding.get('wizard_started_recorded'):
+            record_student_onboarding_event(
+                actor=None,
+                actor_role='',
+                journey=self.pending_onboarding.get('journey', ''),
+                event='wizard_started',
+                target_model='student_app.StudentOnboardingWizard',
+                target_label=self.pending_onboarding.get('journey', ''),
+                description='Wizard do onboarding do aluno iniciado.',
+                metadata={
+                    'box_root_slug': self.pending_onboarding.get('box_root_slug') or get_box_runtime_slug(),
+                    'student_id': self.pending_onboarding.get('student_id'),
+                    'identity_id': self.pending_onboarding.get('identity_id'),
+                    'invitation_id': self.pending_onboarding.get('invitation_id'),
+                    'box_invite_link_id': self.pending_onboarding.get('box_invite_link_id'),
+                },
+            )
+            self.pending_onboarding['wizard_started_recorded'] = True
+            store = request.session.get('student_pending_onboarding') or {}
+            store.update(self.pending_onboarding)
+            request.session['student_pending_onboarding'] = store
+            request.session.modified = True
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_class(self):
+        journey = self.pending_onboarding.get('journey')
+        if journey == StudentOnboardingJourney.IMPORTED_LEAD_INVITE:
+            return ImportedLeadOnboardingForm
+        return MassInviteOnboardingForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        initial = kwargs.setdefault('initial', {})
+        journey = self.pending_onboarding.get('journey')
+        initial.setdefault('email', self.pending_onboarding.get('email', ''))
+        if journey == StudentOnboardingJourney.IMPORTED_LEAD_INVITE:
+            student = self._get_existing_student()
+            if student is not None:
+                initial.setdefault('full_name', student.full_name)
+                initial.setdefault('phone', student.phone)
+                initial.setdefault('email', student.email or self.pending_onboarding.get('email', ''))
+                initial.setdefault('birth_date', student.birth_date)
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        journey = self.pending_onboarding.get('journey')
+        context['journey'] = journey
+        context['journey_title'] = (
+            'Complete seu cadastro no app'
+            if journey == StudentOnboardingJourney.MASS_BOX_INVITE
+            else 'Revise seus dados para entrar no app'
+        )
+        context['journey_copy'] = (
+            'Aqui a gente pega os dados essenciais para seu acesso nascer redondo.'
+            if journey == StudentOnboardingJourney.MASS_BOX_INVITE
+            else 'Ja puxamos o que o box sabia sobre voce. Agora falta so uma revisao curta.'
+        )
+        return context
+
+    def form_valid(self, form):
+        journey = self.pending_onboarding.get('journey')
+        if journey == StudentOnboardingJourney.IMPORTED_LEAD_INVITE:
+            return self._complete_imported_lead_onboarding(form)
+        return self._complete_mass_onboarding(form)
+
+    def _get_existing_student(self):
+        student_id = self.pending_onboarding.get('student_id')
+        if not student_id:
+            identity = self._get_pending_identity()
+            return identity.student if identity is not None else None
+        return Student.objects.filter(pk=student_id).first()
+
+    def _get_pending_identity(self):
+        identity_id = self.pending_onboarding.get('identity_id')
+        return DjangoStudentIdentityRepository().find_identity_by_id(identity_id) if identity_id else None
+
+    @transaction.atomic
+    def _complete_mass_onboarding(self, form):
+        repository = DjangoStudentIdentityRepository()
+        student = Student.objects.create(
+            full_name=form.cleaned_data['full_name'],
+            phone=form.cleaned_data['phone'],
+            email=form.cleaned_data['email'],
+            birth_date=form.cleaned_data.get('birth_date'),
+            status=StudentStatus.LEAD,
+        )
+        identity = repository.save_identity(
+            student=student,
+            box_root_slug=self.pending_onboarding['box_root_slug'],
+            provider=self.pending_onboarding['provider'],
+            provider_subject=self.pending_onboarding['provider_subject'],
+            email=form.cleaned_data['email'],
+            invitation=None,
+        )
+        _ensure_pending_enrollment(
+            student=student,
+            plan=form.cleaned_data.get('selected_plan'),
+            source_note='Capturado via link em massa do onboarding do aluno.',
+        )
+        record_student_onboarding_event(
+            actor=None,
+            actor_role='',
+            journey=StudentOnboardingJourney.MASS_BOX_INVITE,
+            event='wizard_completed',
+            target_model='student_identity.StudentIdentity',
+            target_id=str(identity.id),
+            target_label=student.full_name,
+            description='Wizard completo do link em massa concluido.',
+            metadata={
+                'box_root_slug': identity.box_root_slug,
+                'student_id': student.id,
+                'identity_id': identity.id,
+                'box_invite_link_id': self.pending_onboarding.get('box_invite_link_id'),
+            },
+        )
+        record_student_onboarding_event(
+            actor=None,
+            actor_role='',
+            journey=StudentOnboardingJourney.MASS_BOX_INVITE,
+            event='app_entry_completed',
+            target_model='student_identity.StudentIdentity',
+            target_id=str(identity.id),
+            target_label=student.full_name,
+            description='Entrada no app concluida apos onboarding em massa.',
+            metadata={
+                'box_root_slug': identity.box_root_slug,
+                'student_id': student.id,
+                'identity_id': identity.id,
+                'box_invite_link_id': self.pending_onboarding.get('box_invite_link_id'),
+            },
+        )
+        clear_pending_student_onboarding(self.request)
+        response = redirect('student-app-home')
+        attach_student_session_cookie(
+            response,
+            identity_id=identity.id,
+            box_root_slug=identity.box_root_slug,
+            device_fingerprint=build_student_device_fingerprint(self.request),
+        )
+        messages.success(self.request, 'Cadastro concluido. Seu app do aluno ja esta pronto para uso.')
+        return response
+
+    @transaction.atomic
+    def _complete_imported_lead_onboarding(self, form):
+        identity = self._get_pending_identity()
+        if identity is None:
+            messages.error(self.request, 'Nao conseguimos localizar a identidade ligada a este onboarding.')
+            clear_pending_student_onboarding(self.request)
+            return redirect('student-app-home')
+        student = self._get_existing_student()
+        if student is None:
+            messages.error(self.request, 'Nao conseguimos localizar o aluno vinculado a este convite.')
+            clear_pending_student_onboarding(self.request)
+            return redirect('student-app-home')
+        student.full_name = form.cleaned_data['full_name']
+        student.phone = form.cleaned_data['phone']
+        student.email = form.cleaned_data['email']
+        student.birth_date = form.cleaned_data.get('birth_date')
+        if student.status == StudentStatus.LEAD:
+            student.status = StudentStatus.ACTIVE
+        student.save()
+        if identity.email != student.email and student.email:
+            identity.email = student.email
+            identity.save(update_fields=['email', 'updated_at'])
+        _ensure_pending_enrollment(
+            student=student,
+            plan=form.cleaned_data.get('selected_plan'),
+            source_note='Capturado via convite individual de lead importado.',
+        )
+        record_student_onboarding_event(
+            actor=None,
+            actor_role='',
+            journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            event='wizard_completed',
+            target_model='student_identity.StudentIdentity',
+            target_id=str(identity.id),
+            target_label=student.full_name,
+            description='Wizard reduzido do lead importado concluido.',
+            metadata={
+                'box_root_slug': identity.box_root_slug,
+                'student_id': student.id,
+                'identity_id': identity.id,
+                'invitation_id': self.pending_onboarding.get('invitation_id'),
+            },
+        )
+        record_student_onboarding_event(
+            actor=None,
+            actor_role='',
+            journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            event='app_entry_completed',
+            target_model='student_identity.StudentIdentity',
+            target_id=str(identity.id),
+            target_label=student.full_name,
+            description='Entrada no app concluida apos convite de lead importado.',
+            metadata={
+                'box_root_slug': identity.box_root_slug,
+                'student_id': student.id,
+                'identity_id': identity.id,
+                'invitation_id': self.pending_onboarding.get('invitation_id'),
+            },
+        )
+        clear_pending_student_onboarding(self.request)
+        messages.success(self.request, 'Dados revisados. Agora voce pode usar o app normalmente.')
+        return redirect('student-app-home')
 
 
 class StudentMembershipPendingView(StudentSessionIdentityMixin, TemplateView):

@@ -6,16 +6,41 @@
 <section class="student-card">
     <p class="student-eyebrow">Conta do aluno</p>
     <h1>Configuracoes do acesso</h1>
+    <form method="post" class="student-form-stack">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <label>
+            <span>Nome completo</span>
+            {{ form.full_name }}
+            {{ form.full_name.errors }}
+        </label>
+        <label>
+            <span>WhatsApp</span>
+            {{ form.phone }}
+            {{ form.phone.errors }}
+        </label>
+        <label>
+            <span>E-mail</span>
+            {{ form.email }}
+            {{ form.email.errors }}
+        </label>
+        <label>
+            <span>Data de nascimento</span>
+            {{ form.birth_date }}
+            {{ form.birth_date.errors }}
+        </label>
+        <div class="actions actions-tight">
+            <button type="submit" class="student-button">Salvar perfil</button>
+        </div>
+    </form>
     <ul class="student-settings-list">
-        <li><strong>Aluno:</strong> {{ student_identity.student.full_name }}</li>
-        <li><strong>Email:</strong> {{ student_identity.email }}</li>
         <li><strong>Provedor:</strong> {{ student_identity.get_provider_display }}</li>
         <li><strong>Runtime atual:</strong> {{ box_runtime_slug }}</li>
         <li><strong>Box principal:</strong> {{ student_primary_box_root_slug }}</li>
         <li><strong>Box ativo:</strong> {{ student_active_box_root_slug }}</li>
         <li><strong>Status:</strong> {{ student_identity.get_status_display }}</li>
     </ul>
-    <p class="student-form-note">Nesta fase, o aluno ja possui box principal e contexto ativo. O switch de box troca apenas o contexto da sessao.</p>
+    <p class="student-form-note">Seu perfil pode amadurecer depois da entrada. A ideia aqui e nao travar a porta com formulario gigante.</p>
 </section>
 {% include "student_app/partials/invite_entry_card.html" with eyebrow="Novo box" title="Entrar em outro box com convite" copy="Cole um novo convite para adicionar outro corredor ao seu app. Pense nisso como apresentar uma nova credencial para outra unidade sem misturar a sua identidade." %}
 {% endblock %}

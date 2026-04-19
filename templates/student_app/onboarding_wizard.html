@@ -1,0 +1,46 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}Onboarding | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-card">
+    <p class="student-eyebrow">Onboarding</p>
+    <h1>{{ journey_title }}</h1>
+    <p>{{ journey_copy }}</p>
+    <form method="post" class="student-form-stack">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <label>
+            <span>Nome completo</span>
+            {{ form.full_name }}
+            {% if form.full_name.help_text %}<small class="student-form-note">{{ form.full_name.help_text }}</small>{% endif %}
+            {{ form.full_name.errors }}
+        </label>
+        <label>
+            <span>WhatsApp</span>
+            {{ form.phone }}
+            {% if form.phone.help_text %}<small class="student-form-note">{{ form.phone.help_text }}</small>{% endif %}
+            {{ form.phone.errors }}
+        </label>
+        <label>
+            <span>E-mail</span>
+            {{ form.email }}
+            {{ form.email.errors }}
+        </label>
+        <label>
+            <span>Data de nascimento</span>
+            {{ form.birth_date }}
+            {{ form.birth_date.errors }}
+        </label>
+        <label>
+            <span>Plano</span>
+            {{ form.selected_plan }}
+            <small class="student-form-note">Se voce ainda nao sabe, pode decidir depois com o box.</small>
+            {{ form.selected_plan.errors }}
+        </label>
+        <div class="actions actions-tight">
+            <button type="submit" class="student-button">Continuar</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

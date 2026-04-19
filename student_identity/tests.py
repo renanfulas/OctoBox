@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core.cache import cache
 from django.core import mail
 from django.test import override_settings
 from django.test import Client, TestCase
@@ -21,6 +22,7 @@ from student_identity.infrastructure.repositories import DjangoStudentIdentityRe
 from student_identity.infrastructure.session import read_student_session_value
 from student_identity.models import (
     StudentAppInvitation,
+    StudentBoxInviteLink,
     StudentBoxMembership,
     StudentBoxMembershipStatus,
     StudentIdentity,
@@ -30,6 +32,7 @@ from student_identity.models import (
     StudentInvitationDeliveryEvent,
     StudentInvitationDeliveryStatus,
     StudentInvitationType,
+    StudentOnboardingJourney,
 )
 from students.models import Student
 
@@ -47,6 +50,7 @@ def build_resend_svix_signature(*, secret: str, webhook_id: str, timestamp: str,
 
 class StudentIdentityFlowTests(TestCase):
     def setUp(self):
+        cache.clear()
         self.client = Client()
         self.student = Student.objects.create(
             full_name='Aluno Box',
@@ -184,6 +188,90 @@ class StudentIdentityFlowTests(TestCase):
         self.assertEqual(membership.status, StudentBoxMembershipStatus.PENDING_APPROVAL)
         invitation.refresh_from_db()
         self.assertIsNotNone(invitation.accepted_at)
+
+    @override_settings(
+        STUDENT_GOOGLE_OAUTH_CLIENT_ID='google-client-id',
+        STUDENT_GOOGLE_OAUTH_CLIENT_SECRET='google-client-secret',
+    )
+    @patch('student_identity.views.build_provider')
+    def test_mass_box_invite_redirects_to_onboarding_wizard(self, build_provider_mock):
+        link = StudentBoxInviteLink.objects.create(
+            box_root_slug=get_box_runtime_slug(),
+            expires_at=timezone.now() + timedelta(days=3),
+            max_uses=200,
+        )
+        provider = Mock()
+        provider.exchange_code.return_value = Mock(
+            provider='google',
+            email='novo.aluno@example.com',
+            provider_subject='google-mass-box-subject',
+        )
+        build_provider_mock.return_value = provider
+
+        from student_identity.oauth_state import build_oauth_state
+
+        response = self.client.get(
+            reverse('student-identity-oauth-callback', kwargs={'provider': 'google'}),
+            {
+                'code': 'oauth-code',
+                'state': build_oauth_state(provider='google', invite_token=str(link.token)),
+            },
+        )
+
+        self.assertRedirects(response, reverse('student-app-onboarding'))
+        self.assertEqual(StudentIdentity.objects.count(), 0)
+        pending = self.client.session.get('student_pending_onboarding', {})
+        self.assertEqual(pending.get('journey'), StudentOnboardingJourney.MASS_BOX_INVITE)
+        link.refresh_from_db()
+        self.assertEqual(link.use_count, 1)
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                action='student_onboarding.mass_box_invite.oauth_completed',
+                metadata__box_invite_link_id=link.id,
+            ).exists()
+        )
+
+    @override_settings(
+        STUDENT_GOOGLE_OAUTH_CLIENT_ID='google-client-id',
+        STUDENT_GOOGLE_OAUTH_CLIENT_SECRET='google-client-secret',
+    )
+    @patch('student_identity.views.build_provider')
+    def test_imported_lead_invite_redirects_to_reduced_onboarding(self, build_provider_mock):
+        invitation = StudentAppInvitation.objects.create(
+            student=self.student,
+            invited_email='',
+            onboarding_journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            expires_at=timezone.now() + timedelta(days=3),
+        )
+        provider = Mock()
+        provider.exchange_code.return_value = Mock(
+            provider='google',
+            email='aluno@example.com',
+            provider_subject='google-imported-lead-subject',
+        )
+        build_provider_mock.return_value = provider
+
+        from student_identity.oauth_state import build_oauth_state
+
+        response = self.client.get(
+            reverse('student-identity-oauth-callback', kwargs={'provider': 'google'}),
+            {
+                'code': 'oauth-code',
+                'state': build_oauth_state(provider='google', invite_token=str(invitation.token)),
+            },
+        )
+
+        self.assertRedirects(response, reverse('student-app-onboarding'))
+        pending = self.client.session.get('student_pending_onboarding', {})
+        self.assertEqual(pending.get('journey'), StudentOnboardingJourney.IMPORTED_LEAD_INVITE)
+        identity = StudentIdentity.objects.get(student=self.student)
+        self.assertEqual(identity.provider_subject, 'google-imported-lead-subject')
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                action='student_onboarding.imported_lead_invite.oauth_completed',
+                metadata__invitation_id=invitation.id,
+            ).exists()
+        )
 
     def test_transfer_student_moves_box_root_without_creating_second_house(self):
         identity = StudentIdentity.objects.create(
@@ -445,6 +533,80 @@ class StudentIdentityFlowTests(TestCase):
                 target_label=str(owner.id),
             ).exists()
         )
+
+    def test_operations_page_shows_intelligent_next_action_for_funnel(self):
+        owner = get_user_model().objects.create_superuser(
+            username='owner-funnel',
+            email='owner-funnel@example.com',
+            password='Senha@123456',
+        )
+        self.client.force_login(owner)
+        AuditEvent.objects.create(
+            actor=owner,
+            actor_role='Owner',
+            action='student_onboarding.mass_box_invite.landing_viewed',
+            target_model='student_identity.StudentBoxInviteLink',
+            target_label='control',
+            description='Landing em massa aberta.',
+            metadata={
+                'box_root_slug': get_box_runtime_slug(),
+                'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
+                'box_invite_link_id': 999,
+            },
+        )
+        AuditEvent.objects.create(
+            actor=owner,
+            actor_role='Owner',
+            action='student_onboarding.mass_box_invite.landing_viewed',
+            target_model='student_identity.StudentBoxInviteLink',
+            target_label='control',
+            description='Landing em massa aberta.',
+            metadata={
+                'box_root_slug': get_box_runtime_slug(),
+                'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
+                'box_invite_link_id': 999,
+            },
+        )
+
+        response = self.client.get(reverse('student-invitation-operations'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Pulso do corredor')
+        self.assertContains(response, 'Proxima melhor acao: atacar visitas -&gt; oauth concluido')
+        self.assertContains(response, 'O grupo esta clicando, mas pouca gente esta entrando com Google ou Apple.')
+
+    def test_operations_page_prioritizes_stalled_invites_in_recommended_queue(self):
+        owner = get_user_model().objects.create_superuser(
+            username='owner-queue',
+            email='owner-queue@example.com',
+            password='Senha@123456',
+        )
+        invitation = StudentAppInvitation.objects.create(
+            student=self.student,
+            invited_email='aluno@example.com',
+            expires_at=timezone.now() + timedelta(days=5),
+            created_by=owner,
+        )
+        StudentInvitationDelivery.objects.create(
+            invitation=invitation,
+            channel='email',
+            provider='smtp',
+            status=StudentInvitationDeliveryStatus.BOUNCED,
+            recipient='aluno@example.com',
+            requested_by=owner,
+            sent_at=timezone.now() - timedelta(hours=6),
+            failed_at=timezone.now() - timedelta(hours=5),
+            error_message='email.bounced',
+        )
+        self.client.force_login(owner)
+
+        response = self.client.get(reverse('student-invitation-operations'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Prioridade do dia')
+        self.assertContains(response, 'Trabalhar a fila quente do WhatsApp')
+        self.assertContains(response, 'Aluno Box')
+        self.assertContains(response, 'Enviar mensagem')
 
     @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
     def test_owner_can_send_student_invitation_email_from_operations_screen(self):

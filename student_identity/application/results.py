@@ -10,6 +10,7 @@ class StudentInvitationRecord:
     student_id: int
     student_name: str
     invite_type: str
+    onboarding_journey: str
     invited_email: str
     box_root_slug: str
     expires_at_iso: str
@@ -48,3 +49,15 @@ class StudentTransferResult:
     identity: StudentIdentityRecord | None
     transfer_id: int | None = None
     failure_reason: str = ''
+
+
+@dataclass(frozen=True, slots=True)
+class StudentBoxInviteLinkRecord:
+    id: int
+    token: str
+    box_root_slug: str
+    expires_at_iso: str
+    max_uses: int
+    use_count: int
+    paused_at_iso: str = ''
+    revoked_at_iso: str = ''

@@ -16,7 +16,14 @@ PONTOS CRITICOS:
 """
 
 from .base import *  # noqa: F401,F403
-from .base import MIDDLEWARE, env_bool, env_str
+from .base import (
+    MIDDLEWARE,
+    build_https_trusted_origins,
+    env_bool,
+    env_list_alias,
+    env_str,
+    merge_public_host_contract,
+)
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
@@ -24,9 +31,16 @@ from sentry_sdk.integrations.django import DjangoIntegration
 DEBUG = env_bool('DJANGO_DEBUG', False)
 
 # 🚀 Segurança de Elite: Isolamento de Host (Previne Host Header Injection)
-ALLOWED_HOSTS = env_str('DJANGO_ALLOWED_HOSTS', 'octobox.app,www.octobox.app').split(',')
-
-CSRF_TRUSTED_ORIGINS = [f"https://{host.strip()}" for host in ALLOWED_HOSTS if host.strip()]
+ALLOWED_HOSTS = env_list_alias(('DJANGO_ALLOWED_HOSTS', 'ALLOWED_HOSTS'), 'octobox.app,www.octobox.app')
+CSRF_TRUSTED_ORIGINS = env_list_alias(('DJANGO_CSRF_TRUSTED_ORIGINS', 'CSRF_TRUSTED_ORIGINS'))
+CSRF_TRUSTED_ORIGINS = sorted(
+    dict.fromkeys([*CSRF_TRUSTED_ORIGINS, *build_https_trusted_origins(ALLOWED_HOSTS)])
+)
+ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS = merge_public_host_contract(
+    ALLOWED_HOSTS,
+    CSRF_TRUSTED_ORIGINS,
+    extra_hosts=[env_str('RENDER_EXTERNAL_HOSTNAME')],
+)
 
 _configured_secret_key = env_str('DJANGO_SECRET_KEY')
 if not _configured_secret_key or _configured_secret_key == 'dev-only-secret-key-change-me':

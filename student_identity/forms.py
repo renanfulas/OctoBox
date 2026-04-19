@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django import forms
 
-from student_identity.models import StudentInvitationType
+from student_identity.models import StudentInvitationType, StudentOnboardingJourney
 from students.models import Student, StudentStatus
 
 
@@ -23,6 +23,16 @@ class StudentInvitationCreateForm(forms.Form):
         initial=StudentInvitationType.INDIVIDUAL,
         help_text='Convite individual libera o aluno ao fechar a identidade. Convite do box pede aprovacao depois.',
     )
+    onboarding_journey = forms.ChoiceField(
+        label='Jornada',
+        choices=(
+            (StudentOnboardingJourney.REGISTERED_STUDENT_INVITE, 'Aluno ja cadastrado'),
+            (StudentOnboardingJourney.IMPORTED_LEAD_INVITE, 'Lead importado'),
+        ),
+        initial=StudentOnboardingJourney.REGISTERED_STUDENT_INVITE,
+        required=False,
+        help_text='Use lead importado quando o box ja sabe nome e WhatsApp, mas o aluno ainda precisa completar o resto.',
+    )
     expires_in_days = forms.TypedChoiceField(
         label='Validade',
         coerce=int,
@@ -40,3 +50,6 @@ class StudentInvitationCreateForm(forms.Form):
 
     def clean_invited_email(self):
         return (self.cleaned_data.get('invited_email') or '').strip().lower()
+
+    def clean_onboarding_journey(self):
+        return self.cleaned_data.get('onboarding_journey') or StudentOnboardingJourney.REGISTERED_STUDENT_INVITE

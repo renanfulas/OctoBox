@@ -51,6 +51,12 @@ class StudentInvitationType(models.TextChoices):
     OPEN_BOX = 'open_box', 'Box com aprovacao'
 
 
+class StudentOnboardingJourney(models.TextChoices):
+    MASS_BOX_INVITE = 'mass_box_invite', 'Link em massa do box'
+    IMPORTED_LEAD_INVITE = 'imported_lead_invite', 'Lead importado'
+    REGISTERED_STUDENT_INVITE = 'registered_student_invite', 'Aluno ja cadastrado'
+
+
 class StudentInvitationDeliveryStatus(models.TextChoices):
     SENT = 'sent', 'Enviado'
     FAILED = 'failed', 'Falhou'
@@ -175,6 +181,12 @@ class StudentAppInvitation(TimeStampedModel):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='app_invitations')
     box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)
     invited_email = models.EmailField(blank=True)
+    onboarding_journey = models.CharField(
+        max_length=32,
+        choices=StudentOnboardingJourney.choices,
+        default=StudentOnboardingJourney.REGISTERED_STUDENT_INVITE,
+        db_index=True,
+    )
     expires_at = models.DateTimeField(db_index=True)
     accepted_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(
@@ -194,6 +206,49 @@ class StudentAppInvitation(TimeStampedModel):
 
     def __str__(self):
         return f'Invite {self.student.full_name} [{self.box_root_slug}]'
+
+
+class StudentBoxInviteLink(TimeStampedModel):
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)
+    expires_at = models.DateTimeField(db_index=True)
+    max_uses = models.PositiveIntegerField(default=200)
+    use_count = models.PositiveIntegerField(default=0)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='student_box_invite_links',
+    )
+    paused_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    @property
+    def is_expired(self) -> bool:
+        return self.expires_at <= timezone.now()
+
+    @property
+    def is_paused(self) -> bool:
+        return self.paused_at is not None
+
+    @property
+    def is_revoked(self) -> bool:
+        return self.revoked_at is not None
+
+    @property
+    def is_exhausted(self) -> bool:
+        return self.use_count >= self.max_uses
+
+    @property
+    def can_accept(self) -> bool:
+        return not self.is_expired and not self.is_paused and not self.is_revoked and not self.is_exhausted
+
+    def __str__(self):
+        return f'Link em massa [{self.box_root_slug}]'
 
 
 class StudentTransfer(TimeStampedModel):

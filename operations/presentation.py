@@ -135,11 +135,11 @@ def _build_operation_workspace_hero(page_key, snapshot):
         'operations-reception': build_page_hero(
             eyebrow='Recepcao',
             title='Seu balcão.',
-            copy='Veja chegada, caixa curto e grade sem travar o atendimento.',
+            copy='Veja quem atender primeiro, resolva cobrancas curtas e oriente a proxima aula sem travar o atendimento.',
             actions=_build_hero_actions_from_entry_context(
                 snapshot.get('reception_decision_entry_context'),
                 tertiary_action={
-                    'label': 'Ver grade em leitura',
+                    'label': 'Ver proximas aulas',
                     'href': '#reception-class-grid-board',
                     'kind': 'secondary',
                 },

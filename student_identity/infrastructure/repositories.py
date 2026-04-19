@@ -5,14 +5,16 @@ from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
 
-from student_identity.application.results import StudentIdentityRecord, StudentInvitationRecord
+from student_identity.application.results import StudentBoxInviteLinkRecord, StudentIdentityRecord, StudentInvitationRecord
 from student_identity.models import (
     StudentAppInvitation,
+    StudentBoxInviteLink,
     StudentBoxMembership,
     StudentBoxMembershipStatus,
     StudentIdentity,
     StudentIdentityStatus,
     StudentInvitationType,
+    StudentOnboardingJourney,
     StudentTransfer,
     StudentTransferStatus,
 )
@@ -39,10 +41,24 @@ def _invitation_record(invitation: StudentAppInvitation) -> StudentInvitationRec
         student_id=invitation.student_id,
         student_name=invitation.student.full_name,
         invite_type=invitation.invite_type,
+        onboarding_journey=invitation.onboarding_journey,
         invited_email=invitation.invited_email,
         box_root_slug=invitation.box_root_slug,
         expires_at_iso=invitation.expires_at.isoformat(),
         accepted_at_iso=invitation.accepted_at.isoformat() if invitation.accepted_at else '',
+    )
+
+
+def _box_invite_link_record(link: StudentBoxInviteLink) -> StudentBoxInviteLinkRecord:
+    return StudentBoxInviteLinkRecord(
+        id=link.id,
+        token=str(link.token),
+        box_root_slug=link.box_root_slug,
+        expires_at_iso=link.expires_at.isoformat(),
+        max_uses=link.max_uses,
+        use_count=link.use_count,
+        paused_at_iso=link.paused_at.isoformat() if link.paused_at else '',
+        revoked_at_iso=link.revoked_at.isoformat() if link.revoked_at else '',
     )
 
 
@@ -117,6 +133,9 @@ class DjangoStudentIdentityRepository:
             .first()
         )
 
+    def find_box_invite_link_by_token(self, token: str):
+        return StudentBoxInviteLink.objects.filter(token=token).first()
+
     def find_student_candidates_by_email(self, *, email: str):
         return list(Student.objects.filter(email__iexact=(email or '').strip()).order_by('id'))
 
@@ -135,6 +154,7 @@ class DjangoStudentIdentityRepository:
         invited_email: str,
         box_root_slug: str,
         invite_type: str,
+        onboarding_journey: str,
         expires_in_days: int,
         actor_id: int | None,
     ) -> StudentInvitationRecord:
@@ -153,12 +173,49 @@ class DjangoStudentIdentityRepository:
             student=student,
             box_root_slug=box_root_slug,
             invite_type=invite_type,
+            onboarding_journey=onboarding_journey or StudentOnboardingJourney.REGISTERED_STUDENT_INVITE,
             invited_email=(invited_email or '').strip().lower(),
             expires_at=now + timedelta(days=max(1, expires_in_days)),
             created_by_id=actor_id,
         )
         invitation = StudentAppInvitation.objects.select_related('student').get(pk=invitation.pk)
         return _invitation_record(invitation)
+
+    @transaction.atomic
+    def create_or_replace_box_invite_link(
+        self,
+        *,
+        box_root_slug: str,
+        expires_in_days: int,
+        max_uses: int,
+        actor_id: int | None,
+    ) -> StudentBoxInviteLinkRecord:
+        now = timezone.now()
+        (
+            StudentBoxInviteLink.objects
+            .filter(
+                box_root_slug=box_root_slug,
+                paused_at__isnull=True,
+                revoked_at__isnull=True,
+                expires_at__gt=now,
+            )
+            .update(revoked_at=now)
+        )
+        link = StudentBoxInviteLink.objects.create(
+            box_root_slug=box_root_slug,
+            expires_at=now + timedelta(days=max(1, expires_in_days)),
+            max_uses=max(1, max_uses),
+            created_by_id=actor_id,
+        )
+        return _box_invite_link_record(link)
+
+    @transaction.atomic
+    def record_box_invite_acceptance(self, link: StudentBoxInviteLink) -> StudentBoxInviteLink:
+        StudentBoxInviteLink.objects.filter(pk=link.pk).update(
+            use_count=link.use_count + 1,
+            updated_at=timezone.now(),
+        )
+        return StudentBoxInviteLink.objects.get(pk=link.pk)
 
     @transaction.atomic
     def save_identity(

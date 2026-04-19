@@ -7,6 +7,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from auditing.models import AuditEvent
 from operations.models import Attendance, AttendanceStatus, ClassSession
 from student_app.application.use_cases import GetStudentWorkoutPrescription
 from student_app.models import (
@@ -26,8 +27,9 @@ from student_identity.models import (
     StudentIdentity,
     StudentIdentityProvider,
     StudentIdentityStatus,
+    StudentOnboardingJourney,
 )
-from students.models import Student
+from students.models import Student, StudentStatus
 
 
 class StudentAppExperienceTests(TestCase):
@@ -62,6 +64,152 @@ class StudentAppExperienceTests(TestCase):
         anonymous_client = Client()
         response = anonymous_client.get(reverse('student-app-home'))
         self.assertRedirects(response, reverse('student-identity-login'))
+
+    def test_student_profile_edit_updates_student_and_identity_email(self):
+        response = self.client.post(
+            reverse('student-app-settings'),
+            {
+                'full_name': 'Atleta Atualizada',
+                'phone': '5511777777778',
+                'email': 'nova@app.com',
+                'birth_date': '1998-04-03',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('student-app-settings'))
+        self.student.refresh_from_db()
+        self.identity.refresh_from_db()
+        self.assertEqual(self.student.full_name, 'Atleta Atualizada')
+        self.assertEqual(self.student.email, 'nova@app.com')
+        self.assertEqual(self.identity.email, 'nova@app.com')
+
+    def test_mass_onboarding_creates_student_and_identity(self):
+        client = Client()
+        session = client.session
+        session['student_pending_onboarding'] = {
+            'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
+            'box_root_slug': 'control',
+            'provider': StudentIdentityProvider.GOOGLE,
+            'provider_subject': 'provider-subject-new-mass',
+            'email': 'novo@app.com',
+            'box_invite_link_id': 123,
+        }
+        session.save()
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Novo Aluno App',
+                'phone': '5511888888888',
+                'email': 'novo@app.com',
+                'birth_date': '2000-01-02',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('student-app-home'))
+        identity = StudentIdentity.objects.get(provider_subject='provider-subject-new-mass')
+        self.assertEqual(identity.email, 'novo@app.com')
+        self.assertEqual(identity.student.full_name, 'Novo Aluno App')
+        membership = StudentBoxMembership.objects.get(identity=identity, box_root_slug='control')
+        self.assertEqual(membership.status, StudentBoxMembershipStatus.ACTIVE)
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                action='student_onboarding.mass_box_invite.wizard_started',
+                metadata__box_invite_link_id=123,
+            ).exists()
+        )
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                action='student_onboarding.mass_box_invite.wizard_completed',
+                metadata__identity_id=identity.id,
+            ).exists()
+        )
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                action='student_onboarding.mass_box_invite.app_entry_completed',
+                metadata__identity_id=identity.id,
+            ).exists()
+        )
+
+    def test_imported_lead_onboarding_updates_student_and_records_funnel_events(self):
+        client = Client()
+        student = Student.objects.create(
+            full_name='Lead Importado',
+            phone='5511666666666',
+            email='',
+            status=StudentStatus.LEAD,
+        )
+        identity = StudentIdentity.objects.create(
+            student=student,
+            box_root_slug='control',
+            primary_box_root_slug='control',
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='provider-subject-imported-lead',
+            email='lead@app.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        StudentBoxMembership.objects.create(
+            identity=identity,
+            student=student,
+            box_root_slug='control',
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
+        client.cookies['octobox_student_session'] = build_student_session_value(
+            identity_id=identity.id,
+            box_root_slug='control',
+        )
+        session = client.session
+        session['student_pending_onboarding'] = {
+            'journey': StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            'box_root_slug': 'control',
+            'student_id': student.id,
+            'identity_id': identity.id,
+            'invitation_id': 456,
+            'email': 'lead@app.com',
+        }
+        session.save()
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Lead Revisado',
+                'phone': '5511666667777',
+                'email': 'lead@app.com',
+                'birth_date': '1999-05-06',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('student-app-home'))
+        student.refresh_from_db()
+        self.assertEqual(student.full_name, 'Lead Revisado')
+        self.assertEqual(student.phone, '5511666667777')
+        self.assertEqual(student.status, StudentStatus.ACTIVE)
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                action='student_onboarding.imported_lead_invite.wizard_started',
+                metadata__invitation_id=456,
+            ).exists()
+        )
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                action='student_onboarding.imported_lead_invite.wizard_completed',
+                metadata__identity_id=identity.id,
+            ).exists()
+        )
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                action='student_onboarding.imported_lead_invite.app_entry_completed',
+                metadata__identity_id=identity.id,
+            ).exists()
+        )
 
     def test_student_home_renders_without_staff_shell(self):
         ClassSession.objects.create(

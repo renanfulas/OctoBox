@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from .models import (
     StudentAppInvitation,
+    StudentBoxInviteLink,
     StudentIdentity,
     StudentInvitationDelivery,
     StudentInvitationDeliveryEvent,
@@ -22,8 +23,8 @@ class StudentIdentityAdmin(admin.ModelAdmin):
 
 @admin.register(StudentAppInvitation)
 class StudentAppInvitationAdmin(admin.ModelAdmin):
-    list_display = ('student', 'box_root_slug', 'invited_email', 'invitation_status', 'expires_at', 'accepted_at')
-    list_filter = ('box_root_slug',)
+    list_display = ('student', 'box_root_slug', 'onboarding_journey', 'invited_email', 'invitation_status', 'expires_at', 'accepted_at')
+    list_filter = ('box_root_slug', 'onboarding_journey')
     search_fields = ('student__full_name', 'invited_email')
     readonly_fields = ('invite_url',)
     actions = ('extend_selected_invites_by_7_days', 'revoke_selected_invites')
@@ -62,6 +63,13 @@ class StudentTransferAdmin(admin.ModelAdmin):
     list_display = ('student', 'from_box_root_slug', 'to_box_root_slug', 'status', 'effective_at')
     list_filter = ('status', 'from_box_root_slug', 'to_box_root_slug')
     search_fields = ('student__full_name', 'reason')
+
+
+@admin.register(StudentBoxInviteLink)
+class StudentBoxInviteLinkAdmin(admin.ModelAdmin):
+    list_display = ('box_root_slug', 'use_count', 'max_uses', 'expires_at', 'paused_at', 'revoked_at')
+    list_filter = ('box_root_slug',)
+    search_fields = ('box_root_slug',)
 
 
 @admin.register(StudentInvitationDelivery)

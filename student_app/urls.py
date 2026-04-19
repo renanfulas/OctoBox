@@ -7,6 +7,7 @@ from .views import (
     StudentManifestView,
     StudentMembershipPendingView,
     StudentNoActiveBoxView,
+    StudentOnboardingWizardView,
     StudentOfflineView,
     StudentRmView,
     StudentServiceWorkerView,
@@ -21,6 +22,7 @@ from .views import (
 urlpatterns = [
     path('auth/', include('student_identity.urls')),
     path('', StudentHomeView.as_view(), name='student-app-home'),
+    path('onboarding/', StudentOnboardingWizardView.as_view(), name='student-app-onboarding'),
     path('grade/', StudentGradeView.as_view(), name='student-app-grade'),
     path('aguardando-aprovacao/', StudentMembershipPendingView.as_view(), name='student-app-membership-pending'),
     path('suspenso-financeiro/', StudentSuspendedFinancialView.as_view(), name='student-app-suspended-financial'),

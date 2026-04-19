@@ -69,6 +69,14 @@
                 <button class="button secondary" type="submit" name="action" value="reject-intake">Recusar</button>
             </form>
             {% endif %}
+            {% if page.capabilities.can_manage_students and intake.phone %}
+            <form method="post" class="intake-row-form" data-action="intake-queue-actions">
+                {% csrf_token %}
+                <input type="hidden" name="intake_id" value="{{ intake.id }}">
+                <input type="hidden" name="return_query" value="{{ request.GET.urlencode }}">
+                <button class="button secondary" type="submit" name="action" value="send-whatsapp-invite">Convidar 1 clique</button>
+            </form>
+            {% endif %}
             {% if item.whatsapp_href %}
             <div class="intake-whatsapp-slot">
                 <a

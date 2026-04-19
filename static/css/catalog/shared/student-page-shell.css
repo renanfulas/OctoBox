@@ -11,6 +11,66 @@ POR QUE ELE EXISTE:
     gap: 12px;
 }
 
+.student-return-banner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px 16px;
+    align-items: center;
+    padding: 14px 16px;
+    border-radius: var(--radius-panel);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-glass-border) 80%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 32%),
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-glass-strong) 94%, transparent), color-mix(in srgb, var(--theme-surface-glass) 96%, transparent));
+    box-shadow:
+        inset 0 1px 0 var(--theme-glass-highlight),
+        0 12px 28px rgba(15, 23, 42, 0.05);
+}
+
+.student-return-banner__copy {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+.student-return-banner__eyebrow {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 9px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 12%, var(--theme-surface-glass) 88%);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 18%, var(--theme-glass-border) 82%);
+    color: var(--legacy-copy);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.student-return-banner__title {
+    margin: 0;
+    color: var(--theme-text-primary);
+    font-size: 1.05rem;
+    line-height: 1.2;
+}
+
+.student-return-banner__text {
+    margin: 0;
+    color: var(--legacy-copy);
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.student-return-banner__actions {
+    justify-content: flex-end;
+}
+
+.student-return-banner__action {
+    white-space: nowrap;
+}
+
 .student-page-shell :is(.field-label, [class~="meta-text"], [class~="meta-text-sm"]) {
     color: var(--legacy-copy);
 }

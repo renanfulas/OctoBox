@@ -5,15 +5,15 @@ POR QUE ELE EXISTE:
 - mantém intake e cadastro rápido em um bloco próprio.
 -->
 <article class="table-card operation-table-card reception-priority-card" id="reception-intake-board" data-panel="reception-intake-board">
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Fila de entrada" title="Quem pode virar ficha agora" copy="Localizar, entender a origem e abrir cadastro com pouco atrito." pill_label=page.data.reception_intakes|length|stringformat:"s"|add:" entrada(s)" pill_class="info" %}
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Fila de entrada" title="Quem atender primeiro agora" copy="Veja quem chegou e resolva o proximo passo sem travar o balcao." pill_label=page.data.reception_intakes|length|stringformat:"s"|add:" na fila" pill_class="info" %}
     <div class="operation-table-wrap">
         <table>
             <thead>
                 <tr>
                     <th scope="col">Contato</th>
                     <th scope="col">Origem</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Proximo passo</th>
+                    <th scope="col">Fila</th>
+                    <th scope="col">Acao</th>
                 </tr>
             </thead>
             <tbody>
