@@ -633,7 +633,9 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertEqual(response['Content-Type'], 'application/manifest+json')
         payload = json.loads(response.content.decode('utf-8'))
         self.assertEqual(payload['name'], 'Treino Juliana')
-        self.assertEqual(payload['start_url'], '/renan/juliana')
+        self.assertEqual(payload['id'], '/renan/juliana')
+        self.assertEqual(payload['short_name'], 'Juliana')
+        self.assertEqual(payload['start_url'], '/renan/juliana?source=pwa')
         self.assertEqual(payload['scope'], '/renan/')
         self.assertEqual(len(payload['icons']), 3)
 
@@ -644,7 +646,17 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertEqual(sw_response.status_code, 200)
         self.assertEqual(sw_response['Service-Worker-Allowed'], '/renan/')
         self.assertIn('/renan/juliana', sw_response.content.decode('utf-8'))
+        self.assertIn('/renan/juliana/manifest.webmanifest', sw_response.content.decode('utf-8'))
         self.assertIn('/renan/bruno', sw_response.content.decode('utf-8'))
+        self.assertIn('/renan/bruno/manifest.webmanifest', sw_response.content.decode('utf-8'))
         self.assertIn('/renan/offline/', sw_response.content.decode('utf-8'))
         self.assertEqual(offline_response.status_code, 200)
         self.assertContains(offline_response, 'Sem conexão agora.')
+
+    def test_public_workout_page_renders_install_cta(self):
+        response = self.client.get('/renan/juliana')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'public-workout-install')
+        self.assertContains(response, 'beforeinstallprompt')
+        self.assertContains(response, 'Adicionar à Tela de Início')

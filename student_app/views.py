@@ -97,8 +97,6 @@ def _render_public_workout_html(plan_slug: str) -> str:
         raise Http404('Arquivo de treino publico indisponivel.')
 
     html = template_path.read_text(encoding='utf-8')
-    if html.startswith('{% load static %}'):
-        html = html.split('\n', 1)[1]
 
     viewport_markers = (
         '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">',
@@ -120,12 +118,107 @@ def _render_public_workout_html(plan_slug: str) -> str:
             html = html.replace(marker, f'{marker}\n{head_injection}', 1)
             break
 
+    install_prompt_markup = """
+<style>
+.public-workout-install{
+  position:fixed;
+  right:16px;
+  bottom:16px;
+  z-index:9999;
+  display:none;
+  align-items:center;
+  gap:10px;
+  max-width:min(320px,calc(100vw - 32px));
+  padding:12px 14px;
+  border-radius:18px;
+  background:rgba(17,32,59,.94);
+  color:#fff;
+  box-shadow:0 16px 34px rgba(15,23,42,.28);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.public-workout-install.is-visible{display:flex}
+.public-workout-install__copy{font-size:13px;line-height:1.35}
+.public-workout-install__button{
+  border:0;
+  border-radius:999px;
+  padding:10px 14px;
+  background:#f5efe4;
+  color:#11203b;
+  font-weight:700;
+  font-size:13px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+@media (max-width: 640px){
+  .public-workout-install{
+    left:12px;
+    right:12px;
+    bottom:12px;
+    max-width:none;
+  }
+}
+</style>
+<div class="public-workout-install" id="public-workout-install" aria-live="polite">
+  <div class="public-workout-install__copy" id="public-workout-install-copy"></div>
+  <button class="public-workout-install__button" id="public-workout-install-button" type="button"></button>
+</div>
+""".strip()
     sw_registration_script = """
 <script>
 (function () {
+  var installPrompt = null;
+  var installRoot = document.getElementById('public-workout-install');
+  var installCopy = document.getElementById('public-workout-install-copy');
+  var installButton = document.getElementById('public-workout-install-button');
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  var isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+
+  function showInstall(copy, buttonLabel, onClick) {
+    if (!installRoot || !installCopy || !installButton || isStandalone) {
+      return;
+    }
+    installCopy.textContent = copy;
+    installButton.textContent = buttonLabel;
+    installButton.onclick = onClick;
+    installRoot.classList.add('is-visible');
+  }
+
   if (!('serviceWorker' in navigator)) {
+    if (isIos) {
+      showInstall('No iPhone/iPad, toque em Compartilhar e depois em Adicionar à Tela de Início.', 'Entendi', function () {
+        installRoot.classList.remove('is-visible');
+      });
+    }
     return;
   }
+
+  if (isIos) {
+    showInstall('No iPhone/iPad, toque em Compartilhar e depois em Adicionar à Tela de Início.', 'Entendi', function () {
+      installRoot.classList.remove('is-visible');
+    });
+  }
+
+  window.addEventListener('beforeinstallprompt', function (event) {
+    event.preventDefault();
+    installPrompt = event;
+    showInstall('Instale este treino na tela inicial para abrir como app, sem login.', 'Instalar app', function () {
+      if (!installPrompt) {
+        return;
+      }
+      installPrompt.prompt();
+      installPrompt.userChoice.finally(function () {
+        installPrompt = null;
+        installRoot.classList.remove('is-visible');
+      });
+    });
+  });
+
+  window.addEventListener('appinstalled', function () {
+    if (installRoot) {
+      installRoot.classList.remove('is-visible');
+    }
+  });
+
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('/renan/sw.js', { scope: '/renan/' }).catch(function () {
       // O treino continua abrindo mesmo sem o service worker.
@@ -135,7 +228,7 @@ def _render_public_workout_html(plan_slug: str) -> str:
 </script>
 """.strip()
     if "navigator.serviceWorker.register('/renan/sw.js'" not in html:
-        html = html.replace('</body>', f'{sw_registration_script}\n</body>', 1)
+        html = html.replace('</body>', f'{install_prompt_markup}\n{sw_registration_script}\n</body>', 1)
     return html
 
 
@@ -815,9 +908,11 @@ class PublicWorkoutManifestView(View):
     def get(self, request, plan_slug, *args, **kwargs):
         entry = _get_public_workout_entry(plan_slug)
         manifest = {
+            'id': f'/renan/{entry["slug"]}',
             'name': entry['title'],
-            'short_name': 'OctoFit',
-            'start_url': f'/renan/{entry["slug"]}',
+            'short_name': entry['title'].replace('Treino ', '')[:12],
+            'description': f'{entry["title"]} no formato rapido do OctoBox.',
+            'start_url': f'/renan/{entry["slug"]}?source=pwa',
             'scope': PUBLIC_WORKOUT_SCOPE,
             'display': 'standalone',
             'orientation': 'portrait',
@@ -849,7 +944,13 @@ class PublicWorkoutManifestView(View):
 
 class PublicWorkoutServiceWorkerView(View):
     def get(self, request, *args, **kwargs):
-        routes = ''.join([f"  '/renan/{slug}',\n" for slug in PUBLIC_WORKOUT_LIBRARY])
+        routes = ''.join(
+            [
+                f"  '/renan/{slug}',\n"
+                f"  '/renan/{slug}/manifest.webmanifest',\n"
+                for slug in PUBLIC_WORKOUT_LIBRARY
+            ]
+        )
         js = f"""const VERSION = 'public-workouts-{getattr(settings, 'STATIC_ASSET_VERSION', '1')}';
 const STATIC_CACHE = `${{VERSION}}-static`;
 const OFFLINE_URL = '{PUBLIC_WORKOUT_OFFLINE_URL}';
