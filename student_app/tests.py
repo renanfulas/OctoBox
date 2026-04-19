@@ -65,6 +65,21 @@ class StudentAppExperienceTests(TestCase):
         response = anonymous_client.get(reverse('student-app-home'))
         self.assertRedirects(response, reverse('student-identity-login'))
 
+    def test_student_routes_redirect_to_onboarding_when_pending_onboarding_exists(self):
+        session = self.client.session
+        session['student_pending_onboarding'] = {
+            'journey': StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            'identity_id': self.identity.id,
+            'student_id': self.student.id,
+            'invitation_id': 321,
+            'email': self.identity.email,
+        }
+        session.save()
+
+        response = self.client.get(reverse('student-app-home'))
+
+        self.assertRedirects(response, reverse('student-app-onboarding'))
+
     def test_student_profile_edit_updates_student_and_identity_email(self):
         response = self.client.post(
             reverse('student-app-settings'),
@@ -229,6 +244,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'WOD')
         self.assertContains(response, 'RM')
         self.assertContains(response, 'Modo atual: Grade')
+        self.assertNotContains(response, 'Tema')
 
     def test_student_home_switches_to_wod_mode_when_attendance_window_is_active(self):
         session = ClassSession.objects.create(
@@ -594,3 +610,41 @@ class StudentAppExperienceTests(TestCase):
         )
 
         self.assertRedirects(response, reverse('student-identity-invite', kwargs={'token': token}))
+
+
+class PublicWorkoutPwaTests(TestCase):
+    def test_public_workout_pages_are_open_without_login(self):
+        juliana_response = self.client.get('/renan/juliana')
+        bruno_response = self.client.get('/renan/bruno')
+
+        self.assertEqual(juliana_response.status_code, 200)
+        self.assertEqual(bruno_response.status_code, 200)
+        self.assertContains(juliana_response, 'Juliana Alves')
+        self.assertContains(bruno_response, 'Bruno Fulas')
+        self.assertContains(juliana_response, "/renan/juliana/manifest.webmanifest")
+        self.assertContains(bruno_response, "/renan/bruno/manifest.webmanifest")
+        self.assertContains(juliana_response, "/renan/sw.js")
+        self.assertContains(bruno_response, "/renan/sw.js")
+
+    def test_public_workout_manifest_is_dynamic_per_slug(self):
+        response = self.client.get(reverse('public-workout-manifest', kwargs={'plan_slug': 'juliana'}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/manifest+json')
+        payload = json.loads(response.content.decode('utf-8'))
+        self.assertEqual(payload['name'], 'Treino Juliana')
+        self.assertEqual(payload['start_url'], '/renan/juliana')
+        self.assertEqual(payload['scope'], '/renan/')
+        self.assertEqual(len(payload['icons']), 3)
+
+    def test_public_workout_service_worker_and_offline_route_are_available(self):
+        sw_response = self.client.get(reverse('public-workout-sw'))
+        offline_response = self.client.get(reverse('public-workout-offline'))
+
+        self.assertEqual(sw_response.status_code, 200)
+        self.assertEqual(sw_response['Service-Worker-Allowed'], '/renan/')
+        self.assertIn('/renan/juliana', sw_response.content.decode('utf-8'))
+        self.assertIn('/renan/bruno', sw_response.content.decode('utf-8'))
+        self.assertIn('/renan/offline/', sw_response.content.decode('utf-8'))
+        self.assertEqual(offline_response.status_code, 200)
+        self.assertContains(offline_response, 'Sem conexão agora.')

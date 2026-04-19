@@ -2,14 +2,16 @@ from __future__ import annotations
 
 import json
 import re
+from pathlib import Path
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
 from django.conf import settings
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.template.loader import render_to_string
 from django.views.generic import FormView, TemplateView, View
 
@@ -52,6 +54,89 @@ STUDENT_APP_ICON_512 = '/static/images/student-app-icon-512.png'
 STUDENT_APP_ICON_MASKABLE_512 = '/static/images/student-app-icon-maskable-512.png'
 STUDENT_APP_APPLE_TOUCH_ICON = '/static/images/student-app-apple-touch-icon.png'
 UUID_TOKEN_PATTERN = re.compile(r'(?P<token>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})')
+PUBLIC_WORKOUT_SCOPE = '/renan/'
+PUBLIC_WORKOUT_SW_URL = '/renan/sw.js'
+PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
+PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
+PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
+PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
+PUBLIC_WORKOUT_APPLE_TOUCH_ICON = STUDENT_APP_APPLE_TOUCH_ICON
+PUBLIC_WORKOUT_LIBRARY = {
+    'juliana': {
+        'title': 'Treino Juliana',
+        'theme_color': '#0f172a',
+        'background_color': '#f5efe4',
+        'template_file': 'juliana.html',
+    },
+    'bruno': {
+        'title': 'Treino Bruno',
+        'theme_color': '#11203b',
+        'background_color': '#f4efe6',
+        'template_file': 'bruno.html',
+    },
+}
+PUBLIC_WORKOUT_TEMPLATE_DIR = Path(settings.BASE_DIR) / 'templates' / 'public_workouts'
+
+
+def _get_public_workout_entry(plan_slug: str) -> dict[str, str]:
+    normalized_slug = (plan_slug or '').strip().lower()
+    entry = PUBLIC_WORKOUT_LIBRARY.get(normalized_slug)
+    if entry is None:
+        raise Http404('Treino publico nao encontrado.')
+    return {'slug': normalized_slug, **entry}
+
+
+def _build_public_workout_manifest_url(plan_slug: str) -> str:
+    return f'/renan/{plan_slug}/manifest.webmanifest'
+
+
+def _render_public_workout_html(plan_slug: str) -> str:
+    entry = _get_public_workout_entry(plan_slug)
+    template_path = PUBLIC_WORKOUT_TEMPLATE_DIR / entry['template_file']
+    if not template_path.exists():
+        raise Http404('Arquivo de treino publico indisponivel.')
+
+    html = template_path.read_text(encoding='utf-8')
+    if html.startswith('{% load static %}'):
+        html = html.split('\n', 1)[1]
+
+    viewport_markers = (
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">',
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+    )
+    head_injection = (
+        f'<meta name="theme-color" content="{entry["theme_color"]}">\n'
+        '<meta name="mobile-web-app-capable" content="yes">\n'
+        '<meta name="apple-mobile-web-app-capable" content="yes">\n'
+        '<meta name="apple-mobile-web-app-status-bar-style" content="default">\n'
+        f'<meta name="apple-mobile-web-app-title" content="{entry["title"]}">\n'
+        f'<link rel="manifest" href="{_build_public_workout_manifest_url(entry["slug"])}">\n'
+        f'<link rel="apple-touch-icon" href="{PUBLIC_WORKOUT_APPLE_TOUCH_ICON}">\n'
+        f'<link rel="icon" href="/static/images/student-app-icon.svg" type="image/svg+xml">\n'
+        f'<link rel="icon" href="{PUBLIC_WORKOUT_ICON_192}" sizes="192x192" type="image/png">'
+    )
+    for marker in viewport_markers:
+        if marker in html:
+            html = html.replace(marker, f'{marker}\n{head_injection}', 1)
+            break
+
+    sw_registration_script = """
+<script>
+(function () {
+  if (!('serviceWorker' in navigator)) {
+    return;
+  }
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/renan/sw.js', { scope: '/renan/' }).catch(function () {
+      // O treino continua abrindo mesmo sem o service worker.
+    });
+  });
+})();
+</script>
+""".strip()
+    if "navigator.serviceWorker.register('/renan/sw.js'" not in html:
+        html = html.replace('</body>', f'{sw_registration_script}\n</body>', 1)
+    return html
 
 
 def _ensure_pending_enrollment(*, student: Student, plan, source_note: str):
@@ -140,6 +225,9 @@ class StudentIdentityRequiredMixin:
         identity, memberships, active_membership = self._resolve_student_runtime(request)
         if identity is None:
             return redirect('student-identity-login')
+        pending_onboarding = read_pending_student_onboarding(request)
+        if pending_onboarding is not None and request.path != reverse('student-app-onboarding'):
+            return redirect('student-app-onboarding')
         current_device_fingerprint = build_student_device_fingerprint(request)
         payload = read_student_session_value(request.COOKIES.get(get_student_session_cookie_name()))
         if payload is not None and payload.get('device_fingerprint') and payload.get('device_fingerprint') != current_device_fingerprint:
@@ -715,3 +803,154 @@ class StudentServiceWorkerView(View):
 
 class StudentOfflineView(TemplateView):
     template_name = 'student_app/offline.html'
+
+
+class PublicWorkoutDetailView(View):
+    def get(self, request, plan_slug, *args, **kwargs):
+        html = _render_public_workout_html(plan_slug)
+        return HttpResponse(html)
+
+
+class PublicWorkoutManifestView(View):
+    def get(self, request, plan_slug, *args, **kwargs):
+        entry = _get_public_workout_entry(plan_slug)
+        manifest = {
+            'name': entry['title'],
+            'short_name': 'OctoFit',
+            'start_url': f'/renan/{entry["slug"]}',
+            'scope': PUBLIC_WORKOUT_SCOPE,
+            'display': 'standalone',
+            'orientation': 'portrait',
+            'background_color': entry['background_color'],
+            'theme_color': entry['theme_color'],
+            'icons': [
+                {
+                    'src': PUBLIC_WORKOUT_ICON_192,
+                    'sizes': '192x192',
+                    'type': 'image/png',
+                    'purpose': 'any',
+                },
+                {
+                    'src': PUBLIC_WORKOUT_ICON_512,
+                    'sizes': '512x512',
+                    'type': 'image/png',
+                    'purpose': 'any',
+                },
+                {
+                    'src': PUBLIC_WORKOUT_ICON_MASKABLE_512,
+                    'sizes': '512x512',
+                    'type': 'image/png',
+                    'purpose': 'maskable',
+                },
+            ],
+        }
+        return HttpResponse(json.dumps(manifest), content_type='application/manifest+json')
+
+
+class PublicWorkoutServiceWorkerView(View):
+    def get(self, request, *args, **kwargs):
+        routes = ''.join([f"  '/renan/{slug}',\n" for slug in PUBLIC_WORKOUT_LIBRARY])
+        js = f"""const VERSION = 'public-workouts-{getattr(settings, 'STATIC_ASSET_VERSION', '1')}';
+const STATIC_CACHE = `${{VERSION}}-static`;
+const OFFLINE_URL = '{PUBLIC_WORKOUT_OFFLINE_URL}';
+const APP_SCOPE = '{PUBLIC_WORKOUT_SCOPE}';
+const ALLOWLIST = [
+{routes}  OFFLINE_URL,
+  '{PUBLIC_WORKOUT_ICON_192}',
+  '{PUBLIC_WORKOUT_ICON_512}',
+  '{PUBLIC_WORKOUT_ICON_MASKABLE_512}',
+  '{PUBLIC_WORKOUT_APPLE_TOUCH_ICON}',
+  '/static/images/student-app-icon.svg',
+];
+
+function isAllowedStaticAsset(requestUrl) {{
+  if (requestUrl.origin !== self.location.origin) {{
+    return false;
+  }}
+  return ALLOWLIST.includes(requestUrl.pathname);
+}}
+
+self.addEventListener('install', (event) => {{
+  event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.addAll(ALLOWLIST)));
+  self.skipWaiting();
+}});
+
+self.addEventListener('activate', (event) => {{
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((key) => key !== STATIC_CACHE).map((key) => caches.delete(key)))
+    )
+  );
+  self.clients.claim();
+}});
+
+self.addEventListener('fetch', (event) => {{
+  const request = event.request;
+  const requestUrl = new URL(request.url);
+
+  if (request.method !== 'GET') {{
+    return;
+  }}
+
+  if (request.mode === 'navigate') {{
+    if (!requestUrl.pathname.startsWith(APP_SCOPE)) {{
+      return;
+    }}
+    event.respondWith(
+      fetch(request).catch(async () => {{
+        const cache = await caches.open(STATIC_CACHE);
+        return cache.match(request, {{ ignoreSearch: true }}) || cache.match(OFFLINE_URL, {{ ignoreSearch: true }});
+      }})
+    );
+    return;
+  }}
+
+  if (!isAllowedStaticAsset(requestUrl)) {{
+    return;
+  }}
+
+  event.respondWith(
+    caches.open(STATIC_CACHE).then(async (cache) => {{
+      const cached = await cache.match(request, {{ ignoreSearch: true }});
+      const networkFetch = fetch(request).then((response) => {{
+        if (response.ok) {{
+          cache.put(request, response.clone());
+        }}
+        return response;
+      }});
+      return cached || networkFetch;
+    }})
+  );
+}});
+"""
+        response = HttpResponse(js, content_type='application/javascript')
+        response['Service-Worker-Allowed'] = PUBLIC_WORKOUT_SCOPE
+        return response
+
+
+class PublicWorkoutOfflineView(View):
+    def get(self, request, *args, **kwargs):
+        html = """<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Treinos offline</title>
+  <style>
+    body{margin:0;font-family:Manrope,system-ui,sans-serif;background:#f4efe6;color:#11203b;min-height:100vh;display:grid;place-items:center;padding:24px}
+    main{width:min(100%,560px);background:rgba(255,255,255,.92);border:1px solid rgba(17,32,59,.12);border-radius:28px;padding:28px;box-shadow:0 24px 60px rgba(17,32,59,.12)}
+    h1{margin:0 0 12px;font-size:clamp(1.8rem,4vw,2.4rem)}
+    p{margin:0 0 12px;line-height:1.6;color:#52627e}
+    a{display:inline-flex;margin-top:12px;padding:12px 16px;border-radius:999px;background:#11203b;color:#fff;text-decoration:none;font-weight:700}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Sem conexão agora.</h1>
+    <p>Quando a internet voltar, os links públicos de treino da Juliana e do Bruno voltam a abrir normalmente.</p>
+    <p>Se você já abriu um dos treinos antes neste aparelho, tente novamente em alguns segundos.</p>
+    <a href="/renan/juliana">Abrir treino da Juliana</a>
+  </main>
+</body>
+</html>"""
+        return HttpResponse(html)

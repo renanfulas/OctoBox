@@ -26,6 +26,7 @@ urlpatterns = [
     path('', include('access.urls')),
     path('api/', include('api.urls')),
     path('aluno/', include('student_app.urls')),
+    path('renan/', include('student_app.public_urls')),
     path('', include('dashboard.urls')),
     path('', include('onboarding.urls')),
     path('', include('catalog.urls')),

@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bruno Fulas — Programa Upper/Lower</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F4F4F2;--white:#fff;--card:#FAFAF8;--border:#E8E8E5;
+  --dark:#1a1a1a;--muted:#888;--light:#bbb;--alt:#F9F9F7;
+  --blue:#2563EB;--blue-bg:#EFF6FF;--blue-border:#BFDBFE;
+  --prep-bg:#F1EFE8;--prep-fg:#57534E;
+  --feed-bg:#FEF3C7;--feed-fg:#92400E;
+  --top-bg:#EDE9FE;--top-fg:#5B21B6;
+  --max-bg:#FEE2E2;--max-fg:#991B1B;
+  --force-bg:#DBEAFE;--force-fg:#1D4ED8;
+  --hiper-bg:#EDE9FE;--hiper-fg:#5B21B6;
+  --cardio-bg:#D1FAE5;--cardio-fg:#065F46;
+  --green-bg:#EAF3DE;--green-fg:#3A6F10;
+  --amber-bg:#FEF3C7;--amber-fg:#92400E;
+}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--dark);min-height:100vh}
+.page{max-width:880px;margin:0 auto;padding:1.75rem 1.25rem 4rem}
+
+/* ─ Header ─ */
+.prog-title{font-size:22px;font-weight:700;margin-bottom:2px}
+.prog-name{font-size:14px;color:var(--blue);font-weight:700;margin-bottom:3px}
+.prog-sub{font-size:11.5px;color:var(--muted);margin-bottom:1.4rem;line-height:1.55}
+
+/* ─ Stats ─ */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.4rem}
+.stat{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:.7rem .9rem}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.stat-v{font-size:19px;font-weight:700}
+
+/* ─ Glossary banner ─ */
+.glossary{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;margin-bottom:1.25rem}
+.glossary-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.55rem}
+.glossary-grid{display:flex;flex-wrap:wrap;gap:6px}
+.gloss-item{display:flex;align-items:baseline;gap:5px;font-size:11.5px}
+.gloss-term{font-weight:700;color:var(--dark);background:var(--alt);border:1px solid var(--border);border-radius:5px;padding:2px 7px}
+.gloss-def{color:var(--muted)}
+.gloss-sep{width:1px;background:var(--border);height:14px;align-self:center;margin:0 4px}
+
+/* ─ Week strip ─ */
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:1.2rem}
+.dp{background:var(--white);border:1px solid var(--border);border-radius:9px;padding:.6rem .25rem;text-align:center;cursor:pointer;transition:border-color .12s,background .12s;user-select:none}
+.dp:hover:not(.rest){border-color:#93C5FD}
+.dp.active{border-color:var(--blue);background:var(--blue-bg)}
+.dp.active .dt{color:var(--force-fg)}
+.dp.cardio-d{background:var(--green-bg);border-color:#86C04A}
+.dp.cardio-d .dt{color:var(--green-fg)}
+.dp.rest{opacity:.38;cursor:default}
+.dn{font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:600;margin-bottom:3px}
+.dt{font-size:11px;font-weight:700;color:#444}
+
+/* ─ Tabs ─ */
+.tabs{display:flex;gap:5px;margin-bottom:1.1rem;flex-wrap:wrap}
+.tab{padding:6px 15px;border-radius:8px;border:1px solid var(--border);font-size:12.5px;cursor:pointer;background:var(--white);color:#666;font-family:inherit;transition:all .12s}
+.tab:hover{background:#f0f0ee}
+.tab.on{background:var(--dark);color:var(--white);border-color:var(--dark);font-weight:600}
+
+/* ─ Session ─ */
+.session{display:none}
+.session.on{display:block}
+.sess-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;padding-bottom:.85rem;border-bottom:1px solid var(--border);gap:12px}
+.sess-title{font-size:16px;font-weight:700;margin-bottom:2px}
+.sess-meta{font-size:11px;color:var(--muted);line-height:1.5}
+.badge{font-size:10px;font-weight:700;padding:4px 11px;border-radius:99px;white-space:nowrap;flex-shrink:0}
+.b-forca{background:var(--force-bg);color:var(--force-fg)}
+.b-hiper{background:var(--hiper-bg);color:var(--hiper-fg)}
+.b-cardio{background:var(--cardio-bg);color:var(--cardio-fg)}
+
+/* ─ Exercise block ─ */
+.ex{margin-bottom:1rem;background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.ex-top{padding:.75rem 1rem .6rem;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;background:var(--card);border-bottom:1px solid var(--border)}
+.ex-left{flex:1;min-width:0}
+.ex-code{font-size:9.5px;font-weight:700;color:var(--light);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px}
+.ex-name{font-size:14px;font-weight:700;margin-bottom:4px}
+.ex-var{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.var-lbl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.var-link{font-size:11px;color:#6B7280;text-decoration:none;background:#F3F4F6;border:1px solid #E5E7EB;border-radius:5px;padding:2px 7px;transition:all .1s}
+.var-link:hover{background:#E5E7EB}
+.wiki-btn{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;color:var(--blue);text-decoration:none;background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:7px;padding:5px 10px;white-space:nowrap;flex-shrink:0;transition:all .12s}
+.wiki-btn:hover{background:#DBEAFE}
+.ex-note{font-size:11px;color:#555;padding:.5rem 1rem;background:var(--card);border-bottom:1px solid var(--border);line-height:1.55;font-style:italic}
+.sets-tbl{width:100%;border-collapse:collapse}
+.sets-tbl th{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--light);padding:.5rem 1rem;text-align:left;background:var(--white);border-bottom:1px solid #f5f5f3;font-weight:700}
+.sets-tbl td{font-size:12.5px;padding:.5rem 1rem;border-bottom:1px solid #f8f8f6;background:var(--white);vertical-align:middle}
+.sets-tbl tr:last-child td{border-bottom:none}
+.st{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;padding:3px 9px;border-radius:99px;min-width:88px;justify-content:center}
+.st-p{background:var(--prep-bg);color:var(--prep-fg)}
+.st-f{background:var(--feed-bg);color:var(--feed-fg)}
+.st-t{background:var(--top-bg);color:var(--top-fg)}
+.st-m{background:var(--max-bg);color:var(--max-fg)}
+
+/* ─ Legend strip ─ */
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.1rem;padding:.65rem 1rem;background:var(--white);border:1px solid var(--border);border-radius:9px}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#555}
+
+/* ─ Weight Tracker ─ */
+.tracker{border-top:1px solid var(--border);background:var(--blue-bg);padding:1rem}
+.tracker-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--force-fg);margin-bottom:.75rem;display:flex;align-items:center;gap:6px}
+.tracker-title span{font-size:14px}
+.tracker-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.wk-box{background:var(--white);border:1px solid var(--blue-border);border-radius:8px;padding:.55rem .4rem;text-align:center}
+.wk-label{font-size:9px;font-weight:700;color:var(--force-fg);text-transform:uppercase;margin-bottom:4px}
+.wk-input{width:100%;border:1px solid var(--blue-border);border-radius:5px;padding:5px 4px;font-size:13px;font-weight:700;text-align:center;background:var(--white);color:var(--dark);font-family:inherit;outline:none}
+.wk-input:focus{border-color:var(--blue);box-shadow:0 0 0 2px #BFDBFE}
+.wk-input::placeholder{color:var(--light);font-weight:400}
+.wk-unit{font-size:9px;color:var(--muted);margin-top:2px}
+.tracker-save{margin-top:.75rem;display:flex;align-items:center;gap:8px}
+.save-btn{padding:6px 14px;border-radius:7px;border:none;background:var(--blue);color:var(--white);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .12s}
+.save-btn:hover{background:#1D4ED8}
+.save-msg{font-size:11px;color:var(--green-fg);opacity:0;transition:opacity .3s}
+.tracker-prog{margin-top:.75rem;height:44px;position:relative;display:flex;align-items:flex-end;gap:4px}
+.prog-bar{flex:1;border-radius:4px 4px 0 0;min-height:4px;transition:height .4s;position:relative;display:flex;align-items:flex-start;justify-content:center}
+.prog-bar-val{font-size:8px;font-weight:700;color:var(--force-fg);padding-top:2px;white-space:nowrap}
+.prog-bar-fill{width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#93C5FD,#3B82F6)}
+.prog-baseline{position:absolute;bottom:0;left:0;right:0;height:1px;background:var(--blue-border)}
+
+/* ─ Cardio ─ */
+.c-card{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1rem}
+.c-head{padding:.75rem 1rem;font-size:13.5px;font-weight:700;background:var(--card);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.km-badge{font-size:11px;font-weight:700;color:var(--green-fg);background:var(--green-bg);border-radius:99px;padding:2px 9px}
+.c-row{display:flex;justify-content:space-between;align-items:center;padding:.55rem 1rem;border-bottom:1px solid #f8f8f6;font-size:12.5px}
+.c-row:last-child{border-bottom:none}
+.c-lbl{font-size:11.5px;color:var(--muted);font-weight:600;flex-shrink:0;margin-right:1rem}
+.c-note{font-size:11px;color:#666;padding:.6rem 1rem;background:var(--card);font-style:italic;line-height:1.55}
+
+/* ─ Periodização chart ─ */
+.period-wrap{margin-bottom:1.25rem}
+.period-chart{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.25rem .75rem;margin-bottom:1rem}
+.chart-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:1.1rem}
+.chart-body{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;align-items:end;min-height:120px;padding-top:.5rem}
+.chart-col{display:flex;flex-direction:column;align-items:center;gap:5px}
+.chart-bar-wrap{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;width:100%}
+.chart-bar{width:100%;border-radius:6px 6px 0 0;transition:all .3s;position:relative;min-height:8px}
+.chart-bar:hover{filter:brightness(1.05)}
+.chart-reps{font-size:9.5px;font-weight:700;text-align:center;line-height:1.2}
+.chart-label{font-size:9.5px;font-weight:700;color:var(--muted);text-align:center;padding-bottom:3px;white-space:nowrap}
+.chart-focus{font-size:10px;font-weight:700;text-align:center;padding:2px 5px;border-radius:5px;white-space:nowrap}
+.chart-legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:.75rem;padding:.6rem .75rem;background:var(--alt);border-radius:8px}
+.chart-leg-item{display:flex;align-items:center;gap:5px;font-size:10.5px;color:#555}
+.chart-swatch{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.period-tbl{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1rem}
+.period-tbl table{width:100%;border-collapse:collapse}
+.period-tbl th{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--light);padding:.5rem 1rem;text-align:left;background:var(--card);border-bottom:1px solid var(--border);font-weight:700}
+.period-tbl td{font-size:12.5px;padding:.5rem 1rem;border-bottom:1px solid #f8f8f6}
+.period-tbl tr:last-child td{border-bottom:none}
+.deload-row td{background:var(--green-bg);color:var(--green-fg)}
+.vnote{font-size:11.5px;color:#555;padding:.7rem 1rem;background:var(--white);border:1px solid var(--border);border-radius:9px;margin-bottom:1rem;line-height:1.65;font-style:italic}
+.vol-tbl{width:100%;border-collapse:collapse;background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.vol-tbl th{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--light);padding:.5rem 1rem;text-align:left;background:var(--card);border-bottom:1px solid var(--border);font-weight:700}
+.vol-tbl td{font-size:12.5px;padding:.5rem 1rem;border-bottom:1px solid #f8f8f6}
+.vol-tbl tr:last-child td{border-bottom:none}
+
+@media(max-width:600px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .week{grid-template-columns:repeat(4,1fr)}
+  .week .dp:nth-child(n+5){display:none}
+  .tracker-grid{grid-template-columns:repeat(3,1fr)}
+  .ex-top{flex-direction:column}
+  .wiki-btn{align-self:flex-start}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="prog-name">Bruno Fulas</div>
+<div class="prog-title">Programa Upper/Lower — Mesociclo 6 Semanas</div>
+<div class="prog-sub">Periodização ondulatória · 4× musculação + 2× cardio · 10 km/semana (4 km HIIT + 6 km Zona 2)<br>Clique em cada exercício para assistir o vídeo no MuscleWiki ↗</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-l">Atleta</div><div class="stat-v" style="font-size:14px;padding-top:2px">Bruno Fulas</div></div>
+  <div class="stat"><div class="stat-l">Idade</div><div class="stat-v">35 anos</div></div>
+  <div class="stat"><div class="stat-l">Peso</div><div class="stat-v">91 kg</div></div>
+  <div class="stat"><div class="stat-l">Body fat</div><div class="stat-v">14%</div></div>
+</div>
+
+<!-- Glossário -->
+<div class="glossary">
+  <div class="glossary-title">📖 Dicionário de termos</div>
+  <div class="glossary-grid">
+    <div class="gloss-item"><span class="gloss-term">RIR</span><span class="gloss-def">Repetições na Reserva — quantas reps ainda sobravam antes da falha</span></div>
+    <div class="gloss-sep"></div>
+    <div class="gloss-item"><span class="gloss-term">AMRAP</span><span class="gloss-def">Até a falha — faça o máximo de repetições possível</span></div>
+    <div class="gloss-sep"></div>
+    <div class="gloss-item"><span class="gloss-term">RPE</span><span class="gloss-def">Esforço percebido de 1 a 10 (RPE 9 = quase falha)</span></div>
+    <div class="gloss-sep"></div>
+    <div class="gloss-item"><span class="gloss-term">ADM</span><span class="gloss-def">Amplitude de movimento — quanto o músculo estica e contrai</span></div>
+    <div class="gloss-sep"></div>
+    <div class="gloss-item"><span class="gloss-term">SFR</span><span class="gloss-def">Relação estímulo ÷ fadiga — exercícios com alto SFR geram mais resultado com menos desgaste</span></div>
+  </div>
+</div>
+
+<!-- Legenda -->
+<div class="legend">
+  <div class="leg-item"><span class="st st-p">Preparatória</span> Ativação, custo zero de SNC</div>
+  <div class="leg-item"><span class="st st-f">Feeder</span> RIR 4-5, calibra a carga</div>
+  <div class="leg-item"><span class="st st-t">Top Set</span> RIR 1-2, trabalho pesado</div>
+  <div class="leg-item"><span class="st st-m">Max Set</span> AMRAP (até a falha) — mede progressão</div>
+</div>
+
+<div class="week">
+  <div class="dp active" onclick="goDay('seg',this)"><div class="dn">Seg</div><div class="dt">Upper A</div></div>
+  <div class="dp" onclick="goDay('ter',this)"><div class="dn">Ter</div><div class="dt">Lower A</div></div>
+  <div class="dp rest"><div class="dn">Qua</div><div class="dt">Rest</div></div>
+  <div class="dp" onclick="goDay('qui',this)"><div class="dn">Qui</div><div class="dt">Upper B</div></div>
+  <div class="dp" onclick="goDay('sex',this)"><div class="dn">Sex</div><div class="dt">Lower B</div></div>
+  <div class="dp cardio-d" onclick="goDay('sab',this)"><div class="dn">Sáb</div><div class="dt">HIIT</div></div>
+  <div class="dp rest"><div class="dn">Dom</div><div class="dt">Rest</div></div>
+</div>
+
+<div class="tabs">
+  <button class="tab on" onclick="goTab('treino',this)">Treinos</button>
+  <button class="tab" onclick="goTab('cardio',this)">Cardio</button>
+  <button class="tab" onclick="goTab('period',this)">Periodização</button>
+</div>
+
+<!-- ═══════ TAB TREINO ═══════ -->
+<div id="tab-treino">
+
+<!-- ── UPPER A ── -->
+<div id="seg" class="session on">
+  <div class="sess-hdr">
+    <div><div class="sess-title">Upper A — Push Pesado</div><div class="sess-meta">Segunda · ~60 min · 2× Peito · 2× Costas · 1× Ombro anterior</div></div>
+    <span class="badge b-forca">Força</span>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">A1 · Peito — Compound</div>
+        <div class="ex-name">Supino reto com barra</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/dumbbell-bench-press" target="_blank">Supino com halteres</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-bench-press" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Desça controlado 2-3s. Cotovelos ~60° do tronco. Não quica no peito — o alongamento é onde o estímulo acontece.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-p">Preparatória</span></td><td>2-3×</td><td>8 / 5 / 3</td><td>40% → 65% → 80% do Top Set</td></tr>
+      <tr><td><span class="st st-f">Feeder</span></td><td>1×</td><td>12</td><td>RIR 4-5 · sente o padrão</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>6-8</td><td>RIR 1-2 · progressão semanal</td></tr>
+      <tr><td><span class="st st-m">Max Set</span></td><td>1×</td><td>AMRAP (até a falha)</td><td>Mesma carga do top set</td></tr>
+    </table>
+    <div class="tracker" id="tracker-seg-A1">
+      <div class="tracker-title"><span>⚖️</span> Registro de carga — Supino reto (Top Set)</div>
+      <div class="tracker-grid">
+        <div class="wk-box"><div class="wk-label">Semana 1</div><input class="wk-input" type="number" placeholder="kg" min="0" step="2.5" data-key="seg-A1-s1"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 2</div><input class="wk-input" type="number" placeholder="kg" min="0" step="2.5" data-key="seg-A1-s2"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 3</div><input class="wk-input" type="number" placeholder="kg" min="0" step="2.5" data-key="seg-A1-s3"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 4</div><input class="wk-input" type="number" placeholder="kg" min="0" step="2.5" data-key="seg-A1-s4"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 5</div><input class="wk-input" type="number" placeholder="kg" min="0" step="2.5" data-key="seg-A1-s5"><div class="wk-unit">kg</div></div>
+      </div>
+      <div class="tracker-prog" id="prog-seg-A1"></div>
+      <div class="tracker-save"><button class="save-btn" onclick="saveTracker('seg-A1')">Salvar progressão</button><span class="save-msg" id="msg-seg-A1">✓ Salvo!</span></div>
+    </div>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">A2 · Peito — Inclinado</div>
+        <div class="ex-name">Supino inclinado com halteres</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-incline-chest-press" target="_blank">Chest press inclinada (máquina)</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-incline-bench-press" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Banco 30-45°. Halteres permitem maior ADM lateral. Foco no peitoral clavicular (parte superior).</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>8-10</td><td>RIR 1-2</td></tr>
+      <tr><td><span class="st st-m">Max Set</span></td><td>1×</td><td>AMRAP (até a falha)</td><td>RIR 0</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">B1 · Costas — Largura</div>
+        <div class="ex-name">Barra fixa (pull-up)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-pulldown" target="_blank">Puxador alto (pulldown)</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/bodyweight-pull-up" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Menos de 8 reps limpo? Usa o puxador. Carga progressiva no puxador = barra fixa mais fácil ao longo do tempo.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-p">Preparatória</span></td><td>1×</td><td>5</td><td>Leve · ativa escápula</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>6-10</td><td>RIR 1-2</td></tr>
+      <tr><td><span class="st st-m">Max Set</span></td><td>1×</td><td>AMRAP (até a falha)</td><td>RIR 0</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">B2 · Costas — Espessura</div>
+        <div class="ex-name">Remada curvada com barra</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-row" target="_blank">Remada na máquina (seated row)</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-bent-over-row" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Cotovelo para trás, não para cima. Pausa 1s na contração. Tronco ~45°. Remada máquina = menos fadiga lombar.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>8-10</td><td>RIR 1-2 · pausa 1s</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">C1 · Ombro anterior</div>
+        <div class="ex-name">Desenvolvimento com halteres</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-shoulder-press" target="_blank">Desenvolvimento na máquina</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-shoulder-press" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Full ADM — desce até os halteres na linha das orelhas. Máquina permite carga maior com menos estabilização.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>8-10</td><td>RIR 1-2</td></tr>
+      <tr><td><span class="st st-m">Max Set</span></td><td>1×</td><td>AMRAP (até a falha)</td><td>RIR 0</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ── LOWER A ── -->
+<div id="ter" class="session">
+  <div class="sess-hdr">
+    <div><div class="sess-title">Lower A — Quad + Panturrilha</div><div class="sess-meta">Terça · ~55 min + 35 min Zona 2 (6 km) · Quadríceps, Panturrilha</div></div>
+    <span class="badge b-forca">Força</span>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">A1 · Quad — Compound</div>
+        <div class="ex-name">Agachamento livre</div>
+        <div class="ex-var">
+          <span class="var-lbl">Variação:</span>
+          <a class="var-link" href="https://musclewiki.com/exercise/hack-squat" target="_blank">Hack Squat (máquina)</a>
+          <a class="var-link" href="https://musclewiki.com/exercise/machine-leg-press" target="_blank">Leg press 45°</a>
+        </div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-squat" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Hack Squat = mais quad, menos estabilização, mais carga. Leg press = mais seguro. Profundidade abaixo do paralelo sempre que possível.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-p">Preparatória</span></td><td>3×</td><td>8 / 5 / 3</td><td>40% → 65% → 80% 1RM</td></tr>
+      <tr><td><span class="st st-f">Feeder</span></td><td>1×</td><td>10</td><td>RIR 4 · sente quadril e joelhos</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>4×</td><td>5-7</td><td>RIR 1-2 · dia mais pesado da semana</td></tr>
+      <tr><td><span class="st st-m">Max Set</span></td><td>1×</td><td>AMRAP (até a falha)</td><td>RIR 0</td></tr>
+    </table>
+    <div class="tracker" id="tracker-ter-A1">
+      <div class="tracker-title"><span>⚖️</span> Registro de carga — Agachamento (Top Set)</div>
+      <div class="tracker-grid">
+        <div class="wk-box"><div class="wk-label">Semana 1</div><input class="wk-input" type="number" placeholder="kg" min="0" step="2.5" data-key="ter-A1-s1"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 2</div><input class="wk-input" type="number" placeholder="kg" min="0" step="2.5" data-key="ter-A1-s2"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 3</div><input class="wk-input" type="number" placeholder="kg" min="0" step="2.5" data-key="ter-A1-s3"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 4</div><input class="wk-input" type="number" placeholder="kg" min="0" step="2.5" data-key="ter-A1-s4"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 5</div><input class="wk-input" type="number" placeholder="kg" min="0" step="2.5" data-key="ter-A1-s5"><div class="wk-unit">kg</div></div>
+      </div>
+      <div class="tracker-prog" id="prog-ter-A1"></div>
+      <div class="tracker-save"><button class="save-btn" onclick="saveTracker('ter-A1')">Salvar progressão</button><span class="save-msg" id="msg-ter-A1">✓ Salvo!</span></div>
+    </div>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">B1 · Quad — Isolamento</div>
+        <div class="ex-name">Leg extension (cadeira extensora)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-leg-press" target="_blank">Leg press pés baixos e fechados</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-leg-extension" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Único exercício que isola o quad sem glúteo. Pausa 1s no topo — tensão no pico de extensão. Alto SFR, não precisa de carga máxima.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>12-15</td><td>RIR 1 · pausa 1s no topo</td></tr>
+      <tr><td><span class="st st-m">Max Set</span></td><td>1×</td><td>AMRAP (até a falha)</td><td>RIR 0</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">C1 · Panturrilha — Gastrocnêmio</div>
+        <div class="ex-name">Panturrilha em pé (calf raise)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-leg-press-calf-raise" target="_blank">Panturrilha no leg press</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-standing-calf-raise" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Full ADM obrigatório. Pausa 2s no fundo (calcanhar abaixo da plataforma). Sem ADM completa o estímulo cai muito.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>4×</td><td>12-15</td><td>RIR 0-1 · pausa 2s no fundo</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ── UPPER B ── -->
+<div id="qui" class="session">
+  <div class="sess-hdr">
+    <div><div class="sess-title">Upper B — Volume + Braços</div><div class="sess-meta">Quinta · ~65 min · 1× Peito · 1× Costas · Ombro medial + posterior · 2× Bíceps · 2× Tríceps</div></div>
+    <span class="badge b-hiper">Hipertrofia</span>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">A1 · Peito — Isolamento</div>
+        <div class="ex-name">Crossover no cabo (alto → baixo)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-fly" target="_blank">Peck deck (máquina borboleta)</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/cable-fly" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Tensão constante em todo o arco. Peck deck é excelente variação — mesma mecânica, mais fácil de controlar. Alto SFR.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>12-15</td><td>RIR 1 · contração 1s</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">B1 · Costas — Largura</div>
+        <div class="ex-name">Puxador alto (pulldown)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/cable-seated-row" target="_blank">Remada no cabo sentada</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-pulldown" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Pegada neutra (triângulo) = mais ADM e lat inferior. Barra larga = mais largura. Alterna a cada mesociclo.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1-2</td></tr>
+      <tr><td><span class="st st-m">Max Set</span></td><td>1×</td><td>AMRAP (até a falha)</td><td>RIR 0</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">C1 · Ombro medial (deltoide lateral)</div>
+        <div class="ex-name">Elevação lateral no cabo (unilateral)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/dumbbell-lateral-raise" target="_blank">Elevação lateral com halteres</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/cable-lateral-raise" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Cabo atrás do corpo = tensão no alongamento onde o halter perde torque. Alto SFR. Sem swing.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>15-20</td><td>RIR 0-1 · Myo-reps opcional</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">D1 · Ombro posterior</div>
+        <div class="ex-name">Face pull no cabo (corda)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/dumbbell-rear-delt-fly" target="_blank">Crucifixo invertido com halteres</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/cable-single-arm-face-pull" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Rotação externa no fim — esse movimento cuida do manguito rotador. Essencial para saúde do ombro. Nunca corta esse exercício.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>15-20</td><td>RIR 0-1</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">E1 · Bíceps — Compound</div>
+        <div class="ex-name">Rosca direta com barra (ou W)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/dumbbell-curl" target="_blank">Rosca direta com halteres</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-curl" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Cotovelos fixos, supinação completa no topo. Excêntrico 2-3s. Barra W reduz stress no pulso.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>8-12</td><td>RIR 1-2</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">E2 · Bíceps — Comprimento longo</div>
+        <div class="ex-name">Rosca no cabo (low pulley)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/dumbbell-curl" target="_blank">Rosca martelo com halteres</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/cable-curl" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Cabo low pulley com ombro levemente atrás = bíceps em comprimento longo. Mais tensão passiva = hipertrofia distal. Evidência 2022-2024.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>2×</td><td>12-15</td><td>RIR 0-1</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">F1 · Tríceps — Cabo</div>
+        <div class="ex-name">Tríceps corda no pulldown</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-tricep-extension" target="_blank">Tríceps na máquina</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/cable-pushdown" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Abre a corda no final para extensão total. Cotovelos fixos ao tronco durante todo o movimento.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>12-15</td><td>RIR 1</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">F2 · Tríceps — Comprimento longo</div>
+        <div class="ex-name">Tríceps testa com halteres (skull crusher)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/cable-overhead-tricep-extension" target="_blank">Tríceps francês no cabo (overhead)</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-skullcrusher" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Cotovelo apontado para o teto. Tríceps francês no cabo é ainda melhor: carrega o tríceps longo no comprimento máximo (maior sarcomerogênese).</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>2×</td><td>10-12</td><td>RIR 1</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ── LOWER B ── -->
+<div id="sex" class="session">
+  <div class="sess-hdr">
+    <div><div class="sess-title">Lower B — Glúteos + Posterior de coxa</div><div class="sess-meta">Sexta · ~60 min · Glúteo máximo, bíceps femoral, sóleo</div></div>
+    <span class="badge b-hiper">Hipertrofia</span>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">A1 · Posterior — Compound</div>
+        <div class="ex-name">RDL — Romanian Deadlift</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/dumbbell-romanian-deadlift" target="_blank">RDL com halteres</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-romanian-deadlift" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Quadril para trás, não para baixo. Desce até sentir alongamento no posterior — não o limite lombar. Coluna neutra sempre.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-p">Preparatória</span></td><td>2×</td><td>8 / 6</td><td>50% → 70% do trabalho</td></tr>
+      <tr><td><span class="st st-f">Feeder</span></td><td>1×</td><td>10</td><td>RIR 4 · sente o alongamento</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>8-10</td><td>RIR 1-2</td></tr>
+      <tr><td><span class="st st-m">Max Set</span></td><td>1×</td><td>AMRAP (até a falha)</td><td>Atenção à fadiga lombar</td></tr>
+    </table>
+    <div class="tracker" id="tracker-sex-A1">
+      <div class="tracker-title"><span>⚖️</span> Registro de carga — RDL (Top Set)</div>
+      <div class="tracker-grid">
+        <div class="wk-box"><div class="wk-label">Semana 1</div><input class="wk-input" type="number" placeholder="kg" min="0" step="2.5" data-key="sex-A1-s1"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 2</div><input class="wk-input" type="number" placeholder="kg" min="0" step="2.5" data-key="sex-A1-s2"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 3</div><input class="wk-input" type="number" placeholder="kg" min="0" step="2.5" data-key="sex-A1-s3"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 4</div><input class="wk-input" type="number" placeholder="kg" min="0" step="2.5" data-key="sex-A1-s4"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 5</div><input class="wk-input" type="number" placeholder="kg" min="0" step="2.5" data-key="sex-A1-s5"><div class="wk-unit">kg</div></div>
+      </div>
+      <div class="tracker-prog" id="prog-sex-A1"></div>
+      <div class="tracker-save"><button class="save-btn" onclick="saveTracker('sex-A1')">Salvar progressão</button><span class="save-msg" id="msg-sex-A1">✓ Salvo!</span></div>
+    </div>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">B1 · Posterior — Isolamento</div>
+        <div class="ex-name">Leg curl deitado</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-seated-leg-curl" target="_blank">Leg curl sentado</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-lying-leg-curl" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Deitado bate sentado — quadril estendido = bíceps femoral no comprimento total. Excêntrico 3s. Myo-reps são ótimos aqui.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1 · excêntrico 3s</td></tr>
+      <tr><td><span class="st st-m">Max Set</span></td><td>1×</td><td>AMRAP (até a falha)</td><td>RIR 0</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">C1 · Glúteo — Compound</div>
+        <div class="ex-name">Hip thrust com barra</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-hip-thrust" target="_blank">Hip thrust na máquina</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-hip-thrust" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Contração isométrica 1-2s no topo. Queixo no peito para neutralizar a lombar. Máquina = mais fácil de carregar progressivamente.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-15</td><td>RIR 0-1 · pausa 2s no topo</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">D1 · Glúteo — Unilateral</div>
+        <div class="ex-name">Agachamento búlgaro com halteres</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-leg-press" target="_blank">Leg press pés altos e afastados</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-bulgarian-split-squat" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Torso inclinado para frente = mais glúteo. Leg press pés altos = mesma lógica, menos exigência de equilíbrio.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1-2 por perna</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">E1 · Panturrilha — Sóleo</div>
+        <div class="ex-name">Panturrilha sentado</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-standing-calf-raise" target="_blank">Panturrilha em pé (máquina)</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-seated-calf-raise" target="_blank">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="ex-note">Joelho dobrado = ativa o sóleo (músculo profundo). Complementa o gastrocnêmio do Lower A. Full ADM obrigatório.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>15-20</td><td>RIR 0-1</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ── SÁBADO ── -->
+<div id="sab" class="session">
+  <div class="sess-hdr">
+    <div><div class="sess-title">Sábado — HIIT</div><div class="sess-meta">~25 min · 4 km de alta intensidade · Bike ergométrica ou corrida</div></div>
+    <span class="badge b-cardio">4 km HIIT</span>
+  </div>
+  <div class="ex">
+    <div class="ex-top" style="flex-direction:column;gap:6px"><div class="ex-name">Protocolo — Sprints intervalados</div></div>
+    <table class="sets-tbl">
+      <tr><th>Fase</th><th>Protocolo</th><th>FC / RPE</th><th>Progressão</th></tr>
+      <tr><td>Aquecimento</td><td>5 min leve</td><td>RPE 3-4</td><td>Prepare as articulações</td></tr>
+      <tr><td>Sprints</td><td>30s máximo / 90s recuperação ativa</td><td>>85% FCmax · RPE 9</td><td>6 rounds (S1) → 10 rounds (S5)</td></tr>
+      <tr><td>Volta</td><td>5 min leve</td><td>RPE 3</td><td>Não para de repente</td></tr>
+      <tr><td>Total</td><td>~4 km em ~22-25 min</td><td>—</td><td>Bike = menos impacto articular</td></tr>
+    </table>
+  </div>
+</div>
+
+</div><!-- /tab-treino -->
+
+<!-- ═══════ TAB CARDIO ═══════ -->
+<div id="tab-cardio" style="display:none">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem">
+    <div style="font-size:15px;font-weight:700">Meta semanal</div>
+    <span class="badge b-cardio" style="font-size:12px;padding:5px 14px">10 km / semana</span>
+  </div>
+  <div class="c-card">
+    <div class="c-head">Zona 2 — Cardio moderado <span class="km-badge">6 km · Terça</span></div>
+    <div class="c-row"><span class="c-lbl">Distância</span><span>6 km contínuos (ou 2× 3 km separados)</span></div>
+    <div class="c-row"><span class="c-lbl">Ritmo estimado</span><span>6:30–7:30 min/km — conversa ainda possível</span></div>
+    <div class="c-row"><span class="c-lbl">FC alvo</span><span>130–150 bpm</span></div>
+    <div class="c-row"><span class="c-lbl">RPE</span><span>5-6 — esforçado mas confortável</span></div>
+    <div class="c-row"><span class="c-lbl">Duração estimada</span><span>~42–50 min</span></div>
+    <div class="c-row"><span class="c-lbl">Alternativa</span><span>Esteira 4-5 km/h · 8-10% inclinação</span></div>
+    <div class="c-note">Zona 2 não compete com hipertrofia quando bem posicionada no dia. Melhora a biogênese mitocondrial e acelera a recuperação entre sessões.</div>
+  </div>
+  <div class="c-card">
+    <div class="c-head">HIIT — Alta intensidade <span class="km-badge">4 km · Sábado</span></div>
+    <div class="c-row"><span class="c-lbl">Distância</span><span>~4 km em sprints intervalados</span></div>
+    <div class="c-row"><span class="c-lbl">Protocolo</span><span>30s sprint máximo / 90s recuperação ativa</span></div>
+    <div class="c-row"><span class="c-lbl">Progressão</span><span>6 rounds (Semana 1) → +1 round/semana → 10 rounds (Semana 5)</span></div>
+    <div class="c-row"><span class="c-lbl">FC no sprint</span><span>>85% FCmax</span></div>
+    <div class="c-row"><span class="c-lbl">Duração total</span><span>~22–28 min com aquecimento e volta</span></div>
+    <div class="c-row"><span class="c-lbl">Equipamento</span><span>Bike ergométrica (preferencial) — menos impacto articular</span></div>
+    <div class="c-note">HIIT ao menos 24h separado do treino de força. Melhora VO2max e eficiência cardíaca ao longo das semanas.</div>
+  </div>
+</div>
+
+<!-- ═══════ TAB PERIODIZAÇÃO ═══════ -->
+<div id="tab-period" style="display:none">
+
+  <!-- Gráfico visual -->
+  <div class="period-chart">
+    <div class="chart-title">Ondulação de volume e intensidade ao longo do mesociclo</div>
+    <div class="chart-body" id="period-chart-body">
+      <!-- Built by JS -->
+    </div>
+    <div class="chart-legend">
+      <div class="chart-leg-item"><span class="chart-swatch" style="background:#3B82F6"></span>Volume (reps altas)</div>
+      <div class="chart-leg-item"><span class="chart-swatch" style="background:#8B5CF6"></span>Força-Hipertrofia</div>
+      <div class="chart-leg-item"><span class="chart-swatch" style="background:#EF4444"></span>Intensidade (reps baixas)</div>
+      <div class="chart-leg-item"><span class="chart-swatch" style="background:#10B981"></span>Deload (recuperação)</div>
+    </div>
+  </div>
+
+  <!-- Tabela semanas -->
+  <div class="period-tbl">
+    <table>
+      <tr><th>Semana</th><th>Foco</th><th>Reps (top sets)</th><th>Diretriz de carga</th></tr>
+      <tr><td><strong>Semana 1</strong></td><td>Volume</td><td>8-10 reps</td><td>Carga base — referência do ciclo</td></tr>
+      <tr><td><strong>Semana 2</strong></td><td>Força-Hipertrofia</td><td>6-8 reps</td><td>+2.5 kg vs. Semana 1</td></tr>
+      <tr><td><strong>Semana 3</strong></td><td>Volume Alto</td><td>10-12 reps</td><td>+2.5 kg vs. Semana 1</td></tr>
+      <tr><td><strong>Semana 4</strong></td><td>Intensidade</td><td>5-7 reps</td><td>+5 kg vs. Semana 2</td></tr>
+      <tr><td><strong>Semana 5</strong></td><td>Peak</td><td>8-10 reps</td><td>Melhor resultado da série</td></tr>
+      <tr class="deload-row"><td><strong>Semana 6</strong></td><td>DELOAD 🟢</td><td>Livre</td><td>50% volume · 70-80% intensidade</td></tr>
+    </table>
+  </div>
+
+  <div class="vnote">A ondulação força o SNC a lidar com demandas diferentes sem estagnar. Volume acumula fadiga controlada. Intensidade revela as adaptações. O deload na Semana 6 não é fraqueza — é onde o crescimento se consolida.</div>
+
+  <!-- Volume table -->
+  <table class="vol-tbl">
+    <tr><th>Grupo muscular</th><th>Séries/sem</th><th>Frequência</th><th>Principal exercício</th></tr>
+    <tr><td>Peito</td><td>8-10</td><td>2×/sem</td><td>Supino barra (A) + Crossover (B)</td></tr>
+    <tr><td>Costas — largura</td><td>8-10</td><td>2×/sem</td><td>Barra fixa (A) + Pulldown (B)</td></tr>
+    <tr><td>Costas — espessura</td><td>4-6</td><td>1×/sem</td><td>Remada curvada (A)</td></tr>
+    <tr><td>Ombro anterior</td><td>4-6</td><td>1×/sem</td><td>Desenvolvimento (A)</td></tr>
+    <tr><td>Ombro medial</td><td>6-8</td><td>1×/sem</td><td>Elevação lateral cabo (B)</td></tr>
+    <tr><td>Ombro posterior</td><td>4-6</td><td>1×/sem</td><td>Face pull (B)</td></tr>
+    <tr><td>Quadríceps</td><td>10-12</td><td>1×/sem</td><td>Agachamento + Leg extension (A)</td></tr>
+    <tr><td>Posterior de coxa</td><td>6-8</td><td>1×/sem</td><td>RDL + Leg curl (B)</td></tr>
+    <tr><td>Glúteo</td><td>6-8</td><td>1×/sem</td><td>Hip thrust + Búlgaro (B)</td></tr>
+    <tr><td>Bíceps</td><td>8-10</td><td>1×/sem</td><td>Rosca direta + Cabo (B)</td></tr>
+    <tr><td>Tríceps</td><td>6-8</td><td>1×/sem</td><td>Corda + Skull crusher (B)</td></tr>
+    <tr><td>Panturrilha</td><td>6-8</td><td>2×/sem</td><td>Em pé (A) + Sentado (B)</td></tr>
+  </table>
+</div>
+
+</div><!-- /page -->
+<script>
+// ─ Navigation ─
+function goDay(id,el){
+  document.querySelectorAll('.session').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.dp:not(.rest)').forEach(p=>p.classList.remove('active'));
+  const s=document.getElementById(id);if(s)s.classList.add('on');
+  if(el)el.classList.add('active');
+  showTab('treino');
+  document.querySelectorAll('.tab').forEach((t,i)=>{t.classList.remove('on');if(i===0)t.classList.add('on')});
+}
+function showTab(t){
+  document.getElementById('tab-treino').style.display=t==='treino'?'block':'none';
+  document.getElementById('tab-cardio').style.display=t==='cardio'?'block':'none';
+  document.getElementById('tab-period').style.display=t==='period'?'block':'none';
+}
+function goTab(t,el){
+  showTab(t);
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  if(el)el.classList.add('on');
+  if(t==='period')buildChart();
+}
+
+// ─ Periodization Chart ─
+const weekData=[
+  {label:'S1',focus:'Volume',reps:'8-10',color:'#3B82F6',bg:'#DBEAFE',fg:'#1D4ED8',h:70},
+  {label:'S2',focus:'Força-Hiper',reps:'6-8',color:'#8B5CF6',bg:'#EDE9FE',fg:'#5B21B6',h:82},
+  {label:'S3',focus:'Vol. Alto',reps:'10-12',color:'#3B82F6',bg:'#DBEAFE',fg:'#1D4ED8',h:90},
+  {label:'S4',focus:'Intensidade',reps:'5-7',color:'#EF4444',bg:'#FEE2E2',fg:'#991B1B',h:100},
+  {label:'S5',focus:'Peak',reps:'8-10',color:'#8B5CF6',bg:'#EDE9FE',fg:'#5B21B6',h:95},
+  {label:'S6',focus:'Deload',reps:'Livre',color:'#10B981',bg:'#D1FAE5',fg:'#065F46',h:35},
+];
+function buildChart(){
+  const c=document.getElementById('period-chart-body');
+  if(c.children.length>0)return;
+  const maxH=100,chartH=120;
+  weekData.forEach(w=>{
+    const barH=Math.round((w.h/maxH)*chartH);
+    const col=document.createElement('div');
+    col.className='chart-col';
+    col.innerHTML=`
+      <div class="chart-bar-wrap" style="height:${chartH}px">
+        <div style="font-size:9px;font-weight:700;color:${w.fg};margin-bottom:3px">${w.reps}</div>
+        <div class="chart-bar" style="height:${barH}px;background:${w.color};width:100%;border-radius:6px 6px 0 0;position:relative;">
+          <div style="position:absolute;inset:0;border-radius:6px 6px 0 0;background:linear-gradient(180deg,rgba(255,255,255,0.2),transparent)"></div>
+        </div>
+      </div>
+      <div class="chart-focus" style="background:${w.bg};color:${w.fg};font-size:9px;font-weight:700;padding:2px 4px;border-radius:5px;text-align:center;width:100%">${w.focus}</div>
+      <div class="chart-label">${w.label}</div>`;
+    c.appendChild(col);
+  });
+}
+
+// ─ Weight Tracker ─
+const STORE_KEY='bruno_fulas_treino';
+function loadAll(){
+  try{return JSON.parse(localStorage.getItem(STORE_KEY)||'{}')}catch{return{}}
+}
+function saveAll(d){try{localStorage.setItem(STORE_KEY,JSON.stringify(d))}catch{}}
+
+function initTrackers(){
+  const data=loadAll();
+  document.querySelectorAll('.wk-input').forEach(inp=>{
+    const k=inp.dataset.key;
+    if(data[k])inp.value=data[k];
+    inp.addEventListener('input',()=>renderBar(k.split('-').slice(0,2).join('-')));
+  });
+  ['seg-A1','ter-A1','sex-A1'].forEach(id=>renderBar(id));
+}
+
+function getVals(id){
+  return [1,2,3,4,5].map(i=>{
+    const el=document.querySelector(`[data-key="${id}-s${i}"]`);
+    return el&&el.value?parseFloat(el.value):null;
+  });
+}
+
+function renderBar(id){
+  const prog=document.getElementById('prog-'+id);
+  if(!prog)return;
+  const vals=getVals(id);
+  const filled=vals.filter(v=>v!==null);
+  if(filled.length===0){prog.innerHTML='';return;}
+  const maxV=Math.max(...filled);
+  const minV=Math.min(...filled);
+  const range=maxV-minV||1;
+  const MAXH=36;
+  prog.innerHTML=vals.map((v,i)=>{
+    if(v===null)return`<div style="flex:1;opacity:.25;border-bottom:1px dashed #BFDBFE;font-size:8px;color:#BFDBFE;text-align:center;padding-bottom:2px">S${i+1}</div>`;
+    const h=Math.max(6,Math.round(((v-minV)/range)*(MAXH-6)+6));
+    const isMax=v===maxV&&filled.length>1;
+    const color=isMax?'#1D4ED8':'#60A5FA';
+    return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px">
+      <div style="font-size:8px;font-weight:700;color:${color}">${v}kg</div>
+      <div style="width:100%;height:${h}px;background:${color};border-radius:3px 3px 0 0;transition:height .3s"></div>
+      <div style="font-size:8px;color:#93C5FD">S${i+1}</div>
+    </div>`;
+  }).join('');
+  const baseline=document.createElement('div');
+  baseline.style.cssText='position:absolute;bottom:18px;left:0;right:0;height:1px;background:#BFDBFE;';
+  prog.style.position='relative';
+}
+
+function saveTracker(id){
+  const data=loadAll();
+  [1,2,3,4,5].forEach(i=>{
+    const el=document.querySelector(`[data-key="${id}-s${i}"]`);
+    if(el&&el.value)data[`${id}-s${i}`]=parseFloat(el.value);
+    else delete data[`${id}-s${i}`];
+  });
+  saveAll(data);
+  renderBar(id);
+  const msg=document.getElementById('msg-'+id);
+  msg.style.opacity='1';
+  setTimeout(()=>msg.style.opacity='0',2000);
+}
+
+// ─ Init ─
+document.addEventListener('DOMContentLoaded',initTrackers);
+</script>
+</body>
+</html>
