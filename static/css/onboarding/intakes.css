@@ -1360,8 +1360,13 @@ body[data-theme="dark"] .intake-scene .intake-kpi-card.is-selected-tab {
 
     .intake-directory-table tbody tr {
         display: grid;
-        grid-template-columns: 1fr;
-        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            "contact contact"
+            "source stage"
+            "owner registration"
+            "actions actions";
+        gap: 10px;
         padding: 16px;
         border: 1px solid rgba(148, 163, 184, 0.12);
         border-radius: 18px;
@@ -1374,11 +1379,46 @@ body[data-theme="dark"] .intake-scene .intake-kpi-card.is-selected-tab {
         padding: 0;
     }
 
+    .intake-cell--contact {
+        grid-area: contact;
+    }
+
+    .intake-cell--source {
+        grid-area: source;
+    }
+
+    .intake-cell--stage {
+        grid-area: stage;
+    }
+
+    .intake-cell--owner {
+        grid-area: owner;
+    }
+
+    .intake-cell--registration {
+        grid-area: registration;
+    }
+
+    .intake-cell--actions {
+        grid-area: actions;
+    }
+
+    .intake-directory-table td:not(.intake-cell--contact):not(.intake-cell--actions) {
+        min-height: 72px;
+        align-content: start;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        background:
+            radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 7%, transparent), transparent 42%),
+            color-mix(in srgb, var(--theme-surface-strong) 88%, white 12%);
+    }
+
     .intake-directory-table td::before {
         content: attr(data-label);
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
         text-transform: uppercase;
         color: rgba(71, 85, 105, 0.64);
     }
@@ -1390,8 +1430,9 @@ body[data-theme="dark"] .intake-scene .intake-kpi-card.is-selected-tab {
     }
 
     .intake-row-actions {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
     }
 
     .intake-row-form .button,
@@ -1413,6 +1454,13 @@ body[data-theme="dark"] .intake-scene .intake-kpi-card.is-selected-tab {
     body[data-theme="dark"] .intake-directory-table tbody tr {
         background: rgba(12, 13, 21, 0.96);
         border-color: rgba(148, 163, 184, 0.12);
+    }
+
+    body[data-theme="dark"] .intake-directory-table td:not(.intake-cell--contact):not(.intake-cell--actions) {
+        border-color: rgba(148, 163, 184, 0.12);
+        background:
+            radial-gradient(circle at top right, rgba(74, 144, 226, 0.08), transparent 42%),
+            linear-gradient(160deg, rgba(16, 22, 36, 0.88), rgba(10, 16, 28, 0.82));
     }
 
     body[data-theme="dark"] .intake-directory-table td::before {
@@ -1440,6 +1488,17 @@ body[data-theme="dark"] .intake-scene .intake-kpi-card.is-selected-tab {
 }
 
 @media (max-width: 430px) {
+    .intake-directory-table tbody tr {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "contact"
+            "source"
+            "stage"
+            "owner"
+            "registration"
+            "actions";
+    }
+
     .intake-radar-board-head {
         gap: 12px;
         margin-bottom: 16px;

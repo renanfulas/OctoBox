@@ -68,10 +68,10 @@ POR QUE ELE EXISTE:
                             </div>
                         </div>
                     </td>
-                    <td class="student-cell" data-label="Plano">
+                    <td class="student-cell student-cell--plan" data-label="Plano">
                         <span class="student-plan-name">{{ student.latest_plan_name|default:"--" }}</span>
                     </td>
-                    <td class="student-cell" data-label="Status">
+                    <td class="student-cell student-cell--status" data-label="Status">
                         {% if student.status == 'active' %}
                         <div class="student-status-pill student-status-pill--green">
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="8 12 11 15 16 9"/></svg>
@@ -99,7 +99,7 @@ POR QUE ELE EXISTE:
                             {{ student.presence_percent }}%
                         </span>
                     </td>
-                    <td class="student-cell" data-label="Pagamento">
+                    <td class="student-cell student-cell--payment" data-label="Pagamento">
                         {% if student.operational_payment_status == 'overdue' %}
                         <span class="student-payment-state student-payment-state--red">Atrasado</span>
                         {% elif student.operational_payment_status == 'pending' %}

@@ -167,13 +167,15 @@ PONTOS CRITICOS:
 .payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: 10px;
 }
 
 .payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta-item {
     display: grid;
     gap: 3px;
-    padding: 9px 10px;
+    min-height: 74px;
+    align-content: start;
+    padding: 11px 12px;
     border-radius: 12px;
     background: color-mix(in srgb, var(--theme-surface-panel) 84%, white 16%);
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, white 16%);
@@ -182,6 +184,16 @@ PONTOS CRITICOS:
 .payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta-item strong {
     line-height: 1.2;
     color: var(--theme-text-primary);
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+}
+
+.payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta-item:first-child {
+    min-width: 0;
+}
+
+.payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta-item:last-child {
+    min-width: 0;
 }
 
 .reception-payment-card .finance-action-message {
@@ -650,6 +662,10 @@ body[data-theme="dark"] .reception-payment-actions-support .button:focus-visible
 
     .payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta {
         grid-template-columns: 1fr;
+    }
+
+    .payment-primary-summary.reception-payment-highlight .payment-primary-summary__meta-item {
+        min-height: 0;
     }
 
     .reception-payment-actions-primary,

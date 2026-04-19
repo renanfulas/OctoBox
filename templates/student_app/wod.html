@@ -33,7 +33,7 @@
             <span class="student-status-badge">{% if student_workout_day %}Publicado{% else %}Placeholder vivo{% endif %}</span>
         </div>
         {% if student_workout_day %}
-        <p class="student-copy">{{ student_workout_day.session_title }} · {{ student_workout_day.session_scheduled_label }} · {{ student_workout_day.coach_name }}</p>
+        <p class="student-copy">{{ student_workout_day.session_title }} | {{ student_workout_day.session_scheduled_label }} | {{ student_workout_day.coach_name }}</p>
         {% if student_workout_day.coach_notes %}
         <p class="student-copy">{{ student_workout_day.coach_notes }}</p>
         {% endif %}

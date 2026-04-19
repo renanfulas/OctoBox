@@ -388,12 +388,38 @@ body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:
     .hero :is(h1, h2) {
         font-size: clamp(1.75rem, 7vw, 2.2rem);
     }
+
+    .hero.hero--command .operation-hero-copy {
+        max-width: 26ch;
+        line-height: 1.46;
+        text-wrap: pretty;
+    }
+
+    .hero.hero--command .operation-hero-action-rail {
+        gap: 10px;
+    }
 }
 
 @media (max-width: 640px) {
     .hero {
         padding: 18px;
         border-radius: 24px;
+    }
+
+    .hero.hero--command .operation-hero-main {
+        gap: 14px;
+    }
+
+    .hero.hero--command .operation-hero-copy-block {
+        gap: 10px;
+    }
+
+    .hero.hero--command .operation-hero-text-stack {
+        gap: 10px;
+    }
+
+    .hero.hero--command .operation-hero-copy {
+        max-width: 24ch;
     }
 
     .operation-hero-panel-head {

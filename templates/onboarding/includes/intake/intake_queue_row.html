@@ -22,7 +22,7 @@
     data-conversion-action-post="{% if page.capabilities.can_work_queue and conversion.can_convert and conversion.action_type == 'move-to-conversation' %}true{% else %}false{% endif %}"
     data-can-reject="{% if page.capabilities.can_work_queue and permissions.can_reject %}true{% else %}false{% endif %}"
 >
-    <td class="intake-queue-col--contact" data-label="Contato">
+    <td class="intake-queue-col--contact intake-cell intake-cell--contact" data-label="Contato">
         <div class="intake-contact-identity">
             <div class="avatar-circle avatar-{% cycle 'orange' 'blue' 'purple' 'teal' 'pink' 'indigo' %} intake-contact-avatar">
                 {{ intake.full_name|slice:":2"|upper }}
@@ -33,22 +33,22 @@
             </div>
         </div>
     </td>
-    <td class="intake-queue-col--source" data-label="Origem">
+    <td class="intake-queue-col--source intake-cell intake-cell--source" data-label="Origem">
         <span class="intake-table-text">{{ intake.get_source_display }}</span>
     </td>
-    <td class="intake-queue-col--stage" data-label="Leitura">
+    <td class="intake-queue-col--stage intake-cell intake-cell--stage" data-label="Leitura">
         <div class="intake-reading-stack">
             <span class="student-status-pill {% if semantic.semantic_stage == 'new-leads' %}student-status-pill--blue{% elif semantic.semantic_stage == 'lead-open' %}student-status-pill--orange{% else %}student-status-pill--gray{% endif %}">{{ semantic.semantic_label }}</span>
             <span class="intake-reading-note">{{ conversion.reason }}</span>
         </div>
     </td>
-    <td class="intake-queue-col--owner" data-label="Responsavel">
+    <td class="intake-queue-col--owner intake-cell intake-cell--owner" data-label="Responsavel">
         <span class="intake-table-text">{% if intake.assigned_to %}{{ intake.assigned_to.get_full_name|default:intake.assigned_to.username }}{% else %}Aguardando{% endif %}</span>
     </td>
-    <td class="intake-queue-col--registration" data-label="Registro">
+    <td class="intake-queue-col--registration intake-cell intake-cell--registration" data-label="Registro">
         <span class="intake-table-text">{{ item.registration_age_label }}</span>
     </td>
-    <td class="intake-queue-col--actions" data-label="Proxima acao">
+    <td class="intake-queue-col--actions intake-cell intake-cell--actions" data-label="Proxima acao">
         <div class="operation-hero-action-rail intake-row-actions">
             {% if page.capabilities.can_manage_students and conversion.can_convert and conversion.action_type == 'convert-student' %}
             <a class="button intake-convert-button" href="{{ student_quick_create_url }}?intake={{ intake.id }}#student-form-essential">{{ conversion.action_label }}</a>

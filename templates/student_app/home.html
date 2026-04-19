@@ -24,7 +24,7 @@
         <h2>{% if student_active_wod_session %}{{ student_active_wod_session.title }}{% else %}WOD pronto para abrir{% endif %}</h2>
         <p class="student-copy">
             {% if student_active_wod_session %}
-            {{ student_active_wod_session.scheduled_label }} · {{ student_active_wod_session.coach_name }} · {{ student_active_wod_session.attendance_status }}
+            {{ student_active_wod_session.scheduled_label }} | {{ student_active_wod_session.coach_name }} | {{ student_active_wod_session.attendance_status }}
             {% else %}
             Sua janela de treino esta ativa. Abra o WOD para consultar os blocos e a carga recomendada.
             {% endif %}
@@ -105,7 +105,7 @@
         <h2>{% if student_next_session %}{{ student_next_session.title }}{% else %}Nenhuma aula imediata{% endif %}</h2>
         <p class="student-copy">
             {% if student_next_session %}
-            {{ student_next_session.scheduled_label }} · {{ student_next_session.coach_name }} · {{ student_next_session.attendance_status }}
+            {{ student_next_session.scheduled_label }} | {{ student_next_session.coach_name }} | {{ student_next_session.attendance_status }}
             {% else %}
             Sua proxima aula vai aparecer aqui assim que a grade publicada estiver pronta para este contexto.
             {% endif %}
