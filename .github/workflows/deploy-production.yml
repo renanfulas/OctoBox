@@ -68,6 +68,7 @@ jobs:
   deploy-render:
     needs: verify-required-gates
     runs-on: ubuntu-latest
+    environment: Production
     steps:
       - name: Checkout
         uses: actions/checkout@v6
