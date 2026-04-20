@@ -97,6 +97,8 @@ def build_access_overview_context(view, *, context, profile_create_form=None, fo
         ],
         aria_label='Panorama de acessos',
         classes=['access-hero'],
+        data_panel='access-hero',
+        actions_slot='access-hero-actions',
     )
     context['group_admin_url'] = (
         admin_changelist_url('auth', 'group')

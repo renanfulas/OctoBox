@@ -41,11 +41,16 @@ class ApiV1ManifestView(View):
                     'student_autocomplete': reverse('api-v1-student-autocomplete'),
                     'whatsapp_poll_webhook': reverse('api-v1-whatsapp-poll-webhook'),
                     'student_invitation_resend_webhook': reverse('api-v1-resend-student-invitations-webhook'),
+                    'project_rag_health': reverse('api-v1-project-rag-health'),
+                    'project_rag_search': reverse('api-v1-project-rag-search'),
+                    'project_rag_answer': reverse('api-v1-project-rag-answer'),
+                    'project_rag_reindex': reverse('api-v1-project-rag-reindex'),
                 },
                 'scope': [
                     'foundation',
                     'mobile-ready-boundary',
                     'integration-ready-boundary',
+                    'internal-project-rag',
                 ],
             }
         )

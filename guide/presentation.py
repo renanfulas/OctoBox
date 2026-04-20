@@ -34,6 +34,7 @@ def build_system_map_page():
                 aria_label='Panorama do mapa do sistema',
                 classes=['system-map-hero'],
                 data_panel='system-map-hero',
+                actions_slot='system-map-hero-actions',
             ),
             'system_flow': [
                 'Entrada do projeto pelo Django',
@@ -235,7 +236,7 @@ def build_system_map_page():
                 'roles': '/acessos/',
             },
         },
-        assets=build_page_assets(css=['css/guide/system-map.css']),
+        assets=build_page_assets(css=['css/design-system/operations.css', 'css/guide/system-map.css']),
     )
 
 
@@ -264,6 +265,7 @@ def build_operational_settings_page(*, latest_lead_import_status=None):
                 aria_label='Janela operacional do WhatsApp',
                 classes=['system-map-hero'],
                 data_panel='operational-settings-hero',
+                actions_slot='operational-settings-hero-actions',
             ),
             'repeat_block_hours': repeat_block_hours,
             'repeat_block_mode_label': (
@@ -285,5 +287,5 @@ def build_operational_settings_page(*, latest_lead_import_status=None):
             'access_overview_href': '/acessos/#access-profile-create',
             'student_invites_href': '/configuracoes-operacionais/aluno/convites/',
         },
-        assets=build_page_assets(css=['css/guide/system-map.css']),
+        assets=build_page_assets(css=['css/design-system/operations.css', 'css/guide/system-map.css']),
     )

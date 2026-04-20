@@ -362,6 +362,7 @@ class WhatsAppWorkspaceView(OperationBaseView):
             classes=['whatsapp-placeholder-hero'],
             heading_level='h1',
             data_panel='whatsapp-placeholder-hero',
+            actions_slot='whatsapp-placeholder-hero-actions',
         )
         return context
 

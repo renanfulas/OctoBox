@@ -1,0 +1,200 @@
+/*
+ARQUIVO: fachada de login do app do aluno.
+
+POR QUE ELE EXISTE:
+- adapta a entrada do aluno para a mesma familia visual do login principal, mas com foco no app.
+
+O QUE ESTE ARQUIVO FAZ:
+1. aplica uma cena minimalista e escura para o app do aluno;
+2. organiza botoes sociais e acesso da equipe sem competir entre si;
+3. limita o escopo ao login do aluno para nao contaminar o resto do app.
+*/
+
+body.student-app-body {
+    background:
+        radial-gradient(circle at top left, rgba(0, 229, 255, 0.14), transparent 26%),
+        radial-gradient(circle at top right, rgba(255, 0, 200, 0.08), transparent 18%),
+        radial-gradient(circle at bottom center, rgba(74, 144, 226, 0.16), transparent 28%),
+        linear-gradient(180deg, #07111f 0%, #040912 100%);
+    color: #eff6ff;
+}
+
+.student-shell-grid {
+    width: min(560px, calc(100% - 28px));
+    padding: 28px 0 32px;
+}
+
+.student-shell {
+    gap: 18px;
+    padding-bottom: 0;
+}
+
+.student-auth-shell {
+    display: grid;
+    gap: 18px;
+}
+
+.student-auth-intro,
+.student-auth-card {
+    border: 1px solid rgba(0, 229, 255, 0.22);
+    border-radius: 30px;
+    background:
+        radial-gradient(circle at top, rgba(0, 229, 255, 0.08), transparent 38%),
+        linear-gradient(180deg, rgba(9, 17, 30, 0.96), rgba(6, 12, 22, 0.94));
+    box-shadow: 0 36px 120px rgba(2, 6, 23, 0.42);
+    backdrop-filter: blur(18px);
+}
+
+.student-auth-intro {
+    padding: 28px 24px 22px;
+}
+
+.student-auth-kicker,
+.student-auth-note,
+.student-auth-support {
+    margin: 0;
+}
+
+.student-auth-kicker {
+    color: rgba(125, 211, 252, 0.9);
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.student-auth-intro h1 {
+    margin: 10px 0 8px;
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1;
+    letter-spacing: -0.05em;
+}
+
+.student-auth-copy,
+.student-auth-note,
+.student-auth-support,
+.student-form-note,
+.student-form-errors p {
+    color: rgba(226, 232, 240, 0.74);
+}
+
+.student-auth-copy {
+    margin: 0;
+    line-height: 1.7;
+}
+
+.student-auth-card {
+    display: grid;
+    gap: 14px;
+    padding: 24px;
+}
+
+.student-provider-stack {
+    gap: 12px;
+}
+
+.student-form-note {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.student-auth-note {
+    padding: 12px 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(74, 144, 226, 0.18);
+    background: rgba(74, 144, 226, 0.08);
+    line-height: 1.55;
+}
+
+.student-form-errors {
+    border: 1px solid rgba(255, 156, 170, 0.24);
+    background: rgba(73, 16, 28, 0.34);
+    color: #ffd7de;
+}
+
+.student-button {
+    min-height: 52px;
+    color: #03111f;
+    background: linear-gradient(135deg, #00e5ff, #4a90e2);
+    box-shadow: 0 16px 30px rgba(0, 229, 255, 0.18);
+}
+
+.student-button--ghost {
+    color: #eff6ff;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: none;
+}
+
+.student-auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: rgba(186, 200, 220, 0.68);
+    font-size: 0.84rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+.student-auth-divider::before,
+.student-auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.26), transparent);
+}
+
+.student-auth-divider span {
+    white-space: nowrap;
+}
+
+.student-auth-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    padding: 14px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(0, 229, 255, 0.22);
+    color: #eff6ff;
+    text-decoration: none;
+    font-weight: 800;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(74, 144, 226, 0.16));
+    transition:
+        transform 0.16s ease,
+        filter 0.16s ease;
+}
+
+.student-auth-link:hover,
+.student-auth-link:focus-visible,
+.student-button:hover,
+.student-button:focus-visible {
+    transform: translateY(-1px);
+    filter: saturate(1.04);
+}
+
+.student-auth-link:focus-visible,
+.student-button:focus-visible {
+    outline: 3px solid rgba(0, 229, 255, 0.16);
+    outline-offset: 3px;
+}
+
+.student-auth-support {
+    line-height: 1.6;
+    font-size: 0.94rem;
+}
+
+@media (max-width: 640px) {
+    .student-shell-grid {
+        width: min(560px, calc(100% - 18px));
+        padding-top: 18px;
+    }
+
+    .student-auth-intro,
+    .student-auth-card {
+        padding-left: 18px;
+        padding-right: 18px;
+        border-radius: 24px;
+    }
+}

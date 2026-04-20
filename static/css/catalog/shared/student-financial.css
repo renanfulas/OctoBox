@@ -373,22 +373,6 @@ POR QUE ELE EXISTE:
     background: color-mix(in srgb, var(--theme-surface-strong) 42%, transparent);
 }
 
-body[data-theme="dark"] .student-financial-confirm-dialog__actions .button:not(.secondary) {
-    background: rgba(10, 18, 32, 0.72);
-    border-color: rgba(148, 163, 184, 0.12);
-    color: rgba(248, 250, 252, 0.92);
-}
-
-body[data-theme="dark"] .student-financial-confirm-dialog__actions .button.secondary {
-    background: transparent;
-    border-color: transparent;
-}
-
-body[data-theme="dark"] .student-financial-confirm-dialog__actions .button:hover,
-body[data-theme="dark"] .student-financial-confirm-dialog__actions .button:focus-visible {
-    background: rgba(15, 23, 42, 0.84);
-}
-
 .student-financial-layout {
     display: grid;
     grid-template-columns: minmax(0, 1.8fr) minmax(280px, 0.95fr);
@@ -1104,26 +1088,6 @@ body[data-theme="dark"] .student-financial-workspace :is(
 
 body[data-theme="dark"] .student-financial-workspace :is(.eyebrow, [class~="meta-text"], [class~="meta-text-sm"], .student-financial-kpi-card__label, .student-financial-kpi-card__meta, .student-financial-id-stat__label, .student-financial-status-tile__label, .student-payment-management-summary__row span, .student-financial-ledger__head th, .student-financial-ledger__copy span) {
     color: var(--theme-text-secondary);
-}
-
-body[data-theme="dark"] .student-financial-workspace .operation-hero-action-rail .button:not(.secondary),
-body[data-theme="dark"] #student-page-payments-summary-slot .operation-hero-action-rail .button:not(.secondary) {
-    background: rgba(10, 18, 32, 0.72);
-    border-color: rgba(148, 163, 184, 0.12);
-    color: rgba(248, 250, 252, 0.92);
-}
-
-body[data-theme="dark"] .student-financial-workspace .operation-hero-action-rail .button.secondary,
-body[data-theme="dark"] #student-page-payments-summary-slot .operation-hero-action-rail .button.secondary {
-    background: transparent;
-    border-color: transparent;
-}
-
-body[data-theme="dark"] .student-financial-workspace .operation-hero-action-rail .button:hover,
-body[data-theme="dark"] .student-financial-workspace .operation-hero-action-rail .button:focus-visible,
-body[data-theme="dark"] #student-page-payments-summary-slot .operation-hero-action-rail .button:hover,
-body[data-theme="dark"] #student-page-payments-summary-slot .operation-hero-action-rail .button:focus-visible {
-    background: rgba(15, 23, 42, 0.84);
 }
 
 body[data-theme="dark"] .student-financial-workspace :is(

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "branch_name": "codex/refactor-operational-student-flows",
+      "worktree_path": "C:\\Users\\renan\\OneDrive\\Documents\\OctoBOX",
+      "status": "active",
+      "created_at": "2026-04-20T08:22:17.876Z",
+      "updated_at": "2026-04-20T08:28:51.807Z"
+    },
+    {
+      "branch_name": "main",
+      "worktree_path": "C:\\Users\\renan\\OneDrive\\Documents\\OctoBOX",
+      "status": "active",
+      "created_at": "2026-04-20T07:46:33.622Z",
+      "updated_at": "2026-04-20T14:32:59.589Z"
+    }
+  ]
+}

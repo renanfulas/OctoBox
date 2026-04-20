@@ -393,9 +393,11 @@ class StudentIdentityFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Continuar com Google')
         self.assertContains(response, 'Continuar com Apple')
+        self.assertContains(response, 'Entrar com usuario')
         self.assertNotContains(response, 'aria-disabled="true"')
         self.assertContains(response, reverse('student-identity-oauth-start', kwargs={'provider': 'google'}))
         self.assertContains(response, reverse('student-identity-oauth-start', kwargs={'provider': 'apple'}))
+        self.assertContains(response, reverse('login-staff'))
 
     def test_public_login_hub_preserves_invite_token_in_student_oauth_buttons(self):
         invitation = StudentAppInvitation.objects.create(
@@ -416,6 +418,7 @@ class StudentIdentityFlowTests(TestCase):
             f"{reverse('student-identity-oauth-start', kwargs={'provider': 'apple'})}?{urlencode({'invite': str(invitation.token)})}",
         )
         self.assertContains(response, 'Convite reconhecido.')
+        self.assertContains(response, reverse('login-staff'))
 
     def test_invite_landing_points_student_to_public_login_hub_with_invite_token(self):
         invitation = StudentAppInvitation.objects.create(
