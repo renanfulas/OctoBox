@@ -12,6 +12,7 @@ REGRA:
 
 .topbar {
     --topbar-h: 84px;
+    --topbar-height: var(--topbar-h);
     --topbar-item-h: 32px;
     --topbar-profile-h: 54px;
     --topbar-padding-block: 11px;
@@ -789,19 +790,25 @@ REGRA:
 }
 
 [data-theme="dark"] .topbar {
-    --topbar-surface: color-mix(in srgb, #0a1422 90%, var(--theme-surface-strong) 10%);
-    --topbar-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.2) 74%, rgba(255, 255, 255, 0.04) 26%);
-    --topbar-shadow: 0 18px 32px rgba(2, 6, 18, 0.24), 0 4px 12px rgba(0, 0, 0, 0.14);
-    --topbar-search-surface: color-mix(in srgb, #0d1828 84%, var(--theme-surface-strong) 16%);
-    --topbar-search-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.18) 72%, rgba(255, 255, 255, 0.05) 28%);
-    --topbar-search-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 0 1px rgba(74, 144, 226, 0.06);
-    --topbar-toggle-surface: color-mix(in srgb, #101a2b 92%, var(--theme-surface-secondary) 8%);
-    --topbar-toggle-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.14) 72%, rgba(255, 255, 255, 0.04) 28%);
-    --topbar-toggle-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 3px 10px rgba(0, 0, 0, 0.16);
-    --topbar-toggle-surface-hover: color-mix(in srgb, #142235 90%, var(--theme-surface-strong) 10%);
-    --topbar-profile-surface: color-mix(in srgb, #101a2b 84%, var(--theme-surface-secondary) 16%);
-    --topbar-profile-border-color: color-mix(in srgb, rgba(92, 146, 214, 0.18) 74%, rgba(255, 255, 255, 0.04) 26%);
-    --topbar-profile-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 12px rgba(0, 0, 0, 0.16);
+    --topbar-surface: color-mix(in srgb, #0b121d 88%, var(--theme-surface-strong) 12%);
+    --topbar-border-color: color-mix(in srgb, rgba(74, 144, 226, 0.22) 68%, rgba(255, 255, 255, 0.04) 32%);
+    --topbar-shadow:
+        0 20px 38px rgba(2, 6, 18, 0.26),
+        0 0 0 1px color-mix(in srgb, var(--theme-accent-support-alpha) 8%, transparent);
+    --topbar-search-surface: color-mix(in srgb, #0f1826 82%, var(--theme-surface-strong) 18%);
+    --topbar-search-border-color: color-mix(in srgb, rgba(74, 144, 226, 0.18) 68%, rgba(255, 255, 255, 0.05) 32%);
+    --topbar-search-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 0 0 1px color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent);
+    --topbar-toggle-surface: color-mix(in srgb, #121b2a 90%, var(--theme-surface-secondary) 10%);
+    --topbar-toggle-border-color: color-mix(in srgb, rgba(74, 144, 226, 0.14) 70%, rgba(255, 255, 255, 0.04) 30%);
+    --topbar-toggle-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 12px rgba(0, 0, 0, 0.18);
+    --topbar-toggle-surface-hover: color-mix(in srgb, #162235 86%, var(--theme-surface-strong) 14%);
+    --topbar-profile-surface: color-mix(in srgb, #111a29 80%, var(--theme-surface-secondary) 20%);
+    --topbar-profile-border-color: color-mix(in srgb, rgba(74, 144, 226, 0.18) 68%, rgba(255, 255, 255, 0.04) 32%);
+    --topbar-profile-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 6px 16px rgba(0, 0, 0, 0.18);
     --topbar-profile-meta-copy: color-mix(in srgb, var(--theme-text-secondary) 82%, white 18%);
 }
 
@@ -821,19 +828,22 @@ REGRA:
 [data-theme="dark"] .topbar-quick-link--secondary:focus-visible,
 [data-theme="dark"] .alert-chip:hover,
 [data-theme="dark"] .alert-chip:focus-visible {
-    background: color-mix(in srgb, #142235 88%, var(--theme-surface-strong) 12%);
-    border-color: color-mix(in srgb, rgba(92, 146, 214, 0.22) 76%, rgba(255, 255, 255, 0.04) 24%);
-    box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.14);
+    background: color-mix(in srgb, #172538 84%, var(--theme-surface-strong) 16%);
+    border-color: color-mix(in srgb, rgba(74, 144, 226, 0.24) 74%, rgba(255, 255, 255, 0.04) 26%);
+    box-shadow:
+        0 0 0 1px rgba(0, 229, 255, 0.14),
+        0 10px 18px rgba(0, 0, 0, 0.14);
 }
 
 [data-theme="dark"] .avatar {
     background:
         radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.12), transparent 42%),
-        linear-gradient(145deg, color-mix(in srgb, var(--theme-accent-support) 50%, #172334 50%), color-mix(in srgb, var(--theme-accent-primary) 40%, #122033 60%), color-mix(in srgb, var(--theme-accent-premium) 18%, #0d1828 82%));
+        linear-gradient(145deg, color-mix(in srgb, var(--theme-accent-support) 52%, #172334 48%), color-mix(in srgb, var(--theme-accent-primary) 46%, #122033 54%), color-mix(in srgb, var(--theme-accent-premium) 20%, #0d1828 80%));
     border-color: rgba(255, 255, 255, 0.08);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        0 10px 18px rgba(0, 0, 0, 0.24);
+        0 10px 18px rgba(0, 0, 0, 0.24),
+        0 0 20px color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent);
 }
 
 [data-theme="dark"] .avatar-glyph {
@@ -873,7 +883,7 @@ REGRA:
 [data-theme="dark"] .topbar-profile:focus-within .avatar {
     background:
         radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.14), transparent 44%),
-        linear-gradient(145deg, color-mix(in srgb, rgba(0, 229, 255, 0.38) 54%, #172334 46%), color-mix(in srgb, rgba(74, 144, 226, 0.34) 42%, #122033 58%), color-mix(in srgb, rgba(255, 0, 200, 0.18) 18%, #0d1828 82%));
+        linear-gradient(145deg, color-mix(in srgb, rgba(0, 229, 255, 0.4) 56%, #172334 44%), color-mix(in srgb, rgba(74, 144, 226, 0.38) 44%, #122033 56%), color-mix(in srgb, rgba(255, 0, 200, 0.2) 20%, #0d1828 80%));
 }
 
 @media (max-width: 1320px) {

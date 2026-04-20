@@ -30,16 +30,6 @@ ARQUIVO: superfície técnica de dev.
     pointer-events: none;
 }
 
-.dev-hero .page-hero-actions-flat {
-    position: relative;
-    z-index: 1;
-}
-
-.dev-hero .page-hero-actions-flat .btn {
-    border-color: color-mix(in srgb, var(--color-primary) 20%, rgba(255, 255, 255, 0.76));
-    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.1);
-}
-
 .dev-metric-grid .operation-kpi-card {
     border-color: rgba(94, 234, 212, 0.16);
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);

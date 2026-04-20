@@ -1406,22 +1406,6 @@ body[data-theme="dark"] .student-page-plan-action-row:hover {
     background: inherit;
 }
 
-body[data-theme="dark"] .student-page-plan-action-row .button:not(.secondary) {
-    background: rgba(10, 18, 32, 0.72);
-    border-color: rgba(148, 163, 184, 0.12);
-    color: rgba(248, 250, 252, 0.92);
-}
-
-body[data-theme="dark"] .student-page-plan-action-row .button.secondary {
-    background: transparent;
-    border-color: transparent;
-}
-
-body[data-theme="dark"] .student-page-plan-action-row .button:hover,
-body[data-theme="dark"] .student-page-plan-action-row .button:focus-visible {
-    background: rgba(15, 23, 42, 0.84);
-}
-
 body[data-theme="dark"] .student-page-payments-panel :is(
     .student-payment-management-card,
     .student-page-payments-enrollment-card
@@ -1634,42 +1618,6 @@ body[data-theme="dark"] .student-page-plan-meta__item,
 body[data-theme="dark"] .student-page-empty-state {
     border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-glass-border) 84%);
     background: color-mix(in srgb, var(--theme-surface-glass) 84%, transparent);
-}
-
-body[data-theme="dark"] .student-page-alert-banner .operation-hero-action-rail .button:not(.secondary),
-body[data-theme="dark"] .student-page-payments-ghost-action-rail .button:not(.secondary) {
-    background: rgba(10, 18, 32, 0.72);
-    border-color: rgba(148, 163, 184, 0.12);
-    color: rgba(248, 250, 252, 0.92);
-}
-
-body[data-theme="dark"] .student-page-alert-banner .operation-hero-action-rail .button.secondary,
-body[data-theme="dark"] .student-page-payments-ghost-action-rail .button.secondary {
-    background: transparent;
-    border-color: transparent;
-}
-
-body[data-theme="dark"] .student-page-alert-banner .operation-hero-action-rail .button:hover,
-body[data-theme="dark"] .student-page-alert-banner .operation-hero-action-rail .button:focus-visible,
-body[data-theme="dark"] .student-page-payments-ghost-action-rail .button:hover,
-body[data-theme="dark"] .student-page-payments-ghost-action-rail .button:focus-visible {
-    background: rgba(15, 23, 42, 0.84);
-}
-
-body[data-theme="dark"] .student-page-header__actions .operation-hero-action-rail .button:not(.secondary) {
-    background: rgba(10, 18, 32, 0.72);
-    border-color: rgba(148, 163, 184, 0.12);
-    color: rgba(248, 250, 252, 0.92);
-}
-
-body[data-theme="dark"] .student-page-header__actions .operation-hero-action-rail .button.secondary {
-    background: transparent;
-    border-color: transparent;
-}
-
-body[data-theme="dark"] .student-page-header__actions .operation-hero-action-rail .button:hover,
-body[data-theme="dark"] .student-page-header__actions .operation-hero-action-rail .button:focus-visible {
-    background: rgba(15, 23, 42, 0.84);
 }
 
 @media (max-width: 720px) {

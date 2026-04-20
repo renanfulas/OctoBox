@@ -28,7 +28,7 @@ POR QUE ELE EXISTE:
     --operation-hero-main-gap: clamp(8px, 1vw, 10px);
     --operation-hero-stack-gap: 8px;
     --operation-hero-text-gap: 8px;
-    --operation-hero-stack-max-width: 48rem;
+    --operation-hero-stack-max-width: 100%;
     --operation-hero-heading-max-width: 16ch;
     --operation-hero-heading-size: clamp(2.1rem, 3.3vw, 2.85rem);
     --operation-hero-heading-line-height: 0.95;
@@ -126,34 +126,30 @@ body[data-theme="dark"] .operation-hero {
 }
 
 .operation-hero-title {
-    max-width: var(--operation-hero-heading-max-width, 15ch);
+    max-width: 100%;
     font-family: var(--font-display-critical, var(--font-display));
     font-size: var(--operation-hero-heading-size, clamp(2rem, 3.2vw, 2.8rem));
     line-height: var(--operation-hero-heading-line-height, 0.96);
     letter-spacing: var(--operation-hero-heading-letter-spacing, -0.05em);
     max-inline-size: 100%;
-    white-space: normal;
+    white-space: nowrap;
     overflow: hidden;
-    display: -webkit-box;
-    line-clamp: 2;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    text-wrap: balance;
+    display: block;
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
 }
 
 .operation-hero-copy {
     margin-inline: 0;
-    max-width: var(--operation-hero-copy-max-width, 40ch);
+    max-width: 100%;
     font-size: var(--operation-hero-copy-size, 0.99rem);
     line-height: var(--operation-hero-copy-line-height, 1.48);
     color: color-mix(in srgb, var(--theme-text-secondary) 90%, white 10%);
     max-inline-size: 100%;
-    white-space: normal;
+    white-space: nowrap;
     overflow: hidden;
-    display: -webkit-box;
-    line-clamp: 2;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    display: block;
+    text-overflow: ellipsis;
 }
 
 /* O contrato do hero declara linhas maximas; aqui tornamos a regra visual verdadeira. */

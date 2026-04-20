@@ -126,3 +126,6 @@ debug_*.html
 /.github/renan_prompter.instructions.md
 /.github/agents/Debugger.agent.md
 /.github/agents/UI Payment.agent.md
+
+tmp/
+.omx/

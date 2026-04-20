@@ -213,13 +213,26 @@ REGRA:
     min-height: 100%;
 }
 
+.hero.hero--command .operation-hero-copy-block,
+.hero.hero--command .operation-hero-text-stack {
+    max-width: 100%;
+}
+
 .hero.hero--command .operation-hero-title {
-    max-width: 11ch;
-    text-wrap: balance;
+    max-width: 100%;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
 }
 
 .hero.hero--command .operation-hero-copy {
-    max-width: var(--operation-hero-copy-max-width, 42ch);
+    max-width: 100%;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     color: color-mix(in srgb, var(--theme-text-secondary) 76%, white 24%);
 }
 
@@ -270,32 +283,58 @@ REGRA:
 }
 
 body[data-theme="dark"] .hero.hero--command {
+    --hero-before-width: 3px;
+    --hero-before-height: 100%;
+    --hero-before-radius: 999px;
+    --hero-before-opacity: 0.92;
+    --hero-after-width: clamp(180px, 24vw, 260px);
+    --hero-after-height: clamp(180px, 24vw, 260px);
+    --hero-after-opacity: 0.82;
+    --hero-panel-surface: color-mix(in srgb, var(--theme-surface-strong) 76%, rgba(255, 255, 255, 0.04) 24%);
+    --hero-panel-border: color-mix(in srgb, var(--theme-accent-support) 24%, var(--theme-border-soft) 76%);
+    --hero-panel-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 14px 28px color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent);
     background:
-        linear-gradient(145deg, rgba(8, 15, 29, 0.98), rgba(6, 12, 24, 0.98) 58%, rgba(4, 10, 20, 0.96));
-    border-color: rgba(148, 163, 184, 0.12);
+        linear-gradient(145deg, rgba(9, 14, 22, 0.98), rgba(10, 17, 30, 0.98) 56%, rgba(14, 22, 37, 0.96)),
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-primary-alpha) 34%, transparent), transparent 42%),
+        radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--theme-accent-premium-alpha) 24%, transparent), transparent 34%);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 74%, var(--theme-accent-support) 26%);
     box-shadow:
-        0 12px 22px rgba(2, 6, 23, 0.2),
+        0 18px 36px rgba(2, 6, 18, 0.28),
+        0 0 0 1px color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 body[data-theme="dark"] .hero.hero--command .operation-hero-copy {
-    color: rgba(226, 232, 240, 0.74);
+    color: color-mix(in srgb, var(--theme-text-secondary) 86%, white 14%);
 }
 
 body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:not(.secondary) {
-    background: rgba(10, 18, 32, 0.72);
-    border-color: rgba(148, 163, 184, 0.12);
-    color: rgba(248, 250, 252, 0.92);
+    background: color-mix(in srgb, var(--theme-surface-panel) 78%, var(--theme-accent-support-alpha) 22%);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 20%, var(--theme-border-soft) 80%);
+    color: color-mix(in srgb, var(--theme-text-primary) 92%, white 8%);
 }
 
 body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button.secondary {
-    background: transparent;
-    border-color: transparent;
+    background: color-mix(in srgb, var(--theme-surface-strong) 52%, var(--theme-accent-support-alpha) 12%);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 10%, var(--theme-border-soft) 90%);
+    color: color-mix(in srgb, var(--theme-text-secondary) 82%, white 18%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 8px 18px color-mix(in srgb, var(--theme-accent-support-alpha) 8%, transparent);
 }
 
 body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:hover,
 body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button:focus-visible {
-    background: rgba(15, 23, 42, 0.84);
+    background: color-mix(in srgb, var(--theme-surface-strong) 68%, var(--theme-accent-support-alpha) 32%);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 16%, var(--theme-border-soft) 84%);
+}
+
+body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button.secondary:hover,
+body[data-theme="dark"] .hero.hero--command .operation-hero-action-rail .button.secondary:focus-visible {
+    background: color-mix(in srgb, var(--theme-surface-strong) 62%, var(--theme-accent-support-alpha) 20%);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-border-soft) 82%);
 }
 
 .front-command-snapshot {

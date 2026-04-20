@@ -17,33 +17,25 @@ PONTOS CRITICOS:
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Entrar como funcionario | OctoBox Control</title>
+    <title>Entrar na equipe | OctoBox</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/design-system/pages/login.css' %}?v={{ static_asset_version }}">
 </head>
 <body data-page="login" data-screen="entry-auth" data-ui="login-body">
     <main data-slot="login-root">
         <div class="login-shell" data-panel="login-shell">
-            <div class="login-stage" aria-hidden="true">
-                <div class="login-stage__grid login-stage__grid--left"></div>
-                <div class="login-stage__grid login-stage__grid--right"></div>
-                <div class="login-stage__line login-stage__line--top"></div>
-                <div class="login-stage__line login-stage__line--mid"></div>
-                <div class="login-stage__line login-stage__line--bottom"></div>
-            </div>
-
             <section class="login-panel" aria-label="Formulario de login" data-panel="login-form">
                 <div class="brand-lockup">
                     <span class="brand-mark" aria-hidden="true"></span>
-                    <p class="brand-kicker">OctoBox Control</p>
-                    <h1>OCTOBOX</h1>
-                    <p class="brand-subtitle">Box Management Sovereign System</p>
+                    <p class="brand-kicker">OctoBox</p>
+                    <h1>Entrar na equipe</h1>
+                    <p class="brand-subtitle">Acesso interno com usuario e senha.</p>
                 </div>
 
                 <div class="form-wrap" data-slot="login-form-shell">
                     <div class="form-wrap__header">
-                        <h2>Welcome Back, Leader.</h2>
-                        <p class="subtitle">Access your box command center with the right internal credential and land directly in the correct operational corridor.</p>
+                        <h2>Acesso interno</h2>
+                        <p class="subtitle">Use seu usuario interno para abrir o painel certo sem misturar recepcao, coach, gestao e owner.</p>
                     </div>
 
                     <form method="post" data-slot="login-form-fields">
@@ -64,7 +56,7 @@ PONTOS CRITICOS:
                         </div>
                         {% endif %}
 
-                        <label for="id_username">Usuario interno</label>
+                        <label for="id_username">Usuario</label>
                         {{ form.username }}
                         {% if form.username.errors %}
                         <ul class="field-errors" aria-live="polite">
@@ -73,7 +65,7 @@ PONTOS CRITICOS:
                             {% endfor %}
                         </ul>
                         {% endif %}
-                        <p class="field-note" id="login-username-note">Use o identificador oficial do box. Pense nisso como usar a chave certa da porta certa.</p>
+                        <p class="field-note" id="login-username-note">Use o usuario interno do box. E como pegar a chave certa antes de abrir a porta.</p>
 
                         <label for="id_password">Senha</label>
                         {{ form.password }}
@@ -86,16 +78,16 @@ PONTOS CRITICOS:
                         {% endif %}
 
                         <div class="form-meta">
-                            <p class="field-note" id="login-password-note">A senha precisa combinar com o usuario interno para abrir o papel correto sem misturar recepcao, coach e gestao.</p>
-                            <a href="{% url 'login' %}" class="support-link">Portal alternativo</a>
+                            <p class="field-note" id="login-password-note">Sua senha confirma quem voce e e qual corredor do sistema deve abrir para voce.</p>
+                            <a href="{% url 'login' %}" class="support-link">Sou aluno</a>
                         </div>
 
-                        <button type="submit">LOGIN TO YOUR BOX</button>
+                        <button type="submit">Entrar</button>
                         <input type="hidden" name="next" value="{{ next }}" autocomplete="off">
                     </form>
 
-                    <p class="helper-note">Primeiro acesso? Configure grupos e papeis no admin antes de entregar esta chave para a equipe.</p>
-                    <p class="support-copy">Not a sovereign owner yet? Access is exclusive. <a href="{% url 'login' %}">Choose another entrance</a>.</p>
+                    <p class="helper-note">Primeiro acesso? Peca seu usuario ao gestor do box antes de tentar entrar.</p>
+                    <p class="support-copy">Se voce e aluno, use a entrada do app. <a href="{% url 'login' %}">Ir para o app</a>.</p>
                 </div>
             </section>
         </div>

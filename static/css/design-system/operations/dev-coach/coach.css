@@ -33,33 +33,6 @@ ARQUIVO: superfície operacional do coach.
     pointer-events: none;
 }
 
-.coach-scene .coach-hero .operation-hero-copy {
-    max-width: 42ch;
-}
-
-.coach-scene .coach-hero .operation-hero-action-rail {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.coach-scene .coach-hero .operation-hero-action-rail .button {
-    min-height: 32px;
-    padding: 6px 12px;
-    border-radius: 999px;
-    box-shadow: none;
-}
-
-.coach-scene .coach-hero .operation-hero-action-rail .button:not(.secondary) {
-    background: color-mix(in srgb, var(--theme-surface-panel) 64%, transparent);
-    border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
-}
-
-.coach-scene .coach-hero .operation-hero-action-rail .button.secondary {
-    border-color: transparent;
-    background: transparent;
-}
-
 .coach-scene .operation-metric-grid {
     gap: 14px;
 }
