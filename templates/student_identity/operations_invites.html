@@ -3,9 +3,17 @@
 
 {% block content %}
 {% with page=student_invitation_operations_page %}
+{% if page.data.access_matrix.is_read_only_identity_observer %}
+<section class="table-card section-gap-bottom-sm" aria-label="Modo de leitura do coach">
+    <p class="eyebrow">Matriz de acesso</p>
+    <h3>Coach entra aqui em modo leitura</h3>
+    <p class="system-map-copy">O coach pode acompanhar o pulso de ativacao do aluno e enxergar onde o corredor trava. Convites, aprovacoes e ajustes de identidade continuam com Recepcao, Manager, Owner ou DEV.</p>
+</section>
+{% endif %}
 {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
 <section class="layout-grid student-invite-operations" aria-label="Convites operacionais do app do aluno">
+    {% if page.data.access_matrix.can_operate_invites %}
     <article class="table-card">
         <p class="eyebrow">Link em massa</p>
         <h3>Link do grupo para puxar a turma</h3>
@@ -78,6 +86,18 @@
             </div>
         </form>
     </article>
+    {% else %}
+    <article class="table-card">
+        <p class="eyebrow">Leitura por papel</p>
+        <h3>Coach acompanha sem virar portaria</h3>
+        <p class="system-map-copy">Este papel enxerga o estado do onboarding e da entrada no app, mas nao gera convite, nao aprova membership e nao altera identidade.</p>
+        <ul class="capability-list">
+            <li>Enxerga gargalos da entrada no app.</li>
+            <li>Acompanha quem ainda esta aguardando liberacao.</li>
+            <li>Mantem treino e portaria em corredores separados.</li>
+        </ul>
+    </article>
+    {% endif %}
 
     <article class="table-card">
         <p class="eyebrow">Regras do fluxo</p>
@@ -159,25 +179,37 @@
                         </div>
                         <p class="student-invite-detail">{{ item.detail }}</p>
                         {% if item.action_kind == 'approve-membership' %}
+                        {% if page.data.access_matrix.can_approve_membership %}
                         <form method="post" class="student-invite-inline-form section-gap-top-xs">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="approve-membership">
                             <input type="hidden" name="membership_id" value="{{ item.membership_id }}">
                             <button class="button" type="submit">{{ item.action_label }}</button>
                         </form>
+                        {% else %}
+                        <p class="student-invite-detail section-gap-top-xs">Esse papel acompanha a fila, mas nao libera acesso.</p>
+                        {% endif %}
                         {% elif item.action_kind == 'open-whatsapp' %}
+                        {% if page.data.access_matrix.can_operate_invites %}
                         <form method="post" class="student-invite-inline-form section-gap-top-xs">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="open-whatsapp">
                             <input type="hidden" name="invitation_id" value="{{ item.invitation_id }}">
                             <button class="button" type="submit">{{ item.action_label }}</button>
                         </form>
+                        {% else %}
+                        <p class="student-invite-detail section-gap-top-xs">Esse papel observa a fila quente, mas nao dispara handoff.</p>
+                        {% endif %}
                         {% elif item.action_kind == 'copy-mass-link' %}
+                        {% if page.data.access_matrix.can_view_invite_links %}
                         <label class="student-invite-url-field section-gap-top-xs">
                             <span class="field-label">Link para o grupo</span>
                             <input type="text" readonly value="{{ item.copy_value }}" onclick="this.select(); navigator.clipboard && navigator.clipboard.writeText(this.value);">
                         </label>
                         <p class="student-invite-detail">Toque no campo para selecionar e copiar o link antes de republicar.</p>
+                        {% else %}
+                        <p class="student-invite-detail section-gap-top-xs">O link em massa fica escondido neste papel para nao misturar treino com identidade.</p>
+                        {% endif %}
                         {% endif %}
                     </div>
                 </article>
@@ -277,12 +309,16 @@
             </div>
             <p class="student-invite-detail">{{ stalled.reason_label }}</p>
             <p class="student-invite-detail">{{ stalled.stalled_since_label }}</p>
+            {% if stalled.can_open_whatsapp %}
             <form method="post" class="student-invite-inline-form section-gap-top-xs">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="open-whatsapp">
                 <input type="hidden" name="invitation_id" value="{{ stalled.invitation_id }}">
                 <button class="button" type="submit">{{ stalled.whatsapp_action_label }}</button>
             </form>
+            {% else %}
+            <p class="student-invite-detail section-gap-top-xs">Modo leitura: acompanhe a fila quente e acione recepcao ou gerencia para o handoff.</p>
+            {% endif %}
         </article>
         {% endfor %}
     </div>
@@ -310,6 +346,7 @@
             <p class="student-invite-detail">
                 Pedido feito em {{ membership.created_at|date:"d/m/Y H:i" }} para o box {{ membership.box_root_slug }}.
             </p>
+            {% if page.data.access_matrix.can_approve_membership %}
             <div class="actions actions-tight student-invite-actions">
                 <form method="post" class="student-invite-inline-form">
                     {% csrf_token %}
@@ -318,6 +355,9 @@
                     <button class="button" type="submit">Liberar acesso</button>
                 </form>
             </div>
+            {% else %}
+            <p class="student-invite-detail">Esse papel acompanha a fila, mas a liberacao do acesso fica com recepcao, manager, owner ou DEV.</p>
+            {% endif %}
         </article>
         {% endfor %}
     </div>
@@ -415,10 +455,12 @@
                 <span class="student-invite-pill student-invite-pill-{{ invite.last_email_delivery_status_tone }}">{{ invite.last_email_delivery_status_label }}</span>
                 <span class="student-invite-pill student-invite-pill-{{ invite.last_whatsapp_delivery_status_tone }}">{{ invite.last_whatsapp_delivery_status_label }}</span>
             </div>
+            {% if page.data.access_matrix.can_view_invite_links %}
             <label class="student-invite-url-field">
                 <span class="field-label">Link para compartilhar</span>
                 <input type="text" readonly value="{{ invite.invite_url }}" onclick="this.select();">
             </label>
+            {% endif %}
             <div class="actions actions-tight student-invite-actions">
                 {% if invite.can_open_whatsapp and invite.whatsapp_url %}
                 <form method="post" class="student-invite-inline-form">

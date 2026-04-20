@@ -48,7 +48,8 @@ class AccessViewTests(TestCase):
         response = self.client.get(reverse('login-staff'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Entrar como funcionario')
+        self.assertContains(response, 'Welcome Back, Leader.')
+        self.assertContains(response, 'LOGIN TO YOUR BOX')
         self.assertContains(response, 'name="username"', html=False)
 
     def test_access_overview_renders_role_matrix(self):

@@ -8,15 +8,19 @@ from django.utils import timezone
 
 from access.roles import ROLE_COACH
 from auditing.models import AuditEvent
-from operations.models import ClassSession
+from operations.models import Attendance, AttendanceStatus, ClassSession
 from student_app.models import (
     SessionWorkout,
     SessionWorkoutBlock,
     SessionWorkoutMovement,
     SessionWorkoutRevision,
     SessionWorkoutRevisionEvent,
+    SessionWorkoutRmGapAction,
     SessionWorkoutStatus,
+    StudentExerciseMax,
+    StudentWorkoutView,
     WorkoutLoadType,
+    WorkoutRmGapActionStatus,
 )
 from tests.workout_test_support import WorkoutFlowBaseTestCase
 
@@ -451,3 +455,261 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'WOD sensivel filtrado')
         self.assertNotContains(response, 'WOD comum')
         self.assertContains(response, 'Somente mudancas sensiveis')
+
+    def test_approval_board_renders_rm_readiness_against_real_consumption(self):
+        workout = SessionWorkout.objects.create(
+            session=self.session,
+            title='WOD com RM publicado',
+            coach_notes='Treino de forca guiado por percentual.',
+            status=SessionWorkoutStatus.PUBLISHED,
+            created_by=self.coach,
+            approved_by=self.manager,
+            approved_at=timezone.now(),
+            version=2,
+        )
+        block = SessionWorkoutBlock.objects.create(
+            workout=workout,
+            title='Forca principal',
+            kind='strength',
+            sort_order=1,
+        )
+        SessionWorkoutMovement.objects.create(
+            block=block,
+            movement_slug='deadlift',
+            movement_label='Deadlift',
+            sets=5,
+            reps=3,
+            load_type=WorkoutLoadType.PERCENTAGE_OF_RM,
+            load_value=Decimal('70.00'),
+            sort_order=1,
+        )
+        Attendance.objects.create(student=self.student_alpha, session=self.session, status=AttendanceStatus.BOOKED)
+        Attendance.objects.create(student=self.student_beta, session=self.session, status=AttendanceStatus.CHECKED_IN)
+        StudentExerciseMax.objects.create(
+            student=self.student_alpha,
+            exercise_slug='deadlift',
+            exercise_label='Deadlift',
+            one_rep_max_kg=Decimal('100.00'),
+        )
+        StudentWorkoutView.objects.create(
+            student=self.student_alpha,
+            workout=workout,
+            first_viewed_at=timezone.now(),
+            last_viewed_at=timezone.now(),
+            view_count=1,
+        )
+        StudentWorkoutView.objects.create(
+            student=self.student_beta,
+            workout=workout,
+            first_viewed_at=timezone.now(),
+            last_viewed_at=timezone.now(),
+            view_count=1,
+        )
+        SessionWorkoutRevision.objects.create(
+            workout=workout,
+            version=2,
+            event=SessionWorkoutRevisionEvent.PUBLISHED,
+            created_by=self.manager,
+            snapshot={
+                'title': 'WOD com RM publicado',
+                'coach_notes': 'Treino de forca guiado por percentual.',
+                'status': 'published',
+                'version': 2,
+                'approval_reason_summary': 'Aprovado sem ressalvas',
+                'blocks': [
+                    {
+                        'sort_order': 1,
+                        'title': 'Forca principal',
+                        'kind': 'strength',
+                        'kind_label': 'Forca',
+                        'notes': '',
+                        'movements': [
+                            {
+                                'sort_order': 1,
+                                'movement_slug': 'deadlift',
+                                'movement_label': 'Deadlift',
+                                'sets': 5,
+                                'reps': 3,
+                                'load_type': WorkoutLoadType.PERCENTAGE_OF_RM,
+                                'load_value': '70.00',
+                                'notes': '',
+                            }
+                        ],
+                    }
+                ],
+            },
+        )
+        self.login_as_manager()
+
+        response = self.client.get(reverse('workout-approval-board'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Prontidao de RM x consumo real')
+        self.assertContains(response, 'RM pronto 1/2 (50%)')
+        self.assertContains(response, 'Aberturas prontas 1/2 (50%)')
+        self.assertContains(response, 'Movimentos dependentes de RM: Deadlift')
+        self.assertContains(response, 'Sem RM completo: Aluno Beta.')
+        self.assertContains(response, 'Gap de RM nas aberturas 1')
+        self.assertContains(response, 'Coletar RM antes da proxima aula semelhante')
+        self.assertContains(
+            response,
+            'O sinal mostra que o treino pediu uma chave que parte da turma ainda nao tinha; melhor medir antes ou simplificar a prescricao.',
+        )
+        self.assertContains(response, 'href="#rm-gap-queue"')
+        self.assertContains(response, 'Alunos sem RM para movimentos criticos')
+        self.assertContains(response, 'Salvar corredor')
+        self.assertContains(response, 'Aluno Beta')
+        self.assertContains(response, 'Deadlift')
+        self.assertContains(
+            response,
+            reverse('workout-student-rm-quick-edit', args=[workout.id, self.student_beta.id, 'deadlift']),
+        )
+
+    def test_manager_can_mark_rm_gap_as_requested(self):
+        workout = SessionWorkout.objects.create(
+            session=self.session,
+            title='WOD com gap de RM',
+            coach_notes='Treino de forca guiado por percentual.',
+            status=SessionWorkoutStatus.PUBLISHED,
+            created_by=self.coach,
+            approved_by=self.manager,
+            approved_at=timezone.now(),
+        )
+        block = SessionWorkoutBlock.objects.create(
+            workout=workout,
+            title='Forca principal',
+            kind='strength',
+            sort_order=1,
+        )
+        SessionWorkoutMovement.objects.create(
+            block=block,
+            movement_slug='deadlift',
+            movement_label='Deadlift',
+            sets=5,
+            reps=3,
+            load_type=WorkoutLoadType.PERCENTAGE_OF_RM,
+            load_value=Decimal('75.00'),
+            sort_order=1,
+        )
+        Attendance.objects.create(student=self.student_beta, session=self.session, status=AttendanceStatus.BOOKED)
+        self.login_as_manager()
+
+        response = self.client.post(
+            reverse('workout-rm-gap-action', args=[workout.id]),
+            data={
+                'student_id': self.student_beta.id,
+                'exercise_slug': 'deadlift',
+                'exercise_label': 'Deadlift',
+                'status': 'requested',
+                'note': 'Recepcao vai pedir o RM antes da aula das 18h.',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        action = SessionWorkoutRmGapAction.objects.get(workout=workout, student=self.student_beta, exercise_slug='deadlift')
+        self.assertEqual(action.status, WorkoutRmGapActionStatus.REQUESTED)
+        self.assertEqual(action.note, 'Recepcao vai pedir o RM antes da aula das 18h.')
+        self.assertContains(response, 'RM solicitado registrado para Aluno Beta.')
+
+    def test_manager_cannot_mark_rm_as_collected_without_registered_rm(self):
+        workout = SessionWorkout.objects.create(
+            session=self.session,
+            title='WOD com gap de RM',
+            coach_notes='Treino de forca guiado por percentual.',
+            status=SessionWorkoutStatus.PUBLISHED,
+            created_by=self.coach,
+            approved_by=self.manager,
+            approved_at=timezone.now(),
+        )
+        block = SessionWorkoutBlock.objects.create(
+            workout=workout,
+            title='Forca principal',
+            kind='strength',
+            sort_order=1,
+        )
+        SessionWorkoutMovement.objects.create(
+            block=block,
+            movement_slug='deadlift',
+            movement_label='Deadlift',
+            sets=5,
+            reps=3,
+            load_type=WorkoutLoadType.PERCENTAGE_OF_RM,
+            load_value=Decimal('75.00'),
+            sort_order=1,
+        )
+        Attendance.objects.create(student=self.student_beta, session=self.session, status=AttendanceStatus.BOOKED)
+        self.login_as_manager()
+
+        response = self.client.post(
+            reverse('workout-rm-gap-action', args=[workout.id]),
+            data={
+                'student_id': self.student_beta.id,
+                'exercise_slug': 'deadlift',
+                'exercise_label': 'Deadlift',
+                'status': 'collected',
+                'note': 'Coach disse que ja mediu.',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            SessionWorkoutRmGapAction.objects.filter(workout=workout, student=self.student_beta, exercise_slug='deadlift').exists()
+        )
+        self.assertContains(response, 'Nao marque RM coletado sem registrar o RM real do aluno primeiro.')
+
+    def test_manager_can_open_quick_rm_edit_and_save_rm(self):
+        workout = SessionWorkout.objects.create(
+            session=self.session,
+            title='WOD com atalho de RM',
+            coach_notes='Treino de forca guiado por percentual.',
+            status=SessionWorkoutStatus.PUBLISHED,
+            created_by=self.coach,
+            approved_by=self.manager,
+            approved_at=timezone.now(),
+        )
+        block = SessionWorkoutBlock.objects.create(
+            workout=workout,
+            title='Forca principal',
+            kind='strength',
+            sort_order=1,
+        )
+        SessionWorkoutMovement.objects.create(
+            block=block,
+            movement_slug='deadlift',
+            movement_label='Deadlift',
+            sets=5,
+            reps=3,
+            load_type=WorkoutLoadType.PERCENTAGE_OF_RM,
+            load_value=Decimal('75.00'),
+            sort_order=1,
+        )
+        Attendance.objects.create(student=self.student_beta, session=self.session, status=AttendanceStatus.BOOKED)
+        self.login_as_manager()
+        url = reverse('workout-student-rm-quick-edit', args=[workout.id, self.student_beta.id, 'deadlift'])
+
+        response = self.client.get(f'{url}?label=Deadlift')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Aluno Beta')
+        self.assertContains(response, 'Deadlift')
+        self.assertContains(response, 'Salvar RM e fechar gap')
+
+        response = self.client.post(
+            url,
+            data={
+                'exercise_label': 'Deadlift',
+                'one_rep_max_kg': '105.00',
+                'notes': 'Medido na janela operacional da board.',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        rm_record = StudentExerciseMax.objects.get(student=self.student_beta, exercise_slug='deadlift')
+        self.assertEqual(rm_record.one_rep_max_kg, Decimal('105.00'))
+        self.assertEqual(rm_record.notes, 'Medido na janela operacional da board.')
+        gap_action = SessionWorkoutRmGapAction.objects.get(workout=workout, student=self.student_beta, exercise_slug='deadlift')
+        self.assertEqual(gap_action.status, WorkoutRmGapActionStatus.COLLECTED)
+        self.assertContains(response, 'RM de Deadlift salvo para Aluno Beta.')

@@ -1,16 +1,16 @@
 """
-ARQUIVO: consultas de leitura do dominio onboarding.
+ARQUIVO: consultas de leitura do domínio onboarding.
 
 POR QUE ELE EXISTE:
-- Da ownership proprio para leads e intakes sem depender da fronteira de communications.
+- dá ownership próprio para leads e intakes sem depender da fronteira de communications.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Resume metricas de entradas pendentes.
-2. Expoe listas curtas para triagem e workspaces operacionais.
-3. Monta a leitura principal da Central de Intake.
+1. resume métricas de entradas pendentes.
+2. expõe listas curtas para triagem e workspaces operacionais.
+3. monta a leitura principal da Central de Intake.
 
-PONTOS CRITICOS:
-- Essas consultas abastecem shell, operacao, onboarding e alunos; qualquer regressao aqui aparece como fila quebrada ou contagem errada.
+PONTOS CRÍTICOS:
+- essas consultas abastecem shell, operação, onboarding e alunos; qualquer regressão aqui aparece como fila quebrada ou contagem errada.
 """
 
 from datetime import timedelta
@@ -87,7 +87,7 @@ def _build_intake_radar_board(*, params, metrics_queryset, today):
             created_at__date__lte=today,
         )
         period_label = 'Semana'
-        copy = 'Veja quem procurou o box nesta semana, sem carregar volume antigo junto.'
+        copy = 'Leia quem entrou nesta semana sem misturar volume antigo na decisão.'
     elif source_period == 'month':
         radar_queryset = radar_queryset.filter(
             created_at__date__gte=month_start,
@@ -97,11 +97,11 @@ def _build_intake_radar_board(*, params, metrics_queryset, today):
         copy = 'Leia o acumulado do mês atual para entender quais canais sustentam a captação agora.'
     elif source_period == 'all':
         period_label = 'Todos'
-        copy = 'Leia todo o historico disponivel para enxergar os canais que mais sustentam a captacao.'
+        copy = 'Leia o histórico inteiro para enxergar quais canais mais sustentam a captação.'
     else:
         radar_queryset = radar_queryset.filter(created_at__date=today)
         period_label = 'Hoje'
-        copy = 'Compare quem entrou hoje em uma leitura curta, limpa e direta.'
+        copy = 'Compare quem entrou hoje em uma leitura curta, direta e acionável.'
 
     radar_rows = list(radar_queryset.values_list('source', 'raw_payload'))
     acquisition_counts = summarize_acquisition_channels(radar_rows)
@@ -136,7 +136,7 @@ def _build_intake_radar_board(*, params, metrics_queryset, today):
         'total': total,
         'periods': periods,
         'cards': [
-            {'key': 'referral', 'label': 'Indicacao', 'value': acquisition_counts.get('referral', 0)},
+            {'key': 'referral', 'label': 'Indicação', 'value': acquisition_counts.get('referral', 0)},
             {'key': 'instagram', 'label': 'Instagram', 'value': acquisition_counts.get('instagram', 0)},
             {'key': 'walk_in', 'label': 'Passei na frente', 'value': acquisition_counts.get('walk_in', 0)},
             {'key': 'google', 'label': 'Google', 'value': acquisition_counts.get('google', 0)},
@@ -268,7 +268,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
             {
                 'label': 'Leads',
                 'display_value': str(lead_count),
-                'note': 'Leads aguardando primeiro contato, agendamento ou direcionamento basico no balcao.',
+                'note': 'Leads que ainda pedem primeiro contato, agendamento ou direcionamento inicial.',
                 'href': '?panel=tab-intake-queue&semantic_stage=new-leads',
                 'target_panel': 'tab-intake-queue',
                 'tone_class': 'kpi-blue',
@@ -278,7 +278,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
             {
                 'label': 'Em conversa',
                 'display_value': str(conversation_count),
-                'note': 'Leads que ja estao em contato ativo com a equipe e podem virar matricula sem trocar de tela.',
+                'note': 'Leads que já estão em conversa ativa e podem virar matrícula sem trocar de tela.',
                 'href': '?panel=tab-intake-queue&semantic_stage=lead-open',
                 'target_panel': 'tab-intake-queue',
                 'tone_class': 'kpi-amber',
@@ -288,7 +288,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
             {
                 'label': 'Hoje',
                 'display_value': str(created_today),
-                'note': 'Conta apenas os leads e contatos em conversa que entraram hoje; na virada do dia esse numero reinicia.',
+                'note': 'Conta apenas as entradas que chegaram hoje; esse número reinicia na virada do dia.',
                 'href': '?panel=tab-intake-queue&created_window=today',
                 'target_panel': 'tab-intake-queue',
                 'tone_class': 'kpi-emerald',
@@ -296,9 +296,9 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
                 'is_selected': active_panel == 'tab-intake-queue' and created_window == 'today',
             },
             {
-                'label': 'Atribuidos',
+                'label': 'Atribuídos',
                 'display_value': str(assigned_count),
-                'note': 'Mostra quantas entradas ja estao com alguem dono do atendimento.',
+                'note': 'Mostra quantas entradas já têm alguém responsável pelo atendimento.',
                 'href': '?panel=tab-intake-queue&assignment=assigned',
                 'target_panel': 'tab-intake-queue',
                 'tone_class': 'kpi-purple',
@@ -309,7 +309,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         'hero_stats': [
             {'label': 'Pendentes', 'value': pending_count},
             {'label': 'Na fila', 'value': len(queue)},
-            {'label': 'Atribuidos', 'value': assigned_count},
+            {'label': 'Atribuídos', 'value': assigned_count},
             {'label': 'Hoje', 'value': created_today},
         ],
         'radar_board': radar_board,
@@ -330,9 +330,9 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
                 'label': 'Comece pela fila aberta',
                 'chip_label': 'Fila',
                 'summary': (
-                    f'{visible_queue_count} entrada(s) aparecem neste recorte da fila principal e pedem leitura antes de esfriarem ou virarem ruido operacional.'
+                    f'{visible_queue_count} entrada(s) aparecem neste recorte e pedem leitura antes de esfriar ou virar ruído operacional.'
                     if visible_queue_count > 0
-                    else 'Nenhuma entrada aparece neste recorte da fila principal, entao a triagem nao pede pressao imediata agora.'
+                    else 'Nenhuma entrada aparece neste recorte da fila principal, então a triagem não pede pressão imediata agora.'
                 ),
                 'count': visible_queue_count,
                 'pill_class': 'warning' if visible_queue_count > 0 else 'success',
@@ -340,12 +340,12 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
                 'href_label': 'Ver fila principal',
             },
             {
-                'label': 'Acompanhe quem ja esta em conversa',
+                'label': 'Acompanhe quem já está aquecido',
                 'chip_label': 'Contato ativo',
                 'summary': (
-                    f'{conversation_count} lead(s) ja estao em conversa e podem ser convertidos sem depender de uma etapa intermediaria.'
+                    f'{conversation_count} lead(s) já estão em conversa e podem ser convertidos sem depender de nova triagem.'
                     if conversation_count > 0
-                    else 'Nenhum lead esta marcado como conversa ativa agora, entao a fila pede primeiro contato antes de virar matricula.'
+                    else 'Nenhum lead está marcado como conversa ativa agora, então a fila pede primeiro contato antes de virar matrícula.'
                 ),
                 'count': conversation_count,
                 'pill_class': 'accent' if conversation_count == 0 else 'success',
@@ -355,7 +355,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
             {
                 'label': 'Depois leia a origem do fluxo',
                 'chip_label': 'Origens',
-                'summary': 'A origem ajuda a separar gargalo de captacao, canal ou passagem de bastao.',
+                'summary': 'A origem ajuda a separar gargalo de captação, canal ou passagem de bastão.',
                 'pill_class': 'info' if created_today > 0 else 'accent',
                 'href': '#intake-source-board',
                 'href_label': 'Ver origens',

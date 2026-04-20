@@ -33,6 +33,8 @@ jobs:
             const branch = context.payload.workflow_run.head_branch;
             const requiredWorkflows = [
               "OctoBox CI Checks (Performance & Integrity)",
+              "Student Onboarding Corridors Regression",
+              "Student Onboarding Real Smoke",
               "Security Scanners 🛡️",
             ];
             const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -73,7 +75,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Trigger Render deploy hook
         env:
@@ -85,7 +87,7 @@ jobs:
       - name: Wait for Render rollout
         run: sleep 45
 
-      - name: Run production smoke suite
+      - name: Run baseline runtime smoke suite
         env:
           SMOKE_BASE_URL: ${{ secrets.SMOKE_BASE_URL }}
           SMOKE_USERNAME: ${{ secrets.SMOKE_USERNAME }}

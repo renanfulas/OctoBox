@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.urls import reverse
 
 from auditing.models import AuditEvent
-from operations.models import ClassSession
+from operations.models import Attendance, AttendanceStatus, ClassSession
 from student_app.models import (
     SessionWorkout,
     SessionWorkoutBlock,
@@ -12,6 +12,7 @@ from student_app.models import (
     SessionWorkoutRevision,
     SessionWorkoutRevisionEvent,
     SessionWorkoutStatus,
+    StudentExerciseMax,
     WorkoutLoadType,
 )
 from tests.workout_test_support import WorkoutFlowBaseTestCase
@@ -246,3 +247,57 @@ class CoachWorkoutEditorFlowTests(WorkoutFlowBaseTestCase):
             ).exists()
         )
         self.assertTrue(AuditEvent.objects.filter(action='session_workout_duplicated', target_id=str(duplicated_workout.id)).exists())
+
+    def test_coach_editor_shows_rm_preview_for_booked_students(self):
+        workout = self._create_workout()
+        block = self._create_block(workout, title='Forca guiada')
+        self._create_movement(
+            block,
+            movement_slug='deadlift',
+            movement_label='Deadlift',
+            sets=5,
+            reps=3,
+            load_type=WorkoutLoadType.PERCENTAGE_OF_RM,
+            load_value=Decimal('70.00'),
+        )
+        Attendance.objects.create(student=self.student_alpha, session=self.session, status=AttendanceStatus.BOOKED)
+        Attendance.objects.create(student=self.student_beta, session=self.session, status=AttendanceStatus.CHECKED_IN)
+        StudentExerciseMax.objects.create(
+            student=self.student_alpha,
+            exercise_slug='deadlift',
+            exercise_label='Deadlift',
+            one_rep_max_kg=Decimal('100.00'),
+        )
+
+        response = self.client.get(self._editor_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Preview do impacto nos alunos')
+        self.assertContains(response, '2 aluno(s) no radar')
+        self.assertContains(response, '1/2 alunos com RM registrado')
+        self.assertContains(response, 'Aluno Alpha')
+        self.assertContains(response, '70.00 kg')
+        self.assertContains(response, 'Aluno Beta')
+        self.assertContains(response, 'Sem RM registrado')
+
+    def test_coach_editor_explains_when_no_percentage_rm_is_configured(self):
+        workout = self._create_workout()
+        block = self._create_block(workout, title='Metcon livre')
+        self._create_movement(
+            block,
+            movement_slug='row',
+            movement_label='Row',
+            sets=4,
+            reps=500,
+            load_type=WorkoutLoadType.FREE,
+        )
+        Attendance.objects.create(student=self.student_alpha, session=self.session, status=AttendanceStatus.BOOKED)
+
+        response = self.client.get(self._editor_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '1 aluno(s) no radar')
+        self.assertContains(
+            response,
+            'Ainda nao existe movimento com % do RM neste WOD. Quando voce usar esse tipo de carga, mostramos aqui o impacto na turma.',
+        )

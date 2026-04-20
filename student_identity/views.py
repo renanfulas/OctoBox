@@ -6,25 +6,31 @@ from django.http import HttpResponseNotAllowed
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.views.generic import FormView, TemplateView, View
+from django.views.generic import TemplateView, View
 
 from shared_support.box_runtime import get_box_runtime_slug
 from auditing.models import AuditEvent
 from .application.commands import AuthenticateStudentWithProviderCommand
 from .application.use_cases import AuthenticateStudentWithProvider
 from .infrastructure.repositories import DjangoStudentIdentityRepository
-from .infrastructure.session import attach_student_session_cookie, clear_student_session_cookie
+from .infrastructure.session import clear_student_session_cookie
 from .funnel_events import record_student_onboarding_event
-from .models import StudentBoxInviteLink, StudentBoxMembership, StudentBoxMembershipStatus, StudentOnboardingJourney
+from .models import StudentOnboardingJourney
+from .oauth_actions import (
+    StudentOAuthProviderExchangeError,
+    authenticate_student_oauth_identity,
+    exchange_student_oauth_identity_payload,
+    finalize_student_oauth_callback,
+)
+from .oauth_journeys import resolve_student_oauth_journey
+from .oauth_loader import enforce_student_oauth_callback_rate_limit
+from .oauth_policy import StudentOAuthCallbackPolicyError, read_student_oauth_callback_input
 from .oauth_providers import OAuthProviderError, build_provider
-from .oauth_state import build_oauth_state, read_oauth_state
+from .oauth_state import build_oauth_state
 from .security import (
-    build_student_device_fingerprint,
     check_student_flow_rate_limit,
-    maybe_emit_student_anomaly_alert,
     resolve_student_client_ip,
 )
-from student_app.onboarding_state import store_pending_student_onboarding
 
 
 class StudentSignInView(TemplateView):
@@ -68,7 +74,10 @@ class StudentSignInView(TemplateView):
 class StudentOAuthStartView(View):
     def get(self, request, provider, *args, **kwargs):
         invite_token = request.GET.get('invite', '').strip()
-        journey = self._resolve_journey(invite_token=invite_token)
+        journey = resolve_student_oauth_journey(
+            repository=DjangoStudentIdentityRepository(),
+            invite_token=invite_token,
+        )
         if journey:
             record_student_onboarding_event(
                 actor=None,
@@ -103,18 +112,6 @@ class StudentOAuthStartView(View):
         }
         return mapping.get(reason, 'Nao foi possivel iniciar a autenticacao social agora.')
 
-    def _resolve_journey(self, *, invite_token: str) -> str:
-        if not invite_token:
-            return ''
-        repository = DjangoStudentIdentityRepository()
-        box_invite_link = repository.find_box_invite_link_by_token(invite_token)
-        if box_invite_link is not None:
-            return StudentOnboardingJourney.MASS_BOX_INVITE
-        invitation = repository.find_invitation_by_token(invite_token)
-        if invitation is not None:
-            return invitation.onboarding_journey
-        return ''
-
 
 class StudentOAuthCallbackView(StudentSignInView):
     identity_repository_class = DjangoStudentIdentityRepository
@@ -131,272 +128,39 @@ class StudentOAuthCallbackView(StudentSignInView):
         return self._handle_callback(request, provider)
 
     def _handle_callback(self, request, provider: str):
-        allowed, retry_after = check_student_flow_rate_limit(
-            scope='student-oauth-callback',
-            token=f'ip:{resolve_student_client_ip(request)}',
-            limit=max(1, int(getattr(settings, 'STUDENT_OAUTH_CALLBACK_RATE_LIMIT_MAX_REQUESTS', 12))),
-            window_seconds=max(1, int(getattr(settings, 'STUDENT_OAUTH_CALLBACK_RATE_LIMIT_WINDOW_SECONDS', 300))),
-        )
-        if not allowed:
-            AuditEvent.objects.create(
-                actor=None,
-                actor_role='',
-                action='student_oauth_callback.rate_limited',
-                target_model='student_identity.StudentOAuthCallback',
-                target_label=provider,
-                description='Callback social do aluno bloqueado por rajada.',
-                metadata={
-                    'provider': provider,
-                    'client_ip': resolve_student_client_ip(request),
-                    'path': request.path,
-                },
-            )
-            response = HttpResponse('Muitas tentativas de callback social em pouco tempo. Aguarde e tente novamente.', status=429)
-            response['Retry-After'] = str(retry_after)
-            return response
-
-        error = request.GET.get('error') or request.POST.get('error')
-        if error:
-            messages.error(request, 'O provedor cancelou ou recusou a autenticacao.')
-            return redirect('student-identity-login')
-
-        state_payload = read_oauth_state(request.GET.get('state') or request.POST.get('state') or '')
-        if state_payload is None or state_payload.get('provider') != provider:
-            messages.error(request, 'O estado da autenticacao nao e valido. Tente novamente.')
-            return redirect('student-identity-login')
-
-        code = (request.GET.get('code') or request.POST.get('code') or '').strip()
-        if not code:
-            messages.error(request, 'O provedor nao retornou um codigo de autenticacao valido.')
-            return redirect('student-identity-login')
-
+        rate_limit_response = enforce_student_oauth_callback_rate_limit(request=request, provider=provider)
+        if rate_limit_response is not None:
+            return rate_limit_response
         try:
-            oauth_provider = build_provider(provider)
-            identity_payload = oauth_provider.exchange_code(code=code, request=request)
-        except OAuthProviderError as exc:
+            callback_input = read_student_oauth_callback_input(request=request, provider=provider)
+        except StudentOAuthCallbackPolicyError as exc:
+            messages.error(request, str(exc))
+            return redirect('student-identity-login')
+        try:
+            identity_payload = exchange_student_oauth_identity_payload(
+                provider=provider,
+                code=callback_input.code,
+                request=request,
+                provider_builder=build_provider,
+            )
+        except StudentOAuthProviderExchangeError as exc:
             messages.error(request, self._map_provider_callback_error(str(exc)))
             return redirect('student-identity-login')
 
-        result = self.authenticate_identity(
-            provider_name=identity_payload.provider,
-            email=identity_payload.email,
-            provider_subject=identity_payload.provider_subject,
-            invite_token=state_payload.get('invite_token', ''),
+        result = authenticate_student_oauth_identity(
+            authenticate_identity=self.authenticate_identity,
+            identity_payload=identity_payload,
+            invite_token=callback_input.invite_token,
         )
-        redirect_response = self._handle_special_journeys(
+        return finalize_student_oauth_callback(
             request=request,
             provider=provider,
+            state_payload=callback_input.state_payload,
             identity_payload=identity_payload,
-            state_payload=state_payload,
-            result=result,
+            authentication_result=result,
+            identity_repository_class=self.identity_repository_class,
+            map_failure_reason=self._map_failure_reason,
         )
-        if redirect_response is not None:
-            return redirect_response
-        if not result.success or result.identity is None:
-            messages.error(request, self._map_failure_reason(result.failure_reason))
-            redirect_url = reverse('student-identity-login')
-            invite_token = state_payload.get('invite_token', '')
-            if invite_token:
-                redirect_url = f'{redirect_url}?invite={invite_token}'
-            return redirect(redirect_url)
-
-        active_membership = StudentBoxMembership.objects.filter(
-            identity_id=result.identity.id,
-            box_root_slug=result.identity.box_root_slug,
-        ).first()
-        redirect_name = 'student-app-home'
-        if active_membership is not None and active_membership.status == StudentBoxMembershipStatus.PENDING_APPROVAL:
-            redirect_name = 'student-app-membership-pending'
-            messages.info(request, 'Sua identidade foi validada. Agora o box precisa aprovar este acesso.')
-
-        response = redirect(redirect_name)
-        attach_student_session_cookie(
-            response,
-            identity_id=result.identity.id,
-            box_root_slug=result.identity.box_root_slug,
-            device_fingerprint=build_student_device_fingerprint(request),
-        )
-        client_ip = resolve_student_client_ip(request)
-        actor_label = result.identity.student_name
-        ip_anomaly_allowed, _ = check_student_flow_rate_limit(
-            scope='student-invite-accept-ip-alert',
-            token=f'ip:{client_ip}',
-            limit=max(1, int(getattr(settings, 'STUDENT_INVITE_ACCEPT_IP_ALERT_THRESHOLD', 8))),
-            window_seconds=max(1, int(getattr(settings, 'STUDENT_INVITE_ACCEPT_IP_ALERT_WINDOW_SECONDS', 600))),
-        )
-        if not ip_anomaly_allowed:
-            maybe_emit_student_anomaly_alert(
-                scope='student-invite-accept-ip',
-                actor=None,
-                actor_role='',
-                target_label=client_ip,
-                description='Volume suspeito de aceite de invite/callback social vindo do mesmo IP.',
-                metadata={
-                    'box_root_slug': result.identity.box_root_slug,
-                    'student_identity_id': result.identity.id,
-                    'provider': provider,
-                },
-                dedupe_window_seconds=max(60, int(getattr(settings, 'STUDENT_INVITE_ACCEPT_IP_ALERT_WINDOW_SECONDS', 600))),
-            )
-        box_anomaly_allowed, _ = check_student_flow_rate_limit(
-            scope='student-invite-accept-box-alert',
-            token=f'box:{result.identity.box_root_slug}',
-            limit=max(1, int(getattr(settings, 'STUDENT_INVITE_ACCEPT_BOX_ALERT_THRESHOLD', 12))),
-            window_seconds=max(1, int(getattr(settings, 'STUDENT_INVITE_ACCEPT_BOX_ALERT_WINDOW_SECONDS', 600))),
-        )
-        if not box_anomaly_allowed:
-            maybe_emit_student_anomaly_alert(
-                scope='student-invite-accept-box',
-                actor=None,
-                actor_role='',
-                target_label=result.identity.box_root_slug,
-                description='Volume suspeito de aceite de invites concentrado no mesmo box em janela curta.',
-                metadata={
-                    'client_ip': client_ip,
-                    'student_identity_id': result.identity.id,
-                    'student_name': actor_label,
-                    'provider': provider,
-                },
-                dedupe_window_seconds=max(60, int(getattr(settings, 'STUDENT_INVITE_ACCEPT_BOX_ALERT_WINDOW_SECONDS', 600))),
-            )
-        if redirect_name == 'student-app-home':
-            journey = self._resolve_journey_from_state(state_payload=state_payload)
-            if journey:
-                record_student_onboarding_event(
-                    actor=None,
-                    actor_role='',
-                    journey=journey,
-                    event='oauth_completed',
-                    target_model='student_identity.StudentIdentity',
-                    target_id=str(result.identity.id),
-                    target_label=result.identity.student_name,
-                    description='OAuth concluido com sucesso no onboarding do aluno.',
-                    metadata={
-                        'box_root_slug': result.identity.box_root_slug,
-                        'identity_id': result.identity.id,
-                        'student_id': result.identity.student_id,
-                        'provider': provider,
-                    },
-                )
-                record_student_onboarding_event(
-                    actor=None,
-                    actor_role='',
-                    journey=journey,
-                    event='app_entry_completed',
-                    target_model='student_identity.StudentIdentity',
-                    target_id=str(result.identity.id),
-                    target_label=result.identity.student_name,
-                    description='Entrada direta no app concluida via convite do aluno.',
-                    metadata={
-                        'box_root_slug': result.identity.box_root_slug,
-                        'identity_id': result.identity.id,
-                        'student_id': result.identity.student_id,
-                        'provider': provider,
-                    },
-                )
-            messages.success(request, f'Acesso do aluno {result.identity.student_name} confirmado.')
-        return response
-
-    def _resolve_journey_from_state(self, *, state_payload: dict) -> str:
-        invite_token = (state_payload.get('invite_token') or '').strip()
-        if not invite_token:
-            return ''
-        repository = self.identity_repository_class()
-        box_invite_link = repository.find_box_invite_link_by_token(invite_token)
-        if box_invite_link is not None:
-            return StudentOnboardingJourney.MASS_BOX_INVITE
-        invitation = repository.find_invitation_by_token(invite_token)
-        if invitation is not None:
-            return invitation.onboarding_journey
-        return ''
-
-    def _handle_special_journeys(self, *, request, provider: str, identity_payload, state_payload: dict, result):
-        invite_token = (state_payload.get('invite_token') or '').strip()
-        if not invite_token:
-            return None
-
-        repository = self.identity_repository_class()
-        box_invite_link = repository.find_box_invite_link_by_token(invite_token)
-        if box_invite_link is not None:
-            if box_invite_link.box_root_slug != get_box_runtime_slug():
-                messages.error(request, 'Este link em massa nao pertence ao box atual.')
-                return redirect('student-identity-login')
-            if not box_invite_link.can_accept:
-                messages.error(request, 'Este link em massa nao esta mais disponivel para novos cadastros.')
-                return redirect('student-identity-login')
-            repository.record_box_invite_acceptance(box_invite_link)
-            store_pending_student_onboarding(
-                request,
-                payload={
-                    'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
-                    'box_root_slug': box_invite_link.box_root_slug,
-                    'provider': identity_payload.provider,
-                    'provider_subject': identity_payload.provider_subject,
-                    'email': identity_payload.email,
-                    'box_invite_link_id': box_invite_link.id,
-                    'box_invite_link_token': str(box_invite_link.token),
-                },
-            )
-            record_student_onboarding_event(
-                actor=None,
-                actor_role='',
-                journey=StudentOnboardingJourney.MASS_BOX_INVITE,
-                event='oauth_completed',
-                target_model='student_identity.StudentBoxInviteLink',
-                target_id=str(box_invite_link.id),
-                target_label=box_invite_link.box_root_slug,
-                description='OAuth concluido para link em massa do box.',
-                metadata={
-                    'box_root_slug': box_invite_link.box_root_slug,
-                    'box_invite_link_id': box_invite_link.id,
-                    'provider': provider,
-                },
-            )
-            return redirect('student-app-onboarding')
-
-        invitation = repository.find_invitation_by_token(invite_token)
-        if invitation is None or not result.success or result.identity is None:
-            return None
-        if invitation.onboarding_journey != StudentOnboardingJourney.IMPORTED_LEAD_INVITE:
-            return None
-
-        attach_response = redirect('student-app-onboarding')
-        attach_student_session_cookie(
-            attach_response,
-            identity_id=result.identity.id,
-            box_root_slug=result.identity.box_root_slug,
-            device_fingerprint=build_student_device_fingerprint(request),
-        )
-        store_pending_student_onboarding(
-            request,
-            payload={
-                'journey': invitation.onboarding_journey,
-                'identity_id': result.identity.id,
-                'student_id': result.identity.student_id,
-                'invitation_id': invitation.id,
-                'provider': identity_payload.provider,
-                'provider_subject': identity_payload.provider_subject,
-                'email': identity_payload.email,
-            },
-        )
-        record_student_onboarding_event(
-            actor=None,
-            actor_role='',
-            journey=invitation.onboarding_journey,
-            event='oauth_completed',
-            target_model='student_identity.StudentAppInvitation',
-            target_id=str(invitation.id),
-            target_label=invitation.student.full_name,
-            description='OAuth concluido para convite individual do onboarding do aluno.',
-            metadata={
-                'box_root_slug': invitation.box_root_slug,
-                'student_id': invitation.student_id,
-                'identity_id': result.identity.id,
-                'invitation_id': invitation.id,
-                'provider': provider,
-            },
-        )
-        return attach_response
 
     def _map_provider_callback_error(self, reason: str) -> str:
         mapping = {
@@ -455,7 +219,7 @@ class StudentInviteLandingView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['invite_token'] = self.kwargs['token']
-        context['login_url'] = f"{reverse('student-identity-login')}?invite={self.kwargs['token']}"
+        context['login_url'] = f"{reverse('login')}?invite={self.kwargs['token']}"
         context['journey_label'] = 'aluno'
         invitation = DjangoStudentIdentityRepository().find_invitation_by_token(str(self.kwargs['token']))
         if invitation is not None:
@@ -483,7 +247,7 @@ class StudentBoxInviteLandingView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['invite_token'] = self.kwargs['token']
-        context['login_url'] = f"{reverse('student-identity-login')}?invite={self.kwargs['token']}"
+        context['login_url'] = f"{reverse('login')}?invite={self.kwargs['token']}"
         context['journey_label'] = 'grupo do box'
         context['mass_invite_mode'] = True
         box_invite_link = DjangoStudentIdentityRepository().find_box_invite_link_by_token(str(self.kwargs['token']))

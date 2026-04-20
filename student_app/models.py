@@ -101,6 +101,12 @@ class WorkoutWeeklyGovernanceCommitmentStatus(models.TextChoices):
     EXECUTED = 'executed', 'Executado'
 
 
+class WorkoutRmGapActionStatus(models.TextChoices):
+    REQUESTED = 'requested', 'RM solicitado'
+    COLLECTED = 'collected', 'RM coletado'
+    FREE_LOAD = 'free_load', 'Deixar carga livre'
+
+
 class SessionWorkout(TimeStampedModel):
     session = models.OneToOneField(ClassSession, on_delete=models.CASCADE, related_name='workout')
     title = models.CharField(max_length=140, blank=True)
@@ -298,3 +304,35 @@ class WorkoutWeeklyManagementCheckpoint(TimeStampedModel):
 
     def __str__(self):
         return f'Checkpoint semanal WOD - {self.week_start:%d/%m/%Y}'
+
+
+class SessionWorkoutRmGapAction(TimeStampedModel):
+    workout = models.ForeignKey(SessionWorkout, on_delete=models.CASCADE, related_name='rm_gap_actions')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='session_workout_rm_gap_actions')
+    exercise_slug = models.SlugField(max_length=64)
+    exercise_label = models.CharField(max_length=120)
+    status = models.CharField(
+        max_length=24,
+        choices=WorkoutRmGapActionStatus.choices,
+        default=WorkoutRmGapActionStatus.REQUESTED,
+    )
+    note = models.CharField(max_length=255, blank=True)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='session_workout_rm_gap_actions_updated',
+    )
+
+    class Meta:
+        ordering = ['-updated_at', '-id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['workout', 'student', 'exercise_slug'],
+                name='unique_workout_student_rm_gap_action',
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.workout} - {self.student.full_name} - {self.exercise_label}'

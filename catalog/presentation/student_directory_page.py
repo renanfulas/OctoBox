@@ -52,8 +52,8 @@ def build_student_directory_page(
 
     hero = build_page_hero(
         eyebrow='Base',
-        title='O que pede cuidado na sua base hoje.',
-        copy='Veja quem merece leitura primeiro, quem ja pode avancar e onde agir sem ruido.',
+        title='Sua base de alunos, com prioridade clara.',
+        copy='Veja quem está bem, quem pede atenção e onde agir primeiro sem perder contexto.',
         actions=hero_actions,
         aria_label='Panorama de alunos',
         classes=['student-hero'],
@@ -114,7 +114,7 @@ def build_student_directory_page(
             **build_page_context(
                 page_key='student-directory',
                 title='Alunos',
-                subtitle='Triagem, contexto e proxima acao com leitura limpa.',
+                subtitle='Base, prioridade e próxima ação em uma leitura que cabe na rotina.',
                 mode='management' if can_manage_students else 'read-only',
                 role_slug=current_role_slug,
             ),

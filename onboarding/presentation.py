@@ -58,8 +58,8 @@ def build_intake_center_page(*, snapshot, current_role_slug, intake_search=None)
 
     hero = build_page_hero(
         eyebrow='Entradas',
-        title='Entradas em leitura.',
-        copy='Veja quem pede resposta agora, quem ja esta em conversa e onde converter ou recusar sem ruido.',
+        title='Suas entradas, com prioridade clara.',
+        copy='Veja quem pede resposta agora, quem ja esta aquecido e onde converter sem perder contexto.',
         actions=hero_actions,
         aria_label='Panorama da central de entradas',
         classes=[],
@@ -112,7 +112,7 @@ def build_intake_center_page(*, snapshot, current_role_slug, intake_search=None)
             **build_page_context(
                 page_key='intake-center',
                 title='Central de Entradas',
-                subtitle='Entradas, triagem e conversao em um ponto proprio.',
+                subtitle='Triagem, conversa e conversao em uma central propria.',
                 mode='workspace',
                 role_slug=current_role_slug,
             ),

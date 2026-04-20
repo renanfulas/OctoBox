@@ -15,21 +15,22 @@ PONTOS CRITICOS:
 
 from django.apps import apps
 from django.contrib import messages
-from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.db import transaction
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from django.views.decorators.csrf import ensure_csrf_cookie
 
-from access.admin import admin_changelist_url, user_can_access_admin
-from shared_support.page_payloads import build_page_hero, build_page_reading_panel
-from .forms import AccessProfileCreateForm, AccessProfileUpdateForm
-from .roles import ROLE_DEFINITIONS, ROLE_DEV, ROLE_OWNER, ROLE_PERMISSION_MAP, get_user_capabilities, get_user_role
+from access.access_overview_context import build_access_overview_context
+from access.access_profile_actions import (
+    handle_access_profile_create,
+    handle_access_profile_toggle,
+    handle_access_profile_update,
+)
+from .roles import ROLE_DEV, ROLE_OWNER, ROLE_PERMISSION_MAP, get_user_role
 
 
 def _ensure_role_group(role_slug):
@@ -47,20 +48,6 @@ def _ensure_role_group(role_slug):
         permissions.extend(Permission.objects.filter(content_type=content_type, codename__in=codenames))
     group.permissions.set(permissions)
     return group
-
-
-def _split_full_name(full_name):
-    chunks = full_name.split()
-    if not chunks:
-        return '', ''
-    if len(chunks) == 1:
-        return chunks[0], ''
-    return chunks[0], ' '.join(chunks[1:])
-
-
-def _build_full_name(user):
-    full_name = user.get_full_name().strip()
-    return full_name or user.username
 
 
 from django.contrib.auth.views import LoginView
@@ -90,7 +77,9 @@ class AccessEntryHubView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         next_url = (self.request.GET.get('next') or '').strip()
+        invite_token = (self.request.GET.get('invite') or '').strip()
         context['next'] = next_url
+        context['invite_token'] = invite_token
         context['staff_login_url'] = reverse('login-staff')
         if next_url:
             context['staff_login_url'] = f"{context['staff_login_url']}?next={next_url}"
@@ -102,6 +91,9 @@ class AccessEntryHubView(TemplateView):
             'student-identity-oauth-start',
             kwargs={'provider': 'apple'},
         )
+        if invite_token:
+            context['student_google_url'] = f"{context['student_google_url']}?invite={invite_token}"
+            context['student_apple_url'] = f"{context['student_apple_url']}?invite={invite_token}"
         return context
 
     def post(self, request, *args, **kwargs):
@@ -125,40 +117,6 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
         current_role = get_user_role(self.request.user)
         return getattr(current_role, 'slug', '') in (ROLE_OWNER, ROLE_DEV)
 
-    def _get_profile_queryset(self):
-        user_model = get_user_model()
-        return user_model.objects.order_by('-is_active', 'username').prefetch_related('groups')
-
-    def _build_access_profiles(self, *, forms_by_user_id=None):
-        profiles = []
-        for user in self._get_profile_queryset():
-            role = get_user_role(user)
-            profile_form = None
-            if forms_by_user_id and user.id in forms_by_user_id:
-                profile_form = forms_by_user_id[user.id]
-            else:
-                profile_form = AccessProfileUpdateForm(
-                    prefix=f'profile-{user.id}',
-                    initial={
-                        'full_name': _build_full_name(user),
-                        'email': user.email,
-                        'role': getattr(role, 'slug', ''),
-                    },
-                )
-            profiles.append({
-                'id': user.id,
-                'username': user.username,
-                'full_name': _build_full_name(user),
-                'email': user.email,
-                'role_label': getattr(role, 'label', 'Sem papel definido'),
-                'role_slug': getattr(role, 'slug', ''),
-                'is_active': user.is_active,
-                'is_superuser': user.is_superuser,
-                'is_current_user': user.pk == self.request.user.pk,
-                'form': profile_form,
-            })
-        return profiles
-
     def post(self, request, *args, **kwargs):
         if not self._can_manage_access_profiles():
             messages.error(request, 'Seu papel atual pode consultar acessos, mas nao gerenciar perfis por esta tela.')
@@ -166,121 +124,57 @@ class AccessOverviewView(LoginRequiredMixin, TemplateView):
 
         access_action = request.POST.get('access_action', 'create')
         if access_action == 'update':
-            profile_id = request.POST.get('target_profile_id', '').strip()
-            form = AccessProfileUpdateForm(request.POST, prefix=f'profile-{profile_id}')
-            if not form.is_valid():
-                forms_by_user_id = {}
-                if profile_id.isdigit():
-                    forms_by_user_id[int(profile_id)] = form
-                context = self.get_context_data(forms_by_user_id=forms_by_user_id)
-                return self.render_to_response(context)
-
-            user_model = get_user_model()
-            target_user = user_model.objects.filter(pk=profile_id).first()
-            if target_user is None:
+            result = handle_access_profile_update(
+                post_data=request.POST,
+                ensure_role_group=_ensure_role_group,
+            )
+            if not result['ok']:
+                if result['reason'] == 'invalid-form':
+                    context = self.get_context_data(forms_by_user_id=result['forms_by_user_id'])
+                    return self.render_to_response(context)
                 messages.error(request, 'Perfil nao encontrado para atualizacao.')
                 return redirect('access-overview')
 
-            role_slug = form.cleaned_data['role']
-            first_name, last_name = _split_full_name(form.cleaned_data['full_name'])
-            with transaction.atomic():
-                target_user.first_name = first_name
-                target_user.last_name = last_name
-                target_user.email = form.cleaned_data['email']
-                target_user.save(update_fields=['first_name', 'last_name', 'email'])
-                group = _ensure_role_group(role_slug)
-                target_user.groups.set([group])
-
-            messages.success(request, f'Perfil de {target_user.username} atualizado com sucesso.')
+            messages.success(request, f'Perfil de {result["user"].username} atualizado com sucesso.')
             return redirect('access-overview')
 
         if access_action == 'toggle_active':
-            profile_id = request.POST.get('target_profile_id', '').strip()
-            user_model = get_user_model()
-            target_user = user_model.objects.filter(pk=profile_id).first()
-            if target_user is None:
-                messages.error(request, 'Perfil nao encontrado para alteracao de status.')
-                return redirect('access-overview')
-            if target_user.pk == request.user.pk and target_user.is_active:
-                messages.error(request, 'Nao e permitido desativar o proprio usuario por esta tela.')
+            result = handle_access_profile_toggle(
+                actor=request.user,
+                post_data=request.POST,
+            )
+            if not result['ok']:
+                if result['reason'] == 'self-disable-blocked':
+                    messages.error(request, 'Nao e permitido desativar o proprio usuario por esta tela.')
+                else:
+                    messages.error(request, 'Perfil nao encontrado para alteracao de status.')
                 return redirect('access-overview')
 
-            target_user.is_active = not target_user.is_active
-            target_user.save(update_fields=['is_active'])
-            status_label = 'ativado' if target_user.is_active else 'desativado'
-            messages.success(request, f'Perfil de {target_user.username} {status_label} com sucesso.')
+            status_label = 'ativado' if result['user'].is_active else 'desativado'
+            messages.success(request, f'Perfil de {result["user"].username} {status_label} com sucesso.')
             return redirect('access-overview')
 
-        form = AccessProfileCreateForm(request.POST)
-        if not form.is_valid():
-            context = self.get_context_data(profile_create_form=form)
+        result = handle_access_profile_create(
+            post_data=request.POST,
+            ensure_role_group=_ensure_role_group,
+        )
+        if not result['ok']:
+            context = self.get_context_data(profile_create_form=result['form'])
             return self.render_to_response(context)
 
-        user_model = get_user_model()
-        username = form.cleaned_data['username']
-        if user_model.objects.filter(username=username).exists():
-            form.add_error('username', 'Ja existe um usuario com esse identificador.')
-            context = self.get_context_data(profile_create_form=form)
-            return self.render_to_response(context)
-
-        role_slug = form.cleaned_data['role']
-        first_name, last_name = _split_full_name(form.cleaned_data['full_name'])
-        with transaction.atomic():
-            user = user_model.objects.create_user(
-                username=username,
-                email=form.cleaned_data['email'],
-                password=form.cleaned_data['password'],
-                first_name=first_name,
-                last_name=last_name,
-            )
-            group = _ensure_role_group(role_slug)
-            user.groups.set([group])
-
-        messages.success(request, f'Perfil criado para {user.get_full_name() or user.username} com o papel {group.name}.')
+        messages.success(
+            request,
+            f'Perfil criado para {result["user"].get_full_name() or result["user"].username} com o papel {result["group"].name}.',
+        )
         return redirect('access-overview')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        current_role = get_user_role(self.request.user)
-        role_capabilities = get_user_capabilities(self.request.user)
-        role_definitions = ROLE_DEFINITIONS
-        can_manage_access_profiles = self._can_manage_access_profiles()
-        access_profiles_panel_open = self.request.GET.get('manage_profiles') == '1' or bool(kwargs.get('forms_by_user_id'))
-
-        context['current_role'] = current_role
-        context['role_definitions'] = role_definitions
-        context['can_manage_access_profiles'] = can_manage_access_profiles
-        context['access_profiles_panel_open'] = access_profiles_panel_open
-        context['profile_create_form'] = kwargs.get('profile_create_form') or AccessProfileCreateForm()
-        context['access_profiles'] = self._build_access_profiles(forms_by_user_id=kwargs.get('forms_by_user_id'))
-        context['page_title'] = 'Papeis e acessos'
-        context['page_subtitle'] = 'Quem decide o que e onde cada papel para.'
-        context['hero_stats'] = [
-            {'label': 'Papel atual', 'value': current_role.label},
-            {'label': 'Capacidades do papel', 'value': len(role_capabilities)},
-            {'label': 'Papeis formais', 'value': len(role_definitions)},
-            {'label': 'Fronteira central', 'value': 'Governanca'},
-        ]
-        context['access_operational_focus'] = []
-        context['access_reading_panel'] = build_page_reading_panel(
-            items=context['access_operational_focus'],
-            primary_href='',
-            pill_label='Governanca',
-            pill_class='accent',
-            class_name='access-reading-panel',
-            panel_id='access-command-lane',
+        return build_access_overview_context(
+            self,
+            context=context,
+            profile_create_form=kwargs.get('profile_create_form'),
+            forms_by_user_id=kwargs.get('forms_by_user_id'),
         )
-        context['access_hero'] = build_page_hero(
-            eyebrow='Acessos',
-            title='Fronteiras em leitura.',
-            copy='Veja quem pode agir, onde cada papel comeca e o que pede cuidado agora.',
-            actions=[
-                {'label': 'Ver mapa de papeis', 'href': '#access-role-map'},
-            ],
-            aria_label='Panorama de acessos',
-            classes=['access-hero'],
-        )
-        context['group_admin_url'] = admin_changelist_url('auth', 'group') if user_can_access_admin(self.request.user) else ''
-        return context
 
 

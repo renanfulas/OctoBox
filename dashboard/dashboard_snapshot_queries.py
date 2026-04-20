@@ -33,81 +33,12 @@ from operations.models import Attendance, AttendanceStatus, BehaviorNote, ClassS
 from operations.session_snapshots import serialize_class_session, sync_runtime_statuses
 from students.models import Student, StudentStatus
 from monitoring.beacon_snapshot import build_red_beacon_snapshot
-
-
-def _build_delta_badge(current, previous, *, label, formatter=str, semantic='neutral'):
-    # Ensure callers can rely on a numeric representation of the delta
-    # 'value' remains the display string, 'value_raw' is always an int/float (or None)
-    try:
-        diff = (current or 0) - (previous or 0)
-    except Exception:
-        diff = 0
-
-    # exact same: expose numeric zero but keep human-friendly display
-    if diff == 0:
-        return {
-            'tone': 'neutral',
-            'value': 'Mesmo ritmo',
-            'value_raw': 0,
-            'value_percent': 0,
-            'is_small': False,
-            'label': label,
-        }
-
-    # previous == 0 => first meaningful reading
-    if not previous:
-        return {
-            'tone': 'neutral',
-            'value': 'Primeira leitura',
-            'value_raw': None,
-            'value_percent': None,
-            'is_small': False,
-            'label': label,
-        }
-
-    if diff > 0:
-        symbol = '+'
-        tone = 'good' if semantic == 'positive' else 'bad' if semantic == 'negative' else 'neutral'
-    else:
-        symbol = '-'
-        tone = 'bad' if semantic == 'positive' else 'good' if semantic == 'negative' else 'neutral'
-
-    # compute percent relative to previous (signed)
-    try:
-        percent = (diff / float(previous)) * 100
-    except Exception:
-        percent = None
-
-    is_small = False
-    if percent is not None:
-        try:
-            is_small = abs(percent) <= 10 and tone in ('good', 'bad')
-        except Exception:
-            is_small = False
-
-    return {
-        'tone': tone,
-        'value': f'{symbol} {formatter(abs(diff))}',
-        'value_raw': diff,
-        'value_percent': percent,
-        'is_small': is_small,
-        'label': label,
-    }
-
-
-def _format_percent(value):
-    return f"{int(round(value))}%"
-
-
-def _format_currency(value):
-    try:
-        v = float(value or 0)
-        # format as BRL: 1.234.567,89
-        s = f"{v:,.2f}"
-        s = s.replace(',', 'X').replace('.', ',').replace('X', '.')
-        return f"R$ {s}"
-    except Exception:
-        return f"R$ {value}"
+from dashboard.dashboard_snapshot_panels import (
+    build_dashboard_glance_summary,
+    build_dashboard_metric_cards_enriched,
+    build_dashboard_payment_alert_snapshot,
+    format_currency,
+)
 
 
 def _build_dashboard_finance_href(role_slug):
@@ -248,139 +179,6 @@ def _build_dashboard_metric_cards_legacy(metrics, *, pending_intakes_count, toda
             'hide_footer': True,
         },
     ]
-
-
-def _build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, today_schedule_occupancy_percent, actionable_payment_alerts_count, role_slug=''):
-    finance_href = _build_dashboard_finance_href(role_slug)
-    occupancy_signal_tone = 'good' if today_schedule_occupancy_percent >= 65 else 'neutral'
-    occupancy_signal_value = 'Agenda viva' if today_schedule_occupancy_percent >= 65 else 'Dia leve'
-    if today_schedule_occupancy_percent >= 95:
-        occupancy_signal_tone = 'bad'
-        occupancy_signal_value = 'Quase lotado'
-
-    _weekly = metrics.get('weekly_revenue_paid')
-    _weekly_prev = metrics.get('weekly_revenue_paid_previous')
-    current_revenue = _weekly if _weekly else metrics['monthly_revenue_paid']
-    previous_revenue = _weekly_prev if _weekly_prev else metrics['monthly_revenue_paid_previous']
-    priority_context = _build_dashboard_priority_context(
-        metrics=metrics,
-        pending_intakes_count=pending_intakes_count,
-        today_schedule_occupancy_percent=today_schedule_occupancy_percent,
-        actionable_payment_alerts_count=actionable_payment_alerts_count,
-    )
-    cards = {
-        'revenue': {
-            'card_class': 'dashboard-kpi-card kpi-amber is-stage',
-            'eyebrow': 'Receita realizada',
-            'kicker': 'O que realmente chegou' if priority_context['dominant_key'] == 'revenue' else 'Base do caixa',
-            'display_value': _format_currency(current_revenue),
-            'is_jumbo': True,
-            'data_action': 'blink-sidebar-financeiro',
-            'sparkline_data': [
-                {'percent': 25, 'label': '6 dias atras: R$ 850,00'},
-                {'percent': 40, 'label': '5 dias atras: R$ 1.360,00'},
-                {'percent': 30, 'label': '4 dias atras: R$ 1.020,00'},
-                {'percent': 55, 'label': '3 dias atras: R$ 1.870,00'},
-                {'percent': 45, 'label': '2 dias atras: R$ 1.530,00'},
-                {'percent': 80, 'label': 'Ontem: R$ 2.720,00'},
-                {'percent': 100, 'label': 'Hoje: Cerca de R$ 3.400,00'},
-            ],
-            'change': _build_delta_badge(
-                current_revenue,
-                previous_revenue,
-                label='vs semana anterior',
-                formatter=_format_currency,
-                semantic='positive',
-            ),
-            'note': (
-                'Sem pressao maior no momento, a receita realizada vira a melhor abertura para ler o pulso do box.'
-                if priority_context['dominant_key'] == 'revenue' else
-                'Esse e o dinheiro real que entrou. Ele ancora a leitura, mas hoje nao abre sozinho a prioridade do dia.'
-            ),
-            'hide_footer': True,
-            'status_hint': 'attention' if priority_context['dominant_key'] == 'revenue' else 'neutral',
-        },
-        'overdue': {
-            'card_class': 'dashboard-kpi-card kpi-red is-panel',
-            'eyebrow': 'Cobrancas em atraso',
-            'kicker': 'Seu primeiro movimento' if priority_context['dominant_key'] == 'overdue' and metrics['overdue_payments'] > 0 else 'Tudo Certo' if metrics['overdue_payments'] == 0 else 'Precisa do seu olhar',
-            'display_value': metrics['overdue_payments'],
-            'change': _build_delta_badge(metrics['overdue_payments'], metrics['overdue_payments_previous_day'], label='desde ontem', semantic='negative'),
-            'data_action': 'blink-topbar-finance',
-            'note': (
-                'Essa e a pressao dominante agora. Cada cobranca aqui ainda tem chance, mas o relogio ja esta correndo.'
-                if priority_context['dominant_key'] == 'overdue' and metrics['overdue_payments'] > 0 else
-                'Cada cobranca aqui ainda tem chance. Vou te ajudar a priorizar quem abordar primeiro.'
-            ),
-            'hide_footer': True,
-            'status_hint': 'attention' if metrics['overdue_payments'] > 0 else 'clean',
-        },
-        'intakes': {
-            'card_class': 'dashboard-kpi-card kpi-amber is-ribbon',
-            'eyebrow': 'Entradas pendentes',
-            'kicker': 'Sua primeira resposta hoje' if priority_context['dominant_key'] == 'intakes' and pending_intakes_count > 0 else 'Pessoas que procuraram seu Box',
-            'display_value': pending_intakes_count,
-            'data_action': 'blink-topbar-intake',
-            'signal': {
-                'tone': 'warning' if pending_intakes_count else 'good',
-                'value': 'Responder hoje' if pending_intakes_count else 'Fila limpa',
-                'label': 'pipeline comercial',
-            },
-            'note': (
-                'Essa e a pressao dominante agora. Cada entrada aqui pode esfriar se ficar para depois.'
-                if priority_context['dominant_key'] == 'intakes' and pending_intakes_count > 0 else
-                'Cada entrada aqui pode ser alguem que esta esperando por voce mudar a vida dela.\nVamos cuidar antes que esfrie.'
-            ),
-            'hide_footer': True,
-            'status_hint': 'attention' if pending_intakes_count > 0 else 'clean',
-        },
-        'occupancy': {
-            'card_class': 'dashboard-kpi-card kpi-blue is-ledger',
-            'eyebrow': 'Aproveitamento da agenda hoje',
-            'kicker': 'Primeira coordenacao do turno' if priority_context['dominant_key'] == 'occupancy' and metrics['sessions_today'] > 0 else 'Pulso do dia',
-            'display_value': _format_percent(today_schedule_occupancy_percent),
-            'signal': {
-                'tone': occupancy_signal_tone,
-                'value': occupancy_signal_value,
-                'label': 'ocupacao media',
-            },
-            'data_action': 'blink-board-sessions',
-            'note': (
-                'A agenda virou a primeira coordenacao do dia. Vale abrir aqui antes de aprofundar o restante.'
-                if priority_context['dominant_key'] == 'occupancy' and metrics['sessions_today'] > 0 else
-                'Cuide da lotacao para que seu Coach possa entregar uma aula melhor para os alunos.'
-            ),
-            'hide_footer': True,
-            'status_hint': 'attention' if today_schedule_occupancy_percent >= 95 else 'neutral',
-        },
-        'attendance': {
-            'card_class': 'dashboard-kpi-card kpi-green is-rail',
-            'eyebrow': 'Presenca no mes',
-            'kicker': 'Compromisso que voltou',
-            'display_value': metrics['attendance_this_month'],
-            'data_action': 'blink-sidebar-alunos',
-            'change': _build_delta_badge(metrics['attendance_this_month'], metrics['attendance_previous_month'], label='vs mes anterior', semantic='positive'),
-            'note': 'Cada presenca e uma pessoa que escolheu voltar. Voce esta construindo algo que importa.',
-            'hide_footer': True,
-            'status_hint': 'neutral',
-        },
-        'active': {
-            'card_class': 'dashboard-kpi-card kpi-emerald is-orbit',
-            'eyebrow': 'Comunidade ativa',
-            'kicker': 'Sua comunidade viva',
-            'display_value': metrics['active_students'],
-            'data_action': 'blink-sidebar-alunos',
-            'signal': {'tone': 'good', 'value': 'Base viva', 'label': 'comunidade ativa'},
-            'note': 'Essa e a sua comunidade. Cada pessoa aqui confia no que voce esta construindo.',
-            'hide_footer': True,
-            'status_hint': 'clean',
-        },
-    }
-
-    if metrics['overdue_payments'] > 0:
-        cards['overdue']['href'] = finance_href
-
-    return [cards[key] for key in priority_context['lead_order']], priority_context
 
 
 def _decorate_dashboard_sessions(serialized_sessions):
@@ -764,7 +562,7 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
         )
 
     try:
-        payment_alert_snapshot = _build_dashboard_payment_alert_snapshot(overdue_payments_queryset=overdue_payments)
+        payment_alert_snapshot = build_dashboard_payment_alert_snapshot(overdue_payments_queryset=overdue_payments)
     except NameError:
         total_count = overdue_payments.count()
         payment_alert_snapshot = {
@@ -807,7 +605,7 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
     health_metrics = student_health_queryset.aggregate(at_risk=Count('id', filter=Q(total_absences__gte=1)))
     students_at_risk_count = health_metrics['at_risk']
     student_health = student_health_queryset.order_by('-total_absences', '-total_attendances', 'full_name')[:8]
-    metric_cards, metric_priority_context = _build_dashboard_metric_cards_enriched(
+    metric_cards, metric_priority_context = build_dashboard_metric_cards_enriched(
         metrics,
         pending_intakes_count=pending_intakes_count,
         today_schedule_occupancy_percent=today_schedule_occupancy_percent,
@@ -844,11 +642,11 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
             {'label': 'Comunidade ativa', 'value': metrics['active_students']},
             {'label': 'Turmas hoje', 'value': metrics['sessions_today']},
             {'label': 'Atrasos', 'value': metrics['overdue_payments']},
-            {'label': 'Receita rodada', 'value': _format_currency(metrics['monthly_revenue_paid'])},
+            {'label': 'Receita rodada', 'value': format_currency(metrics['monthly_revenue_paid'])},
         ],
         'metric_cards': metric_cards,
         'metric_priority_context': metric_priority_context,
-        'glance_summary': _build_dashboard_glance_summary(
+        'glance_summary': build_dashboard_glance_summary(
             metrics=metrics,
             role_slug=role_slug,
             upcoming_sessions=upcoming_sessions,

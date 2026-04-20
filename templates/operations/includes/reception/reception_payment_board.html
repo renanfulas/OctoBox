@@ -1,8 +1,8 @@
 <!--
-ARQUIVO: fila curta de cobranca da Recepcao.
+ARQUIVO: fila curta de cobrança da Recepção.
 
 POR QUE ELE EXISTE:
-- separa a leitura de caixa do balcao do restante da tela.
+- separa a leitura de caixa do balcão do restante da tela.
 -->
 <article
     class="table-card operation-table-card reception-payment-board reception-secondary-card"
@@ -12,9 +12,9 @@ POR QUE ELE EXISTE:
     data-snapshot-version="{{ page.behavior.snapshot_version|default:'' }}">
     <div class="operation-card-head">
         <div>
-            <p class="eyebrow">Cobranca curta</p>
-            <h2 class="operation-card-title">Cobrancas rapidas do balcao</h2>
-            <p class="operation-card-copy">Resolva pagamentos curtos do atendimento sem entrar no financeiro completo.</p>
+            <p class="eyebrow">Caixa curto</p>
+            <h2 class="operation-card-title">Cobranças rápidas do balcão</h2>
+            <p class="operation-card-copy">Resolva pagamentos curtos do atendimento sem precisar abrir o financeiro completo.</p>
         </div>
         <div class="reception-payment-head-pills">
             <span class="pill neutral reception-payment-live-pill" data-role="reception-payment-live-pill">Fila pronta</span>
@@ -26,7 +26,7 @@ POR QUE ELE EXISTE:
         {% include "operations/includes/reception/reception_payment_card.html" with item=item page=page %}
         {% empty %}
         <div class="table-card operation-empty-card">
-            {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Cobranca curta" title="Nenhum caixa curto pendente" copy="A fila do balcao nao tem cobranca aguardando leitura agora." badge="Caixa limpo" badge_class="success" %}
+            {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Caixa curto" title="Nenhum caixa curto pendente" copy="A fila do balcão não tem cobrança aguardando leitura agora." badge="Caixa limpo" badge_class="success" %}
         </div>
         {% endfor %}
     </div>

@@ -11,12 +11,12 @@ from shared_support.page_payloads import build_page_hero
 def build_finance_operational_focus(*, finance_priority_context, operational_queue, financial_alerts, finance_pulse):
     return [
         {
-            'label': 'Quem pede contato agora' if finance_priority_context['dominant_key'] == 'queue' else 'Onde a fila ainda pode virar caixa',
-            'chip_label': 'Cobrancas',
+            'label': 'Quem pede contato agora' if finance_priority_context['dominant_key'] == 'queue' else 'Onde a fila ainda pode virar receita',
+            'chip_label': 'Cobranças',
             'summary': (
-                f'{len(operational_queue)} caso(s) ja tem abordagem sugerida e nao deveriam esperar outra leitura para virar acao.'
+                f'{len(operational_queue)} caso(s) já chegam com abordagem sugerida e pedem execução antes de esfriar.'
                 if finance_priority_context['dominant_key'] == 'queue' else
-                f'{len(operational_queue)} caso(s) continuam prontos para acao, mas hoje dividem a abertura com leitura de caixa e carteira.'
+                f'{len(operational_queue)} caso(s) seguem prontos para ação, mas hoje dividem a abertura com caixa e carteira.'
             ),
             'count': len(operational_queue),
             'pill_class': 'warning' if len(operational_queue) > 0 else 'success',
@@ -27,7 +27,7 @@ def build_finance_operational_focus(*, finance_priority_context, operational_que
         {
             'label': 'Onde a fila pressiona o caixa',
             'chip_label': 'Fila',
-            'summary': f'{len(financial_alerts)} cobranca(s) ja aparecem como pendencia ou atraso no periodo atual.',
+            'summary': f'{len(financial_alerts)} cobrança(s) aparecem como pendência ou atraso no recorte atual.',
             'count': len(financial_alerts),
             'pill_class': 'warning' if len(financial_alerts) > 0 else 'info',
             'href': '#finance-queue-board',
@@ -35,13 +35,13 @@ def build_finance_operational_focus(*, finance_priority_context, operational_que
             'data_action': 'open-tab-finance-queue',
         },
         {
-            'label': 'Como a carteira respira',
+            'label': 'Como a carteira está respirando',
             'chip_label': 'Carteira',
             'summary': f"Recebido: R$ {finance_pulse['received']:.2f} | Em aberto: R$ {finance_pulse['open']:.2f}.",
             'count': finance_pulse['overdue_students'],
             'pill_class': 'accent',
             'href': '#finance-trend-board',
-            'href_label': 'Ver tendencia',
+            'href_label': 'Ver tendência',
             'data_action': 'open-tab-finance-movements',
         },
     ]
@@ -65,16 +65,16 @@ def build_finance_hero(*, finance_priority_context, has_operational_queue):
 
     dominant_key = finance_priority_context.get('dominant_key')
     if dominant_key == 'portfolio':
-        hero_title = 'Carteira em leitura.'
+        hero_title = 'Carteira em foco.'
     elif dominant_key == 'queue':
-        hero_title = 'Fila financeira.'
+        hero_title = 'Cobrança em foco.'
     else:
-        hero_title = 'Financeiro ativo.'
+        hero_title = 'Financeiro em foco.'
 
     return build_page_hero(
         eyebrow='Financeiro',
         title=hero_title,
-        copy='Veja a pressao dominante, abra a primeira passagem e desca sem ruido.',
+        copy='Veja a pressão dominante, entre na fila certa e aprofunde só o que precisa.',
         actions=hero_actions,
         aria_label='Panorama financeiro',
         classes=['finance-hero'],

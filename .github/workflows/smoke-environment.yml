@@ -16,6 +16,12 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
+      - name: Explain smoke scope
+        run: |
+          echo "Este workflow valida o runtime publicado e as rotas base."
+          echo "Os 3 corredores do onboarding do aluno ficam protegidos pelo workflow Student Onboarding Corridors Regression."
+          echo "O fluxo real ponta a ponta staff -> convite -> OAuth -> Grade/WOD ou aguardando aprovacao fica protegido pelo workflow Student Onboarding Real Smoke."
+
       - name: Checkout
         uses: actions/checkout@v6
 
@@ -24,7 +30,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Run HTTP smoke suite
+      - name: Run baseline runtime smoke suite
         shell: bash
         env:
           SMOKE_BASE_URL: ${{ secrets.SMOKE_BASE_URL }}

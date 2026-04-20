@@ -1,0 +1,64 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+{% with page=operation_page %}
+<div class="operation-shell coach-scene workspace-shell coach-wod-editor-shell">
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+
+    <section class="coach-wod-editor-grid" aria-label="Cadastro rapido de RM">
+        <article class="table-card coach-wod-editor-card">
+            <div class="coach-wod-editor-head">
+                <div>
+                    <p class="eyebrow">Aluno</p>
+                    <h2>{{ student.full_name }}</h2>
+                    <p class="operation-session-meta">{{ workout.session.title }} · {{ workout.session.scheduled_at|date:"d/m/Y H:i" }}</p>
+                </div>
+                <div class="coach-wod-editor-pills">
+                    <span class="pill accent">{{ exercise_label }}</span>
+                    <span class="pill info">{{ exercise_slug }}</span>
+                </div>
+            </div>
+
+            <form method="post" class="coach-wod-form-stack">
+                {% csrf_token %}
+                <div class="coach-wod-form-grid coach-wod-form-grid--two">
+                    <label>
+                        <span>Movimento</span>
+                        {{ form.exercise_label }}
+                    </label>
+                    <label>
+                        <span>RM em kg</span>
+                        {{ form.one_rep_max_kg }}
+                    </label>
+                </div>
+                <label>
+                    <span>Nota curta</span>
+                    {{ form.notes }}
+                </label>
+                <div class="actions">
+                    <button class="button" type="submit">Salvar RM e fechar gap</button>
+                    <a class="button secondary" href="{% url 'workout-approval-board' %}#rm-gap-queue">Voltar para a fila</a>
+                </div>
+            </form>
+        </article>
+
+        <article class="table-card coach-wod-editor-card">
+            <div class="coach-wod-editor-head">
+                <div>
+                    <p class="eyebrow">Leitura curta</p>
+                    <h2>Por que essa tela existe</h2>
+                </div>
+            </div>
+            <div class="coach-wod-review-digest">
+                <p>O WOD continua sendo a regra da turma. O RM continua sendo a capacidade real do aluno. Esta mesa lateral so conecta os dois sem misturar as responsabilidades.</p>
+                {% if rm_record %}
+                <p><strong>RM atual:</strong> {{ rm_record.one_rep_max_kg }} kg{% if rm_record.notes %} · {{ rm_record.notes }}{% endif %}</p>
+                {% else %}
+                <p><strong>RM atual:</strong> ainda nao registrado para este movimento.</p>
+                {% endif %}
+            </div>
+        </article>
+    </section>
+</div>
+{% endwith %}
+{% endblock %}

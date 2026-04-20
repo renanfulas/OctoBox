@@ -14,13 +14,13 @@ PONTOS CRITICOS:
 <section class="card finance-board-shell finance-board-queue is-queue" id="finance-queue-board" data-panel="finance-queue-board" aria-label="Fila automatica" data-finance-mode-visibility="hybrid ai">
     <div class="card-head">
         <div class="finance-board-shell-copy">
-            <span class="eyebrow">Decisao assistida</span>
-            <h3 class="card-title finance-board-shell-title">Fila do turno</h3>
+            <span class="eyebrow">Prioridade assistida</span>
+            <h3 class="card-title finance-board-shell-title">Fila de cobrança do turno</h3>
             {% if page.data.finance_risk_queue.rows %}
             <div class="finance-risk-summary finance-risk-summary--headline">
                 <span class="badge finance-risk-summary-metric finance-risk-summary-metric--queue">{{ page.data.finance_risk_queue.filtered_count }} na fila</span>
                 <span class="badge finance-risk-summary-metric finance-risk-summary-metric--high-risk">{{ page.data.finance_risk_queue.summary.high_signal_count }} alto risco</span>
-                <span class="badge finance-risk-summary-metric finance-risk-summary-metric--inactive">{{ page.data.finance_risk_queue.summary.actual_churn_count }} ja inativo(s)</span>
+                <span class="badge finance-risk-summary-metric finance-risk-summary-metric--inactive">{{ page.data.finance_risk_queue.summary.actual_churn_count }} já inativo(s)</span>
                 <span class="badge finance-risk-summary-metric finance-risk-summary-metric--recovered">{{ page.data.finance_risk_queue.summary.recovered_count }} recuperado(s)</span>
             </div>
             {% else %}
@@ -34,19 +34,19 @@ PONTOS CRITICOS:
     <div class="finance-board-shell-body finance-risk-queue" data-slot="finance-risk-queue">
         <div class="finance-queue-guide-grid" aria-label="Leitura guiada da fila">
             <div class="visually-hidden">
-                Recomendacao global do turno
+                Recomendação global do turno
                 Prioridade agregada do turno
-                Casos que merecem monitoramento antes de empurrar a acao.
+                Casos que merecem monitoramento antes de empurrar a ação.
                 Sinal dominante:
                 abrem esta faixa
-                O que mais empurra esta faixa e
+                O que mais empurra esta faixa é
                 Primeira jogada sugerida:
-                Ela puxa para outro lado da recomendacao global do turno
+                Ela puxa para outro lado da recomendação global do turno
             </div>
             {% for group in page.data.finance_risk_queue.groups %}
             {% if group.level == 'observe_first' %}
             <div class="finance-guide-card finance-board-subsurface finance-guide-card-compact finance-queue-group-card finance-queue-guide-card finance-queue-guide-card--observe-first">
-                <span class="eyebrow">Observar primeiro</span>
+                <span class="eyebrow">Observar antes de agir</span>
                 <div class="finance-followup-line">
                     <strong>{{ group.count }} caso(s)</strong>
                     <span>{{ group.summary_line }}</span>
@@ -57,7 +57,7 @@ PONTOS CRITICOS:
             {% endfor %}
             {% if page.data.finance_risk_queue.turn_recommendation %}
             <div class="finance-guide-card finance-board-subsurface finance-guide-card-soft finance-guide-card-compact finance-queue-guide-card finance-queue-guide-card--recommendation">
-                <span class="eyebrow">Recomendacao do turno</span>
+                <span class="eyebrow">Recomendação do turno</span>
                 <div class="finance-followup-line">
                     <strong>{{ page.data.finance_risk_queue.turn_recommendation.action_label }}</strong>
                     <span>{{ page.data.finance_risk_queue.turn_recommendation.summary }}</span>
@@ -121,16 +121,16 @@ PONTOS CRITICOS:
         </div>
     </div>
     {% elif page.data.financial_churn_foundation.summary.students_in_scope %}
-        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Fila por missao" title="Nenhum aluno neste recorte da fila" copy="Mude a missao da fila para abrir outro grupo de prioridade operacional sem perder o recorte financeiro." badge=page.data.finance_risk_queue.queue_focus_label badge_class="info" %}
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Fila por missão" title="Nenhum caso aparece neste recorte" copy="Troque a missão da fila para abrir outro grupo de prioridade sem perder o contexto financeiro." badge=page.data.finance_risk_queue.queue_focus_label badge_class="info" %}
     {% endif %}
 </section>
 
-<section class="card finance-board-shell finance-board-overdue-support is-support" id="finance-overdue-support-board" aria-label="Pendencias abertas" data-finance-mode-visibility="traditional" hidden>
+<section class="card finance-board-shell finance-board-overdue-support is-support" id="finance-overdue-support-board" aria-label="Pendências abertas" data-finance-mode-visibility="traditional" hidden>
     <div class="card-head">
         <div class="finance-board-shell-copy">
-            <span class="eyebrow">Apoio bruto</span>
-            <h3 class="card-title finance-board-shell-title">Pendencias abertas</h3>
-            <p class="finance-board-shell-subtitle finance-board-support-subtitle">Lista bruta de pagamentos vencidos que continuam pressionando o caixa.</p>
+            <span class="eyebrow">Apoio de contexto</span>
+            <h3 class="card-title finance-board-shell-title">Pendências abertas</h3>
+            <p class="finance-board-shell-subtitle finance-board-support-subtitle">Lista direta dos pagamentos vencidos que ainda pressionam o caixa.</p>
         </div>
     </div>
     <div class="finance-board-shell-body">
@@ -150,7 +150,7 @@ PONTOS CRITICOS:
             </div>
         </a>
         {% empty %}
-        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Fila financeira" title="Nenhuma pendencia financeira no momento" copy="A carteira nao tem cobranca pressionando caixa ou retencao neste recorte." badge="Carteira estabilizada" badge_class="accent" %}
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Fila financeira" title="Nenhuma pendência financeira no momento" copy="A carteira não tem cobrança pressionando o caixa ou a retenção neste recorte." badge="Carteira estabilizada" badge_class="accent" %}
         {% endfor %}
     </div>
     </div>

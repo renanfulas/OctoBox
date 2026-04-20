@@ -27,14 +27,14 @@ POR QUE ELE EXISTE:
                 type="text"
                 name="query"
                 value="{{ page.data.student_filter_form.query.value|default:'' }}"
-                placeholder="Buscar aluno, e-mail ou telefone..."
+                placeholder="Buscar por nome, e-mail ou telefone..."
                 maxlength="50"
                 class="student-filter-search-input"
             >
         </label>
     </form>
 
-    <nav class="student-filter-pills" aria-label="Filtros rapidos do diretorio">
+    <nav class="student-filter-pills" aria-label="Filtros rápidos do diretório">
         <button type="button" class="student-filter-pill is-active" data-student-filter="all" aria-pressed="true">Todos</button>
         <button type="button" class="student-filter-pill" data-student-filter="active" aria-pressed="false">Ativos</button>
         <button type="button" class="student-filter-pill" data-student-sort="presence" data-sort-direction="desc" aria-pressed="false">Presen&ccedil;a</button>
@@ -43,5 +43,5 @@ POR QUE ELE EXISTE:
         <button type="button" class="student-filter-pill" data-student-filter="inactive" aria-pressed="false">Inativos</button>
     </nav>
 
-    <p class="student-filter-count" data-student-count>{{ page.data.total_students }} alunos</p>
+    <p class="student-filter-count" data-student-count>{{ page.data.total_students }} aluno(s) neste recorte</p>
 </section>
