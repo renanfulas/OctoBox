@@ -105,5 +105,6 @@ class ReportHubView(OperationBaseView, TemplateView):
             classes=['reports-hub-hero'],
             heading_level='h1',
             data_panel='reports-hub-hero',
+            actions_slot='reports-hub-hero-actions',
         )
         return context

@@ -1,0 +1,37 @@
+{
+  "kind": "omx.question/v1",
+  "question_id": "question-2026-04-20T07-53-25-437Z-2441e35e",
+  "session_id": "omx-1776670632556-hh9rcz",
+  "created_at": "2026-04-20T07:53:25.437Z",
+  "updated_at": "2026-04-20T07:53:25.448Z",
+  "status": "error",
+  "header": "Deep Interview",
+  "question": "Round 2. Success Criteria. Ambiguity 24 percent. Qual decisao concreta essa analise precisa destravar para voce como founder ou investidor?",
+  "options": [
+    {
+      "label": "Go-to-market",
+      "value": "go_to_market",
+      "description": "Decidir se o produto ja pode ir para pilotos e vendas com confianca"
+    },
+    {
+      "label": "Investibilidade",
+      "value": "investibilidade",
+      "description": "Decidir se o projeto ja parece promissor para captar ou atrair capital"
+    },
+    {
+      "label": "Prioridade estrategica",
+      "value": "prioridade_estrategica",
+      "description": "Decidir onde focar os proximos 30 a 90 dias para maximizar valor"
+    }
+  ],
+  "allow_other": true,
+  "other_label": "Outra",
+  "multi_select": false,
+  "type": "single-answerable",
+  "source": "deep-interview",
+  "error": {
+    "code": "question_runtime_failed",
+    "message": "omx question requires tmux for OMX-owned question UI rendering in this session.",
+    "at": "2026-04-20T07:53:25.448Z"
+  }
+}

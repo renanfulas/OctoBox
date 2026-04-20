@@ -33,27 +33,6 @@ ARQUIVO: cena base e hero do manager.
     pointer-events: none;
 }
 
-.manager-scene .manager-hero .operation-hero-copy {
-    max-width: 42ch;
-}
-
-.manager-scene .manager-hero .operation-hero-action-rail {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.manager-scene .manager-hero .operation-hero-action-rail .button:not(.secondary) {
-    background: color-mix(in srgb, var(--theme-surface-panel) 64%, transparent);
-    border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
-    box-shadow: none;
-}
-
-.manager-scene .manager-hero .operation-hero-action-rail .button.secondary {
-    border-color: transparent;
-    background: transparent;
-}
-
 .manager-metric-grid {
     gap: 14px;
 }

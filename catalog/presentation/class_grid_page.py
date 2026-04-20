@@ -46,6 +46,8 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
         ],
         aria_label='Panorama da grade',
         classes=['class-grid-hero'],
+        data_panel='class-grid-hero',
+        actions_slot='class-grid-hero-actions',
         contract={'max_primary_actions': 4},
     )
     payload = build_catalog_page_payload(

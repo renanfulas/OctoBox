@@ -2,31 +2,44 @@
 
 {% block title %}Entrar | OctoBox Aluno{% endblock %}
 
-{% block body %}
-<section class="student-hero">
-    <p class="student-eyebrow">OctoBox Aluno</p>
-    <h1>Seu box na palma da mao.</h1>
-    <p class="student-copy">Esta superficie foi criada do zero para o aluno: acesso proprio, box raiz unico, grade, treino e RM sem depender do shell interno da equipe.</p>
-</section>
+{% block extra_head %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/student_identity/login.css' %}?v={{ static_asset_version }}">
+{% endblock %}
 
-<section class="student-card student-auth-card">
-    <header class="student-card-header">
-        <h2>Entrar com identidade social</h2>
-        <p>Google e Apple validam quem voce e. O OctoBox decide se esse aluno pode entrar neste box.</p>
-    </header>
-    <div class="student-provider-stack">
-        <a href="{{ google_start_url }}{% if invite_token %}?invite={{ invite_token }}{% endif %}" class="student-button">Continuar com Google</a>
-        <a href="{{ apple_start_url }}{% if invite_token %}?invite={{ invite_token }}{% endif %}" class="student-button student-button--ghost">Continuar com Apple</a>
+{% block body %}
+<section class="student-auth-shell">
+    <div class="student-auth-intro">
+        <p class="student-auth-kicker">OctoBox Aluno</p>
+        <h1>Entrar no app</h1>
+        <p class="student-auth-copy">Use Google ou Apple para entrar como aluno. Se voce e da equipe, use o acesso interno logo abaixo.</p>
     </div>
-    <p class="student-form-note">Nesta primeira base, o convite do box ou o email ja cadastrado validam a autorizacao do aluno depois da identidade social.</p>
-    {% if invite_token %}
-    <p class="student-form-note">Convite ativo: {{ invite_token }}</p>
-    {% endif %}
-    {% if not google_available or not apple_available %}
-    <div class="student-form-errors">
-        {% if not google_available %}<p>Google ainda nao foi configurado neste ambiente. O botao continua ativo para o sistema responder com o diagnostico certo.</p>{% endif %}
-        {% if not apple_available %}<p>Apple ainda nao foi configurada neste ambiente. O botao continua ativo para o sistema responder com o diagnostico certo.</p>{% endif %}
-    </div>
-    {% endif %}
+
+    <section class="student-auth-card" aria-label="Entrar no app do aluno">
+        <div class="student-provider-stack">
+            <a href="{{ google_start_url }}{% if invite_token %}?invite={{ invite_token }}{% endif %}" class="student-button">Continuar com Google</a>
+            <a href="{{ apple_start_url }}{% if invite_token %}?invite={{ invite_token }}{% endif %}" class="student-button student-button--ghost">Continuar com Apple</a>
+        </div>
+
+        <p class="student-form-note">O OctoBox usa sua identidade social para confirmar quem voce e e liberar o box certo.</p>
+
+        {% if invite_token %}
+        <p class="student-auth-note">Convite ativo: {{ invite_token }}</p>
+        {% endif %}
+
+        {% if not google_available or not apple_available %}
+        <div class="student-form-errors">
+            {% if not google_available %}<p>Google ainda nao foi configurado neste ambiente. O botao continua ativo para o sistema responder com o diagnostico certo.</p>{% endif %}
+            {% if not apple_available %}<p>Apple ainda nao foi configurada neste ambiente. O botao continua ativo para o sistema responder com o diagnostico certo.</p>{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="student-auth-divider" aria-hidden="true">
+            <span>Equipe do box</span>
+        </div>
+
+        <a href="{% url 'login-staff' %}" class="student-auth-link">Entrar com usuario</a>
+        <p class="student-auth-support">Usuario interno e senha. Um acesso direto para quem trabalha no box.</p>
+    </section>
 </section>
 {% endblock %}

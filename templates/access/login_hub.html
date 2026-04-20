@@ -24,53 +24,33 @@ PONTOS CRITICOS:
 </head>
 <body data-page="login-hub" data-screen="entry-choice" data-ui="login-hub-body">
     <main class="entry-shell" aria-label="Escolha de entrada do OctoBox">
-        <section class="entry-story" aria-label="Apresentacao do OctoBox">
+        <section class="entry-panel" aria-label="Opcoes de acesso">
             <div class="entry-brand-chip">
                 <span>OctoBox</span>
                 <span>Entrada oficial</span>
             </div>
-            <h1>Como voce quer entrar?</h1>
+            <p class="entry-eyebrow">Entrar</p>
+            <h1>Seu box, sem excesso.</h1>
             <p class="entry-copy">
-                O aluno entra pelo app social. A equipe entra pelo painel interno. Uma fachada clara, dois corredores diferentes.
+                Entre com Google ou Apple para abrir o app do aluno. Se voce faz parte da equipe, use o acesso interno logo abaixo.
             </p>
-            <div class="entry-pill-row">
-                <span class="entry-pill">Aluno por Google ou Apple</span>
-                <span class="entry-pill">Equipe por usuario e senha</span>
-                <span class="entry-pill">Contexto certo desde a entrada</span>
-            </div>
-        </section>
+            {% if invite_token %}
+            <p class="entry-note">
+                Convite reconhecido. Sua autenticacao social vai entrar ja com o contexto certo do box.
+            </p>
+            {% endif %}
 
-        <section class="entry-panel" aria-label="Opcoes de acesso">
-            <div class="entry-card entry-card--student">
-                <p class="entry-eyebrow">Entrar como aluno</p>
-                <h2>Seu box na palma da mao.</h2>
-                <p class="entry-text">
-                    Continue com Google ou Apple para acessar o app do aluno com o contexto certo do seu box.
-                </p>
-                {% if invite_token %}
-                <p class="entry-note">
-                    Convite reconhecido. Sua autenticacao social vai entrar ja com o contexto certo do box.
-                </p>
-                {% endif %}
-                <div class="entry-actions">
-                    <a href="{{ student_google_url }}" class="entry-button entry-button--primary">Continuar com Google</a>
-                    <a href="{{ student_apple_url }}" class="entry-button entry-button--ghost">Continuar com Apple</a>
-                </div>
+            <div class="entry-actions">
+                <a href="{{ student_google_url }}" class="entry-button entry-button--primary">Continuar com Google</a>
+                <a href="{{ student_apple_url }}" class="entry-button entry-button--ghost">Continuar com Apple</a>
             </div>
 
-            <div class="entry-card entry-card--staff">
-                <p class="entry-eyebrow">Entrar como funcionario</p>
-                <h2>Painel interno da equipe.</h2>
-                <p class="entry-text">
-                    Use seu usuario interno e sua senha para acessar operacao, recepcao, coach, manager e owner no corredor certo.
-                </p>
-                <div class="entry-actions">
-                    <a href="{{ staff_login_url }}" class="entry-button entry-button--staff">Entrar com usuario e senha</a>
-                </div>
-                <p class="entry-note">
-                    Dica para a equipe: salve esta pagina de login interno nos favoritos para entrar mais rapido no dia a dia.
-                </p>
+            <div class="entry-divider" aria-hidden="true">
+                <span>Equipe do box</span>
             </div>
+
+            <a href="{{ staff_login_url }}" class="entry-button entry-button--staff">Entrar com usuario</a>
+            <p class="entry-support-copy">Usuario interno e senha. Simples como pegar o cracha certo antes de entrar na sala certa.</p>
         </section>
     </main>
 </body>

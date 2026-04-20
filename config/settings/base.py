@@ -50,6 +50,16 @@ def env_int(name, default=0):
         return default
 
 
+def env_float(name, default=0.0):
+    raw_value = os.getenv(name)
+    if raw_value is None:
+        return default
+    try:
+        return float(raw_value.strip())
+    except (TypeError, ValueError):
+        return default
+
+
 def env_list(name, default=''):
     raw_value = os.getenv(name, default)
     return [item.strip() for item in raw_value.split(',') if item.strip()]
@@ -234,6 +244,7 @@ LOCAL_APPS = [
     'finance.apps.FinanceConfig',
     'guide.apps.GuideConfig',
     'jobs.apps.JobsConfig',
+    'knowledge.apps.KnowledgeConfig',
     'integrations.apps.IntegrationsConfig',
     'operations.apps.OperationsConfig',
     'quick_sales.apps.QuickSalesConfig',
@@ -245,6 +256,20 @@ LOCAL_APPS = [
 ]
 
 INSTALLED_APPS = [*DJANGO_APPS, *LOCAL_APPS]
+
+PROJECT_RAG_REMOTE_LLM_ENABLED = env_bool('PROJECT_RAG_REMOTE_LLM_ENABLED', False)
+PROJECT_RAG_GENERATION_PROVIDER = env_str('PROJECT_RAG_GENERATION_PROVIDER', 'openai')   # 'openai' | 'anthropic' | 'extractive'
+PROJECT_RAG_REMOTE_MODEL = env_str('PROJECT_RAG_REMOTE_MODEL', 'gpt-4o-mini')            # openai: gpt-4o-mini | anthropic: claude-haiku-4-5-20251001
+PROJECT_RAG_REMOTE_MAX_TOKENS = env_int('PROJECT_RAG_REMOTE_MAX_TOKENS', 1024)
+PROJECT_RAG_REMOTE_TIMEOUT_SECONDS = env_int('PROJECT_RAG_REMOTE_TIMEOUT_SECONDS', 30)
+PROJECT_RAG_MAX_CONTEXT_CHARS = env_int('PROJECT_RAG_MAX_CONTEXT_CHARS', 12000)
+PROJECT_RAG_EMBEDDINGS_ENABLED = env_bool('PROJECT_RAG_EMBEDDINGS_ENABLED', False)
+PROJECT_RAG_EMBEDDING_PROVIDER = env_str('PROJECT_RAG_EMBEDDING_PROVIDER', 'openai')     # 'openai' | 'voyage' | 'disabled'
+PROJECT_RAG_EMBEDDING_MODEL = env_str('PROJECT_RAG_EMBEDDING_MODEL', 'text-embedding-3-small')  # voyage: voyage-3-lite | voyage-code-3
+PROJECT_RAG_EMBEDDING_DIMENSIONS = env_int('PROJECT_RAG_EMBEDDING_DIMENSIONS', 256)
+PROJECT_RAG_EMBEDDING_TIMEOUT_SECONDS = env_int('PROJECT_RAG_EMBEDDING_TIMEOUT_SECONDS', 30)
+PROJECT_RAG_EMBEDDING_BATCH_SIZE = env_int('PROJECT_RAG_EMBEDDING_BATCH_SIZE', 64)
+PROJECT_RAG_EMBEDDING_MIN_SCORE = env_float('PROJECT_RAG_EMBEDDING_MIN_SCORE', 0.15)
 
 MIDDLEWARE = [
     'integrations.middleware.WebhookIdempotencyMiddleware',

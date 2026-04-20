@@ -447,22 +447,44 @@ REGRA:
 
 body[data-theme="dark"] .metric-card {
     --metric-card-surface:
-        linear-gradient(180deg, rgba(11, 18, 32, 0.98), rgba(9, 16, 29, 0.96));
-    --metric-card-border: color-mix(in srgb, var(--theme-border-soft) 84%, var(--theme-accent-support-alpha) 16%);
-    --metric-card-shadow: 0 24px 48px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    --metric-card-accent: color-mix(in srgb, var(--theme-accent-primary) 42%, transparent);
+        linear-gradient(180deg, rgba(11, 18, 30, 0.98), rgba(10, 17, 28, 0.94));
+    --metric-card-border: color-mix(in srgb, var(--theme-border-soft) 72%, var(--theme-accent-support) 28%);
+    --metric-card-shadow:
+        0 24px 52px rgba(0, 0, 0, 0.36),
+        0 0 0 1px color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --metric-card-accent: color-mix(in srgb, var(--theme-accent-primary) 54%, transparent);
     --metric-card-copy-ink: color-mix(in srgb, var(--theme-text-secondary) 88%, white 12%);
     --metric-card-label-ink: color-mix(in srgb, var(--theme-text-muted) 92%, white 8%);
-    --metric-card-kicker-surface: color-mix(in srgb, var(--theme-surface-strong) 88%, rgba(255, 255, 255, 0.08) 12%);
+    --metric-card-kicker-surface: color-mix(in srgb, var(--theme-surface-strong) 78%, var(--theme-accent-support-alpha) 22%);
     --metric-card-kicker-ink: color-mix(in srgb, var(--theme-text-secondary) 86%, white 14%);
-    --metric-card-signal-surface: color-mix(in srgb, var(--theme-surface-strong) 84%, var(--theme-accent-support-alpha) 16%);
-    --metric-card-signal-border: color-mix(in srgb, var(--theme-border-soft) 72%, var(--theme-accent-support) 28%);
+    --metric-card-signal-surface: color-mix(in srgb, var(--theme-surface-strong) 72%, var(--theme-accent-support-alpha) 28%);
+    --metric-card-signal-border: color-mix(in srgb, var(--theme-border-soft) 62%, var(--theme-accent-support) 38%);
     --metric-card-signal-ink: color-mix(in srgb, var(--theme-text-secondary) 86%, white 14%);
-    --metric-card-sparkline-ink: color-mix(in srgb, var(--theme-accent-primary) 52%, var(--theme-text-secondary) 48%);
+    --metric-card-sparkline-ink: color-mix(in srgb, var(--theme-accent-primary) 62%, var(--theme-text-secondary) 38%);
+}
+
+body[data-theme="dark"] .metric-card::before {
+    content: "";
+    height: 1px;
+    background:
+        linear-gradient(
+            90deg,
+            color-mix(in srgb, var(--theme-accent-primary) 62%, transparent),
+            color-mix(in srgb, var(--theme-accent-support) 58%, transparent),
+            color-mix(in srgb, var(--theme-accent-premium) 32%, transparent)
+        );
+    opacity: 0.94;
+}
+
+body[data-theme="dark"] .metric-card::after {
+    background:
+        radial-gradient(circle, color-mix(in srgb, var(--metric-card-accent) 44%, transparent), transparent 70%);
+    opacity: 0.98;
 }
 
 body[data-theme="dark"] .metric-card .card-value {
-    text-shadow: 0 0 18px color-mix(in srgb, var(--metric-card-accent) 22%, transparent);
+    text-shadow: 0 0 22px color-mix(in srgb, var(--metric-card-accent) 24%, transparent);
 }
 
 body[data-theme="dark"] .metric-card .card-signal.is-good {

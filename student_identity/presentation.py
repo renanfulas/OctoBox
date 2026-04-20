@@ -36,6 +36,7 @@ def build_student_invitation_operations_page(
                 aria_label='Convites operacionais do app do aluno',
                 classes=['system-map-hero'],
                 data_panel='student-app-invitations-hero',
+                actions_slot='student-app-invitations-hero-actions',
             ),
             'box_root_slug': current_box_slug,
             'access_matrix': access_matrix,
@@ -59,6 +60,7 @@ def build_student_invitation_operations_page(
         },
         assets=build_page_assets(
             css=[
+                'css/design-system/operations.css',
                 'css/guide/system-map.css',
                 'css/student_identity/operations_invites.css',
             ],

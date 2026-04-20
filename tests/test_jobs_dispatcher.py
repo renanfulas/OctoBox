@@ -37,6 +37,12 @@ class JobsDispatcherTests(SimpleTestCase):
         self.assertIsNotNone(registered_job)
         self.assertEqual(registered_job.source_channel, 'operations.student_import')
 
+    def test_get_registered_job_returns_project_knowledge_reindex(self):
+        registered_job = get_registered_job('project_knowledge_reindex')
+
+        self.assertIsNotNone(registered_job)
+        self.assertEqual(registered_job.source_channel, 'knowledge.reindex')
+
     @patch('operations.tasks.run_csv_student_import_job.delay')
     def test_dispatch_async_job_routes_to_registered_task(self, delay_mock):
         delay_mock.return_value = SimpleNamespace(id='task-123')
@@ -56,3 +62,24 @@ class JobsDispatcherTests(SimpleTestCase):
         delay_kwargs = delay_mock.call_args.kwargs
         self.assertEqual(delay_kwargs['job_id'], 19)
         self.assertEqual(delay_kwargs['signal_envelope']['correlation_id'], 'corr-1')
+
+    @patch('knowledge.tasks.run_project_knowledge_reindex.delay')
+    def test_dispatch_async_job_routes_to_project_knowledge_task(self, delay_mock):
+        delay_mock.return_value = SimpleNamespace(id='task-rag-1')
+        job = SimpleNamespace(id=33)
+
+        task = dispatch_async_job(
+            job=job,
+            dispatch_context=build_dispatch_context(
+                job_type='project_knowledge_reindex',
+                actor_id=7,
+                signal_envelope={'correlation_id': 'corr-rag-1'},
+                payload={'force': True, 'with_embeddings': True},
+            ),
+        )
+
+        self.assertEqual(task.id, 'task-rag-1')
+        delay_kwargs = delay_mock.call_args.kwargs
+        self.assertEqual(delay_kwargs['job_id'], 33)
+        self.assertTrue(delay_kwargs['force'])
+        self.assertTrue(delay_kwargs['with_embeddings'])

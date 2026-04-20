@@ -1,0 +1,29 @@
+﻿# Context Snapshot — darkmode-theme-revamp
+
+- Task statement: Repaginar o dark mode do OctoBox usando `docs/architecture/themeOctoBox.md` como base, mantendo o light mode como está.
+- Desired outcome: Dark mode mais moderno, ágil, magnético e orientado à ação, com neon controlado (máx. 2–3 neons).
+- Stated solution: Recalibrar tema dark e possivelmente shared components / overrides.
+- Probable intent hypothesis: Melhorar percepção premium-tech e clareza de ação sem cair em visual gamer/carnaval.
+- Known facts/evidence:
+  - `docs/architecture/themeOctoBox.md` define o dark como protagonista e pede neon controlado, premium-tech, não gamer.
+  - `docs/plans/theme-implementation-final.md` proíbe reestruturação forte em views/payloads/JS nesta rodada.
+  - `docs/reference/design-system-contract.md` manda revisar tokens -> spacing/responsiveness -> components -> CSS local.
+  - `static/css/design-system/tokens.css` concentra tokens globais e tema dark.
+  - `static/css/design-system/components/hero.css` concentra gramática visual compartilhada.
+  - `static/css/catalog/finance/_dark.css` mostra que já existem overrides locais por tela.
+- Constraints:
+  - Light mode deve permanecer bom/coerente.
+  - Evitar exagero visual.
+  - Baixo risco / sem débito técnico desnecessário.
+- Unknowns/open questions:
+  - Escopo: global/shared only ou também telas específicas?
+  - Quais superfícies devem funcionar como “vitrine premium”?
+  - O que explicitamente fica fora de escopo?
+  - Limites de autonomia do OMX para decidir tokens/local overrides.
+- Decision-boundary unknowns:
+  - Até onde posso mexer sem reconfirmação do usuário?
+  - Posso alterar apenas design system ou também overrides locais dark?
+- Likely codebase touchpoints:
+  - `static/css/design-system/tokens.css`
+  - `static/css/design-system/components/*.css`
+  - possíveis overrides `body[data-theme="dark"]` em CSS local

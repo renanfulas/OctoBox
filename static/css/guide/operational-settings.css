@@ -15,12 +15,6 @@ ARQUIVO: refinamentos locais da tela operational-settings.
     width: 100%;
 }
 
-.system-map-section .operation-hero-action-rail {
-    --operation-hero-button-min-height: 38px;
-    --operation-hero-button-padding: 9px 14px;
-    --operation-hero-button-font-size: 0.88rem;
-}
-
 .operational-settings-file-input {
     border: 1px dashed var(--line);
     padding: 10px;

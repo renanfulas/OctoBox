@@ -328,32 +328,20 @@ body[data-theme="dark"] .finance-shell .finance-plan-card {
     background: var(--surface);
 }
 
-body[data-theme="dark"] .finance-shell .button.secondary {
-    color: rgba(226, 232, 240, 0.76);
-    border-color: transparent;
-    background: transparent;
-}
-
-body[data-theme="dark"] .finance-shell .button.secondary:hover {
-    color: rgba(248, 250, 252, 0.92);
-    border-color: rgba(92, 146, 214, 0.16);
-    background: rgba(15, 23, 42, 0.84);
-}
-
 body[data-theme="dark"] .finance-shell .finance-queue-card-actions .finance-action-secondary,
 body[data-theme="dark"] .finance-shell .finance-queue-card-actions .finance-risk-action-neutral {
-    color: rgba(226, 232, 240, 0.7);
-    border-color: rgba(148, 163, 184, 0.14);
-    background: rgba(15, 23, 42, 0.42);
+    color: color-mix(in srgb, var(--theme-text-secondary) 82%, white 18%);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 76%, var(--theme-accent-support) 24%);
+    background: color-mix(in srgb, var(--theme-surface-strong) 62%, var(--theme-accent-support-alpha) 10%);
 }
 
 body[data-theme="dark"] .finance-shell .finance-queue-card-actions .finance-action-secondary:hover,
 body[data-theme="dark"] .finance-shell .finance-queue-card-actions .finance-action-secondary:focus-visible,
 body[data-theme="dark"] .finance-shell .finance-queue-card-actions .finance-risk-action-neutral:hover,
 body[data-theme="dark"] .finance-shell .finance-queue-card-actions .finance-risk-action-neutral:focus-visible {
-    color: rgba(248, 250, 252, 0.86);
-    border-color: rgba(92, 146, 214, 0.16);
-    background: rgba(15, 23, 42, 0.68);
+    color: color-mix(in srgb, var(--theme-text-primary) 90%, white 10%);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 28%, var(--theme-border-soft) 72%);
+    background: color-mix(in srgb, var(--theme-surface-strong) 72%, var(--theme-accent-support-alpha) 16%);
 }
 
 body[data-theme="dark"] .finance-shell .finance-inline-currency,

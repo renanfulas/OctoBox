@@ -45,33 +45,6 @@ ARQUIVO: cena base e hero da recepcao.
     pointer-events: none;
 }
 
-.reception-scene .reception-hero .operation-hero-copy {
-    max-width: 44ch;
-}
-
-.reception-scene .reception-hero .operation-hero-action-rail {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.reception-scene .reception-hero .operation-hero-action-rail .button {
-    min-height: 32px;
-    padding: 6px 12px;
-    border-radius: 999px;
-    box-shadow: none;
-}
-
-.reception-scene .reception-hero .operation-hero-action-rail .button:not(.secondary) {
-    background: color-mix(in srgb, var(--theme-surface-panel) 64%, transparent);
-    border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
-}
-
-.reception-scene .reception-hero .operation-hero-action-rail .button.secondary {
-    border-color: transparent;
-    background: transparent;
-}
-
 .reception-scene::before {
     content: "";
     position: absolute;

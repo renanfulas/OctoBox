@@ -257,28 +257,6 @@ body[data-theme="dark"] .finance-shell .finance-metric-card .metric {
     color: rgba(245, 249, 252, 0.96);
 }
 
-body[data-theme="dark"] .finance-shell .finance-plan-card-compact .actions .button.secondary,
-body[data-theme="dark"] .finance-shell .finance-card-actions-compact .button.secondary {
-    border-color: transparent;
-    background: transparent;
-    color: rgba(226, 232, 240, 0.76);
-}
-
-body[data-theme="dark"] .finance-shell .finance-plan-card-compact .actions .button:not(.secondary),
-body[data-theme="dark"] .finance-shell .finance-card-actions-compact .button:not(.secondary) {
-    background: rgba(10, 18, 32, 0.72);
-    border-color: rgba(148, 163, 184, 0.12);
-    color: rgba(248, 250, 252, 0.92);
-}
-
-body[data-theme="dark"] .finance-shell .finance-plan-card-compact .actions .button:hover,
-body[data-theme="dark"] .finance-shell .finance-plan-card-compact .actions .button:focus-visible,
-body[data-theme="dark"] .finance-shell .finance-card-actions-compact .button:hover,
-body[data-theme="dark"] .finance-shell .finance-card-actions-compact .button:focus-visible {
-    background: rgba(15, 23, 42, 0.84);
-}
-
-
 body[data-theme="dark"] .finance-shell .finance-metric-card,
 body[data-theme="dark"] .finance-shell .finance-filter-summary-card,
 body[data-theme="dark"] .finance-shell .finance-action-card:not(.finance-queue-card),

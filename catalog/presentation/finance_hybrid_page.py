@@ -79,6 +79,7 @@ def build_finance_hero(*, finance_priority_context, has_operational_queue):
         aria_label='Panorama financeiro',
         classes=['finance-hero'],
         heading_level='h1',
+        actions_slot='finance-hero-actions',
     )
 
 
