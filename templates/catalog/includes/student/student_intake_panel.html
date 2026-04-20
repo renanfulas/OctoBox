@@ -5,14 +5,14 @@ POR QUE ELE EXISTE:
 - deixa claro que a fila principal vive na central propria, sem misturar com o diretorio.
 -->
 <section id="tab-students-intake" class="table-card layout-panel layout-panel--stack section-gap student-queue-panel" aria-label="Fila de intake" data-panel="students-intake-board">
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Handoff para a central propria de intake" title="A fila principal agora mora na Central de Intake" copy="Use Alunos para base e ficha definitiva. A triagem canonica da entrada segue na central propria." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Handoff para entradas" title="As novas chegadas agora vivem na Central de Entradas" copy="Use Alunos para a base consolidada e a ficha definitiva. A triagem inicial segue em uma central própria." title_class="operation-card-title section-title-sm" copy_class="meta-text" %}
     {% url 'intake-center' as intake_center_url %}
     <div class="actions actions-tight">
         {% if page.capabilities.can_manage_students %}
-        <a class="button" href="{{ intake_center_url }}#intake-queue-board">Abrir central de intake</a>
+        <a class="button" href="{{ intake_center_url }}#intake-queue-board">Abrir central de entradas</a>
         {% endif %}
         {% if page.capabilities.can_manage_students %}
-        <a class="button secondary" href="{% url 'student-quick-create' %}#student-form-essential">Abrir cadastro rapido</a>
+        <a class="button secondary" href="{% url 'student-quick-create' %}#student-form-essential">Abrir cadastro rápido</a>
         {% endif %}
     </div>
     <div class="intake-grid">
@@ -33,13 +33,13 @@ POR QUE ELE EXISTE:
                     <a class="button secondary" href="{{ intake_center_url }}#intake-queue-board">Ver fila completa</a>
                     {% endif %}
                     {% if page.capabilities.can_manage_students %}
-                    <a class="button" href="{% url 'student-quick-create' %}?intake={{ intake.id }}#student-form-essential">Converter em aluno</a>
+                    <a class="button" href="{% url 'student-quick-create' %}?intake={{ intake.id }}#student-form-essential">Transformar em aluno</a>
                     {% endif %}
                 </div>
             </div>
         </div>
         {% empty %}
-        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Central de intake" title="Nenhuma entrada provisoria aguardando conversao" copy="A fila principal esta limpa neste momento; use a central propria para acompanhar novas chegadas." badge="Conversao em dia" badge_class="info" %}
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Central de entradas" title="Nenhuma entrada aguardando conversão agora" copy="A fila inicial está limpa neste momento; acompanhe novas chegadas pela central própria." badge="Conversão em dia" badge_class="info" %}
         {% endfor %}
     </div>
 </section>

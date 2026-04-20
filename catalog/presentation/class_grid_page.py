@@ -3,7 +3,7 @@ ARQUIVO: presenter da tela de grade de aulas.
 
 POR QUE ELE EXISTE:
 - tira da view HTTP a maior parte da montagem da fachada da grade.
-- organiza a tela por contrato explicito para preparar a convergencia com page payload.
+- organiza a tela por contrato explícito para preparar a convergência com page payload.
 """
 
 from access.admin import admin_changelist_url
@@ -36,8 +36,8 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
     planner_hero_action = [] if role_slug in (ROLE_COACH, ROLE_RECEPTION) else [{'label': 'Abrir planejamento', 'href': '#planner-board', 'kind': 'secondary'}]
     hero = build_page_hero(
         eyebrow='Aulas',
-        title='Grade em leitura.',
-        copy='Veja o ritmo do dia, a pressao da semana e onde ajustar sem ruido.',
+        title='Sua grade, em leitura operacional.',
+        copy='Veja o ritmo do dia, a ocupação da semana e onde ajustar antes de virar atrito.',
         actions=[
             {'label': 'Ver hoje', 'href': '#today-board'},
             {'label': 'Ver semana', 'href': '#class-weekly-modal', 'kind': 'secondary', 'data_action': 'open-weekly-modal-full'},
@@ -52,7 +52,7 @@ def build_class_grid_page(*, base_context, snapshot, schedule_form, selected_ses
         context={
             'page_key': 'class-grid',
             'title': 'Grade de aulas',
-            'subtitle': 'Agenda, lotacao e ajuste de janela numa leitura curta.',
+            'subtitle': 'Agenda, ocupação e ajuste de agenda em uma leitura curta.',
             'mode': 'management' if can_manage_classes else 'read-only',
             'role_slug': role_slug,
             'today': base_context['today'],

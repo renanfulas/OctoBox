@@ -48,6 +48,8 @@ A homologacao so pode ser considerada pronta quando:
 5. `bootstrap_roles` foi executado
 6. backup foi gerado e verificado
 7. a rota [api/v1/health/](../../api/v1/urls.py) responde OK
+8. o workflow `Student Onboarding Corridors Regression` ficou verde para o commit publicado
+9. o workflow `Student Onboarding Real Smoke` ficou verde para o commit publicado
 
 ## Etapa 0: decidir a hospedagem
 
@@ -175,6 +177,9 @@ Executar e validar manualmente:
 8. confirmar que CSS e layout carregaram corretamente
 9. confirmar que logout funciona
 10. confirmar que o workflow `Smoke Environment` consegue repetir esse teste com o GitHub Environment correto
+11. confirmar que a regressao explicita dos corredores passou antes do deploy com `python scripts/run_student_onboarding_corridors_regression.py`
+12. confirmar que o smoke real ponta a ponta passou com `python scripts/run_student_onboarding_real_smoke.py`
+13. confirmar que o workflow `Student Onboarding Real Smoke` ficou verde para o mesmo commit
 
 Checklist de resultado:
 
@@ -182,6 +187,8 @@ Checklist de resultado:
 2. sem pagina sem estilo
 3. sem rota critica quebrada
 4. sem problema evidente de permissao no fluxo base
+5. sem desvio entre o smoke manual e a regressao explicita dos corredores
+6. sem quebra no smoke real `staff cria convite -> aluno abre link -> OAuth -> Grade/WOD ou aguardando aprovacao`
 
 ## Etapa 6: validar backup antes de abrir para piloto
 
@@ -220,6 +227,8 @@ So liberar se todos os itens abaixo estiverem verdes:
 6. backup OK
 7. healthcheck OK
 8. papeis bootstrapados
+9. regressao `Student Onboarding Corridors Regression` OK
+10. workflow `Student Onboarding Real Smoke` OK
 
 Se qualquer item critico falhar:
 
@@ -256,3 +265,7 @@ Para a homologacao existir de verdade, precisamos sair desta sequencia com quatr
 2. loga
 3. persiste
 4. recupera
+
+E agora com uma quinta:
+
+5. os 3 corredores do onboarding do aluno continuam vivos no gate e no runtime

@@ -7,6 +7,7 @@ from shared_support.page_payloads import build_page_assets, build_page_hero, bui
 def build_student_invitation_operations_page(
     *,
     current_box_slug: str,
+    access_matrix: dict,
     recent_invites: list[dict],
     stalled_invites: list[dict],
     pending_memberships: list[dict],
@@ -37,6 +38,7 @@ def build_student_invitation_operations_page(
                 data_panel='student-app-invitations-hero',
             ),
             'box_root_slug': current_box_slug,
+            'access_matrix': access_matrix,
             'guardrails': [
                 'Cada convite vale para um aluno ou um box por vez.',
                 'Quando voce gera um novo convite para o mesmo aluno, o anterior deixa de ser o principal.',

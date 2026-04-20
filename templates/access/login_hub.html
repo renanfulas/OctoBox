@@ -47,6 +47,11 @@ PONTOS CRITICOS:
                 <p class="entry-text">
                     Continue com Google ou Apple para acessar o app do aluno com o contexto certo do seu box.
                 </p>
+                {% if invite_token %}
+                <p class="entry-note">
+                    Convite reconhecido. Sua autenticacao social vai entrar ja com o contexto certo do box.
+                </p>
+                {% endif %}
                 <div class="entry-actions">
                     <a href="{{ student_google_url }}" class="entry-button entry-button--primary">Continuar com Google</a>
                     <a href="{{ student_apple_url }}" class="entry-button entry-button--ghost">Continuar com Apple</a>

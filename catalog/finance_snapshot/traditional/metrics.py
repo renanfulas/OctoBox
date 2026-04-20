@@ -104,43 +104,43 @@ def build_finance_metrics(payments, enrollments):
     return OrderedDict(
         [
             (
-                'Receita recebida no mes',
+                'Receita recebida no mês',
                 {
                     'value': revenue_this_month,
                     'count': paid_count,
-                    'note': f'No mes anterior, entraram R$ {_format_currency_br(revenue_previous_month)}.',
+                    'note': f'No mês anterior, o caixa realizado fechou em R$ {_format_currency_br(revenue_previous_month)}.',
                     'is_currency': True,
                 },
             ),
             (
-                'Receita que ainda nao entrou',
+                'Receita que ainda não entrou',
                 {
                     'value': open_revenue,
-                    'note': 'Mostra o volume que ainda depende de cobranca ou regularizacao.',
+                    'note': 'Mostra o volume que ainda depende de cobrança, acordo ou regularização.',
                     'is_currency': True,
                 },
             ),
             (
-                'Novos contratos no mes',
+                'Novos contratos no mês',
                 {
                     'value': active_growth,
-                    'note': 'Entradas reais que reforcaram a carteira neste mes.',
+                    'note': 'Novas entradas que reforçaram a carteira neste mês.',
                     'is_currency': False,
                 },
             ),
             (
-                'Cancelamentos no mes',
+                'Cancelamentos no mês',
                 {
                     'value': cancellations,
-                    'note': 'Saidas que impactam recorrencia e pedem leitura de retencao.',
+                    'note': 'Saídas que pressionam a recorrência e pedem leitura de retenção.',
                     'is_currency': False,
                 },
             ),
             (
-                'Ticket medio recebido',
+                'Ticket médio recebido',
                 {
                     'value': revenue_this_month / paid_count if paid_count else Decimal('0.00'),
-                    'note': 'Quanto a operacao efetivamente trouxe por pagamento recebido.',
+                    'note': 'Quanto a operação trouxe, em média, por pagamento efetivamente recebido.',
                     'is_currency': True,
                 },
             ),
@@ -152,7 +152,7 @@ def build_finance_metrics(payments, enrollments):
                         'label': 'Valor vencido',
                         'value': f'R$ {_format_currency_br(overdue_amount)}',
                     },
-                    'note': f'{overdue_payments} cobranca(s) ja passaram do vencimento e pedem acao de cobranca e cuidado comercial.',
+                    'note': f'{overdue_payments} cobrança(s) já passaram do vencimento e pedem follow-up antes de virar evasão.',
                     'is_currency': False,
                 },
             ),
@@ -162,26 +162,26 @@ def build_finance_metrics(payments, enrollments):
 
 def build_finance_pulse(finance_metrics):
     return {
-        'received': finance_metrics['Receita recebida no mes']['value'],
-        'received_count': finance_metrics['Receita recebida no mes'].get('count', 0),
-        'open': finance_metrics['Receita que ainda nao entrou']['value'],
+        'received': finance_metrics['Receita recebida no mês']['value'],
+        'received_count': finance_metrics['Receita recebida no mês'].get('count', 0),
+        'open': finance_metrics['Receita que ainda não entrou']['value'],
         'overdue_students': finance_metrics['Alunos com atraso ativo']['value'],
-        'ticket': finance_metrics['Ticket medio recebido']['value'],
+        'ticket': finance_metrics['Ticket médio recebido']['value'],
     }
 
 
 def build_finance_priority_context(finance_metrics):
     overdue_students = finance_metrics['Alunos com atraso ativo']['value']
-    open_revenue = finance_metrics['Receita que ainda nao entrou']['value']
-    received_revenue = finance_metrics['Receita recebida no mes']['value']
+    open_revenue = finance_metrics['Receita que ainda não entrou']['value']
+    received_revenue = finance_metrics['Receita recebida no mês']['value']
 
     if overdue_students > 0:
         return {
             'dominant_key': 'queue',
             'pill_class': 'warning',
             'pill_label': 'Fila dominante',
-            'headline': 'A fila de cobranca pede a primeira leitura.',
-            'summary': 'Existe atraso ativo na base. Regua e fila merecem abrir antes da carteira e dos filtros.',
+            'headline': 'A fila de cobrança deve abrir a leitura.',
+            'summary': 'Existe atraso ativo na base. Vale entrar em fila e régua antes de expandir carteira ou filtros.',
             'default_action': 'open-tab-finance-queue',
             'default_panel': 'tab-finance-queue',
         }
@@ -190,8 +190,8 @@ def build_finance_priority_context(finance_metrics):
             'dominant_key': 'queue',
             'pill_class': 'warning',
             'pill_label': 'Caixa pressionado',
-            'headline': 'O dinheiro em aberto esta maior que o dinheiro convertido.',
-            'summary': 'Mesmo sem atraso dominante, a fila financeira esta puxando mais que os movimentos realizados.',
+            'headline': 'O dinheiro em aberto já pesa mais que o dinheiro realizado.',
+            'summary': 'Mesmo sem atraso dominante, a fila financeira pede abertura antes da leitura de tendência.',
             'default_action': 'open-tab-finance-queue',
             'default_panel': 'tab-finance-queue',
         }
@@ -200,8 +200,8 @@ def build_finance_priority_context(finance_metrics):
             'dominant_key': 'movements',
             'pill_class': 'accent',
             'pill_label': 'Caixa em leitura',
-            'headline': 'O caixa realizado volta a ser a melhor abertura.',
-            'summary': 'Sem pressao dominante na fila, movimentos e tendencia explicam melhor o momento financeiro.',
+            'headline': 'O caixa realizado vira a melhor abertura do recorte.',
+            'summary': 'Sem pressão dominante na fila, movimentos e tendência explicam melhor o momento financeiro.',
             'default_action': 'open-tab-finance-movements',
             'default_panel': 'tab-finance-movements',
         }
@@ -209,8 +209,8 @@ def build_finance_priority_context(finance_metrics):
         'dominant_key': 'portfolio',
         'pill_class': 'info',
         'pill_label': 'Carteira em foco',
-        'headline': 'Sem receita forte no recorte, a carteira vira o melhor ponto de leitura.',
-        'summary': 'Planos, mix e estrutura de carteira explicam mais do que movimentos curtos neste momento.',
+        'headline': 'Sem caixa forte no recorte, a carteira vira o melhor ponto de leitura.',
+        'summary': 'Planos, mix e concentração de receita explicam mais do que movimentos curtos neste momento.',
         'default_action': 'open-tab-finance-portfolio',
         'default_panel': 'tab-finance-portfolio',
     }
@@ -221,48 +221,48 @@ def build_finance_interactive_kpis(finance_metrics, *, priority_context=None, pl
     plan_portfolio = plan_portfolio or []
     cards = {
         'movements': {
-            'eyebrow': 'Raio-X Financeiro',
-            'display_value': f"R$ {_format_currency_br(finance_metrics['Receita recebida no mes']['value'])}",
+            'eyebrow': 'Raio-X financeiro',
+            'display_value': f"R$ {_format_currency_br(finance_metrics['Receita recebida no mês']['value'])}",
             'icon': _finance_kpi_icon('movements'),
             'note': (
-                'Movimentos, entradas, saidas e graficos de tendencia financeira.'
+                'Abra caixa, tendência e sinais do período sem sair da central.'
                 if priority_context['dominant_key'] != 'movements' else
-                'Esse e o melhor ponto de abertura agora: o caixa realizado explica o recorte sem ruido.'
+                'Este é o melhor ponto de abertura agora: o caixa realizado explica o recorte com mais clareza.'
             ),
             'data_action': 'open-tab-finance-movements',
             'card_class': 'kpi-emerald',
-            'value_class': 'is-emerald' if finance_metrics['Receita recebida no mes']['value'] > 1 else '',
+            'value_class': 'is-emerald' if finance_metrics['Receita recebida no mês']['value'] > 1 else '',
         },
         'queue': {
-            'eyebrow': 'Handoff de Cobranca',
-            'display_value': f"R$ {_format_currency_br(finance_metrics['Receita que ainda nao entrou']['value'])}",
+            'eyebrow': 'Handoff de cobrança',
+            'display_value': f"R$ {_format_currency_br(finance_metrics['Receita que ainda não entrou']['value'])}",
             'icon': _finance_kpi_icon('queue'),
             'note': (
-                'Fila automatica e regua ativa contra a inadimplencia e atrasos.'
+                'Abra a fila assistida para cobrar com prioridade, timing e contexto.'
                 if priority_context['dominant_key'] != 'queue' else
-                'Essa e a primeira pressao do recorte agora: fila e regua pedem acao antes de aprofundar carteira.'
+                'Esta é a primeira pressão do recorte agora: fila e régua pedem execução antes de aprofundar a carteira.'
             ),
             'data_action': 'open-tab-finance-queue',
             'card_class': 'kpi-red',
-            'value_class': 'is-ruby' if finance_metrics['Receita que ainda nao entrou']['value'] > 1 else '',
+            'value_class': 'is-ruby' if finance_metrics['Receita que ainda não entrou']['value'] > 1 else '',
         },
         'portfolio': {
-            'eyebrow': 'Motor de Carteira',
+            'eyebrow': 'Motor de carteira',
             'display_value': str(len(plan_portfolio)),
             'icon': _finance_kpi_icon('portfolio'),
             'note': (
-                'Portfolio de planos, mix de base e concentracao de receita.'
+                'Leia planos ativos, mix da base e concentração de receita.'
                 if priority_context['dominant_key'] != 'portfolio' else
-                'Carteira, mix e portfolio explicam melhor o momento do que a fila curta neste recorte.'
+                'Carteira, mix e portfólio explicam melhor o momento do que a fila curta neste recorte.'
             ),
             'data_action': 'open-tab-finance-portfolio',
             'card_class': 'kpi-slate',
         },
         'filters': {
-            'eyebrow': 'Filtros & Exportacao',
+            'eyebrow': 'Filtros e exportação',
             'display_value': 'Recortes',
             'icon': _finance_kpi_icon('filters'),
-            'note': 'Acesse os controles globais para isolar status, datas e planilhas.',
+            'note': 'Ajuste o recorte da leitura para separar janela, plano, status e missão.',
             'data_action': 'open-tab-finance-filters',
             'card_class': 'kpi-ink',
         },

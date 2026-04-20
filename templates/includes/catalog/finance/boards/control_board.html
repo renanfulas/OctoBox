@@ -13,8 +13,8 @@ O QUE ESTE ARQUIVO FAZ:
 <section class="card finance-board-filter finance-command-card" data-panel="finance-filter-form">
     <div class="card-head">
         <div class="finance-command-head-copy">
-            <p class="finance-command-eyebrow eyebrow">Leitura guiada</p>
-            <h3 class="card-title">Filtros da Leitura Financeira</h3>
+            <p class="finance-command-eyebrow eyebrow">Recorte da leitura</p>
+            <h3 class="card-title">Filtros do financeiro</h3>
         </div>
         <span class="badge badge-subtle info">Leitura ativa</span>
     </div>
@@ -43,8 +43,8 @@ O QUE ESTE ARQUIVO FAZ:
             </label>
         </div>
         <div class="actions actions-tight operation-hero-action-rail finance-command-actions">
-            <button class="button" type="submit">Aplicar filtros</button>
-            <a class="button secondary" href="{% url 'finance-center' %}?reset_filters=1">Limpar</a>
+            <button class="button" type="submit">Atualizar leitura</button>
+            <a class="button secondary" href="{% url 'finance-center' %}?reset_filters=1">Voltar ao padrão</a>
         </div>
     </form>
 </section>
@@ -52,12 +52,12 @@ O QUE ESTE ARQUIVO FAZ:
 <section class="card finance-support-card finance-support-card-tight finance-filter-summary-card" id="finance-control-board" data-panel="finance-control-summary" role="status" aria-live="polite" aria-atomic="true">
     <div class="card-head">
         <div class="finance-filter-summary-copy">
-            <h3 class="card-title" id="finance-summary-title">Resumo do Recorte Ativo</h3>
+            <h3 class="card-title" id="finance-summary-title">Resumo do recorte ativo</h3>
             <p class="finance-filter-summary-subtitle">
                 {% if page.data.finance_filter_state_restored %}
-                Estamos usando o ultimo recorte salvo desta leitura.
+                Estamos usando o último recorte salvo para esta leitura.
                 {% else %}
-                O recorte aparece aqui sem tirar voce da mesma tela.
+                O recorte aparece aqui para você validar o contexto sem sair da tela.
                 {% endif %}
             </p>
         </div>

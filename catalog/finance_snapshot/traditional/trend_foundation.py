@@ -138,6 +138,24 @@ def _build_pending_metric(*, key, label, placeholder_label, pending_reason, depe
     }
 
 
+def _resolve_received_metric_note(finance_metrics):
+    preferred_keys = (
+        'Receita recebida no mes',
+        'Receita recebida no mês',
+        'Receita recebida no mÃªs',
+    )
+    for key in preferred_keys:
+        metric = finance_metrics.get(key)
+        if metric and metric.get('note'):
+            return metric['note']
+
+    for key, metric in finance_metrics.items():
+        if 'Receita recebida' in key and metric.get('note'):
+            return metric['note']
+
+    return 'Mostra o caixa realizado no recorte atual frente ao mes anterior.'
+
+
 def _resolve_window_label(filter_form):
     months_value = '6'
     if filter_form.is_valid():
@@ -395,7 +413,7 @@ def build_finance_trend_foundation(*, filter_form, finance_metrics, monthly_comp
             delta_label=received_delta_label,
             direction=received_direction,
             semantic_state=received_semantic,
-            help_text=finance_metrics['Receita recebida no mes']['note'],
+            help_text=_resolve_received_metric_note(finance_metrics),
         ),
         _build_pending_metric(
             key='gastos',

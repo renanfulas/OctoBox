@@ -26,6 +26,7 @@ from .base_views import RoleOperationRedirectView
 from .workout_action_views import (
     WorkoutApprovalActionView,
     WorkoutFollowUpActionView,
+    WorkoutRmGapActionView,
     WorkoutOperationalMemoryCreateView,
     WorkoutWeeklyCheckpointUpdateView,
 )
@@ -42,6 +43,7 @@ from .workspace_views import (
     ReceptionPaymentBoardPartialView,
     ReceptionWorkspaceView,
     WorkoutApprovalBoardView,
+    WorkoutStudentRmQuickEditView,
     WhatsAppWorkspaceView,
 )
 
@@ -62,8 +64,14 @@ urlpatterns = [
     path('operacao/coach/', CoachWorkspaceView.as_view(), name='coach-workspace'),
     path('operacao/coach/aula/<int:session_id>/wod/', CoachSessionWorkoutEditorView.as_view(), name='coach-session-workout-editor'),
     path('operacao/wod/aprovacoes/', WorkoutApprovalBoardView.as_view(), name='workout-approval-board'),
+    path(
+        'operacao/wod/<int:workout_id>/aluno/<int:student_id>/rm/<slug:exercise_slug>/',
+        WorkoutStudentRmQuickEditView.as_view(),
+        name='workout-student-rm-quick-edit',
+    ),
     path('operacao/wod/aprovacoes/checkpoint-semanal/', WorkoutWeeklyCheckpointUpdateView.as_view(), name='workout-weekly-checkpoint-update'),
     path('operacao/wod/<int:workout_id>/follow-up/', WorkoutFollowUpActionView.as_view(), name='workout-follow-up-action'),
+    path('operacao/wod/<int:workout_id>/rm-gap/', WorkoutRmGapActionView.as_view(), name='workout-rm-gap-action'),
     path('operacao/wod/<int:workout_id>/memory/', WorkoutOperationalMemoryCreateView.as_view(), name='workout-operational-memory-create'),
     path('operacao/wod/<int:workout_id>/<str:action>/', WorkoutApprovalActionView.as_view(), name='workout-approval-action'),
     path('operacao/whatsapp/', WhatsAppWorkspaceView.as_view(), name='whatsapp-workspace'),

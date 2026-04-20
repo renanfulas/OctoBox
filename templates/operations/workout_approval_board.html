@@ -71,6 +71,9 @@
                 <span class="pill accent">{{ published_history.assist.no_reason_count }} sem motivo extra</span>
                 <span class="pill accent">{{ published_history.assist.viewer_total }} abertura(s) de WOD</span>
                 <span class="pill info">{{ published_history.assist.reserved_total }} reserva(s) nas turmas</span>
+                <span class="pill success">RM pronto {{ published_history.assist.rm_ready_total }}/{{ published_history.assist.rm_required_total }}</span>
+                <span class="pill accent">Aberturas prontas {{ published_history.assist.rm_viewer_ready_total }}</span>
+                <span class="pill warning">Gap de RM nas aberturas {{ published_history.assist.rm_viewer_gap_total }}</span>
                 <span class="pill danger">{{ published_history.assist.critical_alert_count }} alerta(s) critico(s)</span>
                 <span class="pill warning">{{ published_history.assist.warning_alert_count }} alerta(s) de atencao</span>
                 <span class="pill success">{{ published_history.assist.resolved_action_count }} acao(oes) com resultado</span>
@@ -301,9 +304,78 @@
                     <span class="pill {{ recommendation.tone }}">{{ recommendation.cadence }}</span>
                     <span class="pill accent">{{ recommendation.source_label }}</span>
                 </div>
+                {% if recommendation.href %}
+                <a class="button secondary" href="{{ recommendation.href }}">Abrir fila</a>
+                {% endif %}
             </article>
             {% endfor %}
         </div>
+        {% endif %}
+        {% if published_history.assist.rm_gap_queue.entries %}
+        <section id="rm-gap-queue" class="coach-wod-publication-history" aria-label="Fila curta de alunos sem RM">
+            <div class="coach-wod-publication-history-head">
+                <div>
+                    <p class="eyebrow">Fila de RM</p>
+                    <h2>Alunos sem RM para movimentos criticos</h2>
+                    <p>Leitura curta para atacar primeiro quem ficou sem a chave de %RM nos treinos ja publicados.</p>
+                </div>
+                <div class="coach-wod-review-meta">
+                    <span class="pill warning">{{ published_history.assist.rm_gap_queue.total_cases }} caso(s)</span>
+                    <span class="pill accent">{{ published_history.assist.rm_gap_queue.total_students }} aluno(s) na fila</span>
+                </div>
+            </div>
+            <div class="coach-wod-detail-list">
+                {% for rm_case in published_history.assist.rm_gap_queue.entries %}
+                <article class="coach-wod-detail-card">
+                    <p class="eyebrow">{{ rm_case.session_title }} · {{ rm_case.session_scheduled_label }}</p>
+                    <strong>{{ rm_case.workout_title }}</strong>
+                    <p>Movimentos criticos: {{ rm_case.required_movements_label }}</p>
+                    <div class="coach-wod-review-meta">
+                        <span class="pill {{ rm_case.tone }}">{{ rm_case.coverage_label }}</span>
+                        <span class="pill accent">{{ rm_case.viewer_ready_label }}</span>
+                    </div>
+                    <div class="coach-wod-detail-list">
+                        {% for student_row in rm_case.student_rows %}
+                        <article class="coach-wod-detail-card">
+                            <p class="eyebrow">{{ student_row.student_name }}</p>
+                            <strong>{{ student_row.exercise_label }}</strong>
+                            <div class="coach-wod-review-meta">
+                                <span class="pill {{ student_row.status_tone }}">{{ student_row.status_label }}</span>
+                                {% if student_row.updated_by_label %}
+                                <span class="pill info">{{ student_row.updated_by_label }}</span>
+                                {% endif %}
+                                {% if student_row.updated_at_label %}
+                                <span class="pill accent">{{ student_row.updated_at_label }}</span>
+                                {% endif %}
+                            </div>
+                            <form method="post" action="{% url 'workout-rm-gap-action' rm_case.workout_id %}" class="coach-wod-follow-up-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="student_id" value="{{ student_row.student_id }}">
+                                <input type="hidden" name="exercise_slug" value="{{ student_row.exercise_slug }}">
+                                <input type="hidden" name="exercise_label" value="{{ student_row.exercise_label }}">
+                                <label>
+                                    <span>Status</span>
+                                    <select name="status">
+                                        <option value="requested" {% if student_row.status == 'requested' %}selected{% endif %}>RM solicitado</option>
+                                        <option value="collected" {% if student_row.status == 'collected' %}selected{% endif %}>RM coletado</option>
+                                        <option value="free_load" {% if student_row.status == 'free_load' %}selected{% endif %}>Deixar carga livre</option>
+                                    </select>
+                                </label>
+                                <label class="coach-wod-follow-up-note">
+                                    <span>Nota curta</span>
+                                    <input type="text" name="note" maxlength="255" placeholder="Ex.: coach vai medir no proximo aquecimento." value="{{ student_row.note }}">
+                                </label>
+                                <button class="button secondary" type="submit">Salvar corredor</button>
+                            </form>
+                            <a class="button tertiary" href="{% url 'workout-student-rm-quick-edit' rm_case.workout_id student_row.student_id student_row.exercise_slug %}?label={{ student_row.exercise_label|urlencode }}">Abrir cadastro de RM</a>
+                        </article>
+                        {% endfor %}
+                    </div>
+                    <p>Publicado em {{ rm_case.published_at_label }}</p>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
         {% endif %}
         <div class="coach-wod-publication-alert-strip" aria-label="Alertas leves de gestao">
             {% for alert in published_history.assist.operational_management_priority.entries %}
@@ -398,6 +470,22 @@
                         <span class="pill accent">Abriram WOD {{ item.viewer_count }}</span>
                         <span class="pill {% if item.viewer_count and item.viewer_count < item.reserved_count %}warning{% else %}success{% endif %}">Consumo {{ item.viewer_rate_label }}</span>
                     </div>
+                    {% if item.rm_readiness.has_percentage_rm %}
+                    <div class="coach-wod-review-digest">
+                        <p class="eyebrow">Prontidao de RM x consumo real</p>
+                        <p>{{ item.rm_readiness.readiness_summary }}</p>
+                        <div class="coach-wod-review-meta">
+                            <span class="pill {% if item.rm_readiness.alert_level == 'danger' %}danger{% elif item.rm_readiness.alert_level == 'warning' %}warning{% else %}success{% endif %}">
+                                {{ item.rm_readiness.coverage_label }}
+                            </span>
+                            <span class="pill accent">{{ item.rm_readiness.viewer_ready_label }}</span>
+                        </div>
+                        <p>Movimentos dependentes de RM: {{ item.rm_readiness.required_movements_label }}</p>
+                        {% if item.rm_readiness.missing_students_label %}
+                        <p>Sem RM completo: {{ item.rm_readiness.missing_students_label }}{% if item.rm_readiness.missing_students_remaining %} e mais {{ item.rm_readiness.missing_students_remaining }} aluno(s){% endif %}.</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                     {% if item.alerts %}
                     <div class="coach-wod-publication-alert-list">
                         {% for alert in item.alerts %}

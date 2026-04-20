@@ -97,6 +97,8 @@ Leitura pratica desse fluxo:
 4. o processo web sobe com Gunicorn
 5. o healthcheck usa `/api/v1/health/`
 6. o `autoDeploy` fica desligado para que a publicacao venha do gate do GitHub Actions, e nao de qualquer push isolado na branch
+7. a publicacao agora tambem depende do workflow `Student Onboarding Corridors Regression`, que trava o verde quando os corredores `link em massa`, `lead importado` e `aluno ja cadastrado` perdem cobertura explicita
+8. a publicacao agora tambem depende do workflow `Student Onboarding Real Smoke`, que trava o release quando o fluxo real `staff cria convite -> aluno abre link -> OAuth -> Grade/WOD ou aguardando aprovacao` quebra
 
 Observacoes importantes para Render:
 
@@ -106,6 +108,12 @@ Observacoes importantes para Render:
 4. `DJANGO_ADMIN_URL_PATH` deve ser preenchido com um caminho nao obvio antes de abrir o ambiente
 5. se quiser dominio proprio, configure-o no Render e mantenha `DJANGO_ALLOWED_HOSTS` e `DJANGO_CSRF_TRUSTED_ORIGINS` como sobreposicao explicita quando necessario
 6. para gate real de deploy, o repositorio agora espera publicar via `Render Production Gate & Deploy`, usando `RENDER_DEPLOY_HOOK_URL` e um GitHub Environment `production`
+7. esse gate agora espera tres camadas juntas:
+   - runtime base e integridade
+   - seguranca
+   - regressao explicita do onboarding do aluno
+8. e uma quarta camada de comportamento real:
+   - smoke ponta a ponta do onboarding do aluno
 
 ## Static files
 

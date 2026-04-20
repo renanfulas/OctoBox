@@ -308,6 +308,70 @@
             </div>
             {% endif %}
         </article>
+
+        <article class="table-card coach-wod-editor-card">
+            <div class="coach-wod-editor-head">
+                <div>
+                    <p class="eyebrow">RM da turma</p>
+                    <h2>Preview do impacto nos alunos</h2>
+                    <p class="operation-session-meta">Aqui o coach enxerga como o `% do RM` pousa na turma reservada para esta aula, sem editar RM individual.</p>
+                </div>
+                <div class="coach-wod-editor-pills">
+                    <span class="pill info">{{ session_rm_preview.reserved_students_count }} aluno(s) no radar</span>
+                    <span class="pill accent">{{ session_rm_preview.cards|length }} movimento(s) com % RM</span>
+                </div>
+            </div>
+
+            {% if session_rm_preview.cards %}
+            <div class="coach-wod-block-list">
+                {% for card in session_rm_preview.cards %}
+                <section class="coach-wod-block-card">
+                    <div class="coach-wod-editor-head">
+                        <div>
+                            <p class="eyebrow">{{ card.block_title }}</p>
+                            <h2>{{ card.movement_label }}</h2>
+                            <p class="operation-session-meta">{{ card.prescription_label }}</p>
+                        </div>
+                        <div class="coach-wod-editor-pills">
+                            <span class="pill info">{{ card.coverage_label }}</span>
+                            {% if card.range_label %}
+                            <span class="pill success">{{ card.range_label }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="coach-wod-review-digest">
+                        <p class="eyebrow">Como isso chega no aluno</p>
+                        <p>{{ card.load_context_label }}</p>
+                    </div>
+
+                    {% if card.tracked_students %}
+                    <div class="coach-wod-detail-list">
+                        {% for student_card in card.tracked_students %}
+                        <article class="coach-wod-detail-card">
+                            <p class="eyebrow">{{ student_card.student_name }}</p>
+                            <strong>{{ student_card.recommended_load_label }}</strong>
+                            <p>RM base: {{ student_card.one_rep_max_label }}</p>
+                            <p>{{ student_card.recommendation_copy }}</p>
+                        </article>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if card.missing_students %}
+                    <div class="coach-wod-empty-state">
+                        <p><strong>Sem RM registrado:</strong> {{ card.missing_students_label }}{% if card.missing_students_remaining %} e mais {{ card.missing_students_remaining }} aluno(s){% endif %}.</p>
+                    </div>
+                    {% endif %}
+                </section>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="coach-wod-empty-state">
+                <p>{{ session_rm_preview.empty_copy }}</p>
+            </div>
+            {% endif %}
+        </article>
     </section>
 </div>
 {% endwith %}

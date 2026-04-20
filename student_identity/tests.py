@@ -12,9 +12,11 @@ from django.core import mail
 from django.test import override_settings
 from django.test import Client, TestCase
 from django.urls import reverse
+from django.utils.http import urlencode
 from django.utils import timezone
 
 from auditing.models import AuditEvent
+from operations.models import Attendance, AttendanceStatus, ClassSession
 from shared_support.box_runtime import get_box_runtime_slug
 from student_identity.application.commands import CreateStudentInvitationCommand, TransferStudentToBoxCommand
 from student_identity.application.use_cases import CreateStudentInvitation, TransferStudentToBox
@@ -67,6 +69,15 @@ class StudentIdentityFlowTests(TestCase):
         group, _ = Group.objects.get_or_create(name=role_name)
         user.groups.add(group)
         return user
+
+    def _build_google_provider_mock(self, *, email: str, provider_subject: str):
+        provider = Mock()
+        provider.exchange_code.return_value = Mock(
+            provider='google',
+            email=email,
+            provider_subject=provider_subject,
+        )
+        return provider
 
     @override_settings(
         STUDENT_GOOGLE_OAUTH_CLIENT_ID='google-client-id',
@@ -273,6 +284,56 @@ class StudentIdentityFlowTests(TestCase):
             ).exists()
         )
 
+    @override_settings(
+        STUDENT_GOOGLE_OAUTH_CLIENT_ID='google-client-id',
+        STUDENT_GOOGLE_OAUTH_CLIENT_SECRET='google-client-secret',
+    )
+    @patch('student_identity.views.build_provider')
+    def test_registered_student_invite_redirects_directly_to_app_with_funnel_events(self, build_provider_mock):
+        invitation = StudentAppInvitation.objects.create(
+            student=self.student,
+            invited_email='aluno@example.com',
+            onboarding_journey=StudentOnboardingJourney.REGISTERED_STUDENT_INVITE,
+            expires_at=timezone.now() + timedelta(days=3),
+        )
+        provider = Mock()
+        provider.exchange_code.return_value = Mock(
+            provider='google',
+            email='aluno@example.com',
+            provider_subject='google-registered-student-subject',
+        )
+        build_provider_mock.return_value = provider
+
+        from student_identity.oauth_state import build_oauth_state
+
+        response = self.client.get(
+            reverse('student-identity-oauth-callback', kwargs={'provider': 'google'}),
+            {
+                'code': 'oauth-code',
+                'state': build_oauth_state(provider='google', invite_token=str(invitation.token)),
+            },
+        )
+
+        self.assertRedirects(response, reverse('student-app-home'))
+        identity = StudentIdentity.objects.get(student=self.student)
+        self.assertEqual(identity.provider_subject, 'google-registered-student-subject')
+        invitation.refresh_from_db()
+        self.assertIsNotNone(invitation.accepted_at)
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                action='student_onboarding.registered_student_invite.oauth_completed',
+                metadata__identity_id=identity.id,
+                metadata__student_id=self.student.id,
+            ).exists()
+        )
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                action='student_onboarding.registered_student_invite.app_entry_completed',
+                metadata__identity_id=identity.id,
+                metadata__student_id=self.student.id,
+            ).exists()
+        )
+
     def test_transfer_student_moves_box_root_without_creating_second_house(self):
         identity = StudentIdentity.objects.create(
             student=self.student,
@@ -335,6 +396,231 @@ class StudentIdentityFlowTests(TestCase):
         self.assertNotContains(response, 'aria-disabled="true"')
         self.assertContains(response, reverse('student-identity-oauth-start', kwargs={'provider': 'google'}))
         self.assertContains(response, reverse('student-identity-oauth-start', kwargs={'provider': 'apple'}))
+
+    def test_public_login_hub_preserves_invite_token_in_student_oauth_buttons(self):
+        invitation = StudentAppInvitation.objects.create(
+            student=self.student,
+            invited_email='aluno@example.com',
+            expires_at=timezone.now() + timedelta(days=3),
+        )
+
+        response = self.client.get(reverse('login'), {'invite': str(invitation.token)})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            f"{reverse('student-identity-oauth-start', kwargs={'provider': 'google'})}?{urlencode({'invite': str(invitation.token)})}",
+        )
+        self.assertContains(
+            response,
+            f"{reverse('student-identity-oauth-start', kwargs={'provider': 'apple'})}?{urlencode({'invite': str(invitation.token)})}",
+        )
+        self.assertContains(response, 'Convite reconhecido.')
+
+    def test_invite_landing_points_student_to_public_login_hub_with_invite_token(self):
+        invitation = StudentAppInvitation.objects.create(
+            student=self.student,
+            invited_email='aluno@example.com',
+            expires_at=timezone.now() + timedelta(days=3),
+        )
+
+        response = self.client.get(reverse('student-identity-invite', kwargs={'token': invitation.token}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f"{reverse('login')}?invite={invitation.token}")
+
+    @override_settings(
+        STUDENT_GOOGLE_OAUTH_CLIENT_ID='google-client-id',
+        STUDENT_GOOGLE_OAUTH_CLIENT_SECRET='google-client-secret',
+    )
+    @patch('student_identity.views.build_provider')
+    def test_smoke_staff_creates_individual_invite_and_student_reaches_home_in_grade_mode(self, build_provider_mock):
+        owner = get_user_model().objects.create_superuser(
+            username='owner-smoke-grade',
+            email='owner-smoke-grade@example.com',
+            password='Senha@123456',
+        )
+        staff_client = Client()
+        student_client = Client()
+        staff_client.force_login(owner)
+        build_provider_mock.return_value = self._build_google_provider_mock(
+            email='aluno@example.com',
+            provider_subject='google-smoke-grade-subject',
+        )
+
+        create_response = staff_client.post(
+            reverse('student-invitation-operations'),
+            {
+                'student': str(self.student.id),
+                'invited_email': 'aluno@example.com',
+                'invite_type': StudentInvitationType.INDIVIDUAL,
+                'onboarding_journey': StudentOnboardingJourney.REGISTERED_STUDENT_INVITE,
+                'expires_in_days': '7',
+            },
+        )
+
+        self.assertEqual(create_response.status_code, 302)
+        invitation = StudentAppInvitation.objects.latest('id')
+
+        landing_response = student_client.get(reverse('student-identity-invite', kwargs={'token': invitation.token}))
+        self.assertEqual(landing_response.status_code, 200)
+        self.assertContains(landing_response, f"{reverse('login')}?invite={invitation.token}")
+
+        from student_identity.oauth_state import build_oauth_state
+
+        callback_response = student_client.get(
+            reverse('student-identity-oauth-callback', kwargs={'provider': 'google'}),
+            {
+                'code': 'oauth-smoke-grade',
+                'state': build_oauth_state(provider='google', invite_token=str(invitation.token)),
+            },
+            follow=False,
+        )
+
+        self.assertRedirects(callback_response, reverse('student-app-home'))
+        home_response = student_client.get(reverse('student-app-home'))
+        self.assertEqual(home_response.status_code, 200)
+        self.assertContains(home_response, 'Modo atual: Grade')
+        self.assertContains(home_response, 'Grade')
+        membership = StudentBoxMembership.objects.get(student=self.student, box_root_slug=get_box_runtime_slug())
+        self.assertEqual(membership.status, StudentBoxMembershipStatus.ACTIVE)
+
+    @override_settings(
+        STUDENT_GOOGLE_OAUTH_CLIENT_ID='google-client-id',
+        STUDENT_GOOGLE_OAUTH_CLIENT_SECRET='google-client-secret',
+    )
+    @patch('student_identity.views.build_provider')
+    def test_smoke_student_oauth_reaches_home_in_wod_mode_when_attendance_window_is_active(self, build_provider_mock):
+        owner = get_user_model().objects.create_superuser(
+            username='owner-smoke-wod',
+            email='owner-smoke-wod@example.com',
+            password='Senha@123456',
+        )
+        staff_client = Client()
+        student_client = Client()
+        staff_client.force_login(owner)
+        build_provider_mock.return_value = self._build_google_provider_mock(
+            email='aluno@example.com',
+            provider_subject='google-smoke-wod-subject',
+        )
+        session = ClassSession.objects.create(
+            title='WOD Smoke',
+            scheduled_at=timezone.now() + timedelta(minutes=10),
+            status='open',
+        )
+        Attendance.objects.create(
+            student=self.student,
+            session=session,
+            status=AttendanceStatus.BOOKED,
+        )
+
+        create_response = staff_client.post(
+            reverse('student-invitation-operations'),
+            {
+                'student': str(self.student.id),
+                'invited_email': 'aluno@example.com',
+                'invite_type': StudentInvitationType.INDIVIDUAL,
+                'onboarding_journey': StudentOnboardingJourney.REGISTERED_STUDENT_INVITE,
+                'expires_in_days': '7',
+            },
+        )
+
+        self.assertEqual(create_response.status_code, 302)
+        invitation = StudentAppInvitation.objects.latest('id')
+
+        from student_identity.oauth_state import build_oauth_state
+
+        callback_response = student_client.get(
+            reverse('student-identity-oauth-callback', kwargs={'provider': 'google'}),
+            {
+                'code': 'oauth-smoke-wod',
+                'state': build_oauth_state(provider='google', invite_token=str(invitation.token)),
+            },
+            follow=False,
+        )
+
+        self.assertRedirects(callback_response, reverse('student-app-home'))
+        home_response = student_client.get(reverse('student-app-home'))
+        self.assertEqual(home_response.status_code, 200)
+        self.assertContains(home_response, 'Modo atual: WOD')
+        self.assertContains(home_response, 'Treino de hoje ativo.')
+        self.assertContains(home_response, 'Abrir WOD')
+
+    @override_settings(
+        STUDENT_GOOGLE_OAUTH_CLIENT_ID='google-client-id',
+        STUDENT_GOOGLE_OAUTH_CLIENT_SECRET='google-client-secret',
+    )
+    @patch('student_identity.views.build_provider')
+    def test_smoke_open_box_invite_waits_for_approval_then_student_enters_home(self, build_provider_mock):
+        owner = get_user_model().objects.create_superuser(
+            username='owner-smoke-open-box',
+            email='owner-smoke-open-box@example.com',
+            password='Senha@123456',
+        )
+        manager = self._create_role_user(
+            username='manager-smoke-approve',
+            email='manager-smoke-approve@example.com',
+            role_name='Manager',
+        )
+        staff_client = Client()
+        manager_client = Client()
+        student_client = Client()
+        staff_client.force_login(owner)
+        manager_client.force_login(manager)
+        build_provider_mock.return_value = self._build_google_provider_mock(
+            email='aluno@example.com',
+            provider_subject='google-smoke-open-box-subject',
+        )
+
+        create_response = staff_client.post(
+            reverse('student-invitation-operations'),
+            {
+                'student': str(self.student.id),
+                'invited_email': 'aluno@example.com',
+                'invite_type': StudentInvitationType.OPEN_BOX,
+                'onboarding_journey': StudentOnboardingJourney.REGISTERED_STUDENT_INVITE,
+                'expires_in_days': '7',
+            },
+        )
+
+        self.assertEqual(create_response.status_code, 302)
+        invitation = StudentAppInvitation.objects.latest('id')
+
+        from student_identity.oauth_state import build_oauth_state
+
+        callback_response = student_client.get(
+            reverse('student-identity-oauth-callback', kwargs={'provider': 'google'}),
+            {
+                'code': 'oauth-smoke-open-box',
+                'state': build_oauth_state(provider='google', invite_token=str(invitation.token)),
+            },
+            follow=False,
+        )
+
+        self.assertRedirects(callback_response, reverse('student-app-membership-pending'))
+        pending_response = student_client.get(reverse('student-app-membership-pending'))
+        self.assertEqual(pending_response.status_code, 200)
+        self.assertContains(pending_response, 'aguardando')
+
+        membership = StudentBoxMembership.objects.get(student=self.student, box_root_slug=get_box_runtime_slug())
+        self.assertEqual(membership.status, StudentBoxMembershipStatus.PENDING_APPROVAL)
+
+        approve_response = manager_client.post(
+            reverse('student-invitation-operations'),
+            {
+                'action': 'approve-membership',
+                'membership_id': str(membership.id),
+            },
+        )
+
+        self.assertEqual(approve_response.status_code, 302)
+        membership.refresh_from_db()
+        self.assertEqual(membership.status, StudentBoxMembershipStatus.ACTIVE)
+        self.assertEqual(membership.approved_by_id, manager.id)
+
+        home_response = student_client.get(reverse('student-app-home'))
+        self.assertEqual(home_response.status_code, 200)
+        self.assertContains(home_response, 'Modo atual: Grade')
 
     @override_settings(
         STUDENT_GOOGLE_OAUTH_CLIENT_ID='',
@@ -759,6 +1045,67 @@ class StudentIdentityFlowTests(TestCase):
         self.assertEqual(membership.status, StudentBoxMembershipStatus.ACTIVE)
         self.assertEqual(membership.approved_by_id, owner.id)
         self.assertIsNotNone(membership.approved_at)
+
+    def test_coach_can_view_operations_page_in_read_only_mode(self):
+        coach = self._create_role_user(
+            username='coach-readonly',
+            email='coach-readonly@example.com',
+            role_name='Coach',
+        )
+        invitation = StudentAppInvitation.objects.create(
+            student=self.student,
+            invited_email='aluno@example.com',
+            expires_at=timezone.now() + timedelta(days=5),
+        )
+        StudentBoxMembership.objects.create(
+            identity=StudentIdentity.objects.create(
+                student=self.student,
+                box_root_slug=get_box_runtime_slug(),
+                primary_box_root_slug=get_box_runtime_slug(),
+                provider=StudentIdentityProvider.GOOGLE,
+                provider_subject='google-coach-readonly',
+                email='aluno@example.com',
+                status=StudentIdentityStatus.ACTIVE,
+            ),
+            student=self.student,
+            box_root_slug=get_box_runtime_slug(),
+            status=StudentBoxMembershipStatus.PENDING_APPROVAL,
+            created_from_invite=invitation,
+        )
+        self.client.force_login(coach)
+
+        response = self.client.get(reverse('student-invitation-operations'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Coach entra aqui em modo leitura')
+        self.assertNotContains(response, 'Gerar convite individual')
+        self.assertNotContains(response, 'Liberar acesso')
+        self.assertNotContains(response, 'Link pronto para compartilhar')
+
+    def test_coach_cannot_create_student_invitation_from_operations_screen(self):
+        coach = self._create_role_user(
+            username='coach-denied',
+            email='coach-denied@example.com',
+            role_name='Coach',
+        )
+        self.client.force_login(coach)
+
+        response = self.client.post(
+            reverse('student-invitation-operations'),
+            {
+                'student': str(self.student.id),
+                'invited_email': 'aluno@example.com',
+                'invite_type': StudentInvitationType.INDIVIDUAL,
+                'onboarding_journey': StudentOnboardingJourney.REGISTERED_STUDENT_INVITE,
+                'expires_in_days': '7',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(StudentAppInvitation.objects.count(), 0)
+        messages = list(response.context['messages'])
+        self.assertTrue(any('modo leitura' in str(message) for message in messages))
 
     def test_reception_can_change_student_email_once_per_month(self):
         reception = self._create_role_user(

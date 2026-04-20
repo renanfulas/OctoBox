@@ -16,8 +16,9 @@ from django import forms
 
 from operations.models import BehaviorCategory
 from shared_support.form_inputs import apply_text_input_attrs
-from student_app.models import WorkoutBlockKind, WorkoutLoadType, WorkoutOperationalMemoryKind
+from student_app.models import StudentExerciseMax, WorkoutBlockKind, WorkoutLoadType, WorkoutOperationalMemoryKind
 from student_app.models import (
+    WorkoutRmGapActionStatus,
     WorkoutWeeklyCheckpointClosure,
     WorkoutWeeklyCheckpointOwner,
     WorkoutWeeklyCheckpointStatus,
@@ -60,6 +61,12 @@ WORKOUT_OPERATIONAL_MEMORY_KIND_CHOICES = (
     (WorkoutOperationalMemoryKind.WHATSAPP_SENT, 'WhatsApp disparado'),
     (WorkoutOperationalMemoryKind.MONITORING_NOTE, 'Nota de monitoramento'),
     (WorkoutOperationalMemoryKind.CUSTOM, 'Marco livre'),
+)
+
+WORKOUT_RM_GAP_STATUS_CHOICES = (
+    (WorkoutRmGapActionStatus.REQUESTED, 'RM solicitado'),
+    (WorkoutRmGapActionStatus.COLLECTED, 'RM coletado'),
+    (WorkoutRmGapActionStatus.FREE_LOAD, 'Deixar carga livre'),
 )
 
 
@@ -231,6 +238,52 @@ class WorkoutWeeklyCheckpointForm(forms.Form):
         }
 
 
+class WorkoutRmGapActionForm(forms.Form):
+    student_id = forms.IntegerField(min_value=1)
+    exercise_slug = forms.SlugField(max_length=64)
+    exercise_label = forms.CharField(max_length=120)
+    status = forms.ChoiceField(choices=WORKOUT_RM_GAP_STATUS_CHOICES)
+    note = forms.CharField(max_length=255, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        apply_text_input_attrs(
+            self.fields['note'],
+            placeholder='Ex.: recepcao pediu RM hoje antes da aula das 18h.',
+            maxlength=255,
+        )
+
+    def build_payload(self):
+        status = self.cleaned_data['status']
+        return {
+            'student_id': self.cleaned_data['student_id'],
+            'exercise_slug': self.cleaned_data['exercise_slug'],
+            'exercise_label': self.cleaned_data['exercise_label'],
+            'status': status,
+            'status_label': dict(WORKOUT_RM_GAP_STATUS_CHOICES).get(status, status),
+            'note': (self.cleaned_data.get('note') or '').strip(),
+        }
+
+
+class WorkoutStudentRmQuickForm(forms.ModelForm):
+    class Meta:
+        model = StudentExerciseMax
+        fields = ['exercise_label', 'one_rep_max_kg', 'notes']
+
+    def __init__(self, *args, exercise_label='', **kwargs):
+        super().__init__(*args, **kwargs)
+        apply_text_input_attrs(self.fields['exercise_label'], placeholder='Ex.: Deadlift', maxlength=120)
+        self.fields['one_rep_max_kg'].widget.attrs.update({'placeholder': 'Ex.: 100.00', 'step': '0.01', 'min': '0'})
+        apply_text_input_attrs(
+            self.fields['notes'],
+            placeholder='Ex.: medido no teste de forca da turma.',
+            maxlength=255,
+        )
+        if exercise_label and not self.initial.get('exercise_label'):
+            self.initial['exercise_label'] = exercise_label
+            self.fields['exercise_label'].initial = exercise_label
+
+
 class CoachWorkoutBlockForm(forms.Form):
     block_id = forms.IntegerField(min_value=1, required=False)
     title = forms.CharField(max_length=120)
@@ -283,4 +336,6 @@ __all__ = [
     'WorkoutFollowUpResolutionForm',
     'WorkoutOperationalMemoryForm',
     'WorkoutWeeklyCheckpointForm',
+    'WorkoutRmGapActionForm',
+    'WorkoutStudentRmQuickForm',
 ]

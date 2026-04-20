@@ -58,6 +58,7 @@ O smoke so passa quando:
 2. nenhum deles cai em erro 500
 3. o painel operacional mostra o estado correto do link em massa
 4. o perfil do aluno salva sem quebrar identidade
+5. a rodada manual confirma o mesmo pacote protegido pela regressao `python scripts/run_student_onboarding_corridors_regression.py`
 
 Se qualquer item falhar:
 
@@ -77,6 +78,23 @@ Separar antes:
 Tempo alvo:
 
 1. 5 minutos
+
+Regressao automatizada alinhada a este smoke:
+
+1. `link em massa`: `test_mass_box_invite_redirects_to_onboarding_wizard` + `test_mass_onboarding_creates_student_and_identity`
+2. `lead importado via WhatsApp`: `test_imported_lead_invite_redirects_to_reduced_onboarding` + `test_imported_lead_onboarding_updates_student_and_records_funnel_events`
+3. `aluno ja cadastrado`: `test_registered_student_invite_redirects_directly_to_app_with_funnel_events` + `test_open_box_invite_redirects_student_to_membership_pending`
+4. `editar perfil`: `test_student_profile_edit_updates_student_and_identity_email`
+
+Smoke automatizado ponta a ponta do corredor real:
+
+1. `.\.venv\Scripts\python.exe scripts/run_student_onboarding_real_smoke.py`
+
+Esse comando protege o trilho operacional mais proximo do uso real:
+
+1. `staff cria convite -> aluno abre link -> OAuth -> Grade`
+2. `staff cria convite -> aluno abre link -> OAuth -> WOD`
+3. `staff cria convite aberto -> aluno abre link -> OAuth -> aguardando aprovacao -> staff aprova -> app`
 
 ## Modos por papel
 

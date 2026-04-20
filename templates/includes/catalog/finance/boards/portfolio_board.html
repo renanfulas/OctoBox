@@ -14,7 +14,7 @@ PONTOS CRITICOS:
 <section class="card finance-board-portfolio finance-portfolio-panel-card" id="finance-portfolio-board" aria-label="Portfolio de produtos ativos">
     <div class="finance-portfolio-panel-head">
         <div class="finance-portfolio-panel-copy finance-board-head-copy">
-            <h3 class="finance-revenue-trend-title">Planos ativos</h3>
+            <h3 class="finance-revenue-trend-title">Carteira de planos ativos</h3>
         </div>
     </div>
     <div class="finance-portfolio-panel-list">
@@ -28,7 +28,7 @@ PONTOS CRITICOS:
                 <div class="finance-portfolio-panel-value">
                     <strong>R$ {{ item.revenue|floatformat:2 }}</strong>
                     {% if item.is_new_empty_plan %}
-                    <span>Aguardando primeira adesao</span>
+                    <span>Aguardando a primeira adesão</span>
                     {% else %}
                     <span>{{ item.active_enrollments }} aluno{{ item.active_enrollments|pluralize:"s" }}</span>
                     {% endif %}
@@ -39,12 +39,12 @@ PONTOS CRITICOS:
             </div>
         </article>
         {% empty %}
-        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Portfolio de planos" title="Nenhum plano cadastrado ainda" copy="Cadastre pelo menos uma oferta para enxergar carteira, mix e matriculas de forma legivel." badge="Estrutura inicial" badge_class="info" %}
+        {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Portfólio de planos" title="Nenhum plano cadastrado ainda" copy="Cadastre pelo menos uma oferta para enxergar carteira, mix e matrículas com uma leitura útil." badge="Estrutura inicial" badge_class="info" %}
         {% endfor %}
     </div>
     {% if page.data.finance_portfolio_panel.items %}
     <footer class="finance-portfolio-panel-footer">
-        <span>Total MRR</span>
+        <span>Receita mensal desta carteira</span>
         <strong>R$ {{ page.data.finance_portfolio_panel.total_revenue|floatformat:2 }}</strong>
     </footer>
     {% endif %}

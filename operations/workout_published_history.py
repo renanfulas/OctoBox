@@ -17,262 +17,39 @@ PONTOS CRITICOS:
 
 from datetime import timedelta
 
-from django.urls import reverse
 from django.utils import timezone
 
-from access.roles import ROLE_OWNER
-from operations.models import AttendanceStatus, SessionStatus
+from operations.models import SessionStatus
 from student_app.models import (
     SessionWorkoutRevision,
     SessionWorkoutRevisionEvent,
-    WorkoutFollowUpStatus,
 )
 
+from .workout_publication_executive import (
+    build_executive_case_closure,
+    build_operational_memory_digest,
+)
+from .workout_publication_follow_up import (
+    _push_operational_action,
+    build_follow_up_result_summary,
+    build_live_follow_up_escalation,
+    build_publication_follow_up_actions,
+)
+from .workout_publication_metrics import (
+    build_publication_rm_readiness,
+    build_publication_runtime_metrics,
+)
 from .workout_board_builders import (
+    build_rm_gap_queue,
     build_management_alert_priority,
     build_management_recommendations,
+    build_rm_readiness_management_alerts,
     build_operational_leverage_summary,
     build_operational_leverage_trends,
     build_operational_management_alerts,
     build_operational_memory_patterns,
     build_weekly_executive_summary,
 )
-
-
-def _push_operational_action(actions, *, key, label, copy, tone='info', href=''):
-    if any(action['key'] == key for action in actions):
-        return
-    actions.append(
-        {
-            'key': key,
-            'label': label,
-            'copy': copy,
-            'tone': tone,
-            'href': href,
-        }
-    )
-
-
-def build_publication_runtime_metrics(*, session, workout):
-    attendances = list(session.attendances.all())
-    reserved_statuses = {
-        AttendanceStatus.BOOKED,
-        AttendanceStatus.CHECKED_IN,
-        AttendanceStatus.CHECKED_OUT,
-    }
-    reserved_count = sum(1 for attendance in attendances if attendance.status in reserved_statuses)
-    checked_in_count = sum(
-        1 for attendance in attendances if attendance.status in {AttendanceStatus.CHECKED_IN, AttendanceStatus.CHECKED_OUT}
-    )
-    viewer_count = len(list(workout.student_views.all()))
-    viewer_rate = round((viewer_count / reserved_count) * 100) if reserved_count else 0
-    return {
-        'reserved_count': reserved_count,
-        'checked_in_count': checked_in_count,
-        'viewer_count': viewer_count,
-        'viewer_rate': viewer_rate,
-    }
-
-
-def _collect_relevant_follow_up_alerts(*, action_key, alerts):
-    alert_labels = [alert['label'] for alert in alerts]
-    if action_key == 'whatsapp-reinforce':
-        return [label for label in alert_labels if 'nenhuma abertura' in label.lower() or 'poucos alunos abriram' in label.lower()]
-    if action_key == 'coach-align':
-        return [label for label in alert_labels if 'urgente' in label.lower() or 'em aula' in label.lower()]
-    if action_key == 'desk-follow-up':
-        return [label for label in alert_labels if 'poucos alunos abriram' in label.lower() or 'em aula' in label.lower()]
-    return alert_labels
-
-
-def build_follow_up_result_summary(result, *, action_key, current_metrics, alerts):
-    if result is None:
-        return None
-    baseline_metrics = result.baseline_metrics or {}
-    resolved_by_label = ''
-    if result.resolved_by is not None:
-        resolved_by_label = result.resolved_by.get_full_name() or result.resolved_by.username
-    resolved_at_label = timezone.localtime(result.resolved_at).strftime('%d/%m %H:%M') if result.resolved_at else ''
-    status_tone = 'success' if result.status == WorkoutFollowUpStatus.COMPLETED else 'warning'
-    relevant_alerts = _collect_relevant_follow_up_alerts(action_key=action_key, alerts=alerts)
-    viewer_before = int(baseline_metrics.get('viewer_count') or 0)
-    viewer_after = int(current_metrics.get('viewer_count') or 0)
-    check_in_before = int(baseline_metrics.get('checked_in_count') or 0)
-    check_in_after = int(current_metrics.get('checked_in_count') or 0)
-    reserved_before = int(baseline_metrics.get('reserved_count') or 0)
-    reserved_after = int(current_metrics.get('reserved_count') or 0)
-    if result.status == WorkoutFollowUpStatus.DISMISSED:
-        monitor_status = 'dismissed'
-        monitor_label = 'Encerrado'
-        monitor_tone = 'warning'
-    elif not relevant_alerts:
-        monitor_status = 'resolved'
-        monitor_label = 'Resolvido'
-        monitor_tone = 'success'
-    elif viewer_after > viewer_before or check_in_after > check_in_before:
-        monitor_status = 'monitoring'
-        monitor_label = 'Monitorando'
-        monitor_tone = 'accent'
-    else:
-        monitor_status = 'not_resolved'
-        monitor_label = 'Nao resolveu'
-        monitor_tone = 'danger'
-    return {
-        'status': result.status,
-        'status_label': result.get_status_display(),
-        'status_tone': status_tone,
-        'outcome_note': result.outcome_note,
-        'resolved_by_label': resolved_by_label,
-        'resolved_at_label': resolved_at_label,
-        'summary': (
-            f"{result.get_status_display()} por {resolved_by_label} em {resolved_at_label}"
-            if resolved_by_label and resolved_at_label
-            else result.get_status_display()
-        ),
-        'monitor_status': monitor_status,
-        'monitor_label': monitor_label,
-        'monitor_tone': monitor_tone,
-        'before_after_summary': (
-            f'Aberturas {viewer_before}->{viewer_after} | Check-in {check_in_before}->{check_in_after} | Turma {reserved_before}->{reserved_after}'
-        ),
-        'delta_summary': (
-            f"Aberturas {viewer_after - viewer_before:+d} | Check-in {check_in_after - check_in_before:+d}"
-        ),
-        'remaining_alerts': relevant_alerts[:3],
-    }
-
-
-def build_live_follow_up_escalation(*, runtime_label, reasons, actions, current_role_slug):
-    lowered_reasons = ' '.join(reasons).lower()
-    lowered_actions = ' '.join(actions).lower()
-    if runtime_label == 'Aula em andamento' or 'em aula' in lowered_reasons:
-        return {
-            'owner_label': 'Recepcao' if current_role_slug == ROLE_OWNER else 'Operacao',
-            'escalation_label': 'Escalonar agora no chao da operacao',
-            'tone': 'danger',
-            'href': reverse('reception-workspace') if current_role_slug == ROLE_OWNER else reverse('manager-workspace'),
-        }
-    if 'coach' in lowered_actions or 'urgencia' in lowered_reasons:
-        return {
-            'owner_label': 'Coach',
-            'escalation_label': 'Escalonar para alinhamento com coach',
-            'tone': 'warning',
-            'href': '',
-        }
-    if 'whatsapp' in lowered_actions:
-        return {
-            'owner_label': 'WhatsApp',
-            'escalation_label': 'Escalonar para reforco de comunicacao',
-            'tone': 'accent',
-            'href': reverse('whatsapp-workspace'),
-        }
-    return {
-        'owner_label': 'Manager/Owner',
-        'escalation_label': 'Escalonar para leitura executiva',
-        'tone': 'info',
-        'href': reverse('workout-approval-board'),
-    }
-
-
-def build_operational_memory_digest(memories):
-    digest = []
-    for memory in memories[:4]:
-        actor_label = ''
-        if memory.created_by is not None:
-            actor_label = memory.created_by.get_full_name() or memory.created_by.username
-        digest.append(
-            {
-                'kind_label': memory.get_kind_display(),
-                'note': memory.note,
-                'created_at_label': timezone.localtime(memory.created_at).strftime('%d/%m %H:%M'),
-                'actor_label': actor_label,
-            }
-        )
-    return digest
-
-
-def build_executive_case_closure(*, runtime_label, alerts, follow_up_actions):
-    has_open_action = False
-    has_monitoring = False
-    has_not_resolved = False
-    for action in follow_up_actions:
-        result = action.get('result')
-        if result is None:
-            has_open_action = True
-            continue
-        if result['monitor_status'] == 'monitoring':
-            has_monitoring = True
-        elif result['monitor_status'] == 'not_resolved':
-            has_not_resolved = True
-
-    if has_not_resolved or (alerts and runtime_label == 'Aula em andamento'):
-        return {
-            'status': 'strong_intervention',
-            'label': 'Intervencao forte',
-            'tone': 'danger',
-            'summary': 'Esse caso ainda pede resposta forte da operacao para nao contaminar a experiencia da aula.',
-        }
-    if has_open_action:
-        return {
-            'status': 'awaiting_action',
-            'label': 'Aguardando acao',
-            'tone': 'warning',
-            'summary': 'A leitura do risco ja existe, mas ainda falta uma resposta registrada para fechar o ciclo.',
-        }
-    if has_monitoring or alerts:
-        return {
-            'status': 'monitoring',
-            'label': 'Acompanhando',
-            'tone': 'accent',
-            'summary': 'Ja houve resposta operacional, mas o caso ainda merece vigia curta antes de ser dado como absorvido.',
-        }
-    return {
-        'status': 'absorbed',
-        'label': 'Absorvido',
-        'tone': 'success',
-        'summary': 'A operacao absorveu o caso e nao ha sinal vivo pedindo nova escalada agora.',
-    }
-
-
-def build_publication_follow_up_actions(*, current_role_slug, approval_category, runtime_label, alerts):
-    actions = []
-    alert_labels = ' '.join(alert['label'] for alert in alerts).lower()
-    if 'nenhuma abertura' in alert_labels or 'poucos alunos abriram' in alert_labels:
-        _push_operational_action(
-            actions,
-            key='whatsapp-reinforce',
-            label='Reforcar chamada no WhatsApp',
-            copy='Acione a trilha de mensagens para lembrar a turma de abrir o WOD antes da aula.',
-            tone='warning',
-            href=reverse('whatsapp-workspace'),
-        )
-    if approval_category == 'operational_urgency' or 'em aula' in alert_labels:
-        _push_operational_action(
-            actions,
-            key='coach-align',
-            label='Avisar coach',
-            copy='Alinhe rapido com o coach para confirmar se o treino precisa de reforco verbal ou ajuste de abordagem.',
-            tone='info',
-        )
-    if 'poucos alunos abriram' in alert_labels or 'em aula' in alert_labels:
-        _push_operational_action(
-            actions,
-            key='desk-follow-up',
-            label='Acompanhar recepcao' if current_role_slug == ROLE_OWNER else 'Acompanhar operacao agora',
-            copy='Monitore chegada, check-in e leitura do treino no chao da operacao antes da aula travar.',
-            tone='accent',
-            href=reverse('reception-workspace') if current_role_slug == ROLE_OWNER else reverse('manager-workspace'),
-        )
-    if runtime_label == 'Aula encerrada' and alerts:
-        _push_operational_action(
-            actions,
-            key='next-cycle-review',
-            label='Revisar no proximo ciclo',
-            copy='Leve esse caso para a revisao do proximo WOD e ajuste a estrategia de publicacao ou reforco.',
-            tone='info',
-            href=reverse('workout-approval-board'),
-        )
-    return actions[:3]
 
 
 def build_published_workout_history(*, limit=12, coach_username='', today_only=False, published_reason='', current_role_slug=''):
@@ -285,10 +62,11 @@ def build_published_workout_history(*, limit=12, coach_username='', today_only=F
             'created_by',
         )
         .prefetch_related(
-            'workout__session__attendances',
+            'workout__session__attendances__student',
             'workout__student_views',
             'workout__follow_up_actions',
             'workout__operational_memories__created_by',
+            'workout__rm_gap_actions__updated_by',
         )
         .filter(event=SessionWorkoutRevisionEvent.PUBLISHED)
     )
@@ -327,6 +105,10 @@ def build_published_workout_history(*, limit=12, coach_username='', today_only=F
     monitoring_case_count = 0
     awaiting_action_case_count = 0
     strong_intervention_case_count = 0
+    rm_ready_total = 0
+    rm_required_total = 0
+    rm_viewer_ready_total = 0
+    rm_viewer_gap_total = 0
     for revision in published_revisions:
         snapshot = revision.snapshot or {}
         approval_category = snapshot.get('approval_reason_category') or 'no_reason'
@@ -361,6 +143,7 @@ def build_published_workout_history(*, limit=12, coach_username='', today_only=F
             runtime_tone = 'success'
 
         metrics = build_publication_runtime_metrics(session=session, workout=revision.workout)
+        rm_readiness = build_publication_rm_readiness(snapshot=snapshot, session=session, workout=revision.workout)
         reserved_count = metrics['reserved_count']
         checked_in_count = metrics['checked_in_count']
         viewer_count = metrics['viewer_count']
@@ -392,6 +175,12 @@ def build_published_workout_history(*, limit=12, coach_username='', today_only=F
 
         if runtime_label == 'Aula encerrada' and reserved_count and viewer_count == 0:
             _push_alert(tone='warning', label='Aula encerrada sem nenhuma abertura registrada do WOD')
+        if rm_readiness['has_percentage_rm'] and reserved_count and rm_readiness['fully_ready_count'] == 0:
+            _push_alert(tone='danger', label='WOD com %RM sem nenhum aluno pronto com RM completo na turma reservada')
+        elif rm_readiness['has_percentage_rm'] and reserved_count and rm_readiness['alert_level'] == 'warning':
+            _push_alert(tone='warning', label='WOD com %RM e cobertura curta de RM na turma reservada')
+        if rm_readiness['viewer_without_full_rm_count']:
+            _push_alert(tone='warning', label='Aluno abriu o WOD, mas parte da turma seguiu sem RM completo para consumir a prescricao')
 
         existing_follow_up_results = {
             result.action_key: result for result in revision.workout.follow_up_actions.all()
@@ -451,6 +240,7 @@ def build_published_workout_history(*, limit=12, coach_username='', today_only=F
 
         operational_memories = list(revision.workout.operational_memories.all())
         operational_memory_kinds = [memory.kind for memory in operational_memories]
+        rm_gap_action_records = list(revision.workout.rm_gap_actions.all())
         history_item = {
             'workout_id': revision.workout_id,
             'session_title': session.title,
@@ -472,6 +262,7 @@ def build_published_workout_history(*, limit=12, coach_username='', today_only=F
             'checked_in_count': checked_in_count,
             'viewer_count': viewer_count,
             'viewer_rate_label': f'{viewer_rate}%' if reserved_count else 'Sem base',
+            'rm_readiness': rm_readiness,
             'alerts': alerts,
             'has_alerts': bool(alerts),
             'alert_tone': highest_alert_tone or '',
@@ -479,7 +270,13 @@ def build_published_workout_history(*, limit=12, coach_username='', today_only=F
             'executive_closure': executive_closure,
             'operational_memories': build_operational_memory_digest(operational_memories),
             'operational_memory_kinds': operational_memory_kinds,
+            'rm_gap_action_records': rm_gap_action_records,
         }
+        if rm_readiness['has_percentage_rm']:
+            rm_ready_total += rm_readiness['fully_ready_count']
+            rm_required_total += reserved_count
+            rm_viewer_ready_total += rm_readiness['viewer_ready_count']
+            rm_viewer_gap_total += rm_readiness['viewer_without_full_rm_count']
         history_items.append(history_item)
         if alerts and len(alert_spotlight) < 4:
             alert_spotlight.append(
@@ -507,10 +304,12 @@ def build_published_workout_history(*, limit=12, coach_username='', today_only=F
     operational_management_alerts = build_operational_management_alerts(
         trend_cards=operational_leverage_trends['cards']
     )
+    operational_management_alerts.extend(build_rm_readiness_management_alerts(history_items=history_items))
     operational_management_priority = build_management_alert_priority(operational_management_alerts)
     operational_management_recommendations = build_management_recommendations(
         operational_management_priority['entries']
     )
+    rm_gap_queue = build_rm_gap_queue(history_items=history_items)
     weekly_executive_summary = build_weekly_executive_summary(
         history_items=history_items,
         management_priority=operational_management_priority,
@@ -564,6 +363,10 @@ def build_published_workout_history(*, limit=12, coach_username='', today_only=F
             'no_reason_count': category_counts.get('no_reason', 0),
             'viewer_total': sum(item['viewer_count'] for item in history_items),
             'reserved_total': sum(item['reserved_count'] for item in history_items),
+            'rm_ready_total': rm_ready_total,
+            'rm_required_total': rm_required_total,
+            'rm_viewer_ready_total': rm_viewer_ready_total,
+            'rm_viewer_gap_total': rm_viewer_gap_total,
             'critical_alert_count': critical_alert_count,
             'warning_alert_count': warning_alert_count,
             'resolved_action_count': resolved_action_count,
@@ -585,6 +388,7 @@ def build_published_workout_history(*, limit=12, coach_username='', today_only=F
             'operational_management_alerts': operational_management_alerts,
             'operational_management_priority': operational_management_priority,
             'operational_management_recommendations': operational_management_recommendations,
+            'rm_gap_queue': rm_gap_queue,
             'weekly_executive_summary': weekly_executive_summary,
         },
     }

@@ -1,8 +1,9 @@
 """
-ARQUIVO: smoke HTTP simples para homologacao e producao.
+ARQUIVO: smoke HTTP base para homologacao e producao.
 
 POR QUE ELE EXISTE:
 - valida se o runtime publicado responde nas rotas basicas e, quando houver credenciais, testa login e rotas autenticadas.
+- nao substitui a regressao explicita dos corredores do onboarding do aluno.
 """
 
 from __future__ import annotations

@@ -3,7 +3,7 @@ ARQUIVO: builders de page payload para workspaces operacionais.
 
 POR QUE ELE EXISTE:
 - unifica o contrato de operations com o mesmo shape usado no restante do front.
-- mantem a view HTTP curta e previsivel mesmo quando a tela ainda consome aliases legados.
+- mantém a view HTTP curta e previsível mesmo quando a tela ainda consome aliases legados.
 """
 
 from django.urls import reverse
@@ -54,16 +54,16 @@ def _build_owner_hero_content(snapshot):
     if primary_key == 'intakes':
         return {
             'title': 'Novas entradas.',
-            'copy': 'Existe demanda esperando resposta agora.' if metrics.get('pending_intakes') else 'A fila de entradas esta limpa hoje.',
+            'copy': 'Existe demanda esperando resposta agora.' if metrics.get('pending_intakes') else 'A fila de entradas está limpa hoje.',
         }
     if primary_key == 'payments':
         return {
             'title': 'Seu caixa.',
-            'copy': 'Ha cobranca atrasada pedindo contato agora.' if metrics.get('overdue_payments') else 'As cobrancas estao sob controle.',
+            'copy': 'Há cobrança atrasada pedindo contato agora.' if metrics.get('overdue_payments') else 'As cobranças estão sob controle.',
         }
     return {
-        'title': 'Operacao ativa.',
-        'copy': 'Confirme a estrutura ou responda novas demandas.',
+        'title': 'Operação ativa.',
+        'copy': 'Confirme a estrutura ou responda a novas demandas.',
     }
 
 
@@ -100,11 +100,11 @@ def _build_operation_workspace_hero(page_key, snapshot):
             aria_label='Comando do dia do owner',
         ),
         'operations-manager': build_page_hero(
-            eyebrow='Gerencia',
-            title='Gerencia ativa.',
-            copy='Veja intake, vinculos e caixa sem perder o ritmo.',
+            eyebrow='Gerência',
+            title='Sua gerência, em foco.',
+            copy='Veja triagem, vínculos e caixa na ordem certa, sem perder o ritmo.',
             actions=_build_hero_actions_from_entry_context(snapshot.get('manager_decision_entry_context')),
-            aria_label='Panorama da gerencia',
+            aria_label='Panorama da gerência',
             classes=['manager-hero'],
             data_panel='manager-hero',
             actions_slot='manager-hero-actions',
@@ -133,18 +133,18 @@ def _build_operation_workspace_hero(page_key, snapshot):
             actions_slot='dev-hero-actions',
         ),
         'operations-reception': build_page_hero(
-            eyebrow='Recepcao',
-            title='Seu balcão.',
-            copy='Veja quem atender primeiro, resolva cobrancas curtas e oriente a proxima aula sem travar o atendimento.',
+            eyebrow='Recepção',
+            title='Seu balcão, em foco.',
+            copy='Veja quem atender primeiro, resolva cobranças curtas e oriente a próxima aula sem travar o atendimento.',
             actions=_build_hero_actions_from_entry_context(
                 snapshot.get('reception_decision_entry_context'),
                 tertiary_action={
-                    'label': 'Ver proximas aulas',
+                    'label': 'Ver próximas aulas',
                     'href': '#reception-class-grid-board',
                     'kind': 'secondary',
                 },
             ),
-            aria_label='Panorama da recepcao',
+            aria_label='Panorama da recepção',
             classes=['reception-hero'],
             data_panel='reception-hero',
             actions_slot='reception-jump-links',
@@ -199,7 +199,7 @@ def _build_operation_workspace_reading_panel(page_key, snapshot):
         'operations-dev': build_page_reading_panel(
             items=snapshot.get('dev_operational_focus'),
             primary_href='#dev-audit-board',
-            pill_label='Leitura tecnica',
+            pill_label='Leitura técnica',
             pill_class='accent',
             class_name='dev-focus-lane',
             panel_id='dev-command-lane',
