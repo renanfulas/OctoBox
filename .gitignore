@@ -128,4 +128,4 @@ debug_*.html
 /.github/agents/UI Payment.agent.md
 
 tmp/
-.omx/tmp/
+.omx/

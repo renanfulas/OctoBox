@@ -1,9 +1,0 @@
-
-
-## WORKING MEMORY
-[2026-04-20T07:45:26.752Z] Deep-interview preflight started for OctoBox structure/market analysis. Read README + authority map + guides + architecture + rollout docs. Key evidence: modular monolith maturity is real; operational rollout/security posture is unusually documented; manage.py check passes; full pytest collection currently fails due mirrored OctoBox tree and root ad-hoc tests. Need clarify primary evaluation lens before deeper scoring.
-
-[2026-04-20T07:53:41.592Z] Deep-interview blocked on Round 2 because node/omx question returned question_runtime_failed: OMX-owned question UI requires tmux in this session. User selected founder/investidor/mercado lens. Current ambiguity approx 23.6%, weakest unresolved dimensions: success criteria and scope.
-[2026-04-20T07:54:50.550Z] User clarified founder-market lens goal: decide if OctoBox is ready to sell/pilot now. Current working answer from repo evidence: yes for assisted pilot / limited design-partner sales, not yet for broad GTM. Need preserve distinction between market potential and go-to-market readiness.
-[2026-04-20T08:20:17.275Z] Deep-interview for darkmode-theme-revamp blocked at round 1 because `omx question` requires tmux for structured question UI in this session. Context snapshot saved at `.omx/context/darkmode-theme-revamp-20260420T081705Z.md`. Relevant docs/files inspected: themeOctoBox.md, design-system-contract.md, theme-implementation-final.md, tokens.css, hero.css, finance/_dark.css.
-[2026-04-20T13:01:13.006Z] User updated dark-mode direction on 2026-04-20: not pure token-only repaint anymore. New desired approach = hybrid repagination: stronger hotspots plus global theme application. Safest architecture per docs: global token recalibration in static/css/design-system/tokens.css + disciplined stronger emphasis in approved shared hosts (hero, actions/CTA, metric cards, topbar) without turning whole product into premium scope everywhere.

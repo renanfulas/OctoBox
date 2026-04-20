@@ -1,6 +1,0 @@
-{
-  "last_turn_at": "2026-04-20T08:40:55.798Z",
-  "last_progress_at": "2026-04-20T08:40:55.798Z",
-  "turn_count": 7,
-  "last_agent_output": "O `RENDER_DEPLOY_HOOK_URL` já estava cadastrado no environment `Production` do GitHub. O problema re"
-}
