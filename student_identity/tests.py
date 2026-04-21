@@ -334,6 +334,41 @@ class StudentIdentityFlowTests(TestCase):
             ).exists()
         )
 
+    @override_settings(
+        STUDENT_GOOGLE_OAUTH_CLIENT_ID='google-client-id',
+        STUDENT_GOOGLE_OAUTH_CLIENT_SECRET='google-client-secret',
+    )
+    @patch('student_identity.views.build_provider')
+    def test_oauth_callback_with_invalid_invite_redirects_to_login_with_clear_message(self, build_provider_mock):
+        provider = Mock()
+        provider.exchange_code.return_value = Mock(
+            provider='google',
+            email='aluno@example.com',
+            provider_subject='google-invalid-invite-subject',
+        )
+        build_provider_mock.return_value = provider
+
+        from student_identity.oauth_state import build_oauth_state
+
+        invalid_token = '33333333-3333-3333-3333-333333333333'
+        response = self.client.get(
+            reverse('student-identity-oauth-callback', kwargs={'provider': 'google'}),
+            {
+                'code': 'oauth-code',
+                'state': build_oauth_state(provider='google', invite_token=invalid_token),
+            },
+            follow=True,
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('student-identity-login')}?invite={invalid_token}",
+        )
+        messages = list(response.context['messages'])
+        self.assertTrue(
+            any('O convite informado nao foi encontrado ou expirou. Tente entrar sem convite.' in str(message) for message in messages)
+        )
+
     def test_transfer_student_moves_box_root_without_creating_second_house(self):
         identity = StudentIdentity.objects.create(
             student=self.student,
@@ -387,16 +422,18 @@ class StudentIdentityFlowTests(TestCase):
             response['Location'],
         )
 
-    def test_login_page_keeps_social_buttons_clickable_without_provider_config(self):
+    @override_settings(
+        STUDENT_GOOGLE_OAUTH_CLIENT_ID='',
+        STUDENT_APPLE_OAUTH_CLIENT_ID='',
+    )
+    def test_login_page_hides_social_buttons_when_provider_is_not_configured(self):
         response = self.client.get(reverse('student-identity-login'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Continuar com Google')
-        self.assertContains(response, 'Continuar com Apple')
+        self.assertNotContains(response, 'Continuar com Google')
+        self.assertNotContains(response, 'Continuar com Apple')
         self.assertContains(response, 'Entrar com usuario')
-        self.assertNotContains(response, 'aria-disabled="true"')
-        self.assertContains(response, reverse('student-identity-oauth-start', kwargs={'provider': 'google'}))
-        self.assertContains(response, reverse('student-identity-oauth-start', kwargs={'provider': 'apple'}))
+        self.assertContains(response, 'Nenhum provedor social esta disponivel agora.')
         self.assertContains(response, reverse('login-staff'))
 
     def test_public_login_hub_preserves_invite_token_in_student_oauth_buttons(self):
@@ -420,7 +457,7 @@ class StudentIdentityFlowTests(TestCase):
         self.assertContains(response, 'Convite reconhecido.')
         self.assertContains(response, reverse('login-staff'))
 
-    def test_invite_landing_points_student_to_public_login_hub_with_invite_token(self):
+    def test_invite_landing_points_student_to_student_login_with_invite_token(self):
         invitation = StudentAppInvitation.objects.create(
             student=self.student,
             invited_email='aluno@example.com',
@@ -430,7 +467,57 @@ class StudentIdentityFlowTests(TestCase):
         response = self.client.get(reverse('student-identity-invite', kwargs={'token': invitation.token}))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, f"{reverse('login')}?invite={invitation.token}")
+        self.assertContains(response, f"{reverse('student-identity-login')}?invite={invitation.token}")
+
+    def test_invite_landing_shows_expired_message(self):
+        invitation = StudentAppInvitation.objects.create(
+            student=self.student,
+            invited_email='aluno@example.com',
+            expires_at=timezone.now() - timedelta(minutes=5),
+        )
+
+        response = self.client.get(reverse('student-identity-invite', kwargs={'token': invitation.token}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Este convite expirou.')
+
+    def test_invite_landing_invalid_token_creates_audit_event(self):
+        token = '22222222-2222-2222-2222-222222222222'
+
+        response = self.client.get(reverse('student-identity-invite', kwargs={'token': token}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                action='student_invite_landing.invalid_token_accessed',
+                target_label=hashlib.sha256(token.encode()).hexdigest()[:16],
+            ).exists()
+        )
+
+    def test_box_invite_landing_shows_unavailable_message_when_paused(self):
+        link = StudentBoxInviteLink.objects.create(
+            box_root_slug=get_box_runtime_slug(),
+            expires_at=timezone.now() + timedelta(days=3),
+            paused_at=timezone.now(),
+        )
+
+        response = self.client.get(reverse('student-identity-box-invite', kwargs={'token': link.token}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Este link nao esta mais disponivel.')
+
+    def test_student_login_shows_invite_context_label(self):
+        invitation = StudentAppInvitation.objects.create(
+            student=self.student,
+            invited_email='aluno@example.com',
+            expires_at=timezone.now() + timedelta(days=3),
+        )
+
+        response = self.client.get(reverse('student-identity-login'), {'invite': str(invitation.token)})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Voce esta entrando por convite do box')
+        self.assertContains(response, get_box_runtime_slug().replace('-', ' ').title())
 
     @override_settings(
         STUDENT_GOOGLE_OAUTH_CLIENT_ID='google-client-id',
@@ -467,7 +554,7 @@ class StudentIdentityFlowTests(TestCase):
 
         landing_response = student_client.get(reverse('student-identity-invite', kwargs={'token': invitation.token}))
         self.assertEqual(landing_response.status_code, 200)
-        self.assertContains(landing_response, f"{reverse('login')}?invite={invitation.token}")
+        self.assertContains(landing_response, f"{reverse('student-identity-login')}?invite={invitation.token}")
 
         from student_identity.oauth_state import build_oauth_state
 
@@ -729,7 +816,42 @@ class StudentIdentityFlowTests(TestCase):
         self.assertTrue(
             AuditEvent.objects.filter(
                 action='student_invite_landing.rate_limited',
-                target_label=str(invitation.token),
+                target_label=hashlib.sha256(str(invitation.token).encode()).hexdigest()[:16],
+            ).exists()
+        )
+
+    @override_settings(
+        STUDENT_INVITE_LANDING_RATE_LIMIT_MAX_REQUESTS=1,
+        STUDENT_INVITE_LANDING_RATE_LIMIT_WINDOW_SECONDS=300,
+    )
+    def test_box_invite_landing_rate_limit_blocks_second_open_in_window(self):
+        link = StudentBoxInviteLink.objects.create(
+            box_root_slug=get_box_runtime_slug(),
+            expires_at=timezone.now() + timedelta(days=3),
+        )
+
+        first_response = self.client.get(reverse('student-identity-box-invite', kwargs={'token': link.token}))
+        second_response = self.client.get(reverse('student-identity-box-invite', kwargs={'token': link.token}))
+
+        self.assertEqual(first_response.status_code, 200)
+        self.assertEqual(second_response.status_code, 429)
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                action='student_box_invite_landing.rate_limited',
+                target_label=hashlib.sha256(str(link.token).encode()).hexdigest()[:16],
+            ).exists()
+        )
+
+    def test_box_invite_landing_invalid_token_creates_audit_event(self):
+        token = '11111111-1111-1111-1111-111111111111'
+
+        response = self.client.get(reverse('student-identity-box-invite', kwargs={'token': token}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                action='student_box_invite_landing.invalid_token_accessed',
+                target_label=hashlib.sha256(token.encode()).hexdigest()[:16],
             ).exists()
         )
 
