@@ -34,9 +34,10 @@ class StudentInvitationInviteActionsMixin:
         if not form.is_valid():
             return self.render_to_response(self.get_context_data(form=form))
 
+        student = form.cleaned_data['student']
         command = CreateStudentInvitationCommand(
-            student_id=form.cleaned_data['student'].id,
-            invited_email=form.cleaned_data['invited_email'],
+            student_id=student.id,
+            invited_email='',
             box_root_slug=get_box_runtime_slug(),
             invite_type=form.cleaned_data['invite_type'],
             onboarding_journey=form.cleaned_data['onboarding_journey'],
@@ -92,10 +93,10 @@ class StudentInvitationInviteActionsMixin:
                 actor_role=self._get_actor_role_slug(request),
                 action='student_invitation.rate_limit_blocked',
                 target_model='student_identity.StudentAppInvitation',
-                target_label=form.cleaned_data['student'].full_name,
+                target_label=student.full_name,
                 description='Tentativa bloqueada por rate limit de invite aberto do box.',
                 metadata={
-                    'student_id': form.cleaned_data['student'].id,
+                    'student_id': student.id,
                     'box_root_slug': get_box_runtime_slug(),
                     'invite_type': form.cleaned_data['invite_type'],
                 },

@@ -47,7 +47,7 @@ def log_audit_event(*, actor=None, action, target=None, description='', metadata
     target_model = ''
     target_id = ''
     target_label = ''
-    if target is not None:
+    if target is not None and hasattr(target, '_meta'):
         target_model = target._meta.model_name
         target_id = str(target.pk)
         target_label = str(target)

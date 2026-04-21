@@ -35,6 +35,10 @@ POR QUE ELE EXISTE:
     z-index: 80;
 }
 
+.student-quick-panel[hidden] {
+    display: none !important;
+}
+
 .student-quick-panel.is-open {
     transform: translateX(0);
     opacity: 1;

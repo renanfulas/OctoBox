@@ -327,6 +327,49 @@ ARQUIVO: superfície operacional do coach.
     background: color-mix(in srgb, var(--theme-surface-panel) 78%, white 22%);
 }
 
+.coach-wod-filter-form {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: end;
+}
+
+.coach-wod-filter-form > label {
+    grid-column: span 3;
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+.coach-wod-filter-form > label:nth-of-type(3),
+.coach-wod-filter-form > label:nth-of-type(4),
+.coach-wod-filter-form > label:nth-of-type(5) {
+    grid-column: span 2;
+}
+
+.coach-wod-filter-toggle {
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-panel) 68%, white 32%);
+}
+
+.coach-wod-filter-actions {
+    grid-column: span 12;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-start;
+}
+
+.coach-wod-filter-actions .button {
+    min-height: 40px;
+}
+
 .coach-wod-queue-summary-card,
 .coach-wod-decision-strip {
     padding: 14px 16px;
@@ -416,6 +459,32 @@ ARQUIVO: superfície operacional do coach.
     background: color-mix(in srgb, var(--theme-surface-panel) 78%, white 22%);
     display: grid;
     gap: 8px;
+}
+
+.coach-wod-publication-action-card strong,
+.coach-wod-publication-alert-card strong,
+.coach-wod-queue-summary-card h2 {
+    color: var(--theme-text-primary);
+}
+
+.coach-wod-publication-action-card p,
+.coach-wod-publication-alert-card p,
+.coach-wod-queue-summary-card p,
+.coach-wod-detail-card p,
+.coach-wod-filter-form span,
+.coach-wod-filter-form label {
+    color: var(--theme-text-secondary);
+}
+
+.coach-wod-follow-up-form {
+    display: grid;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.coach-wod-follow-up-form > label {
+    display: grid;
+    gap: 6px;
 }
 
 .coach-wod-publication-action-card strong,
@@ -1202,12 +1271,60 @@ body[data-theme="dark"] .coach-wod-publication-action-inline.tone-info {
     border-color: color-mix(in srgb, var(--info) 36%, rgba(92, 146, 214, 0.16) 64%);
 }
 
+body[data-theme="dark"] .coach-wod-filter-bar,
+body[data-theme="dark"] .coach-wod-queue-summary-card,
+body[data-theme="dark"] .coach-wod-publication-alert-card,
+body[data-theme="dark"] .coach-wod-publication-action-card,
+body[data-theme="dark"] .coach-wod-publication-action-inline,
+body[data-theme="dark"] .coach-wod-detail-card,
+body[data-theme="dark"] .coach-wod-decision-strip {
+    border-color: rgba(92, 146, 214, 0.18);
+    background:
+        radial-gradient(circle at top right, rgba(92, 146, 214, 0.09), transparent 32%),
+        linear-gradient(145deg, rgba(8, 15, 29, 0.98), rgba(6, 12, 24, 0.98) 58%, rgba(4, 10, 20, 0.96));
+}
+
+body[data-theme="dark"] .coach-wod-filter-form > label span,
+body[data-theme="dark"] .coach-wod-follow-up-form > label span,
+body[data-theme="dark"] .coach-wod-publication-alert-card p,
+body[data-theme="dark"] .coach-wod-publication-action-card p,
+body[data-theme="dark"] .coach-wod-detail-card p,
+body[data-theme="dark"] .coach-wod-queue-summary-card p {
+    color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .coach-wod-filter-form select,
+body[data-theme="dark"] .coach-wod-follow-up-form select,
+body[data-theme="dark"] .coach-wod-follow-up-form input {
+    color: var(--theme-text-primary);
+    background: rgba(8, 16, 30, 0.9);
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+body[data-theme="dark"] .coach-wod-filter-toggle {
+    border-color: rgba(148, 163, 184, 0.18);
+    background: rgba(8, 16, 30, 0.72);
+}
+
+body[data-theme="dark"] .coach-wod-filter-actions .button.secondary,
+body[data-theme="dark"] .coach-wod-filter-actions .button.tertiary {
+    border-color: rgba(148, 163, 184, 0.18);
+    background: rgba(8, 16, 30, 0.86);
+    color: var(--theme-text-primary);
+}
+
 body[data-theme="dark"] .coach-wod-publication-result.tone-success {
     border-color: color-mix(in srgb, var(--success) 36%, rgba(92, 146, 214, 0.16) 64%);
 }
 
 body[data-theme="dark"] .coach-wod-publication-result.tone-warning {
     border-color: color-mix(in srgb, var(--warning) 36%, rgba(92, 146, 214, 0.16) 64%);
+}
+
+body[data-theme="dark"] .coach-wod-follow-up-form .button.secondary {
+    background: linear-gradient(180deg, rgba(14, 24, 42, 0.98), rgba(10, 18, 34, 0.98));
+    color: var(--theme-text-primary);
+    border-color: rgba(92, 146, 214, 0.18);
 }
 
 body[data-theme="dark"] .coach-wod-publication-result .pill.danger,

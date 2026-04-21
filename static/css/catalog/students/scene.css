@@ -141,16 +141,6 @@ POR QUE ELE EXISTE:
     transform: translateY(-1px);
 }
 
-.student-scene .student-kpi-card.is-selected-tab::before {
-    content: "";
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 4px;
-    border-radius: 18px 0 0 18px;
-    background: linear-gradient(180deg, currentColor, color-mix(in srgb, currentColor 48%, white 52%));
-    opacity: 0.92;
-}
-
 .student-scene .student-kpi-card-body {
     min-height: 100%;
     display: grid;
@@ -261,7 +251,8 @@ body[data-theme="dark"] .student-scene .student-kpi-card.is-selected-tab {
     border-color: color-mix(in srgb, currentColor 36%, var(--theme-border-soft) 64%);
     box-shadow:
         0 22px 40px rgba(0, 0, 0, 0.26),
-        0 0 0 1px color-mix(in srgb, currentColor 16%, transparent),
+        0 0 0 2px color-mix(in srgb, currentColor 18%, transparent),
+        0 0 26px color-mix(in srgb, currentColor 18%, transparent),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 

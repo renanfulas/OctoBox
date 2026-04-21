@@ -520,6 +520,37 @@ body[data-theme="dark"] .metric-card .card-signal.is-info {
         background var(--transition-base);
 }
 
+.metric-card.kpi-family-card::before {
+    content: none !important;
+    background: none !important;
+    opacity: 0 !important;
+}
+
+@keyframes octobox-kpi-select-glow {
+    0% {
+        box-shadow:
+            0 0 0 0 color-mix(in srgb, currentColor 0%, transparent),
+            inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    }
+
+    55% {
+        box-shadow:
+            0 0 0 4px color-mix(in srgb, currentColor 18%, transparent),
+            0 18px 34px rgba(15, 23, 42, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    100% {
+        box-shadow:
+            0 0 0 1px color-mix(in srgb, currentColor 10%, transparent),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+}
+
+.metric-card.kpi-family-card.is-selected-tab {
+    animation: octobox-kpi-select-glow 220ms ease-out;
+}
+
 .metric-card.kpi-family-card .kpi-card-icon-box {
     transition:
         transform var(--transition-base),

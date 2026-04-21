@@ -18,6 +18,8 @@ from copy import deepcopy
 from datetime import datetime
 from typing import Any
 
+from onboarding.model_definitions import IntakeSource
+
 LEGACY_SOURCE_TO_ACQUISITION_CHANNEL = {
     'csv': 'referral',
     'whatsapp': 'whatsapp',
@@ -154,11 +156,29 @@ def summarize_acquisition_channels(rows: list[tuple[str, dict[str, Any] | None]]
     return counts
 
 
+def derive_operational_source(*, acquisition_channel: str = '', entry_kind: str = '') -> str:
+    normalized_channel = normalize_acquisition_channel(acquisition_channel)
+    normalized_kind = str(entry_kind or '').strip().lower()
+
+    if normalized_channel == 'whatsapp':
+        return IntakeSource.WHATSAPP
+    if normalized_channel == 'referral':
+        return IntakeSource.CSV
+    if normalized_channel in {'instagram', 'website', 'google', 'meta_ads', 'other'}:
+        return IntakeSource.IMPORT
+    if normalized_channel == 'walk_in':
+        return IntakeSource.MANUAL
+    if normalized_kind == 'intake':
+        return IntakeSource.WHATSAPP
+    return IntakeSource.MANUAL
+
+
 __all__ = [
     'ACQUISITION_CHANNEL_CHOICES',
     'ACQUISITION_CHANNEL_LABELS',
     'ATTRIBUTION_SCHEMA_VERSION',
     'build_intake_attribution_payload',
+    'derive_operational_source',
     'extract_acquisition_channel',
     'get_acquisition_channel_label',
     'merge_qualification_response',

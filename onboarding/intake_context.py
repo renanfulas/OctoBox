@@ -64,6 +64,7 @@ def serialize_intake_search_entry(*, item, request):
         'id': intake.id,
         'full_name': intake.full_name,
         'channel_label': intake.email or intake.phone or '',
+        'source_key': intake.source,
         'source_label': intake.get_source_display(),
         'registration_age_days': item['registration_age_days'],
         'registration_age_label': item['registration_age_label'],
@@ -89,6 +90,7 @@ def serialize_intake_search_entry(*, item, request):
         },
         'permissions': {
             'can_reject': bool(can_work_queue and permissions.get('can_reject')),
+            'can_send_whatsapp_invite': bool(can_manage_students and item.get('can_send_whatsapp_invite')),
         },
     }
 

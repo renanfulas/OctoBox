@@ -56,6 +56,7 @@ _SIDEBAR_ICON_PATHS = {
     'FI': '<path d="M12 3.5v17m4-13.5h-6.2a2.8 2.8 0 1 0 0 5.6h4.4a2.8 2.8 0 1 1 0 5.6H7.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"/>',
     'EN': '<path d="M4.5 12h8m0 0-3-3m3 3-3 3m4.5-8.5h4a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"/>',
     'AU': '<rect x="4" y="5" width="16" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="1.75"/><path d="M8 3.75v3.5M16 3.75v3.5M4 9h16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"/>',
+    'WO': '<path d="M3.5 11h2v2h2.5V9.5H16V13h2.5v-2h2V13h-2v2h-2.5v-3.5H8V15H5.5v-2h-2z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"/>',
     'WA': '<path d="M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.75 20.5l4.5-.8A8.5 8.5 0 1 0 12 3.5Zm4.05 11.05c-.18.5-1.05.95-1.46 1.01-.38.06-.86.09-1.39-.08-.32-.1-.73-.23-1.26-.46-2.2-.95-3.64-3.17-3.75-3.32-.11-.15-.9-1.2-.9-2.3s.58-1.64.79-1.86c.2-.22.44-.27.59-.27h.43c.14 0 .33-.05.52.4.19.46.64 1.57.7 1.68.06.11.1.25.02.4-.08.15-.12.25-.24.38-.12.14-.25.31-.36.42-.12.12-.24.24-.1.47.13.23.61 1 1.32 1.63.91.81 1.67 1.06 1.9 1.18.23.11.36.09.49-.06.14-.15.58-.68.73-.92.15-.24.31-.2.52-.12.22.08 1.37.65 1.61.76.24.12.4.18.46.28.06.1.06.59-.12 1.1Z" fill="currentColor"/>',
     'OC': '<path d="M12 4.5 20 18H4l8-13.5Zm0 4.5v4m0 3.2h.01" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"/>',
 }
@@ -197,6 +198,13 @@ def _build_navigation(role_slug, current_view_name):
             'icon': 'EN',
         },
         {'nav_key': 'grade-aulas', 'label': 'Grade de aulas', 'href': reverse('class-grid'), 'icon': 'AU'},
+        {
+            'nav_key': 'wod',
+            'label': 'WOD',
+            'href': reverse('workout-approval-board'),
+            'roles': (ROLE_OWNER, ROLE_MANAGER),
+            'icon': 'WO',
+        },
     ]
 
     role_links = {

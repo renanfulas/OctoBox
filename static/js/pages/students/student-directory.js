@@ -107,6 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
         currentProfileVersion: '',
         processedEventIds: [],
     };
+    var quickPanelCloseTimerId = null;
     var realtimeTelemetry = {
         duplicateEventsIgnored: 0,
         staleEventsIgnored: 0,
@@ -1473,6 +1474,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        if (quickPanelCloseTimerId) {
+            window.clearTimeout(quickPanelCloseTimerId);
+            quickPanelCloseTimerId = null;
+        }
+
         quickPanelState.studentId = Number(row.getAttribute('data-student-id') || '0');
         quickPanelState.activeHref = row.getAttribute('data-href') || '';
         quickPanelState.activeRow = row;
@@ -1502,6 +1508,7 @@ document.addEventListener('DOMContentLoaded', function() {
         populateQuickPanel(initialSnapshot);
         activateQuickPanelTab('');
         quickOverlay.hidden = false;
+        quickPanel.hidden = false;
         quickPanel.classList.add('is-open');
         quickPanel.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
@@ -1554,6 +1561,13 @@ document.addEventListener('DOMContentLoaded', function() {
         quickPanel.classList.remove('is-open');
         quickPanel.setAttribute('aria-hidden', 'true');
         quickOverlay.hidden = true;
+        if (quickPanelCloseTimerId) {
+            window.clearTimeout(quickPanelCloseTimerId);
+        }
+        quickPanelCloseTimerId = window.setTimeout(function() {
+            quickPanel.hidden = true;
+            quickPanelCloseTimerId = null;
+        }, 240);
         document.body.style.overflow = '';
         clearQuickLiveState();
         resetQuickPanelFragmentSlots();

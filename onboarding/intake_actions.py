@@ -18,7 +18,11 @@ PONTOS CRITICOS:
 from django.db import transaction
 
 from monitoring.lead_attribution_metrics import record_lead_attribution_capture
-from onboarding.attribution import build_intake_attribution_payload, normalize_acquisition_channel
+from onboarding.attribution import (
+    build_intake_attribution_payload,
+    derive_operational_source,
+    normalize_acquisition_channel,
+)
 from onboarding.models import IntakeStatus
 from shared_support.manager_event_stream import publish_manager_stream_event
 
@@ -28,7 +32,11 @@ from .facade import run_intake_queue_action
 def create_intake_quick_entry(*, actor, form, entry_kind: str):
     with transaction.atomic():
         created_entry = form.save(commit=False)
-        created_entry.status = IntakeStatus.NEW
+        created_entry.status = IntakeStatus.REVIEWING if entry_kind == 'intake' else IntakeStatus.NEW
+        created_entry.source = derive_operational_source(
+            acquisition_channel=form.cleaned_data.get('acquisition_channel', ''),
+            entry_kind=entry_kind,
+        )
         created_entry.raw_payload = {
             **(created_entry.raw_payload or {}),
             **build_intake_attribution_payload(

@@ -21,7 +21,7 @@ from django.utils import timezone
 
 from django.contrib import messages
 
-from onboarding.models import IntakeStatus, StudentIntake
+from onboarding.models import IntakeSource, IntakeStatus, StudentIntake
 from shared_support.box_runtime import get_box_runtime_slug
 from shared_support.crypto_fields import generate_blind_index
 from student_identity.application.commands import CreateStudentInvitationCommand
@@ -51,6 +51,9 @@ def send_intake_whatsapp_invite(*, request, role_slug: str, get_success_url):
     ).first()
     if intake is None:
         messages.error(request, 'Nao encontrei esse lead para disparar o convite por WhatsApp.')
+        return redirect(get_success_url(return_query))
+    if intake.source != IntakeSource.IMPORT:
+        messages.error(request, 'O convite 1 clique por WhatsApp fica restrito a leads de Importacao externa.')
         return redirect(get_success_url(return_query))
     if not intake.phone:
         messages.error(request, 'Esse lead nao tem WhatsApp utilizavel para convite.')

@@ -1,5 +1,32 @@
 .student-invite-operations {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(340px, 1.08fr);
+    gap: clamp(16px, 2vw, 24px);
     align-items: start;
+}
+
+.student-invite-card {
+    min-width: 0;
+}
+
+.student-invite-card--mass-link {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.student-invite-card--individual {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    min-height: 100%;
+}
+
+.student-invite-card--guardrails,
+.student-invite-card--observer {
+    grid-column: 1;
+}
+
+.student-invite-card--guardrails {
+    grid-row: 2;
 }
 
 .field-help {
@@ -256,6 +283,16 @@
     font-size: 0.92rem;
 }
 
+.student-invite-system-note {
+    margin: 0;
+    padding: 0.75rem 0.9rem;
+    border-radius: 14px;
+    border: 1px solid rgba(59, 130, 246, 0.16);
+    background: rgba(59, 130, 246, 0.08);
+    color: var(--text-muted, #475569);
+    font-size: 0.92rem;
+}
+
 .student-invite-actions {
     margin-top: 0.85rem;
 }
@@ -317,6 +354,18 @@
 }
 
 @media (max-width: 720px) {
+    .student-invite-operations {
+        grid-template-columns: 1fr;
+    }
+
+    .student-invite-card--mass-link,
+    .student-invite-card--individual,
+    .student-invite-card--guardrails,
+    .student-invite-card--observer {
+        grid-column: auto;
+        grid-row: auto;
+    }
+
     .student-action-hub {
         grid-template-columns: 1fr;
     }
@@ -333,4 +382,75 @@
     .student-revoke-form {
         grid-template-columns: 1fr;
     }
+}
+
+body[data-theme="dark"] .student-invite-card,
+body[data-theme="dark"] .student-action-primary,
+body[data-theme="dark"] .student-action-secondary,
+body[data-theme="dark"] .student-action-queue,
+body[data-theme="dark"] .student-observability-card,
+body[data-theme="dark"] .student-stalled-item,
+body[data-theme="dark"] .student-invite-item,
+body[data-theme="dark"] .student-funnel-card,
+body[data-theme="dark"] .student-invite-guidance,
+body[data-theme="dark"] .student-invite-system-note {
+    border-color: rgba(92, 146, 214, 0.18);
+    background:
+        radial-gradient(circle at top right, rgba(92, 146, 214, 0.08), transparent 32%),
+        linear-gradient(145deg, rgba(8, 15, 29, 0.98), rgba(6, 12, 24, 0.98) 58%, rgba(4, 10, 20, 0.96));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 18px 30px rgba(0, 0, 0, 0.18);
+}
+
+body[data-theme="dark"] .student-action-primary strong,
+body[data-theme="dark"] .student-action-secondary strong,
+body[data-theme="dark"] .student-action-queue strong,
+body[data-theme="dark"] .student-observability-card strong,
+body[data-theme="dark"] .student-stalled-item strong,
+body[data-theme="dark"] .student-invite-item strong,
+body[data-theme="dark"] .student-funnel-card strong,
+body[data-theme="dark"] .student-invite-card h3,
+body[data-theme="dark"] .student-invite-list-header h3 {
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .student-action-primary-copy,
+body[data-theme="dark"] .student-invite-detail,
+body[data-theme="dark"] .student-invite-system-note,
+body[data-theme="dark"] .student-action-queue p,
+body[data-theme="dark"] .student-observability-card p,
+body[data-theme="dark"] .student-stalled-item p,
+body[data-theme="dark"] .student-invite-item p,
+body[data-theme="dark"] .student-funnel-card p,
+body[data-theme="dark"] .student-invite-card .system-map-copy,
+body[data-theme="dark"] .student-invite-card .capability-list,
+body[data-theme="dark"] .student-invite-card .capability-list li,
+body[data-theme="dark"] .student-invite-list-header .system-map-copy,
+body[data-theme="dark"] .student-invite-operations .field-label,
+body[data-theme="dark"] .student-invite-operations .field-help {
+    color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .student-invite-card .eyebrow,
+body[data-theme="dark"] .student-invite-list-header .eyebrow,
+body[data-theme="dark"] .student-invite-operations .field-label {
+    color: color-mix(in srgb, var(--theme-text-muted) 86%, white 14%);
+}
+
+body[data-theme="dark"] .student-invite-card .capability-list li::marker {
+    color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .student-invite-operations input,
+body[data-theme="dark"] .student-invite-operations select,
+body[data-theme="dark"] .student-invite-operations textarea {
+    color: var(--theme-text-primary);
+    background: rgba(8, 16, 30, 0.9);
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+body[data-theme="dark"] .student-invite-operations input::placeholder,
+body[data-theme="dark"] .student-invite-operations textarea::placeholder {
+    color: var(--theme-text-muted);
 }
