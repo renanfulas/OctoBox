@@ -89,11 +89,14 @@ def finalize_student_oauth_callback(
 
     if not authentication_result.success or authentication_result.identity is None:
         messages.error(request, map_failure_reason(authentication_result.failure_reason))
-        redirect_url = 'student-identity-login'
+        response = redirect('student-identity-login')
         invite_token = (state_payload.get('invite_token') or '').strip()
         if invite_token:
-            return redirect(f"/aluno/auth/login/?invite={invite_token}")
-        return redirect(redirect_url)
+            response.set_cookie(
+                'student_invite_pending', invite_token,
+                max_age=900, httponly=True, secure=not settings.DEBUG, samesite='Lax',
+            )
+        return response
 
     active_membership = StudentBoxMembership.objects.filter(
         identity_id=authentication_result.identity.id,

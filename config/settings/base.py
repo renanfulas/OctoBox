@@ -286,7 +286,12 @@ MIDDLEWARE = [
     'shared_support.security.RequestSecurityMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'student_app.middleware.student_auth.StudentAuthMiddleware',
 ]
+
+STUDENT_LOGIN_URL = '/aluno/auth/login/'
+STUDENT_APP_URL_PREFIX = '/aluno/'
+STUDENT_AUDIT_ASYNC = False
 
 ROOT_URLCONF = 'config.urls'
 

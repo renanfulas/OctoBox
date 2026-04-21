@@ -60,18 +60,18 @@ def handle_student_special_oauth_journey(
         if not box_invite_link.can_accept:
             return _redirect_with_message(request, 'error', 'Este link em massa nao esta mais disponivel para novos cadastros.')
         repository.record_box_invite_acceptance(box_invite_link)
-        store_pending_student_onboarding(
-            request,
-            payload={
-                'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
-                'box_root_slug': box_invite_link.box_root_slug,
-                'provider': identity_payload.provider,
-                'provider_subject': identity_payload.provider_subject,
-                'email': identity_payload.email,
-                'box_invite_link_id': box_invite_link.id,
-                'box_invite_link_token': str(box_invite_link.token),
-            },
-        )
+        payload = {
+            'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
+            'box_root_slug': box_invite_link.box_root_slug,
+            'provider': identity_payload.provider,
+            'provider_subject': identity_payload.provider_subject,
+            'email': identity_payload.email,
+            'box_invite_link_id': box_invite_link.id,
+            'box_invite_link_token': str(box_invite_link.token),
+        }
+        if not payload['box_root_slug'] or not payload['provider'] or not payload['provider_subject']:
+            return _redirect_with_message(request, 'warning', 'Sua sessao de cadastro nao ficou completa. Tente entrar novamente.')
+        store_pending_student_onboarding(request, payload=payload)
         record_student_onboarding_event(
             actor=None,
             actor_role='',
@@ -102,18 +102,19 @@ def handle_student_special_oauth_journey(
         box_root_slug=result.identity.box_root_slug,
         device_fingerprint=build_student_device_fingerprint(request),
     )
-    store_pending_student_onboarding(
-        request,
-        payload={
-            'journey': invitation.onboarding_journey,
-            'identity_id': result.identity.id,
-            'student_id': result.identity.student_id,
-            'invitation_id': invitation.id,
-            'provider': identity_payload.provider,
-            'provider_subject': identity_payload.provider_subject,
-            'email': identity_payload.email,
-        },
-    )
+    payload = {
+        'journey': invitation.onboarding_journey,
+        'box_root_slug': invitation.box_root_slug,
+        'identity_id': result.identity.id,
+        'student_id': result.identity.student_id,
+        'invitation_id': invitation.id,
+        'provider': identity_payload.provider,
+        'provider_subject': identity_payload.provider_subject,
+        'email': identity_payload.email,
+    }
+    if not payload['box_root_slug'] or not payload['identity_id'] or not payload['student_id']:
+        return _redirect_with_message(request, 'warning', 'Sua sessao de cadastro nao ficou completa. Tente entrar novamente.')
+    store_pending_student_onboarding(request, payload=payload)
     record_student_onboarding_event(
         actor=None,
         actor_role='',

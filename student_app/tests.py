@@ -22,6 +22,8 @@ from student_app.models import (
 )
 from student_identity.infrastructure.session import build_student_session_value, read_student_session_value
 from student_identity.models import (
+    StudentAppInvitation,
+    StudentBoxInviteLink,
     StudentBoxMembership,
     StudentBoxMembershipStatus,
     StudentIdentity,
@@ -66,12 +68,20 @@ class StudentAppExperienceTests(TestCase):
         self.assertRedirects(response, reverse('student-identity-login'))
 
     def test_student_routes_redirect_to_onboarding_when_pending_onboarding_exists(self):
+        invitation = StudentAppInvitation.objects.create(
+            student=self.student,
+            box_root_slug='control',
+            invited_email=self.identity.email,
+            onboarding_journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            expires_at=timezone.now() + timedelta(days=3),
+        )
         session = self.client.session
         session['student_pending_onboarding'] = {
             'journey': StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            'box_root_slug': 'control',
             'identity_id': self.identity.id,
             'student_id': self.student.id,
-            'invitation_id': 321,
+            'invitation_id': invitation.id,
             'email': self.identity.email,
         }
         session.save()
@@ -102,6 +112,11 @@ class StudentAppExperienceTests(TestCase):
 
     def test_mass_onboarding_creates_student_and_identity(self):
         client = Client()
+        link = StudentBoxInviteLink.objects.create(
+            box_root_slug='control',
+            expires_at=timezone.now() + timedelta(days=3),
+            max_uses=200,
+        )
         session = client.session
         session['student_pending_onboarding'] = {
             'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
@@ -109,7 +124,7 @@ class StudentAppExperienceTests(TestCase):
             'provider': StudentIdentityProvider.GOOGLE,
             'provider_subject': 'provider-subject-new-mass',
             'email': 'novo@app.com',
-            'box_invite_link_id': 123,
+            'box_invite_link_id': link.id,
         }
         session.save()
 
@@ -135,7 +150,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertTrue(
             AuditEvent.objects.filter(
                 action='student_onboarding.mass_box_invite.wizard_started',
-                metadata__box_invite_link_id=123,
+                metadata__box_invite_link_id=link.id,
             ).exists()
         )
         self.assertTrue(
@@ -178,13 +193,20 @@ class StudentAppExperienceTests(TestCase):
             identity_id=identity.id,
             box_root_slug='control',
         )
+        invitation = StudentAppInvitation.objects.create(
+            student=student,
+            box_root_slug='control',
+            invited_email='lead@app.com',
+            onboarding_journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            expires_at=timezone.now() + timedelta(days=3),
+        )
         session = client.session
         session['student_pending_onboarding'] = {
             'journey': StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
             'box_root_slug': 'control',
             'student_id': student.id,
             'identity_id': identity.id,
-            'invitation_id': 456,
+            'invitation_id': invitation.id,
             'email': 'lead@app.com',
         }
         session.save()
@@ -210,7 +232,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertTrue(
             AuditEvent.objects.filter(
                 action='student_onboarding.imported_lead_invite.wizard_started',
-                metadata__invitation_id=456,
+                metadata__invitation_id=invitation.id,
             ).exists()
         )
         self.assertTrue(
@@ -225,6 +247,65 @@ class StudentAppExperienceTests(TestCase):
                 metadata__identity_id=identity.id,
             ).exists()
         )
+
+    def test_onboarding_redirects_to_login_when_session_is_missing(self):
+        client = Client()
+
+        response = client.get(reverse('student-app-onboarding'), follow=False)
+
+        self.assertRedirects(response, reverse('student-identity-login'), fetch_redirect_response=False)
+
+    def test_onboarding_redirects_to_login_when_pending_payload_is_incomplete(self):
+        client = Client()
+        session = client.session
+        session['student_pending_onboarding'] = {
+            'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
+            'provider': StudentIdentityProvider.GOOGLE,
+        }
+        session.save()
+
+        response = client.get(reverse('student-app-onboarding'), follow=False)
+
+        self.assertRedirects(response, reverse('student-identity-login'), fetch_redirect_response=False)
+
+    def test_onboarding_redirects_to_login_when_imported_lead_payload_is_semantically_inconsistent(self):
+        client = Client()
+        another_student = Student.objects.create(
+            full_name='Outro Aluno',
+            phone='5511666661234',
+            email='outro@app.com',
+        )
+        session = client.session
+        session['student_pending_onboarding'] = {
+            'journey': StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            'box_root_slug': 'control',
+            'identity_id': self.identity.id,
+            'student_id': another_student.id,
+            'invitation_id': 999,
+            'email': self.identity.email,
+        }
+        session.save()
+
+        response = client.get(reverse('student-app-onboarding'), follow=False)
+
+        self.assertRedirects(response, reverse('student-identity-login'), fetch_redirect_response=False)
+
+    def test_onboarding_redirects_to_login_when_mass_invite_payload_points_to_wrong_box_link(self):
+        client = Client()
+        session = client.session
+        session['student_pending_onboarding'] = {
+            'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
+            'box_root_slug': 'control',
+            'provider': StudentIdentityProvider.GOOGLE,
+            'provider_subject': 'provider-subject-mass-mismatch',
+            'email': 'novo@app.com',
+            'box_invite_link_id': 123456,
+        }
+        session.save()
+
+        response = client.get(reverse('student-app-onboarding'), follow=False)
+
+        self.assertRedirects(response, reverse('student-identity-login'), fetch_redirect_response=False)
 
     def test_student_home_renders_without_staff_shell(self):
         ClassSession.objects.create(
@@ -675,3 +756,28 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(response, '<div class="dn">Sex</div><div class="dt">Rest</div>', html=True)
         self.assertContains(response, 'Quarta · ~55 min · Peito, Costas, Ombros, Bíceps, Tríceps')
         self.assertContains(response, 'Quinta · ~60 min · Quad, Posterior, Glúteo, Panturrilha, Core')
+
+
+class StudentAuthMiddlewareTests(TestCase):
+    def setUp(self):
+        self.anonymous_client = Client()
+
+    def test_anonymous_access_to_student_app_root_redirects_to_student_login(self):
+        response = self.anonymous_client.get(reverse('student-app-home'))
+        self.assertRedirects(response, reverse('student-identity-login'))
+        self.assertTrue(
+            AuditEvent.objects.filter(action='student_app.anonymous_access_redirected').exists()
+        )
+
+    def test_anonymous_access_to_student_onboarding_redirects_with_message(self):
+        response = self.anonymous_client.get(reverse('student-app-onboarding'), follow=True)
+        self.assertRedirects(response, reverse('student-identity-login'))
+        page_messages = [str(m) for m in response.context['messages']]
+        self.assertTrue(any('login' in m.lower() for m in page_messages))
+
+    def test_student_login_url_distinct_from_staff_login_url(self):
+        from django.conf import settings
+        student_login = getattr(settings, 'STUDENT_LOGIN_URL', None)
+        staff_login = getattr(settings, 'LOGIN_URL', '/login/')
+        self.assertIsNotNone(student_login)
+        self.assertNotEqual(student_login, staff_login)

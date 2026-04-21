@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+import hashlib
+
 from django.conf import settings
+
+_INVITE_COOKIE = 'student_invite_pending'
+_INVITE_COOKIE_MAX_AGE = 900  # 15 min
 from django.contrib import messages
 from django.http import HttpResponseNotAllowed
 from django.http import HttpResponse
@@ -38,8 +43,22 @@ class StudentSignInView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        invite_token = self.request.GET.get('invite', '').strip()
+        invite_token = (
+            self.request.COOKIES.get(_INVITE_COOKIE, '').strip()
+            or self.request.GET.get('invite', '').strip()
+        )
+        invite_context_label = ''
+        repository = DjangoStudentIdentityRepository()
+        invitation = repository.find_invitation_by_token(invite_token) if invite_token else None
+        box_invite_link = None
+        if invitation is not None:
+            invite_context_label = invitation.box_root_slug.replace('-', ' ').title()
+        elif invite_token:
+            box_invite_link = repository.find_box_invite_link_by_token(invite_token)
+            if box_invite_link is not None:
+                invite_context_label = box_invite_link.box_root_slug.replace('-', ' ').title()
         context['invite_token'] = invite_token
+        context['invite_context_label'] = invite_context_label
         context['google_start_url'] = reverse('student-identity-oauth-start', kwargs={'provider': 'google'})
         context['apple_start_url'] = reverse('student-identity-oauth-start', kwargs={'provider': 'apple'})
         context['google_available'] = bool(getattr(settings, 'STUDENT_GOOGLE_OAUTH_CLIENT_ID', '').strip())
@@ -59,9 +78,9 @@ class StudentSignInView(TemplateView):
 
     def _map_failure_reason(self, reason: str) -> str:
         mapping = {
-            'invite-not-found': 'O convite informado nao foi encontrado.',
+            'invite-not-found': 'O convite informado nao foi encontrado ou expirou. Tente entrar sem convite.',
             'invite-box-mismatch': 'Este convite nao pertence ao box atual.',
-            'invite-expired': 'Este convite ja expirou.',
+            'invite-expired': 'O convite informado nao foi encontrado ou expirou. Tente entrar sem convite.',
             'invite-email-mismatch': 'O email informado nao corresponde ao convite.',
             'student-email-ambiguous': 'Nao foi possivel validar este aluno por email neste box.',
             'box-root-mismatch': 'Esta conta de aluno pertence a outro box.',
@@ -73,7 +92,10 @@ class StudentSignInView(TemplateView):
 
 class StudentOAuthStartView(View):
     def get(self, request, provider, *args, **kwargs):
-        invite_token = request.GET.get('invite', '').strip()
+        invite_token = (
+            request.COOKIES.get(_INVITE_COOKIE, '').strip()
+            or request.GET.get('invite', '').strip()
+        )
         journey = resolve_student_oauth_journey(
             repository=DjangoStudentIdentityRepository(),
             invite_token=invite_token,
@@ -101,7 +123,14 @@ class StudentOAuthStartView(View):
             )
         except OAuthProviderError as exc:
             messages.error(request, self._map_provider_error(str(exc)))
-            return redirect(f"{reverse('student-identity-login')}?invite={invite_token}" if invite_token else reverse('student-identity-login'))
+            response = redirect(reverse('student-identity-login'))
+            if invite_token:
+                response.set_cookie(
+                    _INVITE_COOKIE, invite_token,
+                    max_age=_INVITE_COOKIE_MAX_AGE,
+                    httponly=True, secure=not settings.DEBUG, samesite='Lax',
+                )
+            return response
         return redirect(authorize_url)
 
     def _map_provider_error(self, reason: str) -> str:
@@ -145,6 +174,19 @@ class StudentOAuthCallbackView(StudentSignInView):
             )
         except StudentOAuthProviderExchangeError as exc:
             messages.error(request, self._map_provider_callback_error(str(exc)))
+            AuditEvent.objects.create(
+                actor=None,
+                actor_role='',
+                action='student_oauth_callback.provider_error_received',
+                target_model='student_identity.StudentOAuthCallback',
+                target_label=provider,
+                description='Provedor OAuth retornou erro durante troca de identidade do aluno.',
+                metadata={
+                    'provider': provider,
+                    'reason': str(exc),
+                    'path': request.path,
+                },
+            )
             return redirect('student-identity-login')
 
         result = authenticate_student_oauth_identity(
@@ -204,10 +246,10 @@ class StudentInviteLandingView(TemplateView):
                 actor_role='',
                 action='student_invite_landing.rate_limited',
                 target_model='student_identity.StudentAppInvitation',
-                target_label=str(self.kwargs.get('token', '')),
+                target_label=hashlib.sha256(str(self.kwargs.get('token', '')).encode()).hexdigest()[:16],
                 description='Landing de invite do aluno bloqueada por rajada.',
                 metadata={
-                    'client_ip': resolve_student_client_ip(request),
+                    'ip_hash': hashlib.sha256(resolve_student_client_ip(request).encode()).hexdigest()[:8],
                     'path': request.path,
                 },
             )
@@ -219,9 +261,12 @@ class StudentInviteLandingView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['invite_token'] = self.kwargs['token']
-        context['login_url'] = f"{reverse('login')}?invite={self.kwargs['token']}"
+        context['login_url'] = reverse('student-identity-login')
         context['journey_label'] = 'aluno'
         invitation = DjangoStudentIdentityRepository().find_invitation_by_token(str(self.kwargs['token']))
+        context['invite_not_found'] = invitation is None
+        context['invite_expired'] = bool(invitation and invitation.is_expired)
+        context['invite_already_accepted'] = bool(invitation and invitation.accepted_at)
         if invitation is not None:
             record_student_onboarding_event(
                 actor=None,
@@ -238,19 +283,71 @@ class StudentInviteLandingView(TemplateView):
                     'invitation_id': invitation.id,
                 },
             )
+        else:
+            _token_hash = hashlib.sha256(str(self.kwargs['token']).encode()).hexdigest()[:16]
+            AuditEvent.objects.create(
+                actor=None,
+                actor_role='',
+                action='student_invite_landing.invalid_token_accessed',
+                target_model='student_identity.StudentAppInvitation',
+                target_label=_token_hash,
+                description='Tentativa de abrir convite individual inexistente.',
+                metadata={
+                    'box_root_slug': get_box_runtime_slug(),
+                    'token_hash': _token_hash,
+                    'path': self.request.path,
+                },
+            )
         return context
+
+    def render_to_response(self, context, **response_kwargs):
+        response = super().render_to_response(context, **response_kwargs)
+        if not context.get('invite_not_found') and not context.get('invite_expired'):
+            response.set_cookie(
+                _INVITE_COOKIE, str(self.kwargs['token']),
+                max_age=_INVITE_COOKIE_MAX_AGE,
+                httponly=True, secure=not settings.DEBUG, samesite='Lax',
+            )
+        return response
 
 
 class StudentBoxInviteLandingView(TemplateView):
     template_name = 'student_identity/invite_landing.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        allowed, retry_after = check_student_flow_rate_limit(
+            scope='student-box-invite-landing',
+            token=f'ip:{resolve_student_client_ip(request)}',
+            limit=max(1, int(getattr(settings, 'STUDENT_INVITE_LANDING_RATE_LIMIT_MAX_REQUESTS', 20))),
+            window_seconds=max(1, int(getattr(settings, 'STUDENT_INVITE_LANDING_RATE_LIMIT_WINDOW_SECONDS', 300))),
+        )
+        if not allowed:
+            AuditEvent.objects.create(
+                actor=None,
+                actor_role='',
+                action='student_box_invite_landing.rate_limited',
+                target_model='student_identity.StudentBoxInviteLink',
+                target_label=hashlib.sha256(str(self.kwargs.get('token', '')).encode()).hexdigest()[:16],
+                description='Landing de link em massa do aluno bloqueada por rajada.',
+                metadata={
+                    'ip_hash': hashlib.sha256(resolve_student_client_ip(request).encode()).hexdigest()[:8],
+                    'path': request.path,
+                },
+            )
+            response = HttpResponse('Muitas tentativas de abrir links de convite em pouco tempo. Aguarde e tente novamente.', status=429)
+            response['Retry-After'] = str(retry_after)
+            return response
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['invite_token'] = self.kwargs['token']
-        context['login_url'] = f"{reverse('login')}?invite={self.kwargs['token']}"
+        context['login_url'] = reverse('student-identity-login')
         context['journey_label'] = 'grupo do box'
         context['mass_invite_mode'] = True
         box_invite_link = DjangoStudentIdentityRepository().find_box_invite_link_by_token(str(self.kwargs['token']))
+        context['invite_not_found'] = box_invite_link is None
+        context['invite_unavailable'] = bool(box_invite_link is not None and not box_invite_link.can_accept)
         if box_invite_link is not None:
             record_student_onboarding_event(
                 actor=None,
@@ -266,4 +363,29 @@ class StudentBoxInviteLandingView(TemplateView):
                     'box_invite_link_id': box_invite_link.id,
                 },
             )
+        else:
+            _token_hash = hashlib.sha256(str(self.kwargs['token']).encode()).hexdigest()[:16]
+            AuditEvent.objects.create(
+                actor=None,
+                actor_role='',
+                action='student_box_invite_landing.invalid_token_accessed',
+                target_model='student_identity.StudentBoxInviteLink',
+                target_label=_token_hash,
+                description='Tentativa de abrir link em massa inexistente.',
+                metadata={
+                    'box_root_slug': get_box_runtime_slug(),
+                    'token_hash': _token_hash,
+                    'path': self.request.path,
+                },
+            )
         return context
+
+    def render_to_response(self, context, **response_kwargs):
+        response = super().render_to_response(context, **response_kwargs)
+        if not context.get('invite_not_found') and not context.get('invite_unavailable'):
+            response.set_cookie(
+                _INVITE_COOKIE, str(self.kwargs['token']),
+                max_age=_INVITE_COOKIE_MAX_AGE,
+                httponly=True, secure=not settings.DEBUG, samesite='Lax',
+            )
+        return response
