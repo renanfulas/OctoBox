@@ -432,7 +432,7 @@ class StudentIdentityFlowTests(TestCase):
         self.assertNotContains(response, 'Continuar com Google')
         self.assertNotContains(response, 'Continuar com Apple')
         self.assertContains(response, 'Entrar com usuario')
-        self.assertContains(response, 'Nenhum provedor social esta disponivel agora.')
+        self.assertContains(response, 'O login social esta em manutencao.')
         self.assertContains(response, reverse('login-staff'))
 
     def test_public_login_hub_preserves_invite_token_in_student_oauth_buttons(self):
@@ -519,6 +519,51 @@ class StudentIdentityFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Voce esta entrando por convite do box')
         self.assertContains(response, get_box_runtime_slug().replace('-', ' ').title())
+
+    @override_settings(STUDENT_GOOGLE_OAUTH_CLIENT_ID='google-client-id')
+    def test_login_hides_google_button_when_client_id_missing(self):
+        with self.settings(STUDENT_GOOGLE_OAUTH_CLIENT_ID=''):
+            response = self.client.get(reverse('student-identity-login'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Continuar com Google')
+
+    @override_settings(STUDENT_GOOGLE_OAUTH_CLIENT_ID='', STUDENT_APPLE_OAUTH_CLIENT_ID='')
+    def test_login_shows_unavailable_block_when_no_provider_configured(self):
+        response = self.client.get(reverse('student-identity-login'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'O login social esta em manutencao.')
+        self.assertNotContains(response, 'Continuar com Google')
+        self.assertNotContains(response, 'Continuar com Apple')
+
+    @override_settings(STUDENT_AUDIT_ASYNC=True)
+    @patch('student_identity.funnel_events.transaction')
+    def test_audit_events_enqueued_not_blocking_request(self, mock_transaction):
+        from student_identity.funnel_events import record_student_onboarding_event
+        callbacks = []
+        mock_transaction.on_commit.side_effect = lambda fn: callbacks.append(fn)
+        record_student_onboarding_event(
+            journey='test_journey',
+            event='test_event',
+            description='teste',
+        )
+        self.assertEqual(len(callbacks), 1)
+        self.assertEqual(AuditEvent.objects.filter(action='student_onboarding.test_journey.test_event').count(), 0)
+
+    @override_settings(STUDENT_AUDIT_ASYNC=False)
+    def test_landing_p95_latency_under_200ms_with_async_audit(self):
+        import time
+        invitation = StudentAppInvitation.objects.create(
+            student=self.student,
+            invited_email='aluno@example.com',
+            expires_at=timezone.now() + timedelta(days=3),
+        )
+        start = time.perf_counter()
+        response = self.client.get(
+            reverse('student-identity-invite', kwargs={'token': invitation.token})
+        )
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        self.assertEqual(response.status_code, 200)
+        self.assertLess(elapsed_ms, 200, f'Landing levou {elapsed_ms:.1f}ms — acima de 200ms')
 
     @override_settings(
         STUDENT_GOOGLE_OAUTH_CLIENT_ID='google-client-id',

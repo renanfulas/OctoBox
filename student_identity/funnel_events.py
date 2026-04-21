@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import threading
+
+from django.conf import settings
+from django.db import transaction
+
 from auditing.models import AuditEvent
 
 
@@ -23,7 +28,7 @@ def record_student_onboarding_event(
         'journey': journey,
         **(metadata or {}),
     }
-    return AuditEvent.objects.create(
+    kwargs = dict(
         actor=actor,
         actor_role=actor_role,
         action=build_student_onboarding_event_action(journey=journey, event=event),
@@ -33,3 +38,9 @@ def record_student_onboarding_event(
         description=description,
         metadata=payload,
     )
+    if getattr(settings, 'STUDENT_AUDIT_ASYNC', False):
+        def _write():
+            AuditEvent.objects.create(**kwargs)
+        transaction.on_commit(lambda: threading.Thread(target=_write, daemon=True).start())
+        return None
+    return AuditEvent.objects.create(**kwargs)

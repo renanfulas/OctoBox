@@ -34,14 +34,7 @@
         <p class="student-form-note">O OctoBox usa sua identidade social para confirmar quem voce e e liberar o box certo.</p>
 
         {% if not google_available and not apple_available %}
-        <div class="student-form-errors">
-            <p>Nenhum provedor social esta disponivel agora. Entre em contato com a recepcao para acessar o app.</p>
-        </div>
-        {% elif not google_available or not apple_available %}
-        <div class="student-form-errors">
-            {% if not google_available %}<p>Google ainda nao foi configurado neste ambiente.</p>{% endif %}
-            {% if not apple_available %}<p>Apple ainda nao foi configurada neste ambiente.</p>{% endif %}
-        </div>
+        {% include "student_identity/partials/provider_unavailable_block.html" %}
         {% endif %}
 
         <div class="student-auth-divider" aria-hidden="true">

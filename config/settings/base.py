@@ -291,6 +291,7 @@ MIDDLEWARE = [
 
 STUDENT_LOGIN_URL = '/aluno/auth/login/'
 STUDENT_APP_URL_PREFIX = '/aluno/'
+STUDENT_AUDIT_ASYNC = False
 
 ROOT_URLCONF = 'config.urls'
 
