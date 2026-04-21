@@ -61,41 +61,40 @@ jobs:
       - name: Deploy no VPS via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host:     ${{ secrets.VPS_HOST }}
+          host:    ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          key:      ${{ secrets.VPS_SSH_KEY }}
-          port:     ${{ secrets.VPS_PORT || 22 }}
+          key:     ${{ secrets.VPS_SSH_KEY }}
+          port:    ${{ secrets.VPS_PORT }}
           script: |
             set -euo pipefail
-            cd /srv/octobox
+            APP=/srv/octobox/app
+            VENV=/srv/octobox/venv
+            ENV=/srv/octobox/shared/octobox.env
 
             echo "==> Pull do repositório..."
-            git fetch origin main
-            git reset --hard origin/main
+            git -C "$APP" fetch origin main
+            git -C "$APP" reset --hard origin/main
 
             echo "==> Atualizando dependências Python..."
-            .venv/bin/pip install --quiet -r requirements.txt
+            "$VENV/bin/pip" install --quiet -r "$APP/requirements.txt"
 
             echo "==> Coletando static files..."
-            .venv/bin/python manage.py collectstatic --noinput
+            set -a && source "$ENV" && set +a
+            "$VENV/bin/python" "$APP/manage.py" collectstatic --noinput
 
             echo "==> Rodando migrations..."
-            .venv/bin/python manage.py migrate --noinput
+            "$VENV/bin/python" "$APP/manage.py" migrate --noinput
 
             echo "==> Sincronizando roles..."
-            .venv/bin/python manage.py bootstrap_roles
+            "$VENV/bin/python" "$APP/manage.py" bootstrap_roles
 
-            echo "==> Reiniciando Gunicorn (zero-downtime)..."
-            sudo systemctl reload octobox || sudo systemctl restart octobox
+            echo "==> Reiniciando Gunicorn..."
+            systemctl restart octobox-gunicorn
 
             echo "==> Deploy concluído."
 
       - name: Health check pós-deploy
-        env:
-          SMOKE_BASE_URL: ${{ secrets.SMOKE_BASE_URL_VPS }}
-          SMOKE_USERNAME: ${{ secrets.SMOKE_USERNAME }}
-          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
         run: |
-          sleep 10
-          curl --fail --silent --show-error "$SMOKE_BASE_URL/api/v1/health/"
-          echo "Health check OK"
+          sleep 8
+          curl --fail --silent --show-error https://app.octoboxfit.com.br/api/v1/health/
+          echo " — OK"
