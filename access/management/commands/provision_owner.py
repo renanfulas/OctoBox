@@ -18,8 +18,8 @@ USO:
     python manage.py provision_owner --username=joao --email=joao@crossfitsul.com.br --name="João Silva"
 
 PONTOS CRÍTICOS:
-- Uma instância comporta exatamente 1 Owner enquanto o multitenancy não estiver aberto.
-  Tentativas de criar um segundo Owner são bloqueadas por padrão.
+- Uma instância comporta no máximo 2 Owners enquanto o multitenancy não estiver aberto.
+  Tentativas de criar um terceiro Owner são bloqueadas por padrão.
 - A senha temporária aparece UMA VEZ no terminal. Guarde antes de fechar.
 - O Owner deve trocar a senha no primeiro acesso via /accounts/password/change/.
 - Rode bootstrap_roles antes se o grupo Owner ainda não existir.
@@ -63,7 +63,7 @@ class Command(BaseCommand):
             "--force",
             action="store_true",
             default=False,
-            help="Ignora a trava de 1 Owner por instância. Use só em migração ou suporte explícito.",
+            help="Ignora a trava de 2 Owners por instância. Use só em migração ou suporte explícito.",
         )
 
     def handle(self, *args, **options):
@@ -78,13 +78,16 @@ class Command(BaseCommand):
                 "Grupo 'Owner' não encontrado. Rode primeiro: python manage.py bootstrap_roles"
             )
 
+        _MAX_OWNERS = 2
+
         if not options["force"]:
             existing_owners = User.objects.filter(groups=owner_group)
-            if existing_owners.exists():
+            count = existing_owners.count()
+            if count >= _MAX_OWNERS:
                 names = ", ".join(existing_owners.values_list("username", flat=True))
                 raise CommandError(
-                    f"Já existe um Owner nesta instância: {names}\n"
-                    "Esta instalação suporta apenas 1 Owner por box enquanto o multitenancy "
+                    f"Esta instância já possui {count} Owner(s): {names}\n"
+                    f"O limite é {_MAX_OWNERS} Owners por box enquanto o multitenancy "
                     "não estiver habilitado.\n"
                     "Use --force somente em migração de dados ou suporte explícito."
                 )
