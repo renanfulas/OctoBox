@@ -46,6 +46,18 @@ _configured_secret_key = env_str('DJANGO_SECRET_KEY')
 if not _configured_secret_key or _configured_secret_key == 'dev-only-secret-key-change-me':
     raise RuntimeError('DJANGO_SECRET_KEY forte e obrigatoria em homologacao/producao.')
 
+_configured_database_url = env_str('DATABASE_URL')
+if not _configured_database_url:
+    raise RuntimeError(
+        'DATABASE_URL e obrigatoria em homologacao/producao. '
+        'Fallback para SQLite e bloqueado para evitar banco efemero no Render.'
+    )
+if not _configured_database_url.startswith(('postgres://', 'postgresql://')):
+    raise RuntimeError(
+        f'DATABASE_URL deve apontar para PostgreSQL em homologacao/producao. '
+        f'Schema recebido: {_configured_database_url.split("://", 1)[0] if "://" in _configured_database_url else "(sem schema)"}.'
+    )
+
 MIDDLEWARE = [
     MIDDLEWARE[0],
     'whitenoise.middleware.WhiteNoiseMiddleware',
