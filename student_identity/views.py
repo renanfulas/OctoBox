@@ -3,6 +3,9 @@ from __future__ import annotations
 import hashlib
 
 from django.conf import settings
+
+_INVITE_COOKIE = 'student_invite_pending'
+_INVITE_COOKIE_MAX_AGE = 900  # 15 min
 from django.contrib import messages
 from django.http import HttpResponseNotAllowed
 from django.http import HttpResponse
@@ -40,7 +43,10 @@ class StudentSignInView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        invite_token = self.request.GET.get('invite', '').strip()
+        invite_token = (
+            self.request.COOKIES.get(_INVITE_COOKIE, '').strip()
+            or self.request.GET.get('invite', '').strip()
+        )
         invite_context_label = ''
         repository = DjangoStudentIdentityRepository()
         invitation = repository.find_invitation_by_token(invite_token) if invite_token else None
@@ -86,7 +92,10 @@ class StudentSignInView(TemplateView):
 
 class StudentOAuthStartView(View):
     def get(self, request, provider, *args, **kwargs):
-        invite_token = request.GET.get('invite', '').strip()
+        invite_token = (
+            request.COOKIES.get(_INVITE_COOKIE, '').strip()
+            or request.GET.get('invite', '').strip()
+        )
         journey = resolve_student_oauth_journey(
             repository=DjangoStudentIdentityRepository(),
             invite_token=invite_token,
@@ -114,7 +123,14 @@ class StudentOAuthStartView(View):
             )
         except OAuthProviderError as exc:
             messages.error(request, self._map_provider_error(str(exc)))
-            return redirect(f"{reverse('student-identity-login')}?invite={invite_token}" if invite_token else reverse('student-identity-login'))
+            response = redirect(reverse('student-identity-login'))
+            if invite_token:
+                response.set_cookie(
+                    _INVITE_COOKIE, invite_token,
+                    max_age=_INVITE_COOKIE_MAX_AGE,
+                    httponly=True, secure=not settings.DEBUG, samesite='Lax',
+                )
+            return response
         return redirect(authorize_url)
 
     def _map_provider_error(self, reason: str) -> str:
@@ -232,7 +248,7 @@ class StudentInviteLandingView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['invite_token'] = self.kwargs['token']
-        context['login_url'] = f"{reverse('student-identity-login')}?invite={self.kwargs['token']}"
+        context['login_url'] = reverse('student-identity-login')
         context['journey_label'] = 'aluno'
         invitation = DjangoStudentIdentityRepository().find_invitation_by_token(str(self.kwargs['token']))
         context['invite_not_found'] = invitation is None
@@ -271,6 +287,16 @@ class StudentInviteLandingView(TemplateView):
             )
         return context
 
+    def render_to_response(self, context, **response_kwargs):
+        response = super().render_to_response(context, **response_kwargs)
+        if not context.get('invite_not_found') and not context.get('invite_expired'):
+            response.set_cookie(
+                _INVITE_COOKIE, str(self.kwargs['token']),
+                max_age=_INVITE_COOKIE_MAX_AGE,
+                httponly=True, secure=not settings.DEBUG, samesite='Lax',
+            )
+        return response
+
 
 class StudentBoxInviteLandingView(TemplateView):
     template_name = 'student_identity/invite_landing.html'
@@ -303,7 +329,7 @@ class StudentBoxInviteLandingView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['invite_token'] = self.kwargs['token']
-        context['login_url'] = f"{reverse('student-identity-login')}?invite={self.kwargs['token']}"
+        context['login_url'] = reverse('student-identity-login')
         context['journey_label'] = 'grupo do box'
         context['mass_invite_mode'] = True
         box_invite_link = DjangoStudentIdentityRepository().find_box_invite_link_by_token(str(self.kwargs['token']))
@@ -340,3 +366,13 @@ class StudentBoxInviteLandingView(TemplateView):
                 },
             )
         return context
+
+    def render_to_response(self, context, **response_kwargs):
+        response = super().render_to_response(context, **response_kwargs)
+        if not context.get('invite_not_found') and not context.get('invite_unavailable'):
+            response.set_cookie(
+                _INVITE_COOKIE, str(self.kwargs['token']),
+                max_age=_INVITE_COOKIE_MAX_AGE,
+                httponly=True, secure=not settings.DEBUG, samesite='Lax',
+            )
+        return response

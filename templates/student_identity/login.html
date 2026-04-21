@@ -24,10 +24,10 @@
 
         <div class="student-provider-stack">
             {% if google_available %}
-            <a href="{{ google_start_url }}{% if invite_token %}?invite={{ invite_token }}{% endif %}" class="student-button">Continuar com Google</a>
+            <a href="{{ google_start_url }}" class="student-button">Continuar com Google</a>
             {% endif %}
             {% if apple_available %}
-            <a href="{{ apple_start_url }}{% if invite_token %}?invite={{ invite_token }}{% endif %}" class="student-button student-button--ghost">Continuar com Apple</a>
+            <a href="{{ apple_start_url }}" class="student-button student-button--ghost">Continuar com Apple</a>
             {% endif %}
         </div>
 

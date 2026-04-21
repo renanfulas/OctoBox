@@ -467,7 +467,9 @@ class StudentIdentityFlowTests(TestCase):
         response = self.client.get(reverse('student-identity-invite', kwargs={'token': invitation.token}))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, f"{reverse('student-identity-login')}?invite={invitation.token}")
+        self.assertContains(response, reverse('student-identity-login'))
+        self.assertNotContains(response, f"?invite={invitation.token}")
+        self.assertIn('student_invite_pending', response.cookies)
 
     def test_invite_landing_shows_expired_message(self):
         invitation = StudentAppInvitation.objects.create(
@@ -554,7 +556,9 @@ class StudentIdentityFlowTests(TestCase):
 
         landing_response = student_client.get(reverse('student-identity-invite', kwargs={'token': invitation.token}))
         self.assertEqual(landing_response.status_code, 200)
-        self.assertContains(landing_response, f"{reverse('student-identity-login')}?invite={invitation.token}")
+        self.assertContains(landing_response, reverse('student-identity-login'))
+        self.assertNotContains(landing_response, f"?invite={invitation.token}")
+        self.assertIn('student_invite_pending', landing_response.cookies)
 
         from student_identity.oauth_state import build_oauth_state
 
