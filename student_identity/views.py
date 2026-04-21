@@ -174,6 +174,19 @@ class StudentOAuthCallbackView(StudentSignInView):
             )
         except StudentOAuthProviderExchangeError as exc:
             messages.error(request, self._map_provider_callback_error(str(exc)))
+            AuditEvent.objects.create(
+                actor=None,
+                actor_role='',
+                action='student_oauth_callback.provider_error_received',
+                target_model='student_identity.StudentOAuthCallback',
+                target_label=provider,
+                description='Provedor OAuth retornou erro durante troca de identidade do aluno.',
+                metadata={
+                    'provider': provider,
+                    'reason': str(exc),
+                    'path': request.path,
+                },
+            )
             return redirect('student-identity-login')
 
         result = authenticate_student_oauth_identity(

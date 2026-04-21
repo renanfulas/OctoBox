@@ -360,10 +360,9 @@ class StudentIdentityFlowTests(TestCase):
             follow=True,
         )
 
-        self.assertRedirects(
-            response,
-            f"{reverse('student-identity-login')}?invite={invalid_token}",
-        )
+        self.assertRedirects(response, reverse('student-identity-login'))
+        self.assertNotContains(response, f"?invite={invalid_token}")
+        self.assertIn('student_invite_pending', self.client.cookies)
         messages = list(response.context['messages'])
         self.assertTrue(
             any('O convite informado nao foi encontrado ou expirou. Tente entrar sem convite.' in str(message) for message in messages)
