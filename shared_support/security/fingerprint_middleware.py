@@ -25,17 +25,25 @@ logger = logging.getLogger(__name__)
 # Usamos um segredo derivado para não queimar o Secret nativo
 FINGERPRINT_SECRET = getattr(settings, 'SECRET_KEY', 'fallback_secret').encode('utf-8')
 
+def _get_client_ip(request) -> str:
+    # Em produção com proxy (Render/Heroku), REMOTE_ADDR é o IP interno do proxy,
+    # não o IP real do cliente. X-Forwarded-For contém o IP real.
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR', '')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR', '127.0.0.1')
+
+
 def generate_device_hash(request) -> str:
     """Computa o hash físico primário do dispositivo do cliente."""
     # Como IP dinâmico em 4G muda o último octeto, usamos a classe C network + UA.
-    ip = request.META.get('REMOTE_ADDR', '127.0.0.1')
+    ip = _get_client_ip(request)
     ip_class_c = '.'.join(ip.split('.')[:3]) if '.' in ip else ip
-    
+
     user_agent = request.META.get('HTTP_USER_AGENT', 'Unknown')
-    
-    # O conteúdo assinado
+
     payload = f"{ip_class_c}|{user_agent}".encode('utf-8')
-    
+
     return hmac.new(FINGERPRINT_SECRET, payload, digestmod='sha256').hexdigest()
 
 
