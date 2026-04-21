@@ -756,3 +756,28 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(response, '<div class="dn">Sex</div><div class="dt">Rest</div>', html=True)
         self.assertContains(response, 'Quarta · ~55 min · Peito, Costas, Ombros, Bíceps, Tríceps')
         self.assertContains(response, 'Quinta · ~60 min · Quad, Posterior, Glúteo, Panturrilha, Core')
+
+
+class StudentAuthMiddlewareTests(TestCase):
+    def setUp(self):
+        self.anonymous_client = Client()
+
+    def test_anonymous_access_to_student_app_root_redirects_to_student_login(self):
+        response = self.anonymous_client.get(reverse('student-app-home'))
+        self.assertRedirects(response, reverse('student-identity-login'))
+        self.assertTrue(
+            AuditEvent.objects.filter(action='student_app.anonymous_access_redirected').exists()
+        )
+
+    def test_anonymous_access_to_student_onboarding_redirects_with_message(self):
+        response = self.anonymous_client.get(reverse('student-app-onboarding'), follow=True)
+        self.assertRedirects(response, reverse('student-identity-login'))
+        page_messages = [str(m) for m in response.context['messages']]
+        self.assertTrue(any('login' in m.lower() for m in page_messages))
+
+    def test_student_login_url_distinct_from_staff_login_url(self):
+        from django.conf import settings
+        student_login = getattr(settings, 'STUDENT_LOGIN_URL', None)
+        staff_login = getattr(settings, 'LOGIN_URL', '/login/')
+        self.assertIsNotNone(student_login)
+        self.assertNotEqual(student_login, staff_login)
