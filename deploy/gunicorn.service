@@ -1,0 +1,26 @@
+[Unit]
+Description=OctoBox Gunicorn WSGI Server
+After=network.target postgresql.service redis.service
+
+[Service]
+Type=notify
+User=octobox
+Group=octobox
+WorkingDirectory=/srv/octobox
+EnvironmentFile=/etc/octobox.env
+ExecStart=/srv/octobox/.venv/bin/gunicorn config.wsgi \
+    --workers 3 \
+    --worker-class sync \
+    --bind unix:/run/octobox/gunicorn.sock \
+    --log-file - \
+    --access-logfile - \
+    --timeout 60 \
+    --keep-alive 5
+ExecReload=/bin/kill -s HUP $MAINPID
+RuntimeDirectory=octobox
+RuntimeDirectoryMode=0755
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
