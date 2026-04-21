@@ -18,6 +18,8 @@ USO:
     python manage.py provision_owner --username=joao --email=joao@crossfitsul.com.br --name="João Silva"
 
 PONTOS CRÍTICOS:
+- Uma instância comporta exatamente 1 Owner enquanto o multitenancy não estiver aberto.
+  Tentativas de criar um segundo Owner são bloqueadas por padrão.
 - A senha temporária aparece UMA VEZ no terminal. Guarde antes de fechar.
 - O Owner deve trocar a senha no primeiro acesso via /accounts/password/change/.
 - Rode bootstrap_roles antes se o grupo Owner ainda não existir.
@@ -57,6 +59,12 @@ class Command(BaseCommand):
         parser.add_argument("--username", required=True, help="Username do Owner (sem espaços).")
         parser.add_argument("--email", required=True, help="E-mail do Owner.")
         parser.add_argument("--name", default="", help="Nome completo (opcional).")
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            default=False,
+            help="Ignora a trava de 1 Owner por instância. Use só em migração ou suporte explícito.",
+        )
 
     def handle(self, *args, **options):
         username = options["username"].strip()
@@ -69,6 +77,17 @@ class Command(BaseCommand):
             raise CommandError(
                 "Grupo 'Owner' não encontrado. Rode primeiro: python manage.py bootstrap_roles"
             )
+
+        if not options["force"]:
+            existing_owners = User.objects.filter(groups=owner_group)
+            if existing_owners.exists():
+                names = ", ".join(existing_owners.values_list("username", flat=True))
+                raise CommandError(
+                    f"Já existe um Owner nesta instância: {names}\n"
+                    "Esta instalação suporta apenas 1 Owner por box enquanto o multitenancy "
+                    "não estiver habilitado.\n"
+                    "Use --force somente em migração de dados ou suporte explícito."
+                )
 
         existing = User.objects.filter(username=username).first()
         if existing:
