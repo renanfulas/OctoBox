@@ -52,8 +52,8 @@ def build_finance_center_page(
     can_manage_finance = current_role_slug in (ROLE_OWNER, ROLE_MANAGER)
     has_operational_queue = bool(operational_queue)
 
-    default_panel = finance_priority_context['default_panel']
-    default_action = finance_priority_context['default_action']
+    default_panel = 'tab-finance-movements'
+    default_action = 'open-tab-finance-movements'
     if default_panel_override == 'tab-finance-filters':
         default_panel = 'tab-finance-filters'
         default_action = 'open-tab-finance-filters'

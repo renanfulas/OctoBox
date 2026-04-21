@@ -247,6 +247,7 @@
                 id: Number(row.getAttribute('data-intake-id') || 0),
                 full_name: row.getAttribute('data-full-name') || '',
                 channel_label: row.getAttribute('data-channel-label') || '',
+                source_key: row.getAttribute('data-source-key') || '',
                 source_label: row.getAttribute('data-source-label') || '',
                 registration_age_days: Number(row.getAttribute('data-registration-age-days') || '0'),
                 registration_age_label: row.getAttribute('data-registration-age-label') || '',
@@ -265,6 +266,7 @@
                 },
                 permissions: {
                     can_reject: row.getAttribute('data-can-reject') === 'true',
+                    can_send_whatsapp_invite: row.getAttribute('data-can-send-whatsapp-invite') === 'true',
                 },
             };
         });
@@ -349,6 +351,21 @@
     }
 
     function buildWhatsappActionHtml(entry) {
+        if (!entry || !entry.permissions || !entry.permissions.can_send_whatsapp_invite) {
+            return '';
+        }
+
+        return [
+            '<form method="post" class="intake-row-form" data-action="intake-queue-actions">',
+            '<input type="hidden" name="csrfmiddlewaretoken" value="', escapeHtml(getCsrfToken()), '">',
+            '<input type="hidden" name="intake_id" value="', escapeHtml(entry.id), '">',
+            '<input type="hidden" name="return_query" value="', escapeHtml(getQueueReturnQuery()), '">',
+            '<button class="button secondary" type="submit" name="action" value="send-whatsapp-invite">Convidar 1 clique</button>',
+            '</form>',
+        ].join('');
+    }
+
+    function buildWhatsappLinkHtml(entry) {
         if (!entry || !entry.whatsapp_href) {
             return '';
         }
@@ -381,6 +398,7 @@
             buildConversionActionHtml(entry),
             buildRejectActionHtml(entry),
             buildWhatsappActionHtml(entry),
+            buildWhatsappLinkHtml(entry),
             '</div></td></tr>',
         ].join('');
     }

@@ -24,7 +24,7 @@ class CreateStudentInvitation:
         if student is None:
             return StudentInvitationResult(success=False, invitation=None, failure_reason='student-not-found')
 
-        invited_email = (command.invited_email or getattr(student, 'email', '') or '').strip().lower()
+        invited_email = (getattr(student, 'email', '') or '').strip().lower()
         if not invited_email and command.onboarding_journey != 'imported_lead_invite':
             return StudentInvitationResult(success=False, invitation=None, failure_reason='email-required')
 

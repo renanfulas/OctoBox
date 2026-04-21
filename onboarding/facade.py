@@ -23,7 +23,7 @@ from onboarding.domain import (
     build_intake_semantic_state,
     resolve_intake_action_permissions,
 )
-from onboarding.models import IntakeStatus, StudentIntake
+from onboarding.models import IntakeSource, IntakeStatus, StudentIntake
 from shared_support.whatsapp_links import build_whatsapp_message_href
 
 
@@ -77,6 +77,7 @@ def build_intake_queue_item(*, intake: StudentIntake, actor_role_slug: str, toda
         'semantic_state': asdict(semantic_state),
         'conversion': asdict(conversion),
         'action_permissions': action_permissions,
+        'can_send_whatsapp_invite': intake.source == IntakeSource.IMPORT and bool(intake.phone),
         'registration_age_days': _get_registration_age_days(intake=intake, today=today),
         'registration_age_label': _build_registration_age_label(intake=intake, today=today),
         'whatsapp_href': build_whatsapp_message_href(

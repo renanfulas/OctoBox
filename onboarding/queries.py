@@ -71,7 +71,7 @@ def _resolve_queue_ordering(*, sort_value):
 
 
 def _build_intake_radar_board(*, params, metrics_queryset, today):
-    source_period = (params.get('source_period') or 'day').strip().lower()
+    source_period = (params.get('source_period') or 'all').strip().lower()
     if source_period not in {'day', 'week', 'month', 'all'}:
         source_period = 'day'
 
@@ -296,20 +296,20 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
                 'is_selected': active_panel == 'tab-intake-queue' and created_window == 'today',
             },
             {
-                'label': 'Atribuídos',
-                'display_value': str(assigned_count),
-                'note': 'Mostra quantas entradas já têm alguém responsável pelo atendimento.',
-                'href': '?panel=tab-intake-queue&assignment=assigned',
-                'target_panel': 'tab-intake-queue',
+                'label': 'Captação',
+                'display_value': str(radar_board['total']),
+                'note': 'Abre o radar de origem para ler Instagram, WhatsApp, site, indicação e importação externa.',
+                'href': '?panel=tab-intake-source',
+                'target_panel': 'tab-intake-source',
                 'tone_class': 'kpi-purple',
                 'icon': _intake_kpi_icon('owners'),
-                'is_selected': active_panel == 'tab-intake-queue' and assignment == 'assigned',
+                'is_selected': active_panel == 'tab-intake-source',
             },
         ],
         'hero_stats': [
             {'label': 'Pendentes', 'value': pending_count},
             {'label': 'Na fila', 'value': len(queue)},
-            {'label': 'Atribuídos', 'value': assigned_count},
+            {'label': 'Captação', 'value': radar_board['total']},
             {'label': 'Hoje', 'value': created_today},
         ],
         'radar_board': radar_board,

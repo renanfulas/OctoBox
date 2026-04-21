@@ -12,11 +12,6 @@ class StudentInvitationCreateForm(forms.Form):
         queryset=Student.objects.none(),
         help_text='Somente alunos ativos entram no app do aluno nesta fase.',
     )
-    invited_email = forms.EmailField(
-        label='E-mail do convite',
-        required=False,
-        help_text='Se vazio, o sistema tenta usar o e-mail ja cadastrado no aluno.',
-    )
     invite_type = forms.ChoiceField(
         label='Tipo de convite',
         choices=StudentInvitationType.choices,
@@ -47,9 +42,6 @@ class StudentInvitationCreateForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['student'].queryset = Student.objects.filter(status=StudentStatus.ACTIVE).order_by('full_name')
-
-    def clean_invited_email(self):
-        return (self.cleaned_data.get('invited_email') or '').strip().lower()
 
     def clean_onboarding_journey(self):
         return self.cleaned_data.get('onboarding_journey') or StudentOnboardingJourney.REGISTERED_STUDENT_INVITE

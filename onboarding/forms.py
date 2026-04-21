@@ -93,6 +93,8 @@ class IntakeQuickCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['source'].required = False
+        self.fields['source'].widget = forms.HiddenInput()
         apply_text_input_attrs(self.fields['full_name'], placeholder='Nome completo')
         apply_text_input_attrs(self.fields['phone'], placeholder='WhatsApp principal (com DDD)')
         apply_text_input_attrs(self.fields['email'], placeholder='E-mail (opcional)')

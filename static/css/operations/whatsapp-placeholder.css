@@ -11,6 +11,10 @@ POR QUE ELE EXISTE:
 }
 
 .whatsapp-placeholder-hero {
+    --operation-hero-min-height: 184px;
+    --operation-hero-height: 184px;
+    --operation-hero-padding: clamp(21px, 1.8vw, 30px);
+    --operation-hero-radius: clamp(20px, 2.4vw, 28px);
     position: relative;
     overflow: hidden;
     border-color: color-mix(in srgb, rgba(37, 211, 102, 0.18) 70%, var(--theme-border-soft) 30%);

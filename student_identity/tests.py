@@ -808,6 +808,7 @@ class StudentIdentityFlowTests(TestCase):
 
         self.assertTrue(result.success)
         self.assertIsNotNone(result.invitation)
+        self.assertEqual(result.invitation.invited_email, self.student.email)
         previous_invitation.refresh_from_db()
         self.assertTrue(previous_invitation.is_expired)
         self.assertEqual(StudentAppInvitation.objects.filter(student=self.student).count(), 2)

@@ -55,11 +55,6 @@ PONTOS CRITICOS:
                 {{ form.email.errors }}
             </label>
             <label>
-                <span class="field-label">{{ form.source.label }}</span>
-                {{ form.source }}
-                {{ form.source.errors }}
-            </label>
-            <label>
                 <span class="field-label">{{ form.acquisition_channel.label }}</span>
                 {{ form.acquisition_channel }}
                 {{ form.acquisition_channel.errors }}
@@ -70,6 +65,7 @@ PONTOS CRITICOS:
                 {{ form.acquisition_detail.errors }}
             </label>
         </div>
+        {{ form.source }}
         <div class="actions actions-tight operation-hero-action-rail intake-create-actions">
             <button class="button" type="submit">Salvar {% if entry_kind == 'lead' %}lead{% else %}conversa{% endif %}</button>
             <a class="button secondary" href="#tab-intake-queue" data-action="open-tab-intake-queue">Voltar para fila</a>

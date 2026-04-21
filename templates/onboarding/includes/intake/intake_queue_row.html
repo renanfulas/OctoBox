@@ -5,6 +5,7 @@
     data-intake-id="{{ intake.id }}"
     data-full-name="{{ intake.full_name }}"
     data-channel-label="{{ intake.email|default:intake.phone }}"
+    data-source-key="{{ intake.source }}"
     data-source-label="{{ intake.get_source_display }}"
     data-registration-age-days="{{ item.registration_age_days }}"
     data-registration-age-label="{{ item.registration_age_label }}"
@@ -21,6 +22,7 @@
     data-conversion-action-href="{% if page.capabilities.can_manage_students and conversion.can_convert and conversion.action_type == 'convert-student' %}{{ student_quick_create_url }}?intake={{ intake.id }}#student-form-essential{% endif %}"
     data-conversion-action-post="{% if page.capabilities.can_work_queue and conversion.can_convert and conversion.action_type == 'move-to-conversation' %}true{% else %}false{% endif %}"
     data-can-reject="{% if page.capabilities.can_work_queue and permissions.can_reject %}true{% else %}false{% endif %}"
+    data-can-send-whatsapp-invite="{% if page.capabilities.can_manage_students and item.can_send_whatsapp_invite %}true{% else %}false{% endif %}"
 >
     <td class="intake-queue-col--contact intake-cell intake-cell--contact" data-label="Contato">
         <div class="intake-contact-identity">
@@ -69,7 +71,7 @@
                 <button class="button secondary" type="submit" name="action" value="reject-intake">Recusar</button>
             </form>
             {% endif %}
-            {% if page.capabilities.can_manage_students and intake.phone %}
+            {% if page.capabilities.can_manage_students and item.can_send_whatsapp_invite %}
             <form method="post" class="intake-row-form" data-action="intake-queue-actions">
                 {% csrf_token %}
                 <input type="hidden" name="intake_id" value="{{ intake.id }}">

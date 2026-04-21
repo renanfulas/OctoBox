@@ -744,19 +744,10 @@ POR QUE ELE EXISTE:
     border-color: color-mix(in srgb, currentColor 24%, rgba(15, 23, 42, 0.08) 76%);
     box-shadow:
         0 18px 34px rgba(15, 23, 42, 0.09),
-        0 0 0 1px color-mix(in srgb, currentColor 10%, transparent),
+        0 0 0 2px color-mix(in srgb, currentColor 12%, transparent),
+        0 0 18px color-mix(in srgb, currentColor 12%, transparent),
         inset 0 1px 0 rgba(255, 255, 255, 0.86);
     transform: translateY(-1px);
-}
-
-.intake-scene .intake-kpi-card.is-selected-tab::before {
-    content: "";
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 4px;
-    border-radius: 18px 0 0 18px;
-    background: linear-gradient(180deg, currentColor, color-mix(in srgb, currentColor 48%, white 52%));
-    opacity: 0.92;
 }
 
 .intake-kpi-card-head {
@@ -1232,7 +1223,8 @@ body[data-theme="dark"] .intake-scene .intake-kpi-icon-box {
 body[data-theme="dark"] .intake-scene .intake-kpi-card.is-selected-tab {
     box-shadow:
         0 20px 36px rgba(0, 0, 0, 0.22),
-        0 0 0 1px color-mix(in srgb, currentColor 14%, transparent),
+        0 0 0 2px color-mix(in srgb, currentColor 18%, transparent),
+        0 0 26px color-mix(in srgb, currentColor 18%, transparent),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
@@ -1377,6 +1369,22 @@ body[data-theme="dark"] .intake-scene .intake-kpi-card.is-selected-tab {
         display: grid;
         gap: 6px;
         padding: 0;
+        min-width: 0;
+    }
+
+    .intake-directory-table .intake-table-text,
+    .intake-directory-table .intake-contact-name,
+    .intake-directory-table .intake-contact-channel,
+    .intake-directory-table .intake-reading-note {
+        overflow-wrap: normal;
+        word-break: normal;
+        hyphens: none;
+    }
+
+    .intake-directory-table .intake-cell--source .intake-table-text,
+    .intake-directory-table .intake-cell--owner .intake-table-text,
+    .intake-directory-table .intake-cell--registration .intake-table-text {
+        white-space: normal;
     }
 
     .intake-cell--contact {
@@ -1497,6 +1505,18 @@ body[data-theme="dark"] .intake-scene .intake-kpi-card.is-selected-tab {
             "owner"
             "registration"
             "actions";
+    }
+
+    .intake-directory-table .intake-contact-copy,
+    .intake-directory-table .intake-reading-stack {
+        min-width: 0;
+    }
+
+    .intake-directory-table .intake-contact-name,
+    .intake-directory-table .intake-contact-channel,
+    .intake-directory-table .intake-reading-note,
+    .intake-directory-table .intake-table-text {
+        white-space: normal;
     }
 
     .intake-radar-board-head {

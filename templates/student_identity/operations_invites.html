@@ -14,7 +14,7 @@
 
 <section class="layout-grid student-invite-operations" aria-label="Convites operacionais do app do aluno">
     {% if page.data.access_matrix.can_operate_invites %}
-    <article class="table-card">
+    <article class="table-card student-invite-card student-invite-card--mass-link">
         <p class="eyebrow">Link em massa</p>
         <h3>Link do grupo para puxar a turma</h3>
         <p class="system-map-copy">Use esse link quando quiser chamar varios alunos de uma vez. O box publica no grupo e cada aluno entra sozinho no app.</p>
@@ -45,7 +45,7 @@
         </div>
     </article>
 
-    <article class="table-card">
+    <article class="table-card student-invite-card student-invite-card--individual">
         <p class="eyebrow">Convite individual</p>
         <h3>Chamar um aluno do jeito certo</h3>
         <p class="system-map-copy">Quando o caso e pontual, gere um convite individual. Esse caminho e melhor para recuperar um aluno especifico ou organizar uma entrada com mais controle.</p>
@@ -58,12 +58,7 @@
                 {% if form.student.help_text %}<small class="field-help">{{ form.student.help_text }}</small>{% endif %}
                 {{ form.student.errors }}
             </label>
-            <label>
-                <span class="field-label">{{ form.invited_email.label }}</span>
-                {{ form.invited_email }}
-                {% if form.invited_email.help_text %}<small class="field-help">{{ form.invited_email.help_text }}</small>{% endif %}
-                {{ form.invited_email.errors }}
-            </label>
+            <p class="student-invite-system-note">O envio sempre vai para o e-mail cadastrado do aluno. Sem override manual nesse fluxo.</p>
             <label>
                 <span class="field-label">{{ form.invite_type.label }}</span>
                 {{ form.invite_type }}
@@ -87,7 +82,7 @@
         </form>
     </article>
     {% else %}
-    <article class="table-card">
+    <article class="table-card student-invite-card student-invite-card--observer">
         <p class="eyebrow">Leitura por papel</p>
         <h3>Coach acompanha sem virar portaria</h3>
         <p class="system-map-copy">Este papel enxerga o estado do onboarding e da entrada no app, mas nao gera convite, nao aprova membership e nao altera identidade.</p>
@@ -99,7 +94,7 @@
     </article>
     {% endif %}
 
-    <article class="table-card">
+    <article class="table-card student-invite-card student-invite-card--guardrails">
         <p class="eyebrow">Regras do fluxo</p>
         <h3>O que este painel garante</h3>
         <ul class="capability-list">
