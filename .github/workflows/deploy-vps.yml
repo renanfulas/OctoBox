@@ -83,10 +83,15 @@ jobs:
             echo "==> Backup do env..."
             cp "$ENV" "$BACKUP"
 
-            echo "==> Restaurando backup mais recente do env, se existir..."
-            LATEST_BACKUP="$(ls -1t "${ENV}.bak-"* 2>/dev/null | head -n 1 || true)"
-            if [ -n "${LATEST_BACKUP:-}" ]; then
-              cp "$LATEST_BACKUP" "$ENV"
+            echo "==> Validando env atual..."
+            if ! grep -q '^DJANGO_SECRET_KEY=' "$ENV" || ! grep -q '^DATABASE_URL=' "$ENV"; then
+              echo "==> Env atual parece corrompido. Procurando backup válido..."
+              VALID_BACKUP="$(for file in $(ls -1t "${ENV}.bak-"* 2>/dev/null); do if grep -q '^DJANGO_SECRET_KEY=' \"$file\" && grep -q '^DATABASE_URL=' \"$file\"; then echo \"$file\"; break; fi; done)"
+              if [ -z "${VALID_BACKUP:-}" ]; then
+                echo "Nenhum backup válido encontrado para $ENV"
+                exit 1
+              fi
+              cp "$VALID_BACKUP" "$ENV"
             fi
 
             echo "==> Atualizando host routing no env..."
