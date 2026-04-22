@@ -5,11 +5,33 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}OctoBox Aluno{% endblock %}</title>
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#f5f7fb">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="OctoBox">
+    <script>
+        (function () {
+            var storedTheme = '';
+            try {
+                storedTheme = window.localStorage.getItem('octobox-theme') || '';
+            } catch (error) {
+                storedTheme = '';
+            }
+
+            var theme = storedTheme === 'dark' || storedTheme === 'light'
+                ? storedTheme
+                : ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light');
+
+            window.__octoboxStudentTheme = theme;
+            document.documentElement.style.colorScheme = theme;
+
+            var themeMeta = document.querySelector('meta[name="theme-color"]');
+            if (themeMeta) {
+                themeMeta.setAttribute('content', theme === 'dark' ? '#091221' : '#f5f7fb');
+            }
+        }());
+    </script>
     <link rel="manifest" href="{% url 'student-app-manifest' %}">
     <link rel="apple-touch-icon" href="{% static 'images/student-app-apple-touch-icon.png' %}">
     <link rel="icon" href="{% static 'images/student-app-icon.svg' %}" type="image/svg+xml">
@@ -17,7 +39,14 @@
     <link rel="stylesheet" href="{% static 'css/student_app/app.css' %}">
     {% block extra_head %}{% endblock %}
 </head>
-<body class="student-app-body" data-student-app="true" data-student-pwa-scope="/aluno/">
+<body class="student-app-body" data-student-app="true" data-student-pwa-scope="/aluno/" data-theme="light">
+    <script>
+        (function () {
+            var theme = window.__octoboxStudentTheme || 'light';
+            document.body.dataset.theme = theme;
+            document.body.style.colorScheme = theme;
+        }());
+    </script>
     <div class="student-shell-grid">
         {% if student_identity %}
         <aside class="student-sidebar" aria-label="Navegacao do aluno">
@@ -57,8 +86,8 @@
 
         <main class="student-shell">
             {% if student_identity %}
-            <header class="student-topbar">
-                <div class="student-topbar-main">
+            <header class="student-topbar topbar">
+                <div class="student-topbar-main topbar-left">
                     <div class="student-avatar" aria-hidden="true">
                         {{ student_identity.student.full_name|slice:":1"|upper }}
                     </div>
@@ -68,7 +97,11 @@
                         <span>Box atual: {{ student_active_box_root_slug|default:"Sem box ativo" }}</span>
                     </div>
                 </div>
-                <div class="student-topbar-actions">
+                <div class="student-topbar-actions topbar-right">
+                    <button type="button" class="student-theme-toggle theme-toggle" data-ui="student-theme-toggle">
+                        <span class="theme-toggle-icon" aria-hidden="true">☼</span>
+                        <span class="theme-toggle-label visually-hidden">Tema</span>
+                    </button>
                     {% if student_can_switch_box %}
                     <details class="student-box-switcher">
                         <summary>Trocar box</summary>
@@ -122,6 +155,7 @@
             {% endif %}
         </main>
     </div>
+    <script src="{% static 'js/student_app/theme.js' %}"></script>
     <script src="{% static 'js/student_app/pwa.js' %}"></script>
     {% block extra_scripts %}{% endblock %}
 </body>

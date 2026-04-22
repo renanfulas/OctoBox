@@ -32,17 +32,16 @@ PONTOS CRITICOS:
             <p class="entry-eyebrow">Entrar</p>
             <h1>Seu box, sem excesso.</h1>
             <p class="entry-copy">
-                Entre com Google ou Apple para abrir o app do aluno. Se voce faz parte da equipe, use o acesso interno logo abaixo.
+                Entre com Google para abrir o app do aluno. Se voce faz parte da equipe, use o acesso interno logo abaixo.
             </p>
             {% if invite_token %}
             <p class="entry-note">
-                Convite reconhecido. Sua autenticacao social vai entrar ja com o contexto certo do box.
+                Convite reconhecido. Sua autenticacao com Google vai entrar ja com o contexto certo do box.
             </p>
             {% endif %}
 
             <div class="entry-actions">
                 <a href="{{ student_google_url }}" class="entry-button entry-button--primary">Continuar com Google</a>
-                <a href="{{ student_apple_url }}" class="entry-button entry-button--ghost">Continuar com Apple</a>
             </div>
 
             <div class="entry-divider" aria-hidden="true">

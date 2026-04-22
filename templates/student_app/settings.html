@@ -3,44 +3,71 @@
 {% block title %}Configuracoes | OctoBox Aluno{% endblock %}
 
 {% block body %}
-<section class="student-card">
-    <p class="student-eyebrow">Conta do aluno</p>
-    <h1>Configuracoes do acesso</h1>
-    <form method="post" class="student-form-stack">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
-        <label>
-            <span>Nome completo</span>
-            {{ form.full_name }}
-            {{ form.full_name.errors }}
-        </label>
-        <label>
-            <span>WhatsApp</span>
-            {{ form.phone }}
-            {{ form.phone.errors }}
-        </label>
-        <label>
-            <span>E-mail</span>
-            {{ form.email }}
-            {{ form.email.errors }}
-        </label>
-        <label>
-            <span>Data de nascimento</span>
-            {{ form.birth_date }}
-            {{ form.birth_date.errors }}
-        </label>
-        <div class="actions actions-tight">
-            <button type="submit" class="student-button">Salvar perfil</button>
+<section class="student-page-head student-page-head--settings">
+    <div>
+        <p class="student-eyebrow">Conta do aluno</p>
+        <h1>Seu acesso, seu box e seu contexto.</h1>
+        <p class="student-copy">Essa tela precisa ser clara e confiavel. Aqui o aluno revisa identidade, maturidade do cadastro e o box ativo sem disputar atencao com as telas de treino.</p>
+    </div>
+    <div class="student-head-chip-group">
+        <span class="student-head-chip">{{ student_identity.get_provider_display }}</span>
+        <span class="student-head-chip">Box ativo: {{ student_active_box_root_slug }}</span>
+    </div>
+</section>
+
+<section class="student-surface-grid student-surface-grid--settings">
+    <article class="student-card student-card--feature student-card--settings-main">
+        <div class="student-section-head">
+            <div>
+                <p class="student-eyebrow">Perfil</p>
+                <h2>Configuracoes do acesso</h2>
+            </div>
         </div>
-    </form>
-    <ul class="student-settings-list">
-        <li><strong>Provedor:</strong> {{ student_identity.get_provider_display }}</li>
-        <li><strong>Runtime atual:</strong> {{ box_runtime_slug }}</li>
-        <li><strong>Box principal:</strong> {{ student_primary_box_root_slug }}</li>
-        <li><strong>Box ativo:</strong> {{ student_active_box_root_slug }}</li>
-        <li><strong>Status:</strong> {{ student_identity.get_status_display }}</li>
-    </ul>
-    <p class="student-form-note">Seu perfil pode amadurecer depois da entrada. A ideia aqui e nao travar a porta com formulario gigante.</p>
+        <form method="post" class="student-form-stack">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <label>
+                <span>Nome completo</span>
+                {{ form.full_name }}
+                {{ form.full_name.errors }}
+            </label>
+            <label>
+                <span>WhatsApp</span>
+                {{ form.phone }}
+                {{ form.phone.errors }}
+            </label>
+            <label>
+                <span>E-mail</span>
+                {{ form.email }}
+                {{ form.email.errors }}
+            </label>
+            <label>
+                <span>Data de nascimento</span>
+                {{ form.birth_date }}
+                {{ form.birth_date.errors }}
+            </label>
+            <div class="actions actions-tight">
+                <button type="submit" class="student-button">Salvar perfil</button>
+            </div>
+        </form>
+        <p class="student-form-note">Seu perfil pode amadurecer depois da entrada. A ideia aqui e nao travar a porta com formulario gigante.</p>
+    </article>
+
+    <article class="student-card student-card--quiet student-card--settings-side">
+        <div class="student-section-head">
+            <div>
+                <p class="student-eyebrow">Runtime</p>
+                <h2>Leitura rapida da conta</h2>
+            </div>
+        </div>
+        <ul class="student-settings-list">
+            <li><strong>Provedor:</strong> {{ student_identity.get_provider_display }}</li>
+            <li><strong>Runtime atual:</strong> {{ box_runtime_slug }}</li>
+            <li><strong>Box principal:</strong> {{ student_primary_box_root_slug }}</li>
+            <li><strong>Box ativo:</strong> {{ student_active_box_root_slug }}</li>
+            <li><strong>Status:</strong> {{ student_identity.get_status_display }}</li>
+        </ul>
+    </article>
 </section>
 {% include "student_app/partials/invite_entry_card.html" with eyebrow="Novo box" title="Entrar em outro box com convite" copy="Cole um novo convite para adicionar outro corredor ao seu app. Pense nisso como apresentar uma nova credencial para outra unidade sem misturar a sua identidade." %}
 {% endblock %}

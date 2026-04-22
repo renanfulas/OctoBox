@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 import json
 import uuid
@@ -62,6 +62,30 @@ class StudentAppExperienceTests(TestCase):
             box_root_slug='control',
         )
 
+    def _set_mass_onboarding_session(
+        self,
+        client,
+        *,
+        provider_subject='provider-subject-new-mass',
+        email='novo@app.com',
+    ):
+        link = StudentBoxInviteLink.objects.create(
+            box_root_slug='control',
+            expires_at=timezone.now() + timedelta(days=3),
+            max_uses=200,
+        )
+        session = client.session
+        session['student_pending_onboarding'] = {
+            'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
+            'box_root_slug': 'control',
+            'provider': StudentIdentityProvider.GOOGLE,
+            'provider_subject': provider_subject,
+            'email': email,
+            'box_invite_link_id': link.id,
+        }
+        session.save()
+        return link
+
     def test_student_home_requires_student_identity_cookie(self):
         anonymous_client = Client()
         response = anonymous_client.get(reverse('student-app-home'))
@@ -112,21 +136,7 @@ class StudentAppExperienceTests(TestCase):
 
     def test_mass_onboarding_creates_student_and_identity(self):
         client = Client()
-        link = StudentBoxInviteLink.objects.create(
-            box_root_slug='control',
-            expires_at=timezone.now() + timedelta(days=3),
-            max_uses=200,
-        )
-        session = client.session
-        session['student_pending_onboarding'] = {
-            'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
-            'box_root_slug': 'control',
-            'provider': StudentIdentityProvider.GOOGLE,
-            'provider_subject': 'provider-subject-new-mass',
-            'email': 'novo@app.com',
-            'box_invite_link_id': link.id,
-        }
-        session.save()
+        link = self._set_mass_onboarding_session(client)
 
         response = client.post(
             reverse('student-app-onboarding'),
@@ -165,6 +175,86 @@ class StudentAppExperienceTests(TestCase):
                 metadata__identity_id=identity.id,
             ).exists()
         )
+
+    def test_mass_onboarding_renders_hardened_input_attrs(self):
+        client = Client()
+        self._set_mass_onboarding_session(client)
+
+        response = client.get(reverse('student-app-onboarding'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'maxlength="150"', html=False)
+        self.assertContains(response, 'minlength="5"', html=False)
+        self.assertContains(response, 'autocomplete="tel"', html=False)
+        self.assertContains(response, 'pattern="[0-9]{10,20}"', html=False)
+        self.assertContains(response, 'maxlength="254"', html=False)
+        self.assertContains(response, f'min="{date(1900, 1, 1).isoformat()}"', html=False)
+        self.assertContains(response, f'max="{timezone.localdate().isoformat()}"', html=False)
+
+    def test_mass_onboarding_rejects_invalid_phone_payload(self):
+        client = Client()
+        self._set_mass_onboarding_session(client, provider_subject='provider-subject-invalid-phone')
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Novo Aluno App',
+                'phone': '12',
+                'email': 'novo@app.com',
+                'birth_date': '2000-01-02',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Informe um WhatsApp valido com DDD.')
+        self.assertFalse(StudentIdentity.objects.filter(provider_subject='provider-subject-invalid-phone').exists())
+
+    def test_mass_onboarding_rejects_future_birth_date_payload(self):
+        client = Client()
+        self._set_mass_onboarding_session(client, provider_subject='provider-subject-future-birth')
+        future_birth_date = timezone.localdate() + timedelta(days=1)
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Novo Aluno App',
+                'phone': '5511888888888',
+                'email': 'novo-futuro@app.com',
+                'birth_date': future_birth_date.isoformat(),
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'A data de nascimento nao pode ficar no futuro.')
+        self.assertFalse(StudentIdentity.objects.filter(provider_subject='provider-subject-future-birth').exists())
+
+    def test_mass_onboarding_rejects_duplicate_live_identity_email(self):
+        client = Client()
+        self._set_mass_onboarding_session(
+            client,
+            provider_subject='provider-subject-duplicate-email',
+            email=self.identity.email,
+        )
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Novo Aluno App',
+                'phone': '5511888888888',
+                'email': self.identity.email,
+                'birth_date': '2000-01-02',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Ja existe um acesso de aluno com este e-mail neste box.')
+        self.assertFalse(StudentIdentity.objects.filter(provider_subject='provider-subject-duplicate-email').exists())
 
     def test_imported_lead_onboarding_updates_student_and_records_funnel_events(self):
         client = Client()
@@ -227,7 +317,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(response['Location'], reverse('student-app-home'))
         student.refresh_from_db()
         self.assertEqual(student.full_name, 'Lead Revisado')
-        self.assertEqual(student.phone, '5511666667777')
+        self.assertEqual(student.phone, '11666667777')
         self.assertEqual(student.status, StudentStatus.ACTIVE)
         self.assertTrue(
             AuditEvent.objects.filter(
@@ -325,7 +415,10 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'WOD')
         self.assertContains(response, 'RM')
         self.assertContains(response, 'Modo atual: Grade')
-        self.assertNotContains(response, 'Tema')
+        self.assertContains(response, 'data-theme="light"', html=False)
+        self.assertContains(response, 'data-ui="student-theme-toggle"', html=False)
+        self.assertContains(response, 'octobox-theme', html=False)
+        self.assertContains(response, '/static/js/student_app/theme.js', html=False)
 
     def test_student_home_switches_to_wod_mode_when_attendance_window_is_active(self):
         session = ClassSession.objects.create(
@@ -544,6 +637,9 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(len(manifest_payload['icons']), 3)
         self.assertEqual(manifest_payload['icons'][0]['src'], '/static/images/student-app-icon-192.png')
         self.assertIn('/static/images/student-app-icon-maskable-512.png', sw_response.content.decode('utf-8'))
+        self.assertIn('/static/js/student_app/theme.js', sw_response.content.decode('utf-8'))
+        self.assertIn('/static/css/student_app/shell.css', sw_response.content.decode('utf-8'))
+        self.assertIn('/static/css/design-system/tokens.css', sw_response.content.decode('utf-8'))
 
     def test_student_home_refreshes_student_session_cookie(self):
         response = self.client.get(reverse('student-app-home'))

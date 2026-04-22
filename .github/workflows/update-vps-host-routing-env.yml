@@ -1,0 +1,75 @@
+name: Update VPS Host Routing Env
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  update-env:
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Update host routing env on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          timeout: 2m
+          command_timeout: 20m
+          script: |
+            set -euo pipefail
+            ENV_FILE=/srv/octobox/shared/octobox.env
+            BACKUP_FILE="${ENV_FILE}.bak-$(date +%Y%m%d-%H%M%S)"
+
+            cp "$ENV_FILE" "$BACKUP_FILE"
+
+            python3 - <<'PY'
+            from pathlib import Path
+
+            env_path = Path("/srv/octobox/shared/octobox.env")
+            original = env_path.read_text(encoding="utf-8")
+            updates = {
+                "DJANGO_ALLOWED_HOSTS": "octoboxfit.com.br,www.octoboxfit.com.br,app.octoboxfit.com.br",
+                "ALLOWED_HOSTS": "octoboxfit.com.br,www.octoboxfit.com.br,app.octoboxfit.com.br",
+                "DJANGO_CSRF_TRUSTED_ORIGINS": "https://octoboxfit.com.br,https://www.octoboxfit.com.br,https://app.octoboxfit.com.br",
+                "CSRF_TRUSTED_ORIGINS": "https://octoboxfit.com.br,https://www.octoboxfit.com.br,https://app.octoboxfit.com.br",
+                "STUDENT_OAUTH_PUBLIC_BASE_URL": "https://app.octoboxfit.com.br",
+            }
+
+            lines = original.splitlines()
+            found = set()
+            output = []
+
+            for line in lines:
+                stripped = line.strip()
+                if not stripped or stripped.startswith("#") or "=" not in line:
+                    output.append(line)
+                    continue
+                key, _ = line.split("=", 1)
+                key = key.strip()
+                if key in updates:
+                    output.append(f"{key}={updates[key]}")
+                    found.add(key)
+                else:
+                    output.append(line)
+
+            missing = [key for key in updates if key not in found]
+            if missing:
+                if output and output[-1].strip():
+                    output.append("")
+                output.append("# Host routing contract for www vs app")
+                for key in missing:
+                    output.append(f"{key}={updates[key]}")
+
+            env_path.write_text("\\n".join(output) + "\\n", encoding="utf-8")
+            PY
+
+            systemctl restart octobox-gunicorn
+
+            echo "Backup criado em: $BACKUP_FILE"
+            grep -E '^(DJANGO_ALLOWED_HOSTS|ALLOWED_HOSTS|DJANGO_CSRF_TRUSTED_ORIGINS|CSRF_TRUSTED_ORIGINS|STUDENT_OAUTH_PUBLIC_BASE_URL)=' "$ENV_FILE"

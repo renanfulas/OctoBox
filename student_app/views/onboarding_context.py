@@ -29,9 +29,13 @@ def build_student_onboarding_form_kwargs(view):
     kwargs = super(type(view), view).get_form_kwargs()
     initial = kwargs.setdefault('initial', {})
     journey = view.pending_onboarding.get('journey')
+    kwargs['box_root_slug'] = view.pending_onboarding.get('box_root_slug', '')
+    kwargs['identity'] = view._get_pending_identity()
+    kwargs['student'] = None
     initial.setdefault('email', view.pending_onboarding.get('email', ''))
     if journey == StudentOnboardingJourney.IMPORTED_LEAD_INVITE:
         student = view._get_existing_student()
+        kwargs['student'] = student
         if student is not None:
             initial.setdefault('full_name', student.full_name)
             initial.setdefault('phone', student.phone)
