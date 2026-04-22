@@ -83,6 +83,12 @@ jobs:
             echo "==> Backup do env..."
             cp "$ENV" "$BACKUP"
 
+            echo "==> Restaurando backup mais recente do env, se existir..."
+            LATEST_BACKUP="$(ls -1t "${ENV}.bak-"* 2>/dev/null | head -n 1 || true)"
+            if [ -n "${LATEST_BACKUP:-}" ]; then
+              cp "$LATEST_BACKUP" "$ENV"
+            fi
+
             echo "==> Atualizando host routing no env..."
             python3 - <<'PY'
             from pathlib import Path
@@ -122,11 +128,11 @@ jobs:
                 for key in missing:
                     output.append(f"{key}={updates[key]}")
 
-            env_path.write_text("\\n".join(output) + "\\n", encoding="utf-8")
+            env_path.write_text("\n".join(output) + "\n", encoding="utf-8")
             PY
 
             echo "==> Host routing aplicado no env:"
-            grep -E '^(DJANGO_ALLOWED_HOSTS|ALLOWED_HOSTS|DJANGO_CSRF_TRUSTED_ORIGINS|CSRF_TRUSTED_ORIGINS|STUDENT_OAUTH_PUBLIC_BASE_URL)=' "$ENV"
+            grep -E '^(DJANGO_ALLOWED_HOSTS|ALLOWED_HOSTS|DJANGO_CSRF_TRUSTED_ORIGINS|CSRF_TRUSTED_ORIGINS|STUDENT_OAUTH_PUBLIC_BASE_URL)=' "$ENV" || true
 
             echo "==> Pull do repositório..."
             git -C "$APP" fetch origin main
