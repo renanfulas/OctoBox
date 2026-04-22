@@ -16,12 +16,12 @@ PONTOS CRITICOS:
 from django.contrib.auth.views import LogoutView
 from django.urls import path
 
-from .views import AccessEntryHubView, AccessOverviewView, HomeRedirectView, ThrottledLoginView
+from .views import AccessEntryHubView, AccessOverviewView, AppHostThrottledLoginView, HomeRedirectView
 
 urlpatterns = [
     path('', HomeRedirectView.as_view(), name='home'),
     path('acessos/', AccessOverviewView.as_view(), name='access-overview'),
     path('login/', AccessEntryHubView.as_view(), name='login'),
-    path('login/funcionario/', ThrottledLoginView.as_view(), name='login-staff'),
+    path('login/funcionario/', AppHostThrottledLoginView.as_view(), name='login-staff'),
     path('logout/', LogoutView.as_view(), name='logout'),
 ]
