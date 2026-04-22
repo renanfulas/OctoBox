@@ -248,6 +248,52 @@ body[data-theme="dark"] .state-empty-hint {
     background: var(--theme-accent-support);
 }
 
+body[data-theme="dark"] .message {
+    border-color: color-mix(in srgb, var(--theme-border-soft) 72%, transparent);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 36%),
+        linear-gradient(180deg, rgba(11, 18, 30, 0.98), rgba(10, 17, 28, 0.95));
+    box-shadow:
+        0 18px 34px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"] .message.success {
+    border-color: color-mix(in srgb, var(--theme-accent-success) 34%, var(--theme-border-soft) 66%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-success-alpha) 18%, transparent), transparent 36%),
+        linear-gradient(180deg, rgba(8, 20, 22, 0.98), rgba(8, 17, 24, 0.95));
+}
+
+body[data-theme="dark"] .message.error {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 34%, var(--theme-border-soft) 66%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-danger-alpha) 18%, transparent), transparent 36%),
+        linear-gradient(180deg, rgba(24, 10, 18, 0.98), rgba(18, 10, 17, 0.95));
+}
+
+body[data-theme="dark"] .message.warning {
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 36%, var(--theme-border-soft) 64%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, transparent), transparent 36%),
+        linear-gradient(180deg, rgba(24, 18, 8, 0.98), rgba(18, 14, 8, 0.95));
+}
+
+body[data-theme="dark"] .message.info {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 34%, var(--theme-border-soft) 66%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 36%),
+        linear-gradient(180deg, rgba(8, 16, 28, 0.98), rgba(8, 13, 22, 0.95));
+}
+
+body[data-theme="dark"] .message :is(.notice-panel-title, .state-notice-title, .notice-panel-copy, .state-notice-copy, .notice-panel-hint, .state-notice-hint) {
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .message :is(.notice-panel-copy, .state-notice-copy, .notice-panel-hint, .state-notice-hint) {
+    color: var(--theme-text-secondary);
+}
+
 .state-payment-success {
     gap: 18px;
 }

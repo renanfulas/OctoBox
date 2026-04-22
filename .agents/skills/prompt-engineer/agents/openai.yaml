@@ -1,0 +1,7 @@
+interface:
+  display_name: "Elite Prompt Engineer"
+  short_description: "Prompt systems for projects and refactors"
+  default_prompt: "Use $prompt-engineer to design or refactor a prompt system with clear contracts, tests, and migration guardrails."
+
+policy:
+  allow_implicit_invocation: true

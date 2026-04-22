@@ -1,0 +1,7 @@
+interface:
+  display_name: "Daily Prompt Coach"
+  short_description: "Fast prompts for daily use"
+  default_prompt: "Use $prompt-daily to turn this rough idea into a clear prompt in one pass."
+
+policy:
+  allow_implicit_invocation: true

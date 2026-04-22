@@ -17,6 +17,16 @@ from tests.workout_test_support import WorkoutFlowBaseTestCase
 
 
 class WorkoutWeeklyGovernanceTests(WorkoutFlowBaseTestCase):
+    def test_coach_sees_minimal_summary_surface(self):
+        self.login_as_coach()
+
+        response = self.client.get(reverse('operations-executive-summary'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Resumo executivo curto para coach')
+        self.assertContains(response, 'Pendencias reais')
+        self.assertContains(response, 'Abrir historico completo')
+
     def test_approval_board_surfaces_light_management_alert_for_consistent_improvement(self):
         sessions = [
             ClassSession.objects.create(
@@ -75,7 +85,7 @@ class WorkoutWeeklyGovernanceTests(WorkoutFlowBaseTestCase):
 
         self.login_as_manager()
 
-        response = self.client.get(reverse('workout-approval-board'))
+        response = self.client.get(reverse('operations-executive-summary'))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Alerta leve de gestao')
@@ -101,6 +111,7 @@ class WorkoutWeeklyGovernanceTests(WorkoutFlowBaseTestCase):
                 'governance_commitment_status': 'assumed',
                 'governance_commitment_note': 'Owner assumiu a decisao e vai cobrar fechamento na proxima semana.',
                 'summary_note': 'Manager puxando o ritual semanal e fechando parcialmente a recomendacao.',
+                'next': reverse('workout-publication-history'),
             },
             follow=True,
         )
@@ -155,7 +166,7 @@ class WorkoutWeeklyGovernanceTests(WorkoutFlowBaseTestCase):
 
         self.login_as_manager()
 
-        response = self.client.get(reverse('workout-approval-board'))
+        response = self.client.get(reverse('workout-publication-history'))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Maturidade operacional')

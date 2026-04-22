@@ -40,10 +40,13 @@ class WorkoutFlowBaseTestCase(TestCase):
         )
         cls.owner.groups.add(Group.objects.get(name=ROLE_OWNER))
 
+        local_now = timezone.localtime()
+        session_time = local_now.replace(hour=12, minute=0, second=0, microsecond=0)
+
         cls.session = ClassSession.objects.create(
             title='Cross 07h',
             coach=cls.coach,
-            scheduled_at=timezone.now() + timedelta(hours=2),
+            scheduled_at=session_time,
             duration_minutes=60,
             capacity=16,
         )

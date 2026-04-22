@@ -65,6 +65,25 @@ class CoachWorkoutEditorFlowTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'Criar WOD')
         self.assertContains(response, self._editor_url())
 
+    def test_workout_editor_home_lists_session_cards(self):
+        response = self.client.get(reverse('workout-editor-home'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Escolha a aula e monte o WOD.')
+        self.assertContains(response, self.session.title)
+        self.assertContains(response, self._editor_url())
+
+    def test_owner_can_access_editor_home_and_session_editor(self):
+        self.login_as_owner()
+
+        home_response = self.client.get(reverse('workout-editor-home'))
+        editor_response = self.client.get(self._editor_url())
+
+        self.assertEqual(home_response.status_code, 200)
+        self.assertEqual(editor_response.status_code, 200)
+        self.assertContains(home_response, 'Resumo executivo')
+        self.assertContains(editor_response, 'Aprovacoes')
+
     def test_coach_can_create_submit_block_and_movement(self):
         editor_url = self._editor_url()
 

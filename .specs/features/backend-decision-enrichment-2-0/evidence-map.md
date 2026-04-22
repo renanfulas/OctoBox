@@ -1,0 +1,22 @@
+## Evidence Map
+
+- `dashboard/dashboard_snapshot_queries.py`
+- `catalog/finance_snapshot/metrics.py`
+- `catalog/finance_snapshot/snapshot.py`
+- `catalog/presentation/finance_center_page.py`
+- `operations/queries.py`
+- Dashboard: o snapshot ja entrega `metric_priority_context`, mas ainda carrega parte da semantica em cards/presenter por composicao de `note`, `kicker` e ordem.
+- Financeiro: `build_finance_priority_context()` ja e forte, mas o `finance_flow_bridge` ainda nasceu no presenter; isso mostra que a camada de entrada ainda nao esta totalmente no snapshot.
+- Operations: owner e manager ja recebem `priority_context`, porem o proximo movimento dominante e mais inferido por listas de foco do que por um contrato explicito de `entry_surface`/`entry_reason`.
+- ROI oficial:
+  - 1: financeiro
+  - 2: operations
+  - 3: dashboard
+- Primeira onda aplicada no financeiro:
+  - `build_finance_flow_bridge()` migrou do presenter para `catalog/finance_snapshot/snapshot.py`
+  - `build_finance_snapshot(..., operational_queue=...)` agora sobe `finance_flow_bridge` no payload
+  - o presenter de financeiro passou a consumir `snapshot['finance_flow_bridge']` em vez de decidir a entrada
+- Validacao T4:
+  - `python manage.py check` passou limpo
+  - o template financeiro permaneceu inalterado nesta onda
+  - a reducao de logica aconteceu no presenter, nao por redistribuicao para o template

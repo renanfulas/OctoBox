@@ -1,0 +1,33 @@
+<section class="coach-wod-filter-bar" aria-label="Filtros do historico publicado">
+    <form method="get" class="coach-wod-filter-form">
+        <label class="coach-wod-filter-field">
+            <span>Coach</span>
+            <select name="coach">
+                <option value="">Todos</option>
+                {% for option in approval_coach_options %}
+                <option value="{{ option.value }}" {% if history_filter_state.coach == option.value %}selected{% endif %}>{{ option.label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <div class="coach-wod-filter-toggle-group coach-wod-filter-toggle-group--single" aria-label="Refinos do historico">
+            <label class="coach-wod-filter-toggle">
+                <input type="checkbox" name="today_only" value="1" {% if history_filter_state.today_only %}checked{% endif %}>
+                <span>Somente aulas de hoje</span>
+            </label>
+        </div>
+        <label class="coach-wod-filter-field coach-wod-filter-field--history">
+            <span>Contexto de publicacao</span>
+            <select name="published_reason">
+                <option value="" {% if not history_filter_state.published_reason %}selected{% endif %}>Todos os contextos</option>
+                <option value="without_concerns" {% if history_filter_state.published_reason == 'without_concerns' %}selected{% endif %}>Sem ressalvas</option>
+                <option value="verbal_alignment" {% if history_filter_state.published_reason == 'verbal_alignment' %}selected{% endif %}>Alinhamento verbal</option>
+                <option value="operational_urgency" {% if history_filter_state.published_reason == 'operational_urgency' %}selected{% endif %}>Urgencia operacional</option>
+                <option value="no_reason" {% if history_filter_state.published_reason == 'no_reason' %}selected{% endif %}>Sem motivo extra</option>
+            </select>
+        </label>
+        <div class="coach-wod-filter-actions">
+            <button class="button secondary" type="submit">Aplicar filtros</button>
+            <a class="button tertiary" href="{% url 'workout-publication-history' %}">Limpar</a>
+        </div>
+    </form>
+</section>

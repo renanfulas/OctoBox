@@ -4,6 +4,7 @@
 {% with page=operation_page %}
 <div class="operation-shell coach-scene workspace-shell coach-wod-editor-shell">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    {% include "operations/includes/wod_corridor_tabs.html" %}
 
     <section class="coach-wod-editor-grid" aria-label="Editor de WOD da aula">
         <article class="table-card coach-wod-editor-card">
@@ -52,7 +53,11 @@
                 <input type="hidden" name="intent" value="submit_for_approval">
                 <div class="actions">
                     <button class="button" type="submit">Enviar para aprovacao</button>
+                    {% if current_role.slug == 'owner' %}
                     <a class="button secondary" href="{% url 'workout-approval-board' %}">Ver fila de aprovacao</a>
+                    {% else %}
+                    <a class="button secondary" href="{% url 'workout-publication-history' %}">Ver historico do corredor</a>
+                    {% endif %}
                 </div>
             </form>
             <form method="post" class="coach-wod-form-stack coach-wod-duplicate-form">
