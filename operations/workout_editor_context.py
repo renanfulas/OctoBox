@@ -29,6 +29,8 @@ from operations.forms import (
 from operations.models import ClassSession
 from student_app.models import StudentExerciseMax, WorkoutLoadType
 
+from .workout_corridor_navigation import build_workout_corridor_tabs
+
 
 def build_coach_workout_editor_page_payload(view, context):
     payload = build_page_payload(
@@ -166,6 +168,11 @@ def build_coach_workout_editor_context(view, *, workout_form=None, block_form=No
     build_coach_workout_editor_page_payload(view, context)
     context.update(
         {
+            'workout_corridor_tabs': build_workout_corridor_tabs(
+                current_key='editor',
+                current_role_slug=context['current_role'].slug,
+                editor_href=reverse('coach-session-workout-editor', args=[view.session.id]),
+            ),
             'session': view.session,
             'workout': workout,
             'workout_form': workout_form

@@ -1,0 +1,7 @@
+interface:
+  display_name: "OctoBox SQL Architect"
+  short_description: "Premium PostgreSQL and schema guidance for OctoBOX"
+  default_prompt: "Use $octobox-sql-architect to analyze the real OctoBOX database, explain the current schema safely, and recommend the best PostgreSQL path with explicit trade-offs."
+
+policy:
+  allow_implicit_invocation: true

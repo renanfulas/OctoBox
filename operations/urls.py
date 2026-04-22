@@ -32,6 +32,7 @@ from .workout_action_views import (
 )
 from .workspace_views import (
     CoachSessionWorkoutEditorView,
+    OperationsExecutiveSummaryView,
     CoachWorkspaceView,
     DevWorkspaceView,
     ManagerBoardsPartialView,
@@ -42,7 +43,9 @@ from .workspace_views import (
     OwnerWorkspaceView,
     ReceptionPaymentBoardPartialView,
     ReceptionWorkspaceView,
+    WorkoutEditorHomeView,
     WorkoutApprovalBoardView,
+    WorkoutPublicationHistoryView,
     WorkoutStudentRmQuickEditView,
     WhatsAppWorkspaceView,
 )
@@ -62,8 +65,11 @@ urlpatterns = [
     path('operacao/recepcao/', ReceptionWorkspaceView.as_view(), name='reception-workspace'),
     path('operacao/recepcao/fragmentos/pagamentos/', ReceptionPaymentBoardPartialView.as_view(), name='reception-payment-board-fragment'),
     path('operacao/coach/', CoachWorkspaceView.as_view(), name='coach-workspace'),
+    path('operacao/wod/editor/', WorkoutEditorHomeView.as_view(), name='workout-editor-home'),
     path('operacao/coach/aula/<int:session_id>/wod/', CoachSessionWorkoutEditorView.as_view(), name='coach-session-workout-editor'),
     path('operacao/wod/aprovacoes/', WorkoutApprovalBoardView.as_view(), name='workout-approval-board'),
+    path('operacao/wod/historico/', WorkoutPublicationHistoryView.as_view(), name='workout-publication-history'),
+    path('operacao/resumo-executivo/', OperationsExecutiveSummaryView.as_view(), name='operations-executive-summary'),
     path(
         'operacao/wod/<int:workout_id>/aluno/<int:student_id>/rm/<slug:exercise_slug>/',
         WorkoutStudentRmQuickEditView.as_view(),

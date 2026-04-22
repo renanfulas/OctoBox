@@ -156,7 +156,7 @@ class WorkoutPostPublicationHistoryTests(WorkoutFlowBaseTestCase):
         )
         self.login_as_manager()
 
-        response = self.client.get(reverse('workout-approval-board'))
+        response = self.client.get(reverse('workout-publication-history'))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Historico executivo do que foi ao ar')
@@ -236,7 +236,7 @@ class WorkoutPostPublicationHistoryTests(WorkoutFlowBaseTestCase):
         )
         self.login_as_manager()
 
-        response = self.client.get(reverse('workout-approval-board'), data={'published_reason': 'operational_urgency'})
+        response = self.client.get(reverse('workout-publication-history'), data={'published_reason': 'operational_urgency'})
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Urgente')
@@ -320,7 +320,7 @@ class WorkoutPostPublicationHistoryTests(WorkoutFlowBaseTestCase):
         )
         self.login_as_manager()
 
-        response = self.client.get(reverse('workout-approval-board'))
+        response = self.client.get(reverse('workout-publication-history'))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Pendencia real')
@@ -383,6 +383,7 @@ class WorkoutPostPublicationHistoryTests(WorkoutFlowBaseTestCase):
                 'action_label': 'Reforcar chamada no WhatsApp',
                 'result_status': 'completed',
                 'outcome_note': 'Recepcao reforcou no grupo e a turma confirmou leitura.',
+                'next': reverse('workout-publication-history'),
             },
             follow=True,
         )
@@ -408,7 +409,7 @@ class WorkoutPostPublicationHistoryTests(WorkoutFlowBaseTestCase):
             view_count=1,
         )
 
-        response = self.client.get(reverse('workout-approval-board'))
+        response = self.client.get(reverse('workout-publication-history'))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'alerta(s) resolvido(s)')
@@ -420,6 +421,7 @@ class WorkoutPostPublicationHistoryTests(WorkoutFlowBaseTestCase):
             data={
                 'kind': 'coach_aligned',
                 'note': 'Coach alinhado para reforcar a abertura do WOD no aquecimento.',
+                'next': reverse('workout-publication-history'),
             },
             follow=True,
         )

@@ -1,0 +1,545 @@
+<section class="coach-wod-publication-history" aria-label="Historico executivo do que foi ao ar">
+    <div class="coach-wod-publication-history-head">
+        <div class="coach-wod-publication-history-intro">
+            <p class="eyebrow">Pos-publicacao</p>
+            <h2>Historico executivo do que foi ao ar</h2>
+            <p>Leitura curta das ultimas publicacoes, com o contexto da decisao que liberou cada WOD.</p>
+        </div>
+        <div class="coach-wod-review-meta" aria-label="Marcadores executivos do historico publicado">
+            <span class="pill success">{{ published_history.assist.without_concerns_count }} sem ressalvas</span>
+            <span class="pill info">{{ published_history.assist.verbal_alignment_count }} com alinhamento verbal</span>
+            <span class="pill warning">{{ published_history.assist.operational_urgency_count }} com urgencia operacional</span>
+            <span class="pill accent">{{ published_history.assist.no_reason_count }} sem motivo extra</span>
+            <span class="pill accent">{{ published_history.assist.viewer_total }} abertura(s) de WOD</span>
+            <span class="pill info">{{ published_history.assist.reserved_total }} reserva(s) nas turmas</span>
+            <span class="pill success">RM pronto {{ published_history.assist.rm_ready_total }}/{{ published_history.assist.rm_required_total }}</span>
+            <span class="pill accent">Aberturas prontas {{ published_history.assist.rm_viewer_ready_total }}</span>
+            <span class="pill warning">Gap de RM nas aberturas {{ published_history.assist.rm_viewer_gap_total }}</span>
+            <span class="pill danger">{{ published_history.assist.critical_alert_count }} alerta(s) critico(s)</span>
+            <span class="pill warning">{{ published_history.assist.warning_alert_count }} alerta(s) de atencao</span>
+            <span class="pill success">{{ published_history.assist.resolved_action_count }} acao(oes) com resultado</span>
+            <span class="pill accent">{{ published_history.assist.open_action_count }} acao(oes) aguardando retorno</span>
+            <span class="pill success">{{ published_history.assist.resolved_outcome_count }} alerta(s) resolvido(s)</span>
+            <span class="pill accent">{{ published_history.assist.monitoring_outcome_count }} monitorando</span>
+            <span class="pill danger">{{ published_history.assist.not_resolved_outcome_count }} nao resolveu(ram)</span>
+            <span class="pill warning">{{ published_history.assist.live_follow_up_count }} pendencia(s) real(is)</span>
+            <span class="pill warning">{{ published_history.assist.short_escalation_count }} escalonamento(s) curto(s)</span>
+            <span class="pill success">{{ published_history.assist.absorbed_case_count }} absorvido(s)</span>
+            <span class="pill accent">{{ published_history.assist.monitoring_case_count }} acompanhando</span>
+            <span class="pill warning">{{ published_history.assist.awaiting_action_case_count }} aguardando acao</span>
+            <span class="pill danger">{{ published_history.assist.strong_intervention_case_count }} intervencao forte</span>
+        </div>
+    </div>
+    {% if published_history.assist.weekly_executive_summary %}
+    <div class="coach-wod-publication-alert-strip" aria-label="Resumo executivo semanal do box">
+        <article class="coach-wod-publication-alert-card tone-info">
+            <p class="eyebrow">{{ published_history.assist.weekly_executive_summary.label }}</p>
+            <strong>{{ published_history.assist.weekly_executive_summary.summary }}</strong>
+            <div class="coach-wod-review-meta">
+                <span class="pill info">{{ published_history.assist.weekly_executive_summary.weekly_total }} publicacao(oes) na janela</span>
+                <span class="pill warning">{{ published_history.assist.weekly_executive_summary.adjustment_label }}</span>
+                <span class="pill success">{{ published_history.assist.weekly_executive_summary.improvement_label }}</span>
+                <span class="pill accent">{{ published_history.assist.weekly_executive_summary.action_label }}</span>
+            </div>
+        </article>
+        <article class="coach-wod-publication-alert-card tone-accent">
+            <p class="eyebrow">Checkpoint de gestao da semana</p>
+            <strong>Semana iniciada em {{ weekly_checkpoint_week_label }}</strong>
+            {% if weekly_checkpoint %}
+            <div class="coach-wod-review-meta">
+                <span class="pill accent">{{ weekly_checkpoint.get_execution_status_display }}</span>
+                <span class="pill info">{{ weekly_checkpoint.get_responsible_role_display }}</span>
+                <span class="pill warning">{{ weekly_checkpoint.get_governance_commitment_status_display }}</span>
+                {% if weekly_checkpoint.closure_status %}
+                <span class="pill success">{{ weekly_checkpoint.get_closure_status_display }}</span>
+                {% endif %}
+            </div>
+            {% if weekly_checkpoint.governance_commitment_note %}
+            <p>{{ weekly_checkpoint.governance_commitment_note }}</p>
+            {% endif %}
+            {% if weekly_checkpoint.summary_note %}
+            <p>{{ weekly_checkpoint.summary_note }}</p>
+            {% endif %}
+            {% else %}
+            <p>Nenhum checkpoint semanal registrado ainda para esta janela.</p>
+            {% endif %}
+            {% if can_manage_weekly_checkpoint %}
+            <form method="post" action="{% url 'workout-weekly-checkpoint-update' %}" class="coach-wod-follow-up-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ current_surface_path }}">
+                <label>
+                    <span>Status</span>
+                    <select name="execution_status">
+                        <option value="not_started" {% if weekly_checkpoint_form.initial.execution_status == 'not_started' %}selected{% endif %}>Nao iniciado</option>
+                        <option value="in_progress" {% if weekly_checkpoint_form.initial.execution_status == 'in_progress' %}selected{% endif %}>Em andamento</option>
+                        <option value="completed" {% if weekly_checkpoint_form.initial.execution_status == 'completed' %}selected{% endif %}>Concluido</option>
+                    </select>
+                </label>
+                <label>
+                    <span>Responsavel</span>
+                    <select name="responsible_role">
+                        <option value="owner" {% if weekly_checkpoint_form.initial.responsible_role == 'owner' %}selected{% endif %}>Owner</option>
+                        <option value="manager" {% if weekly_checkpoint_form.initial.responsible_role == 'manager' %}selected{% endif %}>Manager</option>
+                        <option value="reception" {% if weekly_checkpoint_form.initial.responsible_role == 'reception' %}selected{% endif %}>Recepcao</option>
+                        <option value="coach" {% if weekly_checkpoint_form.initial.responsible_role == 'coach' %}selected{% endif %}>Coach</option>
+                    </select>
+                </label>
+                <label>
+                    <span>Fechamento</span>
+                    <select name="closure_status">
+                        <option value="" {% if not weekly_checkpoint_form.initial.closure_status %}selected{% endif %}>Fechamento ainda nao registrado</option>
+                        <option value="worked" {% if weekly_checkpoint_form.initial.closure_status == 'worked' %}selected{% endif %}>Funcionou</option>
+                        <option value="partial" {% if weekly_checkpoint_form.initial.closure_status == 'partial' %}selected{% endif %}>Parcial</option>
+                        <option value="did_not_work" {% if weekly_checkpoint_form.initial.closure_status == 'did_not_work' %}selected{% endif %}>Nao funcionou</option>
+                    </select>
+                </label>
+                <label>
+                    <span>Compromisso</span>
+                    <select name="governance_commitment_status">
+                        <option value="not_assumed" {% if weekly_checkpoint_form.initial.governance_commitment_status == 'not_assumed' %}selected{% endif %}>Nao assumido</option>
+                        <option value="assumed" {% if weekly_checkpoint_form.initial.governance_commitment_status == 'assumed' %}selected{% endif %}>Assumido</option>
+                        <option value="executed" {% if weekly_checkpoint_form.initial.governance_commitment_status == 'executed' %}selected{% endif %}>Executado</option>
+                    </select>
+                </label>
+                <label class="coach-wod-follow-up-note">
+                    <span>Nota do compromisso</span>
+                    <input type="text" name="governance_commitment_note" maxlength="255" placeholder="Ex.: owner assumiu a decisao e vai validar execucao na proxima semana." value="{{ weekly_checkpoint_form.initial.governance_commitment_note }}">
+                </label>
+                <label class="coach-wod-follow-up-note">
+                    <span>Nota curta</span>
+                    <input type="text" name="summary_note" maxlength="255" placeholder="Ex.: manager puxando ritual da semana e coach alinhado no fechamento." value="{{ weekly_checkpoint_form.initial.summary_note }}">
+                </label>
+                <button class="button secondary" type="submit">Registrar checkpoint semanal</button>
+            </form>
+            {% endif %}
+        </article>
+        {% if weekly_checkpoint_history %}
+        <article class="coach-wod-publication-alert-card tone-info">
+            <p class="eyebrow">Historico leve dos checkpoints</p>
+            <strong>Ultimas semanas</strong>
+            {% if weekly_checkpoint_maturity %}
+            <div class="coach-wod-review-meta">
+                <span class="pill {{ weekly_checkpoint_maturity.tone }}">{{ weekly_checkpoint_maturity.label }}</span>
+                <span class="pill {{ weekly_checkpoint_maturity.tone }}">{{ weekly_checkpoint_maturity.state_label }}</span>
+            </div>
+            <p>{{ weekly_checkpoint_maturity.summary }}</p>
+            {% endif %}
+            {% if weekly_governance_action %}
+            <div class="coach-wod-review-meta">
+                <span class="pill {{ weekly_governance_action.tone }}">Acao de governanca</span>
+                <span class="pill {{ weekly_governance_action.tone }}">{{ weekly_governance_action.cadence }}</span>
+            </div>
+            <p><strong>{{ weekly_governance_action.label }}</strong></p>
+            <p>{{ weekly_governance_action.summary }}</p>
+            {% endif %}
+            {% if weekly_checkpoint_rhythm %}
+            <div class="coach-wod-publication-alert-list">
+                {% for rhythm in weekly_checkpoint_rhythm %}
+                <span class="pill {{ rhythm.tone }}">{{ rhythm.label }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div class="coach-wod-detail-list">
+                {% for checkpoint_item in weekly_checkpoint_history %}
+                <article class="coach-wod-detail-card">
+                    <p class="eyebrow">Semana de {{ checkpoint_item.week_label }}</p>
+                    <strong>{{ checkpoint_item.execution_status_label }} · {{ checkpoint_item.responsible_role_label }}</strong>
+                    <p>{{ checkpoint_item.closure_status_label }}</p>
+                    <p>{{ checkpoint_item.governance_commitment_status_label }}</p>
+                    {% if checkpoint_item.governance_commitment_note %}
+                    <p>{{ checkpoint_item.governance_commitment_note }}</p>
+                    {% endif %}
+                    {% if checkpoint_item.summary_note %}
+                    <p>{{ checkpoint_item.summary_note }}</p>
+                    {% endif %}
+                    {% if checkpoint_item.updated_by_label %}
+                    <p>{{ checkpoint_item.updated_by_label }}</p>
+                    {% endif %}
+                </article>
+                {% endfor %}
+            </div>
+            {% if weekly_checkpoint_rhythm %}
+            {% for rhythm in weekly_checkpoint_rhythm %}
+            <p>{{ rhythm.summary }}</p>
+            {% endfor %}
+            {% endif %}
+        </article>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% if published_history.live_follow_up_entries %}
+    <section class="coach-wod-publication-history" aria-label="Pendencias reais do corredor">
+        <div class="coach-wod-publication-history-head">
+            <div class="coach-wod-publication-history-intro">
+                <p class="eyebrow">Pendencia real</p>
+                <h2>Fila curta do que ainda pede atencao</h2>
+                <p>Esse trecho separa os casos vivos do resto do historico. Ele mostra fumaça, dono da bola e proxima escada.</p>
+            </div>
+            <div class="coach-wod-review-meta">
+                <span class="pill warning">{{ published_history.assist.live_follow_up_count }} pendencia(s) real(is)</span>
+                <span class="pill warning">{{ published_history.assist.short_escalation_count }} escalonamento(s) curto(s)</span>
+                <span class="pill danger">{{ published_history.assist.strong_intervention_case_count }} intervencao forte</span>
+            </div>
+        </div>
+        <div class="coach-wod-detail-list">
+            {% for live_entry in published_history.live_follow_up_entries %}
+            <article class="coach-wod-detail-card">
+                <p class="eyebrow">{{ live_entry.session_title }} · {{ live_entry.published_at_label }}</p>
+                <strong>{{ live_entry.workout_title }}</strong>
+                <div class="coach-wod-review-meta">
+                    <span class="pill {{ live_entry.runtime_tone }}">{{ live_entry.runtime_label }}</span>
+                    <span class="pill accent">{{ live_entry.approval_label }}</span>
+                    <span class="pill {{ live_entry.escalation.tone }}">Intervencao forte</span>
+                </div>
+                {% if live_entry.reasons %}
+                <div class="coach-wod-publication-alert-list">
+                    {% for reason in live_entry.reasons %}
+                    <span class="pill warning">{{ reason }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if live_entry.actions %}
+                <p>Acoes em aberto: {{ live_entry.actions|join:", " }}</p>
+                {% endif %}
+                <p>{{ live_entry.escalation.escalation_label }}</p>
+                {% if live_entry.escalation.href %}
+                <a class="button secondary" href="{{ live_entry.escalation.href }}">{{ live_entry.escalation.owner_label }}</a>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    {% if published_history.assist.operational_memory_summary.patterns %}
+    <div class="coach-wod-publication-action-strip" aria-label="Padroes da memoria operacional">
+        {% for pattern in published_history.assist.operational_memory_summary.patterns %}
+        <article class="coach-wod-publication-action-card tone-{{ pattern.tone }}">
+            <p class="eyebrow">Memoria operacional agregada</p>
+            <strong>{{ pattern.value }} {{ pattern.label|lower }}</strong>
+            <p>{{ pattern.copy }}</p>
+        </article>
+        {% endfor %}
+    </div>
+    <div class="coach-wod-review-meta">
+        <span class="pill info">{{ published_history.assist.operational_memory_summary.reception_case_count }} com recepcao</span>
+        <span class="pill accent">{{ published_history.assist.operational_memory_summary.coach_case_count }} com coach alinhado</span>
+        <span class="pill success">{{ published_history.assist.operational_memory_summary.coach_resolved_case_count }} coach absorvido</span>
+        <span class="pill warning">{{ published_history.assist.operational_memory_summary.whatsapp_case_count }} com WhatsApp</span>
+        <span class="pill accent">{{ published_history.assist.operational_memory_summary.monitoring_case_count }} com nota de monitoramento</span>
+        <span class="pill info">{{ published_history.assist.operational_memory_summary.custom_case_count }} com marco livre</span>
+    </div>
+    {% endif %}
+    {% if published_history.assist.operational_leverage_summary.cards %}
+    <div class="coach-wod-publication-action-strip" aria-label="Efetividade das alavancas operacionais">
+        {% for leverage in published_history.assist.operational_leverage_summary.cards %}
+        <article class="coach-wod-publication-action-card tone-{{ leverage.tone }}">
+            <p class="eyebrow">Alavanca x fechamento executivo</p>
+            <strong>{{ leverage.label }}</strong>
+            <p>{{ leverage.summary }}</p>
+            <div class="coach-wod-review-meta">
+                <span class="pill {{ leverage.efficiency_tone }}">{{ leverage.efficiency_label }}</span>
+                <span class="pill accent">Taxa {{ leverage.absorption_rate_label }}</span>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if published_history.assist.operational_leverage_trends.cards %}
+    <div class="coach-wod-publication-action-strip" aria-label="Tendencia curta das alavancas operacionais">
+        {% for trend in published_history.assist.operational_leverage_trends.cards %}
+        <article class="coach-wod-publication-action-card tone-{{ trend.tone }}">
+            <p class="eyebrow">Tendencia curta da alavanca</p>
+            <strong>{{ trend.label }}</strong>
+            <p>{{ trend.trend_summary }}</p>
+            <div class="coach-wod-review-meta">
+                <span class="pill {{ trend.trend_tone }}">{{ trend.trend_label }}</span>
+                <span class="pill info">Janela recente {{ trend.recent_rate_label }}</span>
+                <span class="pill accent">Janela anterior {{ trend.previous_rate_label }}</span>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if published_history.assist.operational_management_priority.top_entry %}
+    <div class="coach-wod-publication-alert-strip" aria-label="Prioridade executiva dos alertas de gestao">
+        <article class="coach-wod-publication-alert-card tone-{{ published_history.assist.operational_management_priority.top_entry.priority_tone }}">
+            <p class="eyebrow">Prioridade executiva</p>
+            <strong>{{ published_history.assist.operational_management_priority.top_entry.title }}</strong>
+            <p>{{ published_history.assist.operational_management_priority.top_entry.summary }}</p>
+            <div class="coach-wod-review-meta">
+                <span class="pill {{ published_history.assist.operational_management_priority.top_entry.priority_tone }}">{{ published_history.assist.operational_management_priority.top_entry.priority_label }}</span>
+                <span class="pill accent">{{ published_history.assist.operational_management_priority.top_entry.state_label }}</span>
+            </div>
+        </article>
+    </div>
+    {% endif %}
+    {% if published_history.assist.operational_management_recommendations %}
+    <div class="coach-wod-publication-action-strip" aria-label="Recomendacoes executivas curtas">
+        {% for recommendation in published_history.assist.operational_management_recommendations %}
+        <article class="coach-wod-publication-action-card tone-{{ recommendation.tone }}">
+            <p class="eyebrow">Recomendacao executiva curta</p>
+            <strong>{{ recommendation.title }}</strong>
+            <p>{{ recommendation.summary }}</p>
+            <div class="coach-wod-review-meta">
+                <span class="pill {{ recommendation.tone }}">{{ recommendation.window_label }}</span>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if published_history.assist.rm_gap_queue.entries %}
+    <section id="rm-gap-queue" class="coach-wod-publication-history" aria-label="Fila curta de alunos sem RM">
+        <div class="coach-wod-publication-history-head">
+            <div>
+                <p class="eyebrow">Corredor de RM</p>
+                <h2>Alunos sem RM para movimentos criticos</h2>
+                <p>Quando o treino pede %RM e a turma nao tem esse dado, a publicacao deixa um corredor curto para fechar o gap antes da proxima aula.</p>
+            </div>
+            <div class="coach-wod-review-meta">
+                <span class="pill warning">{{ published_history.assist.rm_gap_queue.total_students }} gap(s) de RM</span>
+                <span class="pill info">{{ published_history.assist.rm_gap_queue.total_cases }} WOD(s) afetados</span>
+            </div>
+        </div>
+        <div class="coach-wod-detail-list">
+            {% for rm_case in published_history.assist.rm_gap_queue.entries %}
+            <article class="coach-wod-detail-card">
+                <p class="eyebrow">{{ rm_case.session_title }} · {{ rm_case.session_scheduled_label }}</p>
+                <strong>{{ rm_case.workout_title }}</strong>
+                <div class="coach-wod-review-meta">
+                    <span class="pill warning">{{ rm_case.missing_count }} sem RM</span>
+                    <span class="pill info">{{ rm_case.coverage_label }}</span>
+                    <span class="pill accent">{{ rm_case.viewer_ready_label }}</span>
+                    <span class="pill {{ rm_case.tone }}">Prioridade RM</span>
+                </div>
+                <p>Movimentos dependentes: {{ rm_case.required_movements_label }}</p>
+                <ul class="coach-wod-detail-items">
+                    {% for student_gap in rm_case.student_rows %}
+                    <li>
+                        <strong>{{ student_gap.student_name }}</strong> — {{ student_gap.exercise_label }}
+                        {% if student_gap.status_label %} · {{ student_gap.status_label }}{% endif %}
+                        {% if student_gap.note %} · {{ student_gap.note }}{% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% if can_manage_weekly_checkpoint %}
+                {% for student_gap in rm_case.student_rows %}
+                <form method="post" action="{% url 'workout-rm-gap-action' rm_case.workout_id %}" class="coach-wod-follow-up-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ current_surface_path }}">
+                    <input type="hidden" name="student_id" value="{{ student_gap.student_id }}">
+                    <input type="hidden" name="exercise_slug" value="{{ student_gap.exercise_slug }}">
+                    <input type="hidden" name="exercise_label" value="{{ student_gap.exercise_label }}">
+                    <label>
+                        <span>Status</span>
+                        <select name="status">
+                            <option value="requested" {% if student_gap.status == 'requested' %}selected{% endif %}>Salvar corredor</option>
+                            <option value="collected" {% if student_gap.status == 'collected' %}selected{% endif %}>RM coletado</option>
+                        </select>
+                    </label>
+                    <label class="coach-wod-follow-up-note">
+                        <span>Nota curta</span>
+                        <input type="text" name="note" maxlength="255" placeholder="Ex.: recepcao vai pedir antes da aula." value="{{ student_gap.note }}">
+                    </label>
+                    {% if student_gap.updated_by_label or student_gap.updated_at_label %}
+                    <p>{% if student_gap.updated_by_label %}{{ student_gap.updated_by_label }}{% endif %}{% if student_gap.updated_at_label %} · {{ student_gap.updated_at_label }}{% endif %}</p>
+                    {% endif %}
+                    <div class="actions">
+                        <button class="button secondary" type="submit">Salvar corredor</button>
+                        <a class="button tertiary" href="{% url 'workout-student-rm-quick-edit' rm_case.workout_id student_gap.student_id student_gap.exercise_slug %}">Registrar RM</a>
+                    </div>
+                </form>
+                {% endfor %}
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    {% if published_history.assist.alert_spotlight %}
+    <div class="coach-wod-publication-alert-strip">
+        {% for alert in published_history.assist.alert_spotlight %}
+        <article class="coach-wod-publication-alert-card tone-{{ alert.tone }}">
+            <p class="eyebrow">Alerta operacional</p>
+            <strong>{{ alert.session_title }} · {{ alert.workout_title }}</strong>
+            <p>{{ alert.label }}</p>
+        </article>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if published_history.assist.suggested_actions %}
+    <div class="coach-wod-publication-action-strip">
+        {% for action in published_history.assist.suggested_actions %}
+        <article class="coach-wod-publication-action-card tone-{{ action.tone }}">
+            <p class="eyebrow">Acao sugerida</p>
+            <strong>{{ action.label }}</strong>
+            <p>{{ action.copy }}</p>
+            {% if action.href %}
+            <a class="button secondary" href="{{ action.href }}">Abrir agora</a>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <div class="coach-wod-publication-history-grid">
+        {% for item in published_history.entries %}
+        <article class="coach-wod-publication-card{% if item.has_alerts %} has-alert-{{ item.alert_tone }}{% endif %}">
+            <div class="coach-wod-publication-card-head">
+                <div>
+                    <p class="eyebrow">Publicado em {{ item.published_at_label }}</p>
+                    <h3>{{ item.workout_title }}</h3>
+                    <p>{{ item.session_title }} · {{ item.session_scheduled_label }} · Coach {{ item.coach_label }}</p>
+                </div>
+                <div class="coach-wod-editor-pills">
+                    <span class="pill {{ item.approval_tone }}">{{ item.approval_label }}</span>
+                    <span class="pill {{ item.runtime_tone }}">{{ item.runtime_label }}</span>
+                    <span class="pill accent">v{{ item.version }}</span>
+                    {% if item.is_sensitive_confirmation %}
+                    <span class="pill warning">Mudanca sensivel confirmada</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="coach-wod-publication-card-body">
+                <p>{{ item.approval_summary }}</p>
+                <div class="coach-wod-publication-stats">
+                    <span class="pill info">Turma {{ item.reserved_count }}/{{ item.capacity }}</span>
+                    <span class="pill success">Check-in {{ item.checked_in_count }}</span>
+                    <span class="pill accent">Abriram WOD {{ item.viewer_count }}</span>
+                    <span class="pill {% if item.viewer_count and item.viewer_count < item.reserved_count %}warning{% else %}success{% endif %}">Consumo {{ item.viewer_rate_label }}</span>
+                </div>
+                {% if item.rm_readiness.has_percentage_rm %}
+                <div class="coach-wod-review-digest">
+                    <p class="eyebrow">Prontidao de RM x consumo real</p>
+                    <p>{{ item.rm_readiness.readiness_summary }}</p>
+                    <div class="coach-wod-review-meta">
+                        <span class="pill {% if item.rm_readiness.alert_level == 'danger' %}danger{% elif item.rm_readiness.alert_level == 'warning' %}warning{% else %}success{% endif %}">
+                            {{ item.rm_readiness.coverage_label }}
+                        </span>
+                        <span class="pill accent">{{ item.rm_readiness.viewer_ready_label }}</span>
+                    </div>
+                    <p>Movimentos dependentes de RM: {{ item.rm_readiness.required_movements_label }}</p>
+                    {% if item.rm_readiness.missing_students_label %}
+                    <p>Sem RM completo: {{ item.rm_readiness.missing_students_label }}{% if item.rm_readiness.missing_students_remaining %} e mais {{ item.rm_readiness.missing_students_remaining }} aluno(s){% endif %}.</p>
+                    {% endif %}
+                    <a class="button tertiary" href="#rm-gap-queue">Abrir fila de RM</a>
+                </div>
+                {% endif %}
+                {% if item.alerts %}
+                <div class="coach-wod-publication-alert-list">
+                    {% for alert in item.alerts %}
+                    <span class="pill {{ alert.tone }}">{{ alert.label }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if item.follow_up_actions %}
+                <div class="coach-wod-publication-action-list">
+                    {% for action in item.follow_up_actions %}
+                    <article class="coach-wod-publication-action-inline tone-{{ action.tone }}">
+                        <strong>{{ action.label }}</strong>
+                        <p>{{ action.copy }}</p>
+                        {% if action.href %}
+                        <a href="{{ action.href }}">Abrir agora</a>
+                        {% endif %}
+                        {% if action.result %}
+                        <div class="coach-wod-publication-result tone-{{ action.result.status_tone }}">
+                            <div class="coach-wod-review-meta">
+                                <span class="pill {{ action.result.status_tone }}">{{ action.result.status_label }}</span>
+                                <span class="pill {{ action.result.monitor_tone }}">{{ action.result.monitor_label }}</span>
+                                {% if action.result.resolved_by_label %}
+                                <span class="pill info">{{ action.result.resolved_by_label }}</span>
+                                {% endif %}
+                                {% if action.result.resolved_at_label %}
+                                <span class="pill accent">{{ action.result.resolved_at_label }}</span>
+                                {% endif %}
+                            </div>
+                            {% if action.result.outcome_note %}
+                            <p>{{ action.result.outcome_note }}</p>
+                            {% endif %}
+                            <p>{{ action.result.before_after_summary }}</p>
+                            <p>{{ action.result.delta_summary }}</p>
+                            {% if action.result.remaining_alerts %}
+                            <div class="coach-wod-publication-alert-list">
+                                {% for label in action.result.remaining_alerts %}
+                                <span class="pill warning">{{ label }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {% if can_manage_weekly_checkpoint %}
+                        <form method="post" action="{% url 'workout-follow-up-action' item.workout_id %}" class="coach-wod-follow-up-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ current_surface_path }}">
+                            <input type="hidden" name="action_key" value="{{ action.key }}">
+                            <input type="hidden" name="action_label" value="{{ action.label }}">
+                            <label>
+                                <span>Resultado</span>
+                                <select name="result_status">
+                                    <option value="completed" {% if action.result and action.result.status == 'completed' %}selected{% endif %}>Resolvido</option>
+                                    <option value="dismissed" {% if action.result and action.result.status == 'dismissed' %}selected{% endif %}>Descartado</option>
+                                </select>
+                            </label>
+                            <label class="coach-wod-follow-up-note">
+                                <span>Nota curta</span>
+                                <input type="text" name="outcome_note" maxlength="255" placeholder="Ex.: recepcao avisada e turma respondeu." value="{% if action.result %}{{ action.result.outcome_note }}{% endif %}">
+                            </label>
+                            <button class="button secondary" type="submit">{% if action.result %}Atualizar retorno{% else %}Registrar retorno{% endif %}</button>
+                        </form>
+                        {% endif %}
+                    </article>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="coach-wod-review-digest">
+                    <p class="eyebrow">Memoria operacional curta</p>
+                    {% if item.operational_memories %}
+                    <div class="coach-wod-detail-list">
+                        {% for memory in item.operational_memories %}
+                        <article class="coach-wod-detail-card">
+                            <p class="eyebrow">{{ memory.kind_label }}</p>
+                            <strong>{{ memory.created_at_label }}</strong>
+                            {% if memory.actor_label %}
+                            <p>{{ memory.actor_label }}</p>
+                            {% endif %}
+                            {% if memory.note %}
+                            <p>{{ memory.note }}</p>
+                            {% endif %}
+                        </article>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p>Nenhum marco curto registrado ainda para este caso.</p>
+                    {% endif %}
+                    {% if can_manage_weekly_checkpoint %}
+                    <form method="post" action="{% url 'workout-operational-memory-create' item.workout_id %}" class="coach-wod-follow-up-form">
+                        {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ current_surface_path }}">
+                        <label>
+                            <span>Marco</span>
+                            <select name="kind">
+                                <option value="reception_owned">Recepcao assumiu</option>
+                                <option value="coach_aligned">Coach alinhado</option>
+                                <option value="whatsapp_sent">WhatsApp disparado</option>
+                                <option value="monitoring_note">Nota de monitoramento</option>
+                                <option value="custom">Marco livre</option>
+                            </select>
+                        </label>
+                        <label class="coach-wod-follow-up-note">
+                            <span>Nota curta</span>
+                            <input type="text" name="note" maxlength="255" placeholder="Ex.: recepcao assumiu e chamou os dois atrasados.">
+                        </label>
+                        <button class="button secondary" type="submit">Registrar marco</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% if item.published_by_label %}
+                <p>Publicado por {{ item.published_by_label }}</p>
+                {% endif %}
+            </div>
+        </article>
+        {% empty %}
+        <article class="coach-wod-empty-state">
+            <p>Nenhum WOD publicado entrou nessa vitrine executiva ainda.</p>
+        </article>
+        {% endfor %}
+    </div>
+</section>

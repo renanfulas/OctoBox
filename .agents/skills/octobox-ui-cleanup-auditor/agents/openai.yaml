@@ -1,0 +1,7 @@
+interface:
+  display_name: "OctoBox UI Cleanup Auditor"
+  short_description: "CSS/HTML cleanup and UI legacy forensics"
+  default_prompt: "Use $octobox-ui-cleanup-auditor to audit CSS/HTML debt, find override hotspots, and map safe cleanup paths in OctoBOX."
+
+policy:
+  allow_implicit_invocation: true

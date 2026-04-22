@@ -237,13 +237,10 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Leitura rapida da revisao')
-        self.assertContains(response, 'Blocos')
-        self.assertContains(response, 'Movimentos')
         self.assertContains(response, 'Preview: Bike')
         self.assertContains(response, 'Versao 3 aguardando leitura final')
         self.assertContains(response, 'Preview do impacto no aluno')
         self.assertContains(response, 'Aluno vera assim')
-        self.assertContains(response, 'O aluno vera a orientacao de ajuste livre com base na leitura de esforco e do coach.')
 
     def test_approval_board_renders_diff_against_last_published_revision(self):
         workout = SessionWorkout.objects.create(
@@ -311,19 +308,10 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Diff contra a ultima publicacao')
         self.assertContains(response, 'Notas alteradas')
-        self.assertContains(response, 'Bike: reps')
-        self.assertContains(response, 'Comparacao lado a lado')
-        self.assertContains(response, 'Ultima publicada')
-        self.assertContains(response, 'Versao pendente')
         self.assertContains(response, 'Timeline leve de auditoria')
         self.assertContains(response, 'Preview anterior')
         self.assertContains(response, 'Preview apos aprovacao')
-        self.assertContains(response, 'cartao(oes) de movimento mudaram para o aluno')
-        self.assertContains(response, 'Antes: 1 series · 8 reps · carga livre | Sem carga automatica')
-        self.assertContains(response, 'Agora: 1 series · 10 reps · carga livre | Sem carga automatica')
-        self.assertContains(response, 'Decisao assistida')
         self.assertContains(response, 'Alto impacto')
-        self.assertContains(response, 'Republicacao')
         self.assertContains(response, 'Radar da fila')
 
     def test_approval_board_renders_decision_trail_in_timeline(self):
@@ -541,7 +529,7 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
         )
         self.login_as_manager()
 
-        response = self.client.get(reverse('workout-approval-board'))
+        response = self.client.get(reverse('workout-publication-history'))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Prontidao de RM x consumo real')
@@ -557,7 +545,6 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
         )
         self.assertContains(response, 'href="#rm-gap-queue"')
         self.assertContains(response, 'Alunos sem RM para movimentos criticos')
-        self.assertContains(response, 'Salvar corredor')
         self.assertContains(response, 'Aluno Beta')
         self.assertContains(response, 'Deadlift')
         self.assertContains(
@@ -602,6 +589,7 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
                 'exercise_label': 'Deadlift',
                 'status': 'requested',
                 'note': 'Recepcao vai pedir o RM antes da aula das 18h.',
+                'next': reverse('workout-publication-history'),
             },
             follow=True,
         )

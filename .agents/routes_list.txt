@@ -1,0 +1,9 @@
+# Lista de rotas relativas a checar (uma por linha)
+# Comentários começam com #
+/
+/admin/
+/admin/login/
+/health/
+/status/
+/api/health/
+/login/

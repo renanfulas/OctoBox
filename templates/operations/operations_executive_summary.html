@@ -1,0 +1,116 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+{% with page=operation_page %}
+<div class="operation-shell coach-scene workspace-shell coach-wod-editor-shell">
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    {% include "operations/includes/wod_corridor_tabs.html" %}
+    <section class="coach-wod-page-intro coach-wod-page-intro--executive" aria-label="Missao do resumo executivo">
+        <p class="eyebrow">Varanda executiva</p>
+        <h2>Leitura macro do corredor sem perder o jeito simples do OctoBox.</h2>
+        <p>Use essa tela para ver o conjunto. Quando surgir acao concreta, o caminho natural e descer para Historico ou Aprovações.</p>
+    </section>
+
+    {% if executive_summary_mode == 'coach-minimal' %}
+    <section class="coach-wod-summary-grid" aria-label="Resumo executivo curto para coach">
+        {% for card in coach_minimal_cards %}
+        <article class="table-card coach-wod-summary-card tone-{{ card.tone }}">
+            <p class="eyebrow">{{ card.label }}</p>
+            <h2>{{ card.value }}</h2>
+            <p>{{ card.copy }}</p>
+        </article>
+        {% endfor %}
+    </section>
+    <section class="coach-wod-publication-history" aria-label="Alertas curtos para coach">
+        {% if published_history.assist.alert_spotlight %}
+        <div class="coach-wod-publication-alert-strip">
+            {% for alert in published_history.assist.alert_spotlight %}
+            <article class="coach-wod-publication-alert-card tone-{{ alert.tone }}">
+                <p class="eyebrow">Alerta operacional</p>
+                <strong>{{ alert.session_title }} · {{ alert.workout_title }}</strong>
+                <p>{{ alert.label }}</p>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <article class="table-card coach-wod-summary-card tone-info">
+            <p class="eyebrow">Historico do corredor</p>
+            <p>Nao ha alerta vivo nesta janela curta, mas o historico completo continua como trilho principal de leitura.</p>
+        </article>
+        {% endif %}
+        <div class="actions">
+            <a class="button secondary" href="{% url 'workout-publication-history' %}">Abrir historico completo</a>
+        </div>
+    </section>
+    {% else %}
+    <section class="coach-wod-summary-grid" aria-label="Resumo executivo da operacao">
+        <article class="table-card coach-wod-summary-card tone-info">
+            <p class="eyebrow">WODs acompanhados</p>
+            <h2>{{ published_history.assist.total }}</h2>
+            <p>Janela recente de publicacoes com leitura executiva agregada.</p>
+        </article>
+        <article class="table-card coach-wod-summary-card tone-warning">
+            <p class="eyebrow">Pendencias reais</p>
+            <h2>{{ published_history.assist.live_follow_up_count }}</h2>
+            <p>Casos vivos que ainda pedem resposta operacional curta.</p>
+        </article>
+        <article class="table-card coach-wod-summary-card tone-danger">
+            <p class="eyebrow">Alertas criticos</p>
+            <h2>{{ published_history.assist.critical_alert_count }}</h2>
+            <p>Sinais fortes que precisam ser resolvidos antes de virarem rotina ruim.</p>
+        </article>
+        <article class="table-card coach-wod-summary-card tone-success">
+            <p class="eyebrow">Acoes com resultado</p>
+            <h2>{{ published_history.assist.resolved_action_count }}</h2>
+            <p>Retornos já registrados com trilha de fechamento no corredor.</p>
+        </article>
+    </section>
+
+    {% if published_history.assist.weekly_executive_summary %}
+    <section class="coach-wod-publication-history" aria-label="Leitura semanal executiva">
+        <div class="coach-wod-publication-alert-strip">
+            <article class="coach-wod-publication-alert-card tone-info">
+                <p class="eyebrow">{{ published_history.assist.weekly_executive_summary.label }}</p>
+                <strong>{{ published_history.assist.weekly_executive_summary.summary }}</strong>
+                <div class="coach-wod-review-meta">
+                    <span class="pill info">{{ published_history.assist.weekly_executive_summary.weekly_total }} publicacao(oes)</span>
+                    <span class="pill warning">{{ published_history.assist.weekly_executive_summary.adjustment_label }}</span>
+                    <span class="pill success">{{ published_history.assist.weekly_executive_summary.improvement_label }}</span>
+                </div>
+            </article>
+            {% if published_history.assist.operational_management_priority.top_entry %}
+            <article class="coach-wod-publication-alert-card tone-{{ published_history.assist.operational_management_priority.top_entry.priority_tone }}">
+                <p class="eyebrow">Alerta leve de gestao</p>
+                <strong>{{ published_history.assist.operational_management_priority.top_entry.label }}</strong>
+                <p>{{ published_history.assist.operational_management_priority.top_entry.summary }}</p>
+                <p>{{ published_history.assist.operational_management_priority.top_entry.recommendation }}</p>
+                <div class="coach-wod-review-meta">
+                    <span class="pill info">Prioridade executiva</span>
+                    <span class="pill {{ published_history.assist.operational_management_priority.top_entry.priority_tone }}">{{ published_history.assist.operational_management_priority.top_entry.priority_label }}</span>
+                </div>
+            </article>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if published_history.assist.operational_management_recommendations %}
+    <section class="coach-wod-publication-history" aria-label="Recomendacoes executivas">
+        <div class="coach-wod-publication-action-strip">
+            {% for recommendation in published_history.assist.operational_management_recommendations %}
+            <article class="coach-wod-publication-action-card tone-{{ recommendation.tone }}">
+                <p class="eyebrow">Recomendacao executiva curta</p>
+                <strong>{{ recommendation.label }}</strong>
+                <p>{{ recommendation.summary }}</p>
+                <div class="coach-wod-review-meta">
+                    <span class="pill {{ recommendation.tone }}">{{ recommendation.cadence }}</span>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    {% endif %}
+</div>
+{% endwith %}
+{% endblock %}

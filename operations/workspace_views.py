@@ -34,6 +34,8 @@ from operations.facade import (
 )
 from operations.presentation import build_operation_workspace_page
 from operations.workout_approval_board_context import build_workout_approval_board_context
+from operations.operations_executive_summary_context import build_operations_executive_summary_context
+from operations.workout_editor_overview_context import build_workout_editor_overview_context
 from operations.workout_published_history import (
     build_publication_runtime_metrics as _build_publication_runtime_metrics,
 )
@@ -47,6 +49,7 @@ from operations.workout_rm_quick_edit_context import (
     build_workout_student_rm_quick_edit_form_kwargs,
 )
 from operations.workout_rm_quick_edit_loader import load_workout_student_rm_quick_edit_context
+from operations.workout_publication_history_context import build_workout_publication_history_context
 from operations.forms import (
     WorkoutStudentRmQuickForm,
 )
@@ -240,8 +243,33 @@ class CoachWorkspaceView(OperationBaseView):
         return context
 
 
+class WorkoutEditorHomeView(OperationBaseView):
+    allowed_roles = (ROLE_COACH, ROLE_OWNER)
+    template_name = 'operations/workout_editor_home.html'
+    page_title = 'Editor de WOD'
+    page_subtitle = 'Escolha a aula e abra o editor sem labirinto.'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_base_context())
+        editor_context = build_workout_editor_overview_context(
+            request=self.request,
+            today=context['today'],
+            current_role=context['current_role'],
+            page_title=self.page_title,
+            page_subtitle=self.page_subtitle,
+        )
+        attach_page_payload(
+            context,
+            payload_key='operation_page',
+            payload=editor_context.pop('operation_page_payload'),
+        )
+        context.update(editor_context)
+        return context
+
+
 class CoachSessionWorkoutEditorView(CoachSessionWorkoutEditorActionsMixin, OperationBaseView):
-    allowed_roles = (ROLE_COACH,)
+    allowed_roles = (ROLE_COACH, ROLE_OWNER)
     template_name = 'operations/coach_session_workout_editor.html'
     page_title = 'Publicar WOD'
     page_subtitle = 'Monte o treino da aula com blocos e movimentos sem sair do fluxo do coach.'
@@ -310,6 +338,54 @@ class WorkoutApprovalBoardView(OperationBaseView):
             payload=board_context.pop('operation_page_payload'),
         )
         context.update(board_context)
+        return context
+
+
+class WorkoutPublicationHistoryView(OperationBaseView):
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_COACH)
+    template_name = 'operations/workout_publication_history.html'
+    page_title = 'Historico do WOD'
+    page_subtitle = 'Acompanhe o que foi ao ar e as pendencias reais do corredor.'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_base_context())
+        history_context = build_workout_publication_history_context(
+            request=self.request,
+            today=context['today'],
+            current_role=context['current_role'],
+            page_title=self.page_title,
+            page_subtitle=self.page_subtitle,
+        )
+        attach_page_payload(
+            context,
+            payload_key='operation_page',
+            payload=history_context.pop('operation_page_payload'),
+        )
+        context.update(history_context)
+        return context
+
+
+class OperationsExecutiveSummaryView(OperationBaseView):
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_COACH)
+    template_name = 'operations/operations_executive_summary.html'
+    page_title = 'Resumo executivo'
+    page_subtitle = 'Leia o corredor de WOD sem misturar decisao, historico e acompanhamento.'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_base_context())
+        summary_context = build_operations_executive_summary_context(
+            current_role=context['current_role'],
+            page_title=self.page_title,
+            page_subtitle=self.page_subtitle,
+        )
+        attach_page_payload(
+            context,
+            payload_key='operation_page',
+            payload=summary_context.pop('operation_page_payload'),
+        )
+        context.update(summary_context)
         return context
 
 

@@ -7,7 +7,7 @@ POR QUE ELE EXISTE:
 O QUE ESTE ARQUIVO FAZ:
 1. monta fila pendente com filtros e ordenacao.
 2. monta payload da pagina.
-3. prepara checkpoint semanal, historico publicado e assistentes da board.
+3. prepara a leitura curta da board de aprovacao.
 
 PONTOS CRITICOS:
 - manter o shape do contexto estavel para o template.
@@ -22,24 +22,14 @@ from operations.forms import (
     WorkoutApprovalDecisionForm,
     WorkoutApprovalFilterForm,
     WorkoutRejectionForm,
-    WorkoutWeeklyCheckpointForm,
 )
 from student_app.models import (
     SessionWorkout,
     SessionWorkoutStatus,
-    WorkoutWeeklyManagementCheckpoint,
-    WorkoutWeeklyCheckpointOwner,
-    WorkoutWeeklyCheckpointStatus,
-    WorkoutWeeklyGovernanceCommitmentStatus,
 )
 
-from .workout_board_builders import (
-    build_weekly_checkpoint_maturity,
-    build_weekly_checkpoint_rhythm,
-    build_weekly_governance_action,
-)
-from .workout_published_history import build_published_workout_history
-from .workout_support import build_weekly_checkpoint_history, build_workout_review_snapshot, week_start_for
+from .workout_corridor_navigation import build_workout_corridor_tabs
+from .workout_support import build_workout_review_snapshot
 
 
 def _build_pending_workouts(*, filter_form, today, build_review_snapshot):
@@ -152,48 +142,20 @@ def build_workout_approval_board_context(
         build_review_snapshot=build_workout_review_snapshot,
     )
     pending_workouts = pending_state['pending_workouts']
-    current_week_start = week_start_for(today)
-    weekly_checkpoint = WorkoutWeeklyManagementCheckpoint.objects.filter(week_start=current_week_start).first()
-    weekly_checkpoint_history = build_weekly_checkpoint_history()
-    weekly_checkpoint_rhythm = build_weekly_checkpoint_rhythm(
-        checkpoint_history=weekly_checkpoint_history
-    )
-    weekly_checkpoint_maturity = build_weekly_checkpoint_maturity(
-        checkpoint_history=weekly_checkpoint_history,
-        rhythm_cards=weekly_checkpoint_rhythm,
-    )
     return {
         'operation_page_payload': _build_page_payload(
             page_title=page_title,
             page_subtitle=page_subtitle,
             current_role_slug=current_role.slug,
         ),
+        'workout_corridor_tabs': build_workout_corridor_tabs(
+            current_key='approval',
+            current_role_slug=current_role.slug,
+        ),
         'pending_workouts': pending_workouts,
         'rejection_form': WorkoutRejectionForm(),
         'approval_decision_form': WorkoutApprovalDecisionForm(),
         'approval_filter_form': filter_form,
-        'weekly_checkpoint': weekly_checkpoint,
-        'weekly_checkpoint_form': WorkoutWeeklyCheckpointForm(
-            initial={
-                'execution_status': getattr(weekly_checkpoint, 'execution_status', WorkoutWeeklyCheckpointStatus.NOT_STARTED),
-                'responsible_role': getattr(weekly_checkpoint, 'responsible_role', WorkoutWeeklyCheckpointOwner.MANAGER),
-                'closure_status': getattr(weekly_checkpoint, 'closure_status', ''),
-                'governance_commitment_status': getattr(
-                    weekly_checkpoint,
-                    'governance_commitment_status',
-                    WorkoutWeeklyGovernanceCommitmentStatus.NOT_ASSUMED,
-                ),
-                'governance_commitment_note': getattr(weekly_checkpoint, 'governance_commitment_note', ''),
-                'summary_note': getattr(weekly_checkpoint, 'summary_note', ''),
-            }
-        ),
-        'weekly_checkpoint_week_label': current_week_start.strftime('%d/%m/%Y'),
-        'weekly_checkpoint_history': weekly_checkpoint_history,
-        'weekly_checkpoint_rhythm': weekly_checkpoint_rhythm,
-        'weekly_checkpoint_maturity': weekly_checkpoint_maturity,
-        'weekly_governance_action': build_weekly_governance_action(
-            maturity=weekly_checkpoint_maturity
-        ),
         'approval_queue_assist': {
             'total': len(pending_workouts),
             'high_impact_count': sum(
@@ -203,13 +165,6 @@ def build_workout_approval_board_context(
                 1 for workout in pending_workouts if workout.review_snapshot['diff_snapshot']['is_sensitive']
             ),
         },
-        'published_history': build_published_workout_history(
-            limit=12,
-            coach_username=pending_state['selected_coach'],
-            today_only=pending_state['today_only'],
-            published_reason=pending_state['published_reason'],
-            current_role_slug=current_role.slug,
-        ),
         'approval_filter_state': {
             'sort': pending_state['sort_value'],
             'coach': pending_state['selected_coach'],
@@ -218,4 +173,5 @@ def build_workout_approval_board_context(
             'published_reason': pending_state['published_reason'],
         },
         'approval_coach_options': _build_coach_options(),
+        'current_surface_path': request.get_full_path(),
     }

@@ -1,0 +1,37 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+{% with page=operation_page %}
+<div class="operation-shell coach-scene workspace-shell coach-wod-editor-shell">
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    {% include "operations/includes/wod_corridor_tabs.html" %}
+
+    <section class="coach-wod-overview-grid" aria-label="Aulas disponiveis para editar WOD">
+        {% for session_item in editor_sessions %}
+        <article class="table-card coach-wod-overview-card">
+            <div class="coach-wod-editor-head">
+                <div>
+                    <p class="eyebrow">Aula</p>
+                    <h2>{{ session_item.title }}</h2>
+                    <p class="operation-session-meta">{{ session_item.scheduled_label }} · Coach {{ session_item.coach_label }}</p>
+                </div>
+                <div class="coach-wod-editor-pills">
+                    <span class="pill {{ session_item.status_tone }}">{{ session_item.status_label }}</span>
+                </div>
+            </div>
+            <p>{{ session_item.summary }}</p>
+            <div class="actions">
+                <a class="button" href="{{ session_item.href }}">Abrir editor</a>
+            </div>
+        </article>
+        {% empty %}
+        <article class="table-card coach-wod-overview-card">
+            <div class="coach-wod-empty-state">
+                <p>{{ editor_sessions_empty_copy }}</p>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+</div>
+{% endwith %}
+{% endblock %}

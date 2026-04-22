@@ -1,0 +1,7 @@
+interface:
+  display_name: "Frontend Aesthetic Director"
+  short_description: "Distinctive production-grade frontends"
+  default_prompt: "Use $frontend-aesthetic-director to design and build a visually distinctive, production-grade frontend that avoids generic AI aesthetics."
+
+policy:
+  allow_implicit_invocation: true

@@ -67,12 +67,8 @@ backups/
 *.rej
 
 # Tooling local de agentes
-.agents/
-/ .agents/
-/prompts/
+.claude/
 /figma/
-/OctoBox/
-/.specs/
 
 # Artefatos temporarios de revisao local
 tmp-*-cookies.txt
@@ -123,9 +119,6 @@ debug_*.html
 /Programando-em-alto-nível1.py
 /Programando-em-alto-nível2.py
 /Programando-em-alto-nível4.yaml
-/.github/renan_prompter.instructions.md
-/.github/agents/Debugger.agent.md
-/.github/agents/UI Payment.agent.md
 
 tmp/
 .omx/

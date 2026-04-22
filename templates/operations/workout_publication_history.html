@@ -1,0 +1,17 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+{% with page=operation_page %}
+<div class="operation-shell coach-scene workspace-shell coach-wod-editor-shell">
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    {% include "operations/includes/wod_corridor_tabs.html" %}
+    <section class="coach-wod-page-intro" aria-label="Missao da pagina de historico">
+        <p class="eyebrow">Missao da pagina</p>
+        <h2>Leia o que foi ao ar, entenda a resposta da turma e feche o que ainda pede acao.</h2>
+        <p>Essa superficie existe para acompanhamento. Ela nao compete com a aprovacao e nao tenta virar painel pesado.</p>
+    </section>
+    {% include "operations/includes/wod_publication_history_filters.html" %}
+    {% include "operations/includes/wod_publication_history_content.html" %}
+</div>
+{% endwith %}
+{% endblock %}

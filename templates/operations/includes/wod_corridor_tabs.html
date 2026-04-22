@@ -1,0 +1,13 @@
+{% if workout_corridor_tabs %}
+<nav class="coach-wod-corridor-tabs" aria-label="Navegacao do corredor de WOD">
+    {% for tab in workout_corridor_tabs %}
+    <a
+        class="coach-wod-corridor-tab{% if tab.is_active %} is-active{% endif %}"
+        href="{{ tab.href }}"
+        {% if tab.is_active %}aria-current="page"{% endif %}
+    >
+        {{ tab.label }}
+    </a>
+    {% endfor %}
+</nav>
+{% endif %}
