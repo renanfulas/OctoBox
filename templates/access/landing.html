@@ -1,0 +1,239 @@
+<!--
+ARQUIVO: landing page comercial publica do OctoBox.
+
+POR QUE ELE EXISTE:
+- transforma a raiz do dominio em vitrine comercial do produto;
+- separa a fachada publica da porta de login operacional;
+- comunica valor com clareza antes de pedir qualquer acao.
+
+O QUE ESTE ARQUIVO FAZ:
+1. entrega um hero cinematico com video local e CTA enxuto;
+2. apresenta os modulos centrais com linguagem limpa e editorial;
+3. fecha com uma chamada simples para conhecer ou entrar no produto.
+
+PONTOS CRITICOS:
+- a pagina deve permanecer minimalista, sem virar mosaico de marketing;
+- o hero precisa vender atmosfera sem roubar leitura do conteudo;
+- os CTAs nao devem competir entre si.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OctoBox Fit | A operação premium para boxes e academias</title>
+    <meta
+        name="description"
+        content="OctoBox organiza recepção, financeiro, agenda e experiência do aluno em uma operação premium, clara e pronta para valorizar o seu box."
+    >
+    {% load static %}
+    <link rel="preload" href="{% static 'videos/hero-sequence/hero-master-loop-mobile.mp4' %}?v={{ static_asset_version }}" as="video" type="video/mp4" media="(max-width: 840px)">
+    <link rel="preload" href="{% static 'videos/hero-sequence/hero-master-loop.mp4' %}?v={{ static_asset_version }}" as="video" type="video/mp4" media="(min-width: 841px)">
+    <link rel="stylesheet" href="{% static 'css/design-system/tokens.css' %}?v={{ static_asset_version }}">
+    <link rel="stylesheet" href="{% static 'css/design-system/pages/marketing-landing.css' %}?v={{ static_asset_version }}">
+</head>
+<body data-page="marketing-landing">
+    <header class="landing-nav">
+        <a class="landing-brand" href="#topo" aria-label="OctoBox, voltar ao topo">
+            <span class="landing-brand-mark">OctoBox</span>
+            <span class="landing-brand-subtitle">Fit</span>
+        </a>
+        <nav class="landing-nav-links" aria-label="Navegação da landing page">
+            <a href="#plataforma">Plataforma</a>
+            <a href="#modulos">Módulos</a>
+            <a href="#faq">FAQ</a>
+        </nav>
+        <a class="landing-button landing-button--ghost" href="{{ login_url }}">Entrar</a>
+    </header>
+
+    <main>
+        <section class="landing-hero" id="topo" aria-label="Apresentação principal do OctoBox">
+            <video
+                aria-label="Atletas treinando com intensidade em um ambiente de box funcional"
+                autoplay
+                class="landing-hero-video"
+                loop
+                muted
+                playsinline
+                preload="metadata"
+            >
+                <source src="{% static 'videos/hero-sequence/hero-master-loop-mobile.mp4' %}?v={{ static_asset_version }}" type="video/mp4" media="(max-width: 840px)">
+                <source src="{% static 'videos/hero-sequence/hero-master-loop.mp4' %}?v={{ static_asset_version }}" type="video/mp4" media="(min-width: 841px)">
+            </video>
+            <div class="landing-hero-scrim" aria-hidden="true"></div>
+            <div class="landing-hero-noise" aria-hidden="true"></div>
+
+            <div class="landing-hero-content">
+                <p class="landing-eyebrow">OctoBox Fit</p>
+                <h1>Seu box com presença premium. Sua operação no controle.</h1>
+                <p class="landing-hero-copy">
+                    O OctoBox transforma recepção, agenda, financeiro e relacionamento em uma experiência de operação
+                    elegante, comercial e pronta para fazer o seu box parecer maior, mais sólido e mais desejado.
+                </p>
+                <div class="landing-hero-actions">
+                    <a class="landing-button landing-button--primary" href="#plataforma">Ver a experiência</a>
+                    <a class="landing-button landing-button--secondary" href="{{ login_url }}">Entrada oficial</a>
+                </div>
+                <ul class="landing-hero-pill-row" aria-label="Pilares principais do produto">
+                    <li>Recepção</li>
+                    <li>Financeiro</li>
+                    <li>Agenda</li>
+                    <li>App do aluno</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="landing-statement">
+            <div class="landing-container landing-container--narrow">
+                <p class="landing-section-kicker">Menos improviso</p>
+                <h2>Quando a operação sobe de nível, o seu box sobe junto.</h2>
+                <p class="landing-section-copy">
+                    Pense no OctoBox como a concierge de uma marca premium: por trás existe disciplina, processo e
+                    precisão. Na frente, o aluno sente organização, confiança e valor desde o primeiro contato.
+                </p>
+            </div>
+        </section>
+
+        <section class="landing-showcase" id="plataforma" aria-label="Visão da plataforma">
+            <div class="landing-container">
+                <article class="landing-panel landing-panel--dark">
+                    <div class="landing-panel-copy">
+                        <p class="landing-section-kicker">Operação</p>
+                        <h2>Uma operação que parece tão forte quanto o treino que você entrega.</h2>
+                        <p>
+                            Owner, recepção e equipe deixam de correr atrás de planilhas, mensagens soltas e memória
+                            operacional. O que importa aparece primeiro, com leitura clara e presença de produto.
+                        </p>
+                    </div>
+                    <div class="landing-browser-frame">
+                        <img
+                            src="{% static 'images/landing/entradas-real.png' %}"
+                            alt="Tela real de entradas do app OctoBox"
+                            loading="lazy"
+                        >
+                    </div>
+                </article>
+
+                <article class="landing-panel landing-panel--light">
+                    <div class="landing-browser-frame landing-browser-frame--soft">
+                        <img
+                            src="{% static 'images/landing/financeiro-real.png' %}"
+                            alt="Tela real do financeiro do app OctoBox"
+                            loading="lazy"
+                        >
+                    </div>
+                    <div class="landing-panel-copy">
+                        <p class="landing-section-kicker">Gestão</p>
+                        <h2>Visual premium. Gestão à altura da sua ambição.</h2>
+                        <p>
+                            Inspirado por uma linguagem editorial, o layout mostra só o essencial: prioridade, contexto
+                            e próxima ação. Menos ruído, mais autoridade.
+                        </p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="landing-modules" id="modulos" aria-label="Módulos principais do OctoBox">
+            <div class="landing-container">
+                <div class="landing-modules-head">
+                    <p class="landing-section-kicker">Fluxo completo</p>
+                    <h2>Quatro frentes do negócio, unidas na mesma assinatura.</h2>
+                </div>
+
+                <div class="landing-module-grid">
+                    <article class="landing-module-card">
+                        <div class="landing-device-frame landing-device-frame--wide">
+                            <img
+                                src="{% static 'images/landing/entradas-real.png' %}"
+                                alt="Tela real da fila de entradas do app OctoBox"
+                                loading="lazy"
+                            >
+                        </div>
+                        <h3>Entradas que mostram quem merece atenção agora e para onde converter primeiro.</h3>
+                        <p>Menos troca de contexto. Mais velocidade comercial, cadência e leitura operacional.</p>
+                    </article>
+
+                    <article class="landing-module-card">
+                        <div class="landing-device-frame">
+                            <img
+                                src="{% static 'images/landing/alunos-real.png' %}"
+                                alt="Tela real da base de alunos do app OctoBox"
+                                loading="lazy"
+                            >
+                        </div>
+                        <h3>Base de alunos com status, contexto e próximo passo, sem depender da memória da equipe.</h3>
+                        <p>Plano, presença e sinais de prioridade aparecem com clareza de produto, não de planilha.</p>
+                    </article>
+
+                    <article class="landing-module-card landing-module-card--text">
+                        <span class="landing-stat">1</span>
+                        <h3>Uma base operacional para comercial, gestão e experiência do aluno.</h3>
+                        <p>
+                            O que antes vivia espalhado em WhatsApp, caderno e planilha passa a conversar na mesma
+                            arquitetura, com acabamento de marca premium.
+                        </p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="landing-proof" aria-label="Benefícios comerciais do produto">
+            <div class="landing-container landing-container--narrow">
+                <p class="landing-section-kicker">Feito para boxes</p>
+                <h2>Venda melhor. Retenha melhor. Pareça o box que todos querem lembrar.</h2>
+                <div class="landing-proof-grid">
+                    <article>
+                        <h3>Menos retrabalho</h3>
+                        <p>A informação deixa de pingar em cinco lugares diferentes e volta a correr em linha reta.</p>
+                    </article>
+                    <article>
+                        <h3>Mais confiança</h3>
+                        <p>Quem atende sabe o que fazer sem depender de improviso, sorte ou memória da equipe.</p>
+                    </article>
+                    <article>
+                        <h3>Mais valor percebido</h3>
+                        <p>Seu box passa a operar com presença de marca premium, não com aparência de improviso.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="landing-faq" id="faq" aria-label="Perguntas frequentes">
+            <div class="landing-container landing-container--narrow">
+                <p class="landing-section-kicker">FAQ</p>
+                <h2>Direto ao ponto.</h2>
+                <div class="landing-faq-list">
+                    <article>
+                        <h3>O OctoBox é apenas para CrossFit?</h3>
+                        <p>Sim. O OctoBox foi pensado para boxes de CrossFit e estúdios de treino funcional.</p>
+                    </article>
+                    <article>
+                        <h3>Isso substitui planilhas e parte do WhatsApp?</h3>
+                        <p>Essa é exatamente a ideia: trazer o fluxo para uma base única, rastreável e digna da operação que você quer construir.</p>
+                    </article>
+                    <article>
+                        <h3>Onde os alunos entram?</h3>
+                        <p>O aluno entra pelo link de cadastro enviado dentro da operação. Depois de autenticado com Google ou Apple, ele acessa o aplicativo no próprio celular.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="landing-cta" aria-label="Chamada final para acao">
+            <div class="landing-container landing-container--narrow">
+                <p class="landing-section-kicker">OctoBox Fit</p>
+                <h2>Uma plataforma para dar ao seu box a presença que o seu treino já merece.</h2>
+                <p>
+                    Se o caos é uma sala cheia de vozes ao mesmo tempo, o OctoBox é o sistema que devolve ritmo,
+                    clareza e presença. Sofisticado no olhar, objetivo na operação.
+                </p>
+                <div class="landing-hero-actions landing-hero-actions--center">
+                    <a class="landing-button landing-button--primary" href="{{ login_url }}">Conhecer a entrada oficial</a>
+                    <a class="landing-button landing-button--secondary" href="{{ staff_login_url }}">Equipe interna</a>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

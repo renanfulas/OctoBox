@@ -31,10 +31,12 @@ class AccessViewTests(TestCase):
             password='senha-forte-123',
         )
 
-    def test_home_redirects_anonymous_user_to_login(self):
+    def test_home_renders_marketing_landing_for_anonymous_user(self):
         response = self.client.get(reverse('home'))
 
-        self.assertRedirects(response, reverse('login'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Seu box, sem ruido. Sua operacao, em controle.')
+        self.assertContains(response, reverse('login'))
 
     def test_login_route_renders_entry_hub(self):
         response = self.client.get(reverse('login'))

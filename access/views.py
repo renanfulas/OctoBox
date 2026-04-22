@@ -104,10 +104,18 @@ class AccessEntryHubView(TemplateView):
 
 
 class HomeRedirectView(TemplateView):
+    template_name = 'access/landing.html'
+
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             return redirect('role-operations')
-        return redirect('login')
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['login_url'] = reverse('login')
+        context['staff_login_url'] = reverse('login-staff')
+        return context
 
 
 class AccessOverviewView(LoginRequiredMixin, TemplateView):
