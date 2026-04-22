@@ -81,7 +81,7 @@ class OnboardingWorkflow:
             phone=cleaned_data['phone'],
             email=cleaned_data['email'],
             birth_date=cleaned_data.get('birth_date'),
-            status=StudentStatus.LEAD,
+            status=StudentStatus.ACTIVE,
         )
         identity = self.identity_repository.save_identity(
             student=student,

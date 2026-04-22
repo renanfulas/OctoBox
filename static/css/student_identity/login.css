@@ -119,6 +119,23 @@ body.student-app-body {
     box-shadow: 0 16px 30px rgba(0, 229, 255, 0.18);
 }
 
+.student-button--google {
+    color: #1f1f1f;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.student-button--google:hover,
+.student-button--google:focus-visible {
+    background: #f5f5f5;
+    filter: none;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+}
+
 .student-button--ghost {
     color: #eff6ff;
     background: rgba(255, 255, 255, 0.05);
