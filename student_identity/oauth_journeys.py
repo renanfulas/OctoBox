@@ -59,6 +59,15 @@ def handle_student_special_oauth_journey(
             return _redirect_with_message(request, 'error', 'Este link em massa nao pertence ao box atual.')
         if not box_invite_link.can_accept:
             return _redirect_with_message(request, 'error', 'Este link em massa nao esta mais disponivel para novos cadastros.')
+        if result.success and result.identity is not None:
+            response = redirect('student-app-home')
+            attach_student_session_cookie(
+                response,
+                identity_id=result.identity.id,
+                box_root_slug=result.identity.box_root_slug,
+                device_fingerprint=build_student_device_fingerprint(request),
+            )
+            return response
         repository.record_box_invite_acceptance(box_invite_link)
         payload = {
             'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
