@@ -13,7 +13,10 @@ PONTOS CRITICOS:
 - O contexto current_role e usado pelo layout e nao deve desaparecer.
 """
 
+from urllib.parse import urlsplit
+
 from django.apps import apps
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group, Permission
@@ -54,6 +57,65 @@ from django.contrib.auth.views import LoginView
 from .forms import AccessAuthenticationForm
 from shared_support.security.anti_cheat_throttles import LoginBruteForceThrottle
 
+
+def _normalized_request_host(request):
+    return request.get_host().split(':', 1)[0].strip().lower()
+
+
+def _configured_app_host():
+    configured_base_url = getattr(settings, 'STUDENT_OAUTH_PUBLIC_BASE_URL', '').strip()
+    if not configured_base_url:
+        return ''
+    return (urlsplit(configured_base_url).hostname or '').strip().lower()
+
+
+def _is_local_host(host):
+    return host in {'localhost', '127.0.0.1', 'testserver'}
+
+
+def _build_app_base_url(request):
+    configured_base_url = getattr(settings, 'STUDENT_OAUTH_PUBLIC_BASE_URL', '').strip()
+    if configured_base_url:
+        return configured_base_url.rstrip('/')
+
+    host = _normalized_request_host(request)
+    if _is_local_host(host):
+        return ''
+
+    if host.startswith('www.'):
+        host = f"app.{host[4:]}"
+    elif not host.startswith('app.'):
+        host = f'app.{host}'
+
+    scheme = 'https' if request.is_secure() else 'http'
+    return f'{scheme}://{host}'
+
+
+def _build_app_url(request, path):
+    app_base_url = _build_app_base_url(request)
+    if not app_base_url:
+        return path
+    return f'{app_base_url}{path}'
+
+
+def _request_targets_app_host(request):
+    host = _normalized_request_host(request)
+    if _is_local_host(host):
+        return True
+
+    configured_app_host = _configured_app_host()
+    if configured_app_host:
+        return host == configured_app_host
+
+    return host.startswith('app.')
+
+
+class AppHostRequiredMixin:
+    def dispatch(self, request, *args, **kwargs):
+        if _request_targets_app_host(request):
+            return super().dispatch(request, *args, **kwargs)
+        return redirect(_build_app_url(request, request.get_full_path()))
+
 class ThrottledLoginView(LoginView):
     template_name = 'access/login.html'
     authentication_form = AccessAuthenticationForm
@@ -70,8 +132,12 @@ class ThrottledLoginView(LoginView):
         return super().post(request, *args, **kwargs)
 
 
+class AppHostThrottledLoginView(AppHostRequiredMixin, ThrottledLoginView):
+    pass
+
+
 @method_decorator(ensure_csrf_cookie, name='dispatch')
-class AccessEntryHubView(TemplateView):
+class AccessEntryHubView(AppHostRequiredMixin, TemplateView):
     template_name = 'access/login_hub.html'
 
     def get_context_data(self, **kwargs):
@@ -107,18 +173,23 @@ class HomeRedirectView(TemplateView):
     template_name = 'access/landing.html'
 
     def get(self, request, *args, **kwargs):
+        if _request_targets_app_host(request):
+            if request.user.is_authenticated:
+                return redirect('role-operations')
+            return redirect('login')
+
         if request.user.is_authenticated:
-            return redirect('role-operations')
+            return redirect(_build_app_url(request, reverse('role-operations')))
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['login_url'] = reverse('login')
-        context['staff_login_url'] = reverse('login-staff')
+        context['login_url'] = _build_app_url(self.request, reverse('login'))
+        context['staff_login_url'] = _build_app_url(self.request, reverse('login-staff'))
         return context
 
 
-class AccessOverviewView(LoginRequiredMixin, TemplateView):
+class AccessOverviewView(AppHostRequiredMixin, LoginRequiredMixin, TemplateView):
     template_name = 'access/overview.html'
 
     def _can_manage_access_profiles(self):

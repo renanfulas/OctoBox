@@ -18,11 +18,16 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.urls import reverse
 
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 
 
+@override_settings(
+    ALLOWED_HOSTS=['testserver', 'www.octoboxfit.com.br', 'app.octoboxfit.com.br', 'octoboxfit.com.br'],
+    STUDENT_OAUTH_PUBLIC_BASE_URL='https://app.octoboxfit.com.br',
+)
 class AccessViewTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_superuser(
@@ -32,11 +37,11 @@ class AccessViewTests(TestCase):
         )
 
     def test_home_renders_marketing_landing_for_anonymous_user(self):
-        response = self.client.get(reverse('home'))
+        response = self.client.get(reverse('home'), HTTP_HOST='www.octoboxfit.com.br')
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Seu box, sem ruido. Sua operacao, em controle.')
-        self.assertContains(response, reverse('login'))
+        self.assertContains(response, 'Seu box com presença premium. Sua operação no controle.')
+        self.assertContains(response, 'https://app.octoboxfit.com.br/login/')
 
     def test_login_route_renders_entry_hub(self):
         response = self.client.get(reverse('login'))
