@@ -25,11 +25,13 @@
         <label>
             <span>E-mail</span>
             {{ form.email }}
+            {% if form.email.help_text %}<small class="student-form-note">{{ form.email.help_text }}</small>{% endif %}
             {{ form.email.errors }}
         </label>
         <label>
             <span>Data de nascimento</span>
             {{ form.birth_date }}
+            {% if form.birth_date.help_text %}<small class="student-form-note">{{ form.birth_date.help_text }}</small>{% endif %}
             {{ form.birth_date.errors }}
         </label>
         <label>

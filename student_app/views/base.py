@@ -31,8 +31,8 @@ from student_app.onboarding_state import read_pending_student_onboarding
 
 STUDENT_APP_SCOPE = '/aluno/'
 STUDENT_APP_START_URL = '/aluno/'
-STUDENT_APP_THEME_COLOR = '#0f172a'
-STUDENT_APP_BACKGROUND_COLOR = '#f5efe4'
+STUDENT_APP_THEME_COLOR = '#091221'
+STUDENT_APP_BACKGROUND_COLOR = '#f5f7fb'
 STUDENT_APP_ICON_192 = '/static/images/student-app-icon-192.png'
 STUDENT_APP_ICON_512 = '/static/images/student-app-icon-512.png'
 STUDENT_APP_ICON_MASKABLE_512 = '/static/images/student-app-icon-maskable-512.png'

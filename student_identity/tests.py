@@ -431,9 +431,9 @@ class StudentIdentityFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Continuar com Google')
         self.assertNotContains(response, 'Continuar com Apple')
-        self.assertContains(response, 'Entrar com usuario')
         self.assertContains(response, 'O login social esta em manutencao.')
-        self.assertContains(response, reverse('login-staff'))
+        self.assertNotContains(response, 'Entrar com usuario')
+        self.assertNotContains(response, reverse('login-staff'))
 
     def test_public_login_hub_preserves_invite_token_in_student_oauth_buttons(self):
         invitation = StudentAppInvitation.objects.create(
@@ -449,7 +449,8 @@ class StudentIdentityFlowTests(TestCase):
             response,
             f"{reverse('student-identity-oauth-start', kwargs={'provider': 'google'})}?{urlencode({'invite': str(invitation.token)})}",
         )
-        self.assertContains(
+        self.assertNotContains(response, 'Continuar com Apple')
+        self.assertNotContains(
             response,
             f"{reverse('student-identity-oauth-start', kwargs={'provider': 'apple'})}?{urlencode({'invite': str(invitation.token)})}",
         )
@@ -526,6 +527,15 @@ class StudentIdentityFlowTests(TestCase):
             response = self.client.get(reverse('student-identity-login'))
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Continuar com Google')
+
+    @override_settings(STUDENT_GOOGLE_OAUTH_CLIENT_ID='google-client-id')
+    def test_login_shows_google_logo_marker_when_google_available(self):
+        response = self.client.get(reverse('student-identity-login'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'student-provider-mark student-provider-mark--google')
+        self.assertContains(response, 'Continuar com Google')
+        self.assertNotContains(response, 'Equipe do box')
+        self.assertNotContains(response, 'Entrar com usuario')
 
     @override_settings(STUDENT_GOOGLE_OAUTH_CLIENT_ID='', STUDENT_APPLE_OAUTH_CLIENT_ID='')
     def test_login_shows_unavailable_block_when_no_provider_configured(self):

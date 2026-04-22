@@ -1,0 +1,162 @@
+/*
+ARQUIVO: formularios e campos do app do aluno.
+
+POR QUE ELE EXISTE:
+- concentra a camada de digitacao do aluno em uma familia coerente para light e dark.
+- protege contraste, foco e placeholders sem remendo por tela.
+
+O QUE ESTE ARQUIVO FAZ:
+1. define grids e stacks de formulario.
+2. estiliza inputs, selects, textareas e erros.
+3. fecha o comportamento de formularios de perfil, onboarding, WOD e convite.
+
+PONTOS CRITICOS:
+- campos precisam nascer legiveis nos dois temas.
+- o perfil deve parecer confiavel e quieto, nao palco principal.
+*/
+
+.student-form-stack,
+.student-form,
+.student-provider-stack,
+.student-session-list,
+.student-settings-list,
+.student-rm-list,
+.student-wod-block-list {
+    display: grid;
+    gap: 12px;
+}
+
+.student-form--wod {
+    margin-top: 8px;
+}
+
+.student-form-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.student-form label,
+.student-form-stack label {
+    display: grid;
+    gap: 8px;
+    color: var(--theme-text-primary);
+    font-weight: 700;
+}
+
+.student-form input,
+.student-form select,
+.student-form textarea,
+.student-form-stack input,
+.student-form-stack select,
+.student-form-stack textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 13px 15px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
+    color: var(--theme-text-primary);
+    font: inherit;
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, white 10%, transparent),
+        0 0 0 1px color-mix(in srgb, var(--theme-accent-support-alpha) 4%, transparent);
+    caret-color: var(--theme-accent-primary);
+    -webkit-text-fill-color: currentColor;
+    transition:
+        border-color var(--motion-base) var(--ease-standard),
+        background var(--motion-base) var(--ease-standard),
+        box-shadow var(--motion-base) var(--ease-standard),
+        color var(--motion-base) var(--ease-standard);
+}
+
+.student-form textarea,
+.student-form-stack textarea {
+    min-height: 112px;
+    resize: vertical;
+}
+
+.student-form input::placeholder,
+.student-form select::placeholder,
+.student-form textarea::placeholder,
+.student-form-stack input::placeholder,
+.student-form-stack select::placeholder,
+.student-form-stack textarea::placeholder {
+    color: var(--theme-text-muted);
+    opacity: 1;
+}
+
+.student-form input:focus,
+.student-form select:focus,
+.student-form textarea:focus,
+.student-form-stack input:focus,
+.student-form-stack select:focus,
+.student-form-stack textarea:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--theme-accent-support) 26%, var(--theme-focus-ring) 74%);
+    background: color-mix(in srgb, var(--theme-surface-strong) 88%, var(--theme-accent-support-alpha) 12%);
+    box-shadow:
+        0 0 0 3px color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent),
+        0 16px 26px color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent);
+}
+
+body.student-app-body[data-theme="dark"] .student-form input,
+body.student-app-body[data-theme="dark"] .student-form select,
+body.student-app-body[data-theme="dark"] .student-form textarea,
+body.student-app-body[data-theme="dark"] .student-form-stack input,
+body.student-app-body[data-theme="dark"] .student-form-stack select,
+body.student-app-body[data-theme="dark"] .student-form-stack textarea {
+    color-scheme: dark;
+}
+
+.student-form-errors,
+.student-form-stack .errorlist,
+.student-form .errorlist {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 16px;
+    list-style: none;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-danger) 20%, var(--theme-border-soft) 80%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 20%, var(--theme-surface-strong) 80%);
+    color: color-mix(in srgb, var(--theme-accent-danger) 72%, var(--theme-text-primary) 28%);
+}
+
+.student-form-stack .errorlist,
+.student-form .errorlist {
+    padding: 10px 12px;
+    font-size: 0.92rem;
+}
+
+.student-inline-form {
+    margin: 0;
+}
+
+.student-invite-entry-form {
+    display: grid;
+    gap: 12px;
+}
+
+.student-settings-list {
+    margin: 0;
+    padding-left: 18px;
+    line-height: 1.7;
+}
+
+.student-settings-list strong {
+    color: var(--theme-text-primary);
+}
+
+.student-auth-shell {
+    display: grid;
+    gap: 18px;
+}
+
+@media (min-width: 720px) {
+    .student-form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .student-invite-entry-form {
+        grid-template-columns: minmax(240px, 1fr) auto;
+        align-items: end;
+    }
+}

@@ -4,7 +4,7 @@
 
 {% block body %}
 {% if student_home_mode == 'wod_active' %}
-<section class="student-page-head">
+<section class="student-page-head student-page-head--wod">
     <div>
         <p class="student-eyebrow">Inicio</p>
         <h1>Treino de hoje ativo.</h1>
@@ -87,7 +87,7 @@
     </article>
 </section>
 {% else %}
-<section class="student-page-head">
+<section class="student-page-head student-page-head--schedule">
     <div>
         <p class="student-eyebrow">Inicio</p>
         <h1>Sua agenda primeiro. O treino entra quando o momento chegar.</h1>
