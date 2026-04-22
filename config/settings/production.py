@@ -31,7 +31,10 @@ from sentry_sdk.integrations.django import DjangoIntegration
 DEBUG = env_bool('DJANGO_DEBUG', False)
 
 # 🚀 Segurança de Elite: Isolamento de Host (Previne Host Header Injection)
-ALLOWED_HOSTS = env_list_alias(('DJANGO_ALLOWED_HOSTS', 'ALLOWED_HOSTS'), 'octobox.app,www.octobox.app')
+ALLOWED_HOSTS = env_list_alias(
+    ('DJANGO_ALLOWED_HOSTS', 'ALLOWED_HOSTS'),
+    'octoboxfit.com.br,www.octoboxfit.com.br,app.octoboxfit.com.br',
+)
 CSRF_TRUSTED_ORIGINS = env_list_alias(('DJANGO_CSRF_TRUSTED_ORIGINS', 'CSRF_TRUSTED_ORIGINS'))
 CSRF_TRUSTED_ORIGINS = sorted(
     dict.fromkeys([*CSRF_TRUSTED_ORIGINS, *build_https_trusted_origins(ALLOWED_HOSTS)])

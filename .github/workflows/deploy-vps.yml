@@ -71,6 +71,8 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key:     ${{ secrets.VPS_SSH_KEY }}
           port:    ${{ secrets.VPS_PORT }}
+          timeout: 2m
+          command_timeout: 20m
           script: |
             set -euo pipefail
             APP=/srv/octobox/app
