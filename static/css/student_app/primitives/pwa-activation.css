@@ -1,0 +1,95 @@
+/*
+ARQUIVO: rail de ativacao PWA do aluno
+GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+*/
+
+.student-pwa-activation {
+    --student-pwa-surface:
+        linear-gradient(
+            140deg,
+            color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, var(--theme-surface-strong) 84%),
+            color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-surface-secondary) 80%),
+            color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, var(--theme-surface-strong) 88%)
+        );
+    position: relative;
+    display: grid;
+    order: 20;
+    gap: 12px;
+    padding: clamp(16px, 2vw, 20px);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 12%, var(--theme-border-soft) 88%);
+    border-radius: var(--radius-panel);
+    background:
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-primary-alpha) 24%, transparent), transparent 38%),
+        var(--student-pwa-surface);
+    box-shadow: var(--theme-shadow-soft);
+    overflow: hidden;
+}
+
+.student-pwa-activation::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 2px;
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-accent-primary) 92%, transparent),
+            color-mix(in srgb, var(--theme-accent-support) 82%, transparent),
+            color-mix(in srgb, var(--theme-accent-premium) 68%, transparent)
+        );
+}
+
+.student-pwa-activation__copy {
+    display: grid;
+    gap: 10px;
+}
+
+.student-pwa-activation__copy h2 {
+    margin: 0;
+    font-size: clamp(1rem, 2vw, 1.18rem);
+    line-height: 1.12;
+    letter-spacing: -0.035em;
+}
+
+.student-pwa-activation__copy > .student-copy {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.student-pwa-activation__status,
+.student-pwa-activation__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.student-pwa-activation__actions .student-button {
+    min-height: 42px;
+    padding-block: 10px;
+}
+
+.student-pwa-activation__status .student-status-badge[data-state="done"] {
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 52%, var(--theme-surface-strong) 48%);
+    border-color: color-mix(in srgb, var(--theme-accent-success) 24%, var(--theme-border-soft) 76%);
+}
+
+.student-pwa-activation__status .student-status-badge[data-state="pending"] {
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 48%, var(--theme-surface-strong) 52%);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 28%, var(--theme-border-soft) 72%);
+}
+
+.student-pwa-activation__status .student-status-badge[data-state="blocked"] {
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 50%, var(--theme-surface-strong) 50%);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 24%, var(--theme-border-soft) 76%);
+}
+
+.student-pwa-activation__notes {
+    display: grid;
+    gap: 6px;
+}
+
+.student-pwa-activation__notes .student-form-note {
+    margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.45;
+}

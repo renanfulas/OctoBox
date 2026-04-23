@@ -1,0 +1,23 @@
+{% if rm_of_the_day %}
+<section class="student-hero-number">
+    <span class="student-hero-number__meta">RM do dia</span>
+    <p class="student-hero-number__label">{{ rm_of_the_day.exercise_label }}</p>
+    <div class="student-hero-number__value">
+        <span>{% if rm_of_the_day.one_rep_max_kg %}{{ rm_of_the_day.one_rep_max_kg }}{% else %}--{% endif %}</span>
+        <small class="student-hero-number__unit">kg</small>
+    </div>
+    {% if rm_of_the_day.recommended_load_kg %}
+    <p class="student-hero-number__support">{{ rm_of_the_day.percentage }}% = {{ rm_of_the_day.recommended_load_kg }} kg</p>
+    {% endif %}
+    {% if rm_of_the_day.delta_kg %}<span class="student-hero-number__delta">+{{ rm_of_the_day.delta_kg }} kg</span>{% endif %}
+</section>
+{% elif rm_records %}
+<section class="student-hero-number">
+    <span class="student-hero-number__meta">{{ rm_records|length }} movimento(s)</span>
+    <p class="student-hero-number__label">Seus RMs</p>
+    <div class="student-hero-number__value">
+        <span>{{ rm_records.0.one_rep_max_kg }}</span>
+        <small class="student-hero-number__unit">kg</small>
+    </div>
+</section>
+{% endif %}

@@ -1,0 +1,81 @@
+/*
+ARQUIVO: hero numerico do app do aluno.
+
+POR QUE ELE EXISTE:
+- destaca o dado pessoal mais importante da tela antes de qualquer explicacao.
+*/
+
+.student-hero-number {
+    position: relative;
+    display: grid;
+    gap: 14px;
+    padding: clamp(22px, 4vw, 34px);
+    border-radius: calc(var(--radius-shell) + 8px);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 20%, var(--theme-border-soft) 80%);
+    background:
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-primary-alpha) 58%, transparent), transparent 36%),
+        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--theme-accent-premium-alpha) 26%, transparent), transparent 42%),
+        var(--theme-card-surface-strong);
+    box-shadow: var(--theme-shadow-xl);
+    overflow: hidden;
+}
+
+.student-hero-number__meta,
+.student-context-switch {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    min-height: 32px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 22%, var(--theme-border-soft) 78%);
+    background: color-mix(in srgb, var(--theme-surface-strong) 82%, var(--theme-accent-support-alpha) 18%);
+    color: var(--theme-text-primary);
+    font-size: 0.78rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.student-hero-number__label {
+    margin: 0;
+    color: var(--theme-text-secondary);
+    font-size: clamp(1.05rem, 2.6vw, 1.35rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+}
+
+.student-hero-number__value {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    color: var(--theme-text-primary);
+    font-family: var(--font-display);
+    font-size: clamp(3.3rem, 14vw, 5.6rem);
+    font-weight: 850;
+    letter-spacing: -0.055em;
+    line-height: 0.92;
+}
+
+.student-hero-number__unit {
+    color: var(--theme-text-muted);
+    font-size: clamp(1rem, 4vw, 1.35rem);
+    letter-spacing: 0;
+}
+
+.student-hero-number__support {
+    margin: 0;
+    max-width: 52ch;
+    color: var(--theme-text-secondary);
+    line-height: 1.45;
+}
+
+.student-hero-number__delta {
+    color: color-mix(in srgb, var(--theme-accent-success) 72%, var(--theme-text-primary) 28%);
+    font-weight: 900;
+}
+
+@media (max-width: 640px) {
+    .student-hero-number {
+        padding: 20px 18px;
+    }
+}

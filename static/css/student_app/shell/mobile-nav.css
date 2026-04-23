@@ -1,0 +1,82 @@
+/*
+ARQUIVO: navegacao mobile do app do aluno
+GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+*/
+
+.student-mobile-nav {
+    position: fixed;
+    left: 14px;
+    right: 14px;
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    z-index: 12;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    padding: 6px;
+    border-radius: 22px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-strong) 96%, transparent),
+            color-mix(in srgb, var(--theme-surface-secondary) 92%, transparent)
+        );
+    box-shadow: var(--theme-shadow-xl);
+    backdrop-filter: blur(18px) saturate(145%);
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
+}
+
+.student-mobile-nav-link {
+    display: grid;
+    place-items: center;
+    min-height: 48px;
+    padding: 8px 10px;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    text-decoration: none;
+    color: var(--theme-text-muted);
+    border: 1px solid transparent;
+    transition:
+        background var(--motion-base) var(--ease-standard),
+        color var(--motion-base) var(--ease-standard),
+        border-color var(--motion-base) var(--ease-standard),
+        transform var(--motion-fast) var(--ease-standard);
+}
+
+.student-mobile-nav-icon {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.student-mobile-nav-icon svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
+.student-mobile-nav-link:hover,
+.student-mobile-nav-link:focus-visible {
+    transform: translateY(-1px);
+    outline: none;
+    color: var(--theme-text-primary);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 16%, var(--theme-border-soft) 84%);
+    background: color-mix(in srgb, var(--theme-surface-strong) 84%, var(--theme-accent-support-alpha) 16%);
+}
+
+.student-mobile-nav-link.is-active {
+    color: var(--theme-text-primary);
+    background:
+        linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--theme-accent-primary) 18%, var(--theme-surface-strong) 82%),
+            color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-surface-secondary) 82%)
+        );
+    border-color: color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-border-soft) 82%);
+}
+
+.student-mobile-nav-link.is-active .student-mobile-nav-icon {
+    filter: saturate(1.08);
+}

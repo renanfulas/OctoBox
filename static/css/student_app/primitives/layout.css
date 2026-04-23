@@ -1,0 +1,36 @@
+﻿/*
+ARQUIVO: grids compartilhados das telas do aluno
+GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+*/
+
+.student-surface-grid {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: 1fr;
+}
+
+.student-surface-grid {
+    align-items: start;
+}
+
+@media (min-width: 860px) {
+    .student-surface-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .student-surface-grid--settings {
+        grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.9fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .student-rm-card {
+        display: grid;
+        justify-items: start;
+    }
+
+    .student-button {
+        width: 100%;
+    }
+
+}

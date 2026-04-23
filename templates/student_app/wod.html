@@ -2,155 +2,114 @@
 
 {% block title %}WOD | OctoBox Aluno{% endblock %}
 
+{% block extra_head %}
+{{ block.super }}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/student_app/screens/wod.css' %}">
+{% endblock %}
+
 {% block body %}
-<section class="student-page-head student-page-head--wod">
-    <div>
-        <p class="student-eyebrow">WOD</p>
-        <h1>Treino do dia com leitura rapida e carga pessoal.</h1>
-        <p class="student-copy">
-            {% if student_workout_day %}
-            O treino do coach ja esta publicado para esta aula. O app organiza os blocos e, quando houver percentual, traduz para o seu peso recomendado.
-            {% else %}
-            Essa tela ja nasce como modo de execucao. Enquanto o coach ainda nao publicou o treino do dia, ela segura um placeholder honesto com a calculadora de porcentagem embaixo.
-            {% endif %}
-        </p>
+{% if student_workout_day and student_workout_day.primary_recommendation %}
+<section class="student-hero-number">
+    <span class="student-hero-number__meta">{{ student_workout_day.workout_title }}</span>
+    <p class="student-hero-number__label">{{ student_workout_day.primary_recommendation.movement_label }}</p>
+    <div class="student-hero-number__value">
+        <span>{{ student_workout_day.primary_recommendation.recommended_load_kg }}</span>
+        <small class="student-hero-number__unit">kg</small>
     </div>
-    <div class="student-head-chip-group">
-        <span class="student-head-chip">Modo de treino</span>
-        {% if student_next_session %}
-        <span class="student-head-chip">{{ student_next_session.scheduled_label }}</span>
-        {% endif %}
-    </div>
+    <p class="student-hero-number__support">
+        {{ student_workout_day.primary_recommendation.percentage }}% do seu RM {{ student_workout_day.primary_recommendation.base_rm_kg }} kg
+    </p>
 </section>
-
-<section class="student-surface-grid">
-    <article class="student-card student-card--feature">
-        <div class="student-section-head">
-            <div>
-                <p class="student-eyebrow">Bloco principal</p>
-                <h2>{% if student_workout_day %}{{ student_workout_day.workout_title }}{% else %}Forca do dia{% endif %}</h2>
-            </div>
-            <span class="student-status-badge">{% if student_workout_day %}Publicado{% else %}Placeholder vivo{% endif %}</span>
-        </div>
-        {% if student_workout_day %}
-        <p class="student-copy">{{ student_workout_day.session_title }} | {{ student_workout_day.session_scheduled_label }} | {{ student_workout_day.coach_name }}</p>
-        {% if student_workout_day.coach_notes %}
-        <p class="student-copy">{{ student_workout_day.coach_notes }}</p>
-        {% endif %}
-        <div class="student-wod-block-list">
-            {% for block in student_workout_day.blocks %}
-            <article class="student-wod-block">
-                <div class="student-section-head student-section-head--compact">
-                    <div>
-                        <p class="student-eyebrow">{{ block.kind_label }}</p>
-                        <h2>{{ block.title }}</h2>
-                    </div>
-                </div>
-                {% if block.notes %}<p class="student-copy">{{ block.notes }}</p>{% endif %}
-                <div class="student-wod-movement-list">
-                    {% for movement in block.movements %}
-                    <article class="student-wod-movement-card">
-                        <div class="student-wod-movement-copy">
-                            <strong>{{ movement.movement_label }}</strong>
-                            <span>{{ movement.prescription_label }}</span>
-                            {% if movement.notes %}<p>{{ movement.notes }}</p>{% endif %}
-                        </div>
-                        <div class="student-wod-movement-metrics">
-                            <small>{{ movement.load_context_label }}</small>
-                            <strong>{{ movement.recommendation_label }}</strong>
-                            <span>{{ movement.recommendation_copy }}</span>
-                        </div>
-                    </article>
-                    {% endfor %}
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="student-wod-block-list">
-            <article class="student-wod-block">
-                <strong>Aquecimento</strong>
-                <p>Mobilidade curta, ativacao e leitura do corpo antes da carga principal.</p>
-            </article>
-            <article class="student-wod-block">
-                <strong>Deadlift</strong>
-                <p>5 x 10 @ 70% do RM. Aqui vai entrar a prescricao publicada do coach com sua recomendacao pessoal por baixo.</p>
-            </article>
-            <article class="student-wod-block">
-                <strong>Metcon</strong>
-                <p>Bloco de condicionamento rapido para consulta no meio da aula.</p>
-            </article>
-        </div>
-        {% endif %}
-    </article>
-
-    <article class="student-card student-card--soft">
-        <p class="student-eyebrow">Consulta de carga</p>
-        <h2>Use a sua base de RM sem fazer conta mental.</h2>
-        <p class="student-copy">Por enquanto a calculadora vive aqui dentro. Depois ela vai virar recomendacao automatica por bloco do WOD.</p>
-        {% if student_rm_preview %}
-        <div class="student-rm-preview">
-            <strong>{{ student_rm_preview.exercise_label }}</strong>
-            <span>{{ student_rm_preview.one_rep_max_kg }} kg</span>
-            <small>Seu RM mais proximo para consulta rapida.</small>
-        </div>
-        {% endif %}
-    </article>
+{% elif student_workout_day %}
+<section class="student-hero-number">
+    <span class="student-hero-number__meta">WOD</span>
+    <p class="student-hero-number__label">{{ student_workout_day.workout_title }}</p>
+    <div class="student-hero-number__value"><span>Hoje</span></div>
 </section>
+{% else %}
+<section class="student-compact-state">
+    <strong>WOD ainda nao publicado.</strong>
+    <p class="student-copy">Use a calculadora.</p>
+</section>
+{% endif %}
 
-<section class="student-card">
+{% if student_workout_day %}
+<section class="student-card student-card--feature">
     <div class="student-section-head">
         <div>
-            <p class="student-eyebrow">Calculadora</p>
-            <h2>Percentual do treino</h2>
+            <span class="student-context-switch">{{ student_workout_day.session_scheduled_label }}</span>
+            <h2>Blocos</h2>
         </div>
-        <a href="{% url 'student-app-rm' %}" class="student-inline-link">Ver todos os RMs</a>
+    </div>
+    <div class="student-wod-block-list">
+        {% for block in student_workout_day.blocks %}
+        <article class="student-wod-block">
+            <div class="student-section-head student-section-head--compact">
+                <div>
+                    <span class="student-context-switch">{{ block.kind_label }}</span>
+                    <h2>{{ block.title }}</h2>
+                </div>
+            </div>
+            <div class="student-wod-movement-list">
+                {% for movement in block.movements %}
+                <article class="student-wod-movement-card">
+                    <div class="student-wod-movement-copy">
+                        <strong>{{ movement.movement_label }}</strong>
+                        <span>{{ movement.prescription_label }}</span>
+                    </div>
+                    <div class="student-wod-movement-metrics">
+                        <small>{{ movement.load_context_label }}</small>
+                        <strong>{{ movement.recommendation_label }}</strong>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section class="student-card student-card--quiet">
+    <div class="student-section-head">
+        <div>
+            <span class="student-context-switch">Calculadora</span>
+            <h2>Percentual</h2>
+        </div>
+        <a href="{% url 'student-app-rm' %}" class="student-secondary-action">RMs</a>
     </div>
     <form method="post" class="student-form student-form--wod">
         {% csrf_token %}
         {% if form.non_field_errors %}
         <div class="student-form-errors">
-            {% for error in form.non_field_errors %}
-            <p>{{ error }}</p>
-            {% endfor %}
+            {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
         </div>
         {% endif %}
         <div class="student-form-grid">
-            <div>
-                <label for="{{ form.exercise_slug.id_for_label }}">Movimento</label>
+            <label>
+                <span>Movimento</span>
                 {{ form.exercise_slug }}
-            </div>
-            <div>
-                <label for="{{ form.percentage.id_for_label }}">Percentual do treino</label>
+            </label>
+            <label>
+                <span>%</span>
                 {{ form.percentage }}
-            </div>
+            </label>
         </div>
-        <button type="submit" class="student-button">Calcular carga</button>
+        <button type="submit" class="student-primary-action">Calcular</button>
     </form>
     {% if prescription %}
     <article class="student-prescription">
         <div class="student-section-head">
             <div>
-                <p class="student-eyebrow">Carga recomendada</p>
+                <span class="student-context-switch">{{ prescription.percentage_label }}</span>
                 <h2>{{ prescription.exercise_label }}</h2>
             </div>
-            <span class="student-status-badge">{{ prescription.percentage_label }}</span>
         </div>
         <div class="student-prescription-grid">
-            <div>
-                <small>RM atual</small>
-                <strong>{{ prescription.one_rep_max_label }}</strong>
-            </div>
-            <div>
-                <small>Carga bruta</small>
-                <strong>{{ prescription.raw_load_label }}</strong>
-            </div>
-            <div>
-                <small>Carga prescrita</small>
-                <strong>{{ prescription.rounded_load_label }}</strong>
-            </div>
+            <div><small>RM</small><strong>{{ prescription.one_rep_max_label }}</strong></div>
+            <div><small>Carga</small><strong>{{ prescription.rounded_load_label }}</strong></div>
         </div>
-        <p class="student-copy">{{ prescription.observation }}</p>
     </article>
     {% endif %}
 </section>

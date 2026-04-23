@@ -20,6 +20,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import FormView, TemplateView, View
 
 from shared_support.box_runtime import get_box_runtime_slug
+from student_app.application.activity import record_student_app_activity
 from student_app.application.use_cases import GetStudentDashboard, GetStudentWorkoutPrescription
 from student_app.forms import (
     StudentExerciseMaxForm,
@@ -27,7 +28,11 @@ from student_app.forms import (
     StudentProfileEditForm,
     WorkoutPrescriptionForm,
 )
-from student_app.models import StudentExerciseMax
+from student_app.models import (
+    StudentAppActivityKind,
+    StudentExerciseMax,
+    StudentExerciseMaxHistory,
+)
 from student_app.workflows import AttendanceNotAvailableError, confirm_student_attendance
 from .base import StudentIdentityRequiredMixin
 from .wod_context import build_student_wod_context
@@ -114,6 +119,12 @@ class StudentWodView(StudentIdentityRequiredMixin, FormView):
                 student=self.request.student_identity.student,
                 workout=payload['workout'],
             )
+            record_student_app_activity(
+                student=self.request.student_identity.student,
+                kind=StudentAppActivityKind.WOD_VIEWED,
+                source_object_id=payload['workout'].id,
+                metadata={'workout_title': payload['workout_day'].workout_title},
+            )
         return self._attach_student_shell_context(context)
 
 
@@ -122,10 +133,27 @@ class StudentRmView(StudentIdentityRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        dashboard = GetStudentDashboard().execute(identity=self.request.student_identity)
+        rm_records = tuple(
+            StudentExerciseMax.objects.filter(student=self.request.student_identity.student).order_by('exercise_label')
+        )
+        latest_delta_by_slug = {}
+        for history in StudentExerciseMaxHistory.objects.filter(
+            student=self.request.student_identity.student,
+            exercise_slug__in=[record.exercise_slug for record in rm_records],
+        ).order_by('exercise_slug', '-created_at', '-id'):
+            latest_delta_by_slug.setdefault(history.exercise_slug, history.delta_kg)
         context['student_shell_nav'] = 'rm'
         context['student_shell_title'] = 'RM'
-        context['rm_records'] = tuple(
-            StudentExerciseMax.objects.filter(student=self.request.student_identity.student).order_by('exercise_label')
+        context['dashboard'] = dashboard
+        context['rm_of_the_day'] = dashboard.rm_of_the_day
+        context['rm_records'] = rm_records
+        context['rm_cards'] = tuple(
+            {
+                'record': record,
+                'delta_kg': latest_delta_by_slug.get(record.exercise_slug),
+            }
+            for record in rm_records
         )
         context['add_rm_form'] = StudentExerciseMaxForm()
         return self._attach_student_shell_context(context)
@@ -145,10 +173,26 @@ class StudentAddRmView(StudentIdentityRequiredMixin, View):
             exercise_slug=slug,
             defaults={'exercise_label': label, 'one_rep_max_kg': kg},
         )
+        previous_kg = None if created else obj.one_rep_max_kg
         if not created:
             obj.one_rep_max_kg = kg
             obj.exercise_label = label
             obj.save(update_fields=['exercise_label', 'one_rep_max_kg', 'updated_at'])
+        StudentExerciseMaxHistory.objects.create(
+            student=request.student_identity.student,
+            exercise_max=obj,
+            exercise_slug=obj.exercise_slug,
+            exercise_label=obj.exercise_label,
+            previous_kg=previous_kg,
+            new_kg=kg,
+            delta_kg=(kg - previous_kg) if previous_kg is not None else 0,
+        )
+        record_student_app_activity(
+            student=request.student_identity.student,
+            kind=StudentAppActivityKind.RM_CREATED if created else StudentAppActivityKind.RM_UPDATED,
+            source_object_id=obj.id,
+            metadata={'exercise_slug': obj.exercise_slug, 'exercise_label': obj.exercise_label},
+        )
         messages.success(request, f'RM de {label} salvo como {kg} kg.')
         return redirect('student-app-rm')
 
@@ -164,8 +208,24 @@ class StudentUpdateRmView(StudentIdentityRequiredMixin, View):
         if not form.is_valid():
             messages.error(request, 'Valor invalido.')
             return redirect('student-app-rm')
+        previous_kg = record.one_rep_max_kg
         record.one_rep_max_kg = form.cleaned_data['one_rep_max_kg']
         record.save(update_fields=['one_rep_max_kg', 'updated_at'])
+        StudentExerciseMaxHistory.objects.create(
+            student=request.student_identity.student,
+            exercise_max=record,
+            exercise_slug=record.exercise_slug,
+            exercise_label=record.exercise_label,
+            previous_kg=previous_kg,
+            new_kg=record.one_rep_max_kg,
+            delta_kg=record.one_rep_max_kg - previous_kg,
+        )
+        record_student_app_activity(
+            student=request.student_identity.student,
+            kind=StudentAppActivityKind.RM_UPDATED,
+            source_object_id=record.id,
+            metadata={'exercise_slug': record.exercise_slug, 'exercise_label': record.exercise_label},
+        )
         messages.success(request, f'RM de {record.exercise_label} atualizado para {record.one_rep_max_kg} kg.')
         return redirect('student-app-rm')
 
@@ -261,5 +321,11 @@ class StudentConfirmAttendanceView(StudentIdentityRequiredMixin, View):
         messages.success(
             request,
             f'Sua presenca em {result.session.title} foi confirmada. Quando a janela do treino abrir, o WOD sobe para o Inicio.',
+        )
+        record_student_app_activity(
+            student=request.student_identity.student,
+            kind=StudentAppActivityKind.ATTENDANCE_CONFIRMED,
+            source_object_id=result.session.id,
+            metadata={'session_title': result.session.title},
         )
         return _safe_redirect(request, 'student-app-grade')

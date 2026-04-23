@@ -1,0 +1,13 @@
+<section class="student-hero-number">
+    {% if meta %}<span class="student-hero-number__meta">{{ meta }}</span>{% endif %}
+    <p class="student-hero-number__label">{{ label }}</p>
+    <div class="student-hero-number__value">
+        <span>{{ value }}</span>
+        {% if unit %}<small class="student-hero-number__unit">{{ unit }}</small>{% endif %}
+    </div>
+    {% if support %}<p class="student-hero-number__support">{{ support }}</p>{% endif %}
+    {% if delta %}<span class="student-hero-number__delta">{{ delta }}</span>{% endif %}
+    {% if action_label and action_url %}
+    <a href="{{ action_url }}" class="student-primary-action">{{ action_label }}</a>
+    {% endif %}
+</section>

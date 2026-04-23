@@ -1,0 +1,32 @@
+/*
+ARQUIVO: flash messages do app do aluno
+GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+*/
+
+.student-flash-stack {
+    display: grid;
+    gap: 10px;
+}
+
+.student-flash {
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 90%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 94%, transparent);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--theme-shadow-soft) 12%, transparent);
+}
+
+.student-flash--success {
+    border-color: color-mix(in srgb, var(--theme-accent-success) 24%, var(--theme-border-soft) 76%);
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 30%, var(--theme-surface-strong) 70%);
+}
+
+.student-flash--error {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 24%, var(--theme-border-soft) 76%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 26%, var(--theme-surface-strong) 74%);
+}
+
+.student-flash--warning {
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 24%, var(--theme-border-soft) 76%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 24%, var(--theme-surface-strong) 76%);
+}

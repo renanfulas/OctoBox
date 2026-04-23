@@ -47,17 +47,19 @@ class AccessViewTests(TestCase):
         response = self.client.get(reverse('login'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Como voce quer entrar?')
+        self.assertContains(response, 'Seu box, sem excesso.')
         self.assertContains(response, 'Continuar com Google')
+        self.assertContains(response, 'Entrar com usuario')
         self.assertContains(response, reverse('login-staff'))
 
     def test_staff_login_route_renders_internal_form(self):
         response = self.client.get(reverse('login-staff'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Welcome Back, Leader.')
-        self.assertContains(response, 'LOGIN TO YOUR BOX')
+        self.assertContains(response, 'Entrar na equipe')
+        self.assertContains(response, 'Acesso interno')
         self.assertContains(response, 'name="username"', html=False)
+        self.assertContains(response, 'name="password"', html=False)
 
     def test_access_overview_renders_role_matrix(self):
         self.client.force_login(self.user)

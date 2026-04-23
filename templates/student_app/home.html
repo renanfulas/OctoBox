@@ -2,179 +2,76 @@
 
 {% block title %}Inicio | OctoBox Aluno{% endblock %}
 
+{% block extra_head %}
+{{ block.super }}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/student_app/screens/home.css' %}">
+{% endblock %}
+
 {% block body %}
-{% if student_home_mode == 'wod_active' %}
-<section class="student-page-head student-page-head--wod">
-    <div>
-        <p class="student-eyebrow">Inicio</p>
-        <h1>Treino de hoje ativo.</h1>
-        <p class="student-copy">Agora o app muda de marcha: em vez de mostrar so a agenda, ele passa a te entregar o treino do momento. E como sair do corredor e entrar na sala de aula certa.</p>
-    </div>
-    <div class="student-head-chip-group">
-        <span class="student-head-chip">Modo atual: WOD</span>
-        {% if student_active_wod_session %}
-        <span class="student-head-chip">{{ student_active_wod_session.scheduled_label }}</span>
+<section class="student-hero-number">
+    <p class="visually-hidden">
+        Modo atual: {% if student_home_mode == 'wod_active' %}WOD{% else %}Grade{% endif %}
+    </p>
+    <span class="student-context-switch">
+        {% if student_home_mode == 'wod_active' %}Modo WOD{% else %}Proxima acao{% endif %}
+    </span>
+    <p class="student-hero-number__label">
+        {% if student_home_mode == 'wod_active' and student_active_wod_session %}
+        {{ student_active_wod_session.title }}
+        {% elif student_next_session %}
+        {{ student_next_session.title }}
+        {% else %}
+        Sem aula agora
         {% endif %}
+    </p>
+    <div class="student-hero-number__value">
+        <span>
+            {% if student_home_mode == 'wod_active' %}WOD{% elif student_next_session %}{{ student_next_session.scheduled_at|date:"H:i" }}{% else %}--{% endif %}
+        </span>
+    </div>
+    {% if student_next_session %}
+    <p class="student-hero-number__support">{{ student_next_session.scheduled_label }} · {{ student_next_session.attendance_status }}</p>
+    {% endif %}
+
+    {% if student_home_mode == 'wod_active' %}
+    <p class="visually-hidden">Treino de hoje ativo.</p>
+    {% endif %}
+
+    {% if dashboard.primary_action.kind == 'confirm_attendance' %}
+    <form method="post" action="{% url dashboard.primary_action.url_name %}" class="student-inline-form">
+        {% csrf_token %}
+        <input type="hidden" name="session_id" value="{{ dashboard.primary_action.payload.session_id }}">
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" class="student-primary-action">{{ dashboard.primary_action.label }}</button>
+    </form>
+    {% else %}
+    <a href="{% url dashboard.primary_action.url_name %}" class="student-primary-action">{{ dashboard.primary_action.label }}</a>
+    {% endif %}
+</section>
+
+{% include "student_app/_partials/_progress_strip.html" with progress_days=dashboard.progress_days %}
+
+<section class="student-card student-card--quiet">
+    <div class="student-section-head">
+        <div>
+            <span class="student-context-switch">Agenda</span>
+            <h2>Proximas aulas</h2>
+        </div>
+    </div>
+    <div class="student-session-list">
+        {% for session in dashboard.next_sessions %}
+        <article class="student-session-card">
+            <strong>{{ session.title }}</strong>
+            <span>{{ session.scheduled_label }}</span>
+            <span>{{ session.attendance_status }}</span>
+        </article>
+        {% empty %}
+        <article class="student-compact-state">
+            <strong>Nada publicado.</strong>
+            <p class="student-copy">Volte mais tarde.</p>
+        </article>
+        {% endfor %}
     </div>
 </section>
-
-<section class="student-home-grid">
-    <article class="student-card student-card--feature">
-        <p class="student-eyebrow">{{ student_active_box_root_slug }}</p>
-        <h2>{% if student_active_wod_session %}{{ student_active_wod_session.title }}{% else %}WOD pronto para abrir{% endif %}</h2>
-        <p class="student-copy">
-            {% if student_active_wod_session %}
-            {{ student_active_wod_session.scheduled_label }} | {{ student_active_wod_session.coach_name }} | {{ student_active_wod_session.attendance_status }}
-            {% else %}
-            Sua janela de treino esta ativa. Abra o WOD para consultar os blocos e a carga recomendada.
-            {% endif %}
-        </p>
-        <div class="student-hero-actions">
-            <a href="{% url 'student-app-wod' %}" class="student-button">Abrir WOD</a>
-            <a href="{% url 'student-app-grade' %}" class="student-button student-button--ghost">Ver grade</a>
-        </div>
-    </article>
-
-    <article class="student-card student-card--soft">
-        <p class="student-eyebrow">Carga e execucao</p>
-        <h2>O treino do coach encontra os seus numeros.</h2>
-        <p class="student-copy">Quando o WOD usar porcentagem, o app consulta o seu RM e te entrega a carga recomendada. Assim voce abre o celular, olha e segue. Sem virar calculadora no meio do treino.</p>
-        <div class="student-inline-links">
-            <a href="{% url 'student-app-wod' %}">Ir para WOD</a>
-            <a href="{% url 'student-app-rm' %}">Ver RM</a>
-        </div>
-    </article>
-</section>
-
-<section class="student-surface-grid">
-    <article class="student-card">
-        <div class="student-section-head">
-            <div>
-                <p class="student-eyebrow">Atalho rapido</p>
-                <h2>Treino do dia</h2>
-            </div>
-            <a href="{% url 'student-app-wod' %}" class="student-inline-link">Abrir</a>
-        </div>
-        <p class="student-copy">A home ja reconheceu que voce esta no momento de execucao. O WOD vira o centro da experiencia, e a Grade continua como suporte, nao como protagonista.</p>
-        <div class="student-insight-stack">
-            <div class="student-insight-pill">Blocos do treino</div>
-            <div class="student-insight-pill">Carga recomendada</div>
-            <div class="student-insight-pill">Consulta rapida</div>
-        </div>
-    </article>
-
-    <article class="student-card">
-        <div class="student-section-head">
-            <div>
-                <p class="student-eyebrow">Rotina</p>
-                <h2>Sua agenda continua por perto</h2>
-            </div>
-            <a href="{% url 'student-app-grade' %}" class="student-inline-link">Ver grade</a>
-        </div>
-        <div class="student-session-list">
-            {% for session in dashboard.next_sessions %}
-            <article class="student-session-card">
-                <strong>{{ session.title }}</strong>
-                <span>{{ session.scheduled_label }}</span>
-                <span>{{ session.coach_name }}</span>
-                <span>{{ session.attendance_status }}</span>
-                {% if session.notes %}<p>{{ session.notes }}</p>{% endif %}
-            </article>
-            {% empty %}
-            <p class="student-copy">Nenhuma aula futura publicada ainda.</p>
-            {% endfor %}
-        </div>
-    </article>
-</section>
-{% else %}
-<section class="student-page-head student-page-head--schedule">
-    <div>
-        <p class="student-eyebrow">Inicio</p>
-        <h1>Sua agenda primeiro. O treino entra quando o momento chegar.</h1>
-        <p class="student-copy">Aqui o app trabalha como recepcao inteligente: ele te mostra a proxima aula e o proximo passo. Quando a presenca e a janela do treino estiverem ativas, a home vira WOD sozinha.</p>
-    </div>
-    <div class="student-head-chip-group">
-        <span class="student-head-chip">Modo atual: Grade</span>
-        <span class="student-head-chip">Box principal: {{ student_primary_box_root_slug }}</span>
-    </div>
-</section>
-
-<section class="student-home-grid">
-    <article class="student-card student-card--feature">
-        <p class="student-eyebrow">{{ student_active_box_root_slug }}</p>
-        <h2>{% if student_next_session %}{{ student_next_session.title }}{% else %}Nenhuma aula imediata{% endif %}</h2>
-        <p class="student-copy">
-            {% if student_next_session %}
-            {{ student_next_session.scheduled_label }} | {{ student_next_session.coach_name }} | {{ student_next_session.attendance_status }}
-            {% else %}
-            Sua proxima aula vai aparecer aqui assim que a grade publicada estiver pronta para este contexto.
-            {% endif %}
-        </p>
-        <div class="student-hero-actions">
-            {% if student_next_session and student_next_session.can_confirm_presence %}
-            <form method="post" action="{% url 'student-app-confirm-attendance' %}" class="student-inline-form">
-                {% csrf_token %}
-                <input type="hidden" name="session_id" value="{{ student_next_session.session_id }}">
-                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <button type="submit" class="student-button">Confirmar presenca</button>
-            </form>
-            {% else %}
-            <a href="{% url 'student-app-grade' %}" class="student-button">Abrir grade</a>
-            {% endif %}
-            <a href="{% url 'student-app-wod' %}" class="student-button student-button--ghost">Ver WOD</a>
-        </div>
-    </article>
-
-    <article class="student-card student-card--soft">
-        <p class="student-eyebrow">Proximo passo</p>
-        <h2>Grade antes da aula. WOD durante o treino.</h2>
-        <p class="student-copy">Pensa como uma mochila organizada: na chegada voce precisa da agenda; no meio da aula voce precisa da licao e do peso certo. O app vai seguir essa logica para parecer natural na sua mao.</p>
-        <div class="student-inline-links">
-            <a href="{% url 'student-app-grade' %}">Ir para Grade</a>
-            <a href="{% url 'student-app-rm' %}">Ver seus RMs</a>
-        </div>
-    </article>
-</section>
-
-<section class="student-surface-grid">
-    <article class="student-card">
-        <div class="student-section-head">
-            <div>
-                <p class="student-eyebrow">Grade</p>
-                <h2>Chegada e rotina</h2>
-            </div>
-            <a href="{% url 'student-app-grade' %}" class="student-inline-link">Abrir</a>
-        </div>
-        <div class="student-session-list">
-            {% for session in dashboard.next_sessions %}
-            <article class="student-session-card">
-                <strong>{{ session.title }}</strong>
-                <span>{{ session.scheduled_label }}</span>
-                <span>{{ session.coach_name }}</span>
-                <span>{{ session.attendance_status }}</span>
-                {% if session.notes %}<p>{{ session.notes }}</p>{% endif %}
-            </article>
-            {% empty %}
-            <p class="student-copy">Nenhuma aula futura publicada ainda.</p>
-            {% endfor %}
-        </div>
-    </article>
-
-    <article class="student-card">
-        <div class="student-section-head">
-            <div>
-                <p class="student-eyebrow">WOD e RM</p>
-                <h2>Execucao e carga personalizada</h2>
-            </div>
-            <a href="{% url 'student-app-wod' %}" class="student-inline-link">Abrir</a>
-        </div>
-        <p class="student-copy">O coach manda a regra do treino. O app consulta o seu RM e prepara a carga recomendada. Assim o treino deixa de ser quadro na parede e vira ferramenta pessoal.</p>
-        <div class="student-insight-stack">
-            <div class="student-insight-pill">WOD do dia</div>
-            <div class="student-insight-pill">Recomendacao por % RM</div>
-            <div class="student-insight-pill">Consulta rapida no meio da aula</div>
-        </div>
-    </article>
-</section>
-{% endif %}
 {% endblock %}

@@ -1,0 +1,7 @@
+{% if messages %}
+<section class="student-flash-stack" aria-live="polite">
+    {% for message in messages %}
+    <article class="student-flash student-flash--{{ message.tags|default:'info' }}">{{ message }}</article>
+    {% endfor %}
+</section>
+{% endif %}

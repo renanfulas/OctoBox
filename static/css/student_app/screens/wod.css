@@ -1,0 +1,20 @@
+/*
+ARQUIVO: tela WOD do aluno
+GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+*/
+
+.student-wod-movement-list {
+    margin-top: 14px;
+}
+
+.student-prescription {
+    gap: 14px;
+}
+
+.student-wod-block-list {
+    display: grid;
+}
+
+.student-wod-block .student-section-head {
+    margin-bottom: 10px;
+}

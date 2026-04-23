@@ -33,6 +33,7 @@ from shared_support.validators import validate_file_security
 # ðŸš€ SeguranÃ§a de Elite (Ghost Hardening): Resource Exhaustion Limit
 # Evita que arquivos gigantes (bombas de CSV) derrubem o servidor.
 MAX_IMPORT_FILE_SIZE = 50 * 1024 * 1024  # 50MB (Suficiente para ~500k contatos)
+SQLITE_SAFE_LOOKUP_BATCH_SIZE = 500
 
 SOURCE_FIELD_SYNONYMS = {
     'name': ['Nome', 'Name', 'saved_name', 'public_name', 'Contato', 'First Name', 'Contact'],
@@ -158,6 +159,17 @@ def build_file_level_error_report(*, reason_code, reason_message):
     }
 
 
+def iter_lookup_batches(values, batch_size=SQLITE_SAFE_LOOKUP_BATCH_SIZE):
+    batch = []
+    for value in values:
+        batch.append(value)
+        if len(batch) >= batch_size:
+            yield batch
+            batch = []
+    if batch:
+        yield batch
+
+
 def check_duplicate_lead(phone, email=None):
     """
     Verifica se o contato ja existe no StudentIntake para evitar spam.
@@ -201,16 +213,19 @@ def import_contacts_from_list(contact_list, source_platform='whatsapp', actor=No
 
     existing_intakes_by_phone_index = {}
     if phone_lookup_indexes_to_check:
-        existing_intakes = (
-            StudentIntake.objects.filter(phone_lookup_index__in=phone_lookup_indexes_to_check)
-            .only('id', 'full_name', 'phone_lookup_index')
-            .order_by('id')
-        )
-        existing_intakes_by_phone_index = {
-            intake.phone_lookup_index: intake
-            for intake in existing_intakes
-            if intake.phone_lookup_index
-        }
+        for lookup_batch in iter_lookup_batches(phone_lookup_indexes_to_check):
+            existing_intakes = (
+                StudentIntake.objects.filter(phone_lookup_index__in=lookup_batch)
+                .only('id', 'full_name', 'phone_lookup_index')
+                .order_by('id')
+            )
+            existing_intakes_by_phone_index.update(
+                {
+                    intake.phone_lookup_index: intake
+                    for intake in existing_intakes
+                    if intake.phone_lookup_index
+                }
+            )
 
     to_create = []
     seen_phone_lookup_indexes = set()

@@ -34,6 +34,51 @@ class StudentExerciseMax(TimeStampedModel):
         return f'{self.student.full_name} - {self.exercise_label}'
 
 
+class StudentExerciseMaxHistory(TimeStampedModel):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='exercise_max_history')
+    exercise_max = models.ForeignKey(StudentExerciseMax, on_delete=models.CASCADE, related_name='history')
+    exercise_slug = models.SlugField(max_length=64)
+    exercise_label = models.CharField(max_length=120)
+    previous_kg = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    new_kg = models.DecimalField(max_digits=6, decimal_places=2)
+    delta_kg = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal('0.00'))
+    source = models.CharField(max_length=32, default='student_app')
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        indexes = [
+            models.Index(fields=['student', 'exercise_slug', '-created_at'], name='student_rm_history_lookup'),
+        ]
+
+    def __str__(self):
+        return f'{self.student.full_name} - {self.exercise_label} {self.delta_kg} kg'
+
+
+class StudentAppActivityKind(models.TextChoices):
+    ATTENDANCE_CONFIRMED = 'attendance_confirmed', 'Presenca confirmada'
+    WOD_VIEWED = 'wod_viewed', 'WOD aberto'
+    RM_CREATED = 'rm_created', 'RM criado'
+    RM_UPDATED = 'rm_updated', 'RM atualizado'
+
+
+class StudentAppActivity(TimeStampedModel):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='student_app_activities')
+    kind = models.CharField(max_length=32, choices=StudentAppActivityKind.choices)
+    activity_date = models.DateField()
+    source_object_id = models.PositiveIntegerField(null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ['-activity_date', '-created_at', '-id']
+        indexes = [
+            models.Index(fields=['student', 'activity_date'], name='student_activity_day_lookup'),
+            models.Index(fields=['student', 'kind', 'activity_date'], name='student_activity_kind_day'),
+        ]
+
+    def __str__(self):
+        return f'{self.student.full_name} - {self.kind} - {self.activity_date:%d/%m/%Y}'
+
+
 class WorkoutLoadType(models.TextChoices):
     FREE = 'free', 'Livre'
     FIXED_KG = 'fixed_kg', 'Carga fixa'

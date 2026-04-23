@@ -17,7 +17,20 @@ PONTOS CRITICOS:
 
 @import url("../design-system/tokens.css");
 @import url("../design-system/topbar.css");
-@import url("./shell.css");
-@import url("./components.css");
+@import url("./shell/shell.css");
+@import url("./shell/sidebar.css");
+@import url("./shell/topbar.css");
+@import url("./shell/mobile-nav.css");
+@import url("./shell/responsive.css");
+@import url("./primitives/layout.css");
+@import url("./primitives/eyebrow.css");
+@import url("./primitives/chip.css");
+@import url("./primitives/card.css");
+@import url("./primitives/button.css");
+@import url("./primitives/flash.css");
+@import url("./primitives/pwa-activation.css");
+@import url("./primitives/hero-number.css");
+@import url("./primitives/primary-action.css");
+@import url("./primitives/progress-strip.css");
+@import url("./primitives/compact-state.css");
 @import url("./forms.css");
-@import url("./pages.css");

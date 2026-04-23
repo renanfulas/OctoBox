@@ -1,0 +1,93 @@
+/*
+ARQUIVO: ajustes responsivos do shell do aluno
+GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+*/
+
+@media (min-width: 860px) {
+    .student-shell-grid {
+        display: grid;
+        grid-template-columns: 300px minmax(0, 1fr);
+        gap: var(--student-shell-gap);
+        align-items: start;
+    }
+
+    .student-sidebar {
+        display: grid;
+    }
+
+    .student-mobile-nav {
+        display: none;
+    }
+
+    .student-shell {
+        padding-bottom: 28px;
+    }
+}
+
+@media (max-width: 859px) {
+    .student-topbar.topbar {
+        --topbar-padding-inline: 14px;
+        --topbar-padding-block: 12px;
+        --topbar-left-gap: 10px;
+        --topbar-right-gap: 8px;
+        top: 12px;
+    }
+
+    .student-topbar-copy span {
+        font-size: 0.82rem;
+    }
+
+    .student-box-switcher-panel {
+        left: auto;
+        right: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .student-shell-grid {
+        width: min(var(--student-shell-max), calc(100% - 20px));
+        padding-top: 12px;
+    }
+
+    .student-topbar.topbar {
+        --topbar-left-gap: 8px;
+        --topbar-right-gap: 6px;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "left right";
+        align-items: center;
+    }
+
+    .student-topbar-main.topbar-left,
+    .student-topbar-actions.topbar-right {
+        width: auto;
+    }
+
+    .student-topbar-actions.topbar-right {
+        justify-content: flex-end;
+        flex-wrap: nowrap;
+    }
+
+    .student-box-switcher {
+        flex: 0 0 auto;
+    }
+
+    .student-box-switcher > summary {
+        width: auto;
+        place-items: center;
+        padding-inline: 10px;
+    }
+
+    .student-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 15px;
+    }
+
+    .student-topbar-copy {
+        gap: 0;
+    }
+
+    .student-topbar-copy strong,
+    .student-topbar-copy span {
+        max-width: 42vw;
+    }

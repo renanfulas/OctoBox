@@ -3,40 +3,8 @@
 <html lang="pt-BR">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}OctoBox Aluno{% endblock %}</title>
-    <meta name="theme-color" content="#f5f7fb">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="OctoBox">
-    <script>
-        (function () {
-            var storedTheme = '';
-            try {
-                storedTheme = window.localStorage.getItem('octobox-theme') || '';
-            } catch (error) {
-                storedTheme = '';
-            }
-
-            var theme = storedTheme === 'dark' || storedTheme === 'light'
-                ? storedTheme
-                : ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light');
-
-            window.__octoboxStudentTheme = theme;
-            document.documentElement.style.colorScheme = theme;
-
-            var themeMeta = document.querySelector('meta[name="theme-color"]');
-            if (themeMeta) {
-                themeMeta.setAttribute('content', theme === 'dark' ? '#091221' : '#f5f7fb');
-            }
-        }());
-    </script>
-    <link rel="manifest" href="{% url 'student-app-manifest' %}">
-    <link rel="apple-touch-icon" href="{% static 'images/student-app-apple-touch-icon.png' %}">
-    <link rel="icon" href="{% static 'images/student-app-icon.svg' %}" type="image/svg+xml">
-    <link rel="icon" href="{% static 'images/student-app-icon-192.png' %}" sizes="192x192" type="image/png">
-    <link rel="stylesheet" href="{% static 'css/student_app/app.css' %}">
+    {% include "student_app/_partials/_head_assets.html" %}
     {% block extra_head %}{% endblock %}
 </head>
 <body
@@ -56,204 +24,16 @@
         }());
     </script>
     <div class="student-shell-grid">
-        {% if student_identity %}
-        <aside class="student-sidebar" aria-label="Navegacao do aluno">
-            <a href="{% url 'student-app-home' %}" class="student-brandmark">
-                <span class="student-brandmark-mark">OB</span>
-                <span>
-                    <strong>OctoBox Aluno</strong>
-                    <small>{{ student_active_box_root_slug|default:"Sem box ativo" }}</small>
-                </span>
-            </a>
-            <nav class="student-nav">
-                <a href="{% url 'student-app-home' %}" class="student-nav-link{% if student_shell_nav == 'home' %} is-active{% endif %}">
-                    <span>Inicio</span>
-                    <small>O que importa agora</small>
-                </a>
-                <a href="{% url 'student-app-grade' %}" class="student-nav-link{% if student_shell_nav == 'grade' %} is-active{% endif %}">
-                    <span>Grade</span>
-                    <small>Sua rotina no box</small>
-                </a>
-                <a href="{% url 'student-app-wod' %}" class="student-nav-link{% if student_shell_nav == 'wod' %} is-active{% endif %}">
-                    <span>WOD</span>
-                    <small>Treino do dia</small>
-                </a>
-                <a href="{% url 'student-app-rm' %}" class="student-nav-link{% if student_shell_nav == 'rm' %} is-active{% endif %}">
-                    <span>RM</span>
-                    <small>Seus records maximos</small>
-                </a>
-            </nav>
-            <div class="student-sidebar-footer">
-                <a href="{% url 'student-app-settings' %}" class="student-sidebar-utility{% if student_shell_nav == 'settings' %} is-active{% endif %}">
-                    Perfil e configuracoes
-                </a>
-                <p class="student-sidebar-note">O app troca de contexto com voce: Grade antes da aula, WOD durante o treino.</p>
-            </div>
-        </aside>
-        {% endif %}
+        {% include "student_app/_partials/_sidebar.html" %}
 
         <main class="student-shell">
-            {% if student_identity %}
-            <header class="student-topbar topbar">
-                <div class="student-topbar-main topbar-left">
-                    <a
-                        href="{% url 'student-app-settings' %}"
-                        class="student-avatar student-avatar-link"
-                        aria-label="Abrir perfil e configuracoes"
-                        title="Perfil e configuracoes"
-                    >
-                        {{ student_identity.student.full_name|slice:":1"|upper }}
-                    </a>
-                    <div class="student-topbar-copy">
-                        <p class="student-topbar-eyebrow">{{ student_shell_title|default:"Inicio" }}</p>
-                        <strong>{{ student_identity.student.full_name }}</strong>
-                        <span>Box atual: {{ student_active_box_root_slug|default:"Sem box ativo" }}</span>
-                    </div>
-                    <button type="button" class="student-theme-toggle theme-toggle" data-ui="student-theme-toggle">
-                        <svg class="theme-toggle-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="4"></circle>
-                            <path d="M12 2v2"></path>
-                            <path d="M12 20v2"></path>
-                            <path d="m4.93 4.93 1.41 1.41"></path>
-                            <path d="m17.66 17.66 1.41 1.41"></path>
-                            <path d="M2 12h2"></path>
-                            <path d="M20 12h2"></path>
-                            <path d="m6.34 17.66-1.41 1.41"></path>
-                            <path d="m19.07 4.93-1.41 1.41"></path>
-                        </svg>
-                        <span class="theme-toggle-label visually-hidden">Tema</span>
-                    </button>
-                </div>
-                <div class="student-topbar-actions topbar-right">
-                    {% if student_can_switch_box %}
-                    <details class="student-box-switcher">
-                        <summary>Trocar box</summary>
-                        <div class="student-box-switcher-panel">
-                            <p class="student-form-note">Troque o contexto ativo sem relogar. O box principal continua sendo {{ student_primary_box_root_slug }}.</p>
-                            <div class="student-box-switcher-list">
-                                {% for box_choice in student_box_choices %}
-                                <form method="post" action="{% url 'student-app-switch-box' %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="box_root_slug" value="{{ box_choice.box_root_slug }}">
-                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                    <button
-                                        type="submit"
-                                        class="student-box-switch-button{% if box_choice.is_active %} is-active{% endif %}"
-                                        {% if box_choice.is_active %}disabled{% endif %}
-                                    >
-                                        <span>{{ box_choice.box_root_slug }}</span>
-                                        <span class="student-box-switch-meta">
-                                            {% if box_choice.is_primary %}<small>principal</small>{% endif %}
-                                            {% if box_choice.is_active %}<small>ativo</small>{% endif %}
-                                        </span>
-                                    </button>
-                                </form>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </details>
-                    {% endif %}
-                </div>
-            </header>
-            {% endif %}
-
-            {% if messages %}
-            <section class="student-flash-stack" aria-live="polite">
-                {% for message in messages %}
-                <article class="student-flash student-flash--{{ message.tags|default:'info' }}">{{ message }}</article>
-                {% endfor %}
-            </section>
-            {% endif %}
-
-            {% if student_identity %}
-            <section
-                class="student-pwa-activation"
-                data-ui="student-pwa-activation"
-                hidden
-                aria-live="polite"
-            >
-                <div class="student-pwa-activation__copy">
-                    <p class="student-eyebrow">Ativacao do app</p>
-                    <h2>Instale o OctoBox no celular e libere as notificacoes.</h2>
-                    <p class="student-copy" data-ui="student-pwa-copy">
-                        Falta transformar este atalho em app de verdade no seu celular e liberar os alertas.
-                    </p>
-                    <div class="student-pwa-activation__status" data-ui="student-pwa-status">
-                        <span class="student-status-badge" data-ui="student-pwa-install-status">PWA pendente</span>
-                        <span class="student-status-badge" data-ui="student-pwa-notification-status">Notificacoes pendentes</span>
-                    </div>
-                    <div class="student-pwa-activation__actions">
-                        <button type="button" class="student-button" data-ui="student-pwa-install-action">
-                            Instalar app
-                        </button>
-                        <button type="button" class="student-button student-button--ghost" data-ui="student-pwa-notification-action">
-                            Ativar notificacoes
-                        </button>
-                    </div>
-                    <div class="student-pwa-activation__notes">
-                        <p class="student-form-note" data-ui="student-pwa-install-note">
-                            No iPhone/iPad, toque em Compartilhar e depois em Adicionar a Tela de Inicio.
-                        </p>
-                        <p class="student-form-note" data-ui="student-pwa-notification-note">
-                            Depois de instalar, aceite as notificacoes para receber alertas do app.
-                        </p>
-                    </div>
-                </div>
-            </section>
-            {% endif %}
+            {% include "student_app/_partials/_topbar.html" %}
+            {% include "student_app/_partials/_flash_stack.html" %}
+            {% include "student_app/_partials/_pwa_activation.html" %}
 
             {% block body %}{% endblock %}
 
-            {% if student_identity %}
-            <nav class="student-mobile-nav" aria-label="Navegacao mobile do aluno">
-                <a href="{% url 'student-app-home' %}" class="student-mobile-nav-link{% if student_shell_nav == 'home' %} is-active{% endif %}" aria-label="Inicio" title="Inicio">
-                    <span class="student-mobile-nav-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 10.5 12 3l9 7.5"/>
-                            <path d="M5 9.5V20h14V9.5"/>
-                            <path d="M9.5 20v-5.5h5V20"/>
-                        </svg>
-                    </span>
-                    <span class="visually-hidden">Inicio</span>
-                </a>
-                <a href="{% url 'student-app-grade' %}" class="student-mobile-nav-link{% if student_shell_nav == 'grade' %} is-active{% endif %}" aria-label="Grade" title="Grade">
-                    <span class="student-mobile-nav-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M8 2v4"/>
-                            <path d="M16 2v4"/>
-                            <rect x="3" y="4" width="18" height="17" rx="3"/>
-                            <path d="M3 10h18"/>
-                            <path d="M8 14h.01"/>
-                            <path d="M12 14h.01"/>
-                            <path d="M16 14h.01"/>
-                        </svg>
-                    </span>
-                    <span class="visually-hidden">Grade</span>
-                </a>
-                <a href="{% url 'student-app-wod' %}" class="student-mobile-nav-link{% if student_shell_nav == 'wod' %} is-active{% endif %}" aria-label="WOD" title="WOD">
-                    <span class="student-mobile-nav-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 10h3"/>
-                            <path d="M18 10h3"/>
-                            <path d="M6 7v6"/>
-                            <path d="M18 7v6"/>
-                            <path d="M8.5 12h7"/>
-                            <path d="M8.5 10h7"/>
-                            <path d="M8.5 14h7"/>
-                        </svg>
-                    </span>
-                    <span class="visually-hidden">WOD</span>
-                </a>
-                <a href="{% url 'student-app-rm' %}" class="student-mobile-nav-link{% if student_shell_nav == 'rm' %} is-active{% endif %}" aria-label="RM" title="RM">
-                    <span class="student-mobile-nav-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 3 14.9 8.86 21 9.76l-4.4 4.29 1.04 6.05L12 17.27 6.36 20.1 7.4 14.05 3 9.76l6.1-.9L12 3z"/>
-                        </svg>
-                    </span>
-                    <span class="visually-hidden">RM</span>
-                </a>
-            </nav>
-            {% endif %}
+            {% include "student_app/_partials/_mobile_nav.html" %}
         </main>
     </div>
     <script src="{% static 'js/student_app/theme.js' %}"></script>

@@ -1,0 +1,131 @@
+/*
+ARQUIVO: sidebar do app do aluno
+GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+*/
+
+.student-sidebar {
+    display: none;
+    gap: 18px;
+    align-content: start;
+    padding: 20px;
+    border-radius: calc(var(--radius-shell) + 6px);
+    border: 1px solid var(--student-shell-border);
+    background:
+        var(--student-shell-glow),
+        var(--student-shell-panel);
+    box-shadow: var(--student-shell-shadow);
+    backdrop-filter: blur(18px) saturate(138%);
+    -webkit-backdrop-filter: blur(18px) saturate(138%);
+    position: sticky;
+    top: 18px;
+    overflow: hidden;
+}
+
+.student-brandmark {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    color: inherit;
+    min-width: 0;
+}
+
+.student-brandmark > span:last-child {
+    min-width: 0;
+}
+
+.student-brandmark strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    letter-spacing: -0.02em;
+}
+
+.student-brandmark small,
+.student-sidebar-note {
+    color: var(--theme-text-muted);
+    line-height: 1.5;
+}
+
+.student-brandmark-mark {
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    background:
+        linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--theme-accent-primary) 18%, var(--theme-surface-strong) 82%),
+            color-mix(in srgb, var(--theme-accent-support) 22%, var(--theme-surface-secondary) 78%),
+            color-mix(in srgb, var(--theme-accent-premium) 12%, var(--theme-surface-strong) 88%)
+        );
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 20%, var(--theme-border-soft) 80%);
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, white 14%, transparent),
+        0 12px 24px color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent);
+    color: var(--theme-text-primary);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.student-nav {
+    display: grid;
+    gap: 10px;
+}
+
+.student-nav-link,
+.student-sidebar-utility,
+.student-topbar-link {
+    display: grid;
+    gap: 4px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid transparent;
+    text-decoration: none;
+    transition:
+        background var(--motion-base) var(--ease-standard),
+        border-color var(--motion-base) var(--ease-standard),
+        color var(--motion-base) var(--ease-standard),
+        transform var(--motion-fast) var(--ease-standard);
+}
+
+.student-nav-link {
+    background: color-mix(in srgb, var(--theme-surface-secondary) 74%, transparent);
+}
+
+.student-nav-link span,
+.student-sidebar-utility {
+    font-weight: 700;
+}
+
+.student-nav-link small {
+    color: var(--theme-text-muted);
+    line-height: 1.35;
+}
+
+.student-nav-link:hover,
+.student-sidebar-utility:hover,
+.student-topbar-link:hover,
+.student-nav-link:focus-visible,
+.student-sidebar-utility:focus-visible,
+.student-topbar-link:focus-visible {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-border-soft) 82%);
+    background: color-mix(in srgb, var(--theme-surface-strong) 86%, var(--theme-accent-support-alpha) 14%);
+    outline: none;
+}
+
+.student-nav-link.is-active,
+.student-sidebar-utility.is-active {
+    background:
+        linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--theme-accent-primary) 18%, var(--theme-surface-strong) 82%),
+            color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-surface-secondary) 82%)
+        );
+    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, var(--theme-border-soft) 76%);
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--theme-accent-primary-alpha) 12%, transparent),
+        0 14px 26px color-mix(in srgb, var(--theme-accent-support-alpha) 14%, transparent);
+}

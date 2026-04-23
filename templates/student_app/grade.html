@@ -2,64 +2,40 @@
 
 {% block title %}Grade | OctoBox Aluno{% endblock %}
 
+{% block extra_head %}
+{{ block.super }}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/student_app/screens/grade.css' %}">
+{% endblock %}
+
 {% block body %}
-<section class="student-page-head student-page-head--grade">
-    <div>
-        <p class="student-eyebrow">Grade</p>
-        <h1>Sua rotina no box, sem cara de tabela fria.</h1>
-        <p class="student-copy">Aqui mora o modo de chegada. O aluno bate o olho, entende a proxima aula e sabe o que precisa fazer antes do treino ficar ativo.</p>
+<section class="student-hero-number">
+    <span class="student-context-switch">Grade</span>
+    <p class="student-hero-number__label">
+        {% if student_next_session %}{{ student_next_session.title }}{% else %}Sem aula agora{% endif %}
+    </p>
+    <div class="student-hero-number__value">
+        <span>{% if student_next_session %}{{ student_next_session.scheduled_at|date:"H:i" }}{% else %}--{% endif %}</span>
     </div>
-    <div class="student-head-chip-group">
-        <span class="student-head-chip">{{ dashboard.membership_label }}</span>
-        <span class="student-head-chip">{{ dashboard.next_sessions|length }} aula(s) no radar</span>
-    </div>
+    {% if student_next_session %}
+    <p class="student-hero-number__support">{{ student_next_session.scheduled_label }} · {{ student_next_session.attendance_status }}</p>
+    {% endif %}
+    {% if student_next_session and student_next_session.can_confirm_presence %}
+    <form method="post" action="{% url 'student-app-confirm-attendance' %}" class="student-inline-form">
+        {% csrf_token %}
+        <input type="hidden" name="session_id" value="{{ student_next_session.session_id }}">
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" class="student-primary-action">Confirmar presenca</button>
+    </form>
+    {% endif %}
 </section>
 
-<section class="student-surface-grid">
-    <article class="student-card student-card--feature">
-        <div class="student-section-head">
-            <div>
-                <p class="student-eyebrow">Proxima aula</p>
-                <h2>{% if student_next_session %}{{ student_next_session.title }}{% else %}Nenhuma aula agendada agora{% endif %}</h2>
-            </div>
-            <span class="student-status-badge">{% if student_next_session %}{{ student_next_session.attendance_status }}{% else %}Livre{% endif %}</span>
-        </div>
-        <p class="student-copy">
-            {% if student_next_session %}
-            {{ student_next_session.scheduled_label }} · {{ student_next_session.coach_name }}
-            {% else %}
-            Quando sua agenda ganhar um novo horario, ele sobe primeiro aqui.
-            {% endif %}
-        </p>
-        <div class="student-hero-actions">
-            {% if student_next_session and student_next_session.can_confirm_presence %}
-            <form method="post" action="{% url 'student-app-confirm-attendance' %}" class="student-inline-form">
-                {% csrf_token %}
-                <input type="hidden" name="session_id" value="{{ student_next_session.session_id }}">
-                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <button type="submit" class="student-button">Confirmar presenca</button>
-            </form>
-            {% else %}
-            <span class="student-status-badge">Presenca ja registrada</span>
-            {% endif %}
-            <a href="{% url 'student-app-wod' %}" class="student-button student-button--ghost">Ir para WOD</a>
-        </div>
-    </article>
-
-    <article class="student-card student-card--soft">
-        <p class="student-eyebrow">Janela do treino</p>
-        <h2>Quando a presenca fechar, o WOD sobe para o Inicio.</h2>
-        <p class="student-copy">Essa pagina organiza a chegada. O WOD assume o centro quando a aula entrar em modo de execucao. E como trocar do ingresso para o filme no momento certo.</p>
-    </article>
-</section>
-
-<section class="student-card">
+<section class="student-card student-card--quiet">
     <div class="student-section-head">
         <div>
-            <p class="student-eyebrow">Agenda curta</p>
-            <h2>Proximas aulas</h2>
+            <span class="student-context-switch">{{ dashboard.next_sessions|length }} aula(s)</span>
+            <h2>Proximas</h2>
         </div>
-        <span class="student-section-kicker">Leitura rapida</span>
     </div>
     <div class="student-session-list">
         {% for session in dashboard.next_sessions %}
@@ -68,10 +44,12 @@
             <span>{{ session.scheduled_label }}</span>
             <span>{{ session.coach_name }}</span>
             <span>{{ session.attendance_status }}</span>
-            {% if session.notes %}<p>{{ session.notes }}</p>{% endif %}
         </article>
         {% empty %}
-        <p class="student-copy">Nenhuma aula futura publicada ainda.</p>
+        <article class="student-compact-state">
+            <strong>Nada publicado.</strong>
+            <p class="student-copy">Volte mais tarde.</p>
+        </article>
         {% endfor %}
     </div>
 </section>

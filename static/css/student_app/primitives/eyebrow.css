@@ -1,0 +1,39 @@
+/*
+ARQUIVO: copy e eyebrow do app do aluno
+GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+*/
+
+.student-copy,
+.student-form-note,
+.student-card p,
+.student-session-card p,
+.student-settings-list,
+.student-wod-movement-copy span,
+.student-wod-movement-copy p,
+.student-wod-movement-metrics small,
+.student-wod-movement-metrics span {
+    color: var(--theme-text-secondary);
+}
+
+.student-eyebrow {
+    margin: 0;
+    color: color-mix(in srgb, var(--theme-accent-primary) 58%, var(--theme-accent-support) 42%);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.student-card h2,
+.student-prescription h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    color: var(--theme-text-primary);
+    letter-spacing: -0.045em;
+}
+
+.student-card h2,
+.student-prescription h2 {
+    font-size: clamp(1.22rem, 2vw, 1.52rem);
+    line-height: 1.08;
+}

@@ -1,0 +1,16 @@
+/*
+ARQUIVO: tela settings do aluno
+GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+*/
+
+.student-card--settings-main {
+    min-height: 100%;
+}
+
+.student-card--settings-side {
+    align-content: start;
+}
+
+.student-card--settings-main {
+    --student-card-glow: none;
+}

@@ -100,7 +100,7 @@ class CatalogViewTests(TestCase):
         self.assertContains(response, 'js/core/surface-runtime.js')
         self.assertContains(response, 'id="global-search-input" type="search" name="query" placeholder="Buscar aluno, telefone ou CPF" maxlength="50"', html=False)
         self.assertContains(response, 'name="query"', html=False)
-        self.assertContains(response, 'placeholder="Buscar aluno, e-mail ou telefone..."', html=False)
+        self.assertContains(response, 'placeholder="Buscar por nome, e-mail ou telefone..."', html=False)
         self.assertContains(response, 'class="student-filter-search-input"', html=False)
         self.assertContains(response, 'maxlength="50"', html=False)
         self.assertContains(response, 'js/core/shell-interactions.js')
