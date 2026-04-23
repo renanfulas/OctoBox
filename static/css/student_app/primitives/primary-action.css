@@ -1,0 +1,64 @@
+/*
+ARQUIVO: CTA primario contextual do app do aluno.
+*/
+
+.student-primary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    min-height: 52px;
+    padding: 14px 22px;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 30%, transparent);
+    background:
+        linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--theme-accent-primary) 92%, white 8%),
+            color-mix(in srgb, var(--theme-accent-support) 84%, black 16%)
+        );
+    color: color-mix(in srgb, white 96%, var(--theme-accent-primary) 4%);
+    font: inherit;
+    font-weight: 900;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow:
+        0 20px 38px color-mix(in srgb, var(--theme-accent-support-alpha) 50%, transparent),
+        inset 0 1px 0 color-mix(in srgb, white 20%, transparent);
+    transition:
+        transform var(--motion-fast) var(--ease-standard),
+        box-shadow var(--motion-base) var(--ease-standard);
+}
+
+.student-primary-action:hover,
+.student-primary-action:focus-visible {
+    transform: translateY(-1px);
+    outline: none;
+    box-shadow:
+        0 26px 48px color-mix(in srgb, var(--theme-accent-support-alpha) 58%, transparent),
+        0 0 0 3px color-mix(in srgb, var(--theme-accent-primary-alpha) 24%, transparent);
+}
+
+.student-secondary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    min-height: 42px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 90%, transparent);
+    color: var(--theme-text-primary);
+    font: inherit;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+@media (max-width: 640px) {
+    .student-primary-action,
+    .student-secondary-action {
+        width: 100%;
+    }
+}

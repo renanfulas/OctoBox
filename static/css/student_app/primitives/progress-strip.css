@@ -1,0 +1,37 @@
+/*
+ARQUIVO: faixa de progresso do app do aluno.
+*/
+
+.student-progress-strip {
+    display: grid;
+    gap: 10px;
+    padding: 16px;
+    border-radius: var(--radius-panel);
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 88%, transparent);
+    box-shadow: var(--theme-shadow-soft);
+}
+
+.student-progress-strip__track {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.student-progress-day {
+    display: grid;
+    place-items: center;
+    min-height: 42px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 80%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 88%, transparent);
+    color: var(--theme-text-muted);
+    font-size: 0.76rem;
+    font-weight: 900;
+}
+
+.student-progress-day.is-complete {
+    border-color: color-mix(in srgb, var(--theme-accent-success) 28%, var(--theme-border-soft) 72%);
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 44%, var(--theme-surface-strong) 56%);
+    color: var(--theme-text-primary);
+}

@@ -5,11 +5,7 @@ const APP_SCOPE = '{{ student_app_scope }}';
 const ALLOWLIST = [
   OFFLINE_URL,
   '{{ student_app_manifest_url }}',
-  '{{ student_app_css_url }}',
-  '{{ student_app_shell_css_url }}',
-  '{{ student_app_components_css_url }}',
-  '{{ student_app_forms_css_url }}',
-  '{{ student_app_pages_css_url }}',
+  {% for css_url in student_app_css_urls %}'{{ css_url }}',{% endfor %}
   '{{ student_app_tokens_css_url }}',
   '{{ student_app_topbar_css_url }}',
   '{{ student_app_js_url }}',

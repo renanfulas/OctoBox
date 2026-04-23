@@ -1,0 +1,274 @@
+/*
+ARQUIVO: topbar e troca de box do app do aluno
+GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+*/
+
+.student-topbar.topbar {
+    --topbar-h: auto;
+    --topbar-padding-block: 12px;
+    --topbar-padding-inline: 16px;
+    --topbar-gap: 10px;
+    --topbar-left-gap: 10px;
+    --topbar-right-gap: 8px;
+    --topbar-top: 18px;
+    --topbar-margin-bottom: 0;
+    --topbar-radius: calc(var(--radius-shell) + 2px);
+    --topbar-surface:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-strong) 94%, transparent),
+            color-mix(in srgb, var(--theme-surface-secondary) 90%, transparent)
+        );
+    --topbar-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-border-soft) 84%);
+    --topbar-shadow: var(--theme-shadow-lift);
+    --topbar-toggle-surface: color-mix(in srgb, var(--theme-surface-secondary) 84%, var(--theme-accent-support-alpha) 16%);
+    --topbar-toggle-border-color: color-mix(in srgb, var(--theme-border-soft) 86%, var(--theme-accent-support-alpha) 14%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+}
+
+.student-topbar-main,
+.student-topbar-actions {
+    min-width: 0;
+}
+
+.student-topbar-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1 1 auto;
+}
+
+.student-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+.student-topbar-actions:empty {
+    display: none;
+}
+
+.student-topbar-copy {
+    display: grid;
+    gap: 0;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.student-topbar-copy strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: clamp(0.98rem, 2vw, 1.08rem);
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.08;
+}
+
+.student-topbar-copy span {
+    color: var(--theme-text-muted);
+    font-size: 0.84rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.15;
+}
+
+.student-topbar-eyebrow {
+    margin: 0;
+    color: color-mix(in srgb, var(--theme-accent-primary) 58%, var(--theme-accent-support) 42%);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.66rem;
+    font-weight: 800;
+    line-height: 1.05;
+}
+
+.student-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    background:
+        linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--theme-accent-primary) 24%, var(--theme-surface-strong) 76%),
+            color-mix(in srgb, var(--theme-accent-support) 20%, var(--theme-surface-secondary) 80%),
+            color-mix(in srgb, var(--theme-accent-premium) 12%, var(--theme-surface-strong) 88%)
+        );
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 20%, var(--theme-border-soft) 80%);
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, white 14%, transparent),
+        0 12px 22px color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent);
+    font-weight: 800;
+    letter-spacing: 0.06em;
+}
+
+.student-avatar-link {
+    color: var(--theme-text-primary);
+    text-decoration: none;
+    transition:
+        transform var(--motion-fast) var(--ease-standard),
+        border-color var(--motion-base) var(--ease-standard),
+        box-shadow var(--motion-base) var(--ease-standard),
+        filter var(--motion-base) var(--ease-standard);
+}
+
+.student-avatar-link:hover,
+.student-avatar-link:focus-visible {
+    transform: translateY(-1px);
+    outline: none;
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 34%, var(--theme-border-soft) 66%);
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, white 16%, transparent),
+        0 0 0 4px color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent),
+        0 16px 28px color-mix(in srgb, var(--theme-accent-support-alpha) 28%, transparent);
+    filter: saturate(1.08);
+}
+
+.student-topbar-link {
+    min-height: 40px;
+    place-items: center;
+    padding: 10px 14px;
+    background: color-mix(in srgb, var(--theme-surface-secondary) 82%, transparent);
+}
+
+.student-theme-toggle.theme-toggle {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 13px;
+    align-self: center;
+}
+
+.student-theme-toggle .theme-toggle-icon {
+    width: 19px;
+    height: 19px;
+}
+
+.student-box-switcher {
+    position: relative;
+}
+
+.student-box-switcher > summary {
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    cursor: pointer;
+    background: color-mix(in srgb, var(--theme-surface-secondary) 82%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, transparent);
+    transition:
+        background var(--motion-base) var(--ease-standard),
+        border-color var(--motion-base) var(--ease-standard),
+        transform var(--motion-fast) var(--ease-standard);
+}
+
+.student-box-switcher > summary:hover,
+.student-box-switcher > summary:focus-visible {
+    transform: translateY(-1px);
+    outline: none;
+    background: color-mix(in srgb, var(--theme-surface-strong) 88%, var(--theme-accent-support-alpha) 12%);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-border-soft) 82%);
+}
+
+.student-box-switcher > summary::-webkit-details-marker {
+    display: none;
+}
+
+.student-box-switcher-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 10px);
+    width: min(360px, calc(100vw - 40px));
+    z-index: 14;
+    padding: 16px;
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--student-shell-border-strong);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-strong) 96%, transparent),
+            color-mix(in srgb, var(--theme-surface-secondary) 92%, transparent)
+        );
+    box-shadow: var(--theme-shadow-xl);
+    backdrop-filter: blur(20px) saturate(145%);
+    -webkit-backdrop-filter: blur(20px) saturate(145%);
+}
+
+.student-box-switcher-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.student-box-switcher-list form {
+    margin: 0;
+}
+
+.student-box-switch-button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 90%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
+    color: var(--theme-text-primary);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        transform var(--motion-fast) var(--ease-standard),
+        border-color var(--motion-base) var(--ease-standard),
+        background var(--motion-base) var(--ease-standard),
+        box-shadow var(--motion-base) var(--ease-standard);
+}
+
+.student-box-switch-button:hover:not(:disabled),
+.student-box-switch-button:focus-visible:not(:disabled) {
+    transform: translateY(-1px);
+    outline: none;
+    border-color: color-mix(in srgb, var(--theme-accent-support) 20%, var(--theme-border-soft) 80%);
+    background: color-mix(in srgb, var(--theme-surface-strong) 86%, var(--theme-accent-support-alpha) 14%);
+    box-shadow: 0 14px 26px color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent);
+}
+
+.student-box-switch-button.is-active,
+.student-box-switch-button:disabled {
+    cursor: default;
+    opacity: 0.92;
+    background:
+        linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--theme-accent-primary) 14%, var(--theme-surface-strong) 86%),
+            color-mix(in srgb, var(--theme-accent-support) 14%, var(--theme-surface-secondary) 86%)
+        );
+    border-color: color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-border-soft) 82%);
+}
+
+.student-box-switch-meta {
+    display: inline-flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.student-box-switch-button small {
+    color: var(--theme-text-muted);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}

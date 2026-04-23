@@ -10,13 +10,16 @@ from django.utils import timezone
 
 from auditing.models import AuditEvent
 from operations.models import Attendance, AttendanceStatus, ClassSession
-from student_app.application.use_cases import GetStudentWorkoutPrescription
+from student_app.application.use_cases import GetStudentDashboard, GetStudentWorkoutPrescription
 from student_app.models import (
     SessionWorkout,
     SessionWorkoutBlock,
     SessionWorkoutMovement,
     SessionWorkoutStatus,
+    StudentAppActivity,
+    StudentAppActivityKind,
     StudentExerciseMax,
+    StudentExerciseMaxHistory,
     StudentWorkoutView,
     WorkoutBlockKind,
     WorkoutLoadType,
@@ -408,7 +411,9 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'Grade')
         self.assertContains(response, 'WOD')
         self.assertContains(response, 'RM')
-        self.assertContains(response, 'Modo atual: Grade')
+        self.assertContains(response, 'Proxima acao')
+        self.assertContains(response, 'class="student-primary-action"', html=False)
+        self.assertContains(response, 'class="student-progress-strip"', html=False)
         self.assertContains(response, 'data-theme="light"', html=False)
         self.assertContains(response, 'data-ui="student-theme-toggle"', html=False)
         self.assertContains(response, 'octobox-theme', html=False)
@@ -429,8 +434,8 @@ class StudentAppExperienceTests(TestCase):
         response = self.client.get(reverse('student-app-home'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Treino de hoje ativo.')
-        self.assertContains(response, 'Modo atual: WOD')
+        self.assertContains(response, 'WOD das 19h')
+        self.assertContains(response, 'Modo WOD')
         self.assertContains(response, 'Abrir WOD')
 
     def test_confirm_attendance_creates_student_booking(self):
@@ -454,6 +459,8 @@ class StudentAppExperienceTests(TestCase):
         attendance = Attendance.objects.get(student=self.student, session=session)
         self.assertEqual(attendance.status, AttendanceStatus.BOOKED)
         self.assertEqual(attendance.reservation_source, 'student_app')
+        activity = StudentAppActivity.objects.get(student=self.student, kind=StudentAppActivityKind.ATTENDANCE_CONFIRMED)
+        self.assertEqual(activity.source_object_id, session.id)
 
     def test_confirm_attendance_reactivates_canceled_booking(self):
         session = ClassSession.objects.create(
@@ -495,9 +502,53 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(grade_response.status_code, 200)
         self.assertEqual(rm_response.status_code, 200)
         self.assertContains(grade_response, 'Sua rotina no box')
-        self.assertContains(grade_response, 'Proxima aula')
-        self.assertContains(rm_response, 'Seus records maximos')
+        self.assertContains(grade_response, 'Sem aula agora')
+        self.assertContains(grade_response, 'Proximas')
+        self.assertContains(rm_response, 'Seus RMs')
         self.assertContains(rm_response, 'Deadlift')
+
+    def test_student_rm_create_and_update_record_history_and_activity(self):
+        add_response = self.client.post(
+            reverse('student-app-rm-add'),
+            {
+                'exercise_label': 'Deadlift',
+                'one_rep_max_kg': '100.00',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(add_response.status_code, 302)
+        record = StudentExerciseMax.objects.get(student=self.student, exercise_slug='deadlift')
+        created_history = StudentExerciseMaxHistory.objects.get(student=self.student, exercise_slug='deadlift')
+        self.assertIsNone(created_history.previous_kg)
+        self.assertEqual(created_history.new_kg, Decimal('100.00'))
+        self.assertEqual(created_history.delta_kg, Decimal('0.00'))
+        self.assertTrue(
+            StudentAppActivity.objects.filter(
+                student=self.student,
+                kind=StudentAppActivityKind.RM_CREATED,
+                source_object_id=record.id,
+            ).exists()
+        )
+
+        update_response = self.client.post(
+            reverse('student-app-rm-update', kwargs={'pk': record.id}),
+            {'one_rep_max_kg': '105.00'},
+            follow=False,
+        )
+
+        self.assertEqual(update_response.status_code, 302)
+        latest_history = StudentExerciseMaxHistory.objects.filter(student=self.student, exercise_slug='deadlift').latest('created_at')
+        self.assertEqual(latest_history.previous_kg, Decimal('100.00'))
+        self.assertEqual(latest_history.new_kg, Decimal('105.00'))
+        self.assertEqual(latest_history.delta_kg, Decimal('5.00'))
+        self.assertTrue(
+            StudentAppActivity.objects.filter(
+                student=self.student,
+                kind=StudentAppActivityKind.RM_UPDATED,
+                source_object_id=record.id,
+            ).exists()
+        )
 
     def test_student_session_attendees_renders_for_visible_session(self):
         session = ClassSession.objects.create(
@@ -553,8 +604,8 @@ class StudentAppExperienceTests(TestCase):
         response = self.client.get(reverse('student-app-wod'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Treino do dia com leitura rapida e carga pessoal.')
-        self.assertContains(response, 'Percentual do treino')
+        self.assertContains(response, 'WOD ainda nao publicado.')
+        self.assertContains(response, 'Percentual')
         self.assertContains(response, 'Deadlift')
 
     def test_student_wod_route_renders_published_workout_day(self):
@@ -603,13 +654,26 @@ class StudentAppExperienceTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Forca + Metcon')
-        self.assertContains(response, 'Cross de hoje')
         self.assertContains(response, 'Forca principal')
         self.assertContains(response, 'Deadlift')
         self.assertContains(response, '70.00 kg')
-        self.assertContains(response, 'Baseado no seu RM atual de 100.00 kg.')
+        self.assertContains(response, '70,00% do seu RM 100,00 kg')
         workout_view = StudentWorkoutView.objects.get(student=self.student, workout=workout)
         self.assertEqual(workout_view.view_count, 1)
+        self.assertTrue(
+            StudentAppActivity.objects.filter(
+                student=self.student,
+                kind=StudentAppActivityKind.WOD_VIEWED,
+                source_object_id=workout.id,
+            ).exists()
+        )
+        dashboard = GetStudentDashboard().execute(identity=self.identity)
+        self.assertEqual(dashboard.primary_action.kind, 'open_wod')
+        self.assertEqual(dashboard.rm_of_the_day.exercise_slug, 'deadlift')
+        self.assertEqual(dashboard.rm_of_the_day.recommended_load_kg, Decimal('70.00'))
+        self.assertEqual(len(dashboard.progress_days), 7)
+        self.assertTrue(any(day.is_complete for day in dashboard.progress_days))
+        self.assertEqual(dashboard.next_useful_context, 'WOD ativo agora')
 
         second_response = self.client.get(reverse('student-app-wod'))
 
@@ -639,7 +703,7 @@ class StudentAppExperienceTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Rascunho do coach')
-        self.assertContains(response, 'Treino do dia com leitura rapida e carga pessoal.')
+        self.assertContains(response, 'WOD ainda nao publicado.')
 
     def test_workout_prescription_returns_expected_rounded_load(self):
         StudentExerciseMax.objects.create(
@@ -675,7 +739,8 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(manifest_payload['icons'][0]['src'], '/static/images/student-app-icon-192.png')
         self.assertIn('/static/images/student-app-icon-maskable-512.png', sw_response.content.decode('utf-8'))
         self.assertIn('/static/js/student_app/theme.js', sw_response.content.decode('utf-8'))
-        self.assertIn('/static/css/student_app/shell.css', sw_response.content.decode('utf-8'))
+        self.assertIn('/static/css/student_app/shell/shell.css', sw_response.content.decode('utf-8'))
+        self.assertIn('/static/css/student_app/primitives/card.css', sw_response.content.decode('utf-8'))
         self.assertIn('/static/css/design-system/tokens.css', sw_response.content.decode('utf-8'))
 
     def test_student_home_refreshes_student_session_cookie(self):

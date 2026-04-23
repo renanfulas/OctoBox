@@ -1,0 +1,20 @@
+/*
+ARQUIVO: estados compactos do app do aluno.
+*/
+
+.student-compact-state {
+    display: grid;
+    gap: 10px;
+    padding: 18px;
+    border-radius: var(--radius-panel);
+    border: 1px dashed color-mix(in srgb, var(--theme-border-strong) 72%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 82%, transparent);
+}
+
+.student-compact-state strong {
+    color: var(--theme-text-primary);
+}
+
+.student-compact-state p {
+    margin: 0;
+}

@@ -3,13 +3,13 @@
 {% block title %}Turma | OctoBox Aluno{% endblock %}
 
 {% block body %}
-<section class="student-page-head">
-    <p class="student-eyebrow">Turma</p>
-    <h1>{{ session.title }}</h1>
-    <div class="student-head-chip-group">
-        <span class="student-head-chip">{{ session.scheduled_at|date:"d/m H:i" }}</span>
-        <span class="student-head-chip">{{ attendees|length }} confirmado(s)</span>
+<section class="student-hero-number">
+    <span class="student-hero-number__meta">{{ session.scheduled_at|date:"d/m H:i" }}</span>
+    <p class="student-hero-number__label">{{ session.title }}</p>
+    <div class="student-hero-number__value">
+        <span>{{ attendees|length }}</span>
     </div>
+    <p class="student-hero-number__support">confirmado(s)</p>
 </section>
 
 <section class="student-card">

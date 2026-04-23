@@ -1,0 +1,24 @@
+/*
+ARQUIVO: tela RM do aluno
+GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+*/
+
+.student-rm-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+/* RM inline update form */
+.student-rm-inline-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+.student-rm-inline-form .student-input {
+    width: 110px;
+    min-height: 42px;
+}

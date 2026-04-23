@@ -1,0 +1,35 @@
+{% if student_identity %}
+<aside class="student-sidebar" aria-label="Navegacao do aluno">
+    <a href="{% url 'student-app-home' %}" class="student-brandmark">
+        <span class="student-brandmark-mark">OB</span>
+        <span>
+            <strong>OctoBox Aluno</strong>
+            <small>{{ student_active_box_root_slug|default:"Sem box ativo" }}</small>
+        </span>
+    </a>
+    <nav class="student-nav">
+        <a href="{% url 'student-app-home' %}" class="student-nav-link{% if student_shell_nav == 'home' %} is-active{% endif %}">
+            <span>Inicio</span>
+            <small>O que importa agora</small>
+        </a>
+        <a href="{% url 'student-app-grade' %}" class="student-nav-link{% if student_shell_nav == 'grade' %} is-active{% endif %}">
+            <span>Grade</span>
+            <small>Sua rotina no box</small>
+        </a>
+        <a href="{% url 'student-app-wod' %}" class="student-nav-link{% if student_shell_nav == 'wod' %} is-active{% endif %}">
+            <span>WOD</span>
+            <small>Treino do dia</small>
+        </a>
+        <a href="{% url 'student-app-rm' %}" class="student-nav-link{% if student_shell_nav == 'rm' %} is-active{% endif %}">
+            <span>RM</span>
+            <small>Seus records maximos</small>
+        </a>
+    </nav>
+    <div class="student-sidebar-footer">
+        <a href="{% url 'student-app-settings' %}" class="student-sidebar-utility{% if student_shell_nav == 'settings' %} is-active{% endif %}">
+            Perfil e configuracoes
+        </a>
+        <p class="student-sidebar-note">O app troca de contexto com voce: Grade antes da aula, WOD durante o treino.</p>
+    </div>
+</aside>
+{% endif %}

@@ -76,6 +76,7 @@ class AuditTrailTests(TestCase):
                 'method': 'pix',
                 'reference': 'PIX-2026-03',
                 'notes': 'Pagamento confirmado no admin.',
+                'version': self.payment.version,
                 '_save': 'Salvar',
             },
         )

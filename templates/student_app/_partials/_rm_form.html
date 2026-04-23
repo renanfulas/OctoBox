@@ -1,0 +1,20 @@
+<section class="student-card student-card--quiet">
+    <div class="student-section-head">
+        <div>
+            <span class="student-context-switch">Novo RM</span>
+            <h2>Registrar</h2>
+        </div>
+    </div>
+    <form method="post" action="{% url 'student-app-rm-add' %}" class="student-form student-form-grid">
+        {% csrf_token %}
+        <label>
+            <span>Movimento</span>
+            {{ add_rm_form.exercise_label }}
+        </label>
+        <label>
+            <span>Kg</span>
+            {{ add_rm_form.one_rep_max_kg }}
+        </label>
+        <button type="submit" class="student-primary-action">Salvar RM</button>
+    </form>
+</section>

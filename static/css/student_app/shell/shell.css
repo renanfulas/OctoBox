@@ -1,0 +1,93 @@
+/*
+ARQUIVO: shell base do app do aluno
+GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+*/
+
+/*
+ARQUIVO: shell e chrome base do app do aluno.
+
+POR QUE ELE EXISTE:
+- define a fachada estrutural do app do aluno sem competir com os tokens canonicos.
+- concentra background, sidebar, topbar, switch box, flashes e navegacao mobile.
+
+O QUE ESTE ARQUIVO FAZ:
+1. monta o palco do app do aluno em light e dark.
+2. organiza topbar, sidebar e navegacao mobile.
+3. entrega o acabamento base do shell premium do aluno.
+
+PONTOS CRITICOS:
+- este arquivo nao deve virar novo design system paralelo.
+- a casca do app precisa continuar leve no mobile e premium no desktop.
+*/
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    background: var(--theme-bg-root);
+}
+
+body.student-app-body {
+    --student-shell-max: 1400px;
+    --student-shell-gap: clamp(18px, 2vw, 26px);
+    --student-shell-padding: clamp(16px, 2vw, 22px);
+    --student-mobile-nav-height: 72px;
+    --student-shell-panel:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-strong) 95%, transparent),
+            color-mix(in srgb, var(--theme-surface-secondary) 90%, transparent)
+        );
+    --student-shell-panel-strong:
+        linear-gradient(
+            160deg,
+            color-mix(in srgb, var(--theme-surface-strong) 98%, transparent),
+            color-mix(in srgb, var(--theme-surface-secondary) 92%, transparent)
+        );
+    --student-shell-border: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    --student-shell-border-strong: color-mix(in srgb, var(--theme-border-strong) 94%, transparent);
+    --student-shell-shadow: var(--theme-shadow-lift);
+    --student-shell-glow:
+        radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--theme-accent-primary-alpha) 72%, transparent), transparent 40%),
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-premium-alpha) 54%, transparent), transparent 34%);
+    margin: 0;
+    min-height: 100vh;
+    color: var(--theme-text-primary);
+    font-family: var(--font-body);
+    background:
+        var(--theme-bg-stage-depth),
+        var(--theme-bg-stage),
+        var(--theme-bg-root);
+}
+
+body.student-app-body a {
+    color: inherit;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.student-shell-grid {
+    width: min(var(--student-shell-max), calc(100% - 28px));
+    margin: 0 auto;
+    padding: 18px 0 110px;
+}
+
+.student-shell {
+    display: grid;
+    gap: var(--student-shell-gap);
+    min-width: 0;
+    padding-bottom: calc(var(--student-mobile-nav-height) + env(safe-area-inset-bottom, 0px) + 26px);
+}

@@ -1,0 +1,217 @@
+﻿/*
+ARQUIVO: cards base do app do aluno
+GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+*/
+
+.student-card {
+    --student-card-surface:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-strong) 96%, transparent),
+            color-mix(in srgb, var(--theme-surface-secondary) 92%, transparent)
+        );
+    --student-card-border: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    --student-card-shadow: var(--theme-shadow-soft);
+    --student-card-glow:
+        radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--theme-accent-support-alpha) 48%, transparent), transparent 58%);
+    position: relative;
+    display: grid;
+    gap: 16px;
+    padding: clamp(20px, 2.4vw, 24px);
+    border-radius: calc(var(--radius-panel) + 4px);
+    border: 1px solid var(--student-card-border);
+    background:
+        var(--student-card-glow),
+        var(--student-card-surface);
+    box-shadow: var(--student-card-shadow);
+    overflow: hidden;
+}
+
+.student-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background:
+        linear-gradient(
+            90deg,
+            color-mix(in srgb, var(--theme-accent-primary) 56%, transparent),
+            color-mix(in srgb, var(--theme-accent-support) 44%, transparent),
+            color-mix(in srgb, var(--theme-accent-premium) 26%, transparent)
+        );
+    opacity: 0.92;
+    pointer-events: none;
+}
+
+.student-card--feature {
+    --student-card-surface:
+        linear-gradient(
+            140deg,
+            color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, var(--theme-surface-strong) 82%),
+            color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-surface-secondary) 80%),
+            color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, var(--theme-surface-strong) 90%)
+        );
+    --student-card-border: color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-border-soft) 82%);
+    --student-card-shadow: var(--theme-shadow-lift);
+    --student-card-glow:
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-support-alpha) 72%, transparent), transparent 42%),
+        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent), transparent 42%);
+}
+
+.student-card--quiet {
+    --student-card-surface:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-strong) 98%, transparent),
+            color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent)
+        );
+    --student-card-border: color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    --student-card-shadow: var(--theme-shadow-soft);
+    --student-card-glow: none;
+}
+
+.student-card--alert {
+    --student-card-surface:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-accent-danger-alpha) 20%, var(--theme-surface-strong) 80%),
+            color-mix(in srgb, var(--theme-surface-secondary) 90%, transparent)
+        );
+    --student-card-border: color-mix(in srgb, var(--theme-accent-danger) 18%, var(--theme-border-soft) 82%);
+}
+
+.student-section-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 0;
+}
+
+.student-section-head--compact {
+    margin-bottom: 8px;
+}
+
+.student-section-head > div {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+.student-session-card,
+.student-prescription,
+.student-wod-block,
+.student-wod-movement-card,
+.student-rm-card {
+    padding: 18px;
+    border-radius: 20px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 90%, transparent);
+    box-shadow: 0 12px 22px color-mix(in srgb, var(--theme-shadow-soft) 10%, transparent);
+}
+
+.student-session-card,
+.student-rm-card {
+    display: grid;
+    gap: 6px;
+}
+
+.student-wod-block strong,
+.student-rm-card strong,
+.student-session-card strong {
+    color: var(--theme-text-primary);
+    font-size: 1rem;
+}
+
+.student-wod-movement-card {
+    display: grid;
+    gap: 14px;
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-strong) 92%, transparent),
+            color-mix(in srgb, var(--theme-surface-secondary) 88%, transparent)
+        );
+}
+
+.student-wod-movement-copy,
+.student-wod-movement-metrics {
+    display: grid;
+    gap: 4px;
+}
+
+.student-wod-movement-metrics strong,
+.student-prescription-grid strong {
+    color: var(--theme-text-primary);
+    font-size: 1.08rem;
+    font-weight: 800;
+}
+
+.student-prescription-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    margin: 14px 0;
+}
+
+.student-prescription-grid small {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--theme-text-muted);
+    font-size: 0.8rem;
+}
+
+/* Session card with actions column */
+.student-session-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* Attendees grid */
+.student-attendees-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+    gap: 18px;
+    margin-top: 4px;
+}
+
+.student-attendee-card {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
+.student-attendee-card strong {
+    font-size: 0.88rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.student-attendee-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    overflow: hidden;
+    background:
+        linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--theme-accent-primary-alpha) 46%, var(--theme-surface-strong) 54%),
+            color-mix(in srgb, var(--theme-accent-support-alpha) 38%, var(--theme-surface-secondary) 62%)
+        );
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--theme-text-primary);
+}
+
+.student-attendee-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
