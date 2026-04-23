@@ -2,8 +2,9 @@ from datetime import date, timedelta
 from decimal import Decimal
 import json
 import uuid
+from unittest.mock import patch
 
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -28,6 +29,7 @@ from student_identity.models import (
     StudentBoxMembershipStatus,
     StudentIdentity,
     StudentIdentityProvider,
+    StudentPushSubscription,
     StudentIdentityStatus,
     StudentOnboardingJourney,
 )
@@ -696,6 +698,68 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'Instale o OctoBox no celular e libere as notificacoes.', html=False)
         self.assertContains(response, 'data-ui="student-pwa-install-action"', html=False)
         self.assertContains(response, 'data-ui="student-pwa-notification-action"', html=False)
+
+    def test_student_topbar_profile_lives_inside_avatar(self):
+        response = self.client.get(reverse('student-app-home'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="student-avatar student-avatar-link"', html=False)
+        self.assertContains(response, 'aria-label="Abrir perfil e configuracoes"', html=False)
+        self.assertContains(response, '<svg class="theme-toggle-icon"', html=False)
+        self.assertNotContains(response, 'class="student-topbar-link">Perfil</a>', html=False)
+
+    @override_settings(
+        STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY='test-public-key',
+        STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY='test-private-key',
+        STUDENT_WEB_PUSH_VAPID_CLAIMS_SUBJECT='mailto:teste@octoboxfit.com.br',
+    )
+    @patch('student_app.views.pwa_views.send_student_web_push_notification', return_value=True)
+    def test_student_push_subscribe_persists_subscription(self, send_push_mock):
+        response = self.client.post(
+            reverse('student-app-push-subscribe'),
+            data=json.dumps(
+                {
+                    'subscription': {
+                        'endpoint': 'https://push.example.test/subscription-1',
+                        'expirationTime': None,
+                        'keys': {
+                            'p256dh': 'test-p256dh',
+                            'auth': 'test-auth',
+                        },
+                    }
+                }
+            ),
+            content_type='application/json',
+            HTTP_USER_AGENT='OctoBox Browser Teste',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        subscription = StudentPushSubscription.objects.get(endpoint='https://push.example.test/subscription-1')
+        self.assertEqual(subscription.identity, self.identity)
+        self.assertEqual(subscription.box_root_slug, 'control')
+        self.assertEqual(subscription.subscription['keys']['auth'], 'test-auth')
+        send_push_mock.assert_called_once()
+
+    def test_student_push_unsubscribe_revokes_subscription(self):
+        subscription = StudentPushSubscription.objects.create(
+            identity=self.identity,
+            box_root_slug='control',
+            endpoint='https://push.example.test/subscription-2',
+            subscription={
+                'endpoint': 'https://push.example.test/subscription-2',
+                'keys': {'p256dh': 'key-a', 'auth': 'key-b'},
+            },
+        )
+
+        response = self.client.post(
+            reverse('student-app-push-unsubscribe'),
+            data=json.dumps({'endpoint': subscription.endpoint}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        subscription.refresh_from_db()
+        self.assertIsNotNone(subscription.revoked_at)
 
     def test_student_home_redirects_to_login_when_device_fingerprint_changes(self):
         warmup_response = self.client.get(reverse('student-app-home'), HTTP_USER_AGENT='OctoBox Test Browser A')

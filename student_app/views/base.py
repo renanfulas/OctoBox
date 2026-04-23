@@ -12,6 +12,7 @@ O QUE ESTE ARQUIVO FAZ:
 
 from __future__ import annotations
 
+from django.conf import settings
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -84,6 +85,7 @@ class StudentIdentityRequiredMixin:
         context['student_identity'] = self.request.student_identity
         context['student_active_box_root_slug'] = self.request.student_active_box_root_slug
         context['student_primary_box_root_slug'] = self.request.student_identity.primary_box_root_slug
+        context['student_web_push_public_key'] = getattr(settings, 'STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY', '').strip()
         context['student_memberships'] = list(self.request.student_box_memberships)
         context.setdefault('student_shell_nav', 'home')
         context.setdefault('student_shell_title', 'Inicio')

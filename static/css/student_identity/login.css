@@ -120,20 +120,51 @@ body.student-app-body {
 }
 
 .student-button--google {
-    color: #1f1f1f;
-    background: #ffffff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+    color: #142033;
+    -webkit-text-fill-color: #142033;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.94));
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    box-shadow:
+        0 10px 24px rgba(2, 8, 23, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
 }
 
+.student-button--google > span:not(.student-google-mark) {
+    color: #142033;
+    -webkit-text-fill-color: #142033;
+}
+
+.student-google-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    box-shadow:
+        0 1px 0 rgba(15, 23, 42, 0.04),
+        0 6px 16px rgba(15, 23, 42, 0.08);
+    flex-shrink: 0;
+}
+
+.student-google-mark svg {
+    display: block;
+}
+
 .student-button--google:hover,
 .student-button--google:focus-visible {
-    background: #f5f5f5;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(244, 248, 255, 0.96));
     filter: none;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    box-shadow:
+        0 16px 30px rgba(2, 8, 23, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
 .student-button--ghost {

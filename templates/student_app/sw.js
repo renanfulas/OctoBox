@@ -89,3 +89,46 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(staleWhileRevalidate(request));
 });
+
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch (error) {
+    payload = {
+      title: 'OctoBox Aluno',
+      body: event.data ? event.data.text() : 'Voce recebeu uma nova notificacao.',
+    };
+  }
+
+  const title = payload.title || 'OctoBox Aluno';
+  const options = {
+    body: payload.body || 'Voce recebeu uma nova notificacao.',
+    icon: payload.icon || '{{ student_app_icon_192_url }}',
+    badge: payload.badge || '{{ student_app_icon_192_url }}',
+    tag: payload.tag || 'student-app-notification',
+    data: {
+      url: payload.url || '{{ student_app_scope }}',
+    },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || '{{ student_app_scope }}';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ('focus' in client && client.url.includes(targetUrl)) {
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl);
+      }
+      return undefined;
+    })
+  );
+});

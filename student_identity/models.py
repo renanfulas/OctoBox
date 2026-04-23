@@ -323,5 +323,49 @@ class StudentInvitationDeliveryEvent(TimeStampedModel):
     class Meta:
         ordering = ['-created_at']
 
+
+class StudentPushSubscription(TimeStampedModel):
+    identity = models.ForeignKey(StudentIdentity, on_delete=models.CASCADE, related_name='push_subscriptions')
+    box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)
+    endpoint = models.CharField(max_length=500, unique=True, db_index=True)
+    subscription = models.JSONField(default=dict, blank=True)
+    device_fingerprint = models.CharField(max_length=64, blank=True, db_index=True)
+    user_agent = models.CharField(max_length=255, blank=True)
+    last_seen_at = models.DateTimeField(default=timezone.now, db_index=True)
+    last_push_sent_at = models.DateTimeField(null=True, blank=True)
+    last_error_at = models.DateTimeField(null=True, blank=True)
+    last_error_message = models.CharField(max_length=255, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True, db_index=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    @property
+    def is_active(self) -> bool:
+        return self.revoked_at is None
+
+    def mark_seen(self):
+        self.last_seen_at = timezone.now()
+        self.revoked_at = None
+        self.last_error_at = None
+        self.last_error_message = ''
+
+    def mark_push_sent(self):
+        self.last_push_sent_at = timezone.now()
+        self.last_error_at = None
+        self.last_error_message = ''
+
+    def mark_push_failed(self, *, error_message: str):
+        self.last_error_at = timezone.now()
+        self.last_error_message = (error_message or '')[:255]
+
+    def mark_revoked(self, *, error_message: str = ''):
+        self.revoked_at = timezone.now()
+        self.last_error_message = (error_message or '')[:255]
+        self.last_error_at = timezone.now()
+
+    def __str__(self):
+        return f'{self.identity.student.full_name} push [{self.box_root_slug}]'
+
     def __str__(self):
         return f'{self.provider} {self.event_type}'
