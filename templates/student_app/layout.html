@@ -143,6 +143,43 @@
             </section>
             {% endif %}
 
+            {% if student_identity %}
+            <section
+                class="student-pwa-activation"
+                data-ui="student-pwa-activation"
+                hidden
+                aria-live="polite"
+            >
+                <div class="student-pwa-activation__copy">
+                    <p class="student-eyebrow">Ativacao do app</p>
+                    <h2>Instale o OctoBox no celular e libere as notificacoes.</h2>
+                    <p class="student-copy" data-ui="student-pwa-copy">
+                        Falta transformar este atalho em app de verdade no seu celular e liberar os alertas.
+                    </p>
+                    <div class="student-pwa-activation__status" data-ui="student-pwa-status">
+                        <span class="student-status-badge" data-ui="student-pwa-install-status">PWA pendente</span>
+                        <span class="student-status-badge" data-ui="student-pwa-notification-status">Notificacoes pendentes</span>
+                    </div>
+                    <div class="student-pwa-activation__actions">
+                        <button type="button" class="student-button" data-ui="student-pwa-install-action">
+                            Instalar app
+                        </button>
+                        <button type="button" class="student-button student-button--ghost" data-ui="student-pwa-notification-action">
+                            Ativar notificacoes
+                        </button>
+                    </div>
+                    <div class="student-pwa-activation__notes">
+                        <p class="student-form-note" data-ui="student-pwa-install-note">
+                            No iPhone/iPad, toque em Compartilhar e depois em Adicionar a Tela de Inicio.
+                        </p>
+                        <p class="student-form-note" data-ui="student-pwa-notification-note">
+                            Depois de instalar, aceite as notificacoes para receber alertas do app.
+                        </p>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
             {% block body %}{% endblock %}
 
             {% if student_identity %}

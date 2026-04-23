@@ -6,7 +6,12 @@ from django.utils import timezone
 
 from finance.models import MembershipPlan
 from shared_support.crypto_fields import generate_blind_index
-from shared_support.form_inputs import apply_phone_input_attrs, apply_text_input_attrs
+from shared_support.form_inputs import (
+    LenientDateField,
+    apply_date_input_attrs,
+    apply_phone_input_attrs,
+    apply_text_input_attrs,
+)
 from shared_support.phone_numbers import normalize_phone_number
 from student_identity.models import StudentIdentity, StudentIdentityStatus
 from student_app.models import StudentExerciseMax
@@ -14,6 +19,7 @@ from students.models import Student
 
 
 MIN_STUDENT_BIRTH_DATE = date(1900, 1, 1)
+MAX_STUDENT_BIRTH_YEAR = 2026
 MIN_STUDENT_NAME_LENGTH = 5
 MIN_STUDENT_PHONE_DIGITS = 10
 MAX_STUDENT_PHONE_DIGITS = 11
@@ -81,12 +87,12 @@ class StudentExerciseMaxUpdateForm(forms.Form):
 class BaseStudentOnboardingForm(forms.Form):
     full_name = forms.CharField(label='Nome completo', max_length=150)
     phone = forms.CharField(label='WhatsApp', max_length=20)
-    email = forms.EmailField(label='E-mail', max_length=254)
-    birth_date = forms.DateField(
+    birth_date = LenientDateField(
         label='Data de nascimento',
         required=False,
-        widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
-        input_formats=['%Y-%m-%d'],
+        min_year=MIN_STUDENT_BIRTH_DATE.year,
+        max_year=MAX_STUDENT_BIRTH_YEAR,
+        widget=forms.TextInput(),
     )
     selected_plan = forms.ModelChoiceField(
         label='Plano',
@@ -100,7 +106,6 @@ class BaseStudentOnboardingForm(forms.Form):
         self.student = student
         self.identity = identity
         self.box_root_slug = box_root_slug
-        today = timezone.localdate()
         self.fields['selected_plan'].queryset = MembershipPlan.objects.filter(active=True).order_by('price', 'name')
         apply_text_input_attrs(
             self.fields['full_name'],
@@ -115,33 +120,16 @@ class BaseStudentOnboardingForm(forms.Form):
         self.fields['full_name'].help_text = 'Use o nome real que identifica voce no box.'
         apply_phone_input_attrs(self.fields['phone'], placeholder='Ex.: 5511999999999')
         self.fields['phone'].help_text = 'Use seu numero principal com DDD. Pode colar com espacos ou simbolos.'
-        apply_text_input_attrs(
-            self.fields['email'],
-            placeholder='voce@exemplo.com',
-            maxlength=254,
-            autocomplete='email',
+        apply_date_input_attrs(
+            self.fields['birth_date'],
+            placeholder='dd/mm/aaaa',
+            maxlength=10,
+            pattern=r'\d{2}/\d{2}/\d{4}',
+            min_year=MIN_STUDENT_BIRTH_DATE.year,
+            max_year=MAX_STUDENT_BIRTH_YEAR,
         )
-        self.fields['email'].widget.attrs.update({
-            'inputmode': 'email',
-            'autocapitalize': 'off',
-        })
-        self.fields['email'].help_text = 'Esse e-mail amarra seu acesso social ao box certo.'
-        self.fields['birth_date'].widget.attrs.update({
-            'min': MIN_STUDENT_BIRTH_DATE.isoformat(),
-            'max': today.isoformat(),
-        })
-        self.fields['birth_date'].help_text = 'Nao use datas no futuro nem datas impossiveis.'
+        self.fields['birth_date'].help_text = 'Use o formato dd/mm/aaaa. Ano permitido: 1900 a 2026.'
         self.fields['selected_plan'].widget.attrs.update({'autocomplete': 'off'})
-
-    def clean_email(self):
-        email = (self.cleaned_data.get('email') or '').strip().lower()
-        if _student_identity_email_exists(
-            email=email,
-            box_root_slug=self.box_root_slug,
-            exclude_identity_id=getattr(self.identity, 'id', None),
-        ):
-            raise forms.ValidationError('Ja existe um acesso de aluno com este e-mail neste box.')
-        return email
 
     def clean_phone(self):
         raw_phone = (self.cleaned_data.get('phone') or '').strip()
@@ -166,10 +154,10 @@ class BaseStudentOnboardingForm(forms.Form):
         birth_date = self.cleaned_data.get('birth_date')
         if birth_date is None:
             return birth_date
-        if birth_date > timezone.localdate():
-            raise forms.ValidationError('A data de nascimento nao pode ficar no futuro.')
         if birth_date < MIN_STUDENT_BIRTH_DATE:
             raise forms.ValidationError('A data de nascimento precisa ser posterior a 01/01/1900.')
+        if birth_date.year > MAX_STUDENT_BIRTH_YEAR:
+            raise forms.ValidationError('O ano da data de nascimento precisa ficar entre 1900 e 2026.')
         return birth_date
 
 

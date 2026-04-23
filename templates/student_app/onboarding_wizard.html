@@ -22,12 +22,11 @@
             {% if form.phone.help_text %}<small class="student-form-note">{{ form.phone.help_text }}</small>{% endif %}
             {{ form.phone.errors }}
         </label>
-        <label>
-            <span>E-mail</span>
-            {{ form.email }}
-            {% if form.email.help_text %}<small class="student-form-note">{{ form.email.help_text }}</small>{% endif %}
-            {{ form.email.errors }}
-        </label>
+        {% if oauth_email %}
+        <div class="student-form-note">
+            Seu e-mail sera o mesmo validado no OAuth: <strong>{{ oauth_email }}</strong>
+        </div>
+        {% endif %}
         <label>
             <span>Data de nascimento</span>
             {{ form.birth_date }}

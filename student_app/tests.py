@@ -143,8 +143,7 @@ class StudentAppExperienceTests(TestCase):
             {
                 'full_name': 'Novo Aluno App',
                 'phone': '5511888888888',
-                'email': 'novo@app.com',
-                'birth_date': '2000-01-02',
+                'birth_date': '02/01/2000',
                 'selected_plan': '',
             },
             follow=False,
@@ -187,9 +186,11 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'minlength="5"', html=False)
         self.assertContains(response, 'autocomplete="tel"', html=False)
         self.assertContains(response, 'pattern="[0-9]{10,20}"', html=False)
-        self.assertContains(response, 'maxlength="254"', html=False)
-        self.assertContains(response, f'min="{date(1900, 1, 1).isoformat()}"', html=False)
-        self.assertContains(response, f'max="{timezone.localdate().isoformat()}"', html=False)
+        self.assertContains(response, 'placeholder="dd/mm/aaaa"', html=False)
+        self.assertContains(response, 'data-min-year="1900"', html=False)
+        self.assertContains(response, 'data-max-year="2026"', html=False)
+        self.assertNotContains(response, '<span>E-mail</span>', html=False)
+        self.assertContains(response, 'Seu e-mail sera o mesmo validado no OAuth', html=False)
 
     def test_mass_onboarding_rejects_invalid_phone_payload(self):
         client = Client()
@@ -200,8 +201,7 @@ class StudentAppExperienceTests(TestCase):
             {
                 'full_name': 'Novo Aluno App',
                 'phone': '12',
-                'email': 'novo@app.com',
-                'birth_date': '2000-01-02',
+                'birth_date': '02/01/2000',
                 'selected_plan': '',
             },
             follow=False,
@@ -211,50 +211,43 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'Informe um WhatsApp valido com DDD.')
         self.assertFalse(StudentIdentity.objects.filter(provider_subject='provider-subject-invalid-phone').exists())
 
-    def test_mass_onboarding_rejects_future_birth_date_payload(self):
+    def test_mass_onboarding_rejects_birth_date_after_max_year(self):
         client = Client()
         self._set_mass_onboarding_session(client, provider_subject='provider-subject-future-birth')
-        future_birth_date = timezone.localdate() + timedelta(days=1)
 
         response = client.post(
             reverse('student-app-onboarding'),
             {
                 'full_name': 'Novo Aluno App',
                 'phone': '5511888888888',
-                'email': 'novo-futuro@app.com',
-                'birth_date': future_birth_date.isoformat(),
+                'birth_date': '01/01/2027',
                 'selected_plan': '',
             },
             follow=False,
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'A data de nascimento nao pode ficar no futuro.')
+        self.assertContains(response, 'O ano da data de nascimento precisa ficar entre 1900 e 2026.')
         self.assertFalse(StudentIdentity.objects.filter(provider_subject='provider-subject-future-birth').exists())
 
-    def test_mass_onboarding_rejects_duplicate_live_identity_email(self):
+    def test_mass_onboarding_accepts_masked_phone_and_saves_clean_digits(self):
         client = Client()
-        self._set_mass_onboarding_session(
-            client,
-            provider_subject='provider-subject-duplicate-email',
-            email=self.identity.email,
-        )
+        self._set_mass_onboarding_session(client, provider_subject='provider-subject-masked-phone')
 
         response = client.post(
             reverse('student-app-onboarding'),
             {
-                'full_name': 'Novo Aluno App',
-                'phone': '5511888888888',
-                'email': self.identity.email,
-                'birth_date': '2000-01-02',
+                'full_name': 'Novo Aluno Mascara',
+                'phone': '+55 (11) 98888-7777',
+                'birth_date': '02/01/2000',
                 'selected_plan': '',
             },
             follow=False,
         )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Ja existe um acesso de aluno com este e-mail neste box.')
-        self.assertFalse(StudentIdentity.objects.filter(provider_subject='provider-subject-duplicate-email').exists())
+        self.assertEqual(response.status_code, 302)
+        identity = StudentIdentity.objects.get(provider_subject='provider-subject-masked-phone')
+        self.assertEqual(identity.student.phone, '11988887777')
 
     def test_imported_lead_onboarding_updates_student_and_records_funnel_events(self):
         client = Client()
@@ -306,8 +299,7 @@ class StudentAppExperienceTests(TestCase):
             {
                 'full_name': 'Lead Revisado',
                 'phone': '5511666667777',
-                'email': 'lead@app.com',
-                'birth_date': '1999-05-06',
+                'birth_date': '06/05/1999',
                 'selected_plan': '',
             },
             follow=False,
@@ -695,6 +687,15 @@ class StudentAppExperienceTests(TestCase):
         payload = read_student_session_value(cookie.value)
         self.assertEqual(payload['active_box_root_slug'], 'control')
         self.assertTrue(payload['device_fingerprint'])
+
+    def test_student_home_renders_pwa_activation_rail(self):
+        response = self.client.get(reverse('student-app-home'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-ui="student-pwa-activation"', html=False)
+        self.assertContains(response, 'Instale o OctoBox no celular e libere as notificacoes.', html=False)
+        self.assertContains(response, 'data-ui="student-pwa-install-action"', html=False)
+        self.assertContains(response, 'data-ui="student-pwa-notification-action"', html=False)
 
     def test_student_home_redirects_to_login_when_device_fingerprint_changes(self):
         warmup_response = self.client.get(reverse('student-app-home'), HTTP_USER_AGENT='OctoBox Test Browser A')
