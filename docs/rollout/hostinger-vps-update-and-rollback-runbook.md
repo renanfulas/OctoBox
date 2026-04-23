@@ -36,12 +36,13 @@ Atualizar e, se necessario, voltar o OctoBOX em uma Hostinger VPS sem improviso 
 
 ## Defaults desta rota
 
-1. app em `octoboxfit.app`
-2. VPS com `/srv/octobox/app`
-3. `venv` em `/srv/octobox/venv`
-4. env file em `/srv/octobox/shared/octobox.env`
-5. Gunicorn via `octobox-gunicorn.service`
-6. Nginx na frente
+1. host canonico em `octoboxfit.com.br`
+2. superficie de login e app em `app.octoboxfit.com.br`
+3. VPS com `/srv/octobox/app`
+4. `venv` em `/srv/octobox/venv`
+5. env file em `/srv/octobox/shared/octobox.env`
+6. Gunicorn via `octobox-gunicorn.service`
+7. Nginx na frente
 
 ---
 
@@ -108,8 +109,8 @@ sudo systemctl status nginx
 
 Checklist minimo:
 
-1. `https://octoboxfit.app/api/v1/health/`
-2. login
+1. `https://octoboxfit.com.br/api/v1/health/`
+2. `https://app.octoboxfit.com.br/login/`
 3. dashboard
 4. alunos
 5. operacao
@@ -168,8 +169,8 @@ sudo systemctl status octobox-gunicorn
 
 Checklist minimo:
 
-1. `https://octoboxfit.app/api/v1/health/`
-2. login
+1. `https://octoboxfit.com.br/api/v1/health/`
+2. `https://app.octoboxfit.com.br/login/`
 3. dashboard
 4. operacao
 

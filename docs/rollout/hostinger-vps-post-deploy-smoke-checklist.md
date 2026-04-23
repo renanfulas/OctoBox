@@ -23,12 +23,16 @@ Confirmar que o deploy nao apenas subiu, mas ficou operacional.
 
 ## HTTP e health
 
+- [ ] `https://octoboxfit.com.br/api/v1/health/` responde `200`
+- [ ] `https://app.octoboxfit.com.br/api/v1/health/` responde `200`
 - [ ] `/api/v1/health/` responde `200`
 - [ ] `runtime_slug` do health esta coerente
 - [ ] `runtime_namespace` do health esta coerente
 
 ## Fluxos centrais
 
+- [ ] `https://octoboxfit.com.br/login/` redireciona para `https://app.octoboxfit.com.br/login/`
+- [ ] `https://app.octoboxfit.com.br/login/` responde sem `500`
 - [ ] `/login/` responde sem `500`
 - [ ] login funciona com usuario valido
 - [ ] `/dashboard/` abre

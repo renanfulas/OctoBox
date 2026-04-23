@@ -74,12 +74,20 @@ class OnboardingWorkflow:
             return None
         return self.identity_repository.find_identity_by_id(identity_id)
 
+    def get_pending_email(self, *, pending_onboarding) -> str:
+        pending_email = (pending_onboarding.get('email') or '').strip().lower()
+        if pending_email:
+            return pending_email
+        identity = self.get_pending_identity(pending_onboarding=pending_onboarding)
+        return (getattr(identity, 'email', '') or '').strip().lower()
+
     @transaction.atomic
     def complete_mass_onboarding(self, *, pending_onboarding, cleaned_data) -> OnboardingCompletionResult:
+        email = self.get_pending_email(pending_onboarding=pending_onboarding)
         student = Student.objects.create(
             full_name=cleaned_data['full_name'],
             phone=cleaned_data['phone'],
-            email=cleaned_data['email'],
+            email=email,
             birth_date=cleaned_data.get('birth_date'),
             status=StudentStatus.ACTIVE,
         )
@@ -88,7 +96,7 @@ class OnboardingWorkflow:
             box_root_slug=pending_onboarding['box_root_slug'],
             provider=pending_onboarding['provider'],
             provider_subject=pending_onboarding['provider_subject'],
-            email=cleaned_data['email'],
+            email=email,
             invitation=None,
         )
         ensure_pending_enrollment(
@@ -152,7 +160,7 @@ class OnboardingWorkflow:
 
         student.full_name = cleaned_data['full_name']
         student.phone = cleaned_data['phone']
-        student.email = cleaned_data['email']
+        student.email = self.get_pending_email(pending_onboarding=pending_onboarding)
         student.birth_date = cleaned_data.get('birth_date')
         if student.status == StudentStatus.LEAD:
             student.status = StudentStatus.ACTIVE

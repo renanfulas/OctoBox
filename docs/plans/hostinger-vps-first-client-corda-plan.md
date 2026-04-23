@@ -32,9 +32,9 @@ O QUE ESTE ARQUIVO FAZ:
 4. fornece um prompt operacional reutilizavel em formato C.O.R.D.A.
 
 PONTOS CRITICOS:
-- este documento assume `octoboxfit.com.br` como institucional e `octoboxfit.app` como aplicativo
+- este documento assume `octoboxfit.com.br` como host canonico e `app.octoboxfit.com.br` como superficie principal de login e app
 - este documento nao autoriza go-live sem TLS na origem, backup com copia externa e restore ensaiado
-- este documento nao autoriza `www.octoboxfit.app`, Redis publico, PostgreSQL publico ou deploy com `runserver`
+- este documento nao autoriza `www.octoboxfit.com.br` nem `www.app.octoboxfit.com.br` como host principal, Redis publico, PostgreSQL publico ou deploy com `runserver`
 -->
 
 # C.O.R.D.A. - Primeiro cliente em Hostinger VPS
@@ -53,8 +53,8 @@ O OctoBOX ja tem base de producao para:
 
 A decisao operacional agora e:
 
-1. usar `octoboxfit.com.br` como fachada institucional
-2. usar `octoboxfit.app` como aplicativo real
+1. usar `octoboxfit.com.br` como host canonico publico
+2. usar `app.octoboxfit.com.br` como superficie principal de login e app
 3. hospedar o runtime em Hostinger VPS, em Sao Paulo
 4. manter `PostgreSQL` e `Redis` na mesma VPS do app no v1
 5. usar `Cloudflare` na frente do dominio do app
@@ -62,7 +62,7 @@ A decisao operacional agora e:
 O plano anterior ja estava bom no esqueleto, mas ainda tinha lacunas importantes:
 
 1. faltava TLS na origem
-2. faltava evitar `www.octoboxfit.app`
+2. faltava evitar hosts duplicados sem funcao clara
 3. faltava hardening explicito de SSH
 4. faltava verificacao concreta de `PostgreSQL` e `Redis` ouvindo apenas localmente
 5. faltava runbook de update e rollback
@@ -76,19 +76,20 @@ Em linguagem simples:
 
 ## O - Objetivo
 
-Colocar o primeiro cliente no ar em `octoboxfit.app`, com uma topologia simples, legivel e suficientemente segura para producao inicial.
+Colocar o primeiro cliente no ar em `octoboxfit.com.br`, com `app.octoboxfit.com.br` para login e superficie autenticada, usando uma topologia simples, legivel e suficientemente segura para producao inicial.
 
 Sucesso significa:
 
 1. a VPS sobe e volta sozinha apos reboot
-2. `octoboxfit.app` responde via HTTPS fim a fim
-3. Cloudflare opera em `Full (strict)`
-4. `PostgreSQL` e `Redis` nao estao expostos publicamente
-5. o app responde em `health`, login, dashboard, alunos, operacao e grade
-6. existe backup diario com copia externa
-7. o restore foi ensaiado em banco isolado
-8. existe roteiro de update e rollback
-9. o deploy pode ser repetido por outra pessoa sem adivinhacao
+2. `octoboxfit.com.br` responde via HTTPS fim a fim
+3. `app.octoboxfit.com.br` responde via HTTPS fim a fim
+4. Cloudflare opera em `Full (strict)`
+5. `PostgreSQL` e `Redis` nao estao expostos publicamente
+6. o app responde em `health`, login, dashboard, alunos, operacao e grade
+7. existe backup diario com copia externa
+8. o restore foi ensaiado em banco isolado
+9. existe roteiro de update e rollback
+10. o deploy pode ser repetido por outra pessoa sem adivinhacao
 
 ## R - Riscos
 
@@ -108,16 +109,17 @@ Decisao:
 
 ### 2. Risco de naming e host duplicado no app
 
-Se tentarmos tratar `www.octoboxfit.app` como host principal:
+Se tentarmos tratar `www.octoboxfit.com.br` ou `www.app.octoboxfit.com.br` como host principal:
 
 1. o app fica com naming feio e desnecessario
 2. a configuracao de host e redirect fica mais fragil
 
 Decisao:
 
-1. o host canonico do app e `octoboxfit.app`
-2. `www.octoboxfit.app` nao sera usado como host principal
-3. se existir, deve apenas redirecionar
+1. o host canonico publico e `octoboxfit.com.br`
+2. a superficie principal de login e app e `app.octoboxfit.com.br`
+3. variantes com `www` nao serao usadas como host principal
+4. se existirem, devem apenas redirecionar
 
 ### 3. Risco de operador sem perceber que virou operador
 
@@ -195,9 +197,9 @@ Publicar com o menor passo de maior ROI, mas sem deixar lacunas de seguranca e r
 
 ### Defaults travados
 
-1. institucional: `octoboxfit.com.br`
-2. app: `octoboxfit.app`
-3. sem `www` como host principal do app
+1. host canonico: `octoboxfit.com.br`
+2. login e app: `app.octoboxfit.com.br`
+3. sem `www` como host principal
 4. Hostinger VPS em Sao Paulo
 5. Ubuntu LTS
 6. Cloudflare na frente
@@ -215,8 +217,8 @@ Publicar com o menor passo de maior ROI, mas sem deixar lacunas de seguranca e r
 
 ### O que NAO fazer
 
-1. nao usar `app.octoboxfit.app`
-2. nao usar `www.octoboxfit.app` como host principal
+1. nao usar `octoboxfit.app` como se fosse o host real da operacao atual
+2. nao usar `www.octoboxfit.com.br` nem `www.app.octoboxfit.com.br` como host principal
 3. nao deixar `PostgreSQL` publico
 4. nao deixar `Redis` publico
 5. nao usar `runserver`
@@ -239,7 +241,7 @@ Publicar com o menor passo de maior ROI, mas sem deixar lacunas de seguranca e r
 ### Onda 1 - Fechar a infraestrutura minima correta
 
 1. comprar a VPS em Sao Paulo
-2. apontar `octoboxfit.app` para o IP da VPS no Cloudflare
+2. apontar `octoboxfit.com.br` e `app.octoboxfit.com.br` para o IP da VPS no Cloudflare
 3. configurar Cloudflare com proxy ativo e `Full (strict)`
 4. instalar certificado valido na origem
 5. subir Nginx com `443` e redirect de `80`
@@ -276,7 +278,7 @@ Criar `octobox.env` com:
 
 1. `DJANGO_ENV=production`
 2. `DJANGO_DEBUG=False`
-3. `DJANGO_ALLOWED_HOSTS=octoboxfit.app`
+3. `DJANGO_ALLOWED_HOSTS=octoboxfit.com.br,www.octoboxfit.com.br,app.octoboxfit.com.br`
 4. `DATABASE_URL` apontando para `127.0.0.1`
 5. `REDIS_URL` apontando para `127.0.0.1`
 6. `BOX_RUNTIME_SLUG=box-piloto-octoboxfit`
@@ -340,11 +342,12 @@ Ritual canonico:
 Voce vai atuar como arquiteto de deploy, seguranca e operacao do OctoBOX para o primeiro cliente em Hostinger VPS.
 
 Missao principal:
-publicar o aplicativo em `octoboxfit.app`, com `octoboxfit.com.br` como institucional, usando Hostinger VPS em Sao Paulo, Ubuntu LTS, Cloudflare na frente, Nginx, Gunicorn, Django, PostgreSQL local e Redis local, sem Docker no v1.
+publicar o aplicativo com `octoboxfit.com.br` como host canonico e `app.octoboxfit.com.br` como superficie principal de login e app, usando Hostinger VPS em Sao Paulo, Ubuntu LTS, Cloudflare na frente, Nginx, Gunicorn, Django, PostgreSQL local e Redis local, sem Docker no v1.
 
 Contexto obrigatorio:
-- host canonico do app: `octoboxfit.app`
-- `www.octoboxfit.app` nao e o host principal
+- host canonico publico: `octoboxfit.com.br`
+- superficie principal de login e app: `app.octoboxfit.com.br`
+- `www.octoboxfit.com.br` e `www.app.octoboxfit.com.br` nao sao hosts principais
 - Cloudflare deve operar em `Full (strict)`
 - a origem precisa de certificado valido
 - PostgreSQL e Redis devem ouvir apenas localmente
@@ -363,7 +366,7 @@ Failure checks obrigatorios:
 - se nao houver backup com copia externa, o deploy nao esta pronto
 - se nao houver restore ensaiado, o deploy nao esta pronto
 - se nao houver ritual de update e rollback, o deploy nao esta pronto
-- se `www.octoboxfit.app` estiver sendo tratado como host canonico, o plano esta errado
+- se `octoboxfit.app` estiver sendo tratado como host canonico da operacao atual, o plano esta errado
 
 Formato esperado da resposta:
 1. diagnostico rapido
@@ -386,17 +389,17 @@ Qualidade minima:
 
 Nao abrir o primeiro cliente enquanto qualquer item abaixo estiver falso:
 
-1. `octoboxfit.app` responde em HTTPS
-2. origem com certificado valido
-3. Cloudflare em `Full (strict)`
-4. `DJANGO_ALLOWED_HOSTS=octoboxfit.app`
-5. `/api/v1/health/` responde
-6. login funciona
-7. dashboard, alunos, operacao e grade respondem sem `500`
-8. `PostgreSQL` e `Redis` escutam apenas localmente
-9. backup diario existe e tem copia externa
-10. restore foi ensaiado
-11. existe roteiro de update
-12. existe roteiro de rollback
-13. reboot da VPS nao derruba a aplicacao permanentemente
-
+1. `octoboxfit.com.br` responde em HTTPS
+2. `app.octoboxfit.com.br` responde em HTTPS
+3. origem com certificado valido
+4. Cloudflare em `Full (strict)`
+5. `DJANGO_ALLOWED_HOSTS` contempla `octoboxfit.com.br` e `app.octoboxfit.com.br`
+6. `/api/v1/health/` responde
+7. login funciona
+8. dashboard, alunos, operacao e grade respondem sem `500`
+9. `PostgreSQL` e `Redis` escutam apenas localmente
+10. backup diario existe e tem copia externa
+11. restore foi ensaiado
+12. existe roteiro de update
+13. existe roteiro de rollback
+14. reboot da VPS nao derruba a aplicacao permanentemente

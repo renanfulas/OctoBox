@@ -32,14 +32,12 @@ def build_student_onboarding_form_kwargs(view):
     kwargs['box_root_slug'] = view.pending_onboarding.get('box_root_slug', '')
     kwargs['identity'] = view._get_pending_identity()
     kwargs['student'] = None
-    initial.setdefault('email', view.pending_onboarding.get('email', ''))
     if journey == StudentOnboardingJourney.IMPORTED_LEAD_INVITE:
         student = view._get_existing_student()
         kwargs['student'] = student
         if student is not None:
             initial.setdefault('full_name', student.full_name)
             initial.setdefault('phone', student.phone)
-            initial.setdefault('email', student.email or view.pending_onboarding.get('email', ''))
             initial.setdefault('birth_date', student.birth_date)
     return kwargs
 
@@ -57,6 +55,11 @@ def build_student_onboarding_context(view, **kwargs):
         'Aqui a gente pega os dados essenciais para seu acesso nascer redondo.'
         if journey == StudentOnboardingJourney.MASS_BOX_INVITE
         else 'Ja puxamos o que o box sabia sobre voce. Agora falta so uma revisao curta.'
+    )
+    context['oauth_email'] = (
+        view.pending_onboarding.get('email')
+        or getattr(view._get_pending_identity(), 'email', '')
+        or ''
     )
     return context
 
