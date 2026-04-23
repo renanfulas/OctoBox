@@ -1,6 +1,7 @@
 from django.urls import include, path
 
 from .views import (
+    StudentAddRmView,
     StudentConfirmAttendanceView,
     StudentGradeView,
     StudentHomeView,
@@ -11,10 +12,12 @@ from .views import (
     StudentOfflineView,
     StudentRmView,
     StudentServiceWorkerView,
+    StudentSessionAttendeesView,
     StudentSettingsView,
     StudentSuspendedFinancialView,
     StudentInviteEntryView,
     StudentSwitchBoxView,
+    StudentUpdateRmView,
     StudentWodView,
 )
 
@@ -33,6 +36,9 @@ urlpatterns = [
     path('wod/', StudentWodView.as_view(), name='student-app-wod'),
     path('treino/', StudentWodView.as_view(), name='student-app-workout'),
     path('rm/', StudentRmView.as_view(), name='student-app-rm'),
+    path('rm/adicionar/', StudentAddRmView.as_view(), name='student-app-rm-add'),
+    path('rm/<int:pk>/atualizar/', StudentUpdateRmView.as_view(), name='student-app-rm-update'),
+    path('aula/<int:session_id>/turma/', StudentSessionAttendeesView.as_view(), name='student-app-session-attendees'),
     path('configuracoes/', StudentSettingsView.as_view(), name='student-app-settings'),
     path('manifest.webmanifest', StudentManifestView.as_view(), name='student-app-manifest'),
     path('sw.js', StudentServiceWorkerView.as_view(), name='student-app-sw'),

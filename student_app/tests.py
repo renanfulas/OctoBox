@@ -505,6 +505,49 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(rm_response, 'Seus records maximos')
         self.assertContains(rm_response, 'Deadlift')
 
+    def test_student_session_attendees_renders_for_visible_session(self):
+        session = ClassSession.objects.create(
+            title='Cross visivel',
+            scheduled_at=timezone.now() + timedelta(hours=2),
+            status='scheduled',
+        )
+        mate = Student.objects.create(
+            full_name='Colega de Box',
+            phone='5511999990001',
+            email='colega@example.com',
+        )
+        Attendance.objects.create(
+            student=mate,
+            session=session,
+            status=AttendanceStatus.BOOKED,
+        )
+
+        response = self.client.get(reverse('student-app-session-attendees', kwargs={'session_id': session.id}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Cross visivel')
+        self.assertContains(response, 'Colega')
+
+    def test_student_session_attendees_blocks_session_outside_visible_dashboard(self):
+        for offset in range(5):
+            ClassSession.objects.create(
+                title=f'Cross visivel {offset}',
+                scheduled_at=timezone.now() + timedelta(hours=offset + 1),
+                status='scheduled',
+            )
+        hidden_session = ClassSession.objects.create(
+            title='Cross fora do radar',
+            scheduled_at=timezone.now() + timedelta(hours=12),
+            status='scheduled',
+        )
+
+        response = self.client.get(
+            reverse('student-app-session-attendees', kwargs={'session_id': hidden_session.id}),
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 404)
+
     def test_student_wod_route_keeps_workout_calculator_inside_new_shell(self):
         StudentExerciseMax.objects.create(
             student=self.student,
