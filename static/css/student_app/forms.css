@@ -48,7 +48,8 @@ PONTOS CRITICOS:
 .student-form textarea,
 .student-form-stack input,
 .student-form-stack select,
-.student-form-stack textarea {
+.student-form-stack textarea,
+.student-input {
     width: 100%;
     min-height: 48px;
     padding: 13px 15px;
@@ -80,7 +81,8 @@ PONTOS CRITICOS:
 .student-form textarea::placeholder,
 .student-form-stack input::placeholder,
 .student-form-stack select::placeholder,
-.student-form-stack textarea::placeholder {
+.student-form-stack textarea::placeholder,
+.student-input::placeholder {
     color: var(--theme-text-muted);
     opacity: 1;
 }
@@ -90,7 +92,8 @@ PONTOS CRITICOS:
 .student-form textarea:focus,
 .student-form-stack input:focus,
 .student-form-stack select:focus,
-.student-form-stack textarea:focus {
+.student-form-stack textarea:focus,
+.student-input:focus {
     outline: none;
     border-color: color-mix(in srgb, var(--theme-accent-support) 26%, var(--theme-focus-ring) 74%);
     background: color-mix(in srgb, var(--theme-surface-strong) 88%, var(--theme-accent-support-alpha) 12%);
@@ -104,8 +107,24 @@ body.student-app-body[data-theme="dark"] .student-form select,
 body.student-app-body[data-theme="dark"] .student-form textarea,
 body.student-app-body[data-theme="dark"] .student-form-stack input,
 body.student-app-body[data-theme="dark"] .student-form-stack select,
-body.student-app-body[data-theme="dark"] .student-form-stack textarea {
+body.student-app-body[data-theme="dark"] .student-form-stack textarea,
+body.student-app-body[data-theme="dark"] .student-input {
     color-scheme: dark;
+}
+
+.student-form input:disabled,
+.student-form input[readonly],
+.student-form select:disabled,
+.student-form textarea:disabled,
+.student-form-stack input:disabled,
+.student-form-stack input[readonly],
+.student-form-stack select:disabled,
+.student-form-stack textarea:disabled,
+.student-input:disabled,
+.student-input[readonly] {
+    opacity: 0.64;
+    cursor: default;
+    background: color-mix(in srgb, var(--theme-surface-muted) 88%, transparent);
 }
 
 .student-form-errors,

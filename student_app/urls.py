@@ -10,6 +10,8 @@ from .views import (
     StudentNoActiveBoxView,
     StudentOnboardingWizardView,
     StudentOfflineView,
+    StudentPushSubscribeView,
+    StudentPushUnsubscribeView,
     StudentRmView,
     StudentServiceWorkerView,
     StudentSessionAttendeesView,
@@ -43,4 +45,6 @@ urlpatterns = [
     path('manifest.webmanifest', StudentManifestView.as_view(), name='student-app-manifest'),
     path('sw.js', StudentServiceWorkerView.as_view(), name='student-app-sw'),
     path('offline/', StudentOfflineView.as_view(), name='student-app-offline'),
+    path('push/subscribe/', StudentPushSubscribeView.as_view(), name='student-app-push-subscribe'),
+    path('push/unsubscribe/', StudentPushUnsubscribeView.as_view(), name='student-app-push-unsubscribe'),
 ]

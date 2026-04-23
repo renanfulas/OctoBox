@@ -255,15 +255,15 @@ PONTOS CRITICOS:
         );
     position: relative;
     display: grid;
-    gap: 18px;
-    padding: clamp(20px, 2.8vw, 28px);
-    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-border-soft) 82%);
-    border-radius: calc(var(--radius-shell) + 4px);
+    order: 20;
+    gap: 12px;
+    padding: clamp(16px, 2vw, 20px);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 12%, var(--theme-border-soft) 88%);
+    border-radius: var(--radius-panel);
     background:
-        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-primary-alpha) 48%, transparent), transparent 42%),
-        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--theme-accent-premium-alpha) 34%, transparent), transparent 48%),
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-primary-alpha) 24%, transparent), transparent 38%),
         var(--student-pwa-surface);
-    box-shadow: var(--theme-shadow-lift);
+    box-shadow: var(--theme-shadow-soft);
     overflow: hidden;
 }
 
@@ -271,7 +271,7 @@ PONTOS CRITICOS:
     content: "";
     position: absolute;
     inset: 0 auto 0 0;
-    width: 4px;
+    width: 2px;
     background:
         linear-gradient(
             180deg,
@@ -283,11 +283,19 @@ PONTOS CRITICOS:
 
 .student-pwa-activation__copy {
     display: grid;
-    gap: 14px;
+    gap: 10px;
 }
 
 .student-pwa-activation__copy h2 {
     margin: 0;
+    font-size: clamp(1rem, 2vw, 1.18rem);
+    line-height: 1.12;
+    letter-spacing: -0.035em;
+}
+
+.student-pwa-activation__copy > .student-copy {
+    font-size: 0.9rem;
+    line-height: 1.5;
 }
 
 .student-pwa-activation__status,
@@ -297,28 +305,35 @@ PONTOS CRITICOS:
     gap: 10px;
 }
 
+.student-pwa-activation__actions .student-button {
+    min-height: 42px;
+    padding-block: 10px;
+}
+
 .student-pwa-activation__status .student-status-badge[data-state="done"] {
-    background: color-mix(in srgb, var(--theme-success-bg, #0f3b2e) 62%, var(--theme-surface-strong) 38%);
-    border-color: color-mix(in srgb, var(--theme-success, #2ecc71) 24%, var(--theme-border-soft) 76%);
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 52%, var(--theme-surface-strong) 48%);
+    border-color: color-mix(in srgb, var(--theme-accent-success) 24%, var(--theme-border-soft) 76%);
 }
 
 .student-pwa-activation__status .student-status-badge[data-state="pending"] {
-    background: color-mix(in srgb, var(--theme-warning-bg, #4a2b08) 54%, var(--theme-surface-strong) 46%);
-    border-color: color-mix(in srgb, var(--theme-warning, #f39c12) 28%, var(--theme-border-soft) 72%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 48%, var(--theme-surface-strong) 52%);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 28%, var(--theme-border-soft) 72%);
 }
 
 .student-pwa-activation__status .student-status-badge[data-state="blocked"] {
-    background: color-mix(in srgb, var(--theme-danger-bg, #3b1017) 58%, var(--theme-surface-strong) 42%);
-    border-color: color-mix(in srgb, var(--theme-danger, #ff5d73) 24%, var(--theme-border-soft) 76%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 50%, var(--theme-surface-strong) 50%);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 24%, var(--theme-border-soft) 76%);
 }
 
 .student-pwa-activation__notes {
     display: grid;
-    gap: 8px;
+    gap: 6px;
 }
 
 .student-pwa-activation__notes .student-form-note {
     margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.45;
 }
 
 .student-card--quiet {
@@ -413,7 +428,7 @@ PONTOS CRITICOS:
             color-mix(in srgb, var(--theme-accent-support) 82%, black 18%),
             color-mix(in srgb, var(--theme-accent-premium) 18%, transparent)
         );
-    color: #f7feff;
+    color: color-mix(in srgb, white 96%, var(--theme-accent-primary) 4%);
     text-decoration: none;
     font: inherit;
     font-weight: 800;
@@ -421,7 +436,7 @@ PONTOS CRITICOS:
     cursor: pointer;
     box-shadow:
         0 18px 32px color-mix(in srgb, var(--theme-accent-support-alpha) 46%, transparent),
-        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+        inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
     transition:
         transform var(--motion-fast) var(--ease-standard),
         box-shadow var(--motion-base) var(--ease-standard),
@@ -438,7 +453,7 @@ PONTOS CRITICOS:
     box-shadow:
         0 24px 40px color-mix(in srgb, var(--theme-accent-support-alpha) 56%, transparent),
         0 0 0 1px color-mix(in srgb, var(--theme-accent-primary-alpha) 22%, transparent),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        inset 0 1px 0 color-mix(in srgb, white 20%, transparent);
 }
 
 .student-button:active {
@@ -468,8 +483,8 @@ PONTOS CRITICOS:
     background:
         linear-gradient(
             135deg,
-            color-mix(in srgb, var(--theme-accent-danger) 84%, #3f0c1b 16%),
-            color-mix(in srgb, var(--theme-accent-premium) 24%, #200714 76%)
+            color-mix(in srgb, var(--theme-accent-danger) 84%, var(--theme-surface-inverse) 16%),
+            color-mix(in srgb, var(--theme-accent-premium) 24%, var(--theme-surface-inverse) 76%)
         );
 }
 
@@ -551,50 +566,11 @@ PONTOS CRITICOS:
     font-size: 0.8rem;
 }
 
-/* ── Form stack ──────────────────────────────────────────── */
-.student-form-stack {
-    display: grid;
-    gap: 16px;
-}
-
-.student-form-stack label {
-    display: grid;
-    gap: 6px;
-    font-weight: 700;
-}
-
-.student-form-stack input,
-.student-form-stack select {
-    width: 100%;
-    border-radius: var(--student-radius-sm, 14px);
-    border: 1px solid var(--theme-border-strong, rgba(17, 32, 59, 0.14));
-    padding: 14px 16px;
-    font: inherit;
-    background: rgba(255, 255, 255, 0.88);
-}
-
-.student-form-stack input:disabled,
-.student-form-stack input[readonly],
-.student-form-stack select:disabled {
-    opacity: 0.6;
-    cursor: default;
-    background: rgba(17, 32, 59, 0.04);
-}
-
 .student-form-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     margin-top: 4px;
-}
-
-/* ── Generic input ───────────────────────────────────────── */
-.student-input {
-    border-radius: var(--student-radius-sm, 14px);
-    border: 1px solid var(--theme-border-strong, rgba(17, 32, 59, 0.14));
-    padding: 10px 14px;
-    font: inherit;
-    background: rgba(255, 255, 255, 0.88);
 }
 
 /* ── Small variants ──────────────────────────────────────── */
@@ -617,16 +593,16 @@ PONTOS CRITICOS:
     width: 40px;
     height: 40px;
     border-radius: 14px;
-    border: 1px solid var(--theme-border, rgba(17, 32, 59, 0.08));
-    background: rgba(255, 255, 255, 0.72);
-    color: var(--theme-ink, #11203b);
+    border: 1px solid var(--theme-border-soft);
+    background: color-mix(in srgb, var(--theme-surface-strong) 84%, transparent);
+    color: var(--theme-text-primary);
     cursor: pointer;
     flex-shrink: 0;
     transition: background 150ms ease;
 }
 
 .student-edit-btn:hover {
-    background: var(--student-accent-soft, rgba(202, 122, 18, 0.12));
+    background: color-mix(in srgb, var(--theme-surface-strong) 78%, var(--theme-accent-support-alpha) 22%);
 }
 
 /* ── RM inline update form ───────────────────────────────── */
@@ -634,7 +610,7 @@ PONTOS CRITICOS:
     grid-column: 1 / -1;
     padding: 14px;
     border-radius: var(--student-radius-sm, 14px);
-    background: rgba(17, 32, 59, 0.04);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 86%, var(--theme-accent-support-alpha) 14%);
 }
 
 .student-rm-inline-form form {
@@ -659,7 +635,7 @@ PONTOS CRITICOS:
 }
 
 .student-session-card-info span {
-    color: var(--theme-text-muted, #52627e);
+    color: var(--theme-text-muted);
     font-size: 0.88rem;
 }
 
@@ -698,12 +674,17 @@ PONTOS CRITICOS:
     height: 56px;
     border-radius: 18px;
     overflow: hidden;
-    background: linear-gradient(135deg, rgba(202, 122, 18, 0.2), rgba(17, 32, 59, 0.18));
+    background:
+        linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--theme-accent-primary-alpha) 46%, var(--theme-surface-strong) 54%),
+            color-mix(in srgb, var(--theme-accent-support-alpha) 38%, var(--theme-surface-secondary) 62%)
+        );
     display: grid;
     place-items: center;
     font-weight: 800;
     font-size: 1.2rem;
-    color: var(--theme-ink, #11203b);
+    color: var(--theme-text-primary);
 }
 
 .student-attendee-avatar img {

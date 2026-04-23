@@ -15,9 +15,19 @@ from __future__ import annotations
 import json
 
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.urls import reverse
 from django.template.loader import render_to_string
 from django.views.generic import TemplateView, View
+
+from student_identity.push_notifications import (
+    build_student_push_welcome_url,
+    is_student_web_push_configured,
+    revoke_student_push_subscription,
+    send_student_web_push_notification,
+    upsert_student_push_subscription,
+)
+from student_identity.security import build_student_device_fingerprint
 
 from .base import (
     STUDENT_APP_APPLE_TOUCH_ICON,
@@ -28,6 +38,7 @@ from .base import (
     STUDENT_APP_SCOPE,
     STUDENT_APP_START_URL,
     STUDENT_APP_THEME_COLOR,
+    StudentAnyMembershipMixin,
 )
 
 
@@ -97,3 +108,54 @@ class StudentServiceWorkerView(View):
 
 class StudentOfflineView(TemplateView):
     template_name = 'student_app/offline.html'
+
+
+class StudentPushSubscribeView(StudentAnyMembershipMixin, View):
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        if not is_student_web_push_configured():
+            return JsonResponse({'ok': False, 'error': 'push-not-configured'}, status=503)
+        try:
+            payload = json.loads(request.body.decode('utf-8') or '{}')
+        except json.JSONDecodeError:
+            return JsonResponse({'ok': False, 'error': 'invalid-json'}, status=400)
+
+        subscription_data = payload.get('subscription') or {}
+        endpoint = str(subscription_data.get('endpoint') or '').strip()
+        keys = subscription_data.get('keys') or {}
+        if not endpoint or not keys.get('p256dh') or not keys.get('auth'):
+            return JsonResponse({'ok': False, 'error': 'invalid-subscription'}, status=400)
+
+        subscription = upsert_student_push_subscription(
+            identity=request.student_identity,
+            box_root_slug=request.student_active_box_root_slug,
+            subscription_data=subscription_data,
+            device_fingerprint=build_student_device_fingerprint(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+        )
+        send_student_web_push_notification(
+            subscription=subscription,
+            title='OctoBox pronto no seu celular',
+            body='Seu app do aluno agora pode receber alertas importantes do box.',
+            url=request.build_absolute_uri(build_student_push_welcome_url()),
+            tag='student-push-welcome',
+        )
+        return JsonResponse({'ok': True, 'endpoint': subscription.endpoint})
+
+
+class StudentPushUnsubscribeView(StudentAnyMembershipMixin, View):
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        try:
+            payload = json.loads(request.body.decode('utf-8') or '{}')
+        except json.JSONDecodeError:
+            return JsonResponse({'ok': False, 'error': 'invalid-json'}, status=400)
+
+        endpoint = str(payload.get('endpoint') or '').strip()
+        if not endpoint:
+            return JsonResponse({'ok': False, 'error': 'missing-endpoint'}, status=400)
+
+        revoke_student_push_subscription(endpoint=endpoint)
+        return JsonResponse({'ok': True})

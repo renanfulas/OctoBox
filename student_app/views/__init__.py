@@ -23,7 +23,13 @@ from .public_workout_views import (
     PublicWorkoutOfflineView,
     PublicWorkoutServiceWorkerView,
 )
-from .pwa_views import StudentManifestView, StudentOfflineView, StudentServiceWorkerView
+from .pwa_views import (
+    StudentManifestView,
+    StudentOfflineView,
+    StudentPushSubscribeView,
+    StudentPushUnsubscribeView,
+    StudentServiceWorkerView,
+)
 from .shell_views import (
     StudentAddRmView,
     StudentConfirmAttendanceView,
@@ -51,6 +57,8 @@ __all__ = [
     'StudentNoActiveBoxView',
     'StudentOfflineView',
     'StudentOnboardingWizardView',
+    'StudentPushSubscribeView',
+    'StudentPushUnsubscribeView',
     'StudentRmView',
     'StudentServiceWorkerView',
     'StudentSessionAttendeesView',

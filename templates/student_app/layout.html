@@ -39,7 +39,15 @@
     <link rel="stylesheet" href="{% static 'css/student_app/app.css' %}">
     {% block extra_head %}{% endblock %}
 </head>
-<body class="student-app-body" data-student-app="true" data-student-pwa-scope="/aluno/" data-theme="light">
+<body
+    class="student-app-body"
+    data-student-app="true"
+    data-student-pwa-scope="/aluno/"
+    data-student-web-push-public-key="{{ student_web_push_public_key|default:'' }}"
+    data-student-push-subscribe-url="{% url 'student-app-push-subscribe' %}"
+    data-student-push-unsubscribe-url="{% url 'student-app-push-unsubscribe' %}"
+    data-theme="light"
+>
     <script>
         (function () {
             var theme = window.__octoboxStudentTheme || 'light';
@@ -88,20 +96,35 @@
             {% if student_identity %}
             <header class="student-topbar topbar">
                 <div class="student-topbar-main topbar-left">
-                    <div class="student-avatar" aria-hidden="true">
+                    <a
+                        href="{% url 'student-app-settings' %}"
+                        class="student-avatar student-avatar-link"
+                        aria-label="Abrir perfil e configuracoes"
+                        title="Perfil e configuracoes"
+                    >
                         {{ student_identity.student.full_name|slice:":1"|upper }}
-                    </div>
+                    </a>
                     <div class="student-topbar-copy">
                         <p class="student-topbar-eyebrow">{{ student_shell_title|default:"Inicio" }}</p>
                         <strong>{{ student_identity.student.full_name }}</strong>
                         <span>Box atual: {{ student_active_box_root_slug|default:"Sem box ativo" }}</span>
                     </div>
-                </div>
-                <div class="student-topbar-actions topbar-right">
                     <button type="button" class="student-theme-toggle theme-toggle" data-ui="student-theme-toggle">
-                        <span class="theme-toggle-icon" aria-hidden="true">☼</span>
+                        <svg class="theme-toggle-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="4"></circle>
+                            <path d="M12 2v2"></path>
+                            <path d="M12 20v2"></path>
+                            <path d="m4.93 4.93 1.41 1.41"></path>
+                            <path d="m17.66 17.66 1.41 1.41"></path>
+                            <path d="M2 12h2"></path>
+                            <path d="M20 12h2"></path>
+                            <path d="m6.34 17.66-1.41 1.41"></path>
+                            <path d="m19.07 4.93-1.41 1.41"></path>
+                        </svg>
                         <span class="theme-toggle-label visually-hidden">Tema</span>
                     </button>
+                </div>
+                <div class="student-topbar-actions topbar-right">
                     {% if student_can_switch_box %}
                     <details class="student-box-switcher">
                         <summary>Trocar box</summary>
@@ -130,7 +153,6 @@
                         </div>
                     </details>
                     {% endif %}
-                    <a href="{% url 'student-app-settings' %}" class="student-topbar-link">Perfil</a>
                 </div>
             </header>
             {% endif %}
@@ -184,10 +206,52 @@
 
             {% if student_identity %}
             <nav class="student-mobile-nav" aria-label="Navegacao mobile do aluno">
-                <a href="{% url 'student-app-home' %}" class="student-mobile-nav-link{% if student_shell_nav == 'home' %} is-active{% endif %}">Inicio</a>
-                <a href="{% url 'student-app-grade' %}" class="student-mobile-nav-link{% if student_shell_nav == 'grade' %} is-active{% endif %}">Grade</a>
-                <a href="{% url 'student-app-wod' %}" class="student-mobile-nav-link{% if student_shell_nav == 'wod' %} is-active{% endif %}">WOD</a>
-                <a href="{% url 'student-app-rm' %}" class="student-mobile-nav-link{% if student_shell_nav == 'rm' %} is-active{% endif %}">RM</a>
+                <a href="{% url 'student-app-home' %}" class="student-mobile-nav-link{% if student_shell_nav == 'home' %} is-active{% endif %}" aria-label="Inicio" title="Inicio">
+                    <span class="student-mobile-nav-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 10.5 12 3l9 7.5"/>
+                            <path d="M5 9.5V20h14V9.5"/>
+                            <path d="M9.5 20v-5.5h5V20"/>
+                        </svg>
+                    </span>
+                    <span class="visually-hidden">Inicio</span>
+                </a>
+                <a href="{% url 'student-app-grade' %}" class="student-mobile-nav-link{% if student_shell_nav == 'grade' %} is-active{% endif %}" aria-label="Grade" title="Grade">
+                    <span class="student-mobile-nav-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M8 2v4"/>
+                            <path d="M16 2v4"/>
+                            <rect x="3" y="4" width="18" height="17" rx="3"/>
+                            <path d="M3 10h18"/>
+                            <path d="M8 14h.01"/>
+                            <path d="M12 14h.01"/>
+                            <path d="M16 14h.01"/>
+                        </svg>
+                    </span>
+                    <span class="visually-hidden">Grade</span>
+                </a>
+                <a href="{% url 'student-app-wod' %}" class="student-mobile-nav-link{% if student_shell_nav == 'wod' %} is-active{% endif %}" aria-label="WOD" title="WOD">
+                    <span class="student-mobile-nav-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 10h3"/>
+                            <path d="M18 10h3"/>
+                            <path d="M6 7v6"/>
+                            <path d="M18 7v6"/>
+                            <path d="M8.5 12h7"/>
+                            <path d="M8.5 10h7"/>
+                            <path d="M8.5 14h7"/>
+                        </svg>
+                    </span>
+                    <span class="visually-hidden">WOD</span>
+                </a>
+                <a href="{% url 'student-app-rm' %}" class="student-mobile-nav-link{% if student_shell_nav == 'rm' %} is-active{% endif %}" aria-label="RM" title="RM">
+                    <span class="student-mobile-nav-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 3 14.9 8.86 21 9.76l-4.4 4.29 1.04 6.05L12 17.27 6.36 20.1 7.4 14.05 3 9.76l6.1-.9L12 3z"/>
+                        </svg>
+                    </span>
+                    <span class="visually-hidden">RM</span>
+                </a>
             </nav>
             {% endif %}
         </main>

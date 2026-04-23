@@ -26,6 +26,10 @@ PONTOS CRITICOS:
     light: '#f5f7fb',
     dark: '#091221'
   };
+  var THEME_ICONS = {
+    light: '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path>',
+    dark: '<path d="M21 12.79A8.5 8.5 0 1 1 11.21 3 6.6 6.6 0 0 0 21 12.79z"></path>'
+  };
   var toggleButtons = document.querySelectorAll('[data-ui="student-theme-toggle"]');
   var themeMeta = document.querySelector('meta[name="theme-color"]');
   var mediaQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
@@ -75,7 +79,7 @@ PONTOS CRITICOS:
       button.setAttribute('title', 'Ativar ' + nextThemeLabel);
 
       if (icon) {
-        icon.textContent = isDark ? '☾' : '☼';
+        icon.innerHTML = THEME_ICONS[theme] || THEME_ICONS.light;
       }
 
       if (label) {
