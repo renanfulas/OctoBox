@@ -92,6 +92,7 @@ class StudentIdentity(TimeStampedModel):
     invited_at = models.DateTimeField(null=True, blank=True)
     activated_at = models.DateTimeField(null=True, blank=True)
     last_authenticated_at = models.DateTimeField(null=True, blank=True)
+    photo_url = models.URLField(blank=True, max_length=500)
 
     class Meta:
         ordering = ['student__full_name']

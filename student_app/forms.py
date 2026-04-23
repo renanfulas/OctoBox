@@ -56,6 +56,28 @@ class WorkoutPrescriptionForm(forms.Form):
         self.fields['exercise_slug'].choices = choices
 
 
+class StudentExerciseMaxForm(forms.Form):
+    exercise_label = forms.CharField(label='Movimento', max_length=120)
+    one_rep_max_kg = forms.DecimalField(
+        label='RM (kg)',
+        min_value=Decimal('0.5'),
+        max_value=Decimal('999'),
+        decimal_places=2,
+    )
+
+    def clean_exercise_label(self):
+        return (self.cleaned_data.get('exercise_label') or '').strip()
+
+
+class StudentExerciseMaxUpdateForm(forms.Form):
+    one_rep_max_kg = forms.DecimalField(
+        label='Novo RM (kg)',
+        min_value=Decimal('0.5'),
+        max_value=Decimal('999'),
+        decimal_places=2,
+    )
+
+
 class BaseStudentOnboardingForm(forms.Form):
     full_name = forms.CharField(label='Nome completo', max_length=150)
     phone = forms.CharField(label='WhatsApp', max_length=20)

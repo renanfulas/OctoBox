@@ -474,3 +474,165 @@ PONTOS CRITICOS:
     color: var(--theme-text-muted);
     font-size: 0.8rem;
 }
+
+/* ── Form stack ──────────────────────────────────────────── */
+.student-form-stack {
+    display: grid;
+    gap: 16px;
+}
+
+.student-form-stack label {
+    display: grid;
+    gap: 6px;
+    font-weight: 700;
+}
+
+.student-form-stack input,
+.student-form-stack select {
+    width: 100%;
+    border-radius: var(--student-radius-sm, 14px);
+    border: 1px solid var(--theme-border-strong, rgba(17, 32, 59, 0.14));
+    padding: 14px 16px;
+    font: inherit;
+    background: rgba(255, 255, 255, 0.88);
+}
+
+.student-form-stack input:disabled,
+.student-form-stack input[readonly],
+.student-form-stack select:disabled {
+    opacity: 0.6;
+    cursor: default;
+    background: rgba(17, 32, 59, 0.04);
+}
+
+.student-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+/* ── Generic input ───────────────────────────────────────── */
+.student-input {
+    border-radius: var(--student-radius-sm, 14px);
+    border: 1px solid var(--theme-border-strong, rgba(17, 32, 59, 0.14));
+    padding: 10px 14px;
+    font: inherit;
+    background: rgba(255, 255, 255, 0.88);
+}
+
+/* ── Small variants ──────────────────────────────────────── */
+.student-button--sm {
+    min-height: 36px;
+    padding: 8px 14px;
+    font-size: 0.88rem;
+}
+
+.student-status-badge--sm {
+    padding: 5px 9px;
+    font-size: 0.76rem;
+}
+
+/* ── Pencil edit button (settings) ──────────────────────── */
+.student-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    border: 1px solid var(--theme-border, rgba(17, 32, 59, 0.08));
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--theme-ink, #11203b);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 150ms ease;
+}
+
+.student-edit-btn:hover {
+    background: var(--student-accent-soft, rgba(202, 122, 18, 0.12));
+}
+
+/* ── RM inline update form ───────────────────────────────── */
+.student-rm-inline-form {
+    grid-column: 1 / -1;
+    padding: 14px;
+    border-radius: var(--student-radius-sm, 14px);
+    background: rgba(17, 32, 59, 0.04);
+}
+
+.student-rm-inline-form form {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* ── Session card with actions column ───────────────────── */
+.student-session-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.student-session-card-info {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.student-session-card-info span {
+    color: var(--theme-text-muted, #52627e);
+    font-size: 0.88rem;
+}
+
+.student-session-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* ── Attendees grid ──────────────────────────────────────── */
+.student-attendees-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+    gap: 18px;
+    margin-top: 4px;
+}
+
+.student-attendee-card {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
+.student-attendee-card strong {
+    font-size: 0.88rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.student-attendee-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(202, 122, 18, 0.2), rgba(17, 32, 59, 0.18));
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--theme-ink, #11203b);
+}
+
+.student-attendee-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}

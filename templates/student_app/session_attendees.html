@@ -1,0 +1,33 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}Turma | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-page-head">
+    <p class="student-eyebrow">Turma</p>
+    <h1>{{ session.title }}</h1>
+    <div class="student-head-chip-group">
+        <span class="student-head-chip">{{ session.scheduled_at|date:"d/m H:i" }}</span>
+        <span class="student-head-chip">{{ attendees|length }} confirmado(s)</span>
+    </div>
+</section>
+
+<section class="student-card">
+    <div class="student-attendees-grid">
+        {% for person in attendees %}
+        <article class="student-attendee-card">
+            <div class="student-attendee-avatar">
+                {% if person.photo_url %}
+                <img src="{{ person.photo_url }}" alt="{{ person.first_name }}" width="48" height="48" loading="lazy" referrerpolicy="no-referrer">
+                {% else %}
+                <span>{{ person.first_name|slice:":1"|upper }}</span>
+                {% endif %}
+            </div>
+            <strong>{{ person.first_name }}</strong>
+        </article>
+        {% empty %}
+        <p class="student-copy">Nenhuma presenca confirmada ainda.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

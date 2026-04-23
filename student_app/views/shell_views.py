@@ -11,18 +11,53 @@ O QUE ESTE ARQUIVO FAZ:
 
 from __future__ import annotations
 
+import re
+
 from django.contrib import messages
-from django.shortcuts import redirect
+from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import FormView, TemplateView, View
 
 from shared_support.box_runtime import get_box_runtime_slug
 from student_app.application.use_cases import GetStudentDashboard, GetStudentWorkoutPrescription
-from student_app.forms import StudentProfileEditForm, WorkoutPrescriptionForm
+from student_app.forms import (
+    StudentExerciseMaxForm,
+    StudentExerciseMaxUpdateForm,
+    StudentProfileEditForm,
+    WorkoutPrescriptionForm,
+)
 from student_app.models import StudentExerciseMax
 from student_app.workflows import AttendanceNotAvailableError, confirm_student_attendance
 from .base import StudentIdentityRequiredMixin
 from .wod_context import build_student_wod_context
 from .wod_tracking import track_student_workout_view
+
+
+def _safe_redirect(request, fallback: str):
+    candidate = (request.POST.get('next') or '').strip()
+    if candidate and url_has_allowed_host_and_scheme(
+        url=candidate,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(candidate)
+    return redirect(fallback)
+
+
+def _slugify_exercise(label: str) -> str:
+    slug = label.lower().strip()
+    slug = re.sub(r'[^a-z0-9\s-]', '', slug)
+    slug = re.sub(r'[\s]+', '-', slug)
+    return slug[:64]
+
+
+def _get_dashboard_session_or_404(*, identity, session_id: int):
+    dashboard = GetStudentDashboard().execute(identity=identity)
+    visible_session_ids = {session.session_id for session in dashboard.next_sessions}
+    if session_id not in visible_session_ids:
+        raise Http404('Sessao fora do radar atual do aluno.')
+    return dashboard
 
 
 class StudentHomeView(StudentIdentityRequiredMixin, TemplateView):
@@ -92,6 +127,87 @@ class StudentRmView(StudentIdentityRequiredMixin, TemplateView):
         context['rm_records'] = tuple(
             StudentExerciseMax.objects.filter(student=self.request.student_identity.student).order_by('exercise_label')
         )
+        context['add_rm_form'] = StudentExerciseMaxForm()
+        return self._attach_student_shell_context(context)
+
+
+class StudentAddRmView(StudentIdentityRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        form = StudentExerciseMaxForm(request.POST)
+        if not form.is_valid():
+            messages.error(request, 'Confira os dados e tente novamente.')
+            return redirect('student-app-rm')
+        label = form.cleaned_data['exercise_label']
+        slug = _slugify_exercise(label)
+        kg = form.cleaned_data['one_rep_max_kg']
+        obj, created = StudentExerciseMax.objects.get_or_create(
+            student=request.student_identity.student,
+            exercise_slug=slug,
+            defaults={'exercise_label': label, 'one_rep_max_kg': kg},
+        )
+        if not created:
+            obj.one_rep_max_kg = kg
+            obj.exercise_label = label
+            obj.save(update_fields=['exercise_label', 'one_rep_max_kg', 'updated_at'])
+        messages.success(request, f'RM de {label} salvo como {kg} kg.')
+        return redirect('student-app-rm')
+
+
+class StudentUpdateRmView(StudentIdentityRequiredMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        record = get_object_or_404(
+            StudentExerciseMax,
+            pk=pk,
+            student=request.student_identity.student,
+        )
+        form = StudentExerciseMaxUpdateForm(request.POST)
+        if not form.is_valid():
+            messages.error(request, 'Valor invalido.')
+            return redirect('student-app-rm')
+        record.one_rep_max_kg = form.cleaned_data['one_rep_max_kg']
+        record.save(update_fields=['one_rep_max_kg', 'updated_at'])
+        messages.success(request, f'RM de {record.exercise_label} atualizado para {record.one_rep_max_kg} kg.')
+        return redirect('student-app-rm')
+
+
+class StudentSessionAttendeesView(StudentIdentityRequiredMixin, TemplateView):
+    template_name = 'student_app/session_attendees.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from operations.models import Attendance, AttendanceStatus, ClassSession
+        dashboard = _get_dashboard_session_or_404(
+            identity=self.request.student_identity,
+            session_id=self.kwargs['session_id'],
+        )
+        session = get_object_or_404(ClassSession, pk=self.kwargs['session_id'])
+        attendances = (
+            Attendance.objects
+            .filter(
+                session=session,
+                status__in=[
+                    AttendanceStatus.BOOKED,
+                    AttendanceStatus.CHECKED_IN,
+                    AttendanceStatus.CHECKED_OUT,
+                ],
+            )
+            .select_related('student__app_identity')
+        )
+        attendees = []
+        for att in attendances:
+            s = att.student
+            first_name = s.full_name.split()[0] if s.full_name else ''
+            photo_url = ''
+            try:
+                photo_url = s.app_identity.photo_url
+            except Exception:
+                pass
+            attendees.append({'first_name': first_name, 'photo_url': photo_url})
+        context['session'] = session
+        context['attendees'] = attendees
+        context['dashboard'] = dashboard
+        context['student_shell_nav'] = 'grade'
+        context['student_shell_title'] = 'Turma'
         return self._attach_student_shell_context(context)
 
 
@@ -140,10 +256,10 @@ class StudentConfirmAttendanceView(StudentIdentityRequiredMixin, View):
             )
         except AttendanceNotAvailableError:
             messages.error(request, 'Nao consegui identificar a aula para confirmar sua presenca.')
-            return redirect(request.POST.get('next') or request.META.get('HTTP_REFERER') or 'student-app-grade')
+            return _safe_redirect(request, 'student-app-grade')
 
         messages.success(
             request,
             f'Sua presenca em {result.session.title} foi confirmada. Quando a janela do treino abrir, o WOD sobe para o Inicio.',
         )
-        return redirect(request.POST.get('next') or request.META.get('HTTP_REFERER') or 'student-app-grade')
+        return _safe_redirect(request, 'student-app-grade')

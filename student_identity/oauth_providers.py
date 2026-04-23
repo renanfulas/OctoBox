@@ -23,6 +23,7 @@ class OAuthIdentityPayload:
     provider: str
     email: str
     provider_subject: str
+    photo_url: str = ''
 
 
 def _urlsafe_b64(data: bytes) -> str:
@@ -155,6 +156,7 @@ class GoogleOAuthProvider(BaseOAuthProvider):
             provider=self.provider,
             email=(userinfo.get('email') or '').strip().lower(),
             provider_subject=str(userinfo.get('sub') or ''),
+            photo_url=(userinfo.get('picture') or '').strip(),
         )
 
 

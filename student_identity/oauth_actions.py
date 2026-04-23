@@ -113,6 +113,10 @@ def finalize_student_oauth_callback(
         response=response,
         authentication_result=authentication_result,
     )
+    _maybe_update_photo_url(
+        identity=authentication_result.identity,
+        photo_url=getattr(identity_payload, 'photo_url', ''),
+    )
     _emit_student_oauth_anomaly_alerts(
         request=request,
         provider=provider,
@@ -130,6 +134,17 @@ def finalize_student_oauth_callback(
         )
         messages.success(request, f'Acesso do aluno {authentication_result.identity.student_name} confirmado.')
     return response
+
+
+def _maybe_update_photo_url(*, identity, photo_url: str) -> None:
+    if not photo_url or identity is None:
+        return
+    from .models import StudentIdentity
+    if not isinstance(identity, StudentIdentity):
+        return
+    if identity.photo_url != photo_url:
+        StudentIdentity.objects.filter(pk=identity.pk).update(photo_url=photo_url)
+        identity.photo_url = photo_url
 
 
 def _attach_student_session(*, request, response, authentication_result):
