@@ -10,6 +10,9 @@
 
 {% block body %}
 <section class="student-hero-number">
+    <p class="visually-hidden">
+        Modo atual: {% if student_home_mode == 'wod_active' %}WOD{% else %}Grade{% endif %}
+    </p>
     <span class="student-context-switch">
         {% if student_home_mode == 'wod_active' %}Modo WOD{% else %}Proxima acao{% endif %}
     </span>
@@ -29,6 +32,10 @@
     </div>
     {% if student_next_session %}
     <p class="student-hero-number__support">{{ student_next_session.scheduled_label }} · {{ student_next_session.attendance_status }}</p>
+    {% endif %}
+
+    {% if student_home_mode == 'wod_active' %}
+    <p class="visually-hidden">Treino de hoje ativo.</p>
     {% endif %}
 
     {% if dashboard.primary_action.kind == 'confirm_attendance' %}
