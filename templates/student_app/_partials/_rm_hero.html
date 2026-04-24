@@ -2,7 +2,7 @@
 <section class="student-hero-number">
     <span class="student-hero-number__meta">RM do dia</span>
     <p class="student-hero-number__label">{{ rm_of_the_day.exercise_label }}</p>
-    <div class="student-hero-number__value">
+    <div class="student-hero-number__value student-rm-value">
         <span>{% if rm_of_the_day.one_rep_max_kg %}{{ rm_of_the_day.one_rep_max_kg }}{% else %}--{% endif %}</span>
         <small class="student-hero-number__unit">kg</small>
     </div>
@@ -15,8 +15,17 @@
 <section class="student-hero-number">
     <span class="student-hero-number__meta">{{ rm_records|length }} movimento(s)</span>
     <p class="student-hero-number__label">Seus RMs</p>
-    <div class="student-hero-number__value">
+    <div class="student-hero-number__value student-rm-value">
         <span>{{ rm_records.0.one_rep_max_kg }}</span>
+        <small class="student-hero-number__unit">kg</small>
+    </div>
+</section>
+{% else %}
+<section class="student-hero-number">
+    <span class="student-hero-number__meta">RM</span>
+    <p class="student-hero-number__label">Cadastre seu RM</p>
+    <div class="student-hero-number__value student-rm-value">
+        <span>--</span>
         <small class="student-hero-number__unit">kg</small>
     </div>
 </section>

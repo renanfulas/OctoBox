@@ -44,6 +44,20 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     gap: 10px;
 }
 
+.student-pwa-activation__cards {
+    display: grid;
+    gap: 12px;
+}
+
+.student-pwa-activation__card {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border-radius: var(--radius-card);
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
+}
+
 .student-pwa-activation__copy h2 {
     margin: 0;
     font-size: clamp(1rem, 2vw, 1.18rem);

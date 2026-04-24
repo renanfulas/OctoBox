@@ -191,8 +191,141 @@ class WorkoutRmGapActionStatus(models.TextChoices):
     FREE_LOAD = 'free_load', 'Deixar carga livre'
 
 
+class WeeklyWodPlanStatus(models.TextChoices):
+    DRAFT = 'draft', 'Rascunho'
+    CONFIRMED = 'confirmed', 'Confirmado'
+
+
+class WeeklyWodPlanWeekday(models.IntegerChoices):
+    MONDAY = 0, 'Segunda'
+    TUESDAY = 1, 'Terca'
+    WEDNESDAY = 2, 'Quarta'
+    THURSDAY = 3, 'Quinta'
+    FRIDAY = 4, 'Sexta'
+    SATURDAY = 5, 'Sabado'
+    SUNDAY = 6, 'Domingo'
+
+
+class PlanBlockKind(models.TextChoices):
+    WARMUP = 'warmup', 'Aquecimento'
+    STRENGTH = 'strength', 'Forca'
+    SKILL = 'skill', 'Skill'
+    METCON = 'metcon', 'WOD / Metcon'
+    COOLDOWN = 'cooldown', 'Cooldown'
+    MOBILITY = 'mobility', 'Mobilidade'
+    CUSTOM = 'custom', 'Livre'
+
+
+class WeeklyWodPlan(TimeStampedModel):
+    week_start = models.DateField()
+    label = models.CharField(max_length=140, blank=True)
+    source_text = models.TextField(blank=True)
+    parsed_payload = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=24, choices=WeeklyWodPlanStatus.choices, default=WeeklyWodPlanStatus.DRAFT)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='weekly_wod_plans_created',
+    )
+
+    class Meta:
+        ordering = ['-week_start', '-created_at', '-id']
+        indexes = [
+            models.Index(fields=['status', '-week_start'], name='weekly_wod_plan_status_week'),
+        ]
+
+    def __str__(self):
+        return self.label or f'Plano semanal {self.week_start:%d/%m/%Y}'
+
+
+class DayPlan(TimeStampedModel):
+    weekly_plan = models.ForeignKey(WeeklyWodPlan, on_delete=models.CASCADE, related_name='days')
+    weekday = models.PositiveSmallIntegerField(choices=WeeklyWodPlanWeekday.choices)
+    sort_order = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        ordering = ['sort_order', 'weekday', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['weekly_plan', 'weekday'], name='unique_weekly_wod_plan_weekday'),
+            models.UniqueConstraint(fields=['weekly_plan', 'sort_order'], name='unique_weekly_wod_plan_day_order'),
+        ]
+
+    def __str__(self):
+        return f'{self.weekly_plan} - {self.get_weekday_display()}'
+
+
+class PlanBlock(TimeStampedModel):
+    day_plan = models.ForeignKey(DayPlan, on_delete=models.CASCADE, related_name='blocks')
+    kind = models.CharField(max_length=24, choices=PlanBlockKind.choices, default=PlanBlockKind.CUSTOM)
+    title = models.CharField(max_length=120, blank=True)
+    notes = models.TextField(blank=True)
+    timecap_min = models.PositiveIntegerField(null=True, blank=True)
+    rounds = models.PositiveIntegerField(null=True, blank=True)
+    interval_seconds = models.PositiveIntegerField(null=True, blank=True)
+    sort_order = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ['sort_order', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['day_plan', 'sort_order'], name='unique_day_plan_block_order'),
+        ]
+
+    def __str__(self):
+        return f'{self.day_plan} - {self.title or self.get_kind_display()}'
+
+
+class PlanMovement(TimeStampedModel):
+    plan_block = models.ForeignKey(PlanBlock, on_delete=models.CASCADE, related_name='movements')
+    movement_slug = models.SlugField(max_length=64, blank=True)
+    movement_label_raw = models.CharField(max_length=120)
+    sets = models.PositiveIntegerField(null=True, blank=True)
+    reps_spec = models.CharField(max_length=64, blank=True)
+    load_spec = models.CharField(max_length=64, blank=True)
+    notes = models.CharField(max_length=255, blank=True)
+    sort_order = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ['sort_order', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['plan_block', 'sort_order'], name='unique_plan_block_movement_order'),
+        ]
+
+    def __str__(self):
+        return f'{self.plan_block} - {self.movement_label_raw}'
+
+
+class ReplicationBatch(TimeStampedModel):
+    weekly_plan = models.ForeignKey(WeeklyWodPlan, on_delete=models.CASCADE, related_name='replication_batches')
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='weekly_wod_replication_batches_created',
+    )
+    class_type_filter = models.JSONField(default=list, blank=True)
+    sessions_targeted = models.PositiveIntegerField(default=0)
+    sessions_created = models.PositiveIntegerField(default=0)
+    undone_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+
+    def __str__(self):
+        return f'Replicacao {self.weekly_plan} - {self.created_at:%d/%m/%Y %H:%M}'
+
+
 class SessionWorkout(TimeStampedModel):
     session = models.OneToOneField(ClassSession, on_delete=models.CASCADE, related_name='workout')
+    replication_batch = models.ForeignKey(
+        ReplicationBatch,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='session_workouts',
+    )
     title = models.CharField(max_length=140, blank=True)
     coach_notes = models.TextField(blank=True)
     status = models.CharField(max_length=24, choices=SessionWorkoutStatus.choices, default=SessionWorkoutStatus.DRAFT)

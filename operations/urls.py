@@ -53,6 +53,7 @@ from .workout_board_views import (
     OperationsExecutiveSummaryView,
     WorkoutApprovalBoardView,
     WorkoutPublicationHistoryView,
+    WorkoutSmartPasteView,
     WorkoutStudentRmQuickEditView,
 )
 from .workout_planner_views import (
@@ -95,6 +96,7 @@ urlpatterns = [
     path('operacao/recepcao/fragmentos/pagamentos/', ReceptionPaymentBoardPartialView.as_view(), name='reception-payment-board-fragment'),
     path('operacao/coach/', CoachWorkspaceView.as_view(), name='coach-workspace'),
     path('operacao/wod/editor/', WorkoutEditorHomeView.as_view(), name='workout-editor-home'),
+    path('operacao/wod/paste/', WorkoutSmartPasteView.as_view(), name='workout-smart-paste'),
     path('operacao/wod/planner/', WorkoutPlannerView.as_view(), name='workout-planner'),
     path('operacao/wod/planner/template-picker/telemetry/', WorkoutPlannerTemplatePickerTelemetryView.as_view(), name='workout-planner-template-picker-telemetry'),
     path(

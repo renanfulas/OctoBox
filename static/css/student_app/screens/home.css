@@ -1,6 +1,78 @@
-/*
-ARQUIVO: tela home do aluno
-GERADO NA ONDA 1: divisao estrutural sem redesign visual.
-*/
+.student-day-section,
+.student-day-workouts {
+    display: grid;
+    gap: 12px;
+}
 
-/* Home-specific V2 rules intentionally live close to the screen. */
+.student-day-workouts h3 {
+    margin: 0;
+    color: var(--theme-text-primary);
+    font-size: 1rem;
+}
+
+.student-day-workout {
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, transparent);
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 90%, transparent);
+    overflow: hidden;
+}
+
+.student-day-workout summary {
+    cursor: pointer;
+    padding: 14px 16px;
+    color: var(--theme-text-primary);
+    font-weight: 800;
+}
+
+.student-day-workout p {
+    margin: 0;
+    padding: 0 16px 16px;
+}
+
+.student-day-filter__empty-state {
+    margin-bottom: 12px;
+}
+
+.student-session-action--blocked {
+    width: 100%;
+    border-color: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 94%, transparent);
+    color: var(--theme-text-muted);
+}
+
+.student-status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    width: fit-content;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 90%, transparent);
+    color: var(--theme-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.class-status-scheduled {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, var(--theme-border-soft) 76%);
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-surface-strong) 84%);
+}
+
+.class-status-in-progress {
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 28%, var(--theme-border-soft) 72%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-surface-strong) 82%);
+}
+
+.class-status-completed,
+.class-status-canceled {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 18%, var(--theme-border-soft) 82%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 12%, var(--theme-surface-strong) 88%);
+}
+
+@media (max-width: 640px) {
+    .student-day-workout summary {
+        padding: 12px 14px;
+    }
+}

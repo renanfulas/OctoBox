@@ -21,6 +21,8 @@
   var copyElement = null;
   var installNote = null;
   var notificationNote = null;
+  var installCard = null;
+  var notificationCard = null;
 
   function isIos() {
     var userAgent = (window.navigator.userAgent || '').toLowerCase();
@@ -247,6 +249,8 @@
     copyElement = activationElement.querySelector('[data-ui="student-pwa-copy"]');
     installNote = activationElement.querySelector('[data-ui="student-pwa-install-note"]');
     notificationNote = activationElement.querySelector('[data-ui="student-pwa-notification-note"]');
+    installCard = activationElement.querySelector('[data-ui="student-pwa-install-card"]');
+    notificationCard = activationElement.querySelector('[data-ui="student-pwa-notification-card"]');
 
     if (installAction) {
       installAction.addEventListener('click', function () {
@@ -277,9 +281,24 @@
       return;
     }
 
-    activationElement.hidden = Boolean(state.activationComplete);
+    var hideInstallCard = Boolean(state.isStandalone);
+    var hideNotificationCard = Boolean(
+      state.notificationPermission === 'granted' ||
+      state.notificationPermission === 'unsupported' ||
+      !state.notificationSupported
+    );
+
+    activationElement.hidden = Boolean(hideInstallCard && hideNotificationCard);
     if (copyElement) {
       copyElement.textContent = resolveActivationCopy(state);
+    }
+
+    if (installCard) {
+      installCard.hidden = hideInstallCard;
+    }
+
+    if (notificationCard) {
+      notificationCard.hidden = hideNotificationCard;
     }
 
     updateStatusChip(
@@ -310,7 +329,7 @@
     }
 
     if (notificationAction) {
-      notificationAction.hidden = Boolean(!state.isStandalone || state.notificationPermission === 'granted' || !state.notificationSupported);
+      notificationAction.hidden = Boolean(!state.isStandalone || hideNotificationCard);
       notificationAction.disabled = Boolean(!state.isStandalone || !state.notificationSupported || !state.pushConfigured);
     }
 

@@ -18,15 +18,20 @@
         <span>{% if student_next_session %}{{ student_next_session.scheduled_at|date:"H:i" }}{% else %}--{% endif %}</span>
     </div>
     {% if student_next_session %}
-    <p class="student-hero-number__support">{{ student_next_session.scheduled_label }} · {{ student_next_session.attendance_status }}</p>
+    <p class="student-hero-number__support">
+        {{ student_next_session.scheduled_label }} · {{ student_next_session.attendance_status }}
+        {% if student_next_session.is_starting_soon %}· Em breve{% endif %}
+    </p>
     {% endif %}
-    {% if student_next_session and student_next_session.can_confirm_presence %}
-    <form method="post" action="{% url 'student-app-confirm-attendance' %}" class="student-inline-form">
+    {% if dashboard.primary_action.kind == 'confirm_attendance' or dashboard.primary_action.kind == 'book_session' %}
+    <form method="post" action="{% url dashboard.primary_action.url_name %}" class="student-inline-form">
         {% csrf_token %}
-        <input type="hidden" name="session_id" value="{{ student_next_session.session_id }}">
+        <input type="hidden" name="session_id" value="{{ dashboard.primary_action.payload.session_id }}">
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
-        <button type="submit" class="student-primary-action">Confirmar presenca</button>
+        <button type="submit" class="student-primary-action">{{ dashboard.primary_action.label }}</button>
     </form>
+    {% elif dashboard.primary_action.disabled %}
+    <button type="button" class="student-primary-action" disabled aria-disabled="true">{{ dashboard.primary_action.label }}</button>
     {% endif %}
 </section>
 
@@ -35,14 +40,30 @@
     <div class="student-month-calendar__grid" aria-label="Calendario mensal">
         {% for day in student_month_days %}
         {% if day.date %}
-        <article class="student-month-day{% if day.is_today %} is-today{% endif %}{% if day.sessions %} has-sessions{% endif %}">
-            <span class="student-month-day__date">{{ day.date_label }}</span>
-            <span class="student-month-day__label">{{ day.day_label }}</span>
+        <article class="student-month-day{% if day.is_today %} is-today{% endif %}{% if day.sessions %} has-sessions{% endif %}{% if day.is_holiday %} is-holiday{% endif %}">
+            <div class="student-month-day__head">
+                <span class="student-month-day__date">{{ day.date_label }}</span>
+                <span class="student-month-day__label">{{ day.day_label }}</span>
+            </div>
+            {% if day.is_holiday %}
+            <span class="student-holiday-badge">{{ day.holiday_name }}</span>
+            {% endif %}
+            <span class="student-month-day__checkin">{{ day.student_checkin_label }}</span>
             {% if day.sessions %}
-            <span class="student-month-day__count">{{ day.sessions|length }} aula(s)</span>
-            <div class="student-month-day__sessions">
+            <button
+                type="button"
+                class="student-month-day__preview-toggle"
+                data-preview-toggle="{{ day.date|date:'Y-m-d' }}"
+                aria-expanded="false"
+            >
+                Ver detalhes
+            </button>
+            <div class="student-month-day-preview" data-preview-panel="{{ day.date|date:'Y-m-d' }}" hidden>
+                <strong>{{ day.date|date:"d/m" }}</strong>
+                {% if day.is_holiday %}<span class="student-holiday-badge">{{ day.holiday_name }}</span>{% endif %}
+                <span>{{ day.student_checkin_label }}</span>
                 {% for session in day.sessions %}
-                <p>{{ session.scheduled_at|date:"H:i" }} · {{ session.title }}</p>
+                <p>{{ session.scheduled_at|date:"H:i" }} · {{ session.title }} · {{ session.attendance_status }}</p>
                 {% endfor %}
             </div>
             {% else %}
@@ -69,6 +90,7 @@
             <strong>{{ session.title }}</strong>
             <span>{{ session.scheduled_label }}</span>
             <span>{{ session.coach_name }}</span>
+            <span class="student-status-pill {{ session.runtime_status_pill_class }}">{{ session.runtime_status_label }}</span>
             <span>{{ session.attendance_status }}</span>
             {% include "student_app/_partials/_session_actions.html" with session=session %}
         </article>
@@ -80,4 +102,9 @@
         {% endfor %}
     </div>
 </section>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ block.super }}
+<script src="{% static 'js/student_app/grade-month.js' %}"></script>
 {% endblock %}

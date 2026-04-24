@@ -30,6 +30,16 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     font-weight: 900;
 }
 
+.student-rm-value {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    color: var(--theme-text-primary);
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 900;
+}
+
 .student-rm-calculator__result {
     display: grid;
     place-items: center;
@@ -41,6 +51,27 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     font-family: var(--font-display);
     font-size: 1.35rem;
     font-weight: 900;
+}
+
+.student-field-with-unit {
+    position: relative;
+    display: block;
+}
+
+.student-field-with-unit .student-input,
+.student-field-with-unit input {
+    padding-right: 48px;
+}
+
+.student-field-with-unit__suffix {
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    transform: translateY(-50%);
+    color: var(--theme-text-muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+    pointer-events: none;
 }
 
 /* RM inline update form */

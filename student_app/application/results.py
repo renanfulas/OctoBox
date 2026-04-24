@@ -12,6 +12,8 @@ class StudentPrimaryAction:
     url_name: str
     method: str = 'get'
     payload: dict | None = None
+    disabled: bool = False
+    help_text: str = ''
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,6 +48,15 @@ class StudentSessionCard:
     notes: str
     can_confirm_presence: bool
     can_cancel_attendance: bool = False
+    can_book: bool = False
+    is_day_blocked: bool = False
+    day_block_reason: str = ''
+    is_plan_blocked: bool = False
+    plan_block_reason: str = ''
+    runtime_status_label: str = ''
+    runtime_status_pill_class: str = ''
+    is_starting_soon: bool = False
+    workout_titles: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +66,10 @@ class StudentMonthDay:
     day_label: str
     is_today: bool
     sessions: tuple[StudentSessionCard, ...] = ()
+    holiday_name: str = ''
+    is_holiday: bool = False
+    student_checkin_label: str = ''
+    preview_state: str = 'ready'
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,6 +85,7 @@ class StudentDashboardResult:
     progress_days: tuple[StudentProgressDay, ...] = ()
     rm_of_the_day: StudentRmOfTheDay | None = None
     next_useful_context: str = ''
+    available_session: StudentSessionCard | None = None
 
 
 @dataclass(frozen=True, slots=True)

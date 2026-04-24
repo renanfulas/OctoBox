@@ -12,6 +12,7 @@ O QUE ESTE ARQUIVO FAZ:
 from __future__ import annotations
 
 import re
+from collections import OrderedDict
 
 from django.contrib import messages
 from django.db import OperationalError, ProgrammingError
@@ -29,6 +30,8 @@ from student_app.forms import (
     WorkoutPrescriptionForm,
 )
 from student_app.models import (
+    SessionWorkout,
+    SessionWorkoutStatus,
     StudentAppActivityKind,
     StudentExerciseMax,
     StudentExerciseMaxHistory,
@@ -70,6 +73,39 @@ def _get_dashboard_session_or_404(*, identity, session_id: int):
     return dashboard
 
 
+def _build_day_sections(*, sessions):
+    if not sessions:
+        return ()
+    sections = OrderedDict()
+    for session in sessions:
+        bucket = sections.setdefault(
+            session.scheduled_at.date(),
+            {
+                'date': session.scheduled_at.date(),
+                'label': session.scheduled_at.strftime('%d/%m'),
+                'sessions': [],
+                'workouts': [],
+            },
+        )
+        bucket['sessions'].append(session)
+    workout_by_session_id = {}
+    session_ids = [session.session_id for session in sessions]
+    for workout in SessionWorkout.objects.filter(session_id__in=session_ids, status=SessionWorkoutStatus.PUBLISHED).select_related('session'):
+        workout_by_session_id.setdefault(workout.session_id, []).append(
+            {
+                'title': workout.title,
+                'notes': workout.coach_notes,
+            }
+        )
+    for bucket in sections.values():
+        for session in bucket['sessions']:
+            for workout in workout_by_session_id.get(session.session_id, ()):
+                bucket['workouts'].append(workout)
+        bucket['sessions'] = tuple(bucket['sessions'])
+        bucket['workouts'] = tuple(bucket['workouts'])
+    return tuple(sections.values())
+
+
 class StudentHomeView(StudentIdentityRequiredMixin, TemplateView):
     template_name = 'student_app/home.html'
 
@@ -82,6 +118,7 @@ class StudentHomeView(StudentIdentityRequiredMixin, TemplateView):
         context['student_home_mode'] = dashboard.home_mode
         context['student_next_session'] = dashboard.focal_session
         context['student_active_wod_session'] = dashboard.active_wod_session
+        context['student_day_sections'] = _build_day_sections(sessions=dashboard.next_sessions)
         return self._attach_student_shell_context(context)
 
 
@@ -94,8 +131,9 @@ class StudentGradeView(StudentIdentityRequiredMixin, TemplateView):
         context['dashboard'] = dashboard
         context['student_shell_nav'] = 'grade'
         context['student_shell_title'] = 'Grade'
-        context['student_next_session'] = dashboard.next_sessions[0] if dashboard.next_sessions else None
+        context['student_next_session'] = dashboard.focal_session or (dashboard.next_sessions[0] if dashboard.next_sessions else None)
         context['student_month_days'] = GetStudentMonthSchedule().execute(identity=self.request.student_identity)
+        context['student_day_sections'] = _build_day_sections(sessions=dashboard.next_sessions)
         return self._attach_student_shell_context(context)
 
 
@@ -166,6 +204,7 @@ class StudentRmView(StudentIdentityRequiredMixin, TemplateView):
             for record in rm_records
         )
         context['add_rm_form'] = StudentExerciseMaxForm()
+        context['percentage_choices'] = tuple(range(5, 105, 5))
         return self._attach_student_shell_context(context)
 
 
@@ -343,8 +382,8 @@ class StudentConfirmAttendanceView(StudentIdentityRequiredMixin, View):
                 student=request.student_identity.student,
                 session_id=session_id,
             )
-        except AttendanceNotAvailableError:
-            messages.error(request, 'Nao consegui identificar a aula para confirmar sua presenca.')
+        except AttendanceNotAvailableError as exc:
+            messages.error(request, str(exc) or 'Nao consegui identificar a aula para confirmar sua presenca.')
             return _safe_redirect(request, 'student-app-grade')
 
         messages.success(

@@ -14,14 +14,18 @@
             </div>
             <form method="post" action="{% url 'student-app-rm-update' card.record.id %}" class="student-rm-inline-form">
                 {% csrf_token %}
-                <input class="student-input" type="number" name="one_rep_max_kg" min="0.5" max="999" step="0.01" value="{{ card.record.one_rep_max_kg }}">
+                <span class="student-rm-value">{{ card.record.one_rep_max_kg }} kg</span>
+                <span class="student-field-with-unit">
+                    <input class="student-input" type="number" name="one_rep_max_kg" min="0.5" max="999" step="0.5" value="{{ card.record.one_rep_max_kg }}">
+                    <span class="student-field-with-unit__suffix">kg</span>
+                </span>
                 <button type="submit" class="student-secondary-action">Atualizar</button>
             </form>
         </article>
         {% empty %}
         <article class="student-compact-state">
-            <strong>Nenhum RM ainda.</strong>
-            <p class="student-copy">Registre o primeiro.</p>
+            <strong>Cadastre seu RM.</strong>
+            <p class="student-copy">Registre o primeiro movimento para liberar a calculadora.</p>
         </article>
         {% endfor %}
     </div>

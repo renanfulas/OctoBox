@@ -15,6 +15,7 @@ PONTOS CRITICOS:
 from django import forms
 
 from operations.models import BehaviorCategory
+from operations.models import ClassType
 from shared_support.form_inputs import apply_text_input_attrs
 from student_app.models import StudentExerciseMax, WorkoutBlockKind, WorkoutLoadType, WorkoutOperationalMemoryKind
 from student_app.models import (
@@ -339,6 +340,104 @@ class WorkoutDuplicateForm(forms.Form):
     target_session_id = forms.IntegerField(min_value=1)
 
 
+class WeeklyWodSmartPasteForm(forms.Form):
+    plan_id = forms.IntegerField(required=False, min_value=1)
+    week_start = forms.DateField(input_formats=['%Y-%m-%d'])
+    label = forms.CharField(max_length=140, required=False)
+    source_text = forms.CharField(widget=forms.Textarea(attrs={'rows': 22}), required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        apply_text_input_attrs(
+            self.fields['label'],
+            placeholder='Ex.: Semana 2 - Base de forca + metcon',
+            maxlength=140,
+        )
+        self.fields['source_text'].widget.attrs.update(
+            {
+                'placeholder': (
+                    'Cole aqui o treino semanal.\n\n'
+                    'Segunda\n'
+                    'Mobilidade\n'
+                    'Aquecimento\n'
+                    '3x\n'
+                    '10 lunges\n'
+                    '8 front squat\n'
+                    '20 sit up'
+                ),
+                'class': 'smart-paste-textarea',
+                'spellcheck': 'false',
+            }
+        )
+
+    def clean_source_text(self):
+        return (self.cleaned_data.get('source_text') or '').strip()
+
+
+class WeeklyWodProjectionForm(forms.Form):
+    plan_id = forms.IntegerField(min_value=1)
+    target_week_start = forms.DateField(input_formats=['%Y-%m-%d'])
+    class_types = forms.MultipleChoiceField(
+        choices=(
+            (ClassType.CROSS, 'CrossFit'),
+            (ClassType.MOBILITY, 'Mobilidade'),
+            (ClassType.OLY, 'Halterofilia'),
+            (ClassType.STRENGTH, 'Forca'),
+            (ClassType.OPEN_GYM, 'Open Gym'),
+        ),
+        required=False,
+    )
+
+    def clean_class_types(self):
+        class_types = self.cleaned_data.get('class_types') or []
+        return list(class_types or [ClassType.CROSS])
+
+
+class WeeklyWodReviewMovementForm(forms.Form):
+    plan_id = forms.IntegerField(min_value=1)
+    day_index = forms.IntegerField(min_value=0)
+    block_index = forms.IntegerField(min_value=0)
+    movement_index = forms.IntegerField(min_value=0)
+    movement_label_raw = forms.CharField(max_length=120)
+    movement_slug = forms.CharField(max_length=64, required=False)
+    reps_spec = forms.CharField(max_length=64, required=False)
+    load_spec = forms.CharField(max_length=64, required=False)
+    notes = forms.CharField(max_length=255, required=False)
+
+    def __init__(self, *args, slug_choices=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.slug_choices = list(slug_choices or [])
+        apply_text_input_attrs(
+            self.fields['movement_label_raw'],
+            placeholder='Ex.: 15 bar muscle up',
+            maxlength=120,
+        )
+        apply_text_input_attrs(
+            self.fields['movement_slug'],
+            placeholder='Ex.: bar_muscle_up',
+            maxlength=64,
+        )
+        apply_text_input_attrs(
+            self.fields['reps_spec'],
+            placeholder='Ex.: 15 ou 10 a 12',
+            maxlength=64,
+        )
+        apply_text_input_attrs(
+            self.fields['load_spec'],
+            placeholder='Ex.: 40/25 ou 70%',
+            maxlength=64,
+        )
+        apply_text_input_attrs(
+            self.fields['notes'],
+            placeholder='Observacao curta do movimento.',
+            maxlength=255,
+        )
+
+
+class WeeklyWodUndoReplicationForm(forms.Form):
+    batch_id = forms.IntegerField(min_value=1)
+
+
 class WorkoutQuickTemplateForm(forms.Form):
     source_workout_id = forms.IntegerField(min_value=1)
 
@@ -416,4 +515,8 @@ __all__ = [
     'WorkoutWeeklyCheckpointForm',
     'WorkoutRmGapActionForm',
     'WorkoutStudentRmQuickForm',
+    'WeeklyWodSmartPasteForm',
+    'WeeklyWodProjectionForm',
+    'WeeklyWodReviewMovementForm',
+    'WeeklyWodUndoReplicationForm',
 ]

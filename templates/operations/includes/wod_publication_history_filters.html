@@ -1,4 +1,7 @@
 <section class="coach-wod-filter-bar" aria-label="Filtros do historico publicado">
+    {% if history_filter_state.session_id %}
+    <p>Historico filtrado por aula.</p>
+    {% endif %}
     <form method="get" class="coach-wod-filter-form">
         {% if history_filter_state.session_id %}
         <input type="hidden" name="session_id" value="{{ history_filter_state.session_id }}">
