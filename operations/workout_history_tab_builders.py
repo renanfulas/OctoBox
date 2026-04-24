@@ -19,7 +19,6 @@ from operations.workout_board_weekly_builders import (
     build_weekly_checkpoint_rhythm,
     build_weekly_governance_action,
 )
-from operations.workout_published_history import build_published_workout_history
 from student_app.models import (
     WorkoutWeeklyManagementCheckpoint,
     WorkoutWeeklyCheckpointOwner,
@@ -31,14 +30,18 @@ from student_app.models import (
 def build_published_wods_context(
     *,
     coach_username='',
+    session_id=None,
     today_only=False,
     published_reason='',
     current_role_slug='',
 ):
+    from operations.workout_published_history import build_published_workout_history
+
     return {
         'published_history': build_published_workout_history(
             limit=12,
             coach_username=coach_username,
+            session_id=session_id,
             today_only=today_only,
             published_reason=published_reason,
             current_role_slug=current_role_slug,
@@ -82,15 +85,19 @@ def build_checkpoint_context(*, today):
 def build_alerts_context(
     *,
     coach_username='',
+    session_id=None,
     today_only=False,
     published_reason='',
     current_role_slug='',
     published_history=None,
 ):
     if published_history is None:
+        from operations.workout_published_history import build_published_workout_history
+
         published_history = build_published_workout_history(
             limit=12,
             coach_username=coach_username,
+            session_id=session_id,
             today_only=today_only,
             published_reason=published_reason,
             current_role_slug=current_role_slug,

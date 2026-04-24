@@ -425,6 +425,9 @@ ALERT_SIREN_MEDIUM_JOB_LIMIT_CAP = env_int('ALERT_SIREN_MEDIUM_JOB_LIMIT_CAP', 1
 ALERT_SIREN_MEDIUM_WEBHOOK_LIMIT_CAP = env_int('ALERT_SIREN_MEDIUM_WEBHOOK_LIMIT_CAP', 10)
 ALERT_SIREN_HIGH_JOB_LIMIT_CAP = env_int('ALERT_SIREN_HIGH_JOB_LIMIT_CAP', 5)
 ALERT_SIREN_HIGH_WEBHOOK_LIMIT_CAP = env_int('ALERT_SIREN_HIGH_WEBHOOK_LIMIT_CAP', 0)
+WOD_ACTION_TELEMETRY_ENABLED = env_bool('WOD_ACTION_TELEMETRY_ENABLED', True)
+WOD_ACTION_TELEMETRY_SAMPLE_RATE = env_float('WOD_ACTION_TELEMETRY_SAMPLE_RATE', 1.0)
+WOD_APPROVAL_POLICY = env_str('WOD_APPROVAL_POLICY', 'strict')
 
 # 🔒 Segurança Institucional White Hat (Bug Bounty Fixes)
 # Força o browser do cliente a nunca se conectar com HTTP por 1 ano (prevenindo mitm_downgrade)
@@ -457,6 +460,11 @@ LOGGING = {
         'octobox.access': {
             'handlers': ['console'],
             'level': EFFECTIVE_SECURITY_LOG_LEVEL,
+            'propagate': False,
+        },
+        'octobox.operations.wod': {
+            'handlers': ['console'],
+            'level': 'INFO',
             'propagate': False,
         },
         'octobox.security.honeypot': {

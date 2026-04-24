@@ -234,6 +234,139 @@ class LeadImportJob(TimeStampedModel):
         return f'{self.get_source_type_display()} - {self.get_status_display()}'
 
 
+class WorkoutApprovalPolicySetting(TimeStampedModel):
+    box_id = models.PositiveIntegerField(unique=True, db_index=True)
+    approval_policy = models.CharField(
+        max_length=32,
+        choices=(
+            ('strict', 'Aprovacao obrigatoria'),
+            ('trusted_template', 'Template confiavel publica direto'),
+            ('coach_autonomy', 'Coach confiavel publica direto'),
+        ),
+        default='strict',
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='workout_approval_policies_updated',
+    )
+
+    class Meta:
+        ordering = ['box_id']
+
+    def __str__(self):
+        return f'Box {self.box_id} - {self.approval_policy}'
+
+
+class WorkoutTemplate(TimeStampedModel):
+    name = models.CharField(max_length=120)
+    description = models.CharField(max_length=255, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='workout_templates_created',
+    )
+    source_workout = models.ForeignKey(
+        'student_app.SessionWorkout',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='derived_templates',
+    )
+    is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False)
+    is_trusted = models.BooleanField(default=False)
+    usage_count = models.PositiveIntegerField(default=0)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-is_featured', '-is_active', '-usage_count', '-last_used_at', 'name', '-created_at']
+
+    def __str__(self):
+        return self.name
+
+
+class WorkoutTemplateBlock(TimeStampedModel):
+    template = models.ForeignKey(WorkoutTemplate, on_delete=models.CASCADE, related_name='blocks')
+    kind = models.CharField(max_length=24, choices=(
+        ('warmup', 'Aquecimento'),
+        ('strength', 'Forca'),
+        ('skill', 'Skill'),
+        ('metcon', 'Metcon'),
+        ('cooldown', 'Cooldown'),
+        ('custom', 'Livre'),
+    ), default='custom')
+    title = models.CharField(max_length=120)
+    notes = models.TextField(blank=True)
+    sort_order = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ['sort_order', 'id']
+
+    def __str__(self):
+        return f'{self.template.name} - {self.title}'
+
+
+class WorkoutTemplateMovement(TimeStampedModel):
+    block = models.ForeignKey(WorkoutTemplateBlock, on_delete=models.CASCADE, related_name='movements')
+    movement_slug = models.SlugField(max_length=64)
+    movement_label = models.CharField(max_length=120)
+    sets = models.PositiveIntegerField(null=True, blank=True)
+    reps = models.PositiveIntegerField(null=True, blank=True)
+    load_type = models.CharField(
+        max_length=32,
+        choices=(
+            ('free', 'Livre'),
+            ('fixed_kg', 'Carga fixa'),
+            ('percentage_of_rm', 'Percentual do RM'),
+        ),
+        default='free',
+    )
+    load_value = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    notes = models.CharField(max_length=255, blank=True)
+    sort_order = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ['sort_order', 'id']
+
+    def __str__(self):
+        return f'{self.block} - {self.movement_label}'
+
+
+class WorkoutPlannerTemplatePickerEvent(TimeStampedModel):
+    event_name = models.CharField(max_length=24, db_index=True)
+    session_id = models.PositiveIntegerField(db_index=True)
+    template = models.ForeignKey(
+        WorkoutTemplate,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='planner_picker_events',
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='workout_planner_template_picker_events',
+    )
+    action_outcome = models.CharField(max_length=32, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['event_name', 'created_at'], name='ops_tpl_evt_name_idx'),
+            models.Index(fields=['session_id', 'created_at'], name='ops_tpl_evt_sess_idx'),
+        ]
+
+    def __str__(self):
+        return f'{self.event_name} - session {self.session_id}'
+
+
 __all__ = [
     'Attendance',
     'AttendanceStatus',
@@ -250,4 +383,9 @@ __all__ = [
     'LeadImportProcessingMode',
     'LeadImportSourceType',
     'SessionStatus',
+    'WorkoutApprovalPolicySetting',
+    'WorkoutTemplate',
+    'WorkoutTemplateBlock',
+    'WorkoutTemplateMovement',
+    'WorkoutPlannerTemplatePickerEvent',
 ]

@@ -55,14 +55,17 @@ def _build_page_payload(*, page_title, page_subtitle, current_role_slug):
 def build_workout_publication_history_context(*, request, today, current_role, page_title, page_subtitle):
     filter_form = WorkoutApprovalFilterForm(request.GET or None)
     selected_coach = ''
+    selected_session_id = None
     today_only = False
     published_reason = ''
     if filter_form.is_valid():
         selected_coach = (filter_form.cleaned_data.get('coach') or '').strip()
+        selected_session_id = filter_form.cleaned_data.get('session_id')
         today_only = bool(filter_form.cleaned_data.get('today_only'))
         published_reason = (filter_form.cleaned_data.get('published_reason') or '').strip()
     published_context = build_published_wods_context(
         coach_username=selected_coach,
+        session_id=selected_session_id,
         today_only=today_only,
         published_reason=published_reason,
         current_role_slug=current_role.slug,
@@ -70,6 +73,7 @@ def build_workout_publication_history_context(*, request, today, current_role, p
     checkpoint_context = build_checkpoint_context(today=today)
     alerts_context = build_alerts_context(
         coach_username=selected_coach,
+        session_id=selected_session_id,
         today_only=today_only,
         published_reason=published_reason,
         current_role_slug=current_role.slug,
@@ -89,6 +93,7 @@ def build_workout_publication_history_context(*, request, today, current_role, p
         'approval_filter_form': filter_form,
         'history_filter_state': {
             'coach': selected_coach,
+            'session_id': selected_session_id,
             'today_only': today_only,
             'published_reason': published_reason,
         },

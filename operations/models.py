@@ -25,6 +25,11 @@ from operations.model_definitions import (
     LeadImportProcessingMode,
     LeadImportSourceType,
     SessionStatus,
+    WorkoutApprovalPolicySetting,
+    WorkoutTemplate,
+    WorkoutTemplateBlock,
+    WorkoutTemplateMovement,
+    WorkoutPlannerTemplatePickerEvent,
 )
 
 __all__ = [
@@ -40,4 +45,9 @@ __all__ = [
     'LeadImportProcessingMode',
     'LeadImportSourceType',
     'SessionStatus',
+    'WorkoutApprovalPolicySetting',
+    'WorkoutTemplate',
+    'WorkoutTemplateBlock',
+    'WorkoutTemplateMovement',
+    'WorkoutPlannerTemplatePickerEvent',
 ]

@@ -40,15 +40,17 @@ Hoje o fluxo de WOD em `operations` nao mora mais em um arquivo monolitico.
 
 Ele foi separado em corredores diferentes:
 
-1. leitura de workspace
-2. montagem da board
-3. historico publicado
-4. mutacoes reais
-5. suporte compartilhado
+1. casca de workspace por papel
+2. templates persistentes
+3. planner
+4. board e historico
+5. editor
+6. mutacoes reais
+7. suporte compartilhado
 
 Em linguagem simples:
 
-1. a cozinha, o caixa e a recepcao nao dividem mais o mesmo balcao
+1. a cozinha, o caixa, a sala do mapa e a sala do professor nao dividem mais o mesmo balcao
 
 ## Mapa rapido
 
@@ -61,22 +63,62 @@ Arquivo:
 Ownership:
 
 1. telas operacionais por papel
-2. editor do WOD do coach
-3. casca fina da `WorkoutApprovalBoardView`
+2. event streams
+3. placeholders e superficies gerais
 
 Abra primeiro aqui quando:
 
 1. a rota da tela quebrou
 2. o contexto base do workspace sumiu
-3. o editor do coach falhou no fluxo HTTP
+3. um workspace por papel falhou no fluxo HTTP
 
 Nao deveria concentrar:
 
-1. historico publicado
-2. action views da board
-3. heuristica compartilhada do WOD
+1. planner
+2. editor
+3. board e historico
+4. mutacoes do WOD
 
-### 2. Contexto da board de aprovacao
+### 2. Corredor de templates persistentes
+
+Arquivo:
+
+1. [operations/workout_template_views.py](../../operations/workout_template_views.py)
+
+Ownership:
+
+1. management de templates
+2. politica de aprovacao do box
+3. metadata de template
+4. blocos e movimentos persistentes
+
+Abra primeiro aqui quando:
+
+1. a tela de templates quebrar
+2. toggle, duplicate, delete ou update de template falhar
+3. a politica de aprovacao do box nao persistir
+
+### 3. Corredor do planner
+
+Arquivo:
+
+1. [operations/workout_planner_views.py](../../operations/workout_planner_views.py)
+
+Ownership:
+
+1. tela do planner
+2. telemetria do picker
+3. apply trusted template pelo cockpit
+4. duplicacao do slot anterior
+
+Abra primeiro aqui quando:
+
+1. a rota do planner quebrar
+2. picker do planner falhar
+3. apply trusted template nao respeitar o fluxo HTTP
+4. o cockpit perder comportamento de navegacao ou acao
+
+### 4. Contexto da board de aprovacao
 
 Arquivo:
 
@@ -96,7 +138,7 @@ Abra primeiro aqui quando:
 2. um filtro nao funcionar
 3. a tela de aprovacao estiver montando contexto demais ou de menos
 
-### 3. Builders puros da board
+### 5. Builders puros da board
 
 Arquivo:
 
@@ -122,7 +164,26 @@ Regra:
 
 1. este corredor deve permanecer sem `request`, sem redirect e sem messages
 
-### 4. Historico publicado e pos-publicacao
+### 6. Corredor HTTP da board, history e quick edit
+
+Arquivo:
+
+1. [operations/workout_board_views.py](../../operations/workout_board_views.py)
+
+Ownership:
+
+1. `WorkoutApprovalBoardView`
+2. `WorkoutPublicationHistoryView`
+3. `OperationsExecutiveSummaryView`
+4. `WorkoutStudentRmQuickEditView`
+
+Abra primeiro aqui quando:
+
+1. a rota de board ou history quebrar
+2. o resumo executivo falhar na casca HTTP
+3. o quick edit de RM falhar no fluxo HTTP
+
+### 7. Historico publicado e pos-publicacao
 
 Arquivo:
 
@@ -144,7 +205,25 @@ Abra primeiro aqui quando:
 3. os alertas pos-publicacao estiverem errados
 4. a leitura executiva da historia estiver inconsistente
 
-### 5. Mutacoes do WOD
+### 8. Corredor do editor do coach
+
+Arquivo:
+
+1. [operations/workout_editor_views.py](../../operations/workout_editor_views.py)
+
+Ownership:
+
+1. `WorkoutEditorHomeView`
+2. `CoachSessionWorkoutEditorView`
+3. `WorkoutPrescriptionPreviewView`
+
+Abra primeiro aqui quando:
+
+1. o editor da aula quebrar no fluxo HTTP
+2. o redirect do editor-home divergir
+3. o preview backend de prescricao falhar
+
+### 9. Mutacoes do WOD
 
 Arquivo:
 
@@ -169,7 +248,7 @@ Regra:
 1. action view e mutacao real
 2. nao deve virar lugar de leitura pesada
 
-### 6. Suporte compartilhado do WOD
+### 10. Suporte compartilhado do WOD
 
 Arquivo:
 
@@ -193,7 +272,7 @@ Abra primeiro aqui quando:
 Regra:
 
 1. essa e a caixa de ferramentas compartilhada
-2. ela nao deve depender de `workspace_views.py`
+2. ela nao deve depender dos corredores HTTP
 
 ## Ordem de leitura por tipo de problema
 
@@ -201,7 +280,7 @@ Regra:
 
 Leia:
 
-1. [operations/workspace_views.py](../../operations/workspace_views.py)
+1. [operations/workout_board_views.py](../../operations/workout_board_views.py)
 2. [operations/workout_approval_board_context.py](../../operations/workout_approval_board_context.py)
 3. [operations/workout_board_builders.py](../../operations/workout_board_builders.py)
 
@@ -217,27 +296,42 @@ Leia:
 
 Leia:
 
-1. [operations/workout_published_history.py](../../operations/workout_published_history.py)
-2. [operations/workout_board_builders.py](../../operations/workout_board_builders.py)
-3. [templates/operations/workout_approval_board.html](../../templates/operations/workout_approval_board.html)
+1. [operations/workout_board_views.py](../../operations/workout_board_views.py)
+2. [operations/workout_published_history.py](../../operations/workout_published_history.py)
+3. [operations/workout_board_builders.py](../../operations/workout_board_builders.py)
+4. [templates/operations/workout_publication_history.html](../../templates/operations/workout_publication_history.html)
 
 ### Problema no editor do coach
 
 Leia:
 
-1. [operations/workspace_views.py](../../operations/workspace_views.py)
-2. [operations/workout_support.py](../../operations/workout_support.py)
-3. [operations/forms.py](../../operations/forms.py)
-4. [templates/operations/coach_session_workout_editor.html](../../templates/operations/coach_session_workout_editor.html)
+1. [operations/workout_editor_views.py](../../operations/workout_editor_views.py)
+2. [operations/workout_editor_context.py](../../operations/workout_editor_context.py)
+3. [operations/workout_editor_actions.py](../../operations/workout_editor_actions.py)
+4. [operations/workout_support.py](../../operations/workout_support.py)
+5. [templates/operations/coach_session_workout_editor.html](../../templates/operations/coach_session_workout_editor.html)
+
+### Problema no planner
+
+Leia:
+
+1. [operations/workout_planner_views.py](../../operations/workout_planner_views.py)
+2. [operations/workout_planner_context.py](../../operations/workout_planner_context.py)
+3. [operations/workout_planner_builders.py](../../operations/workout_planner_builders.py)
+4. [templates/operations/workout_planner.html](../../templates/operations/workout_planner.html)
 
 ## Ownership atual resumido
 
-1. `workspace_views.py` = entrada e casca HTTP
-2. `workout_approval_board_context.py` = montagem do contexto da board
-3. `workout_board_builders.py` = inteligencia pura e leitura executiva
-4. `workout_published_history.py` = historia publicada e pos-publicacao
-5. `workout_action_views.py` = mutacoes reais da board
-6. `workout_support.py` = suporte compartilhado do corredor de WOD
+1. `workspace_views.py` = workspaces por papel e casca geral
+2. `workout_template_views.py` = templates persistentes
+3. `workout_planner_views.py` = planner e cockpit
+4. `workout_board_views.py` = board, history, summary e RM quick edit
+5. `workout_editor_views.py` = editor e preview backend
+6. `workout_approval_board_context.py` = montagem do contexto da board
+7. `workout_board_builders.py` = inteligencia pura e leitura executiva
+8. `workout_published_history.py` = historia publicada e pos-publicacao
+9. `workout_action_views.py` = mutacoes reais da board
+10. `workout_support.py` = suporte compartilhado do corredor de WOD
 
 ## Mapa rapido da suite de testes alvo
 
@@ -249,14 +343,15 @@ Quando a duvida nao for "onde mexer no codigo", mas sim "onde deve morar a cober
 Direcao alvo da suite:
 
 1. `tests/test_coach_wod_editor.py` = editor do coach, inline edit, duplicacao e submit
-2. `tests/test_workout_approval_board.py` = aprovacao, rejeicao, filtros, diff e trilha de decisao
-3. `tests/test_workout_post_publication_history.py` = historico publicado, alertas, follow-up e memoria
-4. `tests/test_workout_weekly_governance.py` = checkpoint semanal, ritmo, maturidade e governanca
+2. `tests/test_workout_planner_builders.py` = planner, picker e cockpit
+3. `tests/test_workout_approval_board.py` = aprovacao, rejeicao, filtros, diff e trilha de decisao
+4. `tests/test_workout_post_publication_history.py` = historico publicado, alertas, follow-up e memoria
+5. `tests/test_workout_weekly_governance.py` = checkpoint semanal, ritmo, maturidade e governanca
 
 ## Antipadroes a evitar
 
-1. voltar a colocar action views em `workspace_views.py`
-2. fazer `workout_action_views.py` depender de `workspace_views.py`
+1. voltar a colocar corredores WOD em `workspace_views.py`
+2. fazer `workout_action_views.py` depender de corredores HTTP
 3. colocar query pesada em builder puro
 4. colocar regra de decisao executiva dentro do template
 5. duplicar serializacao e auditoria do WOD em varios modulos
@@ -265,11 +360,12 @@ Direcao alvo da suite:
 
 Pense no corredor de WOD como uma escola:
 
-1. `workspace_views.py` e a porta da escola
-2. `workout_approval_board_context.py` e a secretaria que organiza a sala
-3. `workout_board_builders.py` e o professor que pensa
-4. `workout_published_history.py` e o caderno de ocorrencias
-5. `workout_action_views.py` e o balcão que carimba e registra
-6. `workout_support.py` e a caixa de ferramentas da manutencao
+1. `workspace_views.py` e a portaria principal do predio
+2. `workout_template_views.py` e a biblioteca de moldes
+3. `workout_planner_views.py` e a sala do mapa semanal
+4. `workout_board_views.py` e a sala de revisao e historico
+5. `workout_editor_views.py` e a sala do professor que monta a aula
+6. `workout_action_views.py` e o balcao que carimba e registra
+7. `workout_support.py` e a caixa de ferramentas da manutencao
 
 Se cada um ficar no seu lugar, a escola funciona.

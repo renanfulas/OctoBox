@@ -1548,6 +1548,51 @@ body[data-theme="dark"] .coach-sessions-board > .operation-empty-card .state-emp
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent);
 }
 
+.coach-wod-tooltip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-left: 6px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 34%, transparent);
+    color: var(--theme-accent-support);
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+    cursor: help;
+}
+
+.coach-wod-tooltip::after {
+    position: absolute;
+    z-index: 5;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    width: min(260px, 70vw);
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-panel-strong) 94%, black 6%);
+    color: var(--theme-text-primary);
+    box-shadow: var(--shadow-md);
+    content: attr(aria-label);
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.35;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 4px);
+    transition: opacity var(--motion-base) var(--ease-standard), transform var(--motion-base) var(--ease-standard);
+}
+
+.coach-wod-tooltip:hover::after,
+.coach-wod-tooltip:focus-visible::after {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
 .coach-wod-filter-toggle-group--single {
     grid-template-columns: 1fr;
 }
@@ -1762,6 +1807,50 @@ body[data-theme="dark"] .coach-wod-corridor-tab.is-active {
 
 .coach-wod-review-digest .eyebrow {
     margin-bottom: 4px;
+}
+
+.coach-wod-prescription-preview {
+    display: grid;
+    gap: 10px;
+}
+
+.coach-wod-prescription-preview__meta {
+    margin-top: 0;
+}
+
+.coach-wod-prescription-preview__label {
+    color: var(--theme-text-primary);
+    line-height: 1.35;
+}
+
+.coach-wod-prescription-preview__context {
+    color: var(--theme-text-secondary);
+}
+
+.coach-wod-prescription-preview__students {
+    margin-top: 2px;
+}
+
+.coach-wod-prescription-preview__students .coach-wod-detail-card strong {
+    font-size: 1.02rem;
+}
+
+.coach-wod-prescription-preview__students .coach-wod-detail-card p + p {
+    margin-top: 4px;
+}
+
+.coach-wod-prescription-preview__missing {
+    margin-top: 2px;
+}
+
+.coach-wod-quick-template-preview__meta {
+    align-items: center;
+}
+
+.coach-wod-quick-template-preview__hint {
+    font-size: 0.88rem;
+    border-top: 1px solid color-mix(in srgb, var(--theme-border-soft) 76%, transparent);
+    padding-top: 10px;
 }
 
 .coach-wod-review-signal-card,

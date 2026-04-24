@@ -131,6 +131,7 @@ class WorkoutApprovalFilterForm(forms.Form):
         ),
     )
     coach = forms.CharField(required=False, max_length=120)
+    session_id = forms.IntegerField(required=False, min_value=1)
     sensitive_only = forms.BooleanField(required=False)
     today_only = forms.BooleanField(required=False)
     published_reason = forms.ChoiceField(required=False, choices=WORKOUT_HISTORY_REASON_FILTER_CHOICES)
@@ -318,6 +319,20 @@ class CoachWorkoutMovementForm(forms.Form):
         super().__init__(*args, **kwargs)
         apply_text_input_attrs(self.fields['movement_slug'], placeholder='deadlift')
         apply_text_input_attrs(self.fields['movement_label'], placeholder='Deadlift')
+        self.fields['movement_slug'].widget.attrs.update(
+            {
+                'list': 'wod-movement-catalog-slugs',
+                'data-wod-movement-slug': 'true',
+                'autocomplete': 'off',
+            }
+        )
+        self.fields['movement_label'].widget.attrs.update(
+            {
+                'list': 'wod-movement-catalog-labels',
+                'data-wod-movement-label': 'true',
+                'autocomplete': 'off',
+            }
+        )
         apply_text_input_attrs(self.fields['notes'], placeholder='Respire no topo e mantenha a lombar forte.', maxlength=255)
 
 
@@ -423,10 +438,73 @@ class WeeklyWodUndoReplicationForm(forms.Form):
     batch_id = forms.IntegerField(min_value=1)
 
 
+class WorkoutQuickTemplateForm(forms.Form):
+    source_workout_id = forms.IntegerField(min_value=1)
+
+
+class WorkoutStoredTemplateForm(forms.Form):
+    template_id = forms.IntegerField(min_value=1)
+
+
+class WorkoutCreateStoredTemplateForm(forms.Form):
+    template_name = forms.CharField(max_length=120)
+
+
+class WorkoutTemplateMetadataForm(forms.Form):
+    name = forms.CharField(max_length=120)
+    description = forms.CharField(max_length=255, required=False)
+    is_featured = forms.BooleanField(required=False)
+    is_trusted = forms.BooleanField(required=False)
+
+
+class WorkoutTemplateDuplicateForm(forms.Form):
+    name = forms.CharField(max_length=120, required=False)
+
+
+class WorkoutTemplateManagementFilterForm(forms.Form):
+    q = forms.CharField(max_length=120, required=False)
+    active = forms.BooleanField(required=False)
+    featured = forms.BooleanField(required=False)
+
+
+class WorkoutApprovalPolicyForm(forms.Form):
+    approval_policy = forms.ChoiceField(choices=(('strict', 'Aprovacao obrigatoria'), ('trusted_template', 'Template confiavel publica direto'), ('coach_autonomy', 'Coach confiavel publica direto')))
+
+
+class WorkoutTemplateBlockForm(forms.Form):
+    block_id = forms.IntegerField(min_value=1, required=False)
+    title = forms.CharField(max_length=120)
+    kind = forms.ChoiceField(choices=WorkoutBlockKind.choices, initial=WorkoutBlockKind.CUSTOM)
+    notes = forms.CharField(widget=forms.Textarea(attrs={'rows': 2}), required=False)
+    sort_order = forms.IntegerField(min_value=1, initial=1)
+
+
+class WorkoutTemplateMovementForm(forms.Form):
+    movement_id = forms.IntegerField(min_value=1, required=False)
+    block_id = forms.IntegerField(min_value=1, required=False)
+    movement_slug = forms.SlugField(max_length=64)
+    movement_label = forms.CharField(max_length=120)
+    sets = forms.IntegerField(min_value=1, required=False)
+    reps = forms.IntegerField(min_value=1, required=False)
+    load_type = forms.ChoiceField(choices=WorkoutLoadType.choices, initial=WorkoutLoadType.FREE)
+    load_value = forms.DecimalField(min_value=0, decimal_places=2, max_digits=6, required=False)
+    notes = forms.CharField(max_length=255, required=False)
+    sort_order = forms.IntegerField(min_value=1, initial=1)
+
+
 __all__ = [
     'CoachSessionWorkoutForm',
     'CoachWorkoutBlockForm',
     'WorkoutDuplicateForm',
+    'WorkoutQuickTemplateForm',
+    'WorkoutStoredTemplateForm',
+    'WorkoutTemplateMetadataForm',
+    'WorkoutTemplateDuplicateForm',
+    'WorkoutTemplateManagementFilterForm',
+    'WorkoutApprovalPolicyForm',
+    'WorkoutTemplateBlockForm',
+    'WorkoutTemplateMovementForm',
+    'WorkoutCreateStoredTemplateForm',
     'CoachWorkoutMovementForm',
     'TechnicalBehaviorNoteForm',
     'WorkoutRejectionForm',

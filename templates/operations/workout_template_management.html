@@ -1,0 +1,408 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+{% with page=operation_page %}
+<div class="operation-shell coach-scene workspace-shell coach-wod-editor-shell">
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    {% include "operations/includes/wod_corridor_tabs.html" %}
+
+    <section class="coach-wod-overview-grid" aria-label="Resumo do catalogo de templates">
+        <article class="table-card coach-wod-overview-card">
+            <p class="eyebrow">Catalogo</p>
+            <h2>{{ template_management_summary.total }}</h2>
+            <p class="operation-session-meta">Template(s) persistente(s) sob sua gestao agora.</p>
+        </article>
+        <article class="table-card coach-wod-overview-card">
+            <p class="eyebrow">Ativos</p>
+            <h2>{{ template_management_summary.active }}</h2>
+            <p class="operation-session-meta">Prontos para aparecer como base reutilizavel.</p>
+        </article>
+        <article class="table-card coach-wod-overview-card">
+            <p class="eyebrow">Destaque</p>
+            <h2>{{ template_management_summary.featured }}</h2>
+            <p class="operation-session-meta">Templates puxados para a frente do catalogo.</p>
+        </article>
+    </section>
+
+    <section class="coach-wod-filter-bar" aria-label="Politica de aprovacao do box">
+        <article class="table-card coach-wod-overview-card">
+            <div class="coach-wod-editor-head">
+                <div>
+                    <p class="eyebrow">Politica do box</p>
+                    <h2>{% if approval_policy_setting %}{{ approval_policy_setting.get_approval_policy_display }}{% else %}Fallback institucional{% endif %}</h2>
+                    <p class="operation-session-meta">
+                        {% if approval_policy_setting %}
+                        Box {{ approval_policy_setting.box_id }} ? ultima atualizacao por {{ approval_policy_setting.updated_by|default:'sistema' }}.
+                        {% else %}
+                        Nenhum box ativo resolvido no corredor. Seguimos no fallback de settings.
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="coach-wod-editor-pills">
+                    <span class="pill accent">{{ approval_policy_setting.approval_policy|default:'strict' }}</span>
+                </div>
+            </div>
+            {% if current_role.slug == 'owner' %}
+            <form method="post" action="{% url 'workout-approval-policy-update' %}" class="coach-wod-form-stack">
+                {% csrf_token %}
+                <label>
+                    <span>Politica de aprovacao</span>
+                    <select name="approval_policy">
+                        {% for value,label in approval_policy_form.fields.approval_policy.choices %}
+                        <option value="{{ value }}" {% if approval_policy_form.initial.approval_policy == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <div class="actions">
+                    <button class="button secondary" type="submit">Salvar politica do box</button>
+                </div>
+            </form>
+            {% else %}
+            <p class="operation-session-meta">Somente owner ajusta essa politica. O coach enxerga o efeito no CTA do editor.</p>
+            {% endif %}
+        </article>
+    </section>
+
+    <section class="coach-wod-filter-bar" aria-label="Filtros dos templates">
+        <form method="get" class="coach-wod-filter-form coach-wod-form-stack">
+            <div class="coach-wod-form-grid coach-wod-form-grid--two">
+                <label>
+                    <span>Buscar template</span>
+                    <input type="search" name="q" value="{{ template_filter_state.query }}" placeholder="Ex.: forca base ou metcon rapido">
+                </label>
+                <div class="coach-wod-filter-toggle-group">
+                    <label class="coach-wod-filter-toggle">
+                        <input type="checkbox" name="active" value="1" {% if template_filter_state.active_only %}checked{% endif %}>
+                        <span>Somente ativos</span>
+                    </label>
+                    <label class="coach-wod-filter-toggle">
+                        <input type="checkbox" name="featured" value="1" {% if template_filter_state.featured_only %}checked{% endif %}>
+                        <span>Somente destaque</span>
+                    </label>
+                </div>
+            </div>
+            <div class="coach-wod-review-meta">
+                <span class="pill info">{{ stored_templates|length }} resultado(s)</span>
+                {% if template_filter_state.query %}
+                <span class="pill accent">Busca: {{ template_filter_state.query }}</span>
+                {% endif %}
+                {% if template_filter_state.active_only %}
+                <span class="pill success">Filtro ativo</span>
+                {% endif %}
+                {% if template_filter_state.featured_only %}
+                <span class="pill warning">So destaque</span>
+                {% endif %}
+            </div>
+            <div class="coach-wod-filter-actions">
+                <button class="button secondary" type="submit">Aplicar filtro</button>
+                <a class="button tertiary" href="{% url 'workout-template-management' %}">Limpar</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="coach-wod-overview-grid" aria-label="Catalogo de templates persistentes">
+        {% for template in stored_templates %}
+        <article class="table-card coach-wod-overview-card">
+            <div class="coach-wod-editor-head">
+                <div>
+                    <p class="eyebrow">Template salvo</p>
+                    <h2>{{ template.name }}</h2>
+                    <p class="operation-session-meta">{{ template.last_used_label }} ? {{ template.coach_label }}</p>
+                </div>
+                <div class="coach-wod-editor-pills">
+                    <span class="pill {% if template.is_active %}success{% else %}warning{% endif %}">
+                        {% if template.is_active %}Ativo{% else %}Inativo{% endif %}
+                    </span>
+                    <span class="pill {% if template.is_featured %}accent{% else %}info{% endif %}">
+                        {% if template.is_featured %}Destaque{% else %}Padrao{% endif %}
+                    </span>
+                    <span class="pill accent">{{ template.usage_count }} uso(s)</span>
+                    <span class="pill {% if template.is_trusted %}success{% else %}info{% endif %}">{% if template.is_trusted %}Confiavel{% else %}Em revisao{% endif %}</span>
+                </div>
+            </div>
+            {% if template.description %}
+            <p class="operation-session-meta">{{ template.description }}</p>
+            {% else %}
+            <p class="operation-session-meta">Sem descricao ainda. Use a linha de metadados para deixar o catalogo mais autoexplicativo.</p>
+            {% endif %}
+            <div class="coach-wod-review-meta">
+                <span class="pill info">{{ template.block_count }} bloco(s)</span>
+                <span class="pill info">{{ template.movement_count }} movimento(s)</span>
+                <span class="pill info">Ultimo uso: {{ template.last_used_label }}</span>
+            </div>
+            <div class="actions">
+                <form method="post" action="{% url 'workout-template-toggle-active' template.id %}">
+                    {% csrf_token %}
+                    <button class="button secondary" type="submit">
+                        {% if template.is_active %}Inativar{% else %}Ativar{% endif %}
+                    </button>
+                </form>
+                <form method="post" action="{% url 'workout-template-toggle-featured' template.id %}">
+                    {% csrf_token %}
+                    <button class="button tertiary" type="submit">
+                        {% if template.is_featured %}Remover destaque{% else %}Destacar{% endif %}
+                    </button>
+                </form>
+                <form method="post" action="{% url 'workout-template-duplicate' template.id %}" class="coach-wod-inline-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="name" value="{{ template.name }} copia">
+                    <button class="button tertiary" type="submit">Duplicar</button>
+                </form>
+                <form method="post" action="{% url 'workout-template-delete' template.id %}" onsubmit="return confirm('Excluir este template persistente do catalogo?');">
+                    {% csrf_token %}
+                    <button class="button tertiary" type="submit">Excluir</button>
+                </form>
+            </div>
+            <form method="post" action="{% url 'workout-template-update-metadata' template.id %}" class="coach-wod-form-stack">
+                {% csrf_token %}
+                <div class="coach-wod-form-grid coach-wod-form-grid--two">
+                    <label>
+                        <span>Nome</span>
+                        <input type="text" name="name" value="{{ template.name }}" maxlength="120">
+                    </label>
+                    <label>
+                        <span>Descricao</span>
+                        <input type="text" name="description" value="{{ template.description }}" maxlength="255">
+                    </label>
+                </div>
+                <div class="coach-wod-filter-toggle-group">
+                    <label class="coach-wod-filter-toggle">
+                        <input type="checkbox" name="is_featured" value="1" {% if template.is_featured %}checked{% endif %}>
+                        <span>Manter em destaque</span>
+                    </label>
+                    <label class="coach-wod-filter-toggle">
+                        <input type="checkbox" name="is_trusted" value="1" {% if template.is_trusted %}checked{% endif %}>
+                        <span>Template confiavel</span>
+                    </label>
+                </div>
+                <div class="actions">
+                    <button class="button secondary" type="submit">Salvar metadados</button>
+                </div>
+            </form>
+
+            <form method="post" action="{% url 'workout-template-create-block' template.id %}" class="coach-wod-form-stack">
+                {% csrf_token %}
+                <div class="coach-wod-form-grid coach-wod-form-grid--three">
+                    <label>
+                        <span>Novo bloco</span>
+                        <input type="text" name="title" maxlength="120" placeholder="Ex.: Metcon final">
+                    </label>
+                    <label>
+                        <span>Tipo</span>
+                        <select name="kind">
+                            <option value="warmup">Aquecimento</option>
+                            <option value="strength">Forca</option>
+                            <option value="skill">Skill</option>
+                            <option value="metcon">Metcon</option>
+                            <option value="cooldown">Cooldown</option>
+                            <option value="custom" selected>Livre</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Ordem</span>
+                        <input type="number" name="sort_order" min="1" value="{{ template.block_count|add:1 }}">
+                    </label>
+                </div>
+                <label>
+                    <span>Notas</span>
+                    <textarea name="notes" rows="2"></textarea>
+                </label>
+                <div class="actions">
+                    <button class="button secondary" type="submit">Adicionar bloco</button>
+                </div>
+            </form>
+
+            {% for block in template.blocks %}
+            <section class="coach-wod-block-card">
+                <div class="coach-wod-editor-head">
+                    <div>
+                        <p class="eyebrow">Bloco {{ block.sort_order }}</p>
+                        <h3>{{ block.title }}</h3>
+                    </div>
+                    <div class="coach-wod-editor-pills">
+                        <span class="pill info">{{ block.kind }}</span>
+                        <span class="pill info">{{ block.movements|length }} movimento(s)</span>
+                    </div>
+                </div>
+                <form method="post" action="{% url 'workout-template-update-block' block.id %}" class="coach-wod-form-stack">
+                    {% csrf_token %}
+                    <input type="hidden" name="block_id" value="{{ block.id }}">
+                    <div class="coach-wod-form-grid coach-wod-form-grid--three">
+                        <label>
+                            <span>Titulo do bloco</span>
+                            <input type="text" name="title" value="{{ block.title }}" maxlength="120">
+                        </label>
+                        <label>
+                            <span>Tipo</span>
+                            <select name="kind">
+                                <option value="warmup" {% if block.kind == 'warmup' %}selected{% endif %}>Aquecimento</option>
+                                <option value="strength" {% if block.kind == 'strength' %}selected{% endif %}>Forca</option>
+                                <option value="skill" {% if block.kind == 'skill' %}selected{% endif %}>Skill</option>
+                                <option value="metcon" {% if block.kind == 'metcon' %}selected{% endif %}>Metcon</option>
+                                <option value="cooldown" {% if block.kind == 'cooldown' %}selected{% endif %}>Cooldown</option>
+                                <option value="custom" {% if block.kind == 'custom' %}selected{% endif %}>Livre</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Ordem</span>
+                            <input type="number" name="sort_order" min="1" value="{{ block.sort_order }}">
+                        </label>
+                    </div>
+                    <label>
+                        <span>Notas</span>
+                        <textarea name="notes" rows="2">{{ block.notes }}</textarea>
+                    </label>
+                    <div class="actions">
+                        <button class="button secondary" type="submit">Salvar bloco</button>
+                    </div>
+                </form>
+                <div class="actions">
+                    <form method="post" action="{% url 'workout-template-move-block' block.id 'up' %}">
+                        {% csrf_token %}
+                        <button class="button tertiary" type="submit">Subir bloco</button>
+                    </form>
+                    <form method="post" action="{% url 'workout-template-move-block' block.id 'down' %}">
+                        {% csrf_token %}
+                        <button class="button tertiary" type="submit">Descer bloco</button>
+                    </form>
+                    <form method="post" action="{% url 'workout-template-delete-block' block.id %}" onsubmit="return confirm('Remover este bloco e todos os movimentos dele?');">
+                        {% csrf_token %}
+                        <button class="button tertiary" type="submit">Remover bloco</button>
+                    </form>
+                </div>
+
+                <div class="coach-wod-movement-list">
+                    {% for movement in block.movements %}
+                    <article class="coach-wod-movement-card">
+                        <form method="post" action="{% url 'workout-template-update-movement' movement.id %}" class="coach-wod-form-stack">
+                            {% csrf_token %}
+                            <input type="hidden" name="movement_id" value="{{ movement.id }}">
+                            <div class="coach-wod-form-grid coach-wod-form-grid--three">
+                                <label>
+                                    <span>Slug</span>
+                                    <input type="text" name="movement_slug" value="{{ movement.movement_slug }}" maxlength="64">
+                                </label>
+                                <label>
+                                    <span>Nome</span>
+                                    <input type="text" name="movement_label" value="{{ movement.movement_label }}" maxlength="120">
+                                </label>
+                                <label>
+                                    <span>Ordem</span>
+                                    <input type="number" name="sort_order" min="1" value="{{ movement.sort_order }}">
+                                </label>
+                            </div>
+                            <div class="coach-wod-form-grid coach-wod-form-grid--four">
+                                <label>
+                                    <span>Series</span>
+                                    <input type="number" name="sets" min="1" value="{{ movement.sets|default_if_none:'' }}">
+                                </label>
+                                <label>
+                                    <span>Repeticoes</span>
+                                    <input type="number" name="reps" min="1" value="{{ movement.reps|default_if_none:'' }}">
+                                </label>
+                                <label>
+                                    <span>Tipo de carga</span>
+                                    <select name="load_type">
+                                        <option value="free" {% if movement.load_type == 'free' %}selected{% endif %}>Livre</option>
+                                        <option value="fixed_kg" {% if movement.load_type == 'fixed_kg' %}selected{% endif %}>Carga fixa</option>
+                                        <option value="percentage_of_rm" {% if movement.load_type == 'percentage_of_rm' %}selected{% endif %}>Percentual do RM</option>
+                                    </select>
+                                </label>
+                                <label>
+                                    <span>Valor</span>
+                                    <input type="number" name="load_value" min="0" step="0.01" value="{{ movement.load_value|default_if_none:'' }}">
+                                </label>
+                            </div>
+                            <label>
+                                <span>Notas</span>
+                                <input type="text" name="notes" value="{{ movement.notes }}" maxlength="255">
+                            </label>
+                            <div class="actions">
+                                <button class="button tertiary" type="submit">Salvar movimento</button>
+                            </div>
+                        </form>
+                        <div class="actions">
+                            <form method="post" action="{% url 'workout-template-move-movement' movement.id 'up' %}">
+                                {% csrf_token %}
+                                <button class="button tertiary" type="submit">Subir movimento</button>
+                            </form>
+                            <form method="post" action="{% url 'workout-template-move-movement' movement.id 'down' %}">
+                                {% csrf_token %}
+                                <button class="button tertiary" type="submit">Descer movimento</button>
+                            </form>
+                            <form method="post" action="{% url 'workout-template-delete-movement' movement.id %}" onsubmit="return confirm('Remover este movimento do template?');">
+                                {% csrf_token %}
+                                <button class="button tertiary" type="submit">Remover movimento</button>
+                            </form>
+                        </div>
+                    </article>
+                    {% empty %}
+                    <div class="coach-wod-empty-state">
+                        <p>Nenhum movimento neste bloco ainda.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                <form method="post" action="{% url 'workout-template-create-movement' block.id %}" class="coach-wod-form-stack">
+                    {% csrf_token %}
+                    <div class="coach-wod-form-grid coach-wod-form-grid--three">
+                        <label>
+                            <span>Slug</span>
+                            <input type="text" name="movement_slug" maxlength="64" placeholder="deadlift">
+                        </label>
+                        <label>
+                            <span>Nome</span>
+                            <input type="text" name="movement_label" maxlength="120" placeholder="Deadlift">
+                        </label>
+                        <label>
+                            <span>Ordem</span>
+                            <input type="number" name="sort_order" min="1" value="{{ block.movements|length|add:1 }}">
+                        </label>
+                    </div>
+                    <div class="coach-wod-form-grid coach-wod-form-grid--four">
+                        <label>
+                            <span>Series</span>
+                            <input type="number" name="sets" min="1">
+                        </label>
+                        <label>
+                            <span>Repeticoes</span>
+                            <input type="number" name="reps" min="1">
+                        </label>
+                        <label>
+                            <span>Tipo de carga</span>
+                            <select name="load_type">
+                                <option value="free" selected>Livre</option>
+                                <option value="fixed_kg">Carga fixa</option>
+                                <option value="percentage_of_rm">Percentual do RM</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Valor</span>
+                            <input type="number" name="load_value" min="0" step="0.01">
+                        </label>
+                    </div>
+                    <label>
+                        <span>Notas</span>
+                        <input type="text" name="notes" maxlength="255">
+                    </label>
+                    <div class="actions">
+                        <button class="button secondary" type="submit">Adicionar movimento</button>
+                    </div>
+                </form>
+            </section>
+            {% endfor %}
+        </article>
+        {% empty %}
+        <article class="table-card coach-wod-editor-card">
+            <div class="coach-wod-empty-state">
+                {% if template_filter_state.query or template_filter_state.active_only or template_filter_state.featured_only %}
+                <p>Nenhum template bateu com esse filtro. Tente limpar a busca ou relaxar os marcadores.</p>
+                {% else %}
+                <p>Nenhum template persistente criado ainda.</p>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+</div>
+{% endwith %}
+{% endblock %}

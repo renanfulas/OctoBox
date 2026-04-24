@@ -24,9 +24,12 @@ from auditing import log_audit_event
 from student_app.models import (
     SessionWorkoutRevision,
     SessionWorkoutRevisionEvent,
+    SessionWorkoutStatus,
     WorkoutWeeklyManagementCheckpoint,
 )
 
+from .workout_approval_policy import resolve_workout_approval_policy
+from .workout_telemetry import emit_wod_policy_decision
 from .workout_board_builders import (
     build_snapshot_presentation,
     build_student_preview_diff,
@@ -303,3 +306,186 @@ def build_weekly_checkpoint_history(*, limit=4):
 
 def week_start_for(date_value):
     return date_value - timedelta(days=date_value.weekday())
+
+
+
+
+def should_require_workout_approval(*, workout, coach, source, source_template=None):
+    policy = resolve_workout_approval_policy(actor=coach, session=getattr(workout, 'session', None))
+    if policy == 'strict':
+        return True
+    if policy == 'trusted_template' and source == 'template' and getattr(source_template, 'is_trusted', False):
+        return False
+    if policy == 'coach_autonomy' and getattr(coach, 'is_trusted_author', False):
+        return False
+    return True
+
+
+def route_workout_submission(*, actor, workout, source='manual', source_template=None):
+    requires_approval = should_require_workout_approval(
+        workout=workout,
+        coach=actor,
+        source=source,
+        source_template=source_template,
+    )
+    policy = resolve_workout_approval_policy(actor=actor, session=getattr(workout, 'session', None))
+    source_template_id = getattr(source_template, 'id', None)
+    source_template_trusted = bool(getattr(source_template, 'is_trusted', False))
+
+    workout.rejected_by = None
+    workout.rejected_at = None
+    workout.rejection_reason = ''
+
+    if requires_approval:
+        workout.status = SessionWorkoutStatus.PENDING_APPROVAL
+        workout.submitted_by = actor
+        workout.submitted_at = timezone.now()
+        workout.save(
+            update_fields=[
+                'status',
+                'submitted_by',
+                'submitted_at',
+                'rejected_by',
+                'rejected_at',
+                'rejection_reason',
+                'updated_at',
+            ]
+        )
+        decision_snapshot = {
+            'approval_policy': policy,
+            'submission_source': source,
+            'source_template_id': source_template_id,
+            'source_template_trusted': source_template_trusted,
+            'bypass_approval': False,
+            'policy_decision_label': 'Enviado para aprovacao',
+        }
+        create_workout_revision(
+            workout=workout,
+            actor=actor,
+            event=SessionWorkoutRevisionEvent.SUBMITTED,
+            extra_snapshot=decision_snapshot,
+        )
+        record_workout_audit(
+            actor=actor,
+            workout=workout,
+            action='session_workout_submitted_for_approval',
+            description='Coach enviou WOD para aprovacao conforme politica ativa.',
+            metadata={
+                'session_id': workout.session_id,
+                'version': workout.version,
+                **decision_snapshot,
+            },
+        )
+        emit_wod_policy_decision(
+            actor=actor,
+            workout=workout,
+            approval_policy=policy,
+            submission_source=source,
+            source_template=source_template,
+            bypass_approval=False,
+        )
+        return {'status': 'pending_approval', 'policy': policy, 'bypass_approval': False, 'decision_label': 'Enviado para aprovacao'}
+
+    now = timezone.now()
+    workout.status = SessionWorkoutStatus.PUBLISHED
+    workout.submitted_by = actor
+    workout.submitted_at = workout.submitted_at or now
+    workout.approved_by = actor
+    workout.approved_at = now
+    workout.save(
+        update_fields=[
+            'status',
+            'submitted_by',
+            'submitted_at',
+            'approved_by',
+            'approved_at',
+            'rejected_by',
+            'rejected_at',
+            'rejection_reason',
+            'updated_at',
+        ]
+    )
+    decision_snapshot = {
+        'approval_policy': policy,
+        'submission_source': source,
+        'source_template_id': source_template_id,
+        'source_template_trusted': source_template_trusted,
+        'bypass_approval': True,
+        'policy_decision_label': 'Publicado direto pela politica',
+    }
+    create_workout_revision(
+        workout=workout,
+        actor=actor,
+        event=SessionWorkoutRevisionEvent.PUBLISHED,
+        extra_snapshot=decision_snapshot,
+    )
+    record_workout_audit(
+        actor=actor,
+        workout=workout,
+        action='session_workout_published_directly',
+        description='WOD publicado diretamente pela politica ativa.',
+        metadata={
+            'session_id': workout.session_id,
+            'version': workout.version,
+            **decision_snapshot,
+        },
+    )
+    emit_wod_policy_decision(
+        actor=actor,
+        workout=workout,
+        approval_policy=policy,
+        submission_source=source,
+        source_template=source_template,
+        bypass_approval=True,
+    )
+    return {'status': 'published', 'policy': policy, 'bypass_approval': True, 'decision_label': 'Publicado direto pela politica'}
+
+
+def extract_latest_policy_snapshot(workout, *, preferred_event=None):
+    revisions = list(workout.revisions.all()) if hasattr(workout, 'revisions') else []
+    if not revisions:
+        return {}
+    candidates = revisions
+    if preferred_event is not None:
+        filtered = [revision for revision in revisions if revision.event == preferred_event]
+        if filtered:
+            candidates = filtered
+    latest = sorted(candidates, key=lambda revision: (revision.created_at, revision.id), reverse=True)[0]
+    return latest.snapshot or {}
+
+
+def build_policy_badge_from_snapshot(snapshot):
+    if not snapshot:
+        return None
+    approval_policy = (snapshot.get('approval_policy') or '').strip()
+    if not approval_policy:
+        return None
+    bypass_approval = bool(snapshot.get('bypass_approval'))
+    source = (snapshot.get('submission_source') or '').strip()
+    source_template_trusted = bool(snapshot.get('source_template_trusted'))
+    policy_label_map = {
+        'strict': 'Fila obrigatoria',
+        'trusted_template': 'Trusted template',
+        'coach_autonomy': 'Coach autonomy',
+    }
+    if bypass_approval and approval_policy == 'trusted_template' and source_template_trusted:
+        detail = 'Publicado direto via template confiavel.'
+        tone = 'success'
+    elif bypass_approval and approval_policy == 'coach_autonomy':
+        detail = 'Publicado direto pela autonomia do coach.'
+        tone = 'accent'
+    elif approval_policy == 'strict':
+        detail = 'Politica exigiu passagem pela fila de aprovacao.'
+        tone = 'warning'
+    else:
+        detail = 'Politica aplicada registrada no corredor.'
+        tone = 'info'
+    if source == 'template' and source_template_trusted and not bypass_approval:
+        detail = 'Template confiavel usado, mas a politica ainda manteve revisao manual.'
+    return {
+        'label': policy_label_map.get(approval_policy, approval_policy),
+        'detail': detail,
+        'tone': tone,
+        'bypass_approval': bypass_approval,
+        'policy': approval_policy,
+    }

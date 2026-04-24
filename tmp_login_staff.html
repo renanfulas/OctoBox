@@ -1,0 +1,70 @@
+<!--
+ARQUIVO: tela de login.
+
+POR QUE ELE EXISTE:
+- E a porta de entrada visual do sistema.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Renderiza o formulario de autenticacao.
+2. Mantem o contrato do form padrao do Django.
+3. Entrega uma fachada visual alinhada ao tema premium do OctoBox.
+
+PONTOS CRITICOS:
+- Alteracoes nos campos precisam respeitar o formulario padrao de autenticacao do Django.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Entrar na equipe | OctoBox</title>
+    
+    <link rel="stylesheet" href="/static/css/design-system/pages/login.4dde2e3d2105.css?v=1">
+</head>
+<body data-page="login" data-screen="entry-auth" data-ui="login-body">
+    <main data-slot="login-root">
+        <div class="login-shell" data-panel="login-shell">
+            <section class="login-panel" aria-label="Formulario de login" data-panel="login-form">
+                <div class="brand-lockup">
+                    <span class="brand-mark" aria-hidden="true"></span>
+                    <p class="brand-kicker">OctoBox</p>
+                    <h1>Entrar na equipe</h1>
+                    <p class="brand-subtitle">Acesso interno com usuario e senha.</p>
+                </div>
+
+                <div class="form-wrap" data-slot="login-form-shell">
+                    <div class="form-wrap__header">
+                        <h2>Acesso interno</h2>
+                        <p class="subtitle">Use seu usuario interno para abrir o painel certo sem misturar recepcao, coach, gestao e owner.</p>
+                    </div>
+
+                    <form method="post" data-slot="login-form-fields">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="XdYxeKhbHBM1M3WkCy9upH3DlsW4bKVRLGvn0mrYy70FWoxZp7N8a2RymUmu2JAN">
+                        
+
+                        <label for="id_username">Usuario</label>
+                        <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" placeholder="Seu usuario interno" spellcheck="false" aria-describedby="login-username-note" required id="id_username">
+                        
+                        <p class="field-note" id="login-username-note">Use o usuario interno do box. E como pegar a chave certa antes de abrir a porta.</p>
+
+                        <label for="id_password">Senha</label>
+                        <input type="password" name="password" autocomplete="current-password" placeholder="Sua senha" aria-describedby="login-password-note" required id="id_password">
+                        
+
+                        <div class="form-meta">
+                            <p class="field-note" id="login-password-note">Sua senha confirma quem voce e e qual corredor do sistema deve abrir para voce.</p>
+                            <a href="/login/" class="support-link">Sou aluno</a>
+                        </div>
+
+                        <button type="submit">Entrar</button>
+                        <input type="hidden" name="next" value="" autocomplete="off">
+                    </form>
+
+                    <p class="helper-note">Primeiro acesso? Peca seu usuario ao gestor do box antes de tentar entrar.</p>
+                    <p class="support-copy">Se voce e aluno, use a entrada do app. <a href="/login/">Ir para o app</a>.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+</body>
+</html>
