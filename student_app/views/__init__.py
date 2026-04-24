@@ -32,6 +32,7 @@ from .pwa_views import (
 )
 from .shell_views import (
     StudentAddRmView,
+    StudentCancelAttendanceView,
     StudentConfirmAttendanceView,
     StudentGradeView,
     StudentHomeView,
@@ -48,6 +49,7 @@ __all__ = [
     'PublicWorkoutOfflineView',
     'PublicWorkoutServiceWorkerView',
     'StudentAddRmView',
+    'StudentCancelAttendanceView',
     'StudentConfirmAttendanceView',
     'StudentGradeView',
     'StudentHomeView',

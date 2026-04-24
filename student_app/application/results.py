@@ -19,6 +19,9 @@ class StudentProgressDay:
     date: date
     is_complete: bool
     kind: str = ''
+    day_label: str = ''
+    date_label: str = ''
+    is_today: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +45,16 @@ class StudentSessionCard:
     attendance_code: str
     notes: str
     can_confirm_presence: bool
+    can_cancel_attendance: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class StudentMonthDay:
+    date: date | None
+    date_label: str
+    day_label: str
+    is_today: bool
+    sessions: tuple[StudentSessionCard, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

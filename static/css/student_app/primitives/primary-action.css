@@ -56,9 +56,26 @@ ARQUIVO: CTA primario contextual do app do aluno.
     cursor: pointer;
 }
 
+.student-secondary-action--danger {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 26%, var(--theme-border-soft) 74%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 22%, var(--theme-surface-strong) 78%);
+    color: color-mix(in srgb, var(--theme-accent-danger) 72%, var(--theme-text-primary) 28%);
+}
+
+.student-session-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
 @media (max-width: 640px) {
     .student-primary-action,
     .student-secondary-action {
         width: 100%;
+    }
+
+    .student-session-actions {
+        display: grid;
     }
 }

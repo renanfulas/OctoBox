@@ -1,1 +1,87 @@
 ﻿
+.student-month-calendar {
+    border-radius: var(--radius-panel);
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 88%, transparent);
+    box-shadow: var(--theme-shadow-soft);
+}
+
+.student-month-calendar__toggle {
+    min-height: 48px;
+    padding: 14px 16px;
+    color: var(--theme-text-primary);
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.student-month-calendar__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+    padding: 0 16px 16px;
+}
+
+.student-month-day {
+    display: grid;
+    gap: 4px;
+    min-height: 78px;
+    padding: 10px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 86%, transparent);
+}
+
+.student-month-day--blank {
+    visibility: hidden;
+}
+
+.student-month-day.is-today {
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 34%, var(--theme-border-soft) 66%);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 28%, var(--theme-surface-strong) 72%);
+}
+
+.student-month-day.has-sessions {
+    border-color: color-mix(in srgb, var(--theme-accent-success) 26%, var(--theme-border-soft) 74%);
+}
+
+.student-month-day__date {
+    color: var(--theme-text-primary);
+    font-weight: 900;
+}
+
+.student-month-day__label,
+.student-month-day__empty,
+.student-month-day__count {
+    color: var(--theme-text-secondary);
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.student-month-day__sessions {
+    display: grid;
+    gap: 2px;
+}
+
+.student-month-day__sessions p {
+    margin: 0;
+    color: var(--theme-text-primary);
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+@media (max-width: 640px) {
+    .student-month-calendar__grid {
+        gap: 5px;
+        padding: 0 10px 12px;
+    }
+
+    .student-month-day {
+        min-height: 58px;
+        padding: 7px;
+        border-radius: 11px;
+    }
+
+    .student-month-day__sessions {
+        display: none;
+    }
+}

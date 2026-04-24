@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import timedelta
+from calendar import monthrange
+from datetime import datetime, time, timedelta
 from decimal import Decimal
 
 from django.utils import timezone
@@ -10,6 +11,7 @@ from operations.models import Attendance, AttendanceStatus, ClassSession
 from student_app.application.results import (
     StudentPrimaryAction,
     StudentDashboardResult,
+    StudentMonthDay,
     StudentProgressDay,
     StudentRmOfTheDay,
     StudentSessionCard,
@@ -27,6 +29,10 @@ from student_app.models import (
     StudentExerciseMaxHistory,
     WorkoutLoadType,
 )
+from student_app.application.timezone import localize_box_datetime, resolve_box_timezone
+
+
+WEEKDAY_LABELS = ('Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom')
 
 
 def _movement_value(movement, field_name):
@@ -137,7 +143,7 @@ class GetStudentDashboard:
 
     def _build_progress_days(self, *, student, now):
         today = now.date()
-        days = [today - timedelta(days=offset) for offset in range(6, -1, -1)]
+        days = [today + timedelta(days=offset) for offset in range(7)]
         activities = (
             StudentAppActivity.objects
             .filter(student=student, activity_date__in=days)
@@ -151,6 +157,9 @@ class GetStudentDashboard:
                 date=day,
                 is_complete=day in activity_by_day,
                 kind=activity_by_day.get(day, ''),
+                day_label='Hoje' if day == today else WEEKDAY_LABELS[day.weekday()],
+                date_label=day.strftime('%d/%m'),
+                is_today=day == today,
             )
             for day in days
         )
@@ -229,7 +238,8 @@ class GetStudentDashboard:
         )
 
     def execute(self, *, identity) -> StudentDashboardResult:
-        now = timezone.localtime()
+        box_timezone = resolve_box_timezone(box_root_slug=identity.box_root_slug)
+        now = timezone.localtime(timezone.now(), box_timezone)
         sessions = (
             ClassSession.objects.filter(status__in=['scheduled', 'open'])
             .order_by('scheduled_at')
@@ -239,26 +249,35 @@ class GetStudentDashboard:
             attendance.session_id: attendance
             for attendance in Attendance.objects.filter(student=identity.student, session__in=sessions).select_related('session')
         }
-        next_sessions = tuple(
-            StudentSessionCard(
-                session_id=session.id,
-                title=session.title,
-                scheduled_label=session.scheduled_at.strftime('%d/%m %H:%M'),
-                scheduled_at=session.scheduled_at,
-                coach_name=session.coach.get_full_name() if session.coach else 'Equipe OctoBox',
-                attendance_status=(attendance_by_session.get(session.id).get_status_display() if attendance_by_session.get(session.id) else 'Sem reserva'),
-                attendance_code=(attendance_by_session.get(session.id).status if attendance_by_session.get(session.id) else ''),
-                notes=session.notes,
-                can_confirm_presence=(
-                    attendance_by_session.get(session.id) is None
-                    or attendance_by_session.get(session.id).status in {
-                        AttendanceStatus.ABSENT,
-                        AttendanceStatus.CANCELED,
-                    }
-                ),
+        session_cards = []
+        for session in sessions:
+            attendance = attendance_by_session.get(session.id)
+            scheduled_at = localize_box_datetime(session.scheduled_at, box_root_slug=identity.box_root_slug)
+            session_cards.append(
+                StudentSessionCard(
+                    session_id=session.id,
+                    title=session.title,
+                    scheduled_label=scheduled_at.strftime('%d/%m %H:%M'),
+                    scheduled_at=scheduled_at,
+                    coach_name=session.coach.get_full_name() if session.coach else 'Equipe OctoBox',
+                    attendance_status=(attendance.get_status_display() if attendance else 'Sem reserva'),
+                    attendance_code=(attendance.status if attendance else ''),
+                    notes=session.notes,
+                    can_confirm_presence=(
+                        attendance is None
+                        or attendance.status in {
+                            AttendanceStatus.ABSENT,
+                            AttendanceStatus.CANCELED,
+                        }
+                    ),
+                    can_cancel_attendance=(
+                        attendance is not None
+                        and attendance.status == AttendanceStatus.BOOKED
+                        and now <= scheduled_at - timedelta(hours=1)
+                    ),
+                )
             )
-            for session in sessions
-        )
+        next_sessions = tuple(session_cards)
         home_mode, active_wod_session = self._resolve_home_mode(session_cards=next_sessions, now=now)
         enrollment = (
             Enrollment.objects.select_related('plan')
@@ -295,6 +314,75 @@ class GetStudentDashboard:
             rm_of_the_day=rm_of_the_day,
             next_useful_context=next_useful_context,
         )
+
+
+class GetStudentMonthSchedule:
+    def execute(self, *, identity, reference_date=None) -> tuple[StudentMonthDay, ...]:
+        box_timezone = resolve_box_timezone(box_root_slug=identity.box_root_slug)
+        today = timezone.localtime(timezone.now(), box_timezone).date()
+        reference_date = reference_date or today
+        month_start = reference_date.replace(day=1)
+        _, last_day = monthrange(reference_date.year, reference_date.month)
+        month_end = reference_date.replace(day=last_day)
+        start_at = timezone.make_aware(datetime.combine(month_start, time.min), box_timezone)
+        end_at = timezone.make_aware(datetime.combine(month_end, time.max), box_timezone)
+        sessions = (
+            ClassSession.objects.filter(
+                status__in=['scheduled', 'open'],
+                scheduled_at__gte=start_at,
+                scheduled_at__lte=end_at,
+            )
+            .order_by('scheduled_at')
+            .prefetch_related('attendances', 'coach')
+        )
+        attendance_by_session = {
+            attendance.session_id: attendance
+            for attendance in Attendance.objects.filter(student=identity.student, session__in=sessions).select_related('session')
+        }
+        now = timezone.localtime(timezone.now(), box_timezone)
+        sessions_by_date = {}
+        for session in sessions:
+            attendance = attendance_by_session.get(session.id)
+            scheduled_at = localize_box_datetime(session.scheduled_at, box_root_slug=identity.box_root_slug)
+            card = StudentSessionCard(
+                session_id=session.id,
+                title=session.title,
+                scheduled_label=scheduled_at.strftime('%d/%m %H:%M'),
+                scheduled_at=scheduled_at,
+                coach_name=session.coach.get_full_name() if session.coach else 'Equipe OctoBox',
+                attendance_status=(attendance.get_status_display() if attendance else 'Sem reserva'),
+                attendance_code=(attendance.status if attendance else ''),
+                notes=session.notes,
+                can_confirm_presence=(
+                    attendance is None
+                    or attendance.status in {
+                        AttendanceStatus.ABSENT,
+                        AttendanceStatus.CANCELED,
+                    }
+                ),
+                can_cancel_attendance=(
+                    attendance is not None
+                    and attendance.status == AttendanceStatus.BOOKED
+                    and now <= scheduled_at - timedelta(hours=1)
+                ),
+            )
+            sessions_by_date.setdefault(scheduled_at.date(), []).append(card)
+
+        days = []
+        for _ in range(month_start.weekday()):
+            days.append(StudentMonthDay(date=None, date_label='', day_label='', is_today=False))
+        for day_number in range(1, last_day + 1):
+            day = reference_date.replace(day=day_number)
+            days.append(
+                StudentMonthDay(
+                    date=day,
+                    date_label=str(day.day),
+                    day_label=WEEKDAY_LABELS[day.weekday()],
+                    is_today=day == today,
+                    sessions=tuple(sessions_by_date.get(day, ())),
+                )
+            )
+        return tuple(days)
 
 
 class GetStudentWorkoutPrescription:
@@ -372,9 +460,10 @@ class GetStudentWorkoutDay:
                 )
             )
 
+        scheduled_at = localize_box_datetime(workout.session.scheduled_at)
         return StudentWorkoutDayResult(
             session_title=workout.session.title,
-            session_scheduled_label=workout.session.scheduled_at.strftime('%d/%m %H:%M'),
+            session_scheduled_label=scheduled_at.strftime('%d/%m %H:%M'),
             coach_name=workout.session.coach.get_full_name() if workout.session.coach else 'Equipe OctoBox',
             workout_title=workout.title or workout.session.title,
             coach_notes=workout.coach_notes,

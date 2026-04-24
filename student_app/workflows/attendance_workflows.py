@@ -12,6 +12,9 @@ O QUE ESTE ARQUIVO FAZ:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import timedelta
+
+from django.utils import timezone
 
 from operations.models import Attendance, AttendanceStatus, ClassSession, SessionStatus
 
@@ -26,6 +29,12 @@ class AttendanceConfirmationResult:
     attendance: Attendance
     created: bool
     reactivated: bool
+
+
+@dataclass(frozen=True)
+class AttendanceCancelResult:
+    session: ClassSession
+    attendance: Attendance
 
 
 def confirm_student_attendance(*, student, session_id) -> AttendanceConfirmationResult:
@@ -60,4 +69,37 @@ def confirm_student_attendance(*, student, session_id) -> AttendanceConfirmation
         attendance=attendance,
         created=created,
         reactivated=reactivated,
+    )
+
+
+def cancel_student_attendance(*, student, session_id) -> AttendanceCancelResult:
+    session = (
+        ClassSession.objects.select_related('coach')
+        .filter(
+            pk=session_id,
+            status__in=[SessionStatus.SCHEDULED, SessionStatus.OPEN],
+        )
+        .first()
+    )
+    if session is None:
+        raise AttendanceNotAvailableError('Sessao indisponivel para cancelamento.')
+
+    cancel_deadline = session.scheduled_at - timedelta(hours=1)
+    if timezone.now() > cancel_deadline:
+        raise AttendanceNotAvailableError('Cancelamento encerrado para esta aula.')
+
+    attendance = (
+        Attendance.objects
+        .filter(student=student, session=session, status=AttendanceStatus.BOOKED)
+        .first()
+    )
+    if attendance is None:
+        raise AttendanceNotAvailableError('Reserva indisponivel para cancelamento.')
+
+    attendance.status = AttendanceStatus.CANCELED
+    attendance.save(update_fields=['status', 'updated_at'])
+
+    return AttendanceCancelResult(
+        session=session,
+        attendance=attendance,
     )

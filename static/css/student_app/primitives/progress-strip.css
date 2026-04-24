@@ -21,6 +21,8 @@ ARQUIVO: faixa de progresso do app do aluno.
 .student-progress-day {
     display: grid;
     place-items: center;
+    align-content: center;
+    gap: 2px;
     min-height: 42px;
     border-radius: 14px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 80%, transparent);
@@ -30,8 +32,46 @@ ARQUIVO: faixa de progresso do app do aluno.
     font-weight: 900;
 }
 
+.student-progress-day__label,
+.student-progress-day__date {
+    display: block;
+    line-height: 1.05;
+}
+
+.student-progress-day__date {
+    color: var(--theme-text-secondary);
+    font-size: 0.68rem;
+    font-weight: 800;
+}
+
+.student-progress-day.is-today {
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 34%, var(--theme-border-soft) 66%);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 34%, var(--theme-surface-strong) 66%);
+    color: var(--theme-text-primary);
+}
+
 .student-progress-day.is-complete {
     border-color: color-mix(in srgb, var(--theme-accent-success) 28%, var(--theme-border-soft) 72%);
     background: color-mix(in srgb, var(--theme-accent-success-alpha) 44%, var(--theme-surface-strong) 56%);
     color: var(--theme-text-primary);
+}
+
+@media (max-width: 640px) {
+    .student-progress-strip {
+        padding: 12px;
+    }
+
+    .student-progress-strip__track {
+        gap: 6px;
+    }
+
+    .student-progress-day {
+        min-height: 46px;
+        border-radius: 12px;
+        font-size: 0.68rem;
+    }
+
+    .student-progress-day__date {
+        font-size: 0.62rem;
+    }
 }

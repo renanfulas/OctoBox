@@ -16,29 +16,58 @@
             <h2>Dados do acesso</h2>
         </div>
     </div>
-    <form method="post" class="student-form-stack">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
-        <label><span>Nome completo</span>{{ form.full_name }}{{ form.full_name.errors }}</label>
-        <label><span>WhatsApp</span>{{ form.phone }}{{ form.phone.errors }}</label>
-        <label><span>E-mail</span>{{ form.email }}{{ form.email.errors }}</label>
-        <label><span>Nascimento</span>{{ form.birth_date }}{{ form.birth_date.errors }}</label>
-        <button type="submit" class="student-primary-action">Salvar perfil</button>
-    </form>
+    <dl class="student-profile-readonly">
+        <div>
+            <dt>Nome completo</dt>
+            <dd>{{ student_identity.student.full_name }}</dd>
+        </div>
+        <div>
+            <dt>WhatsApp</dt>
+            <dd>{{ student_identity.student.phone }}</dd>
+        </div>
+        <div>
+            <dt>E-mail</dt>
+            <dd>{{ student_identity.email|default:student_identity.student.email }}</dd>
+        </div>
+        <div>
+            <dt>Nascimento</dt>
+            <dd>{{ student_identity.student.birth_date|date:"d/m/Y"|default:"Nao informado" }}</dd>
+        </div>
+    </dl>
+
+    {% if pending_profile_request %}
+    <p class="student-profile-pending">Alteracao enviada. Seus dados atuais continuam valendo ate aprovacao.</p>
+    {% endif %}
+
+    <details class="student-profile-edit">
+        <summary class="student-icon-action" aria-label="Editar perfil">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M4 17.25V20h2.75L17.8 8.95l-2.75-2.75L4 17.25z"></path>
+                <path d="M19.7 7.05a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.04 1.04 2.75 2.75 1.04-1.04z"></path>
+            </svg>
+            <span>Editar perfil</span>
+        </summary>
+        <form method="post" class="student-form-stack">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <label><span>Nome completo</span>{{ form.full_name }}{{ form.full_name.errors }}</label>
+            <label><span>WhatsApp</span>{{ form.phone }}{{ form.phone.errors }}</label>
+            <label><span>E-mail</span>{{ form.email }}{{ form.email.errors }}</label>
+            <label><span>Nascimento</span>{{ form.birth_date }}{{ form.birth_date.errors }}</label>
+            <button type="submit" class="student-primary-action">Enviar alteracao</button>
+        </form>
+    </details>
 </section>
 
 <section class="student-surface-grid student-surface-grid--settings">
     <article class="student-card student-card--quiet student-card--settings-side">
         <div class="student-section-head">
             <div>
-                <span class="student-context-switch">Conta</span>
+                <span class="student-context-switch">Box atual</span>
                 <h2>{{ student_active_box_root_slug }}</h2>
             </div>
         </div>
         <ul class="student-settings-list">
-            <li><strong>Provedor:</strong> {{ student_identity.get_provider_display }}</li>
-            <li><strong>Runtime:</strong> {{ box_runtime_slug }}</li>
-            <li><strong>Principal:</strong> {{ student_primary_box_root_slug }}</li>
             <li><strong>Status:</strong> {{ student_identity.get_status_display }}</li>
         </ul>
     </article>

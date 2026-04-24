@@ -79,6 +79,45 @@ class StudentAppActivity(TimeStampedModel):
         return f'{self.student.full_name} - {self.kind} - {self.activity_date:%d/%m/%Y}'
 
 
+class StudentProfileChangeRequestStatus(models.TextChoices):
+    PENDING = 'pending', 'Pendente'
+    APPROVED = 'approved', 'Aprovado'
+    REJECTED = 'rejected', 'Rejeitado'
+
+
+class StudentProfileChangeRequest(TimeStampedModel):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='profile_change_requests')
+    identity = models.ForeignKey(
+        'student_identity.StudentIdentity',
+        on_delete=models.CASCADE,
+        related_name='profile_change_requests',
+    )
+    requested_payload = models.JSONField(default=dict)
+    status = models.CharField(
+        max_length=16,
+        choices=StudentProfileChangeRequestStatus.choices,
+        default=StudentProfileChangeRequestStatus.PENDING,
+    )
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='student_profile_change_requests_resolved',
+    )
+    resolution_note = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        indexes = [
+            models.Index(fields=['student', 'status', '-created_at'], name='student_profile_request_lookup'),
+        ]
+
+    def __str__(self):
+        return f'{self.student.full_name} - {self.status}'
+
+
 class WorkoutLoadType(models.TextChoices):
     FREE = 'free', 'Livre'
     FIXED_KG = 'fixed_kg', 'Carga fixa'

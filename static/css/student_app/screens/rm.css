@@ -10,6 +10,39 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     gap: 16px;
 }
 
+.student-rm-calculator {
+    --student-card-glow:
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-primary-alpha) 54%, transparent), transparent 38%),
+        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--theme-accent-premium-alpha) 32%, transparent), transparent 42%);
+}
+
+.student-rm-calculator__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(120px, 0.7fr);
+    gap: 12px;
+    align-items: end;
+}
+
+.student-rm-calculator__grid label {
+    display: grid;
+    gap: 7px;
+    color: var(--theme-text-secondary);
+    font-weight: 900;
+}
+
+.student-rm-calculator__result {
+    display: grid;
+    place-items: center;
+    min-height: 52px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 28%, var(--theme-border-soft) 72%);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 30%, var(--theme-surface-strong) 70%);
+    color: var(--theme-text-primary);
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 900;
+}
+
 /* RM inline update form */
 .student-rm-inline-form {
     display: flex;
@@ -21,4 +54,17 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 .student-rm-inline-form .student-input {
     width: 110px;
     min-height: 42px;
+}
+
+@media (max-width: 640px) {
+    .student-rm-card,
+    .student-rm-inline-form,
+    .student-rm-calculator__grid {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .student-rm-inline-form .student-input {
+        width: 100%;
+    }
 }
