@@ -20,9 +20,8 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import FormView, TemplateView, View
 
-from shared_support.box_runtime import get_box_runtime_slug
 from student_app.application.activity import record_student_app_activity
-from student_app.application.use_cases import GetStudentDashboard, GetStudentWorkoutPrescription
+from student_app.application.use_cases import GetStudentDashboard, GetStudentMonthSchedule, GetStudentWorkoutPrescription
 from student_app.forms import (
     StudentExerciseMaxForm,
     StudentExerciseMaxUpdateForm,
@@ -33,8 +32,10 @@ from student_app.models import (
     StudentAppActivityKind,
     StudentExerciseMax,
     StudentExerciseMaxHistory,
+    StudentProfileChangeRequest,
+    StudentProfileChangeRequestStatus,
 )
-from student_app.workflows import AttendanceNotAvailableError, confirm_student_attendance
+from student_app.workflows import AttendanceNotAvailableError, cancel_student_attendance, confirm_student_attendance
 from .base import StudentIdentityRequiredMixin
 from .wod_context import build_student_wod_context
 from .wod_tracking import track_student_workout_view
@@ -94,6 +95,7 @@ class StudentGradeView(StudentIdentityRequiredMixin, TemplateView):
         context['student_shell_nav'] = 'grade'
         context['student_shell_title'] = 'Grade'
         context['student_next_session'] = dashboard.next_sessions[0] if dashboard.next_sessions else None
+        context['student_month_days'] = GetStudentMonthSchedule().execute(identity=self.request.student_identity)
         return self._attach_student_shell_context(context)
 
 
@@ -299,20 +301,33 @@ class StudentSettingsView(StudentIdentityRequiredMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['box_runtime_slug'] = get_box_runtime_slug()
+        context['pending_profile_request'] = (
+            StudentProfileChangeRequest.objects
+            .filter(
+                student=self.request.student_identity.student,
+                identity=self.request.student_identity,
+                status=StudentProfileChangeRequestStatus.PENDING,
+            )
+            .first()
+        )
         context['student_shell_nav'] = 'settings'
         context['student_shell_title'] = 'Perfil'
         return self._attach_student_shell_context(context)
 
     def form_valid(self, form):
-        student = form.save(commit=False)
-        email = form.cleaned_data.get('email', '')
-        student.email = email
-        student.save()
-        if self.request.student_identity.email != email and email:
-            self.request.student_identity.email = email
-            self.request.student_identity.save(update_fields=['email', 'updated_at'])
-        messages.success(self.request, 'Seu perfil foi atualizado.')
+        StudentProfileChangeRequest.objects.create(
+            student=self.request.student_identity.student,
+            identity=self.request.student_identity,
+            requested_payload={
+                'full_name': form.cleaned_data.get('full_name', ''),
+                'phone': form.cleaned_data.get('phone', ''),
+                'email': form.cleaned_data.get('email', ''),
+                'birth_date': form.cleaned_data.get('birth_date').isoformat()
+                if form.cleaned_data.get('birth_date')
+                else '',
+            },
+        )
+        messages.success(self.request, 'Pedido de alteracao enviado para aprovacao.')
         return redirect('student-app-settings')
 
 
@@ -342,4 +357,24 @@ class StudentConfirmAttendanceView(StudentIdentityRequiredMixin, View):
             source_object_id=result.session.id,
             metadata={'session_title': result.session.title},
         )
+        return _safe_redirect(request, 'student-app-grade')
+
+
+class StudentCancelAttendanceView(StudentIdentityRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        session_id = request.POST.get('session_id')
+        if not session_id:
+            messages.error(request, 'Nao consegui identificar a aula para cancelar sua reserva.')
+            return redirect('student-app-grade')
+
+        try:
+            result = cancel_student_attendance(
+                student=request.student_identity.student,
+                session_id=session_id,
+            )
+        except AttendanceNotAvailableError as exc:
+            messages.error(request, str(exc) or 'Nao foi possivel cancelar esta reserva agora.')
+            return _safe_redirect(request, 'student-app-grade')
+
+        messages.success(request, f'Reserva em {result.session.title} cancelada.')
         return _safe_redirect(request, 'student-app-grade')

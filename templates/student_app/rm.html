@@ -1,15 +1,21 @@
 {% extends "student_app/layout.html" %}
+{% load static %}
 
 {% block title %}RM | OctoBox Aluno{% endblock %}
 
 {% block extra_head %}
 {{ block.super }}
-{% load static %}
 <link rel="stylesheet" href="{% static 'css/student_app/screens/rm.css' %}">
 {% endblock %}
 
 {% block body %}
 {% include "student_app/_partials/_rm_hero.html" %}
+{% include "student_app/_partials/_rm_calculator.html" %}
 {% include "student_app/_partials/_rm_list.html" %}
 {% include "student_app/_partials/_rm_form.html" %}
+{% endblock %}
+
+{% block extra_scripts %}
+{{ block.super }}
+<script src="{% static 'js/student_app/rm.js' %}"></script>
 {% endblock %}

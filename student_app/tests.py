@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone as dt_timezone
 from decimal import Decimal
 import json
 import uuid
@@ -20,6 +20,8 @@ from student_app.models import (
     StudentAppActivityKind,
     StudentExerciseMax,
     StudentExerciseMaxHistory,
+    StudentProfileChangeRequest,
+    StudentProfileChangeRequestStatus,
     StudentWorkoutView,
     WorkoutBlockKind,
     WorkoutLoadType,
@@ -119,7 +121,7 @@ class StudentAppExperienceTests(TestCase):
 
         self.assertRedirects(response, reverse('student-app-onboarding'))
 
-    def test_student_profile_edit_updates_student_and_identity_email(self):
+    def test_student_profile_edit_creates_pending_request_without_direct_write(self):
         response = self.client.post(
             reverse('student-app-settings'),
             {
@@ -135,9 +137,13 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(response['Location'], reverse('student-app-settings'))
         self.student.refresh_from_db()
         self.identity.refresh_from_db()
-        self.assertEqual(self.student.full_name, 'Atleta Atualizada')
-        self.assertEqual(self.student.email, 'nova@app.com')
-        self.assertEqual(self.identity.email, 'nova@app.com')
+        self.assertEqual(self.student.full_name, 'Atleta App')
+        self.assertEqual(self.student.email, 'app@example.com')
+        self.assertEqual(self.identity.email, 'app@example.com')
+        request = StudentProfileChangeRequest.objects.get(student=self.student, identity=self.identity)
+        self.assertEqual(request.status, StudentProfileChangeRequestStatus.PENDING)
+        self.assertEqual(request.requested_payload['full_name'], 'Atleta Atualizada')
+        self.assertEqual(request.requested_payload['email'], 'nova@app.com')
 
     def test_mass_onboarding_creates_student_and_identity(self):
         client = Client()
@@ -487,6 +493,90 @@ class StudentAppExperienceTests(TestCase):
         attendance = Attendance.objects.get(student=self.student, session=session)
         self.assertEqual(attendance.status, AttendanceStatus.BOOKED)
         self.assertEqual(attendance.reservation_source, 'student_app')
+
+    def test_student_grade_renders_booking_action_for_every_listed_session(self):
+        for offset in (2, 4):
+            ClassSession.objects.create(
+                title=f'Aula {offset}',
+                scheduled_at=timezone.now() + timedelta(hours=offset),
+                status='scheduled',
+            )
+
+        response = self.client.get(reverse('student-app-grade'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="student-secondary-action"', count=2, html=False)
+
+    def test_cancel_attendance_sets_booking_as_canceled_until_one_hour_before_class(self):
+        session = ClassSession.objects.create(
+            title='Aula com cancelamento',
+            scheduled_at=timezone.now() + timedelta(hours=3),
+            status='scheduled',
+        )
+        Attendance.objects.create(
+            student=self.student,
+            session=session,
+            status=AttendanceStatus.BOOKED,
+            reservation_source='student_app',
+        )
+
+        response = self.client.post(
+            reverse('student-app-cancel-attendance'),
+            {
+                'session_id': str(session.id),
+                'next': reverse('student-app-grade'),
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        attendance = Attendance.objects.get(student=self.student, session=session)
+        self.assertEqual(attendance.status, AttendanceStatus.CANCELED)
+
+    def test_cancel_attendance_is_blocked_inside_one_hour_window(self):
+        session = ClassSession.objects.create(
+            title='Aula perto demais',
+            scheduled_at=timezone.now() + timedelta(minutes=45),
+            status='scheduled',
+        )
+        Attendance.objects.create(
+            student=self.student,
+            session=session,
+            status=AttendanceStatus.BOOKED,
+            reservation_source='student_app',
+        )
+
+        self.client.post(
+            reverse('student-app-cancel-attendance'),
+            {
+                'session_id': str(session.id),
+                'next': reverse('student-app-grade'),
+            },
+            follow=False,
+        )
+
+        attendance = Attendance.objects.get(student=self.student, session=session)
+        self.assertEqual(attendance.status, AttendanceStatus.BOOKED)
+
+    @override_settings(TIME_ZONE='America/Sao_Paulo')
+    def test_student_schedule_renders_utc_input_in_box_local_timezone(self):
+        session = ClassSession.objects.create(
+            title='Aula UTC',
+            scheduled_at=datetime(2026, 4, 24, 12, 0, tzinfo=dt_timezone.utc),
+            status='scheduled',
+        )
+
+        dashboard = GetStudentDashboard().execute(identity=self.identity)
+
+        card = next(item for item in dashboard.next_sessions if item.session_id == session.id)
+        self.assertEqual(card.scheduled_label, '24/04 09:00')
+
+    def test_student_progress_week_starts_today(self):
+        dashboard = GetStudentDashboard().execute(identity=self.identity)
+        today = timezone.localdate()
+
+        self.assertEqual(dashboard.progress_days[0].date, today)
+        self.assertEqual(dashboard.progress_days[0].day_label, 'Hoje')
 
     def test_student_grade_and_rm_routes_render_new_shell(self):
         StudentExerciseMax.objects.create(
