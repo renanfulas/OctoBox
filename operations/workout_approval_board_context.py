@@ -25,32 +25,37 @@ from operations.forms import (
 )
 from student_app.models import (
     SessionWorkout,
+    SessionWorkoutRevisionEvent,
     SessionWorkoutStatus,
 )
 
 from .workout_corridor_navigation import build_workout_corridor_tabs
-from .workout_support import build_workout_review_snapshot
+from .workout_support import build_policy_badge_from_snapshot, build_workout_review_snapshot, extract_latest_policy_snapshot
 
 
 def _build_pending_workouts(*, filter_form, today, build_review_snapshot):
     queryset = (
         SessionWorkout.objects.select_related('session', 'session__coach', 'submitted_by')
-        .prefetch_related('blocks__movements')
+        .prefetch_related('blocks__movements', 'revisions')
         .filter(status=SessionWorkoutStatus.PENDING_APPROVAL)
     )
     selected_coach = ''
+    selected_session_id = None
     sort_value = 'submitted_oldest'
     sensitive_only = False
     today_only = False
     published_reason = ''
     if filter_form.is_valid():
         selected_coach = (filter_form.cleaned_data.get('coach') or '').strip()
+        selected_session_id = filter_form.cleaned_data.get('session_id')
         sort_value = filter_form.cleaned_data.get('sort') or 'submitted_oldest'
         sensitive_only = bool(filter_form.cleaned_data.get('sensitive_only'))
         today_only = bool(filter_form.cleaned_data.get('today_only'))
         published_reason = (filter_form.cleaned_data.get('published_reason') or '').strip()
         if selected_coach:
             queryset = queryset.filter(session__coach__username=selected_coach)
+        if selected_session_id:
+            queryset = queryset.filter(session_id=selected_session_id)
         if today_only:
             queryset = queryset.filter(session__scheduled_at__date=today)
         if sort_value == 'submitted_newest':
@@ -65,6 +70,9 @@ def _build_pending_workouts(*, filter_form, today, build_review_snapshot):
     pending_workouts = list(queryset)
     for workout in pending_workouts:
         workout.review_snapshot = build_review_snapshot(workout)
+        workout.policy_badge = build_policy_badge_from_snapshot(
+            extract_latest_policy_snapshot(workout, preferred_event=SessionWorkoutRevisionEvent.SUBMITTED)
+        )
     if sensitive_only:
         pending_workouts = [workout for workout in pending_workouts if workout.review_snapshot['diff_snapshot']['is_sensitive']]
     pending_workouts.sort(
@@ -77,6 +85,7 @@ def _build_pending_workouts(*, filter_form, today, build_review_snapshot):
     return {
         'pending_workouts': pending_workouts,
         'selected_coach': selected_coach,
+        'selected_session_id': selected_session_id,
         'sort_value': sort_value,
         'sensitive_only': sensitive_only,
         'today_only': today_only,
@@ -96,6 +105,33 @@ def _build_coach_options():
         label = f'{first_name} {last_name}'.strip() or username
         coach_options.append({'value': username, 'label': label})
     return coach_options
+
+
+def _build_approval_inbox_items(pending_workouts):
+    items = []
+    for workout in pending_workouts:
+        review_snapshot = workout.review_snapshot
+        policy_badge = build_policy_badge_from_snapshot(
+            extract_latest_policy_snapshot(workout, preferred_event=SessionWorkoutRevisionEvent.SUBMITTED)
+        )
+        items.append(
+            {
+                'workout_id': workout.id,
+                'session_title': workout.session.title,
+                'session_label': workout.session.scheduled_at.strftime('%d/%m %H:%M'),
+                'coach_label': workout.session.coach.get_full_name() or workout.session.coach.username
+                if workout.session.coach
+                else 'Sem coach',
+                'status_label': workout.get_status_display(),
+                'impact_label': review_snapshot['decision_assist']['impact_label'],
+                'impact_tone': review_snapshot['decision_assist']['impact_tone'],
+                'is_sensitive': review_snapshot['diff_snapshot']['is_sensitive'],
+                'requires_confirmation': review_snapshot['requires_confirmation'],
+                'summary': review_snapshot['review_summary'],
+                'policy_badge': policy_badge,
+            }
+        )
+    return items
 
 
 def _build_page_payload(*, page_title, page_subtitle, current_role_slug):
@@ -123,7 +159,17 @@ def _build_page_payload(*, page_title, page_subtitle, current_role_slug):
             'surface_key': 'operations-workout-approval-board',
             'scope': 'operations-approval',
         },
-        assets=build_page_assets(css=['css/design-system/operations.css']),
+        assets=build_page_assets(
+            css=[
+                'css/design-system/operations.css',
+                'css/design-system/operations/workspace/wod-inbox.css',
+                'css/design-system/operations/workspace/wod-command-palette.css',
+            ],
+            deferred_js=[
+                'js/operations/wod_inbox.js',
+                'js/operations/wod_command_palette.js',
+            ],
+        ),
     )
 
 
@@ -153,11 +199,15 @@ def build_workout_approval_board_context(
             current_role_slug=current_role.slug,
         ),
         'pending_workouts': pending_workouts,
+        'approval_inbox_items': _build_approval_inbox_items(pending_workouts),
         'rejection_form': WorkoutRejectionForm(),
         'approval_decision_form': WorkoutApprovalDecisionForm(),
         'approval_filter_form': filter_form,
         'approval_queue_assist': {
             'total': len(pending_workouts),
+            'batch_safe_count': sum(
+                1 for workout in pending_workouts if not workout.review_snapshot['diff_snapshot']['is_sensitive']
+            ),
             'high_impact_count': sum(
                 1 for workout in pending_workouts if workout.review_snapshot['decision_assist']['impact_label'] == 'Alto impacto'
             ),
@@ -168,6 +218,7 @@ def build_workout_approval_board_context(
         'approval_filter_state': {
             'sort': pending_state['sort_value'],
             'coach': pending_state['selected_coach'],
+            'session_id': pending_state['selected_session_id'],
             'sensitive_only': pending_state['sensitive_only'],
             'today_only': pending_state['today_only'],
             'published_reason': pending_state['published_reason'],

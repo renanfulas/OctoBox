@@ -29,6 +29,9 @@ def get_coach_workout_editor_intent_handler(view, intent: str):
         'update_movement': view._handle_update_movement,
         'submit_for_approval': view._handle_submit_for_approval,
         'duplicate_workout': view._handle_duplicate_workout,
+        'apply_quick_template': view._handle_apply_quick_template,
+        'apply_stored_template': view._handle_apply_stored_template,
+        'create_stored_template': view._handle_create_stored_template,
     }
     return intent_handlers.get(intent)
 

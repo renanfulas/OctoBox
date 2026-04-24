@@ -204,6 +204,114 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
         )
         self.assertTrue(AuditEvent.objects.filter(action='session_workout_rejected', target_id=str(workout.id)).exists())
 
+    def test_batch_approve_publishes_only_non_sensitive_pending_workouts(self):
+        safe_workout = SessionWorkout.objects.create(
+            session=self.session,
+            title='WOD seguro para lote',
+            coach_notes='Sem mudanca sensivel.',
+            status=SessionWorkoutStatus.PENDING_APPROVAL,
+            created_by=self.coach,
+            submitted_by=self.coach,
+            submitted_at=timezone.now(),
+        )
+        sensitive_session = ClassSession.objects.create(
+            title='Cross 18h',
+            coach=self.coach,
+            scheduled_at=timezone.now() + timedelta(hours=6),
+            duration_minutes=60,
+            capacity=16,
+        )
+        sensitive_workout = SessionWorkout.objects.create(
+            session=sensitive_session,
+            title='WOD sensivel no lote',
+            coach_notes='Mudanca de carga.',
+            status=SessionWorkoutStatus.PENDING_APPROVAL,
+            created_by=self.coach,
+            submitted_by=self.coach,
+            submitted_at=timezone.now(),
+            version=2,
+        )
+        block = SessionWorkoutBlock.objects.create(
+            workout=sensitive_workout,
+            title='Forca',
+            kind='strength',
+            sort_order=1,
+        )
+        SessionWorkoutMovement.objects.create(
+            block=block,
+            movement_slug='deadlift',
+            movement_label='Deadlift',
+            sets=5,
+            reps=5,
+            load_type=WorkoutLoadType.FIXED_KG,
+            load_value=Decimal('90.00'),
+            sort_order=1,
+        )
+        SessionWorkoutRevision.objects.create(
+            workout=sensitive_workout,
+            version=1,
+            event=SessionWorkoutRevisionEvent.PUBLISHED,
+            created_by=self.manager,
+            snapshot={
+                'title': 'WOD sensivel no lote',
+                'coach_notes': 'Versao anterior',
+                'status': 'published',
+                'version': 1,
+                'blocks': [
+                    {
+                        'sort_order': 1,
+                        'title': 'Forca',
+                        'kind': 'strength',
+                        'kind_label': 'Forca',
+                        'notes': '',
+                        'movements': [
+                            {
+                                'sort_order': 1,
+                                'movement_slug': 'deadlift',
+                                'movement_label': 'Deadlift',
+                                'sets': 5,
+                                'reps': 5,
+                                'load_type': WorkoutLoadType.PERCENTAGE_OF_RM,
+                                'load_value': '70.00',
+                                'notes': '',
+                            }
+                        ],
+                    }
+                ],
+            },
+        )
+        self.login_as_manager()
+
+        response = self.client.post(
+            reverse('workout-approval-batch-action'),
+            data={
+                'workout_ids': [safe_workout.id, sensitive_workout.id],
+                'approval_reason_category': 'without_concerns',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        safe_workout.refresh_from_db()
+        sensitive_workout.refresh_from_db()
+        self.assertEqual(safe_workout.status, SessionWorkoutStatus.PUBLISHED)
+        self.assertEqual(sensitive_workout.status, SessionWorkoutStatus.PENDING_APPROVAL)
+        self.assertTrue(
+            SessionWorkoutRevision.objects.filter(
+                workout=safe_workout,
+                event=SessionWorkoutRevisionEvent.PUBLISHED,
+            ).exists()
+        )
+        self.assertFalse(
+            SessionWorkoutRevision.objects.filter(
+                workout=sensitive_workout,
+                event=SessionWorkoutRevisionEvent.PUBLISHED,
+                version=sensitive_workout.version,
+            ).exists()
+        )
+        self.assertContains(response, '1 WOD(s) aprovado(s) em lote.')
+        self.assertContains(response, '1 sensivel(is) ficaram para revisao manual.')
+
     def test_approval_board_renders_richer_review_summary(self):
         workout = SessionWorkout.objects.create(
             session=self.session,
@@ -241,6 +349,8 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'Versao 3 aguardando leitura final')
         self.assertContains(response, 'Preview do impacto no aluno')
         self.assertContains(response, 'Aluno vera assim')
+        self.assertContains(response, 'data-wod-command="approve"')
+        self.assertContains(response, 'data-wod-command="batch-approve"')
 
     def test_approval_board_renders_diff_against_last_published_revision(self):
         workout = SessionWorkout.objects.create(
@@ -443,6 +553,70 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'WOD sensivel filtrado')
         self.assertNotContains(response, 'WOD comum')
         self.assertContains(response, 'Somente mudancas sensiveis')
+
+    def test_approval_board_can_filter_directly_by_session_id(self):
+        focused_workout = SessionWorkout.objects.create(
+            session=self.session,
+            title='WOD focado da aula',
+            coach_notes='Fila da aula certa.',
+            status=SessionWorkoutStatus.PENDING_APPROVAL,
+            created_by=self.coach,
+            submitted_by=self.coach,
+            submitted_at=timezone.now(),
+        )
+        other_session = ClassSession.objects.create(
+            title='Cross 20h',
+            coach=self.coach,
+            scheduled_at=timezone.now() + timedelta(days=1),
+            duration_minutes=60,
+            capacity=16,
+        )
+        SessionWorkout.objects.create(
+            session=other_session,
+            title='WOD de outra aula',
+            coach_notes='Nao deve aparecer no deep link.',
+            status=SessionWorkoutStatus.PENDING_APPROVAL,
+            created_by=self.coach,
+            submitted_by=self.coach,
+            submitted_at=timezone.now(),
+        )
+        self.login_as_manager()
+
+        response = self.client.get(reverse('workout-approval-board'), data={'session_id': self.session.id})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, focused_workout.title)
+        self.assertNotContains(response, 'WOD de outra aula')
+        self.assertContains(response, 'Fila filtrada por aula')
+
+    def test_approval_board_shows_policy_badge_for_pending_workout(self):
+        workout = SessionWorkout.objects.create(
+            session=self.session,
+            title='WOD com politica visivel',
+            coach_notes='Treino seguindo fluxo estrito.',
+            status=SessionWorkoutStatus.PENDING_APPROVAL,
+            created_by=self.coach,
+            submitted_by=self.coach,
+            submitted_at=timezone.now(),
+        )
+        SessionWorkoutRevision.objects.create(
+            workout=workout,
+            version=workout.version,
+            event=SessionWorkoutRevisionEvent.SUBMITTED,
+            created_by=self.coach,
+            snapshot={
+                'approval_policy': 'strict',
+                'submission_source': 'manual',
+                'bypass_approval': False,
+            },
+        )
+        self.login_as_manager()
+
+        response = self.client.get(reverse('workout-approval-board'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Fila obrigatoria')
+        self.assertContains(response, 'Politica exigiu passagem pela fila de aprovacao.')
 
     def test_approval_board_renders_rm_readiness_against_real_consumption(self):
         workout = SessionWorkout.objects.create(

@@ -14,6 +14,7 @@ from __future__ import annotations
 import re
 
 from django.contrib import messages
+from django.db import OperationalError, ProgrammingError
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -37,6 +38,9 @@ from student_app.workflows import AttendanceNotAvailableError, confirm_student_a
 from .base import StudentIdentityRequiredMixin
 from .wod_context import build_student_wod_context
 from .wod_tracking import track_student_workout_view
+
+
+RM_ACTIVITY_STORAGE_EXCEPTIONS = (OperationalError, ProgrammingError)
 
 
 def _safe_redirect(request, fallback: str):
@@ -138,10 +142,14 @@ class StudentRmView(StudentIdentityRequiredMixin, TemplateView):
             StudentExerciseMax.objects.filter(student=self.request.student_identity.student).order_by('exercise_label')
         )
         latest_delta_by_slug = {}
-        for history in StudentExerciseMaxHistory.objects.filter(
-            student=self.request.student_identity.student,
-            exercise_slug__in=[record.exercise_slug for record in rm_records],
-        ).order_by('exercise_slug', '-created_at', '-id'):
+        try:
+            history_queryset = StudentExerciseMaxHistory.objects.filter(
+                student=self.request.student_identity.student,
+                exercise_slug__in=[record.exercise_slug for record in rm_records],
+            ).order_by('exercise_slug', '-created_at', '-id')
+        except RM_ACTIVITY_STORAGE_EXCEPTIONS:
+            history_queryset = ()
+        for history in history_queryset:
             latest_delta_by_slug.setdefault(history.exercise_slug, history.delta_kg)
         context['student_shell_nav'] = 'rm'
         context['student_shell_title'] = 'RM'
@@ -178,15 +186,18 @@ class StudentAddRmView(StudentIdentityRequiredMixin, View):
             obj.one_rep_max_kg = kg
             obj.exercise_label = label
             obj.save(update_fields=['exercise_label', 'one_rep_max_kg', 'updated_at'])
-        StudentExerciseMaxHistory.objects.create(
-            student=request.student_identity.student,
-            exercise_max=obj,
-            exercise_slug=obj.exercise_slug,
-            exercise_label=obj.exercise_label,
-            previous_kg=previous_kg,
-            new_kg=kg,
-            delta_kg=(kg - previous_kg) if previous_kg is not None else 0,
-        )
+        try:
+            StudentExerciseMaxHistory.objects.create(
+                student=request.student_identity.student,
+                exercise_max=obj,
+                exercise_slug=obj.exercise_slug,
+                exercise_label=obj.exercise_label,
+                previous_kg=previous_kg,
+                new_kg=kg,
+                delta_kg=(kg - previous_kg) if previous_kg is not None else 0,
+            )
+        except RM_ACTIVITY_STORAGE_EXCEPTIONS:
+            messages.info(request, 'Seu RM foi salvo, mas o historico detalhado ainda nao esta ativo neste banco.')
         record_student_app_activity(
             student=request.student_identity.student,
             kind=StudentAppActivityKind.RM_CREATED if created else StudentAppActivityKind.RM_UPDATED,
@@ -211,15 +222,18 @@ class StudentUpdateRmView(StudentIdentityRequiredMixin, View):
         previous_kg = record.one_rep_max_kg
         record.one_rep_max_kg = form.cleaned_data['one_rep_max_kg']
         record.save(update_fields=['one_rep_max_kg', 'updated_at'])
-        StudentExerciseMaxHistory.objects.create(
-            student=request.student_identity.student,
-            exercise_max=record,
-            exercise_slug=record.exercise_slug,
-            exercise_label=record.exercise_label,
-            previous_kg=previous_kg,
-            new_kg=record.one_rep_max_kg,
-            delta_kg=record.one_rep_max_kg - previous_kg,
-        )
+        try:
+            StudentExerciseMaxHistory.objects.create(
+                student=request.student_identity.student,
+                exercise_max=record,
+                exercise_slug=record.exercise_slug,
+                exercise_label=record.exercise_label,
+                previous_kg=previous_kg,
+                new_kg=record.one_rep_max_kg,
+                delta_kg=record.one_rep_max_kg - previous_kg,
+            )
+        except RM_ACTIVITY_STORAGE_EXCEPTIONS:
+            messages.info(request, 'Seu RM foi atualizado, mas o historico detalhado ainda nao esta ativo neste banco.')
         record_student_app_activity(
             student=request.student_identity.student,
             kind=StudentAppActivityKind.RM_UPDATED,

@@ -1,28 +1,22 @@
 """
-ARQUIVO: views de workspace operacional por papel.
+ARQUIVO: views HTTP gerais dos workspaces operacionais.
 
 POR QUE ELE EXISTE:
-- publica as telas de owner, dev, manager e coach no app operations.
+- publica os workspaces por papel e placeholders compartilhados.
 
 O QUE ESTE ARQUIVO FAZ:
-1. renderiza workspaces por papel.
-2. consome snapshots prontos da camada de queries.
+1. renderiza as superficies principais de owner, dev, manager, coach e recepcao.
+2. centraliza helpers pequenos de payload compartilhado entre esses workspaces.
 
 PONTOS CRITICOS:
 - qualquer regressao aqui afeta a experiencia operacional por papel.
 """
 
-from datetime import timedelta
-
-from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect
 from django.views import View
-from django.views.generic import FormView
 
 from access.navigation_contracts import get_shell_route_url
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from shared_support.page_payloads import attach_page_payload, build_page_hero
-from shared_support.page_payloads import build_page_assets, build_page_payload
 from shared_support.manager_event_stream import build_manager_event_stream
 
 from operations.facade import (
@@ -33,31 +27,6 @@ from operations.facade import (
     build_reception_workspace_snapshot,
 )
 from operations.presentation import build_operation_workspace_page
-from operations.workout_approval_board_context import build_workout_approval_board_context
-from operations.operations_executive_summary_context import build_operations_executive_summary_context
-from operations.workout_editor_overview_context import build_workout_editor_overview_context
-from operations.workout_published_history import (
-    build_publication_runtime_metrics as _build_publication_runtime_metrics,
-)
-from operations.workout_editor_actions import CoachSessionWorkoutEditorActionsMixin
-from operations.workout_editor_context import build_coach_workout_editor_context
-from operations.workout_editor_dispatcher import dispatch_coach_workout_editor_intent
-from operations.workout_editor_loader import load_coach_workout_editor_session
-from operations.workout_rm_quick_edit_actions import save_workout_student_rm_quick_edit
-from operations.workout_rm_quick_edit_context import (
-    build_workout_student_rm_quick_edit_context,
-    build_workout_student_rm_quick_edit_form_kwargs,
-)
-from operations.workout_rm_quick_edit_loader import load_workout_student_rm_quick_edit_context
-from operations.workout_publication_history_context import build_workout_publication_history_context
-from operations.forms import (
-    WorkoutStudentRmQuickForm,
-)
-from operations.models import AttendanceStatus, ClassSession
-from student_app.models import (
-    SessionWorkout,
-    SessionWorkoutStatus,
-)
 
 from .base_views import ManagerWorkspaceAvailabilityMixin, OperationBaseView
 
@@ -115,6 +84,19 @@ def _build_manager_workspace_payload(context):
     )
 
 
+def _build_role_workspace_payload(context, *, page_key, title, subtitle, scope, snapshot_builder, focus_key):
+    snapshot = snapshot_builder(today=context['today'])
+    return _attach_operation_workspace_payload(
+        context,
+        page_key=page_key,
+        title=title,
+        subtitle=subtitle,
+        scope=scope,
+        snapshot=snapshot,
+        focus_key=focus_key,
+    )
+
+
 
 
 class OwnerWorkspaceView(OperationBaseView):
@@ -126,14 +108,13 @@ class OwnerWorkspaceView(OperationBaseView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
-        snapshot = build_owner_workspace_snapshot(today=context['today'])
-        _attach_operation_workspace_payload(
+        _build_role_workspace_payload(
             context,
             page_key='operations-owner',
             title=self.page_title,
             subtitle=self.page_subtitle,
             scope='operations-owner',
-            snapshot=snapshot,
+            snapshot_builder=build_owner_workspace_snapshot,
             focus_key='owner_operational_focus',
         )
         return context
@@ -146,14 +127,13 @@ class OwnerWorkspacePartialView(OperationBaseView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
-        snapshot = build_owner_workspace_snapshot(today=context['today'])
-        _attach_operation_workspace_payload(
+        _build_role_workspace_payload(
             context,
             page_key='operations-owner',
             title='Minha operacao',
             subtitle='Crescimento, caixa e estrutura sem leitura longa.',
             scope='operations-owner',
-            snapshot=snapshot,
+            snapshot_builder=build_owner_workspace_snapshot,
             focus_key='owner_operational_focus',
         )
         context['page'] = context['operation_page']
@@ -169,14 +149,13 @@ class DevWorkspaceView(OperationBaseView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
-        snapshot = build_dev_workspace_snapshot()
-        _attach_operation_workspace_payload(
+        _build_role_workspace_payload(
             context,
             page_key='operations-dev',
             title=self.page_title,
             subtitle=self.page_subtitle,
             scope='operations-dev',
-            snapshot=snapshot,
+            snapshot_builder=lambda **_: build_dev_workspace_snapshot(),
             focus_key='dev_operational_focus',
         )
         return context
@@ -230,162 +209,15 @@ class CoachWorkspaceView(OperationBaseView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_base_context())
-        snapshot = build_coach_workspace_snapshot(today=context['today'])
-        _attach_operation_workspace_payload(
+        _build_role_workspace_payload(
             context,
             page_key='operations-coach',
             title=self.page_title,
             subtitle=self.page_subtitle,
             scope='operations-coach',
-            snapshot=snapshot,
+            snapshot_builder=build_coach_workspace_snapshot,
             focus_key='coach_operational_focus',
         )
-        return context
-
-
-class WorkoutEditorHomeView(OperationBaseView):
-    allowed_roles = (ROLE_COACH, ROLE_OWNER)
-    template_name = 'operations/workout_editor_home.html'
-    page_title = 'Editor de WOD'
-    page_subtitle = 'Escolha a aula e abra o editor sem labirinto.'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(self.get_base_context())
-        editor_context = build_workout_editor_overview_context(
-            request=self.request,
-            today=context['today'],
-            current_role=context['current_role'],
-            page_title=self.page_title,
-            page_subtitle=self.page_subtitle,
-        )
-        attach_page_payload(
-            context,
-            payload_key='operation_page',
-            payload=editor_context.pop('operation_page_payload'),
-        )
-        context.update(editor_context)
-        return context
-
-
-class CoachSessionWorkoutEditorView(CoachSessionWorkoutEditorActionsMixin, OperationBaseView):
-    allowed_roles = (ROLE_COACH, ROLE_OWNER)
-    template_name = 'operations/coach_session_workout_editor.html'
-    page_title = 'Publicar WOD'
-    page_subtitle = 'Monte o treino da aula com blocos e movimentos sem sair do fluxo do coach.'
-    rm_preview_attendance_statuses = {
-        AttendanceStatus.BOOKED,
-        AttendanceStatus.CHECKED_IN,
-        AttendanceStatus.CHECKED_OUT,
-    }
-
-    def dispatch(self, request, *args, **kwargs):
-        self.session = load_coach_workout_editor_session(session_id=kwargs['session_id'])
-        return super().dispatch(request, *args, **kwargs)
-
-    def _get_workout(self):
-        return getattr(self.session, 'workout', None)
-
-    def _get_or_create_workout(self):
-        workout = self._get_workout()
-        if workout is not None:
-            return workout
-        workout, _ = SessionWorkout.objects.get_or_create(
-            session=self.session,
-            defaults={
-                'title': self.session.title,
-                'status': SessionWorkoutStatus.DRAFT,
-                'created_by': self.request.user,
-            },
-        )
-        self.session.workout = workout
-        return workout
-
-    def _build_context(self, *, workout_form=None, block_form=None, movement_form=None):
-        return build_coach_workout_editor_context(
-            self,
-            workout_form=workout_form,
-            block_form=block_form,
-            movement_form=movement_form,
-        )
-
-    def get(self, request, *args, **kwargs):
-        return self.render_to_response(self._build_context())
-
-    def post(self, request, *args, **kwargs):
-        return dispatch_coach_workout_editor_intent(self, request)
-
-
-class WorkoutApprovalBoardView(OperationBaseView):
-    allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
-    template_name = 'operations/workout_approval_board.html'
-    page_title = 'Aprovacao de WOD'
-    page_subtitle = 'Revise os treinos pendentes antes de liberar para os alunos.'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(self.get_base_context())
-        board_context = build_workout_approval_board_context(
-            request=self.request,
-            today=context['today'],
-            current_role=context['current_role'],
-            page_title=self.page_title,
-            page_subtitle=self.page_subtitle,
-        )
-        attach_page_payload(
-            context,
-            payload_key='operation_page',
-            payload=board_context.pop('operation_page_payload'),
-        )
-        context.update(board_context)
-        return context
-
-
-class WorkoutPublicationHistoryView(OperationBaseView):
-    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_COACH)
-    template_name = 'operations/workout_publication_history.html'
-    page_title = 'Historico do WOD'
-    page_subtitle = 'Acompanhe o que foi ao ar e as pendencias reais do corredor.'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(self.get_base_context())
-        history_context = build_workout_publication_history_context(
-            request=self.request,
-            today=context['today'],
-            current_role=context['current_role'],
-            page_title=self.page_title,
-            page_subtitle=self.page_subtitle,
-        )
-        attach_page_payload(
-            context,
-            payload_key='operation_page',
-            payload=history_context.pop('operation_page_payload'),
-        )
-        context.update(history_context)
-        return context
-
-
-class OperationsExecutiveSummaryView(OperationBaseView):
-    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_COACH)
-    template_name = 'operations/operations_executive_summary.html'
-    page_title = 'Resumo executivo'
-    page_subtitle = 'Leia o corredor de WOD sem misturar decisao, historico e acompanhamento.'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(self.get_base_context())
-        summary_context = build_operations_executive_summary_context(
-            current_role=context['current_role'],
-            page_title=self.page_title,
-            page_subtitle=self.page_subtitle,
-        )
-        attach_page_payload(
-            context,
-            payload_key='operation_page',
-            payload=summary_context.pop('operation_page_payload'),
-        )
-        context.update(summary_context)
         return context
 
 
@@ -443,35 +275,3 @@ class WhatsAppWorkspaceView(OperationBaseView):
         return context
 
 
-class WorkoutStudentRmQuickEditView(OperationBaseView, FormView):
-    allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
-    template_name = 'operations/workout_student_rm_quick_edit.html'
-    form_class = WorkoutStudentRmQuickForm
-    page_title = 'Cadastro rapido de RM'
-    page_subtitle = 'Registre o RM do aluno sem sair do corredor operacional do WOD.'
-
-    def dispatch(self, request, *args, **kwargs):
-        payload = load_workout_student_rm_quick_edit_context(
-            workout_id=kwargs['workout_id'],
-            student_id=kwargs['student_id'],
-            exercise_slug=kwargs['exercise_slug'],
-            label=request.GET.get('label', ''),
-        )
-        self.workout = payload['workout']
-        self.student = payload['student']
-        self.exercise_slug = payload['exercise_slug']
-        self.exercise_label = payload['exercise_label']
-        self.rm_record = payload['rm_record']
-        if not payload['attendance_exists']:
-            messages.error(request, 'Esse aluno nao esta mais na turma reservada deste WOD.')
-            return redirect('workout-approval-board')
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_form_kwargs(self):
-        return build_workout_student_rm_quick_edit_form_kwargs(self)
-
-    def get_context_data(self, **kwargs):
-        return build_workout_student_rm_quick_edit_context(self, **kwargs)
-
-    def form_valid(self, form):
-        return save_workout_student_rm_quick_edit(self, form)

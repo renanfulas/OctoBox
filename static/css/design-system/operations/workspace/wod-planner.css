@@ -1,0 +1,500 @@
+/*
+ARQUIVO: planner semanal de WOD.
+
+POR QUE ELE EXISTE:
+- cria a primeira grade temporal da Onda 3 sem substituir ainda todo o fluxo de editor/aprovacao.
+
+O QUE ESTE ARQUIVO FAZ:
+1. define toolbar, metricas e grade 7 dias.
+2. diferencia estados de WOD por celula.
+3. preserva responsividade sem framework JS.
+*/
+
+.wod-planner {
+    display: grid;
+    gap: 18px;
+}
+
+.wod-planner__toolbar,
+.wod-planner__metrics,
+.wod-planner__grid,
+.wod-planner__day,
+.wod-planner__cells {
+    min-width: 0;
+}
+
+.wod-planner__toolbar {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    border-radius: 22px;
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 36%),
+        color-mix(in srgb, var(--theme-surface-panel) 84%, white 16%);
+}
+
+.wod-planner__toolbar h2,
+.wod-planner__toolbar p {
+    margin: 0;
+}
+
+.wod-planner__nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.wod-planner__metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+    gap: 12px;
+}
+
+.wod-planner__keyboard-hint {
+    margin: -2px 0 0;
+    color: var(--theme-text-secondary);
+    font-size: 0.84rem;
+}
+
+.wod-planner__keyboard-hint kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    min-height: 22px;
+    margin-right: 4px;
+    padding: 0 6px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--theme-surface-panel-strong) 80%, white 20%);
+    color: var(--theme-text-primary);
+    font-size: 0.74rem;
+    font-weight: 800;
+}
+
+.wod-planner__metric {
+    display: grid;
+    gap: 4px;
+    padding: 13px 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--theme-surface-panel-strong) 74%, white 26%);
+}
+
+.wod-planner__metric span {
+    color: var(--theme-text-secondary);
+    font-size: 0.82rem;
+}
+
+.wod-planner__metric strong {
+    color: var(--theme-text-primary);
+    font-size: 1.45rem;
+    line-height: 1;
+}
+
+.wod-planner__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(140px, 1fr));
+    gap: var(--wod-planner-gap, 10px);
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.wod-planner__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+    gap: 18px;
+    align-items: start;
+}
+
+.wod-planner__day {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    min-height: 280px;
+    padding: 12px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--theme-surface-panel) 78%, white 22%);
+}
+
+.wod-planner__day-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--theme-text-secondary);
+}
+
+.wod-planner__day-head strong {
+    color: var(--theme-text-primary);
+}
+
+.wod-planner__cells {
+    display: grid;
+    gap: 8px;
+}
+
+.wod-planner__cell,
+.wod-planner__empty-day {
+    min-height: var(--wod-cell-min-size, 72px);
+    border-radius: 14px;
+}
+
+.wod-planner__cell {
+    display: grid;
+    gap: 4px;
+    padding: 10px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-panel-strong) 76%, white 24%);
+    color: var(--theme-text-secondary);
+    transition:
+        border-color var(--motion-base) var(--ease-standard),
+        color var(--motion-base) var(--ease-standard),
+        transform var(--motion-base) var(--ease-standard);
+}
+
+.wod-planner__cell:hover,
+.wod-planner__cell:focus-visible {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 42%, transparent);
+    color: var(--theme-text-primary);
+    transform: translateY(-1px);
+}
+
+.wod-planner__cell.is-focused {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 42%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent);
+    color: var(--theme-text-primary);
+}
+
+.wod-planner__cell strong {
+    color: var(--theme-text-primary);
+    line-height: 1.15;
+}
+
+.wod-planner__cell-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.wod-planner__cell-action-form {
+    margin: 0;
+}
+
+.wod-planner__cell-action {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 80%, transparent);
+    color: var(--theme-text-primary);
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.wod-planner__cell-action--primary {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 30%, transparent);
+}
+
+.wod-planner__cell-action--secondary {
+    color: var(--theme-text-secondary);
+}
+
+.wod-planner__cell-time,
+.wod-planner__cell-meta,
+.wod-planner__empty-day {
+    color: var(--theme-text-secondary);
+    font-size: 0.8rem;
+}
+
+.wod-planner__cell--empty {
+    border-color: color-mix(in srgb, var(--theme-border-soft) 70%, transparent);
+}
+
+.wod-planner__cell--draft {
+    border-color: color-mix(in srgb, var(--warning) 28%, var(--theme-border-soft) 72%);
+}
+
+.wod-planner__cell--pending {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 34%, var(--theme-border-soft) 66%);
+}
+
+.wod-planner__cell--published {
+    border-color: color-mix(in srgb, var(--success) 30%, var(--theme-border-soft) 70%);
+}
+
+.wod-planner__cell--sensitive {
+    border-color: color-mix(in srgb, var(--danger) 38%, var(--theme-border-soft) 62%);
+}
+
+.wod-planner__empty-day {
+    display: grid;
+    place-items: center;
+    border: 1px dashed color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+}
+
+.wod-planner__spotlight {
+    position: sticky;
+    top: 18px;
+    display: grid;
+    gap: 10px;
+    padding: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 36%),
+        color-mix(in srgb, var(--theme-surface-panel) 84%, white 16%);
+}
+
+.wod-planner__spotlight h3,
+.wod-planner__spotlight p,
+.wod-planner__spotlight strong {
+    margin: 0;
+}
+
+.wod-planner__spotlight-slot,
+.wod-planner__spotlight-summary {
+    color: var(--theme-text-secondary);
+}
+
+.wod-planner__spotlight-pills,
+.wod-planner__spotlight-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.wod-planner__spotlight-workout {
+    color: var(--theme-text-primary);
+    line-height: 1.2;
+}
+
+.wod-planner__spotlight-action {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 24%, transparent);
+    color: var(--theme-text-primary);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.wod-planner__spotlight-action.is-secondary {
+    border-color: color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    color: var(--theme-text-secondary);
+}
+
+body[data-theme="dark"] .wod-planner__toolbar,
+body[data-theme="dark"] .wod-planner__metric,
+body[data-theme="dark"] .wod-planner__day,
+body[data-theme="dark"] .wod-planner__cell,
+body[data-theme="dark"] .wod-planner__spotlight {
+    border-color: rgba(148, 163, 184, 0.16);
+    background:
+        radial-gradient(circle at top right, rgba(92, 146, 214, 0.08), transparent 36%),
+        rgba(8, 16, 30, 0.82);
+}
+
+@media (max-width: 980px) {
+    .wod-planner__toolbar {
+        display: grid;
+    }
+
+    .wod-planner__layout {
+        grid-template-columns: 1fr;
+    }
+
+    .wod-planner__nav {
+        justify-content: flex-start;
+    }
+
+    .wod-planner__spotlight {
+        position: static;
+    }
+}
+
+
+.wod-planner__template-picker {
+    width: min(560px, calc(100vw - 32px));
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    border-radius: 24px;
+    padding: 18px;
+    background: color-mix(in srgb, var(--theme-surface-panel) 88%, white 12%);
+    color: var(--theme-text-primary);
+}
+
+.wod-planner__template-picker::backdrop {
+    background: rgba(4, 10, 18, 0.48);
+}
+
+.wod-planner__template-picker-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.wod-planner__template-picker-head h3,
+.wod-planner__template-picker-head p {
+    margin: 0;
+}
+
+.wod-planner__template-picker-copy {
+    color: var(--theme-text-secondary);
+    margin-top: 6px;
+}
+
+.wod-planner__template-picker-list {
+    display: grid;
+    gap: 10px;
+}
+
+.wod-planner__template-picker-card {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 80%, transparent);
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--theme-surface-panel-strong) 76%, white 24%);
+}
+
+.wod-planner__template-picker-card p,
+.wod-planner__template-picker-card strong {
+    margin: 0;
+}
+
+.wod-planner__template-picker-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+
+.wod-planner__template-picker-description {
+    margin: 0;
+    color: var(--theme-text-secondary);
+}
+
+.wod-planner__template-picker-preview {
+    display: grid;
+    gap: 8px;
+}
+
+.wod-planner__template-picker-preview-card {
+    display: grid;
+    gap: 4px;
+    padding: 10px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 76%, transparent);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--theme-surface-panel) 82%, white 18%);
+}
+
+.wod-planner__template-picker-preview-card p,
+.wod-planner__template-picker-preview-card strong {
+    margin: 0;
+}
+
+
+.wod-planner__usage-panel {
+    display: grid;
+    gap: 14px;
+}
+
+.wod-planner__usage-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+    gap: 12px;
+}
+
+.wod-planner__usage-ranking {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--theme-surface-panel) 82%, white 18%);
+}
+
+.wod-planner__usage-ranking h3,
+.wod-planner__usage-ranking p,
+.wod-planner__usage-ranking strong {
+    margin: 0;
+}
+
+.wod-planner__usage-ranking-list {
+    display: grid;
+    gap: 10px;
+}
+
+.wod-planner__usage-ranking-card {
+    display: grid;
+    gap: 6px;
+    padding: 12px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--theme-surface-panel-strong) 76%, white 24%);
+}
+
+.wod-planner__funnel-panel {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support) 12%, transparent), transparent 34%),
+        color-mix(in srgb, var(--theme-surface-panel) 84%, white 16%);
+}
+
+.wod-planner__funnel-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.wod-planner__funnel-head h3,
+.wod-planner__funnel-head p {
+    margin: 0;
+}
+
+.wod-planner__funnel-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+    gap: 12px;
+}
+
+.wod-planner__funnel-ranking {
+    display: grid;
+    gap: 10px;
+}
+
+.wod-planner__funnel-ranking-list {
+    display: grid;
+    gap: 10px;
+}
+
+.wod-planner__funnel-ranking-card {
+    display: grid;
+    gap: 6px;
+    padding: 12px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--theme-surface-panel-strong) 80%, white 20%);
+}
+
+.wod-planner__funnel-ranking-card p,
+.wod-planner__funnel-ranking-card strong {
+    margin: 0;
+}

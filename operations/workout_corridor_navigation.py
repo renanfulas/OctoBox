@@ -17,10 +17,10 @@ from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
 
 _TAB_SPECS = (
     {
-        'key': 'editor',
-        'label': 'Editor',
-        'route_name': 'workout-editor-home',
-        'allowed_roles': {ROLE_COACH, ROLE_OWNER},
+        'key': 'planner',
+        'label': 'Planner',
+        'route_name': 'workout-planner',
+        'allowed_roles': {ROLE_COACH, ROLE_MANAGER, ROLE_OWNER},
     },
     {
         'key': 'approval',

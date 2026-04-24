@@ -1,0 +1,280 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+{% with page=operation_page %}
+<div class="operation-shell coach-scene workspace-shell wod-planner-shell">
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    {% include "operations/includes/wod_corridor_tabs.html" %}
+
+    <section class="wod-planner" data-wod-planner data-template-picker-telemetry-url="{% url 'workout-planner-template-picker-telemetry' %}" aria-label="Planner semanal de WOD">
+        <header class="wod-planner__toolbar">
+            <div>
+                <p class="eyebrow">Semana</p>
+                <h2>{{ planner_week.label }}</h2>
+            </div>
+            <nav class="wod-planner__nav" aria-label="Navegacao semanal">
+                <a class="button tertiary" href="{{ planner_previous_week_href }}">Semana anterior</a>
+                <a class="button secondary" href="{{ planner_today_href }}">Hoje</a>
+                <a class="button tertiary" href="{{ planner_next_week_href }}">Proxima semana</a>
+            </nav>
+        </header>
+
+        <div class="wod-planner__metrics" aria-label="Resumo da semana">
+            <article class="wod-planner__metric">
+                <span>Total</span>
+                <strong>{{ planner_week.total_sessions }}</strong>
+            </article>
+            <article class="wod-planner__metric">
+                <span>Sem WOD</span>
+                <strong>{{ planner_week.empty_count }}</strong>
+            </article>
+            <article class="wod-planner__metric">
+                <span>Rascunho</span>
+                <strong>{{ planner_week.draft_count }}</strong>
+            </article>
+            <article class="wod-planner__metric">
+                <span>Pendentes</span>
+                <strong>{{ planner_week.pending_count }}</strong>
+            </article>
+            <article class="wod-planner__metric">
+                <span>Publicados</span>
+                <strong>{{ planner_week.published_count }}</strong>
+            </article>
+            <article class="wod-planner__metric">
+                <span>Sensiveis</span>
+                <strong>{{ planner_week.sensitive_count }}</strong>
+            </article>
+        </div>
+
+        <p class="wod-planner__keyboard-hint">Teclado: <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> movem o foco · <kbd>Enter</kbd> abre a ação principal.</p>
+
+        {% if planner_template_usage_panel.total_templates %}
+        <section class="wod-planner__usage-panel" aria-label="Uso operacional dos templates no planner">
+            <div class="wod-planner__usage-metrics">
+                <article class="wod-planner__metric">
+                    <span>Templates no radar</span>
+                    <strong>{{ planner_template_usage_panel.total_templates }}</strong>
+                </article>
+                <article class="wod-planner__metric">
+                    <span>Publica direto</span>
+                    <strong>{{ planner_template_usage_panel.publish_direct_count }}</strong>
+                </article>
+                <article class="wod-planner__metric">
+                    <span>Vai para fila</span>
+                    <strong>{{ planner_template_usage_panel.approval_count }}</strong>
+                </article>
+                <article class="wod-planner__metric">
+                    <span>Templates frios</span>
+                    <strong>{{ planner_template_usage_panel.cold_count }}</strong>
+                </article>
+            </div>
+            <div class="wod-planner__usage-ranking">
+                <div>
+                    <p class="eyebrow">Mais relevantes agora</p>
+                    <h3>Templates mais quentes do cockpit</h3>
+                </div>
+                <div class="wod-planner__usage-ranking-list">
+                    {% for template in planner_template_usage_panel.top_templates %}
+                    <article class="wod-planner__usage-ranking-card">
+                        <strong>{{ template.label }}</strong>
+                        <p>{{ template.summary }}</p>
+                        <div class="wod-planner__template-picker-meta">
+                            <span class="pill accent">{{ template.usage_count }} uso(s)</span>
+                            <span class="pill info">{{ template.last_used_label }}</span>
+                            <span class="pill {{ template.policy_hint.tone }}">{{ template.policy_hint.label }}</span>
+                            {% if template.is_cold %}<span class="pill warning">Frio</span>{% endif %}
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if planner_template_funnel_panel.opened_count or planner_template_funnel_panel.selected_count or planner_template_funnel_panel.applied_count %}
+        <section class="wod-planner__funnel-panel" aria-label="Funil curto do picker">
+            <div class="wod-planner__funnel-head">
+                <div>
+                    <p class="eyebrow">Funil curto</p>
+                    <h3>Abriu, escolheu, aplicou, publicou</h3>
+                </div>
+                <span class="pill info">{{ planner_template_funnel_panel.window_label }}</span>
+            </div>
+            <div class="wod-planner__funnel-metrics">
+                <article class="wod-planner__metric">
+                    <span>Abriu</span>
+                    <strong>{{ planner_template_funnel_panel.opened_count }}</strong>
+                </article>
+                <article class="wod-planner__metric">
+                    <span>Escolheu</span>
+                    <strong>{{ planner_template_funnel_panel.selected_count }}</strong>
+                    <small>{{ planner_template_funnel_panel.opened_to_selected_label }}</small>
+                </article>
+                <article class="wod-planner__metric">
+                    <span>Aplicou</span>
+                    <strong>{{ planner_template_funnel_panel.applied_count }}</strong>
+                    <small>{{ planner_template_funnel_panel.selected_to_applied_label }}</small>
+                </article>
+                <article class="wod-planner__metric">
+                    <span>Publicou</span>
+                    <strong>{{ planner_template_funnel_panel.published_count }}</strong>
+                    <small>{{ planner_template_funnel_panel.completed_to_published_label }}</small>
+                </article>
+                <article class="wod-planner__metric">
+                    <span>Fila</span>
+                    <strong>{{ planner_template_funnel_panel.pending_count }}</strong>
+                    <small>{{ planner_template_funnel_panel.applied_to_completed_label }}</small>
+                </article>
+            </div>
+            {% if planner_template_funnel_panel.top_templates %}
+            <div class="wod-planner__funnel-ranking">
+                <p class="eyebrow">Templates que mais convertem</p>
+                <div class="wod-planner__funnel-ranking-list">
+                    {% for template in planner_template_funnel_panel.top_templates %}
+                    <article class="wod-planner__funnel-ranking-card">
+                        <strong>{{ template.label }}</strong>
+                        <p>{{ template.conversion_label }}</p>
+                        <div class="wod-planner__template-picker-meta">
+                            <span class="pill accent">{{ template.selected_count }} escolhidas</span>
+                            <span class="pill success">{{ template.published_count }} publicadas</span>
+                            <span class="pill {{ template.policy_hint.tone }}">{{ template.policy_hint.label }}</span>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        <div class="wod-planner__layout">
+            <div class="wod-planner__grid" role="list" aria-label="Dias da semana">
+                {% for day in planner_week.days %}
+                <section class="wod-planner__day" role="listitem" aria-label="{{ day.weekday_label }} {{ day.label }}">
+                    <div class="wod-planner__day-head">
+                        <span>{{ day.weekday_label }}</span>
+                        <strong>{{ day.label }}</strong>
+                    </div>
+                    <div class="wod-planner__cells">
+                        {% for cell in day.cells %}
+                        <article
+                            class="wod-planner__cell wod-planner__cell--{{ cell.state }}{% if planner_week.initial_focus_session_id == cell.session_id %} is-focused{% endif %}"
+                            data-wod-planner-cell
+                            data-wod-state="{{ cell.state }}"
+                            data-planner-day-index="{{ forloop.parentloop.counter0 }}"
+                            data-planner-row-index="{{ forloop.counter0 }}"
+                            data-planner-status-label="{{ cell.status_label }}"
+                            data-planner-summary="{{ cell.summary }}"
+                            data-planner-session-title="{{ cell.session_title }}"
+                            data-planner-workout-title="{{ cell.workout_title }}"
+                            data-planner-coach-label="{{ cell.coach_label }}"
+                            data-planner-slot-label="{{ cell.slot_label }}"
+                            data-planner-primary-action="{{ cell.primary_action_label }}"
+                            data-planner-secondary-action="{{ cell.secondary_action_label|default:cell.trusted_template_label }}"
+                            data-planner-policy-label="{{ cell.policy_label|default:'Politica sera lida ao aplicar template confiavel' }}"
+                            data-planner-session-id="{{ cell.session_id }}"
+                            data-planner-template-picker-enabled="{% if cell.trusted_template_picker_enabled %}true{% else %}false{% endif %}"
+                            tabindex="{% if planner_week.initial_focus_session_id == cell.session_id %}0{% else %}-1{% endif %}"
+                        >
+                            <span class="wod-planner__cell-time">{{ cell.slot_label }}</span>
+                            <strong>{{ cell.session_title }}</strong>
+                            <span>{{ cell.workout_title }}</span>
+                            <span class="wod-planner__cell-meta">{{ cell.coach_label }}</span>
+                            <div class="wod-planner__cell-actions" aria-label="Acoes da celula">
+                                {% for action in cell.actions %}
+                                {% if action.key != 'open-template-picker' %}
+                                <a class="wod-planner__cell-action wod-planner__cell-action--{{ action.tone }}" href="{{ action.href }}">
+                                    {{ action.label }}
+                                </a>
+                                {% endif %}
+                                {% endfor %}
+                                {% if cell.can_duplicate_previous %}
+                                <form method="post" action="{{ cell.duplicate_previous_url }}" class="wod-planner__cell-action-form">
+                                    {% csrf_token %}
+                                    <button class="wod-planner__cell-action wod-planner__cell-action--secondary" type="submit">
+                                        {{ cell.duplicate_previous_label|default:'Duplicar semana anterior' }}
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if cell.trusted_template_picker_enabled %}
+                                <button class="wod-planner__cell-action wod-planner__cell-action--secondary" type="button" data-wod-planner-template-picker-trigger data-session-id="{{ cell.session_id }}">
+                                    {{ cell.trusted_template_label }}
+                                </button>
+                                {% endif %}
+                            </div>
+                        </article>
+                        {% empty %}
+                        <div class="wod-planner__empty-day">
+                            <span>Sem aula</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endfor %}
+            </div>
+
+            <aside class="wod-planner__spotlight" data-wod-planner-spotlight aria-label="Leitura da celula focada">
+                <p class="eyebrow">Spotlight</p>
+                <h3 data-planner-spotlight-session>Selecione uma celula</h3>
+                <p class="wod-planner__spotlight-slot" data-planner-spotlight-slot>Use o teclado ou clique em uma celula.</p>
+                <div class="wod-planner__spotlight-pills">
+                    <span class="pill info" data-planner-spotlight-status>Sem foco</span>
+                    <span class="pill accent" data-planner-spotlight-coach>Sem coach</span>
+                    <span class="pill info" data-planner-spotlight-policy>Politica nao lida</span>
+                </div>
+                <strong class="wod-planner__spotlight-workout" data-planner-spotlight-workout>Sem leitura selecionada</strong>
+                <p class="wod-planner__spotlight-summary" data-planner-spotlight-summary>Quando uma celula recebe foco, mostramos aqui o contexto operacional resumido.</p>
+                <div class="wod-planner__spotlight-actions">
+                    <span class="wod-planner__spotlight-action" data-planner-spotlight-primary>Acao principal</span>
+                    <span class="wod-planner__spotlight-action is-secondary" data-planner-spotlight-secondary>Acao secundaria</span>
+                </div>
+            </aside>
+        </div>
+
+        {% if planner_trusted_template_options %}
+        <dialog class="wod-planner__template-picker" data-wod-planner-template-picker aria-label="Escolher template confiavel">
+            <form method="dialog" class="wod-planner__template-picker-head">
+                <div>
+                    <p class="eyebrow">Template confiavel</p>
+                    <h3>Escolha a base da celula</h3>
+                    <p class="wod-planner__template-picker-copy" data-wod-planner-template-picker-copy>Selecione um template confiavel para aplicar na aula focada.</p>
+                </div>
+                <button class="button tertiary" type="submit">Fechar</button>
+            </form>
+            <div class="wod-planner__template-picker-list">
+                {% for option in planner_trusted_template_options %}
+                <form method="post" class="wod-planner__template-picker-card" data-wod-planner-template-apply-form data-template-id="{{ option.id }}">
+                    {% csrf_token %}
+                    <p class="eyebrow">{{ option.coach_label }}</p>
+                    <strong>{{ option.label }}</strong>
+                    <p>{{ option.summary }}</p>
+                    {% if option.description %}<p class="wod-planner__template-picker-description">{{ option.description }}</p>{% endif %}
+                    <div class="wod-planner__template-picker-meta">
+                        <span class="pill success">Confiavel</span>
+                        <span class="pill {{ option.policy_hint.tone }}">{{ option.policy_hint.label }}</span>
+                        {% if option.is_featured %}<span class="pill accent">Destaque</span>{% endif %}
+                        {% if option.has_percentage_rm %}<span class="pill info">Tem %RM</span>{% endif %}
+                        {% if option.has_fixed_load %}<span class="pill warning">Tem carga fixa</span>{% endif %}
+                    </div>
+                    <p class="wod-planner__template-picker-description">{{ option.policy_hint.detail }}</p>
+                    {% if option.preview_blocks %}
+                    <div class="wod-planner__template-picker-preview">
+                        {% for block in option.preview_blocks %}
+                        <article class="wod-planner__template-picker-preview-card">
+                            <p class="eyebrow">{{ block.kind_label }}</p>
+                            <strong>{{ block.title }}</strong>
+                            <p>{{ block.movement_preview|default:'Sem movimentos visiveis neste recorte.' }}</p>
+                        </article>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <button class="button secondary" type="submit">Aplicar nesta celula</button>
+                </form>
+                {% endfor %}
+            </div>
+        </dialog>
+        {% endif %}
+    </section>
+</div>
+{% endwith %}
+{% endblock %}

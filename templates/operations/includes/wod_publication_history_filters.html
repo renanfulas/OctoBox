@@ -1,5 +1,8 @@
 <section class="coach-wod-filter-bar" aria-label="Filtros do historico publicado">
     <form method="get" class="coach-wod-filter-form">
+        {% if history_filter_state.session_id %}
+        <input type="hidden" name="session_id" value="{{ history_filter_state.session_id }}">
+        {% endif %}
         <label class="coach-wod-filter-field">
             <span>Coach</span>
             <select name="coach">
@@ -31,3 +34,11 @@
         </div>
     </form>
 </section>
+{% if history_filter_state.session_id %}
+<section class="coach-wod-filter-bar" aria-label="Filtro fixo da aula publicada">
+    <div class="coach-wod-review-meta">
+        <span class="pill info">Historico filtrado por aula</span>
+        <a class="button tertiary" href="{% url 'workout-publication-history' %}">Remover filtro da aula</a>
+    </div>
+</section>
+{% endif %}

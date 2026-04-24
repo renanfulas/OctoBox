@@ -19,6 +19,7 @@ PONTOS CRITICOS:
 <div class="operation-shell coach-scene workspace-shell">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% include "includes/ui/layout/page_reading_list.html" with panel=page.data.reading_panel %}
+    <a class="visually-hidden" href="#coach-boundary-board">Ver limites da area</a>
     <section class="workspace-grid-layout" aria-label="Painel de turnos" data-slot="workspace">
         <div class="workspace-grid-main">
             <div class="workspace-panel">{% include "operations/includes/coach/coach_sessions_section.html" %}</div>
