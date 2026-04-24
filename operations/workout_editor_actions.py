@@ -16,28 +16,34 @@ PONTOS CRITICOS:
 """
 
 from django.contrib import messages
+from django.db import OperationalError, ProgrammingError
 from django.shortcuts import get_object_or_404, redirect
-from django.utils import timezone
-
 from operations.forms import (
     CoachSessionWorkoutForm,
     CoachWorkoutBlockForm,
     CoachWorkoutMovementForm,
     WorkoutDuplicateForm,
+    WorkoutCreateStoredTemplateForm,
+    WorkoutQuickTemplateForm,
+    WorkoutStoredTemplateForm,
 )
-from operations.models import ClassSession
+from operations.models import ClassSession, WorkoutTemplate
 from student_app.models import (
     SessionWorkout,
     SessionWorkoutBlock,
     SessionWorkoutMovement,
-    SessionWorkoutRevisionEvent,
     SessionWorkoutStatus,
 )
+from .workout_duplication import apply_workout_template_to_session, clone_workout_to_session
+from .workout_templates import apply_persisted_workout_template, create_persisted_template_from_workout
 
 from .workout_support import (
-    create_workout_revision as _create_workout_revision,
     record_workout_audit as _record_workout_audit,
+    route_workout_submission,
 )
+
+
+TEMPLATE_STORAGE_EXCEPTIONS = (OperationalError, ProgrammingError)
 
 
 class CoachSessionWorkoutEditorActionsMixin:
@@ -258,37 +264,21 @@ class CoachSessionWorkoutEditorActionsMixin:
     def _handle_submit_for_approval(self, request):
         workout = self._get_workout()
         if workout is None:
-            messages.error(request, 'Salve um rascunho antes de enviar para aprovacao.')
+            messages.error(request, 'Salve um rascunho antes de seguir para publicacao.')
             return redirect('coach-session-workout-editor', session_id=self.session.id)
         if not workout.blocks.exists():
-            messages.error(request, 'Crie pelo menos um bloco antes de enviar o WOD para aprovacao.')
+            messages.error(request, 'Crie pelo menos um bloco antes de seguir com o WOD.')
             return redirect('coach-session-workout-editor', session_id=self.session.id)
-        workout.status = SessionWorkoutStatus.PENDING_APPROVAL
-        workout.submitted_by = request.user
-        workout.submitted_at = timezone.now()
-        workout.rejected_by = None
-        workout.rejected_at = None
-        workout.rejection_reason = ''
-        workout.save(
-            update_fields=[
-                'status',
-                'submitted_by',
-                'submitted_at',
-                'rejected_by',
-                'rejected_at',
-                'rejection_reason',
-                'updated_at',
-            ]
-        )
-        _create_workout_revision(workout=workout, actor=request.user, event=SessionWorkoutRevisionEvent.SUBMITTED)
-        _record_workout_audit(
+
+        submission_result = route_workout_submission(
             actor=request.user,
             workout=workout,
-            action='session_workout_submitted_for_approval',
-            description='Coach enviou WOD para aprovacao.',
-            metadata={'session_id': workout.session_id, 'version': workout.version},
+            source='manual',
         )
-        messages.success(request, 'WOD enviado para aprovacao do owner ou manager.')
+        if submission_result['status'] == 'published':
+            messages.success(request, 'WOD publicado direto pela politica ativa deste corredor.')
+        else:
+            messages.success(request, 'WOD enviado para aprovacao do owner ou manager.')
         return redirect('coach-session-workout-editor', session_id=self.session.id)
 
     def _handle_duplicate_workout(self, request):
@@ -304,51 +294,109 @@ class CoachSessionWorkoutEditorActionsMixin:
         if hasattr(target_session, 'workout'):
             messages.error(request, 'A aula de destino ja possui um WOD. Escolha outra aula.')
             return redirect('coach-session-workout-editor', session_id=self.session.id)
-        duplicated_workout = SessionWorkout.objects.create(
-            session=target_session,
-            title=workout.title,
-            coach_notes=workout.coach_notes,
-            status=SessionWorkoutStatus.DRAFT,
-            created_by=request.user,
-            version=1,
-        )
-        for block in workout.blocks.all():
-            duplicated_block = SessionWorkoutBlock.objects.create(
-                workout=duplicated_workout,
-                kind=block.kind,
-                title=block.title,
-                notes=block.notes,
-                sort_order=block.sort_order,
-            )
-            for movement in block.movements.all():
-                SessionWorkoutMovement.objects.create(
-                    block=duplicated_block,
-                    movement_slug=movement.movement_slug,
-                    movement_label=movement.movement_label,
-                    sets=movement.sets,
-                    reps=movement.reps,
-                    load_type=movement.load_type,
-                    load_value=movement.load_value,
-                    notes=movement.notes,
-                    sort_order=movement.sort_order,
-                )
-        _create_workout_revision(
-            workout=duplicated_workout,
+        duplicated_workout = clone_workout_to_session(
             actor=request.user,
-            event=SessionWorkoutRevisionEvent.DUPLICATED,
-            extra_snapshot={'source_workout_id': workout.id, 'source_session_id': workout.session_id},
-        )
-        _record_workout_audit(
-            actor=request.user,
-            workout=duplicated_workout,
-            action='session_workout_duplicated',
-            description='Coach duplicou WOD para outra aula.',
-            metadata={
-                'session_id': duplicated_workout.session_id,
-                'version': duplicated_workout.version,
-                'source_workout_id': workout.id,
-                'source_session_id': workout.session_id,
-            },
+            source_workout=workout,
+            target_session=target_session,
         )
         messages.success(request, 'WOD duplicado como rascunho para a nova aula.')
         return redirect('coach-session-workout-editor', session_id=target_session.id)
+
+    def _handle_apply_quick_template(self, request):
+        form = WorkoutQuickTemplateForm(request.POST)
+        if not form.is_valid():
+            messages.error(request, 'Escolha um template rapido valido.')
+            return redirect('coach-session-workout-editor', session_id=self.session.id)
+
+        source_workout = get_object_or_404(
+            SessionWorkout.objects.prefetch_related('blocks__movements'),
+            pk=form.cleaned_data['source_workout_id'],
+            status=SessionWorkoutStatus.PUBLISHED,
+        )
+        result = apply_workout_template_to_session(
+            actor=request.user,
+            source_workout=source_workout,
+            target_session=self.session,
+        )
+        if not result['ok']:
+            messages.warning(
+                request,
+                'A aula ja tem montagem parcial '
+                f"({result.get('target_block_count', 0)} bloco(s), {result.get('target_movement_count', 0)} movimento(s)). "
+                'Nao aplicamos template por cima. Se quiser reaproveitar esse modelo, limpe os blocos atuais ou use outra aula.',
+            )
+            return redirect('coach-session-workout-editor', session_id=self.session.id)
+
+        messages.success(request, 'Template rapido aplicado como base do WOD desta aula.')
+        return redirect('coach-session-workout-editor', session_id=self.session.id)
+
+    def _handle_apply_stored_template(self, request):
+        form = WorkoutStoredTemplateForm(request.POST)
+        if not form.is_valid():
+            messages.error(request, 'Escolha um template salvo valido.')
+            return redirect('coach-session-workout-editor', session_id=self.session.id)
+
+        try:
+            template = get_object_or_404(
+                WorkoutTemplate.objects.prefetch_related('blocks__movements'),
+                pk=form.cleaned_data['template_id'],
+                is_active=True,
+            )
+        except TEMPLATE_STORAGE_EXCEPTIONS:
+            messages.warning(
+                request,
+                'A base de templates ainda nao esta pronta neste banco. Rode as migrations de operations para usar templates salvos.',
+            )
+            return redirect('coach-session-workout-editor', session_id=self.session.id)
+        result = apply_persisted_workout_template(
+            actor=request.user,
+            template=template,
+            target_session=self.session,
+        )
+        if not result['ok']:
+            messages.warning(
+                request,
+                'A aula ja tem montagem parcial '
+                f"({result.get('target_block_count', 0)} bloco(s), {result.get('target_movement_count', 0)} movimento(s)). "
+                'Nao aplicamos template salvo por cima. Se quiser usar esse modelo persistente, limpe os blocos atuais ou escolha outra aula.',
+            )
+            return redirect('coach-session-workout-editor', session_id=self.session.id)
+
+        submission_result = route_workout_submission(
+            actor=request.user,
+            workout=result['workout'],
+            source='template',
+            source_template=template,
+        ) if template.is_trusted else {'status': 'draft'}
+
+        if submission_result.get('status') == 'published':
+            messages.success(request, 'Template salvo confiavel aplicado e publicado direto pela politica ativa.')
+        else:
+            messages.success(request, 'Template salvo aplicado como base do WOD desta aula.')
+        return redirect('coach-session-workout-editor', session_id=self.session.id)
+
+    def _handle_create_stored_template(self, request):
+        workout = self._get_workout()
+        if workout is None or not workout.blocks.exists():
+            messages.error(request, 'Monte pelo menos um bloco no WOD antes de salvar como template.')
+            return redirect('coach-session-workout-editor', session_id=self.session.id)
+
+        form = WorkoutCreateStoredTemplateForm(request.POST)
+        if not form.is_valid():
+            messages.error(request, 'Escolha um nome valido para o template salvo.')
+            return redirect('coach-session-workout-editor', session_id=self.session.id)
+
+        try:
+            template = create_persisted_template_from_workout(
+                actor=request.user,
+                source_workout=workout,
+                name=form.cleaned_data['template_name'],
+            )
+        except TEMPLATE_STORAGE_EXCEPTIONS:
+            messages.warning(
+                request,
+                'A base de templates ainda nao esta pronta neste banco. Rode as migrations de operations antes de salvar templates.',
+            )
+            return redirect('coach-session-workout-editor', session_id=self.session.id)
+        messages.success(request, f'Template salvo "{template.name}" criado a partir deste WOD.')
+        return redirect('coach-session-workout-editor', session_id=self.session.id)

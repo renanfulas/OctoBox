@@ -53,9 +53,9 @@ Mesmo assim, `operations/workspace_views.py` cresceu demais e hoje concentra fun
 
 Estado observado na base atual:
 
-1. `operations/workspace_views.py` esta com 2535 linhas
-2. o arquivo mistura builders puros, leitura operacional, heuristicas executivas, action views e classes HTTP
-3. a board de aprovacao/publicacao do WOD puxou para dentro da mesma borda:
+1. `operations/workspace_views.py` esta com 878 linhas no runtime atual observado em 2026-04-24
+2. o arquivo segue misturando workspaces por papel, planner WOD, editor WOD, gestao de templates, approval/history e RM quick edit
+3. o corredor de WOD puxou para dentro da mesma borda:
    - historico publicado
    - follow-up
    - memoria operacional
@@ -63,6 +63,11 @@ Estado observado na base atual:
    - checkpoint semanal
    - maturidade
    - governanca
+4. a frente de templates persistentes agora tambem vive no mesmo arquivo:
+   - management
+   - policy update
+   - duplicate/delete/toggle
+   - blocos e movimentos
 
 Em linguagem simples:
 
@@ -255,175 +260,167 @@ Criar um baseline para refatorar sem andar no escuro.
 1. sabemos exatamente o que pode ser movido sem tocar em regra
 2. temos testes suficientes para nao refatorar no escuro
 
-## Onda 1 - Extrair builders puros da board
+## Onda 1 - Extrair corredor de templates para `workout_template_views.py`
 
 ### Objetivo
 
-Tirar da view tudo que e calculo puro e montagem de dicionario sem responsabilidade HTTP.
+Tirar de `workspace_views.py` o corredor mais coeso e de maior write density sem mexer no contrato de URLs.
 
-### Candidatos diretos
+### Escopo direto
 
-1. `_build_student_preview_payload`
-2. `_build_student_preview_diff`
-3. `_build_workout_decision_assist`
-4. `_build_workout_diff_snapshot`
-5. `_build_operational_memory_patterns`
-6. `_build_operational_leverage_summary`
-7. `_build_operational_leverage_trends`
-8. `_build_management_alert_priority`
-9. `_build_management_recommendations`
-10. `_build_weekly_executive_summary`
-11. `_build_weekly_checkpoint_rhythm`
-12. `_build_weekly_checkpoint_maturity`
-13. `_build_weekly_governance_action`
+1. `WorkoutTemplateManagementView`
+2. `WorkoutApprovalPolicyUpdateView`
+3. `WorkoutTemplateDuplicateView`
+4. `WorkoutTemplateDeleteView`
+5. `WorkoutTemplateToggleActiveView`
+6. `WorkoutTemplateToggleFeaturedView`
+7. `WorkoutTemplateUpdateMetadataView`
+8. `WorkoutTemplateUpdateBlockView`
+9. `WorkoutTemplateCreateBlockView`
+10. `WorkoutTemplateDeleteBlockView`
+11. `WorkoutTemplateMoveBlockView`
+12. `WorkoutTemplateUpdateMovementView`
+13. `WorkoutTemplateCreateMovementView`
+14. `WorkoutTemplateDeleteMovementView`
+15. `WorkoutTemplateMoveMovementView`
 
 ### Direcao
 
-Mover para modulo especifico da board, mantendo assinatura simples e sem dependencias de request.
+Mover para `operations/workout_template_views.py`, mantendo:
+
+1. os mesmos nomes de rota
+2. as mesmas permissoes
+3. a mesma casca HTTP
+4. o mesmo fallback de degradacao quando as tabelas de template nao existirem no banco
 
 ### Check de pronto
 
-1. `WorkoutApprovalBoardView` chama builders externos
-2. o template continua recebendo o mesmo shape
-3. testes continuam verdes
+1. `urls.py` passa a importar as views de template do novo modulo
+2. `workspace_views.py` perde o corredor de templates inteiro
+3. testes do editor/planner/templates continuam verdes
 
-## Onda 2 - Extrair montagem do historico publicado
+## Onda 2 - Extrair planner para `workout_planner_views.py`
 
 ### Objetivo
 
-Separar a leitura mais densa da board em um corredor proprio.
+Separar o cockpit do WOD para um modulo proprio, preservando a navegacao e a telemetria do picker.
 
-### Candidato principal
+### Escopo direto
 
-1. `_build_published_workout_history`
+1. `WorkoutPlannerView`
+2. `WorkoutPlannerTemplatePickerTelemetryView`
+3. `WorkoutPlannerApplyTrustedTemplateView`
+4. `WorkoutPlannerDuplicatePreviousSlotView`
 
 ### Direcao
 
-Essa extracao deve consolidar:
-
-1. prefetch e acesso a revisoes
-2. runtime metrics
-3. follow-up actions
-4. executive closure
-5. live follow-up entries
-6. weekly executive summary
-
-O resultado ideal e:
-
-1. um builder/coordinator claro
-2. com helpers pequenos em volta
-3. deixando a view so pedir "me devolva a historia publicada pronta"
+Mover o corredor inteiro para `operations/workout_planner_views.py`, sem reabsorver contexto ou builder puro para dentro da view.
 
 ### Check de pronto
 
-1. a leitura publicada sai de `workspace_views.py`
-2. o ponto de query fica mais facil de revisar
-3. conseguimos medir gargalo sem navegar no arquivo inteiro
+1. planner deixa de conviver com templates e workspaces por papel no mesmo arquivo
+2. rotas e comportamento ficam identicos
+3. smoke tests de planner permanecem verdes
 
-## Onda 3 - Tirar action views do arquivo monolitico
+## Onda 3 - Extrair builders puros e corredores densos da board
 
 ### Objetivo
 
-Separar leitura de workspace de mutacao operacional do WOD.
+Separar a leitura operacional mais densa do WOD em um corredor HTTP proprio.
 
-### Candidatos diretos
+### Escopo direto
 
-1. `WorkoutApprovalActionView`
-2. `WorkoutFollowUpActionView`
-3. `WorkoutOperationalMemoryCreateView`
-4. `WorkoutWeeklyCheckpointUpdateView`
+1. `WorkoutApprovalBoardView`
+2. `WorkoutPublicationHistoryView`
+3. `OperationsExecutiveSummaryView`
+4. `WorkoutStudentRmQuickEditView`
 
 ### Direcao
 
-Mover essas classes para:
+Mover para `operations/workout_board_views.py`, mantendo o corredor WOD coeso:
 
-1. `operations/action_views.py`, se o arquivo ainda comportar com clareza
-ou
-2. `operations/workout_action_views.py`, se a densidade do dominio WOD justificar um modulo proprio
+1. board
+2. history
+3. executive summary
+4. quick edit de RM
 
 ### Regra
 
-Mutacao deve ficar perto de:
+Leitura operacional deve ficar perto de:
 
-1. form
-2. auditoria
-3. permissao
-4. redirecionamento
-
-Mas nao precisa morar ao lado da board gigante so porque nasceu la.
+1. contexto da board
+2. contexto de historico
+3. resumo executivo
+4. quick edit do corredor
 
 ### Check de pronto
 
-1. `workspace_views.py` para de concentrar leitura e mutacao do WOD
+1. `workspace_views.py` para de concentrar board e historico do WOD
 2. `urls.py` continua estavel
-3. auditoria e mensagens continuam identicas
+3. approval, history e quick edit continuam identicos por fora
 
-## Onda 4 - Encurtar as workspace views
+## Onda 4 - Extrair corredor do editor
 
 ### Objetivo
 
-Fazer cada workspace view funcionar como casca fina.
+Separar o editor do coach/owner e o preview de prescricao do arquivo geral de workspace.
+
+### Escopo direto
+
+1. `WorkoutEditorHomeView`
+2. `CoachSessionWorkoutEditorView`
+3. `WorkoutPrescriptionPreviewView`
 
 ### Direcao
 
-Aplicar o mesmo criterio em:
+Mover para `operations/workout_editor_views.py`, preservando:
 
-1. `OwnerWorkspaceView`
-2. `ManagerWorkspaceView`
-3. `CoachWorkspaceView`
-4. `DevWorkspaceView`
-5. `ReceptionWorkspaceView`
-
-### Acoes
-
-1. mover attach/builders de payload para helpers de apresentacao quando fizer sentido
-2. evitar que a view tenha logica executiva longa
-3. manter apenas:
-   - permissao
-   - chamada de snapshot
-   - composicao de contexto final
-   - render
+1. contract do editor
+2. preview backend
+3. comportamento do redirect `workout-editor-home`
 
 ### Check de pronto
 
-1. uma pessoa nova entende a view em poucos minutos
-2. a logica de decisao nao fica enterrada no meio da borda HTTP
+1. o corredor do editor sai de `workspace_views.py`
+2. o editor continua verde nos testes
+3. o arquivo principal vira casca de workspaces por papel
 
-## Onda 5 - Revisao de query e payload depois da extracao
+## Onda 5 - Encurtar as workspace views restantes
 
 ### Objetivo
 
-Conferir se a refatoracao trouxe clareza sem custo escondido.
+Fazer o arquivo principal sobrar apenas para workspaces por papel e superficies realmente compartilhadas.
 
 ### Acoes
 
-1. revisar duplicacao de queryset
-2. conferir `select_related` e `prefetch_related`
-3. procurar montagens repetidas no mesmo request
-4. validar tempo de render da board e do workspace
-
-### Regra
-
-Otimizar depois da organizacao, e nao antes.
+1. revisar helpers compartilhados restantes
+2. manter no arquivo principal apenas:
+   - Owner/Dev/Manager/Coach/Reception workspaces
+   - event streams
+   - placeholders gerais, se ainda fizer sentido
 
 ### Check de pronto
 
-1. nenhum N+1 novo apareceu
-2. o payload nao cresceu sem necessidade
-3. a extracao nao piorou o runtime
+1. uma pessoa nova entende o arquivo principal em poucos minutos
+2. cada corredor WOD tem ownership proprio
+3. o arquivo principal deixa de ser gargalo cognitivo
 
-## Onda 6 - Atualizar docs de ownership e leitura
+## Onda 6 - Revisao de query, payload e docs de ownership
 
 ### Objetivo
 
-Fazer a documentacao acompanhar a nova planta.
+Fechar a refatoracao com medicao e documentacao alinhadas ao runtime real.
 
 ### Acoes
 
+1. revisar duplicacao de queryset e payload depois dos splits
+2. conferir `select_related` e `prefetch_related` nos corredores novos
 1. atualizar `docs/reference/reading-guide.md` se os pontos de entrada mudarem
 2. atualizar planos ligados ao WOD quando os ownerships mudarem
 3. deixar explicito onde mora:
    - leitura da board
+   - leitura do planner
+   - leitura do editor
    - mutacao da board
    - checkpoint semanal
    - aprendizado operacional
@@ -486,27 +483,37 @@ Traducao tecnica:
 Ao final das ondas estruturais executadas nesta trilha, o corredor ficou assim:
 
 1. `operations/workspace_views.py`
-   - casca HTTP por papel
-   - editor do coach
-   - board de aprovacao fina
-2. `operations/workout_board_builders.py`
-   - builders puros de diff, preview e leitura executiva
-3. `operations/workout_published_history.py`
-   - historico publicado e pos-publicacao
-4. `operations/workout_action_views.py`
+   - workspaces por papel
+   - event streams
+   - placeholders e superficies gerais
+2. `operations/workout_template_views.py`
+   - management e mutacoes de templates persistentes
+3. `operations/workout_planner_views.py`
+   - planner, picker telemetry e acoes do cockpit
+4. `operations/workout_board_views.py`
+   - board, history, executive summary e quick edit de RM
+5. `operations/workout_editor_views.py`
+   - editor do coach/owner e preview backend de prescricao
+6. `operations/workout_action_views.py`
    - mutacoes reais da board
-5. `operations/workout_approval_board_context.py`
+7. `operations/workout_approval_board_context.py`
    - coordenacao do contexto da board
-6. `operations/workout_support.py`
+8. `operations/workout_support.py`
    - suporte compartilhado de snapshot, revisao, auditoria e review snapshot
 
 Medida objetiva da trilha:
 
-1. `operations/workspace_views.py` saiu de 2535 linhas
-2. e terminou em 668 linhas
+1. `operations/workspace_views.py` saiu de 878 linhas no baseline observado em 2026-04-24
+2. e terminou em 231 linhas apos as ondas 1 a 4
+3. os corredores novos ficaram assim:
+   - `operations/workout_template_views.py` -> 388 linhas
+   - `operations/workout_planner_views.py` -> 134 linhas
+   - `operations/workout_board_views.py` -> 123 linhas
+   - `operations/workout_editor_views.py` -> 103 linhas
 
 Leitura correta:
 
 1. a view principal deixou de ser o cerebro do corredor de WOD
 2. agora ela e a casca de entrada
 3. os corredores internos passaram a ter ownership mais claro
+4. o split foi feito por capacidade, nao por abstracao generica

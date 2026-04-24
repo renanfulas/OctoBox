@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 from decimal import Decimal
 
+from django.db import OperationalError, ProgrammingError
 from django.utils import timezone
 
 from finance.models import Enrollment, EnrollmentStatus
@@ -138,11 +139,14 @@ class GetStudentDashboard:
     def _build_progress_days(self, *, student, now):
         today = now.date()
         days = [today - timedelta(days=offset) for offset in range(6, -1, -1)]
-        activities = (
-            StudentAppActivity.objects
-            .filter(student=student, activity_date__in=days)
-            .order_by('activity_date', 'created_at')
-        )
+        try:
+            activities = (
+                StudentAppActivity.objects
+                .filter(student=student, activity_date__in=days)
+                .order_by('activity_date', 'created_at')
+            )
+        except (OperationalError, ProgrammingError):
+            activities = ()
         activity_by_day = {}
         for activity in activities:
             activity_by_day.setdefault(activity.activity_date, activity.kind)
@@ -184,12 +188,15 @@ class GetStudentDashboard:
                         percentage=movement.load_value,
                     )
                     recommended_load = prescription.rounded_load_kg
-                    history = (
-                        StudentExerciseMaxHistory.objects
-                        .filter(student=student, exercise_slug=movement.movement_slug)
-                        .order_by('-created_at', '-id')
-                        .first()
-                    )
+                    try:
+                        history = (
+                            StudentExerciseMaxHistory.objects
+                            .filter(student=student, exercise_slug=movement.movement_slug)
+                            .order_by('-created_at', '-id')
+                            .first()
+                        )
+                    except (OperationalError, ProgrammingError):
+                        history = None
                     delta_kg = history.delta_kg if history is not None else None
                 return StudentRmOfTheDay(
                     exercise_slug=movement.movement_slug,

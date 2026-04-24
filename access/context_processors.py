@@ -172,7 +172,7 @@ def _build_navigation(role_slug, current_view_name):
             'nav_key': 'dashboard',
             'label': 'Dashboard',
             'href': reverse('dashboard'),
-            'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER),
+            'roles': (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_COACH),
             'icon': 'DB',
         },
         {

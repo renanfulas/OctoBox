@@ -1,0 +1,39 @@
+<div class="wod-command-palette" data-wod-command-palette hidden>
+    <div class="wod-command-palette__backdrop" data-wod-command="close" aria-hidden="true"></div>
+    <section
+        class="wod-command-palette__dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="wod-command-palette-title"
+    >
+        <div class="wod-command-palette__head">
+            <div>
+                <p class="eyebrow">Command palette</p>
+                <h2 id="wod-command-palette-title">Acoes rapidas do WOD</h2>
+            </div>
+            <button class="button tertiary" type="button" data-wod-command="close">Fechar</button>
+        </div>
+        <div class="wod-command-palette__list" aria-label="Comandos disponiveis">
+            <button type="button" data-wod-command="approve">
+                <strong>Aprovar item focado</strong>
+                <span>Publica o WOD atual quando ele nao exige confirmacao sensivel.</span>
+            </button>
+            <button type="button" data-wod-command="reject">
+                <strong>Preparar rejeicao</strong>
+                <span>Leva o foco para o motivo de rejeicao do WOD atual.</span>
+            </button>
+            <button type="button" data-wod-command="batch-approve">
+                <strong>Aprovar lote seguro</strong>
+                <span>Publica apenas itens nao sensiveis visiveis na fila.</span>
+            </button>
+            <button type="button" data-wod-command="next">
+                <strong>Proximo WOD</strong>
+                <span>Atalho visual para navegar na fila.</span>
+            </button>
+            <button type="button" data-wod-command="previous">
+                <strong>WOD anterior</strong>
+                <span>Volta para o item acima na lista.</span>
+            </button>
+        </div>
+    </section>
+</div>

@@ -1,9 +1,8 @@
 <section class="coach-wod-publication-history" aria-label="Historico executivo do que foi ao ar">
     <div class="coach-wod-publication-history-head">
         <div class="coach-wod-publication-history-intro">
-            <p class="eyebrow">Pos-publicacao</p>
+            <p class="eyebrow">Pos-publicacao {% include "operations/includes/wod_tooltip.html" with tooltip_text="Leitura curta das ultimas publicacoes e do contexto de decisao de cada WOD." %}</p>
             <h2>Historico executivo do que foi ao ar</h2>
-            <p>Leitura curta das ultimas publicacoes, com o contexto da decisao que liberou cada WOD.</p>
         </div>
         <div class="coach-wod-review-meta" aria-label="Marcadores executivos do historico publicado">
             <span class="pill success">{{ published_history.assist.without_concerns_count }} sem ressalvas</span>
@@ -171,9 +170,8 @@
     <section class="coach-wod-publication-history" aria-label="Pendencias reais do corredor">
         <div class="coach-wod-publication-history-head">
             <div class="coach-wod-publication-history-intro">
-                <p class="eyebrow">Pendencia real</p>
+                <p class="eyebrow">Pendencia real {% include "operations/includes/wod_tooltip.html" with tooltip_text="Separa casos vivos do resto do historico: fumaça, dono da bola e proxima escada." %}</p>
                 <h2>Fila curta do que ainda pede atencao</h2>
-                <p>Esse trecho separa os casos vivos do resto do historico. Ele mostra fumaça, dono da bola e proxima escada.</p>
             </div>
             <div class="coach-wod-review-meta">
                 <span class="pill warning">{{ published_history.assist.live_follow_up_count }} pendencia(s) real(is)</span>
@@ -291,9 +289,8 @@
     <section id="rm-gap-queue" class="coach-wod-publication-history" aria-label="Fila curta de alunos sem RM">
         <div class="coach-wod-publication-history-head">
             <div>
-                <p class="eyebrow">Corredor de RM</p>
+                <p class="eyebrow">Corredor de RM {% include "operations/includes/wod_tooltip.html" with tooltip_text="Quando o treino usa percentual de RM e falta dado da turma, este bloco mostra o gap a fechar." %}</p>
                 <h2>Alunos sem RM para movimentos criticos</h2>
-                <p>Quando o treino pede %RM e a turma nao tem esse dado, a publicacao deixa um corredor curto para fechar o gap antes da proxima aula.</p>
             </div>
             <div class="coach-wod-review-meta">
                 <span class="pill warning">{{ published_history.assist.rm_gap_queue.total_students }} gap(s) de RM</span>
@@ -392,6 +389,7 @@
                 <div class="coach-wod-editor-pills">
                     <span class="pill {{ item.approval_tone }}">{{ item.approval_label }}</span>
                     <span class="pill {{ item.runtime_tone }}">{{ item.runtime_label }}</span>
+                    {% if item.policy_badge %}<span class="pill {{ item.policy_badge.tone }}">{{ item.policy_badge.label }}</span>{% endif %}
                     <span class="pill accent">v{{ item.version }}</span>
                     {% if item.is_sensitive_confirmation %}
                     <span class="pill warning">Mudanca sensivel confirmada</span>
@@ -400,6 +398,7 @@
             </div>
             <div class="coach-wod-publication-card-body">
                 <p>{{ item.approval_summary }}</p>
+                {% if item.policy_badge %}<p>{{ item.policy_badge.detail }}</p>{% endif %}
                 <div class="coach-wod-publication-stats">
                     <span class="pill info">Turma {{ item.reserved_count }}/{{ item.capacity }}</span>
                     <span class="pill success">Check-in {{ item.checked_in_count }}</span>
