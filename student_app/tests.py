@@ -417,7 +417,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'Grade')
         self.assertContains(response, 'WOD')
         self.assertContains(response, 'RM')
-        self.assertContains(response, 'Proxima acao')
+        self.assertContains(response, 'Proxima aula')
         self.assertContains(response, 'class="student-primary-action"', html=False)
         self.assertContains(response, 'class="student-progress-strip"', html=False)
         self.assertContains(response, 'data-theme="light"', html=False)
@@ -467,6 +467,37 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(attendance.reservation_source, 'student_app')
         activity = StudentAppActivity.objects.get(student=self.student, kind=StudentAppActivityKind.ATTENDANCE_CONFIRMED)
         self.assertEqual(activity.source_object_id, session.id)
+
+    def test_confirm_attendance_blocks_second_booking_on_same_day(self):
+        first_session = ClassSession.objects.create(
+            title='Primeira aula',
+            scheduled_at=timezone.now() + timedelta(hours=3),
+            status='scheduled',
+        )
+        second_session = ClassSession.objects.create(
+            title='Segunda aula',
+            scheduled_at=timezone.now() + timedelta(hours=5),
+            status='scheduled',
+        )
+        Attendance.objects.create(
+            student=self.student,
+            session=first_session,
+            status=AttendanceStatus.BOOKED,
+            reservation_source='student_app',
+        )
+
+        response = self.client.post(
+            reverse('student-app-confirm-attendance'),
+            {
+                'session_id': str(second_session.id),
+                'next': reverse('student-app-grade'),
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Voce ja tem uma reserva ativa neste dia.')
+        self.assertFalse(Attendance.objects.filter(student=self.student, session=second_session).exists())
 
     def test_confirm_attendance_reactivates_canceled_booking(self):
         session = ClassSession.objects.create(
@@ -558,6 +589,33 @@ class StudentAppExperienceTests(TestCase):
         attendance = Attendance.objects.get(student=self.student, session=session)
         self.assertEqual(attendance.status, AttendanceStatus.BOOKED)
 
+    def test_cancel_attendance_is_blocked_after_check_in(self):
+        session = ClassSession.objects.create(
+            title='Aula com check-in',
+            scheduled_at=timezone.now() + timedelta(hours=2),
+            status='scheduled',
+        )
+        Attendance.objects.create(
+            student=self.student,
+            session=session,
+            status=AttendanceStatus.CHECKED_IN,
+            reservation_source='student_app',
+        )
+
+        response = self.client.post(
+            reverse('student-app-cancel-attendance'),
+            {
+                'session_id': str(session.id),
+                'next': reverse('student-app-grade'),
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Sua presenca ja foi confirmada nesta aula.')
+        attendance = Attendance.objects.get(student=self.student, session=session)
+        self.assertEqual(attendance.status, AttendanceStatus.CHECKED_IN)
+
     @override_settings(TIME_ZONE='America/Sao_Paulo')
     def test_student_schedule_renders_utc_input_in_box_local_timezone(self):
         session = ClassSession.objects.create(
@@ -602,7 +660,7 @@ class StudentAppExperienceTests(TestCase):
             reverse('student-app-rm-add'),
             {
                 'exercise_label': 'Deadlift',
-                'one_rep_max_kg': '100.00',
+                'one_rep_max_kg': '100.5',
             },
             follow=False,
         )
@@ -611,7 +669,7 @@ class StudentAppExperienceTests(TestCase):
         record = StudentExerciseMax.objects.get(student=self.student, exercise_slug='deadlift')
         created_history = StudentExerciseMaxHistory.objects.get(student=self.student, exercise_slug='deadlift')
         self.assertIsNone(created_history.previous_kg)
-        self.assertEqual(created_history.new_kg, Decimal('100.00'))
+        self.assertEqual(created_history.new_kg, Decimal('100.5'))
         self.assertEqual(created_history.delta_kg, Decimal('0.00'))
         self.assertTrue(
             StudentAppActivity.objects.filter(
@@ -623,14 +681,14 @@ class StudentAppExperienceTests(TestCase):
 
         update_response = self.client.post(
             reverse('student-app-rm-update', kwargs={'pk': record.id}),
-            {'one_rep_max_kg': '105.00'},
+            {'one_rep_max_kg': '105.5'},
             follow=False,
         )
 
         self.assertEqual(update_response.status_code, 302)
         latest_history = StudentExerciseMaxHistory.objects.filter(student=self.student, exercise_slug='deadlift').latest('created_at')
-        self.assertEqual(latest_history.previous_kg, Decimal('100.00'))
-        self.assertEqual(latest_history.new_kg, Decimal('105.00'))
+        self.assertEqual(latest_history.previous_kg, Decimal('100.5'))
+        self.assertEqual(latest_history.new_kg, Decimal('105.5'))
         self.assertEqual(latest_history.delta_kg, Decimal('5.00'))
         self.assertTrue(
             StudentAppActivity.objects.filter(
@@ -639,6 +697,20 @@ class StudentAppExperienceTests(TestCase):
                 source_object_id=record.id,
             ).exists()
         )
+
+    def test_student_rm_rejects_quarter_kg_precision(self):
+        response = self.client.post(
+            reverse('student-app-rm-add'),
+            {
+                'exercise_label': 'Front squat',
+                'one_rep_max_kg': '100.25',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Confira os dados e tente novamente.')
+        self.assertFalse(StudentExerciseMax.objects.filter(student=self.student, exercise_slug='front-squat').exists())
 
     def test_student_session_attendees_renders_for_visible_session(self):
         session = ClassSession.objects.create(
@@ -664,7 +736,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'Colega')
 
     def test_student_session_attendees_blocks_session_outside_visible_dashboard(self):
-        for offset in range(5):
+        for offset in range(12):
             ClassSession.objects.create(
                 title=f'Cross visivel {offset}',
                 scheduled_at=timezone.now() + timedelta(hours=offset + 1),
@@ -672,7 +744,7 @@ class StudentAppExperienceTests(TestCase):
             )
         hidden_session = ClassSession.objects.create(
             title='Cross fora do radar',
-            scheduled_at=timezone.now() + timedelta(hours=12),
+            scheduled_at=timezone.now() + timedelta(hours=24),
             status='scheduled',
         )
 
@@ -850,7 +922,7 @@ class StudentAppExperienceTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-ui="student-pwa-activation"', html=False)
-        self.assertContains(response, 'Instale o OctoBox no celular e libere as notificacoes.', html=False)
+        self.assertContains(response, 'Ative o que falta no app.', html=False)
         self.assertContains(response, 'data-ui="student-pwa-install-action"', html=False)
         self.assertContains(response, 'data-ui="student-pwa-notification-action"', html=False)
 

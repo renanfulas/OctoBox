@@ -51,7 +51,7 @@ def _student_identity_email_exists(*, email: str, box_root_slug: str, exclude_id
 
 class WorkoutPrescriptionForm(forms.Form):
     exercise_slug = forms.ChoiceField(choices=())
-    percentage = forms.DecimalField(min_value=Decimal('1'), max_value=Decimal('200'), decimal_places=2)
+    percentage = forms.ChoiceField(choices=())
 
     def __init__(self, *args, student=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -60,6 +60,12 @@ class WorkoutPrescriptionForm(forms.Form):
             for record in StudentExerciseMax.objects.filter(student=student).order_by('exercise_label')
         ] if student is not None else []
         self.fields['exercise_slug'].choices = choices
+        percentage_choices = [(str(value), f'{value}%') for value in range(5, 105, 5)]
+        self.fields['percentage'].choices = percentage_choices
+        self.fields['percentage'].initial = '70'
+
+    def clean_percentage(self):
+        return Decimal(str(self.cleaned_data['percentage']))
 
 
 class StudentExerciseMaxForm(forms.Form):
@@ -68,7 +74,8 @@ class StudentExerciseMaxForm(forms.Form):
         label='RM (kg)',
         min_value=Decimal('0.5'),
         max_value=Decimal('999'),
-        decimal_places=2,
+        decimal_places=1,
+        widget=forms.NumberInput(attrs={'step': '0.5', 'min': '0.5', 'inputmode': 'decimal'}),
     )
 
     def clean_exercise_label(self):
@@ -80,7 +87,8 @@ class StudentExerciseMaxUpdateForm(forms.Form):
         label='Novo RM (kg)',
         min_value=Decimal('0.5'),
         max_value=Decimal('999'),
-        decimal_places=2,
+        decimal_places=1,
+        widget=forms.NumberInput(attrs={'step': '0.5', 'min': '0.5', 'inputmode': 'decimal'}),
     )
 
 

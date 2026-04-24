@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from finance.models import Enrollment, EnrollmentStatus
 from operations.models import Attendance, AttendanceStatus, ClassSession
+from operations.session_snapshots import build_class_session_runtime_state
 from student_app.application.results import (
     StudentPrimaryAction,
     StudentDashboardResult,
@@ -30,6 +31,7 @@ from student_app.models import (
     WorkoutLoadType,
 )
 from student_app.application.timezone import localize_box_datetime, resolve_box_timezone
+from student_app.brazilian_holidays import get_brazilian_holiday_name
 
 
 WEEKDAY_LABELS = ('Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom')
@@ -39,6 +41,14 @@ def _movement_value(movement, field_name):
     if isinstance(movement, dict):
         return movement.get(field_name)
     return getattr(movement, field_name, None)
+
+
+def _format_attendance_status(*, attendance):
+    if attendance is None:
+        return 'Sem reserva'
+    if attendance.status == AttendanceStatus.CHECKED_IN:
+        return 'Presenca confirmada'
+    return attendance.get_status_display()
 
 
 def build_student_prescription_label(*, movement):
@@ -127,6 +137,16 @@ class GetStudentDashboard:
     wod_window_before_minutes = 30
     wod_window_after_minutes = 30
 
+    def _resolve_day_block_map(self, *, attendances):
+        day_blocks = {}
+        for attendance in attendances:
+            session_date = attendance.session.scheduled_at.date()
+            if attendance.status == AttendanceStatus.CHECKED_IN:
+                day_blocks[session_date] = 'Presenca confirmada'
+            elif attendance.status == AttendanceStatus.BOOKED and session_date not in day_blocks:
+                day_blocks[session_date] = 'Voce ja tem uma aula reservada hoje'
+        return day_blocks
+
     def _resolve_home_mode(self, *, session_cards, now):
         for session_card in session_cards:
             if session_card.attendance_code not in {
@@ -210,7 +230,7 @@ class GetStudentDashboard:
                 )
         return None
 
-    def _resolve_primary_action(self, *, home_mode, focal_session, active_wod_session, rm_of_the_day):
+    def _resolve_primary_action(self, *, home_mode, focal_session, active_wod_session, rm_of_the_day, available_session):
         if home_mode == 'wod_active' and active_wod_session is not None:
             return StudentPrimaryAction(
                 kind='open_wod',
@@ -231,6 +251,33 @@ class GetStudentDashboard:
                 label='Registrar RM',
                 url_name='student-app-rm',
             )
+        if focal_session is not None and focal_session.attendance_code in {
+            AttendanceStatus.BOOKED,
+            AttendanceStatus.CHECKED_IN,
+            AttendanceStatus.CHECKED_OUT,
+        }:
+            return StudentPrimaryAction(
+                kind='open_grade',
+                label='Abrir grade',
+                url_name='student-app-grade',
+            )
+        if available_session is not None:
+            if available_session.is_plan_blocked:
+                return StudentPrimaryAction(
+                    kind='renew_plan',
+                    label='Renove seu plano',
+                    url_name='student-app-settings',
+                    disabled=True,
+                    help_text=available_session.plan_block_reason,
+                )
+            if available_session.can_book:
+                return StudentPrimaryAction(
+                    kind='book_session',
+                    label='Reservar',
+                    url_name='student-app-confirm-attendance',
+                    method='post',
+                    payload={'session_id': available_session.session_id},
+                )
         return StudentPrimaryAction(
             kind='open_grade',
             label='Abrir grade',
@@ -240,19 +287,51 @@ class GetStudentDashboard:
     def execute(self, *, identity) -> StudentDashboardResult:
         box_timezone = resolve_box_timezone(box_root_slug=identity.box_root_slug)
         now = timezone.localtime(timezone.now(), box_timezone)
+        today = now.date()
         sessions = (
-            ClassSession.objects.filter(status__in=['scheduled', 'open'])
+            ClassSession.objects.filter(
+                status__in=['scheduled', 'open'],
+                scheduled_at__gte=timezone.make_aware(datetime.combine(today, time.min), box_timezone),
+            )
             .order_by('scheduled_at')
-            .prefetch_related('attendances', 'coach')[:5]
+            .prefetch_related('attendances', 'coach')[:12]
         )
+        attendance_queryset = Attendance.objects.filter(student=identity.student, session__in=sessions).select_related('session')
         attendance_by_session = {
             attendance.session_id: attendance
-            for attendance in Attendance.objects.filter(student=identity.student, session__in=sessions).select_related('session')
+            for attendance in attendance_queryset
         }
+        day_block_map = self._resolve_day_block_map(attendances=attendance_queryset)
+        workout_title_map = {}
+        for workout in SessionWorkout.objects.filter(session__in=sessions, status=SessionWorkoutStatus.PUBLISHED).select_related('session'):
+            workout_title_map.setdefault(workout.session_id, []).append(workout.title)
+        enrollment = (
+            Enrollment.objects.select_related('plan')
+            .filter(student=identity.student, status=EnrollmentStatus.ACTIVE)
+            .order_by('-created_at')
+            .first()
+        )
+        latest_enrollment = (
+            Enrollment.objects.select_related('plan')
+            .filter(student=identity.student)
+            .order_by('-created_at')
+            .first()
+        )
+        has_active_plan = enrollment is not None or latest_enrollment is None
         session_cards = []
         for session in sessions:
             attendance = attendance_by_session.get(session.id)
             scheduled_at = localize_box_datetime(session.scheduled_at, box_root_slug=identity.box_root_slug)
+            runtime_state = build_class_session_runtime_state(session, now=now)
+            is_day_blocked = session.scheduled_at.date() in day_block_map and attendance is None
+            plan_block_reason = 'Renove seu plano para reservar'
+            is_plan_blocked = not has_active_plan and attendance is None
+            can_book = (
+                attendance is None
+                and not is_day_blocked
+                and not is_plan_blocked
+                and runtime_state['label'] == 'Agendada'
+            )
             session_cards.append(
                 StudentSessionCard(
                     session_id=session.id,
@@ -260,7 +339,7 @@ class GetStudentDashboard:
                     scheduled_label=scheduled_at.strftime('%d/%m %H:%M'),
                     scheduled_at=scheduled_at,
                     coach_name=session.coach.get_full_name() if session.coach else 'Equipe OctoBox',
-                    attendance_status=(attendance.get_status_display() if attendance else 'Sem reserva'),
+                    attendance_status=_format_attendance_status(attendance=attendance),
                     attendance_code=(attendance.status if attendance else ''),
                     notes=session.notes,
                     can_confirm_presence=(
@@ -275,31 +354,44 @@ class GetStudentDashboard:
                         and attendance.status == AttendanceStatus.BOOKED
                         and now <= scheduled_at - timedelta(hours=1)
                     ),
+                    can_book=can_book,
+                    is_day_blocked=is_day_blocked,
+                    day_block_reason=day_block_map.get(session.scheduled_at.date(), ''),
+                    is_plan_blocked=is_plan_blocked,
+                    plan_block_reason=plan_block_reason if is_plan_blocked else '',
+                    runtime_status_label=runtime_state['label'],
+                    runtime_status_pill_class=runtime_state['pill_class'],
+                    is_starting_soon=scheduled_at > now and scheduled_at <= now + timedelta(minutes=30),
+                    workout_titles=tuple(workout_title_map.get(session.id, ())),
                 )
             )
         next_sessions = tuple(session_cards)
         home_mode, active_wod_session = self._resolve_home_mode(session_cards=next_sessions, now=now)
-        enrollment = (
-            Enrollment.objects.select_related('plan')
-            .filter(student=identity.student, status=EnrollmentStatus.ACTIVE)
-            .order_by('-created_at')
-            .first()
-        )
         membership_label = enrollment.plan.name if enrollment and enrollment.plan_id else 'Sem plano ativo'
+        booked_future_session = next(
+            (
+                session for session in next_sessions
+                if session.attendance_code in {AttendanceStatus.BOOKED, AttendanceStatus.CHECKED_IN, AttendanceStatus.CHECKED_OUT}
+                and session.scheduled_at >= now
+            ),
+            None,
+        )
+        available_session = next((session for session in next_sessions if session.can_book or session.is_plan_blocked), None)
         rm_of_the_day = self._resolve_rm_of_the_day(
             student=identity.student,
-            session_card=active_wod_session or (next_sessions[0] if next_sessions else None),
+            session_card=active_wod_session or booked_future_session or available_session or (next_sessions[0] if next_sessions else None),
         )
         primary_action = self._resolve_primary_action(
             home_mode=home_mode,
-            focal_session=next_sessions[0] if next_sessions else None,
+            focal_session=booked_future_session,
             active_wod_session=active_wod_session,
             rm_of_the_day=rm_of_the_day,
+            available_session=available_session,
         )
         next_useful_context = (
             'WOD ativo agora'
             if home_mode == 'wod_active'
-            else ('Proxima aula no radar' if next_sessions else 'Sem aula publicada')
+            else ('Proxima aula no radar' if booked_future_session or available_session else 'Sem aula publicada')
         )
         return StudentDashboardResult(
             student_name=identity.student.full_name,
@@ -307,12 +399,13 @@ class GetStudentDashboard:
             next_sessions=next_sessions,
             membership_label=membership_label,
             home_mode=home_mode,
-            focal_session=next_sessions[0] if next_sessions else None,
+            focal_session=booked_future_session or available_session,
             active_wod_session=active_wod_session,
             primary_action=primary_action,
             progress_days=self._build_progress_days(student=identity.student, now=now),
             rm_of_the_day=rm_of_the_day,
             next_useful_context=next_useful_context,
+            available_session=available_session,
         )
 
 
@@ -339,18 +432,22 @@ class GetStudentMonthSchedule:
             attendance.session_id: attendance
             for attendance in Attendance.objects.filter(student=identity.student, session__in=sessions).select_related('session')
         }
+        workout_title_map = {}
+        for workout in SessionWorkout.objects.filter(session__in=sessions, status=SessionWorkoutStatus.PUBLISHED).select_related('session'):
+            workout_title_map.setdefault(workout.session_id, []).append(workout.title)
         now = timezone.localtime(timezone.now(), box_timezone)
         sessions_by_date = {}
         for session in sessions:
             attendance = attendance_by_session.get(session.id)
             scheduled_at = localize_box_datetime(session.scheduled_at, box_root_slug=identity.box_root_slug)
+            runtime_state = build_class_session_runtime_state(session, now=now)
             card = StudentSessionCard(
                 session_id=session.id,
                 title=session.title,
                 scheduled_label=scheduled_at.strftime('%d/%m %H:%M'),
                 scheduled_at=scheduled_at,
                 coach_name=session.coach.get_full_name() if session.coach else 'Equipe OctoBox',
-                attendance_status=(attendance.get_status_display() if attendance else 'Sem reserva'),
+                attendance_status=_format_attendance_status(attendance=attendance),
                 attendance_code=(attendance.status if attendance else ''),
                 notes=session.notes,
                 can_confirm_presence=(
@@ -365,21 +462,44 @@ class GetStudentMonthSchedule:
                     and attendance.status == AttendanceStatus.BOOKED
                     and now <= scheduled_at - timedelta(hours=1)
                 ),
+                can_book=attendance is None and runtime_state['label'] == 'Agendada',
+                runtime_status_label=runtime_state['label'],
+                runtime_status_pill_class=runtime_state['pill_class'],
+                is_starting_soon=scheduled_at > now and scheduled_at <= now + timedelta(minutes=30),
+                workout_titles=tuple(workout_title_map.get(session.id, ())),
             )
             sessions_by_date.setdefault(scheduled_at.date(), []).append(card)
 
         days = []
         for _ in range(month_start.weekday()):
-            days.append(StudentMonthDay(date=None, date_label='', day_label='', is_today=False))
+            days.append(StudentMonthDay(date=None, date_label='', day_label='', is_today=False, preview_state='blank'))
         for day_number in range(1, last_day + 1):
             day = reference_date.replace(day=day_number)
+            holiday_name = get_brazilian_holiday_name(day)
+            day_sessions = tuple(sessions_by_date.get(day, ()))
+            attendance_labels = []
+            for session in day_sessions:
+                if session.attendance_code == AttendanceStatus.CHECKED_IN:
+                    attendance_labels.append(f'{session.title} · Presenca confirmada')
+                elif session.attendance_code == AttendanceStatus.BOOKED:
+                    attendance_labels.append(f'{session.title} · Reservado')
+            if attendance_labels:
+                student_checkin_label = ' | '.join(attendance_labels)
+            elif day < today:
+                student_checkin_label = 'Sem presenca'
+            else:
+                student_checkin_label = 'Nenhum check-in'
             days.append(
                 StudentMonthDay(
                     date=day,
                     date_label=str(day.day),
                     day_label=WEEKDAY_LABELS[day.weekday()],
                     is_today=day == today,
-                    sessions=tuple(sessions_by_date.get(day, ())),
+                    sessions=day_sessions,
+                    holiday_name=holiday_name or '',
+                    is_holiday=bool(holiday_name),
+                    student_checkin_label=student_checkin_label,
+                    preview_state='ready',
                 )
             )
         return tuple(days)

@@ -1,5 +1,5 @@
 <div class="student-session-actions" aria-label="Acoes da aula {{ session.title }}">
-    {% if session.can_confirm_presence %}
+    {% if session.can_book %}
     <form method="post" action="{% url 'student-app-confirm-attendance' %}" class="student-inline-form">
         {% csrf_token %}
         <input type="hidden" name="session_id" value="{{ session.session_id }}">
@@ -8,6 +8,30 @@
             Reservar
         </button>
     </form>
+    {% elif session.is_plan_blocked %}
+    <button
+        type="button"
+        class="student-secondary-action student-session-action--blocked"
+        disabled
+        aria-disabled="true"
+        title="{{ session.plan_block_reason }}"
+    >
+        Renove seu plano
+    </button>
+    {% elif session.is_day_blocked %}
+    <button
+        type="button"
+        class="student-secondary-action student-session-action--blocked"
+        disabled
+        aria-disabled="true"
+        title="{{ session.day_block_reason }}"
+    >
+        {% if session.day_block_reason == 'Presenca confirmada' %}Presenca confirmada{% else %}Dia ocupado{% endif %}
+    </button>
+    {% elif session.attendance_code == 'checked_in' %}
+    <button type="button" class="student-secondary-action student-session-action--blocked" disabled aria-disabled="true">
+        Presenca confirmada
+    </button>
     {% endif %}
     {% if session.can_cancel_attendance %}
     <form
