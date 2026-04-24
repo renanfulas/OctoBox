@@ -1,0 +1,79 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+{% with page=operation_page %}
+<div class="operation-shell coach-scene workspace-shell coach-wod-editor-shell smart-paste-shell">
+    {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
+    {% include "operations/includes/wod_corridor_tabs.html" %}
+
+    <section class="smart-paste-stepper" aria-label="Etapas do Smart Paste">
+        <div class="smart-paste-step{% if smart_paste_step == 1 %} is-active{% endif %}">
+            <span class="smart-paste-step-index">1</span>
+            <div>
+                <strong>Colar</strong>
+                <p>Texto cru da semana</p>
+            </div>
+        </div>
+        <div class="smart-paste-step{% if smart_paste_step == 2 %} is-active{% endif %}">
+            <span class="smart-paste-step-index">2</span>
+            <div>
+                <strong>Conferir</strong>
+                <p>Estrutura parseada</p>
+            </div>
+        </div>
+        <div class="smart-paste-step{% if smart_paste_step == 3 or weekly_plan_is_confirmed %} is-active{% endif %}">
+            <span class="smart-paste-step-index">3</span>
+            <div>
+                <strong>Replicar</strong>
+                <p>Preview, criar e desfazer</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="smart-paste-layout" aria-label="Fluxo do Smart Paste semanal">
+        <article class="table-card smart-paste-card">
+            <div class="coach-wod-editor-head">
+                <div>
+                    <p class="eyebrow">Colar</p>
+                    <h2>Semana em texto livre</h2>
+                    <p class="operation-session-meta">Cole como o coach escreve. O parser organiza sem tocar ainda nas aulas reais.</p>
+                </div>
+                {% if weekly_plan %}
+                <div class="coach-wod-editor-pills">
+                    <span class="pill {% if weekly_plan.status == 'confirmed' %}success{% else %}info{% endif %}">{{ weekly_plan.get_status_display }}</span>
+                    <span class="pill accent">{{ weekly_plan.week_start|date:"d/m/Y" }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <form method="post" class="coach-wod-form-stack smart-paste-form">
+                {% csrf_token %}
+                <input type="hidden" name="plan_id" value="{{ smart_paste_form.initial.plan_id|default_if_none:'' }}">
+                <input type="hidden" name="action" value="parse_text">
+                <div class="coach-wod-form-grid coach-wod-form-grid--two">
+                    <label>
+                        <span>Inicio da semana</span>
+                        {{ smart_paste_form.week_start }}
+                    </label>
+                    <label>
+                        <span>Rotulo do plano</span>
+                        {{ smart_paste_form.label }}
+                    </label>
+                </div>
+                <label>
+                    <span>Texto colado</span>
+                    {{ smart_paste_form.source_text }}
+                </label>
+                <div class="actions">
+                    <button class="button" type="submit">Organizar texto</button>
+                </div>
+            </form>
+        </article>
+
+        {% include "operations/includes/wod_smart_paste_preview.html" %}
+    </section>
+
+    {% include "operations/includes/wod_smart_paste_projection.html" %}
+</div>
+{% endwith %}
+{% endblock %}

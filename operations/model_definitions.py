@@ -26,6 +26,15 @@ HISTORICAL_BOXCORE_STUDENT_MODEL = 'boxcore.Student'
 HISTORICAL_BOXCORE_CLASS_SESSION_MODEL = 'boxcore.ClassSession'
 
 
+class ClassType(models.TextChoices):
+    CROSS = 'cross', 'CrossFit'
+    MOBILITY = 'mobility', 'Mobilidade / Alongamento'
+    OLY = 'oly', 'Halterofilia'
+    STRENGTH = 'strength', 'Forca'
+    OPEN_GYM = 'open_gym', 'Open Gym'
+    OTHER = 'other', 'Outro'
+
+
 class SessionStatus(models.TextChoices):
     SCHEDULED = 'scheduled', 'Agendada'
     OPEN = 'open', 'Liberada'
@@ -82,6 +91,12 @@ class LeadImportJobStatus(models.TextChoices):
 
 class ClassSession(TimeStampedModel):
     title = models.CharField(max_length=100)
+    class_type = models.CharField(
+        max_length=24,
+        choices=ClassType.choices,
+        default=ClassType.OTHER,
+        db_index=True,
+    )
     coach = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -224,6 +239,7 @@ __all__ = [
     'AttendanceStatus',
     'BehaviorCategory',
     'BehaviorNote',
+    'ClassType',
     'ClassSession',
     'HISTORICAL_BOXCORE_APP_LABEL',
     'HISTORICAL_BOXCORE_CLASS_SESSION_MODEL',

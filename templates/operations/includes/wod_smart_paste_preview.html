@@ -1,0 +1,127 @@
+<article class="table-card smart-paste-card" id="smart-paste-preview-panel">
+    <div class="coach-wod-editor-head">
+        <div>
+            <p class="eyebrow">Conferir</p>
+            <h2>Preview semanal</h2>
+            <p class="operation-session-meta">O texto cru vira grade de dias, blocos e movimentos antes de qualquer replicacao.</p>
+        </div>
+    </div>
+
+    {% if smart_paste_warnings %}
+    <div class="smart-paste-warning-list" aria-label="Linhas para revisar">
+        {% for warning in smart_paste_warnings %}
+        <article class="smart-paste-warning-card">
+            <strong>Linha {{ warning.line_number }}</strong>
+            <p><code>{{ warning.line_text }}</code></p>
+            <p>{{ warning.message }}</p>
+        </article>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if smart_paste_days %}
+    <div class="smart-paste-preview-grid">
+        {% for day in smart_paste_days %}
+        <section class="smart-paste-day-column">
+            <header class="smart-paste-day-head">
+                <p class="eyebrow">Dia {{ day.weekday|add:"1" }}</p>
+                <h3>{{ day.weekday_label }}</h3>
+            </header>
+            <div class="smart-paste-block-stack">
+                {% for block in day.blocks %}
+                <article class="smart-paste-block-card smart-paste-block-card--{{ block.kind }}">
+                    <div class="smart-paste-block-head">
+                        <span class="pill accent">{{ block.kind }}</span>
+                        {% if block.timecap_min %}
+                        <span class="pill info">{{ block.timecap_min }}m</span>
+                        {% endif %}
+                        {% if block.rounds %}
+                        <span class="pill warning">{{ block.rounds }} rounds</span>
+                        {% endif %}
+                    </div>
+                    <strong>{% if block.title %}{{ block.title }}{% else %}{{ block.kind|title }}{% endif %}</strong>
+                    {% if block.format_spec %}
+                    <p>{{ block.format_spec }}</p>
+                    {% endif %}
+                    {% if block.notes %}
+                    <p>{{ block.notes }}</p>
+                    {% endif %}
+                    <ul class="smart-paste-movement-list">
+                        {% for movement in block.movements %}
+                        <li class="{% if not movement.movement_slug %}is-warning{% endif %}">
+                            <span>{{ movement.movement_label_raw }}</span>
+                            {% if movement.movement_slug %}
+                            <code>{{ movement.movement_slug }}</code>
+                            {% else %}
+                            <span class="pill warning">revisar</span>
+                            <form
+                                method="post"
+                                class="smart-paste-inline-review-form"
+                                hx-post="{% url 'workout-smart-paste' %}"
+                                hx-target="#smart-paste-preview-panel"
+                                hx-swap="outerHTML"
+                            >
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="update_review_item">
+                                <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
+                                <input type="hidden" name="day_index" value="{{ forloop.parentloop.parentloop.parentloop.counter0 }}">
+                                <input type="hidden" name="block_index" value="{{ forloop.parentloop.parentloop.counter0 }}">
+                                <input type="hidden" name="movement_index" value="{{ forloop.counter0 }}">
+                                <label>
+                                    <span>Texto</span>
+                                    <input type="text" name="movement_label_raw" value="{{ movement.movement_label_raw }}">
+                                </label>
+                                <label>
+                                    <span>Slug</span>
+                                    <input type="text" name="movement_slug" value="{{ movement.movement_slug|default_if_none:'' }}" list="smart-paste-movement-slugs">
+                                </label>
+                                <label>
+                                    <span>Reps</span>
+                                    <input type="text" name="reps_spec" value="{{ movement.reps_spec|default_if_none:'' }}">
+                                </label>
+                                <label>
+                                    <span>Carga</span>
+                                    <input type="text" name="load_spec" value="{{ movement.load_spec|default_if_none:'' }}">
+                                </label>
+                                <label>
+                                    <span>Nota</span>
+                                    <input type="text" name="notes" value="{{ movement.notes|default_if_none:'' }}">
+                                </label>
+                                <div class="actions">
+                                    <button class="button tertiary" type="submit">Salvar revisao</button>
+                                </div>
+                            </form>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+        {% endfor %}
+    </div>
+
+    <datalist id="smart-paste-movement-slugs">
+        {% for slug, aliases in review_slug_choices %}
+        <option value="{{ slug }}"></option>
+        {% endfor %}
+    </datalist>
+
+    <form method="post" class="coach-wod-form-stack smart-paste-confirm-form">
+        {% csrf_token %}
+        <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
+        <input type="hidden" name="week_start" value="{{ weekly_plan.week_start|date:'Y-m-d' }}">
+        <input type="hidden" name="label" value="{{ weekly_plan.label }}">
+        <input type="hidden" name="source_text" value="{{ weekly_plan.source_text }}">
+        <input type="hidden" name="action" value="confirm_plan">
+        <div class="actions">
+            <button class="button secondary" type="submit">Confirmar rascunho semanal</button>
+        </div>
+    </form>
+    {% else %}
+    <div class="coach-wod-empty-state">
+        <p>O preview aparece aqui assim que o texto for organizado.</p>
+    </div>
+    {% endif %}
+</article>

@@ -46,6 +46,7 @@ from .workspace_views import (
     WorkoutEditorHomeView,
     WorkoutApprovalBoardView,
     WorkoutPublicationHistoryView,
+    WorkoutSmartPasteView,
     WorkoutStudentRmQuickEditView,
     WhatsAppWorkspaceView,
 )
@@ -66,6 +67,7 @@ urlpatterns = [
     path('operacao/recepcao/fragmentos/pagamentos/', ReceptionPaymentBoardPartialView.as_view(), name='reception-payment-board-fragment'),
     path('operacao/coach/', CoachWorkspaceView.as_view(), name='coach-workspace'),
     path('operacao/wod/editor/', WorkoutEditorHomeView.as_view(), name='workout-editor-home'),
+    path('operacao/wod/paste/', WorkoutSmartPasteView.as_view(), name='workout-smart-paste'),
     path('operacao/coach/aula/<int:session_id>/wod/', CoachSessionWorkoutEditorView.as_view(), name='coach-session-workout-editor'),
     path('operacao/wod/aprovacoes/', WorkoutApprovalBoardView.as_view(), name='workout-approval-board'),
     path('operacao/wod/historico/', WorkoutPublicationHistoryView.as_view(), name='workout-publication-history'),
