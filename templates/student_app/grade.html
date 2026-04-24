@@ -30,6 +30,32 @@
     {% endif %}
 </section>
 
+<details class="student-month-calendar">
+    <summary class="student-month-calendar__toggle">Ver mes</summary>
+    <div class="student-month-calendar__grid" aria-label="Calendario mensal">
+        {% for day in student_month_days %}
+        {% if day.date %}
+        <article class="student-month-day{% if day.is_today %} is-today{% endif %}{% if day.sessions %} has-sessions{% endif %}">
+            <span class="student-month-day__date">{{ day.date_label }}</span>
+            <span class="student-month-day__label">{{ day.day_label }}</span>
+            {% if day.sessions %}
+            <span class="student-month-day__count">{{ day.sessions|length }} aula(s)</span>
+            <div class="student-month-day__sessions">
+                {% for session in day.sessions %}
+                <p>{{ session.scheduled_at|date:"H:i" }} · {{ session.title }}</p>
+                {% endfor %}
+            </div>
+            {% else %}
+            <span class="student-month-day__empty">Sem aula</span>
+            {% endif %}
+        </article>
+        {% else %}
+        <span class="student-month-day student-month-day--blank" aria-hidden="true"></span>
+        {% endif %}
+        {% endfor %}
+    </div>
+</details>
+
 <section class="student-card student-card--quiet">
     <div class="student-section-head">
         <div>
@@ -44,6 +70,7 @@
             <span>{{ session.scheduled_label }}</span>
             <span>{{ session.coach_name }}</span>
             <span>{{ session.attendance_status }}</span>
+            {% include "student_app/_partials/_session_actions.html" with session=session %}
         </article>
         {% empty %}
         <article class="student-compact-state">

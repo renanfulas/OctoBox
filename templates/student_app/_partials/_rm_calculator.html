@@ -1,0 +1,19 @@
+<section class="student-card student-card--feature student-rm-calculator" data-ui="student-rm-calculator">
+    <div class="student-section-head">
+        <div>
+            <span class="student-context-switch">Calculadora</span>
+            <h2>Calcular carga</h2>
+        </div>
+    </div>
+    <div class="student-rm-calculator__grid">
+        <label>
+            <span>RM base</span>
+            <input class="student-input" type="number" min="0" step="0.5" value="{% if rm_records %}{{ rm_records.0.one_rep_max_kg }}{% endif %}" data-ui="student-rm-base">
+        </label>
+        <label>
+            <span>Percentual</span>
+            <input class="student-input" type="number" min="1" max="100" step="1" value="70" data-ui="student-rm-percent">
+        </label>
+        <output class="student-rm-calculator__result" data-ui="student-rm-result">-- kg</output>
+    </div>
+</section>

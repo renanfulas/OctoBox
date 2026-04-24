@@ -356,7 +356,7 @@
       pushConfigured: Boolean(notificationSupport.configured),
       hasPushSubscription: Boolean(currentPushSubscription),
     };
-    state.activationComplete = Boolean(state.isStandalone && state.notificationPermission === 'granted' && state.hasPushSubscription);
+    state.activationComplete = Boolean(state.isStandalone && state.notificationPermission === 'granted');
 
     window.OctoBoxStudentPWA = Object.assign({}, window.OctoBoxStudentPWA || {}, state, {
       promptInstall: function () {

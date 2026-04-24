@@ -14,3 +14,72 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 .student-card--settings-main {
     --student-card-glow: none;
 }
+
+.student-profile-readonly {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+}
+
+.student-profile-readonly > div {
+    display: grid;
+    gap: 4px;
+    padding: 12px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border-soft) 72%, transparent);
+}
+
+.student-profile-readonly dt {
+    color: var(--theme-text-secondary);
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.student-profile-readonly dd {
+    margin: 0;
+    color: var(--theme-text-primary);
+    font-weight: 800;
+}
+
+.student-profile-pending {
+    margin: 16px 0 0;
+    padding: 12px 14px;
+    border-radius: var(--radius-panel);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-warning) 26%, var(--theme-border-soft) 74%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 28%, var(--theme-surface-strong) 72%);
+    color: var(--theme-text-primary);
+    font-weight: 800;
+}
+
+.student-profile-edit {
+    margin-top: 16px;
+}
+
+.student-icon-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 90%, transparent);
+    color: var(--theme-text-primary);
+    font-weight: 900;
+    cursor: pointer;
+    list-style: none;
+}
+
+.student-icon-action::-webkit-details-marker {
+    display: none;
+}
+
+.student-icon-action svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.student-profile-edit .student-form-stack {
+    margin-top: 14px;
+}

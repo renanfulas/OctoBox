@@ -65,6 +65,7 @@
             <strong>{{ session.title }}</strong>
             <span>{{ session.scheduled_label }}</span>
             <span>{{ session.attendance_status }}</span>
+            {% include "student_app/_partials/_session_actions.html" with session=session %}
         </article>
         {% empty %}
         <article class="student-compact-state">

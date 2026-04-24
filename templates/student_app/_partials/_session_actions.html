@@ -1,0 +1,27 @@
+<div class="student-session-actions" aria-label="Acoes da aula {{ session.title }}">
+    {% if session.can_confirm_presence %}
+    <form method="post" action="{% url 'student-app-confirm-attendance' %}" class="student-inline-form">
+        {% csrf_token %}
+        <input type="hidden" name="session_id" value="{{ session.session_id }}">
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" class="student-secondary-action" aria-label="Reservar {{ session.title }} em {{ session.scheduled_label }}">
+            Reservar
+        </button>
+    </form>
+    {% endif %}
+    {% if session.can_cancel_attendance %}
+    <form
+        method="post"
+        action="{% url 'student-app-cancel-attendance' %}"
+        class="student-inline-form"
+        onsubmit="return confirm('Cancelar sua reserva nesta aula?')"
+    >
+        {% csrf_token %}
+        <input type="hidden" name="session_id" value="{{ session.session_id }}">
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" class="student-secondary-action student-secondary-action--danger" aria-label="Cancelar reserva em {{ session.title }} em {{ session.scheduled_label }}">
+            Cancelar
+        </button>
+    </form>
+    {% endif %}
+</div>

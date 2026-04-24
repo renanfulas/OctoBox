@@ -1,10 +1,15 @@
 {% if progress_days %}
-<section class="student-progress-strip" aria-label="Progresso dos ultimos 7 dias">
-    <span class="student-context-switch">7 dias</span>
+<section class="student-progress-strip" aria-label="Proximos 7 dias">
+    <span class="student-context-switch">Semana</span>
     <div class="student-progress-strip__track">
         {% for day in progress_days %}
-        <span class="student-progress-day{% if day.is_complete %} is-complete{% endif %}" title="{{ day.kind|default:'Sem acao' }}">
-            {{ day.date|date:"D"|slice:":1" }}
+        <span
+            class="student-progress-day{% if day.is_complete %} is-complete{% endif %}{% if day.is_today %} is-today{% endif %}"
+            title="{{ day.kind|default:'Sem aula confirmada' }}"
+            aria-label="{{ day.day_label }} {{ day.date_label }}{% if day.is_complete %}, com acao registrada{% else %}, sem acao registrada{% endif %}"
+        >
+            <span class="student-progress-day__label">{{ day.day_label }}</span>
+            <span class="student-progress-day__date">{{ day.date_label }}</span>
         </span>
         {% endfor %}
     </div>
