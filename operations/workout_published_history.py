@@ -39,6 +39,7 @@ from .workout_publication_metrics import (
     build_publication_rm_readiness,
     build_publication_runtime_metrics,
 )
+from .workout_support import build_policy_badge_from_snapshot
 from .workout_board_builders import (
     build_rm_gap_queue,
     build_management_alert_priority,
@@ -52,7 +53,15 @@ from .workout_board_builders import (
 )
 
 
-def build_published_workout_history(*, limit=12, coach_username='', today_only=False, published_reason='', current_role_slug=''):
+def build_published_workout_history(
+    *,
+    limit=12,
+    coach_username='',
+    today_only=False,
+    published_reason='',
+    current_role_slug='',
+    session_id=None,
+):
     now = timezone.localtime()
     queryset = (
         SessionWorkoutRevision.objects.select_related(
@@ -72,6 +81,8 @@ def build_published_workout_history(*, limit=12, coach_username='', today_only=F
     )
     if coach_username:
         queryset = queryset.filter(workout__session__coach__username=coach_username)
+    if session_id:
+        queryset = queryset.filter(workout__session_id=session_id)
     if today_only:
         queryset = queryset.filter(workout__session__scheduled_at__date=now.date())
     if published_reason and published_reason != 'no_reason':
@@ -241,6 +252,7 @@ def build_published_workout_history(*, limit=12, coach_username='', today_only=F
         operational_memories = list(revision.workout.operational_memories.all())
         operational_memory_kinds = [memory.kind for memory in operational_memories]
         rm_gap_action_records = list(revision.workout.rm_gap_actions.all())
+        policy_badge = build_policy_badge_from_snapshot(snapshot)
         history_item = {
             'workout_id': revision.workout_id,
             'session_title': session.title,
@@ -254,6 +266,7 @@ def build_published_workout_history(*, limit=12, coach_username='', today_only=F
             'approval_label': approval_label,
             'approval_summary': approval_summary,
             'approval_tone': tone_map.get(approval_category, 'accent'),
+            'policy_badge': policy_badge,
             'is_sensitive_confirmation': bool(snapshot.get('approved_with_sensitive_confirmation')),
             'runtime_label': runtime_label,
             'runtime_tone': runtime_tone,

@@ -17,6 +17,7 @@ from operations.model_definitions import (
     AttendanceStatus,
     BehaviorCategory,
     BehaviorNote,
+    ClassType,
     ClassSession,
     LeadImportDeclaredRange,
     LeadImportJob,
@@ -24,6 +25,11 @@ from operations.model_definitions import (
     LeadImportProcessingMode,
     LeadImportSourceType,
     SessionStatus,
+    WorkoutApprovalPolicySetting,
+    WorkoutTemplate,
+    WorkoutTemplateBlock,
+    WorkoutTemplateMovement,
+    WorkoutPlannerTemplatePickerEvent,
 )
 
 __all__ = [
@@ -31,6 +37,7 @@ __all__ = [
     'AttendanceStatus',
     'BehaviorCategory',
     'BehaviorNote',
+    'ClassType',
     'ClassSession',
     'LeadImportDeclaredRange',
     'LeadImportJob',
@@ -38,4 +45,9 @@ __all__ = [
     'LeadImportProcessingMode',
     'LeadImportSourceType',
     'SessionStatus',
+    'WorkoutApprovalPolicySetting',
+    'WorkoutTemplate',
+    'WorkoutTemplateBlock',
+    'WorkoutTemplateMovement',
+    'WorkoutPlannerTemplatePickerEvent',
 ]

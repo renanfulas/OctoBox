@@ -281,22 +281,36 @@ Leia nesta ordem:
 1. [operations/urls.py](../../operations/urls.py)
 2. [operations/base_views.py](../../operations/base_views.py)
 3. [operations/workspace_views.py](../../operations/workspace_views.py)
-4. [boxcore/operations/workspace_snapshot_queries.py](../../boxcore/operations/workspace_snapshot_queries.py)
-5. [operations/action_views.py](../../operations/action_views.py)
-6. [operations/actions.py](../../operations/actions.py)
-7. [templates/operations/owner.html](../../templates/operations/owner.html)
-8. [templates/operations/dev.html](../../templates/operations/dev.html)
-9. [templates/operations/manager.html](../../templates/operations/manager.html)
-10. [templates/operations/coach.html](../../templates/operations/coach.html)
+4. [operations/workout_template_views.py](../../operations/workout_template_views.py)
+5. [operations/workout_planner_views.py](../../operations/workout_planner_views.py)
+6. [operations/workout_board_views.py](../../operations/workout_board_views.py)
+7. [operations/workout_editor_views.py](../../operations/workout_editor_views.py)
+8. [boxcore/operations/workspace_snapshot_queries.py](../../boxcore/operations/workspace_snapshot_queries.py)
+9. [operations/action_views.py](../../operations/action_views.py)
+10. [operations/actions.py](../../operations/actions.py)
+11. [templates/operations/owner.html](../../templates/operations/owner.html)
+12. [templates/operations/dev.html](../../templates/operations/dev.html)
+13. [templates/operations/manager.html](../../templates/operations/manager.html)
+14. [templates/operations/coach.html](../../templates/operations/coach.html)
 
 Aqui voce entende:
 
 1. Como o usuario e enviado para a area correta.
 2. Como cada papel recebe um snapshot proprio.
-3. Quais endpoints realmente mutam estado operacional.
-4. Onde termina a camada HTTP e comeca a regra operacional.
+3. Como o corredor WOD foi quebrado por capacidade.
+4. Quais endpoints realmente mutam estado operacional.
+5. Onde termina a camada HTTP e comeca a regra operacional.
 
 Se houver bug de acao bloqueada, permissao funcional, workspace errado ou mutacao operacional com efeito colateral inesperado, investigue aqui.
+
+Se o foco for especificamente o corredor WOD operacional depois dos splits recentes, a trilha curta mais util agora e:
+
+1. [operations/workout_template_views.py](../../operations/workout_template_views.py)
+2. [operations/workout_planner_views.py](../../operations/workout_planner_views.py)
+3. [operations/workout_board_views.py](../../operations/workout_board_views.py)
+4. [operations/workout_editor_views.py](../../operations/workout_editor_views.py)
+5. [operations/workout_action_views.py](../../operations/workout_action_views.py)
+6. [operations/workout_support.py](../../operations/workout_support.py)
 
 ### Etapa 6: entender o dashboard
 
@@ -403,7 +417,7 @@ Use esta heuristica:
 3. Bug de aluno ou intake: [boxcore/models/students.py](../../boxcore/models/students.py), [boxcore/models/onboarding.py](../../boxcore/models/onboarding.py), [catalog/views/student_views.py](../../catalog/views/student_views.py) e [catalog/student_queries.py](../../catalog/student_queries.py).
 4. Bug de matricula, plano ou pagamento: [boxcore/models/finance.py](../../boxcore/models/finance.py), [catalog/services/student_enrollment_actions.py](../../catalog/services/student_enrollment_actions.py), [catalog/services/student_payment_actions.py](../../catalog/services/student_payment_actions.py), [catalog/views/finance_views.py](../../catalog/views/finance_views.py) e [boxcore/admin/finance.py](../../boxcore/admin/finance.py).
 5. Bug de filtros financeiros, relatorio ou fila operacional: [catalog/forms.py](../../catalog/forms.py), [catalog/finance_queries.py](../../catalog/finance_queries.py), [catalog/services/operational_queue.py](../../catalog/services/operational_queue.py), [boxcore/catalog/report_builders.py](../../boxcore/catalog/report_builders.py) e modelos financeiros em [boxcore/models/finance.py](../../boxcore/models/finance.py).
-6. Bug de aula, presenca, ocorrencia ou workspace por papel: [boxcore/models/operations.py](../../boxcore/models/operations.py), [operations/workspace_views.py](../../operations/workspace_views.py), [operations/action_views.py](../../operations/action_views.py), [operations/actions.py](../../operations/actions.py) e [operations/facade/workspace.py](../../operations/facade/workspace.py).
+6. Bug de aula, presenca, ocorrencia ou workspace por papel: [boxcore/models/operations.py](../../boxcore/models/operations.py), [operations/workspace_views.py](../../operations/workspace_views.py), [operations/workout_template_views.py](../../operations/workout_template_views.py), [operations/workout_planner_views.py](../../operations/workout_planner_views.py), [operations/workout_board_views.py](../../operations/workout_board_views.py), [operations/workout_editor_views.py](../../operations/workout_editor_views.py), [operations/action_views.py](../../operations/action_views.py), [operations/actions.py](../../operations/actions.py) e [operations/facade/workspace.py](../../operations/facade/workspace.py).
 7. Bug de dashboard: [dashboard/dashboard_views.py](../../dashboard/dashboard_views.py) e [dashboard/dashboard_snapshot_queries.py](../../dashboard/dashboard_snapshot_queries.py).
 8. Bug de auditoria: [auditing/services.py](../../auditing/services.py), [auditing/signals.py](../../auditing/signals.py) e [boxcore/models/audit.py](../../boxcore/models/audit.py).
 9. Bug de importacao: [boxcore/management/commands/import_students_csv.py](../../boxcore/management/commands/import_students_csv.py).

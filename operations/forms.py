@@ -15,6 +15,7 @@ PONTOS CRITICOS:
 from django import forms
 
 from operations.models import BehaviorCategory
+from operations.models import ClassType
 from shared_support.form_inputs import apply_text_input_attrs
 from student_app.models import StudentExerciseMax, WorkoutBlockKind, WorkoutLoadType, WorkoutOperationalMemoryKind
 from student_app.models import (
@@ -130,6 +131,7 @@ class WorkoutApprovalFilterForm(forms.Form):
         ),
     )
     coach = forms.CharField(required=False, max_length=120)
+    session_id = forms.IntegerField(required=False, min_value=1)
     sensitive_only = forms.BooleanField(required=False)
     today_only = forms.BooleanField(required=False)
     published_reason = forms.ChoiceField(required=False, choices=WORKOUT_HISTORY_REASON_FILTER_CHOICES)
@@ -317,6 +319,20 @@ class CoachWorkoutMovementForm(forms.Form):
         super().__init__(*args, **kwargs)
         apply_text_input_attrs(self.fields['movement_slug'], placeholder='deadlift')
         apply_text_input_attrs(self.fields['movement_label'], placeholder='Deadlift')
+        self.fields['movement_slug'].widget.attrs.update(
+            {
+                'list': 'wod-movement-catalog-slugs',
+                'data-wod-movement-slug': 'true',
+                'autocomplete': 'off',
+            }
+        )
+        self.fields['movement_label'].widget.attrs.update(
+            {
+                'list': 'wod-movement-catalog-labels',
+                'data-wod-movement-label': 'true',
+                'autocomplete': 'off',
+            }
+        )
         apply_text_input_attrs(self.fields['notes'], placeholder='Respire no topo e mantenha a lombar forte.', maxlength=255)
 
 
@@ -324,10 +340,171 @@ class WorkoutDuplicateForm(forms.Form):
     target_session_id = forms.IntegerField(min_value=1)
 
 
+class WeeklyWodSmartPasteForm(forms.Form):
+    plan_id = forms.IntegerField(required=False, min_value=1)
+    week_start = forms.DateField(input_formats=['%Y-%m-%d'])
+    label = forms.CharField(max_length=140, required=False)
+    source_text = forms.CharField(widget=forms.Textarea(attrs={'rows': 22}), required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        apply_text_input_attrs(
+            self.fields['label'],
+            placeholder='Ex.: Semana 2 - Base de forca + metcon',
+            maxlength=140,
+        )
+        self.fields['source_text'].widget.attrs.update(
+            {
+                'placeholder': (
+                    'Cole aqui o treino semanal.\n\n'
+                    'Segunda\n'
+                    'Mobilidade\n'
+                    'Aquecimento\n'
+                    '3x\n'
+                    '10 lunges\n'
+                    '8 front squat\n'
+                    '20 sit up'
+                ),
+                'class': 'smart-paste-textarea',
+                'spellcheck': 'false',
+            }
+        )
+
+    def clean_source_text(self):
+        return (self.cleaned_data.get('source_text') or '').strip()
+
+
+class WeeklyWodProjectionForm(forms.Form):
+    plan_id = forms.IntegerField(min_value=1)
+    target_week_start = forms.DateField(input_formats=['%Y-%m-%d'])
+    class_types = forms.MultipleChoiceField(
+        choices=(
+            (ClassType.CROSS, 'CrossFit'),
+            (ClassType.MOBILITY, 'Mobilidade'),
+            (ClassType.OLY, 'Halterofilia'),
+            (ClassType.STRENGTH, 'Forca'),
+            (ClassType.OPEN_GYM, 'Open Gym'),
+        ),
+        required=False,
+    )
+
+    def clean_class_types(self):
+        class_types = self.cleaned_data.get('class_types') or []
+        return list(class_types or [ClassType.CROSS])
+
+
+class WeeklyWodReviewMovementForm(forms.Form):
+    plan_id = forms.IntegerField(min_value=1)
+    day_index = forms.IntegerField(min_value=0)
+    block_index = forms.IntegerField(min_value=0)
+    movement_index = forms.IntegerField(min_value=0)
+    movement_label_raw = forms.CharField(max_length=120)
+    movement_slug = forms.CharField(max_length=64, required=False)
+    reps_spec = forms.CharField(max_length=64, required=False)
+    load_spec = forms.CharField(max_length=64, required=False)
+    notes = forms.CharField(max_length=255, required=False)
+
+    def __init__(self, *args, slug_choices=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.slug_choices = list(slug_choices or [])
+        apply_text_input_attrs(
+            self.fields['movement_label_raw'],
+            placeholder='Ex.: 15 bar muscle up',
+            maxlength=120,
+        )
+        apply_text_input_attrs(
+            self.fields['movement_slug'],
+            placeholder='Ex.: bar_muscle_up',
+            maxlength=64,
+        )
+        apply_text_input_attrs(
+            self.fields['reps_spec'],
+            placeholder='Ex.: 15 ou 10 a 12',
+            maxlength=64,
+        )
+        apply_text_input_attrs(
+            self.fields['load_spec'],
+            placeholder='Ex.: 40/25 ou 70%',
+            maxlength=64,
+        )
+        apply_text_input_attrs(
+            self.fields['notes'],
+            placeholder='Observacao curta do movimento.',
+            maxlength=255,
+        )
+
+
+class WeeklyWodUndoReplicationForm(forms.Form):
+    batch_id = forms.IntegerField(min_value=1)
+
+
+class WorkoutQuickTemplateForm(forms.Form):
+    source_workout_id = forms.IntegerField(min_value=1)
+
+
+class WorkoutStoredTemplateForm(forms.Form):
+    template_id = forms.IntegerField(min_value=1)
+
+
+class WorkoutCreateStoredTemplateForm(forms.Form):
+    template_name = forms.CharField(max_length=120)
+
+
+class WorkoutTemplateMetadataForm(forms.Form):
+    name = forms.CharField(max_length=120)
+    description = forms.CharField(max_length=255, required=False)
+    is_featured = forms.BooleanField(required=False)
+    is_trusted = forms.BooleanField(required=False)
+
+
+class WorkoutTemplateDuplicateForm(forms.Form):
+    name = forms.CharField(max_length=120, required=False)
+
+
+class WorkoutTemplateManagementFilterForm(forms.Form):
+    q = forms.CharField(max_length=120, required=False)
+    active = forms.BooleanField(required=False)
+    featured = forms.BooleanField(required=False)
+
+
+class WorkoutApprovalPolicyForm(forms.Form):
+    approval_policy = forms.ChoiceField(choices=(('strict', 'Aprovacao obrigatoria'), ('trusted_template', 'Template confiavel publica direto'), ('coach_autonomy', 'Coach confiavel publica direto')))
+
+
+class WorkoutTemplateBlockForm(forms.Form):
+    block_id = forms.IntegerField(min_value=1, required=False)
+    title = forms.CharField(max_length=120)
+    kind = forms.ChoiceField(choices=WorkoutBlockKind.choices, initial=WorkoutBlockKind.CUSTOM)
+    notes = forms.CharField(widget=forms.Textarea(attrs={'rows': 2}), required=False)
+    sort_order = forms.IntegerField(min_value=1, initial=1)
+
+
+class WorkoutTemplateMovementForm(forms.Form):
+    movement_id = forms.IntegerField(min_value=1, required=False)
+    block_id = forms.IntegerField(min_value=1, required=False)
+    movement_slug = forms.SlugField(max_length=64)
+    movement_label = forms.CharField(max_length=120)
+    sets = forms.IntegerField(min_value=1, required=False)
+    reps = forms.IntegerField(min_value=1, required=False)
+    load_type = forms.ChoiceField(choices=WorkoutLoadType.choices, initial=WorkoutLoadType.FREE)
+    load_value = forms.DecimalField(min_value=0, decimal_places=2, max_digits=6, required=False)
+    notes = forms.CharField(max_length=255, required=False)
+    sort_order = forms.IntegerField(min_value=1, initial=1)
+
+
 __all__ = [
     'CoachSessionWorkoutForm',
     'CoachWorkoutBlockForm',
     'WorkoutDuplicateForm',
+    'WorkoutQuickTemplateForm',
+    'WorkoutStoredTemplateForm',
+    'WorkoutTemplateMetadataForm',
+    'WorkoutTemplateDuplicateForm',
+    'WorkoutTemplateManagementFilterForm',
+    'WorkoutApprovalPolicyForm',
+    'WorkoutTemplateBlockForm',
+    'WorkoutTemplateMovementForm',
+    'WorkoutCreateStoredTemplateForm',
     'CoachWorkoutMovementForm',
     'TechnicalBehaviorNoteForm',
     'WorkoutRejectionForm',
@@ -338,4 +515,8 @@ __all__ = [
     'WorkoutWeeklyCheckpointForm',
     'WorkoutRmGapActionForm',
     'WorkoutStudentRmQuickForm',
+    'WeeklyWodSmartPasteForm',
+    'WeeklyWodProjectionForm',
+    'WeeklyWodReviewMovementForm',
+    'WeeklyWodUndoReplicationForm',
 ]

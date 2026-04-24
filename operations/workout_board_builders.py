@@ -30,3 +30,8 @@ from .workout_board_weekly_builders import (
     build_weekly_executive_summary,
     build_weekly_governance_action,
 )
+from .workout_history_tab_builders import (
+    build_alerts_context,
+    build_checkpoint_context,
+    build_published_wods_context,
+)

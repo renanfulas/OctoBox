@@ -19,7 +19,7 @@ TESTS = [
     "student_app/tests.py::StudentAppExperienceTests::test_imported_lead_onboarding_updates_student_and_records_funnel_events",
     "student_identity/tests.py::StudentIdentityFlowTests::test_registered_student_invite_redirects_directly_to_app_with_funnel_events",
     "student_identity/tests.py::StudentIdentityFlowTests::test_open_box_invite_redirects_student_to_membership_pending",
-    "student_app/tests.py::StudentAppExperienceTests::test_student_profile_edit_updates_student_and_identity_email",
+    "student_app/tests.py::StudentAppExperienceTests::test_student_profile_edit_creates_pending_request_without_direct_write",
 ]
 
 

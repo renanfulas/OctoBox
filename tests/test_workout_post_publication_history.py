@@ -242,6 +242,91 @@ class WorkoutPostPublicationHistoryTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'Urgente')
         self.assertNotContains(response, 'Alinhado')
 
+    def test_publication_history_can_filter_directly_by_session_id(self):
+        focused_workout = SessionWorkout.objects.create(
+            session=self.session,
+            title='Historico da aula certa',
+            status=SessionWorkoutStatus.PUBLISHED,
+            version=1,
+        )
+        SessionWorkoutRevision.objects.create(
+            workout=focused_workout,
+            version=1,
+            event=SessionWorkoutRevisionEvent.PUBLISHED,
+            created_by=self.manager,
+            snapshot={
+                'title': 'Historico da aula certa',
+                'status': 'published',
+                'version': 1,
+                'blocks': [],
+            },
+        )
+        other_session = ClassSession.objects.create(
+            title='Cross 20h',
+            coach=self.coach,
+            scheduled_at=timezone.now() + timedelta(days=1),
+            duration_minutes=60,
+            capacity=16,
+            status=SessionStatus.SCHEDULED,
+        )
+        other_workout = SessionWorkout.objects.create(
+            session=other_session,
+            title='Historico de outra aula',
+            status=SessionWorkoutStatus.PUBLISHED,
+            version=1,
+        )
+        SessionWorkoutRevision.objects.create(
+            workout=other_workout,
+            version=1,
+            event=SessionWorkoutRevisionEvent.PUBLISHED,
+            created_by=self.manager,
+            snapshot={
+                'title': 'Historico de outra aula',
+                'status': 'published',
+                'version': 1,
+                'blocks': [],
+            },
+        )
+        self.login_as_manager()
+
+        response = self.client.get(reverse('workout-publication-history'), data={'session_id': self.session.id})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Historico da aula certa')
+        self.assertNotContains(response, 'Historico de outra aula')
+        self.assertContains(response, 'Historico filtrado por aula')
+
+    def test_publication_history_surfaces_policy_badge_readably(self):
+        workout = SessionWorkout.objects.create(
+            session=self.session,
+            title='WOD com bypass legivel',
+            status=SessionWorkoutStatus.PUBLISHED,
+            version=1,
+        )
+        SessionWorkoutRevision.objects.create(
+            workout=workout,
+            version=1,
+            event=SessionWorkoutRevisionEvent.PUBLISHED,
+            created_by=self.manager,
+            snapshot={
+                'title': 'WOD com bypass legivel',
+                'status': 'published',
+                'version': 1,
+                'approval_policy': 'trusted_template',
+                'submission_source': 'template',
+                'source_template_trusted': True,
+                'bypass_approval': True,
+                'blocks': [],
+            },
+        )
+        self.login_as_manager()
+
+        response = self.client.get(reverse('workout-publication-history'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Trusted template')
+        self.assertContains(response, 'Publicado direto via template confiavel.')
+
     def test_approval_board_surfaces_post_publication_operational_alerts(self):
         urgent_session = ClassSession.objects.create(
             title='Cross 06h30',

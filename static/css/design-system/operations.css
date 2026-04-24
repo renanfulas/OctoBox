@@ -38,3 +38,228 @@ ORDEM DA CASCADE:
 
 /* Camada 5: refinamentos e overrides finais. */
 @import url("./operations/refinements.css");
+
+.smart-paste-shell {
+    gap: 1.5rem;
+}
+
+.smart-paste-stepper {
+    display: flex;
+    gap: 1rem;
+    align-items: stretch;
+    overflow-x: auto;
+}
+
+.smart-paste-step {
+    display: flex;
+    gap: 0.85rem;
+    align-items: center;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.38);
+    min-width: 220px;
+}
+
+.smart-paste-step.is-active {
+    border-color: rgba(56, 189, 248, 0.45);
+    box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.18) inset;
+}
+
+.smart-paste-step-index {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    background: rgba(30, 41, 59, 0.92);
+    color: #f8fafc;
+}
+
+.smart-paste-step p {
+    margin: 0.2rem 0 0;
+    color: rgba(226, 232, 240, 0.7);
+    font-size: 0.92rem;
+}
+
+.smart-paste-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.25fr);
+    gap: 1.25rem;
+}
+
+.smart-paste-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.smart-paste-textarea {
+    min-height: 32rem;
+    width: 100%;
+    font-family: "IBM Plex Mono", "Fira Code", Consolas, monospace;
+    line-height: 1.55;
+    resize: vertical;
+}
+
+.smart-paste-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.85rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+}
+
+.smart-paste-day-column {
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.smart-paste-day-head h3 {
+    margin: 0.2rem 0 0;
+}
+
+.smart-paste-block-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.smart-paste-block-card {
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 16px;
+    padding: 0.9rem;
+    background: rgba(15, 23, 42, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.smart-paste-block-card--warmup {
+    border-color: rgba(34, 197, 94, 0.28);
+}
+
+.smart-paste-block-card--skill,
+.smart-paste-block-card--strength {
+    border-color: rgba(56, 189, 248, 0.28);
+}
+
+.smart-paste-block-card--metcon {
+    border-color: rgba(249, 115, 22, 0.32);
+}
+
+.smart-paste-block-card--mobility,
+.smart-paste-block-card--cooldown {
+    border-color: rgba(168, 85, 247, 0.3);
+}
+
+.smart-paste-block-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.smart-paste-movement-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.smart-paste-movement-list li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.55rem 0.65rem;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.68);
+}
+
+.smart-paste-movement-list li.is-warning {
+    border: 1px dashed rgba(245, 158, 11, 0.72);
+}
+
+.smart-paste-warning-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.smart-paste-warning-card {
+    border: 1px dashed rgba(245, 158, 11, 0.72);
+    border-radius: 16px;
+    padding: 0.85rem 0.95rem;
+    background: rgba(120, 53, 15, 0.14);
+}
+
+.smart-paste-class-types {
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 16px;
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.smart-paste-class-type-option {
+    display: inline-flex;
+    gap: 0.45rem;
+    align-items: center;
+}
+
+.smart-paste-projection-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.smart-paste-projection-list {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.smart-paste-projection-card {
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 16px;
+    padding: 0.95rem 1rem;
+    background: rgba(15, 23, 42, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.smart-paste-projection-card--ready {
+    border-color: rgba(34, 197, 94, 0.35);
+}
+
+.smart-paste-projection-card--skip_existing_workout,
+.smart-paste-projection-card--skip_no_compatible_blocks,
+.smart-paste-projection-card--skip_no_day_plan {
+    border-color: rgba(245, 158, 11, 0.45);
+}
+
+.smart-paste-projection-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+@media (max-width: 768px) {
+    .smart-paste-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .smart-paste-stepper {
+        flex-direction: column;
+    }
+
+    .smart-paste-step {
+        min-width: 0;
+    }
+}

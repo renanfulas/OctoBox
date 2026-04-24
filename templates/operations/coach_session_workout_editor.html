@@ -52,7 +52,8 @@
                 {% csrf_token %}
                 <input type="hidden" name="intent" value="submit_for_approval">
                 <div class="actions">
-                    <button class="button" type="submit">Enviar para aprovacao</button>
+                    <button class="button" type="submit">{{ submission_action.label }}</button>
+                    <p class="operation-session-meta">{{ submission_action.helper_copy }}</p>
                     {% if current_role.slug == 'owner' %}
                     <a class="button secondary" href="{% url 'workout-approval-board' %}">Ver fila de aprovacao</a>
                     {% else %}
@@ -79,14 +80,90 @@
                 </div>
             </form>
             {% endif %}
+            {% if quick_template_options %}
+            <form method="post" class="coach-wod-form-stack coach-wod-duplicate-form" data-wod-quick-template-form>
+                {% csrf_token %}
+                <input type="hidden" name="intent" value="apply_quick_template">
+                <div class="coach-wod-form-grid coach-wod-form-grid--two">
+                    <label>
+                        <span>Template rapido</span>
+                        <select name="source_workout_id" data-wod-quick-template-select>
+                            <option value="">Escolha um WOD publicado recente</option>
+                            {% for option in quick_template_options %}
+                            <option value="{{ option.id }}">{{ option.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+                <section class="coach-wod-review-digest coach-wod-prescription-preview" data-wod-quick-template-preview aria-label="Resumo do template rapido">
+                    <p class="eyebrow">Resumo do template</p>
+                    <strong class="coach-wod-prescription-preview__label" data-wod-quick-template-title>Escolha um template para ver o resumo.</strong>
+                    <p class="coach-wod-prescription-preview__context" data-wod-quick-template-summary>Sem template selecionado.</p>
+                    <div class="coach-wod-review-meta coach-wod-prescription-preview__meta coach-wod-quick-template-preview__meta">
+                        <span class="pill info" data-wod-quick-template-coach>Sem coach</span>
+                        <span class="pill accent" data-wod-quick-template-blocks>0 blocos</span>
+                        <span class="pill accent" data-wod-quick-template-movements>0 movimentos</span>
+                    </div>
+                    <p class="coach-wod-prescription-preview__context coach-wod-quick-template-preview__hint">Use o resumo para confirmar a base antes de aplicar o template rapido na aula.</p>
+                </section>
+                <div class="actions">
+                    <button class="button secondary" type="submit">Aplicar template rapido</button>
+                </div>
+            </form>
+            {% endif %}
+            {% if stored_template_options %}
+            <form method="post" class="coach-wod-form-stack coach-wod-duplicate-form" data-wod-stored-template-form>
+                {% csrf_token %}
+                <input type="hidden" name="intent" value="apply_stored_template">
+                <div class="coach-wod-form-grid coach-wod-form-grid--two">
+                    <label>
+                        <span>Template salvo</span>
+                        <select name="template_id" data-wod-stored-template-select>
+                            <option value="">Escolha um template persistente</option>
+                            {% for option in stored_template_options %}
+                            <option value="{{ option.id }}">{{ option.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+                <section class="coach-wod-review-digest coach-wod-prescription-preview" data-wod-stored-template-preview aria-label="Resumo do template salvo">
+                    <p class="eyebrow">Resumo do template salvo</p>
+                    <strong class="coach-wod-prescription-preview__label" data-wod-stored-template-title>Escolha um template salvo para ver o resumo.</strong>
+                    <p class="coach-wod-prescription-preview__context" data-wod-stored-template-summary>Sem template persistente selecionado.</p>
+                    <div class="coach-wod-review-meta coach-wod-prescription-preview__meta coach-wod-quick-template-preview__meta">
+                        <span class="pill info" data-wod-stored-template-coach>Sem autor</span>
+                        <span class="pill info" data-wod-stored-template-trust>Template em revisao</span>
+                        <span class="pill accent" data-wod-stored-template-blocks>0 blocos</span>
+                        <span class="pill accent" data-wod-stored-template-movements>0 movimentos</span>
+                    </div>
+                </section>
+                <div class="actions">
+                    <button class="button secondary" type="submit">Aplicar template salvo</button>
+                </div>
+            </form>
+            {% endif %}
+            {% if workout %}
+            <form method="post" class="coach-wod-form-stack coach-wod-duplicate-form">
+                {% csrf_token %}
+                <input type="hidden" name="intent" value="create_stored_template">
+                <div class="coach-wod-form-grid coach-wod-form-grid--two">
+                    <label>
+                        <span>Salvar este WOD como template</span>
+                        <input type="text" name="template_name" value="{{ create_stored_template_form.template_name.value|default_if_none:'' }}" maxlength="120" placeholder="Ex.: Forca base da semana">
+                    </label>
+                </div>
+                <div class="actions">
+                    <button class="button secondary" type="submit">Salvar como template</button>
+                </div>
+            </form>
+            {% endif %}
         </article>
 
         <article class="table-card coach-wod-editor-card">
             <div class="coach-wod-editor-head">
                 <div>
-                    <p class="eyebrow">Blocos</p>
+                    <p class="eyebrow">Blocos {% include "operations/includes/wod_tooltip.html" with tooltip_text="Cada bloco organiza uma parte do treino, como aquecimento, forca, skill ou metcon." %}</p>
                     <h2>Estrutura do treino</h2>
-                    <p class="operation-session-meta">Cada bloco funciona como um capitulo do treino: aquecimento, forca, skill ou metcon.</p>
                 </div>
             </div>
 
@@ -161,7 +238,7 @@
                     <div class="coach-wod-movement-list">
                         {% for movement in block.movements.all %}
                         <article class="coach-wod-movement-card">
-                            <form method="post" class="coach-wod-inline-form coach-wod-inline-form--movement">
+                            <form method="post" class="coach-wod-inline-form coach-wod-inline-form--movement" data-wod-prescription-endpoint="{% url 'workout-prescription-preview' session.id %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="intent" value="update_movement">
                                 <input type="hidden" name="movement_id" value="{{ movement.id }}">
@@ -176,11 +253,11 @@
                                     </label>
                                     <label>
                                         <span>Slug</span>
-                                        <input type="text" name="movement_slug" value="{{ movement.movement_slug }}" maxlength="64">
+                                        <input type="text" name="movement_slug" value="{{ movement.movement_slug }}" maxlength="64" list="wod-movement-catalog-slugs" data-wod-movement-slug="true" autocomplete="off">
                                     </label>
                                     <label>
                                         <span>Nome</span>
-                                        <input type="text" name="movement_label" value="{{ movement.movement_label }}" maxlength="120">
+                                        <input type="text" name="movement_label" value="{{ movement.movement_label }}" maxlength="120" list="wod-movement-catalog-labels" data-wod-movement-label="true" autocomplete="off">
                                     </label>
                                 </div>
                                 <div class="coach-wod-form-grid coach-wod-form-grid--four">
@@ -205,6 +282,21 @@
                                         <input type="number" name="load_value" min="0" step="0.01" value="{{ movement.load_value|default_if_none:'' }}">
                                     </label>
                                 </div>
+                                <section class="coach-wod-review-digest coach-wod-prescription-preview" data-wod-prescription-preview aria-label="Preview da prescricao do movimento">
+                                    <p class="eyebrow">Preview local da prescricao</p>
+                                    <div class="coach-wod-review-meta coach-wod-prescription-preview__meta">
+                                        <span class="pill info" data-wod-prescription-loading hidden>Atualizando preview...</span>
+                                        <span class="pill success" data-wod-prescription-source="backend" hidden>Fonte: backend</span>
+                                        <span class="pill warning" data-wod-prescription-source="local" hidden>Fonte: fallback local</span>
+                                        <span class="pill accent" data-wod-prescription-suggestion hidden>Sugestao automatica: %RM</span>
+                                    </div>
+                                    <strong class="coach-wod-prescription-preview__label" data-wod-prescription-label>Defina movimento, tipo de carga e valor para ver a leitura.</strong>
+                                    <p class="coach-wod-prescription-preview__context" data-wod-prescription-context>Sem recomendacao automatica por enquanto.</p>
+                                    <div class="coach-wod-detail-list coach-wod-prescription-preview__students" data-wod-prescription-students hidden></div>
+                                    <div class="coach-wod-empty-state coach-wod-prescription-preview__missing" data-wod-prescription-missing hidden>
+                                        <p data-wod-prescription-missing-copy>Sem RM registrado para este movimento na turma.</p>
+                                    </div>
+                                </section>
                                 <div class="coach-wod-form-grid coach-wod-form-grid--two">
                                     <label>
                                         <span>Observacao</span>
@@ -244,14 +336,13 @@
         <article class="table-card coach-wod-editor-card">
             <div class="coach-wod-editor-head">
                 <div>
-                    <p class="eyebrow">Movimentos</p>
+                    <p class="eyebrow">Movimentos {% include "operations/includes/wod_tooltip.html" with tooltip_text="Adicione exercicio, series, repeticoes e tipo de carga no bloco certo." %}</p>
                     <h2>Adicionar em um bloco</h2>
-                    <p class="operation-session-meta">Aqui o coach encaixa o exercicio com sets, reps e tipo de carga.</p>
                 </div>
             </div>
 
             {% if workout and workout.blocks.exists %}
-            <form method="post" class="coach-wod-form-stack">
+            <form method="post" class="coach-wod-form-stack" data-wod-prescription-endpoint="{% url 'workout-prescription-preview' session.id %}">
                 {% csrf_token %}
                 <input type="hidden" name="intent" value="add_movement">
                 <div class="coach-wod-form-grid coach-wod-form-grid--three">
@@ -292,6 +383,22 @@
                     </label>
                 </div>
 
+                <section class="coach-wod-review-digest coach-wod-prescription-preview" data-wod-prescription-preview aria-label="Preview da prescricao do novo movimento">
+                    <p class="eyebrow">Preview local da prescricao</p>
+                    <div class="coach-wod-review-meta coach-wod-prescription-preview__meta">
+                        <span class="pill info" data-wod-prescription-loading hidden>Atualizando preview...</span>
+                        <span class="pill success" data-wod-prescription-source="backend" hidden>Fonte: backend</span>
+                        <span class="pill warning" data-wod-prescription-source="local" hidden>Fonte: fallback local</span>
+                        <span class="pill accent" data-wod-prescription-suggestion hidden>Sugestao automatica: %RM</span>
+                    </div>
+                    <strong class="coach-wod-prescription-preview__label" data-wod-prescription-label>Defina movimento, tipo de carga e valor para ver a leitura.</strong>
+                    <p class="coach-wod-prescription-preview__context" data-wod-prescription-context>Sem recomendacao automatica por enquanto.</p>
+                    <div class="coach-wod-detail-list coach-wod-prescription-preview__students" data-wod-prescription-students hidden></div>
+                    <div class="coach-wod-empty-state coach-wod-prescription-preview__missing" data-wod-prescription-missing hidden>
+                        <p data-wod-prescription-missing-copy>Sem RM registrado para este movimento na turma.</p>
+                    </div>
+                </section>
+
                 <div class="coach-wod-form-grid coach-wod-form-grid--two">
                     <label>
                         <span>Observacao</span>
@@ -317,9 +424,8 @@
         <article class="table-card coach-wod-editor-card">
             <div class="coach-wod-editor-head">
                 <div>
-                    <p class="eyebrow">RM da turma</p>
+                    <p class="eyebrow">RM da turma {% include "operations/includes/wod_tooltip.html" with tooltip_text="Preview de como o percentual de RM chega na turma reservada, sem editar RM individual aqui." %}</p>
                     <h2>Preview do impacto nos alunos</h2>
-                    <p class="operation-session-meta">Aqui o coach enxerga como o `% do RM` pousa na turma reservada para esta aula, sem editar RM individual.</p>
                 </div>
                 <div class="coach-wod-editor-pills">
                     <span class="pill info">{{ session_rm_preview.reserved_students_count }} aluno(s) no radar</span>
@@ -379,5 +485,19 @@
         </article>
     </section>
 </div>
+{{ movement_catalog|json_script:"wod-movement-catalog" }}
+{{ movement_rm_roster|json_script:"wod-movement-rm-roster" }}
+{{ quick_template_options|json_script:"wod-quick-template-options" }}
+{{ stored_template_options|json_script:"wod-stored-template-options" }}
+<datalist id="wod-movement-catalog-slugs">
+    {% for item in movement_catalog %}
+    <option value="{{ item.slug }}">{{ item.label }}</option>
+    {% endfor %}
+</datalist>
+<datalist id="wod-movement-catalog-labels">
+    {% for item in movement_catalog %}
+    <option value="{{ item.label }}">{{ item.slug }}</option>
+    {% endfor %}
+</datalist>
 {% endwith %}
 {% endblock %}

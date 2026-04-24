@@ -14,6 +14,8 @@ PONTOS CRITICOS:
 - aqui mora montagem de tela, nao mutacao de estado.
 """
 
+from types import SimpleNamespace
+
 from django.urls import reverse
 
 from shared_support.page_payloads import attach_page_payload, build_page_hero
@@ -25,11 +27,17 @@ from operations.forms import (
     CoachWorkoutBlockForm,
     CoachWorkoutMovementForm,
     WorkoutDuplicateForm,
+    WorkoutQuickTemplateForm,
+    WorkoutCreateStoredTemplateForm,
+    WorkoutStoredTemplateForm,
 )
 from operations.models import ClassSession
 from student_app.models import StudentExerciseMax, WorkoutLoadType
 
 from .workout_corridor_navigation import build_workout_corridor_tabs
+from .workout_quick_templates import build_recent_published_workout_templates
+from .workout_templates import build_persisted_workout_template_options
+from .workout_support import resolve_workout_approval_policy, should_require_workout_approval
 
 
 def build_coach_workout_editor_page_payload(view, context):
@@ -63,7 +71,15 @@ def build_coach_workout_editor_page_payload(view, context):
             'surface_key': 'operations-coach-wod-editor',
             'scope': 'operations-coach',
         },
-        assets=build_page_assets(css=['css/design-system/operations.css']),
+        assets=build_page_assets(
+            css=['css/design-system/operations.css'],
+            deferred_js=[
+                'js/operations/wod_movement_autocomplete.js',
+                'js/operations/wod_prescription_preview.js',
+                'js/operations/wod_quick_template_preview.js',
+                'js/operations/wod_stored_template_preview.js',
+            ],
+        ),
     )
     attach_page_payload(context, payload_key='operation_page', payload=payload)
     return payload
@@ -156,10 +172,86 @@ def build_coach_workout_editor_rm_preview(view, *, workout):
     }
 
 
+def build_coach_workout_movement_catalog(view, *, workout):
+    catalog = {}
+    attendance_student_ids = [
+        attendance.student_id
+        for attendance in view.session.attendances.all()
+        if attendance.student_id
+    ]
+    if attendance_student_ids:
+        for exercise_max in StudentExerciseMax.objects.filter(student_id__in=attendance_student_ids).order_by('exercise_label'):
+            catalog.setdefault(
+                exercise_max.exercise_slug,
+                {
+                    'slug': exercise_max.exercise_slug,
+                    'label': exercise_max.exercise_label,
+                    'has_rm_data': True,
+                },
+            )
+    if workout is not None:
+        for block in workout.blocks.all():
+            for movement in block.movements.all():
+                catalog.setdefault(
+                    movement.movement_slug,
+                    {
+                        'slug': movement.movement_slug,
+                        'label': movement.movement_label,
+                        'has_rm_data': False,
+                    },
+                )
+    return tuple(sorted(catalog.values(), key=lambda item: (item['label'].lower(), item['slug'])))
+
+
+def build_coach_workout_movement_rm_roster(view):
+    roster = {}
+    attendance_student_ids = [
+        attendance.student_id
+        for attendance in view.session.attendances.all()
+        if attendance.student_id
+    ]
+    if not attendance_student_ids:
+        return ()
+    for exercise_max in StudentExerciseMax.objects.filter(student_id__in=attendance_student_ids).select_related('student').order_by(
+        'exercise_label',
+        'student__full_name',
+    ):
+        bucket = roster.setdefault(
+            exercise_max.exercise_slug,
+            {
+                'slug': exercise_max.exercise_slug,
+                'label': exercise_max.exercise_label,
+                'students': [],
+            },
+        )
+        bucket['students'].append(
+            {
+                'name': exercise_max.student.full_name,
+                'one_rep_max_kg': str(exercise_max.one_rep_max_kg),
+            }
+        )
+    return tuple(sorted(roster.values(), key=lambda item: (item['label'].lower(), item['slug'])))
+
+
 def build_coach_workout_editor_context(view, *, workout_form=None, block_form=None, movement_form=None):
     context = view.get_context_data()
     context.update(view.get_base_context())
     workout = view._get_workout()
+    approval_policy = resolve_workout_approval_policy(session=view.session)
+    manual_requires_approval = should_require_workout_approval(
+        workout=workout or SimpleNamespace(session=view.session),
+        coach=view.request.user,
+        source='manual',
+    )
+    submission_action = {
+        'policy': approval_policy,
+        'label': 'Enviar para aprovacao' if manual_requires_approval else 'Publicar agora',
+        'helper_copy': (
+            'Esse corredor ainda pede aprovacao manual antes de liberar para os alunos.'
+            if manual_requires_approval
+            else 'Pela politica ativa, este envio publica direto sem passar pela fila.'
+        ),
+    }
     duplicate_sessions = (
         ClassSession.objects.filter(scheduled_at__gte=view.session.scheduled_at)
         .exclude(pk=view.session.id)
@@ -195,8 +287,25 @@ def build_coach_workout_editor_context(view, *, workout_form=None, block_form=No
                 }
             ),
             'session_rm_preview': build_coach_workout_editor_rm_preview(view, workout=workout),
+            'movement_catalog': build_coach_workout_movement_catalog(view, workout=workout),
+            'movement_rm_roster': build_coach_workout_movement_rm_roster(view),
+            'quick_template_options': build_recent_published_workout_templates(
+                current_session=view.session,
+                current_role_slug=context['current_role'].slug,
+                actor=view.request.user,
+            ),
+            'submission_action': submission_action,
+            'stored_template_options': build_persisted_workout_template_options(
+                current_role_slug=context['current_role'].slug,
+                actor=view.request.user,
+            ),
             'duplicate_sessions': duplicate_sessions,
             'duplicate_form': WorkoutDuplicateForm(),
+            'quick_template_form': WorkoutQuickTemplateForm(),
+            'create_stored_template_form': WorkoutCreateStoredTemplateForm(
+                initial={'template_name': getattr(workout, 'title', '') or view.session.title}
+            ),
+            'stored_template_form': WorkoutStoredTemplateForm(),
         }
     )
     return context

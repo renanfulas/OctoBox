@@ -17,9 +17,15 @@ from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
 
 _TAB_SPECS = (
     {
-        'key': 'editor',
-        'label': 'Editor',
-        'route_name': 'workout-editor-home',
+        'key': 'planner',
+        'label': 'Planner',
+        'route_name': 'workout-planner',
+        'allowed_roles': {ROLE_COACH, ROLE_MANAGER, ROLE_OWNER},
+    },
+    {
+        'key': 'smart_paste',
+        'label': 'Smart Paste',
+        'route_name': 'workout-smart-paste',
         'allowed_roles': {ROLE_COACH, ROLE_OWNER},
     },
     {

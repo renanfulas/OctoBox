@@ -317,7 +317,7 @@ class OperationWorkspaceTests(TestCase):
 
         overdue_stat = next(item for item in snapshot['hero_stats'] if item['label'] == 'Atrasos')
         self.assertEqual(overdue_stat['value'], 1)
-        self.assertIn('Pagamento vencido ha 1 dia(s)', snapshot['reception_queue'][0]['reason'])
+        self.assertIn('Pagamento vencido há 1 dia(s)', snapshot['reception_queue'][0]['reason'])
 
     def test_reception_snapshot_marks_focus_cards_with_octobox_signal_states(self):
         StudentIntake.objects.create(full_name='Lead de Balcao', phone='5511944444444')
@@ -429,7 +429,7 @@ class OperationWorkspaceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'manager-scene')
         self.assertContains(response, 'id="manager-enrollment-link-board"', count=1)
-        self.assertContains(response, 'Cobrancas ainda sem matricula', count=1)
+        self.assertContains(response, 'Cobranças ainda sem matrícula', count=1)
 
     @override_settings(OPERATIONS_MANAGER_WORKSPACE_ENABLED=True)
     def test_manager_workspace_exposes_priority_surface_and_metric_anchors(self):

@@ -8,6 +8,9 @@
 
     <section class="coach-wod-filter-bar" aria-label="Filtros da fila de aprovacao">
         <form method="get" class="coach-wod-filter-form">
+            {% if approval_filter_state.session_id %}
+            <input type="hidden" name="session_id" value="{{ approval_filter_state.session_id }}">
+            {% endif %}
             <label class="coach-wod-filter-field">
                 <span>Ordenacao</span>
                 <select name="sort">
@@ -42,36 +45,99 @@
         </form>
     </section>
 
+    {% if approval_filter_state.session_id %}
+    <section class="coach-wod-filter-bar" aria-label="Filtro fixo da aula">
+        <div class="coach-wod-review-meta">
+            <span class="pill info">Fila filtrada por aula</span>
+            <a class="button tertiary" href="{% url 'workout-approval-board' %}">Remover filtro da aula</a>
+        </div>
+    </section>
+    {% endif %}
+
     <section class="coach-wod-queue-summary" aria-label="Resumo executivo da fila">
         <div class="coach-wod-queue-summary-head">
             <div>
-                <p class="eyebrow">Radar da fila</p>
+                <p class="eyebrow">Radar da fila {% include "operations/includes/wod_tooltip.html" with tooltip_text="Mostra pressao, risco e proxima decisao antes de abrir cada WOD." %}</p>
                 <h2>Decisao curta para publicar sem ruido</h2>
-                <p>O objetivo aqui e simples: entender pressao, risco e proxima decisao antes de abrir cada WOD.</p>
             </div>
         </div>
         <div class="coach-wod-summary-grid coach-wod-summary-grid--approval">
             <article class="coach-wod-summary-card tone-info">
                 <p class="eyebrow">Aguardando carimbo</p>
                 <h2>{{ approval_queue_assist.total }}</h2>
-                <p>Treinos que ainda dependem da leitura final de manager ou owner.</p>
             </article>
             <article class="coach-wod-summary-card tone-warning">
                 <p class="eyebrow">Alto impacto</p>
                 <h2>{{ approval_queue_assist.high_impact_count }}</h2>
-                <p>Casos que mexem mais na rotina da aula ou no que o aluno vai perceber.</p>
             </article>
             <article class="coach-wod-summary-card tone-danger">
                 <p class="eyebrow">Mudanca sensivel</p>
                 <h2>{{ approval_queue_assist.sensitive_count }}</h2>
-                <p>Casos que pedem leitura mais cuidadosa antes de publicar.</p>
             </article>
         </div>
     </section>
 
-    <section class="coach-wod-editor-grid" aria-label="Fila de aprovacao de WOD">
+    <section class="wod-inbox" data-wod-inbox aria-label="Fila de aprovacao de WOD">
+        <aside class="wod-inbox__list" aria-label="WODs pendentes">
+            <div class="wod-inbox__list-head">
+                <p class="eyebrow">Inbox de aprovacao</p>
+                <strong>{{ approval_queue_assist.total }} pendente(s)</strong>
+            </div>
+            <form method="post" action="{% url 'workout-approval-batch-action' %}" class="wod-inbox__batch-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ current_surface_path }}">
+                <input type="hidden" name="approval_reason_category" value="without_concerns">
+                {% for item in approval_inbox_items %}
+                {% if not item.is_sensitive %}
+                <input type="hidden" name="workout_ids" value="{{ item.workout_id }}">
+                {% endif %}
+                {% endfor %}
+                <button class="button secondary" type="submit" {% if not approval_queue_assist.batch_safe_count %}disabled{% endif %}>
+                    Aprovar lote seguro
+                </button>
+                <span>{{ approval_queue_assist.batch_safe_count }} sem sensibilidade</span>
+            </form>
+            <div class="wod-inbox__items" role="listbox" aria-label="Selecione um WOD para revisar">
+                {% for item in approval_inbox_items %}
+                <button
+                    class="wod-inbox__item{% if forloop.first %} is-focused{% endif %}{% if item.is_sensitive %} wod-inbox__item--sensitive{% endif %}"
+                    type="button"
+                    role="option"
+                    aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+                    data-wod-inbox-key="{{ item.workout_id }}"
+                    data-wod-inbox-index="{{ forloop.counter0 }}"
+                >
+                    <span class="wod-inbox__item-topline">
+                        <span>{{ item.session_label }}</span>
+                        <span class="pill {{ item.impact_tone }}">{{ item.impact_label }}</span>
+                    </span>
+                    <strong>{{ item.session_title }}</strong>
+                    <span class="wod-inbox__item-meta">Coach {{ item.coach_label }} · {{ item.status_label }}</span>
+                    <span class="wod-inbox__item-summary">{{ item.summary }}</span>
+                    {% if item.policy_badge %}<span class="wod-inbox__item-summary"><span class="pill {{ item.policy_badge.tone }}">{{ item.policy_badge.label }}</span> {{ item.policy_badge.detail }}</span>{% endif %}
+                    {% if item.is_sensitive or item.requires_confirmation %}
+                    <span class="wod-inbox__item-flags">
+                        {% if item.is_sensitive %}<span class="pill danger">Sensivel</span>{% endif %}
+                        {% if item.requires_confirmation %}<span class="pill warning">Confirmar</span>{% endif %}
+                    </span>
+                    {% endif %}
+                </button>
+                {% empty %}
+                <div class="coach-wod-empty-state">
+                    <p>Nenhum WOD aguardando aprovacao com os filtros atuais.</p>
+                </div>
+                {% endfor %}
+            </div>
+            <p class="wod-inbox__keyboard-hint">Atalhos: <kbd>j</kbd>/<kbd>k</kbd> navegam · <kbd>Enter</kbd> aprova quando seguro.</p>
+        </aside>
+
+        <div class="wod-inbox__preview" aria-live="polite">
         {% for workout in pending_workouts %}
-        <article class="table-card coach-wod-editor-card">
+        <article
+            class="table-card coach-wod-editor-card wod-inbox__preview-card{% if forloop.first %} is-active{% endif %}"
+            id="wod-inbox-preview-{{ workout.id }}"
+            data-wod-inbox-panel="{{ workout.id }}"
+        >
             <div class="coach-wod-editor-head">
                 <div>
                     <p class="eyebrow">Aula</p>
@@ -97,6 +163,7 @@
             <div class="coach-wod-review-digest">
                 <p class="eyebrow">Leitura rapida da revisao</p>
                 <p>{{ workout.review_snapshot.review_summary }}</p>
+                {% if workout.policy_badge %}<p>{{ workout.policy_badge.detail }}</p>{% endif %}
                 <p>{{ workout.review_snapshot.revision_digest }}</p>
                 <div class="coach-wod-review-meta">
                     {% if workout.review_snapshot.submitted_by_label %}
@@ -108,6 +175,9 @@
                     {% for reason in workout.review_snapshot.decision_assist.reasons %}
                     <span class="pill {{ reason.tone }}">{{ reason.label }}</span>
                     {% endfor %}
+                    {% if workout.policy_badge %}
+                    <span class="pill {{ workout.policy_badge.tone }}">{{ workout.policy_badge.label }}</span>
+                    {% endif %}
                 </div>
             </div>
 
@@ -270,6 +340,9 @@
                             {% if revision.detail %}
                             <p>{{ revision.detail }}</p>
                             {% endif %}
+                            {% if revision.event_label == 'Entrada na fila' and workout.policy_badge %}
+                            <p>{{ workout.policy_badge.label }} ? {{ workout.policy_badge.detail }}</p>
+                            {% endif %}
                         </div>
                     </article>
                     {% empty %}
@@ -323,7 +396,9 @@
             </div>
         </article>
         {% endfor %}
+        </div>
     </section>
+    {% include "operations/includes/wod_command_palette.html" %}
 </div>
 {% endwith %}
 {% endblock %}

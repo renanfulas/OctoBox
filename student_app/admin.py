@@ -1,6 +1,10 @@
 from django.contrib import admin
 
 from .models import (
+    DayPlan,
+    PlanBlock,
+    PlanMovement,
+    ReplicationBatch,
     SessionWorkout,
     SessionWorkoutFollowUpAction,
     SessionWorkoutOperationalMemory,
@@ -9,6 +13,7 @@ from .models import (
     SessionWorkoutRevision,
     StudentWorkoutView,
     StudentExerciseMax,
+    WeeklyWodPlan,
     WorkoutWeeklyManagementCheckpoint,
 )
 
@@ -84,3 +89,36 @@ class WorkoutWeeklyManagementCheckpointAdmin(admin.ModelAdmin):
     list_display = ('week_start', 'execution_status', 'responsible_role', 'closure_status', 'updated_by', 'updated_at')
     list_filter = ('execution_status', 'responsible_role', 'closure_status')
     search_fields = ('summary_note',)
+
+
+@admin.register(WeeklyWodPlan)
+class WeeklyWodPlanAdmin(admin.ModelAdmin):
+    list_display = ('label', 'week_start', 'status', 'created_by', 'created_at')
+    list_filter = ('status',)
+    search_fields = ('label',)
+
+
+@admin.register(DayPlan)
+class DayPlanAdmin(admin.ModelAdmin):
+    list_display = ('weekly_plan', 'weekday', 'sort_order')
+    list_filter = ('weekday',)
+    search_fields = ('weekly_plan__label',)
+
+
+@admin.register(PlanBlock)
+class PlanBlockAdmin(admin.ModelAdmin):
+    list_display = ('title', 'kind', 'day_plan', 'timecap_min', 'rounds', 'sort_order')
+    list_filter = ('kind',)
+    search_fields = ('title', 'day_plan__weekly_plan__label')
+
+
+@admin.register(PlanMovement)
+class PlanMovementAdmin(admin.ModelAdmin):
+    list_display = ('movement_label_raw', 'movement_slug', 'plan_block', 'sets', 'reps_spec', 'sort_order')
+    search_fields = ('movement_label_raw', 'movement_slug', 'plan_block__title')
+
+
+@admin.register(ReplicationBatch)
+class ReplicationBatchAdmin(admin.ModelAdmin):
+    list_display = ('weekly_plan', 'created_by', 'sessions_targeted', 'sessions_created', 'undone_at', 'created_at')
+    search_fields = ('weekly_plan__label',)

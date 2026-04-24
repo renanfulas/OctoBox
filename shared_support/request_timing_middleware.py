@@ -67,9 +67,15 @@ class RequestTimingMiddleware:
             )
 
         response['Server-Timing'] = ', '.join(server_timing_parts)
-        response['X-OctoBox-Session-Engine'] = request._octobox_request_perf.get('session_engine', '')
-        response['X-OctoBox-Session-Key-Present'] = '1' if request._octobox_request_perf.get('session_key_present') else '0'
-        response['X-OctoBox-User-Authenticated'] = '1' if user_is_authenticated else '0'
-        if shell_perf:
-            response['X-OctoBox-Shell-Cache-Hit'] = '1' if shell_perf.get('cache_hit') else '0'
+
+        # Headers internos de depuracao ajudam no desenvolvimento, mas em runtime
+        # publico entregam pistas desnecessarias sobre sessao, autenticacao e cache.
+        if getattr(settings, 'REQUEST_TIMING_EXPOSE_DEBUG_HEADERS', settings.DEBUG):
+            response['X-OctoBox-Session-Engine'] = request._octobox_request_perf.get('session_engine', '')
+            response['X-OctoBox-Session-Key-Present'] = (
+                '1' if request._octobox_request_perf.get('session_key_present') else '0'
+            )
+            response['X-OctoBox-User-Authenticated'] = '1' if user_is_authenticated else '0'
+            if shell_perf:
+                response['X-OctoBox-Shell-Cache-Hit'] = '1' if shell_perf.get('cache_hit') else '0'
         return response

@@ -25,14 +25,13 @@ from .action_views import (
 from .base_views import RoleOperationRedirectView
 from .workout_action_views import (
     WorkoutApprovalActionView,
+    WorkoutApprovalBatchActionView,
     WorkoutFollowUpActionView,
     WorkoutRmGapActionView,
     WorkoutOperationalMemoryCreateView,
     WorkoutWeeklyCheckpointUpdateView,
 )
 from .workspace_views import (
-    CoachSessionWorkoutEditorView,
-    OperationsExecutiveSummaryView,
     CoachWorkspaceView,
     DevWorkspaceView,
     ManagerBoardsPartialView,
@@ -43,11 +42,42 @@ from .workspace_views import (
     OwnerWorkspaceView,
     ReceptionPaymentBoardPartialView,
     ReceptionWorkspaceView,
+    WhatsAppWorkspaceView,
+)
+from .workout_editor_views import (
+    CoachSessionWorkoutEditorView,
     WorkoutEditorHomeView,
+    WorkoutPrescriptionPreviewView,
+)
+from .workout_board_views import (
+    OperationsExecutiveSummaryView,
     WorkoutApprovalBoardView,
     WorkoutPublicationHistoryView,
+    WorkoutSmartPasteView,
     WorkoutStudentRmQuickEditView,
-    WhatsAppWorkspaceView,
+)
+from .workout_planner_views import (
+    WorkoutPlannerApplyTrustedTemplateView,
+    WorkoutPlannerDuplicatePreviousSlotView,
+    WorkoutPlannerTemplatePickerTelemetryView,
+    WorkoutPlannerView,
+)
+from .workout_template_views import (
+    WorkoutApprovalPolicyUpdateView,
+    WorkoutTemplateCreateBlockView,
+    WorkoutTemplateCreateMovementView,
+    WorkoutTemplateDeleteBlockView,
+    WorkoutTemplateDeleteMovementView,
+    WorkoutTemplateDeleteView,
+    WorkoutTemplateDuplicateView,
+    WorkoutTemplateManagementView,
+    WorkoutTemplateMoveBlockView,
+    WorkoutTemplateMoveMovementView,
+    WorkoutTemplateToggleActiveView,
+    WorkoutTemplateToggleFeaturedView,
+    WorkoutTemplateUpdateBlockView,
+    WorkoutTemplateUpdateMetadataView,
+    WorkoutTemplateUpdateMovementView,
 )
 
 from .reports_views import ReportHubView
@@ -66,8 +96,42 @@ urlpatterns = [
     path('operacao/recepcao/fragmentos/pagamentos/', ReceptionPaymentBoardPartialView.as_view(), name='reception-payment-board-fragment'),
     path('operacao/coach/', CoachWorkspaceView.as_view(), name='coach-workspace'),
     path('operacao/wod/editor/', WorkoutEditorHomeView.as_view(), name='workout-editor-home'),
+    path('operacao/wod/paste/', WorkoutSmartPasteView.as_view(), name='workout-smart-paste'),
+    path('operacao/wod/planner/', WorkoutPlannerView.as_view(), name='workout-planner'),
+    path('operacao/wod/planner/template-picker/telemetry/', WorkoutPlannerTemplatePickerTelemetryView.as_view(), name='workout-planner-template-picker-telemetry'),
+    path(
+        'operacao/wod/planner/celula/<int:session_id>/duplicar-slot-anterior/',
+        WorkoutPlannerDuplicatePreviousSlotView.as_view(),
+        name='workout-planner-duplicate-previous-slot',
+    ),
+    path(
+        'operacao/wod/planner/celula/<int:session_id>/template-confiavel/<int:template_id>/',
+        WorkoutPlannerApplyTrustedTemplateView.as_view(),
+        name='workout-planner-apply-trusted-template',
+    ),
     path('operacao/coach/aula/<int:session_id>/wod/', CoachSessionWorkoutEditorView.as_view(), name='coach-session-workout-editor'),
+    path(
+        'operacao/coach/aula/<int:session_id>/wod/prescription-preview/',
+        WorkoutPrescriptionPreviewView.as_view(),
+        name='workout-prescription-preview',
+    ),
+    path('operacao/wod/templates/', WorkoutTemplateManagementView.as_view(), name='workout-template-management'),
+    path('operacao/wod/templates/policy/', WorkoutApprovalPolicyUpdateView.as_view(), name='workout-approval-policy-update'),
+    path('operacao/wod/templates/<int:template_id>/duplicate/', WorkoutTemplateDuplicateView.as_view(), name='workout-template-duplicate'),
+    path('operacao/wod/templates/<int:template_id>/delete/', WorkoutTemplateDeleteView.as_view(), name='workout-template-delete'),
+    path('operacao/wod/templates/<int:template_id>/toggle/', WorkoutTemplateToggleActiveView.as_view(), name='workout-template-toggle-active'),
+    path('operacao/wod/templates/<int:template_id>/featured/', WorkoutTemplateToggleFeaturedView.as_view(), name='workout-template-toggle-featured'),
+    path('operacao/wod/templates/<int:template_id>/update/', WorkoutTemplateUpdateMetadataView.as_view(), name='workout-template-update-metadata'),
+    path('operacao/wod/templates/<int:template_id>/blocks/create/', WorkoutTemplateCreateBlockView.as_view(), name='workout-template-create-block'),
+    path('operacao/wod/templates/blocos/<int:block_id>/update/', WorkoutTemplateUpdateBlockView.as_view(), name='workout-template-update-block'),
+    path('operacao/wod/templates/blocos/<int:block_id>/delete/', WorkoutTemplateDeleteBlockView.as_view(), name='workout-template-delete-block'),
+    path('operacao/wod/templates/blocos/<int:block_id>/movements/create/', WorkoutTemplateCreateMovementView.as_view(), name='workout-template-create-movement'),
+    path('operacao/wod/templates/movimentos/<int:movement_id>/update/', WorkoutTemplateUpdateMovementView.as_view(), name='workout-template-update-movement'),
+    path('operacao/wod/templates/movimentos/<int:movement_id>/delete/', WorkoutTemplateDeleteMovementView.as_view(), name='workout-template-delete-movement'),
+    path('operacao/wod/templates/blocos/<int:block_id>/<str:direction>/', WorkoutTemplateMoveBlockView.as_view(), name='workout-template-move-block'),
+    path('operacao/wod/templates/movimentos/<int:movement_id>/<str:direction>/', WorkoutTemplateMoveMovementView.as_view(), name='workout-template-move-movement'),
     path('operacao/wod/aprovacoes/', WorkoutApprovalBoardView.as_view(), name='workout-approval-board'),
+    path('operacao/wod/aprovacoes/lote/', WorkoutApprovalBatchActionView.as_view(), name='workout-approval-batch-action'),
     path('operacao/wod/historico/', WorkoutPublicationHistoryView.as_view(), name='workout-publication-history'),
     path('operacao/resumo-executivo/', OperationsExecutiveSummaryView.as_view(), name='operations-executive-summary'),
     path(
