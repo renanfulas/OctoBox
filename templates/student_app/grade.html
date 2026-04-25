@@ -23,45 +23,47 @@
 
 <details class="student-month-calendar">
     <summary class="student-month-calendar__toggle">Ver mes</summary>
+    <div class="student-month-calendar__weekdays" aria-hidden="true">
+        <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
+    </div>
     <div class="student-month-calendar__grid" aria-label="Calendario mensal">
         {% for day in student_month_days %}
         {% if day.date %}
-        <article class="student-month-day{% if day.is_today %} is-today{% endif %}{% if day.sessions %} has-sessions{% endif %}{% if day.is_holiday %} is-holiday{% endif %}">
-            <div class="student-month-day__head">
-                <span class="student-month-day__date">{{ day.date_label }}</span>
-                <span class="student-month-day__label">{{ day.day_label }}</span>
-            </div>
-            {% if day.is_holiday %}
-            <span class="student-holiday-badge">{{ day.holiday_name }}</span>
-            {% endif %}
-            <span class="student-month-day__checkin">{{ day.student_checkin_label }}</span>
             {% if day.sessions %}
             <button
                 type="button"
-                class="student-month-day__preview-toggle"
-                data-preview-toggle="{{ day.date|date:'Y-m-d' }}"
-                aria-expanded="false"
+                class="student-month-day has-sessions{% if day.is_today %} is-today{% endif %}{% if day.is_holiday %} is-holiday{% endif %}"
+                {% if day.sessions|length == 1 %}data-wod-href="{% url 'student-app-wod' %}?session_id={{ day.sessions.0.session_id }}"{% else %}data-day-picker="{{ day.date|date:'Y-m-d' }}"{% endif %}
+                aria-label="{{ day.date|date:'d M' }} — {{ day.sessions|length }} aula(s)"
             >
-                Ver detalhes
+                <span class="student-month-day__num">{{ day.date_label }}</span>
+                <span class="student-month-day__dot" data-status="{{ day.sessions.0.attendance_status }}"></span>
+                {% if day.sessions|length > 1 %}<span class="student-month-day__count">{{ day.sessions|length }}x</span>{% endif %}
+                {% if day.sessions|length > 1 %}
+                <span class="student-month-day__sessions-data" hidden aria-hidden="true">{% for session in day.sessions %}<span data-session-id="{{ session.session_id }}" data-session-time="{{ session.scheduled_at|date:'H:i' }}" data-session-title="{{ session.title }}" data-session-status="{{ session.attendance_status }}"></span>{% endfor %}</span>
+                {% endif %}
             </button>
-            <div class="student-month-day-preview" data-preview-panel="{{ day.date|date:'Y-m-d' }}" hidden>
-                <strong>{{ day.date|date:"d/m" }}</strong>
-                {% if day.is_holiday %}<span class="student-holiday-badge">{{ day.holiday_name }}</span>{% endif %}
-                <span>{{ day.student_checkin_label }}</span>
-                {% for session in day.sessions %}
-                <p>{{ session.scheduled_at|date:"H:i" }} · {{ session.title }} · {{ session.attendance_status }}</p>
-                {% endfor %}
-            </div>
             {% else %}
-            <span class="student-month-day__empty">Sem aula</span>
+            <span class="student-month-day{% if day.is_today %} is-today{% endif %}{% if day.is_holiday %} is-holiday{% endif %}" aria-label="{{ day.date|date:'d M' }}{% if day.is_holiday %} — {{ day.holiday_name }}{% endif %}">
+                <span class="student-month-day__num">{{ day.date_label }}</span>
+                {% if day.is_holiday %}<span class="student-month-day__holiday-dot"></span>{% endif %}
+            </span>
             {% endif %}
-        </article>
         {% else %}
         <span class="student-month-day student-month-day--blank" aria-hidden="true"></span>
         {% endif %}
         {% endfor %}
     </div>
 </details>
+
+<div class="student-month-picker" id="studentMonthPicker" hidden role="dialog" aria-modal="true" aria-label="Escolha uma aula">
+    <div class="student-month-picker__backdrop" id="studentMonthPickerBackdrop"></div>
+    <div class="student-month-picker__sheet">
+        <p class="student-month-picker__title">Escolha uma aula</p>
+        <div class="student-month-picker__list" id="studentMonthPickerList"></div>
+        <button type="button" class="student-month-picker__close" id="studentMonthPickerClose">Fechar</button>
+    </div>
+</div>
 
 <section class="student-card student-card--quiet">
     <div class="student-section-head">

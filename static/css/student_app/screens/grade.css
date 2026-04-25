@@ -1,3 +1,5 @@
+/* ─── Calendário mensal ─────────────────────────────────────────── */
+
 .student-month-calendar {
     border-radius: var(--radius-panel);
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
@@ -11,105 +13,246 @@
     color: var(--theme-text-primary);
     font-weight: 900;
     cursor: pointer;
+    user-select: none;
 }
 
+/* Cabeçalho dos dias da semana */
+.student-month-calendar__weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+    padding: 4px 12px 6px;
+}
+
+.student-month-calendar__weekdays span {
+    text-align: center;
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--theme-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* Grid de dias */
 .student-month-calendar__grid {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 8px;
-    padding: 0 16px 16px;
+    gap: 4px;
+    padding: 0 12px 16px;
 }
 
+/* Célula de dia — base */
 .student-month-day {
-    position: relative;
-    display: grid;
-    gap: 6px;
-    min-height: 112px;
-    padding: 10px;
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-secondary) 86%, transparent);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    aspect-ratio: 1;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: transparent;
+    padding: 0;
+    font: inherit;
+    cursor: default;
+    text-decoration: none;
 }
 
+/* Dias com aula — clicáveis */
+button.student-month-day {
+    cursor: pointer;
+    background: color-mix(in srgb, var(--theme-surface-secondary) 70%, transparent);
+    border-color: color-mix(in srgb, var(--theme-border-soft) 60%, transparent);
+    transition: background 0.14s ease, transform 0.1s ease, border-color 0.14s ease;
+}
+
+button.student-month-day:hover {
+    background: color-mix(in srgb, var(--theme-surface-strong) 95%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 30%, var(--theme-border-soft) 70%);
+    transform: scale(1.06);
+}
+
+button.student-month-day:active {
+    transform: scale(0.96);
+}
+
+/* Hoje */
+.student-month-day.is-today {
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 50%, transparent) !important;
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 22%, var(--theme-surface-strong) 78%) !important;
+}
+
+/* Com aulas */
+button.student-month-day.has-sessions {
+    border-color: color-mix(in srgb, var(--theme-accent-success) 30%, var(--theme-border-soft) 70%);
+}
+
+/* Feriado */
+.student-month-day.is-holiday {
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 28%, var(--theme-border-soft) 72%);
+}
+
+/* Célula vazia (padding do grid) */
 .student-month-day--blank {
     visibility: hidden;
 }
 
-.student-month-day.is-today {
-    border-color: color-mix(in srgb, var(--theme-accent-primary) 34%, var(--theme-border-soft) 66%);
-    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 28%, var(--theme-surface-strong) 72%);
+/* Número do dia */
+.student-month-day__num {
+    font-size: 0.82rem;
+    font-weight: 900;
+    color: var(--theme-text-muted);
+    line-height: 1;
 }
 
-.student-month-day.has-sessions {
-    border-color: color-mix(in srgb, var(--theme-accent-success) 26%, var(--theme-border-soft) 74%);
+button.student-month-day .student-month-day__num {
+    color: var(--theme-text-primary);
 }
 
-.student-month-day.is-holiday {
-    border-color: color-mix(in srgb, var(--theme-accent-warning) 32%, var(--theme-border-soft) 68%);
+/* Dot de status */
+.student-month-day__dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--theme-accent-success) 90%, transparent);
+    flex-shrink: 0;
 }
 
-.student-month-day__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+/* Variações de dot por attendance_status */
+.student-month-day__dot[data-status*="Cancel"],
+.student-month-day__dot[data-status*="cancel"],
+.student-month-day__dot[data-status*="Falt"] {
+    background: color-mix(in srgb, var(--theme-accent-danger) 80%, transparent);
+}
+
+.student-month-day__dot[data-status*="Sem"],
+.student-month-day__dot[data-status*="sem"] {
+    background: color-mix(in srgb, var(--theme-text-muted) 60%, transparent);
+}
+
+.student-month-day__dot[data-status*="Reserv"],
+.student-month-day__dot[data-status*="reserv"] {
+    background: color-mix(in srgb, var(--theme-accent-support) 90%, transparent);
+}
+
+/* Feriado dot */
+.student-month-day__holiday-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--theme-accent-warning) 80%, transparent);
+}
+
+/* Contador multi-aula */
+.student-month-day__count {
+    font-size: 0.55rem;
+    font-weight: 900;
+    color: var(--theme-text-secondary);
+    line-height: 1;
+}
+
+/* ─── Bottom sheet picker (dias com múltiplas aulas) ────────────── */
+
+.student-month-picker {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+}
+
+.student-month-picker[hidden] {
+    display: none;
+}
+
+.student-month-picker__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+
+.student-month-picker__sheet {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 20px 16px 36px;
+    border-radius: 20px 20px 0 0;
+    background: var(--theme-surface-strong);
+    box-shadow: 0 -8px 48px rgba(0, 0, 0, 0.22);
+    display: grid;
+    gap: 12px;
+}
+
+.student-month-picker__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 900;
+    color: var(--theme-text-primary);
+}
+
+.student-month-picker__list {
+    display: grid;
     gap: 8px;
 }
 
-.student-month-day__date {
+.student-month-picker__item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 56px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 80%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 80%, transparent);
+    text-decoration: none;
     color: var(--theme-text-primary);
-    font-weight: 900;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.14s;
 }
 
-.student-month-day__label,
-.student-month-day__empty,
-.student-month-day__checkin {
-    color: var(--theme-text-secondary);
+.student-month-picker__item:hover {
+    background: color-mix(in srgb, var(--theme-surface-strong) 98%, transparent);
+}
+
+.student-month-picker__item-time {
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: var(--theme-accent-primary);
+    min-width: 44px;
+}
+
+.student-month-picker__item-title {
+    flex: 1;
+}
+
+.student-month-picker__item-status {
     font-size: 0.72rem;
     font-weight: 800;
+    color: var(--theme-text-muted);
 }
 
-.student-month-day__preview-toggle {
-    width: 100%;
-    min-height: 34px;
-    padding: 8px 10px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 26%, var(--theme-border-soft) 74%);
+.student-month-picker__close {
+    min-height: 46px;
+    padding: 0 16px;
     border-radius: 12px;
-    background: color-mix(in srgb, var(--theme-surface-strong) 90%, transparent);
-    color: var(--theme-text-primary);
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 80%, transparent);
+    background: transparent;
+    color: var(--theme-text-secondary);
+    font-weight: 800;
+    font-size: 0.9rem;
+    font: inherit;
     font-weight: 800;
     cursor: pointer;
+    transition: background 0.14s;
 }
 
-.student-month-day-preview {
-    position: absolute;
-    inset: auto 8px 8px 8px;
-    display: grid;
-    gap: 6px;
-    padding: 12px;
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-strong) 96%, transparent);
-    box-shadow: var(--theme-shadow-lift);
-    z-index: 2;
-}
-
-.student-month-day-preview p {
-    margin: 0;
-    color: var(--theme-text-secondary);
-    font-size: 0.78rem;
-    font-weight: 700;
-}
-
-.student-holiday-badge {
-    display: inline-flex;
-    align-items: center;
-    width: fit-content;
-    padding: 4px 8px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 24%, var(--theme-surface-strong) 76%);
-    color: var(--theme-text-primary);
-    font-size: 0.72rem;
-    font-weight: 800;
+.student-month-picker__close:hover {
+    background: color-mix(in srgb, var(--theme-surface-secondary) 60%, transparent);
 }
 
 .student-session-action--blocked {
@@ -151,19 +294,22 @@
 }
 
 @media (max-width: 640px) {
-    .student-month-calendar__grid {
-        gap: 5px;
-        padding: 0 10px 12px;
+    .student-month-calendar__grid,
+    .student-month-calendar__weekdays {
+        gap: 3px;
+        padding-left: 10px;
+        padding-right: 10px;
     }
 
     .student-month-day {
-        min-height: 90px;
-        padding: 7px;
-        border-radius: 11px;
+        border-radius: 8px;
     }
 
-    .student-month-day-preview {
-        position: fixed;
-        inset: auto 12px 12px 12px;
+    .student-month-day__num {
+        font-size: 0.75rem;
+    }
+
+    .student-month-picker__sheet {
+        padding-bottom: env(safe-area-inset-bottom, 24px);
     }
 }
