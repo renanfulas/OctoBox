@@ -23,6 +23,8 @@
   var notificationNote = null;
   var installCard = null;
   var notificationCard = null;
+  var dismissAction = null;
+  var dismissKey = 'octobox_pwa_card_dismissed';
 
   function isIos() {
     var userAgent = (window.navigator.userAgent || '').toLowerCase();
@@ -234,6 +236,22 @@
     element.dataset.state = state;
   }
 
+  function shouldShowActivationCard(state) {
+    if (state.activationComplete) {
+      try {
+        window.localStorage.removeItem(dismissKey);
+      } catch (error) {
+        // noop
+      }
+      return false;
+    }
+    try {
+      return window.localStorage.getItem(dismissKey) !== '1';
+    } catch (error) {
+      return true;
+    }
+  }
+
   function bindActivationUI() {
     if (activationElement) {
       return;
@@ -251,6 +269,7 @@
     notificationNote = activationElement.querySelector('[data-ui="student-pwa-notification-note"]');
     installCard = activationElement.querySelector('[data-ui="student-pwa-install-card"]');
     notificationCard = activationElement.querySelector('[data-ui="student-pwa-notification-card"]');
+    dismissAction = activationElement.querySelector('[data-ui="student-pwa-dismiss-action"]');
 
     if (installAction) {
       installAction.addEventListener('click', function () {
@@ -264,13 +283,24 @@
     }
 
     if (notificationAction) {
-      notificationAction.addEventListener('click', function () {
+        notificationAction.addEventListener('click', function () {
         if (!window.OctoBoxStudentPWA || typeof window.OctoBoxStudentPWA.requestNotifications !== 'function') {
           return;
         }
         window.OctoBoxStudentPWA.requestNotifications().finally(function () {
           publishPwaState();
         });
+      });
+    }
+
+    if (dismissAction) {
+      dismissAction.addEventListener('click', function () {
+        try {
+          window.localStorage.setItem(dismissKey, '1');
+        } catch (error) {
+          // noop
+        }
+        activationElement.hidden = true;
       });
     }
   }
@@ -288,7 +318,7 @@
       !state.notificationSupported
     );
 
-    activationElement.hidden = Boolean(hideInstallCard && hideNotificationCard);
+    activationElement.hidden = Boolean((hideInstallCard && hideNotificationCard) || !shouldShowActivationCard(state));
     if (copyElement) {
       copyElement.textContent = resolveActivationCopy(state);
     }

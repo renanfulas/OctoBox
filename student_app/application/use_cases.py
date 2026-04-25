@@ -284,18 +284,26 @@ class GetStudentDashboard:
             url_name='student-app-grade',
         )
 
-    def execute(self, *, identity) -> StudentDashboardResult:
+    def execute(self, *, identity, selected_date=None, window_days: int | None = None) -> StudentDashboardResult:
         box_timezone = resolve_box_timezone(box_root_slug=identity.box_root_slug)
         now = timezone.localtime(timezone.now(), box_timezone)
         today = now.date()
-        sessions = (
+        query_start_date = selected_date or today
+        query_end_date = query_start_date
+        if window_days and window_days > 1:
+            query_end_date = query_start_date + timedelta(days=window_days - 1)
+        sessions_queryset = (
             ClassSession.objects.filter(
                 status__in=['scheduled', 'open'],
-                scheduled_at__gte=timezone.make_aware(datetime.combine(today, time.min), box_timezone),
+                scheduled_at__gte=timezone.make_aware(datetime.combine(query_start_date, time.min), box_timezone),
+                scheduled_at__lte=timezone.make_aware(datetime.combine(query_end_date, time.max), box_timezone),
             )
             .order_by('scheduled_at')
-            .prefetch_related('attendances', 'coach')[:12]
+            .prefetch_related('attendances', 'coach')
         )
+        if selected_date is None and not window_days:
+            sessions_queryset = sessions_queryset[:12]
+        sessions = sessions_queryset
         attendance_queryset = Attendance.objects.filter(student=identity.student, session__in=sessions).select_related('session')
         attendance_by_session = {
             attendance.session_id: attendance

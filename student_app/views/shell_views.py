@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import re
 from collections import OrderedDict
+from datetime import date, timedelta
 
 from django.contrib import messages
 from django.db import OperationalError, ProgrammingError
@@ -111,7 +112,14 @@ class StudentHomeView(StudentIdentityRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        dashboard = GetStudentDashboard().execute(identity=self.request.student_identity)
+        selected_date = None
+        raw_date = (self.request.GET.get('date') or '').strip()
+        if raw_date:
+            try:
+                selected_date = date.fromisoformat(raw_date)
+            except ValueError:
+                selected_date = None
+        dashboard = GetStudentDashboard().execute(identity=self.request.student_identity, selected_date=selected_date)
         context['dashboard'] = dashboard
         context['student_shell_nav'] = 'home'
         context['student_shell_title'] = 'Inicio'
@@ -119,6 +127,7 @@ class StudentHomeView(StudentIdentityRequiredMixin, TemplateView):
         context['student_next_session'] = dashboard.focal_session
         context['student_active_wod_session'] = dashboard.active_wod_session
         context['student_day_sections'] = _build_day_sections(sessions=dashboard.next_sessions)
+        context['student_selected_date'] = selected_date
         return self._attach_student_shell_context(context)
 
 
@@ -127,13 +136,20 @@ class StudentGradeView(StudentIdentityRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        dashboard = GetStudentDashboard().execute(identity=self.request.student_identity)
+        dashboard = GetStudentDashboard().execute(identity=self.request.student_identity, window_days=2)
+        today = dashboard.next_sessions[0].scheduled_at.date() if dashboard.next_sessions else date.today()
+        tomorrow = today + timedelta(days=1)
         context['dashboard'] = dashboard
         context['student_shell_nav'] = 'grade'
         context['student_shell_title'] = 'Grade'
         context['student_next_session'] = dashboard.focal_session or (dashboard.next_sessions[0] if dashboard.next_sessions else None)
         context['student_month_days'] = GetStudentMonthSchedule().execute(identity=self.request.student_identity)
-        context['student_day_sections'] = _build_day_sections(sessions=dashboard.next_sessions)
+        context['student_today_sessions'] = tuple(
+            session for session in dashboard.next_sessions if session.scheduled_at.date() == today
+        )
+        context['student_tomorrow_sessions'] = tuple(
+            session for session in dashboard.next_sessions if session.scheduled_at.date() == tomorrow
+        )
         return self._attach_student_shell_context(context)
 
 
