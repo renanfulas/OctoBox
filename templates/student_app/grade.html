@@ -11,28 +11,14 @@
 {% block body %}
 <section class="student-hero-number">
     <span class="student-context-switch">Grade</span>
-    <p class="student-hero-number__label">
-        {% if student_next_session %}{{ student_next_session.title }}{% else %}Sem aula agora{% endif %}
-    </p>
+    <p class="student-hero-number__label">{% if student_next_session %}{{ student_next_session.title }}{% else %}Hoje e amanha{% endif %}</p>
     <div class="student-hero-number__value">
         <span>{% if student_next_session %}{{ student_next_session.scheduled_at|date:"H:i" }}{% else %}--{% endif %}</span>
     </div>
     {% if student_next_session %}
-    <p class="student-hero-number__support">
-        {{ student_next_session.scheduled_label }} · {{ student_next_session.attendance_status }}
-        {% if student_next_session.is_starting_soon %}· Em breve{% endif %}
-    </p>
+    <p class="student-hero-number__support">{{ student_next_session.scheduled_label }} · {{ student_next_session.attendance_status }}</p>
     {% endif %}
-    {% if dashboard.primary_action.kind == 'confirm_attendance' or dashboard.primary_action.kind == 'book_session' %}
-    <form method="post" action="{% url dashboard.primary_action.url_name %}" class="student-inline-form">
-        {% csrf_token %}
-        <input type="hidden" name="session_id" value="{{ dashboard.primary_action.payload.session_id }}">
-        <input type="hidden" name="next" value="{{ request.get_full_path }}">
-        <button type="submit" class="student-primary-action">{{ dashboard.primary_action.label }}</button>
-    </form>
-    {% elif dashboard.primary_action.disabled %}
-    <button type="button" class="student-primary-action" disabled aria-disabled="true">{{ dashboard.primary_action.label }}</button>
-    {% endif %}
+    <p class="student-copy">Aqui voce acompanha sua rotina. Reserve na aba Agenda.</p>
 </section>
 
 <details class="student-month-calendar">
@@ -80,24 +66,48 @@
 <section class="student-card student-card--quiet">
     <div class="student-section-head">
         <div>
-            <span class="student-context-switch">{{ dashboard.next_sessions|length }} aula(s)</span>
-            <h2>Proximas</h2>
+            <span class="student-context-switch">{{ student_today_sessions|length }} aula(s)</span>
+            <h2>Hoje</h2>
         </div>
     </div>
     <div class="student-session-list">
-        {% for session in dashboard.next_sessions %}
-        <article class="student-session-card">
+        {% for session in student_today_sessions %}
+        <article class="student-session-card" data-session-link="{% url 'student-app-wod' %}?session_id={{ session.session_id }}" tabindex="0" role="link" aria-label="Abrir WOD de {{ session.title }}">
             <strong>{{ session.title }}</strong>
             <span>{{ session.scheduled_label }}</span>
             <span>{{ session.coach_name }}</span>
             <span class="student-status-pill {{ session.runtime_status_pill_class }}">{{ session.runtime_status_label }}</span>
             <span>{{ session.attendance_status }}</span>
-            {% include "student_app/_partials/_session_actions.html" with session=session %}
         </article>
         {% empty %}
         <article class="student-compact-state">
-            <strong>Nada publicado.</strong>
+            <strong>Sem aulas hoje.</strong>
             <p class="student-copy">Volte mais tarde.</p>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="student-card student-card--quiet">
+    <div class="student-section-head">
+        <div>
+            <span class="student-context-switch">{{ student_tomorrow_sessions|length }} aula(s)</span>
+            <h2>Amanha</h2>
+        </div>
+    </div>
+    <div class="student-session-list">
+        {% for session in student_tomorrow_sessions %}
+        <article class="student-session-card" data-session-link="{% url 'student-app-wod' %}?session_id={{ session.session_id }}" tabindex="0" role="link" aria-label="Abrir WOD de {{ session.title }}">
+            <strong>{{ session.title }}</strong>
+            <span>{{ session.scheduled_label }}</span>
+            <span>{{ session.coach_name }}</span>
+            <span class="student-status-pill {{ session.runtime_status_pill_class }}">{{ session.runtime_status_label }}</span>
+            <span>{{ session.attendance_status }}</span>
+        </article>
+        {% empty %}
+        <article class="student-compact-state">
+            <strong>Sem aulas amanha.</strong>
+            <p class="student-copy">Nada publicado para o proximo dia.</p>
         </article>
         {% endfor %}
     </div>
@@ -107,4 +117,5 @@
 {% block extra_scripts %}
 {{ block.super }}
 <script src="{% static 'js/student_app/grade-month.js' %}"></script>
+<script src="{% static 'js/student_app/session-card.js' %}"></script>
 {% endblock %}

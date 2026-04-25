@@ -14,6 +14,9 @@ PONTOS CRITICOS:
 - aqui mora leitura e montagem, nao mutacao.
 """
 
+from django.shortcuts import get_object_or_404
+
+from operations.models import ClassSession
 from student_app.application.use_cases import GetStudentDashboard, GetStudentWorkoutDay
 from student_app.models import SessionWorkout, SessionWorkoutStatus, StudentExerciseMax
 
@@ -26,7 +29,11 @@ def build_student_wod_context(view, **kwargs):
     context['student_shell_nav'] = 'wod'
     context['student_shell_title'] = 'WOD'
     context['student_next_session'] = dashboard.next_sessions[0] if dashboard.next_sessions else None
+    session_id = (view.request.GET.get('session_id') or '').strip()
     target_session = dashboard.active_wod_session or dashboard.focal_session
+    if session_id:
+        session = get_object_or_404(ClassSession, pk=session_id)
+        target_session = type('StudentTargetSession', (), {'session_id': session.id})()
     workout_day = (
         GetStudentWorkoutDay().execute(
             student=student,

@@ -73,15 +73,17 @@
             <h2>Proximas aulas</h2>
         </div>
     </div>
-    <article class="student-compact-state student-day-filter__empty-state" data-day-empty-state hidden>
+    {% if not student_day_sections %}
+    <article class="student-compact-state">
         <strong>Sem aulas neste dia.</strong>
         <p class="student-copy">Escolha outro dia.</p>
     </article>
+    {% endif %}
     {% for section in student_day_sections %}
-    <div class="student-day-section" data-day-section="{{ section.date|date:'Y-m-d' }}"{% if not forloop.first %} hidden{% endif %}>
+    <div class="student-day-section" data-day-section="{{ section.date|date:'Y-m-d' }}">
         <div class="student-session-list">
             {% for session in section.sessions %}
-            <article class="student-session-card">
+            <article class="student-session-card" data-session-link="{% url 'student-app-wod' %}?session_id={{ session.session_id }}" tabindex="0" role="link" aria-label="Abrir WOD de {{ session.title }}">
                 <strong>{{ session.title }}</strong>
                 <span>{{ session.scheduled_label }}</span>
                 <span class="student-status-pill {{ session.runtime_status_pill_class }}">{{ session.runtime_status_label }}</span>
@@ -113,5 +115,5 @@
 
 {% block extra_scripts %}
 {{ block.super }}
-<script src="{% static 'js/student_app/day-filter.js' %}"></script>
+<script src="{% static 'js/student_app/session-card.js' %}"></script>
 {% endblock %}

@@ -3,17 +3,16 @@
     <span class="student-context-switch">Semana</span>
     <div class="student-progress-strip__track">
         {% for day in progress_days %}
-        <button
-            type="button"
+        <a
+            href="?date={{ day.date|date:'Y-m-d' }}"
             class="student-progress-day student-day-filter{% if day.is_complete %} is-complete{% endif %}{% if day.is_today %} is-today{% endif %}"
             title="{{ day.kind|default:'Sem aula confirmada' }}"
             aria-label="{{ day.day_label }} {{ day.date_label }}{% if day.is_complete %}, com acao registrada{% else %}, sem acao registrada{% endif %}"
-            aria-pressed="{% if day.is_today %}true{% else %}false{% endif %}"
-            data-filter-date="{{ day.date|date:'Y-m-d' }}"
+            aria-current="{% if student_selected_date == day.date or not student_selected_date and day.is_today %}date{% else %}false{% endif %}"
         >
             <span class="student-progress-day__label">{{ day.day_label }}</span>
             <span class="student-progress-day__date">{{ day.date_label }}</span>
-        </button>
+        </a>
         {% endfor %}
     </div>
 </section>

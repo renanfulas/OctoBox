@@ -401,12 +401,12 @@ class StudentAppExperienceTests(TestCase):
         self.assertRedirects(response, reverse('student-identity-login'), fetch_redirect_response=False)
 
     def test_student_home_renders_without_staff_shell(self):
-        ClassSession.objects.create(
+        session = ClassSession.objects.create(
             title='Cross de terca',
             scheduled_at=timezone.now() + timedelta(days=1),
             status='scheduled',
         )
-        response = self.client.get(reverse('student-app-home'))
+        response = self.client.get(reverse('student-app-home'), {'date': timezone.localtime(session.scheduled_at).date().isoformat()})
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Inicio')
@@ -469,14 +469,15 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(activity.source_object_id, session.id)
 
     def test_confirm_attendance_blocks_second_booking_on_same_day(self):
+        base = timezone.localtime().replace(hour=9, minute=0, second=0, microsecond=0)
         first_session = ClassSession.objects.create(
             title='Primeira aula',
-            scheduled_at=timezone.now() + timedelta(hours=3),
+            scheduled_at=base,
             status='scheduled',
         )
         second_session = ClassSession.objects.create(
             title='Segunda aula',
-            scheduled_at=timezone.now() + timedelta(hours=5),
+            scheduled_at=base + timedelta(hours=2),
             status='scheduled',
         )
         Attendance.objects.create(
@@ -536,7 +537,8 @@ class StudentAppExperienceTests(TestCase):
         response = self.client.get(reverse('student-app-grade'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'class="student-secondary-action"', count=2, html=False)
+        self.assertContains(response, 'Aqui voce acompanha sua rotina. Reserve na aba Agenda.')
+        self.assertNotContains(response, 'class="student-secondary-action"', html=False)
 
     def test_cancel_attendance_sets_booking_as_canceled_until_one_hour_before_class(self):
         session = ClassSession.objects.create(
@@ -649,11 +651,66 @@ class StudentAppExperienceTests(TestCase):
 
         self.assertEqual(grade_response.status_code, 200)
         self.assertEqual(rm_response.status_code, 200)
-        self.assertContains(grade_response, 'Sua rotina no box')
-        self.assertContains(grade_response, 'Sem aula agora')
-        self.assertContains(grade_response, 'Proximas')
+        self.assertContains(grade_response, 'Hoje')
+        self.assertContains(grade_response, 'Amanha')
+        self.assertContains(grade_response, 'Ver mes')
         self.assertContains(rm_response, 'Seus RMs')
-        self.assertContains(rm_response, 'Deadlift')
+        self.assertContains(rm_response, 'Deadlift 100kg')
+
+    def test_student_home_filters_day_by_query_param(self):
+        today_session = ClassSession.objects.create(
+            title='Hoje cedo',
+            scheduled_at=timezone.now() + timedelta(hours=2),
+            status='scheduled',
+        )
+        tomorrow_session = ClassSession.objects.create(
+            title='Amanha cedo',
+            scheduled_at=timezone.now() + timedelta(days=1, hours=2),
+            status='scheduled',
+        )
+
+        response = self.client.get(reverse('student-app-home'), {'date': timezone.localtime(tomorrow_session.scheduled_at).date().isoformat()})
+
+        self.assertContains(response, 'Amanha cedo')
+        self.assertNotContains(response, 'Hoje cedo')
+
+    def test_student_canceled_booking_shows_reservar_novamente(self):
+        session = ClassSession.objects.create(
+            title='Aula cancelada',
+            scheduled_at=timezone.now() + timedelta(hours=3),
+            status='scheduled',
+        )
+        Attendance.objects.create(
+            student=self.student,
+            session=session,
+            status=AttendanceStatus.CANCELED,
+            reservation_source='student_app',
+        )
+
+        response = self.client.get(reverse('student-app-home'), {'date': timezone.localtime(session.scheduled_at).date().isoformat()})
+
+        self.assertContains(response, 'Reservar novamente')
+
+    def test_student_wod_opens_specific_session_from_query_param(self):
+        first_session = ClassSession.objects.create(
+            title='Turma 1',
+            scheduled_at=timezone.now() + timedelta(hours=2),
+            status='scheduled',
+        )
+        second_session = ClassSession.objects.create(
+            title='Turma 2',
+            scheduled_at=timezone.now() + timedelta(hours=4),
+            status='scheduled',
+        )
+        first_workout = SessionWorkout.objects.create(session=first_session, title='WOD 1', status=SessionWorkoutStatus.PUBLISHED)
+        second_workout = SessionWorkout.objects.create(session=second_session, title='WOD 2', status=SessionWorkoutStatus.PUBLISHED)
+        SessionWorkoutBlock.objects.create(workout=first_workout, kind=WorkoutBlockKind.STRENGTH, title='Forca 1', sort_order=1)
+        SessionWorkoutBlock.objects.create(workout=second_workout, kind=WorkoutBlockKind.STRENGTH, title='Forca 2', sort_order=1)
+
+        response = self.client.get(reverse('student-app-wod'), {'session_id': second_session.id})
+
+        self.assertContains(response, 'WOD 2')
+        self.assertNotContains(response, 'WOD 1')
 
     def test_student_rm_create_and_update_record_history_and_activity(self):
         add_response = self.client.post(

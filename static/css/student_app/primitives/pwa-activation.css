@@ -44,6 +44,11 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     gap: 10px;
 }
 
+.student-pwa-activation__dismiss {
+    display: flex;
+    justify-content: flex-end;
+}
+
 .student-pwa-activation__cards {
     display: grid;
     gap: 12px;

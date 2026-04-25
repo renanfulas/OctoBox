@@ -1,5 +1,40 @@
 <div class="student-session-actions" aria-label="Acoes da aula {{ session.title }}">
-    {% if session.can_book %}
+    {% if session.attendance_code == 'checked_in' %}
+    <button type="button" class="student-secondary-action student-session-action--blocked" disabled aria-disabled="true">
+        Check-in feito
+    </button>
+    {% elif session.attendance_code == 'checked_out' %}
+    <button type="button" class="student-secondary-action student-session-action--blocked" disabled aria-disabled="true">
+        Finalizado
+    </button>
+    {% elif session.can_cancel_attendance %}
+    <form
+        method="post"
+        action="{% url 'student-app-cancel-attendance' %}"
+        class="student-inline-form"
+        onsubmit="return confirm('Cancelar sua reserva nesta aula?')"
+    >
+        {% csrf_token %}
+        <input type="hidden" name="session_id" value="{{ session.session_id }}">
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" class="student-secondary-action student-secondary-action--danger" aria-label="Cancelar reserva em {{ session.title }} em {{ session.scheduled_label }}">
+            Cancelar
+        </button>
+    </form>
+    {% elif session.attendance_code == 'canceled' and session.can_confirm_presence %}
+    <form method="post" action="{% url 'student-app-confirm-attendance' %}" class="student-inline-form">
+        {% csrf_token %}
+        <input type="hidden" name="session_id" value="{{ session.session_id }}">
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" class="student-secondary-action" aria-label="Reservar novamente {{ session.title }} em {{ session.scheduled_label }}">
+            Reservar novamente
+        </button>
+    </form>
+    {% elif session.attendance_code == 'absent' %}
+    <button type="button" class="student-secondary-action student-session-action--blocked" disabled aria-disabled="true">
+        Faltou
+    </button>
+    {% elif session.can_book or session.can_confirm_presence %}
     <form method="post" action="{% url 'student-app-confirm-attendance' %}" class="student-inline-form">
         {% csrf_token %}
         <input type="hidden" name="session_id" value="{{ session.session_id }}">
@@ -26,26 +61,7 @@
         aria-disabled="true"
         title="{{ session.day_block_reason }}"
     >
-        {% if session.day_block_reason == 'Presenca confirmada' %}Presenca confirmada{% else %}Dia ocupado{% endif %}
+        Dia ocupado
     </button>
-    {% elif session.attendance_code == 'checked_in' %}
-    <button type="button" class="student-secondary-action student-session-action--blocked" disabled aria-disabled="true">
-        Presenca confirmada
-    </button>
-    {% endif %}
-    {% if session.can_cancel_attendance %}
-    <form
-        method="post"
-        action="{% url 'student-app-cancel-attendance' %}"
-        class="student-inline-form"
-        onsubmit="return confirm('Cancelar sua reserva nesta aula?')"
-    >
-        {% csrf_token %}
-        <input type="hidden" name="session_id" value="{{ session.session_id }}">
-        <input type="hidden" name="next" value="{{ request.get_full_path }}">
-        <button type="submit" class="student-secondary-action student-secondary-action--danger" aria-label="Cancelar reserva em {{ session.title }} em {{ session.scheduled_label }}">
-            Cancelar
-        </button>
-    </form>
     {% endif %}
 </div>

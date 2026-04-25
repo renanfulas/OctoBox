@@ -10,6 +10,11 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     gap: 16px;
 }
 
+.student-rm-card__summary {
+    display: grid;
+    gap: 4px;
+}
+
 .student-rm-calculator {
     --student-card-glow:
         radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-primary-alpha) 54%, transparent), transparent 38%),
@@ -80,6 +85,36 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     align-items: center;
     gap: 10px;
     margin: 0;
+}
+
+.student-rm-edit {
+    display: grid;
+    justify-items: end;
+    gap: 10px;
+}
+
+.student-rm-edit__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
+    color: var(--theme-text-primary);
+    cursor: pointer;
+    list-style: none;
+}
+
+.student-rm-edit__toggle::-webkit-details-marker {
+    display: none;
+}
+
+.student-rm-edit__toggle svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
 }
 
 .student-rm-inline-form .student-input {
