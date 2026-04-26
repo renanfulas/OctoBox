@@ -170,7 +170,9 @@
                             data-planner-coach-label="{{ cell.coach_label }}"
                             data-planner-slot-label="{{ cell.slot_label }}"
                             data-planner-primary-action="{{ cell.primary_action_label }}"
+                            data-planner-primary-href="{{ cell.primary_action_href }}"
                             data-planner-secondary-action="{{ cell.secondary_action_label|default:cell.trusted_template_label }}"
+                            data-planner-secondary-href="{{ cell.secondary_action_href|default:cell.trusted_template_url }}"
                             data-planner-policy-label="{{ cell.policy_label|default:'Politica sera lida ao aplicar template confiavel' }}"
                             data-planner-session-id="{{ cell.session_id }}"
                             data-planner-template-picker-enabled="{% if cell.trusted_template_picker_enabled %}true{% else %}false{% endif %}"
@@ -225,8 +227,8 @@
                 <strong class="wod-planner__spotlight-workout" data-planner-spotlight-workout>Sem leitura selecionada</strong>
                 <p class="wod-planner__spotlight-summary" data-planner-spotlight-summary>Quando uma celula recebe foco, mostramos aqui o contexto operacional resumido.</p>
                 <div class="wod-planner__spotlight-actions">
-                    <span class="wod-planner__spotlight-action" data-planner-spotlight-primary>Acao principal</span>
-                    <span class="wod-planner__spotlight-action is-secondary" data-planner-spotlight-secondary>Acao secundaria</span>
+                    <a class="wod-planner__spotlight-action is-disabled" data-planner-spotlight-primary href="#" aria-disabled="true">Acao principal</a>
+                    <a class="wod-planner__spotlight-action is-secondary is-disabled" data-planner-spotlight-secondary href="#" aria-disabled="true">Acao secundaria</a>
                 </div>
             </aside>
         </div>

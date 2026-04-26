@@ -60,7 +60,9 @@ class PlannerCell:
     status_label: str
     summary: str
     primary_action_label: str
+    primary_action_href: str
     secondary_action_label: str
+    secondary_action_href: str
     policy_label: str
     trusted_template_label: str
     trusted_template_url: str
@@ -273,7 +275,9 @@ def build_planner_cell(*, session, previous_slot_source=None, current_role_slug=
         status_label=status_label,
         summary=summary,
         primary_action_label=cell_actions[0].label if cell_actions else '',
+        primary_action_href=cell_actions[0].href if cell_actions else '',
         secondary_action_label=cell_actions[1].label if len(cell_actions) > 1 else '',
+        secondary_action_href=cell_actions[1].href if len(cell_actions) > 1 else '',
         policy_label=policy_badge['label'] if workout is not None and policy_badge else '',
         trusted_template_label=('Escolher template' if workout is None and current_role_slug in {'Owner', 'Manager'} and has_trusted_template_picker else ''),
         trusted_template_url='',

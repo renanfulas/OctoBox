@@ -81,6 +81,45 @@ PONTOS CRITICOS:
             const node = spotlight.querySelector(selector);
             if (node) node.textContent = value;
         });
+        bindSpotlightAction(
+            spotlight.querySelector('[data-planner-spotlight-primary]'),
+            {
+                label: cell.dataset.plannerPrimaryAction || 'Acao principal',
+                href: cell.dataset.plannerPrimaryHref || '',
+                sessionId: cell.dataset.plannerSessionId || '',
+                sessionTitle: cell.dataset.plannerSessionTitle || '',
+            }
+        );
+        bindSpotlightAction(
+            spotlight.querySelector('[data-planner-spotlight-secondary]'),
+            {
+                label: cell.dataset.plannerSecondaryAction || 'Sem acao secundaria',
+                href: cell.dataset.plannerSecondaryHref || '',
+                sessionId: cell.dataset.plannerSessionId || '',
+                sessionTitle: cell.dataset.plannerSessionTitle || '',
+                allowTemplatePicker: cell.dataset.plannerTemplatePickerEnabled === 'true',
+            }
+        );
+    }
+
+    function bindSpotlightAction(node, action) {
+        if (!node) return;
+        node.textContent = action.label || 'Sem acao secundaria';
+        node.dataset.sessionId = action.sessionId || '';
+        node.dataset.sessionTitle = action.sessionTitle || '';
+        node.dataset.actionHref = action.href || '';
+        node.dataset.allowTemplatePicker = action.allowTemplatePicker ? 'true' : 'false';
+
+        if (!action.href && !action.allowTemplatePicker) {
+            node.setAttribute('href', '#');
+            node.setAttribute('aria-disabled', 'true');
+            node.classList.add('is-disabled');
+            return;
+        }
+
+        node.setAttribute('href', action.href || '#');
+        node.setAttribute('aria-disabled', 'false');
+        node.classList.remove('is-disabled');
     }
 
     function openTemplatePicker(sessionId, sessionTitle) {
@@ -97,6 +136,17 @@ PONTOS CRITICOS:
         trigger.addEventListener('click', () => {
             openTemplatePicker(trigger.dataset.sessionId, trigger.closest('[data-wod-planner-cell]')?.dataset.plannerSessionTitle || 'selecionada');
         });
+    });
+
+    spotlight?.addEventListener('click', (event) => {
+        const actionLink = event.target.closest('[data-planner-spotlight-primary], [data-planner-spotlight-secondary]');
+        if (!actionLink || actionLink.getAttribute('aria-disabled') === 'true') return;
+        const href = actionLink.dataset.actionHref || '';
+        const canOpenTemplatePicker = actionLink.dataset.allowTemplatePicker === 'true' || href === '#wod-planner-template-picker';
+        if (canOpenTemplatePicker) {
+            event.preventDefault();
+            openTemplatePicker(actionLink.dataset.sessionId, actionLink.dataset.sessionTitle);
+        }
     });
 
     templateApplyForms.forEach((form) => {
