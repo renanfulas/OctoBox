@@ -94,10 +94,14 @@
                             <span class="student-session-card__date">{{ session.scheduled_at|date:"d/m" }}</span>
                             <span class="student-session-card__time">{{ session.scheduled_at|date:"H:i" }}</span>
                         </div>
-                        <div class="student-session-card__occupancy-inline">
+                        <a
+                            href="{% url 'student-app-session-attendees' session.session_id %}"
+                            class="student-session-card__occupancy-inline student-session-card__occupancy-link"
+                            aria-label="Ver turma de {{ session.title }} em {{ session.scheduled_label }}"
+                        >
                             <span class="student-session-card__occupancy-count">{{ session.occupied_slots }}/{{ session.capacity }}</span>
                             <span class="student-session-card__occupancy-state">{{ session.occupancy_label }}</span>
-                        </div>
+                        </a>
                     </div>
                     <div class="student-session-card__status-row">
                         <span class="student-status-pill {{ session.runtime_status_pill_class }}">{{ session.runtime_status_label }}</span>

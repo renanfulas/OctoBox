@@ -40,7 +40,7 @@
                 <span class="student-month-day__dot" data-status="{{ day.sessions.0.attendance_status }}"></span>
                 {% if day.sessions|length > 1 %}<span class="student-month-day__count">{{ day.sessions|length }}x</span>{% endif %}
                 {% if day.sessions|length > 1 %}
-                <span class="student-month-day__sessions-data" hidden aria-hidden="true">{% for session in day.sessions %}<span data-session-id="{{ session.session_id }}" data-session-time="{{ session.scheduled_at|date:'H:i' }}" data-session-title="{{ session.title }}" data-session-status="{{ session.attendance_status }}"></span>{% endfor %}</span>
+                <span class="student-month-day__sessions-data" hidden aria-hidden="true">{% for session in day.sessions %}<span data-session-id="{{ session.session_id }}" data-session-time="{{ session.scheduled_at|date:'H:i' }}" data-session-title="{{ session.title }}" data-session-status="{{ session.attendance_status }}" data-session-runtime-status="{{ session.runtime_status_label }}"></span>{% endfor %}</span>
                 {% endif %}
             </button>
             {% else %}
@@ -69,7 +69,6 @@
     <div class="student-section-head">
         <div>
             <span class="student-context-switch">{{ student_today_sessions|length }} aula(s)</span>
-            <h2>Hoje</h2>
         </div>
     </div>
     <div class="student-session-list">
@@ -104,7 +103,7 @@
             <span>{{ session.scheduled_label }}</span>
             <span>{{ session.coach_name }}</span>
             <span class="student-status-pill {{ session.runtime_status_pill_class }}">{{ session.runtime_status_label }}</span>
-            <span>{{ session.attendance_status }}</span>
+            <span>{{ session.runtime_status_label }}</span>
         </article>
         {% empty %}
         <article class="student-compact-state">

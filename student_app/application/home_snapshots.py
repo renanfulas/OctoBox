@@ -223,7 +223,7 @@ def get_student_home_snapshot(
         .filter(
             Q(session_id__in=session_ids) | Q(status__in=ACTIVE_ATTENDANCE_CODES)
         )
-        .values('session_id', 'status', 'session__scheduled_at', 'session__duration_minutes')
+        .values('session_id', 'status', 'updated_at', 'session__scheduled_at', 'session__duration_minutes')
     )
     attendance_by_session = {
         row['session_id']: row['status']
@@ -231,8 +231,12 @@ def get_student_home_snapshot(
         if row['session_id'] in session_ids
     }
     active_reserved_session_id = None
+    latest_canceled_session_id = None
     reserved_sessions = []
+    canceled_rows = []
     for attendance in attendance_rows:
+        if attendance['status'] == AttendanceStatus.CANCELED:
+            canceled_rows.append(attendance)
         if attendance['status'] not in ACTIVE_ATTENDANCE_CODES:
             continue
         scheduled_at = attendance['session__scheduled_at'].astimezone(now.tzinfo)
@@ -243,6 +247,9 @@ def get_student_home_snapshot(
     if reserved_sessions:
         reserved_sessions.sort(key=lambda item: item[0])
         active_reserved_session_id = reserved_sessions[0][1]
+    if canceled_rows:
+        canceled_rows.sort(key=lambda item: item['updated_at'] or now, reverse=True)
+        latest_canceled_session_id = canceled_rows[0]['session_id']
 
     enrollments = tuple(
         Enrollment.objects.select_related('plan')
@@ -257,6 +264,7 @@ def get_student_home_snapshot(
     snapshot = {
         'attendance_by_session': attendance_by_session,
         'active_reserved_session_id': active_reserved_session_id,
+        'latest_canceled_session_id': latest_canceled_session_id,
         'membership_label': membership_label,
         'has_active_plan': has_active_plan,
         'progress_days': progress_days_builder(student=identity.student, now=now),
@@ -265,6 +273,7 @@ def get_student_home_snapshot(
     cache_payload = {
         'attendance_by_session': snapshot['attendance_by_session'],
         'active_reserved_session_id': snapshot['active_reserved_session_id'],
+        'latest_canceled_session_id': snapshot['latest_canceled_session_id'],
         'membership_label': snapshot['membership_label'],
         'has_active_plan': snapshot['has_active_plan'],
         'progress_days': _serialize_progress_days(snapshot['progress_days']),

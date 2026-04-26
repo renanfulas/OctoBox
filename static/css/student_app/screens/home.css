@@ -129,6 +129,20 @@
     margin-left: auto;
 }
 
+.student-session-card__occupancy-link {
+    text-decoration: none;
+    transition:
+        transform var(--motion-fast) var(--ease-standard),
+        opacity var(--motion-base) var(--ease-standard);
+}
+
+.student-session-card__occupancy-link:hover,
+.student-session-card__occupancy-link:focus-visible {
+    transform: translateY(-1px);
+    opacity: 0.86;
+    outline: none;
+}
+
 .student-session-card__occupancy-count {
     color: var(--theme-text-primary);
     font-size: 0.9rem;

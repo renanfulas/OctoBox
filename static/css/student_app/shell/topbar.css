@@ -109,6 +109,14 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
         0 12px 22px color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent);
     font-weight: 800;
     letter-spacing: 0.06em;
+    overflow: hidden;
+}
+
+.student-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .student-avatar-link {

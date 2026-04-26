@@ -19,11 +19,13 @@ from django.contrib import messages
 from django.db import OperationalError, ProgrammingError
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
+from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import FormView, TemplateView, View
 
 from student_app.application.activity import record_student_app_activity
 from student_app.application.rm_snapshots import get_student_rm_snapshot
+from student_app.application.timezone import resolve_box_timezone
 from student_app.application.use_cases import GetStudentDashboard, GetStudentMonthSchedule, GetStudentWorkoutPrescription
 from student_app.forms import (
     StudentExerciseMaxForm,
@@ -146,7 +148,8 @@ class StudentGradeView(StudentIdentityRequiredMixin, TemplateView):
             window_days=2,
             request_perf=getattr(self.request, '_octobox_request_perf', None),
         )
-        today = dashboard.next_sessions[0].scheduled_at.date() if dashboard.next_sessions else date.today()
+        box_timezone = resolve_box_timezone(box_root_slug=self.request.student_identity.box_root_slug)
+        today = timezone.localtime(timezone.now(), box_timezone).date()
         tomorrow = today + timedelta(days=1)
         context['dashboard'] = dashboard
         context['student_shell_nav'] = 'grade'

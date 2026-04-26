@@ -7,7 +7,18 @@
             aria-label="Abrir perfil e configuracoes"
             title="Perfil e configuracoes"
         >
+            {% if student_identity.photo_url %}
+            <img
+                src="{{ student_identity.photo_url }}"
+                alt="{{ student_identity.student.full_name }}"
+                width="42"
+                height="42"
+                loading="lazy"
+                referrerpolicy="no-referrer"
+            >
+            {% else %}
             {{ student_identity.student.full_name|slice:":1"|upper }}
+            {% endif %}
         </a>
         <div class="student-topbar-copy">
             <p class="student-topbar-eyebrow">{{ student_shell_title|default:"Inicio" }}</p>

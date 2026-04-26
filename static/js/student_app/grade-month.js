@@ -46,7 +46,7 @@
 
       var statusSpan = document.createElement('span');
       statusSpan.className = 'student-month-picker__item-status';
-      statusSpan.textContent = s.dataset.sessionStatus;
+      statusSpan.textContent = s.dataset.sessionRuntimeStatus || s.dataset.sessionStatus;
 
       a.appendChild(timeSpan);
       a.appendChild(titleSpan);

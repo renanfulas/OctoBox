@@ -803,6 +803,89 @@ class StudentAppExperienceTests(TestCase):
 
         self.assertContains(response, 'Reservar novamente')
 
+    def test_student_canceled_booking_is_blocked_when_other_reservation_is_active(self):
+        canceled_session = ClassSession.objects.create(
+            title='Aula cancelada',
+            scheduled_at=timezone.now() + timedelta(hours=2),
+            status='scheduled',
+        )
+        reserved_session = ClassSession.objects.create(
+            title='Aula reservada',
+            scheduled_at=timezone.now() + timedelta(hours=3),
+            status='scheduled',
+        )
+        Attendance.objects.create(
+            student=self.student,
+            session=canceled_session,
+            status=AttendanceStatus.CANCELED,
+            reservation_source='student_app',
+        )
+        Attendance.objects.create(
+            student=self.student,
+            session=reserved_session,
+            status=AttendanceStatus.BOOKED,
+            reservation_source='student_app',
+        )
+
+        response = self.client.get(
+            reverse('student-app-home'),
+            {'date': timezone.localtime(canceled_session.scheduled_at).date().isoformat()},
+        )
+
+        self.assertContains(response, 'Indisponivel')
+        self.assertNotContains(response, 'Reservar novamente')
+
+    def test_only_latest_canceled_booking_shows_reservar_novamente(self):
+        first_canceled_session = ClassSession.objects.create(
+            title='Aula cancelada antiga',
+            scheduled_at=timezone.now() + timedelta(hours=2),
+            status='scheduled',
+        )
+        latest_canceled_session = ClassSession.objects.create(
+            title='Aula cancelada recente',
+            scheduled_at=timezone.now() + timedelta(hours=4),
+            status='scheduled',
+        )
+        first_attendance = Attendance.objects.create(
+            student=self.student,
+            session=first_canceled_session,
+            status=AttendanceStatus.CANCELED,
+            reservation_source='student_app',
+        )
+        latest_attendance = Attendance.objects.create(
+            student=self.student,
+            session=latest_canceled_session,
+            status=AttendanceStatus.CANCELED,
+            reservation_source='student_app',
+        )
+        first_attendance.updated_at = timezone.now() - timedelta(minutes=15)
+        first_attendance.save(update_fields=['updated_at'])
+        latest_attendance.updated_at = timezone.now()
+        latest_attendance.save(update_fields=['updated_at'])
+
+        dashboard = GetStudentDashboard().execute(identity=self.identity)
+
+        rebookable_canceled_sessions = [
+            session for session in dashboard.next_sessions
+            if session.attendance_code == AttendanceStatus.CANCELED and session.can_confirm_presence
+        ]
+        self.assertEqual(len(rebookable_canceled_sessions), 1)
+        self.assertEqual(rebookable_canceled_sessions[0].title, 'Aula cancelada recente')
+
+    def test_student_grade_places_tomorrow_sessions_inside_amanha_section(self):
+        tomorrow = timezone.localtime() + timedelta(days=1, hours=2)
+        session = ClassSession.objects.create(
+            title='Cross amanha cedo',
+            scheduled_at=tomorrow,
+            status='scheduled',
+        )
+
+        response = self.client.get(reverse('student-app-grade'))
+
+        self.assertContains(response, 'Amanha')
+        self.assertContains(response, 'Cross amanha cedo')
+        self.assertContains(response, '1 aula(s)')
+
     def test_student_wod_opens_specific_session_from_query_param(self):
         first_session = ClassSession.objects.create(
             title='Turma 1',
@@ -903,6 +986,38 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Cross visivel')
         self.assertContains(response, 'Colega')
+
+    def test_student_session_attendees_renders_google_photo_when_available(self):
+        session = ClassSession.objects.create(
+            title='Cross com foto',
+            scheduled_at=timezone.now() + timedelta(hours=2),
+            status='scheduled',
+        )
+        mate = Student.objects.create(
+            full_name='Colega com Foto',
+            phone='5511999990003',
+            email='foto@example.com',
+        )
+        StudentIdentity.objects.create(
+            student=mate,
+            box_root_slug='control',
+            primary_box_root_slug='control',
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='provider-subject-photo',
+            email='foto@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+            photo_url='https://example.com/photo.jpg',
+        )
+        Attendance.objects.create(
+            student=mate,
+            session=session,
+            status=AttendanceStatus.BOOKED,
+        )
+
+        response = self.client.get(reverse('student-app-session-attendees', kwargs={'session_id': session.id}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'https://example.com/photo.jpg')
 
     def test_student_session_attendees_blocks_session_outside_visible_dashboard(self):
         for offset in range(12):
@@ -1415,6 +1530,29 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'aria-label="Abrir perfil e configuracoes"', html=False)
         self.assertContains(response, '<svg class="theme-toggle-icon"', html=False)
         self.assertNotContains(response, 'class="student-topbar-link">Perfil</a>', html=False)
+
+    def test_student_topbar_uses_google_photo_when_available(self):
+        self.identity.photo_url = 'https://example.com/me.jpg'
+        self.identity.save(update_fields=['photo_url'])
+
+        response = self.client.get(reverse('student-app-home'))
+
+        self.assertContains(response, 'https://example.com/me.jpg')
+
+    def test_student_home_occupancy_link_points_to_session_attendees(self):
+        session = ClassSession.objects.create(
+            title='Cross com turma',
+            scheduled_at=timezone.now() + timedelta(hours=2),
+            status='scheduled',
+            capacity=15,
+        )
+
+        response = self.client.get(reverse('student-app-home'))
+
+        self.assertContains(
+            response,
+            reverse('student-app-session-attendees', kwargs={'session_id': session.id}),
+        )
 
     @override_settings(
         STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY='test-public-key',

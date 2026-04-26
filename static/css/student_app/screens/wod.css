@@ -63,10 +63,19 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 .student-field-with-unit__prefix {
     position: absolute;
     top: 50%;
-    left: 16px;
+    left: 10px;
     transform: translateY(-50%);
-    color: var(--theme-text-muted);
-    font-size: 0.78rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 8px;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 94%, transparent);
+    color: var(--theme-text-secondary);
+    font-size: 0.82rem;
     font-weight: 900;
     pointer-events: none;
 }
