@@ -53,15 +53,15 @@
     >
         Renove seu plano
     </button>
-    {% elif session.is_day_blocked %}
+    {% elif session.booking_block_reason %}
     <button
         type="button"
         class="student-secondary-action student-session-action--blocked"
         disabled
         aria-disabled="true"
-        title="{{ session.day_block_reason }}"
+        title="{{ session.booking_block_reason }}"
     >
-        Dia ocupado
+        Indisponivel
     </button>
     {% endif %}
 </div>

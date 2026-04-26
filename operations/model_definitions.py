@@ -117,6 +117,9 @@ class ClassSession(TimeStampedModel):
     class Meta:
         app_label = HISTORICAL_BOXCORE_APP_LABEL
         ordering = ['scheduled_at']
+        indexes = [
+            models.Index(fields=['status', 'scheduled_at'], name='class_session_status_time'),
+        ]
 
     def __str__(self):
         return f'{self.title} - {self.scheduled_at:%d/%m %H:%M}'

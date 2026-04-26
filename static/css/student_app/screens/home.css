@@ -71,8 +71,163 @@
     background: color-mix(in srgb, var(--theme-accent-danger-alpha) 12%, var(--theme-surface-strong) 88%);
 }
 
+.student-session-card--agenda {
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 16px;
+}
+
+.student-session-card__main {
+    display: grid;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.student-session-card__identity,
+.student-session-card__schedule {
+    display: grid;
+    gap: 2px;
+}
+
+.student-session-card__identity strong {
+    font-size: 0.98rem;
+    line-height: 1.12;
+}
+
+.student-session-card__meta {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 12px;
+}
+
+.student-session-card__coach,
+.student-session-card__date,
+.student-session-card__attendance,
+.student-session-card__occupancy-inline,
+.student-session-card__capacity-foot {
+    color: var(--theme-text-secondary);
+    font-size: 0.8rem;
+}
+
+.student-session-card__time {
+    color: var(--theme-text-primary);
+    font-size: 1.32rem;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+}
+
+.student-session-card__occupancy-inline {
+    display: grid;
+    gap: 1px;
+    justify-items: end;
+    text-align: right;
+    min-width: 64px;
+    margin-left: auto;
+}
+
+.student-session-card__occupancy-count {
+    color: var(--theme-text-primary);
+    font-size: 0.9rem;
+    font-weight: 900;
+}
+
+.student-session-card__schedule {
+    min-width: 70px;
+}
+
+.student-session-card__status-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.student-session-card__capacity {
+    display: grid;
+    gap: 4px;
+}
+
+.student-session-card__capacity-bar {
+    position: relative;
+    height: 5px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-border-soft) 54%, transparent);
+}
+
+.student-session-card__capacity-bar > span {
+    display: block;
+    width: min(100%, var(--student-session-occupancy, 0%));
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--theme-accent-primary) 78%, white 22%),
+        color-mix(in srgb, var(--theme-accent-support) 84%, white 16%)
+    );
+}
+
+.student-session-card__capacity-bar > span.class-occupancy-medium {
+    background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--theme-accent-warning) 74%, white 26%),
+        color-mix(in srgb, var(--theme-accent-support) 72%, white 28%)
+    );
+}
+
+.student-session-card__capacity-bar > span.class-occupancy-high,
+.student-session-card__capacity-bar > span.class-occupancy-critical,
+.student-session-card__capacity-bar > span.class-occupancy-closed {
+    background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--theme-accent-danger) 72%, white 28%),
+        color-mix(in srgb, var(--theme-accent-warning) 74%, white 26%)
+    );
+}
+
+.student-session-card__aside {
+    display: flex;
+    align-items: center;
+    min-width: 124px;
+}
+
+.student-session-card__aside .student-session-actions,
+.student-session-card__aside .student-inline-form {
+    width: 100%;
+}
+
+.student-session-card__aside .student-secondary-action,
+.student-session-card__aside .student-session-action--blocked {
+    min-height: 38px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 0.92rem;
+}
+
 @media (max-width: 640px) {
     .student-day-workout summary {
         padding: 12px 14px;
+    }
+
+    .student-session-card--agenda {
+        flex-direction: column;
+    }
+
+    .student-session-card__aside {
+        min-width: 0;
+    }
+
+    .student-session-card__meta {
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .student-session-card__occupancy-inline {
+        min-width: 0;
     }
 }

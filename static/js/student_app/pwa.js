@@ -228,6 +228,19 @@
     return 'Instalacao concluida. Agora aceite as notificacoes para receber alertas do OctoBox.';
   }
 
+  function isNotificationActivationComplete(state) {
+    if (!state.isStandalone) {
+      return false;
+    }
+    if (state.notificationPermission !== 'granted') {
+      return false;
+    }
+    if (!state.notificationSupported || !state.pushConfigured) {
+      return true;
+    }
+    return Boolean(state.hasPushSubscription);
+  }
+
   function updateStatusChip(element, label, state) {
     if (!element) {
       return;
@@ -312,11 +325,7 @@
     }
 
     var hideInstallCard = Boolean(state.isStandalone);
-    var hideNotificationCard = Boolean(
-      state.notificationPermission === 'granted' ||
-      state.notificationPermission === 'unsupported' ||
-      !state.notificationSupported
-    );
+    var hideNotificationCard = Boolean(!state.isStandalone || state.activationComplete);
 
     activationElement.hidden = Boolean((hideInstallCard && hideNotificationCard) || !shouldShowActivationCard(state));
     if (copyElement) {
@@ -359,7 +368,7 @@
     }
 
     if (notificationAction) {
-      notificationAction.hidden = Boolean(!state.isStandalone || hideNotificationCard);
+      notificationAction.hidden = Boolean(!state.isStandalone || hideNotificationCard || state.notificationPermission === 'granted');
       notificationAction.disabled = Boolean(!state.isStandalone || !state.notificationSupported || !state.pushConfigured);
     }
 
@@ -405,7 +414,7 @@
       pushConfigured: Boolean(notificationSupport.configured),
       hasPushSubscription: Boolean(currentPushSubscription),
     };
-    state.activationComplete = Boolean(state.isStandalone && state.notificationPermission === 'granted');
+    state.activationComplete = isNotificationActivationComplete(state);
 
     window.OctoBoxStudentPWA = Object.assign({}, window.OctoBoxStudentPWA || {}, state, {
       promptInstall: function () {

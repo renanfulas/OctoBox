@@ -17,13 +17,15 @@ PONTOS CRITICOS:
 from django.shortcuts import get_object_or_404
 
 from operations.models import ClassSession
+from student_app.application.rm_snapshots import get_student_rm_snapshot
 from student_app.application.use_cases import GetStudentDashboard, GetStudentWorkoutDay
-from student_app.models import SessionWorkout, SessionWorkoutStatus, StudentExerciseMax
+from student_app.models import SessionWorkout, SessionWorkoutStatus
 
 
 def build_student_wod_context(view, **kwargs):
     context = super(type(view), view).get_context_data(**kwargs)
-    dashboard = GetStudentDashboard().execute(identity=view.request.student_identity)
+    request_perf = getattr(view.request, '_octobox_request_perf', None)
+    dashboard = GetStudentDashboard().execute(identity=view.request.student_identity, request_perf=request_perf)
     student = view.request.student_identity.student
     context['dashboard'] = dashboard
     context['student_shell_nav'] = 'wod'
@@ -38,6 +40,8 @@ def build_student_wod_context(view, **kwargs):
         GetStudentWorkoutDay().execute(
             student=student,
             session_id=target_session.session_id,
+            box_root_slug=view.request.student_identity.box_root_slug,
+            request_perf=request_perf,
         )
         if target_session is not None
         else None
@@ -49,8 +53,13 @@ def build_student_wod_context(view, **kwargs):
             .only('id')
             .first()
         )
+    rm_snapshot = get_student_rm_snapshot(
+        student=student,
+        box_root_slug=view.request.student_identity.box_root_slug,
+        request_perf=request_perf,
+    )
     context['student_workout_day'] = workout_day
-    context['student_rm_preview'] = StudentExerciseMax.objects.filter(student=student).order_by('exercise_label').first()
+    context['student_rm_preview'] = rm_snapshot['cards'][0].record if rm_snapshot['cards'] else None
     return {
         'context': context,
         'dashboard': dashboard,

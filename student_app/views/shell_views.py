@@ -23,6 +23,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import FormView, TemplateView, View
 
 from student_app.application.activity import record_student_app_activity
+from student_app.application.rm_snapshots import get_student_rm_snapshot
 from student_app.application.use_cases import GetStudentDashboard, GetStudentMonthSchedule, GetStudentWorkoutPrescription
 from student_app.forms import (
     StudentExerciseMaxForm,
@@ -119,7 +120,11 @@ class StudentHomeView(StudentIdentityRequiredMixin, TemplateView):
                 selected_date = date.fromisoformat(raw_date)
             except ValueError:
                 selected_date = None
-        dashboard = GetStudentDashboard().execute(identity=self.request.student_identity, selected_date=selected_date)
+        dashboard = GetStudentDashboard().execute(
+            identity=self.request.student_identity,
+            selected_date=selected_date,
+            request_perf=getattr(self.request, '_octobox_request_perf', None),
+        )
         context['dashboard'] = dashboard
         context['student_shell_nav'] = 'home'
         context['student_shell_title'] = 'Inicio'
@@ -136,7 +141,11 @@ class StudentGradeView(StudentIdentityRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        dashboard = GetStudentDashboard().execute(identity=self.request.student_identity, window_days=2)
+        dashboard = GetStudentDashboard().execute(
+            identity=self.request.student_identity,
+            window_days=2,
+            request_perf=getattr(self.request, '_octobox_request_perf', None),
+        )
         today = dashboard.next_sessions[0].scheduled_at.date() if dashboard.next_sessions else date.today()
         tomorrow = today + timedelta(days=1)
         context['dashboard'] = dashboard
@@ -167,6 +176,7 @@ class StudentWodView(StudentIdentityRequiredMixin, FormView):
             student=self.request.student_identity.student,
             exercise_slug=form.cleaned_data['exercise_slug'],
             percentage=form.cleaned_data['percentage'],
+            request_perf=getattr(self.request, '_octobox_request_perf', None),
         )
         context = self.get_context_data(form=form, prescription=result)
         return self.render_to_response(context)
@@ -193,31 +203,26 @@ class StudentRmView(StudentIdentityRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        dashboard = GetStudentDashboard().execute(identity=self.request.student_identity)
-        rm_records = tuple(
-            StudentExerciseMax.objects.filter(student=self.request.student_identity.student).order_by('exercise_label')
+        dashboard = GetStudentDashboard().execute(
+            identity=self.request.student_identity,
+            request_perf=getattr(self.request, '_octobox_request_perf', None),
         )
-        latest_delta_by_slug = {}
-        try:
-            history_queryset = StudentExerciseMaxHistory.objects.filter(
-                student=self.request.student_identity.student,
-                exercise_slug__in=[record.exercise_slug for record in rm_records],
-            ).order_by('exercise_slug', '-created_at', '-id')
-        except RM_ACTIVITY_STORAGE_EXCEPTIONS:
-            history_queryset = ()
-        for history in history_queryset:
-            latest_delta_by_slug.setdefault(history.exercise_slug, history.delta_kg)
+        rm_snapshot = get_student_rm_snapshot(
+            student=self.request.student_identity.student,
+            box_root_slug=self.request.student_identity.box_root_slug,
+            request_perf=getattr(self.request, '_octobox_request_perf', None),
+        )
         context['student_shell_nav'] = 'rm'
         context['student_shell_title'] = 'RM'
         context['dashboard'] = dashboard
         context['rm_of_the_day'] = dashboard.rm_of_the_day
-        context['rm_records'] = rm_records
+        context['rm_records'] = tuple(card.record for card in rm_snapshot['cards'])
         context['rm_cards'] = tuple(
             {
-                'record': record,
-                'delta_kg': latest_delta_by_slug.get(record.exercise_slug),
+                'record': card.record,
+                'delta_kg': card.delta_kg,
             }
-            for record in rm_records
+            for card in rm_snapshot['cards']
         )
         context['add_rm_form'] = StudentExerciseMaxForm()
         context['percentage_choices'] = tuple(range(5, 105, 5))

@@ -3,16 +3,38 @@ ARQUIVO: tela RM do aluno
 GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 */
 
+.student-rm-records {
+    gap: 14px;
+}
+
 .student-rm-card {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: 16px;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    position: relative;
 }
 
 .student-rm-card__summary {
     display: grid;
-    gap: 4px;
+    gap: 2px;
+}
+
+.student-rm-card__summary strong {
+    font-size: 0.95rem;
+    line-height: 1.15;
+}
+
+.student-rm-card__summary .student-copy {
+    font-size: 0.82rem;
+}
+
+.student-rm-card__value {
+    color: var(--theme-text-secondary);
+    font-size: 0.92rem;
+    font-weight: 800;
 }
 
 .student-rm-calculator {
@@ -68,6 +90,12 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     padding-right: 48px;
 }
 
+.student-field-with-unit--prefix .student-input,
+.student-field-with-unit--prefix input {
+    padding-right: 16px;
+    padding-left: 42px;
+}
+
 .student-field-with-unit__suffix {
     position: absolute;
     top: 50%;
@@ -79,32 +107,49 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     pointer-events: none;
 }
 
+.student-field-with-unit__prefix {
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    transform: translateY(-50%);
+    color: var(--theme-text-muted);
+    font-size: 0.78rem;
+    font-weight: 900;
+    pointer-events: none;
+}
+
 /* RM inline update form */
 .student-rm-inline-form {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 10px;
     margin: 0;
 }
 
 .student-rm-edit {
-    display: grid;
-    justify-items: end;
-    gap: 10px;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    gap: 8px;
+    align-self: flex-start;
 }
 
 .student-rm-edit__toggle {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
     border-radius: 12px;
     background: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
     color: var(--theme-text-primary);
     cursor: pointer;
     list-style: none;
+}
+
+.student-rm-edit__toggle--save {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, var(--theme-border-soft) 76%);
 }
 
 .student-rm-edit__toggle::-webkit-details-marker {
