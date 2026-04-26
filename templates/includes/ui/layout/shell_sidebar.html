@@ -7,10 +7,13 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Depende do usuario autenticado, navegacao e contadores do shell.
 -->
+{% load static %}
 <aside class="sidebar" data-slot="sidebar" data-ui="sidebar">
     <div class="sidebar-head">
         <div class="brand-wrap">
-            <div class="brand-mark" aria-hidden="true">OB</div>
+            <div class="brand-mark" aria-hidden="true">
+                <img src="{% static 'images/brand/octobox-mark.svg' %}?v={{ static_asset_version }}" alt="">
+            </div>
             <div class="brand-copy">
                 <p class="brand">OctoBox Control</p>
                 <p class="tagline">Gestao viva do box com leitura comercial e rotina operacional clara.</p>

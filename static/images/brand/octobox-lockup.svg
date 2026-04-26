@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 188" role="img" aria-labelledby="octobox-lockup-title octobox-lockup-desc">
+  <title id="octobox-lockup-title">OctoBox logo</title>
+  <desc id="octobox-lockup-desc">Horizontal OctoBox logo with futuristic symbol and wordmark.</desc>
+  <defs>
+    <linearGradient id="lockup-bg" x1="32" y1="24" x2="160" y2="166" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#17233A"/>
+      <stop offset="0.52" stop-color="#0A0E1A"/>
+      <stop offset="1" stop-color="#05070D"/>
+    </linearGradient>
+    <linearGradient id="lockup-ring" x1="44" y1="32" x2="148" y2="158" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00E5FF"/>
+      <stop offset="0.55" stop-color="#4A90E2"/>
+      <stop offset="1" stop-color="#FF00C8"/>
+    </linearGradient>
+    <linearGradient id="lockup-core" x1="70" y1="58" x2="124" y2="130" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#EAFBFF"/>
+      <stop offset="0.35" stop-color="#00E5FF"/>
+      <stop offset="1" stop-color="#4A90E2"/>
+    </linearGradient>
+    <linearGradient id="wordmark" x1="206" y1="38" x2="556" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F7FBFF"/>
+      <stop offset="0.72" stop-color="#DCEBFF"/>
+      <stop offset="1" stop-color="#8BCBFF"/>
+    </linearGradient>
+    <filter id="lockup-glow" x="-35%" y="-35%" width="170%" height="170%">
+      <feGaussianBlur stdDeviation="4.5" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0.75  0 0 0 0 1  0 0 0 0.45 0" result="cyanGlow"/>
+      <feMerge>
+        <feMergeNode in="cyanGlow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="720" height="188" rx="34" fill="#070B13"/>
+  <path d="M44 12h92l40 40v92l-40 40H44L4 144V52L44 12Z" fill="url(#lockup-bg)"/>
+  <path d="M56 28h68l36 36v68l-36 36H56l-36-36V64l36-36Z" fill="#00E5FF" fill-opacity="0.035" stroke="url(#lockup-ring)" stroke-width="6" stroke-linejoin="round" filter="url(#lockup-glow)"/>
+  <path d="M92 58 128 78v43l-36 21-36-21V78l36-20Z" fill="#060C18" fill-opacity="0.56" stroke="#EAFBFF" stroke-opacity="0.24" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M92 58 128 78l-36 21-36-21 36-20Z" fill="url(#lockup-core)" fill-opacity="0.92"/>
+  <path d="M56 78v43l36 21V99L56 78Z" fill="#00E5FF" fill-opacity="0.18"/>
+  <path d="M128 78v43l-36 21V99l36-21Z" fill="#4A90E2" fill-opacity="0.34"/>
+  <path d="M92 58v41M56 78l36 21 36-21M92 99v43" fill="none" stroke="#EAFBFF" stroke-opacity="0.58" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M112 69 128 78v43l-16 9V69Z" fill="#FF00C8" fill-opacity="0.28"/>
+  <circle cx="92" cy="99" r="4.5" fill="#EAFBFF"/>
+  <text x="210" y="94" fill="url(#wordmark)" font-family="Manrope, Inter, Segoe UI, Arial, sans-serif" font-size="58" font-weight="800" letter-spacing="-2">OctoBox</text>
+  <text x="214" y="130" fill="#91A4C4" font-family="Manrope, Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="4">CONTROL SYSTEM</text>
+  <path d="M214 148h240" stroke="#00E5FF" stroke-opacity="0.42" stroke-width="2" stroke-linecap="round"/>
+  <path d="M474 148h86" stroke="#FF00C8" stroke-opacity="0.45" stroke-width="2" stroke-linecap="round"/>
+</svg>
