@@ -76,6 +76,7 @@ class StudentIdentityFlowTests(TestCase):
             provider='google',
             email=email,
             provider_subject=provider_subject,
+            photo_url='https://example.com/google-photo.jpg',
         )
         return provider
 
@@ -85,13 +86,10 @@ class StudentIdentityFlowTests(TestCase):
     )
     @patch('student_identity.views.build_provider')
     def test_student_can_authenticate_with_google_callback_in_same_box(self, build_provider_mock):
-        provider = Mock()
-        provider.exchange_code.return_value = Mock(
-            provider='google',
+        build_provider_mock.return_value = self._build_google_provider_mock(
             email='aluno@example.com',
             provider_subject='google-subject-1',
         )
-        build_provider_mock.return_value = provider
 
         from student_identity.oauth_state import build_oauth_state
 
@@ -109,11 +107,53 @@ class StudentIdentityFlowTests(TestCase):
         self.assertEqual(identity.primary_box_root_slug, get_box_runtime_slug())
         self.assertEqual(identity.status, StudentIdentityStatus.ACTIVE)
         self.assertEqual(identity.provider_subject, 'google-subject-1')
+        self.assertEqual(identity.photo_url, 'https://example.com/google-photo.jpg')
         membership = StudentBoxMembership.objects.get(identity=identity, box_root_slug=get_box_runtime_slug())
         self.assertEqual(membership.status, StudentBoxMembershipStatus.ACTIVE)
         self.assertIn('octobox_student_session', response.cookies)
         session_payload = read_student_session_value(response.cookies['octobox_student_session'].value)
         self.assertTrue(session_payload['device_fingerprint'])
+
+    @override_settings(
+        STUDENT_GOOGLE_OAUTH_CLIENT_ID='google-client-id',
+        STUDENT_GOOGLE_OAUTH_CLIENT_SECRET='google-client-secret',
+    )
+    @patch('student_identity.views.build_provider')
+    def test_existing_google_identity_updates_photo_url_on_new_login(self, build_provider_mock):
+        identity = StudentIdentity.objects.create(
+            student=self.student,
+            box_root_slug=get_box_runtime_slug(),
+            primary_box_root_slug=get_box_runtime_slug(),
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-existing-subject',
+            email='aluno@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+            photo_url='',
+        )
+        StudentBoxMembership.objects.create(
+            identity=identity,
+            student=self.student,
+            box_root_slug=get_box_runtime_slug(),
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
+        build_provider_mock.return_value = self._build_google_provider_mock(
+            email='aluno@example.com',
+            provider_subject='google-existing-subject',
+        )
+
+        from student_identity.oauth_state import build_oauth_state
+
+        response = self.client.get(
+            reverse('student-identity-oauth-callback', kwargs={'provider': 'google'}),
+            {
+                'code': 'oauth-code-existing-photo',
+                'state': build_oauth_state(provider='google'),
+            },
+        )
+
+        self.assertRedirects(response, reverse('student-app-home'))
+        identity.refresh_from_db()
+        self.assertEqual(identity.photo_url, 'https://example.com/google-photo.jpg')
 
     @override_settings(
         STUDENT_APPLE_OAUTH_CLIENT_ID='com.octobox.student',
@@ -362,7 +402,7 @@ class StudentIdentityFlowTests(TestCase):
 
         self.assertRedirects(response, reverse('student-identity-login'))
         self.assertNotContains(response, f"?invite={invalid_token}")
-        self.assertIn('student_invite_pending', self.client.cookies)
+        self.assertNotIn('student_invite_pending', self.client.cookies)
         messages = list(response.context['messages'])
         self.assertTrue(
             any('O convite informado nao foi encontrado ou expirou. Tente entrar sem convite.' in str(message) for message in messages)
@@ -532,7 +572,7 @@ class StudentIdentityFlowTests(TestCase):
     def test_login_shows_google_logo_marker_when_google_available(self):
         response = self.client.get(reverse('student-identity-login'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'student-provider-mark student-provider-mark--google')
+        self.assertContains(response, 'student-google-mark')
         self.assertContains(response, 'Continuar com Google')
         self.assertNotContains(response, 'Equipe do box')
         self.assertNotContains(response, 'Entrar com usuario')
