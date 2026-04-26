@@ -86,7 +86,9 @@ def invalidate_student_home_snapshots(*, box_root_slug: str | None, student_id: 
         return
 
     if student_id is None:
-        cache.clear()
+        # Em backends simples sem delete_pattern, limpar o cache inteiro derruba
+        # tambem as sessoes do Django, o que invalida corredores operacionais
+        # nao relacionados. Nesses ambientes aceitamos o TTL curto do home-rm.
         return
 
     keys = []
@@ -132,7 +134,7 @@ def invalidate_student_rm_snapshots(*, box_root_slug: str | None, student_id: in
         return
 
     if student_id is None:
-        cache.clear()
+        return
         return
 
     cache.delete(

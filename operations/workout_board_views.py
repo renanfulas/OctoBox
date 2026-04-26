@@ -38,6 +38,15 @@ from student_app.models import WeeklyWodPlan, WeeklyWodPlanStatus
 from .base_views import OperationBaseView
 
 
+def _first_form_error(form, fallback_message):
+    if not form.errors:
+        return fallback_message
+    first_errors = next(iter(form.errors.values()), [])
+    if first_errors:
+        return first_errors[0]
+    return fallback_message
+
+
 class WorkoutApprovalBoardView(OperationBaseView):
     allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
     template_name = 'operations/workout_approval_board.html'
@@ -150,7 +159,7 @@ class WorkoutSmartPasteView(OperationBaseView):
         if action == 'update_review_item':
             review_form = WeeklyWodReviewMovementForm(request.POST)
             if not review_form.is_valid():
-                messages.error(request, 'Revise o item antes de salvar a correção.')
+                messages.error(request, _first_form_error(review_form, 'Revise o item antes de salvar a correção.'))
                 context = self._build_context(plan=plan, review_form=review_form)
                 if self._is_hx_request():
                     return self._render_partial('operations/includes/wod_smart_paste_preview.html', context)
@@ -166,7 +175,7 @@ class WorkoutSmartPasteView(OperationBaseView):
         if action == 'undo_projection':
             undo_form = WeeklyWodUndoReplicationForm(request.POST)
             if not undo_form.is_valid():
-                messages.error(request, 'Nao foi possivel identificar o lote para desfazer.')
+                messages.error(request, _first_form_error(undo_form, 'Nao foi possivel identificar o lote para desfazer.'))
                 context = self._build_context(plan=plan, undo_form=undo_form)
                 if self._is_hx_request():
                     return self._render_partial('operations/includes/wod_smart_paste_projection.html', context)
@@ -186,7 +195,7 @@ class WorkoutSmartPasteView(OperationBaseView):
         if action in {'preview_projection', 'create_projection'}:
             projection_form = WeeklyWodProjectionForm(request.POST)
             if not projection_form.is_valid():
-                messages.error(request, 'Revise a semana alvo e os tipos de aula antes de projetar.')
+                messages.error(request, _first_form_error(projection_form, 'Revise a semana alvo e os tipos de aula antes de projetar.'))
                 context = self._build_context(plan=plan, projection_form=projection_form)
                 if self._is_hx_request():
                     return self._render_partial('operations/includes/wod_smart_paste_projection.html', context)
@@ -218,7 +227,7 @@ class WorkoutSmartPasteView(OperationBaseView):
 
         form = WeeklyWodSmartPasteForm(request.POST)
         if not form.is_valid():
-            messages.error(request, 'Revise a semana e o texto antes de continuar.')
+            messages.error(request, _first_form_error(form, 'Revise a semana e o texto antes de continuar.'))
             context = self._build_context(plan=plan, form=form)
             if self._is_hx_request():
                 return self._render_partial('operations/includes/wod_smart_paste_preview.html', context)
@@ -245,7 +254,7 @@ class WorkoutSmartPasteView(OperationBaseView):
         refreshed_form = WeeklyWodSmartPasteForm(
             initial={
                 'plan_id': plan.id,
-                'week_start': plan.week_start,
+                'week_start': plan.week_start.strftime('%d/%m'),
                 'label': plan.label,
                 'source_text': plan.source_text,
             }

@@ -96,6 +96,21 @@ ORDEM DA CASCADE:
     gap: 1rem;
 }
 
+.smart-paste-date-input-wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+.smart-paste-native-picker {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+}
+
 .smart-paste-textarea {
     min-height: 32rem;
     width: 100%;
@@ -188,6 +203,56 @@ ORDEM DA CASCADE:
 .smart-paste-warning-list {
     display: grid;
     gap: 0.75rem;
+}
+
+.smart-paste-confidence-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}
+
+.smart-paste-review-queue {
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    border-radius: 18px;
+    padding: 0.95rem 1rem;
+    background: rgba(120, 53, 15, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.smart-paste-review-queue-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.smart-paste-review-queue-list {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.smart-paste-review-queue-card {
+    border-radius: 14px;
+    padding: 0.8rem 0.9rem;
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.smart-paste-inline-review-disclosure {
+    margin-top: 0.35rem;
+}
+
+.smart-paste-inline-review-disclosure summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: rgba(248, 250, 252, 0.9);
+}
+
+.smart-paste-inline-review-form {
+    margin-top: 0.65rem;
+    display: grid;
+    gap: 0.55rem;
 }
 
 .smart-paste-warning-card {

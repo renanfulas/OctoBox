@@ -53,7 +53,11 @@
                 <div class="coach-wod-form-grid coach-wod-form-grid--two">
                     <label>
                         <span>Inicio da semana</span>
-                        {{ smart_paste_form.week_start }}
+                        <div class="smart-paste-date-input-wrap">
+                            {{ smart_paste_form.week_start }}
+                            <button class="button tertiary smart-paste-date-trigger" type="button" data-smart-date-button>Abrir calendario</button>
+                            <input type="date" id="smart-paste-week-start-picker" class="smart-paste-native-picker" value="{% if weekly_plan %}{{ weekly_plan.week_start|date:'Y-m-d' }}{% endif %}">
+                        </div>
                     </label>
                     <label>
                         <span>Rotulo do plano</span>
