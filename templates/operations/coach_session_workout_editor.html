@@ -252,7 +252,7 @@
                                         </select>
                                     </label>
                                     <label>
-                                        <span>Slug</span>
+                                        <span>Slug {% include "operations/includes/wod_tooltip.html" with tooltip_text="Slug e o identificador tecnico estavel do movimento, em snake_case. Ele liga editor, Smart Paste e leitura de RM sem depender do nome visivel." %}</span>
                                         <input type="text" name="movement_slug" value="{{ movement.movement_slug }}" maxlength="64" list="wod-movement-catalog-slugs" data-wod-movement-slug="true" autocomplete="off">
                                     </label>
                                     <label>
@@ -355,7 +355,7 @@
                         </select>
                     </label>
                     <label>
-                        <span>Slug</span>
+                        <span>Slug {% include "operations/includes/wod_tooltip.html" with tooltip_text="Slug e o identificador tecnico estavel do movimento, em snake_case. Ele liga editor, Smart Paste e leitura de RM sem depender do nome visivel." %}</span>
                         {{ movement_form.movement_slug }}
                     </label>
                     <label>
