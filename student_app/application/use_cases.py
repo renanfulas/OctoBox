@@ -52,6 +52,8 @@ def _format_attendance_status(*, attendance):
     status = attendance.status
     if status == AttendanceStatus.CHECKED_IN:
         return 'Presenca confirmada'
+    if status == AttendanceStatus.CANCELED:
+        return 'Reserva cancelada'
     if hasattr(attendance, 'get_status_display'):
         return attendance.get_status_display()
     return dict(AttendanceStatus.choices).get(status, status or 'Sem reserva')
@@ -197,10 +199,6 @@ class GetStudentDashboard:
         is_plan_blocked,
         is_within_booking_window,
     ):
-        if attendance is not None and attendance.status == AttendanceStatus.CANCELED:
-            attendance_label = 'cancelada'
-        else:
-            attendance_label = ''
         if is_plan_blocked:
             return 'Renove seu plano para reservar'
         if has_other_active_reservation:
@@ -209,8 +207,6 @@ class GetStudentDashboard:
             return 'Reserve apenas para hoje ou amanha.'
         if runtime_state['label'] != 'Agendada':
             return 'Reserva indisponivel para esta aula agora.'
-        if attendance_label:
-            return ''
         return ''
 
     def _build_session_capacity_snapshot(self, *, session, runtime_state):
@@ -489,11 +485,13 @@ class GetStudentDashboard:
         attendance_by_session = home_snapshot['attendance_by_session']
         has_active_plan = home_snapshot['has_active_plan']
         active_reserved_session_id = home_snapshot['active_reserved_session_id']
+        latest_canceled_session_id = home_snapshot.get('latest_canceled_session_id')
         booking_horizon_date = today + timedelta(days=self.reservation_horizon_days)
         session_cards = []
         for session_snapshot in session_snapshots:
             session_id = session_snapshot['session_id']
             attendance_status_code = attendance_by_session.get(session_id, '')
+            is_canceled_attendance = attendance_status_code == AttendanceStatus.CANCELED
             scheduled_at = localize_box_datetime(
                 datetime.fromisoformat(session_snapshot['scheduled_at']),
                 box_root_slug=identity.box_root_slug,
@@ -513,7 +511,11 @@ class GetStudentDashboard:
             has_other_active_reservation = (
                 active_reserved_session_id is not None
                 and active_reserved_session_id != session_id
-                and not attendance_status_code
+                and attendance_status_code not in {
+                    AttendanceStatus.BOOKED,
+                    AttendanceStatus.CHECKED_IN,
+                    AttendanceStatus.CHECKED_OUT,
+                }
             )
             can_book = (
                 not attendance_status_code
@@ -523,7 +525,8 @@ class GetStudentDashboard:
                 and runtime_state['label'] == 'Agendada'
             )
             can_rebook = (
-                attendance_status_code == AttendanceStatus.CANCELED
+                is_canceled_attendance
+                and latest_canceled_session_id == session_id
                 and not has_other_active_reservation
                 and not is_plan_blocked
                 and is_within_booking_window
@@ -571,6 +574,7 @@ class GetStudentDashboard:
                     occupancy_fill_class=capacity_snapshot['occupancy_fill_class'],
                     occupancy_note=capacity_snapshot['occupancy_note'],
                     booking_closed=capacity_snapshot['booking_closed'],
+                    is_latest_canceled_session=(latest_canceled_session_id == session_id),
                 )
             )
         next_sessions = tuple(session_cards)

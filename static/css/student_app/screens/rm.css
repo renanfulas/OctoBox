@@ -110,28 +110,48 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 .student-field-with-unit__prefix {
     position: absolute;
     top: 50%;
-    left: 16px;
+    left: 10px;
     transform: translateY(-50%);
-    color: var(--theme-text-muted);
-    font-size: 0.78rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 8px;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 94%, transparent);
+    color: var(--theme-text-secondary);
+    font-size: 0.82rem;
     font-weight: 900;
     pointer-events: none;
 }
 
 /* RM inline update form */
 .student-rm-inline-form {
+    position: absolute;
+    top: 44px;
+    right: 0;
     display: flex;
     align-items: flex-start;
-    gap: 10px;
+    gap: 8px;
     margin: 0;
+    padding: 8px;
+    max-width: min(180px, calc(100vw - 72px));
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-raised) 96%, transparent);
+    box-shadow: 0 16px 28px color-mix(in srgb, var(--theme-shadow-soft) 18%, transparent);
 }
 
 .student-rm-edit {
     position: absolute;
     top: 12px;
     right: 12px;
+    max-width: calc(100% - 24px);
     gap: 8px;
     align-self: flex-start;
+    z-index: 2;
 }
 
 .student-rm-edit__toggle {
@@ -169,10 +189,13 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 
 @media (max-width: 640px) {
     .student-rm-card,
-    .student-rm-inline-form,
     .student-rm-calculator__grid {
         display: grid;
         grid-template-columns: 1fr;
+    }
+
+    .student-rm-inline-form {
+        max-width: min(156px, calc(100vw - 72px));
     }
 
     .student-rm-inline-form .student-input {

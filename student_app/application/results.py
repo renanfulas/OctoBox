@@ -81,6 +81,7 @@ class StudentSessionCard:
     occupancy_fill_class: str = ''
     occupancy_note: str = ''
     booking_closed: bool = False
+    is_latest_canceled_session: bool = False
 
 
 @dataclass(frozen=True, slots=True)

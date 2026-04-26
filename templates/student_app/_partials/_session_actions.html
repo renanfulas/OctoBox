@@ -21,7 +21,7 @@
             Cancelar
         </button>
     </form>
-    {% elif session.attendance_code == 'canceled' and session.can_confirm_presence %}
+    {% elif session.attendance_code == 'canceled' and session.can_confirm_presence and session.is_latest_canceled_session %}
     <form method="post" action="{% url 'student-app-confirm-attendance' %}" class="student-inline-form">
         {% csrf_token %}
         <input type="hidden" name="session_id" value="{{ session.session_id }}">
@@ -30,6 +30,16 @@
             Reservar novamente
         </button>
     </form>
+    {% elif session.attendance_code == 'canceled' %}
+    <button
+        type="button"
+        class="student-secondary-action student-session-action--blocked"
+        disabled
+        aria-disabled="true"
+        title="{{ session.booking_block_reason|default:'Reserva cancelada. Escolha outra aula se estiver liberada.' }}"
+    >
+        Indisponivel
+    </button>
     {% elif session.attendance_code == 'absent' %}
     <button type="button" class="student-secondary-action student-session-action--blocked" disabled aria-disabled="true">
         Faltou
