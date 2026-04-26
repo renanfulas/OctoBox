@@ -34,15 +34,20 @@ OctoBox is an operational hub for boxes and gyms that need to move beyond improv
 
 ## Visual Preview
 
-Below are recent product snapshots from the current runtime: the owner command surface, the finance queue, and the mobile-first command view.
+Below are real product snapshots already available in the repository, chosen to show both the commercial face of the product and the operational surfaces that drive daily work.
 
 <p align="center">
-  <img src="docs/screenshots/dashboard-current.png" width="48%" alt="Owner command surface" />
-  <img src="docs/screenshots/finance-current.png" width="48%" alt="Finance queue surface" />
+  <img src="static/images/landing/entradas-real.png" width="48%" alt="Commercial intake and onboarding surface" />
+  <img src="static/images/landing/financeiro-real.png" width="48%" alt="Finance operations and revenue surface" />
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/dashboard-mobile-current.png" width="34%" alt="Mobile command surface" />
+  <img src="docs/screenshots/dashboard-light.png" width="48%" alt="Owner dashboard command surface" />
+  <img src="docs/screenshots/class-grid-dark.png" width="48%" alt="Class grid and operations planning surface" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/students-list-dark.png" width="58%" alt="Student base and operational directory surface" />
 </p>
 
 ## The problem OctoBox solves
@@ -102,6 +107,27 @@ Timeline of this first cycle:
 - lead import execution now already includes a documented pipeline, background path, and nightly scheduler support
 - published-page probes, request timing, and finance snapshot timing telemetry already inform the current performance work
 - docs now also have a guided architecture layer in `docs/guides/` for onboarding by topic and by profile
+
+## Technical capabilities already in the repository
+
+The project already carries a broader technical surface than a CRUD back office. Today the repository includes these capabilities:
+
+- internal project RAG with document ingestion, chunking, optional embeddings, hybrid lexical plus semantic retrieval, answer generation with citations, and authenticated API endpoints for `health`, `search`, `answer`, and `reindex`
+- webhook boundaries for WhatsApp poll votes and Resend invitation delivery, with normalized contracts, verification, correlation id propagation, and integration-focused API routes under `api/v1/integrations/*`
+- idempotency and replay protection at multiple layers, including shared idempotency helpers, Stripe checkout idempotency keys, webhook fingerprint deduplication, `X-Idempotency-Key` support, and persistent webhook event tracking with retry metadata
+- Stripe payment integration for hosted checkout sessions, Pix and card payment methods, optimistic concurrency awareness through payment versioning, and audit trail entries for checkout initiated and checkout failed flows
+- Signal Mesh primitives for external events and async boundaries, including signal envelopes, correlation ids, idempotency key resolution, retry policy, failure classification, and runtime retry sweep visibility
+- scheduled webhook retry and reprocessing flows, with due retry sweep commands, WhatsApp webhook event persistence, backoff-aware retry decisions, and monitoring hooks for dispatched versus skipped retries
+- security hardening around authentication and privileged surfaces, including role-gated access, private admin path support, CSP headers, trusted proxy handling, blocked IP and range support, and security logging
+- rate limiting and throttling for login, admin, writes, heavy reads, exports, autocomplete, anti-exfiltration paths, anti-card-testing protection, and student or identity-specific abuse windows
+- session and device protection, including cache-backed Django sessions, device fingerprint binding, student session fingerprint checks, and automatic forced re-authentication when the device signature changes materially
+- honeypot and deception controls, including honeypot role isolation, IP-based honeypot triggers, global threat bit activation, and middleware that traps suspicious actors into a controlled fake surface
+- encrypted and privacy-aware identity handling, including blind index lookup for WhatsApp and student phone resolution, encrypted PII fields, webhook fingerprint uniqueness, and invite-token cookie hardening to keep sensitive invite tokens out of public URLs
+- Redis-backed cache and runtime acceleration, including shared cache with safe degradation, page and snapshot caching, role caching, student app smart snapshots for agenda, home, WOD, and RM, plus request-level cache telemetry surfaced in `Server-Timing`
+- runtime observability and monitoring, including health endpoints, Prometheus middleware, request timing telemetry, Signal Mesh runtime snapshots, Red Beacon and Alert Siren support, and metrics for realtime and retry channels
+- background and async job execution without forcing an external queue first, including async job registry and dispatch paths, reindex job dispatch for project knowledge, and room to evolve toward heavier workers later
+- mobile-first student surface with identity, invite-based onboarding, active-box switching, PWA manifest and service worker, offline support, WOD, RM, class schedule, attendance confirmation, and cache-aware student runtime telemetry
+- operational WOD tooling that already goes beyond editing a single class, including approval corridors, post-publication history, weekly smart paste, projection preview, replication batches, undo flows, and quick RM edits tied to workout context
 
 ## Current project snapshot
 

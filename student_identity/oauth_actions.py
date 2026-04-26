@@ -91,7 +91,13 @@ def finalize_student_oauth_callback(
         messages.error(request, map_failure_reason(authentication_result.failure_reason))
         response = redirect('student-identity-login')
         invite_token = (state_payload.get('invite_token') or '').strip()
-        if invite_token:
+        keep_invite_cookie = authentication_result.failure_reason not in {
+            'invite-not-found',
+            'invite-expired',
+            'invite-email-mismatch',
+            'invite-box-mismatch',
+        }
+        if invite_token and keep_invite_cookie:
             response.set_cookie(
                 'student_invite_pending', invite_token,
                 max_age=900, httponly=True, secure=not settings.DEBUG, samesite='Lax',
@@ -113,8 +119,9 @@ def finalize_student_oauth_callback(
         response=response,
         authentication_result=authentication_result,
     )
+    persisted_identity = repository.find_identity_by_id(authentication_result.identity.id)
     _maybe_update_photo_url(
-        identity=authentication_result.identity,
+        identity=persisted_identity,
         photo_url=getattr(identity_payload, 'photo_url', ''),
     )
     _emit_student_oauth_anomaly_alerts(
@@ -137,14 +144,17 @@ def finalize_student_oauth_callback(
 
 
 def _maybe_update_photo_url(*, identity, photo_url: str) -> None:
-    if not photo_url or identity is None:
+    if not isinstance(photo_url, str):
+        return
+    normalized_photo_url = photo_url.strip()
+    if not normalized_photo_url or identity is None:
         return
     from .models import StudentIdentity
     if not isinstance(identity, StudentIdentity):
         return
-    if identity.photo_url != photo_url:
-        StudentIdentity.objects.filter(pk=identity.pk).update(photo_url=photo_url)
-        identity.photo_url = photo_url
+    if identity.photo_url != normalized_photo_url:
+        StudentIdentity.objects.filter(pk=identity.pk).update(photo_url=normalized_photo_url)
+        identity.photo_url = normalized_photo_url
 
 
 def _attach_student_session(*, request, response, authentication_result):
