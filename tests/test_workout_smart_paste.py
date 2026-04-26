@@ -1,8 +1,10 @@
 from datetime import datetime
 
+from django import forms
 from django.urls import reverse
 from django.utils import timezone
 
+from operations.forms import WeeklyWodProjectionForm, WeeklyWodSmartPasteForm
 from operations.models import ClassSession, ClassType
 from student_app.models import SessionWorkout, SessionWorkoutStatus, WeeklyWodPlan, WeeklyWodPlanStatus
 from tests.workout_test_support import WorkoutFlowBaseTestCase
@@ -32,7 +34,7 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         response = self.client.post(
             reverse('workout-smart-paste'),
             data={
-                'week_start': '2026-04-20',
+                'week_start': '20/04',
                 'label': 'Semana base',
                 'source_text': SMART_PASTE_SAMPLE,
                 'action': 'parse_text',
@@ -73,7 +75,7 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
             reverse('workout-smart-paste'),
             data={
                 'plan_id': plan.id,
-                'week_start': '2026-04-20',
+                'week_start': '20/04',
                 'label': 'Semana pronta',
                 'source_text': SMART_PASTE_SAMPLE,
                 'action': 'confirm_plan',
@@ -209,14 +211,14 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
             status=WeeklyWodPlanStatus.CONFIRMED,
         )
         self.session.class_type = ClassType.CROSS
-        self.session.scheduled_at = timezone.make_aware(datetime(2026, 4, 20, 12, 0))
+        self.session.scheduled_at = timezone.make_aware(datetime(2026, 4, 27, 12, 0))
         self.session.save(update_fields=['class_type', 'scheduled_at'])
 
         preview_response = self.client.post(
             reverse('workout-smart-paste'),
             data={
                 'plan_id': plan.id,
-                'target_week_start': '2026-04-20',
+                'target_week_start': '27/04',
                 'class_types': [ClassType.CROSS],
                 'action': 'preview_projection',
             },
@@ -225,7 +227,8 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
 
         self.assertEqual(preview_response.status_code, 200)
         self.assertContains(preview_response, 'Preview de replicacao montado sem criar WODs ainda.')
-        self.assertContains(preview_response, 'ready')
+        self.assertContains(preview_response, '1 aula(s) pronta(s) para criar')
+        self.assertContains(preview_response, '1 aula(s) encontrada(s)')
         self.assertContains(preview_response, '0 aula(s) com colisao')
         self.assertContains(preview_response, 'Carga alvo preservada em nota: 40/25')
 
@@ -233,7 +236,7 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
             reverse('workout-smart-paste'),
             data={
                 'plan_id': plan.id,
-                'target_week_start': '2026-04-20',
+                'target_week_start': '27/04',
                 'class_types': [ClassType.CROSS],
                 'action': 'create_projection',
             },
@@ -285,14 +288,14 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
             status=WeeklyWodPlanStatus.CONFIRMED,
         )
         self.session.class_type = ClassType.CROSS
-        self.session.scheduled_at = timezone.make_aware(datetime(2026, 4, 20, 12, 0))
+        self.session.scheduled_at = timezone.make_aware(datetime(2026, 4, 27, 12, 0))
         self.session.save(update_fields=['class_type', 'scheduled_at'])
 
         response = self.client.post(
             reverse('workout-smart-paste'),
             data={
                 'plan_id': plan.id,
-                'target_week_start': '2026-04-20',
+                'target_week_start': '27/04',
                 'class_types': [ClassType.CROSS],
                 'action': 'preview_projection',
             },
@@ -302,3 +305,54 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, '<html')
         self.assertContains(response, 'smart-paste-projection-panel')
+
+    def test_smart_paste_date_only_accepts_current_or_next_year_window(self):
+        current_year_form = WeeklyWodSmartPasteForm(
+            data={
+                'week_start': '26/04',
+                'label': 'Semana atual',
+                'source_text': SMART_PASTE_SAMPLE,
+            }
+        )
+        self.assertTrue(current_year_form.is_valid(), current_year_form.errors)
+        self.assertEqual(current_year_form.cleaned_data['week_start'].isoformat(), '2026-04-26')
+
+        next_year_form = WeeklyWodSmartPasteForm(
+            data={
+                'week_start': '01/01',
+                'label': 'Virada',
+                'source_text': SMART_PASTE_SAMPLE,
+            }
+        )
+        self.assertTrue(next_year_form.is_valid(), next_year_form.errors)
+        self.assertEqual(next_year_form.cleaned_data['week_start'].isoformat(), '2027-01-01')
+
+        past_form = WeeklyWodSmartPasteForm(
+            data={
+                'week_start': '01/01/2026',
+                'label': 'Passado',
+                'source_text': SMART_PASTE_SAMPLE,
+            }
+        )
+        self.assertFalse(past_form.is_valid())
+        self.assertIn('Nao e permitido usar datas no passado.', past_form.errors['week_start'])
+
+        far_future_form = WeeklyWodSmartPasteForm(
+            data={
+                'week_start': '01/01/2030',
+                'label': 'Longe demais',
+                'source_text': SMART_PASTE_SAMPLE,
+            }
+        )
+        self.assertFalse(far_future_form.is_valid())
+        self.assertIn('A data precisa ficar no ano atual ou no proximo ano.', far_future_form.errors['week_start'])
+
+        projection_form = WeeklyWodProjectionForm(
+            data={
+                'plan_id': 1,
+                'target_week_start': '01/01',
+                'class_types': [ClassType.CROSS],
+            }
+        )
+        self.assertTrue(projection_form.is_valid(), projection_form.errors)
+        self.assertEqual(projection_form.cleaned_data['target_week_start'].isoformat(), '2027-01-01')

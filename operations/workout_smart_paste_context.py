@@ -27,6 +27,44 @@ def _default_week_start(today):
     return today - timedelta(days=today.weekday())
 
 
+def _smart_paste_display_label(movement):
+    label_raw = movement.get('movement_label_raw') or ''
+    movement_slug = movement.get('movement_slug') or ''
+    reps_spec = (movement.get('reps_spec') or '').strip()
+    normalized_reps = reps_spec.lower()
+    if movement_slug == 'run' and reps_spec and normalized_reps.isdigit():
+        return f'{reps_spec}m run'
+    return label_raw
+
+
+def _decorate_preview_payload(parsed_payload):
+    unresolved_items = []
+    total_blocks = 0
+    total_movements = 0
+    for day in parsed_payload.get('days', []):
+        for block in day.get('blocks', []):
+            total_blocks += 1
+            for movement in block.get('movements', []):
+                movement['display_label'] = _smart_paste_display_label(movement)
+                total_movements += 1
+                if not movement.get('movement_slug'):
+                    unresolved_items.append(
+                        {
+                            'day_label': day.get('weekday_label', ''),
+                            'block_kind': block.get('kind', ''),
+                            'movement_label_raw': movement.get('movement_label_raw', ''),
+                        }
+                    )
+    parsed_payload['summary'] = {
+        'days_count': len(parsed_payload.get('days', [])),
+        'blocks_count': total_blocks,
+        'movements_count': total_movements,
+        'unresolved_count': len(unresolved_items),
+        'unresolved_items': unresolved_items[:8],
+    }
+    return parsed_payload
+
+
 def load_latest_weekly_wod_plan_for_user(*, user):
     if not getattr(user, 'is_authenticated', False):
         return None
@@ -60,7 +98,10 @@ def _build_page_payload(*, current_role_slug):
             'surface_key': 'operations-workout-smart-paste',
             'scope': 'operations-approval',
         },
-        assets=build_page_assets(css=['css/design-system/operations.css']),
+        assets=build_page_assets(
+            css=['css/design-system/operations.css'],
+            js=['js/core/forms.js', 'js/operations/wod_smart_paste.js'],
+        ),
     )
 
 
@@ -82,7 +123,7 @@ def build_weekly_wod_smart_paste_context(
     form = form or WeeklyWodSmartPasteForm(
         initial={
             'plan_id': getattr(weekly_plan, 'id', None),
-            'week_start': week_start,
+            'week_start': week_start.strftime('%d/%m'),
             'label': getattr(weekly_plan, 'label', ''),
             'source_text': getattr(weekly_plan, 'source_text', ''),
         }
@@ -90,7 +131,7 @@ def build_weekly_wod_smart_paste_context(
     projection_form = projection_form or WeeklyWodProjectionForm(
         initial={
             'plan_id': getattr(weekly_plan, 'id', None),
-            'target_week_start': week_start,
+            'target_week_start': week_start.strftime('%d/%m'),
             'class_types': [ClassType.CROSS],
         }
     )
@@ -108,6 +149,7 @@ def build_weekly_wod_smart_paste_context(
         }
     )
     parsed_payload = parsed_payload if parsed_payload is not None else getattr(weekly_plan, 'parsed_payload', {}) or {}
+    parsed_payload = _decorate_preview_payload(parsed_payload)
     context = {
         'workout_corridor_tabs': build_workout_corridor_tabs(
             current_key='smart_paste',
@@ -118,6 +160,7 @@ def build_weekly_wod_smart_paste_context(
         'smart_paste_preview': parsed_payload,
         'smart_paste_days': parsed_payload.get('days', []),
         'smart_paste_warnings': parsed_payload.get('parse_warnings', []),
+        'smart_paste_summary': parsed_payload.get('summary', {}),
         'smart_paste_step': 3 if projection_preview else (2 if parsed_payload.get('days') else 1),
         'projection_form': projection_form,
         'projection_preview': projection_preview,

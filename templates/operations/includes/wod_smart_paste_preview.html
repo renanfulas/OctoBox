@@ -20,6 +20,35 @@
     {% endif %}
 
     {% if smart_paste_days %}
+    <div class="smart-paste-confidence-strip" aria-label="Resumo de confianca da leitura">
+        <span class="pill success">{{ smart_paste_summary.days_count }} dia(s)</span>
+        <span class="pill info">{{ smart_paste_summary.blocks_count }} bloco(s)</span>
+        <span class="pill accent">{{ smart_paste_summary.movements_count }} movimento(s)</span>
+        <span class="pill {% if smart_paste_summary.unresolved_count %}warning{% else %}success{% endif %}">
+            {% if smart_paste_summary.unresolved_count %}{{ smart_paste_summary.unresolved_count }} item(ns) para revisar{% else %}Leitura pronta para confiar{% endif %}
+        </span>
+    </div>
+
+    {% if smart_paste_summary.unresolved_items %}
+    <section class="smart-paste-review-queue" aria-label="Fila curta de itens para revisar">
+        <div class="smart-paste-review-queue-head">
+            <div>
+                <p class="eyebrow">Revisar so o que travou</p>
+                <h3>Itens que ainda pedem confirmacao humana</h3>
+            </div>
+            <span class="pill warning">{{ smart_paste_summary.unresolved_count }} pendencia(s)</span>
+        </div>
+        <div class="smart-paste-review-queue-list">
+            {% for item in smart_paste_summary.unresolved_items %}
+            <article class="smart-paste-review-queue-card">
+                <strong>{{ item.movement_label_raw }}</strong>
+                <p>{{ item.day_label }} · {{ item.block_kind }}</p>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
     <div class="smart-paste-preview-grid">
         {% for day in smart_paste_days %}
         <section class="smart-paste-day-column">
@@ -49,48 +78,60 @@
                     <ul class="smart-paste-movement-list">
                         {% for movement in block.movements %}
                         <li class="{% if not movement.movement_slug %}is-warning{% endif %}">
-                            <span>{{ movement.movement_label_raw }}</span>
+                            <span>{{ movement.display_label|default:movement.movement_label_raw }}</span>
                             {% if movement.movement_slug %}
                             <code>{{ movement.movement_slug }}</code>
+                            {% if movement.reps_spec %}
+                            <small>Reps: {{ movement.reps_spec }}</small>
+                            {% endif %}
+                            {% if movement.load_spec %}
+                            <small>Carga: {{ movement.load_spec }}</small>
+                            {% endif %}
+                            {% if movement.notes %}
+                            <small>{{ movement.notes }}</small>
+                            {% endif %}
                             {% else %}
                             <span class="pill warning">revisar</span>
-                            <form
-                                method="post"
-                                class="smart-paste-inline-review-form"
-                                hx-post="{% url 'workout-smart-paste' %}"
-                                hx-target="#smart-paste-preview-panel"
-                                hx-swap="outerHTML"
-                            >
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="update_review_item">
-                                <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
-                                <input type="hidden" name="day_index" value="{{ forloop.parentloop.parentloop.parentloop.counter0 }}">
-                                <input type="hidden" name="block_index" value="{{ forloop.parentloop.parentloop.counter0 }}">
-                                <input type="hidden" name="movement_index" value="{{ forloop.counter0 }}">
-                                <label>
-                                    <span>Texto</span>
-                                    <input type="text" name="movement_label_raw" value="{{ movement.movement_label_raw }}">
-                                </label>
-                                <label>
-                                    <span>Slug</span>
-                                    <input type="text" name="movement_slug" value="{{ movement.movement_slug|default_if_none:'' }}" list="smart-paste-movement-slugs">
-                                </label>
-                                <label>
-                                    <span>Reps</span>
-                                    <input type="text" name="reps_spec" value="{{ movement.reps_spec|default_if_none:'' }}">
-                                </label>
-                                <label>
-                                    <span>Carga</span>
-                                    <input type="text" name="load_spec" value="{{ movement.load_spec|default_if_none:'' }}">
-                                </label>
-                                <label>
-                                    <span>Nota</span>
-                                    <input type="text" name="notes" value="{{ movement.notes|default_if_none:'' }}">
-                                </label>
-                                <div class="actions">
-                                    <button class="button tertiary" type="submit">Salvar revisao</button>
-                                </div>
-                            </form>
+                            <details class="smart-paste-inline-review-disclosure">
+                                <summary>Editar item</summary>
+                                <form
+                                    method="post"
+                                    class="smart-paste-inline-review-form"
+                                    hx-post="{% url 'workout-smart-paste' %}"
+                                    hx-target="#smart-paste-preview-panel"
+                                    hx-swap="outerHTML"
+                                >
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="update_review_item">
+                                    <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
+                                    <input type="hidden" name="day_index" value="{{ forloop.parentloop.parentloop.counter0 }}">
+                                    <input type="hidden" name="block_index" value="{{ forloop.parentloop.counter0 }}">
+                                    <input type="hidden" name="movement_index" value="{{ forloop.counter0 }}">
+                                    <label>
+                                        <span>Texto</span>
+                                        <input type="text" name="movement_label_raw" value="{{ movement.movement_label_raw }}">
+                                    </label>
+                                    <label>
+                                        <span>Slug</span>
+                                        <input type="text" name="movement_slug" value="{{ movement.movement_slug|default_if_none:'' }}" list="smart-paste-movement-slugs">
+                                    </label>
+                                    <label>
+                                        <span>Reps</span>
+                                        <input type="text" name="reps_spec" value="{{ movement.reps_spec|default_if_none:'' }}">
+                                    </label>
+                                    <label>
+                                        <span>Carga</span>
+                                        <input type="text" name="load_spec" value="{{ movement.load_spec|default_if_none:'' }}">
+                                    </label>
+                                    <label>
+                                        <span>Nota</span>
+                                        <input type="text" name="notes" value="{{ movement.notes|default_if_none:'' }}">
+                                    </label>
+                                    <div class="actions">
+                                        <button class="button tertiary" type="submit">Salvar revisao</button>
+                                    </div>
+                                </form>
+                            </details>
                             {% endif %}
                         </li>
                         {% endfor %}
@@ -111,7 +152,7 @@
     <form method="post" class="coach-wod-form-stack smart-paste-confirm-form">
         {% csrf_token %}
         <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
-        <input type="hidden" name="week_start" value="{{ weekly_plan.week_start|date:'Y-m-d' }}">
+        <input type="hidden" name="week_start" value="{{ weekly_plan.week_start|date:'d/m' }}">
         <input type="hidden" name="label" value="{{ weekly_plan.label }}">
         <input type="hidden" name="source_text" value="{{ weekly_plan.source_text }}">
         <input type="hidden" name="action" value="confirm_plan">

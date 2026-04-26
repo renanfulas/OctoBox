@@ -12,7 +12,10 @@ PONTOS CRITICOS:
 - estes formularios ficam na borda HTTP e devem impedir ruido antes da regra de negocio.
 """
 
+from datetime import date
+
 from django import forms
+from django.utils import timezone
 
 from operations.models import BehaviorCategory
 from operations.models import ClassType
@@ -69,6 +72,40 @@ WORKOUT_RM_GAP_STATUS_CHOICES = (
     (WorkoutRmGapActionStatus.COLLECTED, 'RM coletado'),
     (WorkoutRmGapActionStatus.FREE_LOAD, 'Deixar carga livre'),
 )
+
+
+def _coerce_smart_paste_date(raw_value: str, *, field_label: str) -> date:
+    normalized = (raw_value or '').strip()
+    if not normalized:
+        raise forms.ValidationError(f'Informe {field_label} no formato dd/mm.')
+
+    today = timezone.localdate()
+    allowed_years = {today.year, today.year + 1}
+
+    if normalized.count('/') == 1:
+        try:
+            day_value, month_value = [int(chunk) for chunk in normalized.split('/')]
+        except ValueError as exc:
+            raise forms.ValidationError(f'Use {field_label} no formato dd/mm.') from exc
+
+        current_year_candidate = date(today.year, month_value, day_value)
+        candidate = current_year_candidate if current_year_candidate >= today else date(today.year + 1, month_value, day_value)
+    elif normalized.count('/') == 2:
+        try:
+            day_value, month_value, year_value = [int(chunk) for chunk in normalized.split('/')]
+        except ValueError as exc:
+            raise forms.ValidationError(f'Use {field_label} no formato dd/mm.') from exc
+        if year_value not in allowed_years:
+            raise forms.ValidationError('A data precisa ficar no ano atual ou no proximo ano.')
+        candidate = date(year_value, month_value, day_value)
+    else:
+        raise forms.ValidationError(f'Use {field_label} no formato dd/mm.')
+
+    if candidate < today:
+        raise forms.ValidationError('Nao e permitido usar datas no passado.')
+    if candidate.year not in allowed_years:
+        raise forms.ValidationError('A data precisa ficar no ano atual ou no proximo ano.')
+    return candidate
 
 
 class TechnicalBehaviorNoteForm(forms.Form):
@@ -342,7 +379,7 @@ class WorkoutDuplicateForm(forms.Form):
 
 class WeeklyWodSmartPasteForm(forms.Form):
     plan_id = forms.IntegerField(required=False, min_value=1)
-    week_start = forms.DateField(input_formats=['%Y-%m-%d'])
+    week_start = forms.CharField(max_length=10)
     label = forms.CharField(max_length=140, required=False)
     source_text = forms.CharField(widget=forms.Textarea(attrs={'rows': 22}), required=False)
 
@@ -352,6 +389,18 @@ class WeeklyWodSmartPasteForm(forms.Form):
             self.fields['label'],
             placeholder='Ex.: Semana 2 - Base de forca + metcon',
             maxlength=140,
+        )
+        apply_text_input_attrs(
+            self.fields['week_start'],
+            placeholder='dd/mm',
+            maxlength=10,
+        )
+        self.fields['week_start'].widget.attrs.update(
+            {
+                'data-smart-date-input': 'true',
+                'data-picker-target': 'smart-paste-week-start-picker',
+                'inputmode': 'numeric',
+            }
         )
         self.fields['source_text'].widget.attrs.update(
             {
@@ -373,10 +422,13 @@ class WeeklyWodSmartPasteForm(forms.Form):
     def clean_source_text(self):
         return (self.cleaned_data.get('source_text') or '').strip()
 
+    def clean_week_start(self):
+        return _coerce_smart_paste_date(self.cleaned_data.get('week_start'), field_label='a semana')
+
 
 class WeeklyWodProjectionForm(forms.Form):
     plan_id = forms.IntegerField(min_value=1)
-    target_week_start = forms.DateField(input_formats=['%Y-%m-%d'])
+    target_week_start = forms.CharField(max_length=10)
     class_types = forms.MultipleChoiceField(
         choices=(
             (ClassType.CROSS, 'CrossFit'),
@@ -388,9 +440,27 @@ class WeeklyWodProjectionForm(forms.Form):
         required=False,
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        apply_text_input_attrs(
+            self.fields['target_week_start'],
+            placeholder='dd/mm',
+            maxlength=10,
+        )
+        self.fields['target_week_start'].widget.attrs.update(
+            {
+                'data-smart-date-input': 'true',
+                'data-picker-target': 'smart-paste-target-week-picker',
+                'inputmode': 'numeric',
+            }
+        )
+
     def clean_class_types(self):
         class_types = self.cleaned_data.get('class_types') or []
         return list(class_types or [ClassType.CROSS])
+
+    def clean_target_week_start(self):
+        return _coerce_smart_paste_date(self.cleaned_data.get('target_week_start'), field_label='a semana alvo')
 
 
 class WeeklyWodReviewMovementForm(forms.Form):
