@@ -65,6 +65,28 @@ class RequestTimingMiddleware:
                     f'shell-enrollments;dur={shell_perf.get("active_enrollments_ms", 0)}',
                 ]
             )
+        student_perf = request._octobox_request_perf.get('student_app') or {}
+        if student_perf:
+            metric_map = (
+                ('home', 'student-home'),
+                ('agenda', 'student-agenda'),
+                ('home-personal', 'student-home-personal'),
+                ('home-rm', 'student-home-rm'),
+                ('wod', 'student-wod'),
+                ('wod-shared', 'student-wod-shared'),
+                ('rm', 'student-rm'),
+            )
+            for source_key, timing_label in metric_map:
+                metric = student_perf.get(source_key)
+                if not metric:
+                    continue
+                server_timing_parts.extend(
+                    [
+                        f'{timing_label};dur={metric.get("total_ms", 0)}',
+                        f'{timing_label}-cache;dur={metric.get("cache_lookup_ms", 0)}',
+                        f'{timing_label}-build;dur={metric.get("build_ms", 0)}',
+                    ]
+                )
 
         response['Server-Timing'] = ', '.join(server_timing_parts)
 
@@ -78,4 +100,14 @@ class RequestTimingMiddleware:
             response['X-OctoBox-User-Authenticated'] = '1' if user_is_authenticated else '0'
             if shell_perf:
                 response['X-OctoBox-Shell-Cache-Hit'] = '1' if shell_perf.get('cache_hit') else '0'
+            for source_key, header_key in (
+                ('agenda', 'X-OctoBox-Student-Agenda-Cache-Hit'),
+                ('home-personal', 'X-OctoBox-Student-Home-Cache-Hit'),
+                ('home-rm', 'X-OctoBox-Student-Home-RM-Cache-Hit'),
+                ('wod-shared', 'X-OctoBox-Student-WOD-Cache-Hit'),
+                ('rm', 'X-OctoBox-Student-RM-Cache-Hit'),
+            ):
+                metric = student_perf.get(source_key)
+                if metric:
+                    response[header_key] = '1' if metric.get('cache_hit') else '0'
         return response

@@ -37,6 +37,21 @@ class StudentRmOfTheDay:
 
 
 @dataclass(frozen=True, slots=True)
+class StudentRmRecord:
+    id: int
+    exercise_slug: str
+    exercise_label: str
+    one_rep_max_kg: Decimal
+    updated_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class StudentRmCard:
+    record: StudentRmRecord
+    delta_kg: Decimal | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class StudentSessionCard:
     session_id: int
     title: str
@@ -57,6 +72,15 @@ class StudentSessionCard:
     runtime_status_pill_class: str = ''
     is_starting_soon: bool = False
     workout_titles: tuple[str, ...] = ()
+    booking_block_reason: str = ''
+    occupied_slots: int = 0
+    available_slots: int = 0
+    capacity: int = 0
+    occupancy_percent: int = 0
+    occupancy_label: str = ''
+    occupancy_fill_class: str = ''
+    occupancy_note: str = ''
+    booking_closed: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -114,6 +138,7 @@ class StudentWorkoutBlockCard:
 class StudentWorkoutDayResult:
     session_title: str
     session_scheduled_label: str
+    session_weekday_label: str
     coach_name: str
     workout_title: str
     coach_notes: str

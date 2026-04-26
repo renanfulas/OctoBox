@@ -19,6 +19,7 @@ from django.utils import timezone
 
 from operations.models import Attendance, AttendanceStatus, ClassSession, SessionStatus
 from students.models import Student
+from student_app.application.timezone import resolve_box_timezone
 
 
 class AttendanceNotAvailableError(Exception):
@@ -53,18 +54,30 @@ def confirm_student_attendance(*, student, session_id) -> AttendanceConfirmation
         if session is None:
             raise AttendanceNotAvailableError('Sessao indisponivel para reserva.')
 
-        same_day_active = (
+        box_timezone = resolve_box_timezone(box_root_slug=student.app_identity.box_root_slug)
+        now = timezone.localtime(timezone.now(), box_timezone)
+        session_local = timezone.localtime(session.scheduled_at, box_timezone)
+        booking_horizon = now.date() + timedelta(days=1)
+        if session_local.date() > booking_horizon:
+            raise AttendanceNotAvailableError('Voce pode reservar apenas aulas de hoje ou amanha.')
+
+        active_reservations = (
             Attendance.objects.select_for_update()
             .filter(
                 student=student,
-                session__scheduled_at__date=session.scheduled_at.date(),
-                status__in=[AttendanceStatus.BOOKED, AttendanceStatus.CHECKED_IN],
+                status__in=[AttendanceStatus.BOOKED, AttendanceStatus.CHECKED_IN, AttendanceStatus.CHECKED_OUT],
             )
-            .exclude(session=session)
-            .exists()
         )
-        if same_day_active:
-            raise AttendanceNotAvailableError('Voce ja tem uma reserva ativa neste dia.')
+        for active_attendance in active_reservations.select_related('session'):
+            if active_attendance.session_id == session.id:
+                continue
+            active_session = active_attendance.session
+            active_start = timezone.localtime(active_session.scheduled_at, box_timezone)
+            active_end = active_start + timedelta(minutes=active_session.duration_minutes or 60)
+            if active_end > now:
+                raise AttendanceNotAvailableError(
+                    'Voce ja tem uma reserva ativa. So pode reservar a proxima aula depois que a atual terminar.'
+                )
 
         attendance, created = Attendance.objects.get_or_create(
             student=student,

@@ -5,3 +5,6 @@ class StudentAppConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'student_app'
     verbose_name = 'Student App'
+
+    def ready(self):
+        import student_app.signals  # noqa: F401

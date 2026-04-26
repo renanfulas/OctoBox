@@ -35,6 +35,7 @@ ARQUIVO: faixa de progresso do app do aluno.
     font: inherit;
     text-align: center;
     appearance: none;
+    text-decoration: none;
 }
 
 .student-progress-day:focus-visible {
@@ -58,6 +59,21 @@ ARQUIVO: faixa de progresso do app do aluno.
 .student-progress-day.is-today {
     border-color: color-mix(in srgb, var(--theme-accent-primary) 34%, var(--theme-border-soft) 66%);
     background: color-mix(in srgb, var(--theme-accent-primary-alpha) 34%, var(--theme-surface-strong) 66%);
+    color: var(--theme-text-primary);
+}
+
+.student-progress-day.is-selected,
+.student-progress-day[aria-current="date"] {
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 38%, var(--theme-border-soft) 62%);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 30%, var(--theme-surface-strong) 70%);
+    color: var(--theme-text-primary);
+    box-shadow:
+        0 14px 28px color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent),
+        inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
+}
+
+.student-progress-day.is-selected .student-progress-day__date,
+.student-progress-day[aria-current="date"] .student-progress-day__date {
     color: var(--theme-text-primary);
 }
 

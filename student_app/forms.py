@@ -51,7 +51,20 @@ def _student_identity_email_exists(*, email: str, box_root_slug: str, exclude_id
 
 class WorkoutPrescriptionForm(forms.Form):
     exercise_slug = forms.ChoiceField(choices=())
-    percentage = forms.ChoiceField(choices=())
+    percentage = forms.DecimalField(
+        min_value=Decimal('40'),
+        max_value=Decimal('100'),
+        decimal_places=0,
+        widget=forms.NumberInput(
+            attrs={
+                'min': '40',
+                'max': '100',
+                'step': '5',
+                'inputmode': 'numeric',
+                'data-ui': 'student-wod-percent',
+            }
+        ),
+    )
 
     def __init__(self, *args, student=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -60,12 +73,15 @@ class WorkoutPrescriptionForm(forms.Form):
             for record in StudentExerciseMax.objects.filter(student=student).order_by('exercise_label')
         ] if student is not None else []
         self.fields['exercise_slug'].choices = choices
-        percentage_choices = [(str(value), f'{value}%') for value in range(5, 105, 5)]
-        self.fields['percentage'].choices = percentage_choices
-        self.fields['percentage'].initial = '70'
+        self.fields['percentage'].initial = Decimal('70')
 
     def clean_percentage(self):
-        return Decimal(str(self.cleaned_data['percentage']))
+        percentage = Decimal(str(self.cleaned_data['percentage']))
+        if percentage % 5 != 0:
+            raise forms.ValidationError('Use um percentual de 5 em 5.')
+        if percentage < 40 or percentage > 100:
+            raise forms.ValidationError('Use um percentual entre 40% e 100%.')
+        return percentage
 
 
 class StudentExerciseMaxForm(forms.Form):
@@ -75,7 +91,15 @@ class StudentExerciseMaxForm(forms.Form):
         min_value=Decimal('0.5'),
         max_value=Decimal('999'),
         decimal_places=1,
-        widget=forms.NumberInput(attrs={'step': '0.5', 'min': '0.5', 'inputmode': 'decimal'}),
+        widget=forms.NumberInput(
+            attrs={
+                'step': '0.5',
+                'min': '0.5',
+                'max': '999',
+                'inputmode': 'decimal',
+                'data-max-integer-digits': '3',
+            }
+        ),
     )
 
     def clean_exercise_label(self):
@@ -88,7 +112,15 @@ class StudentExerciseMaxUpdateForm(forms.Form):
         min_value=Decimal('0.5'),
         max_value=Decimal('999'),
         decimal_places=1,
-        widget=forms.NumberInput(attrs={'step': '0.5', 'min': '0.5', 'inputmode': 'decimal'}),
+        widget=forms.NumberInput(
+            attrs={
+                'step': '0.5',
+                'min': '0.5',
+                'max': '999',
+                'inputmode': 'decimal',
+                'data-max-integer-digits': '3',
+            }
+        ),
     )
 
 

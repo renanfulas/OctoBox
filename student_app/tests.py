@@ -4,13 +4,24 @@ import json
 import uuid
 from unittest.mock import patch
 
+from django.core.cache import cache
+from django.db import connection
 from django.test import Client, TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
 from auditing.models import AuditEvent
+from finance.models import Enrollment, MembershipPlan
 from operations.models import Attendance, AttendanceStatus, ClassSession
-from student_app.application.use_cases import GetStudentDashboard, GetStudentWorkoutPrescription
+from student_app.application.cache_keys import (
+    build_student_agenda_snapshot_cache_key,
+    build_student_home_snapshot_cache_key,
+    build_student_rm_snapshot_cache_key,
+    build_student_wod_snapshot_cache_key,
+)
+from student_app.application.rm_snapshots import get_student_rm_snapshot
+from student_app.application.use_cases import GetStudentDashboard, GetStudentWorkoutDay, GetStudentWorkoutPrescription
 from student_app.models import (
     SessionWorkout,
     SessionWorkoutBlock,
@@ -43,6 +54,7 @@ from students.models import Student, StudentStatus
 
 class StudentAppExperienceTests(TestCase):
     def setUp(self):
+        cache.clear()
         self.client = Client()
         self.student = Student.objects.create(
             full_name='Atleta App',
@@ -468,8 +480,9 @@ class StudentAppExperienceTests(TestCase):
         activity = StudentAppActivity.objects.get(student=self.student, kind=StudentAppActivityKind.ATTENDANCE_CONFIRMED)
         self.assertEqual(activity.source_object_id, session.id)
 
-    def test_confirm_attendance_blocks_second_booking_on_same_day(self):
-        base = timezone.localtime().replace(hour=9, minute=0, second=0, microsecond=0)
+    def test_confirm_attendance_blocks_second_booking_while_other_reservation_is_active(self):
+        base = timezone.localtime() + timedelta(hours=1)
+        base = base.replace(minute=0, second=0, microsecond=0)
         first_session = ClassSession.objects.create(
             title='Primeira aula',
             scheduled_at=base,
@@ -497,8 +510,28 @@ class StudentAppExperienceTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Voce ja tem uma reserva ativa neste dia.')
+        self.assertContains(response, 'Voce ja tem uma reserva ativa. So pode reservar a proxima aula depois que a atual terminar.')
         self.assertFalse(Attendance.objects.filter(student=self.student, session=second_session).exists())
+
+    def test_confirm_attendance_blocks_booking_beyond_tomorrow(self):
+        session = ClassSession.objects.create(
+            title='Aula distante',
+            scheduled_at=timezone.now() + timedelta(days=2, hours=2),
+            status='scheduled',
+        )
+
+        response = self.client.post(
+            reverse('student-app-confirm-attendance'),
+            {
+                'session_id': str(session.id),
+                'next': reverse('student-app-grade'),
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Voce pode reservar apenas aulas de hoje ou amanha.')
+        self.assertFalse(Attendance.objects.filter(student=self.student, session=session).exists())
 
     def test_confirm_attendance_reactivates_canceled_booking(self):
         session = ClassSession.objects.create(
@@ -626,7 +659,10 @@ class StudentAppExperienceTests(TestCase):
             status='scheduled',
         )
 
-        dashboard = GetStudentDashboard().execute(identity=self.identity)
+        dashboard = GetStudentDashboard().execute(
+            identity=self.identity,
+            selected_date=date(2026, 4, 24),
+        )
 
         card = next(item for item in dashboard.next_sessions if item.session_id == session.id)
         self.assertEqual(card.scheduled_label, '24/04 09:00')
@@ -654,8 +690,9 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(grade_response, 'Hoje')
         self.assertContains(grade_response, 'Amanha')
         self.assertContains(grade_response, 'Ver mes')
-        self.assertContains(rm_response, 'Seus RMs')
-        self.assertContains(rm_response, 'Deadlift 100kg')
+        self.assertContains(rm_response, 'Records')
+        self.assertContains(rm_response, 'Deadlift')
+        self.assertContains(rm_response, '100kg')
 
     def test_student_home_filters_day_by_query_param(self):
         today_session = ClassSession.objects.create(
@@ -673,6 +710,81 @@ class StudentAppExperienceTests(TestCase):
 
         self.assertContains(response, 'Amanha cedo')
         self.assertNotContains(response, 'Hoje cedo')
+
+    def test_dashboard_focal_session_shows_next_class_when_student_has_no_reservation(self):
+        first_session = ClassSession.objects.create(
+            title='Cross 06h',
+            scheduled_at=timezone.now() + timedelta(hours=2),
+            status='scheduled',
+            capacity=20,
+        )
+        ClassSession.objects.create(
+            title='Cross 07h',
+            scheduled_at=timezone.now() + timedelta(hours=3),
+            status='scheduled',
+            capacity=20,
+        )
+
+        dashboard = GetStudentDashboard().execute(identity=self.identity)
+
+        self.assertIsNotNone(dashboard.focal_session)
+        self.assertEqual(dashboard.focal_session.session_id, first_session.id)
+        self.assertEqual(dashboard.primary_action.kind, 'book_session')
+
+    def test_dashboard_focal_session_prioritizes_active_reserved_class(self):
+        first_session = ClassSession.objects.create(
+            title='Cross 06h',
+            scheduled_at=timezone.now() + timedelta(hours=2),
+            status='scheduled',
+            capacity=20,
+        )
+        reserved_session = ClassSession.objects.create(
+            title='Cross 08h',
+            scheduled_at=timezone.now() + timedelta(hours=4),
+            status='scheduled',
+            capacity=20,
+        )
+        Attendance.objects.create(
+            student=self.student,
+            session=reserved_session,
+            status=AttendanceStatus.BOOKED,
+            reservation_source='student_app',
+        )
+
+        dashboard = GetStudentDashboard().execute(identity=self.identity)
+
+        self.assertIsNotNone(dashboard.focal_session)
+        self.assertEqual(dashboard.focal_session.session_id, reserved_session.id)
+        self.assertEqual(dashboard.primary_action.kind, 'open_grade')
+        self.assertNotEqual(dashboard.focal_session.session_id, first_session.id)
+
+    def test_student_home_marks_selected_day_and_keeps_booking_block_reason(self):
+        reserved_session = ClassSession.objects.create(
+            title='Cross reservada',
+            scheduled_at=timezone.now() + timedelta(hours=3),
+            status='scheduled',
+            capacity=20,
+        )
+        next_day_session = ClassSession.objects.create(
+            title='Cross amanha',
+            scheduled_at=timezone.now() + timedelta(days=1, hours=1),
+            status='scheduled',
+            capacity=20,
+        )
+        Attendance.objects.create(
+            student=self.student,
+            session=reserved_session,
+            status=AttendanceStatus.BOOKED,
+            reservation_source='student_app',
+        )
+
+        response = self.client.get(
+            reverse('student-app-home'),
+            {'date': timezone.localtime(next_day_session.scheduled_at).date().isoformat()},
+        )
+
+        self.assertContains(response, 'class="student-progress-day student-day-filter is-selected"', html=False)
+        self.assertContains(response, 'Voce ja tem uma reserva ativa. Libere a proxima so depois que essa aula terminar.')
 
     def test_student_canceled_booking_shows_reservar_novamente(self):
         session = ClassSession.objects.create(
@@ -824,7 +936,7 @@ class StudentAppExperienceTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'WOD ainda nao publicado.')
-        self.assertContains(response, 'Percentual')
+        self.assertContains(response, 'Calculadora')
         self.assertContains(response, 'Deadlift')
 
     def test_student_wod_route_renders_published_workout_day(self):
@@ -876,7 +988,9 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'Forca principal')
         self.assertContains(response, 'Deadlift')
         self.assertContains(response, '70.00 kg')
-        self.assertContains(response, '70,00% do seu RM 100,00 kg')
+        self.assertContains(response, 'Deadlift')
+        self.assertContains(response, '70,00% do seu RM')
+        self.assertContains(response, '70,00 kg')
         workout_view = StudentWorkoutView.objects.get(student=self.student, workout=workout)
         self.assertEqual(workout_view.view_count, 1)
         self.assertTrue(
@@ -899,6 +1013,316 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(second_response.status_code, 200)
         workout_view.refresh_from_db()
         self.assertEqual(workout_view.view_count, 2)
+
+    def test_student_workout_day_uses_versioned_snapshot_without_caching_student_rm(self):
+        cache.clear()
+        exercise_max = StudentExerciseMax.objects.create(
+            student=self.student,
+            exercise_slug='deadlift',
+            exercise_label='Deadlift',
+            one_rep_max_kg=Decimal('100.00'),
+        )
+        session = ClassSession.objects.create(
+            title='Cross com snapshot',
+            scheduled_at=timezone.now() + timedelta(minutes=15),
+            status='open',
+        )
+        workout = SessionWorkout.objects.create(
+            session=session,
+            title='Forca cacheada',
+            coach_notes='Cache compartilhado do treino publicado.',
+            status=SessionWorkoutStatus.PUBLISHED,
+            version=3,
+        )
+        block = SessionWorkoutBlock.objects.create(
+            workout=workout,
+            kind=WorkoutBlockKind.STRENGTH,
+            title='Forca',
+            sort_order=1,
+        )
+        SessionWorkoutMovement.objects.create(
+            block=block,
+            movement_slug='deadlift',
+            movement_label='Deadlift',
+            sets=5,
+            reps=3,
+            load_type=WorkoutLoadType.PERCENTAGE_OF_RM,
+            load_value=Decimal('70.00'),
+            sort_order=1,
+        )
+
+        first_result = GetStudentWorkoutDay().execute(
+            student=self.student,
+            session_id=session.id,
+            box_root_slug='control',
+        )
+
+        cache_key = build_student_wod_snapshot_cache_key(
+            box_root_slug='control',
+            session_id=session.id,
+            workout_version=3,
+        )
+        cached_snapshot = cache.get(cache_key)
+        self.assertIsNotNone(cached_snapshot)
+        self.assertEqual(first_result.primary_recommendation.recommended_load_kg, Decimal('70.00'))
+        self.assertNotIn('recommended_load_kg', json.dumps(cached_snapshot))
+
+        exercise_max.one_rep_max_kg = Decimal('80.00')
+        exercise_max.save(update_fields=['one_rep_max_kg', 'updated_at'])
+
+        with CaptureQueriesContext(connection) as captured_queries:
+            second_result = GetStudentWorkoutDay().execute(
+                student=self.student,
+                session_id=session.id,
+                box_root_slug='control',
+            )
+
+        self.assertLessEqual(len(captured_queries), 3)
+        self.assertEqual(second_result.primary_recommendation.recommended_load_kg, Decimal('55.00'))
+
+    def test_student_dashboard_agenda_snapshot_keeps_attendance_personalized(self):
+        cache.clear()
+        session = ClassSession.objects.create(
+            title='Cross compartilhado',
+            scheduled_at=timezone.now() + timedelta(hours=2),
+            status='scheduled',
+            capacity=16,
+        )
+
+        first_dashboard = GetStudentDashboard().execute(identity=self.identity)
+        first_session = next(item for item in first_dashboard.next_sessions if item.session_id == session.id)
+        self.assertEqual(first_session.attendance_status, 'Sem reserva')
+
+        cache_key = build_student_agenda_snapshot_cache_key(
+            box_root_slug='control',
+            start_date=timezone.localtime().date(),
+            window_days=None,
+            limit=12,
+        )
+        cached_snapshot = cache.get(cache_key)
+        self.assertIsNotNone(cached_snapshot)
+        self.assertNotIn('Reservado', json.dumps(cached_snapshot))
+
+        second_student = Student.objects.create(
+            full_name='Atleta Reservada',
+            phone='5511777777799',
+            email='reservada@example.com',
+        )
+        second_identity = StudentIdentity.objects.create(
+            student=second_student,
+            box_root_slug='control',
+            primary_box_root_slug='control',
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='provider-subject-reserved',
+            email='reservada@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        StudentBoxMembership.objects.create(
+            identity=second_identity,
+            student=second_student,
+            box_root_slug='control',
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
+        Attendance.objects.create(
+            student=second_student,
+            session=session,
+            status=AttendanceStatus.BOOKED,
+        )
+
+        with CaptureQueriesContext(connection) as captured_queries:
+            second_dashboard = GetStudentDashboard().execute(identity=second_identity)
+
+        second_session = next(item for item in second_dashboard.next_sessions if item.session_id == session.id)
+        self.assertLessEqual(len(captured_queries), 8)
+        self.assertEqual(second_session.attendance_status, 'Reservado')
+        self.assertEqual(second_session.occupied_slots, 1)
+
+    def test_student_home_snapshot_invalidates_when_student_books_session(self):
+        cache.clear()
+        session = ClassSession.objects.create(
+            title='Cross para reservar',
+            scheduled_at=timezone.now() + timedelta(hours=2),
+            status='scheduled',
+        )
+
+        first_dashboard = GetStudentDashboard().execute(identity=self.identity)
+        first_session = next(item for item in first_dashboard.next_sessions if item.session_id == session.id)
+        self.assertEqual(first_session.attendance_status, 'Sem reserva')
+
+        cache_key = build_student_home_snapshot_cache_key(
+            box_root_slug='control',
+            student_id=self.student.id,
+            start_date=timezone.localtime().date(),
+            window_days=None,
+            limit=12,
+        )
+        self.assertIsNotNone(cache.get(cache_key))
+
+        Attendance.objects.create(
+            student=self.student,
+            session=session,
+            status=AttendanceStatus.BOOKED,
+            reservation_source='student_app',
+        )
+
+        second_dashboard = GetStudentDashboard().execute(identity=self.identity)
+        second_session = next(item for item in second_dashboard.next_sessions if item.session_id == session.id)
+        self.assertEqual(second_session.attendance_status, 'Reservado')
+        self.assertEqual(second_dashboard.focal_session.session_id, session.id)
+
+    def test_student_home_snapshot_invalidates_when_rm_changes(self):
+        cache.clear()
+        StudentExerciseMax.objects.create(
+            student=self.student,
+            exercise_slug='deadlift',
+            exercise_label='Deadlift',
+            one_rep_max_kg=Decimal('100.00'),
+        )
+        session = ClassSession.objects.create(
+            title='Cross com RM',
+            scheduled_at=timezone.now() + timedelta(minutes=15),
+            status='open',
+        )
+        Attendance.objects.create(
+            student=self.student,
+            session=session,
+            status=AttendanceStatus.BOOKED,
+            reservation_source='student_app',
+        )
+        workout = SessionWorkout.objects.create(
+            session=session,
+            title='WOD RM',
+            status=SessionWorkoutStatus.PUBLISHED,
+        )
+        block = SessionWorkoutBlock.objects.create(
+            workout=workout,
+            kind=WorkoutBlockKind.STRENGTH,
+            title='Forca',
+            sort_order=1,
+        )
+        SessionWorkoutMovement.objects.create(
+            block=block,
+            movement_slug='deadlift',
+            movement_label='Deadlift',
+            load_type=WorkoutLoadType.PERCENTAGE_OF_RM,
+            load_value=Decimal('70.00'),
+            sort_order=1,
+        )
+
+        first_dashboard = GetStudentDashboard().execute(identity=self.identity)
+        self.assertEqual(first_dashboard.rm_of_the_day.recommended_load_kg, Decimal('70.00'))
+
+        record = StudentExerciseMax.objects.get(student=self.student, exercise_slug='deadlift')
+        record.one_rep_max_kg = Decimal('80.00')
+        record.save(update_fields=['one_rep_max_kg', 'updated_at'])
+
+        second_dashboard = GetStudentDashboard().execute(identity=self.identity)
+        self.assertEqual(second_dashboard.rm_of_the_day.recommended_load_kg, Decimal('55.00'))
+
+    def test_student_home_snapshot_invalidates_when_plan_changes(self):
+        cache.clear()
+        plan = MembershipPlan.objects.create(
+            name='Plano Ouro',
+            price=Decimal('299.00'),
+            sessions_per_week=5,
+        )
+        enrollment = Enrollment.objects.create(
+            student=self.student,
+            plan=plan,
+            status='active',
+        )
+
+        first_dashboard = GetStudentDashboard().execute(identity=self.identity)
+        self.assertEqual(first_dashboard.membership_label, 'Plano Ouro')
+
+        enrollment.status = 'canceled'
+        enrollment.save(update_fields=['status', 'updated_at'])
+
+        second_dashboard = GetStudentDashboard().execute(identity=self.identity)
+        self.assertEqual(second_dashboard.membership_label, 'Sem plano ativo')
+
+    @override_settings(REQUEST_TIMING_EXPOSE_DEBUG_HEADERS=True)
+    def test_student_home_emits_cache_telemetry_headers(self):
+        cache.clear()
+        ClassSession.objects.create(
+            title='Cross telemetria',
+            scheduled_at=timezone.now() + timedelta(hours=2),
+            status='scheduled',
+        )
+
+        self.client.get(reverse('student-app-home'))
+        response = self.client.get(reverse('student-app-home'))
+
+        self.assertIn('student-home', response['Server-Timing'])
+        self.assertIn('student-agenda', response['Server-Timing'])
+        self.assertEqual(response['X-OctoBox-Student-Agenda-Cache-Hit'], '1')
+        self.assertEqual(response['X-OctoBox-Student-Home-Cache-Hit'], '1')
+
+    def test_student_rm_snapshot_reuses_cached_record_for_workout_prescription(self):
+        cache.clear()
+        StudentExerciseMax.objects.create(
+            student=self.student,
+            exercise_slug='deadlift',
+            exercise_label='Deadlift',
+            one_rep_max_kg=Decimal('100.00'),
+        )
+
+        first_result = GetStudentWorkoutPrescription().execute(
+            student=self.student,
+            exercise_slug='deadlift',
+            percentage=Decimal('75'),
+        )
+        self.assertEqual(first_result.rounded_load_label, '75.00 kg')
+
+        cache_key = build_student_rm_snapshot_cache_key(
+            box_root_slug='control',
+            student_id=self.student.id,
+        )
+        self.assertIsNotNone(cache.get(cache_key))
+
+        with CaptureQueriesContext(connection) as captured_queries:
+            second_result = GetStudentWorkoutPrescription().execute(
+                student=self.student,
+                exercise_slug='deadlift',
+                percentage=Decimal('75'),
+            )
+
+        self.assertEqual(second_result.rounded_load_label, '75.00 kg')
+        self.assertEqual(len(captured_queries), 0)
+
+    def test_student_rm_snapshot_invalidates_after_rm_update(self):
+        cache.clear()
+        record = StudentExerciseMax.objects.create(
+            student=self.student,
+            exercise_slug='deadlift',
+            exercise_label='Deadlift',
+            one_rep_max_kg=Decimal('100.00'),
+        )
+
+        first_snapshot = get_student_rm_snapshot(student=self.student, box_root_slug='control')
+        self.assertEqual(first_snapshot['cards'][0].record.one_rep_max_kg, Decimal('100.00'))
+
+        record.one_rep_max_kg = Decimal('110.00')
+        record.save(update_fields=['one_rep_max_kg', 'updated_at'])
+
+        second_snapshot = get_student_rm_snapshot(student=self.student, box_root_slug='control')
+        self.assertEqual(second_snapshot['cards'][0].record.one_rep_max_kg, Decimal('110.00'))
+
+    @override_settings(REQUEST_TIMING_EXPOSE_DEBUG_HEADERS=True)
+    def test_student_rm_route_emits_cache_telemetry_headers(self):
+        cache.clear()
+        StudentExerciseMax.objects.create(
+            student=self.student,
+            exercise_slug='deadlift',
+            exercise_label='Deadlift',
+            one_rep_max_kg=Decimal('100.00'),
+        )
+
+        self.client.get(reverse('student-app-rm'))
+        response = self.client.get(reverse('student-app-rm'))
+
+        self.assertIn('student-rm', response['Server-Timing'])
+        self.assertEqual(response['X-OctoBox-Student-RM-Cache-Hit'], '1')
 
     def test_student_wod_route_ignores_draft_workout(self):
         session = ClassSession.objects.create(

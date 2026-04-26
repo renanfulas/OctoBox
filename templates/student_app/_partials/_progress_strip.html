@@ -5,7 +5,7 @@
         {% for day in progress_days %}
         <a
             href="?date={{ day.date|date:'Y-m-d' }}"
-            class="student-progress-day student-day-filter{% if day.is_complete %} is-complete{% endif %}{% if day.is_today %} is-today{% endif %}"
+            class="student-progress-day student-day-filter{% if day.is_complete %} is-complete{% endif %}{% if day.is_today %} is-today{% endif %}{% if student_selected_date == day.date or not student_selected_date and day.is_today %} is-selected{% endif %}"
             title="{{ day.kind|default:'Sem aula confirmada' }}"
             aria-label="{{ day.day_label }} {{ day.date_label }}{% if day.is_complete %}, com acao registrada{% else %}, sem acao registrada{% endif %}"
             aria-current="{% if student_selected_date == day.date or not student_selected_date and day.is_today %}date{% else %}false{% endif %}"

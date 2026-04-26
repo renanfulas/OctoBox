@@ -12,14 +12,12 @@
 {% if student_workout_day and student_workout_day.primary_recommendation %}
 <section class="student-hero-number">
     <span class="student-hero-number__meta">{{ student_workout_day.workout_title }}</span>
-    <p class="student-hero-number__label">{{ student_workout_day.primary_recommendation.movement_label }}</p>
-    <div class="student-hero-number__value">
-        <span>{{ student_workout_day.primary_recommendation.recommended_load_kg }}</span>
-        <small class="student-hero-number__unit">kg</small>
-    </div>
+    <p class="student-hero-number__label">{{ student_workout_day.session_title }}</p>
+    <div class="student-hero-number__value"><span>Resumo</span></div>
     <p class="student-hero-number__support">
-        {{ student_workout_day.primary_recommendation.percentage }}% do seu RM {{ student_workout_day.primary_recommendation.base_rm_kg }} kg
+        {{ student_workout_day.primary_recommendation.movement_label }} · {{ student_workout_day.primary_recommendation.percentage }}% do seu RM · {{ student_workout_day.primary_recommendation.recommended_load_kg }} kg
     </p>
+    <a href="#student-wod-day" class="student-primary-action">Ver treino do dia</a>
 </section>
 {% elif student_workout_day %}
 <section class="student-hero-number">
@@ -35,10 +33,13 @@
 {% endif %}
 
 {% if student_workout_day %}
-<section class="student-card student-card--feature">
+<section class="student-card student-card--feature" id="student-wod-day">
     <div class="student-section-head">
         <div>
-            <span class="student-context-switch">{{ student_workout_day.session_scheduled_label }}</span>
+            <div class="student-wod-session-meta">
+                <span class="student-context-switch">{{ student_workout_day.session_scheduled_label }}</span>
+                <span class="student-context-switch">{{ student_workout_day.session_weekday_label }}</span>
+            </div>
             <h2>Blocos</h2>
         </div>
     </div>
@@ -59,7 +60,7 @@
                         <span>{{ movement.prescription_label }}</span>
                     </div>
                     <div class="student-wod-movement-metrics">
-                        <small>{{ movement.load_context_label }}</small>
+                        <small>{% if movement.load_context_label == 'Percentual do RM' %}Percentual do seu RM:{% else %}{{ movement.load_context_label }}{% endif %}</small>
                         <strong>{{ movement.recommendation_label }}</strong>
                     </div>
                 </article>
@@ -73,11 +74,10 @@
 
 <section class="student-card student-card--quiet">
     <div class="student-section-head">
-        <div>
-            <span class="student-context-switch">Calculadora</span>
-            <h2>Percentual</h2>
+        <div class="student-wod-utility-switch">
+            <span class="student-secondary-action student-secondary-action--tab student-secondary-action--static">Calculadora</span>
         </div>
-        <a href="{% url 'student-app-rm' %}" class="student-secondary-action">RMs</a>
+        <a href="{% url 'student-app-rm' %}" class="student-secondary-action student-secondary-action--tab">RMs</a>
     </div>
     <form method="post" class="student-form student-form--wod">
         {% csrf_token %}
@@ -92,8 +92,11 @@
                 {{ form.exercise_slug }}
             </label>
             <label>
-                <span>%</span>
-                {{ form.percentage }}
+                <span class="visually-hidden">Percentual</span>
+                <span class="student-field-with-unit student-field-with-unit--prefix">
+                    <span class="student-field-with-unit__prefix">%</span>
+                    {{ form.percentage }}
+                </span>
             </label>
         </div>
         <button type="submit" class="student-primary-action">Calcular</button>
@@ -113,4 +116,9 @@
     </article>
     {% endif %}
 </section>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ block.super }}
+<script src="{% static 'js/student_app/wod.js' %}"></script>
 {% endblock %}

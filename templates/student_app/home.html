@@ -83,12 +83,38 @@
     <div class="student-day-section" data-day-section="{{ section.date|date:'Y-m-d' }}">
         <div class="student-session-list">
             {% for session in section.sessions %}
-            <article class="student-session-card" data-session-link="{% url 'student-app-wod' %}?session_id={{ session.session_id }}" tabindex="0" role="link" aria-label="Abrir WOD de {{ session.title }}">
-                <strong>{{ session.title }}</strong>
-                <span>{{ session.scheduled_label }}</span>
-                <span class="student-status-pill {{ session.runtime_status_pill_class }}">{{ session.runtime_status_label }}</span>
-                <span>{{ session.attendance_status }}</span>
-                {% include "student_app/_partials/_session_actions.html" with session=session %}
+            <article class="student-session-card student-session-card--agenda" data-session-link="{% url 'student-app-wod' %}?session_id={{ session.session_id }}" tabindex="0" role="link" aria-label="Abrir WOD de {{ session.title }}">
+                <div class="student-session-card__main">
+                    <div class="student-session-card__identity">
+                        <strong>{{ session.title }}</strong>
+                        <span class="student-session-card__coach">{{ session.coach_name }}</span>
+                    </div>
+                    <div class="student-session-card__meta">
+                        <div class="student-session-card__schedule">
+                            <span class="student-session-card__date">{{ session.scheduled_at|date:"d/m" }}</span>
+                            <span class="student-session-card__time">{{ session.scheduled_at|date:"H:i" }}</span>
+                        </div>
+                        <div class="student-session-card__occupancy-inline">
+                            <span class="student-session-card__occupancy-count">{{ session.occupied_slots }}/{{ session.capacity }}</span>
+                            <span class="student-session-card__occupancy-state">{{ session.occupancy_label }}</span>
+                        </div>
+                    </div>
+                    <div class="student-session-card__status-row">
+                        <span class="student-status-pill {{ session.runtime_status_pill_class }}">{{ session.runtime_status_label }}</span>
+                        <span class="student-session-card__attendance">{{ session.attendance_status }}</span>
+                    </div>
+                    <div class="student-session-card__capacity" style="--student-session-occupancy: {{ session.occupancy_percent }}%;">
+                        <div class="student-session-card__capacity-bar" aria-hidden="true">
+                            <span class="{{ session.occupancy_fill_class }}"></span>
+                        </div>
+                        <div class="student-session-card__capacity-foot">
+                            <span>{{ session.occupancy_note }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="student-session-card__aside">
+                    {% include "student_app/_partials/_session_actions.html" with session=session %}
+                </div>
             </article>
             {% endfor %}
         </div>

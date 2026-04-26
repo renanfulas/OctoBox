@@ -639,14 +639,7 @@ class StudentIdentityFlowTests(TestCase):
     )
     @patch('student_identity.views.build_provider')
     def test_smoke_student_oauth_reaches_home_in_wod_mode_when_attendance_window_is_active(self, build_provider_mock):
-        owner = get_user_model().objects.create_superuser(
-            username='owner-smoke-wod',
-            email='owner-smoke-wod@example.com',
-            password='Senha@123456',
-        )
-        staff_client = Client()
         student_client = Client()
-        staff_client.force_login(owner)
         build_provider_mock.return_value = self._build_google_provider_mock(
             email='aluno@example.com',
             provider_subject='google-smoke-wod-subject',
@@ -661,20 +654,14 @@ class StudentIdentityFlowTests(TestCase):
             session=session,
             status=AttendanceStatus.BOOKED,
         )
-
-        create_response = staff_client.post(
-            reverse('student-invitation-operations'),
-            {
-                'student': str(self.student.id),
-                'invited_email': 'aluno@example.com',
-                'invite_type': StudentInvitationType.INDIVIDUAL,
-                'onboarding_journey': StudentOnboardingJourney.REGISTERED_STUDENT_INVITE,
-                'expires_in_days': '7',
-            },
+        invitation = StudentAppInvitation.objects.create(
+            student=self.student,
+            box_root_slug=get_box_runtime_slug(),
+            invite_type=StudentInvitationType.INDIVIDUAL,
+            onboarding_journey=StudentOnboardingJourney.REGISTERED_STUDENT_INVITE,
+            invited_email='aluno@example.com',
+            expires_at=timezone.now() + timedelta(days=7),
         )
-
-        self.assertEqual(create_response.status_code, 302)
-        invitation = StudentAppInvitation.objects.latest('id')
 
         from student_identity.oauth_state import build_oauth_state
 
