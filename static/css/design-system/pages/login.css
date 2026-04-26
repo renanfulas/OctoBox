@@ -87,35 +87,14 @@ main[data-slot="login-root"] {
 .brand-mark {
     width: 72px;
     height: 72px;
-    position: relative;
     display: grid;
     place-items: center;
-    border-radius: 22px;
-    border: 1px solid var(--login-border-strong);
-    background:
-        linear-gradient(145deg, rgba(10, 18, 31, 0.94), rgba(5, 10, 18, 0.96));
-    box-shadow:
-        inset 0 0 0 1px rgba(255, 255, 255, 0.05),
-        0 0 24px var(--login-glow);
 }
 
-.brand-mark::before,
-.brand-mark::after {
-    content: "";
-    position: absolute;
-    inset: 16px;
-    border-radius: 18px;
-}
-
-.brand-mark::before {
-    border: 2px solid rgba(0, 229, 255, 0.72);
-}
-
-.brand-mark::after {
-    inset: 24px;
-    border-radius: 12px;
-    background: linear-gradient(145deg, rgba(0, 229, 255, 0.9), rgba(74, 144, 226, 0.65));
-    box-shadow: 0 0 18px rgba(0, 229, 255, 0.28);
+.brand-mark img {
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
 .brand-kicker,

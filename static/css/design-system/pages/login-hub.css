@@ -72,6 +72,12 @@ body {
     font-size: 0.84rem;
 }
 
+.entry-brand-icon {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+}
+
 .entry-eyebrow,
 .entry-note,
 .entry-support-copy {

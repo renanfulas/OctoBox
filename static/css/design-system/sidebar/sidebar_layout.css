@@ -87,20 +87,15 @@ O QUE ESTE ARQUIVO FAZ:
 .brand-mark {
     width: 48px;
     height: 48px;
-    border-radius: 16px;
     display: grid;
     place-items: center;
     flex-shrink: 0;
-    color: #f8fbff;
-    font-size: 0.8rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    background:
-        linear-gradient(145deg, color-mix(in srgb, var(--theme-accent-support) 78%, white 22%), color-mix(in srgb, var(--theme-accent-premium) 28%, var(--theme-accent-support) 72%));
-    box-shadow:
-        0 12px 24px rgba(2, 8, 23, 0.18),
-        inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.brand-mark img {
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
 .brand {

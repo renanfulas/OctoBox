@@ -1,7 +1,10 @@
+{% load static %}
 {% if student_identity %}
 <aside class="student-sidebar" aria-label="Navegacao do aluno">
     <a href="{% url 'student-app-home' %}" class="student-brandmark">
-        <span class="student-brandmark-mark">OB</span>
+        <span class="student-brandmark-mark" aria-hidden="true">
+            <img src="{% static 'images/brand/octobox-mark.svg' %}?v={{ static_asset_version }}" alt="">
+        </span>
         <span>
             <strong>OctoBox Aluno</strong>
             <small>{{ student_active_box_root_slug|default:"Sem box ativo" }}</small>

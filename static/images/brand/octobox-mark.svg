@@ -1,21 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="OctoBox Aluno">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="octobox-mark-title octobox-mark-desc">
+  <title id="octobox-mark-title">OctoBox mark</title>
+  <desc id="octobox-mark-desc">Futuristic OctoBox symbol with an octagonal frame and luminous box core.</desc>
   <defs>
-    <linearGradient id="student-bg" x1="34" y1="26" x2="226" y2="232" gradientUnits="userSpaceOnUse">
+    <linearGradient id="octobox-bg" x1="34" y1="26" x2="226" y2="232" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#17233A"/>
       <stop offset="0.48" stop-color="#0A0E1A"/>
       <stop offset="1" stop-color="#05070D"/>
     </linearGradient>
-    <linearGradient id="student-ring" x1="54" y1="34" x2="205" y2="220" gradientUnits="userSpaceOnUse">
+    <linearGradient id="octobox-ring" x1="54" y1="34" x2="205" y2="220" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#00E5FF"/>
       <stop offset="0.54" stop-color="#4A90E2"/>
       <stop offset="1" stop-color="#FF00C8"/>
     </linearGradient>
-    <linearGradient id="student-core" x1="83" y1="72" x2="177" y2="184" gradientUnits="userSpaceOnUse">
+    <linearGradient id="octobox-core" x1="83" y1="72" x2="177" y2="184" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#EAFBFF"/>
       <stop offset="0.3" stop-color="#00E5FF"/>
       <stop offset="1" stop-color="#4A90E2"/>
     </linearGradient>
-    <filter id="student-glow" x="-35%" y="-35%" width="170%" height="170%">
+    <linearGradient id="octobox-accent" x1="116" y1="78" x2="188" y2="170" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF00C8"/>
+      <stop offset="1" stop-color="#00E5FF"/>
+    </linearGradient>
+    <filter id="octobox-glow" x="-35%" y="-35%" width="170%" height="170%">
       <feGaussianBlur stdDeviation="5.5" result="blur"/>
       <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0.75  0 0 0 0 1  0 0 0 0.52 0" result="cyanGlow"/>
       <feMerge>
@@ -24,16 +30,16 @@
       </feMerge>
     </filter>
   </defs>
-  <rect width="256" height="256" rx="56" fill="url(#student-bg)"/>
+  <rect width="256" height="256" rx="56" fill="url(#octobox-bg)"/>
   <path d="M72 22h112l50 50v112l-50 50H72l-50-50V72L72 22Z" fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="2"/>
-  <path d="M84 40h88l44 44v88l-44 44H84l-44-44V84l44-44Z" fill="#00E5FF" fill-opacity="0.035" stroke="url(#student-ring)" stroke-width="7" stroke-linejoin="round" filter="url(#student-glow)"/>
+  <path d="M84 40h88l44 44v88l-44 44H84l-44-44V84l44-44Z" fill="#00E5FF" fill-opacity="0.035" stroke="url(#octobox-ring)" stroke-width="7" stroke-linejoin="round" filter="url(#octobox-glow)"/>
   <path d="M84 40h88l44 44" fill="none" stroke="#FFFFFF" stroke-opacity="0.24" stroke-width="2" stroke-linecap="round"/>
   <path d="M40 172l44 44h88" fill="none" stroke="#FF00C8" stroke-opacity="0.42" stroke-width="3" stroke-linecap="round"/>
   <path d="M128 70 178 98v60l-50 28-50-28V98l50-28Z" fill="#060C18" fill-opacity="0.56" stroke="#EAFBFF" stroke-opacity="0.24" stroke-width="3" stroke-linejoin="round"/>
-  <path d="M128 70 178 98l-50 29-50-29 50-28Z" fill="url(#student-core)" fill-opacity="0.92"/>
+  <path d="M128 70 178 98l-50 29-50-29 50-28Z" fill="url(#octobox-core)" fill-opacity="0.92"/>
   <path d="M78 98v60l50 28v-59L78 98Z" fill="#00E5FF" fill-opacity="0.18"/>
   <path d="M178 98v60l-50 28v-59l50-29Z" fill="#4A90E2" fill-opacity="0.34"/>
   <path d="M128 70v57m-50-29 50 29 50-29m-50 29v59" fill="none" stroke="#EAFBFF" stroke-opacity="0.58" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M156 85 178 98v60l-22 13V85Z" fill="#FF00C8" fill-opacity="0.28"/>
+  <path d="M156 85 178 98v60l-22 13V85Z" fill="url(#octobox-accent)" fill-opacity="0.28"/>
   <circle cx="128" cy="128" r="6" fill="#EAFBFF"/>
 </svg>

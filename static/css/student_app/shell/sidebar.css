@@ -50,23 +50,15 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 .student-brandmark-mark {
     width: 46px;
     height: 46px;
-    border-radius: 16px;
     display: grid;
     place-items: center;
-    background:
-        linear-gradient(
-            135deg,
-            color-mix(in srgb, var(--theme-accent-primary) 18%, var(--theme-surface-strong) 82%),
-            color-mix(in srgb, var(--theme-accent-support) 22%, var(--theme-surface-secondary) 78%),
-            color-mix(in srgb, var(--theme-accent-premium) 12%, var(--theme-surface-strong) 88%)
-        );
-    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 20%, var(--theme-border-soft) 80%);
-    box-shadow:
-        inset 0 1px 0 color-mix(in srgb, white 14%, transparent),
-        0 12px 24px color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent);
-    color: var(--theme-text-primary);
-    font-weight: 800;
-    letter-spacing: 0.08em;
+    flex: 0 0 auto;
+}
+
+.student-brandmark-mark img {
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
 .student-nav {
