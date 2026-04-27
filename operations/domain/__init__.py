@@ -25,6 +25,13 @@ from .class_grid_write_rules import (
     get_week_bounds,
     should_enforce_schedule_limits_for_status,
 )
+from .session_cancellation_rules import (
+    CancellationDecision,
+    CopyVariant,
+    build_cancellation_decision,
+    resolve_copy_variant,
+    should_notify_cancellation,
+)
 from .workspace_action_rules import (
     AttendanceActionDecision,
     TechnicalBehaviorNoteDecision,
@@ -34,6 +41,8 @@ from .workspace_action_rules import (
 )
 
 __all__ = [
+    'CancellationDecision',
+    'CopyVariant',
     'AttendanceActionDecision',
     'ClassGridCreateExecutionPlan',
     'ClassGridPlannedCreationSlot',
@@ -54,4 +63,7 @@ __all__ = [
     'get_week_bounds',
     'iter_schedule_dates',
     'should_enforce_schedule_limits_for_status',
+    'build_cancellation_decision',
+    'resolve_copy_variant',
+    'should_notify_cancellation',
 ]

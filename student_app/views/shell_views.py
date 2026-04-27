@@ -169,7 +169,38 @@ class StudentGradeView(StudentIdentityRequiredMixin, TemplateView):
         context['student_tomorrow_sessions'] = tuple(
             session for session in dashboard.next_sessions if session.scheduled_at.date() == tomorrow
         )
+        context['student_cancellation_events'] = self._load_cancellation_events()
+        context['student_grade_highlight'] = self.request.GET.get('highlight', '')
         return self._attach_student_shell_context(context)
+
+    def _load_cancellation_events(self):
+        from datetime import timedelta as _td
+        from django.utils import timezone as _tz
+        from operations.model_definitions import Attendance, SessionCancellationEvent
+
+        cutoff = _tz.now() - _td(hours=24)
+        identity = self.request.student_identity
+        student_id = identity.student_id
+        box_root_slug = identity.box_root_slug
+
+        # Busca eventos recentes do box.
+        recent_events = SessionCancellationEvent.objects.filter(
+            box_root_slug=box_root_slug,
+            created_at__gte=cutoff,
+        )
+        if not recent_events.exists():
+            return []
+
+        # Filtra apenas os que o aluno tinha reserva ativa.
+        session_ids_with_event = list(recent_events.values_list('session_id', flat=True))
+        attended_session_ids = set(
+            Attendance.objects.filter(
+                student_id=student_id,
+                session_id__in=session_ids_with_event,
+                status__in=['booked', 'checked_in'],
+            ).values_list('session_id', flat=True)
+        )
+        return [evt for evt in recent_events if evt.session_id in attended_session_ids]
 
 
 class StudentWodView(StudentIdentityRequiredMixin, FormView):

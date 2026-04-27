@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block body %}
+{% include "student_app/_partials/_cancellation_banner.html" %}
 <section class="student-hero-number">
     <span class="student-context-switch">Grade</span>
     <p class="student-hero-number__label">{% if student_next_session %}{{ student_next_session.title }}{% else %}Hoje e amanha{% endif %}</p>

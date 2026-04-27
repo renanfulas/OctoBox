@@ -1,0 +1,86 @@
+{% if student_cancellation_events %}
+<div
+    class="cancellation-banner"
+    role="status"
+    aria-live="polite"
+    aria-label="Avisos de aulas canceladas"
+    id="cancellation-banner"
+>
+    {% for evt in student_cancellation_events %}
+    <div
+        class="cancellation-banner__item{% if evt.copy_variant == 'already_checked_in' %} cancellation-banner__item--urgent{% endif %}"
+        data-cancel-evt-id="{{ evt.pk }}"
+    >
+        <span class="cancellation-banner__icon" aria-hidden="true">
+            {% if evt.copy_variant == 'already_checked_in' %}⚠️{% else %}ℹ️{% endif %}
+        </span>
+        <div class="cancellation-banner__content">
+            <p class="cancellation-banner__title">
+                {% if evt.copy_variant == 'already_checked_in' %}
+                    Aula de hoje cancelada
+                {% else %}
+                    Aula cancelada
+                {% endif %}
+            </p>
+            <p class="cancellation-banner__body">
+                {{ evt.session_title }}
+                {% if evt.scheduled_at %}— {{ evt.scheduled_at|date:"d/m H:i" }}{% endif %}
+                {% if evt.copy_variant == 'last_minute' %}
+                    · Crédito devolvido automaticamente.
+                {% elif evt.copy_variant == 'already_checked_in' %}
+                    · Fique à vontade para reservar outra.
+                {% else %}
+                    · Sem perda de crédito.
+                {% endif %}
+            </p>
+        </div>
+        <button
+            type="button"
+            class="cancellation-banner__dismiss"
+            aria-label="Dispensar aviso de {{ evt.session_title }}"
+            data-dismiss-cancel-evt="{{ evt.pk }}"
+        >✕</button>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+(function () {
+    var banner = document.getElementById('cancellation-banner');
+    if (!banner) return;
+
+    var dismissed = JSON.parse(localStorage.getItem('dismissed_cancel_evts') || '[]');
+
+    function applyDismissed() {
+        banner.querySelectorAll('[data-cancel-evt-id]').forEach(function (el) {
+            if (dismissed.indexOf(el.dataset.cancelEvtId) !== -1) {
+                el.hidden = true;
+            }
+        });
+        var visible = banner.querySelectorAll('[data-cancel-evt-id]:not([hidden])');
+        if (visible.length === 0) banner.hidden = true;
+    }
+
+    banner.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-dismiss-cancel-evt]');
+        if (!btn) return;
+        var id = btn.dataset.dismissCancelEvt;
+        if (dismissed.indexOf(id) === -1) dismissed.push(id);
+        localStorage.setItem('dismissed_cancel_evts', JSON.stringify(dismissed));
+        applyDismissed();
+    });
+
+    applyDismissed();
+
+    {% if student_grade_highlight %}
+    var highlighted = document.querySelector('[data-session-id="{{ student_grade_highlight }}"]');
+    if (highlighted) {
+        setTimeout(function () {
+            highlighted.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            highlighted.classList.add('is-highlighted');
+        }, 300);
+    }
+    {% endif %}
+}());
+</script>
+{% endif %}
