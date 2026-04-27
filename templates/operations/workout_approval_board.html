@@ -6,17 +6,17 @@
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% include "operations/includes/wod_corridor_tabs.html" %}
 
-    <section class="coach-wod-filter-bar" aria-label="Filtros da fila de aprovacao">
+    <section class="coach-wod-filter-bar" aria-label="Filtros da fila de aprovação">
         <form method="get" class="coach-wod-filter-form">
             {% if approval_filter_state.session_id %}
             <input type="hidden" name="session_id" value="{{ approval_filter_state.session_id }}">
             {% endif %}
             <label class="coach-wod-filter-field">
-                <span>Ordenacao</span>
+                <span>Ordenação</span>
                 <select name="sort">
                     <option value="submitted_oldest" {% if approval_filter_state.sort == 'submitted_oldest' %}selected{% endif %}>Mais antigos primeiro</option>
                     <option value="submitted_newest" {% if approval_filter_state.sort == 'submitted_newest' %}selected{% endif %}>Mais recentes primeiro</option>
-                    <option value="session_soonest" {% if approval_filter_state.sort == 'session_soonest' %}selected{% endif %}>Aulas mais proximas</option>
+                    <option value="session_soonest" {% if approval_filter_state.sort == 'session_soonest' %}selected{% endif %}>Aulas mais próximas</option>
                 </select>
             </label>
             <label class="coach-wod-filter-field">
@@ -31,7 +31,7 @@
             <div class="coach-wod-filter-toggle-group" aria-label="Refinos rapidos da fila">
                 <label class="coach-wod-filter-toggle">
                     <input type="checkbox" name="sensitive_only" value="1" {% if approval_filter_state.sensitive_only %}checked{% endif %}>
-                    <span>Somente mudancas sensiveis</span>
+                    <span>Somente mudanças sensíveis</span>
                 </label>
                 <label class="coach-wod-filter-toggle">
                     <input type="checkbox" name="today_only" value="1" {% if approval_filter_state.today_only %}checked{% endif %}>
@@ -57,8 +57,8 @@
     <section class="coach-wod-queue-summary" aria-label="Resumo executivo da fila">
         <div class="coach-wod-queue-summary-head">
             <div>
-                <p class="eyebrow">Radar da fila {% include "operations/includes/wod_tooltip.html" with tooltip_text="Mostra pressao, risco e proxima decisao antes de abrir cada WOD." %}</p>
-                <h2>Decisao curta para publicar sem ruido</h2>
+                <p class="eyebrow">Radar da fila {% include "operations/includes/wod_tooltip.html" with tooltip_text="Mostra pressão, risco e próxima decisão antes de abrir cada WOD." %}</p>
+                <h2>Decisão curta para publicar sem ruído</h2>
             </div>
         </div>
         <div class="coach-wod-summary-grid coach-wod-summary-grid--approval">
@@ -71,16 +71,16 @@
                 <h2>{{ approval_queue_assist.high_impact_count }}</h2>
             </article>
             <article class="coach-wod-summary-card tone-danger">
-                <p class="eyebrow">Mudanca sensivel</p>
+                <p class="eyebrow">Mudança sensível</p>
                 <h2>{{ approval_queue_assist.sensitive_count }}</h2>
             </article>
         </div>
     </section>
 
-    <section class="wod-inbox" data-wod-inbox aria-label="Fila de aprovacao de WOD">
+    <section class="wod-inbox" data-wod-inbox aria-label="Fila de aprovação de WOD">
         <aside class="wod-inbox__list" aria-label="WODs pendentes">
             <div class="wod-inbox__list-head">
-                <p class="eyebrow">Inbox de aprovacao</p>
+                <p class="eyebrow">Inbox de aprovação</p>
                 <strong>{{ approval_queue_assist.total }} pendente(s)</strong>
             </div>
             <form method="post" action="{% url 'workout-approval-batch-action' %}" class="wod-inbox__batch-form">
@@ -117,14 +117,14 @@
                     {% if item.policy_badge %}<span class="wod-inbox__item-summary"><span class="pill {{ item.policy_badge.tone }}">{{ item.policy_badge.label }}</span> {{ item.policy_badge.detail }}</span>{% endif %}
                     {% if item.is_sensitive or item.requires_confirmation %}
                     <span class="wod-inbox__item-flags">
-                        {% if item.is_sensitive %}<span class="pill danger">Sensivel</span>{% endif %}
+                        {% if item.is_sensitive %}<span class="pill danger">Sensível</span>{% endif %}
                         {% if item.requires_confirmation %}<span class="pill warning">Confirmar</span>{% endif %}
                     </span>
                     {% endif %}
                 </button>
                 {% empty %}
                 <div class="coach-wod-empty-state">
-                    <p>Nenhum WOD aguardando aprovacao com os filtros atuais.</p>
+                    <p>Nenhum WOD aguardando aprovação com os filtros atuais.</p>
                 </div>
                 {% endfor %}
             </div>
@@ -152,7 +152,7 @@
                     <span class="pill warning">{{ workout.get_status_display }}</span>
                     <span class="pill {{ workout.review_snapshot.decision_assist.impact_tone }}">{{ workout.review_snapshot.decision_assist.impact_label }}</span>
                     {% if workout.review_snapshot.diff_snapshot.is_sensitive %}
-                    <span class="pill danger">Sensivel</span>
+                    <span class="pill danger">Sensível</span>
                     {% endif %}
                     {% if workout.review_snapshot.requires_confirmation %}
                     <span class="pill warning">Precisa confirmar</span>
@@ -161,7 +161,7 @@
             </div>
 
             <div class="coach-wod-review-digest">
-                <p class="eyebrow">Leitura rapida da revisao</p>
+                <p class="eyebrow">Leitura rápida da revisão</p>
                 <p>{{ workout.review_snapshot.review_summary }}</p>
                 {% if workout.policy_badge %}<p>{{ workout.policy_badge.detail }}</p>{% endif %}
                 <p>{{ workout.review_snapshot.revision_digest }}</p>
@@ -218,7 +218,7 @@
                 {% endif %}
                 {% if workout.review_snapshot.diff_snapshot.is_sensitive %}
                 <div class="coach-wod-sensitive-banner">
-                    <strong>Mudanca sensivel</strong>
+                    <strong>Mudança sensível</strong>
                     <ul class="coach-wod-detail-items">
                         {% for reason in workout.review_snapshot.diff_snapshot.sensitive_reasons %}
                         <li>{{ reason }}</li>
@@ -294,11 +294,11 @@
                     <article class="coach-student-preview-card is-current">
                         <div class="coach-student-preview-head">
                             <div>
-                                <p class="student-eyebrow">Preview apos aprovacao</p>
+                                <p class="student-eyebrow">Preview após aprovação</p>
                                 <h3>{{ workout.review_snapshot.student_preview.current.workout_title }}</h3>
                                 <p>{{ workout.review_snapshot.student_preview.current.session_title }} · {{ workout.review_snapshot.student_preview.current.session_scheduled_label }} · {{ workout.review_snapshot.student_preview.current.coach_name }}</p>
                             </div>
-                            <span class="student-status-badge">Aluno vera assim</span>
+                            <span class="student-status-badge">Aluno verá assim</span>
                         </div>
                         {% if workout.review_snapshot.student_preview.current.coach_notes %}
                         <p class="student-copy">{{ workout.review_snapshot.student_preview.current.coach_notes }}</p>
@@ -347,7 +347,7 @@
                     </article>
                     {% empty %}
                     <div class="coach-wod-empty-state">
-                        <p>Nenhuma revisao registrada ainda.</p>
+                        <p>Nenhuma revisão registrada ainda.</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -360,23 +360,23 @@
                     {% if workout.review_snapshot.requires_confirmation %}
                     <label class="coach-wod-filter-toggle">
                         <input type="checkbox" name="confirm_sensitive_changes" value="1">
-                        <span>Confirmo que revisei as mudancas sensiveis antes de publicar</span>
+                        <span>Confirmo que revisei as mudanças sensíveis antes de publicar</span>
                     </label>
                     {% endif %}
                     <select name="approval_reason_category">
                         <option value="">Sem registrar motivo extra</option>
                         <option value="without_concerns">Aprovado sem ressalvas</option>
                         <option value="verbal_alignment">Aprovado com alinhamento verbal</option>
-                        <option value="operational_urgency">Aprovado por urgencia operacional</option>
+                        <option value="operational_urgency">Aprovado por urgência operacional</option>
                     </select>
-                    <input type="text" name="approval_reason_note" maxlength="255" placeholder="Detalhe opcional da aprovacao para trilha de decisao.">
+                    <input type="text" name="approval_reason_note" maxlength="255" placeholder="Detalhe opcional da aprovação para trilha de decisão.">
                     <button class="button" type="submit">Aprovar e publicar</button>
                 </form>
                 <form method="post" action="{% url 'workout-approval-action' workout.id 'reject' %}" class="coach-wod-rejection-inline">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{{ current_surface_path }}">
                     <select name="rejection_category" required>
-                        <option value="">Motivo da rejeicao</option>
+                        <option value="">Motivo da rejeição</option>
                         <option value="load_incoherent">Carga incoerente</option>
                         <option value="missing_block">Faltou bloco</option>
                         <option value="poor_order">Ordem ruim</option>
@@ -384,7 +384,7 @@
                         <option value="excessive_volume">Volume excessivo</option>
                         <option value="other">Outro ajuste</option>
                     </select>
-                    <input type="text" name="rejection_reason" maxlength="255" placeholder="Detalhe rapido para o coach entender o ajuste pedido.">
+                    <input type="text" name="rejection_reason" maxlength="255" placeholder="Detalhe rápido para o coach entender o ajuste pedido.">
                     <button class="button tertiary" type="submit">Rejeitar</button>
                 </form>
             </div>
@@ -392,7 +392,7 @@
         {% empty %}
         <article class="table-card coach-wod-editor-card">
             <div class="coach-wod-empty-state">
-                <p>Nenhum WOD aguardando aprovacao com os filtros atuais.</p>
+                <p>Nenhum WOD aguardando aprovação com os filtros atuais.</p>
             </div>
         </article>
         {% endfor %}

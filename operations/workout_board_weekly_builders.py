@@ -20,15 +20,15 @@ def build_weekly_executive_summary(*, history_items, management_priority, recomm
     top_recommendation = recommendations[0] if recommendations else None
     positive_trend = next((card for card in trend_cards if card.get('trend_label') == 'Melhora recente'), None)
 
-    adjustment_label = top_entry['label'] if top_entry else 'Nenhum corredor pediu ajuste forte acima da linha de ruido'
+    adjustment_label = top_entry['label'] if top_entry else 'Nenhum corredor pediu ajuste forte acima da linha de ruído'
     improvement_label = positive_trend['label'] if positive_trend else 'Nenhuma melhora consistente ficou clara nesta janela'
-    action_label = top_recommendation['label'] if top_recommendation else 'Manter observacao curta sem nova recomendacao principal'
+    action_label = top_recommendation['label'] if top_recommendation else 'Manter observação curta sem nova recomendação principal'
 
     total_weekly = len(weekly_items)
     summary = (
         f'Nesta semana, o principal ponto de ajuste foi {adjustment_label.lower()}. '
         f'O melhor sinal de melhora veio de {improvement_label.lower()}. '
-        f'A recomendacao principal virou {action_label.lower()}.'
+        f'A recomendação principal virou {action_label.lower()}.'
     )
     return {
         'label': 'Resumo executivo semanal do box',
@@ -52,7 +52,7 @@ def build_weekly_checkpoint_rhythm(*, checkpoint_history):
         rhythm_cards.append(
             {
                 'tone': 'info' if current['execution_status'] == WorkoutWeeklyCheckpointStatus.COMPLETED else 'accent',
-                'label': 'Virada de execucao',
+                'label': 'Virada de execução',
                 'summary': (
                     f"O checkpoint saiu de {previous['execution_status_label'].lower()} "
                     f"para {current['execution_status_label'].lower()} na semana de {current['week_label']}."
@@ -65,8 +65,8 @@ def build_weekly_checkpoint_rhythm(*, checkpoint_history):
         rhythm_cards.append(
             {
                 'tone': 'warning',
-                'label': 'Sequencia parcial',
-                'summary': 'As ultimas semanas estao fechando como parcial. Vale revisar se a recomendacao esta grande demais ou sem dono forte.',
+                'label': 'Sequência parcial',
+                'summary': 'As últimas semanas estão fechando como parcial. Vale revisar se a recomendação está grande demais ou sem dono forte.',
             }
         )
 
@@ -74,8 +74,8 @@ def build_weekly_checkpoint_rhythm(*, checkpoint_history):
         rhythm_cards.append(
             {
                 'tone': 'success',
-                'label': 'Sequencia funcionando',
-                'summary': 'As ultimas semanas estao fechando com resultado positivo. Vale consolidar esse ritual como padrao de gestao.',
+                'label': 'Sequência funcionando',
+                'summary': 'As últimas semanas estão fechando com resultado positivo. Vale consolidar esse ritual como padrão de gestão.',
             }
         )
 
@@ -103,7 +103,7 @@ def build_weekly_checkpoint_maturity(*, checkpoint_history, rhythm_cards):
             'summary': 'O ritual semanal esta fechando bem nas ultimas semanas e mostra cara de rotina madura, nao de improviso.',
         }
 
-    if 'Sequencia parcial' in rhythm_labels or len({status for status in recent_execution[:2]}) > 1:
+    if 'Sequência parcial' in rhythm_labels or len({status for status in recent_execution[:2]}) > 1:
         return {
             'label': 'Maturidade operacional',
             'tone': 'warning',

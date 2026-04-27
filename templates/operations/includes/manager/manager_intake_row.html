@@ -3,7 +3,7 @@
     <td data-label="Telefone">{{ intake.phone }}</td>
     <td data-label="Origem">{{ intake.source_label }}</td>
     <td data-label="Status"><span class="pill info">{{ intake.status_label }}</span></td>
-    <td data-label="Proxima acao">
+    <td data-label="Próxima ação">
         <div class="manager-row-decision">
             {% with action=intake.decision_action %}
             {% if action.kind == 'post' %}

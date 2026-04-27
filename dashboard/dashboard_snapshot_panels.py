@@ -160,24 +160,24 @@ def build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, tod
                 semantic='positive',
             ),
             'note': (
-                'Sem pressao maior no momento, a receita realizada vira a melhor abertura para ler o pulso do box.'
+                'Sem pressão maior no momento, a receita realizada vira a melhor abertura para ler o pulso do box.'
                 if priority_context['dominant_key'] == 'revenue' else
-                'Esse e o dinheiro real que entrou. Ele ancora a leitura, mas hoje nao abre sozinho a prioridade do dia.'
+                'Esse é o dinheiro real que entrou. Ele ancora a leitura, mas hoje não abre sozinho a prioridade do dia.'
             ),
             'hide_footer': True,
             'status_hint': 'attention' if priority_context['dominant_key'] == 'revenue' else 'neutral',
         },
         'overdue': {
             'card_class': 'dashboard-kpi-card kpi-red is-panel',
-            'eyebrow': 'Cobrancas em atraso',
+            'eyebrow': 'Cobranças em atraso',
             'kicker': 'Seu primeiro movimento' if priority_context['dominant_key'] == 'overdue' and metrics['overdue_payments'] > 0 else 'Tudo Certo' if metrics['overdue_payments'] == 0 else 'Precisa do seu olhar',
             'display_value': metrics['overdue_payments'],
             'change': build_delta_badge(metrics['overdue_payments'], metrics['overdue_payments_previous_day'], label='desde ontem', semantic='negative'),
             'data_action': 'blink-topbar-finance',
             'note': (
-                'Essa e a pressao dominante agora. Cada cobranca aqui ainda tem chance, mas o relogio ja esta correndo.'
+                'Essa é a pressão dominante agora. Cada cobrança aqui ainda tem chance, mas o relógio já está correndo.'
                 if priority_context['dominant_key'] == 'overdue' and metrics['overdue_payments'] > 0 else
-                'Cada cobranca aqui ainda tem chance. Vou te ajudar a priorizar quem abordar primeiro.'
+                'Cada cobrança aqui ainda tem chance. Vou te ajudar a priorizar quem abordar primeiro.'
             ),
             'hide_footer': True,
             'status_hint': 'attention' if metrics['overdue_payments'] > 0 else 'clean',
@@ -194,9 +194,9 @@ def build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, tod
                 'label': 'pipeline comercial',
             },
             'note': (
-                'Essa e a pressao dominante agora. Cada entrada aqui pode esfriar se ficar para depois.'
+                'Essa é a pressão dominante agora. Cada entrada aqui pode esfriar se ficar para depois.'
                 if priority_context['dominant_key'] == 'intakes' and pending_intakes_count > 0 else
-                'Cada entrada aqui pode ser alguem que esta esperando por voce mudar a vida dela.\nVamos cuidar antes que esfrie.'
+                'Cada entrada aqui pode ser alguém que está esperando por você mudar a vida dela.\nVamos cuidar antes que esfrie.'
             ),
             'hide_footer': True,
             'status_hint': 'attention' if pending_intakes_count > 0 else 'clean',
@@ -213,9 +213,9 @@ def build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, tod
             },
             'data_action': 'blink-board-sessions',
             'note': (
-                'A agenda virou a primeira coordenacao do dia. Vale abrir aqui antes de aprofundar o restante.'
+                'A agenda virou a primeira coordenação do dia. Vale abrir aqui antes de aprofundar o restante.'
                 if priority_context['dominant_key'] == 'occupancy' and metrics['sessions_today'] > 0 else
-                'Cuide da lotacao para que seu Coach possa entregar uma aula melhor para os alunos.'
+                'Cuide da lotação para que seu Coach possa entregar uma aula melhor para os alunos.'
             ),
             'hide_footer': True,
             'status_hint': 'attention' if today_schedule_occupancy_percent >= 95 else 'neutral',
@@ -226,8 +226,8 @@ def build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, tod
             'kicker': 'Compromisso que voltou',
             'display_value': metrics['attendance_this_month'],
             'data_action': 'blink-sidebar-alunos',
-            'change': build_delta_badge(metrics['attendance_this_month'], metrics['attendance_previous_month'], label='vs mes anterior', semantic='positive'),
-            'note': 'Cada presenca e uma pessoa que escolheu voltar. Voce esta construindo algo que importa.',
+            'change': build_delta_badge(metrics['attendance_this_month'], metrics['attendance_previous_month'], label='vs mês anterior', semantic='positive'),
+            'note': 'Cada presença é uma pessoa que escolheu voltar. Você está construindo algo que importa.',
             'hide_footer': True,
             'status_hint': 'neutral',
         },
@@ -238,7 +238,7 @@ def build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, tod
             'display_value': metrics['active_students'],
             'data_action': 'blink-sidebar-alunos',
             'signal': {'tone': 'good', 'value': 'Base viva', 'label': 'comunidade ativa'},
-            'note': 'Essa e a sua comunidade. Cada pessoa aqui confia no que voce esta construindo.',
+            'note': 'Essa é a sua comunidade. Cada pessoa aqui confia no que você está construindo.',
             'hide_footer': True,
             'status_hint': 'clean',
         },

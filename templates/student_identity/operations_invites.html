@@ -47,7 +47,7 @@
 
     <article class="table-card student-invite-card student-invite-card--individual">
         <p class="eyebrow">Convite individual</p>
-        <h3>Chamar um aluno do jeito certo</h3>
+        <h3>Gerar convite do app do aluno</h3>
         <p class="system-map-copy">Quando o caso e pontual, gere um convite individual. Esse caminho e melhor para recuperar um aluno especifico ou organizar uma entrada com mais controle.</p>
         <form method="post" class="form-stack section-gap-top-sm">
             {% csrf_token %}
@@ -77,7 +77,7 @@
                 {{ form.expires_in_days.errors }}
             </label>
             <div class="actions actions-tight operation-hero-action-rail">
-                <button class="button" type="submit">Gerar convite individual</button>
+                <button class="button" type="submit">Gerar convite do app do aluno</button>
             </div>
         </form>
     </article>
@@ -113,7 +113,7 @@
     <div class="student-invite-list-header">
         <div>
             <p class="eyebrow">Saude da operacao</p>
-            <h3>Como o onboarding esta respirando agora</h3>
+            <h3>Painel de temperatura dos convites</h3>
             <p class="system-map-copy">Esses numeros ajudam o time a ver se a operacao esta fluindo, travando ou pedindo atencao antes de virar problema para o aluno.</p>
         </div>
     </div>
@@ -290,7 +290,7 @@
     <div class="student-invite-list-header">
         <div>
             <p class="eyebrow">Fila quente</p>
-            <h3>Casos que pedem contato rapido</h3>
+            <h3>Alunos travados esperando mensagem</h3>
             <p class="system-map-copy">Aqui ficam os alunos cujo e-mail nao resolveu e que ainda precisam de uma mensagem no WhatsApp para continuar.</p>
         </div>
     </div>
@@ -325,7 +325,7 @@
     <div class="student-invite-list-header">
         <div>
             <p class="eyebrow">Aguardando aprovacao</p>
-            <h3>Alunos esperando liberacao do box</h3>
+            <h3>Alunos que fecharam a identidade e agora esperam o box</h3>
             <p class="system-map-copy">Esses alunos ja fizeram a parte deles. Agora falta o box liberar a entrada para eles usarem o app sem friccao.</p>
         </div>
     </div>
@@ -347,7 +347,7 @@
                     {% csrf_token %}
                     <input type="hidden" name="action" value="approve-membership">
                     <input type="hidden" name="membership_id" value="{{ membership.id }}">
-                    <button class="button" type="submit">Liberar acesso</button>
+                    <button class="button" type="submit">Aprovar acesso</button>
                 </form>
             </div>
             {% else %}
@@ -434,7 +434,7 @@
     <div class="student-invite-list-header">
         <div>
             <p class="eyebrow">Historico recente</p>
-            <h3>Ultimos convites gerados neste box</h3>
+            <h3>Ultimos links emitidos para o app do aluno</h3>
             <p class="system-map-copy">Se precisar conferir o que saiu, quem abriu ou por onde seguir, este e o historico mais recente da operacao.</p>
         </div>
     </div>

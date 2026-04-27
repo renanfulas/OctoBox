@@ -1,18 +1,18 @@
-<section class="student-quick-financial-history" aria-label="Historico de pagamentos">
+<section class="student-quick-financial-history" aria-label="Histórico de pagamentos">
     <header class="student-quick-financial-history__header">
         <div class="stack-6">
-            <h3 class="student-quick-financial-history__title">Historico de pagamentos</h3>
-            <p class="student-quick-financial-history__count">{{ page.data.financial_overview.payments|length }} transacao(oes)</p>
+            <h3 class="student-quick-financial-history__title">Histórico de pagamentos</h3>
+            <p class="student-quick-financial-history__count">{{ page.data.financial_overview.payments|length }} transação(ões)</p>
         </div>
     </header>
 
     {% if page.data.financial_overview.payments %}
     <div class="table-responsive student-quick-financial-history__table-wrap">
         <table class="student-quick-financial-history__table">
-            <caption class="visually-hidden">Historico financeiro do aluno no quick panel.</caption>
+            <caption class="visually-hidden">Histórico financeiro do aluno no quick panel.</caption>
             <thead>
                 <tr class="student-quick-financial-history__head">
-                    <th scope="col">Descricao</th>
+                    <th scope="col">Descrição</th>
                     <th scope="col">Data</th>
                     <th scope="col" class="is-center">Status</th>
                     <th scope="col" class="is-right">Valor</th>
@@ -40,7 +40,7 @@
                             </div>
                             <div class="student-quick-financial-history__copy">
                                 <strong>{{ payment.enrollment.plan.name|default:"Mensalidade" }}{% if payment.due_date %} - {{ payment.due_date|date:"M/y" }}{% endif %}</strong>
-                                <span>{% if payment.reference %}INV-{{ payment.reference|truncatechars:8 }}{% else %}Sem referencia{% endif %}</span>
+                                <span>{% if payment.reference %}INV-{{ payment.reference|truncatechars:8 }}{% else %}Sem referência{% endif %}</span>
                             </div>
                         </div>
                     </td>
@@ -62,7 +62,7 @@
     </div>
     {% else %}
     <div class="student-quick-financial-history__empty">
-        <p class="student-quick-financial-history__count">Nenhuma cobranca registrada ainda.</p>
+        <p class="student-quick-financial-history__count">Nenhuma cobrança registrada ainda.</p>
     </div>
     {% endif %}
 </section>

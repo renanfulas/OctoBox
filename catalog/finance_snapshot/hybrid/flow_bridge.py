@@ -41,13 +41,13 @@ def build_finance_flow_bridge(*, priority_context, operational_queue, financial_
             'href_label': 'Abrir raio-X financeiro',
             'data_action': 'open-tab-finance-movements',
             'entry_surface': 'movements-board',
-            'entry_reason': 'Sem pressao dominante na fila, o caixa realizado explica melhor o recorte.',
+            'entry_reason': 'Sem pressão dominante na fila, o caixa realizado explica melhor o recorte.',
             'secondary_surface': 'queue-board',
         }
     return {
         'eyebrow': 'Primeiro movimento',
         'title': 'Comece pela carteira e deixe a fila para a segunda leitura.',
-        'copy': 'Sem pressao dominante na fila ou no caixa, portfolio e mix explicam melhor o momento antes de abrir filtros ou cobrancas.',
+        'copy': 'Sem pressão dominante na fila ou no caixa, portfólio e mix explicam melhor o momento antes de abrir filtros ou cobranças.',
         'href': '#finance-portfolio-board',
         'href_label': 'Abrir carteira ativa',
         'data_action': 'open-tab-finance-portfolio',

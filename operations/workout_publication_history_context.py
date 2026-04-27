@@ -32,13 +32,13 @@ def _build_page_payload(*, page_title, page_subtitle, current_role_slug):
         },
         data={
             'hero': build_page_hero(
-                eyebrow='Historico',
-                title='WOD publicado e leitura pos-publicacao.',
-                copy='Aqui a equipe acompanha o que foi ao ar, registra retorno e entende onde o treino ainda pede acao humana.',
+                eyebrow='Histórico',
+                title='WOD publicado e leitura pós-publicação.',
+                copy='Aqui a equipe acompanha o que foi ao ar, registra retorno e entende onde o treino ainda pede ação humana.',
                 actions=[
-                    {'label': 'Voltar a operacao', 'href': reverse('role-operations'), 'kind': 'secondary'},
+                    {'label': 'Voltar à operação', 'href': reverse('role-operations'), 'kind': 'secondary'},
                 ],
-                aria_label='Historico operacional do WOD',
+                aria_label='Histórico operacional do WOD',
                 classes=['coach-hero'],
                 data_panel='coach-hero',
                 actions_slot='coach-hero-actions',

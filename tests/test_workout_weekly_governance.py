@@ -109,7 +109,7 @@ class WorkoutWeeklyGovernanceTests(WorkoutFlowBaseTestCase):
                 'responsible_role': 'manager',
                 'closure_status': 'partial',
                 'governance_commitment_status': 'assumed',
-                'governance_commitment_note': 'Owner assumiu a decisao e vai cobrar fechamento na proxima semana.',
+                'governance_commitment_note': 'Owner assumiu a decisão e vai cobrar fechamento na próxima semana.',
                 'summary_note': 'Manager puxando o ritual semanal e fechando parcialmente a recomendacao.',
                 'next': reverse('workout-publication-history'),
             },
@@ -123,8 +123,8 @@ class WorkoutWeeklyGovernanceTests(WorkoutFlowBaseTestCase):
         self.assertEqual(checkpoint.closure_status, 'partial')
         self.assertEqual(checkpoint.governance_commitment_status, 'assumed')
         self.assertEqual(checkpoint.updated_by, self.manager)
-        self.assertContains(response, 'Checkpoint de gestao da semana')
-        self.assertContains(response, 'Historico leve dos checkpoints')
+        self.assertContains(response, 'Checkpoint de gestão da semana')
+        self.assertContains(response, 'Histórico leve dos checkpoints')
         self.assertContains(response, 'Semana de')
         self.assertContains(response, 'Em andamento')
         self.assertContains(response, 'Parcial')
@@ -171,9 +171,9 @@ class WorkoutWeeklyGovernanceTests(WorkoutFlowBaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Maturidade operacional')
         self.assertContains(response, 'Instavel')
-        self.assertContains(response, 'Acao de governanca')
+        self.assertContains(response, 'Ação de governança')
         self.assertContains(response, 'Rodar ajuste curto antes de formalizar')
-        self.assertContains(response, 'Virada de execucao')
-        self.assertContains(response, 'Sequencia parcial')
-        self.assertContains(response, 'O checkpoint saiu de nao iniciado para concluido')
+        self.assertContains(response, 'Virada de execução')
+        self.assertContains(response, 'Sequência parcial')
+        self.assertContains(response, 'O checkpoint saiu de não iniciado para concluído')
         self.assertContains(response, 'Executado')

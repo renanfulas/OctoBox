@@ -8,7 +8,7 @@ PONTOS CRITICOS:
 - Depende de page.data.upcoming_sessions.
 -->
 <article class="table-card layout-panel layout-panel--stack dashboard-table-card dashboard-side-card dashboard-support-card dashboard-side-card-sticky" id="dashboard-sessions-board" data-panel="dashboard-sessions-board" data-dashboard-block="{{ block.id }}" data-dashboard-slot="{{ block.slot }}">
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Agenda de apoio" title="Agenda do turno" copy="Linha do turno para sustentar a decisao principal sem competir com o painel central." pill_label=page.data.upcoming_sessions|length|add:" aula(s)" pill_class="info" %}
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Agenda de apoio" title="Agenda do turno" copy="Linha do turno para sustentar a decisão principal sem competir com o painel central." pill_label=page.data.upcoming_sessions|length|add:" aula(s)" pill_class="info" %}
     {% if page.data.upcoming_sessions %}
     {% with featured_session=page.data.upcoming_sessions|first %}
     <div class="dashboard-session-stack is-premium">
@@ -24,6 +24,6 @@ PONTOS CRITICOS:
     </div>
     {% endwith %}
     {% else %}
-    {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Agenda de apoio" title="Nenhuma aula cadastrada ainda" copy="A agenda principal ainda nao tem turma pronta para movimentar recepcao e coach neste recorte." badge="Dia leve" badge_class="info" %}
+    {% include "includes/ui/states/state_empty.html" with compact=True eyebrow="Agenda de apoio" title="Nenhuma aula cadastrada ainda" copy="A agenda principal ainda não tem turma pronta para movimentar recepção e coach neste recorte." badge="Dia leve" badge_class="info" %}
     {% endif %}
 </article>

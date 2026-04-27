@@ -190,21 +190,21 @@ class ClassScheduleRecurringForm(forms.ModelForm):
     coach = forms.ModelChoiceField(
         queryset=get_user_model().objects.none(),
         required=False,
-        label='Coach responsavel pela aula',
+        label='Coach responsável pela aula',
         empty_label='Definir depois',
     )
     skip_existing = forms.BooleanField(
         required=False,
         initial=True,
-        label='Pular aulas que ja existirem nesse mesmo horario',
+        label='Pular aulas que já existirem nesse mesmo horário',
     )
     sequence_count = forms.TypedChoiceField(
-        label='Aulas em sequencia',
+        label='Aulas em sequência',
         choices=((0, '0'), (1, '+1'), (2, '+2'), (3, '+3'), (4, '+4'), (5, '+5')),
         coerce=int,
         initial=0,
         widget=forms.Select,
-        help_text='0 cria so o horario base. Ex.: 07:00 com +3 gera 07:00, 08:00, 09:00 e 10:00 quando a duracao for 60 min.',
+        help_text='0 cria só o horário base. Ex.: 07:00 com +3 gera 07:00, 08:00, 09:00 e 10:00 quando a duração for 60 min.',
     )
 
     class Meta:
@@ -230,10 +230,10 @@ class ClassScheduleRecurringForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['title'].label = 'Nome da aula'
-        self.fields['duration_minutes'].label = 'Duracao em minutos'
+        self.fields['duration_minutes'].label = 'Duração em minutos'
         self.fields['capacity'].label = 'Capacidade da turma'
         self.fields['status'].label = 'Status inicial'
-        self.fields['notes'].label = 'Observacoes operacionais'
+        self.fields['notes'].label = 'Observações operacionais'
         self.fields['coach'].queryset = _get_class_coach_queryset()
 
         apply_text_input_attrs(self.fields['title'], placeholder='Ex.: WOD 07h', maxlength=100)
@@ -251,8 +251,8 @@ class ClassScheduleRecurringForm(forms.ModelForm):
 
         self.fields['start_date'].initial = timezone.localdate()
         self.fields['end_date'].initial = timezone.localdate() + timezone.timedelta(days=27)
-        self.fields['anchor_date'].help_text = 'Use a primeira data que serve de ancora para sabado, domingo ou ambos.'
-        self.fields['interval_days'].help_text = '7, 14 ou 21 dias para o rodizio de fim de semana.'
+        self.fields['anchor_date'].help_text = 'Use a primeira data que serve de âncora para sábado, domingo ou ambos.'
+        self.fields['interval_days'].help_text = '7, 14 ou 21 dias para o rodízio de fim de semana.'
         self.fields['duration_minutes'].initial = 60
         self.fields['capacity'].initial = 20
         self.fields['status'].initial = SessionStatus.SCHEDULED
@@ -288,7 +288,7 @@ class ClassScheduleRecurringForm(forms.ModelForm):
             self.add_error('end_date', 'A data final precisa ser igual ou posterior a data inicial.')
 
         if start_date and end_date and (end_date - start_date).days > 120:
-            self.add_error('end_date', 'Para evitar excesso de agenda acidental, use um intervalo de ate 120 dias por vez.')
+            self.add_error('end_date', 'Para evitar excesso de agenda acidental, use um intervalo de até 120 dias por vez.')
 
         if not weekdays:
             self.add_error('weekdays', 'Escolha pelo menos um dia da semana para gerar a agenda.')
@@ -303,14 +303,14 @@ class ClassScheduleRecurringForm(forms.ModelForm):
             self.add_error('anchor_date', 'Informe a data base para usar o ciclo do rodizio.')
 
         if anchor_date and any(day not in (5, 6) for day in weekdays):
-            self.add_error('weekdays', 'O rodizio com data base so pode ser aplicado em sabado, domingo ou ambos.')
+            self.add_error('weekdays', 'O rodízio com data base só pode ser aplicado em sábado, domingo ou ambos.')
 
         return cleaned_data
 
 
 class ClassSessionQuickEditForm(forms.ModelForm):
     start_time = LenientTimeField(
-        label='Horario de inicio',
+        label='Horário de início',
         input_formats=['%H:%M'],
         widget=forms.TimeInput(format='%H:%M'),
     )
@@ -348,11 +348,11 @@ class ClassSessionQuickEditForm(forms.ModelForm):
         )
         self.fields['coach'].queryset = _get_class_coach_queryset()
         self.fields['title'].label = 'Nome da aula'
-        self.fields['coach'].label = 'Coach responsavel pela aula'
-        self.fields['duration_minutes'].label = 'Duracao em minutos'
+        self.fields['coach'].label = 'Coach responsável pela aula'
+        self.fields['duration_minutes'].label = 'Duração em minutos'
         self.fields['capacity'].label = 'Capacidade da turma'
         self.fields['status'].label = 'Status da aula'
-        self.fields['notes'].label = 'Observacoes operacionais'
+        self.fields['notes'].label = 'Observações operacionais'
         apply_text_input_attrs(self.fields['title'], placeholder='Ex.: WOD 07h', maxlength=100)
         apply_time_input_attrs(self.fields['start_time'])
         apply_integer_input_attrs(self.fields['duration_minutes'], placeholder='Ex.: 60', min_value=1, maxlength=3)

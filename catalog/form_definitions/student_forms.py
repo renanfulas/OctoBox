@@ -93,7 +93,7 @@ class StudentQuickForm(forms.ModelForm):
     intake_record = forms.ModelChoiceField(
         queryset=StudentIntake.objects.none(),
         required=False,
-        label='Lead / entrada provisoria',
+        label='Lead / entrada provisória',
         empty_label='Sem lead vinculado',
     )
     selected_plan = forms.ModelChoiceField(
@@ -199,9 +199,9 @@ class StudentQuickForm(forms.ModelForm):
             if choice[0] in (StudentStatus.LEAD, StudentStatus.ACTIVE)
         ]
         self.fields['email'].label = 'E-mail'
-        self.fields['gender'].label = 'Genero'
+        self.fields['gender'].label = 'Gênero'
         self.fields['birth_date'].label = 'Nascimento (dd/mm/aaaa)'
-        self.fields['health_issue_status'].label = 'Algum problema de saude?'
+        self.fields['health_issue_status'].label = 'Algum problema de saúde?'
         self.fields['cpf'].label = 'CPF do aluno'
         self.fields['acquisition_source'].help_text = 'Esse dado sustenta leitura comercial, reconciliacao e ML futuro.'
         self.fields['notes'].label = 'Descreva o problema, se houver'
@@ -209,7 +209,7 @@ class StudentQuickForm(forms.ModelForm):
             linked_student__isnull=True,
             status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING, IntakeStatus.MATCHED],
         ).order_by('status', '-created_at')
-        self.fields['intake_record'].help_text = 'Use isso para transformar uma entrada provisoria em aluno definitivo.'
+        self.fields['intake_record'].help_text = 'Use isso para transformar uma entrada provisória em aluno definitivo.'
         self.fields['selected_plan'].queryset = MembershipPlan.objects.filter(active=True).order_by('price', 'name')
         self.fields['selected_plan'].help_text = 'Esse plano ja fica pronto para conversar com matricula e financeiro.'
         self.fields['enrollment_status'].label = 'Status do plano no aluno'
@@ -236,7 +236,7 @@ class StudentQuickForm(forms.ModelForm):
         apply_text_input_attrs(self.fields['acquisition_source_detail'], placeholder='Ex.: indicacao do Joao, Google Maps, passou na frente', maxlength=120)
         apply_text_input_attrs(
             self.fields['notes'],
-            placeholder='Descreva o problema de saude ou deixe em branco.',
+            placeholder='Descreva o problema de saúde ou deixe em branco.',
             maxlength=300,
         )
         apply_text_input_attrs(self.fields['payment_reference'], placeholder='Ex.: PIX-MAR-2026', maxlength=100)
