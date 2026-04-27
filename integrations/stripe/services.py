@@ -41,8 +41,8 @@ def create_checkout_session(payment: Payment, request) -> str:
     if payment.enrollment and payment.enrollment.plan:
         product_name = f'Plano {payment.enrollment.plan.name} - {payment.installment_number}/{payment.installment_total}'
 
-    success_url = request.build_absolute_uri(reverse('finance:checkout_success', args=[payment.id])) + '?session_id={CHECKOUT_SESSION_ID}'
-    cancel_url = request.build_absolute_uri(reverse('finance:checkout_cancel', args=[payment.id]))
+    success_url = request.build_absolute_uri(reverse('checkout_success', args=[payment.id])) + '?session_id={CHECKOUT_SESSION_ID}'
+    cancel_url = request.build_absolute_uri(reverse('checkout_cancel', args=[payment.id]))
 
     try:
         session = stripe.checkout.Session.create(

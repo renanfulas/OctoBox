@@ -1,0 +1,98 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="page-shell">
+  <div class="page-header">
+    <h1 class="page-title">Webhooks de Pagamento</h1>
+    <p class="page-subtitle">Signal Mesh — canal Stripe</p>
+  </div>
+
+  <!-- Resumo -->
+  <div class="stats-row" style="display:flex;gap:1rem;margin-bottom:1.5rem;">
+    <div class="stat-card">
+      <span class="stat-label">Total</span>
+      <span class="stat-value">{{ summary.total }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Pendentes</span>
+      <span class="stat-value">{{ summary.pending }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Processados</span>
+      <span class="stat-value" style="color:var(--color-success,#22c55e)">{{ summary.processed }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Falhou</span>
+      <span class="stat-value" style="color:var(--color-danger,#ef4444)">{{ summary.failed }}</span>
+    </div>
+  </div>
+
+  <!-- Filtro por status -->
+  <form method="get" style="margin-bottom:1rem;">
+    <select name="status" onchange="this.form.submit()" class="form-select" style="width:auto;display:inline-block;">
+      <option value="">Todos os status</option>
+      {% for value, label in status_choices %}
+        <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </form>
+
+  <!-- Tabela de eventos -->
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Evento Stripe</th>
+          <th>Tipo</th>
+          <th>Status</th>
+          <th>Tentativas</th>
+          <th>Lag (s)</th>
+          <th>Último erro</th>
+          <th>Criado em</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in events %}
+        <tr>
+          <td><code style="font-size:.8em">{{ event.event_id|truncatechars:24 }}</code></td>
+          <td>{{ event.event_type }}</td>
+          <td>
+            <span class="badge badge--{{ event.status }}">{{ event.get_status_display }}</span>
+          </td>
+          <td>{{ event.attempts }}</td>
+          <td>{% if event.lag_seconds is not None %}{{ event.lag_seconds|floatformat:1 }}{% else %}—{% endif %}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            {{ event.last_error_message|default:"—" }}
+          </td>
+          <td>{{ event.created_at|date:"d/m H:i" }}</td>
+          <td>
+            {% if event.status == 'failed' %}
+            <form method="post" action="{% url 'integrations:webhook-retry' event.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn--sm btn--outline">Retry</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" style="text-align:center;padding:2rem;opacity:.5">Nenhum evento registrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginação -->
+  {% if is_paginated %}
+  <div class="pagination" style="margin-top:1rem;">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}" class="btn btn--sm btn--outline">← Anterior</a>
+    {% endif %}
+    <span style="padding:0 1rem;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}" class="btn btn--sm btn--outline">Próxima →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
