@@ -340,6 +340,46 @@ class WorkoutTemplateMovement(TimeStampedModel):
         return f'{self.block} - {self.movement_label}'
 
 
+class SessionCancellationEvent(TimeStampedModel):
+    """
+    Fato imutavel registrado quando uma ClassSession muda para status 'canceled'
+    com pelo menos uma presenca ativa.
+
+    Fonte de verdade consumida por:
+    - push delivery (Onda 3): envia notificacao para assinantes.
+    - banner in-app (Onda 4): exibe alerta na grade do aluno.
+
+    Ambos os consumidores sao independentes; o evento persiste mesmo se push falhar.
+    """
+
+    session_id = models.PositiveIntegerField(db_index=True)
+    box_root_slug = models.CharField(max_length=64, db_index=True)
+    copy_variant = models.CharField(
+        max_length=24,
+        default='ahead',
+    )
+    attendance_count_at_cancel = models.PositiveIntegerField(default=0)
+    push_sent_count = models.PositiveIntegerField(default=0)
+    scheduled_at = models.DateTimeField(null=True, blank=True)
+    session_title = models.CharField(max_length=100, blank=True)
+
+    class Meta:
+        app_label = 'operations'
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['session_id'],
+                name='ops_session_cancel_evt_unique_session',
+            )
+        ]
+        indexes = [
+            models.Index(fields=['box_root_slug', 'created_at'], name='ops_sess_cancel_box_idx'),
+        ]
+
+    def __str__(self):
+        return f'CancellationEvent session={self.session_id} variant={self.copy_variant}'
+
+
 class WorkoutPlannerTemplatePickerEvent(TimeStampedModel):
     event_name = models.CharField(max_length=24, db_index=True)
     session_id = models.PositiveIntegerField(db_index=True)

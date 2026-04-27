@@ -18,3 +18,7 @@ class OperationsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'operations'
     verbose_name = 'Operations'
+
+    def ready(self):
+        from operations.signals.session_cancellation import connect_session_cancellation_signal
+        connect_session_cancellation_signal()
