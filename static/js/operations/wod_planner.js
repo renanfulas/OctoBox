@@ -28,6 +28,7 @@ PONTOS CRITICOS:
     const templatePickerTriggers = Array.from(planner.querySelectorAll('[data-wod-planner-template-picker-trigger]'));
     const templateApplyForms = Array.from(planner.querySelectorAll('[data-wod-planner-template-apply-form]'));
     let templatePickerSessionId = '';
+    const templatePickerOpenClass = 'wod-planner-template-picker-open';
 
     planner.classList.add('is-enhanced');
 
@@ -130,7 +131,12 @@ PONTOS CRITICOS:
         }
         emitTemplatePickerEvent('opened', { sessionId });
         if (typeof templatePicker.showModal === 'function') templatePicker.showModal();
+        document.documentElement.classList.add(templatePickerOpenClass);
     }
+
+    templatePicker?.addEventListener('close', () => {
+        document.documentElement.classList.remove(templatePickerOpenClass);
+    });
 
     templatePickerTriggers.forEach((trigger) => {
         trigger.addEventListener('click', () => {
