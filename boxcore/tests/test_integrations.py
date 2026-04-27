@@ -19,6 +19,7 @@ from django.test import TestCase
 from communications.models import MessageDirection, StudentIntake, WhatsAppContact, WhatsAppContactStatus, WhatsAppMessageLog
 from integrations.whatsapp.contracts import WhatsAppInboundMessage
 from integrations.whatsapp.services import register_inbound_whatsapp_message
+from shared_support.phone_numbers import normalize_phone_number
 from students.models import Student
 
 
@@ -37,7 +38,8 @@ class WhatsAppIntegrationFoundationTests(TestCase):
         )
 
         self.assertTrue(result.accepted)
-        contact = WhatsAppContact.objects.get(phone='5511999998888')
+        contact = WhatsAppContact.objects.get(pk=result.contact_id)
+        self.assertEqual(contact.phone, normalize_phone_number('+55 (11) 99999-8888'))
         self.assertEqual(contact.linked_student, student)
         self.assertEqual(contact.status, WhatsAppContactStatus.LINKED)
         self.assertTrue(WhatsAppMessageLog.objects.filter(contact=contact, direction=MessageDirection.INBOUND).exists())
@@ -55,7 +57,8 @@ class WhatsAppIntegrationFoundationTests(TestCase):
         )
 
         self.assertTrue(result.accepted)
-        contact = WhatsAppContact.objects.get(phone='551188887777')
+        contact = WhatsAppContact.objects.get(pk=result.contact_id)
+        self.assertEqual(contact.phone, normalize_phone_number('55 11 8888-7777'))
         self.assertIsNone(contact.linked_student)
         self.assertEqual(contact.status, WhatsAppContactStatus.NEW)
         self.assertIsNotNone(contact.last_inbound_at)
@@ -94,7 +97,8 @@ class WhatsAppIntegrationFoundationTests(TestCase):
         )
 
         self.assertTrue(result.accepted)
-        contact = WhatsAppContact.objects.get(phone='5511955554444')
+        contact = WhatsAppContact.objects.get(pk=result.contact_id)
+        self.assertEqual(contact.phone, normalize_phone_number('55 11 95555-4444'))
         message = WhatsAppMessageLog.objects.get(external_message_id='wamid-004')
         self.assertEqual(contact.external_contact_id, 'wa-contact-004')
         self.assertIsInstance(message.raw_payload, dict)
