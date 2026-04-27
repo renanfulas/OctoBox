@@ -17,6 +17,7 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from django.views.generic import TemplateView, View
 
+from auditing.models import AuditEvent
 from student_identity.infrastructure.session import attach_student_session_cookie
 from student_identity.models import StudentBoxMembershipStatus
 from student_identity.security import build_student_device_fingerprint
@@ -113,3 +114,45 @@ class StudentSwitchBoxView(StudentIdentityRequiredMixin, View):
         )
         messages.success(request, f'Agora voce esta no contexto do box {target_membership.box_root_slug}.')
         return response
+
+
+class StudentRequestFreezeView(StudentIdentityRequiredMixin, View):
+    """
+    Aluno solicita congelamento de matrícula. Não executa o freeze diretamente —
+    registra o pedido como AuditEvent para aprovação assíncrona pela recepção.
+    """
+
+    def post(self, request, *args, **kwargs):
+        raw_days = (request.POST.get('days') or '').strip()
+        try:
+            days = int(raw_days)
+            if days < 7 or days > 90:
+                raise ValueError
+        except (ValueError, TypeError):
+            messages.error(request, 'Informe um período entre 7 e 90 dias.')
+            return redirect('student-app-settings')
+
+        reason = (request.POST.get('reason') or '').strip()[:280]
+        student = request.student_identity.student
+
+        AuditEvent.objects.create(
+            actor=None,
+            actor_role='student',
+            action='student_app.freeze_requested',
+            target_model='students.Student',
+            target_id=str(student.id),
+            target_label=student.full_name,
+            description=f'Aluno solicitou congelamento de {days} dias via app.',
+            metadata={
+                'student_id': student.id,
+                'box_root_slug': request.student_identity.box_root_slug,
+                'days': days,
+                'reason': reason,
+            },
+        )
+
+        messages.success(
+            request,
+            f'Pedido de congelamento de {days} dias enviado. A recepção vai confirmar em breve.',
+        )
+        return redirect('student-app-settings')

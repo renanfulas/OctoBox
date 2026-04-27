@@ -14,7 +14,7 @@ PONTOS CRITICOS:
 
 from django.urls import path
 
-from .finance_views import PaymentLinkView, StudentFreezeView
+from .finance_views import PaymentBulkActionView, PaymentLinkView, StudentFreezeView
 from .integrations_views import WhatsAppPollWebhookView
 from .internal_views import init_system_view
 from .jobs_views import SecureExportDownloadView
@@ -38,6 +38,7 @@ urlpatterns = [
     path('students/autocomplete/', StudentAutocompleteView.as_view(), name='api-v1-student-autocomplete'),
     path('finance/payment-link/<int:payment_id>/', PaymentLinkView.as_view(), name='api-v1-payment-link'),
     path('finance/freeze-student/', StudentFreezeView.as_view(), name='api-v1-finance-freeze'),
+    path('finance/payments/bulk-action/', PaymentBulkActionView.as_view(), name='api-v1-finance-payments-bulk'),
     path('integrations/whatsapp/webhook/poll-vote/', WhatsAppPollWebhookView.as_view(), name='api-v1-whatsapp-poll-webhook'),
     path('integrations/resend/webhook/student-invitations/', ResendInvitationWebhookView.as_view(), name='api-v1-resend-student-invitations-webhook'),
     path('project-rag/health/', ProjectKnowledgeHealthView.as_view(), name='api-v1-project-rag-health'),

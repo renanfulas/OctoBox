@@ -220,6 +220,8 @@ ARQUIVO: superfície operacional do coach.
 .coach-session-card {
     position: relative;
     overflow: hidden;
+    content-visibility: auto;
+    contain-intrinsic-block-size: 480px;
     border-color: color-mix(in srgb, var(--theme-accent-premium-alpha) 16%, var(--card-border) 84%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, transparent), transparent 30%),

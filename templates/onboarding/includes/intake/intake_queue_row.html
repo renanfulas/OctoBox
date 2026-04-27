@@ -24,7 +24,7 @@
     data-can-reject="{% if page.capabilities.can_work_queue and permissions.can_reject %}true{% else %}false{% endif %}"
     data-can-send-whatsapp-invite="{% if page.capabilities.can_manage_students and item.can_send_whatsapp_invite %}true{% else %}false{% endif %}"
 >
-    <td class="intake-queue-col--contact intake-cell intake-cell--contact" data-label="Contato">
+    <td class="intake-queue-col--contact intake-cell intake-cell--contact" data-label="Aluno">
         <div class="intake-contact-identity">
             <div class="avatar-circle avatar-{% cycle 'orange' 'blue' 'purple' 'teal' 'pink' 'indigo' %} intake-contact-avatar">
                 {{ intake.full_name|slice:":2"|upper }}

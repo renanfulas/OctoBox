@@ -66,6 +66,21 @@
 
 {% include "student_app/_partials/_progress_strip.html" with progress_days=dashboard.progress_days %}
 
+{% if student_tomorrow_wod %}
+<section class="student-card student-card--quiet student-tomorrow-wod-card">
+    <div class="student-section-head">
+        <div>
+            <span class="student-context-switch">WOD de amanha</span>
+            <h2>{{ student_tomorrow_wod.title }}</h2>
+        </div>
+        <a href="{% url 'student-app-grade' %}" class="student-link">Ver grade</a>
+    </div>
+    {% if student_tomorrow_wod.notes %}
+    <p class="student-copy">{{ student_tomorrow_wod.notes }}</p>
+    {% endif %}
+</section>
+{% endif %}
+
 <section class="student-card student-card--quiet">
     <div class="student-section-head">
         <div>

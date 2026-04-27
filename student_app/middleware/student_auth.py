@@ -53,6 +53,9 @@ class StudentAuthMiddleware:
                         ).hexdigest()[:8],
                     },
                 )
-                messages.info(request, 'Faca login para acessar o app.')
+                messages.warning(
+                    request,
+                    'Para acessar esta pagina, entre com sua conta Google ou Apple primeiro.',
+                )
                 return redirect(self._login_url)
         return self._get_response(request)
