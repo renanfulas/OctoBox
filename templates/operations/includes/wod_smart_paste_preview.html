@@ -3,7 +3,7 @@
         <div>
             <p class="eyebrow">Conferir</p>
             <h2>Preview semanal</h2>
-            <p class="operation-session-meta">O texto cru vira grade de dias, blocos e movimentos antes de qualquer replicação.</p>
+    <p class="operation-session-meta">O texto cru vira grade de dias, blocos e movimentos antes de qualquer replicação.</p>
         </div>
     </div>
 
@@ -34,7 +34,7 @@
         <div class="smart-paste-review-queue-head">
             <div>
                 <p class="eyebrow">Revisar so o que travou</p>
-                <h3>Itens que ainda pedem confirmação humana</h3>
+    <h3>Itens que ainda pedem confirmação humana</h3>
             </div>
             <span class="pill warning">{{ smart_paste_summary.unresolved_count }} pendencia(s)</span>
         </div>
@@ -160,6 +160,38 @@
             <button class="button secondary" type="submit">Confirmar rascunho semanal</button>
         </div>
     </form>
+
+    {% if weekly_plan_is_confirmed %}
+    <section class="smart-paste-template-bridge" aria-label="Transformar semana em template">
+        <div class="smart-paste-template-bridge__head">
+            <div>
+                <p class="eyebrow">Salvar como template</p>
+                <h3>Transforme esta semana em base reutilizavel</h3>
+                <p class="operation-session-meta">Depois de confiar na leitura, salve o melhor da semana na biblioteca oficial para reaplicar no Planner.</p>
+            </div>
+            <a class="button tertiary" href="{{ template_management_href }}">Abrir biblioteca</a>
+        </div>
+        <form method="post" class="coach-wod-form-stack smart-paste-template-bridge__form">
+            {% csrf_token %}
+            <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
+            <input type="hidden" name="action" value="create_stored_template">
+            <div class="coach-wod-form-grid coach-wod-form-grid--two">
+                <label>
+                    <span>Nome do template</span>
+                    <input type="text" name="template_name" value="{{ create_stored_template_form.template_name.value|default_if_none:'' }}" maxlength="120" placeholder="Ex.: Semana base de forca">
+                </label>
+                <div class="smart-paste-template-bridge__meta">
+                    <span class="pill success">Leitura confirmada</span>
+                    <span class="pill info">Vai para Templates</span>
+                    <span class="pill warning">Confiavel so depois de revisar</span>
+                </div>
+            </div>
+            <div class="actions">
+                <button class="button secondary" type="submit">Salvar como template</button>
+            </div>
+        </form>
+    </section>
+    {% endif %}
     {% else %}
     <div class="coach-wod-empty-state">
         <p>O preview aparece aqui assim que o texto for organizado.</p>

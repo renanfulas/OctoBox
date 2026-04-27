@@ -85,7 +85,7 @@ class CoachWorkoutEditorFlowTests(WorkoutFlowBaseTestCase):
 
         self.assertEqual(home_response.status_code, 302)
         self.assertEqual(editor_response.status_code, 200)
-        self.assertContains(editor_response, 'Aprovacoes')
+        self.assertContains(editor_response, 'Templates')
 
     def test_coach_can_create_submit_block_and_movement(self):
         editor_url = self._editor_url()
@@ -683,10 +683,13 @@ class CoachWorkoutEditorFlowTests(WorkoutFlowBaseTestCase):
         response = self.client.get(reverse('workout-template-management'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Templates persistentes de WOD.')
+        self.assertContains(response, 'Biblioteca oficial de templates de WOD.')
         self.assertContains(response, 'Template persistente base')
         self.assertContains(response, '3 uso(s)')
         self.assertContains(response, 'Ativo')
+        self.assertContains(response, 'aria-current="page"', html=False)
+        self.assertContains(response, 'Templates')
+        self.assertContains(response, 'Abrir Smart Paste')
 
         response = self.client.post(
             reverse('workout-template-toggle-active', args=[template.id]),

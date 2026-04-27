@@ -28,11 +28,13 @@ from operations.forms import (
     WeeklyWodReviewMovementForm,
     WeeklyWodSmartPasteForm,
     WeeklyWodUndoReplicationForm,
+    WorkoutCreateStoredTemplateForm,
     WorkoutStudentRmQuickForm,
 )
 from operations.services.wod_paste_parser import parse_weekly_wod_text, resolve_movement_slug
 from operations.services.wod_projection import build_projection_preview, project_plan_to_sessions
 from operations.services.wod_replication_batches import undo_replication_batch
+from operations.workout_templates import create_persisted_template_from_weekly_plan
 from student_app.models import WeeklyWodPlan, WeeklyWodPlanStatus
 
 from .base_views import OperationBaseView
@@ -224,6 +226,24 @@ class WorkoutSmartPasteView(OperationBaseView):
             if self._is_hx_request():
                 return self._render_partial('operations/includes/wod_smart_paste_projection.html', context)
             return self.render_to_response(context)
+
+        if action == 'create_stored_template':
+            template_form = WorkoutCreateStoredTemplateForm(request.POST)
+            if not template_form.is_valid():
+                messages.error(request, _first_form_error(template_form, 'Escolha um nome valido para o template salvo.'))
+                context = self._build_context(plan=plan, parsed_payload=getattr(plan, 'parsed_payload', {}) or {})
+                return self.render_to_response(context)
+            if plan is None or not (getattr(plan, 'parsed_payload', {}) or {}).get('days'):
+                messages.error(request, 'Organize e confirme a semana antes de salvar como template.')
+                return redirect('workout-smart-paste')
+            template = create_persisted_template_from_weekly_plan(
+                actor=request.user,
+                weekly_plan=plan,
+                name=template_form.cleaned_data['template_name'],
+                description=f'Base criada a partir do Smart Paste semanal de {plan.week_start:%d/%m/%Y}.',
+            )
+            messages.success(request, f'Template salvo "{template.name}" criado a partir do Smart Paste.')
+            return redirect('workout-template-management')
 
         form = WeeklyWodSmartPasteForm(request.POST)
         if not form.is_valid():
