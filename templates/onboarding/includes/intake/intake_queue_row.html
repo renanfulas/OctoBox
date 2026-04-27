@@ -44,13 +44,13 @@
             <span class="intake-reading-note">{{ conversion.reason }}</span>
         </div>
     </td>
-    <td class="intake-queue-col--owner intake-cell intake-cell--owner" data-label="Responsavel">
+    <td class="intake-queue-col--owner intake-cell intake-cell--owner" data-label="Responsável">
         <span class="intake-table-text">{% if intake.assigned_to %}{{ intake.assigned_to.get_full_name|default:intake.assigned_to.username }}{% else %}Aguardando{% endif %}</span>
     </td>
     <td class="intake-queue-col--registration intake-cell intake-cell--registration" data-label="Registro">
         <span class="intake-table-text">{{ item.registration_age_label }}</span>
     </td>
-    <td class="intake-queue-col--actions intake-cell intake-cell--actions" data-label="Proxima acao">
+    <td class="intake-queue-col--actions intake-cell intake-cell--actions" data-label="Próxima ação">
         <div class="operation-hero-action-rail intake-row-actions">
             {% if page.capabilities.can_manage_students and conversion.can_convert and conversion.action_type == 'convert-student' %}
             <a class="button intake-convert-button" href="{{ student_quick_create_url }}?intake={{ intake.id }}#student-form-essential">{{ conversion.action_label }}</a>

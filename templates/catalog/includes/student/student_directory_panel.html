@@ -13,7 +13,7 @@ POR QUE ELE EXISTE:
                     <th scope="col">Aluno</th>
                     <th scope="col">Plano</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Presenca</th>
+                    <th scope="col">Presença</th>
                     <th scope="col">Pagamento</th>
                     <th scope="col">Vencimento</th>
                 </tr>
@@ -94,7 +94,7 @@ POR QUE ELE EXISTE:
                         </div>
                         {% endif %}
                     </td>
-                    <td class="student-cell student-cell--presence" data-label="Presenca">
+                    <td class="student-cell student-cell--presence" data-label="Presença">
                         <span class="student-presence-value {% if student.presence_percent >= 85 %}is-high{% elif student.presence_percent >= 60 %}is-mid{% else %}is-low{% endif %}">
                             {{ student.presence_percent }}%
                         </span>

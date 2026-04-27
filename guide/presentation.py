@@ -242,22 +242,22 @@ def build_system_map_page():
 
 def build_operational_settings_page(*, latest_lead_import_status=None):
     operational_focus = [
-        {'href': '#operational-settings-window', 'summary': 'Ajustar a janela de bloqueio do WhatsApp sem editar variavel de ambiente.'},
+        {'href': '#operational-settings-window', 'summary': 'Ajustar a janela de bloqueio do WhatsApp sem editar variável de ambiente.'},
         {'href': '#operational-settings-access', 'summary': 'Criar perfis de acesso sem depender do admin do Django.'},
-        {'href': '/acessos/#access-profile-create', 'summary': 'Abrir a area de acessos para seguir a configuracao da equipe.'},
+        {'href': '/acessos/#access-profile-create', 'summary': 'Abrir a área de acessos para seguir a configuração da equipe.'},
     ]
     repeat_block_hours = get_operational_whatsapp_repeat_block_hours()
 
     return build_page_payload(
         context={
             'page_key': 'operational-settings',
-            'title': 'Configuracoes operacionais',
-            'subtitle': 'Ajuste rapido da janela do WhatsApp e dos perfis de acesso.',
+            'title': 'Configurações operacionais',
+            'subtitle': 'Ajuste rápido da janela do WhatsApp e dos perfis de acesso.',
         },
         data={
             'hero': build_page_hero(
-                eyebrow='Configuracao',
-                title='Operacao configurada.',
+                eyebrow='Configuração',
+                title='Operação configurada.',
                 copy='Ajuste janela, perfis e guardrails sem abrir um segundo caminho.',
                 actions=[
                     {'label': 'Abrir acessos', 'href': '/acessos/#access-profile-create', 'kind': 'secondary'},
@@ -269,20 +269,20 @@ def build_operational_settings_page(*, latest_lead_import_status=None):
             ),
             'repeat_block_hours': repeat_block_hours,
             'repeat_block_mode_label': (
-                'Repeticao imediata liberada'
+                'Repetição imediata liberada'
                 if repeat_block_hours == 0 else
-                f'Bloqueio de repeticao por {repeat_block_hours}h'
+                f'Bloqueio de repetição por {repeat_block_hours}h'
             ),
             'guardrails': [
-                'A mesma mensagem para o mesmo contato nao dispara de novo dentro da janela configurada.',
-                'Quando bloqueado, o ultimo log valido e reaproveitado para manter rastreabilidade.',
-                'Papeis somente leitura nao recebem CTA de disparo no Dashboard.',
+                'A mesma mensagem para o mesmo contato não dispara de novo dentro da janela configurada.',
+                'Quando bloqueado, o último log válido é reaproveitado para manter rastreabilidade.',
+                'Papéis somente leitura não recebem CTA de disparo no Dashboard.',
             ],
             'latest_lead_import_status': latest_lead_import_status,
             'repeat_block_options': [
-                {'value': 24, 'label': '24h', 'summary': 'Trava diaria padrao para evitar repeticao no mesmo dia.'},
-                {'value': 12, 'label': '12h', 'summary': 'Janela intermediaria para uma retomada mais curta.'},
-                {'value': 0, 'label': '0h', 'summary': 'Libera repeticao imediata quando a operacao precisar.'},
+                {'value': 24, 'label': '24h', 'summary': 'Trava diária padrão para evitar repetição no mesmo dia.'},
+                {'value': 12, 'label': '12h', 'summary': 'Janela intermediária para uma retomada mais curta.'},
+                {'value': 0, 'label': '0h', 'summary': 'Libera repetição imediata quando a operação precisar.'},
             ],
             'access_overview_href': '/acessos/#access-profile-create',
             'student_invites_href': '/configuracoes-operacionais/aluno/convites/',

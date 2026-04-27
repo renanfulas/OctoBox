@@ -16,11 +16,11 @@ POR QUE ELE EXISTE:
 {% with page=operational_settings_page %}
 {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
-<section class="layout-grid system-map-section" aria-label="Acoes operacionais disponiveis">
+<section class="layout-grid system-map-section" aria-label="Ações operacionais disponíveis">
     <article class="table-card">
         <p class="eyebrow">Janela atual</p>
         <h3>{{ page.data.repeat_block_hours }}h</h3>
-        <p class="system-map-copy">Esse e o intervalo usado para impedir repeticao da mesma abordagem de WhatsApp para o mesmo contato.</p>
+        <p class="system-map-copy">Esse é o intervalo usado para impedir a repetição da mesma abordagem de WhatsApp para o mesmo contato.</p>
         <form method="post" class="form-stack section-gap-top-xs">
             {% csrf_token %}
             <label>
@@ -50,7 +50,7 @@ POR QUE ELE EXISTE:
     <article class="table-card" id="operational-settings-import">
         <p class="eyebrow">Importar Contatos</p>
         <h3>Listas Externas</h3>
-        <p class="system-map-copy">Suba uma lista para rodar a higienizacao de telefone e criar leads automaticos no OctoBOX. Ate 200 leads entram na hora, de 201 a 500 vao para background e acima disso seguem para a janela noturna.</p>
+        <p class="system-map-copy">Suba uma lista para rodar a higienização de telefone e criar leads automáticos no OctoBOX. Até 200 leads entram na hora, de 201 a 500 vão para background e, acima disso, seguem para a janela noturna.</p>
         {% if page.data.latest_lead_import_status %}
         <div class="section-gap-top-xs" data-panel="lead-import-status-card">
             <p class="eyebrow">Status atual da importacao</p>
@@ -92,7 +92,7 @@ POR QUE ELE EXISTE:
             <label>
                 <span class="field-label">Faixa declarada</span>
                 <select name="declared_range" class="operational-settings-field">
-                    <option value="up_to_200">Ate 200 leads</option>
+                    <option value="up_to_200">Até 200 leads</option>
                     <option value="from_201_to_500">201 a 500 leads</option>
                     <option value="from_501_to_2000">501 a 2000 leads</option>
                 </select>
@@ -101,16 +101,16 @@ POR QUE ELE EXISTE:
                 <span class="field-label">Arquivo de Contatos (.csv ou .vcf)</span>
                 <input type="file" name="contacts_file" accept=".csv, .vcf, .vcard, text/vcard" required class="operational-settings-file-input">
             </label>
-            <p class="system-map-copy">Cada tipo permite 1 upload por dia e ate 3 por mes. O backend valida a contagem real para decidir o trilho final.</p>
+            <p class="system-map-copy">Cada tipo permite 1 upload por dia e até 3 por mês. O backend valida a contagem real para decidir o trilho final.</p>
             <div class="actions actions-tight operation-hero-action-rail section-gap-top-xs">
-                <button class="button operational-settings-submit" type="submit">Iniciar Importacao Inteligente</button>
+                <button class="button operational-settings-submit" type="submit">Iniciar Importação Inteligente</button>
             </div>
         </form>
     </article>
     <article class="table-card" id="operational-settings-student-app">
         <p class="eyebrow">App do aluno</p>
         <h3>Convites operacionais</h3>
-        <p class="system-map-copy">Gere links de ativacao do app do aluno com validade curta, box raiz fixo e uma trilha limpa para a equipe operar.</p>
+        <p class="system-map-copy">Gere links de ativação do app do aluno com validade curta, box raiz fixo e uma trilha limpa para a equipe operar.</p>
         <div class="actions actions-tight operation-hero-action-rail section-gap-top-xs">
             <a class="button" href="{{ page.data.student_invites_href }}">Abrir convites do aluno</a>
         </div>

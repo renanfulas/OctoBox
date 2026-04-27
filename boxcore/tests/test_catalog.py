@@ -879,7 +879,7 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Finalizada')
         self.assertContains(response, 'Fechado')
-        self.assertContains(response, 'Entradas encerradas porque a aula ja foi finalizada.')
+        self.assertContains(response, 'Entradas encerradas porque a aula já foi finalizada.')
         session.refresh_from_db()
         self.assertEqual(session.status, SessionStatus.COMPLETED)
 
@@ -1389,7 +1389,7 @@ class CatalogViewTests(TestCase):
         self.assertContains(response, 'Cobrar agora')
         self.assertContains(response, 'Plano atual')
         self.assertContains(response, 'Dados cadastrais')
-        self.assertContains(response, 'Historico de pagamentos')
+        self.assertContains(response, 'Histórico de pagamentos')
         self.assertContains(response, 'Salvar perfil')
         self.assertIn('js/core/forms.js', response.context['current_page_assets']['js'])
 
