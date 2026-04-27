@@ -43,6 +43,8 @@ def create_quick_sale(*, actor, student, payload):
     amount = payload.get('amount')
     if amount is None:
         raise ValueError('Valor do pagamento rapido ausente.')
+    if amount <= 0:
+        raise ValueError('Valor do pagamento rapido deve ser maior que zero.')
 
     resolution_mode = QuickSaleResolutionMode.MANUAL
     resolved_description = description

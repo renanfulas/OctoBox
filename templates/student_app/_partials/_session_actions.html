@@ -20,6 +20,7 @@
         <button type="submit" class="student-secondary-action student-secondary-action--danger" aria-label="Cancelar reserva em {{ session.title }} em {{ session.scheduled_label }}">
             Cancelar
         </button>
+        <span class="student-copy" style="font-size:0.72rem; opacity:0.65; display:block; margin-top:3px;">Até 2h antes</span>
     </form>
     {% elif session.attendance_code == 'canceled' and session.can_confirm_presence and session.is_latest_canceled_session %}
     <form method="post" action="{% url 'student-app-confirm-attendance' %}" class="student-inline-form">

@@ -15,11 +15,13 @@ import json
 from datetime import timedelta
 
 from django.db import transaction
+from django.db.models import F
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 
+from api.v1.bulk_views import GenericBulkActionView
 from catalog.forms import EnrollmentManagementForm, PaymentManagementForm
 from catalog.presentation.student_financial_fragments import render_student_financial_fragments
 from catalog.student_queries import build_student_financial_snapshot
@@ -131,11 +133,10 @@ class StudentFreezeView(LoginRequiredMixin, View):
                     enrollment.end_date = enrollment.end_date + timedelta(days=days)
                     enrollment.save()
 
-                # 2. Shift Pending Payments
-                pending_payments = student.payments.filter(status=PaymentStatus.PENDING)
-                for payment in pending_payments:
-                    payment.due_date = payment.due_date + timedelta(days=days)
-                    payment.save()
+                # 2. Shift Pending Payments — single UPDATE avoids partial-commit on N saves
+                student.payments.filter(status=PaymentStatus.PENDING).update(
+                    due_date=F('due_date') + timedelta(days=days)
+                )
 
                 return JsonResponse({
                     'status': 'success',
@@ -147,3 +148,24 @@ class StudentFreezeView(LoginRequiredMixin, View):
             return JsonResponse({'error': 'Student not found'}, status=404)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+
+
+class PaymentBulkActionView(GenericBulkActionView):
+    """
+    Partial-commit bulk mutations for payments.
+    Each item runs in its own savepoint; failures on individual payments
+    do not roll back successful ones. Returns HTTP 207 when partial.
+
+    Supported actions: mark_paid, mark_cancelled.
+    """
+
+    def perform_action(self, item_id, action, user):
+        payment = Payment.objects.get(pk=item_id)
+        if action == 'mark_paid':
+            payment.status = PaymentStatus.PAID
+            payment.save()
+        elif action == 'mark_cancelled':
+            payment.status = PaymentStatus.CANCELLED
+            payment.save()
+        else:
+            raise ValueError(f'Acao desconhecida: {action}')

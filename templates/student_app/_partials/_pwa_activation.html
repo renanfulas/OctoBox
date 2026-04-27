@@ -1,4 +1,43 @@
 {% if student_identity %}
+<div
+    class="student-ios-install-banner"
+    id="student-ios-install-banner"
+    hidden
+    role="status"
+    aria-live="polite"
+>
+    <div class="student-ios-install-banner__body">
+        <span class="student-ios-install-banner__icon" aria-hidden="true">&#x2B06;</span>
+        <div class="student-ios-install-banner__copy">
+            <strong>Instalar o app</strong>
+            <p class="student-copy">Toque em <strong>Compartilhar</strong> e depois <strong>Adicionar à Tela de Início</strong>.</p>
+        </div>
+        <button
+            type="button"
+            class="student-ios-install-banner__dismiss"
+            id="student-ios-install-banner-dismiss"
+            aria-label="Fechar"
+        >&times;</button>
+    </div>
+</div>
+<script>
+(function () {
+    var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    var isStandalone = window.navigator.standalone === true;
+    var dismissed = sessionStorage.getItem('octobox-ios-install-dismissed');
+    if (isIos && !isStandalone && !dismissed) {
+        var banner = document.getElementById('student-ios-install-banner');
+        if (banner) {
+            banner.hidden = false;
+            document.getElementById('student-ios-install-banner-dismiss').addEventListener('click', function () {
+                banner.hidden = true;
+                sessionStorage.setItem('octobox-ios-install-dismissed', '1');
+            });
+        }
+    }
+}());
+</script>
+
 <section
     class="student-pwa-activation"
     data-ui="student-pwa-activation"

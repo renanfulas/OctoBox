@@ -13,6 +13,7 @@ from .membership_views import (
     StudentInviteEntryView,
     StudentMembershipPendingView,
     StudentNoActiveBoxView,
+    StudentRequestFreezeView,
     StudentSuspendedFinancialView,
     StudentSwitchBoxView,
 )
@@ -58,6 +59,7 @@ __all__ = [
     'StudentMembershipPendingView',
     'StudentNoActiveBoxView',
     'StudentOfflineView',
+    'StudentRequestFreezeView',
     'StudentOnboardingWizardView',
     'StudentPushSubscribeView',
     'StudentPushUnsubscribeView',

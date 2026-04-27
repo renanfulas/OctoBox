@@ -134,6 +134,13 @@ class StudentHomeView(StudentIdentityRequiredMixin, TemplateView):
         context['student_next_session'] = dashboard.focal_session
         context['student_active_wod_session'] = dashboard.active_wod_session
         context['student_day_sections'] = _build_day_sections(sessions=dashboard.next_sessions)
+        box_timezone = resolve_box_timezone(box_root_slug=self.request.student_identity.box_root_slug)
+        today = timezone.localtime(timezone.now(), box_timezone).date()
+        tomorrow = today + timedelta(days=1)
+        context['student_tomorrow_wod'] = next(
+            (section['workouts'][0] for section in context['student_day_sections'] if section['date'] == tomorrow and section['workouts']),
+            None,
+        )
         context['student_selected_date'] = selected_date
         return self._attach_student_shell_context(context)
 
@@ -215,11 +222,24 @@ class StudentRmView(StudentIdentityRequiredMixin, TemplateView):
             box_root_slug=self.request.student_identity.box_root_slug,
             request_perf=getattr(self.request, '_octobox_request_perf', None),
         )
+        slugs = [card.record.exercise_slug for card in rm_snapshot['cards']]
+        history_by_slug: dict[str, list] = {}
+        if slugs:
+            for entry in (
+                StudentExerciseMaxHistory.objects
+                .filter(student=self.request.student_identity.student, exercise_slug__in=slugs)
+                .order_by('exercise_slug', 'created_at')
+                .values('exercise_slug', 'new_kg', 'created_at')[:300]
+            ):
+                history_by_slug.setdefault(entry['exercise_slug'], []).append(
+                    {'kg': float(entry['new_kg']), 'date': entry['created_at'].strftime('%Y-%m-%d')}
+                )
         context['student_shell_nav'] = 'rm'
         context['student_shell_title'] = 'RM'
         context['dashboard'] = dashboard
         context['rm_of_the_day'] = dashboard.rm_of_the_day
         context['rm_records'] = tuple(card.record for card in rm_snapshot['cards'])
+        context['rm_history_data'] = history_by_slug
         context['rm_cards'] = tuple(
             {
                 'record': card.record,
