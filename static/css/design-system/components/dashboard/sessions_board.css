@@ -86,33 +86,33 @@ body[data-theme="dark"] #owner-sessions-board {
     display: none;
 }
 
-#dashboard-sessions-board .operation-card-head {
+:is(#dashboard-sessions-board, #owner-sessions-board) .operation-card-head {
     margin-bottom: 10px;
     gap: 10px;
 }
 
-#dashboard-sessions-board .card-head-main-stack {
+:is(#dashboard-sessions-board, #owner-sessions-board) .card-head-main-stack {
     gap: 5px;
 }
 
-#dashboard-sessions-board .card-label {
+:is(#dashboard-sessions-board, #owner-sessions-board) .card-label {
     letter-spacing: 0.14em;
 }
 
-#dashboard-sessions-board .operation-card-title {
+:is(#dashboard-sessions-board, #owner-sessions-board) .operation-card-title {
     color: var(--dashboard-support-title-ink);
     font-size: 1.02rem;
     line-height: 1.08;
     letter-spacing: -0.035em;
 }
 
-#dashboard-sessions-board .operation-card-copy {
+:is(#dashboard-sessions-board, #owner-sessions-board) .operation-card-copy {
     max-width: 31ch;
     font-size: 0.84rem;
     line-height: 1.55;
 }
 
-#dashboard-sessions-board .pill {
+:is(#dashboard-sessions-board, #owner-sessions-board) .pill {
     box-shadow: none;
 }
 
@@ -124,63 +124,63 @@ body[data-theme="dark"] #owner-sessions-board {
     gap: 10px;
 }
 
-#dashboard-sessions-board .dashboard-session-card {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-card {
     border-radius: 16px;
 }
 
-#dashboard-sessions-board .dashboard-session-card.is-primary {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-card.is-primary {
     border-color: var(--dashboard-session-card-primary-border);
 }
 
-#dashboard-sessions-board .dashboard-session-feature-head strong,
-#dashboard-sessions-board .dashboard-session-body strong {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-feature-head strong,
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-body strong {
     letter-spacing: -0.03em;
 }
 
-#dashboard-sessions-board .dashboard-session-feature-head strong {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-feature-head strong {
     font-size: 0.98rem;
 }
 
-#dashboard-sessions-board .dashboard-session-body strong {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-body strong {
     font-size: 0.92rem;
 }
 
-#dashboard-sessions-board .dashboard-session-time {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-time {
     min-width: 54px;
     height: 30px;
     padding: 0 11px;
     font-size: 0.84rem;
 }
 
-#dashboard-sessions-board .dashboard-session-window,
-#dashboard-sessions-board .dashboard-session-kicker,
-#dashboard-sessions-board .dashboard-session-occupancy-label {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-window,
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-kicker,
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-occupancy-label {
     letter-spacing: 0.1em;
 }
 
-#dashboard-sessions-board .dashboard-session-window,
-#dashboard-sessions-board .dashboard-session-occupancy-label {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-window,
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-occupancy-label {
     font-size: 0.7rem;
 }
 
-#dashboard-sessions-board .dashboard-session-body p,
-#dashboard-sessions-board .dashboard-session-feature-meta-row p,
-#dashboard-sessions-board .dashboard-session-note {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-body p,
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-feature-meta-row p,
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-note {
     font-size: 0.81rem;
 }
 
-#dashboard-sessions-board .dashboard-session-progress {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-progress {
     width: 100%;
     max-width: none;
     height: 6px;
 }
 
-#dashboard-sessions-board .dashboard-session-meta,
-#dashboard-sessions-board .dashboard-session-meta--inline {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-meta,
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-meta--inline {
     gap: 7px;
 }
 
-#dashboard-sessions-board .dashboard-session-queue {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-queue {
     max-height: 344px;
     padding-right: 2px;
 }
@@ -232,25 +232,25 @@ body[data-theme="dark"] #dashboard-sessions-board {
     box-shadow: var(--card-local-shadow, var(--dashboard-support-card-shadow));
 }
 
-#dashboard-sessions-board .dashboard-session-queue {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-queue {
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
-#dashboard-sessions-board .dashboard-session-queue::-webkit-scrollbar {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-queue::-webkit-scrollbar {
     width: 8px;
 }
 
-#dashboard-sessions-board .dashboard-session-queue::-webkit-scrollbar-track {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-queue::-webkit-scrollbar-track {
     background: transparent;
 }
 
-#dashboard-sessions-board .dashboard-session-queue::-webkit-scrollbar-thumb {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-queue::-webkit-scrollbar-thumb {
     border-radius: 999px;
     background: var(--scrollbar-thumb);
 }
 
-#dashboard-sessions-board .dashboard-session-queue::-webkit-scrollbar-thumb:hover {
+:is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-queue::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-hover);
 }
 

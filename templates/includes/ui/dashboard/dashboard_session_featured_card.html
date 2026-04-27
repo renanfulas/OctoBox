@@ -1,9 +1,9 @@
 <!--
 ARQUIVO: dashboard_session_featured_card.html
 POR QUE ELE EXISTE:
-- Exibe o card de sessão em destaque no dashboard.
+- Exibe o card de sessao em destaque no dashboard.
 O QUE ESTE ARQUIVO FAZ:
-- Renderiza informações detalhadas da sessão principal do dia, incluindo horários, coach e ocupação.
+- Renderiza informacoes detalhadas da sessao principal do dia, incluindo horarios, coach e ocupacao.
 PONTOS CRITICOS:
 - Depende do objeto 'featured_session'.
 -->
@@ -11,13 +11,13 @@ PONTOS CRITICOS:
     <div class="dashboard-session-feature-head">
         <div>
             <p class="dashboard-session-kicker">{{ featured_session.dashboard_kicker }}</p>
-            <strong>{{ featured_session.title }}</strong>
+            <strong>{{ featured_session.title|default:featured_session.object.title }}</strong>
         </div>
-        <div class="dashboard-session-time">{{ featured_session.starts_at|date:"H:i" }}</div>
+        <div class="dashboard-session-time">{% if featured_session.starts_at_label %}{{ featured_session.starts_at_label }}{% else %}{{ featured_session.starts_at|date:"H:i" }}{% endif %}</div>
     </div>
     <div class="dashboard-session-feature-meta-row">
         <p>{{ featured_session.coach_name }}</p>
-        <p class="dashboard-session-window">até {{ featured_session.ends_at|date:"H:i" }}</p>
+        <p class="dashboard-session-window">ate {% if featured_session.ends_at_label %}{{ featured_session.ends_at_label }}{% else %}{{ featured_session.ends_at|date:"H:i" }}{% endif %}</p>
     </div>
     <p class="dashboard-session-note">{{ featured_session.occupancy_note }}</p>
     <div class="dashboard-session-progress" aria-hidden="true">

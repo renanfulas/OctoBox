@@ -69,9 +69,14 @@
                 </article>
             </div>
             <div class="wod-planner__usage-ranking">
-                <div>
-                    <p class="eyebrow">Mais relevantes agora</p>
-                    <h3>Templates mais quentes do cockpit</h3>
+                <div class="wod-planner__usage-ranking-head">
+                    <div>
+                        <p class="eyebrow">Mais relevantes agora</p>
+                        <h3>Templates mais quentes do cockpit</h3>
+                    </div>
+                    {% if planner_template_management_href %}
+                    <a class="button tertiary" href="{{ planner_template_management_href }}">Ver todos os templates</a>
+                    {% endif %}
                 </div>
                 <div class="wod-planner__usage-ranking-list">
                     {% for template in planner_template_usage_panel.top_templates %}
@@ -84,6 +89,19 @@
                             <span class="pill {{ template.policy_hint.tone }}">{{ template.policy_hint.label }}</span>
                             {% if template.is_cold %}<span class="pill warning">Frio</span>{% endif %}
                         </div>
+                        {% if template.can_manage %}
+                        <div class="wod-planner__usage-card-actions">
+                            <a class="wod-planner__usage-card-link" href="{{ template.catalog_href }}">Editar</a>
+                            <form method="post" action="{{ template.duplicate_action }}" class="wod-planner__usage-card-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="name" value="{{ template.duplicate_name }}">
+                                <input type="hidden" name="next" value="{{ planner_current_href }}">
+                                <button class="wod-planner__usage-card-link" type="submit">Duplicar</button>
+                            </form>
+                        </div>
+                        {% else %}
+                        <p class="wod-planner__usage-card-note">{{ template.governance_copy }}</p>
+                        {% endif %}
                     </article>
                     {% endfor %}
                 </div>

@@ -7,6 +7,23 @@
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% include "operations/includes/wod_corridor_tabs.html" %}
 
+    <section class="coach-wod-page-intro" aria-label="Leitura do corredor de templates">
+        <p class="eyebrow">Corredor canonico</p>
+        <h2>Transforme semanas boas em atalhos reutilizaveis.</h2>
+        <p>O Smart Paste organiza a semana, esta tela governa o catalogo persistente e o Planner usa tudo isso como cockpit rapido.</p>
+        <div class="coach-wod-review-meta">
+            <span class="pill success">{{ template_management_summary.trusted }} confiavel(is)</span>
+            <span class="pill info">{{ template_management_summary.featured }} em destaque</span>
+            <span class="pill warning">{{ template_management_summary.cold }} frio(s)</span>
+        </div>
+        <div class="actions">
+            <a class="button secondary" href="{{ template_management_actions.planner_href }}">Voltar ao planner</a>
+            {% if template_management_actions.smart_paste_href %}
+            <a class="button tertiary" href="{{ template_management_actions.smart_paste_href }}">Abrir Smart Paste</a>
+            {% endif %}
+        </div>
+    </section>
+
     <section class="coach-wod-overview-grid" aria-label="Resumo do catalogo de templates">
         <article class="table-card coach-wod-overview-card">
             <p class="eyebrow">Catalogo</p>
@@ -22,6 +39,16 @@
             <p class="eyebrow">Destaque</p>
             <h2>{{ template_management_summary.featured }}</h2>
             <p class="operation-session-meta">Templates puxados para a frente do catalogo.</p>
+        </article>
+        <article class="table-card coach-wod-overview-card">
+            <p class="eyebrow">Confiaveis</p>
+            <h2>{{ template_management_summary.trusted }}</h2>
+            <p class="operation-session-meta">Prontos para virar base forte no Planner sem parecer aposta cega.</p>
+        </article>
+        <article class="table-card coach-wod-overview-card">
+            <p class="eyebrow">Frios</p>
+            <h2>{{ template_management_summary.cold }}</h2>
+            <p class="operation-session-meta">Templates que ainda nao aqueceram na rotina e merecem revisao de utilidade.</p>
         </article>
     </section>
 
@@ -103,7 +130,7 @@
 
     <section class="coach-wod-overview-grid" aria-label="Catalogo de templates persistentes">
         {% for template in stored_templates %}
-        <article class="table-card coach-wod-overview-card">
+        <article class="table-card coach-wod-overview-card" id="template-card-{{ template.id }}">
             <div class="coach-wod-editor-head">
                 <div>
                     <p class="eyebrow">Template salvo</p>
@@ -119,6 +146,8 @@
                     </span>
                     <span class="pill accent">{{ template.usage_count }} uso(s)</span>
                     <span class="pill {% if template.is_trusted %}success{% else %}info{% endif %}">{% if template.is_trusted %}Confiavel{% else %}Em revisao{% endif %}</span>
+                    <span class="pill {% if template.is_mine %}success{% else %}info{% endif %}">{% if template.is_mine %}Criado por mim{% else %}Criado por {{ template.coach_label }}{% endif %}</span>
+                    {% if template.is_cold %}<span class="pill warning">Frio</span>{% endif %}
                 </div>
             </div>
             {% if template.description %}
@@ -396,9 +425,18 @@
         <article class="table-card coach-wod-editor-card">
             <div class="coach-wod-empty-state">
                 {% if template_filter_state.query or template_filter_state.active_only or template_filter_state.featured_only %}
-                <p>Nenhum template bateu com esse filtro. Tente limpar a busca ou relaxar os marcadores.</p>
+                <p>Nenhum template bateu com esse filtro. Tente limpar a busca ou relaxar os marcadores para reencontrar o corredor principal.</p>
+                <div class="actions">
+                    <a class="button secondary" href="{% url 'workout-template-management' %}">Limpar filtros</a>
+                </div>
                 {% else %}
-                <p>Nenhum template persistente criado ainda.</p>
+                <p>Nenhum template persistente criado ainda. Comece no Smart Paste, transforme uma semana boa em base reaproveitavel e volte aqui para governar o catalogo.</p>
+                <div class="actions">
+                    {% if template_management_actions.smart_paste_href %}
+                    <a class="button secondary" href="{{ template_management_actions.smart_paste_href }}">Abrir Smart Paste</a>
+                    {% endif %}
+                    <a class="button tertiary" href="{{ template_management_actions.planner_href }}">Ir ao planner</a>
+                </div>
                 {% endif %}
             </div>
         </article>

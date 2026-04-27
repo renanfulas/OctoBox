@@ -13,6 +13,7 @@ from operations.forms import (
     WeeklyWodReviewMovementForm,
     WeeklyWodSmartPasteForm,
     WeeklyWodUndoReplicationForm,
+    WorkoutCreateStoredTemplateForm,
 )
 from operations.models import ClassType
 from operations.services.wod_paste_parser import load_wod_movement_dictionary
@@ -164,6 +165,12 @@ def build_weekly_wod_smart_paste_context(
         'smart_paste_step': 3 if projection_preview else (2 if parsed_payload.get('days') else 1),
         'projection_form': projection_form,
         'projection_preview': projection_preview,
+        'create_stored_template_form': WorkoutCreateStoredTemplateForm(
+            initial={
+                'template_name': getattr(weekly_plan, 'label', '') or f"Template {week_start.strftime('%d/%m')}",
+            }
+        ),
+        'template_management_href': reverse('workout-template-management'),
         'projection_selected_class_types': list(
             projection_form.data.getlist('class_types')
             if getattr(projection_form, 'data', None)

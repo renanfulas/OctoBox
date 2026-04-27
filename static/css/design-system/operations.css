@@ -43,50 +43,6 @@ ORDEM DA CASCADE:
     gap: 1.5rem;
 }
 
-.smart-paste-stepper {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1rem;
-    align-items: stretch;
-    overflow: visible;
-}
-
-.smart-paste-step {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 0.85rem;
-    align-items: start;
-    padding: 0.9rem 1rem;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
-    border-radius: 18px;
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 247, 252, 0.92));
-    min-width: 0;
-}
-
-.smart-paste-step.is-active {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 42%, transparent);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent-support-alpha) 28%, transparent) inset;
-}
-
-.smart-paste-step-index {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    background: color-mix(in srgb, var(--theme-accent-support) 84%, white 16%);
-    color: #f8fbff;
-}
-
-.smart-paste-step p {
-    margin: 0.2rem 0 0;
-    color: var(--theme-text-secondary);
-    font-size: 0.92rem;
-}
-
 .smart-paste-layout {
     display: grid;
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.25fr);
@@ -318,44 +274,40 @@ ORDEM DA CASCADE:
     align-items: flex-start;
 }
 
+.smart-paste-template-bridge {
+    display: grid;
+    gap: 0.9rem;
+    padding: 1rem;
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    border-radius: 18px;
+    background: rgba(8, 145, 178, 0.08);
+}
+
+.smart-paste-template-bridge__head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.smart-paste-template-bridge__head h3,
+.smart-paste-template-bridge__head p {
+    margin: 0;
+}
+
+.smart-paste-template-bridge__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    align-content: center;
+}
+
 @media (max-width: 768px) {
     .smart-paste-layout {
         grid-template-columns: 1fr;
     }
 
-    .smart-paste-stepper {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .smart-paste-step {
-        min-width: 0;
-        padding: 0.85rem 0.8rem;
-    }
-
-    .smart-paste-step strong,
-    .smart-paste-step p {
-        word-break: break-word;
-    }
-}
-
-@media (max-width: 560px) {
-    .smart-paste-stepper {
-        gap: 0.75rem;
-    }
-
-    .smart-paste-step {
-        grid-template-columns: 1fr;
-        gap: 0.55rem;
-        padding: 0.8rem 0.7rem;
-    }
-
-    .smart-paste-step-index {
-        width: 1.85rem;
-        height: 1.85rem;
-    }
-
-    .smart-paste-step strong,
-    .smart-paste-step p {
-        text-align: left;
+    .smart-paste-template-bridge__head {
+        flex-direction: column;
     }
 }

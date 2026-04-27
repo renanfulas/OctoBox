@@ -1,20 +1,20 @@
 <!--
 ARQUIVO: dashboard_session_queue_card.html
 POR QUE ELE EXISTE:
-- Exibe um card compacto de sessão na fila do dashboard.
+- Exibe um card compacto de sessao na fila do dashboard.
 O QUE ESTE ARQUIVO FAZ:
-- Renderiza informações resumidas de sessões na fila, incluindo horários, coach e ocupação.
+- Renderiza informacoes resumidas de sessoes na fila, incluindo horarios, coach e ocupacao.
 PONTOS CRITICOS:
 - Depende do objeto 'session'.
 -->
 <article class="dashboard-session-card dashboard-session-card--compact">
     <div class="dashboard-session-time-block">
-        <div class="dashboard-session-time">{{ session.starts_at|date:"H:i" }}</div>
-        <p class="dashboard-session-window">até {{ session.ends_at|date:"H:i" }}</p>
+        <div class="dashboard-session-time">{% if session.starts_at_label %}{{ session.starts_at_label }}{% else %}{{ session.starts_at|date:"H:i" }}{% endif %}</div>
+        <p class="dashboard-session-window">ate {% if session.ends_at_label %}{{ session.ends_at_label }}{% else %}{{ session.ends_at|date:"H:i" }}{% endif %}</p>
     </div>
     <div class="dashboard-session-body">
         <p class="dashboard-session-kicker">{{ session.dashboard_kicker }}</p>
-        <strong>{{ session.title }}</strong>
+        <strong>{{ session.title|default:session.object.title }}</strong>
         <p>{{ session.coach_name }}</p>
     </div>
     <div class="dashboard-session-meta">

@@ -11,12 +11,14 @@ O QUE ESTE ARQUIVO FAZ:
 """
 
 from datetime import timedelta
+from urllib.parse import urlencode
 
 from django.db import OperationalError, ProgrammingError
 from django.db.models import Count
 from django.urls import reverse
 from django.utils import timezone
 
+from access.roles import ROLE_COACH, ROLE_OWNER
 from shared_support.page_payloads import build_page_assets, build_page_hero, build_page_payload
 
 from .workout_corridor_navigation import build_workout_corridor_tabs
@@ -25,6 +27,15 @@ from .workout_planner_builders import build_planner_week, load_planner_sessions,
 from .workout_approval_policy import resolve_workout_approval_policy
 from .workout_planner_actions import find_previous_slot_workout
 from .workout_templates import build_persisted_workout_template_options
+
+
+def _build_template_catalog_href(*, template_id=None, query=''):
+    href = reverse('workout-template-management')
+    if query:
+        href = f'{href}?{urlencode({"q": query})}'
+    if template_id is not None:
+        href = f'{href}#template-card-{template_id}'
+    return href
 
 
 def _build_page_payload(*, page_title, page_subtitle, current_role_slug):
@@ -179,6 +190,8 @@ def build_workout_planner_context(*, request, current_role, page_title, page_sub
     )
     previous_slot_source_map = {session.id: find_previous_slot_workout(session=session) for session in sessions}
     current_policy = resolve_workout_approval_policy(actor=request.user)
+    can_manage_templates = current_role.slug in {ROLE_COACH, ROLE_OWNER}
+    planner_current_href = f"{reverse('workout-planner')}?week={week_start.isoformat()}"
     trusted_template_options = []
     for option in build_persisted_workout_template_options(
         current_role_slug=current_role.slug,
@@ -204,7 +217,23 @@ def build_workout_planner_context(*, request, current_role, page_title, page_sub
                 'detail': 'Pela politica atual, esta aplicacao ainda cai na fila de aprovacao.',
                 'tone': 'warning',
             }
-        trusted_template_options.append({**option, 'policy_hint': policy_hint})
+        trusted_template_options.append(
+            {
+                **option,
+                'policy_hint': policy_hint,
+                'catalog_href': _build_template_catalog_href(template_id=option['id'], query=option['label']) if can_manage_templates else '',
+                'catalog_root_href': _build_template_catalog_href() if can_manage_templates else '',
+                'duplicate_action': option.get('duplicate_action', '') if can_manage_templates else '',
+                'duplicate_name': option.get('duplicate_name', f'{option["label"]} copia'),
+                'planner_return_href': planner_current_href,
+                'can_manage': can_manage_templates and option.get('can_manage', False),
+                'governance_copy': (
+                    'Catalogo governado por owner e coach. O manager usa o planner, mas a manutencao profunda mora na aba Templates.'
+                    if not can_manage_templates else
+                    'Editar profundo segue na aba Templates. Aqui no planner voce so acelera o caminho.'
+                ),
+            }
+        )
     trusted_template_options = tuple(trusted_template_options)
     template_usage_panel = _build_planner_template_usage_panel(trusted_template_options=trusted_template_options[:5])
     template_funnel_panel = _build_planner_template_funnel_panel(
@@ -234,7 +263,10 @@ def build_workout_planner_context(*, request, current_role, page_title, page_sub
         'planner_week': planner_week,
         'planner_previous_week_href': f"{reverse('workout-planner')}?week={previous_week.isoformat()}",
         'planner_next_week_href': f"{reverse('workout-planner')}?week={next_week.isoformat()}",
+        'planner_current_href': planner_current_href,
         'planner_today_href': reverse('workout-planner'),
+        'planner_template_management_href': _build_template_catalog_href() if can_manage_templates else '',
+        'planner_can_manage_templates': can_manage_templates,
         'planner_trusted_template_options': trusted_template_options[:5],
         'planner_template_usage_panel': template_usage_panel,
         'planner_template_funnel_panel': template_funnel_panel,

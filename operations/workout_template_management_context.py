@@ -1,5 +1,5 @@
 """
-ARQUIVO: contexto da tela minima de gestao de templates de WOD.
+ARQUIVO: contexto da tela canonica de gestao de templates de WOD.
 """
 
 from django.urls import reverse
@@ -17,6 +17,7 @@ def build_workout_template_management_context(*, request, current_role, page_tit
     featured_only = request.GET.get('featured') == '1'
     query = (request.GET.get('q') or '').strip()
     approval_policy_setting = get_or_create_workout_approval_policy_setting(actor=request.user)
+    smart_paste_href = reverse('workout-smart-paste') if current_role.slug in {'Coach', 'Owner'} else ''
     return {
         'operation_page_payload': build_page_payload(
             context={
@@ -29,9 +30,12 @@ def build_workout_template_management_context(*, request, current_role, page_tit
             data={
                 'hero': build_page_hero(
                     eyebrow='Templates',
-                    title='Templates persistentes de WOD.',
-                    copy='Veja o que esta ativo, o que ja foi usado e ajuste a disponibilidade sem abrir um fluxo pesado.',
-                    actions=[{'label': 'Voltar ao planner', 'href': reverse('workout-planner'), 'kind': 'secondary'}],
+                    title='Biblioteca oficial de templates de WOD.',
+                    copy='O Smart Paste organiza, esta tela governa e o Planner despacha. Edite o catalogo reutilizavel sem criar atalhos paralelos.',
+                    actions=[
+                        {'label': 'Voltar ao planner', 'href': reverse('workout-planner'), 'kind': 'secondary'},
+                        *([{'label': 'Abrir Smart Paste', 'href': smart_paste_href, 'kind': 'ghost'}] if smart_paste_href else []),
+                    ],
                     aria_label='Gestao de templates persistentes de WOD',
                     classes=['coach-hero'],
                     data_panel='coach-hero',
@@ -45,7 +49,7 @@ def build_workout_template_management_context(*, request, current_role, page_tit
             assets=build_page_assets(css=['css/design-system/operations.css']),
         ),
         'workout_corridor_tabs': build_workout_corridor_tabs(
-            current_key='planner',
+            current_key='templates',
             current_role_slug=current_role.slug,
             editor_href=reverse('workout-planner'),
         ),
@@ -61,6 +65,10 @@ def build_workout_template_management_context(*, request, current_role, page_tit
             actor=request.user,
         ),
         'template_filter_state': {'active_only': active_only, 'featured_only': featured_only, 'query': query},
+        'template_management_actions': {
+            'planner_href': reverse('workout-planner'),
+            'smart_paste_href': smart_paste_href,
+        },
         'template_filter_form': WorkoutTemplateManagementFilterForm(initial={'q': query, 'active': active_only, 'featured': featured_only}),
         'template_metadata_form': WorkoutTemplateMetadataForm(),
         'approval_policy_setting': approval_policy_setting,

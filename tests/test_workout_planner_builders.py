@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from operations.models import ClassSession, WorkoutPlannerTemplatePickerEvent, WorkoutTemplate, WorkoutTemplateBlock, WorkoutTemplateMovement
+from operations.workout_corridor_navigation import build_workout_corridor_tabs
 from operations.workout_planner_builders import build_planner_cell, build_planner_week, load_planner_sessions, resolve_week_start
 from student_app.models import SessionWorkout, SessionWorkoutRevision, SessionWorkoutRevisionEvent, SessionWorkoutStatus, WorkoutLoadType
 from tests.workout_test_support import WorkoutFlowBaseTestCase
@@ -177,6 +178,24 @@ class WorkoutPlannerBuilderTests(WorkoutFlowBaseTestCase):
 
 
 class WorkoutPlannerViewTests(WorkoutFlowBaseTestCase):
+    def test_workout_corridor_tabs_keep_canonical_order_per_role(self):
+        owner_tabs = build_workout_corridor_tabs(current_key='planner', current_role_slug='Owner')
+        coach_tabs = build_workout_corridor_tabs(current_key='planner', current_role_slug='Coach')
+        manager_tabs = build_workout_corridor_tabs(current_key='planner', current_role_slug='Manager')
+
+        self.assertEqual(
+            [tab['key'] for tab in owner_tabs],
+            ['planner', 'smart_paste', 'templates', 'approval', 'history', 'summary'],
+        )
+        self.assertEqual(
+            [tab['key'] for tab in coach_tabs],
+            ['planner', 'smart_paste', 'templates', 'history', 'summary'],
+        )
+        self.assertEqual(
+            [tab['key'] for tab in manager_tabs],
+            ['planner', 'approval', 'history', 'summary'],
+        )
+
     def test_planner_renders_week_grid_for_coach(self):
         WorkoutTemplate.objects.create(
             name='Template coach confiavel',
@@ -241,6 +260,9 @@ class WorkoutPlannerViewTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, '5 uso(s)')
         self.assertContains(response, 'Template frio')
         self.assertContains(response, 'Frio')
+        self.assertContains(response, 'Ver todos os templates')
+        self.assertContains(response, 'Editar')
+        self.assertContains(response, 'Duplicar')
 
     def test_owner_planner_template_picker_shows_preview_cards(self):
         template = WorkoutTemplate.objects.create(

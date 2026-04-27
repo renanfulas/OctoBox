@@ -171,6 +171,7 @@ def serialize_class_session(session, *, now):
 
     return {
         'object': session,
+        'title': getattr(session, 'title', ''),
         'coach_name': getattr(session.coach, 'get_full_name', lambda: '')() or getattr(session.coach, 'username', '') or 'Coach ainda não definido',
         'coach_display_name': _resolve_coach_display_name(session.coach),
         'status_label': runtime_state['label'],
@@ -185,7 +186,9 @@ def serialize_class_session(session, *, now):
         'occupancy_note': occupancy_note,
         'booking_closed': booking_closed,
         'starts_at': runtime_state['starts_at'],
+        'starts_at_label': runtime_state['starts_at'].strftime('%H:%M'),
         'ends_at': runtime_state['ends_at'],
+        'ends_at_label': runtime_state['ends_at'].strftime('%H:%M'),
     }
 
 

@@ -13,6 +13,7 @@ O QUE ESTE ARQUIVO FAZ:
 from django.contrib import messages
 from django.db import OperationalError, ProgrammingError
 from django.shortcuts import get_object_or_404, redirect
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 
 from access.roles import ROLE_COACH, ROLE_OWNER
@@ -42,6 +43,13 @@ def _handle_template_storage_unavailable(request, *, redirect_name='workout-temp
         'A base de templates ainda nao esta pronta neste banco. Rode as migrations de operations para liberar esse fluxo.',
     )
     return redirect(redirect_name)
+
+
+def _redirect_to_next_or_default(request, default_name='workout-template-management'):
+    next_url = (request.POST.get('next') or request.GET.get('next') or '').strip()
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return redirect(next_url)
+    return redirect(default_name)
 
 
 class WorkoutTemplateManagementView(OperationBaseView):
@@ -111,7 +119,7 @@ class WorkoutTemplateDuplicateView(OperationBaseView, View):
         except TEMPLATE_STORAGE_EXCEPTIONS:
             return _handle_template_storage_unavailable(request)
         messages.success(request, f'Template "{duplicated.name}" duplicado com sucesso.')
-        return redirect('workout-template-management')
+        return _redirect_to_next_or_default(request)
 
 
 class WorkoutTemplateDeleteView(OperationBaseView, View):

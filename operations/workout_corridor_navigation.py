@@ -29,6 +29,12 @@ _TAB_SPECS = (
         'allowed_roles': {ROLE_COACH, ROLE_OWNER},
     },
     {
+        'key': 'templates',
+        'label': 'Templates',
+        'route_name': 'workout-template-management',
+        'allowed_roles': {ROLE_COACH, ROLE_OWNER},
+    },
+    {
         'key': 'approval',
         'label': 'Aprovações',
         'route_name': 'workout-approval-board',

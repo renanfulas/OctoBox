@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from operations.forms import WeeklyWodProjectionForm, WeeklyWodSmartPasteForm
-from operations.models import ClassSession, ClassType
+from operations.models import ClassSession, ClassType, WorkoutTemplate
 from student_app.models import SessionWorkout, SessionWorkoutStatus, WeeklyWodPlan, WeeklyWodPlanStatus
 from tests.workout_test_support import WorkoutFlowBaseTestCase
 
@@ -87,6 +87,66 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         plan.refresh_from_db()
         self.assertEqual(plan.status, WeeklyWodPlanStatus.CONFIRMED)
         self.assertContains(response, 'Plano semanal confirmado.')
+        self.assertContains(response, 'Salvar como template')
+
+    def test_coach_can_save_confirmed_weekly_plan_as_stored_template(self):
+        plan = WeeklyWodPlan.objects.create(
+            week_start='2026-04-20',
+            label='Semana template',
+            source_text=SMART_PASTE_SAMPLE,
+            parsed_payload={
+                'week_label': None,
+                'parse_warnings': [],
+                'days': [
+                    {
+                        'weekday': 0,
+                        'weekday_label': 'Segunda',
+                        'blocks': [
+                            {
+                                'kind': 'strength',
+                                'title': 'Forca base',
+                                'notes': 'Subir com tecnica.',
+                                'movements': [
+                                    {
+                                        'movement_slug': 'deadlift',
+                                        'movement_label_raw': 'Deadlift',
+                                        'reps_spec': '5',
+                                        'load_spec': '70%',
+                                        'notes': 'Controlar a descida.',
+                                        'sort_order': 0,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+            created_by=self.coach,
+            status=WeeklyWodPlanStatus.CONFIRMED,
+        )
+
+        response = self.client.post(
+            reverse('workout-smart-paste'),
+            data={
+                'plan_id': plan.id,
+                'template_name': 'Template criado do Smart Paste',
+                'action': 'create_stored_template',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        template = WorkoutTemplate.objects.get(name='Template criado do Smart Paste')
+        self.assertEqual(template.created_by, self.coach)
+        self.assertFalse(template.is_trusted)
+        self.assertEqual(template.blocks.count(), 1)
+        movement = template.blocks.first().movements.first()
+        self.assertEqual(movement.movement_slug, 'deadlift')
+        self.assertEqual(movement.reps, 5)
+        self.assertEqual(movement.load_type, 'percentage_of_rm')
+        self.assertContains(response, 'Template criado do Smart Paste')
+        self.assertContains(response, 'criado a partir do Smart Paste.')
+        self.assertContains(response, 'Biblioteca oficial de templates de WOD.')
 
     def test_coach_can_inline_review_unresolved_item_with_htmx_partial(self):
         plan = WeeklyWodPlan.objects.create(

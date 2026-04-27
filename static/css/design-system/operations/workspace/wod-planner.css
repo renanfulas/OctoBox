@@ -375,13 +375,6 @@ body[data-theme="dark"] .wod-planner__spotlight-action.is-secondary {
         text-align: center;
     }
 
-    .wod-planner__template-picker {
-        width: min(560px, calc(100vw - 20px));
-        max-height: calc(100dvh - 24px);
-        margin: 12px auto;
-        padding: 16px;
-    }
-
     .wod-planner__template-picker-head {
         grid-template-columns: minmax(0, 1fr);
     }
@@ -499,6 +492,36 @@ html.wod-planner-template-picker-open body {
     margin: 0;
 }
 
+@media (max-width: 640px) {
+    .wod-planner__template-picker {
+        width: min(100%, calc(100vw - 20px));
+        height: min(740px, calc(100dvh - 20px));
+        max-height: calc(100dvh - 20px);
+        margin: auto;
+        padding: 14px;
+        border-radius: 22px;
+    }
+
+    .wod-planner__template-picker-head {
+        gap: 10px;
+        padding-bottom: 12px;
+    }
+
+    .wod-planner__template-picker-list {
+        max-height: none;
+        padding-right: 2px;
+    }
+
+    .wod-planner__template-picker-card {
+        padding: 12px;
+    }
+
+    .wod-planner__template-picker-meta .badge {
+        max-width: 100%;
+        white-space: normal;
+    }
+}
+
 
 .wod-planner__usage-panel {
     display: grid;
@@ -520,6 +543,13 @@ html.wod-planner-template-picker-open body {
     background: color-mix(in srgb, var(--theme-surface-panel) 82%, white 18%);
 }
 
+.wod-planner__usage-ranking-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+}
+
 .wod-planner__usage-ranking h3,
 .wod-planner__usage-ranking p,
 .wod-planner__usage-ranking strong {
@@ -538,6 +568,47 @@ html.wod-planner-template-picker-open body {
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
     border-radius: 14px;
     background: color-mix(in srgb, var(--theme-surface-panel-strong) 76%, white 24%);
+}
+
+.wod-planner__usage-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.wod-planner__usage-card-form {
+    margin: 0;
+}
+
+.wod-planner__usage-card-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 6px 12px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-surface-panel-strong) 80%, white 20%);
+    color: var(--theme-text-primary);
+    font-size: 0.86rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.wod-planner__usage-card-link:hover,
+.wod-planner__usage-card-link:focus-visible {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 28%, var(--theme-border-soft) 72%);
+    background: color-mix(in srgb, var(--theme-surface-strong) 72%, white 28%);
+    color: var(--theme-text-primary);
+    outline: none;
+}
+
+.wod-planner__usage-card-note {
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--theme-text-secondary);
 }
 
 .wod-planner__funnel-panel {
@@ -593,32 +664,12 @@ html.wod-planner-template-picker-open body {
     margin: 0;
 }
 
-@media (max-width: 640px) {
-    .wod-planner__template-picker {
-        width: min(100%, calc(100vw - 20px));
-        height: min(740px, calc(100dvh - 20px));
-        max-height: calc(100dvh - 20px);
-        margin: auto;
-        padding: 14px;
-        border-radius: 22px;
+@media (max-width: 720px) {
+    .wod-planner__usage-ranking-head {
+        flex-direction: column;
     }
 
-    .wod-planner__template-picker-head {
-        gap: 10px;
-        padding-bottom: 12px;
-    }
-
-    .wod-planner__template-picker-list {
-        max-height: none;
-        padding-right: 2px;
-    }
-
-    .wod-planner__template-picker-card {
-        padding: 12px;
-    }
-
-    .wod-planner__template-picker-meta .badge {
-        max-width: 100%;
-        white-space: normal;
+    .wod-planner__usage-card-actions {
+        width: 100%;
     }
 }
