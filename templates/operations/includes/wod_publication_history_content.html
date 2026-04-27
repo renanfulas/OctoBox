@@ -1,32 +1,32 @@
-<section class="coach-wod-publication-history" aria-label="Historico executivo do que foi ao ar">
+<section class="coach-wod-publication-history" aria-label="Histórico executivo do que foi ao ar">
     <div class="coach-wod-publication-history-head">
         <div class="coach-wod-publication-history-intro">
-            <p class="eyebrow">Pos-publicacao {% include "operations/includes/wod_tooltip.html" with tooltip_text="Leitura curta das ultimas publicacoes e do contexto de decisao de cada WOD." %}</p>
-            <h2>Historico executivo do que foi ao ar</h2>
+            <p class="eyebrow">Pós-publicação {% include "operations/includes/wod_tooltip.html" with tooltip_text="Leitura curta das últimas publicações e do contexto de decisão de cada WOD." %}</p>
+            <h2>Histórico executivo do que foi ao ar</h2>
         </div>
-        <div class="coach-wod-review-meta" aria-label="Marcadores executivos do historico publicado">
+        <div class="coach-wod-review-meta" aria-label="Marcadores executivos do histórico publicado">
             <span class="pill success">{{ published_history.assist.without_concerns_count }} sem ressalvas</span>
             <span class="pill info">{{ published_history.assist.verbal_alignment_count }} com alinhamento verbal</span>
-            <span class="pill warning">{{ published_history.assist.operational_urgency_count }} com urgencia operacional</span>
+            <span class="pill warning">{{ published_history.assist.operational_urgency_count }} com urgência operacional</span>
             <span class="pill accent">{{ published_history.assist.no_reason_count }} sem motivo extra</span>
             <span class="pill accent">{{ published_history.assist.viewer_total }} abertura(s) de WOD</span>
             <span class="pill info">{{ published_history.assist.reserved_total }} reserva(s) nas turmas</span>
             <span class="pill success">RM pronto {{ published_history.assist.rm_ready_total }}/{{ published_history.assist.rm_required_total }}</span>
             <span class="pill accent">Aberturas prontas {{ published_history.assist.rm_viewer_ready_total }}</span>
             <span class="pill warning">Gap de RM nas aberturas {{ published_history.assist.rm_viewer_gap_total }}</span>
-            <span class="pill danger">{{ published_history.assist.critical_alert_count }} alerta(s) critico(s)</span>
-            <span class="pill warning">{{ published_history.assist.warning_alert_count }} alerta(s) de atencao</span>
-            <span class="pill success">{{ published_history.assist.resolved_action_count }} acao(oes) com resultado</span>
-            <span class="pill accent">{{ published_history.assist.open_action_count }} acao(oes) aguardando retorno</span>
+            <span class="pill danger">{{ published_history.assist.critical_alert_count }} alerta(s) crítico(s)</span>
+            <span class="pill warning">{{ published_history.assist.warning_alert_count }} alerta(s) de atenção</span>
+            <span class="pill success">{{ published_history.assist.resolved_action_count }} ação(ões) com resultado</span>
+            <span class="pill accent">{{ published_history.assist.open_action_count }} ação(ões) aguardando retorno</span>
             <span class="pill success">{{ published_history.assist.resolved_outcome_count }} alerta(s) resolvido(s)</span>
             <span class="pill accent">{{ published_history.assist.monitoring_outcome_count }} monitorando</span>
-            <span class="pill danger">{{ published_history.assist.not_resolved_outcome_count }} nao resolveu(ram)</span>
-            <span class="pill warning">{{ published_history.assist.live_follow_up_count }} pendencia(s) real(is)</span>
+            <span class="pill danger">{{ published_history.assist.not_resolved_outcome_count }} não resolveu(ram)</span>
+            <span class="pill warning">{{ published_history.assist.live_follow_up_count }} pendência(s) real(is)</span>
             <span class="pill warning">{{ published_history.assist.short_escalation_count }} escalonamento(s) curto(s)</span>
             <span class="pill success">{{ published_history.assist.absorbed_case_count }} absorvido(s)</span>
             <span class="pill accent">{{ published_history.assist.monitoring_case_count }} acompanhando</span>
-            <span class="pill warning">{{ published_history.assist.awaiting_action_case_count }} aguardando acao</span>
-            <span class="pill danger">{{ published_history.assist.strong_intervention_case_count }} intervencao forte</span>
+            <span class="pill warning">{{ published_history.assist.awaiting_action_case_count }} aguardando ação</span>
+            <span class="pill danger">{{ published_history.assist.strong_intervention_case_count }} intervenção forte</span>
         </div>
     </div>
     {% if published_history.assist.weekly_executive_summary %}
@@ -35,14 +35,14 @@
             <p class="eyebrow">{{ published_history.assist.weekly_executive_summary.label }}</p>
             <strong>{{ published_history.assist.weekly_executive_summary.summary }}</strong>
             <div class="coach-wod-review-meta">
-                <span class="pill info">{{ published_history.assist.weekly_executive_summary.weekly_total }} publicacao(oes) na janela</span>
+                <span class="pill info">{{ published_history.assist.weekly_executive_summary.weekly_total }} publicação(ões) na janela</span>
                 <span class="pill warning">{{ published_history.assist.weekly_executive_summary.adjustment_label }}</span>
                 <span class="pill success">{{ published_history.assist.weekly_executive_summary.improvement_label }}</span>
                 <span class="pill accent">{{ published_history.assist.weekly_executive_summary.action_label }}</span>
             </div>
         </article>
         <article class="coach-wod-publication-alert-card tone-accent">
-            <p class="eyebrow">Checkpoint de gestao da semana</p>
+            <p class="eyebrow">Checkpoint de gestão da semana</p>
             <strong>Semana iniciada em {{ weekly_checkpoint_week_label }}</strong>
             {% if weekly_checkpoint %}
             <div class="coach-wod-review-meta">
@@ -69,9 +69,9 @@
                 <label>
                     <span>Status</span>
                     <select name="execution_status">
-                        <option value="not_started" {% if weekly_checkpoint_form.initial.execution_status == 'not_started' %}selected{% endif %}>Nao iniciado</option>
-                        <option value="in_progress" {% if weekly_checkpoint_form.initial.execution_status == 'in_progress' %}selected{% endif %}>Em andamento</option>
-                        <option value="completed" {% if weekly_checkpoint_form.initial.execution_status == 'completed' %}selected{% endif %}>Concluido</option>
+          <option value="not_started" {% if weekly_checkpoint_form.initial.execution_status == 'not_started' %}selected{% endif %}>Não iniciado</option>
+          <option value="in_progress" {% if weekly_checkpoint_form.initial.execution_status == 'in_progress' %}selected{% endif %}>Em andamento</option>
+          <option value="completed" {% if weekly_checkpoint_form.initial.execution_status == 'completed' %}selected{% endif %}>Concluído</option>
                     </select>
                 </label>
                 <label>
@@ -95,14 +95,14 @@
                 <label>
                     <span>Compromisso</span>
                     <select name="governance_commitment_status">
-                        <option value="not_assumed" {% if weekly_checkpoint_form.initial.governance_commitment_status == 'not_assumed' %}selected{% endif %}>Nao assumido</option>
-                        <option value="assumed" {% if weekly_checkpoint_form.initial.governance_commitment_status == 'assumed' %}selected{% endif %}>Assumido</option>
-                        <option value="executed" {% if weekly_checkpoint_form.initial.governance_commitment_status == 'executed' %}selected{% endif %}>Executado</option>
+          <option value="not_assumed" {% if weekly_checkpoint_form.initial.governance_commitment_status == 'not_assumed' %}selected{% endif %}>Não assumido</option>
+          <option value="assumed" {% if weekly_checkpoint_form.initial.governance_commitment_status == 'assumed' %}selected{% endif %}>Assumido</option>
+          <option value="executed" {% if weekly_checkpoint_form.initial.governance_commitment_status == 'executed' %}selected{% endif %}>Executado</option>
                     </select>
                 </label>
                 <label class="coach-wod-follow-up-note">
                     <span>Nota do compromisso</span>
-                    <input type="text" name="governance_commitment_note" maxlength="255" placeholder="Ex.: owner assumiu a decisao e vai validar execucao na proxima semana." value="{{ weekly_checkpoint_form.initial.governance_commitment_note }}">
+        <input type="text" name="governance_commitment_note" maxlength="255" placeholder="Ex.: owner assumiu a decisão e vai validar execução na próxima semana." value="{{ weekly_checkpoint_form.initial.governance_commitment_note }}">
                 </label>
                 <label class="coach-wod-follow-up-note">
                     <span>Nota curta</span>
@@ -114,8 +114,8 @@
         </article>
         {% if weekly_checkpoint_history %}
         <article class="coach-wod-publication-alert-card tone-info">
-            <p class="eyebrow">Historico leve dos checkpoints</p>
-            <strong>Ultimas semanas</strong>
+            <p class="eyebrow">Histórico leve dos checkpoints</p>
+            <strong>Últimas semanas</strong>
             {% if weekly_checkpoint_maturity %}
             <div class="coach-wod-review-meta">
                 <span class="pill {{ weekly_checkpoint_maturity.tone }}">{{ weekly_checkpoint_maturity.label }}</span>
@@ -125,7 +125,7 @@
             {% endif %}
             {% if weekly_governance_action %}
             <div class="coach-wod-review-meta">
-                <span class="pill {{ weekly_governance_action.tone }}">Acao de governanca</span>
+                <span class="pill {{ weekly_governance_action.tone }}">Ação de governança</span>
                 <span class="pill {{ weekly_governance_action.tone }}">{{ weekly_governance_action.cadence }}</span>
             </div>
             <p><strong>{{ weekly_governance_action.label }}</strong></p>
@@ -392,7 +392,7 @@
                     {% if item.policy_badge %}<span class="pill {{ item.policy_badge.tone }}">{{ item.policy_badge.label }}</span>{% endif %}
                     <span class="pill accent">v{{ item.version }}</span>
                     {% if item.is_sensitive_confirmation %}
-                    <span class="pill warning">Mudanca sensivel confirmada</span>
+                    <span class="pill warning">Mudança sensível confirmada</span>
                     {% endif %}
                 </div>
             </div>

@@ -50,4 +50,12 @@ def build_membership_plan_command(
     )
 
 
-__all__ = ['MembershipPlanCommand', 'build_membership_plan_command']
+@dataclass(frozen=True, slots=True)
+class ReconcilePaymentCommand:
+    payment_id: int
+    amount_cents: int
+    stripe_event_id: str
+    version_locked: int
+
+
+__all__ = ['MembershipPlanCommand', 'ReconcilePaymentCommand', 'build_membership_plan_command']

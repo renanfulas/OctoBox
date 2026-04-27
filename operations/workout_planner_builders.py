@@ -208,7 +208,7 @@ def build_planner_cell(*, session, previous_slot_source=None, current_role_slug=
                 ),
                 PlannerCellAction(
                     key='history',
-                    label='Historico',
+                    label='Histórico',
                     href=f"{reverse('workout-publication-history')}?session_id={session.id}",
                     tone='secondary',
                 ),
@@ -221,7 +221,7 @@ def build_planner_cell(*, session, previous_slot_source=None, current_role_slug=
             is_sensitive_diff = bool(review_snapshot['diff_snapshot']['is_sensitive'])
             is_sensitive = is_sensitive_diff
             state = 'sensitive' if is_sensitive else 'pending'
-            status_label = 'Mudanca sensivel' if is_sensitive else 'Aguardando aprovacao'
+            status_label = 'Mudança sensível' if is_sensitive else 'Aguardando aprovação'
             summary = review_snapshot['review_summary'] + (f' {policy_badge["label"]}.' if policy_badge else '')
             actions = ('review',)
             cell_actions = (

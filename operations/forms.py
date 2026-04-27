@@ -257,7 +257,7 @@ class WorkoutWeeklyCheckpointForm(forms.Form):
         super().__init__(*args, **kwargs)
         apply_text_input_attrs(
             self.fields['governance_commitment_note'],
-            placeholder='Ex.: owner assumiu a decisao e vai validar execucao na proxima semana.',
+            placeholder='Ex.: owner assumiu a decisão e vai validar execução na próxima semana.',
             maxlength=255,
         )
         apply_text_input_attrs(

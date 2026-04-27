@@ -232,7 +232,7 @@ class GetStudentDashboard:
             occupancy_note = (
                 'Entradas encerradas enquanto a aula estiver em andamento.'
                 if runtime_state['label'] == 'Em andamento'
-                else 'Entradas encerradas porque a aula ja foi finalizada.'
+                else 'Entradas encerradas porque a aula já foi finalizada.'
             )
         else:
             occupancy_percent = round(occupancy_ratio * 100)
@@ -276,7 +276,7 @@ class GetStudentDashboard:
                 'occupancy_note': (
                     'Entradas encerradas enquanto a aula estiver em andamento.'
                     if runtime_state['label'] == 'Em andamento'
-                    else 'Entradas encerradas porque a aula ja foi finalizada.'
+                    else 'Entradas encerradas porque a aula já foi finalizada.'
                 ),
                 'booking_closed': booking_closed,
             }

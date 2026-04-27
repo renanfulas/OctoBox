@@ -54,8 +54,8 @@ def _build_registration_age_label(*, intake: StudentIntake, today=None) -> str:
     if elapsed_days == 0:
         return 'Hoje'
     if elapsed_days == 1:
-        return 'Ha 1 dia'
-    return f'Ha {elapsed_days} dias'
+        return 'Há 1 dia'
+    return f'Há {elapsed_days} dias'
 
 
 def build_intake_queue_item(*, intake: StudentIntake, actor_role_slug: str, today=None) -> dict:

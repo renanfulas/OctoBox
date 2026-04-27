@@ -30,13 +30,13 @@ _TAB_SPECS = (
     },
     {
         'key': 'approval',
-        'label': 'Aprovacoes',
+        'label': 'Aprovações',
         'route_name': 'workout-approval-board',
         'allowed_roles': {ROLE_MANAGER, ROLE_OWNER},
     },
     {
         'key': 'history',
-        'label': 'Historico',
+        'label': 'Histórico',
         'route_name': 'workout-publication-history',
         'allowed_roles': {ROLE_COACH, ROLE_MANAGER, ROLE_OWNER},
     },

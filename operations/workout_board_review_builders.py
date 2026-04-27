@@ -181,8 +181,8 @@ def build_workout_decision_assist(*, workout, diff_snapshot, student_preview_dif
 
     if diff_snapshot['is_sensitive']:
         impact_score += 4
-        reasons.append('Mudancas sensiveis na prescricao')
-        priority_flags.append({'label': 'Mudanca sensivel', 'tone': 'danger'})
+        reasons.append('Mudanças sensíveis na prescrição')
+        priority_flags.append({'label': 'Mudança sensível', 'tone': 'danger'})
     if student_preview_diff['changed_cards']:
         impact_score += min(len(student_preview_diff['changed_cards']), 3)
         reasons.append(f"{len(student_preview_diff['changed_cards'])} cartao(oes) mudaram para o aluno")
@@ -191,24 +191,24 @@ def build_workout_decision_assist(*, workout, diff_snapshot, student_preview_dif
         reasons.append('Estrutura visivel do treino mudou no app do aluno')
     if workout.revisions.filter(event=SessionWorkoutRevisionEvent.PUBLISHED).exists():
         impact_score += 1
-        reasons.append('Republicacao de treino que ja teve versao oficial')
-        priority_flags.append({'label': 'Republicacao', 'tone': 'warning'})
+        reasons.append('Republicação de treino que já teve versão oficial')
+        priority_flags.append({'label': 'Republicação', 'tone': 'warning'})
     else:
-        priority_flags.append({'label': 'Primeira publicacao', 'tone': 'info'})
+        priority_flags.append({'label': 'Primeira publicação', 'tone': 'info'})
 
     now = timezone.localtime()
     starts_at = timezone.localtime(workout.session.scheduled_at)
     hours_until_session = (starts_at - now).total_seconds() / 3600
     if hours_until_session <= 6:
         impact_score += 2
-        reasons.append('Aula comecando em breve')
+        reasons.append('Aula começando em breve')
         priority_flags.append({'label': 'Aula em breve', 'tone': 'accent'})
 
     if impact_score >= 6:
         impact_label = 'Alto impacto'
         impact_tone = 'danger'
     elif impact_score >= 3:
-        impact_label = 'Medio impacto'
+        impact_label = 'Médio impacto'
         impact_tone = 'warning'
     else:
         impact_label = 'Baixo impacto'
@@ -226,14 +226,14 @@ def build_workout_decision_assist(*, workout, diff_snapshot, student_preview_dif
     if student_preview_diff['changed_cards']:
         summary_bits.append(f"{len(student_preview_diff['changed_cards'])} cartao(oes) no app do aluno")
     if diff_snapshot['is_sensitive']:
-        summary_bits.append('revisao sensivel')
+        summary_bits.append('revisão sensível')
 
     return {
         'impact_score': impact_score,
         'impact_label': impact_label,
         'impact_tone': impact_tone,
         'priority_flags': priority_flags[:4],
-        'summary': ', '.join(summary_bits) if summary_bits else 'Mudanca pequena para leitura rapida.',
+        'summary': ', '.join(summary_bits) if summary_bits else 'Mudança pequena para leitura rápida.',
         'reasons': reasons[:5],
     }
 

@@ -80,7 +80,7 @@ def _decorate_operational_sessions(serialized_sessions):
         elif session['booking_closed']:
             session['dashboard_kicker'] = 'Reservas fechadas'
         elif index == 0:
-            session['dashboard_kicker'] = 'Proxima aula'
+            session['dashboard_kicker'] = 'Próxima aula'
         elif session['occupancy_percent'] >= 90:
             session['dashboard_kicker'] = 'Turma quase lotada'
         else:
@@ -129,17 +129,17 @@ def build_owner_workspace_snapshot(*, today):
         ),
         'payments': _build_owner_focus_item(
             key='payments',
-            label='Ver cobrancas',
-            chip_label='Cobranca',
+            label='Ver cobranças',
+            chip_label='Cobrança',
             summary=(
-                f"{headline_metrics['overdue_payments']} cobranca(s) estao atrasadas e pedem contato."
+                f"{headline_metrics['overdue_payments']} cobrança(s) estão atrasadas e pedem contato."
                 if headline_metrics['overdue_payments']
-                else 'Nenhuma cobranca atrasada pede contato agora.'
+                else 'Nenhuma cobrança atrasada pede contato agora.'
             ),
             count=headline_metrics['overdue_payments'],
             pill_class='danger' if headline_metrics['overdue_payments'] > 0 else 'success',
             href=reverse('finance-center'),
-            href_label='Abrir cobrancas',
+            href_label='Abrir cobranças',
         ),
         'structure': _build_owner_focus_item(
             key='structure',

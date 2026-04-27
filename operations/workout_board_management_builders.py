@@ -36,22 +36,22 @@ def build_operational_memory_patterns(*, history_items):
 
     patterns = [
         {
-            'label': 'Casos que precisaram de recepcao',
+            'label': 'Casos que precisaram de recepção',
             'value': reception_case_count,
             'tone': 'info',
-            'copy': 'Conta casos em que a recepcao ou operacao de balcao assumiu a bola em algum momento.',
+            'copy': 'Conta casos em que a recepção ou operação de balcão assumiu a bola em algum momento.',
         },
         {
             'label': 'Casos absorvidos com coach',
             'value': coach_resolved_case_count,
             'tone': 'success',
-            'copy': 'Conta casos que tiveram coach alinhado e hoje ja aparecem como absorvidos na leitura executiva.',
+            'copy': 'Conta casos que tiveram coach alinhado e hoje já aparecem como absorvidos na leitura executiva.',
         },
         {
             'label': 'Casos que dependeram de WhatsApp',
             'value': whatsapp_case_count,
             'tone': 'warning',
-            'copy': 'Conta casos em que reforco de comunicacao entrou na historia operacional daquele WOD.',
+            'copy': 'Conta casos em que reforço de comunicação entrou na história operacional daquele WOD.',
         },
     ]
     return {
@@ -99,10 +99,10 @@ def build_operational_leverage_summary(*, history_items):
         absorption_rate = round((absorbed / total) * 100)
         if absorption_rate >= 70:
             efficiency_tone = 'success'
-            efficiency_label = 'Boa alavanca de absorcao'
+            efficiency_label = 'Boa alavanca de absorção'
         elif absorption_rate >= 40:
             efficiency_tone = 'accent'
-            efficiency_label = 'Alavanca em observacao'
+            efficiency_label = 'Alavanca em observação'
         else:
             efficiency_tone = 'warning'
             efficiency_label = 'Alavanca ainda pesada'
