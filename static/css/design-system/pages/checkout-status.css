@@ -1,0 +1,141 @@
+/*
+ARQUIVO: tela publica de retorno do checkout (Stripe).
+
+POR QUE ELE EXISTE:
+- Evita tela crua/stacktrace depois do retorno do provedor.
+- Mantem uma fachada limpa em mobile para "sucesso" e "cancelamento".
+*/
+
+:root {
+    --checkout-status-bg:
+        radial-gradient(circle at 22% 18%, rgba(56, 189, 248, 0.18), transparent 42%),
+        radial-gradient(circle at 82% 8%, rgba(99, 102, 241, 0.16), transparent 48%),
+        radial-gradient(circle at 64% 86%, rgba(20, 184, 166, 0.12), transparent 46%),
+        linear-gradient(180deg, #070a12, #050714);
+}
+
+body[data-page="checkout-status"] {
+    min-height: 100vh;
+    margin: 0;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    color: rgba(255, 255, 255, 0.92);
+    background: var(--checkout-status-bg);
+    display: grid;
+    place-items: center;
+    padding: 32px 16px;
+}
+
+.checkout-status-shell {
+    width: min(560px, 100%);
+}
+
+.checkout-status-panel {
+    border-radius: 26px;
+    padding: 26px 22px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    box-shadow:
+        0 18px 40px rgba(2, 6, 23, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(18px);
+}
+
+.checkout-status-panel--success {
+    border-color: rgba(16, 185, 129, 0.28);
+}
+
+.checkout-status-panel--cancel {
+    border-color: rgba(245, 158, 11, 0.28);
+}
+
+.checkout-status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.checkout-status-chip__icon {
+    width: 22px;
+    height: 22px;
+}
+
+.checkout-status-chip span {
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.checkout-status-eyebrow {
+    margin: 18px 0 8px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(56, 189, 248, 0.92);
+}
+
+body[data-screen="cancel"] .checkout-status-eyebrow {
+    color: rgba(245, 158, 11, 0.92);
+}
+
+.checkout-status-title {
+    margin: 0 0 10px;
+    font-size: clamp(1.7rem, 5.4vw, 2.35rem);
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+}
+
+.checkout-status-copy {
+    margin: 0 0 18px;
+    color: rgba(226, 232, 240, 0.86);
+    font-size: 1.02rem;
+    line-height: 1.55;
+}
+
+.checkout-status-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.checkout-status-button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    border-radius: 999px;
+    min-height: 46px;
+    padding: 10px 16px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.checkout-status-button--primary {
+    background: rgba(255, 255, 255, 0.92);
+    color: rgba(2, 6, 23, 0.92);
+}
+
+.checkout-status-button--secondary {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.checkout-status-note {
+    margin: 16px 0 0;
+    color: rgba(203, 213, 225, 0.78);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+@media (min-width: 520px) {
+    .checkout-status-actions {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+

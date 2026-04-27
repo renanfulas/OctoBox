@@ -42,8 +42,8 @@ def _build_page_payload(*, page_title, page_subtitle, current_role_slug):
                 title='Semana de WOD em uma so grade.',
                 copy='Planeje, encontre lacunas e abra o editor certo sem depender de uma fila linear.',
                 actions=[
-                    {'label': 'Aprovacoes', 'href': reverse('workout-approval-board'), 'kind': 'secondary'},
-                    {'label': 'Historico', 'href': reverse('workout-publication-history'), 'kind': 'ghost'},
+                    {'label': 'Aprovações', 'href': reverse('workout-approval-board'), 'kind': 'secondary'},
+                    {'label': 'Histórico', 'href': reverse('workout-publication-history'), 'kind': 'ghost'},
                 ],
                 aria_label='Planner semanal de WOD',
                 classes=['coach-hero'],

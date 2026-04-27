@@ -28,7 +28,7 @@ def build_student_invitation_operations_page(
         data={
             'hero': build_page_hero(
                 eyebrow='Aluno App',
-                title='Central de ativacao pronta para uso.',
+                title='Convites operacionais prontos.',
                 copy='Aqui a recepcao e o owner escolhem o melhor caminho para colocar o aluno dentro do app sem confusao.',
                 actions=[
                     {'label': 'Voltar para configuracoes', 'href': '/configuracoes-operacionais/', 'kind': 'secondary'},

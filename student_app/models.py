@@ -161,9 +161,9 @@ class WorkoutOperationalMemoryKind(models.TextChoices):
 
 
 class WorkoutWeeklyCheckpointStatus(models.TextChoices):
-    NOT_STARTED = 'not_started', 'Nao iniciado'
+    NOT_STARTED = 'not_started', 'Não iniciado'
     IN_PROGRESS = 'in_progress', 'Em andamento'
-    COMPLETED = 'completed', 'Concluido'
+    COMPLETED = 'completed', 'Concluído'
 
 
 class WorkoutWeeklyCheckpointOwner(models.TextChoices):
@@ -180,7 +180,7 @@ class WorkoutWeeklyCheckpointClosure(models.TextChoices):
 
 
 class WorkoutWeeklyGovernanceCommitmentStatus(models.TextChoices):
-    NOT_ASSUMED = 'not_assumed', 'Nao assumido'
+    NOT_ASSUMED = 'not_assumed', 'Não assumido'
     ASSUMED = 'assumed', 'Assumido'
     EXECUTED = 'executed', 'Executado'
 

@@ -5,10 +5,10 @@
 <div class="operation-shell coach-scene workspace-shell coach-wod-editor-shell">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% include "operations/includes/wod_corridor_tabs.html" %}
-    <section class="coach-wod-page-intro coach-wod-page-intro--executive" aria-label="Missao do resumo executivo">
+    <section class="coach-wod-page-intro coach-wod-page-intro--executive" aria-label="Missão do resumo executivo">
         <p class="eyebrow">Varanda executiva</p>
         <h2>Leitura macro do corredor sem perder o jeito simples do OctoBox.</h2>
-        <p>Use essa tela para ver o conjunto. Quando surgir acao concreta, o caminho natural e descer para Historico ou Aprovações.</p>
+        <p>Use essa tela para ver o conjunto. Quando surgir ação concreta, o caminho natural é descer para Histórico ou Aprovações.</p>
     </section>
 
     {% if executive_summary_mode == 'coach-minimal' %}
@@ -47,20 +47,20 @@
         <article class="table-card coach-wod-summary-card tone-info">
             <p class="eyebrow">WODs acompanhados</p>
             <h2>{{ published_history.assist.total }}</h2>
-            <p>Janela recente de publicacoes com leitura executiva agregada.</p>
+            <p>Janela recente de publicações com leitura executiva agregada.</p>
         </article>
         <article class="table-card coach-wod-summary-card tone-warning">
-            <p class="eyebrow">Pendencias reais</p>
+            <p class="eyebrow">Pendências reais</p>
             <h2>{{ published_history.assist.live_follow_up_count }}</h2>
             <p>Casos vivos que ainda pedem resposta operacional curta.</p>
         </article>
         <article class="table-card coach-wod-summary-card tone-danger">
-            <p class="eyebrow">Alertas criticos</p>
+            <p class="eyebrow">Alertas críticos</p>
             <h2>{{ published_history.assist.critical_alert_count }}</h2>
             <p>Sinais fortes que precisam ser resolvidos antes de virarem rotina ruim.</p>
         </article>
         <article class="table-card coach-wod-summary-card tone-success">
-            <p class="eyebrow">Acoes com resultado</p>
+            <p class="eyebrow">Ações com resultado</p>
             <h2>{{ published_history.assist.resolved_action_count }}</h2>
             <p>Retornos já registrados com trilha de fechamento no corredor.</p>
         </article>

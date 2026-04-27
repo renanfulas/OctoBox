@@ -32,6 +32,7 @@ urlpatterns = [
     path('', include('catalog.urls')),
     path('', include('guide.urls')),
     path('', include('operations.urls')),
+    path('', include('integrations.urls')),
     path('metrics/', metrics_view),
     path(settings.ADMIN_URL_PATH, admin.site.urls),
 ]

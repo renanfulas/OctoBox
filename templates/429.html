@@ -1,0 +1,31 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Muitas tentativas | OctoBox</title>
+    <link rel="stylesheet" href="{% static 'css/design-system/pages/checkout-status.css' %}?v={{ static_asset_version }}">
+</head>
+<body data-page="checkout-status" data-screen="cancel">
+    <main class="checkout-status-shell" aria-label="Erro 429">
+        <section class="checkout-status-panel checkout-status-panel--cancel" aria-label="Muitas tentativas">
+            <div class="checkout-status-chip">
+                <img class="checkout-status-chip__icon" src="{% static 'images/brand/octobox-mark.svg' %}?v={{ static_asset_version }}" alt="">
+                <span>OctoBox</span>
+                <span>Proteção</span>
+            </div>
+            <p class="checkout-status-eyebrow">429</p>
+            <h1 class="checkout-status-title">Muitas tentativas.</h1>
+            <p class="checkout-status-copy">
+                {{ error|default:"Para proteger o box, este corredor foi temporariamente desacelerado. Espere um pouco e tente de novo." }}
+            </p>
+            <div class="checkout-status-actions" role="group" aria-label="Acoes">
+                <a class="checkout-status-button checkout-status-button--primary" href="/dashboard/">Voltar ao dashboard</a>
+                <a class="checkout-status-button checkout-status-button--secondary" href="/financeiro/">Abrir financeiro</a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
+

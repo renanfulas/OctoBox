@@ -51,11 +51,11 @@ O QUE ESTE ARQUIVO FAZ:
     {% if financial_shell_mode == 'tabbed' %}
         {% include "includes/catalog/student_page/student_page_payments_summary.html" with page=page %}
 
-        <section class="card student-page-card student-page-history-card student-page-payments-history-card" aria-label="Historico de pagamentos">
+        <section class="card student-page-card student-page-history-card student-page-payments-history-card" aria-label="Histórico de pagamentos">
             <header class="student-page-card__head student-page-panel-heading">
                 <div class="student-page-panel-heading__copy">
-                    <h2 class="section-title-sm">Historico de pagamentos</h2>
-                    <p class="meta-text">{{ page.data.financial_overview.metrics.transacoes_totais|default:"0" }} transacao(oes)</p>
+                    <h2 class="section-title-sm">Histórico de pagamentos</h2>
+                    <p class="meta-text">{{ page.data.financial_overview.metrics.transacoes_totais|default:"0" }} transação(ões)</p>
                 </div>
             </header>
             <div class="student-page-card__body">

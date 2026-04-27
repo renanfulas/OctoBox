@@ -124,7 +124,7 @@ def _resolve_closed_occupancy_note(runtime_label):
     if runtime_label == 'Em andamento':
         return 'Entradas encerradas enquanto a aula estiver em andamento.'
     if runtime_label == 'Finalizada':
-        return 'Entradas encerradas porque a aula ja foi finalizada.'
+        return 'Entradas encerradas porque a aula já foi finalizada.'
     return ''
 
 
@@ -171,7 +171,7 @@ def serialize_class_session(session, *, now):
 
     return {
         'object': session,
-        'coach_name': getattr(session.coach, 'get_full_name', lambda: '')() or getattr(session.coach, 'username', '') or 'Coach ainda nao definido',
+        'coach_name': getattr(session.coach, 'get_full_name', lambda: '')() or getattr(session.coach, 'username', '') or 'Coach ainda não definido',
         'coach_display_name': _resolve_coach_display_name(session.coach),
         'status_label': runtime_state['label'],
         'status_pill_class': runtime_state['pill_class'] or _resolve_status_pill(session),

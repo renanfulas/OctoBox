@@ -70,12 +70,12 @@ class GuideViewTests(TestCase):
         response = self.client.get(reverse('operational-settings'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Operacao configurada.')
+        self.assertContains(response, 'Operação configurada.')
         self.assertContains(response, 'Salvar bloqueio do WhatsApp')
         self.assertContains(response, 'Criar perfis de acesso')
         self.assertContains(response, 'Abrir convites do aluno')
         self.assertContains(response, 'Faixa declarada')
-        self.assertContains(response, 'Ate 200 leads')
+        self.assertContains(response, 'Até 200 leads')
         self.assertNotContains(response, 'Status atual da importacao')
 
     def test_operational_settings_shows_latest_lead_import_status_when_job_exists(self):

@@ -75,7 +75,7 @@ def _build_dashboard_priority_context(*, metrics, pending_intakes_count, today_s
     return {
         'dominant_key': 'revenue',
         'label': 'base-health',
-        'reason': 'Sem pressao dominante, a receita realizada volta a ser a melhor abertura gerencial.',
+        'reason': 'Sem pressão dominante, a receita realizada volta a ser a melhor abertura gerencial.',
         'lead_order': ['revenue', 'overdue', 'intakes', 'occupancy', 'attendance', 'active'],
     }
 

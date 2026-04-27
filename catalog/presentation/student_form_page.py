@@ -140,7 +140,7 @@ def build_student_form_page(*, form, student_object, selected_intake, financial_
             'summary': (
                 f'Esta edicao ja nasceu de {selected_intake.full_name} e pode seguir com conversao guiada.'
                 if selected_intake else
-                'Se houver lead ou entrada provisoria, vincular aqui evita retrabalho e mantem a conversa viva.'
+                'Se houver lead ou entrada provisória, vincular aqui evita retrabalho e mantém a conversa viva.'
             ),
             'pill_class': 'info' if selected_intake else 'accent',
             'href': '#student-form-profile',

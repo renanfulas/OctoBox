@@ -33,9 +33,11 @@ POR QUE ELE EXISTE:
     --operation-hero-heading-size: clamp(2.1rem, 3.3vw, 2.85rem);
     --operation-hero-heading-line-height: 0.95;
     --operation-hero-heading-letter-spacing: -0.05em;
+    --operation-hero-title-lines: 1;
     --operation-hero-copy-max-width: 58ch;
     --operation-hero-copy-size: 0.9rem;
     --operation-hero-copy-line-height: 1.54;
+    --operation-hero-copy-lines: 1;
     
     --operation-hero-actions-display: flex;
     --operation-hero-actions-align-self: start;
@@ -77,7 +79,20 @@ body[data-theme="dark"] .operation-hero {
         --operation-hero-actions-justify-self: start;
         --operation-hero-actions-max-width: 100%;
         --operation-hero-actions-padding: 0;
+        --operation-hero-title-lines: 2;
+        --operation-hero-copy-lines: 3;
         block-size: auto;
+    }
+
+    /* Em mobile, 1 linha vira gargalo: títulos e copys ficam "cortados" cedo demais. */
+    .operation-hero-title[data-max-lines="1"] {
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+    }
+
+    .operation-hero-copy[data-max-lines="1"] {
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
     }
 }
 
@@ -132,11 +147,12 @@ body[data-theme="dark"] .operation-hero {
     line-height: var(--operation-hero-heading-line-height, 0.96);
     letter-spacing: var(--operation-hero-heading-letter-spacing, -0.05em);
     max-inline-size: 100%;
-    white-space: nowrap;
     overflow: hidden;
-    display: block;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
     text-overflow: ellipsis;
-    text-wrap: nowrap;
+    -webkit-line-clamp: var(--operation-hero-title-lines, 1);
+    line-clamp: var(--operation-hero-title-lines, 1);
 }
 
 .operation-hero-copy {
@@ -146,23 +162,25 @@ body[data-theme="dark"] .operation-hero {
     line-height: var(--operation-hero-copy-line-height, 1.48);
     color: color-mix(in srgb, var(--theme-text-secondary) 90%, white 10%);
     max-inline-size: 100%;
-    white-space: nowrap;
     overflow: hidden;
-    display: block;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
     text-overflow: ellipsis;
+    -webkit-line-clamp: var(--operation-hero-copy-lines, 1);
+    line-clamp: var(--operation-hero-copy-lines, 1);
 }
 
 /* O contrato do hero declara linhas maximas; aqui tornamos a regra visual verdadeira. */
 .operation-hero-title[data-max-lines="1"],
 .operation-hero-copy[data-max-lines="1"] {
-    line-clamp: 1;
     -webkit-line-clamp: 1;
+    line-clamp: 1;
 }
 
 .operation-hero-title[data-max-lines="2"],
 .operation-hero-copy[data-max-lines="2"] {
-    line-clamp: 2;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
 }
 
 .operation-hero-action-rail {
