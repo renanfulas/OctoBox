@@ -1348,15 +1348,21 @@ body[data-theme="dark"] .intake-scene .intake-kpi-card.is-selected-tab {
     .intake-directory-table tbody {
         gap: 13px;
         padding: 12px 16px 16px;
+        align-items: stretch;
     }
 
     .intake-directory-table tbody tr {
         display: grid;
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        justify-self: stretch;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         grid-template-areas:
             "contact contact"
-            "source stage"
-            "owner registration"
+            "stage stage"
+            "source registration"
+            "owner owner"
             "actions actions";
         gap: 10px;
         padding: 16px;
@@ -1368,6 +1374,9 @@ body[data-theme="dark"] .intake-scene .intake-kpi-card.is-selected-tab {
     .intake-directory-table td {
         display: grid;
         gap: 6px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
         padding: 0;
         min-width: 0;
     }
@@ -1379,6 +1388,11 @@ body[data-theme="dark"] .intake-scene .intake-kpi-card.is-selected-tab {
         overflow-wrap: normal;
         word-break: normal;
         hyphens: none;
+    }
+
+    .intake-directory-table .intake-contact-name,
+    .intake-directory-table .intake-contact-channel {
+        white-space: normal;
     }
 
     .intake-directory-table .intake-cell--source .intake-table-text,
@@ -1420,6 +1434,21 @@ body[data-theme="dark"] .intake-scene .intake-kpi-card.is-selected-tab {
         background:
             radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 7%, transparent), transparent 42%),
             color-mix(in srgb, var(--theme-surface-strong) 88%, white 12%);
+    }
+
+    .intake-directory-table .intake-cell--stage {
+        min-height: auto;
+    }
+
+    .intake-directory-table .intake-cell--stage .intake-reading-stack {
+        grid-template-columns: max-content minmax(0, 1fr);
+        align-items: start;
+        column-gap: 12px;
+    }
+
+    .intake-directory-table .intake-cell--stage .intake-reading-note {
+        font-size: 0.92rem;
+        line-height: 1.42;
     }
 
     .intake-directory-table td::before {
@@ -1495,13 +1524,30 @@ body[data-theme="dark"] .intake-scene .intake-kpi-card.is-selected-tab {
 
 }
 
+@media (max-width: 640px) {
+    .intake-directory-table tbody tr {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "contact"
+            "stage"
+            "source"
+            "owner"
+            "registration"
+            "actions";
+    }
+
+    .intake-directory-table .intake-cell--stage .intake-reading-stack {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 430px) {
     .intake-directory-table tbody tr {
         grid-template-columns: 1fr;
         grid-template-areas:
             "contact"
-            "source"
             "stage"
+            "source"
             "owner"
             "registration"
             "actions";

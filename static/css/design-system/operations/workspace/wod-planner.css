@@ -387,6 +387,10 @@ body[data-theme="dark"] .wod-planner__spotlight-action.is-secondary {
     }
 }
 
+html.wod-planner-template-picker-open,
+html.wod-planner-template-picker-open body {
+    overflow: hidden;
+}
 
 .wod-planner__template-picker {
     width: min(560px, calc(100vw - 32px));
@@ -395,10 +399,16 @@ body[data-theme="dark"] .wod-planner__spotlight-action.is-secondary {
     border-radius: 24px;
     padding: 18px;
     overflow: hidden;
+    overscroll-behavior: contain;
     box-shadow: var(--theme-shadow-xl);
     background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 253, 0.95));
     color: var(--theme-text-primary);
+}
+
+.wod-planner__template-picker[open] {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
 }
 
 .wod-planner__template-picker::backdrop {
@@ -434,8 +444,11 @@ body[data-theme="dark"] .wod-planner__spotlight-action.is-secondary {
     display: grid;
     gap: 10px;
     overflow: auto;
+    min-height: 0;
     max-height: calc(100dvh - 190px);
     padding-right: 4px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .wod-planner__template-picker-card {
@@ -578,4 +591,34 @@ body[data-theme="dark"] .wod-planner__spotlight-action.is-secondary {
 .wod-planner__funnel-ranking-card p,
 .wod-planner__funnel-ranking-card strong {
     margin: 0;
+}
+
+@media (max-width: 640px) {
+    .wod-planner__template-picker {
+        width: min(100%, calc(100vw - 20px));
+        height: min(740px, calc(100dvh - 20px));
+        max-height: calc(100dvh - 20px);
+        margin: auto;
+        padding: 14px;
+        border-radius: 22px;
+    }
+
+    .wod-planner__template-picker-head {
+        gap: 10px;
+        padding-bottom: 12px;
+    }
+
+    .wod-planner__template-picker-list {
+        max-height: none;
+        padding-right: 2px;
+    }
+
+    .wod-planner__template-picker-card {
+        padding: 12px;
+    }
+
+    .wod-planner__template-picker-meta .badge {
+        max-width: 100%;
+        white-space: normal;
+    }
 }
