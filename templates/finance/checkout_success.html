@@ -1,0 +1,27 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Pagamento em processamento | OctoBox{% endblock %}
+
+{% block content %}
+<div class="operation-shell" data-page="checkout-success">
+    <div class="card checkout-state-card" style="max-width: 480px; margin: 80px auto; text-align: center; padding: 40px 32px;">
+        <div class="checkout-state-icon" aria-hidden="true" style="font-size: 3rem; margin-bottom: 16px;">⏳</div>
+        <h1 style="font-size: 1.4rem; margin-bottom: 12px;">PIX enviado!</h1>
+        <p style="margin-bottom: 8px;">A confirmação do pagamento pode levar <strong>até 5 minutos</strong>.</p>
+        <p class="meta-text" style="margin-bottom: 24px;">Assim que o banco confirmar, o sistema atualiza automaticamente. Você não precisa fazer nada.</p>
+        <p class="meta-text-sm" style="color: var(--theme-text-muted);">Esta página vai atualizar em <span id="checkout-countdown">30</span>s.</p>
+    </div>
+</div>
+<script>
+(function () {
+    var n = 30;
+    var el = document.getElementById('checkout-countdown');
+    var timer = setInterval(function () {
+        n -= 1;
+        if (el) el.textContent = n;
+        if (n <= 0) { clearInterval(timer); window.location.reload(); }
+    }, 1000);
+}());
+</script>
+{% endblock %}

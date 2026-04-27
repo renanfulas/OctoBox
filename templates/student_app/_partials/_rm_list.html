@@ -7,7 +7,7 @@
     </div>
     <div class="student-rm-list">
         {% for card in rm_cards %}
-        <article class="student-rm-card">
+        <article class="student-rm-card" data-rm-slug="{{ card.record.exercise_slug }}">
             <details class="student-rm-edit">
                 <summary class="student-rm-edit__toggle" aria-label="Editar RM de {{ card.record.exercise_label }}" title="Editar RM">
                     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -32,6 +32,7 @@
             <div class="student-rm-card__summary">
                 <strong>{{ card.record.exercise_label }} <span class="student-rm-card__value">{{ card.record.one_rep_max_kg|format_rm_value }}</span></strong>
                 <p class="student-copy">{{ card.record.updated_at|date:"d/m" }}{% if card.delta_kg %} · +{{ card.delta_kg|format_rm_value }}{% endif %}</p>
+                <svg class="student-rm-sparkline" data-sparkline aria-hidden="true" viewBox="0 0 120 32" preserveAspectRatio="none" style="width:100%;height:32px;display:none;overflow:visible;"></svg>
             </div>
         </article>
         {% empty %}
@@ -42,3 +43,53 @@
         {% endfor %}
     </div>
 </section>
+{{ rm_history_data|json_script:"rm-history-all" }}
+<script>
+(function () {
+    var raw = document.getElementById('rm-history-all');
+    if (!raw) return;
+    var allHistory;
+    try { allHistory = JSON.parse(raw.textContent); } catch (e) { return; }
+
+    function buildSparkline(svg, points) {
+        var kgs = points.map(function (p) { return p.kg; });
+        var minKg = Math.min.apply(null, kgs);
+        var maxKg = Math.max.apply(null, kgs);
+        var range = maxKg - minKg || 1;
+        var W = 120, H = 32, pad = 3;
+        var coords = points.map(function (p, i) {
+            var x = pad + (i / (points.length - 1)) * (W - pad * 2);
+            var y = H - pad - ((p.kg - minKg) / range) * (H - pad * 2);
+            return [x, y];
+        });
+        var d = coords.map(function (c, i) { return (i === 0 ? 'M' : 'L') + c[0].toFixed(1) + ' ' + c[1].toFixed(1); }).join(' ');
+        var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', d);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', 'currentColor');
+        path.setAttribute('stroke-width', '1.8');
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('opacity', '0.55');
+        svg.appendChild(path);
+        var last = coords[coords.length - 1];
+        var dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', last[0].toFixed(1));
+        dot.setAttribute('cy', last[1].toFixed(1));
+        dot.setAttribute('r', '3');
+        dot.setAttribute('fill', 'currentColor');
+        dot.setAttribute('opacity', '0.8');
+        svg.appendChild(dot);
+        svg.style.display = '';
+    }
+
+    document.querySelectorAll('.student-rm-card[data-rm-slug]').forEach(function (card) {
+        var slug = card.dataset.rmSlug;
+        var history = allHistory[slug];
+        if (!history || history.length < 2) return;
+        var svg = card.querySelector('[data-sparkline]');
+        if (!svg) return;
+        buildSparkline(svg, history);
+    });
+}());
+</script>

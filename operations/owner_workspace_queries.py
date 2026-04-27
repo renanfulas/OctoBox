@@ -13,12 +13,14 @@ PONTOS CRITICOS:
 - manter o snapshot estavel enquanto a fronteira ainda convive com `queries.py`.
 """
 
+from datetime import timedelta
+
 from django.urls import reverse
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import timezone
 
 from communications.queries import build_communications_headline_metrics
-from finance.models import Payment
+from finance.models import Enrollment, EnrollmentStatus, Payment
 from finance.overdue_metrics import get_overdue_payments_queryset, sum_overdue_amount
 from operations.models import ClassSession
 from operations.session_snapshots import serialize_class_session, sync_runtime_statuses
@@ -72,6 +74,18 @@ def _build_decision_entry_context(entry_item=None, secondary_item=None):
     }
 
 
+def _count_ghost_enrollments(*, today):
+    """Matrículas ACTIVE sem nenhuma cobrança com due_date nos últimos 30 dias."""
+    cutoff = today - timedelta(days=30)
+    return (
+        Enrollment.objects
+        .filter(status=EnrollmentStatus.ACTIVE)
+        .annotate(recent_payments=Count('payments', filter=Q(payments__due_date__gte=cutoff)))
+        .filter(recent_payments=0)
+        .count()
+    )
+
+
 def _decorate_operational_sessions(serialized_sessions):
     visible_sessions = [session for session in serialized_sessions if session['status_label'] != 'Finalizada']
     for index, session in enumerate(visible_sessions):
@@ -92,6 +106,7 @@ def build_owner_workspace_snapshot(*, today):
     communications_metrics = build_communications_headline_metrics(today=today)
     overdue_payments = get_overdue_payments_queryset(Payment.objects.all(), today=today)
     overdue_amount = sum_overdue_amount(Payment.objects.all(), today=today)
+    ghost_enrollments_count = _count_ghost_enrollments(today=today)
     classes_today = ClassSession.objects.filter(scheduled_at__date=today).count()
     current_time = timezone.localtime()
     owner_session_objects = list(
@@ -111,6 +126,7 @@ def build_owner_workspace_snapshot(*, today):
         'messages_logged': communications_metrics['messages_logged'],
         'overdue_payments': overdue_payments.count(),
         'overdue_amount': overdue_amount,
+        'ghost_enrollments': ghost_enrollments_count,
     }
     focus_map = {
         'intakes': _build_owner_focus_item(
@@ -153,8 +169,24 @@ def build_owner_workspace_snapshot(*, today):
             href=reverse('student-directory'),
             href_label='Abrir estrutura',
         ),
+        'ghost_enrollments': _build_owner_focus_item(
+            key='ghost_enrollments',
+            label='Matriculas sem cobranca',
+            chip_label='Alerta',
+            summary=(
+                f"{headline_metrics['ghost_enrollments']} matricula(s) ativa(s) sem cobranca nos ultimos 30 dias. Verifique se a recorrencia foi configurada."
+                if headline_metrics['ghost_enrollments']
+                else 'Todas as matriculas ativas tem cobranca recente vinculada.'
+            ),
+            count=headline_metrics['ghost_enrollments'],
+            pill_class='danger' if headline_metrics['ghost_enrollments'] > 0 else 'success',
+            href=reverse('finance-center'),
+            href_label='Abrir financeiro',
+        ),
     }
-    if headline_metrics['pending_intakes'] > 0:
+    if headline_metrics['ghost_enrollments'] > 0:
+        focus_order = ['ghost_enrollments', 'payments', 'intakes']
+    elif headline_metrics['pending_intakes'] > 0:
         focus_order = ['intakes', 'payments', 'structure']
     elif headline_metrics['overdue_payments'] > 0:
         focus_order = ['payments', 'intakes', 'structure']
@@ -172,6 +204,7 @@ def build_owner_workspace_snapshot(*, today):
         {'key': 'messages', 'count': headline_metrics['messages_logged']},
         {'key': 'overdue', 'count': headline_metrics['overdue_payments']},
         {'key': 'sessions', 'items': owner_session_objects, 'count': len(owner_upcoming_sessions)},
+        {'key': 'ghost_enrollments', 'count': headline_metrics['ghost_enrollments']},
     )
     transport_payload = {
         'owner_upcoming_sessions': owner_upcoming_sessions,
@@ -203,6 +236,11 @@ def build_owner_workspace_snapshot(*, today):
             {
                 **_build_metric_card('operation-kpi-card owner-ruby', 'Cobrancas atrasadas', headline_metrics['overdue_payments']),
                 'status_hint': 'clean' if headline_metrics['overdue_payments'] == 0 else 'attention',
+                'href': reverse('finance-center'),
+            },
+            {
+                **_build_metric_card('operation-kpi-card owner-ruby', 'Matriculas sem cobranca', headline_metrics['ghost_enrollments']),
+                'status_hint': 'clean' if headline_metrics['ghost_enrollments'] == 0 else 'danger',
                 'href': reverse('finance-center'),
             },
         ],

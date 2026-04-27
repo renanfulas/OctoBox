@@ -24,7 +24,7 @@ from shared_support.form_inputs import apply_currency_input_attrs, apply_text_in
 class QuickSaleManagementForm(forms.Form):
     template_id = forms.IntegerField(widget=forms.HiddenInput, required=False, min_value=1)
     description = forms.CharField(max_length=120, label='Descricao do produto')
-    amount = forms.DecimalField(decimal_places=2, max_digits=10, min_value=0, label='Valor total')
+    amount = forms.DecimalField(decimal_places=2, max_digits=10, min_value=Decimal('0.01'), label='Valor total')
     method = forms.ChoiceField(choices=PaymentMethod.choices, label='Metodo')
     reference = forms.CharField(required=False, max_length=100, label='Referencia')
     notes = forms.CharField(required=False, label='Observacoes', widget=forms.Textarea(attrs={'rows': 3}))

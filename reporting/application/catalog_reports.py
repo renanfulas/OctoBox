@@ -13,6 +13,18 @@ PONTOS CRITICOS:
 - A leitura pesada deve continuar vindo pronta de queries ou snapshots.
 """
 
+from decimal import Decimal, InvalidOperation
+
+
+def _money(value) -> float:
+    """Normaliza qualquer valor monetário para float com 2 casas — evita mistura float/Decimal no Excel."""
+    if value is None:
+        return 0.00
+    try:
+        return float(round(Decimal(str(value)), 2))
+    except (InvalidOperation, TypeError):
+        return 0.00
+
 
 def build_student_directory_report(*, students, report_format):
     student_rows = students.iterator(chunk_size=1000) if hasattr(students, 'iterator') else iter(students)
@@ -44,8 +56,8 @@ def build_student_directory_report(*, students, report_format):
                     student.latest_enrollment_status or '-',
                     student.latest_payment_status or '-',
                     student.latest_plan_name or '-',
-                    round(student.report_amount_paid, 2) if hasattr(student, 'report_amount_paid') and student.report_amount_paid else 0.0,
-                    round(student.report_amount_open, 2) if hasattr(student, 'report_amount_open') and student.report_amount_open else 0.0,
+                    _money(student.report_amount_paid if hasattr(student, 'report_amount_paid') else None),
+                    _money(student.report_amount_open if hasattr(student, 'report_amount_open') else None),
                     student.report_overdue_count if hasattr(student, 'report_overdue_count') and student.report_overdue_count else 0,
                     student.report_last_check_in.strftime('%d/%m/%Y %H:%M') if hasattr(student, 'report_last_check_in') and student.report_last_check_in else '-',
                 ]
@@ -89,7 +101,7 @@ def build_finance_report(*, snapshot, report_format):
                 [
                     payment.student.full_name,
                     payment.due_date.strftime('%d/%m/%Y'),
-                    payment.amount,
+                    _money(payment.amount),
                     payment.get_status_display(),
                     payment.get_method_display(),
                     payment.due_date.strftime('%m/%Y'),

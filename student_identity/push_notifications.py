@@ -152,3 +152,52 @@ def send_student_web_push_notification(
 
 def build_student_push_welcome_url() -> str:
     return reverse('student-app-home')
+
+
+def send_session_cancelled_push(*, session, box_root_slug: str) -> int:
+    """
+    Envia push de cancelamento para todos os alunos com reserva ativa na sessão.
+
+    Callsite: chame esta função imediatamente após mudar ClassSession.status = 'canceled'
+    e antes de salvar, ou em um sinal post_save. Exemplo:
+
+        from student_identity.push_notifications import send_session_cancelled_push
+        session.status = 'canceled'
+        session.save(update_fields=['status', 'updated_at'])
+        send_session_cancelled_push(session=session, box_root_slug=box_root_slug)
+
+    Retorna o número de pushes enviados com sucesso.
+    """
+    if not is_student_web_push_configured():
+        return 0
+
+    from operations.models import Attendance, AttendanceStatus
+
+    student_ids = list(
+        Attendance.objects.filter(
+            session=session,
+            status__in=[AttendanceStatus.BOOKED, AttendanceStatus.CHECKED_IN],
+        ).values_list('student_id', flat=True)
+    )
+    if not student_ids:
+        return 0
+
+    subscriptions = StudentPushSubscription.objects.filter(
+        identity__student_id__in=student_ids,
+        box_root_slug=box_root_slug,
+        revoked_at__isnull=True,
+    ).select_related('identity__student')
+
+    session_time = session.scheduled_at.strftime('%d/%m %H:%M') if hasattr(session.scheduled_at, 'strftime') else str(session.scheduled_at)
+    sent = 0
+    for sub in subscriptions:
+        ok = send_student_web_push_notification(
+            subscription=sub,
+            title='Aula cancelada',
+            body=f'{session.title} de {session_time} foi cancelada. Fique à vontade para reservar outra.',
+            url=reverse('student-app-grade'),
+            tag=f'session-cancelled-{session.pk}',
+        )
+        if ok:
+            sent += 1
+    return sent

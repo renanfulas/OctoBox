@@ -1,11 +1,49 @@
 import csv
 import logging
 from datetime import date
+
+from django.db import transaction
+
 from shared_support.phone_numbers import normalize_phone_number
 from shared_support.validators import validate_file_security
 from students.models import HealthIssueStatus, Student, StudentGender, StudentStatus
 
 logger = logging.getLogger('octobox.students')
+
+_UPDATE_FIELDS = ['full_name', 'email', 'gender', 'birth_date', 'health_issue_status', 'cpf', 'status', 'notes']
+
+
+def _flush_create(batch, created_count, error_rows):
+    """Attempt bulk_create; fall back to per-row savepoints on constraint error."""
+    try:
+        Student.objects.bulk_create(batch)
+        return created_count + len(batch), error_rows
+    except Exception:
+        for student_obj in batch:
+            try:
+                with transaction.atomic():
+                    student_obj.save()
+                created_count += 1
+            except Exception as row_err:
+                error_rows.append({'phone': student_obj.phone, 'name': student_obj.full_name, 'error': str(row_err)})
+        return created_count, error_rows
+
+
+def _flush_update(batch, updated_count, error_rows):
+    """Attempt bulk_update; fall back to per-row savepoints on error."""
+    try:
+        Student.objects.bulk_update(batch, _UPDATE_FIELDS)
+        return updated_count + len(batch), error_rows
+    except Exception:
+        for student_obj in batch:
+            try:
+                with transaction.atomic():
+                    student_obj.save(update_fields=_UPDATE_FIELDS)
+                updated_count += 1
+            except Exception as row_err:
+                error_rows.append({'phone': student_obj.phone, 'name': student_obj.full_name, 'error': str(row_err)})
+        return updated_count, error_rows
+
 
 class StudentImporter:
     def __init__(self, batch_size=500):
@@ -15,20 +53,16 @@ class StudentImporter:
         created_count = 0
         updated_count = 0
         skipped_count = 0
-        details = []
+        error_rows = []
 
         try:
-            # 🚀 Segurança de Elite (Fintech Hardening): MIME & Size Validation
             validate_file_security(file_path, max_size_mb=15, allowed_mimes=['text/csv', 'text/plain'])
 
-            # EPIC 9: Streaming read with utf-8-sig to handle Windows/Excel encoding
             with open(file_path, encoding='utf-8-sig', newline='') as csv_file:
                 reader = csv.DictReader(csv_file, delimiter=delimiter)
-                
-                # Cache existing phones in a dict mapping phone -> id for O(1) lookups and bulk_update support.
-                # For 1M+ records, this set is ~40-60MB. We use .iterator() to keep memory lean during fetch.
+
                 existing_student_map = {p: i for p, i in Student.objects.values_list('phone', 'id').iterator()}
-                
+
                 to_create = []
                 to_update = []
 
@@ -52,36 +86,24 @@ class StudentImporter:
                     }
 
                     if phone in existing_student_map:
-                        # CRITICAL FIX: Attach the ID so bulk_update works
                         s = Student(id=existing_student_map[phone], phone=phone, **student_data)
                         to_update.append(s)
                     else:
                         s = Student(phone=phone, **student_data)
                         to_create.append(s)
-                        # Avoid adding to existing_student_map here to prevent duplicates in the same batch
-                        # But we add it to a local 'currently_processing' if needed. 
-                        # However, Student model has unique phone constraint usually.
 
                     if len(to_create) >= self.batch_size:
-                        Student.objects.bulk_create(to_create)
-                        created_count += len(to_create)
+                        created_count, error_rows = _flush_create(to_create, created_count, error_rows)
                         to_create = []
 
                     if len(to_update) >= self.batch_size:
-                        update_fields = ['full_name', 'email', 'gender', 'birth_date', 'health_issue_status', 'cpf', 'status', 'notes']
-                        # bulk_update now works because s.id is set
-                        Student.objects.bulk_update(to_update, update_fields)
-                        updated_count += len(to_update)
+                        updated_count, error_rows = _flush_update(to_update, updated_count, error_rows)
                         to_update = []
 
-                # Final flush
                 if to_create:
-                    Student.objects.bulk_create(to_create)
-                    created_count += len(to_create)
+                    created_count, error_rows = _flush_create(to_create, created_count, error_rows)
                 if to_update:
-                    update_fields = ['full_name', 'email', 'gender', 'birth_date', 'health_issue_status', 'cpf', 'status', 'notes']
-                    Student.objects.bulk_update(to_update, update_fields)
-                    updated_count += len(to_update)
+                    updated_count, error_rows = _flush_update(to_update, updated_count, error_rows)
 
         except Exception as e:
             logger.error(f"Failed to import students from {file_path}: {str(e)}", exc_info=True)
@@ -91,7 +113,9 @@ class StudentImporter:
             'success': created_count,
             'updated': updated_count,
             'skipped': skipped_count,
-            'total': created_count + updated_count + skipped_count
+            'errors': len(error_rows),
+            'error_rows': error_rows,
+            'total': created_count + updated_count + skipped_count + len(error_rows),
         }
 
     def _parse_date(self, value):

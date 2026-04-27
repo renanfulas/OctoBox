@@ -30,6 +30,14 @@ from student_identity.resend_webhooks import (
 from students.models import Student
 
 
+def _mask_cpf(cpf: str) -> str:
+    """Retorna CPF mascarado como ***.XXX.***-** para exibição em autocomplete."""
+    digits = ''.join(c for c in (cpf or '') if c.isdigit())
+    if len(digits) != 11:
+        return ''
+    return f'***.{digits[3:6]}.***-**'
+
+
 class ApiV1ManifestView(View):
     def get(self, request, *args, **kwargs):
         return JsonResponse(
@@ -99,6 +107,8 @@ class StudentAutocompleteView(LoginRequiredMixin, View):
                 'status': student.get_status_display(),
                 'status_raw': student.status,
                 'url': reverse('student-quick-update', args=[student.id]),
+                'birth_date': student.birth_date.strftime('%d/%m/%Y') if student.birth_date else None,
+                'cpf_masked': _mask_cpf(student.cpf),
             }
             for student in students
         ]
