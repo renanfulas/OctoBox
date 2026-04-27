@@ -220,19 +220,22 @@ REGRA:
 
 .hero.hero--command .operation-hero-title {
     max-width: 100%;
-    display: block;
-    white-space: nowrap;
     overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
     text-overflow: ellipsis;
-    text-wrap: nowrap;
+    -webkit-line-clamp: var(--operation-hero-title-lines, 1);
+    line-clamp: var(--operation-hero-title-lines, 1);
 }
 
 .hero.hero--command .operation-hero-copy {
     max-width: 100%;
-    display: block;
-    white-space: nowrap;
     overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
     text-overflow: ellipsis;
+    -webkit-line-clamp: var(--operation-hero-copy-lines, 1);
+    line-clamp: var(--operation-hero-copy-lines, 1);
     color: color-mix(in srgb, var(--theme-text-secondary) 76%, white 24%);
 }
 
