@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pagamento em processamento | OctoBox</title>
+    <link rel="stylesheet" href="{% static 'css/design-system/pages/checkout-status.css' %}?v={{ static_asset_version }}">
+</head>
+<body data-page="checkout-status" data-screen="success">
+    <main class="checkout-status-shell" aria-label="Status do pagamento">
+        <section class="checkout-status-panel checkout-status-panel--success" aria-label="Pagamento em processamento">
+            <div class="checkout-status-chip">
+                <img class="checkout-status-chip__icon" src="{% static 'images/brand/octobox-mark.svg' %}?v={{ static_asset_version }}" alt="">
+                <span>OctoBox</span>
+                <span>Pagamento</span>
+            </div>
+            <p class="checkout-status-eyebrow">Confirmado</p>
+            <h1 class="checkout-status-title">Pagamento recebido.</h1>
+            <p class="checkout-status-copy">
+                Estamos confirmando tudo por baixo dos panos. Em instantes a ficha deve atualizar no financeiro.
+            </p>
+            <div class="checkout-status-actions" role="group" aria-label="Acoes depois do pagamento">
+                <a class="checkout-status-button checkout-status-button--primary" href="/financeiro/">Voltar ao financeiro</a>
+                <a class="checkout-status-button checkout-status-button--secondary" href="/alunos/">Abrir alunos</a>
+            </div>
+            <p class="checkout-status-note">
+                Se a cobranca nao refletir em ate 2 minutos, recarregue a pagina do financeiro. A baixa oficial sempre vem do webhook.
+            </p>
+        </section>
+    </main>
+</body>
+</html>
+
