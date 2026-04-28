@@ -520,6 +520,26 @@ class DashboardViewTests(TestCase):
         session.refresh_from_db()
         self.assertEqual(session.status, SessionStatus.SCHEDULED)
 
+    def test_dashboard_renders_session_title_from_sanitized_snapshot_contract(self):
+        self.client.force_login(self.user)
+        today = timezone.localdate()
+        ClassSession.objects.create(
+            title="CrossFit Front Squat",
+            coach=self.user,
+            scheduled_at=timezone.make_aware(
+                timezone.datetime.combine(today, timezone.datetime.strptime("09:00", "%H:%M").time()),
+                timezone.get_current_timezone(),
+            ),
+            duration_minutes=60,
+            capacity=16,
+            status=SessionStatus.SCHEDULED,
+        )
+
+        response = self.client.get(reverse("dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "CrossFit Front Squat")
+
     def test_dashboard_auto_completes_session_after_end_time(self):
         self.client.force_login(self.user)
         today = timezone.localdate()

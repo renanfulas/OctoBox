@@ -241,6 +241,33 @@ class OperationWorkspaceTests(TestCase):
         self.assertIn('owner_upcoming_sessions_total_label', snapshot)
         self.assertTrue(snapshot['owner_upcoming_sessions_total_label'].endswith('aula(s)'))
 
+    def test_owner_workspace_snapshot_hides_red_beacon_metric(self):
+        snapshot = build_owner_workspace_snapshot(today=timezone.localdate())
+
+        eyebrows = [card['eyebrow'] for card in snapshot['metric_cards']]
+
+        self.assertNotIn('Red Beacon', eyebrows)
+
+    def test_owner_workspace_snapshot_keeps_upcoming_sessions_visible_beyond_today(self):
+        ClassSession.objects.all().delete()
+        tomorrow = timezone.localdate() + timezone.timedelta(days=1)
+        upcoming_session = ClassSession.objects.create(
+            title='WOD amanha 07h',
+            scheduled_at=timezone.make_aware(
+                timezone.datetime.combine(
+                    tomorrow,
+                    timezone.datetime.strptime('07:00', '%H:%M').time(),
+                ),
+                timezone.get_current_timezone(),
+            ),
+        )
+
+        snapshot = build_owner_workspace_snapshot(today=timezone.localdate())
+
+        self.assertEqual(len(snapshot['owner_upcoming_sessions']), 1)
+        self.assertEqual(snapshot['owner_upcoming_sessions'][0]['title'], 'WOD amanha 07h')
+        self.assertEqual(snapshot['owner_upcoming_sessions'][0]['object'].id, upcoming_session.id)
+
     def test_sidebar_keeps_my_operation_immediately_after_dashboard_for_main_roles(self):
         scenarios = [
             (self.owner, 'owner-workspace'),

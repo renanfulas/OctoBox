@@ -22,7 +22,6 @@ from django.utils import timezone
 from communications.queries import build_communications_headline_metrics
 from finance.models import Enrollment, EnrollmentStatus, Payment
 from finance.overdue_metrics import get_overdue_payments_queryset, sum_overdue_amount
-from monitoring.beacon_snapshot import build_red_beacon_snapshot
 from operations.models import ClassSession
 from operations.session_snapshots import serialize_class_session, sync_runtime_statuses
 from shared_support.workspace_snapshot_versions import build_workspace_snapshot_version
@@ -104,7 +103,6 @@ def _decorate_operational_sessions(serialized_sessions):
 
 
 def build_owner_workspace_snapshot(*, today):
-    red_beacon_snapshot = build_red_beacon_snapshot()
     communications_metrics = build_communications_headline_metrics(today=today)
     overdue_payments = get_overdue_payments_queryset(Payment.objects.all(), today=today)
     overdue_amount = sum_overdue_amount(Payment.objects.all(), today=today)
@@ -112,7 +110,7 @@ def build_owner_workspace_snapshot(*, today):
     classes_today = ClassSession.objects.filter(scheduled_at__date=today).count()
     current_time = timezone.localtime()
     owner_session_objects = list(
-        ClassSession.objects.filter(scheduled_at__date=today)
+        ClassSession.objects.filter(scheduled_at__date__gte=today)
         .select_related('coach')
         .annotate(occupied_slots=Count('attendances'))
         .order_by('scheduled_at')[:5]
@@ -245,15 +243,8 @@ def build_owner_workspace_snapshot(*, today):
                 'status_hint': 'clean' if headline_metrics['ghost_enrollments'] == 0 else 'danger',
                 'href': reverse('finance-center'),
             },
-            {
-                **_build_metric_card('operation-kpi-card owner-beacon', 'Red Beacon', red_beacon_snapshot['signal_mesh']['total_due_backlog']),
-                'status_hint': 'attention' if red_beacon_snapshot['signal_mesh']['total_due_backlog'] > 0 else 'clean',
-                'note': red_beacon_snapshot['summary'],
-                'href': reverse('whatsapp-workspace'),
-            },
         ],
         'owner_decision_entry_context': owner_decision_entry_context,
         'owner_operational_focus': owner_operational_focus,
-        'red_beacon_snapshot': red_beacon_snapshot,
         'transport_payload': transport_payload,
     }

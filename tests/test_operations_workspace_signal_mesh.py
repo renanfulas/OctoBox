@@ -12,12 +12,11 @@ from operations.queries import build_manager_workspace_snapshot, build_owner_wor
 
 
 class OperationsWorkspaceSignalMeshTests(TestCase):
-    def test_build_owner_workspace_snapshot_includes_red_beacon_card(self):
+    def test_build_owner_workspace_snapshot_hides_red_beacon_card(self):
         snapshot = build_owner_workspace_snapshot(today=timezone.localdate())
 
-        self.assertIn('red_beacon_snapshot', snapshot)
-        self.assertEqual(snapshot['metric_cards'][-1]['eyebrow'], 'Red Beacon')
-        self.assertIn('alert_siren', snapshot['red_beacon_snapshot'])
+        self.assertNotIn('red_beacon_snapshot', snapshot)
+        self.assertNotIn('Red Beacon', [card['eyebrow'] for card in snapshot['metric_cards']])
 
     def test_build_manager_workspace_snapshot_includes_red_beacon_card(self):
         snapshot = build_manager_workspace_snapshot(actor=None)

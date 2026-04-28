@@ -421,6 +421,28 @@ POR QUE ELE EXISTE:
 }
 
 @media (max-width: 720px) {
+    .owner-sessions-panel .dashboard-session-feature-head,
+    .owner-sessions-panel .dashboard-session-feature-meta-row,
+    .owner-sessions-panel .dashboard-session-meta--inline {
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+
+    .owner-sessions-panel .dashboard-session-feature-head,
+    .owner-sessions-panel .dashboard-session-feature-meta-row {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .owner-sessions-panel .dashboard-session-time {
+        min-width: 0;
+        width: fit-content;
+    }
+
+    .owner-sessions-panel .dashboard-session-window {
+        line-height: 1.35;
+    }
+
     .owner-session-feature-head,
     .owner-session-feature-meta-row,
     .owner-session-meta--inline {
@@ -466,6 +488,10 @@ body[data-theme="dark"] .owner-sessions-panel .operation-card-copy {
     color: var(--theme-text-secondary);
 }
 
+body[data-theme="dark"] .owner-sessions-panel .card-label {
+    color: rgba(226, 232, 240, 0.64);
+}
+
 body[data-theme="dark"] .owner-sessions-panel .state-empty {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 26%, transparent), transparent 34%),
@@ -480,6 +506,20 @@ body[data-theme="dark"] .owner-sessions-panel .operation-card-title,
 body[data-theme="dark"] .owner-sessions-panel .owner-session-feature-head strong,
 body[data-theme="dark"] .owner-sessions-panel .owner-session-body strong {
     color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .owner-sessions-panel .state-empty .state-empty-title {
+    color: color-mix(in srgb, var(--theme-text-primary) 96%, white 4%);
+}
+
+body[data-theme="dark"] .owner-sessions-panel .state-empty .state-empty-copy {
+    color: rgba(226, 232, 240, 0.8);
+}
+
+body[data-theme="dark"] .owner-sessions-panel .state-empty .pill {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, rgba(148, 163, 184, 0.16) 76%);
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 20%, rgba(8, 16, 30, 0.96) 80%);
+    color: color-mix(in srgb, var(--theme-accent-support) 66%, white 34%);
 }
 
 body[data-theme="dark"] .owner-session-card {
