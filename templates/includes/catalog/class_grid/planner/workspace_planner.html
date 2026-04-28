@@ -13,7 +13,6 @@ PONTOS CRITICOS:
     {% include "includes/ui/class_grid/class_grid_panel_head.html" with eyebrow="Planejador recorrente" title="Monte a grade sem depender do admin toda hora" summary="Defina nome, coach, horário, período e dias da semana. O sistema gera a recorrência e evita duplicidade." pill_label="Planejamento rápido" pill_class="info" %}
     <form method="post" class="form-stack-lg section-gap-top-xs" novalidate data-class-grid-planner data-action="submit-class-grid-planner">
         {% csrf_token %}
-        <input type="hidden" name="form_kind" value="planner">
         <input type="hidden" name="return_query" value="{{ page.behavior.current_query_string }}">
             {% include "includes/catalog/class_grid/planner/workspace_planner_intro.html" %}
             {% include "includes/catalog/class_grid/planner/workspace_planner_core_fields.html" %}

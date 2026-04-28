@@ -350,6 +350,36 @@ body[data-theme="dark"] .weekday-option {
     color: var(--muted);
 }
 
+.class-grid-planner-reset-rail {
+    margin-top: -4px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.class-grid-reset-button {
+    flex: 0 0 auto;
+    width: auto;
+    min-height: 34px;
+    padding: 7px 12px;
+    border-radius: 12px;
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 18%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-danger) 74%, var(--muted) 26%);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.class-grid-reset-button:hover,
+.class-grid-reset-button:focus-visible {
+    color: color-mix(in srgb, var(--theme-accent-danger) 86%, var(--ink) 14%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 10%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 32%, transparent);
+}
+
+body[data-theme="dark"] .class-grid-reset-button {
+    color: color-mix(in srgb, var(--theme-accent-danger) 78%, rgba(226, 232, 240, 0.72) 22%);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 24%, rgba(148, 163, 184, 0.18) 76%);
+}
+
 /* --- Dark Mode Absolute Overrides --- */
 body[data-theme="dark"] .weekday-picker {
     border-color: rgba(148, 163, 184, 0.12);

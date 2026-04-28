@@ -179,6 +179,14 @@ POR QUE ELE EXISTE:
 
   if (plannerForm) {
     plannerForm.addEventListener('submit', function(event) {
+      var submitter = event.submitter || null;
+      if (submitter && submitter.hasAttribute('data-confirm-reset-all')) {
+        if (!window.confirm('Deseja realmente excluir todas as aulas?')) {
+          event.preventDefault();
+        }
+        return;
+      }
+
       if (validatePlannerForm()) {
         return;
       }

@@ -19,6 +19,8 @@ UNKNOWN_SESSION_ACTION = 'A acao rapida da aula nao foi reconhecida.'
 SESSION_UPDATE_INVALID = 'A aula nao foi atualizada. Revise os campos destacados.'
 PLANNER_INVALID = 'A agenda nao foi criada. Revise os campos destacados do planejador.'
 PLANNER_SKIPPED_ONLY = 'Nenhuma aula nova foi criada, porque todos os horarios escolhidos ja existiam.'
+PLANNER_RESET_ATTENDANCE_BLOCKED = 'Nao foi possivel limpar a grade inteira porque existe ao menos uma aula com reservas ou presencas. Cancele essas aulas para preservar o historico.'
+PLANNER_RESET_EMPTY = 'Nao havia aulas cadastradas para limpar.'
 COMPLETED_SESSION_REOPEN_BLOCKED = 'Aulas concluidas nao podem voltar para agendada por esta edicao rapida.'
 SESSION_DELETE_WITH_ATTENDANCE_BLOCKED = 'Nao exclua uma aula que ja tenha reservas ou presencas. Cancele a aula para preservar o historico.'
 
@@ -38,9 +40,15 @@ def planner_success(created_count, skipped_count):
     return message
 
 
+def planner_reset_success(deleted_count):
+    return f'{deleted_count} aula(s) excluida(s). A grade voltou a ficar vazia para um novo planejamento.'
+
+
 __all__ = [
     'COMPLETED_SESSION_REOPEN_BLOCKED',
     'PLANNER_INVALID',
+    'PLANNER_RESET_ATTENDANCE_BLOCKED',
+    'PLANNER_RESET_EMPTY',
     'PLANNER_SKIPPED_ONLY',
     'ROLE_CANNOT_MANAGE_CLASSES',
     'SESSION_DELETE_WITH_ATTENDANCE_BLOCKED',
@@ -48,6 +56,7 @@ __all__ = [
     'SESSION_UPDATE_INVALID',
     'UNKNOWN_FORM_KIND',
     'UNKNOWN_SESSION_ACTION',
+    'planner_reset_success',
     'planner_success',
     'session_deleted_success',
     'session_updated_success',

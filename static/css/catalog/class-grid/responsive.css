@@ -399,6 +399,15 @@ POR QUE ELE EXISTE:
         justify-content: center;
     }
 
+    .class-grid-planner-panel .class-grid-planner-reset-rail {
+        width: auto;
+    }
+
+    .class-grid-planner-panel .class-grid-planner-reset-rail .class-grid-reset-button {
+        width: auto;
+        justify-content: flex-start;
+    }
+
     .class-day-summary,
     .class-grid-meta {
         font-size: 0.88rem;
