@@ -10,7 +10,7 @@ from shared_support.page_payloads import build_page_assets, build_page_hero, bui
 from .workout_corridor_navigation import build_workout_corridor_tabs
 from .workout_approval_policy import get_or_create_workout_approval_policy_setting
 from .workout_templates import build_manageable_workout_templates, build_workout_template_management_summary
-from .workout_template_archive import build_archived_template_list
+from .services.workout_template_archive import build_archived_template_list
 
 
 def build_workout_template_management_context(*, request, current_role, page_title, page_subtitle):

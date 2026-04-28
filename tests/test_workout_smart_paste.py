@@ -411,11 +411,13 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         )
 
         next_year_candidate = date(today.year, 1, 1)
-        expected_next_year_date = (
+        raw_next_year_date = (
             next_year_candidate
             if next_year_candidate >= today
             else date(today.year + 1, 1, 1)
         )
+        # The form snaps non-Monday dates to the previous Monday.
+        expected_next_year_date = raw_next_year_date - timedelta(days=raw_next_year_date.weekday())
         next_year_form = WeeklyWodSmartPasteForm(
             data={
                 'week_start': '01/01',
