@@ -124,10 +124,15 @@ class StudentRequestFreezeView(StudentIdentityRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         raw_days = (request.POST.get('days') or '').strip()
+        if not raw_days.isdigit():
+            messages.error(request, 'Informe um periodo entre 5 e 90 dias.')
+            return redirect('student-app-settings')
+
         try:
             days = int(raw_days)
-            if days < 7 or days > 90:
-                raise ValueError
+            if days < 5 or days > 90:
+                messages.error(request, 'Informe um periodo entre 5 e 90 dias.')
+                return redirect('student-app-settings')
         except (ValueError, TypeError):
             messages.error(request, 'Informe um período entre 7 e 90 dias.')
             return redirect('student-app-settings')

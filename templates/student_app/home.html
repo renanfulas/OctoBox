@@ -1,6 +1,6 @@
 {% extends "student_app/layout.html" %}
 
-{% block title %}Inicio | OctoBox Aluno{% endblock %}
+{% block title %}Início | OctoBox Aluno{% endblock %}
 
 {% block extra_head %}
 {{ block.super }}
@@ -14,7 +14,7 @@
         Modo atual: {% if student_home_mode == 'wod_active' %}WOD{% else %}Grade{% endif %}
     </p>
     <span class="student-context-switch">
-        {% if student_home_mode == 'wod_active' %}Modo WOD{% else %}Proxima aula{% endif %}
+        {% if student_home_mode == 'wod_active' %}Modo WOD{% else %}Próxima aula{% endif %}
     </span>
     <p class="student-hero-number__label">
         {% if student_home_mode == 'wod_active' and student_active_wod_session %}
@@ -70,7 +70,7 @@
 <section class="student-card student-card--quiet student-tomorrow-wod-card">
     <div class="student-section-head">
         <div>
-            <span class="student-context-switch">WOD de amanha</span>
+            <span class="student-context-switch">WOD de amanhã</span>
             <h2>{{ student_tomorrow_wod.title }}</h2>
         </div>
         <a href="{% url 'student-app-grade' %}" class="student-link">Ver grade</a>
@@ -85,7 +85,7 @@
     <div class="student-section-head">
         <div>
             <span class="student-context-switch">Agenda</span>
-            <h2>Proximas aulas</h2>
+            <h2>Próximas aulas</h2>
         </div>
     </div>
     {% if not student_day_sections %}

@@ -12,19 +12,19 @@
 {% include "student_app/_partials/_cancellation_banner.html" %}
 <section class="student-hero-number">
     <span class="student-context-switch">Grade</span>
-    <p class="student-hero-number__label">{% if student_next_session %}{{ student_next_session.title }}{% else %}Hoje e amanha{% endif %}</p>
+    <p class="student-hero-number__label">{% if student_next_session %}{{ student_next_session.title }}{% else %}Hoje e amanhã{% endif %}</p>
     <div class="student-hero-number__value">
         <span>{% if student_next_session %}{{ student_next_session.scheduled_at|date:"H:i" }}{% else %}--{% endif %}</span>
     </div>
     {% if student_next_session %}
     <p class="student-hero-number__support">{{ student_next_session.scheduled_label }} · {{ student_next_session.attendance_status }}</p>
     {% endif %}
-    <p class="student-copy">Aqui voce acompanha sua rotina. Reserve na aba Agenda.</p>
+    <p class="student-copy">Aqui você acompanha sua rotina. Reserve na aba Agenda.</p>
     <p class="student-copy" style="margin-top:6px; font-size:0.78rem; opacity:0.72;">Cancele sem perder crédito até 2h antes da aula.</p>
 </section>
 
 <details class="student-month-calendar">
-    <summary class="student-month-calendar__toggle">Ver mes</summary>
+    <summary class="student-month-calendar__toggle">Ver mês</summary>
     <div class="student-month-calendar__weekdays" aria-hidden="true">
         <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
     </div>
@@ -95,7 +95,7 @@
     <div class="student-section-head">
         <div>
             <span class="student-context-switch">{{ student_tomorrow_sessions|length }} aula(s)</span>
-            <h2>Amanha</h2>
+            <h2>Amanhã</h2>
         </div>
     </div>
     <div class="student-session-list">
@@ -109,8 +109,8 @@
         </article>
         {% empty %}
         <article class="student-compact-state">
-            <strong>Sem aulas amanha.</strong>
-            <p class="student-copy">Nada publicado para o proximo dia.</p>
+            <strong>Sem aulas amanhã.</strong>
+            <p class="student-copy">Nada publicado para o próximo dia.</p>
         </article>
         {% endfor %}
     </div>

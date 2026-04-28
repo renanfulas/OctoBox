@@ -37,6 +37,44 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     min-width: 110px;
 }
 
+.student-wod-calculator {
+    --student-card-glow:
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-primary-alpha) 50%, transparent), transparent 38%),
+        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--theme-accent-premium-alpha) 24%, transparent), transparent 42%);
+}
+
+.student-wod-calculator .student-section-head {
+    align-items: center;
+}
+
+.student-wod-calculator__grid {
+    align-items: end;
+}
+
+.student-wod-calculator__movement,
+.student-wod-calculator__percent {
+    min-width: 0;
+}
+
+.student-wod-calculator__submit {
+    width: 100%;
+}
+
+.student-prescription {
+    margin-top: 16px;
+}
+
+@media (min-width: 720px) {
+    .student-wod-calculator__grid {
+        grid-template-columns: minmax(0, 1.35fr) minmax(180px, 0.7fr) minmax(140px, auto);
+    }
+
+    .student-wod-calculator__submit {
+        min-height: 48px;
+        align-self: end;
+    }
+}
+
 .student-secondary-action--tab {
     min-height: 46px;
     padding: 12px 18px;
@@ -83,5 +121,9 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 @media (max-width: 640px) {
     .student-wod-utility-switch + .student-secondary-action--tab {
         min-width: 96px;
+    }
+
+    .student-wod-calculator__submit {
+        margin-top: 4px;
     }
 }

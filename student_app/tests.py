@@ -157,6 +157,30 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(request.requested_payload['full_name'], 'Atleta Atualizada')
         self.assertEqual(request.requested_payload['email'], 'nova@app.com')
 
+    def test_student_settings_freeze_request_accepts_five_days_and_logs_audit(self):
+        response = self.client.post(
+            reverse('student-app-request-freeze'),
+            {
+                'days': '5',
+                'reason': 'Viagem curta',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('student-app-settings'))
+        event = AuditEvent.objects.get(action='student_app.freeze_requested')
+        self.assertEqual(event.metadata['days'], 5)
+        self.assertEqual(event.metadata['reason'], 'Viagem curta')
+
+    def test_student_settings_renders_freeze_presets_and_three_digit_guard(self):
+        response = self.client.get(reverse('student-app-settings'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-max-integer-digits="3"', html=False)
+        self.assertContains(response, 'data-freeze-days="5"', html=False)
+        self.assertContains(response, 'data-freeze-days="60"', html=False)
+
     def test_mass_onboarding_creates_student_and_identity(self):
         client = Client()
         link = self._set_mass_onboarding_session(client)

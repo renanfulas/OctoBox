@@ -25,6 +25,7 @@
   var notificationCard = null;
   var dismissAction = null;
   var dismissKey = 'octobox_pwa_card_dismissed';
+  var subscribeInFlight = null;
 
   function isIos() {
     var userAgent = (window.navigator.userAgent || '').toLowerCase();
@@ -143,6 +144,49 @@
     });
   }
 
+  function finalizeSubscriptionState(subscription) {
+    currentPushSubscription = subscription || null;
+    if (subscription && notificationPermission === 'granted') {
+      return syncSubscriptionWithBackend(subscription).then(function () {
+        publishPwaState();
+        return subscription;
+      });
+    }
+    publishPwaState();
+    return Promise.resolve(subscription);
+  }
+
+  function canRecoverLegacyStandaloneSubscription() {
+    return Boolean(
+      isStandalone() &&
+      notificationPermission === 'granted' &&
+      pushPublicKey &&
+      'PushManager' in window
+    );
+  }
+
+  function ensureGrantedPermissionSubscription(registration) {
+    if (!canRecoverLegacyStandaloneSubscription()) {
+      return finalizeSubscriptionState(null);
+    }
+    if (subscribeInFlight) {
+      return subscribeInFlight;
+    }
+    subscribeInFlight = registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(pushPublicKey)
+    }).then(function (subscription) {
+      return finalizeSubscriptionState(subscription);
+    }).catch(function () {
+      currentPushSubscription = null;
+      publishPwaState();
+      return null;
+    }).finally(function () {
+      subscribeInFlight = null;
+    });
+    return subscribeInFlight;
+  }
+
   function refreshPushSubscriptionState() {
     if (!pushPublicKey || !('PushManager' in window)) {
       currentPushSubscription = null;
@@ -154,9 +198,11 @@
     }).then(function (subscription) {
       currentPushSubscription = subscription;
       if (subscription && notificationPermission === 'granted') {
-        return syncSubscriptionWithBackend(subscription).then(function () {
-          publishPwaState();
-          return subscription;
+        return finalizeSubscriptionState(subscription);
+      }
+      if (!subscription && canRecoverLegacyStandaloneSubscription()) {
+        return navigator.serviceWorker.ready.then(function (registration) {
+          return ensureGrantedPermissionSubscription(registration);
         });
       }
       publishPwaState();
@@ -173,25 +219,15 @@
       publishPwaState();
       return Promise.resolve(null);
     }
+    if (subscribeInFlight) {
+      return subscribeInFlight;
+    }
     return navigator.serviceWorker.ready.then(function (registration) {
       return registration.pushManager.getSubscription().then(function (existingSubscription) {
         if (existingSubscription) {
-          currentPushSubscription = existingSubscription;
-          return syncSubscriptionWithBackend(existingSubscription).then(function () {
-            publishPwaState();
-            return existingSubscription;
-          });
+          return finalizeSubscriptionState(existingSubscription);
         }
-        return registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(pushPublicKey)
-        }).then(function (subscription) {
-          currentPushSubscription = subscription;
-          return syncSubscriptionWithBackend(subscription).then(function () {
-            publishPwaState();
-            return subscription;
-          });
-        });
+        return ensureGrantedPermissionSubscription(registration);
       });
     }).catch(function () {
       currentPushSubscription = null;
@@ -202,10 +238,10 @@
 
   function resolveActivationCopy(state) {
     if (state.activationComplete) {
-      return 'Tudo certo. O app ja esta instalado e conectado ao trilho de notificacoes.';
+      return 'Tudo certo. O app já está instalado e conectado ao trilho de notificações.';
     }
     if (!state.isStandalone && isIos()) {
-      return 'Instale o app no iPhone primeiro. Depois volte aqui para liberar as notificacoes.';
+      return 'Instale o app no iPhone primeiro. Depois volte aqui para liberar as notificações.';
     }
     if (!state.isStandalone && state.canInstall) {
       return 'Instale o app agora para transformar o OctoBox em atalho nativo no seu celular.';
@@ -214,18 +250,18 @@
       return 'Abra o menu do navegador e instale o app no celular. Assim o OctoBox fica com cara de aplicativo de verdade.';
     }
     if (state.notificationPermission === 'denied') {
-      return 'As notificacoes foram bloqueadas. Reative nas configuracoes do navegador para o app poder te alertar.';
+      return 'As notificações foram bloqueadas. Reative nas configurações do navegador para o app poder te alertar.';
     }
     if (!state.pushConfigured) {
-      return 'O PWA ja pode ser instalado, mas o push ainda nao foi configurado neste ambiente.';
+      return 'O PWA já pode ser instalado, mas o push ainda não foi configurado neste ambiente.';
     }
     if (!state.notificationSupported) {
-      return 'Este navegador nao oferece o pacote completo de notificacoes push para o app. Abra no navegador principal do celular.';
+      return 'Este navegador não oferece o pacote completo de notificações push para o app. Abra no navegador principal do celular.';
     }
     if (state.notificationPermission === 'granted' && !state.hasPushSubscription) {
-      return 'Permissao concedida. Estamos terminando a assinatura push deste aparelho.';
+      return 'Permissão concedida. Estamos terminando a assinatura push deste aparelho.';
     }
-    return 'Instalacao concluida. Agora aceite as notificacoes para receber alertas do OctoBox.';
+    return 'Instalação concluída. Agora aceite as notificações para receber alertas do OctoBox.';
   }
 
   function isNotificationActivationComplete(state) {
@@ -349,17 +385,17 @@
     if (state.notificationPermission === 'granted') {
       updateStatusChip(
         notificationStatus,
-        state.hasPushSubscription ? 'Notificacoes ativas' : 'Sincronizando notificacoes',
+        state.hasPushSubscription ? 'Notificações ativas' : 'Sincronizando notificações',
         state.hasPushSubscription ? 'done' : 'pending'
       );
     } else if (state.notificationPermission === 'denied') {
-      updateStatusChip(notificationStatus, 'Notificacoes bloqueadas', 'blocked');
+      updateStatusChip(notificationStatus, 'Notificações bloqueadas', 'blocked');
     } else if (!state.pushConfigured) {
-      updateStatusChip(notificationStatus, 'Push ainda nao configurado', 'blocked');
+      updateStatusChip(notificationStatus, 'Push ainda não configurado', 'blocked');
     } else if (!state.notificationSupported) {
       updateStatusChip(notificationStatus, 'Push indisponivel neste navegador', 'blocked');
     } else {
-      updateStatusChip(notificationStatus, 'Notificacoes pendentes', 'pending');
+      updateStatusChip(notificationStatus, 'Notificações pendentes', 'pending');
     }
 
     if (installAction) {
@@ -376,29 +412,29 @@
       if (state.isStandalone) {
         installNote.textContent = 'App instalado neste aparelho.';
       } else if (isIos()) {
-        installNote.textContent = 'No iPhone/iPad, toque em Compartilhar e depois em Adicionar a Tela de Inicio.';
+        installNote.textContent = 'No iPhone/iPad, toque em Compartilhar e depois em Adicionar à Tela de Início.';
       } else if (state.canInstall) {
-        installNote.textContent = 'Toque em Instalar app para concluir a instalacao do PWA.';
+        installNote.textContent = 'Toque em Instalar app para concluir a instalação do PWA.';
       } else {
-        installNote.textContent = 'Se o botao nao aparecer, use o menu do navegador e escolha Instalar app ou Adicionar a tela inicial.';
+        installNote.textContent = 'Se o botão não aparecer, use o menu do navegador e escolha Instalar app ou Adicionar à tela inicial.';
       }
     }
 
     if (notificationNote) {
       if (!state.notificationSupported) {
-        notificationNote.textContent = 'Este navegador ainda nao oferece notificacoes push completas para este app.';
+        notificationNote.textContent = 'Este navegador ainda não oferece notificações push completas para este app.';
       } else if (!state.pushConfigured) {
-        notificationNote.textContent = 'O trilho de push ainda nao foi configurado neste ambiente do OctoBox.';
+        notificationNote.textContent = 'O trilho de push ainda não foi configurado neste ambiente do OctoBox.';
       } else if (!state.isStandalone) {
-        notificationNote.textContent = 'Depois de instalar, volte aqui e aceite as notificacoes para receber alertas do app.';
+        notificationNote.textContent = 'Depois de instalar, volte aqui e aceite as notificações para receber alertas do app.';
       } else if (state.notificationPermission === 'denied') {
-        notificationNote.textContent = 'As notificacoes foram negadas. Reative nas configuracoes do navegador e volte para tentar de novo.';
+        notificationNote.textContent = 'As notificações foram negadas. Reative nas configurações do navegador e volte para tentar de novo.';
       } else if (state.notificationPermission === 'granted') {
         notificationNote.textContent = state.hasPushSubscription
-          ? 'Permissao concedida e assinatura push ativa neste aparelho.'
-          : 'Permissao concedida. Estamos finalizando a assinatura push deste aparelho.';
+          ? 'Permissão concedida e assinatura push ativa neste aparelho.'
+          : 'Permissão concedida. Estamos finalizando a assinatura push deste aparelho.';
       } else {
-        notificationNote.textContent = 'Toque em Ativar notificacoes e aceite o pedido do navegador.';
+        notificationNote.textContent = 'Toque em Ativar notificações e aceite o pedido do navegador.';
       }
     }
   }

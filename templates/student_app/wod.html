@@ -5,7 +5,7 @@
 {% block extra_head %}
 {{ block.super }}
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/student_app/screens/wod.css' %}">
+<link rel="stylesheet" href="{% static 'css/student_app/screens/wod.css' %}?v={{ static_asset_version }}">
 {% endblock %}
 
 {% block body %}
@@ -27,7 +27,7 @@
 </section>
 {% else %}
 <section class="student-compact-state">
-    <strong>WOD ainda nao publicado.</strong>
+    <strong>WOD ainda não publicado.</strong>
     <p class="student-copy">Use a calculadora.</p>
 </section>
 {% endif %}
@@ -72,7 +72,7 @@
 </section>
 {% endif %}
 
-<section class="student-card student-card--quiet">
+<section class="student-card student-card--feature student-wod-calculator">
     <div class="student-section-head">
         <div class="student-wod-utility-switch">
             <span class="student-secondary-action student-secondary-action--tab student-secondary-action--static">Calculadora</span>
@@ -86,20 +86,17 @@
             {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
         </div>
         {% endif %}
-        <div class="student-form-grid">
-            <label>
+        <div class="student-form-grid student-wod-calculator__grid">
+            <label class="student-wod-calculator__movement">
                 <span>Movimento</span>
                 {{ form.exercise_slug }}
             </label>
-            <label>
-                <span class="visually-hidden">Percentual</span>
-                <span class="student-field-with-unit student-field-with-unit--prefix">
-                    <span class="student-field-with-unit__prefix">%</span>
-                    {{ form.percentage }}
-                </span>
+            <label class="student-wod-calculator__percent">
+                <span>Percentual (%)</span>
+                {{ form.percentage }}
             </label>
+            <button type="submit" class="student-primary-action student-wod-calculator__submit">Calcular</button>
         </div>
-        <button type="submit" class="student-primary-action">Calcular</button>
     </form>
     {% if prescription %}
     <article class="student-prescription">
@@ -120,5 +117,5 @@
 
 {% block extra_scripts %}
 {{ block.super }}
-<script src="{% static 'js/student_app/wod.js' %}"></script>
+<script src="{% static 'js/student_app/wod.js' %}?v={{ static_asset_version }}"></script>
 {% endblock %}

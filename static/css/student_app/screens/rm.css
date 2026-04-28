@@ -80,6 +80,20 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     font-weight: 900;
 }
 
+.student-rm-entry {
+    --student-card-glow:
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-primary-alpha) 42%, transparent), transparent 38%),
+        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--theme-accent-premium-alpha) 18%, transparent), transparent 42%);
+}
+
+.student-rm-entry__form {
+    align-items: end;
+}
+
+.student-rm-entry__submit {
+    width: 100%;
+}
+
 .student-field-with-unit {
     position: relative;
     display: block;
@@ -200,5 +214,16 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 
     .student-rm-inline-form .student-input {
         width: 100%;
+    }
+}
+
+@media (min-width: 720px) {
+    .student-rm-entry__form {
+        grid-template-columns: minmax(0, 1.3fr) minmax(180px, 0.75fr);
+    }
+
+    .student-rm-entry__submit {
+        grid-column: 1 / -1;
+        max-width: 220px;
     }
 }

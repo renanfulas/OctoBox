@@ -125,7 +125,8 @@ Use os docs por nivel de pergunta:
 4. os docs em [docs/architecture](docs/architecture) definem tese, principios e rumo estrutural
 5. os docs em [docs/plans](docs/plans) definem frentes ativas e ordem de execucao
 6. o [docs/reference/reading-guide.md](docs/reference/reading-guide.md) serve para navegar no codigo e depurar a base, nao para definir direcao de produto
-7. os docs em [docs/rollout](docs/rollout) servem para publicacao, homologacao e operacao de campo
+7. o [docs/map/1-map-by-tests.md](docs/map/1-map-by-tests.md) mapeia o esqueleto vivo do projeto a partir da suite atual de testes
+8. os docs em [docs/rollout](docs/rollout) servem para publicacao, homologacao e operacao de campo
 
 ## Governanca OctoBox
 

@@ -149,7 +149,8 @@ Use the docs by question level:
 4. docs in [docs/architecture](docs/architecture) define the thesis, principles, and structural direction
 5. docs in [docs/plans](docs/plans) define active fronts and execution order
 6. [docs/reference/reading-guide.md](docs/reference/reading-guide.md) is for navigating the code and debugging the codebase, not for defining product direction
-7. docs in [docs/rollout](docs/rollout) are for release, staging, and field operations
+7. [docs/map/1-map-by-tests.md](docs/map/1-map-by-tests.md) maps the live project skeleton from the current test suite
+8. docs in [docs/rollout](docs/rollout) are for release, staging, and field operations
 
 ## OctoBox governance
 

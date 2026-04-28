@@ -5,7 +5,7 @@
 
 {% block extra_head %}
 {{ block.super }}
-<link rel="stylesheet" href="{% static 'css/student_app/screens/rm.css' %}">
+<link rel="stylesheet" href="{% static 'css/student_app/screens/rm.css' %}?v={{ static_asset_version }}">
 {% endblock %}
 
 {% block body %}
@@ -16,5 +16,5 @@
 
 {% block extra_scripts %}
 {{ block.super }}
-<script src="{% static 'js/student_app/rm.js' %}"></script>
+<script src="{% static 'js/student_app/rm.js' %}?v={{ static_asset_version }}"></script>
 {% endblock %}
