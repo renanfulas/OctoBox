@@ -285,6 +285,14 @@ class WorkoutTemplate(TimeStampedModel):
     is_trusted = models.BooleanField(default=False)
     usage_count = models.PositiveIntegerField(default=0)
     last_used_at = models.DateTimeField(null=True, blank=True)
+    archived_at = models.DateTimeField(null=True, blank=True)
+    archived_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='workout_templates_archived',
+    )
 
     class Meta:
         ordering = ['-is_featured', '-is_active', '-usage_count', '-last_used_at', 'name', '-created_at']

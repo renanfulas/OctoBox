@@ -10,6 +10,7 @@ from shared_support.page_payloads import build_page_assets, build_page_hero, bui
 from .workout_corridor_navigation import build_workout_corridor_tabs
 from .workout_approval_policy import get_or_create_workout_approval_policy_setting
 from .workout_templates import build_manageable_workout_templates, build_workout_template_management_summary
+from .workout_template_archive import build_archived_template_list
 
 
 def build_workout_template_management_context(*, request, current_role, page_title, page_subtitle):
@@ -46,7 +47,13 @@ def build_workout_template_management_context(*, request, current_role, page_tit
                 'surface_key': 'operations-workout-template-management',
                 'scope': 'operations-coach',
             },
-            assets=build_page_assets(css=['css/design-system/operations.css']),
+            assets=build_page_assets(
+                css=[
+                    'css/design-system/operations.css',
+                    'css/design-system/operations/workspace/wod-template-management.css',
+                ],
+                deferred_js=['js/operations/wod_template_archive.js'],
+            ),
         ),
         'workout_corridor_tabs': build_workout_corridor_tabs(
             current_key='templates',
@@ -73,6 +80,8 @@ def build_workout_template_management_context(*, request, current_role, page_tit
         'template_metadata_form': WorkoutTemplateMetadataForm(),
         'approval_policy_setting': approval_policy_setting,
         'approval_policy_form': WorkoutApprovalPolicyForm(initial={'approval_policy': getattr(approval_policy_setting, 'approval_policy', 'strict')}),
+        'archived_templates': build_archived_template_list(box_id=None),
+        'current_role': current_role,
     }
 
 

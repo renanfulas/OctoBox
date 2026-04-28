@@ -1,0 +1,92 @@
+{% comment %}
+INCLUDE: dialog de seleção de template por dia (compartilhado entre todos os dias).
+
+Driven por JS: o botão wod_day_apply_button define data-date + data-day-label,
+o JS seta data-wod-day-apply-active-date + data-wod-day-apply-active-label
+no dialog antes de abrir.
+
+PARÂMETROS (via context):
+  planner_day_apply_options  — lista de templates (todos ativos, não só trusted)
+  csrf_token                 — disponível automaticamente
+{% endcomment %}
+{% if planner_day_apply_options %}
+<dialog
+    class="wod-day-apply__dialog"
+    data-wod-day-apply-dialog
+    aria-label="Aplicar template no dia"
+>
+    <form method="dialog" class="wod-day-apply__dialog-head">
+        <div>
+            <p class="eyebrow">Aplicar template</p>
+            <h3 data-wod-day-apply-dialog-title>Selecione um dia</h3>
+        </div>
+        <button class="button tertiary" type="submit">Fechar</button>
+    </form>
+
+    <div class="wod-day-apply__mode-wrap">
+        <p class="eyebrow">Como aplicar</p>
+        <div class="wod-day-apply__mode-options" role="radiogroup" aria-label="Modo de aplicação">
+            <label class="wod-day-apply__mode-option">
+                <input type="radio" name="wod_day_apply_mode" value="replace_empty" checked>
+                <span>Apenas aulas sem WOD</span>
+                <small>Não toca nas aulas que já têm conteúdo.</small>
+            </label>
+            <label class="wod-day-apply__mode-option">
+                <input type="radio" name="wod_day_apply_mode" value="overwrite">
+                <span>Substituir todas as aulas</span>
+                <small class="wod-day-apply__mode-warning">Apaga rascunhos existentes do dia.</small>
+            </label>
+        </div>
+    </div>
+
+    <div class="wod-day-apply__template-list">
+        <p class="eyebrow">Templates do box</p>
+        <input
+            class="wod-day-apply__search"
+            type="search"
+            placeholder="Buscar template..."
+            data-wod-day-apply-search
+            aria-label="Buscar template"
+            autocomplete="off"
+        >
+        <div class="wod-day-apply__cards" data-wod-day-apply-cards>
+            {% for option in planner_day_apply_options %}
+            <article
+                class="wod-day-apply__card"
+                data-wod-day-apply-card
+                data-template-name="{{ option.label|lower }}"
+            >
+                <div class="wod-day-apply__card-head">
+                    <div>
+                        <strong>{{ option.label }}</strong>
+                        <p>{{ option.summary }}</p>
+                    </div>
+                    <div class="wod-day-apply__card-pills">
+                        {% if option.is_trusted %}<span class="pill success">Confiável</span>{% endif %}
+                        {% if option.is_featured %}<span class="pill accent">Destaque</span>{% endif %}
+                        {% if option.is_cold %}<span class="pill warning">Frio</span>{% endif %}
+                    </div>
+                </div>
+                {% if option.preview_blocks %}
+                <div class="wod-day-apply__card-preview">
+                    {% for block in option.preview_blocks %}
+                    <span class="wod-day-apply__block-tag">{{ block.title }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <button
+                    class="button secondary wod-day-apply__card-btn"
+                    type="button"
+                    data-wod-day-apply-select
+                    data-template-id="{{ option.id }}"
+                    data-template-label="{{ option.label }}"
+                >
+                    Aplicar neste dia
+                </button>
+            </article>
+            {% endfor %}
+        </div>
+        <p class="wod-day-apply__empty" data-wod-day-apply-empty hidden>Nenhum template encontrado.</p>
+    </div>
+</dialog>
+{% endif %}

@@ -62,6 +62,12 @@ from .workout_planner_views import (
     WorkoutPlannerTemplatePickerTelemetryView,
     WorkoutPlannerView,
 )
+from .workout_day_apply_views import WodDayApplyView, WodDayApplyUndoView
+from .workout_template_archive_views import (
+    WorkoutTemplateArchiveView,
+    WorkoutTemplateArchiveAllView,
+    WorkoutTemplateRestoreView,
+)
 from .workout_template_views import (
     WorkoutApprovalPolicyUpdateView,
     WorkoutTemplateCreateBlockView,
@@ -109,6 +115,11 @@ urlpatterns = [
         WorkoutPlannerApplyTrustedTemplateView.as_view(),
         name='workout-planner-apply-trusted-template',
     ),
+    path('operacao/wod/planner/dia/aplicar/', WodDayApplyView.as_view(), name='wod-day-apply'),
+    path('operacao/wod/planner/dia/desfazer/', WodDayApplyUndoView.as_view(), name='wod-day-apply-undo'),
+    path('operacao/wod/templates/<int:template_id>/arquivar/', WorkoutTemplateArchiveView.as_view(), name='workout-template-archive'),
+    path('operacao/wod/templates/arquivar-todos/', WorkoutTemplateArchiveAllView.as_view(), name='workout-template-archive-all'),
+    path('operacao/wod/templates/<int:template_id>/restaurar/', WorkoutTemplateRestoreView.as_view(), name='workout-template-restore'),
     path('operacao/coach/aula/<int:session_id>/wod/', CoachSessionWorkoutEditorView.as_view(), name='coach-session-workout-editor'),
     path(
         'operacao/coach/aula/<int:session_id>/wod/prescription-preview/',

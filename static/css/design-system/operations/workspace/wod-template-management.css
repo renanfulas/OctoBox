@@ -1,0 +1,200 @@
+/*
+ARQUIVO: wod-template-management — archive zone e lista de arquivados.
+
+CONVENÇÕES:
+- BEM: .wod-tmpl-archive-zone__<element>--<modifier>
+- zero cores hardcoded; apenas tokens canônicos de tokens.css
+- zero !important
+*/
+
+/* ── Archive Zone (danger zone) ───────────────────────────────────── */
+
+.wod-tmpl-archive-zone {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 20px 24px;
+    border: 1px solid color-mix(in srgb, var(--theme-danger, #e53e3e) 35%, transparent);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--theme-danger, #e53e3e) 5%, transparent);
+    margin-block: 32px;
+    flex-wrap: wrap;
+}
+
+.wod-tmpl-archive-zone__head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wod-tmpl-archive-zone__head h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--theme-text-primary);
+}
+
+.wod-tmpl-archive-zone__head p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--theme-text-secondary);
+}
+
+.wod-tmpl-archive-zone__open-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+    border-color: color-mix(in srgb, var(--theme-danger, #e53e3e) 50%, transparent);
+    color: var(--theme-danger, #e53e3e);
+}
+
+.wod-tmpl-archive-zone__open-btn:hover {
+    background: color-mix(in srgb, var(--theme-danger, #e53e3e) 10%, transparent);
+}
+
+/* ── Archive All Dialog ───────────────────────────────────────────── */
+
+.wod-tmpl-archive-zone__dialog {
+    border: 1px solid var(--theme-border);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 480px;
+    width: 100%;
+    background: var(--theme-surface);
+    box-shadow: 0 16px 48px color-mix(in srgb, var(--theme-text-primary) 16%, transparent);
+}
+
+.wod-tmpl-archive-zone__dialog::backdrop {
+    background: color-mix(in srgb, var(--theme-text-primary) 40%, transparent);
+    backdrop-filter: blur(2px);
+}
+
+.wod-tmpl-archive-zone__dialog h3 {
+    margin: 4px 0 12px;
+    font-size: 1.1rem;
+}
+
+.wod-tmpl-archive-zone__dialog p {
+    margin: 0 0 16px;
+    font-size: 0.88rem;
+    color: var(--theme-text-secondary);
+    line-height: 1.5;
+}
+
+.wod-tmpl-archive-zone__confirm-label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 20px;
+    font-size: 0.88rem;
+    color: var(--theme-text-secondary);
+}
+
+.wod-tmpl-archive-zone__confirm-input {
+    padding: 8px 12px;
+    border: 1px solid var(--theme-border);
+    border-radius: 8px;
+    background: var(--theme-surface-raised, var(--theme-surface));
+    color: var(--theme-text-primary);
+    font-size: 0.9rem;
+    font-family: monospace;
+    letter-spacing: 0.08em;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+
+.wod-tmpl-archive-zone__confirm-input:focus {
+    outline: none;
+    border-color: var(--theme-accent);
+}
+
+.wod-tmpl-archive-zone__actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.wod-tmpl-archive-zone__submit-btn {
+    background: var(--theme-danger, #e53e3e);
+    border-color: var(--theme-danger, #e53e3e);
+    color: #fff;
+}
+
+.wod-tmpl-archive-zone__submit-btn:not(:disabled):hover {
+    background: color-mix(in srgb, var(--theme-danger, #e53e3e) 85%, #000);
+    border-color: color-mix(in srgb, var(--theme-danger, #e53e3e) 85%, #000);
+}
+
+.wod-tmpl-archive-zone__submit-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ── Archived list ────────────────────────────────────────────────── */
+
+.wod-tmpl-archived {
+    margin-block: 32px;
+}
+
+.wod-tmpl-archived__head {
+    margin-bottom: 16px;
+}
+
+.wod-tmpl-archived__head h3 {
+    margin: 4px 0 4px;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.wod-tmpl-archived__head p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--theme-text-secondary);
+}
+
+.wod-tmpl-archived__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wod-tmpl-archived__card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 18px;
+    border: 1px solid var(--theme-border);
+    border-radius: 10px;
+    background: var(--theme-surface);
+    flex-wrap: wrap;
+}
+
+.wod-tmpl-archived__card--expiring {
+    border-color: color-mix(in srgb, var(--theme-danger, #e53e3e) 40%, transparent);
+    background: color-mix(in srgb, var(--theme-danger, #e53e3e) 4%, transparent);
+}
+
+.wod-tmpl-archived__card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.wod-tmpl-archived__card-info strong {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wod-tmpl-archived__card-info p {
+    margin: 2px 0 0;
+    font-size: 0.78rem;
+    color: var(--theme-text-secondary);
+}
+
+.wod-tmpl-archived__card-meta {
+    flex-shrink: 0;
+}

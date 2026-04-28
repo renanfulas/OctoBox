@@ -1,0 +1,25 @@
+{% comment %}
+INCLUDE: container do toast de undo após aplicação em lote.
+
+Inserido uma vez no workout_planner.html (fora do loop de dias).
+JS popula os atributos data-* e controla visibilidade.
+{% endcomment %}
+<div
+    class="wod-day-apply__toast"
+    data-wod-day-apply-toast
+    role="status"
+    aria-live="polite"
+    hidden
+>
+    <span class="wod-day-apply__toast-msg" data-wod-day-apply-toast-msg></span>
+    <button
+        class="wod-day-apply__toast-undo"
+        type="button"
+        data-wod-day-apply-undo-btn
+        data-undo-url="{% url 'wod-day-apply-undo' %}"
+    >
+        Desfazer
+        <span class="wod-day-apply__toast-countdown" data-wod-day-apply-countdown>60</span>s
+    </button>
+    <button class="wod-day-apply__toast-close" type="button" data-wod-day-apply-toast-close aria-label="Fechar">✕</button>
+</div>

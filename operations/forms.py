@@ -105,6 +105,9 @@ def _coerce_smart_paste_date(raw_value: str, *, field_label: str) -> date:
         raise forms.ValidationError('Nao e permitido usar datas no passado.')
     if candidate.year not in allowed_years:
         raise forms.ValidationError('A data precisa ficar no ano atual ou no proximo ano.')
+    if candidate.weekday() != 0:
+        from datetime import timedelta
+        candidate = candidate - timedelta(days=candidate.weekday())
     return candidate
 
 

@@ -105,6 +105,30 @@ Ativado somente se L1 deixar linhas não resolvidas ou o bloco do dia ficar vazi
 
 ---
 
+## Restrição de inicio de semana — segunda-feira obrigatória
+
+`WeeklyWodPlan.week_start` e `target_week_start` da projeção aceitam apenas segunda-feira.
+
+**Client-side (snap automático):**
+- JS em `static/js/operations/smart_paste_week_monday.js` intercepta change/blur nos campos `[data-smart-date-monday-wrap]`.
+- Se o dia selecionado nao for segunda (JS `getDay() !== 1`), recua para a segunda anterior via `prevMonday()`.
+- Exibe hint `[data-smart-date-monday-hint]` com texto "Ajustado para segunda dd/mm" via `aria-live="polite"`.
+- O campo texto (`dd/mm`) e o picker nativo (`<input type=date step=7>`) sao atualizados em sincronia.
+
+**Server-side (validação em `forms.py`):**
+- `_coerce_smart_paste_date` ja retorna `date`; adicionar guard pos-parse:
+  ```python
+  if candidate.weekday() != 0:
+      candidate = candidate - timedelta(days=candidate.weekday())
+  ```
+  Snap server-side espelha o client para garantir consistência sem duplo erro.
+
+**Include unificado:**
+- `templates/operations/includes/wod_smart_paste_week_input.html` substitui os dois blocos inline de data (em `workout_smart_paste.html` e `wod_smart_paste_projection.html`).
+- Parâmetros: `field`, `picker_id`, `picker_value`, `label_text`.
+
+---
+
 ## UI — Stepper 3 passos
 
 ### Passo 1 — Colar

@@ -1,0 +1,290 @@
+/*
+ARQUIVO: day-apply — aplicação de template por dia no Planner.
+
+CONVENÇÕES:
+- BEM: .wod-day-apply__<element>--<modifier>
+- zero cores hardcoded; apenas tokens canônicos de tokens.css
+- zero !important
+*/
+
+/* ── Botão no header do dia ───────────────────────────────────────── */
+
+.wod-day-apply__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent) 40%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--theme-accent) 8%, transparent);
+    color: var(--theme-accent);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+
+.wod-day-apply__trigger:hover {
+    background: color-mix(in srgb, var(--theme-accent) 16%, transparent);
+    border-color: var(--theme-accent);
+}
+
+/* ── Dialog / popover ─────────────────────────────────────────────── */
+
+.wod-day-apply__dialog {
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    width: min(540px, 96vw);
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 0;
+    border: 1px solid var(--theme-border-soft);
+    border-radius: 20px;
+    background: var(--theme-surface-panel);
+    box-shadow: 0 24px 64px color-mix(in srgb, var(--theme-shadow) 32%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.wod-day-apply__dialog::backdrop {
+    background: color-mix(in srgb, var(--theme-shadow) 48%, transparent);
+    backdrop-filter: blur(4px);
+}
+
+.wod-day-apply__dialog-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--theme-border-soft);
+    position: sticky;
+    top: 0;
+    background: var(--theme-surface-panel);
+    z-index: 1;
+}
+
+.wod-day-apply__dialog-head h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 4px 0 0;
+}
+
+/* ── Modo de aplicação ────────────────────────────────────────────── */
+
+.wod-day-apply__mode-wrap {
+    padding: 16px 24px 0;
+}
+
+.wod-day-apply__mode-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.wod-day-apply__mode-option {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 14px;
+    border: 1px solid var(--theme-border-soft);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.wod-day-apply__mode-option:has(input:checked) {
+    border-color: var(--theme-accent);
+    background: color-mix(in srgb, var(--theme-accent) 6%, transparent);
+}
+
+.wod-day-apply__mode-option input {
+    display: none;
+}
+
+.wod-day-apply__mode-option span {
+    font-weight: 600;
+    font-size: 0.88rem;
+}
+
+.wod-day-apply__mode-option small {
+    font-size: 0.75rem;
+    color: var(--theme-text-muted);
+}
+
+.wod-day-apply__mode-warning {
+    color: var(--theme-warning) !important;
+}
+
+/* ── Lista de templates ───────────────────────────────────────────── */
+
+.wod-day-apply__template-list {
+    padding: 16px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.wod-day-apply__search {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--theme-border-soft);
+    border-radius: 10px;
+    background: var(--theme-surface-input);
+    color: var(--theme-text);
+    font-size: 0.88rem;
+}
+
+.wod-day-apply__search:focus {
+    outline: none;
+    border-color: var(--theme-accent);
+}
+
+.wod-day-apply__cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wod-day-apply__card {
+    padding: 14px 16px;
+    border: 1px solid var(--theme-border-soft);
+    border-radius: 12px;
+    background: var(--theme-surface-card);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color 0.15s;
+}
+
+.wod-day-apply__card:hover {
+    border-color: color-mix(in srgb, var(--theme-accent) 50%, transparent);
+}
+
+.wod-day-apply__card[hidden] {
+    display: none;
+}
+
+.wod-day-apply__card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.wod-day-apply__card-head strong {
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.wod-day-apply__card-head p {
+    font-size: 0.78rem;
+    color: var(--theme-text-muted);
+    margin: 2px 0 0;
+}
+
+.wod-day-apply__card-pills {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.wod-day-apply__card-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.wod-day-apply__block-tag {
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--theme-accent) 10%, transparent);
+    color: var(--theme-accent);
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.wod-day-apply__card-btn {
+    align-self: flex-start;
+}
+
+.wod-day-apply__empty {
+    text-align: center;
+    color: var(--theme-text-muted);
+    font-size: 0.85rem;
+    padding: 16px 0;
+}
+
+/* ── Toast de undo ────────────────────────────────────────────────── */
+
+.wod-day-apply__toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: var(--theme-surface-elevated);
+    border: 1px solid var(--theme-border-soft);
+    box-shadow: 0 8px 32px color-mix(in srgb, var(--theme-shadow) 28%, transparent);
+    z-index: 9999;
+    max-width: min(480px, 92vw);
+    animation: wod-toast-in 0.2s ease;
+}
+
+.wod-day-apply__toast[hidden] {
+    display: none;
+}
+
+@keyframes wod-toast-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.wod-day-apply__toast-msg {
+    font-size: 0.88rem;
+    font-weight: 500;
+    flex: 1;
+}
+
+.wod-day-apply__toast-undo {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--theme-accent);
+    background: transparent;
+    color: var(--theme-accent);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+
+.wod-day-apply__toast-undo:hover {
+    background: color-mix(in srgb, var(--theme-accent) 10%, transparent);
+}
+
+.wod-day-apply__toast-countdown {
+    font-variant-numeric: tabular-nums;
+}
+
+.wod-day-apply__toast-close {
+    background: transparent;
+    border: none;
+    color: var(--theme-text-muted);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 2px 4px;
+    line-height: 1;
+}
