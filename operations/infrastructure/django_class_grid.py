@@ -15,19 +15,23 @@ PONTOS CRITICOS:
 
 from django.db import transaction
 
+from operations.application import class_grid_messages as grid_messages
 from operations.application.commands import (
     ClassScheduleCreateCommand,
+    ClassScheduleResetCommand,
     ClassSessionDeleteCommand,
     ClassSessionUpdateCommand,
 )
 from operations.application.ports import ClassGridClockPort, ClassGridWriterPort, UnitOfWorkPort
 from operations.application.results import (
     ClassScheduleCreateResult,
+    ClassScheduleResetResult,
     DeletedClassSessionRecord,
     UpdatedClassSessionRecord,
 )
 from operations.application.use_cases import (
     execute_create_class_schedule_use_case,
+    execute_reset_class_schedule_use_case,
     execute_delete_class_session_use_case,
     execute_update_class_session_use_case,
 )
@@ -123,6 +127,17 @@ class DjangoClassGridWriter(ClassGridWriterPort):
             skipped_slots=execution_plan.skipped_slots,
         )
 
+    def reset_schedule(self, command: ClassScheduleResetCommand) -> ClassScheduleResetResult:
+        sessions = self.session_store.list_sessions_for_reset()
+        if any(self.session_store.has_attendance(session=session) for session in sessions):
+            raise ValueError(grid_messages.PLANNER_RESET_ATTENDANCE_BLOCKED)
+
+        deleted_session_ids = tuple(session.id for session in sessions)
+        for session in sessions:
+            self.session_store.delete_session(session=session)
+
+        return ClassScheduleResetResult(deleted_session_ids=deleted_session_ids)
+
     def update_session(self, command: ClassSessionUpdateCommand) -> UpdatedClassSessionRecord:
         session = self.session_store.get_session_for_update(session_id=command.session_id)
         policy = build_class_grid_session_policy(
@@ -197,6 +212,10 @@ def execute_create_class_schedule_command(command: ClassScheduleCreateCommand):
     return execute_create_class_schedule_use_case(command, **_build_dependencies())
 
 
+def execute_reset_class_schedule_command(command: ClassScheduleResetCommand):
+    return execute_reset_class_schedule_use_case(command, **_build_dependencies())
+
+
 def execute_update_class_session_command(command: ClassSessionUpdateCommand):
     return execute_update_class_session_use_case(command, **_build_dependencies())
 
@@ -207,6 +226,7 @@ def execute_delete_class_session_command(command: ClassSessionDeleteCommand):
 
 __all__ = [
     'execute_create_class_schedule_command',
+    'execute_reset_class_schedule_command',
     'execute_delete_class_session_command',
     'execute_update_class_session_command',
 ]

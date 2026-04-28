@@ -14,8 +14,18 @@ PONTOS CRITICOS:
 
 from typing import Callable, Protocol, TypeVar
 
-from .commands import ClassScheduleCreateCommand, ClassSessionDeleteCommand, ClassSessionUpdateCommand
-from .results import ClassScheduleCreateResult, DeletedClassSessionRecord, UpdatedClassSessionRecord
+from .commands import (
+    ClassScheduleCreateCommand,
+    ClassScheduleResetCommand,
+    ClassSessionDeleteCommand,
+    ClassSessionUpdateCommand,
+)
+from .results import (
+    ClassScheduleCreateResult,
+    ClassScheduleResetResult,
+    DeletedClassSessionRecord,
+    UpdatedClassSessionRecord,
+)
 
 
 ResultType = TypeVar('ResultType')
@@ -38,6 +48,9 @@ class ClassGridWriterPort(Protocol):
     def create_schedule(self, command: ClassScheduleCreateCommand) -> ClassScheduleCreateResult:
         ...
 
+    def reset_schedule(self, command: ClassScheduleResetCommand) -> ClassScheduleResetResult:
+        ...
+
     def update_session(self, command: ClassSessionUpdateCommand) -> UpdatedClassSessionRecord:
         ...
 
@@ -47,6 +60,9 @@ class ClassGridWriterPort(Protocol):
 
 class ClassGridAuditPort(Protocol):
     def record_schedule_created(self, *, command: ClassScheduleCreateCommand, result: ClassScheduleCreateResult) -> None:
+        ...
+
+    def record_schedule_reset(self, *, command: ClassScheduleResetCommand, result: ClassScheduleResetResult) -> None:
         ...
 
     def record_session_updated(self, *, command: ClassSessionUpdateCommand, result: UpdatedClassSessionRecord) -> None:

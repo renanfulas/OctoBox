@@ -16,9 +16,15 @@ from catalog.class_grid_queries import build_class_grid_snapshot
 from catalog.forms import ClassScheduleRecurringForm, ClassSessionQuickEditForm
 from catalog.presentation import build_class_grid_page
 from catalog.presentation.shared import attach_catalog_page_payload
-from operations.facade import run_class_schedule_create, run_class_session_delete, run_class_session_update
+from operations.facade import (
+    run_class_schedule_create,
+    run_class_schedule_reset,
+    run_class_session_delete,
+    run_class_session_update,
+)
 from operations.application import class_grid_messages as grid_messages
 from operations.application.class_grid_dispatcher import (
+    FORM_KIND_PLANNER_RESET,
     FORM_KIND_SESSION_ACTION,
     FORM_KIND_SESSION_EDIT,
     SESSION_ACTION_DELETE,
@@ -98,7 +104,21 @@ class ClassGridView(CatalogBaseView, FormView):
             return self._handle_session_action()
         if form_kind == FORM_KIND_SESSION_EDIT:
             return self._handle_session_edit()
+        if form_kind == FORM_KIND_PLANNER_RESET:
+            return self._handle_planner_reset()
         return super().post(request, *args, **kwargs)
+
+    def _handle_planner_reset(self):
+        try:
+            result = run_class_schedule_reset(actor=self.request.user)
+        except ValueError as exc:
+            messages.error(self.request, str(exc))
+        else:
+            if result.deleted_count == 0:
+                messages.info(self.request, grid_messages.PLANNER_RESET_EMPTY)
+            else:
+                messages.success(self.request, grid_messages.planner_reset_success(result.deleted_count))
+        return redirect(self.get_success_url())
 
     def _handle_session_action(self):
         session = self._get_selected_session()

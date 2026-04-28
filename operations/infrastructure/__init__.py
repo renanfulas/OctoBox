@@ -19,6 +19,7 @@ from .django_class_grid_sessions import DjangoClassGridSessionStore
 from .django_workspace_store import DjangoWorkspaceStore
 from .django_class_grid import (
     execute_create_class_schedule_command,
+    execute_reset_class_schedule_command,
     execute_delete_class_session_command,
     execute_update_class_session_command,
 )
@@ -50,6 +51,7 @@ __all__ = [
     'execute_apply_attendance_action_command',
     'ensure_schedule_limits',
     'execute_create_class_schedule_command',
+    'execute_reset_class_schedule_command',
     'execute_create_technical_behavior_note_command',
     'execute_delete_class_session_command',
     'execute_link_payment_enrollment_command',

@@ -584,6 +584,54 @@ class CatalogViewTests(TestCase):
         self.assertTrue(AuditEvent.objects.filter(action='class_session_quick_updated').exists())
         self.assertTrue(AuditEvent.objects.filter(action='class_session_quick_deleted').exists())
 
+    def test_class_grid_can_reset_all_sessions(self):
+        self.client.force_login(self.user)
+        ClassSession.objects.create(
+            title='Funcional 06h',
+            coach=self.coach,
+            scheduled_at=timezone.now() + timezone.timedelta(days=1),
+            status=SessionStatus.OPEN,
+        )
+
+        response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'planner-reset',
+                'return_query': '',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ClassSession.objects.count(), 0)
+        self.assertContains(response, 'A grade voltou a ficar vazia para um novo planejamento.')
+        self.assertTrue(AuditEvent.objects.filter(action='class_schedule_reset').exists())
+
+    def test_class_grid_reset_blocks_when_any_session_has_attendance(self):
+        self.client.force_login(self.user)
+        protected_session = ClassSession.objects.create(
+            title='Funcional 07h',
+            coach=self.coach,
+            scheduled_at=timezone.now() + timezone.timedelta(days=1),
+            status=SessionStatus.OPEN,
+        )
+        Attendance.objects.create(student=self.student, session=protected_session)
+        original_ids = set(ClassSession.objects.values_list('id', flat=True))
+
+        response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'planner-reset',
+                'return_query': '',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(set(ClassSession.objects.values_list('id', flat=True)), original_ids)
+        self.assertContains(response, 'Nao foi possivel limpar a grade inteira porque existe ao menos uma aula com reservas ou presencas.')
+        self.assertFalse(AuditEvent.objects.filter(action='class_schedule_reset').exists())
+
     def test_class_grid_quick_edit_renders_start_time_without_seconds(self):
         self.client.force_login(self.user)
         session = ClassSession.objects.create(

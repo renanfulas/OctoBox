@@ -15,7 +15,9 @@ PONTOS CRITICOS:
 from .class_grid import (
     ClassGridCommandResult,
     ClassGridPlannerResult,
+    ClassGridResetResult,
     run_class_schedule_create,
+    run_class_schedule_reset,
     run_class_session_delete,
     run_class_session_update,
 )
@@ -36,6 +38,7 @@ from .workspace import (
 __all__ = [
     'ClassGridCommandResult',
     'ClassGridPlannerResult',
+    'ClassGridResetResult',
     'WorkspaceAttendanceActionResult',
     'WorkspaceLinkPaymentResult',
     'WorkspaceTechnicalBehaviorNoteResult',
@@ -46,6 +49,7 @@ __all__ = [
     'build_reception_workspace_snapshot',
     'run_apply_attendance_action',
     'run_class_schedule_create',
+    'run_class_schedule_reset',
     'run_class_session_delete',
     'run_class_session_update',
     'run_create_technical_behavior_note',
