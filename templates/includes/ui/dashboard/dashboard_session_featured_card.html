@@ -11,7 +11,7 @@ PONTOS CRITICOS:
     <div class="dashboard-session-feature-head">
         <div>
             <p class="dashboard-session-kicker">{{ featured_session.dashboard_kicker }}</p>
-            <strong>{{ featured_session.title|default:featured_session.object.title }}</strong>
+            <strong>{{ featured_session.title }}</strong>
         </div>
         <div class="dashboard-session-time">{% if featured_session.starts_at_label %}{{ featured_session.starts_at_label }}{% else %}{{ featured_session.starts_at|date:"H:i" }}{% endif %}</div>
     </div>

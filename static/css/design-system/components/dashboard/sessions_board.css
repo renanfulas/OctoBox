@@ -12,7 +12,7 @@ REGRAS DESTE ARQUIVO:
 */
 
 /* Base do Card */
-#dashboard-sessions-board {
+:is(#dashboard-sessions-board, #owner-sessions-board) {
     --dashboard-support-card-surface:
         linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-secondary) 95%, transparent));
     --dashboard-support-card-border: color-mix(in srgb, var(--theme-border-soft) 90%, transparent);
@@ -196,7 +196,7 @@ body[data-theme="dark"] #owner-sessions-board {
     opacity: 0;
 }
 
-body[data-theme="dark"] #dashboard-sessions-board {
+body[data-theme="dark"] :is(#dashboard-sessions-board, #owner-sessions-board) {
     --dashboard-support-card-surface: linear-gradient(180deg, rgba(9, 16, 29, 0.94), rgba(7, 12, 24, 0.96));
     --dashboard-support-card-border: rgba(148, 163, 184, 0.12);
     --dashboard-support-card-shadow:
@@ -285,7 +285,23 @@ body[data-theme="dark"] #dashboard-sessions-board {
 }
 
 @media (max-width: 720px) {
-    #dashboard-sessions-board {
+    :is(#dashboard-sessions-board, #owner-sessions-board) {
         overflow: hidden;
+    }
+
+    :is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-feature-head,
+    :is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-feature-meta-row,
+    :is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-meta--inline {
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+
+    :is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-feature-meta-row {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    :is(#dashboard-sessions-board, #owner-sessions-board) .dashboard-session-window {
+        line-height: 1.35;
     }
 }

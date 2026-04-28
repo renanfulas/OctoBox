@@ -37,9 +37,19 @@ POR QUE ELE EXISTE:
 }
 
 .intake-directory-surface {
+    position: relative;
     padding: 0;
     overflow: hidden;
     background: color-mix(in srgb, var(--fdw-panel) 94%, transparent);
+}
+
+.intake-directory-surface::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(14, 165, 233, 0.2), rgba(168, 85, 247, 0.14), transparent 72%);
+    pointer-events: none;
 }
 
 .intake-tab-workspace {
@@ -969,8 +979,8 @@ body[data-theme="dark"] .intake-queue-filter-count {
 body[data-theme="dark"] .intake-workspace-surface {
     border-color: rgba(148, 163, 184, 0.16);
     background:
-        radial-gradient(circle at top left, rgba(0, 229, 255, 0.08), transparent 30%),
-        radial-gradient(circle at top right, rgba(74, 144, 226, 0.08), transparent 28%),
+        radial-gradient(circle at top left, rgba(0, 229, 255, 0.06), transparent 30%),
+        radial-gradient(circle at top right, rgba(74, 144, 226, 0.06), transparent 28%),
         linear-gradient(160deg, rgba(11, 18, 31, 0.96), rgba(9, 14, 24, 0.94));
     box-shadow:
         0 24px 54px rgba(0, 0, 0, 0.24),
@@ -984,12 +994,23 @@ body[data-theme="dark"] .intake-workspace-surface::before {
 }
 
 body[data-theme="dark"] .intake-tab-workspace > .intake-tab-panel.is-tab-active {
+    background: transparent;
+    box-shadow: none;
+}
+
+body[data-theme="dark"] .intake-directory-surface::before {
+    background: linear-gradient(90deg, rgba(0, 229, 255, 0.18), rgba(217, 70, 239, 0.14), transparent 72%);
+}
+
+body[data-theme="dark"] #tab-intake-queue .intake-directory-surface {
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 22px;
     background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)),
-        rgba(12, 18, 32, 0.42);
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+        rgba(10, 16, 28, 0.22);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.04),
-        0 14px 28px rgba(0, 0, 0, 0.18);
+        0 14px 28px rgba(0, 0, 0, 0.16);
 }
 
 body[data-theme="dark"] .intake-table-text {
