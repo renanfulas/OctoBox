@@ -87,7 +87,7 @@ def execute_day_apply(
         for s in sessions
     ]
 
-    eligible, skipped = filter_eligible_sessions(session_payloads=session_payloads, mode=mode)
+    eligible, skipped = filter_eligible_sessions(sessions=session_payloads, mode=mode)
 
     applied_session_ids = []
     skipped_reasons = [{'session_id': s.session_id, 'reason': s.skip_reason} for s in skipped]

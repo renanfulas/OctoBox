@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from django import forms
 from django.urls import reverse
@@ -461,3 +461,21 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
             projection_form.cleaned_data['target_week_start'].isoformat(),
             expected_next_year_date.isoformat(),
         )
+
+    def test_smart_paste_snaps_non_monday_to_previous_monday(self):
+        # Find a future Wednesday so the snapped Monday is also in the future.
+        today = date.today()
+        days_ahead = (2 - today.weekday()) % 7 or 7  # next Wednesday, never today
+        wednesday = today + timedelta(days=days_ahead)
+        expected_monday = wednesday - timedelta(days=2)
+
+        form = WeeklyWodSmartPasteForm(
+            data={
+                'week_start': wednesday.strftime('%d/%m/%Y'),
+                'label': 'Snap para segunda',
+                'source_text': SMART_PASTE_SAMPLE,
+            }
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['week_start'], expected_monday)
+        self.assertEqual(form.cleaned_data['week_start'].weekday(), 0)
