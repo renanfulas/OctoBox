@@ -25,6 +25,7 @@ from auditing.models import AuditEvent
 from communications.application.message_templates import build_operational_message_body
 from communications.queries import get_unlinked_whatsapp_contacts
 from finance.models import Payment, PaymentStatus
+from monitoring.beacon_snapshot import build_red_beacon_snapshot
 from onboarding.models import IntakeStatus
 from onboarding.queries import get_pending_intakes
 from shared_support.operational_contact_memory import (
@@ -797,6 +798,7 @@ def _attach_manager_finance_decision(payment, *, today, is_priority, enrollment_
 
 def build_manager_workspace_snapshot(*, actor=None):
     today = timezone.localdate()
+    red_beacon_snapshot = build_red_beacon_snapshot()
     cooldown_intake_ids, cooldown_payment_ids = _build_recent_contact_subject_sets(actor=actor)
 
     pending_intakes_pool = list(get_pending_intakes(limit=24))
@@ -918,7 +920,14 @@ def build_manager_workspace_snapshot(*, actor=None):
             _build_metric_card('operation-kpi-card manager-sky', 'Contatos sem vinculo', len(unlinked_whatsapp)),
             _build_metric_card('operation-kpi-card manager-gold', 'Pagamentos sem matricula', len(payments_without_enrollment)),
             _build_metric_card('operation-kpi-card manager-steel', 'Alertas financeiros', len(financial_alerts)),
+            {
+                **_build_metric_card('operation-kpi-card manager-beacon', 'Red Beacon', red_beacon_snapshot['signal_mesh']['total_due_backlog']),
+                'note': red_beacon_snapshot['summary'],
+                'status_hint': 'attention' if red_beacon_snapshot['signal_mesh']['total_due_backlog'] > 0 else 'clean',
+                'href': '#manager-history-board',
+            },
         ],
         'manager_operational_focus': manager_operational_focus,
+        'red_beacon_snapshot': red_beacon_snapshot,
         'transport_payload': transport_payload,
     }

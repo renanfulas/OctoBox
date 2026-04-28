@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from django.test import TestCase
+from django.utils import timezone
 
 from operations.class_session_types import infer_class_type_from_session_title
 from operations.models import ClassSession, ClassType
@@ -16,7 +19,7 @@ class ClassSessionClassTypeTests(TestCase):
     def test_class_session_defaults_to_other_until_typed_explicitly(self):
         session = ClassSession.objects.create(
             title='Turma especial',
-            scheduled_at='2026-04-24T12:00:00Z',
+            scheduled_at=timezone.make_aware(datetime(2026, 4, 24, 12, 0)),
             duration_minutes=60,
             capacity=12,
         )
