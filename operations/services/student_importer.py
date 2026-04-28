@@ -13,35 +13,66 @@ logger = logging.getLogger('octobox.students')
 _UPDATE_FIELDS = ['full_name', 'email', 'gender', 'birth_date', 'health_issue_status', 'cpf', 'status', 'notes']
 
 
-def _flush_create(batch, created_count, error_rows):
-    """Attempt bulk_create; fall back to per-row savepoints on constraint error."""
+def _emit_progress(job_id, count, failed_item=None):
+    if not job_id:
+        return
     try:
-        Student.objects.bulk_create(batch)
-        return created_count + len(batch), error_rows
+        from shared_support.background_jobs import update_job_progress
+        update_job_progress(job_id, count, failed_item=failed_item)
     except Exception:
-        for student_obj in batch:
+        logger.exception('background-job progress emit failed for job %s', job_id)
+
+
+def _build_error_row(line_idx, student_obj, exc):
+    return {
+        'line': line_idx,
+        'phone': student_obj.phone,
+        'name': student_obj.full_name,
+        'error': str(exc),
+    }
+
+
+def _flush_create(batch, created_count, error_rows, job_id=None):
+    """batch is a list of (line_idx, Student) tuples."""
+    objects = [obj for _, obj in batch]
+    try:
+        Student.objects.bulk_create(objects)
+        created_count += len(objects)
+        _emit_progress(job_id, len(objects))
+        return created_count, error_rows
+    except Exception:
+        for line_idx, student_obj in batch:
             try:
                 with transaction.atomic():
                     student_obj.save()
                 created_count += 1
+                _emit_progress(job_id, 1)
             except Exception as row_err:
-                error_rows.append({'phone': student_obj.phone, 'name': student_obj.full_name, 'error': str(row_err)})
+                err = _build_error_row(line_idx, student_obj, row_err)
+                error_rows.append(err)
+                _emit_progress(job_id, 1, failed_item=err)
         return created_count, error_rows
 
 
-def _flush_update(batch, updated_count, error_rows):
-    """Attempt bulk_update; fall back to per-row savepoints on error."""
+def _flush_update(batch, updated_count, error_rows, job_id=None):
+    """batch is a list of (line_idx, Student) tuples."""
+    objects = [obj for _, obj in batch]
     try:
-        Student.objects.bulk_update(batch, _UPDATE_FIELDS)
-        return updated_count + len(batch), error_rows
+        Student.objects.bulk_update(objects, _UPDATE_FIELDS)
+        updated_count += len(objects)
+        _emit_progress(job_id, len(objects))
+        return updated_count, error_rows
     except Exception:
-        for student_obj in batch:
+        for line_idx, student_obj in batch:
             try:
                 with transaction.atomic():
                     student_obj.save(update_fields=_UPDATE_FIELDS)
                 updated_count += 1
+                _emit_progress(job_id, 1)
             except Exception as row_err:
-                error_rows.append({'phone': student_obj.phone, 'name': student_obj.full_name, 'error': str(row_err)})
+                err = _build_error_row(line_idx, student_obj, row_err)
+                error_rows.append(err)
+                _emit_progress(job_id, 1, failed_item=err)
         return updated_count, error_rows
 
 
@@ -49,7 +80,7 @@ class StudentImporter:
     def __init__(self, batch_size=500):
         self.batch_size = batch_size
 
-    def import_from_file(self, file_path, delimiter=','):
+    def import_from_file(self, file_path, delimiter=',', job_id=None):
         created_count = 0
         updated_count = 0
         skipped_count = 0
@@ -72,6 +103,7 @@ class StudentImporter:
 
                     if not full_name or not phone:
                         skipped_count += 1
+                        _emit_progress(job_id, 1)
                         continue
 
                     student_data = {
@@ -87,23 +119,23 @@ class StudentImporter:
 
                     if phone in existing_student_map:
                         s = Student(id=existing_student_map[phone], phone=phone, **student_data)
-                        to_update.append(s)
+                        to_update.append((row_idx, s))
                     else:
                         s = Student(phone=phone, **student_data)
-                        to_create.append(s)
+                        to_create.append((row_idx, s))
 
                     if len(to_create) >= self.batch_size:
-                        created_count, error_rows = _flush_create(to_create, created_count, error_rows)
+                        created_count, error_rows = _flush_create(to_create, created_count, error_rows, job_id=job_id)
                         to_create = []
 
                     if len(to_update) >= self.batch_size:
-                        updated_count, error_rows = _flush_update(to_update, updated_count, error_rows)
+                        updated_count, error_rows = _flush_update(to_update, updated_count, error_rows, job_id=job_id)
                         to_update = []
 
                 if to_create:
-                    created_count, error_rows = _flush_create(to_create, created_count, error_rows)
+                    created_count, error_rows = _flush_create(to_create, created_count, error_rows, job_id=job_id)
                 if to_update:
-                    updated_count, error_rows = _flush_update(to_update, updated_count, error_rows)
+                    updated_count, error_rows = _flush_update(to_update, updated_count, error_rows, job_id=job_id)
 
         except Exception as e:
             logger.error(f"Failed to import students from {file_path}: {str(e)}", exc_info=True)

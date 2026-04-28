@@ -910,48 +910,68 @@ class StudentSourceCaptureView(View):
 
 class StudentImportView(LoginRequiredMixin, RoleRequiredMixin, View):
     """
-    Inicia o job de importacao assincrona de alunos ou exibe a tela de form (se houvesse).
+    Recebe upload de CSV de alunos, persiste em arquivo temporario, dispara
+    StudentImporter em background com job_id e redireciona para a tela de progresso.
     """
     allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
 
     def post(self, request, *args, **kwargs):
+        import os
+        import tempfile
+        from pathlib import Path
+
+        from django.conf import settings
+
+        from operations.services.student_importer import StudentImporter
         from shared_support.background_jobs import create_job, submit_background_job
-        # Normalmente leriamos o CSV de request.FILES, mas como e um prototipo/hub para 
-        # provar o async e o partial commit, vamos mocar a logica do job.
-        
+
         csv_file = request.FILES.get('import_file')
         if not csv_file:
             messages.error(request, 'Nenhum arquivo CSV enviado.')
             return redirect('student-directory')
-            
-        # Simula a leitura e determinacao do total de itens no CSV
-        linhas = csv_file.read().decode('utf-8').splitlines()
-        total = len(linhas) - 1 if len(linhas) > 1 else 0
-        
-        if total <= 0:
-            messages.warning(request, 'O arquivo parece vazio ou não tem cabeçalho.')
+
+        raw_bytes = csv_file.read()
+        try:
+            text = raw_bytes.decode('utf-8-sig')
+        except UnicodeDecodeError:
+            messages.error(request, 'Arquivo CSV invalido: codificacao precisa ser UTF-8.')
             return redirect('student-directory')
 
-        job_id = create_job('import_students', total_items=total, metadata={'filename': csv_file.name})
-        
-        # A funcao que vai rodar em background.
-        def process_csv_chunk(job_id, linhas_dados):
-            import time
-            for i, linha in enumerate(linhas_dados):
-                # time sleep para simular o processo DB pesado (100ms)
-                time.sleep(0.1)
-                
-                # Simula falha proposital para testar a engine se a linha contiver 'erro'
-                if 'erro' in linha.lower():
-                    from shared_support.background_jobs import update_job_progress
-                    update_job_progress(job_id, 1, failed_item={'line': i+2, 'error': f'Dados invalidos ou ja existentes: linha "{linha[:20]}..."'})
-                else:
-                    from shared_support.background_jobs import update_job_progress
-                    update_job_progress(job_id, 1)
+        non_empty_data_lines = [line for line in text.splitlines()[1:] if line.strip()]
+        total = len(non_empty_data_lines)
 
-        submit_background_job(process_csv_chunk, job_id, linhas[1:])
-        
-        # Redireciona para a UI de progresso
+        if total <= 0:
+            messages.warning(request, 'O arquivo parece vazio ou tem apenas cabecalho.')
+            return redirect('student-directory')
+
+        upload_dir = Path(settings.BASE_DIR) / 'tmp' / 'student_imports'
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+            mode='wb',
+            delete=False,
+            dir=str(upload_dir),
+            suffix='.csv',
+        ) as temp_handle:
+            temp_handle.write(raw_bytes)
+            temp_path = temp_handle.name
+
+        job_id = create_job(
+            'import_students',
+            total_items=total,
+            metadata={'filename': csv_file.name},
+        )
+
+        def _run(job_id_arg, file_path):
+            try:
+                StudentImporter().import_from_file(file_path, job_id=job_id_arg)
+            finally:
+                try:
+                    os.unlink(file_path)
+                except OSError:
+                    pass
+
+        submit_background_job(_run, job_id, temp_path)
+
         return redirect('student-import-progress', job_id=job_id)
 
 
