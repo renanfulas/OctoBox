@@ -44,6 +44,9 @@ POR QUE ELE EXISTE:
 /* Grade compacta oficial de KPIs do owner */
 
 .owner-sessions-panel {
+    --dashboard-fib-3: 13px;
+    --dashboard-rhythm-2: 8px;
+    --dashboard-rhythm-3: 13px;
     min-width: 0;
     overflow: hidden;
     isolation: isolate;
@@ -431,7 +434,7 @@ POR QUE ELE EXISTE:
     .owner-sessions-panel .dashboard-session-feature-head,
     .owner-sessions-panel .dashboard-session-feature-meta-row {
         flex-direction: column;
-        gap: 4px;
+        gap: 6px;
     }
 
     .owner-sessions-panel .dashboard-session-time {
