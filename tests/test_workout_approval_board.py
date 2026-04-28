@@ -344,11 +344,11 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
         response = self.client.get(reverse('workout-approval-board'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Leitura rapida da revisao')
+        self.assertContains(response, 'Leitura rápida da revisão')
         self.assertContains(response, 'Preview: Bike')
         self.assertContains(response, 'Versao 3 aguardando leitura final')
         self.assertContains(response, 'Preview do impacto no aluno')
-        self.assertContains(response, 'Aluno vera assim')
+        self.assertContains(response, 'Aluno verá assim')
         self.assertContains(response, 'data-wod-command="approve"')
         self.assertContains(response, 'data-wod-command="batch-approve"')
 
@@ -420,7 +420,7 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'Notas alteradas')
         self.assertContains(response, 'Timeline leve de auditoria')
         self.assertContains(response, 'Preview anterior')
-        self.assertContains(response, 'Preview apos aprovacao')
+        self.assertContains(response, 'Preview após aprovação')
         self.assertContains(response, 'Alto impacto')
         self.assertContains(response, 'Radar da fila')
 
@@ -552,7 +552,7 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'WOD sensivel filtrado')
         self.assertNotContains(response, 'WOD comum')
-        self.assertContains(response, 'Somente mudancas sensiveis')
+        self.assertContains(response, 'Somente mudanças sensíveis')
 
     def test_approval_board_can_filter_directly_by_session_id(self):
         focused_workout = SessionWorkout.objects.create(

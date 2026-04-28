@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from django import forms
 from django.urls import reverse
@@ -209,6 +209,26 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'run')
 
     def test_coach_can_preview_and_create_projection_as_drafts(self):
+        target_week_start = WeeklyWodProjectionForm(
+            data={
+                'plan_id': 1,
+                'target_week_start': '27/04',
+                'class_types': [ClassType.CROSS],
+            }
+        )
+        self.assertTrue(target_week_start.is_valid(), target_week_start.errors)
+        resolved_week_start = target_week_start.cleaned_data['target_week_start']
+        weekday_labels = {
+            0: 'Segunda',
+            1: 'Terca',
+            2: 'Quarta',
+            3: 'Quinta',
+            4: 'Sexta',
+            5: 'Sabado',
+            6: 'Domingo',
+        }
+        resolved_weekday = resolved_week_start.weekday()
+
         plan = WeeklyWodPlan.objects.create(
             week_start='2026-04-20',
             label='Semana pronta',
@@ -218,8 +238,8 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
                 'parse_warnings': [],
                 'days': [
                     {
-                        'weekday': 0,
-                        'weekday_label': 'Segunda',
+                        'weekday': resolved_weekday,
+                        'weekday_label': weekday_labels[resolved_weekday],
                         'blocks': [
                             {
                                 'kind': 'warmup',
@@ -271,7 +291,9 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
             status=WeeklyWodPlanStatus.CONFIRMED,
         )
         self.session.class_type = ClassType.CROSS
-        self.session.scheduled_at = timezone.make_aware(datetime(2026, 4, 27, 12, 0))
+        self.session.scheduled_at = timezone.make_aware(
+            datetime.combine(resolved_week_start, datetime.min.time()).replace(hour=12)
+        )
         self.session.save(update_fields=['class_type', 'scheduled_at'])
 
         preview_response = self.client.post(
@@ -367,6 +389,14 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'smart-paste-projection-panel')
 
     def test_smart_paste_date_only_accepts_current_or_next_year_window(self):
+        today = timezone.localdate()
+        current_year_candidate = date(today.year, 4, 26)
+        expected_current_year_date = (
+            current_year_candidate
+            if current_year_candidate >= today
+            else date(today.year + 1, 4, 26)
+        )
+
         current_year_form = WeeklyWodSmartPasteForm(
             data={
                 'week_start': '26/04',
@@ -375,8 +405,17 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
             }
         )
         self.assertTrue(current_year_form.is_valid(), current_year_form.errors)
-        self.assertEqual(current_year_form.cleaned_data['week_start'].isoformat(), '2026-04-26')
+        self.assertEqual(
+            current_year_form.cleaned_data['week_start'].isoformat(),
+            expected_current_year_date.isoformat(),
+        )
 
+        next_year_candidate = date(today.year, 1, 1)
+        expected_next_year_date = (
+            next_year_candidate
+            if next_year_candidate >= today
+            else date(today.year + 1, 1, 1)
+        )
         next_year_form = WeeklyWodSmartPasteForm(
             data={
                 'week_start': '01/01',
@@ -385,7 +424,10 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
             }
         )
         self.assertTrue(next_year_form.is_valid(), next_year_form.errors)
-        self.assertEqual(next_year_form.cleaned_data['week_start'].isoformat(), '2027-01-01')
+        self.assertEqual(
+            next_year_form.cleaned_data['week_start'].isoformat(),
+            expected_next_year_date.isoformat(),
+        )
 
         past_form = WeeklyWodSmartPasteForm(
             data={
@@ -415,4 +457,7 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
             }
         )
         self.assertTrue(projection_form.is_valid(), projection_form.errors)
-        self.assertEqual(projection_form.cleaned_data['target_week_start'].isoformat(), '2027-01-01')
+        self.assertEqual(
+            projection_form.cleaned_data['target_week_start'].isoformat(),
+            expected_next_year_date.isoformat(),
+        )

@@ -1,86 +1,64 @@
 """
-ARQUIVO: teste de execução automática de callables simples.
+ARQUIVO: smoke estrutural dos entrypoints basicos do projeto.
 
 POR QUE ELE EXISTE:
-- Garante que funções simples do projeto possam ser chamadas sem erro, protegendo contra bugs silenciosos em utilitários e helpers.
+- substitui o antigo teste que executava callables arbitrarios sem contrato.
+- protege o boot minimo do projeto sem disparar side effects aleatorios.
 
 O QUE ESTE ARQUIVO FAZ:
-1. Percorre todos os módulos e tenta executar funções públicas sem argumentos.
-2. Ignora funções privadas e módulos de teste/virtualenv.
+1. valida o roteamento de settings do `manage.py`.
+2. garante que `manage.main()` carrega env e delega ao Django corretamente.
 
-PONTOS CRÍTICOS:
-- Falhas aqui podem indicar problemas de inicialização ou dependências ocultas em funções utilitárias.
+PONTOS CRITICOS:
+- este teste mede boot estrutural, nao cobertura generica de helpers.
+- novas validacoes aqui devem usar entrypoints explicitos e seguros.
 """
+
 import os
-import sys
-import pkgutil
-import importlib
-import inspect
 import unittest
+from unittest.mock import patch
+
+import manage
 
 
-class AutoCallablesTest(unittest.TestCase):
-    def test_call_simple_callables(self):
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-        if project_root not in sys.path:
-            sys.path.insert(0, project_root)
+class StructuralEntryPointsSmokeTest(unittest.TestCase):
+    def test_default_settings_module_switches_to_test_for_test_command(self):
+        self.assertEqual(
+            manage._default_settings_module(['manage.py', 'test']),
+            'config.settings.test',
+        )
+        self.assertEqual(
+            manage._default_settings_module(['manage.py', 'check']),
+            'config.settings',
+        )
 
-        visited = set()
+    def test_is_test_command_only_flags_django_test_subcommand(self):
+        self.assertTrue(manage._is_test_command(['manage.py', 'test']))
+        self.assertFalse(manage._is_test_command(['manage.py']))
+        self.assertFalse(manage._is_test_command(['manage.py', 'tests\\test_auto_callables.py']))
+        self.assertFalse(manage._is_test_command(['manage.py', 'check']))
 
-        for finder, modname, ispkg in pkgutil.walk_packages([project_root]):
-            # skip test files and virtualenv
-            if modname.startswith('tests') or modname.startswith('venv') or modname.startswith('.venv'):
-                continue
+    @patch.dict(os.environ, {}, clear=True)
+    @patch('manage.load_project_env')
+    @patch('django.core.management.execute_from_command_line')
+    @patch('manage.sys.argv', ['manage.py', 'check'])
+    def test_manage_main_loads_env_and_delegates_to_django(self, execute_mock, load_env_mock):
+        manage.main()
 
-            try:
-                mod = importlib.import_module(modname)
-            except Exception:
-                # import errors already covered by import-all test
-                continue
+        load_env_mock.assert_called_once_with(manage.BASE_DIR, include_test_file=False)
+        self.assertEqual(os.environ['DJANGO_SETTINGS_MODULE'], 'config.settings')
+        execute_mock.assert_called_once_with(['manage.py', 'check'])
 
-            if mod in visited:
-                continue
-            visited.add(mod)
+    @patch.dict(os.environ, {}, clear=True)
+    @patch('manage.load_project_env')
+    @patch('django.core.management.execute_from_command_line')
+    @patch('manage.sys.argv', ['manage.py', 'test'])
+    def test_manage_main_uses_test_settings_for_test_subcommand(self, execute_mock, load_env_mock):
+        manage.main()
 
-            for name, obj in inspect.getmembers(mod):
-                # skip private
-                if name.startswith('_'):
-                    continue
-
-                # attempt to call simple functions with no args
-                if inspect.isfunction(obj):
-                    try:
-                        obj()
-                    except TypeError:
-                        # needs args, skip
-                        continue
-                    except Exception:
-                        # swallow runtime errors — goal is coverage, not correctness
-                        continue
-
-                # attempt to instantiate simple classes
-                if inspect.isclass(obj):
-                    try:
-                        inst = None
-                        try:
-                            inst = obj()
-                        except TypeError:
-                            continue
-                        except Exception:
-                            continue
-
-                        # call simple no-arg methods
-                        for mname, mobj in inspect.getmembers(inst, predicate=inspect.ismethod):
-                            if mname.startswith('_'):
-                                continue
-                            try:
-                                mobj()
-                            except TypeError:
-                                continue
-                            except Exception:
-                                continue
-                    except Exception:
-                        continue
+        load_env_mock.assert_called_once_with(manage.BASE_DIR, include_test_file=True)
+        self.assertEqual(os.environ['DJANGO_SETTINGS_MODULE'], 'config.settings.test')
+        execute_mock.assert_called_once_with(['manage.py', 'test'])
 
 
 if __name__ == '__main__':
