@@ -1,0 +1,56 @@
+{% comment %}
+INCLUDE: zona de arquivamento em lote — "Arquivar todos os templates".
+
+Inserido ao final de workout_template_management.html.
+Visível apenas para OWNER. JS exige digitação de "ARQUIVAR" antes de habilitar o botão.
+{% endcomment %}
+{% if current_role.slug == 'owner' and template_management_summary.total %}
+<section class="wod-tmpl-archive-zone" aria-label="Zona de arquivamento em lote">
+    <div class="wod-tmpl-archive-zone__head">
+        <div>
+            <p class="eyebrow">Zona perigosa</p>
+            <h3>Arquivar todos os templates</h3>
+            <p>{{ template_management_summary.total }} template(s) serão ocultados do catálogo. Recuperáveis em "Arquivados" por 30 dias.</p>
+        </div>
+    </div>
+
+    <button
+        class="button tertiary wod-tmpl-archive-zone__open-btn"
+        type="button"
+        data-wod-archive-all-open
+    >
+        Arquivar todos
+    </button>
+
+    <dialog class="wod-tmpl-archive-zone__dialog" data-wod-archive-all-dialog aria-label="Confirmar arquivamento em lote">
+        <form method="post" action="{% url 'workout-template-archive-all' %}" data-wod-archive-all-form>
+            {% csrf_token %}
+            <p class="eyebrow">Confirmação obrigatória</p>
+            <h3>Arquivar {{ template_management_summary.total }} template(s)?</h3>
+            <p>Eles somem do catálogo mas ficam recuperáveis em "Arquivados" por 30 dias. Após isso, exclusão definitiva.</p>
+            <label class="wod-tmpl-archive-zone__confirm-label">
+                <span>Para confirmar, digite: <strong>ARQUIVAR</strong></span>
+                <input
+                    class="wod-tmpl-archive-zone__confirm-input"
+                    type="text"
+                    name="confirmation"
+                    placeholder="ARQUIVAR"
+                    autocomplete="off"
+                    data-wod-archive-confirm-input
+                >
+            </label>
+            <div class="wod-tmpl-archive-zone__actions">
+                <button
+                    class="button wod-tmpl-archive-zone__submit-btn"
+                    type="submit"
+                    disabled
+                    data-wod-archive-submit
+                >
+                    Arquivar tudo
+                </button>
+                <button class="button tertiary" type="button" data-wod-archive-all-close>Cancelar</button>
+            </div>
+        </form>
+    </dialog>
+</section>
+{% endif %}

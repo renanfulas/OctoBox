@@ -70,8 +70,12 @@ def _build_page_payload(*, page_title, page_subtitle, current_role_slug):
             css=[
                 'css/design-system/operations.css',
                 'css/design-system/operations/workspace/wod-planner.css',
+                'css/design-system/operations/workspace/wod-day-apply.css',
             ],
-            deferred_js=['js/operations/wod_planner.js'],
+            deferred_js=[
+                'js/operations/wod_planner.js',
+                'js/operations/wod_day_apply.js',
+            ],
         ),
     )
 
@@ -270,6 +274,10 @@ def build_workout_planner_context(*, request, current_role, page_title, page_sub
         'planner_trusted_template_options': trusted_template_options[:5],
         'planner_template_usage_panel': template_usage_panel,
         'planner_template_funnel_panel': template_funnel_panel,
+        'planner_day_apply_options': build_persisted_workout_template_options(
+            current_role_slug=current_role.slug,
+            actor=request.user,
+        ),
     }
 
 

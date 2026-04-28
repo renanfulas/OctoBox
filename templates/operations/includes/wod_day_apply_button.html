@@ -1,0 +1,22 @@
+{% comment %}
+INCLUDE: botão "Aplicar template" no header de cada dia do Planner.
+
+PARÂMETROS:
+  day   — PlannerDay dataclass (campos: date, weekday_label, label)
+
+USO (em workout_planner.html dentro do {% for day in planner_week.days %}):
+  {% include "operations/includes/wod_day_apply_button.html" with day=day %}
+{% endcomment %}
+{% if planner_can_manage_templates and planner_day_apply_options %}
+<button
+    class="wod-day-apply__trigger"
+    type="button"
+    data-wod-day-apply-trigger
+    data-date="{{ day.date|date:'Y-m-d' }}"
+    data-day-label="{{ day.weekday_label }}"
+    aria-label="Aplicar template em todas as aulas de {{ day.weekday_label }}"
+    aria-haspopup="dialog"
+>
+    Aplicar template
+</button>
+{% endif %}

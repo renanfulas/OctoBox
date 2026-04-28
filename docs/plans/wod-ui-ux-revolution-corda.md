@@ -573,7 +573,7 @@ ROLLBACK            - como desfazer em 1 passo
 - Criar em `operations/workout_templates.py` (domain) + `operations/models.py` se operations ja possuir models, senao criar `operations/template_models.py` minimalista.
 - **Nao** tocar em `student_app/models.py`.
 
-**ARQUIVOS CRIADOS:**
+**ARQUIVOS CRIADOS (baseline — Onda 6 original):**
 - `operations/workout_templates.py` (domain + services)
 - `operations/migrations/XXXX_workout_template.py`
 - `operations/workout_template_actions.py` (aplicar template)
@@ -598,6 +598,75 @@ ROLLBACK            - como desfazer em 1 passo
 3. Template compartilhado entre boxes por bug -> filtro `box_id` em todo query + teste multi-tenant.
 
 **ROLLBACK:** `FEATURE_WOD_TEMPLATES=False`; migracao reversivel (tabela nova, sem FK quebravel).
+
+---
+
+### Onda 6.1 - Day Apply Template + Archive + Smart Paste segunda-only
+
+**OBJETIVO:** coach/owner aplica template a todas as aulas de um dia com undo de 60s; templates arquivaveis; Smart Paste aceita apenas segunda-feira como inicio de semana.
+
+**CONTRATO DE ENTRADA:** Onda 6 merged (WorkoutTemplate existente com `is_active`, `is_trusted`).
+
+**CONTRATO DE SAIDA:**
+1. Botao "Aplicar template" no header de cada dia do Planner com popover de selecao.
+2. Modos `replace_empty` (default) e `overwrite` com escolha explicita na UI.
+3. Toast undo de 60s apos aplicar em lote.
+4. Aba Templates com busca, filtros e zona de arquivamento (soft-delete 30 dias).
+5. Smart Paste: `week_start` e `target_week_start` com snap automatico para segunda-feira.
+
+**DECISOES:**
+- Snap automatico (nao erro): ao selecionar outro dia, ajusta silenciosamente e mostra hint.
+- Arquivar (nao excluir): `archived_at` + `archived_by`; recuperavel por 30 dias.
+- Modo padrao: `replace_empty`; `overwrite` requer escolha explicita.
+- SmartPlan no popover: mostra a semana inteira (nao fatia por dia).
+
+**ARQUIVOS CRIADOS:**
+- `operations/migrations/0009_workouttemplate_archive_fields.py`
+- `operations/domain/wod_day_apply_rules.py` — regras puras (elegibilidade por modo)
+- `operations/services/wod_day_apply_executor.py` — aplica template em loop por sessao do dia
+- `operations/services/wod_day_apply_undo.py` — reverte via cache TTL 60s
+- `operations/services/workout_template_archive.py` — soft-archive, restore, cleanup 30d
+- `operations/forms_wod_day_apply.py` — WodDayApplyForm, WodDayApplyUndoForm
+- `operations/forms_template_archive.py` — TemplateArchiveAllForm, TemplateRestoreForm
+- `operations/workout_day_apply_views.py` — endpoints apply, undo, preview
+- `operations/workout_day_apply_actions.py` — dispatcher de acoes
+- `operations/workout_template_archive_views.py` — endpoints archive, restore, archived list
+- `templates/operations/includes/wod_smart_paste_week_input.html` — include unificado de data
+- `templates/operations/includes/wod_day_apply_button.html` — botao no header do dia
+- `templates/operations/includes/wod_day_apply_popover.html` — popover de selecao
+- `templates/operations/includes/wod_day_apply_toast.html` — toast undo
+- `templates/operations/includes/wod_template_archive_zone.html` — zona perigosa
+- `templates/operations/includes/wod_template_archived_list.html` — lista de arquivados
+- `static/css/design-system/operations/workspace/wod-day-apply.css`
+- `static/css/design-system/operations/workspace/wod-template-management.css`
+- `static/js/operations/smart_paste_week_monday.js` — snap de segunda
+- `static/js/operations/wod_day_apply.js` — popover, fetch, undo timer
+- `static/js/operations/wod_template_archive.js` — confirmacao, restore
+
+**ALTERADOS:**
+- `operations/model_definitions.py` — `archived_at`, `archived_by` em WorkoutTemplate
+- `operations/models.py` — reexporta campos novos (via model_definitions)
+- `templates/operations/workout_smart_paste.html` — substitui bloco data pelo include
+- `templates/operations/includes/wod_smart_paste_projection.html` — idem
+- `templates/operations/workout_planner.html` — +1 include por header de dia
+- `templates/operations/workout_template_management.html` — +2 includes (archive zone + archived list)
+- `operations/urls.py` — +6 rotas (day-apply x3, archive x3)
+- `operations/workout_planner_context.py` — expoe templates + smartplan no contexto do dia
+
+**DoD:**
+- aplicar template em todas as 4 aulas de segunda leva <= 500 ms
+- undo reverte dentro de 60s sem dado persistido incorreto
+- selecionar terca no Smart Paste exibe hint "Ajustado para segunda dd/mm" e salva segunda
+- arquivar 12 templates oculta do catalogo; restaurar um reativa
+- zero arquivo existente cresce mais que 15 linhas
+
+**FAILURE MODES:**
+1. Undo apos 60s -> cache expirado, toast mostra "janela de desfazer encerrada".
+2. Overwrite em aula com WOD publicado -> executor bloqueia (status != DRAFT) e registra skip.
+3. Archive de template em uso no SmartPlan da semana -> aviso no modal; nao bloqueia.
+4. Snap de segunda quebrar em locale sem semana ISO -> prevMonday usa getDay() nativo, nao ISO.
+
+**ROLLBACK:** revert do PR; migration 0009 reversivel (campos nullable, sem FK cascata).
 
 ---
 

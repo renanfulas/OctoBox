@@ -178,9 +178,9 @@
                     <input type="hidden" name="name" value="{{ template.name }} copia">
                     <button class="button tertiary" type="submit">Duplicar</button>
                 </form>
-                <form method="post" action="{% url 'workout-template-delete' template.id %}" onsubmit="return confirm('Excluir este template persistente do catalogo?');">
+                <form method="post" action="{% url 'workout-template-archive' template.id %}">
                     {% csrf_token %}
-                    <button class="button tertiary" type="submit">Excluir</button>
+                    <button class="button tertiary" type="submit">Arquivar</button>
                 </form>
             </div>
             <form method="post" action="{% url 'workout-template-update-metadata' template.id %}" class="coach-wod-form-stack">
@@ -442,6 +442,9 @@
         </article>
         {% endfor %}
     </section>
+
+    {% include "operations/includes/wod_template_archive_zone.html" %}
+    {% include "operations/includes/wod_template_archived_list.html" %}
 </div>
 {% endwith %}
 {% endblock %}

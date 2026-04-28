@@ -1,0 +1,33 @@
+{% comment %}
+INCLUDE: campo de data de início de semana com snap automático para segunda-feira.
+
+PARÂMETROS:
+  field           — campo de formulário Django (week_start ou target_week_start)
+  picker_id       — id do input[type=date] nativo (ex: "smart-paste-week-start-picker")
+  picker_value    — valor inicial do picker em formato Y-m-d (opcional)
+  label_text      — texto do <label> (ex: "Início da semana")
+  hint_prefix     — prefixo do hint de segunda (ex: "Semana alvo")
+
+USO:
+  {% include "operations/includes/wod_smart_paste_week_input.html" with
+      field=smart_paste_form.week_start
+      picker_id="smart-paste-week-start-picker"
+      picker_value=weekly_plan.week_start|date:"Y-m-d"
+      label_text="Início da semana"
+  %}
+{% endcomment %}
+<label>
+    <span>{{ label_text|default:"Início da semana" }}</span>
+    <div class="smart-paste-date-input-wrap" data-smart-date-monday-wrap>
+        {{ field }}
+        <button class="button tertiary smart-paste-date-trigger" type="button" data-smart-date-button>Abrir calendário</button>
+        <input
+            type="date"
+            id="{{ picker_id }}"
+            class="smart-paste-native-picker"
+            value="{{ picker_value }}"
+            step="7"
+        >
+        <span class="smart-paste-monday-hint" data-smart-date-monday-hint aria-live="polite" hidden></span>
+    </div>
+</label>

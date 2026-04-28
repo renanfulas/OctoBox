@@ -172,6 +172,7 @@
                     <div class="wod-planner__day-head">
                         <span>{{ day.weekday_label }}</span>
                         <strong>{{ day.label }}</strong>
+                        {% include "operations/includes/wod_day_apply_button.html" with day=day %}
                     </div>
                     <div class="wod-planner__cells">
                         {% for cell in day.cells %}
@@ -250,6 +251,9 @@
                 </div>
             </aside>
         </div>
+
+        {% include "operations/includes/wod_day_apply_popover.html" %}
+        {% include "operations/includes/wod_day_apply_toast.html" %}
 
         {% if planner_trusted_template_options %}
         <dialog class="wod-planner__template-picker" data-wod-planner-template-picker aria-label="Escolher template confiavel">

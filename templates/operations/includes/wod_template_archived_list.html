@@ -1,0 +1,37 @@
+{% comment %}
+INCLUDE: lista de templates arquivados com opção de restaurar.
+
+Inserido ao final de workout_template_management.html, após a archive zone.
+{% endcomment %}
+{% if archived_templates %}
+<section class="wod-tmpl-archived" aria-label="Templates arquivados">
+    <div class="wod-tmpl-archived__head">
+        <div>
+            <p class="eyebrow">Arquivados</p>
+            <h3>{{ archived_templates|length }} template(s) aguardando</h3>
+            <p>Restaure antes do prazo ou serão excluídos permanentemente.</p>
+        </div>
+    </div>
+    <div class="wod-tmpl-archived__list">
+        {% for item in archived_templates %}
+        <article class="wod-tmpl-archived__card {% if item.expires_soon %}wod-tmpl-archived__card--expiring{% endif %}">
+            <div class="wod-tmpl-archived__card-info">
+                <strong>{{ item.name }}</strong>
+                <p>Arquivado em {{ item.archived_at_label }} por {{ item.archived_by_label }}</p>
+            </div>
+            <div class="wod-tmpl-archived__card-meta">
+                {% if item.expires_soon %}
+                <span class="pill danger">Expira em {{ item.days_left }} dia(s)</span>
+                {% else %}
+                <span class="pill info">{{ item.days_left }} dia(s) restantes</span>
+                {% endif %}
+            </div>
+            <form method="post" action="{% url 'workout-template-restore' item.id %}">
+                {% csrf_token %}
+                <button class="button secondary" type="submit">Restaurar</button>
+            </form>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
