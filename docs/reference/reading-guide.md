@@ -80,6 +80,8 @@ Se o foco for implantar esse tema em ordem pratica, por ondas, com baixo risco e
 
 Se o foco for saber quem e o dono local de cada funcionalidade e quais testes sobem quando uma tela precisa continuar se comunicando com as outras, leia tambem [functional-circuits-matrix.md](functional-circuits-matrix.md).
 
+Se o foco for localizar rapidamente qual mapa especializado abrir dentro de `docs/map/`, leia tambem [../map/README.md](../map/README.md).
+
 Se o foco for navegar especificamente o corredor de WOD operacional depois da refatoracao das waves de `operations/workspace_views.py`, leia tambem [operations-wod-ownership-map.md](operations-wod-ownership-map.md).
 
 Se o foco for alinhar a suite de testes do WOD com esse ownership novo, leia tambem [../plans/wod-test-ownership-split-corda.md](../plans/wod-test-ownership-split-corda.md).

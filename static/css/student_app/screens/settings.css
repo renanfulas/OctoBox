@@ -83,3 +83,70 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 .student-profile-edit .student-form-stack {
     margin-top: 14px;
 }
+
+.student-freeze-request-card {
+    gap: 16px;
+}
+
+.student-freeze-form {
+    gap: 16px;
+}
+
+.student-freeze-form .student-field-with-unit {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+}
+
+.student-freeze-form .student-field-with-unit .student-input {
+    padding-right: 15px;
+}
+
+.student-freeze-form .student-field-with-unit__suffix {
+    position: static;
+    transform: none;
+    font-size: 0.9rem;
+}
+
+.student-freeze-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.student-freeze-preset {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 24%, var(--theme-border-soft) 76%);
+    background: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
+    color: var(--theme-text-primary);
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition:
+        transform var(--motion-base) var(--ease-standard),
+        border-color var(--motion-base) var(--ease-standard),
+        background var(--motion-base) var(--ease-standard);
+}
+
+.student-freeze-preset:hover,
+.student-freeze-preset:focus-visible {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--theme-focus-ring) 70%, var(--theme-accent-support) 30%);
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-surface-strong) 86%);
+    outline: none;
+}
+
+.student-freeze-help {
+    color: var(--theme-text-secondary);
+    font-size: 0.82rem;
+    font-weight: 600;
+}

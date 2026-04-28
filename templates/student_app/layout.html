@@ -36,8 +36,8 @@
             {% include "student_app/_partials/_mobile_nav.html" %}
         </main>
     </div>
-    <script src="{% static 'js/student_app/theme.js' %}"></script>
-    <script src="{% static 'js/student_app/pwa.js' %}"></script>
+    <script src="{% static 'js/student_app/theme.js' %}?v={{ static_asset_version }}"></script>
+    <script src="{% static 'js/student_app/pwa.js' %}?v={{ static_asset_version }}"></script>
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>

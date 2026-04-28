@@ -5,7 +5,12 @@
 {% block extra_head %}
 {{ block.super }}
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/student_app/screens/settings.css' %}">
+<link rel="stylesheet" href="{% static 'css/student_app/screens/settings.css' %}?v={{ static_asset_version }}">
+{% endblock %}
+
+{% block extra_scripts %}
+{{ block.super }}
+<script src="{% static 'js/student_app/settings.js' %}?v={{ static_asset_version }}"></script>
 {% endblock %}
 
 {% block body %}
@@ -91,7 +96,7 @@
     {% include "student_app/partials/invite_entry_card.html" with eyebrow="Novo box" title="Entrar com convite" copy="Cole o convite." %}
 </section>
 
-<section class="student-card student-card--quiet">
+<section class="student-card student-card--quiet student-freeze-request-card">
     <div class="student-section-head">
         <div>
             <span class="student-context-switch">Matrícula</span>
@@ -99,14 +104,31 @@
         </div>
     </div>
     <p class="student-copy">Viagens, lesões ou afastamentos. A recepção confirma o período e suspende as cobranças.</p>
-    <form method="post" action="{% url 'student-app-request-freeze' %}" class="student-form-stack" style="margin-top:12px;">
+    <form method="post" action="{% url 'student-app-request-freeze' %}" class="student-form-stack student-freeze-form" style="margin-top:12px;">
         {% csrf_token %}
         <label>
             <span>Quantos dias?</span>
             <span class="student-field-with-unit">
-                <input class="student-input" type="number" name="days" min="7" max="90" placeholder="Ex: 21" required>
+                <input class="student-input" type="text" name="days" inputmode="numeric" pattern="[0-9]{1,3}" maxlength="3" placeholder="Ex: 21" required autocomplete="off" data-max-integer-digits="3" list="student-freeze-day-options">
                 <span class="student-field-with-unit__suffix">dias</span>
             </span>
+            <datalist id="student-freeze-day-options">
+                <option value="5"></option>
+                <option value="7"></option>
+                <option value="10"></option>
+                <option value="20"></option>
+                <option value="30"></option>
+                <option value="60"></option>
+            </datalist>
+            <div class="student-freeze-presets" role="list" aria-label="Sugestoes de dias para congelamento">
+                <button type="button" class="student-freeze-preset" data-freeze-days="5">5 dias</button>
+                <button type="button" class="student-freeze-preset" data-freeze-days="7">7 dias</button>
+                <button type="button" class="student-freeze-preset" data-freeze-days="10">10 dias</button>
+                <button type="button" class="student-freeze-preset" data-freeze-days="20">20 dias</button>
+                <button type="button" class="student-freeze-preset" data-freeze-days="30">30 dias</button>
+                <button type="button" class="student-freeze-preset" data-freeze-days="60">60 dias</button>
+            </div>
+            <small class="student-freeze-help">Escolha um atalho ou digite manualmente. O campo aceita ate 3 digitos.</small>
         </label>
         <label>
             <span>Motivo (opcional)</span>
