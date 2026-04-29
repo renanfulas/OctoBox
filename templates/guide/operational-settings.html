@@ -107,6 +107,22 @@ POR QUE ELE EXISTE:
             </div>
         </form>
     </article>
+    <article class="table-card" id="operational-settings-student-import">
+        <p class="eyebrow">Importar Alunos</p>
+        <h3>CSV de alunos</h3>
+        <p class="system-map-copy">Suba um CSV com a base de alunos para criar ou atualizar cadastros. O sistema identifica cada aluno pelo telefone e processa em background, exibindo progresso em tempo real.</p>
+        <form method="post" enctype="multipart/form-data" action="{% url 'student-import' %}" class="form-stack section-gap-top-sm operational-settings-import-form">
+            {% csrf_token %}
+            <label>
+                <span class="field-label">Arquivo CSV de alunos</span>
+                <input type="file" name="import_file" accept=".csv,text/csv" required class="operational-settings-file-input">
+            </label>
+            <p class="system-map-copy">Colunas esperadas: <code>full_name</code>, <code>whatsapp</code> (ou <code>phone</code>). Opcionais: <code>email</code>, <code>birth_date</code>, <code>gender</code>, <code>cpf</code>, <code>status</code>, <code>notes</code>.</p>
+            <div class="actions actions-tight operation-hero-action-rail section-gap-top-xs">
+                <button class="button operational-settings-submit" type="submit">Importar alunos</button>
+            </div>
+        </form>
+    </article>
     <article class="table-card" id="operational-settings-student-app">
         <p class="eyebrow">App do aluno</p>
         <h3>Convites operacionais</h3>

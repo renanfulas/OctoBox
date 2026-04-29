@@ -14,18 +14,8 @@ PONTOS CRITICOS:
 
 from typing import Callable, Protocol, TypeVar
 
-from .commands import (
-    ClassScheduleCreateCommand,
-    ClassScheduleResetCommand,
-    ClassSessionDeleteCommand,
-    ClassSessionUpdateCommand,
-)
-from .results import (
-    ClassScheduleCreateResult,
-    ClassScheduleResetResult,
-    DeletedClassSessionRecord,
-    UpdatedClassSessionRecord,
-)
+from .commands import ClassScheduleCreateCommand, ClassScheduleResetCommand, ClassSessionDeleteCommand, ClassSessionUpdateCommand
+from .results import ClassScheduleCreateResult, ClassScheduleResetResult, DeletedClassSessionRecord, UpdatedClassSessionRecord
 
 
 ResultType = TypeVar('ResultType')

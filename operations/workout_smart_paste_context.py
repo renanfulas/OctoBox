@@ -42,18 +42,26 @@ def _decorate_preview_payload(parsed_payload):
     unresolved_items = []
     total_blocks = 0
     total_movements = 0
-    for day in parsed_payload.get('days', []):
-        for block in day.get('blocks', []):
+    for day_index, day in enumerate(parsed_payload.get('days', [])):
+        for block_index, block in enumerate(day.get('blocks', [])):
             total_blocks += 1
-            for movement in block.get('movements', []):
+            for movement_index, movement in enumerate(block.get('movements', [])):
                 movement['display_label'] = _smart_paste_display_label(movement)
                 total_movements += 1
                 if not movement.get('movement_slug'):
                     unresolved_items.append(
                         {
+                            'day_index': day_index,
+                            'block_index': block_index,
+                            'movement_index': movement_index,
                             'day_label': day.get('weekday_label', ''),
                             'block_kind': block.get('kind', ''),
+                            'block_title': block.get('title') or block.get('kind', ''),
                             'movement_label_raw': movement.get('movement_label_raw', ''),
+                            'movement_slug': movement.get('movement_slug') or '',
+                            'reps_spec': movement.get('reps_spec') or '',
+                            'load_spec': movement.get('load_spec') or '',
+                            'notes': movement.get('notes') or '',
                         }
                     )
     parsed_payload['summary'] = {
@@ -62,6 +70,7 @@ def _decorate_preview_payload(parsed_payload):
         'movements_count': total_movements,
         'unresolved_count': len(unresolved_items),
         'unresolved_items': unresolved_items[:8],
+        'current_unresolved_item': unresolved_items[0] if unresolved_items else None,
     }
     return parsed_payload
 
@@ -151,6 +160,22 @@ def build_weekly_wod_smart_paste_context(
     )
     parsed_payload = parsed_payload if parsed_payload is not None else getattr(weekly_plan, 'parsed_payload', {}) or {}
     parsed_payload = _decorate_preview_payload(parsed_payload)
+    current_unresolved_item = parsed_payload.get('summary', {}).get('current_unresolved_item')
+    if current_unresolved_item and not getattr(review_form, 'is_bound', False):
+        review_form = WeeklyWodReviewMovementForm(
+            slug_choices=load_wod_movement_dictionary(),
+            initial={
+                'plan_id': getattr(weekly_plan, 'id', None),
+                'day_index': current_unresolved_item['day_index'],
+                'block_index': current_unresolved_item['block_index'],
+                'movement_index': current_unresolved_item['movement_index'],
+                'movement_label_raw': current_unresolved_item['movement_label_raw'],
+                'movement_slug': current_unresolved_item['movement_slug'],
+                'reps_spec': current_unresolved_item['reps_spec'],
+                'load_spec': current_unresolved_item['load_spec'],
+                'notes': current_unresolved_item['notes'],
+            },
+        )
     context = {
         'workout_corridor_tabs': build_workout_corridor_tabs(
             current_key='smart_paste',
