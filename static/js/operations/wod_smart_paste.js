@@ -16,15 +16,27 @@ POR QUE ELE EXISTE:
   function bindSmartDateField(field) {
     if (!field || field.dataset.smartDateBound === 'true') return;
     field.dataset.smartDateBound = 'true';
-    field.dataset.mask = 'date';
-    field.dataset.yearDigits = '2';
-    if (window.OctoForms && typeof window.OctoForms.applyMaskedFields === 'function') {
+    var includesYear = field.dataset.smartDateIncludeYear === 'true';
+    var isHiddenField = field.type === 'hidden';
+    if (!isHiddenField) {
+      field.dataset.mask = 'date';
+      field.dataset.yearDigits = includesYear ? '4' : '2';
+    }
+    if (!isHiddenField && window.OctoForms && typeof window.OctoForms.applyMaskedFields === 'function') {
       window.OctoForms.applyMaskedFields(field.parentNode || document);
     }
 
     var pickerId = field.dataset.pickerTarget || '';
     var picker = pickerId ? document.getElementById(pickerId) : null;
     var button = field.parentNode ? field.parentNode.querySelector('[data-smart-date-button]') : null;
+    var displayId = field.dataset.displayTarget || '';
+    var display = displayId ? document.getElementById(displayId) : null;
+
+    function formatDisplayValue(parts) {
+      return includesYear
+        ? pad(parts[2]) + '/' + pad(parts[1]) + '/' + parts[0]
+        : pad(parts[2]) + '/' + pad(parts[1]);
+    }
 
     function resolveClosestPickerYear(day, month) {
       var today = new Date();
@@ -39,9 +51,13 @@ POR QUE ELE EXISTE:
       if (!picker || !picker.value) return;
       var parts = picker.value.split('-');
       if (parts.length !== 3) return;
-      field.value = pad(parts[2]) + '/' + pad(parts[1]);
+      var formattedValue = formatDisplayValue(parts);
+      field.value = formattedValue;
+      if (display) display.textContent = formattedValue;
       field.dispatchEvent(new Event('input', { bubbles: true }));
-      field.dispatchEvent(new Event('blur', { bubbles: true }));
+      if (!isHiddenField) {
+        field.dispatchEvent(new Event('blur', { bubbles: true }));
+      }
     }
 
     function syncPickerFromText() {
@@ -50,7 +66,13 @@ POR QUE ELE EXISTE:
       if (normalized.length < 4) return;
       var day = normalized.slice(0, 2);
       var month = normalized.slice(2, 4);
-      var year = resolveClosestPickerYear(day, month);
+      var year = null;
+      if (includesYear && normalized.length >= 8) {
+        year = Number(normalized.slice(4, 8));
+      }
+      if (!year) {
+        year = includesYear ? new Date().getFullYear() : resolveClosestPickerYear(day, month);
+      }
       var candidate = new Date(year, Number(month) - 1, Number(day));
       if (
         candidate.getFullYear() === year &&
@@ -63,11 +85,15 @@ POR QUE ELE EXISTE:
 
     if (picker) {
       picker.addEventListener('change', syncFromPicker);
-      field.addEventListener('blur', syncPickerFromText);
+      if (!isHiddenField) {
+        field.addEventListener('blur', syncPickerFromText);
+      }
     }
 
     if (button && picker) {
       button.addEventListener('click', function () {
+        var today = new Date();
+        picker.value = today.getFullYear() + '-' + pad(today.getMonth() + 1) + '-' + pad(today.getDate());
         if (typeof picker.showPicker === 'function') {
           picker.showPicker();
         } else {
@@ -76,7 +102,58 @@ POR QUE ELE EXISTE:
         }
       });
     }
+
+    if (picker && picker.value) {
+      syncFromPicker();
+    } else if (display && field.value) {
+      display.textContent = field.value;
+    }
   }
 
-  root.querySelectorAll('[data-smart-date-input]').forEach(bindSmartDateField);
+  function openReviewTarget(targetId) {
+    if (!targetId) return;
+    var reviewTarget = document.getElementById(String(targetId).replace(/^#/, ''));
+    if (!reviewTarget) return;
+    if (reviewTarget.tagName === 'DETAILS') {
+      reviewTarget.open = true;
+    }
+    reviewTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    var focusField = reviewTarget.querySelector('input:not([type=hidden]), textarea, select');
+    if (focusField) {
+      window.setTimeout(function () { focusField.focus(); }, 180);
+    }
+  }
+
+  function bindReviewQueue(scope) {
+    if (!scope) return;
+    scope.querySelectorAll('[data-smart-paste-review-jump]').forEach(function (link) {
+      if (link.dataset.smartPasteReviewJumpBound === 'true') return;
+      link.dataset.smartPasteReviewJumpBound = 'true';
+      link.addEventListener('click', function (event) {
+        var href = link.getAttribute('href') || '';
+        if (!href.startsWith('#')) return;
+        event.preventDefault();
+        openReviewTarget(href);
+      });
+    });
+    var previewPanel = scope.matches('[data-smart-paste-preview-panel]') ? scope : scope.querySelector('[data-smart-paste-preview-panel]');
+    if (previewPanel) {
+      var autoOpenTarget = previewPanel.dataset.smartPasteAutoOpenTarget || '';
+      if (autoOpenTarget) {
+        openReviewTarget(autoOpenTarget);
+      }
+    }
+  }
+
+  function initializeScope(scope) {
+    if (!scope) return;
+    scope.querySelectorAll('[data-smart-date-input]').forEach(bindSmartDateField);
+    bindReviewQueue(scope);
+  }
+
+  initializeScope(root);
+
+  document.body.addEventListener('htmx:afterSwap', function (event) {
+    initializeScope(event.target);
+  });
 })();

@@ -1,9 +1,9 @@
-from datetime import date, datetime
-from unittest.mock import patch
+from datetime import date, datetime, timedelta
 
 from django import forms
 from django.urls import reverse
 from django.utils import timezone
+from unittest.mock import patch
 
 from operations.forms import WeeklyWodProjectionForm, WeeklyWodSmartPasteForm
 from operations.models import ClassSession, ClassType, WorkoutTemplate
@@ -31,6 +31,31 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'Smart Paste')
         self.assertContains(response, 'Cole o WOD semanal e revise antes de replicar.')
 
+    def test_surface_does_not_auto_bind_latest_plan_from_another_week(self):
+        WeeklyWodPlan.objects.create(
+            week_start='2027-04-19',
+            label='Plano futuro',
+            source_text='Segunda\\nCardio',
+            parsed_payload={'week_label': None, 'parse_warnings': [], 'days': []},
+            created_by=self.coach,
+            status=WeeklyWodPlanStatus.CONFIRMED,
+        )
+
+        response = self.client.get(reverse('workout-smart-paste'))
+
+        self.assertEqual(response.status_code, 200)
+        current_week_start = timezone.localdate() - timedelta(days=timezone.localdate().weekday())
+        self.assertIsNone(response.context['weekly_plan'])
+        self.assertEqual(
+            response.context['smart_paste_form'].initial['week_start'],
+            current_week_start.strftime('%d/%m/%Y'),
+        )
+        self.assertEqual(
+            response.context['projection_form'].initial['target_week_start'],
+            current_week_start.strftime('%d/%m/%Y'),
+        )
+        self.assertNotContains(response, 'Plano futuro')
+
     def test_coach_can_parse_text_into_weekly_plan_draft(self):
         response = self.client.post(
             reverse('workout-smart-paste'),
@@ -52,6 +77,7 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'Texto organizado em rascunho semanal.')
         self.assertContains(response, 'Aquecimento')
         self.assertContains(response, 'lunge')
+        self.assertNotContains(response, 'smart-paste-projection-panel')
 
     def test_coach_can_confirm_existing_weekly_plan_after_preview(self):
         plan = WeeklyWodPlan.objects.create(
@@ -209,11 +235,12 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         self.assertNotContains(response, '<html')
         self.assertContains(response, 'run')
         self.assertNotContains(response, 'Revise um item por vez')
-        self.assertNotContains(response, 'Salvar e revisar próximo')
+        self.assertNotContains(response, 'Salvar e revisar proximo')
 
     def test_preview_focuses_first_unresolved_item_in_review_corridor(self):
+        current_week_start = timezone.localdate() - timedelta(days=timezone.localdate().weekday())
         plan = WeeklyWodPlan.objects.create(
-            week_start='2026-04-20',
+            week_start=current_week_start,
             label='Semana fila',
             source_text='Segunda\nWod\nrum\nbike',
             parsed_payload={
@@ -260,7 +287,110 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'Revise um item por vez')
         self.assertContains(response, 'rum')
         self.assertContains(response, 'bike')
-        self.assertContains(response, 'Salvar e revisar próximo')
+        self.assertContains(response, 'Salvar e revisar proximo')
+
+    def test_inline_review_partial_auto_opens_next_unresolved_item(self):
+        plan = WeeklyWodPlan.objects.create(
+            week_start='2026-04-20',
+            label='Semana revisar duas vezes',
+            source_text='Segunda\nWod\nrum\njum',
+            parsed_payload={
+                'week_label': None,
+                'parse_warnings': [],
+                'days': [
+                    {
+                        'weekday': 0,
+                        'weekday_label': 'Segunda',
+                        'blocks': [
+                            {
+                                'kind': 'metcon',
+                                'title': 'WOD',
+                                'notes': '',
+                                'movements': [
+                                    {
+                                        'movement_slug': None,
+                                        'movement_label_raw': 'rum',
+                                        'reps_spec': None,
+                                        'load_spec': '',
+                                        'notes': None,
+                                        'sort_order': 0,
+                                    },
+                                    {
+                                        'movement_slug': None,
+                                        'movement_label_raw': 'jum',
+                                        'reps_spec': None,
+                                        'load_spec': '',
+                                        'notes': None,
+                                        'sort_order': 1,
+                                    },
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+            created_by=self.coach,
+        )
+
+        response = self.client.post(
+            reverse('workout-smart-paste'),
+            data={
+                'action': 'update_review_item',
+                'plan_id': plan.id,
+                'day_index': 0,
+                'block_index': 0,
+                'movement_index': 0,
+                'movement_label_raw': 'run',
+                'movement_slug': '',
+                'reps_spec': '400',
+                'load_spec': '',
+                'notes': 'Corrigido no preview',
+            },
+            HTTP_HX_REQUEST='true',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-smart-paste-auto-open-target="review-item-0-0-1"')
+
+    def test_unresolved_items_block_weekly_confirmation(self):
+        WeeklyWodPlan.objects.create(
+            week_start='2026-04-27',
+            label='Semana com pendencia',
+            source_text='Segunda\nWod\nrum',
+            parsed_payload={
+                'week_label': None,
+                'parse_warnings': [],
+                'days': [
+                    {
+                        'weekday': 0,
+                        'weekday_label': 'Segunda',
+                        'blocks': [
+                            {
+                                'kind': 'metcon',
+                                'title': 'WOD',
+                                'notes': '',
+                                'movements': [
+                                    {
+                                        'movement_slug': None,
+                                        'movement_label_raw': 'movimento inventado xyz',
+                                        'reps_spec': None,
+                                        'load_spec': '',
+                                        'notes': None,
+                                        'sort_order': 0,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+            created_by=self.coach,
+        )
+        response = self.client.get(reverse('workout-smart-paste'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Feche as pendencias humanas antes de confirmar o rascunho semanal.')
+        self.assertContains(response, 'disabled aria-disabled="true"')
 
     def test_coach_can_preview_and_create_projection_as_drafts(self):
         target_week_start = WeeklyWodProjectionForm(
@@ -442,30 +572,60 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         self.assertNotContains(response, '<html')
         self.assertContains(response, 'smart-paste-projection-panel')
 
-    @patch('operations.forms.timezone.localdate', return_value=date(2026, 4, 28))
-    def test_smart_paste_date_prefers_selected_week_in_same_year_when_it_is_closer(self, mocked_today):
+    def test_unconfirmed_plan_cannot_open_projection(self):
+        plan = WeeklyWodPlan.objects.create(
+            week_start='2026-04-20',
+            label='Semana draft',
+            source_text=SMART_PASTE_SAMPLE,
+            parsed_payload={
+                'week_label': None,
+                'parse_warnings': [],
+                'days': [
+                    {
+                        'weekday': 0,
+                        'weekday_label': 'Segunda',
+                        'blocks': [],
+                    }
+                ],
+            },
+            created_by=self.coach,
+            status=WeeklyWodPlanStatus.DRAFT,
+        )
+
+        response = self.client.post(
+            reverse('workout-smart-paste'),
+            data={
+                'plan_id': plan.id,
+                'target_week_start': '27/04',
+                'class_types': [ClassType.CROSS],
+                'action': 'preview_projection',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Confirme o rascunho semanal antes de montar a replicacao.')
+
+    def test_smart_paste_date_prefers_selected_week_in_same_year_when_it_is_closer(self):
+        today = timezone.localdate()
+        current_year_candidate = date(today.year, 4, 26)
+        expected_current_year_date = current_year_candidate - timedelta(days=current_year_candidate.weekday())
+
         current_year_form = WeeklyWodSmartPasteForm(
             data={
-                'week_start': '20/04',
+                'week_start': '26/04',
                 'label': 'Semana atual',
                 'source_text': SMART_PASTE_SAMPLE,
             }
         )
         self.assertTrue(current_year_form.is_valid(), current_year_form.errors)
-        self.assertEqual(current_year_form.cleaned_data['week_start'].isoformat(), '2026-04-20')
-
-        projection_form = WeeklyWodProjectionForm(
-            data={
-                'plan_id': 1,
-                'target_week_start': '20/04',
-                'class_types': [ClassType.CROSS],
-            }
+        self.assertEqual(
+            current_year_form.cleaned_data['week_start'].isoformat(),
+            expected_current_year_date.isoformat(),
         )
-        self.assertTrue(projection_form.is_valid(), projection_form.errors)
-        self.assertEqual(projection_form.cleaned_data['target_week_start'].isoformat(), '2026-04-20')
 
-    @patch('operations.forms.timezone.localdate', return_value=date(2026, 12, 20))
-    def test_smart_paste_date_can_roll_to_next_year_when_next_year_is_closer(self, mocked_today):
+        next_year_candidate = date(today.year, 1, 1)
+        expected_next_year_date = next_year_candidate - timedelta(days=next_year_candidate.weekday())
         next_year_form = WeeklyWodSmartPasteForm(
             data={
                 'week_start': '01/01',
@@ -474,7 +634,10 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
             }
         )
         self.assertTrue(next_year_form.is_valid(), next_year_form.errors)
-        self.assertEqual(next_year_form.cleaned_data['week_start'].isoformat(), '2027-01-01')
+        self.assertEqual(
+            next_year_form.cleaned_data['week_start'].isoformat(),
+            expected_next_year_date.isoformat(),
+        )
 
     @patch('operations.forms.timezone.localdate', return_value=date(2026, 4, 28))
     def test_smart_paste_date_accepts_explicit_past_week_in_current_year(self, mocked_today):
@@ -498,4 +661,33 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
             }
         )
         self.assertFalse(far_future_form.is_valid())
-        self.assertIn('A data precisa ficar no ano anterior, atual ou no próximo ano.', far_future_form.errors['week_start'])
+        self.assertIn('A data precisa ficar no ano anterior, atual ou no proximo ano.', far_future_form.errors['week_start'])
+
+    def test_projection_target_week_accepts_calendar_year_and_past_week(self):
+        projection_form = WeeklyWodProjectionForm(
+            data={
+                'plan_id': 1,
+                'target_week_start': '27/04/2025',
+                'class_types': [ClassType.CROSS],
+            }
+        )
+        self.assertTrue(projection_form.is_valid(), projection_form.errors)
+        self.assertEqual(projection_form.cleaned_data['target_week_start'].isoformat(), '2025-04-21')
+
+    def test_smart_paste_snaps_non_monday_to_previous_monday(self):
+        # Find a future Wednesday so the snapped Monday is also in the future.
+        today = date.today()
+        days_ahead = (2 - today.weekday()) % 7 or 7  # next Wednesday, never today
+        wednesday = today + timedelta(days=days_ahead)
+        expected_monday = wednesday - timedelta(days=2)
+
+        form = WeeklyWodSmartPasteForm(
+            data={
+                'week_start': wednesday.strftime('%d/%m/%Y'),
+                'label': 'Snap para segunda',
+                'source_text': SMART_PASTE_SAMPLE,
+            }
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['week_start'], expected_monday)
+        self.assertEqual(form.cleaned_data['week_start'].weekday(), 0)

@@ -116,7 +116,18 @@ class WorkoutSmartPasteView(OperationBaseView):
     def _render_partial(self, template_name, context):
         return render(self.request, template_name, context)
 
-    def _build_context(self, *, plan=None, form=None, projection_form=None, review_form=None, undo_form=None, parsed_payload=None, projection_preview=None):
+    def _build_context(
+        self,
+        *,
+        plan=None,
+        form=None,
+        projection_form=None,
+        review_form=None,
+        undo_form=None,
+        parsed_payload=None,
+        projection_preview=None,
+        auto_open_review_target=None,
+    ):
         base_context = self.get_base_context()
         context = build_weekly_wod_smart_paste_context(
             request=self.request,
@@ -129,6 +140,7 @@ class WorkoutSmartPasteView(OperationBaseView):
             undo_form=undo_form,
             parsed_payload=parsed_payload,
             projection_preview=projection_preview,
+            auto_open_review_target=auto_open_review_target,
         )
         base_context.update(context)
         return base_context
@@ -169,7 +181,22 @@ class WorkoutSmartPasteView(OperationBaseView):
             plan = self._load_plan(review_form.cleaned_data['plan_id'])
             plan = self._update_review_item(plan=plan, cleaned_data=review_form.cleaned_data)
             messages.success(request, 'Item revisado no preview semanal.')
-            context = self._build_context(plan=plan, parsed_payload=plan.parsed_payload)
+            next_target = ''
+            for day_index, day in enumerate((plan.parsed_payload or {}).get('days', [])):
+                for block_index, block in enumerate(day.get('blocks', [])):
+                    for movement_index, movement in enumerate(block.get('movements', [])):
+                        if not movement.get('movement_slug'):
+                            next_target = f'review-item-{day_index}-{block_index}-{movement_index}'
+                            break
+                    if next_target:
+                        break
+                if next_target:
+                    break
+            context = self._build_context(
+                plan=plan,
+                parsed_payload=plan.parsed_payload,
+                auto_open_review_target=next_target,
+            )
             if self._is_hx_request():
                 return self._render_partial('operations/includes/wod_smart_paste_preview.html', context)
             return self.render_to_response(context)
@@ -195,6 +222,12 @@ class WorkoutSmartPasteView(OperationBaseView):
             return self.render_to_response(context)
 
         if action in {'preview_projection', 'create_projection'}:
+            if plan is None or getattr(plan, 'status', '') != WeeklyWodPlanStatus.CONFIRMED:
+                messages.error(request, 'Confirme o rascunho semanal antes de montar a replicacao.')
+                context = self._build_context(plan=plan, parsed_payload=getattr(plan, 'parsed_payload', {}) or {})
+                if self._is_hx_request():
+                    return self._render_partial('operations/includes/wod_smart_paste_projection.html', context)
+                return self.render_to_response(context)
             projection_form = WeeklyWodProjectionForm(request.POST)
             if not projection_form.is_valid():
                 messages.error(request, _first_form_error(projection_form, 'Revise a semana alvo e os tipos de aula antes de projetar.'))

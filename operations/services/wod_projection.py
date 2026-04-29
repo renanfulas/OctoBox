@@ -70,6 +70,14 @@ CLASS_TYPE_COMPATIBILITY = {
 }
 
 
+def _expand_projection_class_types(class_types):
+    normalized = list(class_types or [ClassType.CROSS])
+    expanded = list(normalized)
+    if ClassType.CROSS in normalized and ClassType.OTHER not in expanded:
+        expanded.append(ClassType.OTHER)
+    return expanded
+
+
 def _week_range(week_start):
     start = datetime.combine(week_start, time.min)
     end = start + timedelta(days=7)
@@ -143,25 +151,26 @@ def _summarize_load_projection(movement_payload):
 
 def build_projection_preview(*, weekly_plan, target_week_start, class_types):
     days = _extract_plan_days(weekly_plan)
-    if not class_types:
-        class_types = [ClassType.CROSS]
+    class_types = list(class_types or [ClassType.CROSS])
+    filter_class_types = _expand_projection_class_types(class_types)
     range_start, range_end = _week_range(target_week_start)
     sessions = (
         ClassSession.objects.select_related('coach')
         .select_related('workout')
-        .filter(scheduled_at__gte=range_start, scheduled_at__lt=range_end, class_type__in=class_types)
+        .filter(scheduled_at__gte=range_start, scheduled_at__lt=range_end, class_type__in=filter_class_types)
         .order_by('scheduled_at', 'id')
     )
     entries = []
     totals = {
         'sessions_found': 0,
         'sessions_creatable': 0,
+        'sessions_skipped': 0,
         'sessions_with_existing_workout': 0,
         'sessions_without_day_plan': 0,
         'discarded_blocks': 0,
         'load_notes': 0,
     }
-    type_summary = {class_type: {'sessions_found': 0, 'sessions_creatable': 0, 'discarded_blocks': 0} for class_type in class_types}
+    type_summary = {class_type: {'sessions_found': 0, 'sessions_creatable': 0, 'discarded_blocks': 0} for class_type in filter_class_types}
     for session in sessions:
         totals['sessions_found'] += 1
         type_summary[session.class_type]['sessions_found'] += 1
@@ -169,6 +178,7 @@ def build_projection_preview(*, weekly_plan, target_week_start, class_types):
         day_plan = days.get(session_weekday)
         if day_plan is None:
             totals['sessions_without_day_plan'] += 1
+            totals['sessions_skipped'] += 1
             entries.append(
                 {
                     'session_id': session.id,
@@ -185,6 +195,7 @@ def build_projection_preview(*, weekly_plan, target_week_start, class_types):
             continue
         if hasattr(session, 'workout'):
             totals['sessions_with_existing_workout'] += 1
+            totals['sessions_skipped'] += 1
             entries.append(
                 {
                     'session_id': session.id,
@@ -247,6 +258,7 @@ def build_projection_preview(*, weekly_plan, target_week_start, class_types):
         if not projection_blocks:
             status = 'skip_no_compatible_blocks'
             reason = 'Todos os blocos foram descartados pelas regras de compatibilidade.'
+            totals['sessions_skipped'] += 1
         else:
             totals['sessions_creatable'] += 1
             type_summary[session.class_type]['sessions_creatable'] += 1

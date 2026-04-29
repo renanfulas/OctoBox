@@ -141,3 +141,19 @@ class WodProjectionTests(TestCase):
         self.assertEqual(projected_movement.load_type, 'free')
         self.assertEqual(projected_movement.notes, '40/25')
         self.assertEqual(created_preview['collision_policy'], 'skip_existing_workout')
+
+    def test_cross_filter_includes_legacy_other_sessions(self):
+        self.cross_session.class_type = ClassType.OTHER
+        self.cross_session.save(update_fields=['class_type'])
+
+        preview = build_projection_preview(
+            weekly_plan=self.plan,
+            target_week_start=date(2026, 4, 20),
+            class_types=[ClassType.CROSS],
+        )
+
+        self.assertEqual(preview['totals']['sessions_found'], 1)
+        self.assertEqual(preview['totals']['sessions_creatable'], 1)
+        self.assertEqual(preview['totals']['sessions_skipped'], 0)
+        self.assertEqual(preview['entries'][0]['session_id'], self.cross_session.id)
+        self.assertEqual(preview['entries'][0]['status'], 'ready')
