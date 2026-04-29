@@ -55,6 +55,11 @@ class ClassSessionDeleteCommand:
     session_id: int
 
 
+@dataclass(frozen=True, slots=True)
+class ClassScheduleResetCommand:
+    actor_id: int | None
+
+
 def build_class_schedule_create_command(*, actor_id: int | None, cleaned_data: dict[str, Any]) -> ClassScheduleCreateCommand:
     coach = cleaned_data.get('coach')
     weekdays = tuple(sorted(cleaned_data.get('weekdays') or ()))
@@ -71,7 +76,7 @@ def build_class_schedule_create_command(*, actor_id: int | None, cleaned_data: d
         sequence_count=cleaned_data.get('sequence_count') or 0,
         duration_minutes=cleaned_data.get('duration_minutes'),
         capacity=cleaned_data.get('capacity'),
-        status=cleaned_data.get('status') or '',
+        status='scheduled',
         notes=cleaned_data.get('notes') or '',
         skip_existing=bool(cleaned_data.get('skip_existing')),
     )
@@ -101,11 +106,17 @@ def build_class_session_delete_command(*, actor_id: int | None, session_id: int)
     return ClassSessionDeleteCommand(actor_id=actor_id, session_id=session_id)
 
 
+def build_class_schedule_reset_command(*, actor_id: int | None) -> ClassScheduleResetCommand:
+    return ClassScheduleResetCommand(actor_id=actor_id)
+
+
 __all__ = [
     'ClassScheduleCreateCommand',
+    'ClassScheduleResetCommand',
     'ClassSessionDeleteCommand',
     'ClassSessionUpdateCommand',
     'build_class_schedule_create_command',
+    'build_class_schedule_reset_command',
     'build_class_session_delete_command',
     'build_class_session_update_command',
 ]

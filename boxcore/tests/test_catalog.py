@@ -234,6 +234,7 @@ class CatalogViewTests(TestCase):
         created_sessions = ClassSession.objects.filter(title='WOD 07h').order_by('scheduled_at')
         self.assertEqual(created_sessions.count(), 4)
         self.assertEqual(created_sessions.first().capacity, 18)
+        self.assertTrue(all(item.status == SessionStatus.SCHEDULED for item in created_sessions))
         self.assertTrue(AuditEvent.objects.filter(action='class_schedule_recurring_created').exists())
 
     def test_class_grid_can_create_recurring_schedule_with_sequence(self):
@@ -263,6 +264,35 @@ class CatalogViewTests(TestCase):
         created_sessions = list(ClassSession.objects.filter(title='WOD Sequencia 07h').order_by('scheduled_at'))
         self.assertEqual(len(created_sessions), 4)
         self.assertEqual([timezone.localtime(item.scheduled_at).strftime('%H:%M') for item in created_sessions], ['07:00', '08:00', '09:00', '10:00'])
+
+    def test_class_grid_reset_deletes_all_sessions_without_attendance(self):
+        self.client.force_login(self.user)
+        ClassSession.objects.create(
+            title='Funcional 07h',
+            coach=self.coach,
+            scheduled_at=timezone.now() + timezone.timedelta(days=1),
+            status=SessionStatus.SCHEDULED,
+        )
+        ClassSession.objects.create(
+            title='Cross 18h',
+            coach=self.coach,
+            scheduled_at=timezone.now() + timezone.timedelta(days=2),
+            status=SessionStatus.SCHEDULED,
+        )
+
+        response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'planner-reset',
+                'return_query': '',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ClassSession.objects.count(), 0)
+        self.assertContains(response, 'A grade voltou a ficar vazia para um novo planejamento.')
+        self.assertTrue(AuditEvent.objects.filter(action='class_schedule_reset').exists())
 
     def test_class_grid_can_create_weekend_rotation_inside_monthly_window(self):
         self.client.force_login(self.user)

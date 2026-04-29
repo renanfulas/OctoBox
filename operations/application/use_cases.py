@@ -13,9 +13,9 @@ PONTOS CRITICOS:
 - a aplicacao continua sem depender de form, view ou ORM.
 """
 
-from .commands import ClassScheduleCreateCommand, ClassSessionDeleteCommand, ClassSessionUpdateCommand
+from .commands import ClassScheduleCreateCommand, ClassScheduleResetCommand, ClassSessionDeleteCommand, ClassSessionUpdateCommand
 from .ports import ClassGridAuditPort, ClassGridWriterPort, UnitOfWorkPort
-from .results import ClassScheduleCreateResult, DeletedClassSessionRecord, UpdatedClassSessionRecord
+from .results import ClassScheduleCreateResult, ClassScheduleResetResult, DeletedClassSessionRecord, UpdatedClassSessionRecord
 
 
 def execute_create_class_schedule_use_case(
@@ -48,6 +48,21 @@ def execute_update_class_session_use_case(
     return unit_of_work.run(operation)
 
 
+def execute_reset_class_schedule_use_case(
+    command: ClassScheduleResetCommand,
+    *,
+    unit_of_work: UnitOfWorkPort,
+    writer: ClassGridWriterPort,
+    audit: ClassGridAuditPort,
+) -> ClassScheduleResetResult:
+    def operation():
+        result = writer.reset_schedule(command)
+        audit.record_schedule_reset(command=command, result=result)
+        return result
+
+    return unit_of_work.run(operation)
+
+
 def execute_delete_class_session_use_case(
     command: ClassSessionDeleteCommand,
     *,
@@ -65,6 +80,7 @@ def execute_delete_class_session_use_case(
 
 __all__ = [
     'execute_create_class_schedule_use_case',
+    'execute_reset_class_schedule_use_case',
     'execute_delete_class_session_use_case',
     'execute_update_class_session_use_case',
 ]

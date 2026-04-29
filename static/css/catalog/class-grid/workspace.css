@@ -350,6 +350,16 @@ body[data-theme="dark"] .weekday-option {
     color: var(--muted);
 }
 
+.class-grid-planner-reset-rail {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 10px;
+}
+
+.class-grid-reset-button {
+    min-height: 40px;
+}
+
 /* --- Dark Mode Absolute Overrides --- */
 body[data-theme="dark"] .weekday-picker {
     border-color: rgba(148, 163, 184, 0.12);

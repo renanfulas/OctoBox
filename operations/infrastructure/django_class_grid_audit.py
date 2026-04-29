@@ -17,12 +17,14 @@ from django.contrib.auth import get_user_model
 from auditing import log_audit_event
 from operations.application.commands import (
     ClassScheduleCreateCommand,
+    ClassScheduleResetCommand,
     ClassSessionDeleteCommand,
     ClassSessionUpdateCommand,
 )
 from operations.application.ports import ClassGridAuditPort
 from operations.application.results import (
     ClassScheduleCreateResult,
+    ClassScheduleResetResult,
     DeletedClassSessionRecord,
     UpdatedClassSessionRecord,
 )
@@ -72,6 +74,19 @@ class DjangoClassGridAudit(ClassGridAuditPort):
                 'sequence_count': command.sequence_count,
                 'created_count': len(result.created_session_ids),
                 'skipped_count': len(result.skipped_slots),
+            },
+        )
+
+    def record_schedule_reset(self, *, command: ClassScheduleResetCommand, result: ClassScheduleResetResult) -> None:
+        actor = self._get_actor(command.actor_id)
+        log_audit_event(
+            actor=actor,
+            action='class_schedule_reset',
+            target=None,
+            description='Grade de aulas limpa pela tela visual.',
+            metadata={
+                'deleted_count': len(result.deleted_session_ids),
+                'deleted_session_ids': list(result.deleted_session_ids),
             },
         )
 

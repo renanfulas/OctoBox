@@ -23,6 +23,11 @@ class ClassScheduleCreateResult:
 
 
 @dataclass(frozen=True, slots=True)
+class ClassScheduleResetResult:
+    deleted_session_ids: tuple[int, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class UpdatedClassSessionRecord:
     id: int
     title: str
@@ -36,4 +41,4 @@ class DeletedClassSessionRecord:
     status: str
 
 
-__all__ = ['ClassScheduleCreateResult', 'DeletedClassSessionRecord', 'UpdatedClassSessionRecord']
+__all__ = ['ClassScheduleCreateResult', 'ClassScheduleResetResult', 'DeletedClassSessionRecord', 'UpdatedClassSessionRecord']

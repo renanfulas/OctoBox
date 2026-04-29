@@ -18,11 +18,13 @@ from dataclasses import dataclass, field
 from operations.application import class_grid_messages as grid_messages
 from operations.application.commands import (
     build_class_schedule_create_command,
+    build_class_schedule_reset_command,
     build_class_session_delete_command,
     build_class_session_update_command,
 )
 from operations.infrastructure import (
     execute_create_class_schedule_command,
+    execute_reset_class_schedule_command,
     execute_delete_class_session_command,
     execute_update_class_session_command,
 )
@@ -41,6 +43,11 @@ class ClassGridPlannerResult:
     skipped_slots: list
 
 
+@dataclass(frozen=True)
+class ClassGridResetResult:
+    deleted_count: int
+
+
 def run_class_schedule_create(*, actor, form) -> ClassGridPlannerResult:
     command = build_class_schedule_create_command(
         actor_id=getattr(actor, 'id', None),
@@ -52,6 +59,12 @@ def run_class_schedule_create(*, actor, form) -> ClassGridPlannerResult:
         created_sessions=created_sessions,
         skipped_slots=list(result.skipped_slots),
     )
+
+
+def run_class_schedule_reset(*, actor) -> ClassGridResetResult:
+    command = build_class_schedule_reset_command(actor_id=getattr(actor, 'id', None))
+    result = execute_reset_class_schedule_command(command)
+    return ClassGridResetResult(deleted_count=len(result.deleted_session_ids))
 
 
 def run_class_session_update(*, actor, session, form) -> ClassGridCommandResult:
@@ -89,7 +102,9 @@ def run_class_session_delete(*, actor, session) -> ClassGridCommandResult:
 __all__ = [
     'ClassGridCommandResult',
     'ClassGridPlannerResult',
+    'ClassGridResetResult',
     'run_class_schedule_create',
+    'run_class_schedule_reset',
     'run_class_session_delete',
     'run_class_session_update',
 ]

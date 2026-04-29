@@ -16,6 +16,7 @@ from . import class_grid_messages as grid_messages
 
 
 FORM_KIND_PLANNER = 'planner'
+FORM_KIND_PLANNER_RESET = 'planner-reset'
 FORM_KIND_SESSION_ACTION = 'session-action'
 FORM_KIND_SESSION_EDIT = 'session-edit'
 
@@ -23,6 +24,7 @@ SESSION_ACTION_DELETE = 'delete-session'
 
 CLASS_GRID_FORM_KIND_HANDLERS = {
     FORM_KIND_PLANNER: 'planner',
+    FORM_KIND_PLANNER_RESET: 'planner-reset',
     FORM_KIND_SESSION_ACTION: 'session-action',
     FORM_KIND_SESSION_EDIT: 'session-edit',
 }
@@ -48,6 +50,7 @@ def resolve_class_grid_session_action(post_data):
 
 __all__ = [
     'FORM_KIND_PLANNER',
+    'FORM_KIND_PLANNER_RESET',
     'FORM_KIND_SESSION_ACTION',
     'FORM_KIND_SESSION_EDIT',
     'SESSION_ACTION_DELETE',

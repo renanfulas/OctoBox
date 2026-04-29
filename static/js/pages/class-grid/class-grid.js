@@ -7,6 +7,15 @@ POR QUE ELE EXISTE:
 */
 
 (function() {
+  document.querySelectorAll('[data-confirm-reset-all]').forEach(function(button) {
+    button.addEventListener('click', function(event) {
+      var confirmed = window.confirm('Resetar aulas vai excluir toda a grade sem reservas ou presencas. Deseja continuar?');
+      if (!confirmed) {
+        event.preventDefault();
+      }
+    });
+  });
+
   var plannerForm = document.querySelector('form[data-class-grid-planner]');
   var plannerStartDateField = document.getElementById('id_start_date');
   var plannerEndDateField = document.getElementById('id_end_date');
@@ -179,6 +188,10 @@ POR QUE ELE EXISTE:
 
   if (plannerForm) {
     plannerForm.addEventListener('submit', function(event) {
+      var submitter = event.submitter || document.activeElement;
+      if (submitter && submitter.value === 'planner-reset') {
+        return;
+      }
       if (validatePlannerForm()) {
         return;
       }

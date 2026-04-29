@@ -26,6 +26,15 @@ POR QUE ELE EXISTE:
     var picker = pickerId ? document.getElementById(pickerId) : null;
     var button = field.parentNode ? field.parentNode.querySelector('[data-smart-date-button]') : null;
 
+    function resolveClosestPickerYear(day, month) {
+      var today = new Date();
+      var currentYearCandidate = new Date(today.getFullYear(), Number(month) - 1, Number(day));
+      var nextYearCandidate = new Date(today.getFullYear() + 1, Number(month) - 1, Number(day));
+      var currentDistance = Math.abs(currentYearCandidate.getTime() - today.getTime());
+      var nextDistance = Math.abs(nextYearCandidate.getTime() - today.getTime());
+      return currentDistance <= nextDistance ? today.getFullYear() : today.getFullYear() + 1;
+    }
+
     function syncFromPicker() {
       if (!picker || !picker.value) return;
       var parts = picker.value.split('-');
@@ -41,17 +50,13 @@ POR QUE ELE EXISTE:
       if (normalized.length < 4) return;
       var day = normalized.slice(0, 2);
       var month = normalized.slice(2, 4);
-      var today = new Date();
-      var year = today.getFullYear();
+      var year = resolveClosestPickerYear(day, month);
       var candidate = new Date(year, Number(month) - 1, Number(day));
       if (
         candidate.getFullYear() === year &&
         candidate.getMonth() === Number(month) - 1 &&
         candidate.getDate() === Number(day)
       ) {
-        if (candidate < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
-          year += 1;
-        }
         picker.value = year + '-' + pad(month) + '-' + pad(day);
       }
     }

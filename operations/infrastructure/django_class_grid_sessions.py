@@ -51,6 +51,9 @@ class DjangoClassGridSessionStore:
     def get_session_for_update(self, *, session_id: int):
         return ClassSession.objects.select_for_update().get(pk=session_id)
 
+    def list_sessions_for_reset(self):
+        return list(ClassSession.objects.select_for_update().order_by('scheduled_at', 'id'))
+
     def has_attendance(self, *, session) -> bool:
         return session.attendances.exists()
 

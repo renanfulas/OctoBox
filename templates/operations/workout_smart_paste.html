@@ -26,20 +26,8 @@
                 {% csrf_token %}
                 <input type="hidden" name="plan_id" value="{{ smart_paste_form.initial.plan_id|default_if_none:'' }}">
                 <input type="hidden" name="action" value="parse_text">
-                <div class="coach-wod-form-grid coach-wod-form-grid--two">
-                    <label>
-            <span>Início da semana</span>
-                        <div class="smart-paste-date-input-wrap">
-                            {{ smart_paste_form.week_start }}
-                            <button class="button tertiary smart-paste-date-trigger" type="button" data-smart-date-button>Abrir calendario</button>
-                            <input type="date" id="smart-paste-week-start-picker" class="smart-paste-native-picker" value="{% if weekly_plan %}{{ weekly_plan.week_start|date:'Y-m-d' }}{% endif %}">
-                        </div>
-                    </label>
-                    <label>
-            <span>Rótulo do plano</span>
-                        {{ smart_paste_form.label }}
-                    </label>
-                </div>
+                <input type="hidden" name="week_start" value="{{ smart_paste_form.initial.week_start|default_if_none:'' }}">
+                <input type="hidden" name="label" value="{{ smart_paste_form.initial.label|default_if_none:'' }}">
                 <label>
                     <span>Texto colado</span>
                     {{ smart_paste_form.source_text }}
