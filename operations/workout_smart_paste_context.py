@@ -42,15 +42,19 @@ def _decorate_preview_payload(parsed_payload):
     unresolved_items = []
     total_blocks = 0
     total_movements = 0
+    first_unresolved_target_id = ''
     for day_index, day in enumerate(parsed_payload.get('days', [])):
         for block_index, block in enumerate(day.get('blocks', [])):
             total_blocks += 1
             for movement_index, movement in enumerate(block.get('movements', [])):
                 movement['display_label'] = _smart_paste_display_label(movement)
+                movement['review_target_id'] = f'review-item-{day_index}-{block_index}-{movement_index}'
                 total_movements += 1
                 if not movement.get('movement_slug'):
+                    first_unresolved_target_id = first_unresolved_target_id or movement['review_target_id']
                     unresolved_items.append(
                         {
+                            'target_id': movement['review_target_id'],
                             'day_index': day_index,
                             'block_index': block_index,
                             'movement_index': movement_index,
@@ -62,6 +66,7 @@ def _decorate_preview_payload(parsed_payload):
                             'reps_spec': movement.get('reps_spec') or '',
                             'load_spec': movement.get('load_spec') or '',
                             'notes': movement.get('notes') or '',
+                            'display_label': movement.get('display_label') or movement.get('movement_label_raw', ''),
                         }
                     )
     parsed_payload['summary'] = {
@@ -70,15 +75,20 @@ def _decorate_preview_payload(parsed_payload):
         'movements_count': total_movements,
         'unresolved_count': len(unresolved_items),
         'unresolved_items': unresolved_items[:8],
+        'first_unresolved_target_id': first_unresolved_target_id,
         'current_unresolved_item': unresolved_items[0] if unresolved_items else None,
     }
     return parsed_payload
 
 
-def load_latest_weekly_wod_plan_for_user(*, user):
+def load_surface_weekly_wod_plan_for_user(*, user, today):
     if not getattr(user, 'is_authenticated', False):
         return None
-    return WeeklyWodPlan.objects.filter(created_by=user).order_by('-updated_at', '-id').first()
+    return (
+        WeeklyWodPlan.objects.filter(created_by=user, week_start=_default_week_start(today))
+        .order_by('-updated_at', '-id')
+        .first()
+    )
 
 
 def _build_page_payload(*, current_role_slug):
@@ -127,13 +137,14 @@ def build_weekly_wod_smart_paste_context(
     undo_form=None,
     parsed_payload=None,
     projection_preview=None,
+    auto_open_review_target=None,
 ):
-    weekly_plan = plan or load_latest_weekly_wod_plan_for_user(user=request.user)
-    week_start = getattr(weekly_plan, 'week_start', None) or _default_week_start(today)
+    week_start = _default_week_start(today)
+    weekly_plan = plan or load_surface_weekly_wod_plan_for_user(user=request.user, today=today)
     form = form or WeeklyWodSmartPasteForm(
         initial={
             'plan_id': getattr(weekly_plan, 'id', None),
-            'week_start': week_start.strftime('%d/%m'),
+            'week_start': week_start.strftime('%d/%m/%Y'),
             'label': getattr(weekly_plan, 'label', ''),
             'source_text': getattr(weekly_plan, 'source_text', ''),
         }
@@ -141,7 +152,7 @@ def build_weekly_wod_smart_paste_context(
     projection_form = projection_form or WeeklyWodProjectionForm(
         initial={
             'plan_id': getattr(weekly_plan, 'id', None),
-            'target_week_start': week_start.strftime('%d/%m'),
+            'target_week_start': week_start.strftime('%d/%m/%Y'),
             'class_types': [ClassType.CROSS],
         }
     )
@@ -188,6 +199,7 @@ def build_weekly_wod_smart_paste_context(
         'smart_paste_warnings': parsed_payload.get('parse_warnings', []),
         'smart_paste_summary': parsed_payload.get('summary', {}),
         'smart_paste_step': 3 if projection_preview else (2 if parsed_payload.get('days') else 1),
+        'smart_paste_auto_open_review_target': auto_open_review_target or '',
         'projection_form': projection_form,
         'projection_preview': projection_preview,
         'create_stored_template_form': WorkoutCreateStoredTemplateForm(
@@ -217,4 +229,4 @@ def build_weekly_wod_smart_paste_context(
     return context
 
 
-__all__ = ['build_weekly_wod_smart_paste_context', 'load_latest_weekly_wod_plan_for_user']
+__all__ = ['build_weekly_wod_smart_paste_context', 'load_surface_weekly_wod_plan_for_user']

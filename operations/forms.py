@@ -74,7 +74,13 @@ WORKOUT_RM_GAP_STATUS_CHOICES = (
 )
 
 
-def _coerce_smart_paste_date(raw_value: str, *, field_label: str) -> date:
+def _coerce_smart_paste_date(
+    raw_value: str,
+    *,
+    field_label: str,
+    allow_past: bool = False,
+    allow_historical_years: bool = False,
+) -> date:
     normalized = (raw_value or '').strip()
     if not normalized:
         raise forms.ValidationError(f'Informe {field_label} no formato dd/mm.')
@@ -92,7 +98,10 @@ def _coerce_smart_paste_date(raw_value: str, *, field_label: str) -> date:
         next_year_candidate = date(today.year + 1, month_value, day_value)
         current_distance = abs((current_year_candidate - today).days)
         next_distance = abs((next_year_candidate - today).days)
-        candidate = current_year_candidate if current_distance <= next_distance else next_year_candidate
+        if allow_past:
+            candidate = current_year_candidate
+        else:
+            candidate = current_year_candidate if current_distance <= next_distance else next_year_candidate
     elif normalized.count('/') == 2:
         try:
             day_value, month_value, year_value = [int(chunk) for chunk in normalized.split('/')]
@@ -100,14 +109,19 @@ def _coerce_smart_paste_date(raw_value: str, *, field_label: str) -> date:
             raise forms.ValidationError(f'Use {field_label} no formato dd/mm.') from exc
         if year_value < 100:
             year_value += 2000
-        if year_value not in allowed_years:
-            raise forms.ValidationError('A data precisa ficar no ano anterior, atual ou no próximo ano.')
+        if not allow_historical_years and year_value not in allowed_years:
+            raise forms.ValidationError('A data precisa ficar no ano anterior, atual ou no proximo ano.')
         candidate = date(year_value, month_value, day_value)
     else:
         raise forms.ValidationError(f'Use {field_label} no formato dd/mm.')
 
-    if candidate.year not in allowed_years:
-        raise forms.ValidationError('A data precisa ficar no ano anterior, atual ou no próximo ano.')
+    if not allow_past and candidate < today:
+        raise forms.ValidationError('Nao e permitido usar datas no passado.')
+    if not allow_historical_years and candidate.year not in allowed_years:
+        raise forms.ValidationError('A data precisa ficar no ano anterior, atual ou no proximo ano.')
+    if candidate.weekday() != 0:
+        from datetime import timedelta
+        candidate = candidate - timedelta(days=candidate.weekday())
     return candidate
 
 
@@ -426,7 +440,11 @@ class WeeklyWodSmartPasteForm(forms.Form):
         return (self.cleaned_data.get('source_text') or '').strip()
 
     def clean_week_start(self):
-        return _coerce_smart_paste_date(self.cleaned_data.get('week_start'), field_label='a semana')
+        return _coerce_smart_paste_date(
+            self.cleaned_data.get('week_start'),
+            field_label='a semana',
+            allow_past=True,
+        )
 
 
 class WeeklyWodProjectionForm(forms.Form):
@@ -454,6 +472,7 @@ class WeeklyWodProjectionForm(forms.Form):
             {
                 'data-smart-date-input': 'true',
                 'data-picker-target': 'smart-paste-target-week-picker',
+                'data-smart-date-include-year': 'true',
                 'inputmode': 'numeric',
             }
         )
@@ -463,7 +482,12 @@ class WeeklyWodProjectionForm(forms.Form):
         return list(class_types or [ClassType.CROSS])
 
     def clean_target_week_start(self):
-        return _coerce_smart_paste_date(self.cleaned_data.get('target_week_start'), field_label='a semana alvo')
+        return _coerce_smart_paste_date(
+            self.cleaned_data.get('target_week_start'),
+            field_label='a semana alvo',
+            allow_past=True,
+            allow_historical_years=True,
+        )
 
 
 class WeeklyWodReviewMovementForm(forms.Form):

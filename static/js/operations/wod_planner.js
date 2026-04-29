@@ -68,15 +68,15 @@ PONTOS CRITICOS:
     function updateSpotlight(cell) {
         if (!spotlight || !cell) return;
         const mapping = {
-            '[data-planner-spotlight-session]': cell.dataset.plannerSessionTitle || 'Sem sessao',
+            '[data-planner-spotlight-session]': cell.dataset.plannerSessionTitle || 'Aula sem nome',
             '[data-planner-spotlight-slot]': cell.dataset.plannerSlotLabel || '-',
             '[data-planner-spotlight-status]': cell.dataset.plannerStatusLabel || '-',
-            '[data-planner-spotlight-coach]': cell.dataset.plannerCoachLabel || '-',
-            '[data-planner-spotlight-policy]': cell.dataset.plannerPolicyLabel || 'Politica nao registrada',
-            '[data-planner-spotlight-workout]': cell.dataset.plannerWorkoutTitle || 'Sem WOD',
+            '[data-planner-spotlight-coach]': cell.dataset.plannerCoachLabel || 'Coach nao definido',
+            '[data-planner-spotlight-policy]': cell.dataset.plannerPolicyLabel || 'Regra de publicacao indisponivel',
+            '[data-planner-spotlight-workout]': cell.dataset.plannerWorkoutTitle || 'Treino ainda nao montado',
             '[data-planner-spotlight-summary]': cell.dataset.plannerSummary || '',
             '[data-planner-spotlight-primary]': cell.dataset.plannerPrimaryAction || '',
-            '[data-planner-spotlight-secondary]': cell.dataset.plannerSecondaryAction || 'Sem acao secundaria',
+            '[data-planner-spotlight-secondary]': cell.dataset.plannerSecondaryAction || 'Nenhum atalho extra',
         };
         Object.entries(mapping).forEach(([selector, value]) => {
             const node = spotlight.querySelector(selector);
@@ -85,7 +85,7 @@ PONTOS CRITICOS:
         bindSpotlightAction(
             spotlight.querySelector('[data-planner-spotlight-primary]'),
             {
-                label: cell.dataset.plannerPrimaryAction || 'Acao principal',
+                label: cell.dataset.plannerPrimaryAction || 'Abrir aula',
                 href: cell.dataset.plannerPrimaryHref || '',
                 sessionId: cell.dataset.plannerSessionId || '',
                 sessionTitle: cell.dataset.plannerSessionTitle || '',
@@ -94,7 +94,7 @@ PONTOS CRITICOS:
         bindSpotlightAction(
             spotlight.querySelector('[data-planner-spotlight-secondary]'),
             {
-                label: cell.dataset.plannerSecondaryAction || 'Sem acao secundaria',
+                label: cell.dataset.plannerSecondaryAction || 'Nenhum atalho extra',
                 href: cell.dataset.plannerSecondaryHref || '',
                 sessionId: cell.dataset.plannerSessionId || '',
                 sessionTitle: cell.dataset.plannerSessionTitle || '',
@@ -105,7 +105,7 @@ PONTOS CRITICOS:
 
     function bindSpotlightAction(node, action) {
         if (!node) return;
-        node.textContent = action.label || 'Sem acao secundaria';
+        node.textContent = action.label || 'Nenhum atalho extra';
         node.dataset.sessionId = action.sessionId || '';
         node.dataset.sessionTitle = action.sessionTitle || '';
         node.dataset.actionHref = action.href || '';

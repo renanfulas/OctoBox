@@ -11,6 +11,9 @@ O QUE FAZ:
 (function () {
   'use strict';
 
+  if (window.__octoboxWodDayApplyBound) return;
+  window.__octoboxWodDayApplyBound = true;
+
   var APPLY_URL = document.querySelector('[data-wod-day-apply-toast]')
     ? document.querySelector('[data-wod-day-apply-toast] [data-wod-day-apply-undo-btn]')?.dataset.undoUrl
     : null;
@@ -39,18 +42,19 @@ O QUE FAZ:
 
   // ── Abrir dialog ──────────────────────────────────────────────────
 
-  document.querySelectorAll('[data-wod-day-apply-trigger]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      activeDate = btn.dataset.date;
-      var dayLabel = btn.dataset.dayLabel || 'este dia';
-      if (dialogTitle) dialogTitle.textContent = 'Aplicar em ' + dayLabel;
-      if (searchInput) {
-        searchInput.value = '';
-        filterCards('');
-      }
-      if (dialog) dialog.showModal();
-    });
-  });
+  function openDialogForTrigger(btn) {
+    if (!btn || !dialog) return;
+    activeDate = btn.dataset.date;
+    var dayLabel = btn.dataset.dayLabel || 'este dia';
+    if (dialogTitle) dialogTitle.textContent = 'Aplicar em ' + dayLabel;
+    if (searchInput) {
+      searchInput.value = '';
+      filterCards('');
+    }
+    if (!dialog.open) {
+      dialog.showModal();
+    }
+  }
 
   // ── Busca de templates ────────────────────────────────────────────
 
@@ -83,44 +87,55 @@ O QUE FAZ:
     return checked ? checked.value : 'replace_empty';
   }
 
-  if (dialog) {
-    dialog.querySelectorAll('[data-wod-day-apply-select]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var templateId = btn.dataset.templateId;
-        var templateLabel = btn.dataset.templateLabel;
-        var mode = getSelectedMode();
-        if (!activeDate || !templateId) return;
+  function applyTemplate(btn) {
+    var templateId = btn.dataset.templateId;
+    var templateLabel = btn.dataset.templateLabel;
+    var mode = getSelectedMode();
+    if (!activeDate || !templateId) return;
 
-        btn.disabled = true;
-        btn.textContent = 'Aplicando...';
+    btn.disabled = true;
+    btn.textContent = 'Aplicando...';
 
-        var body = new URLSearchParams({
-          csrfmiddlewaretoken: getCsrf(),
-          target_date: activeDate,
-          template_id: templateId,
-          mode: mode,
-        });
-
-        fetch(applyUrl, { method: 'POST', body: body, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-          .then(function (r) { return r.json(); })
-          .then(function (data) {
-            dialog.close();
-            btn.disabled = false;
-            btn.textContent = 'Aplicar neste dia';
-            if (data.ok) {
-              showToast(data, templateLabel);
-            } else {
-              alert('Erro ao aplicar template. Tente novamente.');
-            }
-          })
-          .catch(function () {
-            btn.disabled = false;
-            btn.textContent = 'Aplicar neste dia';
-            alert('Erro de conexao. Tente novamente.');
-          });
-      });
+    var body = new URLSearchParams({
+      csrfmiddlewaretoken: getCsrf(),
+      target_date: activeDate,
+      template_id: templateId,
+      mode: mode,
     });
+
+    fetch(applyUrl, { method: 'POST', body: body, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        dialog.close();
+        btn.disabled = false;
+        btn.textContent = 'Aplicar neste dia';
+        if (data.ok) {
+          showToast(data, templateLabel);
+        } else {
+          alert('Erro ao aplicar template. Tente novamente.');
+        }
+      })
+      .catch(function () {
+        btn.disabled = false;
+        btn.textContent = 'Aplicar neste dia';
+        alert('Erro de conexao. Tente novamente.');
+      });
   }
+
+  document.addEventListener('click', function (event) {
+    var triggerBtn = event.target.closest('[data-wod-day-apply-trigger]');
+    if (triggerBtn) {
+      event.preventDefault();
+      openDialogForTrigger(triggerBtn);
+      return;
+    }
+
+    var applyBtn = event.target.closest('[data-wod-day-apply-select]');
+    if (applyBtn) {
+      event.preventDefault();
+      applyTemplate(applyBtn);
+    }
+  });
 
   // ── Toast + undo ──────────────────────────────────────────────────
 
