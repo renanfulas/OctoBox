@@ -80,7 +80,7 @@ def _coerce_smart_paste_date(raw_value: str, *, field_label: str) -> date:
         raise forms.ValidationError(f'Informe {field_label} no formato dd/mm.')
 
     today = timezone.localdate()
-    allowed_years = {today.year, today.year + 1}
+    allowed_years = {today.year - 1, today.year, today.year + 1}
 
     if normalized.count('/') == 1:
         try:
@@ -89,25 +89,25 @@ def _coerce_smart_paste_date(raw_value: str, *, field_label: str) -> date:
             raise forms.ValidationError(f'Use {field_label} no formato dd/mm.') from exc
 
         current_year_candidate = date(today.year, month_value, day_value)
-        candidate = current_year_candidate if current_year_candidate >= today else date(today.year + 1, month_value, day_value)
+        next_year_candidate = date(today.year + 1, month_value, day_value)
+        current_distance = abs((current_year_candidate - today).days)
+        next_distance = abs((next_year_candidate - today).days)
+        candidate = current_year_candidate if current_distance <= next_distance else next_year_candidate
     elif normalized.count('/') == 2:
         try:
             day_value, month_value, year_value = [int(chunk) for chunk in normalized.split('/')]
         except ValueError as exc:
             raise forms.ValidationError(f'Use {field_label} no formato dd/mm.') from exc
+        if year_value < 100:
+            year_value += 2000
         if year_value not in allowed_years:
-            raise forms.ValidationError('A data precisa ficar no ano atual ou no proximo ano.')
+            raise forms.ValidationError('A data precisa ficar no ano anterior, atual ou no próximo ano.')
         candidate = date(year_value, month_value, day_value)
     else:
         raise forms.ValidationError(f'Use {field_label} no formato dd/mm.')
 
-    if candidate < today:
-        raise forms.ValidationError('Nao e permitido usar datas no passado.')
     if candidate.year not in allowed_years:
-        raise forms.ValidationError('A data precisa ficar no ano atual ou no proximo ano.')
-    if candidate.weekday() != 0:
-        from datetime import timedelta
-        candidate = candidate - timedelta(days=candidate.weekday())
+        raise forms.ValidationError('A data precisa ficar no ano anterior, atual ou no próximo ano.')
     return candidate
 
 

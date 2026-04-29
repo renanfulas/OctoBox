@@ -15,7 +15,6 @@ PONTOS CRITICOS:
 
 from django.db import transaction
 
-from operations.application import class_grid_messages as grid_messages
 from operations.application.commands import (
     ClassScheduleCreateCommand,
     ClassScheduleResetCommand,

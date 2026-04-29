@@ -41,9 +41,4 @@ class DeletedClassSessionRecord:
     status: str
 
 
-__all__ = [
-    'ClassScheduleCreateResult',
-    'ClassScheduleResetResult',
-    'DeletedClassSessionRecord',
-    'UpdatedClassSessionRecord',
-]
+__all__ = ['ClassScheduleCreateResult', 'ClassScheduleResetResult', 'DeletedClassSessionRecord', 'UpdatedClassSessionRecord']

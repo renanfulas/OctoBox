@@ -399,13 +399,13 @@ POR QUE ELE EXISTE:
         justify-content: center;
     }
 
-    .class-grid-planner-panel .class-grid-planner-reset-rail {
-        width: auto;
+    .class-grid-planner-reset-rail {
+        width: 100%;
     }
 
-    .class-grid-planner-panel .class-grid-planner-reset-rail .class-grid-reset-button {
-        width: auto;
-        justify-content: flex-start;
+    .class-grid-planner-reset-rail .button {
+        width: 100%;
+        justify-content: center;
     }
 
     .class-day-summary,

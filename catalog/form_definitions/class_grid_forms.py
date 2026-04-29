@@ -219,7 +219,6 @@ class ClassScheduleRecurringForm(forms.ModelForm):
             'sequence_count',
             'duration_minutes',
             'capacity',
-            'status',
             'notes',
             'skip_existing',
         ]
@@ -232,7 +231,6 @@ class ClassScheduleRecurringForm(forms.ModelForm):
         self.fields['title'].label = 'Nome da aula'
         self.fields['duration_minutes'].label = 'Duração em minutos'
         self.fields['capacity'].label = 'Capacidade da turma'
-        self.fields['status'].label = 'Status inicial'
         self.fields['notes'].label = 'Observações operacionais'
         self.fields['coach'].queryset = _get_class_coach_queryset()
 
@@ -255,10 +253,10 @@ class ClassScheduleRecurringForm(forms.ModelForm):
         self.fields['interval_days'].help_text = '7, 14 ou 21 dias para o rodízio de fim de semana.'
         self.fields['duration_minutes'].initial = 60
         self.fields['capacity'].initial = 20
-        self.fields['status'].initial = SessionStatus.SCHEDULED
         self.fields['weekdays'].initial = [str(timezone.localdate().weekday())]
         self.fields['sequence_count'].initial = 0
         self.fields['notes'].required = False
+        self.instance.status = SessionStatus.SCHEDULED
 
     def clean_weekdays(self):
         weekdays = self.cleaned_data.get('weekdays') or []

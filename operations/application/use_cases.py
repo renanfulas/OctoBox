@@ -13,19 +13,9 @@ PONTOS CRITICOS:
 - a aplicacao continua sem depender de form, view ou ORM.
 """
 
-from .commands import (
-    ClassScheduleCreateCommand,
-    ClassScheduleResetCommand,
-    ClassSessionDeleteCommand,
-    ClassSessionUpdateCommand,
-)
+from .commands import ClassScheduleCreateCommand, ClassScheduleResetCommand, ClassSessionDeleteCommand, ClassSessionUpdateCommand
 from .ports import ClassGridAuditPort, ClassGridWriterPort, UnitOfWorkPort
-from .results import (
-    ClassScheduleCreateResult,
-    ClassScheduleResetResult,
-    DeletedClassSessionRecord,
-    UpdatedClassSessionRecord,
-)
+from .results import ClassScheduleCreateResult, ClassScheduleResetResult, DeletedClassSessionRecord, UpdatedClassSessionRecord
 
 
 def execute_create_class_schedule_use_case(

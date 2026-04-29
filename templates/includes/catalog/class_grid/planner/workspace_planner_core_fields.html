@@ -42,11 +42,6 @@ PONTOS CRITICOS:
         {% for error in page.data.schedule_form.capacity.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
     </label>
     <label>
-        <span class="field-label">{{ page.data.schedule_form.status.label }}</span>
-        {{ page.data.schedule_form.status }}
-        {% for error in page.data.schedule_form.status.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
-    </label>
-    <label>
         <span class="field-label">{{ page.data.schedule_form.start_date.label }}</span>
         {{ page.data.schedule_form.start_date }}
         <small class="meta-text">Ex.: 11/03/26</small>

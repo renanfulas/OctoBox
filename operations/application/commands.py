@@ -76,7 +76,7 @@ def build_class_schedule_create_command(*, actor_id: int | None, cleaned_data: d
         sequence_count=cleaned_data.get('sequence_count') or 0,
         duration_minutes=cleaned_data.get('duration_minutes'),
         capacity=cleaned_data.get('capacity'),
-        status=cleaned_data.get('status') or '',
+        status='scheduled',
         notes=cleaned_data.get('notes') or '',
         skip_existing=bool(cleaned_data.get('skip_existing')),
     )
