@@ -5,6 +5,7 @@ POR QUE ELE EXISTE:
 - separa board, historico, resumo, smart paste e quick edit de RM do arquivo geral de workspace.
 """
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
@@ -143,6 +144,7 @@ class WorkoutSmartPasteView(OperationBaseView):
             auto_open_review_target=auto_open_review_target,
         )
         base_context.update(context)
+        base_context['smartplan_gpt_url'] = getattr(settings, 'SMARTPLAN_GPT_URL', '') or ''
         return base_context
 
     def _update_review_item(self, *, plan, cleaned_data):

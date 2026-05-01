@@ -7,6 +7,16 @@
     {% include "operations/includes/wod_corridor_tabs.html" %}
 
     <section class="smart-paste-layout" aria-label="Fluxo do Smart Paste semanal">
+        {% if smartplan_gpt_url %}
+        <div class="smart-paste-gpt-banner">
+            <span class="eyebrow">SmartPlan</span>
+            <p>Cole seu WOD no GPT, copie a resposta e use o editor para publicar.</p>
+            <a class="button" href="{{ smartplan_gpt_url }}" target="_blank" rel="noopener">
+                Abrir SmartPlan no ChatGPT ↗
+            </a>
+        </div>
+        {% endif %}
+
         <article class="table-card smart-paste-card smart-paste-flow-card">
             <div class="coach-wod-editor-head">
                 <div>
