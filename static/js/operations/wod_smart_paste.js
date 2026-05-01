@@ -114,6 +114,11 @@ POR QUE ELE EXISTE:
     if (!targetId) return;
     var reviewTarget = document.getElementById(String(targetId).replace(/^#/, ''));
     if (!reviewTarget) return;
+    // If target lives inside a <dialog>, open the dialog first
+    var parentDialog = reviewTarget.closest('dialog');
+    if (parentDialog && !parentDialog.open) {
+      parentDialog.showModal();
+    }
     if (reviewTarget.tagName === 'DETAILS') {
       reviewTarget.open = true;
     }
@@ -145,10 +150,43 @@ POR QUE ELE EXISTE:
     }
   }
 
+  function bindDayDialogs(scope) {
+    if (!scope) return;
+    scope.querySelectorAll('[data-action="open-day-dialog"]').forEach(function (btn) {
+      if (btn.dataset.dayDialogBound === 'true') return;
+      btn.dataset.dayDialogBound = 'true';
+      btn.addEventListener('click', function () {
+        var targetId = btn.dataset.target;
+        if (!targetId) return;
+        var dialog = document.getElementById(targetId);
+        if (dialog && typeof dialog.showModal === 'function') {
+          dialog.showModal();
+        }
+      });
+    });
+    scope.querySelectorAll('[data-action="close-dialog"]').forEach(function (btn) {
+      if (btn.dataset.closeDialogBound === 'true') return;
+      btn.dataset.closeDialogBound = 'true';
+      btn.addEventListener('click', function () {
+        var dialog = btn.closest('dialog');
+        if (dialog) dialog.close();
+      });
+    });
+    // Close dialog on backdrop click
+    scope.querySelectorAll('.smart-paste-day-dialog').forEach(function (dialog) {
+      if (dialog.dataset.backdropBound === 'true') return;
+      dialog.dataset.backdropBound = 'true';
+      dialog.addEventListener('click', function (e) {
+        if (e.target === dialog) dialog.close();
+      });
+    });
+  }
+
   function initializeScope(scope) {
     if (!scope) return;
     scope.querySelectorAll('[data-smart-date-input]').forEach(bindSmartDateField);
     bindReviewQueue(scope);
+    bindDayDialogs(scope);
   }
 
   initializeScope(root);

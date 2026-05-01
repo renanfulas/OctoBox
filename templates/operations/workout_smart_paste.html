@@ -6,43 +6,20 @@
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% include "operations/includes/wod_corridor_tabs.html" %}
 
+    {% if smartplan_gpt_url %}
+    <div class="smart-paste-gpt-banner">
+        <span class="eyebrow">SmartPlan</span>
+        <p>Cole seu WOD no GPT, copie a resposta e use o editor para publicar.</p>
+        <a class="button" href="{{ smartplan_gpt_url }}" target="_blank" rel="noopener">Abrir SmartPlan no ChatGPT ↗</a>
+    </div>
+    {% endif %}
+
     <section class="smart-paste-layout" aria-label="Fluxo do Smart Paste semanal">
-        {% if smartplan_gpt_url %}
-        <div class="smart-paste-gpt-banner">
-            <span class="eyebrow">SmartPlan</span>
-            <p>Cole seu WOD no GPT, copie a resposta e use o editor para publicar.</p>
-            <a class="button" href="{{ smartplan_gpt_url }}" target="_blank" rel="noopener">
-                Abrir SmartPlan no ChatGPT ↗
-            </a>
-        </div>
-        {% endif %}
-
-        <article class="table-card smart-paste-card smart-paste-flow-card">
-            <div class="coach-wod-editor-head">
-                <div>
-                    <p class="eyebrow">Fluxo</p>
-                    <h2>Do texto colado ate a replicacao</h2>
-                    <p class="operation-session-meta">Primeiro organizamos a semana, depois fechamos as pendencias humanas e so entao abrimos a replicacao.</p>
-                </div>
-            </div>
-            <ol class="smart-paste-flow-list" aria-label="Etapas do Smart Paste">
-                <li class="smart-paste-flow-step is-active">Nome da semana</li>
-                <li class="smart-paste-flow-step is-active">Texto colado</li>
-                <li class="smart-paste-flow-step is-active">Organizar texto</li>
-                <li class="smart-paste-flow-step {% if smart_paste_days %}is-active{% endif %}">Preview da semana</li>
-                <li class="smart-paste-flow-step {% if smart_paste_summary.unresolved_count %}is-warning{% elif smart_paste_days %}is-active{% endif %}">Itens que ainda pedem confirmacao humana</li>
-                <li class="smart-paste-flow-step {% if weekly_plan_is_confirmed %}is-active{% endif %}">Confirma rascunho semanal</li>
-                <li class="smart-paste-flow-step {% if weekly_plan_is_confirmed %}is-active{% endif %}">Escolhe a semana</li>
-                <li class="smart-paste-flow-step {% if projection_preview %}is-active{% endif %}">Monta preview de replicacao</li>
-            </ol>
-        </article>
-
         <article class="table-card smart-paste-card">
             <div class="coach-wod-editor-head">
                 <div>
                     <p class="eyebrow">Colar</p>
                     <h2>Semana em texto livre</h2>
-                    <p class="operation-session-meta">Cole como o coach escreve. O parser organiza sem tocar ainda nas aulas reais.</p>
                 </div>
                 {% if weekly_plan %}
                 <div class="coach-wod-editor-pills">

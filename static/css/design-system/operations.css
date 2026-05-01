@@ -110,6 +110,117 @@ ORDEM DA CASCADE:
     resize: vertical;
 }
 
+/* ── Day chips ── */
+.smart-paste-day-chips {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+    gap: 0.6rem;
+}
+
+.smart-paste-day-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.85rem 0.5rem;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.35);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    text-align: center;
+    width: 100%;
+    font-family: inherit;
+}
+
+.smart-paste-day-chip:hover {
+    border-color: rgba(56, 189, 248, 0.4);
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.smart-paste-day-chip.is-warning {
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+.smart-paste-day-chip__label {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--theme-text-primary);
+}
+
+.smart-paste-day-chip__count {
+    font-size: 0.68rem;
+    color: var(--theme-text-secondary);
+}
+
+/* ── Day dialog ── */
+.smart-paste-day-dialog {
+    background: var(--surface-card, #0f172a);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 16px;
+    padding: 0;
+    max-width: 520px;
+    width: calc(100vw - 2rem);
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.smart-paste-day-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+}
+
+.smart-paste-day-dialog[open] {
+    display: flex;
+}
+
+.smart-paste-day-dialog__inner {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex: 1;
+}
+
+.smart-paste-day-dialog__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+    flex-shrink: 0;
+}
+
+.smart-paste-day-dialog__head h3 {
+    margin: 0.15rem 0 0;
+}
+
+.smart-paste-day-dialog__close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--theme-text-secondary);
+    font-size: 1rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 6px;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+
+.smart-paste-day-dialog__close:hover {
+    background: rgba(148, 163, 184, 0.15);
+}
+
+.smart-paste-day-dialog__body {
+    overflow-y: auto;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* ── Legacy grid — kept for graceful degradation ── */
 .smart-paste-preview-grid {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
