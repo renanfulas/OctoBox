@@ -359,3 +359,37 @@ ORDEM DA CASCADE:
         flex-direction: column;
     }
 }
+
+/* SmartPlan GPT banner — topo da Smart Paste tab */
+.smart-paste-gpt-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 25%, transparent);
+    border-radius: var(--radius-md);
+    flex-wrap: wrap;
+}
+
+.smart-paste-gpt-banner .eyebrow {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-primary);
+    white-space: nowrap;
+}
+
+.smart-paste-gpt-banner p {
+    flex: 1;
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    min-width: 160px;
+}
+
+.smart-paste-gpt-banner .button {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
