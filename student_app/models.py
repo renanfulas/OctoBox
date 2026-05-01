@@ -362,6 +362,12 @@ class SessionWorkout(TimeStampedModel):
     rejected_at = models.DateTimeField(null=True, blank=True)
     rejection_reason = models.CharField(max_length=255, blank=True)
     version = models.PositiveIntegerField(default=1)
+    # SmartPlan tier flag: True quando publicado a partir de output canonico do GPT.
+    # Texto cru continua valido mas perde o render rico no app do aluno.
+    is_normalized = models.BooleanField(default=False)
+    # Snapshot do JSON canonico devolvido pelo GPT. Prova de origem e replay; nao
+    # e fonte primaria de render — o render itera SessionWorkoutBlock relacional.
+    structured_payload = models.JSONField(default=dict, blank=True)
 
     class Meta:
         ordering = ['session__scheduled_at']
@@ -553,3 +559,32 @@ class SessionWorkoutRmGapAction(TimeStampedModel):
 
     def __str__(self):
         return f'{self.workout} - {self.student.full_name} - {self.exercise_label}'
+
+
+class MovementLibrary(models.Model):
+    """
+    Catalogo de referencia de movimentos.
+
+    Por que existe:
+    - centraliza o link de referencia (ex.: crossfit.com) por slug, sem poluir
+      SessionWorkoutMovement nem o snapshot de WOD.
+    - consultado em bloco (IN lookup) por GetStudentWorkoutDay.
+    - populado via seed_movement_library; nao e alterado por coach.
+
+    Pontos criticos:
+    - slug deve ser identico ao movement_slug usado em SessionWorkoutMovement.
+    - reference_url e opcional: movimentos sem link continuam funcionando normalmente.
+    """
+
+    slug = models.SlugField(max_length=64, unique=True)
+    label_pt = models.CharField(max_length=120)
+    label_en = models.CharField(max_length=120, blank=True)
+    reference_url = models.URLField(max_length=255, blank=True)
+
+    class Meta:
+        verbose_name = 'Biblioteca de Movimento'
+        verbose_name_plural = 'Biblioteca de Movimentos'
+        ordering = ['slug']
+
+    def __str__(self):
+        return f'{self.slug} — {self.label_pt}'

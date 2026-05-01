@@ -22,7 +22,7 @@ from time import perf_counter
 from django.conf import settings
 from django.db import OperationalError, ProgrammingError, transaction
 
-from operations.models import WorkoutPlannerTemplatePickerEvent
+from operations.models import WorkoutPlannerTemplatePickerEvent, SmartPlanGateEvent
 
 
 logger = logging.getLogger('octobox.operations.wod')
@@ -106,6 +106,49 @@ def emit_wod_planner_picker_event(*, actor, event_name, session_id=None, templat
     )
 
 
+def emit_smartplan_gate_event(
+    *,
+    actor,
+    session_id,
+    outcome,
+    paste_length=None,
+    block_count=None,
+    invalid_reason='',
+    prompt_version='v1.0.0',
+):
+    """Registra uma passagem pelo gating SmartPlan. Fire-and-forget — nunca bloqueia."""
+    try:
+        session_pk = int(session_id) if session_id is not None else None
+    except (TypeError, ValueError):
+        session_pk = None
+    if session_pk is not None:
+        try:
+            with transaction.atomic():
+                SmartPlanGateEvent.objects.create(
+                    actor=actor,
+                    session_id=session_pk,
+                    outcome=outcome,
+                    paste_length=paste_length,
+                    block_count=block_count,
+                    invalid_reason=invalid_reason or '',
+                    prompt_version=prompt_version,
+                )
+        except (OperationalError, ProgrammingError):
+            pass
+    logger.info(
+        'smartplan_gate',
+        extra={
+            'outcome': outcome,
+            'session_id': session_id,
+            'user_id': getattr(actor, 'id', None),
+            'paste_length': paste_length,
+            'block_count': block_count,
+            'invalid_reason': invalid_reason,
+            'prompt_version': prompt_version,
+        },
+    )
+
+
 @contextmanager
 def wod_action_timer(request, *, action, workout_id=None):
     started_at = perf_counter()
@@ -121,6 +164,7 @@ def wod_action_timer(request, *, action, workout_id=None):
 
 
 __all__ = [
+    'emit_smartplan_gate_event',
     'emit_wod_action_duration',
     'emit_wod_planner_picker_event',
     'emit_wod_policy_decision',

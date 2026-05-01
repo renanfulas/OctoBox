@@ -1,0 +1,126 @@
+# SmartPlan v1 — Exemplos few-shot
+
+---
+
+## Exemplo 1 — AMRAP simples
+
+Input:
+AMRAP 12: 8 BOB, 10 hspu, 30 thruster
+
+Output:
+=== WOD NORMALIZADO ===
+AMRAP 12 minutos
+
+▸ 8x Burpee Over Box
+▸ 10x Handstand Push-Up
+▸ 30x Thruster (carga livre)
+
+=== JSON ESTRUTURADO ===
+```json
+{
+  "version": "1.0",
+  "blocks": [
+    {
+      "order": 1,
+      "type": "amrap",
+      "title": "AMRAP 12 minutos",
+      "duration_min": 12,
+      "rounds": null,
+      "is_partner": false,
+      "is_synchro": false,
+      "scaling_notes": "",
+      "movements": [
+        {"order": 1, "slug": "burpee_over_box", "label_pt": "Burpee Over Box", "label_en": "Burpee Over Box", "reps": 8, "load_kg": null, "load_note": null, "load_pct_rm": null, "load_pct_rm_exercise": null},
+        {"order": 2, "slug": "handstand_pushup", "label_pt": "Handstand Push-Up", "label_en": "Handstand Push-Up", "reps": 10, "load_kg": null, "load_note": null, "load_pct_rm": null, "load_pct_rm_exercise": null},
+        {"order": 3, "slug": "thruster", "label_pt": "Thruster", "label_en": "Thruster", "reps": 30, "load_kg": null, "load_note": "free", "load_pct_rm": null, "load_pct_rm_exercise": null}
+      ],
+      "warnings": []
+    }
+  ],
+  "session_warnings": []
+}
+```
+
+=== FIM ===
+
+---
+
+## Exemplo 2 — Força com percentual de RM
+
+Input:
+Força: 5x5 Front Squat 75% do RM
+
+Output:
+=== WOD NORMALIZADO ===
+Força
+
+▸ 5 séries x 5 repetições de Front Squat a 75% do RM
+
+=== JSON ESTRUTURADO ===
+```json
+{
+  "version": "1.0",
+  "blocks": [
+    {
+      "order": 1,
+      "type": "strength",
+      "title": "Força",
+      "duration_min": null,
+      "rounds": 5,
+      "is_partner": false,
+      "is_synchro": false,
+      "scaling_notes": "",
+      "movements": [
+        {"order": 1, "slug": "front_squat", "label_pt": "Front Squat", "label_en": "Front Squat", "reps": 5, "load_kg": null, "load_note": null, "load_pct_rm": 75, "load_pct_rm_exercise": "front_squat"}
+      ],
+      "warnings": []
+    }
+  ],
+  "session_warnings": []
+}
+```
+
+=== FIM ===
+
+---
+
+## Exemplo 3 — Input ambíguo com sincronia
+
+Input:
+30 thruster / 40 Hang clean / 50 sit up sincro
+
+Output:
+=== WOD NORMALIZADO ===
+[?] formato do bloco não especificado pelo coach (For Time? AMRAP?)
+
+▸ 30x Thruster (carga livre)
+▸ 40x Hang Clean (carga livre)
+▸ 50x Sit-Up sincronizado (dupla)
+
+=== JSON ESTRUTURADO ===
+```json
+{
+  "version": "1.0",
+  "blocks": [
+    {
+      "order": 1,
+      "type": "free",
+      "title": "Bloco principal [?]",
+      "duration_min": null,
+      "rounds": null,
+      "is_partner": true,
+      "is_synchro": true,
+      "scaling_notes": "",
+      "movements": [
+        {"order": 1, "slug": "thruster", "label_pt": "Thruster", "label_en": "Thruster", "reps": 30, "load_kg": null, "load_note": "free", "load_pct_rm": null, "load_pct_rm_exercise": null},
+        {"order": 2, "slug": "hang_clean", "label_pt": "Hang Clean", "label_en": "Hang Clean", "reps": 40, "load_kg": null, "load_note": "free", "load_pct_rm": null, "load_pct_rm_exercise": null},
+        {"order": 3, "slug": "sit_up", "label_pt": "Sit-Up", "label_en": "Sit-Up", "reps": 50, "load_kg": null, "load_note": null, "load_pct_rm": null, "load_pct_rm_exercise": null}
+      ],
+      "warnings": ["formato do bloco não especificado", "sincronia inferida de 'sincro'"]
+    }
+  ],
+  "session_warnings": []
+}
+```
+
+=== FIM ===

@@ -16,7 +16,7 @@ PONTOS CRITICOS:
 """
 
 from django.contrib import messages
-from django.db import OperationalError, ProgrammingError
+from django.db import OperationalError, ProgrammingError, transaction
 from django.shortcuts import get_object_or_404, redirect
 from operations.forms import (
     CoachSessionWorkoutForm,
@@ -28,11 +28,14 @@ from operations.forms import (
     WorkoutStoredTemplateForm,
 )
 from operations.models import ClassSession, WorkoutTemplate
+from operations.services.wod_normalization import detect_smartplan_format
 from student_app.models import (
     SessionWorkout,
     SessionWorkoutBlock,
     SessionWorkoutMovement,
     SessionWorkoutStatus,
+    WorkoutBlockKind,
+    WorkoutLoadType,
 )
 from .workout_duplication import apply_workout_template_to_session, clone_workout_to_session
 from .workout_templates import apply_persisted_workout_template, create_persisted_template_from_workout
@@ -41,6 +44,23 @@ from .workout_support import (
     record_workout_audit as _record_workout_audit,
     route_workout_submission,
 )
+from .workout_telemetry import emit_smartplan_gate_event
+
+
+# Mapa do tipo de bloco do SmartPlan JSON para WorkoutBlockKind. SmartPlan introduz
+# tipos novos (amrap, emom, for_time, free) que ainda nao existem em WorkoutBlockKind;
+# nesses casos caimos em CUSTOM e preservamos o tipo no titulo para o aluno ver.
+_BLOCK_TYPE_MAP = {
+    'warmup': WorkoutBlockKind.WARMUP,
+    'strength': WorkoutBlockKind.STRENGTH,
+    'skill': WorkoutBlockKind.SKILL,
+    'metcon': WorkoutBlockKind.METCON,
+    'amrap': WorkoutBlockKind.METCON,
+    'emom': WorkoutBlockKind.METCON,
+    'for_time': WorkoutBlockKind.METCON,
+    'cooldown': WorkoutBlockKind.COOLDOWN,
+    'free': WorkoutBlockKind.CUSTOM,
+}
 
 
 TEMPLATE_STORAGE_EXCEPTIONS = (OperationalError, ProgrammingError)
@@ -400,3 +420,180 @@ class CoachSessionWorkoutEditorActionsMixin:
             return redirect('coach-session-workout-editor', session_id=self.session.id)
         messages.success(request, f'Template salvo "{template.name}" criado a partir deste WOD.')
         return redirect('coach-session-workout-editor', session_id=self.session.id)
+
+    def _handle_apply_smartplan_paste(self, request):
+        """Recebe o paste do GPT SmartPlan, valida e popula o WOD em tier rico.
+
+        Bifurca:
+        - paste valido (formato canonico) -> hidrata blocos/movimentos + marca is_normalized=True.
+        - paste invalido com confirmacao 'publish_raw' -> salva texto cru + is_normalized=False.
+        - paste invalido sem confirmacao -> retorna ao editor com popup de aviso.
+        """
+        raw_text = (request.POST.get('smartplan_paste') or '').strip()
+        confirm_raw = request.POST.get('confirm_publish_raw') == '1'
+
+        if not raw_text:
+            emit_smartplan_gate_event(
+                actor=request.user,
+                session_id=self.session.id,
+                outcome='empty_paste',
+                paste_length=0,
+            )
+            messages.error(request, 'Cole a resposta do SmartPlan ou clique em "Abrir SmartPlan no ChatGPT" primeiro.')
+            return redirect('coach-session-workout-editor', session_id=self.session.id)
+
+        result = detect_smartplan_format(raw_text)
+
+        # Caminho A: formato valido -> hidrata blocos/movimentos e submete pela politica ativa.
+        if result['is_normalized']:
+            workout = self._get_or_create_workout()
+            block_count = len(result['structured_payload'].get('blocks', []))
+            with transaction.atomic():
+                _hydrate_workout_from_payload(
+                    workout=workout,
+                    normalized_text=result['normalized_text'],
+                    structured_payload=result['structured_payload'],
+                )
+                _record_workout_audit(
+                    actor=request.user,
+                    workout=workout,
+                    action='wod.smartplan.hydrated',
+                    description='Blocos e movimentos populados via SmartPlan (tier rico).',
+                    metadata={
+                        'session_id': workout.session_id,
+                        'prompt_version': 'v1.0.0',
+                        'block_count': block_count,
+                    },
+                )
+            # Roteamento de publicacao segue a politica do corredor (aprovacao manual ou direto).
+            submission_result = route_workout_submission(
+                actor=request.user,
+                workout=workout,
+                source='smartplan',
+            )
+            outcome = (
+                'canonical_published'
+                if submission_result['status'] == 'published'
+                else 'canonical_pending'
+            )
+            emit_smartplan_gate_event(
+                actor=request.user,
+                session_id=self.session.id,
+                outcome=outcome,
+                paste_length=len(raw_text),
+                block_count=block_count,
+            )
+            if submission_result['status'] == 'published':
+                messages.success(request, 'WOD SmartPlan publicado. Aluno ja ve tier rico com videos e RM.')
+            else:
+                messages.success(request, 'WOD SmartPlan estruturado e enviado para aprovacao do owner.')
+            return redirect('coach-session-workout-editor', session_id=self.session.id)
+
+        # Caminho B: formato invalido + confirmacao 'publicar mesmo assim' -> tier cru.
+        if confirm_raw:
+            workout = self._get_or_create_workout()
+            # Limpa blocos de eventual SmartPlan anterior para nao deixar lixo relacional.
+            workout.blocks.all().delete()
+            workout.coach_notes = raw_text
+            workout.is_normalized = False
+            workout.structured_payload = {}
+            workout.save(update_fields=['coach_notes', 'is_normalized', 'structured_payload', 'updated_at'])
+            _record_workout_audit(
+                actor=request.user,
+                workout=workout,
+                action='wod.smartplan.raw_confirmed',
+                description='Coach confirmou publicacao em texto cru apos aviso de gating.',
+                metadata={
+                    'session_id': workout.session_id,
+                    'gate_reason': result.get('reason'),
+                },
+            )
+            # Publicacao segue a mesma politica do corredor.
+            submission_result = route_workout_submission(
+                actor=request.user,
+                workout=workout,
+                source='smartplan_raw',
+            )
+            emit_smartplan_gate_event(
+                actor=request.user,
+                session_id=self.session.id,
+                outcome='raw_confirmed',
+                paste_length=len(raw_text),
+                invalid_reason=result.get('reason', ''),
+            )
+            if submission_result['status'] == 'published':
+                messages.warning(
+                    request,
+                    'WOD publicado em texto cru. Aluno nao vera videos, RM ou metricas.',
+                )
+            else:
+                messages.warning(
+                    request,
+                    'WOD em texto cru enviado para aprovacao. Sem SmartPlan, aluno vera apenas texto.',
+                )
+            return redirect('coach-session-workout-editor', session_id=self.session.id)
+
+        # Caminho C: invalido sem confirmacao -> popup com aviso, mantem o paste.
+        emit_smartplan_gate_event(
+            actor=request.user,
+            session_id=self.session.id,
+            outcome='invalid_popup',
+            paste_length=len(raw_text),
+            invalid_reason=result.get('reason', ''),
+        )
+        return self.render_to_response(
+            self._build_context(workout_form=None) | {
+                'smartplan_paste_value': raw_text,
+                'smartplan_paste_invalid_reason': result.get('reason'),
+                'smartplan_paste_show_popup': True,
+            }
+        )
+
+
+def _hydrate_workout_from_payload(*, workout, normalized_text, structured_payload):
+    """Popula SessionWorkoutBlock e SessionWorkoutMovement a partir do JSON do GPT.
+
+    Idempotente: apaga blocos antigos antes de criar novos. Re-publicar com SmartPlan
+    apos um paste anterior funciona sem deixar restos.
+    """
+    workout.blocks.all().delete()
+
+    workout.coach_notes = normalized_text
+    workout.is_normalized = True
+    workout.structured_payload = structured_payload
+    workout.version += 1
+    workout.save(update_fields=[
+        'coach_notes', 'is_normalized', 'structured_payload', 'version', 'updated_at',
+    ])
+
+    blocks_data = structured_payload.get('blocks', [])
+    for block_data in blocks_data:
+        block_type = block_data.get('type', 'free')
+        block_kind = _BLOCK_TYPE_MAP.get(block_type, WorkoutBlockKind.CUSTOM)
+        block = SessionWorkoutBlock.objects.create(
+            workout=workout,
+            kind=block_kind,
+            title=block_data.get('title', '')[:120],
+            notes=block_data.get('scaling_notes', ''),
+            sort_order=block_data.get('order', 1),
+        )
+        for movement_data in block_data.get('movements', []):
+            load_value = movement_data.get('load_kg')
+            load_pct = movement_data.get('load_pct_rm')
+            if load_pct is not None:
+                load_type = WorkoutLoadType.PERCENTAGE_OF_RM
+                load_value = load_pct
+            elif load_value is not None:
+                load_type = WorkoutLoadType.FIXED_KG
+            else:
+                load_type = WorkoutLoadType.FREE
+            SessionWorkoutMovement.objects.create(
+                block=block,
+                movement_slug=(movement_data.get('slug') or '')[:64],
+                movement_label=(movement_data.get('label_pt') or movement_data.get('label_en') or '')[:120],
+                reps=movement_data.get('reps'),
+                load_type=load_type,
+                load_value=load_value,
+                notes='',
+                sort_order=movement_data.get('order', 1),
+            )

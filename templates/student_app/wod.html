@@ -6,6 +6,7 @@
 {{ block.super }}
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/student_app/screens/wod.css' %}?v={{ static_asset_version }}">
+<link rel="stylesheet" href="{% static 'css/student_app/screens/wod-rich.css' %}?v={{ static_asset_version }}">
 {% endblock %}
 
 {% block body %}
@@ -33,43 +34,11 @@
 {% endif %}
 
 {% if student_workout_day %}
-<section class="student-card student-card--feature" id="student-wod-day">
-    <div class="student-section-head">
-        <div>
-            <div class="student-wod-session-meta">
-                <span class="student-context-switch">{{ student_workout_day.session_scheduled_label }}</span>
-                <span class="student-context-switch">{{ student_workout_day.session_weekday_label }}</span>
-            </div>
-            <h2>Blocos</h2>
-        </div>
-    </div>
-    <div class="student-wod-block-list">
-        {% for block in student_workout_day.blocks %}
-        <article class="student-wod-block">
-            <div class="student-section-head student-section-head--compact">
-                <div>
-                    <span class="student-context-switch">{{ block.kind_label }}</span>
-                    <h2>{{ block.title }}</h2>
-                </div>
-            </div>
-            <div class="student-wod-movement-list">
-                {% for movement in block.movements %}
-                <article class="student-wod-movement-card">
-                    <div class="student-wod-movement-copy">
-                        <strong>{{ movement.movement_label }}</strong>
-                        <span>{{ movement.prescription_label }}</span>
-                    </div>
-                    <div class="student-wod-movement-metrics">
-                        <small>{% if movement.load_context_label == 'Percentual do RM' %}Percentual do seu RM:{% else %}{{ movement.load_context_label }}{% endif %}</small>
-                        <strong>{{ movement.recommendation_label }}</strong>
-                    </div>
-                </article>
-                {% endfor %}
-            </div>
-        </article>
-        {% endfor %}
-    </div>
-</section>
+    {% if student_workout_day.is_normalized %}
+        {% include "student_app/_partials/_wod_rich.html" %}
+    {% else %}
+        {% include "student_app/_partials/_wod_raw.html" %}
+    {% endif %}
 {% endif %}
 
 <section class="student-card student-card--feature student-wod-calculator">

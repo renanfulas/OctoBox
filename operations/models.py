@@ -31,6 +31,8 @@ from operations.model_definitions import (
     WorkoutTemplateBlock,
     WorkoutTemplateMovement,
     WorkoutPlannerTemplatePickerEvent,
+    SmartPlanGateEvent,
+    SmartPlanGateOutcome,
 )
 
 __all__ = [
@@ -52,4 +54,6 @@ __all__ = [
     'WorkoutTemplateBlock',
     'WorkoutTemplateMovement',
     'WorkoutPlannerTemplatePickerEvent',
+    'SmartPlanGateEvent',
+    'SmartPlanGateOutcome',
 ]
