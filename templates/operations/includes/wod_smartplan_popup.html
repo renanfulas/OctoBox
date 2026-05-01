@@ -1,0 +1,70 @@
+<!--
+ARQUIVO: popup de aviso quando o paste do SmartPlan nao bate o formato canonico.
+
+POR QUE ELE EXISTE:
+- e o ponto de gating UX que aplica loss aversion. Lista as 6 perdas concretas se o
+  owner publicar texto cru, e oferece dois caminhos: voltar e formatar, ou publicar mesmo assim.
+
+O QUE ESTE ARQUIVO FAZ:
+1. e renderizado quando `smartplan_paste_show_popup` e True.
+2. mostra o motivo exato da rejeicao (`smartplan_paste_invalid_reason`).
+3. enumera as 6 perdas e oferece dois botoes com hierarquia visual clara.
+
+PONTOS CRITICOS:
+- botao primario e SEMPRE "Voltar e formatar" (caminho desejado).
+- botao secundario "Publicar mesmo assim" tem peso visual reduzido (danger tint).
+- nao igualar peso visual entre os dois botoes; isso quebra o nudge.
+-->
+{% if smartplan_paste_show_popup %}
+<div class="wod-smartplan-popup" role="dialog" aria-modal="true" aria-labelledby="wod-smartplan-popup-title" data-panel="wod-smartplan-popup">
+    <div class="wod-smartplan-popup__overlay" data-action="wod-smartplan-popup-close"></div>
+    <article class="wod-smartplan-popup__panel notice-panel notice-panel--warning" role="document">
+        <header class="wod-smartplan-popup__head">
+            <p class="eyebrow">SmartPlan</p>
+            <h2 id="wod-smartplan-popup-title">WOD fora do formato SmartPlan</h2>
+            <p class="system-map-copy">
+                {% if smartplan_paste_invalid_reason == 'markers_missing' %}
+                A resposta colada nao tem os marcadores `=== WOD NORMALIZADO ===` e `=== JSON ESTRUTURADO ===`.
+                {% elif smartplan_paste_invalid_reason == 'json_invalid' %}
+                O bloco JSON na resposta nao pode ser interpretado pelo OctoBOX.
+                {% elif smartplan_paste_invalid_reason == 'blocks_missing' or smartplan_paste_invalid_reason == 'blocks_empty' %}
+                A resposta veio sem blocos estruturados de WOD.
+                {% else %}
+                A resposta colada nao bate o formato canonico do SmartPlan.
+                {% endif %}
+            </p>
+        </header>
+
+        <div class="wod-smartplan-popup__body">
+            <p class="system-map-copy"><strong>No app do aluno este WOD vai aparecer apenas como texto cru. Voce perde:</strong></p>
+            <ul class="wod-smartplan-popup__losses">
+                <li>Videos por movimento</li>
+                <li>Vinculo automatico com o RM do aluno</li>
+                <li>Sugestao de carga e scaling</li>
+                <li>Deteccao automatica de PR</li>
+                <li>Metricas de volume e progressao</li>
+                <li>Comparacao com WODs anteriores</li>
+            </ul>
+        </div>
+
+        <footer class="wod-smartplan-popup__actions">
+            <button
+                type="button"
+                class="button wod-smartplan-popup__primary"
+                data-action="wod-smartplan-popup-close"
+            >
+                Voltar e formatar com SmartPlan
+            </button>
+            <form method="post" class="wod-smartplan-popup__raw-form">
+                {% csrf_token %}
+                <input type="hidden" name="intent" value="apply_smartplan_paste">
+                <input type="hidden" name="smartplan_paste" value="{{ smartplan_paste_value }}">
+                <input type="hidden" name="confirm_publish_raw" value="1">
+                <button type="submit" class="button secondary wod-smartplan-popup__secondary">
+                    Publicar mesmo assim
+                </button>
+            </form>
+        </footer>
+    </article>
+</div>
+{% endif %}

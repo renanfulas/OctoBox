@@ -28,6 +28,7 @@ from student_app.application.results import (
 from student_app.domain.workout_prescription import build_workout_prescription
 from student_app.application.wod_snapshots import get_published_student_workout_snapshot
 from student_app.models import (
+    MovementLibrary,
     SessionWorkout,
     SessionWorkoutStatus,
     WorkoutLoadType,
@@ -771,6 +772,11 @@ class GetStudentWorkoutDay:
         if workout_snapshot is None:
             return None
 
+        all_slugs = {
+            movement['movement_slug']
+            for block in workout_snapshot['blocks']
+            for movement in block['movements']
+        }
         percentage_slugs = {
             movement['movement_slug']
             for block in workout_snapshot['blocks']
@@ -783,6 +789,10 @@ class GetStudentWorkoutDay:
             for slug in percentage_slugs
             if slug in rm_record_map
         } if percentage_slugs else {}
+        reference_url_by_slug = {
+            entry['slug']: entry['reference_url']
+            for entry in MovementLibrary.objects.filter(slug__in=all_slugs).values('slug', 'reference_url')
+        } if all_slugs else {}
 
         block_cards = []
         primary_recommendation = None
@@ -812,6 +822,7 @@ class GetStudentWorkoutDay:
                     base_rm_kg=recommendation_payload['base_rm_kg'],
                     percentage=recommendation_payload['percentage'],
                     is_primary_recommendation=primary_recommendation is None and recommended_load is not None,
+                    reference_url=reference_url_by_slug.get(movement['movement_slug'], ''),
                 )
                 if movement_card.is_primary_recommendation:
                     primary_recommendation = movement_card
@@ -837,6 +848,7 @@ class GetStudentWorkoutDay:
             workout_title=workout_snapshot['workout_title'],
             coach_notes=workout_snapshot['coach_notes'],
             blocks=tuple(block_cards),
+            is_normalized=bool(workout_snapshot.get('is_normalized', False)),
             primary_recommendation=primary_recommendation,
         )
         record_student_app_perf(

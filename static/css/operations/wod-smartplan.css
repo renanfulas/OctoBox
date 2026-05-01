@@ -1,0 +1,223 @@
+/*
+ARQUIVO: estilos do card SmartPlan e do popup de aviso no editor de WOD.
+
+POR QUE ELE EXISTE:
+- compoe localmente o card de entrada do SmartPlan e o modal de gating sem inventar
+  hosts paralelos. Reusa `table-card`, `notice-panel`, `button` e tokens semanticos.
+
+O QUE ESTE ARQUIVO FAZ:
+1. estiliza o card SmartPlan no topo do editor (assinatura visual mais forte que o resto).
+2. estiliza o popup de aviso com hierarquia clara entre primario e secundario.
+3. responsividade leve para viewport mobile do owner.
+
+PONTOS CRITICOS:
+- nao redefinir tokens (--theme-*); apenas consumir.
+- o botao primario do popup precisa ter peso visual maior que o secundario.
+- popup usa overlay full-screen com z-index alto; nao competir com toasts existentes.
+*/
+
+/* =========================
+ * Card SmartPlan no editor
+ * ========================= */
+
+.wod-smartplan-card {
+    background:
+        linear-gradient(
+            140deg,
+            color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, var(--theme-surface-strong) 82%),
+            color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-surface-secondary) 86%)
+        );
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 22%, var(--theme-border-soft) 78%);
+    box-shadow:
+        var(--theme-shadow-lift),
+        0 0 0 1px color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent) inset;
+    margin-bottom: 16px;
+}
+
+.wod-smartplan-card__head {
+    display: grid;
+    gap: 6px;
+}
+
+.wod-smartplan-card__cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.wod-smartplan-card__open {
+    flex: 0 0 auto;
+}
+
+.wod-smartplan-card__placeholder {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: var(--radius-panel);
+    background: color-mix(in srgb, var(--theme-surface-strong) 88%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--theme-border-soft) 70%, transparent);
+}
+
+.wod-smartplan-card__placeholder code {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--theme-surface-secondary) 88%, transparent);
+    font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: 0.85em;
+}
+
+.wod-smartplan-form {
+    display: grid;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.wod-smartplan-form__label {
+    display: grid;
+    gap: 4px;
+}
+
+.wod-smartplan-form__textarea {
+    width: 100%;
+    min-height: 220px;
+    padding: 12px 14px;
+    border-radius: var(--radius-panel);
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 80%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
+    color: var(--theme-text-primary);
+    font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: 0.9rem;
+    resize: vertical;
+}
+
+.wod-smartplan-form__textarea:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 50%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-primary-alpha) 28%, transparent);
+}
+
+.wod-smartplan-form__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+.wod-smartplan-form__hint {
+    flex: 1 1 240px;
+    margin: 0;
+    color: var(--theme-text-muted);
+    font-size: 0.85rem;
+}
+
+/* =========================
+ * Popup de aviso (gating UX)
+ * ========================= */
+
+.wod-smartplan-popup {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+}
+
+.wod-smartplan-popup__overlay {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in srgb, var(--theme-surface-base, #000) 70%, transparent);
+    backdrop-filter: blur(4px);
+}
+
+.wod-smartplan-popup__panel {
+    position: relative;
+    width: min(520px, 100%);
+    padding: 24px;
+    border-radius: calc(var(--radius-panel) + 4px);
+    box-shadow: var(--theme-shadow-lift);
+    z-index: 1;
+    display: grid;
+    gap: 18px;
+}
+
+.wod-smartplan-popup__head {
+    display: grid;
+    gap: 6px;
+}
+
+.wod-smartplan-popup__head h2 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.wod-smartplan-popup__body p {
+    margin: 0 0 8px 0;
+}
+
+.wod-smartplan-popup__losses {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 6px;
+}
+
+.wod-smartplan-popup__losses li {
+    position: relative;
+    padding-left: 22px;
+    color: var(--theme-text-secondary);
+    font-size: 0.92rem;
+}
+
+.wod-smartplan-popup__losses li::before {
+    content: "✗";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: color-mix(in srgb, var(--theme-accent-danger) 80%, transparent);
+    font-weight: 700;
+}
+
+.wod-smartplan-popup__actions {
+    display: grid;
+    gap: 10px;
+}
+
+/* Hierarquia: primario domina visualmente o secundario. */
+.wod-smartplan-popup__primary {
+    width: 100%;
+    padding: 12px 18px;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.wod-smartplan-popup__raw-form {
+    margin: 0;
+}
+
+.wod-smartplan-popup__secondary {
+    width: 100%;
+    padding: 8px 14px;
+    font-size: 0.88rem;
+    opacity: 0.85;
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 22%, var(--theme-border-soft) 78%);
+}
+
+.wod-smartplan-popup__secondary:hover {
+    opacity: 1;
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 12%, transparent);
+}
+
+/* =========================
+ * Mobile leve
+ * ========================= */
+
+@media (max-width: 480px) {
+    .wod-smartplan-popup__panel {
+        padding: 18px;
+    }
+    .wod-smartplan-form__textarea {
+        min-height: 160px;
+    }
+}

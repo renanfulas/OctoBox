@@ -388,6 +388,58 @@ class SessionCancellationEvent(TimeStampedModel):
         return f'CancellationEvent session={self.session_id} variant={self.copy_variant}'
 
 
+class SmartPlanGateOutcome(models.TextChoices):
+    CANONICAL_PUBLISHED = 'canonical_published', 'Canonico publicado diretamente'
+    CANONICAL_PENDING   = 'canonical_pending',   'Canonico enviado para aprovacao'
+    INVALID_POPUP       = 'invalid_popup',        'Invalido — popup exibido'
+    RAW_CONFIRMED       = 'raw_confirmed',        'Cru confirmado pelo coach'
+    EMPTY_PASTE         = 'empty_paste',          'Paste vazio'
+
+
+class SmartPlanGateEvent(TimeStampedModel):
+    """
+    Telemetria do funil SmartPlan.
+
+    Por que existe:
+    - registra cada passagem pelo gating do SmartPlan sem bloquear a resposta HTTP.
+    - permite medir: taxa de adocao, taxa de popup, taxa de desistencia (raw_confirmed),
+      e tamanho medio do paste por outcome.
+
+    Pontos criticos:
+    - emissao deve ser fire-and-forget (try/except OperationalError/ProgrammingError).
+    - nao contem o texto do paste — apenas metricas derivadas (paste_length, block_count).
+    - session_id e IntegerField (nao FK) para sobreviver a delecoes de sessao.
+    """
+
+    outcome = models.CharField(
+        max_length=24,
+        choices=SmartPlanGateOutcome.choices,
+        db_index=True,
+    )
+    session_id = models.PositiveIntegerField(db_index=True)
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='smartplan_gate_events',
+    )
+    paste_length = models.PositiveIntegerField(null=True, blank=True)
+    block_count = models.PositiveIntegerField(null=True, blank=True)
+    invalid_reason = models.CharField(max_length=32, blank=True)
+    prompt_version = models.CharField(max_length=16, blank=True, default='v1.0.0')
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['outcome', 'created_at'], name='ops_sp_gate_outcome_idx'),
+            models.Index(fields=['session_id', 'created_at'], name='ops_sp_gate_sess_idx'),
+        ]
+
+    def __str__(self):
+        return f'SmartPlanGate [{self.outcome}] session={self.session_id}'
+
+
 class WorkoutPlannerTemplatePickerEvent(TimeStampedModel):
     event_name = models.CharField(max_length=24, db_index=True)
     session_id = models.PositiveIntegerField(db_index=True)
@@ -439,4 +491,6 @@ __all__ = [
     'WorkoutTemplateBlock',
     'WorkoutTemplateMovement',
     'WorkoutPlannerTemplatePickerEvent',
+    'SmartPlanGateEvent',
+    'SmartPlanGateOutcome',
 ]

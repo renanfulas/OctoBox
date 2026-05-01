@@ -55,6 +55,7 @@ def _serialize_student_workout_snapshot(*, workout, box_root_slug: str | None) -
         'workout_version': workout.version,
         'workout_title': workout.title or session.title,
         'coach_notes': workout.coach_notes,
+        'is_normalized': workout.is_normalized,
         'blocks': [
             {
                 'title': block.title,
@@ -108,6 +109,7 @@ def get_published_student_workout_snapshot(*, session_id: int, box_root_slug: st
             'status',
             'title',
             'coach_notes',
+            'is_normalized',
             'version',
             'session__id',
             'session__title',

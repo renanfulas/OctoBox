@@ -1,0 +1,145 @@
+/*
+ARQUIVO: estilos do tier rico (SmartPlan) e tier cru no app do aluno.
+
+POR QUE ELE EXISTE:
+- separa os estilos especificos de tier de wod.css para que onda E.3 nao toque em CSS
+  estavel. wod.css mantem os primitivos compartilhados; este arquivo so existe quando
+  SmartPlan esta ativo.
+
+O QUE ESTE ARQUIVO FAZ:
+1. badge SmartPlan na meta da sessao (tier rico).
+2. pre-formatacao do texto cru (.student-wod-raw__text) com tokens de fonte mono.
+3. hint discreto no tier cru informando o que o aluno perde sem SmartPlan.
+
+PONTOS CRITICOS:
+- nao redefinir tokens (--theme-*); apenas consumir.
+- badge SmartPlan deve ter peso visual leve — nao competir com kind_label.
+- hint cru e informativo, nao bloqueante; opacidade reduzida e suficiente.
+*/
+
+/* =========================
+ * Tier rico — badge SmartPlan
+ * ========================= */
+
+.student-wod-rich__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--theme-accent-primary) 90%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 22%, transparent);
+}
+
+/* =========================
+ * Link de referencia do movimento (MovementLibrary)
+ * ========================= */
+
+.student-wod-movement-ref {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--theme-accent-primary) 45%, transparent);
+    text-underline-offset: 3px;
+}
+
+.student-wod-movement-ref:hover {
+    text-decoration-color: var(--theme-accent-primary);
+}
+
+/* =========================
+ * Scaling de RM por movimento
+ * ========================= */
+
+.student-wod-movement-rm {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    min-width: 80px;
+    text-align: right;
+}
+
+/* RM registrado: exibe a carga calculada com destaque */
+.student-wod-movement-rm--hit .student-wod-movement-rm__pct {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--theme-text-muted);
+    letter-spacing: 0.02em;
+}
+
+.student-wod-movement-rm--hit .student-wod-movement-rm__load {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--theme-accent-primary);
+    line-height: 1.1;
+}
+
+.student-wod-movement-rm--hit .student-wod-movement-rm__base {
+    font-size: 0.70rem;
+    color: var(--theme-text-muted);
+    opacity: 0.75;
+}
+
+/* RM ausente: percentual + CTA discreto */
+.student-wod-movement-rm--missing .student-wod-movement-rm__pct {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--theme-text-muted);
+}
+
+.student-wod-movement-rm__cta {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--theme-accent-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    opacity: 0.85;
+}
+
+.student-wod-movement-rm__cta:hover {
+    opacity: 1;
+}
+
+/* =========================
+ * Tier cru — texto preformatado
+ * ========================= */
+
+.student-wod-raw__text {
+    margin: 16px 0 12px;
+    padding: 14px 16px;
+    border-radius: var(--radius-panel, 12px);
+    background: color-mix(in srgb, var(--theme-surface-strong) 88%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 70%, transparent);
+    font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--theme-text-primary);
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-x: auto;
+}
+
+.student-wod-raw__hint {
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: var(--radius-panel, 12px);
+    font-size: 0.80rem;
+    color: var(--theme-text-muted);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 60%, transparent);
+    opacity: 0.85;
+}
+
+/* =========================
+ * Mobile
+ * ========================= */
+
+@media (max-width: 480px) {
+    .student-wod-raw__text {
+        font-size: 0.82rem;
+        padding: 10px 12px;
+    }
+}

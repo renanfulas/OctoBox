@@ -32,6 +32,7 @@ def get_coach_workout_editor_intent_handler(view, intent: str):
         'apply_quick_template': view._handle_apply_quick_template,
         'apply_stored_template': view._handle_apply_stored_template,
         'create_stored_template': view._handle_create_stored_template,
+        'apply_smartplan_paste': view._handle_apply_smartplan_paste,
     }
     return intent_handlers.get(intent)
 

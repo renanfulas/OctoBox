@@ -1,0 +1,68 @@
+<!--
+ARQUIVO: card SmartPlan no editor de WOD do coach.
+
+POR QUE ELE EXISTE:
+- e o ponto de entrada visual do fluxo BYOLLM. Convida o coach/owner a abrir o GPT
+  customizado, colar o WOD bruto e devolver a resposta normalizada para o editor.
+
+O QUE ESTE ARQUIVO FAZ:
+1. mostra um card chamativo no topo do editor com botao "Abrir SmartPlan no ChatGPT".
+2. expoe textarea para colar a resposta do GPT.
+3. dispara o intent `apply_smartplan_paste` quando o usuario submete.
+
+PONTOS CRITICOS:
+- depende de `smartplan_gpt_url` no contexto.
+- se `SMARTPLAN_GPT_URL` estiver vazio (settings nao configurado), mostra estado degradado.
+- nao reproduzir conteudo do CrossFit.com aqui; o card so descreve o fluxo.
+-->
+<article class="table-card wod-smartplan-card" id="wod-smartplan-card" data-panel="wod-smartplan">
+    <div class="wod-smartplan-card__head">
+        <p class="eyebrow">SmartPlan</p>
+        <h3>Normalize seu WOD em formato premium</h3>
+        <p class="system-map-copy">
+            Cole o WOD bruto no GPT do OctoBOX, copie a resposta canonica e cole abaixo.
+            Aluno passa a ver videos, vinculo de RM e deteccao automatica de PR.
+        </p>
+    </div>
+
+    {% if smartplan_gpt_url %}
+    <div class="wod-smartplan-card__cta">
+        <a class="button wod-smartplan-card__open" href="{{ smartplan_gpt_url }}" target="_blank" rel="noopener">
+            Abrir SmartPlan no ChatGPT
+        </a>
+        <button type="button" class="button secondary" data-action="wod-smartplan-help">
+            Como funciona?
+        </button>
+    </div>
+    {% else %}
+    <div class="wod-smartplan-card__placeholder">
+        <p class="system-map-copy">
+            <strong>SmartPlan ainda nao configurado.</strong> Owner do sistema precisa publicar o GPT customizado e definir
+            <code>SMARTPLAN_GPT_URL</code> em settings antes deste card ficar ativo.
+        </p>
+    </div>
+    {% endif %}
+
+    <form method="post" class="wod-smartplan-form" data-form="wod-smartplan-paste">
+        {% csrf_token %}
+        <input type="hidden" name="intent" value="apply_smartplan_paste">
+        <label class="wod-smartplan-form__label">
+            <span class="field-label">Cole aqui a resposta do SmartPlan</span>
+            <textarea
+                name="smartplan_paste"
+                class="wod-smartplan-form__textarea"
+                rows="10"
+                placeholder="Cole a resposta inteira do GPT, com os marcadores === WOD NORMALIZADO === e === JSON ESTRUTURADO ===."
+                data-field="smartplan-paste"
+            >{{ smartplan_paste_value }}</textarea>
+        </label>
+        <div class="actions actions-tight wod-smartplan-form__actions">
+            <button class="button" type="submit" data-action="wod-smartplan-publish">
+                Publicar com SmartPlan
+            </button>
+            <p class="system-map-copy wod-smartplan-form__hint">
+                Vou validar o formato. Se estiver fora do padrao, voce pode escolher publicar mesmo assim.
+            </p>
+        </div>
+    </form>
+</article>

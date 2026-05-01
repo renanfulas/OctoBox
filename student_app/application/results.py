@@ -125,6 +125,7 @@ class StudentWorkoutMovementCard:
     base_rm_kg: Decimal | None = None
     percentage: Decimal | None = None
     is_primary_recommendation: bool = False
+    reference_url: str = ''
 
 
 @dataclass(frozen=True, slots=True)
@@ -144,6 +145,7 @@ class StudentWorkoutDayResult:
     workout_title: str
     coach_notes: str
     blocks: tuple[StudentWorkoutBlockCard, ...]
+    is_normalized: bool = False
     primary_recommendation: StudentWorkoutMovementCard | None = None
 
 

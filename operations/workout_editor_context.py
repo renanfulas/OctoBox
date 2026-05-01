@@ -16,6 +16,7 @@ PONTOS CRITICOS:
 
 from types import SimpleNamespace
 
+from django.conf import settings
 from django.urls import reverse
 
 from shared_support.page_payloads import attach_page_payload, build_page_hero
@@ -306,6 +307,10 @@ def build_coach_workout_editor_context(view, *, workout_form=None, block_form=No
                 initial={'template_name': getattr(workout, 'title', '') or view.session.title}
             ),
             'stored_template_form': WorkoutStoredTemplateForm(),
+            'smartplan_gpt_url': getattr(settings, 'SMARTPLAN_GPT_URL', '') or '',
+            'smartplan_paste_value': '',
+            'smartplan_paste_invalid_reason': '',
+            'smartplan_paste_show_popup': False,
         }
     )
     return context

@@ -1,10 +1,18 @@
 {% extends "layouts/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/operations/wod-smartplan.css' %}?v={{ static_asset_version }}">
+{% endblock %}
 
 {% block content %}
 {% with page=operation_page %}
 <div class="operation-shell coach-scene workspace-shell coach-wod-editor-shell">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% include "operations/includes/wod_corridor_tabs.html" %}
+
+    {% include "operations/includes/wod_smartplan_card.html" %}
 
     <section class="coach-wod-editor-grid" aria-label="Editor de WOD da aula">
         <article class="table-card coach-wod-editor-card">
@@ -499,5 +507,9 @@
     <option value="{{ item.label }}">{{ item.slug }}</option>
     {% endfor %}
 </datalist>
+
+{% include "operations/includes/wod_smartplan_popup.html" %}
 {% endwith %}
+
+<script src="{% static 'js/pages/operations/wod-editor-smartplan.js' %}?v={{ static_asset_version }}" defer></script>
 {% endblock %}

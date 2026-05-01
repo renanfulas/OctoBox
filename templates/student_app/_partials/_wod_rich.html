@@ -1,0 +1,81 @@
+<!--
+ARQUIVO: render rico do WOD (tier SmartPlan).
+
+POR QUE ELE EXISTE:
+- isola o render estruturado (blocos + movimentos) para que wod.html possa bifurcar entre
+  tier rico e tier cru sem duplicar markup.
+
+O QUE ESTE ARQUIVO FAZ:
+1. itera student_workout_day.blocks — fonte primaria (SessionWorkoutBlock relacional).
+2. exibe kind_label, titulo do bloco, movimentos com prescricao e metricas de carga.
+3. emite badge SmartPlan para sinalizar ao aluno que o WOD tem tier rico ativo.
+
+PONTOS CRITICOS:
+- esta partial so e incluida quando student_workout.is_normalized == True.
+- nao referenciar student_workout.structured_payload aqui; isso e auditoria, nao render.
+- movimentos sem carga mostram traço (prescription_label apenas).
+-->
+<section class="student-card student-card--feature student-wod-rich" id="student-wod-day">
+    <div class="student-section-head">
+        <div>
+            <div class="student-wod-session-meta">
+                <span class="student-context-switch">{{ student_workout_day.session_scheduled_label }}</span>
+                <span class="student-context-switch">{{ student_workout_day.session_weekday_label }}</span>
+                <span class="student-wod-rich__badge">SmartPlan</span>
+            </div>
+            <h2>Blocos</h2>
+        </div>
+    </div>
+    <div class="student-wod-block-list">
+        {% for block in student_workout_day.blocks %}
+        <article class="student-wod-block">
+            <div class="student-section-head student-section-head--compact">
+                <div>
+                    <span class="student-context-switch">{{ block.kind_label }}</span>
+                    <h2>{{ block.title }}</h2>
+                </div>
+            </div>
+            <div class="student-wod-movement-list">
+                {% for movement in block.movements %}
+                <article class="student-wod-movement-card">
+                    <div class="student-wod-movement-copy">
+                        {% if movement.reference_url %}
+                        <strong><a href="{{ movement.reference_url }}" target="_blank" rel="noopener noreferrer" class="student-wod-movement-ref">{{ movement.movement_label }}</a></strong>
+                        {% else %}
+                        <strong>{{ movement.movement_label }}</strong>
+                        {% endif %}
+                        <span>{{ movement.prescription_label }}</span>
+                    </div>
+
+                    {% if movement.load_context_label == 'Percentual do RM' %}
+                        {% if movement.recommended_load_kg %}
+                        <!-- RM registrado: scaling completo -->
+                        <div class="student-wod-movement-rm student-wod-movement-rm--hit">
+                            <span class="student-wod-movement-rm__pct">{{ movement.percentage }}% RM</span>
+                            <strong class="student-wod-movement-rm__load">{{ movement.recommended_load_kg }} kg</strong>
+                            <small class="student-wod-movement-rm__base">seu RM: {{ movement.base_rm_kg }} kg</small>
+                        </div>
+                        {% else %}
+                        <!-- Sem RM registrado: nudge -->
+                        <div class="student-wod-movement-rm student-wod-movement-rm--missing">
+                            <span class="student-wod-movement-rm__pct">{{ movement.percentage }}% RM</span>
+                            <a href="{% url 'student-app-rm' %}" class="student-wod-movement-rm__cta">Registrar RM</a>
+                        </div>
+                        {% endif %}
+                    {% elif movement.load_context_label == 'Carga fixa' %}
+                    <div class="student-wod-movement-metrics">
+                        <small>Carga prescrita</small>
+                        <strong>{{ movement.recommendation_label }}</strong>
+                    </div>
+                    {% else %}
+                    <div class="student-wod-movement-metrics">
+                        <small>Carga livre</small>
+                    </div>
+                    {% endif %}
+                </article>
+                {% endfor %}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>

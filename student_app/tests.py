@@ -1100,6 +1100,7 @@ class StudentAppExperienceTests(TestCase):
             title='Forca + Metcon',
             coach_notes='Foco em tecnica e consistencia.',
             status=SessionWorkoutStatus.PUBLISHED,
+            is_normalized=True,
         )
         block = SessionWorkoutBlock.objects.create(
             workout=workout,
@@ -1126,10 +1127,10 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'Forca + Metcon')
         self.assertContains(response, 'Forca principal')
         self.assertContains(response, 'Deadlift')
-        self.assertContains(response, '70.00 kg')
-        self.assertContains(response, 'Deadlift')
         self.assertContains(response, '70,00% do seu RM')
         self.assertContains(response, '70,00 kg')
+        # E.5: scaling de RM — carga calculada e base RM visiveis no tier rico
+        self.assertContains(response, 'seu RM: 100,00 kg')
         workout_view = StudentWorkoutView.objects.get(student=self.student, workout=workout)
         self.assertEqual(workout_view.view_count, 1)
         self.assertTrue(
@@ -1216,7 +1217,11 @@ class StudentAppExperienceTests(TestCase):
                 box_root_slug='control',
             )
 
-        self.assertLessEqual(len(captured_queries), 3)
+        # 1: workout header (cache key lookup)
+        # 2: RM records (student exercise maxes)
+        # 3: RM delta (snapshot)
+        # 4: MovementLibrary IN lookup (E.4 — links de referencia por slug)
+        self.assertLessEqual(len(captured_queries), 4)
         self.assertEqual(second_result.primary_recommendation.recommended_load_kg, Decimal('55.00'))
 
     def test_student_dashboard_agenda_snapshot_keeps_attendance_personalized(self):

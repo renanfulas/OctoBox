@@ -1,0 +1,34 @@
+<!--
+ARQUIVO: render cru do WOD (tier texto).
+
+POR QUE ELE EXISTE:
+- exibe o WOD publicado sem SmartPlan como texto preformatado, sem bloquear a publicacao
+  do coach.
+
+O QUE ESTE ARQUIVO FAZ:
+1. mostra meta da sessao (label + dia da semana).
+2. renderiza student_workout.coach_notes em <pre> — preserva quebras e espacamento do coach.
+3. exibe aviso discreto de que o WOD nao tem tier rico ativo.
+
+PONTOS CRITICOS:
+- esta partial so e incluida quando student_workout.is_normalized == False (ou ausente).
+- nao usar <pre> sem classe — tokens mono globais nao chegam aqui sem classe explícita.
+- o aviso nao e bloqueante; aluno ve o conteudo normalmente.
+-->
+<section class="student-card student-card--feature student-wod-raw" id="student-wod-day">
+    <div class="student-section-head">
+        <div>
+            <div class="student-wod-session-meta">
+                <span class="student-context-switch">{{ student_workout_day.session_scheduled_label }}</span>
+                <span class="student-context-switch">{{ student_workout_day.session_weekday_label }}</span>
+            </div>
+            <h2>WOD</h2>
+        </div>
+    </div>
+    {% if student_workout_day.coach_notes %}
+    <pre class="student-wod-raw__text">{{ student_workout_day.coach_notes }}</pre>
+    {% endif %}
+    <p class="student-wod-raw__hint">
+        Videos, sugestao de carga e deteccao de PR ficam disponiveis quando o coach formata o WOD com SmartPlan.
+    </p>
+</section>

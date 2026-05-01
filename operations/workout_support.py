@@ -314,8 +314,13 @@ def should_require_workout_approval(*, workout, coach, source, source_template=N
     policy = resolve_workout_approval_policy(actor=coach, session=getattr(workout, 'session', None))
     if policy == 'strict':
         return True
-    if policy == 'trusted_template' and source == 'template' and getattr(source_template, 'is_trusted', False):
-        return False
+    if policy == 'trusted_template':
+        # SmartPlan produz output canonico validado — semanticamente equivalente a um
+        # template confiavel. Bypass segue a mesma logica de trusted_template.
+        if source == 'smartplan':
+            return False
+        if source == 'template' and getattr(source_template, 'is_trusted', False):
+            return False
     if policy == 'coach_autonomy' and getattr(coach, 'is_trusted_author', False):
         return False
     return True
