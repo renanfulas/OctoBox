@@ -124,6 +124,13 @@
                 {% endfor %}
             </ul>
             {% endif %}
+            {% if entry.session_id and entry.status == 'ready' and smartplan_gpt_url %}
+            <a class="smart-paste-projection-smartplan-link"
+               href="{% url 'coach-session-workout-editor' session_id=entry.session_id %}#wod-smartplan-card"
+               title="Abrir editor desta sessão no SmartPlan">
+                Normalizar com SmartPlan ↗
+            </a>
+            {% endif %}
         </article>
         {% endfor %}
     </div>

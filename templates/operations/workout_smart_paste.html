@@ -9,8 +9,11 @@
     {% if smartplan_gpt_url %}
     <div class="smart-paste-gpt-banner">
         <span class="eyebrow">SmartPlan</span>
-        <p>Cole seu WOD no GPT, copie a resposta e use o editor para publicar.</p>
-        <a class="button" href="{{ smartplan_gpt_url }}" target="_blank" rel="noopener">Abrir SmartPlan no ChatGPT ↗</a>
+        <ol class="smart-paste-gpt-banner__steps">
+            <li><strong>①</strong> Cole o WOD da semana aqui abaixo para organizar os dias</li>
+            <li><strong>②</strong> Abra o GPT, normalize cada treino e cole no editor da sessão</li>
+        </ol>
+        <a class="button" href="{{ smartplan_gpt_url }}" target="_blank" rel="noopener">Abrir GPT ↗</a>
     </div>
     {% endif %}
 

@@ -75,7 +75,7 @@
             </header>
             <div class="smart-paste-day-dialog__body">
                 {% for block in day.blocks %}
-                <article class="smart-paste-block-card smart-paste-block-card--{{ block.kind }}">
+                <article class="smart-paste-block-card smart-paste-block-card--{{ block.kind }}" data-dialog-block>
                     <div class="smart-paste-block-head">
                         <span class="pill accent">{{ block.kind }}</span>
                         {% if block.timecap_min %}<span class="pill info">{{ block.timecap_min }}m</span>{% endif %}
@@ -127,6 +127,17 @@
                 </article>
                 {% endfor %}
             </div>
+            {% if smartplan_gpt_url %}
+            <footer class="smart-paste-day-dialog__footer">
+                <div class="smart-paste-day-dialog__smartplan">
+                    <div>
+                        <p class="eyebrow">SmartPlan</p>
+                        <p>Cole este treino no GPT para normalizar blocos, slugs e cargas. Depois abra o editor da sessão e cole a resposta.</p>
+                    </div>
+                    <a class="button" href="{{ smartplan_gpt_url }}" target="_blank" rel="noopener">Abrir GPT ↗</a>
+                </div>
+            </footer>
+            {% endif %}
         </div>
     </dialog>
     {% endfor %}
