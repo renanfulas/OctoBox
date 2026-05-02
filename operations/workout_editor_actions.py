@@ -28,7 +28,9 @@ from operations.forms import (
     WorkoutStoredTemplateForm,
 )
 from operations.models import ClassSession, WorkoutTemplate
-from operations.services.wod_normalization import detect_smartplan_format
+from operations.services.wod_normalization import detect_smartplan_format, detect_smartplan_text_format
+from operations.services.wod_paste_parser import load_wod_movement_dictionary
+from operations.services.wod_session_llm_parser import parse_session_text_to_payload
 from student_app.models import (
     SessionWorkout,
     SessionWorkoutBlock,
@@ -442,7 +444,25 @@ class CoachSessionWorkoutEditorActionsMixin:
             messages.error(request, 'Cole a resposta do SmartPlan ou clique em "Abrir SmartPlan no ChatGPT" primeiro.')
             return redirect('coach-session-workout-editor', session_id=self.session.id)
 
+        # Tenta v1 (com JSON) — backward compat.
         result = detect_smartplan_format(raw_text)
+
+        # Tenta v2 (só texto normalizado) — novo formato sem JSON.
+        if not result['is_normalized']:
+            text_result = detect_smartplan_text_format(raw_text)
+            if text_result['is_normalized']:
+                structured = parse_session_text_to_payload(
+                    text_result['normalized_text'],
+                    load_wod_movement_dictionary(),
+                )
+                if structured:
+                    result = {
+                        'is_normalized': True,
+                        'format_version': 'v2',
+                        'normalized_text': text_result['normalized_text'],
+                        'structured_payload': structured,
+                    }
+                # Se LLM falhou, result continua inválido → cai no Caminho B/C normalmente.
 
         # Caminho A: formato valido -> hidrata blocos/movimentos e submete pela politica ativa.
         if result['is_normalized']:

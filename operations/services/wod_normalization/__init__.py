@@ -14,8 +14,12 @@ PONTOS CRITICOS:
 - contrato com o GPT vive em prompts/smartplan_v1.md; mudou o formato, bumpe a versao.
 """
 
-from operations.services.wod_normalization.response_parser import detect_smartplan_format
+from operations.services.wod_normalization.response_parser import (
+    detect_smartplan_format,
+    detect_smartplan_text_format,
+)
 
 __all__ = [
     'detect_smartplan_format',
+    'detect_smartplan_text_format',
 ]

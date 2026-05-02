@@ -33,6 +33,10 @@ REASON_JSON_INVALID = 'json_invalid'
 REASON_BLOCKS_MISSING = 'blocks_missing'
 REASON_BLOCKS_EMPTY = 'blocks_empty'
 
+# Formato v2: só texto normalizado, sem JSON estruturado.
+FORMAT_V1 = 'v1'
+FORMAT_V2 = 'v2'
+
 
 def detect_smartplan_format(raw_text: str) -> dict:
     """Detecta se `raw_text` segue o formato canonico do SmartPlan.
@@ -77,6 +81,35 @@ def detect_smartplan_format(raw_text: str) -> dict:
     }
 
 
+def detect_smartplan_text_format(raw_text: str) -> dict:
+    """Detecta o formato SmartPlan v2: só === WOD NORMALIZADO ===, sem JSON.
+
+    Retorna dict com `is_normalized` (bool). Em caso de sucesso, devolve
+    `normalized_text` e `format_version='v2'`. structured_payload é sempre None
+    neste formato — o caller é responsável por chamar o LLM server-side.
+    """
+    if not raw_text or not raw_text.strip():
+        return {'is_normalized': False, 'reason': REASON_MARKERS_MISSING}
+
+    if TEXT_MARKER not in raw_text:
+        return {'is_normalized': False, 'reason': REASON_MARKERS_MISSING}
+
+    # Formato v2 não tem JSON — se tiver, deve usar detect_smartplan_format (v1)
+    if JSON_MARKER in raw_text:
+        return {'is_normalized': False, 'reason': REASON_MARKERS_MISSING}
+
+    normalized_text = _extract_section(raw_text, TEXT_MARKER, END_MARKER)
+    if not normalized_text:
+        return {'is_normalized': False, 'reason': REASON_TEXT_EMPTY}
+
+    return {
+        'is_normalized': True,
+        'format_version': FORMAT_V2,
+        'normalized_text': normalized_text.strip(),
+        'structured_payload': None,
+    }
+
+
 def _extract_section(raw_text: str, start_marker: str, end_marker: str) -> str:
     """Extrai conteudo entre `start_marker` e `end_marker`. Se `end_marker` ausente,
     pega ate o fim do texto."""
@@ -104,9 +137,12 @@ def _strip_code_fence(text: str) -> str:
 
 __all__ = [
     'detect_smartplan_format',
+    'detect_smartplan_text_format',
     'TEXT_MARKER',
     'JSON_MARKER',
     'END_MARKER',
+    'FORMAT_V1',
+    'FORMAT_V2',
     'REASON_MARKERS_MISSING',
     'REASON_TEXT_EMPTY',
     'REASON_JSON_NOT_FOUND',

@@ -119,3 +119,53 @@ class DetectSmartplanFormatTests(SimpleTestCase):
         result = detect_smartplan_format(paste)
         self.assertTrue(result['is_normalized'])
         self.assertEqual(len(result['structured_payload']['blocks']), 1)
+
+
+# ---------------------------------------------------------------------------
+# detect_smartplan_text_format — formato v2 (sem JSON)
+# ---------------------------------------------------------------------------
+
+from operations.services.wod_normalization.response_parser import (
+    FORMAT_V2,
+    detect_smartplan_text_format,
+)
+
+
+class DetectSmartplanTextFormatTests(SimpleTestCase):
+    """Testes do detector de formato SmartPlan v2 (somente texto normalizado)."""
+
+    def _v2_paste(self, body: str = 'AMRAP 12 minutos\n\n▸ 10x Thruster') -> str:
+        return f'=== WOD NORMALIZADO ===\n{body}\n=== FIM ==='
+
+    def test_returns_normalized_for_valid_v2_paste(self):
+        result = detect_smartplan_text_format(self._v2_paste())
+        self.assertTrue(result['is_normalized'])
+        self.assertEqual(result['format_version'], FORMAT_V2)
+        self.assertIn('AMRAP 12 minutos', result['normalized_text'])
+
+    def test_structured_payload_is_none_in_v2(self):
+        result = detect_smartplan_text_format(self._v2_paste())
+        self.assertIsNone(result['structured_payload'])
+
+    def test_returns_invalid_when_text_marker_missing(self):
+        result = detect_smartplan_text_format('AMRAP 12: 10 thruster\n=== FIM ===')
+        self.assertFalse(result['is_normalized'])
+
+    def test_returns_invalid_for_empty_string(self):
+        result = detect_smartplan_text_format('')
+        self.assertFalse(result['is_normalized'])
+
+    def test_returns_invalid_when_json_marker_present(self):
+        """v2 não deve aceitar paste que também tenha JSON (deve usar detect_smartplan_format)."""
+        v1_paste = (
+            '=== WOD NORMALIZADO ===\nTexto\n'
+            '=== JSON ESTRUTURADO ===\n{"blocks":[]}\n=== FIM ==='
+        )
+        result = detect_smartplan_text_format(v1_paste)
+        self.assertFalse(result['is_normalized'])
+
+    def test_v2_text_preserved_exactly(self):
+        body = '[AMRAP — 12 minutos]\n\n▸ 10x Thruster (carga livre)\n▸ 15x Air Squat'
+        result = detect_smartplan_text_format(self._v2_paste(body))
+        self.assertIn('▸ 10x Thruster', result['normalized_text'])
+        self.assertIn('▸ 15x Air Squat', result['normalized_text'])
