@@ -25,14 +25,7 @@
                 {% csrf_token %}
                 <input type="hidden" name="plan_id" value="{{ smart_paste_form.initial.plan_id|default_if_none:'' }}">
                 <input type="hidden" name="action" value="parse_text">
-                {% include "operations/includes/wod_smart_paste_week_input.html" with
-                    field=smart_paste_form.week_start
-                    picker_id="smart-paste-week-start-picker"
-                    picker_value=smart_paste_picker_value
-                    picker_min=smart_paste_picker_min
-                    picker_max=smart_paste_picker_max
-                    label_text="Início da semana"
-                %}
+                {% include "operations/includes/wod_smart_paste_week_input.html" with field=smart_paste_form.week_start picker_id="smart-paste-week-start-picker" picker_value=smart_paste_picker_value picker_min=smart_paste_picker_min picker_max=smart_paste_picker_max label_text="Início da semana" %}
                 <label>
                     <span>Nome da semana</span>
                     {{ smart_paste_form.label }}

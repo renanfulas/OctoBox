@@ -92,8 +92,8 @@ POR QUE ELE EXISTE:
 
     if (button && picker) {
       button.addEventListener('click', function () {
-        var today = new Date();
-        picker.value = today.getFullYear() + '-' + pad(today.getMonth() + 1) + '-' + pad(today.getDate());
+        // Abre o calendário na data já definida no picker (vinda do context).
+        // Não sobrescreve com hoje — o valor correto (próxima segunda) já está no value.
         if (typeof picker.showPicker === 'function') {
           picker.showPicker();
         } else {

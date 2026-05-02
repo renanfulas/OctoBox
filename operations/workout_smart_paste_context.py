@@ -148,7 +148,7 @@ def _build_page_payload(*, current_role_slug):
         },
         assets=build_page_assets(
             css=['css/design-system/operations.css'],
-            js=['js/core/forms.js', 'js/operations/wod_smart_paste.js'],
+            js=['js/core/forms.js', 'js/operations/wod_smart_paste.js', 'js/operations/smart_paste_week_monday.js'],
         ),
     )
 
