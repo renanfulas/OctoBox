@@ -6,17 +6,6 @@
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% include "operations/includes/wod_corridor_tabs.html" %}
 
-    {% if smartplan_gpt_url %}
-    <div class="smart-paste-gpt-banner">
-        <span class="eyebrow">SmartPlan</span>
-        <ol class="smart-paste-gpt-banner__steps">
-            <li><strong>①</strong> Cole o WOD da semana aqui abaixo para organizar os dias</li>
-            <li><strong>②</strong> Abra o GPT, normalize cada treino e cole no editor da sessão</li>
-        </ol>
-        <a class="button" href="{{ smartplan_gpt_url }}" target="_blank" rel="noopener">Abrir GPT ↗</a>
-    </div>
-    {% endif %}
-
     <section class="smart-paste-layout" aria-label="Fluxo do Smart Paste semanal">
         <article class="table-card smart-paste-card">
             <div class="coach-wod-editor-head">
