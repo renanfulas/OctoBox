@@ -113,43 +113,92 @@ ORDEM DA CASCADE:
 /* ── Day chips ── */
 .smart-paste-day-chips {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
     gap: 0.6rem;
 }
 
 .smart-paste-day-chip {
+    position: relative;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.85rem 0.5rem;
-    border: 1px solid rgba(148, 163, 184, 0.2);
-    border-radius: 12px;
-    background: rgba(15, 23, 42, 0.35);
+    align-items: flex-start;
+    gap: 0.3rem;
+    padding: 0.95rem 1rem;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 22%, var(--theme-border-soft) 78%);
+    background:
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-primary-alpha) 50%, transparent), transparent 60%),
+        var(--theme-card-surface-strong);
+    box-shadow: var(--theme-shadow-md, 0 2px 8px rgba(0,0,0,.15));
     cursor: pointer;
-    transition: border-color 0.15s, background 0.15s;
-    text-align: center;
+    transition: border-color 0.18s, box-shadow 0.18s, transform 0.12s;
+    text-align: left;
     width: 100%;
     font-family: inherit;
+    overflow: hidden;
 }
 
 .smart-paste-day-chip:hover {
-    border-color: rgba(56, 189, 248, 0.4);
-    background: rgba(15, 23, 42, 0.6);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 55%, transparent);
+    box-shadow: var(--theme-shadow-xl, 0 4px 16px rgba(0,0,0,.25));
+    transform: translateY(-1px);
 }
 
-.smart-paste-day-chip.is-warning {
-    border-color: rgba(245, 158, 11, 0.4);
+.smart-paste-day-chip:active {
+    transform: translateY(0);
+}
+
+/* Clean — sem pendências */
+.smart-paste-day-chip--clean {
+    border-color: color-mix(in srgb, var(--theme-accent-success) 35%, transparent);
+    background:
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-success) 14%, transparent), transparent 60%),
+        var(--theme-card-surface-strong);
+}
+
+.smart-paste-day-chip--clean::after {
+    content: '';
+    position: absolute;
+    top: 0.55rem;
+    right: 0.65rem;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--theme-accent-success);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--theme-accent-success) 60%, transparent);
+}
+
+/* Warning — tem pendências */
+.smart-paste-day-chip--warning {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 40%, transparent);
+    background:
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-danger) 14%, transparent), transparent 60%),
+        var(--theme-card-surface-strong);
+}
+
+.smart-paste-day-chip--warning::after {
+    content: '';
+    position: absolute;
+    top: 0.55rem;
+    right: 0.65rem;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--theme-accent-danger);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--theme-accent-danger) 60%, transparent);
 }
 
 .smart-paste-day-chip__label {
-    font-weight: 700;
-    font-size: 0.88rem;
+    font-weight: 800;
+    font-size: 0.92rem;
+    letter-spacing: -0.02em;
     color: var(--theme-text-primary);
+    line-height: 1.1;
 }
 
 .smart-paste-day-chip__count {
-    font-size: 0.68rem;
+    font-size: 0.72rem;
+    font-weight: 600;
     color: var(--theme-text-secondary);
 }
 

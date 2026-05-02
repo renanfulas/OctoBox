@@ -76,15 +76,9 @@
                 </div>
             </label>
             {% endif %}
-            <fieldset class="smart-paste-class-types">
-                <legend>Tipos de aula</legend>
-                {% for value, label in projection_form.fields.class_types.choices %}
-                <label class="smart-paste-class-type-option">
-                    <input type="checkbox" name="class_types" value="{{ value }}" {% if value in projection_selected_class_types %}checked{% endif %}>
-                    <span>{{ label }}</span>
-                </label>
-                {% endfor %}
-            </fieldset>
+            {% for value, label in projection_form.fields.class_types.choices %}
+            <input type="hidden" name="class_types" value="{{ value }}">
+            {% endfor %}
         </div>
         <div class="actions">
             <button class="button" type="submit">Montar preview de replicacao</button>

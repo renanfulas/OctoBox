@@ -44,6 +44,7 @@ def _decorate_preview_payload(parsed_payload):
     total_movements = 0
     first_unresolved_target_id = ''
     for day_index, day in enumerate(parsed_payload.get('days', [])):
+        day_has_unresolved = False
         for block_index, block in enumerate(day.get('blocks', [])):
             total_blocks += 1
             for movement_index, movement in enumerate(block.get('movements', [])):
@@ -51,6 +52,7 @@ def _decorate_preview_payload(parsed_payload):
                 movement['review_target_id'] = f'review-item-{day_index}-{block_index}-{movement_index}'
                 total_movements += 1
                 if not movement.get('movement_slug'):
+                    day_has_unresolved = True
                     first_unresolved_target_id = first_unresolved_target_id or movement['review_target_id']
                     unresolved_items.append(
                         {
@@ -69,6 +71,7 @@ def _decorate_preview_payload(parsed_payload):
                             'display_label': movement.get('display_label') or movement.get('movement_label_raw', ''),
                         }
                     )
+        day['has_unresolved'] = day_has_unresolved
     parsed_payload['summary'] = {
         'days_count': len(parsed_payload.get('days', [])),
         'blocks_count': total_blocks,

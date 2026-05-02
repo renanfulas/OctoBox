@@ -51,7 +51,7 @@
         {% for day in smart_paste_days %}
         <button
             type="button"
-            class="smart-paste-day-chip"
+            class="smart-paste-day-chip {% if day.has_unresolved %}smart-paste-day-chip--warning{% else %}smart-paste-day-chip--clean{% endif %}"
             data-action="open-day-dialog"
             data-target="smart-paste-day-dialog-{{ forloop.counter0 }}"
             aria-haspopup="dialog"
