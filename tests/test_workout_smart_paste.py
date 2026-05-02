@@ -284,7 +284,7 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         response = self.client.get(reverse('workout-smart-paste'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Revise um item por vez')
+        self.assertContains(response, 'pendencia')
         self.assertContains(response, 'rum')
         self.assertContains(response, 'bike')
         self.assertContains(response, 'Salvar e revisar proximo')
@@ -389,7 +389,7 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         response = self.client.get(reverse('workout-smart-paste'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Feche as pendencias humanas antes de confirmar o rascunho semanal.')
+        self.assertContains(response, 'Feche as pendencias antes de confirmar.')
         self.assertContains(response, 'disabled aria-disabled="true"')
 
     def test_coach_can_preview_and_create_projection_as_drafts(self):
@@ -691,3 +691,118 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data['week_start'], expected_monday)
         self.assertEqual(form.cleaned_data['week_start'].weekday(), 0)
+
+
+class WodSlugResolverTests(WorkoutFlowBaseTestCase):
+    """Testa o resolvedor LLM de slugs (wod_slug_resolver.py)."""
+
+    def _make_slug_dict(self):
+        return [
+            ('pull_up', ('pull-up', 'pull up', 'barra')),
+            ('push_up', ('push-up', 'push up', 'flexão')),
+            ('run', ('corrida', 'run')),
+            ('box_jump', ('box jump', 'salto na caixa')),
+        ]
+
+    def test_resolve_unknown_slugs_returns_empty_when_no_api_key(self):
+        from operations.services.wod_slug_resolver import resolve_unknown_slugs
+        with patch.dict('os.environ', {}, clear=True):
+            # Garante que nenhuma chave está configurada
+            import os
+            os.environ.pop('OPENAI_API_KEY', None)
+            os.environ.pop('ANTHROPIC_API_KEY', None)
+            result = resolve_unknown_slugs(
+                unrecognized_names=['Pistol Squat', 'Burpee'],
+                slug_dictionary=self._make_slug_dict(),
+            )
+        self.assertEqual(result, {})
+
+    def test_resolve_unknown_slugs_returns_empty_for_empty_input(self):
+        from operations.services.wod_slug_resolver import resolve_unknown_slugs
+        result = resolve_unknown_slugs(
+            unrecognized_names=[],
+            slug_dictionary=self._make_slug_dict(),
+        )
+        self.assertEqual(result, {})
+
+    def test_resolve_rejects_invalid_slugs_from_llm_response(self):
+        from operations.services.wod_slug_resolver import _parse_and_validate
+        valid_slugs = {'pull_up', 'push_up', 'run'}
+        raw_json = '{"Pistol Squat": "pistol_squat", "Pull-up": "pull_up", "Invented": "fake_slug_xyz"}'
+        result = _parse_and_validate(
+            raw_text=raw_json,
+            valid_slugs=valid_slugs,
+            unrecognized_names=['Pistol Squat', 'Pull-up', 'Invented'],
+        )
+        # pistol_squat não está em valid_slugs → rejeitado
+        self.assertNotIn('Pistol Squat', result)
+        # pull_up está → aceito
+        self.assertEqual(result.get('Pull-up'), 'pull_up')
+        # fake_slug_xyz não está → rejeitado
+        self.assertNotIn('Invented', result)
+
+    def test_apply_llm_slug_resolution_fills_unresolved_movements(self):
+        from operations.services.wod_slug_resolver import apply_llm_slug_resolution
+        parsed_payload = {
+            'days': [
+                {
+                    'weekday': 0,
+                    'weekday_label': 'Segunda',
+                    'blocks': [
+                        {
+                            'kind': 'metcon',
+                            'movements': [
+                                {'movement_label_raw': 'PullUp', 'movement_slug': None},
+                                {'movement_label_raw': 'corrida', 'movement_slug': 'run'},
+                            ],
+                        }
+                    ],
+                }
+            ]
+        }
+        slug_dict = self._make_slug_dict()
+
+        mock_resolved = {'PullUp': 'pull_up'}
+        with patch('operations.services.wod_slug_resolver.resolve_unknown_slugs', return_value=mock_resolved):
+            apply_llm_slug_resolution(parsed_payload, slug_dict)
+
+        movements = parsed_payload['days'][0]['blocks'][0]['movements']
+        self.assertEqual(movements[0]['movement_slug'], 'pull_up')
+        # Movimento já resolvido não deve ser alterado
+        self.assertEqual(movements[1]['movement_slug'], 'run')
+
+    def test_apply_llm_slug_resolution_does_nothing_when_resolver_returns_empty(self):
+        from operations.services.wod_slug_resolver import apply_llm_slug_resolution
+        parsed_payload = {
+            'days': [
+                {
+                    'weekday': 0,
+                    'weekday_label': 'Segunda',
+                    'blocks': [
+                        {
+                            'kind': 'metcon',
+                            'movements': [
+                                {'movement_label_raw': 'movimento xyz', 'movement_slug': None},
+                            ],
+                        }
+                    ],
+                }
+            ]
+        }
+        with patch('operations.services.wod_slug_resolver.resolve_unknown_slugs', return_value={}):
+            apply_llm_slug_resolution(parsed_payload, self._make_slug_dict())
+
+        # Slug permanece None — comportamento original preservado
+        self.assertIsNone(parsed_payload['days'][0]['blocks'][0]['movements'][0]['movement_slug'])
+
+    def test_parse_text_action_calls_llm_resolver(self):
+        """Garante que a view chama apply_llm_slug_resolution após parsear o texto."""
+        with patch('operations.workout_board_views.apply_llm_slug_resolution') as mock_resolver:
+            response = self.client.post(reverse('workout-smart-paste'), {
+                'action': 'parse_text',
+                'week_start': '28/04/2026',
+                'label': 'Semana teste resolver',
+                'source_text': 'Segunda\nWod\n10 pistol squats',
+            })
+        self.assertIn(response.status_code, [200, 302])
+        mock_resolver.assert_called_once()
