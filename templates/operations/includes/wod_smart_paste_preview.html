@@ -1,11 +1,4 @@
 <article class="table-card smart-paste-card" id="smart-paste-preview-panel" data-smart-paste-preview-panel {% if smart_paste_auto_open_review_target %}data-smart-paste-auto-open-target="{{ smart_paste_auto_open_review_target }}"{% endif %}>
-    <div class="coach-wod-editor-head">
-        <div>
-            <p class="eyebrow">Conferir</p>
-            <h2>Preview da semana</h2>
-            <p class="operation-session-meta">O texto cru vira grade de dias, blocos e movimentos antes de qualquer replicacao.</p>
-        </div>
-    </div>
 
     {% if smart_paste_days %}
     <div class="smart-paste-confidence-strip" aria-label="Resumo de confianca da leitura">
@@ -13,22 +6,17 @@
         <span class="pill info">{{ smart_paste_summary.blocks_count }} bloco(s)</span>
         <span class="pill accent">{{ smart_paste_summary.movements_count }} movimento(s)</span>
         <span class="pill {% if smart_paste_summary.unresolved_count %}warning{% else %}success{% endif %}">
-            {% if smart_paste_summary.unresolved_count %}{{ smart_paste_summary.unresolved_count }} item(ns) para revisar{% else %}Leitura pronta para confiar{% endif %}
+            {% if smart_paste_summary.unresolved_count %}{{ smart_paste_summary.unresolved_count }} para revisar{% else %}Leitura pronta{% endif %}
         </span>
     </div>
 
     {% if smart_paste_summary.current_unresolved_item %}
-    <section class="smart-paste-review-queue" aria-label="Corredor inteligente de revisao">
-        <div class="smart-paste-review-queue-head">
-            <div>
-                <p class="eyebrow">Revisar so o que travou</p>
-                <h3>Revise um item por vez</h3>
-            </div>
-            <span class="pill warning">{{ smart_paste_summary.unresolved_count }} pendencia(s)</span>
-        </div>
-
+    <section class="smart-paste-review-queue" aria-label="Item pendente de revisao">
         <article class="smart-paste-warning-card smart-paste-warning-card--focus">
-            <strong>{{ smart_paste_summary.current_unresolved_item.movement_label_raw }}</strong>
+            <div class="smart-paste-review-queue-head">
+                <strong>{{ smart_paste_summary.current_unresolved_item.movement_label_raw }}</strong>
+                <span class="pill warning">{{ smart_paste_summary.unresolved_count }} pendencia(s)</span>
+            </div>
             <p>{{ smart_paste_summary.current_unresolved_item.day_label }} · {{ smart_paste_summary.current_unresolved_item.block_title }}</p>
             <form
                 method="post"
@@ -43,26 +31,11 @@
                 <input type="hidden" name="day_index" value="{{ smart_paste_summary.current_unresolved_item.day_index }}">
                 <input type="hidden" name="block_index" value="{{ smart_paste_summary.current_unresolved_item.block_index }}">
                 <input type="hidden" name="movement_index" value="{{ smart_paste_summary.current_unresolved_item.movement_index }}">
-                <label>
-                    <span>Texto</span>
-                    <input type="text" name="movement_label_raw" value="{{ review_form.initial.movement_label_raw|default_if_none:'' }}">
-                </label>
-                <label>
-                    <span>Slug</span>
-                    <input type="text" name="movement_slug" value="{{ review_form.initial.movement_slug|default_if_none:'' }}" list="smart-paste-movement-slugs">
-                </label>
-                <label>
-                    <span>Reps</span>
-                    <input type="text" name="reps_spec" value="{{ review_form.initial.reps_spec|default_if_none:'' }}">
-                </label>
-                <label>
-                    <span>Carga</span>
-                    <input type="text" name="load_spec" value="{{ review_form.initial.load_spec|default_if_none:'' }}">
-                </label>
-                <label>
-                    <span>Nota</span>
-                    <input type="text" name="notes" value="{{ review_form.initial.notes|default_if_none:'' }}">
-                </label>
+                <label><span>Texto</span><input type="text" name="movement_label_raw" value="{{ review_form.initial.movement_label_raw|default_if_none:'' }}"></label>
+                <label><span>Slug</span><input type="text" name="movement_slug" value="{{ review_form.initial.movement_slug|default_if_none:'' }}" list="smart-paste-movement-slugs"></label>
+                <label><span>Reps</span><input type="text" name="reps_spec" value="{{ review_form.initial.reps_spec|default_if_none:'' }}"></label>
+                <label><span>Carga</span><input type="text" name="load_spec" value="{{ review_form.initial.load_spec|default_if_none:'' }}"></label>
+                <label><span>Nota</span><input type="text" name="notes" value="{{ review_form.initial.notes|default_if_none:'' }}"></label>
                 <div class="actions">
                     <button class="button tertiary" type="submit">
                         {% if smart_paste_summary.unresolved_count > 1 %}Salvar e revisar proximo{% else %}Salvar revisao{% endif %}
@@ -73,89 +46,80 @@
     </section>
     {% endif %}
 
-    <div class="smart-paste-preview-grid">
+    {# ── Chips de dia ── #}
+    <div class="smart-paste-day-chips" aria-label="Dias da semana">
         {% for day in smart_paste_days %}
-        <section class="smart-paste-day-column">
-            <header class="smart-paste-day-head">
-                <p class="eyebrow">Dia {{ day.weekday|add:"1" }}</p>
-                <h3>{{ day.weekday_label }}</h3>
+        <button
+            type="button"
+            class="smart-paste-day-chip {% if day.has_unresolved %}smart-paste-day-chip--warning{% else %}smart-paste-day-chip--clean{% endif %}"
+            data-action="open-day-dialog"
+            data-target="smart-paste-day-dialog-{{ forloop.counter0 }}"
+            aria-haspopup="dialog"
+        >
+            <span class="smart-paste-day-chip__label">{{ day.weekday_label }}</span>
+            <span class="smart-paste-day-chip__count">{{ day.blocks|length }} bloco{% if day.blocks|length != 1 %}s{% endif %}</span>
+        </button>
+        {% endfor %}
+    </div>
+
+    {# ── Dialogs por dia ── #}
+    {% for day in smart_paste_days %}
+    <dialog class="smart-paste-day-dialog" id="smart-paste-day-dialog-{{ forloop.counter0 }}">
+        <div class="smart-paste-day-dialog__inner">
+            <header class="smart-paste-day-dialog__head">
+                <div>
+                    <p class="eyebrow">Dia {{ day.weekday|add:"1" }}</p>
+                    <h3>{{ day.weekday_label }}</h3>
+                </div>
+                <button type="button" class="smart-paste-day-dialog__close" data-action="close-dialog" aria-label="Fechar">✕</button>
             </header>
-            <div class="smart-paste-block-stack">
+            <div class="smart-paste-day-dialog__body">
                 {% for block in day.blocks %}
-                <article class="smart-paste-block-card smart-paste-block-card--{{ block.kind }}">
+                <article class="smart-paste-block-card smart-paste-block-card--{{ block.kind }}" data-dialog-block>
                     <div class="smart-paste-block-head">
                         <span class="pill accent">{{ block.kind }}</span>
-                        {% if block.timecap_min %}
-                        <span class="pill info">{{ block.timecap_min }}m</span>
-                        {% endif %}
-                        {% if block.rounds %}
-                        <span class="pill warning">{{ block.rounds }} rounds</span>
-                        {% endif %}
+                        {% if block.timecap_min %}<span class="pill info">{{ block.timecap_min }}m</span>{% endif %}
+                        {% if block.rounds %}<span class="pill warning">{{ block.rounds }} rounds</span>{% endif %}
                     </div>
                     <strong>{% if block.title %}{{ block.title }}{% else %}{{ block.kind|title }}{% endif %}</strong>
-                    {% if block.format_spec %}
-                    <p>{{ block.format_spec }}</p>
-                    {% endif %}
-                    {% if block.notes %}
-                    <p>{{ block.notes }}</p>
-                    {% endif %}
+                    {% if block.format_spec %}<p>{{ block.format_spec }}</p>{% endif %}
+                    {% if block.notes %}<p>{{ block.notes }}</p>{% endif %}
                     <ul class="smart-paste-movement-list">
                         {% for movement in block.movements %}
                         <li class="{% if not movement.movement_slug %}is-warning{% endif %}">
                             <span>{{ movement.display_label|default:movement.movement_label_raw }}</span>
                             {% if movement.movement_slug %}
-                            <code>{{ movement.movement_slug }}</code>
-                            {% if movement.reps_spec %}
-                            <small>Reps: {{ movement.reps_spec }}</small>
-                            {% endif %}
-                            {% if movement.load_spec %}
-                            <small>Carga: {{ movement.load_spec }}</small>
-                            {% endif %}
-                            {% if movement.notes %}
-                            <small>{{ movement.notes }}</small>
-                            {% endif %}
+                                <code>{{ movement.movement_slug }}</code>
+                                {% if movement.reps_spec %}<small>Reps: {{ movement.reps_spec }}</small>{% endif %}
+                                {% if movement.load_spec %}<small>Carga: {{ movement.load_spec }}</small>{% endif %}
+                                {% if movement.notes %}<small>{{ movement.notes }}</small>{% endif %}
                             {% else %}
-                            <span class="pill warning">revisar</span>
-                            <details class="smart-paste-inline-review-disclosure" id="{{ movement.review_target_id }}" data-smart-paste-review-target>
-                                <summary>Editar item</summary>
-                                <form
-                                    method="post"
-                                    class="smart-paste-inline-review-form"
-                                    hx-post="{% url 'workout-smart-paste' %}"
-                                    hx-target="#smart-paste-preview-panel"
-                                    hx-swap="outerHTML"
-                                >
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="update_review_item">
-                                    <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
-                                    <input type="hidden" name="day_index" value="{{ forloop.parentloop.parentloop.counter0 }}">
-                                    <input type="hidden" name="block_index" value="{{ forloop.parentloop.counter0 }}">
-                                    <input type="hidden" name="movement_index" value="{{ forloop.counter0 }}">
-                                    <label>
-                                        <span>Texto</span>
-                                        <input type="text" name="movement_label_raw" value="{{ movement.movement_label_raw }}">
-                                    </label>
-                                    <label>
-                                        <span>Slug</span>
-                                        <input type="text" name="movement_slug" value="{{ movement.movement_slug|default_if_none:'' }}" list="smart-paste-movement-slugs">
-                                    </label>
-                                    <label>
-                                        <span>Reps</span>
-                                        <input type="text" name="reps_spec" value="{{ movement.reps_spec|default_if_none:'' }}">
-                                    </label>
-                                    <label>
-                                        <span>Carga</span>
-                                        <input type="text" name="load_spec" value="{{ movement.load_spec|default_if_none:'' }}">
-                                    </label>
-                                    <label>
-                                        <span>Nota</span>
-                                        <input type="text" name="notes" value="{{ movement.notes|default_if_none:'' }}">
-                                    </label>
-                                    <div class="actions">
-                                        <button class="button tertiary" type="submit">Salvar revisao</button>
-                                    </div>
-                                </form>
-                            </details>
+                                <span class="pill warning">revisar</span>
+                                <details class="smart-paste-inline-review-disclosure" id="{{ movement.review_target_id }}" data-smart-paste-review-target>
+                                    <summary>Editar item</summary>
+                                    <form
+                                        method="post"
+                                        class="smart-paste-inline-review-form"
+                                        hx-post="{% url 'workout-smart-paste' %}"
+                                        hx-target="#smart-paste-preview-panel"
+                                        hx-swap="outerHTML"
+                                    >
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="update_review_item">
+                                        <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
+                                        <input type="hidden" name="day_index" value="{{ forloop.parentloop.parentloop.counter0 }}">
+                                        <input type="hidden" name="block_index" value="{{ forloop.parentloop.counter0 }}">
+                                        <input type="hidden" name="movement_index" value="{{ forloop.counter0 }}">
+                                        <label><span>Texto</span><input type="text" name="movement_label_raw" value="{{ movement.movement_label_raw }}"></label>
+                                        <label><span>Slug</span><input type="text" name="movement_slug" value="{{ movement.movement_slug|default_if_none:'' }}" list="smart-paste-movement-slugs"></label>
+                                        <label><span>Reps</span><input type="text" name="reps_spec" value="{{ movement.reps_spec|default_if_none:'' }}"></label>
+                                        <label><span>Carga</span><input type="text" name="load_spec" value="{{ movement.load_spec|default_if_none:'' }}"></label>
+                                        <label><span>Nota</span><input type="text" name="notes" value="{{ movement.notes|default_if_none:'' }}"></label>
+                                        <div class="actions">
+                                            <button class="button tertiary" type="submit">Salvar revisao</button>
+                                        </div>
+                                    </form>
+                                </details>
                             {% endif %}
                         </li>
                         {% endfor %}
@@ -163,32 +127,9 @@
                 </article>
                 {% endfor %}
             </div>
-        </section>
-        {% endfor %}
-    </div>
-
-    {% if smart_paste_summary.unresolved_items %}
-    <section class="smart-paste-review-queue" id="smart-paste-review-queue" aria-label="Fila curta de itens para revisar">
-        <div class="smart-paste-review-queue-head">
-            <div>
-                <p class="eyebrow">Revisar so o que travou</p>
-                <h3>Itens que ainda pedem confirmacao humana</h3>
-            </div>
-            <a class="pill warning smart-paste-review-jump-pill" href="#{{ smart_paste_summary.first_unresolved_target_id }}" data-smart-paste-review-jump>
-                {{ smart_paste_summary.unresolved_count }} pendencia(s)
-            </a>
         </div>
-        <div class="smart-paste-review-queue-list">
-            {% for item in smart_paste_summary.unresolved_items %}
-            <a class="smart-paste-review-queue-card" href="#{{ item.target_id }}" data-smart-paste-review-jump>
-                <strong>{{ item.display_label|default:item.movement_label_raw }}</strong>
-                <p>{{ item.day_label }} · {{ item.block_kind }}</p>
-                <span>Editar item</span>
-            </a>
-            {% endfor %}
-        </div>
-    </section>
-    {% endif %}
+    </dialog>
+    {% endfor %}
 
     <datalist id="smart-paste-movement-slugs">
         {% for slug, aliases in review_slug_choices %}
@@ -203,11 +144,13 @@
         <input type="hidden" name="label" value="{{ weekly_plan.label }}">
         <input type="hidden" name="source_text" value="{{ weekly_plan.source_text }}">
         <input type="hidden" name="action" value="confirm_plan">
-        {% if smart_paste_summary.unresolved_count %}
-        <p class="operation-session-meta">Feche as pendencias humanas antes de confirmar o rascunho semanal.</p>
-        {% endif %}
         <div class="actions">
-            <button class="button secondary" type="submit" {% if smart_paste_summary.unresolved_count %}disabled aria-disabled="true"{% endif %}>Confirmar rascunho semanal</button>
+            <button class="button secondary" type="submit" {% if smart_paste_summary.unresolved_count %}disabled aria-disabled="true"{% endif %}>
+                Confirmar rascunho semanal
+            </button>
+            {% if smart_paste_summary.unresolved_count %}
+            <p class="operation-session-meta">Feche as pendencias antes de confirmar.</p>
+            {% endif %}
         </div>
     </form>
 
@@ -217,7 +160,6 @@
             <div>
                 <p class="eyebrow">Salvar como template</p>
                 <h3>Transforme esta semana em base reutilizavel</h3>
-                <p class="operation-session-meta">Depois de confiar na leitura, salve o melhor da semana na biblioteca oficial para reaplicar no Planner.</p>
             </div>
             <a class="button tertiary" href="{{ template_management_href }}">Abrir biblioteca</a>
         </div>
@@ -233,7 +175,6 @@
                 <div class="smart-paste-template-bridge__meta">
                     <span class="pill success">Leitura confirmada</span>
                     <span class="pill info">Vai para Templates</span>
-                    <span class="pill warning">Confiavel so depois de revisar</span>
                 </div>
             </div>
             <div class="actions">
@@ -242,6 +183,7 @@
         </form>
     </section>
     {% endif %}
+
     {% else %}
     <div class="coach-wod-empty-state">
         <p>O preview aparece aqui assim que o texto for organizado.</p>

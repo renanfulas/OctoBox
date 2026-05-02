@@ -110,6 +110,202 @@ ORDEM DA CASCADE:
     resize: vertical;
 }
 
+/* ── GPT hint strip ── */
+.smart-paste-gpt-hint {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    margin-top: 0.75rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--theme-accent-primary) 6%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--theme-accent-primary) 30%, transparent);
+    font-size: 0.8rem;
+    color: var(--theme-text-muted);
+}
+
+.smart-paste-gpt-hint__label {
+    font-weight: 500;
+    color: var(--theme-text-secondary);
+}
+
+.smart-paste-gpt-hint__link {
+    font-weight: 600;
+    color: var(--theme-accent-primary);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.smart-paste-gpt-hint__link:hover {
+    text-decoration: underline;
+}
+
+.smart-paste-gpt-hint__tip {
+    color: var(--theme-text-muted);
+    font-style: italic;
+}
+
+/* ── Day chips ── */
+.smart-paste-day-chips {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.6rem;
+}
+
+.smart-paste-day-chip {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+    padding: 0.95rem 1rem;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 22%, var(--theme-border-soft) 78%);
+    background:
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-primary-alpha) 50%, transparent), transparent 60%),
+        var(--theme-card-surface-strong);
+    box-shadow: var(--theme-shadow-md, 0 2px 8px rgba(0,0,0,.15));
+    cursor: pointer;
+    transition: border-color 0.18s, box-shadow 0.18s, transform 0.12s;
+    text-align: left;
+    width: 100%;
+    font-family: inherit;
+    overflow: hidden;
+}
+
+.smart-paste-day-chip:hover {
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 55%, transparent);
+    box-shadow: var(--theme-shadow-xl, 0 4px 16px rgba(0,0,0,.25));
+    transform: translateY(-1px);
+}
+
+.smart-paste-day-chip:active {
+    transform: translateY(0);
+}
+
+/* Clean — sem pendências */
+.smart-paste-day-chip--clean {
+    border-color: color-mix(in srgb, var(--theme-accent-success) 35%, transparent);
+    background:
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-success) 14%, transparent), transparent 60%),
+        var(--theme-card-surface-strong);
+}
+
+.smart-paste-day-chip--clean::after {
+    content: '';
+    position: absolute;
+    top: 0.55rem;
+    right: 0.65rem;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--theme-accent-success);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--theme-accent-success) 60%, transparent);
+}
+
+/* Warning — tem pendências */
+.smart-paste-day-chip--warning {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 40%, transparent);
+    background:
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-danger) 14%, transparent), transparent 60%),
+        var(--theme-card-surface-strong);
+}
+
+.smart-paste-day-chip--warning::after {
+    content: '';
+    position: absolute;
+    top: 0.55rem;
+    right: 0.65rem;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--theme-accent-danger);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--theme-accent-danger) 60%, transparent);
+}
+
+.smart-paste-day-chip__label {
+    font-weight: 800;
+    font-size: 0.92rem;
+    letter-spacing: -0.02em;
+    color: var(--theme-text-primary);
+    line-height: 1.1;
+}
+
+.smart-paste-day-chip__count {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--theme-text-secondary);
+}
+
+/* ── Day dialog ── */
+.smart-paste-day-dialog {
+    background: var(--surface-card, #0f172a);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 16px;
+    padding: 0;
+    max-width: 520px;
+    width: calc(100vw - 2rem);
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.smart-paste-day-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+}
+
+.smart-paste-day-dialog[open] {
+    display: flex;
+}
+
+.smart-paste-day-dialog__inner {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex: 1;
+}
+
+.smart-paste-day-dialog__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+    flex-shrink: 0;
+}
+
+.smart-paste-day-dialog__head h3 {
+    margin: 0.15rem 0 0;
+}
+
+.smart-paste-day-dialog__close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--theme-text-secondary);
+    font-size: 1rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 6px;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+
+.smart-paste-day-dialog__close:hover {
+    background: rgba(148, 163, 184, 0.15);
+}
+
+.smart-paste-day-dialog__body {
+    overflow-y: auto;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* ── Legacy grid — kept for graceful degradation ── */
 .smart-paste-preview-grid {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -322,6 +518,25 @@ ORDEM DA CASCADE:
     align-items: flex-start;
 }
 
+/* SmartPlan link em cada sessão replicada */
+.smart-paste-projection-smartplan-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--theme-accent-primary);
+    text-decoration: none;
+    padding: 0.3rem 0;
+    opacity: 0.85;
+    transition: opacity 0.15s;
+}
+
+.smart-paste-projection-smartplan-link:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
 .smart-paste-template-bridge {
     display: grid;
     gap: 0.9rem;
@@ -389,7 +604,84 @@ ORDEM DA CASCADE:
     min-width: 160px;
 }
 
+.smart-paste-gpt-banner__steps {
+    flex: 1;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 200px;
+}
+
+.smart-paste-gpt-banner__steps li {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.smart-paste-gpt-banner__steps strong {
+    color: var(--accent-primary);
+    font-variant-numeric: tabular-nums;
+}
+
 .smart-paste-gpt-banner .button {
     white-space: nowrap;
     flex-shrink: 0;
+}
+
+/* Footer do dialog com CTA SmartPlan */
+.smart-paste-day-dialog__footer {
+    flex-shrink: 0;
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
+    padding: 0.9rem 1.25rem;
+}
+
+.smart-paste-day-dialog__smartplan {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--theme-accent-primary) 7%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 20%, transparent);
+    flex-wrap: wrap;
+}
+
+.smart-paste-day-dialog__smartplan .eyebrow {
+    margin-bottom: 0.2rem;
+}
+
+.smart-paste-day-dialog__smartplan > div {
+    flex: 1;
+    min-width: 160px;
+}
+
+.smart-paste-day-dialog__smartplan p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--theme-text-secondary);
+    line-height: 1.4;
+}
+
+.smart-paste-day-dialog__smartplan-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.smart-paste-day-dialog__smartplan .button,
+.smart-paste-day-dialog__smartplan-actions .button {
+    white-space: nowrap;
+}
+
+/* Textarea oculto com texto gerado do dia para clipboard */
+.smart-paste-day-gpt-source {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
 }

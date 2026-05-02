@@ -92,8 +92,8 @@ POR QUE ELE EXISTE:
 
     if (button && picker) {
       button.addEventListener('click', function () {
-        var today = new Date();
-        picker.value = today.getFullYear() + '-' + pad(today.getMonth() + 1) + '-' + pad(today.getDate());
+        // Abre o calendário na data já definida no picker (vinda do context).
+        // Não sobrescreve com hoje — o valor correto (próxima segunda) já está no value.
         if (typeof picker.showPicker === 'function') {
           picker.showPicker();
         } else {
@@ -114,6 +114,11 @@ POR QUE ELE EXISTE:
     if (!targetId) return;
     var reviewTarget = document.getElementById(String(targetId).replace(/^#/, ''));
     if (!reviewTarget) return;
+    // If target lives inside a <dialog>, open the dialog first
+    var parentDialog = reviewTarget.closest('dialog');
+    if (parentDialog && !parentDialog.open) {
+      parentDialog.showModal();
+    }
     if (reviewTarget.tagName === 'DETAILS') {
       reviewTarget.open = true;
     }
@@ -145,10 +150,72 @@ POR QUE ELE EXISTE:
     }
   }
 
+  function bindDayDialogs(scope) {
+    if (!scope) return;
+    scope.querySelectorAll('[data-action="open-day-dialog"]').forEach(function (btn) {
+      if (btn.dataset.dayDialogBound === 'true') return;
+      btn.dataset.dayDialogBound = 'true';
+      btn.addEventListener('click', function () {
+        var targetId = btn.dataset.target;
+        if (!targetId) return;
+        var dialog = document.getElementById(targetId);
+        if (dialog && typeof dialog.showModal === 'function') {
+          dialog.showModal();
+        }
+      });
+    });
+    scope.querySelectorAll('[data-action="close-dialog"]').forEach(function (btn) {
+      if (btn.dataset.closeDialogBound === 'true') return;
+      btn.dataset.closeDialogBound = 'true';
+      btn.addEventListener('click', function () {
+        var dialog = btn.closest('dialog');
+        if (dialog) dialog.close();
+      });
+    });
+    // Copy day text to clipboard for GPT
+    scope.querySelectorAll('[data-action="copy-gpt-text"]').forEach(function (btn) {
+      if (btn.dataset.copyGptBound === 'true') return;
+      btn.dataset.copyGptBound = 'true';
+      btn.addEventListener('click', function () {
+        var footer = btn.closest('footer');
+        if (!footer) return;
+        var source = footer.querySelector('[data-gpt-source]');
+        if (!source) return;
+        var text = source.value.trim();
+        var feedback = btn.dataset.feedback || 'Copiado!';
+        var original = btn.textContent;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            btn.textContent = feedback;
+            btn.disabled = true;
+            window.setTimeout(function () {
+              btn.textContent = original;
+              btn.disabled = false;
+            }, 2000);
+          });
+        } else {
+          source.select();
+          document.execCommand('copy');
+          btn.textContent = feedback;
+          window.setTimeout(function () { btn.textContent = original; }, 2000);
+        }
+      });
+    });
+    // Close dialog on backdrop click
+    scope.querySelectorAll('.smart-paste-day-dialog').forEach(function (dialog) {
+      if (dialog.dataset.backdropBound === 'true') return;
+      dialog.dataset.backdropBound = 'true';
+      dialog.addEventListener('click', function (e) {
+        if (e.target === dialog) dialog.close();
+      });
+    });
+  }
+
   function initializeScope(scope) {
     if (!scope) return;
     scope.querySelectorAll('[data-smart-date-input]').forEach(bindSmartDateField);
     bindReviewQueue(scope);
+    bindDayDialogs(scope);
   }
 
   initializeScope(root);
