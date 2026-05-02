@@ -34,6 +34,7 @@ from operations.forms import (
 )
 from operations.services.wod_paste_parser import load_wod_movement_dictionary, parse_weekly_wod_text, resolve_movement_slug
 from operations.services.wod_slug_resolver import apply_llm_slug_resolution
+from operations.services.wod_smartplan_weekly_parser import detect_and_convert_smartplan_weekly
 from operations.services.wod_projection import build_projection_preview, project_plan_to_sessions
 from operations.services.wod_replication_batches import undo_replication_batch
 from operations.workout_templates import create_persisted_template_from_weekly_plan
@@ -298,8 +299,11 @@ class WorkoutSmartPasteView(OperationBaseView):
             plan.status = WeeklyWodPlanStatus.CONFIRMED
         else:
             plan.status = WeeklyWodPlanStatus.DRAFT
-            parsed = parse_weekly_wod_text(cleaned['source_text'])
-            apply_llm_slug_resolution(parsed, load_wod_movement_dictionary())
+            source_text = cleaned['source_text']
+            parsed = detect_and_convert_smartplan_weekly(source_text)
+            if parsed is None:
+                parsed = parse_weekly_wod_text(source_text)
+                apply_llm_slug_resolution(parsed, load_wod_movement_dictionary())
             plan.parsed_payload = parsed
         plan.created_by = plan.created_by or request.user
         plan.save()
