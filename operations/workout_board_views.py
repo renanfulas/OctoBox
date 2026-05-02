@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.generic import FormView
 
 from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
@@ -16,7 +17,7 @@ from shared_support.page_payloads import attach_page_payload
 
 from operations.operations_executive_summary_context import build_operations_executive_summary_context
 from operations.workout_approval_board_context import build_workout_approval_board_context
-from operations.workout_smart_paste_context import build_weekly_wod_smart_paste_context
+from operations.workout_smart_paste_context import build_weekly_wod_smart_paste_context, _max_week_start
 from operations.workout_publication_history_context import build_workout_publication_history_context
 from operations.workout_rm_quick_edit_actions import save_workout_student_rm_quick_edit
 from operations.workout_rm_quick_edit_context import (
@@ -282,7 +283,8 @@ class WorkoutSmartPasteView(OperationBaseView):
             messages.success(request, f'Template salvo "{template.name}" criado a partir do Smart Paste.')
             return redirect('workout-template-management')
 
-        form = WeeklyWodSmartPasteForm(request.POST)
+        today_date = self.get_base_context().get('today') or timezone.localdate()
+        form = WeeklyWodSmartPasteForm(request.POST, max_week_start=_max_week_start(today_date))
         if not form.is_valid():
             messages.error(request, _first_form_error(form, 'Revise a semana e o texto antes de continuar.'))
             context = self._build_context(plan=plan, form=form)

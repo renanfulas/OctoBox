@@ -12,6 +12,8 @@ PONTOS CRITICOS:
 - estes formularios ficam na borda HTTP e devem impedir ruido antes da regra de negocio.
 """
 
+from __future__ import annotations
+
 from datetime import date
 
 from django import forms
@@ -80,6 +82,7 @@ def _coerce_smart_paste_date(
     field_label: str,
     allow_past: bool = False,
     allow_historical_years: bool = False,
+    max_date: date | None = None,
 ) -> date:
     normalized = (raw_value or '').strip()
     if not normalized:
@@ -87,6 +90,8 @@ def _coerce_smart_paste_date(
 
     today = timezone.localdate()
     allowed_years = {today.year - 1, today.year, today.year + 1}
+    if max_date is not None:
+        allowed_years.add(max_date.year)
 
     if normalized.count('/') == 1:
         try:
@@ -122,6 +127,10 @@ def _coerce_smart_paste_date(
     if candidate.weekday() != 0:
         from datetime import timedelta
         candidate = candidate - timedelta(days=candidate.weekday())
+    if max_date is not None and candidate > max_date:
+        raise forms.ValidationError(
+            f'A semana escolhida ({candidate:%d/%m/%Y}) ultrapassa a ultima aula da grade ({max_date:%d/%m/%Y}).'
+        )
     return candidate
 
 
@@ -400,8 +409,9 @@ class WeeklyWodSmartPasteForm(forms.Form):
     label = forms.CharField(max_length=140, required=False)
     source_text = forms.CharField(widget=forms.Textarea(attrs={'rows': 22}), required=False)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, max_week_start: date | None = None, **kwargs):
         super().__init__(*args, **kwargs)
+        self._max_week_start = max_week_start
         apply_text_input_attrs(
             self.fields['label'],
             placeholder='Ex.: Semana 2 - Base de forca + metcon',
@@ -446,6 +456,7 @@ class WeeklyWodSmartPasteForm(forms.Form):
             self.cleaned_data.get('week_start'),
             field_label='a semana',
             allow_past=True,
+            max_date=self._max_week_start,
         )
 
 

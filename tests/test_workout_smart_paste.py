@@ -44,15 +44,16 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         response = self.client.get(reverse('workout-smart-paste'))
 
         self.assertEqual(response.status_code, 200)
-        current_week_start = timezone.localdate() - timedelta(days=timezone.localdate().weekday())
+        today = timezone.localdate()
+        coming_monday = today + timedelta(days=(7 - today.weekday()) % 7)
         self.assertIsNone(response.context['weekly_plan'])
         self.assertEqual(
             response.context['smart_paste_form'].initial['week_start'],
-            current_week_start.strftime('%d/%m/%Y'),
+            coming_monday.strftime('%d/%m/%Y'),
         )
         self.assertEqual(
             response.context['projection_form'].initial['target_week_start'],
-            current_week_start.strftime('%d/%m/%Y'),
+            coming_monday.strftime('%d/%m/%Y'),
         )
         self.assertNotContains(response, 'Plano futuro')
 
@@ -238,7 +239,8 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         self.assertNotContains(response, 'Salvar e revisar proximo')
 
     def test_preview_focuses_first_unresolved_item_in_review_corridor(self):
-        current_week_start = timezone.localdate() - timedelta(days=timezone.localdate().weekday())
+        today = timezone.localdate()
+        current_week_start = today + timedelta(days=(7 - today.weekday()) % 7)
         plan = WeeklyWodPlan.objects.create(
             week_start=current_week_start,
             label='Semana fila',
@@ -353,8 +355,10 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'data-smart-paste-auto-open-target="review-item-0-0-1"')
 
     def test_unresolved_items_block_weekly_confirmation(self):
+        today = timezone.localdate()
+        coming_monday = today + timedelta(days=(7 - today.weekday()) % 7)
         WeeklyWodPlan.objects.create(
-            week_start='2026-04-27',
+            week_start=coming_monday,
             label='Semana com pendencia',
             source_text='Segunda\nWod\nrum',
             parsed_payload={

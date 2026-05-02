@@ -5,6 +5,8 @@ PARÂMETROS:
   field           — campo de formulário Django (week_start ou target_week_start)
   picker_id       — id do input[type=date] nativo (ex: "smart-paste-week-start-picker")
   picker_value    — valor inicial do picker em formato Y-m-d (opcional)
+  picker_min      — data mínima em Y-m-d (ex: smart_paste_picker_min)
+  picker_max      — data máxima em Y-m-d — última aula na grade (ex: smart_paste_picker_max)
   label_text      — texto do <label> (ex: "Início da semana")
   hint_prefix     — prefixo do hint de segunda (ex: "Semana alvo")
 
@@ -12,7 +14,9 @@ USO:
   {% include "operations/includes/wod_smart_paste_week_input.html" with
       field=smart_paste_form.week_start
       picker_id="smart-paste-week-start-picker"
-      picker_value=weekly_plan.week_start|date:"Y-m-d"
+      picker_value=smart_paste_picker_value
+      picker_min=smart_paste_picker_min
+      picker_max=smart_paste_picker_max
       label_text="Início da semana"
   %}
 {% endcomment %}
@@ -20,12 +24,16 @@ USO:
     <span>{{ label_text|default:"Início da semana" }}</span>
     <div class="smart-paste-date-input-wrap" data-smart-date-monday-wrap>
         {{ field }}
-        <button class="button tertiary smart-paste-date-trigger" type="button" data-smart-date-button>Abrir calendário</button>
+        <button class="button tertiary smart-paste-date-trigger" type="button" data-smart-date-button aria-label="Selecionar semana no calendário">
+            📅 Selecionar semana
+        </button>
         <input
             type="date"
             id="{{ picker_id }}"
             class="smart-paste-native-picker"
             value="{{ picker_value }}"
+            {% if picker_min %}min="{{ picker_min }}"{% endif %}
+            {% if picker_max %}max="{{ picker_max }}"{% endif %}
         >
         <span class="smart-paste-monday-hint" data-smart-date-monday-hint aria-live="polite" hidden></span>
     </div>

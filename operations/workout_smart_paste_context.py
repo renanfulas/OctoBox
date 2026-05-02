@@ -15,7 +15,7 @@ from operations.forms import (
     WeeklyWodUndoReplicationForm,
     WorkoutCreateStoredTemplateForm,
 )
-from operations.models import ClassType
+from operations.models import ClassType, ClassSession, SessionStatus
 from operations.services.wod_paste_parser import load_wod_movement_dictionary
 from operations.services.wod_replication_batches import batch_can_be_undone
 from shared_support.page_payloads import attach_page_payload, build_page_assets, build_page_hero, build_page_payload
@@ -24,8 +24,33 @@ from student_app.models import WeeklyWodPlan, WeeklyWodPlanStatus
 from .workout_corridor_navigation import build_workout_corridor_tabs
 
 
+def _coming_monday(today):
+    """Retorna a próxima segunda-feira. Se hoje for segunda, retorna hoje."""
+    days_ahead = (7 - today.weekday()) % 7
+    return today + timedelta(days=days_ahead)
+
+
 def _default_week_start(today):
-    return today - timedelta(days=today.weekday())
+    return _coming_monday(today)
+
+
+def _max_week_start(today, fallback_weeks: int = 52):
+    """Retorna a segunda-feira da semana que contém a última aula agendada.
+
+    Se não houver aulas futuras cadastradas, usa today + fallback_weeks como teto.
+    """
+    last_session = (
+        ClassSession.objects
+        .exclude(status=SessionStatus.CANCELED)
+        .order_by('-scheduled_at')
+        .values_list('scheduled_at', flat=True)
+        .first()
+    )
+    if last_session is not None:
+        last_date = last_session.date() if hasattr(last_session, 'date') else last_session
+        # Monday of that week
+        return last_date - timedelta(days=last_date.weekday())
+    return today + timedelta(weeks=fallback_weeks)
 
 
 def _smart_paste_display_label(movement):
@@ -143,6 +168,7 @@ def build_weekly_wod_smart_paste_context(
     auto_open_review_target=None,
 ):
     week_start = _default_week_start(today)
+    max_week = _max_week_start(today)
     weekly_plan = plan or load_surface_weekly_wod_plan_for_user(user=request.user, today=today)
     form = form or WeeklyWodSmartPasteForm(
         initial={
@@ -223,6 +249,11 @@ def build_weekly_wod_smart_paste_context(
         'latest_replication_batch_can_undo': can_undo_batch,
         'latest_replication_batch_undo_reason': undo_reason,
         'weekly_plan_is_confirmed': getattr(weekly_plan, 'status', '') == WeeklyWodPlanStatus.CONFIRMED,
+        'smart_paste_picker_min': week_start.strftime('%Y-%m-%d'),
+        'smart_paste_picker_max': max_week.strftime('%Y-%m-%d'),
+        'smart_paste_picker_value': (
+            getattr(weekly_plan, 'week_start', None) or week_start
+        ).strftime('%Y-%m-%d'),
     }
     attach_page_payload(
         context,
