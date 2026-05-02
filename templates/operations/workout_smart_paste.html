@@ -10,8 +10,8 @@
         <article class="table-card smart-paste-card">
             <div class="coach-wod-editor-head">
                 <div>
-                    <p class="eyebrow">Colar</p>
-                    <h2>Semana em texto livre</h2>
+                    <p class="eyebrow">Semana</p>
+                    <h2>Cole ou escreva o treino</h2>
                 </div>
                 {% if weekly_plan %}
                 <div class="coach-wod-editor-pills">
@@ -38,6 +38,16 @@
                     <button class="button" type="submit">Organizar texto</button>
                 </div>
             </form>
+
+            {% if smartplan_gpt_url %}
+            <div class="smart-paste-gpt-hint">
+                <span class="smart-paste-gpt-hint__label">Prefere pre-estruturar com IA?</span>
+                <a class="smart-paste-gpt-hint__link" href="{{ smartplan_gpt_url }}" target="_blank" rel="noopener noreferrer">
+                    Abrir SmartPlan GPT ↗
+                </a>
+                <span class="smart-paste-gpt-hint__tip">Cole o resultado normalizado no campo acima.</span>
+            </div>
+            {% endif %}
         </article>
 
         {% include "operations/includes/wod_smart_paste_preview.html" %}

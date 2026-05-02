@@ -422,14 +422,16 @@ class WeeklyWodSmartPasteForm(forms.Form):
         self.fields['source_text'].widget.attrs.update(
             {
                 'placeholder': (
-                    'Cole aqui o treino semanal.\n\n'
+                    'Cole ou escreva o treino da semana. Exemplo:\n\n'
                     'Segunda\n'
-                    'Mobilidade\n'
-                    'Aquecimento\n'
-                    '3x\n'
-                    '10 lunges\n'
-                    '8 front squat\n'
-                    '20 sit up'
+                    'Força: 5x5 Back Squat 75%\n'
+                    'AMRAP 12: 10 pull-up / 15 air squat / 20 sit-up\n\n'
+                    'Terça\n'
+                    'EMOM 10: min 1 = 3 power clean 70% / min 2 = 8 TTB\n'
+                    'For Time 5 rounds: 10 deadlift 80kg / 15 wall ball\n\n'
+                    'Quarta\n'
+                    'Skill: HSPU estrito\n'
+                    'AMRAP 20: 400m run / 21 KB swing 24kg / 12 pull-up'
                 ),
                 'class': 'smart-paste-textarea',
                 'spellcheck': 'false',
