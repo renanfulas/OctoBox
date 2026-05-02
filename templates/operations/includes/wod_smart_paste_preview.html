@@ -129,12 +129,35 @@
             </div>
             {% if smartplan_gpt_url %}
             <footer class="smart-paste-day-dialog__footer">
+                {# Texto gerado do dia para o GPT — oculto, lido pelo JS #}
+                <textarea
+                    class="smart-paste-day-gpt-source"
+                    aria-hidden="true"
+                    readonly
+                    tabindex="-1"
+                    data-gpt-source
+                >{{ day.weekday_label }}{% for block in day.blocks %}
+
+[{{ block.kind|upper }}{% if block.title %} — {{ block.title }}{% endif %}{% if block.timecap_min %} {{ block.timecap_min }}min{% endif %}{% if block.rounds %} {{ block.rounds }} rounds{% endif %}]
+{% if block.format_spec %}{{ block.format_spec }}
+{% endif %}{% for movement in block.movements %}
+- {{ movement.display_label|default:movement.movement_label_raw }}{% if movement.reps_spec %} {{ movement.reps_spec }}{% endif %}{% if movement.load_spec %} @ {{ movement.load_spec }}{% endif %}{% if movement.notes %} ({{ movement.notes }}){% endif %}
+{% endfor %}{% endfor %}</textarea>
+
                 <div class="smart-paste-day-dialog__smartplan">
                     <div>
-                        <p class="eyebrow">SmartPlan</p>
-                        <p>Cole este treino no GPT para normalizar blocos, slugs e cargas. Depois abra o editor da sessão e cole a resposta.</p>
+                        <p class="eyebrow">SmartPlan — 2 passos</p>
+                        <p><strong>①</strong> Copie o texto do dia &nbsp;<strong>②</strong> Cole no GPT e normalize &nbsp;<strong>③</strong> Cole o JSON no editor da sessão</p>
                     </div>
-                    <a class="button" href="{{ smartplan_gpt_url }}" target="_blank" rel="noopener">Abrir GPT ↗</a>
+                    <div class="smart-paste-day-dialog__smartplan-actions">
+                        <button
+                            type="button"
+                            class="button secondary"
+                            data-action="copy-gpt-text"
+                            data-feedback="Copiado!"
+                        >Copiar texto</button>
+                        <a class="button" href="{{ smartplan_gpt_url }}" target="_blank" rel="noopener">Abrir GPT ↗</a>
+                    </div>
                 </div>
             </footer>
             {% endif %}

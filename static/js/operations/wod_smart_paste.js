@@ -172,6 +172,35 @@ POR QUE ELE EXISTE:
         if (dialog) dialog.close();
       });
     });
+    // Copy day text to clipboard for GPT
+    scope.querySelectorAll('[data-action="copy-gpt-text"]').forEach(function (btn) {
+      if (btn.dataset.copyGptBound === 'true') return;
+      btn.dataset.copyGptBound = 'true';
+      btn.addEventListener('click', function () {
+        var footer = btn.closest('footer');
+        if (!footer) return;
+        var source = footer.querySelector('[data-gpt-source]');
+        if (!source) return;
+        var text = source.value.trim();
+        var feedback = btn.dataset.feedback || 'Copiado!';
+        var original = btn.textContent;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            btn.textContent = feedback;
+            btn.disabled = true;
+            window.setTimeout(function () {
+              btn.textContent = original;
+              btn.disabled = false;
+            }, 2000);
+          });
+        } else {
+          source.select();
+          document.execCommand('copy');
+          btn.textContent = feedback;
+          window.setTimeout(function () { btn.textContent = original; }, 2000);
+        }
+      });
+    });
     // Close dialog on backdrop click
     scope.querySelectorAll('.smart-paste-day-dialog').forEach(function (dialog) {
       if (dialog.dataset.backdropBound === 'true') return;

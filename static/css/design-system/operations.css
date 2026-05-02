@@ -628,7 +628,24 @@ ORDEM DA CASCADE:
     line-height: 1.4;
 }
 
-.smart-paste-day-dialog__smartplan .button {
-    white-space: nowrap;
+.smart-paste-day-dialog__smartplan-actions {
+    display: flex;
+    gap: 0.5rem;
     flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.smart-paste-day-dialog__smartplan .button,
+.smart-paste-day-dialog__smartplan-actions .button {
+    white-space: nowrap;
+}
+
+/* Textarea oculto com texto gerado do dia para clipboard */
+.smart-paste-day-gpt-source {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
 }
