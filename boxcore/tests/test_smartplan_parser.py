@@ -169,3 +169,16 @@ class DetectSmartplanTextFormatTests(SimpleTestCase):
         result = detect_smartplan_text_format(self._v2_paste(body))
         self.assertIn('▸ 10x Thruster', result['normalized_text'])
         self.assertIn('▸ 15x Air Squat', result['normalized_text'])
+
+    def test_accepts_v2_paste_wrapped_in_code_fence(self):
+        """GPT v2 envolve o output num code block para o ChatGPT mostrar botao Copy.
+        O parser deve encontrar os marcadores mesmo com as backticks ao redor."""
+        body = '[AMRAP — 12 minutos]\n\n▸ 8x Burpee Over Box\n▸ 10x Handstand Push-Up'
+        inner = f'=== WOD NORMALIZADO ===\n{body}\n=== FIM ==='
+        code_fence_paste = f'```\n{inner}\n```'
+        result = detect_smartplan_text_format(code_fence_paste)
+        self.assertTrue(result['is_normalized'])
+        self.assertIn('▸ 8x Burpee Over Box', result['normalized_text'])
+        self.assertIn('▸ 10x Handstand Push-Up', result['normalized_text'])
+        # backticks não devem vazar para o normalized_text
+        self.assertNotIn('```', result['normalized_text'])
