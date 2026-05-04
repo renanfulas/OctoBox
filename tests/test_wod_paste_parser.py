@@ -1,5 +1,11 @@
+import os
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
+
 from django.test import SimpleTestCase
 
+from operations.services import wod_paste_parser
 from operations.services.wod_paste_parser import parse_weekly_wod_text
 
 
@@ -119,6 +125,29 @@ Wod  15m
 
 
 class WodPasteParserTests(SimpleTestCase):
+    def test_movement_dictionary_cache_refreshes_when_file_changes(self):
+        with TemporaryDirectory() as temporary_directory:
+            dictionary_path = Path(temporary_directory) / 'wod-movement-dictionary.md'
+            dictionary_path.write_text('| `alpha_move` | alpha move |\n', encoding='utf-8')
+
+            with patch.object(wod_paste_parser, '_wod_movement_dictionary_path', return_value=dictionary_path):
+                wod_paste_parser._load_wod_movement_dictionary_cached.cache_clear()
+
+                first_entries = wod_paste_parser.load_wod_movement_dictionary()
+                first_modified_at_ns = dictionary_path.stat().st_mtime_ns
+
+                dictionary_path.write_text('| `beta_move` | beta move |\n', encoding='utf-8')
+                os.utime(
+                    dictionary_path,
+                    ns=(first_modified_at_ns + 1_000_000_000, first_modified_at_ns + 1_000_000_000),
+                )
+
+                second_entries = wod_paste_parser.load_wod_movement_dictionary()
+
+        self.assertIn('alpha_move', {slug for slug, _aliases in first_entries})
+        self.assertNotIn('alpha_move', {slug for slug, _aliases in second_entries})
+        self.assertIn('beta_move', {slug for slug, _aliases in second_entries})
+
     def test_parser_builds_schema_for_real_week_fixture_without_warnings(self):
         parsed = parse_weekly_wod_text(WOD_WEEK_FIXTURE)
 

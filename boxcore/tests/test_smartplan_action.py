@@ -322,3 +322,104 @@ class SmartPlanEdgeCaseTests(SmartPlanActionTests):
 
         self.assertEqual(response.status_code, 302)
         self.assertFalse(SessionWorkout.objects.filter(session=self.session).exists())
+
+
+# ---------------------------------------------------------------------------
+# Formato v2 — texto normalizado sem JSON (server-side LLM parsing)
+# ---------------------------------------------------------------------------
+
+from unittest.mock import patch
+
+
+V2_TEXT_PASTE = (
+    '=== WOD NORMALIZADO ===\n'
+    '[FORÇA]\n'
+    '5 séries × 5 repetições\n\n'
+    '▸ 5x Deadlift (75% do RM)\n'
+    '=== FIM ==='
+)
+
+V2_STRUCTURED_PAYLOAD = {
+    'version': '1.0',
+    'blocks': [
+        {
+            'order': 1,
+            'type': 'strength',
+            'title': 'Força',
+            'duration_min': None,
+            'rounds': 5,
+            'is_partner': False,
+            'is_synchro': False,
+            'scaling_notes': '',
+            'movements': [
+                {
+                    'order': 1,
+                    'slug': 'deadlift',
+                    'label_pt': 'Deadlift',
+                    'label_en': 'Deadlift',
+                    'reps': 5,
+                    'load_kg': None,
+                    'load_note': None,
+                    'load_pct_rm': 75,
+                    'load_pct_rm_exercise': 'deadlift',
+                }
+            ],
+            'warnings': [],
+        }
+    ],
+    'session_warnings': [],
+}
+
+
+class SmartPlanV2FormatTests(SmartPlanActionTests):
+    """Caminho A via formato v2: texto normalizado → LLM server-side → tier rico."""
+
+    @override_settings(WOD_APPROVAL_POLICY='trusted_template')
+    def test_v2_paste_creates_blocks_via_llm(self):
+        with patch(
+            'operations.workout_editor_actions.parse_session_text_to_payload',
+            return_value=V2_STRUCTURED_PAYLOAD,
+        ):
+            self._post({'intent': 'apply_smartplan_paste', 'smartplan_paste': V2_TEXT_PASTE})
+
+        workout = SessionWorkout.objects.get(session=self.session)
+        self.assertTrue(workout.is_normalized)
+        self.assertEqual(SessionWorkoutBlock.objects.filter(workout=workout).count(), 1)
+        movement = SessionWorkoutMovement.objects.get(block__workout=workout)
+        self.assertEqual(movement.movement_slug, 'deadlift')
+
+    @override_settings(WOD_APPROVAL_POLICY='trusted_template')
+    def test_v2_paste_saves_normalized_text_to_coach_notes(self):
+        with patch(
+            'operations.workout_editor_actions.parse_session_text_to_payload',
+            return_value=V2_STRUCTURED_PAYLOAD,
+        ):
+            self._post({'intent': 'apply_smartplan_paste', 'smartplan_paste': V2_TEXT_PASTE})
+
+        workout = SessionWorkout.objects.get(session=self.session)
+        self.assertIn('Deadlift', workout.coach_notes)
+
+    @override_settings(WOD_APPROVAL_POLICY='trusted_template')
+    def test_v2_falls_back_to_raw_when_llm_returns_none(self):
+        """Se o LLM falhar (retorna None), o coach vê popup de inválido — sem blocos."""
+        with patch(
+            'operations.workout_editor_actions.parse_session_text_to_payload',
+            return_value=None,
+        ):
+            response = self._post({
+                'intent': 'apply_smartplan_paste',
+                'smartplan_paste': V2_TEXT_PASTE,
+            })
+
+        # Popup: sem blocos criados, sem workout
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(SessionWorkout.objects.filter(session=self.session).exists())
+
+    @override_settings(WOD_APPROVAL_POLICY='trusted_template')
+    def test_v1_canonical_paste_still_works_after_v2_added(self):
+        """Retrocompatibilidade: paste v1 (com JSON) deve continuar funcionando."""
+        self._post({'intent': 'apply_smartplan_paste', 'smartplan_paste': _canonical_paste()})
+
+        workout = SessionWorkout.objects.get(session=self.session)
+        self.assertTrue(workout.is_normalized)
+        self.assertEqual(SessionWorkoutBlock.objects.filter(workout=workout).count(), 1)

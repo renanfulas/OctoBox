@@ -45,14 +45,167 @@ ORDEM DA CASCADE:
 
 .smart-paste-layout {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(300px, 400px) 1fr;
     gap: 1.25rem;
+    align-items: start;
 }
 
 .smart-paste-card {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+}
+
+/* Preview empty state — shown when no text has been organised yet */
+.smart-paste-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.75rem;
+    padding: 2.5rem 1.5rem;
+    border: 1.5px dashed color-mix(in srgb, var(--theme-border-soft) 70%, transparent);
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--theme-surface-panel) 50%, transparent);
+    min-height: 220px;
+}
+
+.smart-paste-empty-state__icon {
+    font-size: 2rem;
+    line-height: 1;
+    opacity: 0.55;
+}
+
+.smart-paste-empty-state__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--theme-text-primary);
+    opacity: 0.75;
+}
+
+.smart-paste-empty-state__body {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--theme-text-secondary);
+    max-width: 32ch;
+    line-height: 1.55;
+}
+
+.smart-paste-empty-state__hint {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--theme-text-tertiary, var(--theme-text-secondary));
+    max-width: 36ch;
+    line-height: 1.5;
+    opacity: 0.7;
+}
+
+.smart-paste-empty-state__hint code {
+    font-family: var(--font-mono, 'Roboto Mono', monospace);
+    font-size: 0.76rem;
+    background: color-mix(in srgb, var(--theme-accent-primary, #00e5ff) 10%, transparent);
+    color: var(--theme-accent-primary, #00e5ff);
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+}
+
+body[data-theme="dark"] .smart-paste-empty-state {
+    border-color: rgba(148, 163, 184, 0.12);
+    background: rgba(10, 18, 32, 0.45);
+}
+
+/*
+ * Dark mode: o .table-card usa backdrop-filter + superfície semi-transparente.
+ * Em dark, o fundo #090d16 é tão escuro que o card mal se distingue.
+ * Override local: superfície mais opaca + borda com acento sutil.
+ */
+body[data-theme="dark"] .smart-paste-card {
+    --card-local-surface: linear-gradient(
+        160deg,
+        rgba(16, 24, 40, 0.98) 0%,
+        rgba(20, 30, 50, 0.97) 100%
+    );
+    --card-local-border: rgba(128, 151, 190, 0.26);
+    --card-local-glow: rgba(0, 229, 255, 0.1);
+    --card-local-shadow:
+        0 20px 44px rgba(0, 0, 0, 0.44),
+        0 6px 16px rgba(0, 0, 0, 0.28);
+}
+
+/*
+ * Dark mode: campos de formulário dentro dos cards Smart Paste.
+ * O global input herda surface clara (tokens light), ficando branco no dark.
+ * Padrão: mesmo tratamento de intake-create-card em intakes.css.
+ */
+body[data-theme="dark"] .smart-paste-card input,
+body[data-theme="dark"] .smart-paste-card select,
+body[data-theme="dark"] .smart-paste-card textarea {
+    background: rgba(10, 18, 32, 0.72);
+    color: rgba(248, 250, 252, 0.94);
+    border-color: rgba(148, 163, 184, 0.14);
+    caret-color: #67e8f9;
+}
+
+body[data-theme="dark"] .smart-paste-card input::placeholder,
+body[data-theme="dark"] .smart-paste-card textarea::placeholder {
+    color: rgba(148, 163, 184, 0.4);
+}
+
+body[data-theme="dark"] .smart-paste-card input:focus,
+body[data-theme="dark"] .smart-paste-card select:focus,
+body[data-theme="dark"] .smart-paste-card textarea:focus {
+    background: rgba(10, 18, 32, 0.88);
+    border-color: rgba(103, 232, 249, 0.36);
+    box-shadow: 0 0 0 4px rgba(103, 232, 249, 0.1);
+    color: rgba(248, 250, 252, 0.98);
+}
+
+body[data-theme="dark"] .smart-paste-card select {
+    color-scheme: dark;
+}
+
+body[data-theme="dark"] .smart-paste-card select option {
+    background: #0b1628;
+    color: rgba(248, 250, 252, 0.94);
+}
+
+/* Labels e spans de campo */
+body[data-theme="dark"] .smart-paste-card label > span,
+body[data-theme="dark"] .smart-paste-card .field-label {
+    color: rgba(226, 232, 240, 0.62);
+}
+
+/*
+ * Dark mode: o heading "Cole ou escreva o treino" herda a cor do body
+ * mas pode perder o contraste dependendo de como o card-surface resolve.
+ * Garantia explícita para não depender de herança frágil.
+ */
+body[data-theme="dark"] .smart-paste-card .coach-wod-editor-head h2 {
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .smart-paste-card .coach-wod-editor-head .eyebrow {
+    color: var(--theme-accent-primary);
+}
+
+/*
+ * Campo de data (week_start): o global input tem min-height: 48px e 1fr de largura.
+ * Aqui o campo deve mostrar só "dd/mm" — tamanho fixo, compacto ao lado do botão.
+ * width em ch: "dd/mm" = 5 chars + padding interno ≈ 9ch totais.
+ */
+.smart-paste-date-input-wrap input[data-smart-date-input] {
+    width: 9ch;
+    min-width: 0;
+    min-height: 40px;
+    height: 40px;
+    padding: 0 0.75rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-align: center;
 }
 
 .smart-paste-flow-card {
@@ -70,36 +223,78 @@ ORDEM DA CASCADE:
 
 .smart-paste-flow-step {
     padding: 0.8rem 0.9rem;
-    border: 1px solid rgba(148, 163, 184, 0.2);
+    border: 1px solid var(--theme-border-soft);
     border-radius: 16px;
-    background: rgba(15, 23, 42, 0.35);
+    background: var(--theme-surface-secondary);
     color: var(--theme-text-secondary);
     font-weight: 600;
 }
 
 .smart-paste-flow-step.is-active {
-    border-color: rgba(56, 189, 248, 0.35);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 35%, var(--theme-border-soft));
     color: var(--theme-text-primary);
 }
 
 .smart-paste-flow-step.is-warning {
-    border-color: rgba(245, 158, 11, 0.4);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 40%, var(--theme-border-soft));
     color: var(--theme-text-primary);
 }
 
 .smart-paste-date-input-wrap {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto auto;
+    justify-content: start;
     gap: 0.6rem;
     align-items: center;
+    position: relative;
 }
 
 .smart-paste-native-picker {
-    position: absolute;
+    position: fixed;
+    top: -100vh;
+    left: -100vw;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
     opacity: 0;
     pointer-events: none;
-    width: 0;
-    height: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    appearance: none;
+    /* Tema do calendário nativo (light por padrão) */
+    color-scheme: light;
+    accent-color: var(--theme-accent-primary, #00e5ff);
+}
+
+body[data-theme="dark"] .smart-paste-native-picker {
+    /* Calendário nativo com tema escuro quando o app está em dark mode */
+    color-scheme: dark;
+    accent-color: var(--theme-accent-primary, #00e5ff);
+}
+
+/*
+ * Botão de seleção de data: badge "só 2ª" para indicar a restrição ao usuário.
+ * Implementado via ::after para não alterar o HTML.
+ */
+.smart-paste-date-trigger::after {
+    content: 'só 2ª';
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 0.1rem 0.38rem;
+    border-radius: 4px;
+    margin-left: 0.45rem;
+    background: color-mix(in srgb, var(--theme-accent-primary, #00e5ff) 14%, transparent);
+    color: var(--theme-accent-primary, #00e5ff);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary, #00e5ff) 30%, transparent);
+    vertical-align: middle;
+    line-height: 1.4;
 }
 
 .smart-paste-textarea {
@@ -110,6 +305,365 @@ ORDEM DA CASCADE:
     resize: vertical;
 }
 
+/* ── GPT hint strip ── */
+.smart-paste-head-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.smart-paste-gpt-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 56px;
+    padding: 0.55rem 0.9rem;
+    border-radius: 999px;
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 28%, var(--theme-border-soft) 72%);
+    background:
+        linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--theme-surface-strong) 92%, transparent),
+            color-mix(in srgb, var(--theme-accent-primary-alpha) 10%, var(--theme-surface-secondary) 90%)
+        );
+    box-shadow:
+        var(--theme-shadow-sm, 0 8px 20px rgba(15, 23, 42, 0.08)),
+        inset 0 0 0 1px color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, transparent);
+    white-space: normal;
+    text-decoration: none;
+    max-width: 100%;
+}
+
+.smart-paste-gpt-btn:hover {
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 45%, var(--theme-border-soft) 55%);
+    box-shadow:
+        var(--theme-shadow-md, 0 12px 30px rgba(15, 23, 42, 0.12)),
+        inset 0 0 0 1px color-mix(in srgb, var(--theme-accent-primary-alpha) 22%, transparent);
+}
+
+.smart-paste-gpt-btn__icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 16%, var(--theme-surface-strong) 84%);
+    color: var(--theme-accent-primary);
+    flex-shrink: 0;
+}
+
+.smart-paste-gpt-btn__icon {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.smart-paste-gpt-btn__copy {
+    display: grid;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.smart-paste-gpt-btn__copy strong,
+.smart-paste-gpt-btn__copy small {
+    display: block;
+}
+
+.smart-paste-gpt-btn__copy strong {
+    color: var(--theme-text-primary);
+    font-size: 0.95rem;
+    line-height: 1.1;
+}
+
+.smart-paste-gpt-btn__copy small {
+    color: var(--theme-text-secondary);
+    font-size: 0.73rem;
+    line-height: 1.15;
+}
+
+/* ── Day chips ── */
+.smart-paste-day-chips {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(156px, 1fr));
+    gap: 0.75rem;
+}
+
+.smart-paste-day-chip {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.38rem;
+    min-height: 112px;
+    padding: 1rem 1rem 0.95rem;
+    border-radius: 22px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 24%, var(--theme-border-soft) 76%);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-strong) 96%, transparent),
+            color-mix(in srgb, var(--theme-surface-secondary) 94%, transparent)
+        ),
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-primary-alpha) 50%, transparent), transparent 60%),
+        var(--theme-card-surface-strong);
+    box-shadow:
+        var(--theme-shadow-sm, 0 10px 28px rgba(15, 23, 42, 0.08)),
+        inset 0 1px 0 color-mix(in srgb, var(--theme-surface-strong) 80%, transparent);
+    cursor: pointer;
+    transition: border-color 0.18s, box-shadow 0.18s, transform 0.12s;
+    text-align: left;
+    width: 100%;
+    font-family: inherit;
+    overflow: hidden;
+}
+
+.smart-paste-day-chip:hover {
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 55%, transparent);
+    box-shadow:
+        var(--theme-shadow-md, 0 16px 36px rgba(15, 23, 42, 0.12)),
+        inset 0 1px 0 color-mix(in srgb, var(--theme-surface-strong) 80%, transparent);
+    transform: translateY(-2px);
+}
+
+.smart-paste-day-chip:active {
+    transform: translateY(0);
+}
+
+/* Clean — sem pendências */
+.smart-paste-day-chip--clean {
+    border-color: color-mix(in srgb, var(--theme-accent-success) 35%, transparent);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-strong) 96%, transparent),
+            color-mix(in srgb, var(--theme-accent-success-alpha) 8%, var(--theme-surface-secondary) 92%)
+        ),
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-success) 14%, transparent), transparent 60%),
+        var(--theme-card-surface-strong);
+}
+
+.smart-paste-day-chip--clean::after {
+    content: '';
+    position: absolute;
+    top: 0.55rem;
+    right: 0.65rem;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--theme-accent-success);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--theme-accent-success) 60%, transparent);
+}
+
+/* Warning — tem pendências */
+.smart-paste-day-chip--warning {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 40%, transparent);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-surface-strong) 96%, transparent),
+            color-mix(in srgb, var(--theme-accent-danger-alpha) 8%, var(--theme-surface-secondary) 92%)
+        ),
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-danger) 14%, transparent), transparent 60%),
+        var(--theme-card-surface-strong);
+}
+
+.smart-paste-day-chip--warning::after {
+    content: '';
+    position: absolute;
+    top: 0.55rem;
+    right: 0.65rem;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--theme-accent-danger);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--theme-accent-danger) 60%, transparent);
+}
+
+.smart-paste-day-chip__label {
+    font-weight: 800;
+    font-size: 0.92rem;
+    letter-spacing: -0.02em;
+    color: var(--theme-text-primary);
+    line-height: 1.1;
+}
+
+.smart-paste-day-chip__count {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--theme-text-secondary);
+}
+
+.smart-paste-day-chip__status {
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.7rem;
+    padding: 0.28rem 0.62rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 16%, var(--theme-surface-strong) 84%);
+    color: color-mix(in srgb, var(--theme-accent-success) 60%, var(--theme-text-primary) 40%);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.smart-paste-day-chip__status--warning {
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 18%, var(--theme-surface-strong) 82%);
+    color: color-mix(in srgb, var(--theme-accent-danger) 72%, var(--theme-text-primary) 28%);
+}
+
+/* ── Day dialog — Redesign Onda 2 ── */
+/*
+ * ATENÇÃO: NÃO adicionar display aqui.
+ * <dialog> usa display:none por padrão (UA stylesheet).
+ * Definir display no seletor base (sem [open]) sobrescreve o UA
+ * e faz todos os dialogs aparecerem no fluxo do documento mesmo fechados.
+ * O display:flex fica exclusivamente no seletor [open] abaixo.
+ *
+ * Paleta: tokens semânticos em vez de hardcoded rgba.
+ * Light + dark resolvidos automaticamente via tokens.css.
+ */
+.smart-paste-day-dialog {
+    background: var(--theme-surface-strong);
+    border: 1px solid var(--theme-border-soft);
+    border-radius: 20px;
+    padding: 0;
+    max-width: 540px;
+    width: calc(100vw - 2rem);
+    max-height: 82vh;
+    overflow: hidden;
+    box-shadow: var(--theme-shadow-xl);
+}
+
+.smart-paste-day-dialog::backdrop {
+    background: color-mix(in srgb, var(--theme-bg-root) 55%, transparent);
+    backdrop-filter: blur(6px);
+}
+
+.smart-paste-day-dialog[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Inner container ── */
+.smart-paste-day-dialog__inner {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    position: relative; /* âncora para o fade de scroll no ::after */
+}
+
+/* Fade na borda inferior — indica que o body tem mais conteúdo para scrollar */
+.smart-paste-day-dialog__inner::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3rem;
+    background: linear-gradient(to bottom, transparent, var(--theme-surface-strong));
+    pointer-events: none;
+    z-index: 2;
+    border-radius: 0 0 20px 20px;
+    opacity: 1;
+    transition: opacity var(--motion-base);
+}
+
+/* ── Header ── */
+.smart-paste-day-dialog__head {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 1.1rem 3.9rem 1.1rem 1.4rem;
+    background: linear-gradient(
+        180deg,
+        var(--theme-surface-strong) 0%,
+        var(--theme-surface-secondary) 100%
+    );
+    border-bottom: 1px solid var(--theme-border-soft);
+    flex-shrink: 0;
+}
+
+.smart-paste-day-dialog__head h3 {
+    margin: 0.2rem 0 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--theme-text-primary);
+    line-height: 1.3;
+}
+
+.smart-paste-day-dialog__heading {
+    display: grid;
+    gap: 0.3rem;
+    min-width: 0;
+}
+
+.smart-paste-day-dialog__heading .eyebrow {
+    color: var(--theme-accent-primary);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.smart-paste-day-dialog__summary {
+    margin: 0;
+    color: var(--theme-text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+/* ── Close button ── */
+.smart-paste-day-dialog__close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    background: var(--theme-surface-secondary);
+    border: 1px solid var(--theme-border-soft);
+    cursor: pointer;
+    color: var(--theme-text-muted);
+    font-size: 0.9rem;
+    padding: 0;
+    border-radius: 999px;
+    transition: background var(--motion-fast), border-color var(--motion-fast),
+                color var(--motion-fast), transform 0.12s;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.smart-paste-day-dialog__close:hover {
+    background: color-mix(in srgb, var(--theme-accent-danger) 10%, var(--theme-surface-secondary) 90%);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 32%, var(--theme-border-soft) 68%);
+    color: var(--theme-accent-danger);
+    transform: translateY(-1px);
+}
+
+/* ── Body (scrollable) ── */
+.smart-paste-day-dialog__body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 1rem 1.25rem 3.5rem; /* padding-bottom generoso: espaço acima do fade */
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+/* ── Legacy grid — kept for graceful degradation ── */
 .smart-paste-preview-grid {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -135,32 +689,75 @@ ORDEM DA CASCADE:
     gap: 0.75rem;
 }
 
+/* ── Block cards ── */
+/*
+ * Stripe via border-top-width:3px + border-top-color por variante.
+ * Evita ::before position:absolute + overflow:hidden, que impedia
+ * o scroll independente por card.
+ */
 .smart-paste-block-card {
-    border: 1px solid rgba(148, 163, 184, 0.22);
-    border-radius: 16px;
-    padding: 0.9rem;
-    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid var(--theme-border-soft);
+    border-top-width: 3px;                 /* stripe visível no topo */
+    border-top-color: var(--theme-border-soft); /* cor padrão — sobrescrita por variante */
+    border-radius: 14px;
+    padding: 0.85rem 1rem 0.9rem;
+    background: var(--theme-surface-secondary);
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.4rem;
+    /* scroll independente por card — clamp adapta entre telas pequenas e grandes */
+    max-height: clamp(220px, 40vh, 300px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+    scroll-margin-top: 0.75rem; /* ancora o card quando o body faz scroll até ele */
 }
 
+/* Reset margens default do browser nos filhos diretos */
+.smart-paste-block-card > strong {
+    display: block;
+    margin: 0;
+    margin-top: 0.15rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--theme-text-primary);
+    line-height: 1.3;
+}
+
+.smart-paste-block-card > p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--theme-text-secondary);
+    line-height: 1.4;
+}
+
+/* Separador visual antes da lista de movimentos */
+.smart-paste-block-card > .smart-paste-movement-list {
+    margin-top: 0.35rem;
+}
+
+/* ── Variantes por tipo — border-top-color como stripe ── */
 .smart-paste-block-card--warmup {
-    border-color: rgba(34, 197, 94, 0.28);
+    border-color: color-mix(in srgb, var(--theme-accent-success) 28%, var(--theme-border-soft));
+    border-top-color: var(--theme-accent-success);
 }
 
 .smart-paste-block-card--skill,
 .smart-paste-block-card--strength {
-    border-color: rgba(56, 189, 248, 0.28);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 28%, var(--theme-border-soft));
+    border-top-color: var(--theme-accent-primary);
 }
 
 .smart-paste-block-card--metcon {
-    border-color: rgba(249, 115, 22, 0.32);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 32%, var(--theme-border-soft));
+    border-top-color: var(--theme-accent-warning);
 }
 
 .smart-paste-block-card--mobility,
 .smart-paste-block-card--cooldown {
-    border-color: rgba(168, 85, 247, 0.3);
+    border-color: color-mix(in srgb, var(--theme-accent-premium) 30%, var(--theme-border-soft));
+    border-top-color: var(--theme-accent-premium);
+    min-height: 110px; /* mobility costuma ter poucos movimentos — garante presença visual */
 }
 
 .smart-paste-block-head {
@@ -169,26 +766,218 @@ ORDEM DA CASCADE:
     gap: 0.45rem;
 }
 
+/* ── Movement list ── */
 .smart-paste-movement-list {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.45rem;
 }
 
 .smart-paste-movement-list li {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
-    padding: 0.55rem 0.65rem;
-    border-radius: 12px;
-    background: rgba(15, 23, 42, 0.68);
+    gap: 0.2rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: var(--theme-surface-muted);
+    transition: border-color var(--motion-fast);
 }
 
+.smart-paste-movement-list li > span:first-child {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--theme-text-primary);
+    line-height: 1.35;
+}
+
+.smart-paste-movement-list li code {
+    font-size: 0.75rem;
+    font-family: var(--font-mono, "Roboto Mono", monospace);
+    color: var(--theme-accent-primary);
+    background: color-mix(in srgb, var(--theme-accent-primary) 10%, transparent);
+    border-radius: 4px;
+    padding: 0.1rem 0.35rem;
+    width: fit-content;
+}
+
+.smart-paste-movement-list li small {
+    font-size: 0.75rem;
+    color: var(--theme-text-secondary);
+    line-height: 1.4;
+}
+
+/* Estado: pendente de revisão */
 .smart-paste-movement-list li.is-warning {
-    border: 1px dashed rgba(245, 158, 11, 0.72);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 55%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-warning) 6%, var(--theme-surface-muted));
+}
+
+/* Onda 2: cards resumidos no dialog */
+.smart-paste-day-dialog__body .smart-paste-block-card {
+    gap: 0.55rem;
+    min-height: 120px;
+    max-height: none;
+    overflow: hidden;
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+    transition: border-color var(--motion-fast), box-shadow var(--motion-fast), transform 0.12s;
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--theme-shadow-md);
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-summary {
+    display: grid;
+    gap: 0.32rem;
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-summary > strong {
+    display: block;
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--theme-text-primary);
+    line-height: 1.3;
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-summary > p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--theme-text-secondary);
+    line-height: 1.4;
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-summary__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.65rem;
+    align-items: center;
+    font-size: 0.76rem;
+    color: var(--theme-text-secondary);
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-summary__status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.55rem;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 14%, var(--theme-surface-muted) 86%);
+    color: color-mix(in srgb, var(--theme-accent-success) 60%, var(--theme-text-primary) 40%);
+    font-weight: 700;
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-summary__status--warning {
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 16%, var(--theme-surface-muted) 84%);
+    color: color-mix(in srgb, var(--theme-accent-danger) 72%, var(--theme-text-primary) 28%);
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-card--warmup {
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-accent-success-alpha) 5%, var(--theme-surface-secondary) 95%),
+            var(--theme-surface-secondary)
+        );
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-card--skill,
+.smart-paste-day-dialog__body .smart-paste-block-card--strength {
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-accent-primary-alpha) 5%, var(--theme-surface-secondary) 95%),
+            var(--theme-surface-secondary)
+        );
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-card--metcon {
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-accent-warning-alpha) 5%, var(--theme-surface-secondary) 95%),
+            var(--theme-surface-secondary)
+        );
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-card--mobility,
+.smart-paste-day-dialog__body .smart-paste-block-card--cooldown {
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--theme-accent-premium-alpha) 5%, var(--theme-surface-secondary) 95%),
+            var(--theme-surface-secondary)
+        );
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-card--clean {
+    border-top-color: var(--theme-accent-success);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--theme-accent-success-alpha) 8%, transparent);
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-card--warning {
+    border-top-color: var(--theme-accent-danger);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--theme-accent-danger-alpha) 10%, transparent);
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-card__surface {
+    display: grid;
+    gap: 0.55rem;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+}
+
+.smart-paste-day-dialog__body[data-dialog-mode="focused"] [data-dialog-block].is-hidden {
+    display: none;
+}
+
+.smart-paste-day-dialog__body[data-dialog-mode="focused"] [data-dialog-block].is-active {
+    min-height: auto;
+    max-height: none;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+    box-shadow: var(--theme-shadow-lg);
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-detail {
+    display: grid;
+    gap: 0.65rem;
+    margin-top: 0.25rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid var(--theme-border-soft);
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-detail > p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--theme-text-secondary);
+    line-height: 1.4;
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-detail__actions {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.smart-paste-day-dialog__body .smart-paste-block-detail__back {
+    min-height: 34px;
+}
+
+.smart-paste-day-dialog__body[data-dialog-mode="focused"] {
+    gap: 0.9rem;
 }
 
 .smart-paste-warning-list {
@@ -202,14 +991,12 @@ ORDEM DA CASCADE:
     gap: 0.55rem;
 }
 
+/*
+ * ONDA 1: revisão movida para o fluxo via dialog (chips → dialog).
+ * Seção inline ocultada — reversível removendo display:none.
+ */
 .smart-paste-review-queue {
-    border: 1px solid rgba(245, 158, 11, 0.25);
-    border-radius: 18px;
-    padding: 0.95rem 1rem;
-    background: rgba(120, 53, 15, 0.08);
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
+    display: none;
 }
 
 .smart-paste-review-queue-head {
@@ -229,7 +1016,7 @@ ORDEM DA CASCADE:
     gap: 0.3rem;
     border-radius: 14px;
     padding: 0.8rem 0.9rem;
-    background: rgba(15, 23, 42, 0.55);
+    background: var(--theme-surface-secondary);
     color: inherit;
     text-decoration: none;
 }
@@ -245,32 +1032,149 @@ ORDEM DA CASCADE:
     cursor: pointer;
 }
 
+/* ── Inline review disclosure (dentro do dialog) ── */
 .smart-paste-inline-review-disclosure {
-    margin-top: 0.35rem;
+    margin-top: 0.4rem;
     scroll-margin-top: 8rem;
 }
 
 .smart-paste-inline-review-disclosure summary {
     cursor: pointer;
+    font-size: 0.8rem;
     font-weight: 600;
-    color: rgba(248, 250, 252, 0.9);
+    color: var(--theme-accent-support);
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0;
+    user-select: none;
+    transition: color var(--motion-fast);
 }
 
+.smart-paste-inline-review-disclosure summary::before {
+    content: '▸';
+    display: inline-block;
+    transition: transform 0.18s var(--ease-standard);
+    font-size: 0.7rem;
+}
+
+.smart-paste-inline-review-disclosure[open] summary::before {
+    transform: rotate(90deg);
+}
+
+.smart-paste-inline-review-disclosure summary:hover {
+    color: var(--theme-accent-primary);
+}
+
+/* ── Inline review form — override do global input para caber no card ── */
+/*
+ * Grid 2 colunas: Reps + Carga ficam lado a lado.
+ * Texto, Slug e Nota: span 2 (largura total).
+ * Inputs com override do global (min-height:48px → 34px, radius:18px → 8px).
+ */
 .smart-paste-inline-review-form {
-    margin-top: 0.65rem;
+    margin-top: 0.6rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid var(--theme-border-soft);
     display: grid;
-    gap: 0.55rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem;
+}
+
+/* Labels com span acima do input */
+.smart-paste-inline-review-form label {
+    display: grid;
+    gap: 0.25rem;
+}
+
+/* Texto (1º), Slug (2º) e Nota (5º): largura total */
+.smart-paste-inline-review-form label:nth-of-type(1),
+.smart-paste-inline-review-form label:nth-of-type(2),
+.smart-paste-inline-review-form label:nth-of-type(5) {
+    grid-column: span 2;
+}
+
+/* Reps (3º) e Carga (4º): meia largura — ficam lado a lado */
+
+.smart-paste-inline-review-form label > span {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--theme-text-muted);
+    line-height: 1;
+}
+
+/* Override do global: inputs compactos, no tom do card */
+.smart-paste-inline-review-form input {
+    min-height: 34px;
+    height: 34px;
+    padding: 0 0.65rem;
+    border-radius: 8px;
+    background: var(--theme-surface-strong);
+    border: 1px solid var(--theme-border-soft);
+    color: var(--theme-text-primary);
+    font-size: 0.82rem;
+    font-weight: 500;
+    line-height: 1;
+    transition:
+        border-color var(--motion-fast),
+        box-shadow var(--motion-fast);
+}
+
+.smart-paste-inline-review-form input:focus {
+    border-color: var(--theme-accent-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-primary) 14%, transparent);
+    outline: none;
+    transform: none; /* cancela o translateY(-1px) do global */
+}
+
+/* Ação de submit: ocupa 2 colunas, alinha à direita */
+.smart-paste-inline-review-form .actions {
+    grid-column: span 2;
+    margin-top: 0.2rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/*
+ * Dark mode: inputs do inline review form (dentro dos dialogs de dia).
+ * Os dialogs vivem fora de .smart-paste-card no DOM,
+ * então precisam de override próprio para manter o mesmo tema escuro.
+ */
+body[data-theme="dark"] .smart-paste-inline-review-form input {
+    background: rgba(10, 18, 32, 0.72);
+    color: rgba(248, 250, 252, 0.94);
+    border-color: rgba(148, 163, 184, 0.14);
+    caret-color: #67e8f9;
+}
+
+body[data-theme="dark"] .smart-paste-inline-review-form input::placeholder {
+    color: rgba(148, 163, 184, 0.4);
+}
+
+body[data-theme="dark"] .smart-paste-inline-review-form input:focus {
+    background: rgba(10, 18, 32, 0.88);
+    border-color: rgba(103, 232, 249, 0.36);
+    box-shadow: 0 0 0 4px rgba(103, 232, 249, 0.1);
+    color: rgba(248, 250, 252, 0.98);
+    transform: none;
+}
+
+body[data-theme="dark"] .smart-paste-inline-review-form label > span {
+    color: rgba(226, 232, 240, 0.62);
 }
 
 .smart-paste-warning-card {
-    border: 1px dashed rgba(245, 158, 11, 0.72);
-    border-radius: 16px;
+    border: 1px dashed color-mix(in srgb, var(--theme-accent-warning) 65%, transparent);
+    border-radius: 14px;
     padding: 0.85rem 0.95rem;
-    background: rgba(120, 53, 15, 0.14);
+    background: color-mix(in srgb, var(--theme-accent-warning) 7%, var(--theme-surface-secondary));
 }
 
 .smart-paste-class-types {
-    border: 1px solid rgba(148, 163, 184, 0.2);
+    border: 1px solid var(--theme-border-soft);
     border-radius: 16px;
     padding: 0.85rem 1rem;
     display: flex;
@@ -296,23 +1200,23 @@ ORDEM DA CASCADE:
 }
 
 .smart-paste-projection-card {
-    border: 1px solid rgba(148, 163, 184, 0.22);
+    border: 1px solid var(--theme-border-soft);
     border-radius: 16px;
     padding: 0.95rem 1rem;
-    background: rgba(15, 23, 42, 0.5);
+    background: var(--theme-surface-secondary);
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
 }
 
 .smart-paste-projection-card--ready {
-    border-color: rgba(34, 197, 94, 0.35);
+    border-color: color-mix(in srgb, var(--theme-accent-success) 35%, var(--theme-border-soft));
 }
 
 .smart-paste-projection-card--skip_existing_workout,
 .smart-paste-projection-card--skip_no_compatible_blocks,
 .smart-paste-projection-card--skip_no_day_plan {
-    border-color: rgba(245, 158, 11, 0.45);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 45%, var(--theme-border-soft));
 }
 
 .smart-paste-projection-head {
@@ -320,6 +1224,25 @@ ORDEM DA CASCADE:
     justify-content: space-between;
     gap: 1rem;
     align-items: flex-start;
+}
+
+/* SmartPlan link em cada sessão replicada */
+.smart-paste-projection-smartplan-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--theme-accent-primary);
+    text-decoration: none;
+    padding: 0.3rem 0;
+    opacity: 0.85;
+    transition: opacity 0.15s;
+}
+
+.smart-paste-projection-smartplan-link:hover {
+    opacity: 1;
+    text-decoration: underline;
 }
 
 .smart-paste-template-bridge {
@@ -350,10 +1273,13 @@ ORDEM DA CASCADE:
     align-content: center;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 960px) {
     .smart-paste-layout {
         grid-template-columns: 1fr;
     }
+}
+
+@media (max-width: 768px) {
 
     .smart-paste-template-bridge__head {
         flex-direction: column;
@@ -389,7 +1315,174 @@ ORDEM DA CASCADE:
     min-width: 160px;
 }
 
+.smart-paste-gpt-banner__steps {
+    flex: 1;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 200px;
+}
+
+.smart-paste-gpt-banner__steps li {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.smart-paste-gpt-banner__steps strong {
+    color: var(--accent-primary);
+    font-variant-numeric: tabular-nums;
+}
+
 .smart-paste-gpt-banner .button {
     white-space: nowrap;
     flex-shrink: 0;
+}
+
+/* Footer do dialog com CTA SmartPlan */
+.smart-paste-day-dialog__footer {
+    flex-shrink: 0;
+    border-top: 1px solid var(--theme-border-soft);
+    padding: 0.9rem 1.25rem;
+}
+
+.smart-paste-day-dialog__smartplan {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--theme-accent-primary) 7%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 20%, transparent);
+    flex-wrap: wrap;
+}
+
+.smart-paste-day-dialog__smartplan .eyebrow {
+    margin-bottom: 0.2rem;
+}
+
+.smart-paste-day-dialog__smartplan > div {
+    flex: 1;
+    min-width: 160px;
+}
+
+.smart-paste-day-dialog__smartplan p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--theme-text-secondary);
+    line-height: 1.4;
+}
+
+.smart-paste-day-dialog__smartplan-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.smart-paste-day-dialog__smartplan .button,
+.smart-paste-day-dialog__smartplan-actions .button {
+    white-space: nowrap;
+}
+
+/* Textarea oculto com texto gerado do dia para clipboard */
+.smart-paste-day-gpt-source {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+@media (max-width: 720px) {
+    .smart-paste-date-input-wrap {
+        grid-template-columns: auto auto;
+        justify-content: start;
+    }
+
+    .smart-paste-date-trigger {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .smart-paste-head-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, max-content);
+        justify-content: start;
+        align-items: start;
+        gap: 0.6rem;
+    }
+
+    .smart-paste-gpt-btn {
+        grid-column: 1 / -1;
+        width: 100%;
+        min-height: 54px;
+        padding: 0.7rem 0.9rem;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 0.65rem;
+    }
+
+    .smart-paste-gpt-btn__icon-wrap {
+        width: 2.15rem;
+        height: 2.15rem;
+    }
+
+    .smart-paste-gpt-btn__copy {
+        gap: 0.12rem;
+    }
+
+    .smart-paste-gpt-btn__copy strong {
+        font-size: 0.92rem;
+    }
+
+    .smart-paste-gpt-btn__copy small {
+        font-size: 0.69rem;
+    }
+
+    .smart-paste-head-actions > .pill {
+        justify-self: start;
+    }
+
+    .smart-paste-day-chips {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .smart-paste-day-chip {
+        min-height: 104px;
+    }
+
+    .smart-paste-day-dialog {
+        width: min(calc(100vw - 1rem), 540px);
+        max-height: 88vh;
+        border-radius: 16px;
+    }
+
+    .smart-paste-day-dialog__head {
+        padding-right: 3.2rem;
+        padding-left: 1.1rem;
+    }
+
+    .smart-paste-day-dialog__close {
+        top: 0.85rem;
+        right: 0.85rem;
+    }
+}
+
+@media (max-width: 520px) {
+    .smart-paste-head-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .smart-paste-head-actions > .pill {
+        width: fit-content;
+    }
+
+    .smart-paste-day-chips {
+        grid-template-columns: 1fr;
+    }
 }

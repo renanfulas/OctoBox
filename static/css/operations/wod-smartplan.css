@@ -39,6 +39,19 @@ PONTOS CRITICOS:
     gap: 6px;
 }
 
+.wod-smartplan-card__head h3,
+.wod-smartplan-card__head p {
+    margin: 0;
+}
+
+.wod-smartplan-card__head h3 {
+    color: var(--theme-text-primary);
+}
+
+.wod-smartplan-card__head .system-map-copy {
+    color: var(--theme-text-secondary);
+}
+
 .wod-smartplan-card__cta {
     display: flex;
     flex-wrap: wrap;
@@ -209,6 +222,15 @@ PONTOS CRITICOS:
     background: color-mix(in srgb, var(--theme-accent-danger-alpha) 12%, transparent);
 }
 
+body[data-theme="dark"] .wod-smartplan-card__head h3 {
+    color: rgba(248, 250, 252, 0.98);
+    text-shadow: 0 1px 0 rgba(3, 7, 18, 0.28);
+}
+
+body[data-theme="dark"] .wod-smartplan-card__head .system-map-copy {
+    color: rgba(226, 232, 240, 0.76);
+}
+
 /* =========================
  * Mobile leve
  * ========================= */
@@ -219,5 +241,215 @@ PONTOS CRITICOS:
     }
     .wod-smartplan-form__textarea {
         min-height: 160px;
+    }
+}
+
+/* =========================
+ * Coach editor theme parity with Smart Paste
+ * ========================= */
+
+body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-editor-card,
+body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-block-card,
+body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-movement-card,
+body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-prescription-preview,
+body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-empty-state {
+    background:
+        linear-gradient(
+            160deg,
+            rgba(16, 24, 40, 0.98) 0%,
+            rgba(20, 30, 50, 0.97) 100%
+        );
+    border-color: rgba(128, 151, 190, 0.22);
+    box-shadow:
+        0 20px 44px rgba(0, 0, 0, 0.42),
+        0 6px 16px rgba(0, 0, 0, 0.24);
+}
+
+body[data-theme="dark"] .coach-wod-editor-shell input,
+body[data-theme="dark"] .coach-wod-editor-shell select,
+body[data-theme="dark"] .coach-wod-editor-shell textarea {
+    background: rgba(10, 18, 32, 0.72);
+    color: rgba(248, 250, 252, 0.94);
+    border-color: rgba(148, 163, 184, 0.14);
+    caret-color: #67e8f9;
+}
+
+body[data-theme="dark"] .coach-wod-editor-shell input::placeholder,
+body[data-theme="dark"] .coach-wod-editor-shell textarea::placeholder {
+    color: rgba(148, 163, 184, 0.42);
+}
+
+body[data-theme="dark"] .coach-wod-editor-shell input:focus,
+body[data-theme="dark"] .coach-wod-editor-shell select:focus,
+body[data-theme="dark"] .coach-wod-editor-shell textarea:focus {
+    background: rgba(10, 18, 32, 0.88);
+    border-color: rgba(103, 232, 249, 0.36);
+    box-shadow: 0 0 0 4px rgba(103, 232, 249, 0.1);
+    color: rgba(248, 250, 252, 0.98);
+}
+
+body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-editor-head h2 {
+    color: var(--theme-text-primary);
+}
+
+body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-editor-head .eyebrow {
+    color: var(--theme-accent-primary);
+}
+
+body[data-theme="dark"] .coach-wod-editor-shell label > span,
+body[data-theme="dark"] .coach-wod-editor-shell .operation-session-meta,
+body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-prescription-preview__context,
+body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-empty-state p {
+    color: rgba(226, 232, 240, 0.72);
+}
+
+.coach-wod-structure-shell {
+    display: grid;
+    gap: 1rem;
+}
+
+.coach-wod-structure-overview {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.coach-wod-structure-copy {
+    margin: 0;
+}
+
+.coach-wod-structure-card {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--theme-surface-panel-strong) 74%, white 26%);
+    transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard);
+}
+
+.coach-wod-structure-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--theme-shadow-md);
+}
+
+.coach-wod-structure-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.8rem;
+}
+
+.coach-wod-structure-card__head h3,
+.coach-wod-structure-card__head p {
+    margin: 0;
+}
+
+.coach-wod-structure-card__preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.coach-wod-structure-open {
+    width: fit-content;
+}
+
+.coach-wod-structure-details {
+    display: grid;
+    gap: 1rem;
+}
+
+.coach-wod-structure-detail {
+    display: grid;
+    gap: 1rem;
+}
+
+.coach-wod-structure-detail__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 1rem 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border-soft) 72%, transparent);
+}
+
+.coach-wod-structure-detail__head h3,
+.coach-wod-structure-detail__head p {
+    margin: 0;
+}
+
+.coach-wod-structure-detail__head h3 {
+    font-size: 1.2rem;
+}
+
+.coach-wod-structure-detail.is-active {
+    scroll-margin-top: 2rem;
+}
+
+.coach-wod-structure-detail .coach-wod-block-card {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--theme-surface-panel-strong) 74%, white 26%);
+}
+
+.coach-wod-movement-card {
+    display: grid;
+    gap: 0.85rem;
+    padding: 1rem;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 76%, transparent);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--theme-surface-panel-strong) 70%, white 30%);
+}
+
+.coach-wod-movement-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.coach-wod-movement-card__head h4,
+.coach-wod-movement-card__head p {
+    margin: 0;
+}
+
+.coach-wod-movement-card__head h4 {
+    color: var(--theme-text-primary);
+    font-size: 1rem;
+}
+
+body[data-theme="dark"] .coach-wod-structure-card {
+    background:
+        linear-gradient(
+            160deg,
+            rgba(16, 24, 40, 0.98) 0%,
+            rgba(20, 30, 50, 0.97) 100%
+        );
+    border-color: rgba(128, 151, 190, 0.22);
+}
+
+body[data-theme="dark"] .coach-wod-structure-copy {
+    color: rgba(226, 232, 240, 0.72);
+}
+
+body[data-theme="dark"] .coach-wod-structure-detail .coach-wod-block-card,
+body[data-theme="dark"] .coach-wod-movement-card {
+    background:
+        linear-gradient(
+            160deg,
+            rgba(16, 24, 40, 0.98) 0%,
+            rgba(20, 30, 50, 0.97) 100%
+        );
+    border-color: rgba(128, 151, 190, 0.22);
+}
+
+@media (max-width: 720px) {
+    .coach-wod-structure-card__head,
+    .coach-wod-structure-detail__head,
+    .coach-wod-movement-card__head {
+        flex-direction: column;
     }
 }

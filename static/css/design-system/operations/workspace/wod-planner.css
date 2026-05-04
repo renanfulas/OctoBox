@@ -28,13 +28,13 @@ O QUE ESTE ARQUIVO FAZ:
     gap: 16px;
     align-items: flex-start;
     justify-content: space-between;
-    padding: 18px 20px;
+    padding: 14px 18px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
-    border-radius: 22px;
+    border-radius: 20px;
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 36%),
         color-mix(in srgb, var(--theme-surface-panel) 84%, white 16%);
-    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
 }
 
 .wod-planner__toolbar h2,
@@ -42,11 +42,37 @@ O QUE ESTE ARQUIVO FAZ:
     margin: 0;
 }
 
+.wod-planner__toolbar-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
 .wod-planner__nav {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
     justify-content: flex-end;
+}
+
+.wod-planner__toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.wod-planner__btn-danger {
+    color: var(--danger, #ef4444);
+    border-color: color-mix(in srgb, var(--danger, #ef4444) 28%, transparent);
+}
+
+.wod-planner__btn-danger:hover,
+.wod-planner__btn-danger:focus-visible {
+    border-color: color-mix(in srgb, var(--danger, #ef4444) 52%, transparent);
+    background: color-mix(in srgb, var(--danger, #ef4444) 8%, white 92%);
+    color: var(--danger, #ef4444);
 }
 
 .wod-planner__metrics {
@@ -149,8 +175,8 @@ O QUE ESTE ARQUIVO FAZ:
 
 .wod-planner__grid {
     display: grid;
-    grid-template-columns: repeat(7, minmax(172px, 1fr));
-    gap: var(--wod-planner-gap, 10px);
+    grid-template-columns: repeat(7, minmax(152px, 1fr));
+    gap: var(--wod-planner-gap, 8px);
     overflow-x: auto;
     padding-bottom: 4px;
     scroll-padding-inline: 16px;
@@ -166,11 +192,11 @@ O QUE ESTE ARQUIVO FAZ:
 .wod-planner__day {
     display: grid;
     align-content: start;
-    gap: 8px;
-    min-height: 248px;
-    padding: 10px;
+    gap: 6px;
+    min-height: 200px;
+    padding: 8px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
-    border-radius: 18px;
+    border-radius: 16px;
     background: color-mix(in srgb, var(--theme-surface-panel) 78%, white 22%);
 }
 
@@ -200,26 +226,57 @@ O QUE ESTE ARQUIVO FAZ:
 
 .wod-planner__cells {
     display: grid;
-    gap: 8px;
+    gap: 5px;
 }
 
 .wod-planner__cell,
 .wod-planner__empty-day {
-    min-height: var(--wod-cell-min-size, 64px);
-    border-radius: 14px;
+    min-height: var(--wod-cell-min-size, 52px);
+    border-radius: 11px;
 }
 
 .wod-planner__cell {
     display: grid;
-    gap: 4px;
-    padding: 10px;
+    gap: 2px;
+    padding: 7px 9px 7px 12px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
+    border-left-width: 3px;
     background: color-mix(in srgb, var(--theme-surface-panel-strong) 76%, white 24%);
     color: var(--theme-text-secondary);
     transition:
         border-color var(--motion-base) var(--ease-standard),
         color var(--motion-base) var(--ease-standard),
         transform var(--motion-base) var(--ease-standard);
+}
+
+.wod-planner__cell-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.wod-planner__cell-title {
+    color: var(--theme-text-primary);
+    line-height: 1.1;
+    font-size: 0.9rem;
+}
+
+.wod-planner__cell-workout {
+    color: var(--theme-text-secondary);
+    font-size: 0.78rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wod-planner__cell-status-dot {
+    flex-shrink: 0;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--theme-border-soft);
 }
 
 .wod-planner__cell:hover,
@@ -305,22 +362,39 @@ O QUE ESTE ARQUIVO FAZ:
 
 .wod-planner__cell--empty {
     border-color: color-mix(in srgb, var(--theme-border-soft) 70%, transparent);
+    border-left-color: color-mix(in srgb, var(--theme-border-soft) 70%, transparent);
 }
 
 .wod-planner__cell--draft {
-    border-color: color-mix(in srgb, var(--warning) 28%, var(--theme-border-soft) 72%);
+    border-color: color-mix(in srgb, var(--warning) 18%, var(--theme-border-soft) 82%);
+    border-left-color: var(--warning, #f59e0b);
+}
+.wod-planner__cell--draft .wod-planner__cell-status-dot {
+    background: var(--warning, #f59e0b);
 }
 
 .wod-planner__cell--pending {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 34%, var(--theme-border-soft) 66%);
+    border-color: color-mix(in srgb, var(--theme-accent-support) 22%, var(--theme-border-soft) 78%);
+    border-left-color: var(--theme-accent-support);
+}
+.wod-planner__cell--pending .wod-planner__cell-status-dot {
+    background: var(--theme-accent-support);
 }
 
 .wod-planner__cell--published {
-    border-color: color-mix(in srgb, var(--success) 30%, var(--theme-border-soft) 70%);
+    border-color: color-mix(in srgb, var(--success) 20%, var(--theme-border-soft) 80%);
+    border-left-color: var(--success, #22c55e);
+}
+.wod-planner__cell--published .wod-planner__cell-status-dot {
+    background: var(--success, #22c55e);
 }
 
 .wod-planner__cell--sensitive {
-    border-color: color-mix(in srgb, var(--danger) 38%, var(--theme-border-soft) 62%);
+    border-color: color-mix(in srgb, var(--danger) 22%, var(--theme-border-soft) 78%);
+    border-left-color: var(--danger, #ef4444);
+}
+.wod-planner__cell--sensitive .wod-planner__cell-status-dot {
+    background: var(--danger, #ef4444);
 }
 
 .wod-planner__empty-day {
@@ -513,9 +587,22 @@ body[data-theme="dark"] .wod-planner__cell-action--primary {
     color: #e8f1ff;
 }
 
+body[data-theme="dark"] .wod-planner__toolbar h2,
+body[data-theme="dark"] .wod-planner__spotlight-summary-toggle strong,
+body[data-theme="dark"] .wod-planner__insights-summary strong,
+body[data-theme="dark"] .wod-planner__spotlight h3,
+body[data-theme="dark"] .wod-planner__funnel-head h3 {
+    color: #f3f7ff;
+    text-shadow: 0 1px 0 rgba(3, 7, 18, 0.28);
+}
+
 @media (max-width: 980px) {
     .wod-planner__toolbar {
         display: grid;
+    }
+
+    .wod-planner__toolbar-right {
+        align-items: flex-start;
     }
 
     .wod-planner__nav {
@@ -546,8 +633,9 @@ body[data-theme="dark"] .wod-planner__cell-action--primary {
     }
 
     .wod-planner__grid {
-        grid-template-columns: repeat(7, minmax(156px, 1fr));
+        grid-template-columns: repeat(7, minmax(140px, 1fr));
     }
+
 
     .wod-planner__template-picker-head {
         grid-template-columns: minmax(0, 1fr);
@@ -836,6 +924,45 @@ html.wod-planner-template-picker-open body {
 .wod-planner__funnel-ranking-card p,
 .wod-planner__funnel-ranking-card strong {
     margin: 0;
+}
+
+/* ── Confirm dialog (Clear Week) ─────────────────────────────────────────── */
+
+.wod-planner__confirm-dialog {
+    width: min(440px, calc(100vw - 32px));
+    padding: 24px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    border-radius: 22px;
+    box-shadow: var(--theme-shadow-xl);
+    background: color-mix(in srgb, var(--theme-surface-panel) 96%, white 4%);
+    color: var(--theme-text-primary);
+}
+
+.wod-planner__confirm-dialog::backdrop {
+    background: rgba(4, 10, 18, 0.52);
+    backdrop-filter: blur(6px);
+}
+
+.wod-planner__confirm-dialog h3,
+.wod-planner__confirm-dialog p {
+    margin: 0 0 12px;
+}
+
+.wod-planner__confirm-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.wod-planner__confirm-actions form {
+    margin: 0;
+}
+
+/* Dark mode additions */
+body[data-theme="dark"] .wod-planner__confirm-dialog {
+    border-color: rgba(148, 163, 184, 0.16);
+    background: rgba(8, 16, 30, 0.96);
 }
 
 @media (max-width: 720px) {

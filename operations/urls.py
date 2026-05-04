@@ -58,6 +58,8 @@ from .workout_board_views import (
 )
 from .workout_planner_views import (
     WorkoutPlannerApplyTrustedTemplateView,
+    WorkoutPlannerClearWeekView,
+    WorkoutPlannerDeleteSelectedWorkoutView,
     WorkoutPlannerDuplicatePreviousSlotView,
     WorkoutPlannerTemplatePickerTelemetryView,
     WorkoutPlannerView,
@@ -115,6 +117,12 @@ urlpatterns = [
         WorkoutPlannerApplyTrustedTemplateView.as_view(),
         name='workout-planner-apply-trusted-template',
     ),
+    path(
+        'operacao/wod/planner/celula/<int:session_id>/excluir-wod/',
+        WorkoutPlannerDeleteSelectedWorkoutView.as_view(),
+        name='workout-planner-delete-selected-workout',
+    ),
+    path('operacao/wod/planner/semana/limpar/', WorkoutPlannerClearWeekView.as_view(), name='workout-planner-clear-week'),
     path('operacao/wod/planner/dia/aplicar/', WodDayApplyView.as_view(), name='wod-day-apply'),
     path('operacao/wod/planner/dia/desfazer/', WodDayApplyUndoView.as_view(), name='wod-day-apply-undo'),
     path('operacao/wod/templates/<int:template_id>/arquivar/', WorkoutTemplateArchiveView.as_view(), name='workout-template-archive'),

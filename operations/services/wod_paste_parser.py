@@ -53,9 +53,13 @@ def _as_float(raw_value: str) -> float:
     return float(raw_value.replace('.', '').replace(',', '.'))
 
 
-@lru_cache(maxsize=1)
-def load_wod_movement_dictionary() -> list[tuple[str, tuple[str, ...]]]:
-    dictionary_path = Path(__file__).resolve().parents[2] / 'docs' / 'reference' / 'wod-movement-dictionary.md'
+def _wod_movement_dictionary_path() -> Path:
+    return Path(__file__).resolve().parents[2] / 'docs' / 'reference' / 'wod-movement-dictionary.md'
+
+
+@lru_cache(maxsize=8)
+def _load_wod_movement_dictionary_cached(dictionary_path_value: str, modified_at_ns: int) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    dictionary_path = Path(dictionary_path_value)
     entries: list[tuple[str, tuple[str, ...]]] = []
     for line in dictionary_path.read_text(encoding='utf-8').splitlines():
         if not line.startswith('| `'):
@@ -69,7 +73,13 @@ def load_wod_movement_dictionary() -> list[tuple[str, tuple[str, ...]]]:
         aliases = [alias.strip() for alias in parts[1].split(',') if alias.strip()]
         normalized_aliases = sorted({_normalize_token(slug), *(_normalize_token(alias) for alias in aliases)}, key=len, reverse=True)
         entries.append((slug, tuple(normalized_aliases)))
-    return entries
+    return tuple(entries)
+
+
+def load_wod_movement_dictionary() -> list[tuple[str, tuple[str, ...]]]:
+    dictionary_path = _wod_movement_dictionary_path()
+    modified_at_ns = dictionary_path.stat().st_mtime_ns
+    return list(_load_wod_movement_dictionary_cached(str(dictionary_path), modified_at_ns))
 
 
 def _match_weekday(line: str):

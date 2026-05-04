@@ -157,6 +157,8 @@ def classify_source(relative_path: str) -> tuple[str, int]:
         return KnowledgeSourceKind.DOC, 60
     if relative_path.startswith('docs/history/'):
         return KnowledgeSourceKind.DOC, 50
+    if relative_path.startswith('docs/coaching/'):
+        return KnowledgeSourceKind.DOC, 85
     if relative_path.startswith('docs/'):
         return KnowledgeSourceKind.DOC, 68
     if relative_path.startswith('.specs/codebase/'):

@@ -2,12 +2,12 @@
 ARQUIVO: navegacao compartilhada do corredor de WOD.
 
 POR QUE ELE EXISTE:
-- mantem a navegacao do corredor consistente entre editor, aprovacao, historico e resumo.
+- mantem a navegacao do corredor consistente entre planner, Smart Paste e aprovacoes.
 
 O QUE ESTE ARQUIVO FAZ:
 1. define tabs por papel.
-2. centraliza os hrefs canônicos do corredor.
-3. evita duplicacao de navegação nos builders de contexto.
+2. centraliza os hrefs canonicos do corredor.
+3. evita duplicacao de navegacao nos builders de contexto.
 """
 
 from django.urls import reverse
@@ -29,28 +29,10 @@ _TAB_SPECS = (
         'allowed_roles': {ROLE_COACH, ROLE_OWNER},
     },
     {
-        'key': 'templates',
-        'label': 'Templates',
-        'route_name': 'workout-template-management',
-        'allowed_roles': {ROLE_COACH, ROLE_OWNER},
-    },
-    {
         'key': 'approval',
         'label': 'Aprovações',
         'route_name': 'workout-approval-board',
         'allowed_roles': {ROLE_MANAGER, ROLE_OWNER},
-    },
-    {
-        'key': 'history',
-        'label': 'Histórico',
-        'route_name': 'workout-publication-history',
-        'allowed_roles': {ROLE_COACH, ROLE_MANAGER, ROLE_OWNER},
-    },
-    {
-        'key': 'summary',
-        'label': 'Resumo executivo',
-        'route_name': 'operations-executive-summary',
-        'allowed_roles': {ROLE_COACH, ROLE_MANAGER, ROLE_OWNER},
     },
 )
 

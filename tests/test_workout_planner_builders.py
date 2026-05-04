@@ -185,15 +185,15 @@ class WorkoutPlannerViewTests(WorkoutFlowBaseTestCase):
 
         self.assertEqual(
             [tab['key'] for tab in owner_tabs],
-            ['planner', 'smart_paste', 'templates', 'approval', 'history', 'summary'],
+            ['planner', 'smart_paste', 'approval'],
         )
         self.assertEqual(
             [tab['key'] for tab in coach_tabs],
-            ['planner', 'smart_paste', 'templates', 'history', 'summary'],
+            ['planner', 'smart_paste'],
         )
         self.assertEqual(
             [tab['key'] for tab in manager_tabs],
-            ['planner', 'approval', 'history', 'summary'],
+            ['planner', 'approval'],
         )
 
     def test_planner_renders_week_grid_for_coach(self):
@@ -212,10 +212,15 @@ class WorkoutPlannerViewTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, reverse('coach-session-workout-editor', args=[self.session.id]))
         self.assertContains(response, 'Criar WOD')
         self.assertContains(response, 'Teclado:')
+        self.assertContains(response, 'DEL')
+        self.assertContains(response, 'exclui o WOD selecionado')
+        self.assertContains(response, 'exclui todos os WODs da semana')
+        self.assertContains(response, 'Deseja excluir o WOD selecionado?')
+        self.assertContains(response, 'Deseja excluir os WODs da semana?')
         self.assertContains(response, 'data-wod-planner-cell')
         self.assertContains(response, 'data-planner-day-index')
         self.assertContains(response, 'data-planner-row-index')
-        self.assertContains(response, 'Spotlight')
+        self.assertContains(response, 'Resumo da aula em foco')
         self.assertContains(response, 'data-planner-spotlight-session')
         self.assertContains(response, 'tabindex="0"')
 
@@ -473,3 +478,52 @@ class WorkoutPlannerViewTests(WorkoutFlowBaseTestCase):
         self.assertEqual(duplicated_workout.title, 'WOD semana anterior')
         self.assertEqual(duplicated_workout.status, SessionWorkoutStatus.DRAFT)
         self.assertContains(response, 'WOD da semana anterior duplicado como rascunho para esta aula.')
+
+    def test_coach_can_delete_selected_workout_from_planner(self):
+        workout = SessionWorkout.objects.create(
+            session=self.session,
+            title='WOD para excluir',
+            status=SessionWorkoutStatus.DRAFT,
+            created_by=self.coach,
+        )
+
+        response = self.client.post(
+            reverse('workout-planner-delete-selected-workout', args=[self.session.id]),
+            data={'week': self.session.scheduled_at.date().isoformat()},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(SessionWorkout.objects.filter(id=workout.id).exists())
+        self.assertContains(response, 'WOD da aula Cross 07h removido com sucesso.')
+
+    def test_coach_clear_week_only_removes_own_sessions(self):
+        own_workout = SessionWorkout.objects.create(
+            session=self.session,
+            title='WOD meu',
+            status=SessionWorkoutStatus.DRAFT,
+            created_by=self.coach,
+        )
+        other_session = ClassSession.objects.create(
+            title='Cross outro coach',
+            coach=self.owner,
+            scheduled_at=self.session.scheduled_at + timedelta(hours=1),
+            duration_minutes=60,
+            capacity=16,
+        )
+        other_workout = SessionWorkout.objects.create(
+            session=other_session,
+            title='WOD outro coach',
+            status=SessionWorkoutStatus.DRAFT,
+            created_by=self.owner,
+        )
+
+        response = self.client.post(
+            reverse('workout-planner-clear-week'),
+            data={'week': self.session.scheduled_at.date().isoformat()},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(SessionWorkout.objects.filter(id=own_workout.id).exists())
+        self.assertTrue(SessionWorkout.objects.filter(id=other_workout.id).exists())

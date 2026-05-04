@@ -8,12 +8,16 @@ O QUE ESTE ARQUIVO FAZ:
 1. publica a tela do planner.
 2. recebe telemetria do picker de templates.
 3. aplica template confiavel e duplica o slot anterior.
+4. remove todos os SessionWorkout de uma semana inteira (clear-week).
 """
+
+from datetime import timedelta
 
 from django.contrib import messages
 from django.db import OperationalError, ProgrammingError
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.views import View
 
 from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
@@ -21,7 +25,9 @@ from shared_support.page_payloads import attach_page_payload
 
 from operations.models import ClassSession, WorkoutTemplate
 from operations.workout_planner_actions import apply_trusted_template_to_session, duplicate_previous_slot_workout
+from operations.workout_planner_builders import resolve_week_start
 from operations.workout_planner_context import build_workout_planner_context
+from student_app.models import SessionWorkout
 from operations.workout_telemetry import emit_wod_planner_picker_event
 
 from .base_views import OperationBaseView
@@ -153,8 +159,51 @@ class WorkoutPlannerDuplicatePreviousSlotView(OperationBaseView, View):
         return redirect('workout-planner')
 
 
+class WorkoutPlannerClearWeekView(OperationBaseView, View):
+    allowed_roles = (ROLE_COACH, ROLE_OWNER, ROLE_MANAGER)
+
+    def post(self, request, *args, **kwargs):
+        week_param = request.POST.get('week') or request.GET.get('week')
+        week_start = resolve_week_start(week_param)
+        week_end = week_start + timedelta(days=6)
+        queryset = SessionWorkout.objects.filter(
+            session__scheduled_at__date__range=[week_start, week_end]
+        )
+        if request.user.groups.filter(name=ROLE_COACH).exists():
+            queryset = queryset.filter(session__coach=request.user)
+        deleted_count, _ = queryset.delete()
+        if deleted_count:
+            messages.success(request, f'{deleted_count} WOD(s) removidos da semana de {week_start:%d/%m/%Y}.')
+        else:
+            messages.info(request, 'Nenhum WOD encontrado para remover nesta semana.')
+        week_str = week_start.isoformat()
+        return redirect(f"{reverse('workout-planner')}?week={week_str}")
+
+
+class WorkoutPlannerDeleteSelectedWorkoutView(OperationBaseView, View):
+    allowed_roles = (ROLE_COACH, ROLE_OWNER, ROLE_MANAGER)
+
+    def post(self, request, session_id, *args, **kwargs):
+        session = get_object_or_404(ClassSession.objects.select_related('coach', 'workout'), pk=session_id)
+        if request.user.groups.filter(name=ROLE_COACH).exists() and session.coach_id != request.user.id:
+            messages.error(request, 'Coach so pode remover WOD da propria aula.')
+            return redirect('workout-planner')
+
+        workout = getattr(session, 'workout', None)
+        if workout is None:
+            messages.info(request, 'Nenhum WOD encontrado para remover nesta aula.')
+            return redirect('workout-planner')
+
+        workout.delete()
+        messages.success(request, f'WOD da aula {session.title} removido com sucesso.')
+        week_start = resolve_week_start(request.POST.get('week') or request.GET.get('week'))
+        return redirect(f"{reverse('workout-planner')}?week={week_start.isoformat()}")
+
+
 __all__ = [
     'WorkoutPlannerApplyTrustedTemplateView',
+    'WorkoutPlannerClearWeekView',
+    'WorkoutPlannerDeleteSelectedWorkoutView',
     'WorkoutPlannerDuplicatePreviousSlotView',
     'WorkoutPlannerTemplatePickerTelemetryView',
     'WorkoutPlannerView',

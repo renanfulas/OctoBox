@@ -139,8 +139,6 @@ REGRA:
 .theme-toggle-icon {
     width: 100%;
     height: 100%;
-    border-radius: 999px;
-    font-size: 0.78rem;
     transform: rotate(0deg) scale(1);
     transition:
         transform var(--motion-base) var(--ease-standard),
@@ -149,14 +147,19 @@ REGRA:
         background var(--motion-base) var(--ease-standard);
 }
 
+.theme-toggle-icon svg {
+    width: 15px;
+    height: 15px;
+    display: block;
+}
+
 .theme-toggle[data-theme-state="light"] .theme-toggle-icon {
     background: transparent;
 }
 
 .theme-toggle[data-theme-state="dark"] .theme-toggle-icon {
-    background: color-mix(in srgb, var(--theme-accent-support-alpha) 82%, transparent);
     color: color-mix(in srgb, var(--theme-accent-support) 76%, white 24%);
-    transform: rotate(-18deg) scale(0.94);
+    transform: none;
 }
 
 .theme-toggle:hover,
@@ -188,7 +191,7 @@ REGRA:
 
 .theme-toggle[data-theme-state="dark"]:hover .theme-toggle-icon,
 .theme-toggle[data-theme-state="dark"]:focus-visible .theme-toggle-icon {
-    transform: rotate(-18deg) scale(1);
+    transform: scale(1.02);
 }
 
 .global-search {

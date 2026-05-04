@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.generic import FormView
 
 from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
@@ -16,7 +17,7 @@ from shared_support.page_payloads import attach_page_payload
 
 from operations.operations_executive_summary_context import build_operations_executive_summary_context
 from operations.workout_approval_board_context import build_workout_approval_board_context
-from operations.workout_smart_paste_context import build_weekly_wod_smart_paste_context
+from operations.workout_smart_paste_context import build_weekly_wod_smart_paste_context, _max_week_start
 from operations.workout_publication_history_context import build_workout_publication_history_context
 from operations.workout_rm_quick_edit_actions import save_workout_student_rm_quick_edit
 from operations.workout_rm_quick_edit_context import (
@@ -32,7 +33,9 @@ from operations.forms import (
     WorkoutCreateStoredTemplateForm,
     WorkoutStudentRmQuickForm,
 )
-from operations.services.wod_paste_parser import parse_weekly_wod_text, resolve_movement_slug
+from operations.services.wod_paste_parser import load_wod_movement_dictionary, parse_weekly_wod_text, resolve_movement_slug
+from operations.services.wod_slug_resolver import apply_llm_slug_resolution
+from operations.services.wod_smartplan_weekly_parser import detect_and_convert_smartplan_weekly
 from operations.services.wod_projection import build_projection_preview, project_plan_to_sessions
 from operations.services.wod_replication_batches import undo_replication_batch
 from operations.workout_templates import create_persisted_template_from_weekly_plan
@@ -280,7 +283,8 @@ class WorkoutSmartPasteView(OperationBaseView):
             messages.success(request, f'Template salvo "{template.name}" criado a partir do Smart Paste.')
             return redirect('workout-template-management')
 
-        form = WeeklyWodSmartPasteForm(request.POST)
+        today_date = self.get_base_context().get('today') or timezone.localdate()
+        form = WeeklyWodSmartPasteForm(request.POST, max_week_start=_max_week_start(today_date))
         if not form.is_valid():
             messages.error(request, _first_form_error(form, 'Revise a semana e o texto antes de continuar.'))
             context = self._build_context(plan=plan, form=form)
@@ -297,7 +301,12 @@ class WorkoutSmartPasteView(OperationBaseView):
             plan.status = WeeklyWodPlanStatus.CONFIRMED
         else:
             plan.status = WeeklyWodPlanStatus.DRAFT
-            plan.parsed_payload = parse_weekly_wod_text(cleaned['source_text'])
+            source_text = cleaned['source_text']
+            parsed = detect_and_convert_smartplan_weekly(source_text)
+            if parsed is None:
+                parsed = parse_weekly_wod_text(source_text)
+                apply_llm_slug_resolution(parsed, load_wod_movement_dictionary())
+            plan.parsed_payload = parsed
         plan.created_by = plan.created_by or request.user
         plan.save()
 
