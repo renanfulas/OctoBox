@@ -32,6 +32,10 @@ USO:
             id="{{ picker_id }}"
             class="smart-paste-native-picker"
             value="{{ picker_value }}"
+            step="7"
+            hidden
+            tabindex="-1"
+            aria-hidden="true"
             {% if picker_min %}min="{{ picker_min }}"{% endif %}
             {% if picker_max %}max="{{ picker_max }}"{% endif %}
         >

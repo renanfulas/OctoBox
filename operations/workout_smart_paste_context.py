@@ -70,14 +70,21 @@ def _decorate_preview_payload(parsed_payload):
     first_unresolved_target_id = ''
     for day_index, day in enumerate(parsed_payload.get('days', [])):
         day_has_unresolved = False
+        day_unresolved_count = 0
+        day['day_index'] = day_index
         for block_index, block in enumerate(day.get('blocks', [])):
             total_blocks += 1
+            block_unresolved_count = 0
+            block['block_index'] = block_index
+            block['block_focus_id'] = f'smart-paste-block-{day_index}-{block_index}'
             for movement_index, movement in enumerate(block.get('movements', [])):
                 movement['display_label'] = _smart_paste_display_label(movement)
                 movement['review_target_id'] = f'review-item-{day_index}-{block_index}-{movement_index}'
                 total_movements += 1
                 if not movement.get('movement_slug'):
                     day_has_unresolved = True
+                    day_unresolved_count += 1
+                    block_unresolved_count += 1
                     first_unresolved_target_id = first_unresolved_target_id or movement['review_target_id']
                     unresolved_items.append(
                         {
@@ -96,7 +103,11 @@ def _decorate_preview_payload(parsed_payload):
                             'display_label': movement.get('display_label') or movement.get('movement_label_raw', ''),
                         }
                     )
+            block['has_unresolved'] = block_unresolved_count > 0
+            block['unresolved_count'] = block_unresolved_count
+            block['is_clean'] = block_unresolved_count == 0
         day['has_unresolved'] = day_has_unresolved
+        day['unresolved_count'] = day_unresolved_count
     parsed_payload['summary'] = {
         'days_count': len(parsed_payload.get('days', [])),
         'blocks_count': total_blocks,
@@ -225,6 +236,7 @@ def build_weekly_wod_smart_paste_context(
         'weekly_plan': weekly_plan,
         'smart_paste_preview': parsed_payload,
         'smart_paste_days': parsed_payload.get('days', []),
+        'smart_paste_review_days': [day for day in parsed_payload.get('days', []) if day.get('has_unresolved')],
         'smart_paste_warnings': parsed_payload.get('parse_warnings', []),
         'smart_paste_summary': parsed_payload.get('summary', {}),
         'smart_paste_step': 3 if projection_preview else (2 if parsed_payload.get('days') else 1),

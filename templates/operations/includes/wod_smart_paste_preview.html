@@ -15,7 +15,7 @@
         <article class="smart-paste-warning-card smart-paste-warning-card--focus">
             <div class="smart-paste-review-queue-head">
                 <strong>{{ smart_paste_summary.current_unresolved_item.movement_label_raw }}</strong>
-                <span class="pill warning">{{ smart_paste_summary.unresolved_count }} pendencia(s)</span>
+                <span class="pill warning">{{ smart_paste_summary.unresolved_count }} pendência{% if smart_paste_summary.unresolved_count != 1 %}s{% endif %}</span>
             </div>
             <p>{{ smart_paste_summary.current_unresolved_item.day_label }} · {{ smart_paste_summary.current_unresolved_item.block_title }}</p>
             <form
@@ -46,84 +46,105 @@
     </section>
     {% endif %}
 
-    {# ── Chips de dia ── #}
-    <div class="smart-paste-day-chips" aria-label="Dias da semana">
-        {% for day in smart_paste_days %}
+    {% if smart_paste_review_days %}
+    <div class="smart-paste-day-chips" aria-label="Dias com revisoes pendentes">
+        {% for day in smart_paste_review_days %}
         <button
             type="button"
-            class="smart-paste-day-chip {% if day.has_unresolved %}smart-paste-day-chip--warning{% else %}smart-paste-day-chip--clean{% endif %}"
+            class="smart-paste-day-chip smart-paste-day-chip--warning"
             data-action="open-day-dialog"
-            data-target="smart-paste-day-dialog-{{ forloop.counter0 }}"
+            data-target="smart-paste-day-dialog-{{ day.day_index }}"
             aria-haspopup="dialog"
         >
             <span class="smart-paste-day-chip__label">{{ day.weekday_label }}</span>
             <span class="smart-paste-day-chip__count">{{ day.blocks|length }} bloco{% if day.blocks|length != 1 %}s{% endif %}</span>
+            <span class="smart-paste-day-chip__status smart-paste-day-chip__status--warning">{{ day.unresolved_count }} pendência{% if day.unresolved_count != 1 %}s{% endif %}</span>
         </button>
         {% endfor %}
     </div>
+    {% endif %}
 
-    {# ── Dialogs por dia ── #}
-    {% for day in smart_paste_days %}
-    <dialog class="smart-paste-day-dialog" id="smart-paste-day-dialog-{{ forloop.counter0 }}">
+    {% for day in smart_paste_review_days %}
+    <dialog class="smart-paste-day-dialog" id="smart-paste-day-dialog-{{ day.day_index }}">
         <div class="smart-paste-day-dialog__inner">
             <header class="smart-paste-day-dialog__head">
-                <div>
+                <div class="smart-paste-day-dialog__heading">
                     <p class="eyebrow">Dia {{ day.weekday|add:"1" }}</p>
                     <h3>{{ day.weekday_label }}</h3>
+                    <p class="smart-paste-day-dialog__summary">{{ day.unresolved_count }} pendência{% if day.unresolved_count != 1 %}s{% endif %} para revisar antes de confirmar a semana.</p>
                 </div>
                 <button type="button" class="smart-paste-day-dialog__close" data-action="close-dialog" aria-label="Fechar">✕</button>
             </header>
-            <div class="smart-paste-day-dialog__body">
+            <div class="smart-paste-day-dialog__body" data-dialog-mode="overview">
                 {% for block in day.blocks %}
-                <article class="smart-paste-block-card smart-paste-block-card--{{ block.kind }}" data-dialog-block>
-                    <div class="smart-paste-block-head">
-                        <span class="pill accent">{{ block.kind }}</span>
-                        {% if block.timecap_min %}<span class="pill info">{{ block.timecap_min }}m</span>{% endif %}
-                        {% if block.rounds %}<span class="pill warning">{{ block.rounds }} rounds</span>{% endif %}
+                <article class="smart-paste-block-card smart-paste-block-card--{{ block.kind }} {% if block.has_unresolved %}smart-paste-block-card--warning{% else %}smart-paste-block-card--clean{% endif %}" data-dialog-block data-block-focus-id="{{ block.block_focus_id }}" data-block-state="{% if block.has_unresolved %}warning{% else %}clean{% endif %}">
+                    <button type="button" class="smart-paste-block-card__surface" data-action="focus-block" data-target="{{ block.block_focus_id }}" aria-expanded="false" aria-controls="{{ block.block_focus_id }}">
+                        <div class="smart-paste-block-head">
+                            <span class="pill accent">{{ block.kind }}</span>
+                            {% if block.timecap_min %}<span class="pill info">{{ block.timecap_min }}m</span>{% endif %}
+                            {% if block.rounds %}<span class="pill warning">{{ block.rounds }} rounds</span>{% endif %}
+                        </div>
+                        <div class="smart-paste-block-summary">
+                            <strong>{% if block.title %}{{ block.title }}{% else %}{{ block.kind|title }}{% endif %}</strong>
+                            {% if block.format_spec %}<p>{{ block.format_spec }}</p>{% endif %}
+                            {% if block.notes %}<p>{{ block.notes }}</p>{% endif %}
+                            <div class="smart-paste-block-summary__meta">
+                                <span>{{ block.movements|length }} movimento{% if block.movements|length != 1 %}s{% endif %}</span>
+                                {% if block.has_unresolved %}
+                                <span class="smart-paste-block-summary__status smart-paste-block-summary__status--warning">{{ block.unresolved_count }} pendência{% if block.unresolved_count != 1 %}s{% endif %} para revisar</span>
+                                {% else %}
+                                <span class="smart-paste-block-summary__status">Sem pendências</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </button>
+                    <div class="smart-paste-block-detail" id="{{ block.block_focus_id }}" hidden>
+                        <div class="smart-paste-block-detail__actions">
+                            <button type="button" class="button tertiary smart-paste-block-detail__back" data-action="unfocus-block">Voltar aos cards</button>
+                        </div>
+                        {% if block.format_spec %}<p>{{ block.format_spec }}</p>{% endif %}
+                        {% if block.notes %}<p>{{ block.notes }}</p>{% endif %}
+                        <ul class="smart-paste-movement-list">
+                            {% for movement in block.movements %}
+                            <li class="{% if not movement.movement_slug %}is-warning{% endif %}">
+                                <span>{{ movement.display_label|default:movement.movement_label_raw }}</span>
+                                {% if movement.movement_slug %}
+                                    <code>{{ movement.movement_slug }}</code>
+                                    {% if movement.reps_spec %}<small>Reps: {{ movement.reps_spec }}</small>{% endif %}
+                                    {% if movement.load_spec %}<small>Carga: {{ movement.load_spec }}</small>{% endif %}
+                                    {% if movement.notes %}<small>{{ movement.notes }}</small>{% endif %}
+                                {% else %}
+                                    <span class="pill warning">revisar</span>
+                                    <details class="smart-paste-inline-review-disclosure" id="{{ movement.review_target_id }}" data-smart-paste-review-target>
+                                        <summary>Editar item</summary>
+                                        <form
+                                            method="post"
+                                            class="smart-paste-inline-review-form"
+                                            hx-post="{% url 'workout-smart-paste' %}"
+                                            hx-target="#smart-paste-preview-panel"
+                                            hx-swap="outerHTML"
+                                        >
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="update_review_item">
+                                            <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
+                                            <input type="hidden" name="day_index" value="{{ day.day_index }}">
+                                            <input type="hidden" name="block_index" value="{{ block.block_index }}">
+                                            <input type="hidden" name="movement_index" value="{{ forloop.counter0 }}">
+                                            <label><span>Texto</span><input type="text" name="movement_label_raw" value="{{ movement.movement_label_raw }}"></label>
+                                            <label><span>Slug</span><input type="text" name="movement_slug" value="{{ movement.movement_slug|default_if_none:'' }}" list="smart-paste-movement-slugs"></label>
+                                            <label><span>Reps</span><input type="text" name="reps_spec" value="{{ movement.reps_spec|default_if_none:'' }}"></label>
+                                            <label><span>Carga</span><input type="text" name="load_spec" value="{{ movement.load_spec|default_if_none:'' }}"></label>
+                                            <label><span>Nota</span><input type="text" name="notes" value="{{ movement.notes|default_if_none:'' }}"></label>
+                                            <div class="actions">
+                                                <button class="button tertiary" type="submit">Salvar revisao</button>
+                                            </div>
+                                        </form>
+                                    </details>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
                     </div>
-                    <strong>{% if block.title %}{{ block.title }}{% else %}{{ block.kind|title }}{% endif %}</strong>
-                    {% if block.format_spec %}<p>{{ block.format_spec }}</p>{% endif %}
-                    {% if block.notes %}<p>{{ block.notes }}</p>{% endif %}
-                    <ul class="smart-paste-movement-list">
-                        {% for movement in block.movements %}
-                        <li class="{% if not movement.movement_slug %}is-warning{% endif %}">
-                            <span>{{ movement.display_label|default:movement.movement_label_raw }}</span>
-                            {% if movement.movement_slug %}
-                                <code>{{ movement.movement_slug }}</code>
-                                {% if movement.reps_spec %}<small>Reps: {{ movement.reps_spec }}</small>{% endif %}
-                                {% if movement.load_spec %}<small>Carga: {{ movement.load_spec }}</small>{% endif %}
-                                {% if movement.notes %}<small>{{ movement.notes }}</small>{% endif %}
-                            {% else %}
-                                <span class="pill warning">revisar</span>
-                                <details class="smart-paste-inline-review-disclosure" id="{{ movement.review_target_id }}" data-smart-paste-review-target>
-                                    <summary>Editar item</summary>
-                                    <form
-                                        method="post"
-                                        class="smart-paste-inline-review-form"
-                                        hx-post="{% url 'workout-smart-paste' %}"
-                                        hx-target="#smart-paste-preview-panel"
-                                        hx-swap="outerHTML"
-                                    >
-                                        {% csrf_token %}
-                                        <input type="hidden" name="action" value="update_review_item">
-                                        <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
-                                        <input type="hidden" name="day_index" value="{{ forloop.parentloop.parentloop.counter0 }}">
-                                        <input type="hidden" name="block_index" value="{{ forloop.parentloop.counter0 }}">
-                                        <input type="hidden" name="movement_index" value="{{ forloop.counter0 }}">
-                                        <label><span>Texto</span><input type="text" name="movement_label_raw" value="{{ movement.movement_label_raw }}"></label>
-                                        <label><span>Slug</span><input type="text" name="movement_slug" value="{{ movement.movement_slug|default_if_none:'' }}" list="smart-paste-movement-slugs"></label>
-                                        <label><span>Reps</span><input type="text" name="reps_spec" value="{{ movement.reps_spec|default_if_none:'' }}"></label>
-                                        <label><span>Carga</span><input type="text" name="load_spec" value="{{ movement.load_spec|default_if_none:'' }}"></label>
-                                        <label><span>Nota</span><input type="text" name="notes" value="{{ movement.notes|default_if_none:'' }}"></label>
-                                        <div class="actions">
-                                            <button class="button tertiary" type="submit">Salvar revisao</button>
-                                        </div>
-                                    </form>
-                                </details>
-                            {% endif %}
-                        </li>
-                        {% endfor %}
-                    </ul>
                 </article>
                 {% endfor %}
             </div>
@@ -149,7 +170,7 @@
                 Confirmar rascunho semanal
             </button>
             {% if smart_paste_summary.unresolved_count %}
-            <p class="operation-session-meta">Feche as pendencias antes de confirmar.</p>
+            <p class="operation-session-meta">Feche as pendências antes de confirmar.</p>
             {% endif %}
         </div>
     </form>
@@ -185,8 +206,11 @@
     {% endif %}
 
     {% else %}
-    <div class="coach-wod-empty-state">
-        <p>O preview aparece aqui assim que o texto for organizado.</p>
+    <div class="smart-paste-empty-state">
+        <div class="smart-paste-empty-state__icon" aria-hidden="true">📋</div>
+        <h3 class="smart-paste-empty-state__title">Preview da semana</h3>
+        <p class="smart-paste-empty-state__body">Cole o texto da semana ao lado e clique em <strong>Organizar texto</strong>. O preview dos dias, blocos e movimentos aparece aqui.</p>
+        <p class="smart-paste-empty-state__hint">Formato sugerido: cada dia com cabeçalho (ex: <code>Segunda:</code>) seguido dos blocos (<code>WOD:</code>, <code>Strength:</code>) e movimentos.</p>
     </div>
     {% endif %}
 </article>

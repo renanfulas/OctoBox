@@ -115,7 +115,52 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         plan.refresh_from_db()
         self.assertEqual(plan.status, WeeklyWodPlanStatus.CONFIRMED)
         self.assertContains(response, 'Plano semanal confirmado.')
-        self.assertContains(response, 'Salvar como template')
+        self.assertContains(response, 'id="smart-paste-projection-panel"')
+        self.assertContains(response, 'Montar preview de replicacao')
+
+    def test_confirmed_week_shows_projection_panel_in_layout_instead_of_preview_card(self):
+        today = timezone.localdate()
+        current_week_start = today + timedelta(days=(7 - today.weekday()) % 7)
+        WeeklyWodPlan.objects.create(
+            week_start=current_week_start,
+            label='Semana confirmada',
+            source_text='Segunda\nWod\nrun',
+            parsed_payload={
+                'week_label': None,
+                'parse_warnings': [],
+                'days': [
+                    {
+                        'weekday': 0,
+                        'weekday_label': 'Segunda',
+                        'blocks': [
+                            {
+                                'kind': 'metcon',
+                                'title': 'WOD',
+                                'notes': '',
+                                'movements': [
+                                    {
+                                        'movement_slug': 'run',
+                                        'movement_label_raw': 'run',
+                                        'reps_spec': '400',
+                                        'load_spec': '',
+                                        'notes': '',
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+            created_by=self.coach,
+            status=WeeklyWodPlanStatus.CONFIRMED,
+        )
+
+        response = self.client.get(reverse('workout-smart-paste'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="smart-paste-projection-panel"')
+        self.assertNotContains(response, 'id="smart-paste-preview-panel"')
+        self.assertNotContains(response, 'smart-paste-template-bridge')
 
     def test_coach_can_save_confirmed_weekly_plan_as_stored_template(self):
         plan = WeeklyWodPlan.objects.create(
@@ -286,10 +331,82 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         response = self.client.get(reverse('workout-smart-paste'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'pendencia')
+        self.assertContains(response, 'pendência')
         self.assertContains(response, 'rum')
         self.assertContains(response, 'bike')
         self.assertContains(response, 'Salvar e revisar proximo')
+
+    def test_preview_payload_exposes_block_level_review_state(self):
+        today = timezone.localdate()
+        current_week_start = today + timedelta(days=(7 - today.weekday()) % 7)
+        WeeklyWodPlan.objects.create(
+            week_start=current_week_start,
+            label='Semana blocos',
+            source_text='Segunda\nWarmup\nrun\nSegunda\nSkill\nrum',
+            parsed_payload={
+                'week_label': None,
+                'parse_warnings': [],
+                'days': [
+                    {
+                        'weekday': 0,
+                        'weekday_label': 'Segunda',
+                        'blocks': [
+                            {
+                                'kind': 'warmup',
+                                'title': 'Warmup',
+                                'notes': '',
+                                'movements': [
+                                    {
+                                        'movement_slug': 'run',
+                                        'movement_label_raw': 'corrida',
+                                        'reps_spec': '400',
+                                        'load_spec': '',
+                                        'notes': '',
+                                    }
+                                ],
+                            },
+                            {
+                                'kind': 'skill',
+                                'title': 'Skill',
+                                'notes': '',
+                                'movements': [
+                                    {
+                                        'movement_slug': None,
+                                        'movement_label_raw': 'rum',
+                                        'reps_spec': None,
+                                        'load_spec': '',
+                                        'notes': None,
+                                    }
+                                ],
+                            },
+                        ],
+                    }
+                ],
+            },
+            created_by=self.coach,
+        )
+
+        response = self.client.get(reverse('workout-smart-paste'))
+
+        self.assertEqual(response.status_code, 200)
+        blocks = response.context['smart_paste_days'][0]['blocks']
+        self.assertEqual(blocks[0]['block_index'], 0)
+        self.assertEqual(blocks[0]['block_focus_id'], 'smart-paste-block-0-0')
+        self.assertTrue(blocks[0]['is_clean'])
+        self.assertFalse(blocks[0]['has_unresolved'])
+        self.assertEqual(blocks[0]['unresolved_count'], 0)
+        self.assertEqual(blocks[1]['block_index'], 1)
+        self.assertEqual(blocks[1]['block_focus_id'], 'smart-paste-block-0-1')
+        self.assertFalse(blocks[1]['is_clean'])
+        self.assertTrue(blocks[1]['has_unresolved'])
+        self.assertEqual(blocks[1]['unresolved_count'], 1)
+        self.assertContains(response, 'smart-paste-block-card--clean')
+        self.assertContains(response, 'smart-paste-block-card--warning')
+        self.assertContains(response, 'Sem pendências')
+        self.assertContains(response, '1 pendência para revisar')
+        self.assertContains(response, 'data-action="focus-block"')
+        self.assertContains(response, 'data-action="unfocus-block"')
+        self.assertContains(response, 'Voltar aos cards')
 
     def test_inline_review_partial_auto_opens_next_unresolved_item(self):
         plan = WeeklyWodPlan.objects.create(
@@ -393,7 +510,7 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         response = self.client.get(reverse('workout-smart-paste'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Feche as pendencias antes de confirmar.')
+        self.assertContains(response, 'Feche as pendências antes de confirmar.')
         self.assertContains(response, 'disabled aria-disabled="true"')
 
     def test_coach_can_preview_and_create_projection_as_drafts(self):

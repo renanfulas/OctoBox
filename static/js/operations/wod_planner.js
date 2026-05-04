@@ -29,6 +29,10 @@ PONTOS CRITICOS:
     const templateApplyForms = Array.from(planner.querySelectorAll('[data-wod-planner-template-apply-form]'));
     let templatePickerSessionId = '';
     const templatePickerOpenClass = 'wod-planner-template-picker-open';
+    const deleteSelectedDialog = document.getElementById('planner-delete-selected-dialog');
+    const deleteSelectedForm = deleteSelectedDialog?.querySelector('[data-planner-delete-selected-form]');
+    const deleteSelectedCopy = deleteSelectedDialog?.querySelector('[data-planner-delete-selected-copy]');
+    const clearWeekDialog = document.getElementById('planner-clear-week-dialog');
 
     planner.classList.add('is-enhanced');
 
@@ -217,6 +221,28 @@ PONTOS CRITICOS:
         if (primaryAction) primaryAction.click();
     }
 
+    function openDeleteSelectedDialog() {
+        const cell = cells[focusedIndex()];
+        if (!cell || !deleteSelectedDialog || !deleteSelectedForm) return;
+        const deleteHref = cell.dataset.plannerDeleteHref || '';
+        const workoutId = cell.dataset.plannerWorkoutId || '';
+        if (!deleteHref || !workoutId) return;
+        deleteSelectedForm.action = deleteHref;
+        if (deleteSelectedCopy) {
+            const sessionTitle = cell.dataset.plannerSessionTitle || 'a aula selecionada';
+            const slotLabel = cell.dataset.plannerSlotLabel || '';
+            deleteSelectedCopy.textContent = `DEL confirma a exclusão do WOD de ${sessionTitle}${slotLabel ? ' às ' + slotLabel : ''}. Não é possível desfazer.`;
+        }
+        if (typeof deleteSelectedDialog.showModal === 'function') {
+            deleteSelectedDialog.showModal();
+        }
+    }
+
+    function openClearWeekDialog() {
+        if (!clearWeekDialog || typeof clearWeekDialog.showModal !== 'function') return;
+        clearWeekDialog.showModal();
+    }
+
     cells.forEach((cell) => {
         cell.addEventListener('focus', () => setFocusedCell(cell));
         cell.addEventListener('click', (event) => {
@@ -227,7 +253,11 @@ PONTOS CRITICOS:
     });
 
     document.addEventListener('keydown', (event) => {
-        if (!planner.contains(document.activeElement) || isTypingTarget(event.target)) return;
+        if (isTypingTarget(event.target)) return;
+        const activeElement = document.activeElement;
+        const activeInsidePlanner = activeElement ? planner.contains(activeElement) : false;
+        const bodyHasFocus = activeElement === document.body;
+        if (!activeInsidePlanner && !bodyHasFocus) return;
 
         if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
             event.preventDefault();
@@ -252,11 +282,27 @@ PONTOS CRITICOS:
             }
         }
 
+        if (event.key === 'Delete') {
+            event.preventDefault();
+            openDeleteSelectedDialog();
+            return;
+        }
+
+        if ((event.key === 'd' || event.key === 'D') && clearWeekDialog) {
+            event.preventDefault();
+            openClearWeekDialog();
+            return;
+        }
+
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             openPrimaryAction();
         }
     });
 
-    setFocusedCell(cells.find((cell) => cell.classList.contains('is-focused')) || cells[0]);
+    setFocusedCell(cells.find((cell) => cell.classList.contains('is-focused')) || cells[0], {
+        focus: true,
+        preventScroll: true,
+    });
 })();
+

@@ -85,7 +85,8 @@ class CoachWorkoutEditorFlowTests(WorkoutFlowBaseTestCase):
 
         self.assertEqual(home_response.status_code, 302)
         self.assertEqual(editor_response.status_code, 200)
-        self.assertContains(editor_response, 'Templates')
+        self.assertContains(editor_response, 'WOD da aula')
+        self.assertContains(editor_response, 'Estrutura do treino')
 
     def test_coach_can_create_submit_block_and_movement(self):
         editor_url = self._editor_url()
@@ -219,6 +220,23 @@ class CoachWorkoutEditorFlowTests(WorkoutFlowBaseTestCase):
         self.assertEqual(movement.load_type, WorkoutLoadType.FIXED_KG)
         self.assertEqual(movement.load_value, Decimal('52.50'))
         self.assertEqual(movement.sort_order, 2)
+
+    def test_editor_renders_structure_overview_and_detail_shell(self):
+        workout = self._create_workout()
+        block = self._create_block(workout, title='Forca principal')
+        self._create_movement(block, movement_slug='deadlift', movement_label='Deadlift')
+
+        response = self.client.get(self._editor_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-coach-wod-structure')
+        self.assertContains(response, 'data-coach-wod-structure-overview')
+        self.assertContains(response, 'data-coach-wod-structure-detail')
+        self.assertContains(response, 'Abrir treino')
+        self.assertContains(response, 'Voltar aos treinos')
+        self.assertContains(response, 'Veja os blocos como cards.')
+        self.assertContains(response, 'Bloco aberto')
+        self.assertContains(response, 'Deadlift')
 
     def test_coach_can_duplicate_workout_to_another_session_as_draft(self):
         target_session = ClassSession.objects.create(
@@ -687,8 +705,7 @@ class CoachWorkoutEditorFlowTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'Template persistente base')
         self.assertContains(response, '3 uso(s)')
         self.assertContains(response, 'Ativo')
-        self.assertContains(response, 'aria-current="page"', html=False)
-        self.assertContains(response, 'Templates')
+        self.assertContains(response, 'Planner')
         self.assertContains(response, 'Abrir Smart Paste')
 
         response = self.client.post(

@@ -25,6 +25,8 @@ O QUE ESTE ARQUIVO FAZ:
   var sidebarBackdrop = document.querySelector('[data-ui="sidebar-backdrop"]') || document.getElementById('sidebar-backdrop');
   var profileTrigger = document.querySelector('.topbar-profile');
   var profileMenu = document.querySelector('.profile-dropdown');
+  var SUN_ICON = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3.75v2.25M12 18v2.25M4.75 12H7M17 12h2.25M6.88 6.88l1.59 1.59M15.53 15.53l1.59 1.59M17.12 6.88l-1.59 1.59M8.47 15.53l-1.59 1.59" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-width="1.7"/></svg>';
+  var MOON_ICON = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.5 4.5a7.75 7.75 0 1 0 5 13.67 8.25 8.25 0 1 1-5-13.67Z" fill="currentColor"/></svg>';
 
   function readStorage(storage, key) {
     try {
@@ -50,11 +52,10 @@ O QUE ESTE ARQUIVO FAZ:
 
     var isDark = body.dataset.theme === 'dark';
     var themeLabel = isDark ? 'Escuro' : 'Claro';
-    var themeIcon = isDark ? '☾' : '☼';
     var nextThemeLabel = isDark ? 'tema claro' : 'tema escuro';
 
     if (themeToggleIcon) {
-      themeToggleIcon.textContent = themeIcon;
+      themeToggleIcon.innerHTML = isDark ? MOON_ICON : SUN_ICON;
     }
 
     if (themeToggleLabel) {

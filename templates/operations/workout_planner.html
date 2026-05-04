@@ -12,14 +12,21 @@
                 <p class="eyebrow">Semana</p>
                 <h2>{{ planner_week.label }}</h2>
             </div>
-            <nav class="wod-planner__nav" aria-label="Navegacao semanal">
-                <a class="button tertiary" href="{{ planner_previous_week_href }}">Semana anterior</a>
-                <a class="button secondary" href="{{ planner_today_href }}">Hoje</a>
-                <a class="button tertiary" href="{{ planner_next_week_href }}">Proxima semana</a>
-            </nav>
+            <div class="wod-planner__toolbar-right">
+                <nav class="wod-planner__nav" aria-label="Navegacao semanal">
+                    <a class="button tertiary" href="{{ planner_previous_week_href }}">← Anterior</a>
+                    <a class="button secondary" href="{{ planner_today_href }}">Hoje</a>
+                    <a class="button tertiary" href="{{ planner_next_week_href }}">Próxima →</a>
+                </nav>
+                <div class="wod-planner__toolbar-actions">
+                    {% if current_role.slug == 'owner' or current_role.slug == 'manager' or current_role.slug == 'coach' %}
+                    <button type="button" class="button tertiary wod-planner__btn-danger" onclick="document.getElementById('planner-clear-week-dialog').showModal()">Remover todos os WODs</button>
+                    {% endif %}
+                </div>
+            </div>
         </header>
 
-        <p class="wod-planner__keyboard-hint">Teclado: <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> movem o foco · <kbd>Enter</kbd> abre a acao principal.</p>
+        <p class="wod-planner__keyboard-hint">Teclado: <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> movem o foco · <kbd>Enter</kbd> abre a ação principal.<br><span class="wod-planner__keyboard-hint-line-2">Teclado: <kbd>DEL</kbd> exclui o WOD selecionado e <kbd>D</kbd> exclui todos os WODs da semana.</span></p>
 
         <div class="wod-planner__layout">
             <div class="wod-planner__grid" role="list" aria-label="Dias da semana">
@@ -52,12 +59,19 @@
                             data-planner-secondary-href="{{ cell.secondary_action_href|default:cell.trusted_template_url }}"
                             data-planner-policy-label="{{ cell.policy_label|default:'Politica sera exibida quando houver template confiavel' }}"
                             data-planner-session-id="{{ cell.session_id }}"
+                            data-planner-workout-id="{{ cell.workout_id|default:'' }}"
+                            data-planner-delete-href="{% if cell.workout_id %}{% url 'workout-planner-delete-selected-workout' cell.session_id %}{% endif %}"
                             data-planner-template-picker-enabled="{% if cell.trusted_template_picker_enabled %}true{% else %}false{% endif %}"
                             tabindex="{% if planner_week.initial_focus_session_id == cell.session_id %}0{% else %}-1{% endif %}"
                         >
-                            <span class="wod-planner__cell-time">{{ cell.slot_label }}</span>
-                            <strong>{{ cell.session_title }}</strong>
-                            <span>{{ cell.workout_title }}</span>
+                            <div class="wod-planner__cell-header">
+                                <span class="wod-planner__cell-time">{{ cell.slot_label }}</span>
+                                <span class="wod-planner__cell-status-dot" title="{{ cell.status_label }}"></span>
+                            </div>
+                            <strong class="wod-planner__cell-title">{{ cell.session_title }}</strong>
+                            {% if cell.workout_title %}
+                            <span class="wod-planner__cell-workout">{{ cell.workout_title }}</span>
+                            {% endif %}
                             <span class="wod-planner__cell-meta">{{ cell.coach_label }}</span>
                             <div class="wod-planner__cell-actions" aria-label="Acoes da celula">
                                 {% for action in cell.actions %}
@@ -71,7 +85,7 @@
                                 <form method="post" action="{{ cell.duplicate_previous_url }}" class="wod-planner__cell-action-form">
                                     {% csrf_token %}
                                     <button class="wod-planner__cell-action wod-planner__cell-action--secondary" type="submit">
-                                        {{ cell.duplicate_previous_label|default:'Duplicar semana anterior' }}
+                                        {{ cell.duplicate_previous_label|default:'Duplicar anterior' }}
                                     </button>
                                 </form>
                                 {% endif %}
@@ -277,6 +291,39 @@
 
         {% include "operations/includes/wod_day_apply_popover.html" %}
         {% include "operations/includes/wod_day_apply_toast.html" %}
+
+        {# ── Dialog: Remover todos os WODs da semana ─────────────────────── #}
+        <dialog id="planner-clear-week-dialog" class="wod-planner__confirm-dialog" aria-label="Confirmar remoção de todos os WODs">
+            <p class="eyebrow">Atenção</p>
+            <h3>Deseja excluir os WODs da semana? <kbd>D</kbd></h3>
+            {% if current_role.slug == 'coach' %}
+            <p>Esta ação remove os WODs das <strong>suas aulas</strong> em <strong>{{ planner_week.label }}</strong>. Rascunhos, pendentes e publicados serão excluídos. Não é possível desfazer.</p>
+            {% else %}
+            <p>Esta ação remove os WODs de <strong>todas as aulas</strong> de <strong>{{ planner_week.label }}</strong>. Rascunhos, pendentes e publicados serão excluídos. Não é possível desfazer.</p>
+            {% endif %}
+            <div class="wod-planner__confirm-actions">
+                <form method="post" action="{% url 'workout-planner-clear-week' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="week" value="{{ planner_week.week_start|date:'Y-m-d' }}">
+                    <button class="button danger" type="submit">Confirmar remoção</button>
+                </form>
+                <button class="button tertiary" type="button" onclick="document.getElementById('planner-clear-week-dialog').close()">Cancelar</button>
+            </div>
+        </dialog>
+
+        <dialog id="planner-delete-selected-dialog" class="wod-planner__confirm-dialog" aria-label="Confirmar remoção do WOD selecionado">
+            <p class="eyebrow">Atenção</p>
+            <h3>Deseja excluir o WOD selecionado? <kbd>DEL</kbd></h3>
+            <p data-planner-delete-selected-copy>Essa ação remove o WOD da aula em foco. Não é possível desfazer.</p>
+            <div class="wod-planner__confirm-actions">
+                <form method="post" action="" data-planner-delete-selected-form>
+                    {% csrf_token %}
+                    <input type="hidden" name="week" value="{{ planner_week.week_start|date:'Y-m-d' }}">
+                    <button class="button danger" type="submit">Confirmar remoção</button>
+                </form>
+                <button class="button tertiary" type="button" onclick="document.getElementById('planner-delete-selected-dialog').close()">Cancelar</button>
+            </div>
+        </dialog>
 
         {% if planner_trusted_template_options %}
         <dialog class="wod-planner__template-picker" data-wod-planner-template-picker aria-label="Escolher template confiavel">

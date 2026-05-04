@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core.cache import cache
 from django.core.management import call_command
 from django.test import TestCase
 from django.utils import timezone
@@ -63,6 +64,7 @@ class WorkoutFlowBaseTestCase(TestCase):
         )
 
     def setUp(self):
+        cache.clear()
         self.client.force_login(self.coach)
 
     def login_as_coach(self):

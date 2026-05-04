@@ -32,6 +32,72 @@ POR QUE ELE EXISTE:
     var displayId = field.dataset.displayTarget || '';
     var display = displayId ? document.getElementById(displayId) : null;
 
+    function openTransientPicker() {
+      if (!picker) return;
+
+      // showPicker() precisa ser chamado no elemento REAL (não em clone):
+      // clonar quebra o trusted-gesture context no Chrome/Edge.
+      // Estratégia: posicionar o picker real perto do botão (para o calendário
+      // abrir ali), remover hidden temporariamente, chamar showPicker(),
+      // e restaurar o estado depois.
+
+      var anchor = button || field;
+      var rect = anchor ? anchor.getBoundingClientRect() : null;
+
+      var hadHidden = picker.hasAttribute('hidden');
+      var savedCssText = picker.style.cssText || '';
+
+      // Âncora o picker perto do botão — o calendário nativo abre próximo ao input.
+      // Importante: limpar clip/clip-path da classe .smart-paste-native-picker,
+      // senão showPicker() falha (elemento percebido como "não renderizado").
+      picker.style.cssText = [
+        'position:fixed',
+        rect ? 'left:' + Math.round(rect.left) + 'px' : 'left:0',
+        rect ? 'top:' + Math.round(rect.bottom + 4) + 'px' : 'top:0',
+        'width:1px',
+        'height:1px',
+        'opacity:0',
+        'pointer-events:none',
+        'z-index:9999',
+        'clip:auto',
+        'clip-path:none',
+        'overflow:visible',
+        'white-space:normal',
+        'margin:0',
+        'padding:0',
+        'border:0'
+      ].join(';');
+
+      if (hadHidden) picker.removeAttribute('hidden');
+      picker.removeAttribute('aria-hidden');
+
+      // Força reflow síncrono — sem isso o primeiro clique abre no topo.
+      void picker.offsetHeight;
+
+      function restore() {
+        picker.style.cssText = savedCssText;
+        if (hadHidden) picker.setAttribute('hidden', '');
+        picker.setAttribute('aria-hidden', 'true');
+      }
+
+      picker.addEventListener('change', restore, { once: true });
+      picker.addEventListener('blur', function () {
+        window.setTimeout(restore, 50);
+      }, { once: true });
+
+      if (typeof picker.showPicker === 'function') {
+        try {
+          picker.showPicker();
+        } catch (e) {
+          picker.click();
+          picker.focus();
+        }
+      } else {
+        picker.click();
+        picker.focus();
+      }
+    }
+
     function formatDisplayValue(parts) {
       return includesYear
         ? pad(parts[2]) + '/' + pad(parts[1]) + '/' + parts[0]
@@ -90,16 +156,12 @@ POR QUE ELE EXISTE:
       }
     }
 
-    if (button && picker) {
+    // Se o campo está num monday-wrap, o smart_paste_week_monday.js gerencia
+    // o botão — não bindamos aqui para evitar duplo disparo.
+    var isMondayWrap = button && button.closest('[data-smart-date-monday-wrap]');
+    if (button && picker && !isMondayWrap) {
       button.addEventListener('click', function () {
-        // Abre o calendário na data já definida no picker (vinda do context).
-        // Não sobrescreve com hoje — o valor correto (próxima segunda) já está no value.
-        if (typeof picker.showPicker === 'function') {
-          picker.showPicker();
-        } else {
-          picker.click();
-          picker.focus();
-        }
+        openTransientPicker();
       });
     }
 
@@ -119,6 +181,13 @@ POR QUE ELE EXISTE:
     if (parentDialog && !parentDialog.open) {
       parentDialog.showModal();
     }
+    var parentBlock = reviewTarget.closest('[data-dialog-block]');
+    if (parentBlock) {
+      var parentBody = parentBlock.closest('.smart-paste-day-dialog__body');
+      if (parentBody) {
+        setFocusedBlock(parentBody, parentBlock.dataset.blockFocusId || '');
+      }
+    }
     if (reviewTarget.tagName === 'DETAILS') {
       reviewTarget.open = true;
     }
@@ -127,6 +196,46 @@ POR QUE ELE EXISTE:
     if (focusField) {
       window.setTimeout(function () { focusField.focus(); }, 180);
     }
+  }
+
+  function setFocusedBlock(body, focusId) {
+    if (!body || !focusId) return;
+    body.dataset.dialogMode = 'focused';
+    body.dataset.focusedBlockId = focusId;
+    var activeBlock = null;
+    body.querySelectorAll('[data-dialog-block]').forEach(function (block) {
+      var isActive = block.dataset.blockFocusId === focusId;
+      if (isActive) activeBlock = block;
+      block.classList.toggle('is-active', isActive);
+      block.classList.toggle('is-hidden', !isActive);
+      var surface = block.querySelector('[data-action="focus-block"]');
+      var detail = block.querySelector('.smart-paste-block-detail');
+      if (surface) surface.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+      if (detail) detail.hidden = !isActive;
+    });
+    if (activeBlock && typeof activeBlock.scrollIntoView === 'function') {
+      activeBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function clearFocusedBlock(body) {
+    if (!body) return;
+    body.dataset.dialogMode = 'overview';
+    delete body.dataset.focusedBlockId;
+    body.querySelectorAll('[data-dialog-block]').forEach(function (block) {
+      block.classList.remove('is-active');
+      block.classList.remove('is-hidden');
+      var surface = block.querySelector('[data-action="focus-block"]');
+      var detail = block.querySelector('.smart-paste-block-detail');
+      if (surface) surface.setAttribute('aria-expanded', 'false');
+      if (detail) {
+        detail.hidden = true;
+        detail.querySelectorAll('details').forEach(function (disclosure) {
+          disclosure.open = false;
+        });
+      }
+    });
+    body.scrollTop = 0;
   }
 
   function bindReviewQueue(scope) {
@@ -160,6 +269,8 @@ POR QUE ELE EXISTE:
         if (!targetId) return;
         var dialog = document.getElementById(targetId);
         if (dialog && typeof dialog.showModal === 'function') {
+          var body = dialog.querySelector('.smart-paste-day-dialog__body');
+          if (body) clearFocusedBlock(body);
           dialog.showModal();
         }
       });
@@ -169,7 +280,28 @@ POR QUE ELE EXISTE:
       btn.dataset.closeDialogBound = 'true';
       btn.addEventListener('click', function () {
         var dialog = btn.closest('dialog');
-        if (dialog) dialog.close();
+        if (dialog) {
+          var body = dialog.querySelector('.smart-paste-day-dialog__body');
+          if (body) clearFocusedBlock(body);
+          dialog.close();
+        }
+      });
+    });
+    scope.querySelectorAll('[data-action="focus-block"]').forEach(function (btn) {
+      if (btn.dataset.focusBlockBound === 'true') return;
+      btn.dataset.focusBlockBound = 'true';
+      btn.addEventListener('click', function () {
+        var body = btn.closest('.smart-paste-day-dialog__body');
+        var focusId = btn.dataset.target || '';
+        setFocusedBlock(body, focusId);
+      });
+    });
+    scope.querySelectorAll('[data-action="unfocus-block"]').forEach(function (btn) {
+      if (btn.dataset.unfocusBlockBound === 'true') return;
+      btn.dataset.unfocusBlockBound = 'true';
+      btn.addEventListener('click', function () {
+        var body = btn.closest('.smart-paste-day-dialog__body');
+        clearFocusedBlock(body);
       });
     });
     // Copy day text to clipboard for GPT
@@ -206,7 +338,11 @@ POR QUE ELE EXISTE:
       if (dialog.dataset.backdropBound === 'true') return;
       dialog.dataset.backdropBound = 'true';
       dialog.addEventListener('click', function (e) {
-        if (e.target === dialog) dialog.close();
+        if (e.target === dialog) {
+          var body = dialog.querySelector('.smart-paste-day-dialog__body');
+          if (body) clearFocusedBlock(body);
+          dialog.close();
+        }
       });
     });
   }
