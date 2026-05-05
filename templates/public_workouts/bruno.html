@@ -60,6 +60,27 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--da
 .tab{padding:6px 15px;border-radius:8px;border:1px solid var(--border);font-size:12.5px;cursor:pointer;background:var(--white);color:#666;font-family:inherit;transition:all .12s}
 .tab:hover{background:#f0f0ee}
 .tab.on{background:var(--dark);color:var(--white);border-color:var(--dark);font-weight:600}
+.mode-toggle{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 14px;border:none;border-radius:999px;
+  background:#0f172a;color:#fff;font-size:12px;font-weight:700;
+  cursor:pointer;font-family:inherit;margin-bottom:1.1rem
+}
+.mode-toggle .mode-icon{font-size:14px}
+body.simplified .glossary{display:none}
+body.simplified .legend{display:none}
+body.simplified .tracker{display:none}
+body.simplified .ex-code{display:none}
+body.simplified .ex-var{display:none}
+body.simplified .ex-note{display:none}
+body.simplified .prog-sub{display:none}
+body.simplified .sess-meta{display:none}
+body.simplified .wiki-btn{display:none}
+body.simplified .prog-title{font-size:18px}
+body.simplified .stats{grid-template-columns:repeat(3,1fr)}
+body.simplified .stat:last-child{display:none}
+body.simplified .ex-top{background:var(--white);border-bottom:none;padding-bottom:.5rem}
+body.simplified .ex{box-shadow:none;border-color:#e0deda}
 
 /* ─ Session ─ */
 .session{display:none}
@@ -159,7 +180,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--da
 @media(max-width:600px){
   .stats{grid-template-columns:repeat(2,1fr)}
   .week{grid-template-columns:repeat(4,1fr)}
-  .week .dp:nth-child(n+5){display:none}
   .tracker-grid{grid-template-columns:repeat(3,1fr)}
   .ex-top{flex-direction:column}
   .wiki-btn{align-self:flex-start}
@@ -219,6 +239,11 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--da
   <button class="tab" onclick="goTab('cardio',this)">Cardio</button>
   <button class="tab" onclick="goTab('period',this)">Periodização</button>
 </div>
+
+<button class="mode-toggle" type="button" onclick="toggleMode(this)">
+  <span class="mode-icon">🏋️</span>
+  <span class="mode-label">Modo Academia</span>
+</button>
 
 <!-- ═══════ TAB TREINO ═══════ -->
 <div id="tab-treino">
@@ -766,6 +791,20 @@ function goTab(t,el){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
   if(el)el.classList.add('on');
   if(t==='period')buildChart();
+}
+function toggleMode(btn){
+  const simplified=document.body.classList.toggle('simplified');
+  const label=btn.querySelector('.mode-label');
+  const icon=btn.querySelector('.mode-icon');
+  if(simplified){
+    label.textContent='Modo Completo';
+    icon.textContent='📖';
+    btn.style.background='#166534';
+  }else{
+    label.textContent='Modo Academia';
+    icon.textContent='🏋️';
+    btn.style.background='';
+  }
 }
 
 // ─ Periodization Chart ─
