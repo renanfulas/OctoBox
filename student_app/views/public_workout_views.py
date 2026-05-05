@@ -45,6 +45,18 @@ PUBLIC_WORKOUT_LIBRARY = {
         'background_color': '#f4efe6',
         'template_file': 'bruno.html',
     },
+    'milene': {
+        'title': 'Treino Milene',
+        'theme_color': '#1a1a1a',
+        'background_color': '#fafaf7',
+        'template_file': 'milene.html',
+    },
+    'giovanna': {
+        'title': 'Treino Giovanna',
+        'theme_color': '#172017',
+        'background_color': '#f8faf7',
+        'template_file': 'giovanna.html',
+    },
 }
 PUBLIC_WORKOUT_TEMPLATE_DIR = Path(settings.BASE_DIR) / 'templates' / 'public_workouts'
 
@@ -404,7 +416,7 @@ class PublicWorkoutOfflineView(View):
 <body>
   <main>
     <h1>Sem conex\u00e3o agora.</h1>
-    <p>Quando a internet voltar, os links p\u00fablicos de treino da Juliana e do Bruno voltam a abrir normalmente.</p>
+    <p>Quando a internet voltar, os links p\u00fablicos de treino da Juliana, do Bruno, da Milene e da Giovanna voltam a abrir normalmente.</p>
     <p>Se voc\u00ea j\u00e1 abriu um dos treinos antes neste aparelho, tente novamente em alguns segundos.</p>
     <a href="/renan/juliana">Abrir treino da Juliana</a>
   </main>
