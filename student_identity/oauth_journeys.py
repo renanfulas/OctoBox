@@ -79,7 +79,7 @@ def handle_student_special_oauth_journey(
             'box_invite_link_token': str(box_invite_link.token),
         }
         if not payload['box_root_slug'] or not payload['provider'] or not payload['provider_subject']:
-            return _redirect_with_message(request, 'warning', 'Sua sessao de cadastro nao ficou completa. Tente entrar novamente.')
+            return _redirect_with_message(request, 'warning', 'Sua sessão de cadastro não ficou completa. Tente entrar novamente.')
         store_pending_student_onboarding(request, payload=payload)
         record_student_onboarding_event(
             actor=None,
@@ -122,7 +122,7 @@ def handle_student_special_oauth_journey(
         'email': identity_payload.email,
     }
     if not payload['box_root_slug'] or not payload['identity_id'] or not payload['student_id']:
-        return _redirect_with_message(request, 'warning', 'Sua sessao de cadastro nao ficou completa. Tente entrar novamente.')
+        return _redirect_with_message(request, 'warning', 'Sua sessão de cadastro não ficou completa. Tente entrar novamente.')
     store_pending_student_onboarding(request, payload=payload)
     record_student_onboarding_event(
         actor=None,

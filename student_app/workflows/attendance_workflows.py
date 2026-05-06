@@ -52,14 +52,14 @@ def confirm_student_attendance(*, student, session_id) -> AttendanceConfirmation
             .first()
         )
         if session is None:
-            raise AttendanceNotAvailableError('Sessao indisponivel para reserva.')
+            raise AttendanceNotAvailableError('Sessão indisponível para reserva.')
 
         box_timezone = resolve_box_timezone(box_root_slug=student.app_identity.box_root_slug)
         now = timezone.localtime(timezone.now(), box_timezone)
         session_local = timezone.localtime(session.scheduled_at, box_timezone)
         booking_horizon = now.date() + timedelta(days=1)
         if session_local.date() > booking_horizon:
-            raise AttendanceNotAvailableError('Voce pode reservar apenas aulas de hoje ou amanha.')
+            raise AttendanceNotAvailableError('Você pode reservar apenas aulas de hoje ou amanhã.')
 
         active_reservations = (
             Attendance.objects.select_for_update()
@@ -76,7 +76,7 @@ def confirm_student_attendance(*, student, session_id) -> AttendanceConfirmation
             active_end = active_start + timedelta(minutes=active_session.duration_minutes or 60)
             if active_end > now:
                 raise AttendanceNotAvailableError(
-                    'Voce ja tem uma reserva ativa. So pode reservar a proxima aula depois que a atual terminar.'
+                    'Você já tem uma reserva ativa. Só pode reservar a próxima aula depois que a atual terminar.'
                 )
 
         attendance, created = Attendance.objects.get_or_create(
@@ -112,7 +112,7 @@ def cancel_student_attendance(*, student, session_id) -> AttendanceCancelResult:
         .first()
     )
     if session is None:
-        raise AttendanceNotAvailableError('Sessao indisponivel para cancelamento.')
+        raise AttendanceNotAvailableError('Sessão indisponível para cancelamento.')
 
     cancel_deadline = session.scheduled_at - timedelta(hours=1)
     if timezone.now() > cancel_deadline:
@@ -124,11 +124,11 @@ def cancel_student_attendance(*, student, session_id) -> AttendanceCancelResult:
         .first()
     )
     if attendance is None:
-        raise AttendanceNotAvailableError('Reserva indisponivel para cancelamento.')
+        raise AttendanceNotAvailableError('Reserva indisponível para cancelamento.')
     if attendance.status == AttendanceStatus.CHECKED_IN:
-        raise AttendanceNotAvailableError('Sua presenca ja foi confirmada nesta aula.')
+        raise AttendanceNotAvailableError('Sua presença já foi confirmada nesta aula.')
     if attendance.status != AttendanceStatus.BOOKED:
-        raise AttendanceNotAvailableError('Reserva indisponivel para cancelamento.')
+        raise AttendanceNotAvailableError('Reserva indisponível para cancelamento.')
 
     attendance.status = AttendanceStatus.CANCELED
     attendance.save(update_fields=['status', 'updated_at'])

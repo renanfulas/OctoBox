@@ -52,9 +52,9 @@ def build_student_onboarding_context(view, **kwargs):
         else 'Revise seus dados para entrar no app'
     )
     context['journey_copy'] = (
-        'Aqui a gente pega os dados essenciais para seu acesso nascer redondo.'
+        'Aqui a gente pega os dados essenciais para o seu acesso nascer redondo.'
         if journey == StudentOnboardingJourney.MASS_BOX_INVITE
-        else 'Ja puxamos o que o box sabia sobre voce. Agora falta so uma revisao curta.'
+        else 'Já puxamos o que o box sabia sobre você. Agora falta só uma revisão curta.'
     )
     context['oauth_email'] = (
         view.pending_onboarding.get('email')

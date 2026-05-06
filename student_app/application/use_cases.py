@@ -37,8 +37,8 @@ from student_app.application.timezone import localize_box_datetime, resolve_box_
 from student_app.brazilian_holidays import get_brazilian_holiday_name
 
 
-WEEKDAY_LABELS = ('Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom')
-FULL_WEEKDAY_LABELS = ('Segunda-feira', 'Terca-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sabado', 'Domingo')
+WEEKDAY_LABELS = ('Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom')
+FULL_WEEKDAY_LABELS = ('Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo')
 
 
 def _movement_value(movement, field_name):
@@ -52,7 +52,7 @@ def _format_attendance_status(*, attendance):
         return 'Sem reserva'
     status = attendance.status
     if status == AttendanceStatus.CHECKED_IN:
-        return 'Presenca confirmada'
+        return 'Presença confirmada'
     if status == AttendanceStatus.CANCELED:
         return 'Reserva cancelada'
     if hasattr(attendance, 'get_status_display'):
@@ -67,7 +67,7 @@ def build_student_prescription_label(*, movement):
     load_type = _movement_value(movement, 'load_type')
     load_value = _movement_value(movement, 'load_value')
     if sets:
-        bits.append(f'{sets} series')
+        bits.append(f'{sets} séries')
     if reps:
         bits.append(f'{reps} reps')
     if load_type == WorkoutLoadType.PERCENTAGE_OF_RM and load_value is not None:
@@ -76,7 +76,7 @@ def build_student_prescription_label(*, movement):
         bits.append(f'@ {load_value} kg')
     elif load_type == WorkoutLoadType.FREE:
         bits.append('carga livre')
-    return ' · '.join(bits) or 'Sem detalhe de prescricao'
+    return ' · '.join(bits) or 'Sem detalhe de prescrição'
 
 
 def build_student_recommendation_payload(*, movement, student=None):
@@ -104,14 +104,14 @@ def build_student_recommendation_payload(*, movement, student=None):
         return {
             'load_context_label': 'Carga fixa',
             'recommended_load_kg': load_value,
-            'recommendation_copy': 'Esse bloco ja chega ao aluno com uma carga fechada definida pelo coach.',
+            'recommendation_copy': 'Esse bloco já chega ao aluno com uma carga fechada definida pelo coach.',
             'base_rm_kg': None,
             'percentage': None,
         }
     return {
         'load_context_label': 'Carga livre',
         'recommended_load_kg': None,
-        'recommendation_copy': 'O aluno vera a orientacao de ajuste livre com base na leitura de esforco e do coach.',
+        'recommendation_copy': 'O aluno verá a orientação de ajuste livre com base na leitura de esforço e do coach.',
         'base_rm_kg': None,
         'percentage': None,
     }
@@ -144,14 +144,14 @@ def _build_student_recommendation_payload_from_rm(*, movement, exercise_max):
         return {
             'load_context_label': 'Carga fixa',
             'recommended_load_kg': load_value,
-            'recommendation_copy': 'Esse bloco ja chega ao aluno com uma carga fechada definida pelo coach.',
+            'recommendation_copy': 'Esse bloco já chega ao aluno com uma carga fechada definida pelo coach.',
             'base_rm_kg': None,
             'percentage': None,
         }
     return {
         'load_context_label': 'Carga livre',
         'recommended_load_kg': None,
-        'recommendation_copy': 'O aluno vera a orientacao de ajuste livre com base na leitura de esforco e do coach.',
+        'recommendation_copy': 'O aluno verá a orientação de ajuste livre com base na leitura de esforço e do coach.',
         'base_rm_kg': None,
         'percentage': None,
     }
@@ -203,11 +203,11 @@ class GetStudentDashboard:
         if is_plan_blocked:
             return 'Renove seu plano para reservar'
         if has_other_active_reservation:
-            return 'Voce ja tem uma reserva ativa. Libere a proxima so depois que essa aula terminar.'
+            return 'Você já tem uma reserva ativa. Libere a próxima só depois que essa aula terminar.'
         if not is_within_booking_window:
-            return 'Reserve apenas para hoje ou amanha.'
+            return 'Reserve apenas para hoje ou amanhã.'
         if runtime_state['label'] != 'Agendada':
-            return 'Reserva indisponivel para esta aula agora.'
+            return 'Reserva indisponível para esta aula agora.'
         return ''
 
     def _build_session_capacity_snapshot(self, *, session, runtime_state):
@@ -612,7 +612,7 @@ class GetStudentDashboard:
         next_useful_context = (
             'WOD ativo agora'
             if home_mode == 'wod_active'
-            else ('Reserva ativa no radar' if booked_future_session else ('Proxima aula no radar' if focal_session else 'Sem aula publicada'))
+            else ('Reserva ativa no radar' if booked_future_session else ('Próxima aula no radar' if focal_session else 'Sem aula publicada'))
         )
         result = StudentDashboardResult(
             student_name=identity.student.full_name,
@@ -710,13 +710,13 @@ class GetStudentMonthSchedule:
             attendance_labels = []
             for session in day_sessions:
                 if session.attendance_code == AttendanceStatus.CHECKED_IN:
-                    attendance_labels.append(f'{session.title} · Presenca confirmada')
+                    attendance_labels.append(f'{session.title} · Presença confirmada')
                 elif session.attendance_code == AttendanceStatus.BOOKED:
                     attendance_labels.append(f'{session.title} · Reservado')
             if attendance_labels:
                 student_checkin_label = ' | '.join(attendance_labels)
             elif day < today:
-                student_checkin_label = 'Sem presenca'
+                student_checkin_label = 'Sem presença'
             else:
                 student_checkin_label = 'Nenhum check-in'
             days.append(

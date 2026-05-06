@@ -471,7 +471,7 @@ class StudentIdentityFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Continuar com Google')
         self.assertNotContains(response, 'Continuar com Apple')
-        self.assertContains(response, 'O login social esta em manutencao.')
+        self.assertContains(response, 'O login social está em manutenção.')
         self.assertNotContains(response, 'Entrar com usuario')
         self.assertNotContains(response, reverse('login-staff'))
 
@@ -558,7 +558,7 @@ class StudentIdentityFlowTests(TestCase):
         response = self.client.get(reverse('student-identity-login'), {'invite': str(invitation.token)})
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Voce esta entrando por convite do box')
+        self.assertContains(response, 'Você está entrando por convite do box')
         self.assertContains(response, get_box_runtime_slug().replace('-', ' ').title())
 
     @override_settings(STUDENT_GOOGLE_OAUTH_CLIENT_ID='google-client-id')
@@ -581,9 +581,17 @@ class StudentIdentityFlowTests(TestCase):
     def test_login_shows_unavailable_block_when_no_provider_configured(self):
         response = self.client.get(reverse('student-identity-login'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'O login social esta em manutencao.')
+        self.assertContains(response, 'O login social está em manutenção.')
         self.assertNotContains(response, 'Continuar com Google')
         self.assertNotContains(response, 'Continuar com Apple')
+
+    @override_settings(STUDENT_GOOGLE_OAUTH_CLIENT_ID='google-client-id')
+    def test_login_page_uses_accented_student_copy(self):
+        response = self.client.get(reverse('student-identity-login'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Use a autenticação Google para entrar como aluno.')
+        self.assertContains(response, 'O OctoBox usa sua identidade social para confirmar quem você é e liberar o box certo.')
 
     @override_settings(STUDENT_AUDIT_ASYNC=True)
     @patch('student_identity.funnel_events.transaction')

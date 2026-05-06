@@ -18,7 +18,7 @@
     <section class="student-auth-card" aria-label="Entrar no app do aluno">
         {% if invite_context_label %}
         <div class="student-form-note">
-            Voce esta entrando por convite do box <strong>{{ invite_context_label }}</strong>.
+            Você está entrando por convite do box <strong>{{ invite_context_label }}</strong>.
         </div>
         {% endif %}
 
@@ -41,7 +41,7 @@
             {% endif %}
         </div>
 
-        <p class="student-form-note">O OctoBox usa sua identidade social para confirmar quem voce e e liberar o box certo.</p>
+        <p class="student-form-note">O OctoBox usa sua identidade social para confirmar quem você é e liberar o box certo.</p>
 
         {% if not google_available and not apple_available %}
         {% include "student_identity/partials/provider_unavailable_block.html" %}

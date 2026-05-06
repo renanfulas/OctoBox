@@ -234,10 +234,12 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'autocomplete="tel"', html=False)
         self.assertContains(response, 'pattern="[0-9]{10,20}"', html=False)
         self.assertContains(response, 'placeholder="dd/mm/aaaa"', html=False)
+        self.assertContains(response, 'data-mask="date"', html=False)
+        self.assertContains(response, '/static/js/core/forms.js', html=False)
         self.assertContains(response, 'data-min-year="1900"', html=False)
         self.assertContains(response, 'data-max-year="2026"', html=False)
         self.assertNotContains(response, '<span>E-mail</span>', html=False)
-        self.assertContains(response, 'Seu e-mail sera o mesmo validado no OAuth', html=False)
+        self.assertContains(response, 'Seu e-mail será o mesmo validado no OAuth', html=False)
 
     def test_mass_onboarding_rejects_invalid_phone_payload(self):
         client = Client()
@@ -379,10 +381,15 @@ class StudentAppExperienceTests(TestCase):
 
     def test_onboarding_redirects_to_login_when_session_is_missing(self):
         client = Client()
+        client.cookies['octobox_student_session'] = build_student_session_value(
+            identity_id=self.identity.id,
+            box_root_slug='control',
+        )
 
-        response = client.get(reverse('student-app-onboarding'), follow=False)
+        response = client.get(reverse('student-app-onboarding'), follow=True)
 
-        self.assertRedirects(response, reverse('student-identity-login'), fetch_redirect_response=False)
+        self.assertRedirects(response, reverse('student-identity-login'))
+        self.assertContains(response, 'Sua sessão expirou durante o cadastro. Tente novamente.')
 
     def test_onboarding_redirects_to_login_when_pending_payload_is_incomplete(self):
         client = Client()
@@ -445,7 +452,7 @@ class StudentAppExperienceTests(TestCase):
         response = self.client.get(reverse('student-app-home'), {'date': timezone.localtime(session.scheduled_at).date().isoformat()})
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Inicio')
+        self.assertContains(response, 'Início')
         self.assertNotContains(response, 'Abrir menu lateral')
         self.assertContains(response, 'Cross de terca')
         self.assertContains(response, 'Box atual: control')
@@ -453,7 +460,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'Grade')
         self.assertContains(response, 'WOD')
         self.assertContains(response, 'RM')
-        self.assertContains(response, 'Proxima aula')
+        self.assertContains(response, 'Próxima aula')
         self.assertContains(response, 'class="student-primary-action"', html=False)
         self.assertContains(response, 'class="student-progress-strip"', html=False)
         self.assertContains(response, 'data-theme="light"', html=False)
@@ -534,7 +541,7 @@ class StudentAppExperienceTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Voce ja tem uma reserva ativa. So pode reservar a proxima aula depois que a atual terminar.')
+        self.assertContains(response, 'Você já tem uma reserva ativa. Só pode reservar a próxima aula depois que a atual terminar.')
         self.assertFalse(Attendance.objects.filter(student=self.student, session=second_session).exists())
 
     def test_confirm_attendance_blocks_booking_beyond_tomorrow(self):
@@ -554,7 +561,7 @@ class StudentAppExperienceTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Voce pode reservar apenas aulas de hoje ou amanha.')
+        self.assertContains(response, 'Você pode reservar apenas aulas de hoje ou amanhã.')
         self.assertFalse(Attendance.objects.filter(student=self.student, session=session).exists())
 
     def test_confirm_attendance_reactivates_canceled_booking(self):
@@ -594,7 +601,7 @@ class StudentAppExperienceTests(TestCase):
         response = self.client.get(reverse('student-app-grade'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Aqui voce acompanha sua rotina. Reserve na aba Agenda.')
+        self.assertContains(response, 'Aqui você acompanha sua rotina. Reserve na aba Agenda.')
         self.assertNotContains(response, 'class="student-secondary-action"', html=False)
 
     def test_cancel_attendance_sets_booking_as_canceled_until_one_hour_before_class(self):
@@ -671,7 +678,7 @@ class StudentAppExperienceTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Sua presenca ja foi confirmada nesta aula.')
+        self.assertContains(response, 'Sua presença já foi confirmada nesta aula.')
         attendance = Attendance.objects.get(student=self.student, session=session)
         self.assertEqual(attendance.status, AttendanceStatus.CHECKED_IN)
 
@@ -712,8 +719,8 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(grade_response.status_code, 200)
         self.assertEqual(rm_response.status_code, 200)
         self.assertContains(grade_response, 'Hoje')
-        self.assertContains(grade_response, 'Amanha')
-        self.assertContains(grade_response, 'Ver mes')
+        self.assertContains(grade_response, 'Amanhã')
+        self.assertContains(grade_response, 'Ver mês')
         self.assertContains(rm_response, 'Records')
         self.assertContains(rm_response, 'Deadlift')
         self.assertContains(rm_response, '100kg')
@@ -725,14 +732,14 @@ class StudentAppExperienceTests(TestCase):
             status='scheduled',
         )
         tomorrow_session = ClassSession.objects.create(
-            title='Amanha cedo',
+            title='Amanhã cedo',
             scheduled_at=timezone.now() + timedelta(days=1, hours=2),
             status='scheduled',
         )
 
         response = self.client.get(reverse('student-app-home'), {'date': timezone.localtime(tomorrow_session.scheduled_at).date().isoformat()})
 
-        self.assertContains(response, 'Amanha cedo')
+        self.assertContains(response, 'Amanhã cedo')
         self.assertNotContains(response, 'Hoje cedo')
 
     def test_dashboard_focal_session_shows_next_class_when_student_has_no_reservation(self):
@@ -790,7 +797,7 @@ class StudentAppExperienceTests(TestCase):
             capacity=20,
         )
         next_day_session = ClassSession.objects.create(
-            title='Cross amanha',
+            title='Cross amanhã',
             scheduled_at=timezone.now() + timedelta(days=1, hours=1),
             status='scheduled',
             capacity=20,
@@ -808,7 +815,7 @@ class StudentAppExperienceTests(TestCase):
         )
 
         self.assertContains(response, 'class="student-progress-day student-day-filter is-selected"', html=False)
-        self.assertContains(response, 'Voce ja tem uma reserva ativa. Libere a proxima so depois que essa aula terminar.')
+        self.assertContains(response, 'Você já tem uma reserva ativa. Libere a próxima só depois que essa aula terminar.')
 
     def test_student_canceled_booking_shows_reservar_novamente(self):
         session = ClassSession.objects.create(
@@ -856,7 +863,7 @@ class StudentAppExperienceTests(TestCase):
             {'date': timezone.localtime(canceled_session.scheduled_at).date().isoformat()},
         )
 
-        self.assertContains(response, 'Indisponivel')
+        self.assertContains(response, 'Indisponível')
         self.assertNotContains(response, 'Reservar novamente')
 
     def test_only_latest_canceled_booking_shows_reservar_novamente(self):
@@ -899,15 +906,15 @@ class StudentAppExperienceTests(TestCase):
     def test_student_grade_places_tomorrow_sessions_inside_amanha_section(self):
         tomorrow = timezone.localtime() + timedelta(days=1, hours=2)
         session = ClassSession.objects.create(
-            title='Cross amanha cedo',
+            title='Cross amanhã cedo',
             scheduled_at=tomorrow,
             status='scheduled',
         )
 
         response = self.client.get(reverse('student-app-grade'))
 
-        self.assertContains(response, 'Amanha')
-        self.assertContains(response, 'Cross amanha cedo')
+        self.assertContains(response, 'Amanhã')
+        self.assertContains(response, 'Cross amanhã cedo')
         self.assertContains(response, '1 aula(s)')
 
     def test_student_wod_opens_specific_session_from_query_param(self):
@@ -1074,7 +1081,7 @@ class StudentAppExperienceTests(TestCase):
         response = self.client.get(reverse('student-app-wod'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'WOD ainda nao publicado.')
+        self.assertContains(response, 'WOD ainda não publicado.')
         self.assertContains(response, 'Calculadora')
         self.assertContains(response, 'Deadlift')
 
@@ -1490,7 +1497,7 @@ class StudentAppExperienceTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Rascunho do coach')
-        self.assertContains(response, 'WOD ainda nao publicado.')
+        self.assertContains(response, 'WOD ainda não publicado.')
 
     def test_workout_prescription_returns_expected_rounded_load(self):
         StudentExerciseMax.objects.create(
@@ -1551,12 +1558,18 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'data-ui="student-pwa-install-action"', html=False)
         self.assertContains(response, 'data-ui="student-pwa-notification-action"', html=False)
 
+    def test_student_pwa_activation_rail_is_home_only(self):
+        response = self.client.get(reverse('student-app-grade'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'data-ui="student-pwa-activation"', html=False)
+
     def test_student_topbar_profile_lives_inside_avatar(self):
         response = self.client.get(reverse('student-app-home'))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'class="student-avatar student-avatar-link"', html=False)
-        self.assertContains(response, 'aria-label="Abrir perfil e configuracoes"', html=False)
+        self.assertContains(response, 'aria-label="Abrir perfil e configurações"', html=False)
         self.assertContains(response, '<svg class="theme-toggle-icon"', html=False)
         self.assertNotContains(response, 'class="student-topbar-link">Perfil</a>', html=False)
 

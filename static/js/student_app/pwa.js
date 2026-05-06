@@ -25,6 +25,7 @@
   var notificationCard = null;
   var dismissAction = null;
   var dismissKey = 'octobox_pwa_card_dismissed';
+  var installedKey = 'octobox_pwa_installed';
   var subscribeInFlight = null;
 
   function isIos() {
@@ -33,8 +34,42 @@
     return /iphone|ipad|ipod/.test(userAgent) || (platform === 'macintel' && window.navigator.maxTouchPoints > 1);
   }
 
+  function hasStandaloneDisplayMode() {
+    if (mediaQuery && mediaQuery.matches) {
+      return true;
+    }
+    if (!window.matchMedia) {
+      return false;
+    }
+    return (
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.matchMedia('(display-mode: minimal-ui)').matches
+    );
+  }
+
+  function hasStoredInstallState() {
+    try {
+      return window.localStorage.getItem(installedKey) === '1';
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function rememberInstalledState() {
+    try {
+      window.localStorage.setItem(installedKey, '1');
+      window.localStorage.removeItem(dismissKey);
+    } catch (error) {
+      // noop
+    }
+  }
+
   function isStandalone() {
-    return Boolean((mediaQuery && mediaQuery.matches) || window.navigator.standalone);
+    var standalone = Boolean(hasStandaloneDisplayMode() || window.navigator.standalone === true);
+    if (standalone) {
+      rememberInstalledState();
+    }
+    return standalone;
   }
 
   function notificationSupportState() {
@@ -286,7 +321,7 @@
   }
 
   function shouldShowActivationCard(state) {
-    if (state.activationComplete) {
+    if (state.isStandalone || state.wasInstalled || state.activationComplete) {
       try {
         window.localStorage.removeItem(dismissKey);
       } catch (error) {
@@ -445,6 +480,7 @@
     var state = {
       canInstall: Boolean(deferredInstallPrompt),
       isStandalone: isStandalone(),
+      wasInstalled: hasStoredInstallState(),
       notificationPermission: notificationPermission,
       notificationSupported: Boolean(notificationSupport.notificationsApi && notificationSupport.pushManager),
       pushConfigured: Boolean(notificationSupport.configured),
@@ -508,6 +544,7 @@
 
   window.addEventListener('appinstalled', function () {
     deferredInstallPrompt = null;
+    rememberInstalledState();
     publishPwaState();
   });
 

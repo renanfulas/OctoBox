@@ -1,6 +1,6 @@
 {% if student_identity %}
-<nav class="student-mobile-nav" aria-label="Navegacao mobile do aluno">
-    <a href="{% url 'student-app-home' %}" class="student-mobile-nav-link{% if student_shell_nav == 'home' %} is-active{% endif %}" aria-label="Inicio" title="Inicio">
+<nav class="student-mobile-nav" aria-label="Navegação mobile do aluno">
+    <a href="{% url 'student-app-home' %}" class="student-mobile-nav-link{% if student_shell_nav == 'home' %} is-active{% endif %}" aria-label="Início" title="Início">
         <span class="student-mobile-nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 10.5 12 3l9 7.5"/>
@@ -8,7 +8,7 @@
                 <path d="M9.5 20v-5.5h5V20"/>
             </svg>
         </span>
-        <span class="visually-hidden">Inicio</span>
+        <span class="visually-hidden">Início</span>
     </a>
     <a href="{% url 'student-app-grade' %}" class="student-mobile-nav-link{% if student_shell_nav == 'grade' %} is-active{% endif %}" aria-label="Grade" title="Grade">
         <span class="student-mobile-nav-icon" aria-hidden="true">

@@ -129,7 +129,7 @@ class StudentHomeView(StudentIdentityRequiredMixin, TemplateView):
         )
         context['dashboard'] = dashboard
         context['student_shell_nav'] = 'home'
-        context['student_shell_title'] = 'Inicio'
+        context['student_shell_title'] = 'Início'
         context['student_home_mode'] = dashboard.home_mode
         context['student_next_session'] = dashboard.focal_session
         context['student_active_wod_session'] = dashboard.active_wod_session
@@ -441,7 +441,7 @@ class StudentSettingsView(StudentIdentityRequiredMixin, FormView):
                 else '',
             },
         )
-        messages.success(self.request, 'Pedido de alteracao enviado para aprovacao.')
+        messages.success(self.request, 'Pedido de alteração enviado para aprovação.')
         return redirect('student-app-settings')
 
 
@@ -449,7 +449,7 @@ class StudentConfirmAttendanceView(StudentIdentityRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         session_id = request.POST.get('session_id')
         if not session_id:
-            messages.error(request, 'Nao consegui identificar a aula para confirmar sua presenca.')
+            messages.error(request, 'Não consegui identificar a aula para confirmar sua presença.')
             return redirect('student-app-grade')
 
         try:
@@ -458,12 +458,12 @@ class StudentConfirmAttendanceView(StudentIdentityRequiredMixin, View):
                 session_id=session_id,
             )
         except AttendanceNotAvailableError as exc:
-            messages.error(request, str(exc) or 'Nao consegui identificar a aula para confirmar sua presenca.')
+            messages.error(request, str(exc) or 'Não consegui identificar a aula para confirmar sua presença.')
             return _safe_redirect(request, 'student-app-grade')
 
         messages.success(
             request,
-            f'Sua presenca em {result.session.title} foi confirmada. Quando a janela do treino abrir, o WOD sobe para o Inicio.',
+            f'Sua presença em {result.session.title} foi confirmada. Quando a janela do treino abrir, o WOD sobe para o Início.',
         )
         record_student_app_activity(
             student=request.student_identity.student,
@@ -478,7 +478,7 @@ class StudentCancelAttendanceView(StudentIdentityRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         session_id = request.POST.get('session_id')
         if not session_id:
-            messages.error(request, 'Nao consegui identificar a aula para cancelar sua reserva.')
+            messages.error(request, 'Não consegui identificar a aula para cancelar sua reserva.')
             return redirect('student-app-grade')
 
         try:
@@ -487,7 +487,7 @@ class StudentCancelAttendanceView(StudentIdentityRequiredMixin, View):
                 session_id=session_id,
             )
         except AttendanceNotAvailableError as exc:
-            messages.error(request, str(exc) or 'Nao foi possivel cancelar esta reserva agora.')
+            messages.error(request, str(exc) or 'Não foi possível cancelar esta reserva agora.')
             return _safe_redirect(request, 'student-app-grade')
 
         messages.success(request, f'Reserva em {result.session.title} cancelada.')
