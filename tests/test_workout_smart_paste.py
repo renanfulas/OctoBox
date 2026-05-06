@@ -31,6 +31,13 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'Smart Paste')
         self.assertContains(response, 'Cole o WOD semanal e revise antes de replicar.')
 
+    def test_surface_keeps_chatgpt_button_without_custom_gpt_url(self):
+        response = self.client.get(reverse('workout-smart-paste'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Abrir no ChatGPT')
+        self.assertContains(response, 'href="https://chatgpt.com/"')
+
     def test_surface_does_not_auto_bind_latest_plan_from_another_week(self):
         WeeklyWodPlan.objects.create(
             week_start='2027-04-19',

@@ -1,31 +1,23 @@
 {% comment %}
-INCLUDE: campo de data de início de semana com snap automático para segunda-feira.
+INCLUDE: campo de data de inicio de semana com snap automatico para segunda-feira.
 
-PARÂMETROS:
-  field           — campo de formulário Django (week_start ou target_week_start)
-  picker_id       — id do input[type=date] nativo (ex: "smart-paste-week-start-picker")
-  picker_value    — valor inicial do picker em formato Y-m-d (opcional)
-  picker_min      — data mínima em Y-m-d (ex: smart_paste_picker_min)
-  picker_max      — data máxima em Y-m-d — última aula na grade (ex: smart_paste_picker_max)
-  label_text      — texto do <label> (ex: "Início da semana")
-  hint_prefix     — prefixo do hint de segunda (ex: "Semana alvo")
-
-USO:
-  {% include "operations/includes/wod_smart_paste_week_input.html" with
-      field=smart_paste_form.week_start
-      picker_id="smart-paste-week-start-picker"
-      picker_value=smart_paste_picker_value
-      picker_min=smart_paste_picker_min
-      picker_max=smart_paste_picker_max
-      label_text="Início da semana"
-  %}
+PARAMETROS:
+  field           - campo de formulario Django (week_start ou target_week_start)
+  picker_id       - id do input[type=date] nativo (ex: "smart-paste-week-start-picker")
+  picker_value    - valor inicial do picker em formato Y-m-d (opcional)
+  picker_min      - data minima em Y-m-d (ex: smart_paste_picker_min)
+  picker_max      - data maxima em Y-m-d, ultima aula na grade (ex: smart_paste_picker_max)
+  label_text      - texto do <label> (ex: "Inicio da semana")
+  hint_prefix     - prefixo do hint de segunda (ex: "Semana alvo")
 {% endcomment %}
 <label>
-    <span>{{ label_text|default:"Início da semana" }}</span>
+    <span>{{ label_text|default:"Inicio da semana" }}</span>
     <div class="smart-paste-date-input-wrap" data-smart-date-monday-wrap>
         {{ field }}
-        <button class="button tertiary smart-paste-date-trigger" type="button" data-smart-date-button aria-label="Selecionar semana no calendário">
-            📅 Selecionar semana
+        <button class="button tertiary smart-paste-date-trigger" type="button" data-smart-date-button aria-label="Selecionar semana no calendario">
+            <span class="smart-paste-date-trigger-icon" aria-hidden="true">Cal</span>
+            <span class="smart-paste-date-trigger-label">Selecionar semana</span>
+            <span class="smart-paste-date-trigger-badge" aria-hidden="true">Segunda</span>
         </button>
         <input
             type="date"
