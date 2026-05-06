@@ -1,6 +1,6 @@
 {% load static %}
 {% if student_identity %}
-<aside class="student-sidebar" aria-label="Navegacao do aluno">
+<aside class="student-sidebar" aria-label="Navegação do aluno">
     <a href="{% url 'student-app-home' %}" class="student-brandmark">
         <span class="student-brandmark-mark" aria-hidden="true">
             <img src="{% static 'images/brand/octobox-mark.svg' %}?v={{ static_asset_version }}" alt="">
@@ -12,7 +12,7 @@
     </a>
     <nav class="student-nav">
         <a href="{% url 'student-app-home' %}" class="student-nav-link{% if student_shell_nav == 'home' %} is-active{% endif %}">
-            <span>Inicio</span>
+            <span>Início</span>
             <small>O que importa agora</small>
         </a>
         <a href="{% url 'student-app-grade' %}" class="student-nav-link{% if student_shell_nav == 'grade' %} is-active{% endif %}">
@@ -25,14 +25,14 @@
         </a>
         <a href="{% url 'student-app-rm' %}" class="student-nav-link{% if student_shell_nav == 'rm' %} is-active{% endif %}">
             <span>RM</span>
-            <small>Seus records maximos</small>
+            <small>Seus recordes máximos</small>
         </a>
     </nav>
     <div class="student-sidebar-footer">
         <a href="{% url 'student-app-settings' %}" class="student-sidebar-utility{% if student_shell_nav == 'settings' %} is-active{% endif %}">
-            Perfil e configuracoes
+            Perfil e configurações
         </a>
-        <p class="student-sidebar-note">O app troca de contexto com voce: Grade antes da aula, WOD durante o treino.</p>
+        <p class="student-sidebar-note">O app troca de contexto com você: Grade antes da aula, WOD durante o treino.</p>
     </div>
 </aside>
 {% endif %}

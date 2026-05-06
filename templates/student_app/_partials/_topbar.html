@@ -4,8 +4,8 @@
         <a
             href="{% url 'student-app-settings' %}"
             class="student-avatar student-avatar-link"
-            aria-label="Abrir perfil e configuracoes"
-            title="Perfil e configuracoes"
+            aria-label="Abrir perfil e configurações"
+            title="Perfil e configurações"
         >
             {% if student_identity.photo_url %}
             <img
@@ -21,7 +21,7 @@
             {% endif %}
         </a>
         <div class="student-topbar-copy">
-            <p class="student-topbar-eyebrow">{{ student_shell_title|default:"Inicio" }}</p>
+            <p class="student-topbar-eyebrow">{{ student_shell_title|default:"Início" }}</p>
             <strong>{{ student_identity.student.full_name }}</strong>
             <span>Box atual: {{ student_active_box_root_slug|default:"Sem box ativo" }}</span>
         </div>

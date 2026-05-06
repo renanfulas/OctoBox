@@ -89,6 +89,7 @@ class StudentIdentityRequiredMixin:
         context['student_memberships'] = list(self.request.student_box_memberships)
         context.setdefault('student_shell_nav', 'home')
         context.setdefault('student_shell_title', 'Inicio')
+        context.setdefault('show_student_pwa_activation', context['student_shell_nav'] == 'home')
         context['student_box_choices'] = [
             {
                 'box_root_slug': membership.box_root_slug,

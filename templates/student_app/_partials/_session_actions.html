@@ -1,4 +1,4 @@
-<div class="student-session-actions" aria-label="Acoes da aula {{ session.title }}">
+<div class="student-session-actions" aria-label="Ações da aula {{ session.title }}">
     {% if session.attendance_code == 'checked_in' %}
     <button type="button" class="student-secondary-action student-session-action--blocked" disabled aria-disabled="true">
         Check-in feito
@@ -39,7 +39,7 @@
         aria-disabled="true"
         title="{{ session.booking_block_reason|default:'Reserva cancelada. Escolha outra aula se estiver liberada.' }}"
     >
-        Indisponivel
+        Indisponível
     </button>
     {% elif session.attendance_code == 'absent' %}
     <button type="button" class="student-secondary-action student-session-action--blocked" disabled aria-disabled="true">
@@ -72,7 +72,7 @@
         aria-disabled="true"
         title="{{ session.booking_block_reason }}"
     >
-        Indisponivel
+        Indisponível
     </button>
     {% endif %}
 </div>

@@ -44,6 +44,9 @@ from student_app.models import WeeklyWodPlan, WeeklyWodPlanStatus
 from .base_views import OperationBaseView
 
 
+SMARTPLAN_CHATGPT_FALLBACK_URL = 'https://chatgpt.com/'
+
+
 def _first_form_error(form, fallback_message):
     if not form.errors:
         return fallback_message
@@ -147,7 +150,9 @@ class WorkoutSmartPasteView(OperationBaseView):
             auto_open_review_target=auto_open_review_target,
         )
         base_context.update(context)
-        base_context['smartplan_gpt_url'] = getattr(settings, 'SMARTPLAN_GPT_URL', '') or ''
+        configured_gpt_url = getattr(settings, 'SMARTPLAN_GPT_URL', '') or ''
+        base_context['smartplan_gpt_url'] = configured_gpt_url or SMARTPLAN_CHATGPT_FALLBACK_URL
+        base_context['smartplan_gpt_is_configured'] = bool(configured_gpt_url)
         return base_context
 
     def _update_review_item(self, *, plan, cleaned_data):

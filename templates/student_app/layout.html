@@ -29,13 +29,16 @@
         <main class="student-shell">
             {% include "student_app/_partials/_topbar.html" %}
             {% include "student_app/_partials/_flash_stack.html" %}
-            {% include "student_app/_partials/_pwa_activation.html" %}
+            {% if show_student_pwa_activation %}
+                {% include "student_app/_partials/_pwa_activation.html" %}
+            {% endif %}
 
             {% block body %}{% endblock %}
 
             {% include "student_app/_partials/_mobile_nav.html" %}
         </main>
     </div>
+    <script src="{% static 'js/core/forms.js' %}?v={{ static_asset_version }}"></script>
     <script src="{% static 'js/student_app/theme.js' %}?v={{ static_asset_version }}"></script>
     <script src="{% static 'js/student_app/pwa.js' %}?v={{ static_asset_version }}"></script>
     {% block extra_scripts %}{% endblock %}

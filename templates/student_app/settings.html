@@ -1,6 +1,6 @@
 {% extends "student_app/layout.html" %}
 
-{% block title %}Configuracoes | OctoBox Aluno{% endblock %}
+{% block title %}Configurações | OctoBox Aluno{% endblock %}
 
 {% block extra_head %}
 {{ block.super }}
@@ -36,12 +36,12 @@
         </div>
         <div>
             <dt>Nascimento</dt>
-            <dd>{{ student_identity.student.birth_date|date:"d/m/Y"|default:"Nao informado" }}</dd>
+            <dd>{{ student_identity.student.birth_date|date:"d/m/Y"|default:"Não informado" }}</dd>
         </div>
     </dl>
 
     {% if pending_profile_request %}
-    <p class="student-profile-pending">Alteracao enviada. Seus dados atuais continuam valendo ate aprovacao.</p>
+    <p class="student-profile-pending">Alteração enviada. Seus dados atuais continuam valendo até aprovação.</p>
     {% endif %}
 
     <details class="student-profile-edit">
@@ -59,7 +59,7 @@
             <label><span>WhatsApp</span>{{ form.phone }}{{ form.phone.errors }}</label>
             <label><span>E-mail</span>{{ form.email }}{{ form.email.errors }}</label>
             <label><span>Nascimento</span>{{ form.birth_date }}{{ form.birth_date.errors }}</label>
-            <button type="submit" class="student-primary-action">Enviar alteracao</button>
+            <button type="submit" class="student-primary-action">Enviar alteração</button>
         </form>
     </details>
 </section>
@@ -120,7 +120,7 @@
                 <option value="30"></option>
                 <option value="60"></option>
             </datalist>
-            <div class="student-freeze-presets" role="list" aria-label="Sugestoes de dias para congelamento">
+            <div class="student-freeze-presets" role="list" aria-label="Sugestões de dias para congelamento">
                 <button type="button" class="student-freeze-preset" data-freeze-days="5">5 dias</button>
                 <button type="button" class="student-freeze-preset" data-freeze-days="7">7 dias</button>
                 <button type="button" class="student-freeze-preset" data-freeze-days="10">10 dias</button>
@@ -128,7 +128,7 @@
                 <button type="button" class="student-freeze-preset" data-freeze-days="30">30 dias</button>
                 <button type="button" class="student-freeze-preset" data-freeze-days="60">60 dias</button>
             </div>
-            <small class="student-freeze-help">Escolha um atalho ou digite manualmente. O campo aceita ate 3 digitos.</small>
+            <small class="student-freeze-help">Escolha um atalho ou digite manualmente. O campo aceita até 3 dígitos.</small>
         </label>
         <label>
             <span>Motivo (opcional)</span>

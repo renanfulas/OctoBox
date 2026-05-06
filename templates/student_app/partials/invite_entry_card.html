@@ -2,7 +2,7 @@
     <p class="student-eyebrow">{{ eyebrow|default:"Outro box" }}</p>
     <h2>{{ title|default:"Entrar em outro box com convite" }}</h2>
     <p class="student-copy">
-        {{ copy|default:"Cole o link completo do convite ou apenas o token. O app encontra a porta certa para voce sem pedir que decifre a URL." }}
+        {{ copy|default:"Cole o link completo do convite ou apenas o token. O app encontra a porta certa para você sem pedir que decifre a URL." }}
     </p>
     <form method="post" action="{% url 'student-app-enter-invite' %}" class="student-form student-invite-entry-form">
         {% csrf_token %}

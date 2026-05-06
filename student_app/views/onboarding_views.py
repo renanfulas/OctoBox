@@ -34,7 +34,7 @@ class StudentOnboardingWizardView(FormView):
     def dispatch(self, request, *args, **kwargs):
         self.pending_onboarding = load_pending_student_onboarding(request)
         if self.pending_onboarding is None:
-            messages.warning(request, 'Sua sessao expirou durante o cadastro. Tente novamente.')
+            messages.warning(request, 'Sua sessão expirou durante o cadastro. Tente novamente.')
             return redirect('student-identity-login')
         self.pending_onboarding = ensure_student_onboarding_wizard_started(
             request=request,

@@ -157,9 +157,9 @@ class BaseStudentOnboardingForm(forms.Form):
             'minlength': str(MIN_STUDENT_NAME_LENGTH),
             'autocapitalize': 'words',
         })
-        self.fields['full_name'].help_text = 'Use o nome real que identifica voce no box.'
+        self.fields['full_name'].help_text = 'Use o nome real que identifica você no box.'
         apply_phone_input_attrs(self.fields['phone'], placeholder='Ex.: 5511999999999')
-        self.fields['phone'].help_text = 'Use seu numero principal com DDD. Pode colar com espacos ou simbolos.'
+        self.fields['phone'].help_text = 'Use seu número principal com DDD. Pode colar com espaços ou símbolos.'
         apply_date_input_attrs(
             self.fields['birth_date'],
             placeholder='dd/mm/aaaa',
@@ -208,8 +208,8 @@ class MassInviteOnboardingForm(BaseStudentOnboardingForm):
 class ImportedLeadOnboardingForm(BaseStudentOnboardingForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['full_name'].help_text = 'Ja puxamos o nome do lead. Ajuste so se precisar.'
-        self.fields['phone'].help_text = 'Ja puxamos seu WhatsApp do box. Ajuste se estiver diferente.'
+        self.fields['full_name'].help_text = 'Já puxamos o nome do lead. Ajuste só se precisar.'
+        self.fields['phone'].help_text = 'Já puxamos seu WhatsApp do box. Ajuste se estiver diferente.'
 
 
 class StudentProfileEditForm(forms.ModelForm):
