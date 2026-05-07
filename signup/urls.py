@@ -19,6 +19,7 @@ from .views import (
     CheckoutPendingStripeView,
     CheckoutSuccessView,
     OnboardingWizardView,
+    ThankYouView,
 )
 
 urlpatterns = [
@@ -27,4 +28,5 @@ urlpatterns = [
     path('checkout/cancelado/', CheckoutCanceledView.as_view(), name='signup-checkout-canceled'),
     path('checkout/aguardando/<int:pending_id>/', CheckoutPendingStripeView.as_view(), name='signup-checkout-pending'),
     path('onboarding/<str:token>/', OnboardingWizardView.as_view(), name='signup-onboarding'),
+    path('obrigado/', ThankYouView.as_view(), name='signup-thank-you'),
 ]

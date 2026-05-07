@@ -88,9 +88,15 @@ def create_checkout_session(pending_signup, request):
         raise StripeNotConfiguredError('STRIPE_SECRET_KEY nao definida.')
     stripe.api_key = secret_key
 
-    success_url = _build_absolute_url(
-        request,
-        reverse('signup-checkout-success') + '?' + urlencode({'pending': pending_signup.pk}),
+    # Stripe substitui o placeholder {CHECKOUT_SESSION_ID} pelo id real da Session.
+    # Isso permite que CheckoutSuccessView consulte o status diretamente da API
+    # quando o webhook ainda nao chegou (race condition de poucos segundos).
+    success_url = (
+        _build_absolute_url(
+            request,
+            reverse('signup-checkout-success') + '?' + urlencode({'pending': pending_signup.pk}),
+        )
+        + '&session_id={CHECKOUT_SESSION_ID}'
     )
     cancel_url = _build_absolute_url(
         request,
@@ -124,6 +130,53 @@ def create_checkout_session(pending_signup, request):
     pending_signup.save(update_fields=['stripe_session_id', 'updated_at'])
 
     return session.url
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Status publico: consulta Stripe direto para evitar race com webhook
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def query_stripe_session_status(session_id: str):
+    """Retorna informacoes de pagamento da Stripe Session, ou None se nao puder.
+
+    Usado pelo CheckoutSuccessView para confirmar o pagamento antes do webhook
+    chegar. Idempotente: nao faz side effect na Stripe, so leitura.
+
+    Retorna dict com:
+      - paid: bool — payment_status == 'paid'
+      - payment_status: str — valor cru da Stripe
+      - amount_total: int — em centavos
+      - customer_email: str
+      - subscription_id: str
+      - customer_id: str
+    Ou None se Stripe nao configurado ou erro de rede.
+    """
+    secret_key = (getattr(settings, 'STRIPE_SECRET_KEY', '') or '').strip()
+    if not secret_key or not session_id:
+        return None
+
+    try:
+        import stripe
+    except ImportError:
+        logger.warning('query_stripe_session_status: lib stripe nao instalada')
+        return None
+
+    stripe.api_key = secret_key
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+    except Exception as exc:
+        logger.warning('query_stripe_session_status: falha ao consultar session=%s: %s', session_id, exc)
+        return None
+
+    return {
+        'paid': session.get('payment_status') == 'paid',
+        'payment_status': session.get('payment_status', ''),
+        'amount_total': session.get('amount_total') or 0,
+        'customer_email': session.get('customer_email') or session.get('customer_details', {}).get('email', ''),
+        'subscription_id': session.get('subscription') or '',
+        'customer_id': session.get('customer') or '',
+    }
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -210,20 +263,32 @@ def verify_magic_token(token: str):
 
 
 def send_onboarding_email(pending_signup, *, activation_url: str) -> bool:
-    """Envia email de ativacao usando o gateway compartilhado de student_identity.
+    """Envia email de ativacao com HTML + texto fallback.
+
+    Usa signup.email_sender (provider-aware: SMTP ou Resend), reaproveitando
+    settings ja existentes do gateway compartilhado (STUDENT_EMAIL_PROVIDER,
+    STUDENT_EMAIL_FROM, STUDENT_RESEND_API_KEY).
 
     Retorna True se enviou. False se gateway falhou (ja loga o motivo).
     """
-    from student_identity.delivery_gateways import (
-        StudentEmailDeliveryError,
-        get_student_email_gateway,
+    from student_identity.delivery_gateways import StudentEmailDeliveryError
+    from .email_sender import send_html_email
+    from .notifications import (
+        build_owner_onboarding_body,
+        build_owner_onboarding_html_body,
+        build_owner_onboarding_subject,
     )
-    from .notifications import build_owner_onboarding_body, build_owner_onboarding_subject
 
-    gateway = get_student_email_gateway()
     plan_label = pending_signup.get_plan_display()
     subject = build_owner_onboarding_subject(pending_signup.box_name)
-    body = build_owner_onboarding_body(
+    text_body = build_owner_onboarding_body(
+        full_name=pending_signup.full_name,
+        box_name=pending_signup.box_name,
+        plan_label=plan_label,
+        activation_url=activation_url,
+        expires_in_days=_MAGIC_TOKEN_MAX_AGE_DAYS,
+    )
+    html_body = build_owner_onboarding_html_body(
         full_name=pending_signup.full_name,
         box_name=pending_signup.box_name,
         plan_label=plan_label,
@@ -231,9 +296,14 @@ def send_onboarding_email(pending_signup, *, activation_url: str) -> bool:
         expires_in_days=_MAGIC_TOKEN_MAX_AGE_DAYS,
     )
     try:
-        gateway.send(subject=subject, body=body, to_email=pending_signup.email)
+        send_html_email(
+            subject=subject,
+            text_body=text_body,
+            html_body=html_body,
+            to_email=pending_signup.email,
+        )
     except StudentEmailDeliveryError as exc:
-        logger.warning('send_onboarding_email: gateway %s falhou: %s', gateway.provider_name, exc)
+        logger.warning('send_onboarding_email: envio falhou: %s', exc)
         return False
     except Exception:
         logger.exception('send_onboarding_email: erro inesperado ao enviar email')

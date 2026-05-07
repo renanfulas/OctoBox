@@ -35,6 +35,8 @@ from .services import (
     UsernameTakenError,
     activate_pending_signup,
     create_checkout_session,
+    mark_pending_signup_paid,
+    query_stripe_session_status,
     verify_magic_token,
 )
 
@@ -110,15 +112,49 @@ class CheckoutFormView(FormView):
 
 
 class CheckoutSuccessView(TemplateView):
+    """Pagina de pos-checkout com confirmacao defensiva via Stripe API.
+
+    Stripe redireciona aqui apos o pagamento. O webhook `checkout.session.completed`
+    eh a fonte de verdade que cria User, mas pode haver race de poucos segundos.
+    Esta view consulta a Stripe API diretamente para confirmar o status e
+    atualiza o PendingSignup local (idempotente) — assim o cliente ve "pagamento
+    confirmado" mesmo antes do webhook chegar.
+    """
+
     template_name = 'signup/success.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         pending_id = self.request.GET.get('pending')
+        session_id = (self.request.GET.get('session_id') or '').strip()
         pending = None
         if pending_id and pending_id.isdigit():
             pending = PendingSignup.objects.filter(pk=int(pending_id)).first()
+
+        stripe_status = None
+        if session_id:
+            stripe_status = query_stripe_session_status(session_id)
+            if stripe_status and stripe_status.get('paid') and pending and not pending.is_paid:
+                # Adianta o registro local sem esperar o webhook (idempotente — webhook
+                # ainda chega depois e a operacao eh no-op se status ja for paid/activated).
+                logger.info(
+                    'CheckoutSuccessView: marcando pending=%s como paid antes do webhook (session=%s)',
+                    pending.pk,
+                    session_id,
+                )
+                mark_pending_signup_paid(
+                    pending_signup_id=pending.pk,
+                    stripe_session_id=session_id,
+                    stripe_customer_id=stripe_status.get('customer_id', ''),
+                    stripe_subscription_id=stripe_status.get('subscription_id', ''),
+                )
+                pending.refresh_from_db()
+
+        if stripe_status:
+            stripe_status['amount_brl'] = _format_brl_cents(stripe_status.get('amount_total') or 0)
+
         context['pending'] = pending
+        context['stripe_status'] = stripe_status
         context['mode'] = 'success'
         return context
 
@@ -159,6 +195,17 @@ class CheckoutPendingStripeView(TemplateView):
 
 def _pending_path(pending):
     return reverse('signup-checkout-pending', kwargs={'pending_id': pending.pk})
+
+
+def _format_brl_cents(amount_cents: int) -> str:
+    """Formata centavos como string BRL (ex: 99700 -> 'R$ 997,00')."""
+    try:
+        cents = int(amount_cents or 0)
+    except (TypeError, ValueError):
+        return 'R$ 0,00'
+    reais, c = divmod(cents, 100)
+    integer_part = f'{reais:,}'.replace(',', '.')
+    return f'R$ {integer_part},{c:02d}'
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -230,4 +277,36 @@ class OnboardingWizardView(FormView):
             return self.render_to_response(self.get_context_data(form=form))
 
         login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
-        return HttpResponseRedirect(reverse('access-overview'))
+        # Redireciona pra /obrigado/ — pagina de boas-vindas com proximos passos.
+        # Se preferir saltar direto pro painel, troque para reverse('access-overview').
+        return HttpResponseRedirect(reverse('signup-thank-you'))
+
+
+class ThankYouView(TemplateView):
+    """Tela de boas-vindas pos-onboarding com proximas acoes guiadas.
+
+    Mostra video curto explicativo (placeholder ate gravarmos), 3 next-steps
+    acionaveis e CTA primaria para o painel. Acessivel apenas para usuarios
+    autenticados — se um aluno cair aqui por engano, mandamos para o login.
+    """
+
+    template_name = 'signup/thank_you.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('login'))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context['user_first_name'] = (user.first_name or user.username).strip()
+        # PendingSignup ligado pode nao existir (caso o User nao tenha vindo do
+        # fluxo Early Adopter). A pagina degrada bem nesse caso.
+        context['pending'] = (
+            PendingSignup.objects
+            .filter(activated_user=user)
+            .order_by('-activated_at')
+            .first()
+        )
+        return context
