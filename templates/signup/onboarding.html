@@ -1,0 +1,131 @@
+<!--
+ARQUIVO: wizard de onboarding pos-pagamento Early Adopter.
+
+POR QUE ELE EXISTE:
+- Fecha o ciclo: pagamento confirmado → conta criada → primeiro acesso.
+- Sem pedir email novamente (Stripe ja confirmou) — apenas username + senha.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Mostra resumo do PendingSignup (qual box, qual plano).
+2. Pede username + senha.
+3. Em caso de token invalido/expirado, mostra mensagem clara com fallback.
+
+PONTOS CRITICOS:
+- Token error e mostrado SEM revelar o motivo tecnico (so "expirou" / "ja foi usado").
+- Submit POSTa para a mesma URL — view valida + cria User + faz auto-login.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OctoBox Fit | Ative sua conta</title>
+    <meta name="robots" content="noindex,nofollow">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/design-system/tokens.css' %}?v={{ static_asset_version }}">
+    <link rel="stylesheet" href="{% static 'css/design-system/pages/marketing-landing.css' %}?v={{ static_asset_version }}">
+    <link rel="stylesheet" href="{% static 'css/design-system/pages/signup-checkout.css' %}?v={{ static_asset_version }}">
+</head>
+<body data-page="signup-checkout">
+    <header class="checkout-nav">
+        <a class="checkout-brand" href="/" aria-label="OctoBox, voltar para a home">
+            <img class="checkout-brand-icon" src="{% static 'images/brand/octobox-mark.svg' %}?v={{ static_asset_version }}" alt="">
+            <span class="checkout-brand-mark">OctoBox</span>
+            <span class="checkout-brand-subtitle">Fit</span>
+        </a>
+    </header>
+
+    <main class="checkout-shell">
+        {% if pending %}
+            <section class="checkout-grid">
+                <aside class="checkout-summary" aria-label="Resumo do seu cadastro">
+                    <p class="checkout-kicker checkout-kicker--success">✦ Pagamento confirmado</p>
+                    <h1 class="checkout-headline">Bem-vindo, {{ pending.full_name }}.</h1>
+
+                    <ul class="checkout-checklist">
+                        <li>Box: <strong>{{ pending.box_name }}</strong></li>
+                        <li>Plano: <strong>{{ pending.get_plan_display }}</strong></li>
+                        <li>E-mail: <strong>{{ pending.email }}</strong></li>
+                        <li>Você é Early Adopter — preço travado.</li>
+                    </ul>
+
+                    <div class="checkout-trust">
+                        <span class="checkout-trust-dot" aria-hidden="true"></span>
+                        Sua senha é criptografada e nunca aparece em e-mail.
+                    </div>
+
+                    <p class="checkout-fineprint">
+                        Em até 12 horas vamos te chamar no WhatsApp para acompanhar o setup juntos.
+                    </p>
+                </aside>
+
+                <div class="checkout-form-card">
+                    {% if messages %}
+                        <div class="checkout-messages" role="status">
+                            {% for message in messages %}
+                                <div class="checkout-message checkout-message--{{ message.tags|default:'info' }}">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <p class="checkout-section-kicker">Etapa final</p>
+                    <h2 class="checkout-section-title">Crie seu acesso.</h2>
+                    <p class="checkout-section-copy">
+                        Username e senha apenas. Você já confirmou o e-mail no pagamento.
+                    </p>
+
+                    <form method="post" novalidate class="checkout-form">
+                        {% csrf_token %}
+
+                        {% for field in form %}
+                            <div class="checkout-field {% if field.errors %}checkout-field--error{% endif %}">
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <small class="checkout-field-help">{{ field.help_text }}</small>
+                                {% endif %}
+                                {% if field.errors %}
+                                    <small class="checkout-field-error">{{ field.errors|join:" " }}</small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+
+                        <button type="submit" class="checkout-submit">
+                            Ativar conta e entrar →
+                        </button>
+
+                        <p class="checkout-form-foot">
+                            Ao continuar, você cria a conta de Owner do {{ pending.box_name }}.
+                            Você poderá adicionar staff (Recepção, Coach, Manager) pelo painel.
+                        </p>
+                    </form>
+                </div>
+            </section>
+
+        {% else %}
+            <section class="checkout-result">
+                <p class="checkout-kicker">Link inválido</p>
+                <h1 class="checkout-result-headline">Esse link não funciona mais.</h1>
+                {% if token_error == 'token-expirado' %}
+                    <p class="checkout-result-copy">
+                        O link de ativação expirou. Sem pânico —
+                        nossa equipe vai te chamar no WhatsApp em instantes
+                        para enviar um novo.
+                    </p>
+                {% elif token_error == 'ja-ativado' %}
+                    <p class="checkout-result-copy">
+                        Sua conta já está ativa. Pode acessar pelo botão abaixo.
+                    </p>
+                    <a class="checkout-result-cta" href="/login/">Entrar no OctoBox</a>
+                {% else %}
+                    <p class="checkout-result-copy">
+                        Não conseguimos validar este link.
+                        Vamos te chamar no WhatsApp em instantes para resolver.
+                    </p>
+                {% endif %}
+                <a class="checkout-back-home" href="/">Voltar para a home</a>
+            </section>
+        {% endif %}
+    </main>
+</body>
+</html>

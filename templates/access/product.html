@@ -1,0 +1,433 @@
+<!--
+ARQUIVO: pagina /produto/ — vitrine comercial de capabilities reais.
+
+POR QUE ELE EXISTE:
+- Mostra com profundidade tudo que o OctoBox entrega hoje, sem inflar a landing principal.
+- Educa o lead que ainda nao decidiu, oferecendo material concreto de venda.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Hero curto orientado a tese ("operacao completa, em uma camada inteligente").
+2. Quatro papeis (Recepcao, Coach, Manager, Owner) com workspace real.
+3. Seis signature features baseadas em auditoria do codigo:
+   - Fila de risco (heuristica em tempo real, nao ML treinado)
+   - WhatsApp Business integrado
+   - App do aluno (PWA com WOD, RM, streaks)
+   - Inadimplencia semi-automatica
+   - Captura multicanal de leads
+   - Treino prescrito por % do RM com PR historico
+4. Stripe + PIX como trust signal.
+5. CTA final que aponta para /checkout/?plan=annual.
+
+PONTOS CRITICOS:
+- TODA copy aqui tem ancora em codigo real. Auditoria foi feita ANTES de escrever.
+- "Inteligencia operacional" e usado em vez de "Machine Learning" porque o sistema
+  e heuristico, nao modelo treinado offline. Nao mentir e o piso.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OctoBox Fit | Tudo que o seu box precisa, em uma plataforma só</title>
+    <meta name="description" content="Recepção, Coach, Manager e Owner em workspaces dedicados. WhatsApp integrado, fila de risco em tempo real, app do aluno e Stripe + PIX nativo.">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/design-system/tokens.css' %}?v={{ static_asset_version }}">
+    <link rel="stylesheet" href="{% static 'css/design-system/pages/marketing-landing.css' %}?v={{ static_asset_version }}">
+    <link rel="stylesheet" href="{% static 'css/design-system/pages/marketing-product.css' %}?v={{ static_asset_version }}">
+</head>
+<body data-page="marketing-product">
+    <header class="product-nav">
+        <a class="product-brand" href="/" aria-label="OctoBox, voltar para a home">
+            <img class="product-brand-icon" src="{% static 'images/brand/octobox-mark.svg' %}?v={{ static_asset_version }}" alt="">
+            <span class="product-brand-mark">OctoBox</span>
+            <span class="product-brand-subtitle">Fit</span>
+        </a>
+        <nav class="product-nav-links" aria-label="Navegação">
+            <a href="/">Home</a>
+            <a href="/produto/" aria-current="page">Produto</a>
+            <a href="/#planos">Planos</a>
+        </nav>
+        <a class="product-nav-cta" href="/checkout/?plan=annual" data-plan="annual">Garantir vaga</a>
+    </header>
+
+    <main>
+        <!-- HERO ────────────────────────────────────────────────────────── -->
+        <section class="product-hero" aria-label="Visão geral do produto">
+            <div class="product-hero-glow" aria-hidden="true"></div>
+            <div class="product-shell">
+                <p class="product-eyebrow">O produto, por dentro</p>
+                <h1 class="product-h1">
+                    Sua operação completa,<br>
+                    em uma camada inteligente.
+                </h1>
+                <p class="product-hero-copy">
+                    Recepção, Coach, Manager e Owner em workspaces dedicados.
+                    Cada papel vê só o que precisa — e o sistema mostra a próxima ação certa.
+                </p>
+                <div class="product-hero-stats">
+                    <div class="product-hero-stat">
+                        <span class="product-hero-stat-value">4</span>
+                        <span class="product-hero-stat-label">Workspaces por papel</span>
+                    </div>
+                    <div class="product-hero-stat">
+                        <span class="product-hero-stat-value">1</span>
+                        <span class="product-hero-stat-label">Plataforma só</span>
+                    </div>
+                    <div class="product-hero-stat">
+                        <span class="product-hero-stat-value">∞</span>
+                        <span class="product-hero-stat-label">Planilhas substituídas</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- POR PAPEL ─────────────────────────────────────────────────────── -->
+        <section class="product-roles" aria-label="Workspaces por papel">
+            <div class="product-shell">
+                <div class="product-section-head">
+                    <p class="product-section-kicker">Por papel</p>
+                    <h2 class="product-section-title">Cada papel, sua tela.</h2>
+                    <p class="product-section-copy">
+                        Owner não precisa ver lançamento de presença.
+                        Coach não precisa ver inadimplência.
+                        Cada workspace mostra o que importa para a função.
+                    </p>
+                </div>
+
+                <div class="product-roles-grid">
+                    <article class="product-role-card">
+                        <div class="product-role-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                                <path d="M3 12h6l2-3 4 6 2-3h4"/>
+                            </svg>
+                        </div>
+                        <h3>Recepção</h3>
+                        <p class="product-role-tag">Balcão e pagamento curto</p>
+                        <ul>
+                            <li>Check-in de presença em 1 toque</li>
+                            <li>Cadastro rápido de visitante</li>
+                            <li>Cobrança no balcão</li>
+                            <li>Fila de prioridade do dia</li>
+                        </ul>
+                    </article>
+
+                    <article class="product-role-card">
+                        <div class="product-role-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                                <circle cx="12" cy="6" r="3"/>
+                                <path d="M5 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/>
+                            </svg>
+                        </div>
+                        <h3>Coach</h3>
+                        <p class="product-role-tag">Aulas e técnica em tempo real</p>
+                        <ul>
+                            <li>Lista de presença da turma</li>
+                            <li>WOD do dia já prescrito</li>
+                            <li>Observação técnica por aluno</li>
+                            <li>Histórico de PR em 1 clique</li>
+                        </ul>
+                    </article>
+
+                    <article class="product-role-card">
+                        <div class="product-role-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                                <path d="M3 3v18h18"/>
+                                <path d="M7 14l3-3 4 4 5-5"/>
+                            </svg>
+                        </div>
+                        <h3>Manager</h3>
+                        <p class="product-role-tag">Operação tática</p>
+                        <ul>
+                            <li>Triagem de intakes pendentes</li>
+                            <li>Régua de cobrança ativa</li>
+                            <li>Aprovação de WOD da semana</li>
+                            <li>Stream de eventos operacionais</li>
+                        </ul>
+                    </article>
+
+                    <article class="product-role-card product-role-card--featured">
+                        <span class="product-role-badge">Visão completa</span>
+                        <div class="product-role-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                                <circle cx="12" cy="12" r="9"/>
+                                <path d="M12 3v18M3 12h18"/>
+                            </svg>
+                        </div>
+                        <h3>Owner</h3>
+                        <p class="product-role-tag">Decisão executiva</p>
+                        <ul>
+                            <li>MRR, ticket médio e ocupação</li>
+                            <li>Alertas por prioridade</li>
+                            <li>Gestão de equipe e permissões</li>
+                            <li>Auditoria completa de ações</li>
+                        </ul>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- SIGNATURE FEATURES ───────────────────────────────────────────── -->
+        <section class="product-features" aria-label="Capabilities centrais">
+            <div class="product-shell">
+                <div class="product-section-head product-section-head--center">
+                    <p class="product-section-kicker">Capabilities</p>
+                    <h2 class="product-section-title">O que ninguém mais te entrega.</h2>
+                </div>
+
+                <article class="product-feature">
+                    <div class="product-feature-copy">
+                        <p class="product-feature-eyebrow">Inteligência operacional</p>
+                        <h3>Saiba quem vai cancelar — antes de acontecer.</h3>
+                        <p>
+                            A fila de risco lê pagamento atrasado, padrão de presença e tempo desde o último contato.
+                            Mostra a próxima ação certa para cada aluno em risco — em tempo real, sem você precisar pedir relatório.
+                        </p>
+                        <ul class="product-feature-points">
+                            <li>Score recalculado a cada acesso</li>
+                            <li>Recomendação de ação por aluno</li>
+                            <li>Tracking de outcomes (recuperou, perdeu, em andamento)</li>
+                        </ul>
+                    </div>
+                    <div class="product-feature-visual product-feature-visual--risk" aria-hidden="true">
+                        <div class="risk-card risk-card--high">
+                            <span class="risk-dot risk-dot--high"></span>
+                            <div class="risk-card-body">
+                                <strong>Marina · em risco</strong>
+                                <small>3 faltas em 7 dias · cobrança 14d em aberto</small>
+                            </div>
+                            <span class="risk-card-cta">Mensagem +</span>
+                        </div>
+                        <div class="risk-card risk-card--watch">
+                            <span class="risk-dot risk-dot--watch"></span>
+                            <div class="risk-card-body">
+                                <strong>Carlos · monitorar</strong>
+                                <small>presença caindo · próxima cobrança em 5d</small>
+                            </div>
+                            <span class="risk-card-cta">Acompanhar</span>
+                        </div>
+                        <div class="risk-card risk-card--ok">
+                            <span class="risk-dot risk-dot--ok"></span>
+                            <div class="risk-card-body">
+                                <strong>Ana · recuperada</strong>
+                                <small>voltou após 21 dias · plano renovado</small>
+                            </div>
+                            <span class="risk-card-cta">Ver perfil</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="product-feature product-feature--reverse">
+                    <div class="product-feature-copy">
+                        <p class="product-feature-eyebrow">WhatsApp Business integrado</p>
+                        <h3>Conversa, cobrança e confirmação no mesmo fluxo.</h3>
+                        <p>
+                            WhatsApp Business da Meta plugado direto no sistema.
+                            Cobrança vai com link de pagamento. Enquete de presença confirma a aula.
+                            Toda conversa fica no histórico do aluno.
+                        </p>
+                        <ul class="product-feature-points">
+                            <li>Templates operacionais por situação</li>
+                            <li>Enquetes de presença com 1 toque</li>
+                            <li>Status de entrega rastreado</li>
+                            <li>Histórico unificado por contato</li>
+                        </ul>
+                    </div>
+                    <div class="product-feature-visual product-feature-visual--whatsapp" aria-hidden="true">
+                        <div class="wpp-bubble wpp-bubble--out">
+                            Oi, Bruno! Sua mensalidade vence amanhã 💪 <br>
+                            <a class="wpp-link">Pagar com PIX/Cartão →</a>
+                        </div>
+                        <div class="wpp-bubble wpp-bubble--in">Já paguei, valeu!</div>
+                        <div class="wpp-bubble wpp-bubble--out wpp-bubble--system">
+                            ✓ Enquete · você vem na aula das 19h?
+                        </div>
+                        <div class="wpp-bubble wpp-bubble--in">Sim, confirmado</div>
+                    </div>
+                </article>
+
+                <article class="product-feature">
+                    <div class="product-feature-copy">
+                        <p class="product-feature-eyebrow">App do aluno (PWA)</p>
+                        <h3>Agenda, treino e evolução no celular.</h3>
+                        <p>
+                            O aluno entra com Google ou Apple, abre o app no navegador
+                            e já vê a agenda da semana, o WOD do dia, os RMs e a sequência de presenças.
+                            Sem instalar nada.
+                        </p>
+                        <ul class="product-feature-points">
+                            <li>Agenda dos próximos 7 dias</li>
+                            <li>WOD prescrito com carga por % do RM</li>
+                            <li>Histórico de Personal Records</li>
+                            <li>Streak de presenças confirmadas</li>
+                        </ul>
+                    </div>
+                    <div class="product-feature-visual product-feature-visual--app" aria-hidden="true">
+                        <div class="app-phone">
+                            <div class="app-phone-screen">
+                                <div class="app-streak">
+                                    <span class="app-streak-flame">🔥</span>
+                                    <strong>14 dias seguidos</strong>
+                                    <small>Próxima aula: 19h</small>
+                                </div>
+                                <div class="app-wod">
+                                    <p class="app-wod-tag">WOD de hoje · 12 min AMRAP</p>
+                                    <ul>
+                                        <li><strong>Back Squat</strong> 5×5 · 92,5 kg <small>(75% do RM)</small></li>
+                                        <li><strong>Pull-up</strong> 5×8</li>
+                                        <li><strong>Row</strong> 5×500m</li>
+                                    </ul>
+                                </div>
+                                <div class="app-pr">
+                                    <span class="app-pr-arrow">▲</span>
+                                    <span><strong>+5 kg</strong> Deadlift · novo PR</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="product-feature product-feature--reverse">
+                    <div class="product-feature-copy">
+                        <p class="product-feature-eyebrow">Inadimplência</p>
+                        <h3>Régua que mostra o próximo passo.</h3>
+                        <p>
+                            Toda mensalidade em atraso vira uma fila com sugestão de ação:
+                            mandar mensagem, ligar, escalar para retenção, ou só monitorar.
+                            Você decide — o sistema lembra do que cada um precisa.
+                        </p>
+                        <ul class="product-feature-points">
+                            <li>Detecção automática de atraso</li>
+                            <li>Sugestão de ação por situação</li>
+                            <li>Outcome rastreado (sucesso, perda, andamento)</li>
+                            <li>Janela de acompanhamento de 7, 15 e 30 dias</li>
+                        </ul>
+                    </div>
+                    <div class="product-feature-visual product-feature-visual--dunning" aria-hidden="true">
+                        <div class="dunning-header">Régua · 4 alunos</div>
+                        <div class="dunning-row dunning-row--urgent">
+                            <span>R$ 289,90 · 7d em atraso</span>
+                            <strong>Marina Silva</strong>
+                            <em>→ enviar mensagem</em>
+                        </div>
+                        <div class="dunning-row">
+                            <span>R$ 349,90 · 3d</span>
+                            <strong>Carlos Souza</strong>
+                            <em>→ monitorar</em>
+                        </div>
+                        <div class="dunning-row">
+                            <span>R$ 189,90 · 12d</span>
+                            <strong>Lucas Rocha</strong>
+                            <em>→ escalar retenção</em>
+                        </div>
+                        <div class="dunning-row dunning-row--won">
+                            <span>R$ 289,90 · pago hoje</span>
+                            <strong>Renata Lima</strong>
+                            <em>✓ recuperada</em>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="product-feature">
+                    <div class="product-feature-copy">
+                        <p class="product-feature-eyebrow">Captura de leads</p>
+                        <h3>De onde vem cada aluno? Você sabe.</h3>
+                        <p>
+                            Importa lista do Tecnofit, NextFit, do WhatsApp Web ou um VCF do iPhone.
+                            Cada lead vira uma entrada com origem rastreada e nível de confiança.
+                            Conversão para aluno em 1 clique.
+                        </p>
+                        <ul class="product-feature-points">
+                            <li>Importação multicanal (CSV, VCF, WhatsApp, Tecnofit, NextFit)</li>
+                            <li>Origem com nível de confiança (alto, médio, baixo)</li>
+                            <li>Tokens de captura por canal (saiba qual link converteu)</li>
+                            <li>Conversão lead → aluno num clique</li>
+                        </ul>
+                    </div>
+                    <div class="product-feature-visual product-feature-visual--leads" aria-hidden="true">
+                        <div class="leads-source"><span class="leads-pill leads-pill--ig">Instagram</span> 14 leads · alta confiança</div>
+                        <div class="leads-source"><span class="leads-pill leads-pill--ref">Indicação</span> 8 leads · alta</div>
+                        <div class="leads-source"><span class="leads-pill leads-pill--ads">Meta Ads</span> 22 leads · média</div>
+                        <div class="leads-source"><span class="leads-pill leads-pill--vcf">VCF (iPhone)</span> 47 leads · baixa</div>
+                        <div class="leads-source leads-source--total"><span>Total</span> 91 leads · 23 convertidos</div>
+                    </div>
+                </article>
+
+                <article class="product-feature product-feature--reverse">
+                    <div class="product-feature-copy">
+                        <p class="product-feature-eyebrow">Treino e progressão</p>
+                        <h3>Carga prescrita pela força real do aluno.</h3>
+                        <p>
+                            O sistema usa o RM atual de cada aluno e calcula a carga do WOD em %.
+                            Se o aluno fizer um novo Personal Record, o sistema atualiza sozinho —
+                            e o próximo treino já vem com a carga certa.
+                        </p>
+                        <ul class="product-feature-points">
+                            <li>RM (1-rep max) por exercício</li>
+                            <li>Carga calculada como % do RM, arredondada por incremento (2,5 kg padrão)</li>
+                            <li>WOD por dia da semana, com aprovação antes de publicar</li>
+                            <li>Histórico de PR com delta (kg ganhos)</li>
+                        </ul>
+                    </div>
+                    <div class="product-feature-visual product-feature-visual--training" aria-hidden="true">
+                        <div class="train-row">
+                            <span>Back Squat · 1RM</span>
+                            <strong>120 kg</strong>
+                            <em class="train-delta">+5 kg PR</em>
+                        </div>
+                        <div class="train-row">
+                            <span>Deadlift · 1RM</span>
+                            <strong>160 kg</strong>
+                            <em class="train-delta">+10 kg PR</em>
+                        </div>
+                        <div class="train-row train-row--prescribed">
+                            <span>WOD hoje · Back Squat 5×5</span>
+                            <strong>92,5 kg</strong>
+                            <em>75% do RM</em>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- TRUST ─────────────────────────────────────────────────────────── -->
+        <section class="product-trust" aria-label="Confiança e segurança">
+            <div class="product-shell">
+                <div class="product-trust-row">
+                    <div class="product-trust-item">
+                        <p class="product-trust-kicker">Pagamento</p>
+                        <h3>Stripe + PIX nativo</h3>
+                        <p>Cartão criptografado ponta a ponta. PIX gerado direto no checkout. Conciliação automática.</p>
+                    </div>
+                    <div class="product-trust-item">
+                        <p class="product-trust-kicker">Auditoria</p>
+                        <h3>Cada ação, registrada</h3>
+                        <p>Quem fez check-in, quem cancelou, quem alterou plano. Toda mudança fica gravada.</p>
+                    </div>
+                    <div class="product-trust-item">
+                        <p class="product-trust-kicker">Permissões</p>
+                        <h3>Granular por papel</h3>
+                        <p>Recepção não vê dashboard executivo. Coach não vê financeiro. Owner vê tudo.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA FINAL ─────────────────────────────────────────────────────── -->
+        <section class="product-cta" aria-label="Chamada final">
+            <div class="product-shell">
+                <p class="product-section-kicker product-section-kicker--magenta">Early Adopters · 18 de 20 vagas</p>
+                <h2 class="product-cta-headline">Tudo isso, por R$ 97/mês.</h2>
+                <p class="product-cta-copy">
+                    Os 20 primeiros boxes assinam pelo preço fundador.
+                    Você trava esse valor pelo tempo que ficar com a gente.
+                </p>
+                <div class="product-cta-actions">
+                    <a class="product-cta-primary" href="/checkout/?plan=annual" data-plan="annual">Garantir vaga anual →</a>
+                    <a class="product-cta-secondary" href="/checkout/?plan=monthly" data-plan="monthly">Começar mensal</a>
+                </div>
+                <p class="product-cta-foot">Após esgotar: R$ 197/mês.</p>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
