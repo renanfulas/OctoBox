@@ -23,6 +23,35 @@ def _is_public_path(path: str) -> bool:
     return any(path.startswith(prefix) for prefix in _PUBLIC_PREFIXES)
 
 
+
+
+def _resolve_student_tenant(request, session_payload: dict) -> None:
+    # Sprint 2: resolve tenant ativo para /aluno/* via box_id do cookie do aluno.
+    # box_id (FK control.Box) tem prioridade; fallback para box_root_slug legado.
+    from django.db import connection
+    active_box_id = session_payload.get('active_box_id') or session_payload.get('box_id')
+    if active_box_id:
+        try:
+            from control.models import Box
+            box = Box.objects.filter(pk=active_box_id, status=Box.Status.ACTIVE).first()
+            if box:
+                connection.set_tenant(box)
+                request.tenant = box
+                return
+        except Exception:
+            pass
+    # Legado: sem box_id no cookie (sessao antiga), usa box_root_slug
+    box_root_slug = session_payload.get('active_box_root_slug') or session_payload.get('box_root_slug')
+    if box_root_slug:
+        try:
+            from control.models import Box
+            box = Box.objects.filter(slug=box_root_slug, status=Box.Status.ACTIVE).first()
+            if box:
+                connection.set_tenant(box)
+                request.tenant = box
+        except Exception:
+            pass
+
 class StudentAuthMiddleware:
     def __init__(self, get_response):
         self._get_response = get_response
@@ -37,6 +66,10 @@ class StudentAuthMiddleware:
             cookie_name = get_student_session_cookie_name()
             session_payload = read_student_session_value(request.COOKIES.get(cookie_name))
             has_pending_onboarding = bool(request.session.get(_PENDING_ONBOARDING_SESSION_KEY))
+            # Sprint 2: resolve tenant do box do aluno via cookie.
+            if session_payload is not None:
+                _resolve_student_tenant(request, session_payload)
+
             if session_payload is None and not has_pending_onboarding:
                 AuditEvent.objects.create(
                     actor=None,

@@ -55,7 +55,7 @@ class StudentInvitationOperationsQueries:
         return [
             {
                 'id': membership.id,
-                'student_name': membership.student.full_name,
+                'student_name': membership.identity.student_name,  # Sprint 2: via identity (denorm)
                 'box_root_slug': membership.box_root_slug,
                 'created_at': membership.created_at,
                 'invite_type_label': (
@@ -68,7 +68,7 @@ class StudentInvitationOperationsQueries:
                 ) if self.access_matrix['can_view_sensitive_identity_data'] else 'Oculto para este papel',
             }
             for membership in (
-                StudentBoxMembership.objects.select_related('student', 'identity', 'created_from_invite')
+                StudentBoxMembership.objects.select_related('identity', 'created_from_invite')  # Sprint 2: sem 'student'
                 .filter(
                     box_root_slug=self.box_root_slug,
                     status=StudentBoxMembershipStatus.PENDING_APPROVAL,
@@ -80,17 +80,19 @@ class StudentInvitationOperationsQueries:
     def build_managed_memberships(self) -> list[dict]:
         managed_memberships = []
         for membership in (
-            StudentBoxMembership.objects.select_related('student', 'identity', 'created_from_invite')
+            StudentBoxMembership.objects.select_related('identity', 'created_from_invite')  # Sprint 2: sem 'student'
             .filter(box_root_slug=self.box_root_slug)
             .exclude(status=StudentBoxMembershipStatus.INACTIVE)
-            .order_by('student__full_name', 'box_root_slug')
+            .order_by('box_root_slug')  # Sprint 2: era 'student__full_name' (cross-schema JOIN)
         ):
             managed_memberships.append(
                 {
                     'id': membership.id,
-                    'student_name': membership.student.full_name,
+                    'student_name': membership.identity.student_name,  # Sprint 2: via identity (denorm)
                     'student_email': (
-                        membership.student.email if self.access_matrix['can_view_sensitive_identity_data'] else ''
+                        # Sprint 2: membership.student.email era cross-schema — usa identity.email
+                        # (StudentIdentity.email == email de login do aluno, proxy adequado)
+                        membership.identity.email if self.access_matrix['can_view_sensitive_identity_data'] else ''
                     ),
                     'identity_email': (
                         membership.identity.email
@@ -152,7 +154,7 @@ class StudentInvitationOperationsQueries:
             )
             invite_item = {
                 'id': invitation.id,
-                'student_name': invitation.student.full_name,
+                'student_name': invitation.student_name,  # # Sprint 2: denormalizado
                 'invite_type_label': invitation.get_invite_type_display(),
                 'onboarding_journey_label': invitation.get_onboarding_journey_display(),
                 'invited_email': (
@@ -212,7 +214,7 @@ class StudentInvitationOperationsQueries:
                 )
                 stalled_invites.append(
                     {
-                        'student_name': invitation.student.full_name,
+                        'student_name': invitation.student_name,  # # Sprint 2: denormalizado
                         'email_status_label': self.presenter.build_last_email_delivery_status_label(last_email_delivery),
                         'reason_label': self.presenter.build_stalled_reason_label(last_email_delivery),
                         'whatsapp_action_label': 'Enviar mensagem',

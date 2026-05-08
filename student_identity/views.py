@@ -275,7 +275,7 @@ class StudentInviteLandingView(TemplateView):
                 event='landing_viewed',
                 target_model='student_identity.StudentAppInvitation',
                 target_id=str(invitation.id),
-                target_label=invitation.student.full_name,
+                target_label=invitation.student_name,  # # Sprint 2: denorm
                 description='Landing do convite do aluno visualizada.',
                 metadata={
                     'box_root_slug': invitation.box_root_slug,

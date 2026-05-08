@@ -33,6 +33,7 @@ from .services import (
     InvalidMagicTokenError,
     StripeNotConfiguredError,
     UsernameTakenError,
+    activate_and_provision,
     activate_pending_signup,
     create_checkout_session,
     mark_pending_signup_paid,
@@ -260,7 +261,7 @@ class OnboardingWizardView(FormView):
             return self.render_to_response(self.get_context_data(form=form))
 
         try:
-            user = activate_pending_signup(
+            user, box = activate_and_provision(
                 pending_signup=self.pending,
                 username=form.cleaned_data['username'],
                 raw_password=form.cleaned_data['password'],

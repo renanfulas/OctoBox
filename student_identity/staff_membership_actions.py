@@ -28,6 +28,31 @@ from shared_support.box_runtime import get_box_runtime_slug
 from .models import StudentBoxMembership, StudentBoxMembershipStatus
 
 
+
+def _update_student_email_in_tenant(*, membership, new_email: str) -> None:
+    """Atualiza Student.email no schema tenant correto via schema_context.
+
+    Sprint 2: membership.student.email = new_email + save() era cross-schema.
+    Usa schema_context(box.schema_name) para acessar o Student no tenant certo.
+    """
+    student_id = membership.student_id
+    if not student_id:
+        return
+    schema = membership.box.schema_name if membership.box_id else None
+    try:
+        from students.models import Student
+        if schema:
+            from django_tenants.utils import schema_context
+            with schema_context(schema):
+                Student.objects.filter(pk=student_id).update(email=new_email)
+        else:
+            Student.objects.filter(pk=student_id).update(email=new_email)
+    except Exception:
+        import logging
+        logging.getLogger('student_identity.staff_membership').exception(
+            '_update_student_email_in_tenant: falha ao atualizar email do student_id=%s', student_id
+        )
+
 class StudentInvitationMembershipActionsMixin:
     def _handle_approve_membership(self, request):
         denied_response = self._require_action_roles(
@@ -38,7 +63,7 @@ class StudentInvitationMembershipActionsMixin:
         if denied_response is not None:
             return denied_response
         membership = (
-            StudentBoxMembership.objects.select_related('student', 'identity')
+            StudentBoxMembership.objects.select_related('identity')  # Sprint 2: sem 'student' (cross-schema)
             .filter(
                 pk=request.POST.get('membership_id'),
                 box_root_slug=get_box_runtime_slug(),
@@ -59,7 +84,7 @@ class StudentInvitationMembershipActionsMixin:
             action='student_membership.approved',
             target_model='student_identity.StudentBoxMembership',
             target_id=str(membership.id),
-            target_label=membership.student.full_name,
+            target_label=membership.identity.student_name,  # Sprint 2: denorm
             description=f'Membership aprovado no box {membership.box_root_slug}.',
             metadata={
                 'student_id': membership.student_id,
@@ -67,12 +92,12 @@ class StudentInvitationMembershipActionsMixin:
                 'box_root_slug': membership.box_root_slug,
             },
         )
-        messages.success(request, f'Acesso aprovado para {membership.student.full_name} no box {membership.box_root_slug}.')
+        messages.success(request, f'Acesso aprovado para {membership.identity.student_name} no box {membership.box_root_slug}.')
         return redirect('student-invitation-operations')
 
     def _get_membership_for_management(self, request):
         return (
-            StudentBoxMembership.objects.select_related('student', 'identity')
+            StudentBoxMembership.objects.select_related('identity')  # Sprint 2: sem 'student' (cross-schema)
             .filter(
                 pk=request.POST.get('membership_id'),
                 box_root_slug=get_box_runtime_slug(),
@@ -148,15 +173,17 @@ class StudentInvitationMembershipActionsMixin:
         old_email = identity.email
         identity.email = new_email
         identity.save(update_fields=['email', 'updated_at'])
-        membership.student.email = new_email
-        membership.student.save(update_fields=['email'])
+        # Sprint 2: Student.email update requer schema_context (tenant->public direcao errada).
+        # Aluno tem email tanto em StudentIdentity (login) quanto em Student (tenant).
+        # Atualizar Student.email via schema_context do box correto.
+        _update_student_email_in_tenant(membership=membership, new_email=new_email)
         AuditEvent.objects.create(
             actor=request.user,
             actor_role=role_slug,
             action='student_identity.email_changed',
             target_model='student_identity.StudentIdentity',
             target_id=str(identity.id),
-            target_label=membership.student.full_name,
+            target_label=membership.identity.student_name,  # Sprint 2: denorm
             description=f'E-mail do aluno trocado de {old_email} para {new_email}.',
             metadata={
                 'student_id': membership.student_id,
@@ -167,7 +194,7 @@ class StudentInvitationMembershipActionsMixin:
                 'reason': change_reason,
             },
         )
-        messages.success(request, f'E-mail do aluno {membership.student.full_name} atualizado para {new_email}.')
+        messages.success(request, f'E-mail do aluno {membership.identity.student_name} atualizado para {new_email}.')
         return redirect('student-invitation-operations')
 
     def _handle_suspend_membership(self, request):
@@ -195,7 +222,7 @@ class StudentInvitationMembershipActionsMixin:
             action='student_membership.suspended_financial',
             target_model='student_identity.StudentBoxMembership',
             target_id=str(membership.id),
-            target_label=membership.student.full_name,
+            target_label=membership.identity.student_name,  # Sprint 2: denorm
             description=f'Membership suspenso financeiramente no box {membership.box_root_slug}.',
             metadata={
                 'student_id': membership.student_id,
@@ -203,7 +230,7 @@ class StudentInvitationMembershipActionsMixin:
                 'box_root_slug': membership.box_root_slug,
             },
         )
-        messages.success(request, f'Acesso suspenso por inadimplencia para {membership.student.full_name}.')
+        messages.success(request, f'Acesso suspenso por inadimplencia para {membership.identity.student_name}.')
         return redirect('student-invitation-operations')
 
     def _handle_reactivate_membership(self, request):
@@ -250,7 +277,7 @@ class StudentInvitationMembershipActionsMixin:
             action='student_membership.reactivated',
             target_model='student_identity.StudentBoxMembership',
             target_id=str(membership.id),
-            target_label=membership.student.full_name,
+            target_label=membership.identity.student_name,  # Sprint 2: denorm
             description=f'Membership reativado no box {membership.box_root_slug}.',
             metadata={
                 'student_id': membership.student_id,
@@ -258,7 +285,7 @@ class StudentInvitationMembershipActionsMixin:
                 'box_root_slug': membership.box_root_slug,
             },
         )
-        messages.success(request, f'Acesso reativado para {membership.student.full_name}.')
+        messages.success(request, f'Acesso reativado para {membership.identity.student_name}.')
         return redirect('student-invitation-operations')
 
     def _handle_revoke_membership(self, request):
@@ -287,7 +314,7 @@ class StudentInvitationMembershipActionsMixin:
             action='student_membership.revoked',
             target_model='student_identity.StudentBoxMembership',
             target_id=str(membership.id),
-            target_label=membership.student.full_name,
+            target_label=membership.identity.student_name,  # Sprint 2: denorm
             description=f'Membership revogado no box {membership.box_root_slug}.',
             metadata={
                 'student_id': membership.student_id,
@@ -296,5 +323,5 @@ class StudentInvitationMembershipActionsMixin:
                 'reason': revoke_reason,
             },
         )
-        messages.success(request, f'Acesso revogado para {membership.student.full_name}.')
+        messages.success(request, f'Acesso revogado para {membership.identity.student_name}.')
         return redirect('student-invitation-operations')

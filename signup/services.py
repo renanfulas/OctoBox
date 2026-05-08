@@ -324,8 +324,12 @@ class UsernameTakenError(RuntimeError):
 def activate_pending_signup(*, pending_signup, username: str, raw_password: str):
     """Cria User com role Owner, vincula ao PendingSignup e finaliza o ciclo.
 
-    Reusa a logica do comando access.management.commands.provision_owner:
-    cria User ativo, atribui Group 'Owner', preenche first_name/last_name.
+    APENAS cria o User e marca o signup como ativado. NAO provisiona o Box.
+    Para o fluxo completo (User + Box), use activate_and_provision().
+
+    @transaction.atomic: CREATE USER e UPDATE PendingSignup sao transacionais.
+    provision_box (DDL: CREATE SCHEMA) NAO pode ser incluido aqui — DDL nao e
+    transacional no Postgres. Use transaction.on_commit ou activate_and_provision().
     """
     from .models import PendingSignupStatus
 
@@ -364,3 +368,36 @@ def activate_pending_signup(*, pending_signup, username: str, raw_password: str)
     pending_signup.save(update_fields=['status', 'activated_at', 'activated_user', 'updated_at'])
 
     return user
+
+
+def activate_and_provision(*, pending_signup, username: str, raw_password: str):
+    """Orquestra ativacao do signup + provisionamento do Box.
+
+    1. activate_pending_signup (atomic): cria User, marca PendingSignup.
+    2. provision_box (DDL, fora de transacao): CREATE SCHEMA + migrate + bootstrap.
+
+    Idempotente: se Box ja existe para este pending_signup, retoma steps pendentes.
+    Failure mode: se provision_box falhar, User existe mas Box nao. O Owner pode
+    tentar de novo via manage.py reprovision_box ou pelo painel de administracao.
+    O BoxProvisioningEvent registra o step onde parou.
+
+    Retorna (user, box).
+    """
+    from control.services import provision_box
+
+    user = activate_pending_signup(
+        pending_signup=pending_signup,
+        username=username,
+        raw_password=raw_password,
+    )
+    # provision_box fora de @transaction.atomic (DDL nao e transacional no Postgres)
+    box = provision_box(
+        owner_user=user,
+        display_name=pending_signup.box_name or pending_signup.full_name,
+        plan=getattr(pending_signup, 'plan', 'monthly') or 'monthly',
+        pending_signup=pending_signup,
+        stripe_customer_id=getattr(pending_signup, 'stripe_customer_id', '') or '',
+        stripe_subscription_id=getattr(pending_signup, 'stripe_subscription_id', '') or '',
+    )
+    logger.info('activate_and_provision: User=%s Box=%s (schema=%s)', user.username, box.slug, box.schema_name)
+    return user, box

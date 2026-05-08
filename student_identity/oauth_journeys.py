@@ -131,7 +131,7 @@ def handle_student_special_oauth_journey(
         event='oauth_completed',
         target_model='student_identity.StudentAppInvitation',
         target_id=str(invitation.id),
-        target_label=invitation.student.full_name,
+        target_label=invitation.student_name,  # # Sprint 2: denorm
         description='OAuth concluido para convite individual do onboarding do aluno.',
         metadata={
             'box_root_slug': invitation.box_root_slug,

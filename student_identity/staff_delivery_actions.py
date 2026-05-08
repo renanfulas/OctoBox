@@ -83,10 +83,12 @@ class StudentInvitationDeliveryActionsMixin:
             messages.error(request, 'Esse aluno nao possui telefone valido para abrir o WhatsApp.')
             return redirect('student-invitation-operations')
 
+        # Sprint 2: invitation.student.phone era cross-schema — usa helper com schema_context
+        from student_identity.notifications import _get_invitation_student_phone
         record_student_invitation_whatsapp_handoff(
             invitation=invitation,
             actor=request.user,
-            recipient=invitation.student.phone,
+            recipient=_get_invitation_student_phone(invitation),
             metadata={'invite_url': invite_url},
         )
         record_student_onboarding_event(
@@ -96,7 +98,7 @@ class StudentInvitationDeliveryActionsMixin:
             event='whatsapp_handoff_opened',
             target_model='student_identity.StudentAppInvitation',
             target_id=str(invitation.id),
-            target_label=invitation.student.full_name,
+            target_label=invitation.student_name,  # Sprint 2: denormalizado
             description='Handoff de WhatsApp aberto para o convite do onboarding.',
             metadata={
                 'box_root_slug': invitation.box_root_slug,
