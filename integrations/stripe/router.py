@@ -50,11 +50,35 @@ def route_payment_webhook_event(event: PaymentWebhookEvent) -> None:
 
 
 def _handle_checkout_session_completed(event: PaymentWebhookEvent) -> None:
+    """Roteia checkout.session.completed para o handler correto.
+
+    O OctoBox tem dois fluxos de checkout que reusam o mesmo evento Stripe:
+    1. Pagamento de aluno em mensalidade (metadata.payment_id) — fluxo legado.
+    2. Cadastro de Early Adopter (metadata.pending_signup_id) — fluxo novo.
+
+    A escolha e feita pela metadata da Session. Outros tipos sao logados e ignorados,
+    nao falham para nao bloquear o webhook.
+    """
+    session = event.payload.get('data', {}).get('object', {})
+    metadata = session.get('metadata', {}) or {}
+
+    if metadata.get('pending_signup_id'):
+        _handle_early_adopter_signup(event, session, metadata)
+        return
+
+    if metadata.get('payment_id'):
+        _handle_student_payment(event, session, metadata)
+        return
+
+    logger.info(
+        'route_payment_webhook_event: session sem metadata reconhecivel. event=%s',
+        event.event_id,
+    )
+
+
+def _handle_student_payment(event, session, metadata):
     from finance.application.commands import ReconcilePaymentCommand
     from finance.application.use_cases import execute_reconcile_payment_use_case
-
-    session = event.payload.get('data', {}).get('object', {})
-    metadata = session.get('metadata', {})
 
     payment_id = metadata.get('payment_id')
     version_locked = metadata.get('version_locked')
@@ -70,6 +94,62 @@ def _handle_checkout_session_completed(event: PaymentWebhookEvent) -> None:
         version_locked=int(version_locked),
     )
     execute_reconcile_payment_use_case(command)
+
+
+def _handle_early_adopter_signup(event, session, metadata):
+    """Marca o PendingSignup como pago e dispara email de ativacao.
+
+    Falhas no envio do email sao logadas, mas nao falham o webhook — o
+    operador pode reenviar manualmente pelo Django admin.
+    """
+    from signup.services import (
+        generate_magic_token,
+        mark_pending_signup_paid,
+        send_onboarding_email,
+    )
+
+    pending_id = metadata.get('pending_signup_id')
+    try:
+        pending_id_int = int(pending_id)
+    except (TypeError, ValueError):
+        raise ValueError(f'pending_signup_id invalido no evento {event.event_id}: {pending_id!r}')
+
+    pending = mark_pending_signup_paid(
+        pending_signup_id=pending_id_int,
+        stripe_session_id=session.get('id', ''),
+        stripe_customer_id=session.get('customer', '') or '',
+        stripe_subscription_id=session.get('subscription', '') or '',
+    )
+    if pending is None:
+        return  # ja logado em mark_pending_signup_paid
+
+    token = generate_magic_token(pending)
+    activation_path = f'/onboarding/{token}/'
+    site_url = _resolve_marketing_site_url()
+    activation_url = f'{site_url}{activation_path}'
+
+    sent = send_onboarding_email(pending, activation_url=activation_url)
+    if not sent:
+        logger.warning(
+            '_handle_early_adopter_signup: email nao enviado para pending=%s. '
+            'Operador pode reenviar pelo Django admin.',
+            pending.pk,
+        )
+
+
+def _resolve_marketing_site_url() -> str:
+    from django.conf import settings
+
+    explicit = getattr(settings, 'MARKETING_SITE_URL', '').strip()
+    if explicit:
+        return explicit.rstrip('/')
+
+    trusted = getattr(settings, 'CSRF_TRUSTED_ORIGINS', []) or []
+    for origin in trusted:
+        if 'octoboxfit' in origin and 'app.' not in origin:
+            return origin.rstrip('/')
+
+    return 'https://octoboxfit.com.br'
 
 
 _HANDLERS = {

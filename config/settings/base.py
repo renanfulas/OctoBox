@@ -195,6 +195,15 @@ if not SECRET_KEY:
 
 PHONE_BLIND_INDEX_KEY = env_str('PHONE_BLIND_INDEX_KEY', 'dev-default-blind-index-key')
 
+# Stripe — credenciais e price IDs do programa Early Adopters.
+# Os Price IDs sao criados no Stripe Dashboard (Catalog → Products) e copiados aqui via .env.
+# Quando vazios, o checkout publico degrada para fluxo manual (Renan contata via WhatsApp).
+STRIPE_SECRET_KEY = env_str('STRIPE_SECRET_KEY', '')
+STRIPE_PUBLISHABLE_KEY = env_str('STRIPE_PUBLISHABLE_KEY', '')
+STRIPE_WEBHOOK_SECRET = env_str('STRIPE_WEBHOOK_SECRET', '')
+STRIPE_PRICE_EARLY_MONTHLY = env_str('STRIPE_PRICE_EARLY_MONTHLY', '')
+STRIPE_PRICE_EARLY_ANNUAL = env_str('STRIPE_PRICE_EARLY_ANNUAL', '')
+
 # 🚀 Segurança de Elite (Hardening): Chave de Blind Index
 if not is_local_runtime_mode():
     if PHONE_BLIND_INDEX_KEY == 'dev-default-blind-index-key' or not PHONE_BLIND_INDEX_KEY:
@@ -248,6 +257,7 @@ LOCAL_APPS = [
     'integrations.apps.IntegrationsConfig',
     'operations.apps.OperationsConfig',
     'quick_sales.apps.QuickSalesConfig',
+    'signup.apps.SignupConfig',
     'student_identity.apps.StudentIdentityConfig',
     'student_app.apps.StudentAppConfig',
     'students.apps.StudentsConfig',

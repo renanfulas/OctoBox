@@ -1,0 +1,102 @@
+<!--
+ARQUIVO: tela pos-checkout do programa Early Adopters.
+
+POR QUE ELE EXISTE:
+- Confirma para o cliente que recebemos a inscricao e explica o proximo passo.
+- Cobre 3 cenarios diferentes pelo mesmo template via `mode`:
+    success         -> pagamento confirmado pela Stripe
+    canceled        -> cliente abandonou na Stripe
+    manual_followup -> Stripe nao configurado / falha; vamos chamar via WhatsApp
+
+O QUE ESTE ARQUIVO FAZ:
+1. Mostra mensagem clara de "o que acontece agora".
+2. Reaproveita identidade visual da landing (Luxo Futurista 2050).
+3. Da link para voltar ao site sem se sentir perdido.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OctoBox Fit | {% if mode == 'success' %}Vaga garantida{% elif mode == 'canceled' %}Pagamento cancelado{% else %}Em breve falamos com você{% endif %}</title>
+    <meta name="robots" content="noindex,nofollow">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/design-system/tokens.css' %}?v={{ static_asset_version }}">
+    <link rel="stylesheet" href="{% static 'css/design-system/pages/marketing-landing.css' %}?v={{ static_asset_version }}">
+    <link rel="stylesheet" href="{% static 'css/design-system/pages/signup-checkout.css' %}?v={{ static_asset_version }}">
+</head>
+<body data-page="signup-checkout">
+    <header class="checkout-nav">
+        <a class="checkout-brand" href="/" aria-label="OctoBox, voltar para a home">
+            <img class="checkout-brand-icon" src="{% static 'images/brand/octobox-mark.svg' %}?v={{ static_asset_version }}" alt="">
+            <span class="checkout-brand-mark">OctoBox</span>
+            <span class="checkout-brand-subtitle">Fit</span>
+        </a>
+    </header>
+
+    <main class="checkout-shell">
+        <section class="checkout-result">
+            {% if mode == 'success' %}
+                {% if stripe_status and stripe_status.paid %}
+                    <p class="checkout-kicker checkout-kicker--success">✦ Pagamento confirmado</p>
+                    <h1 class="checkout-result-headline">Bem-vindo entre os 20 primeiros.</h1>
+                    <p class="checkout-result-copy">
+                        Pagamento de <strong>{{ stripe_status.amount_brl }}</strong>
+                        confirmado pela Stripe.
+                        Em instantes você vai receber um e-mail
+                        {% if pending %}em <strong>{{ pending.email }}</strong>{% endif %}
+                        com o link para ativar sua conta e configurar o box.
+                    </p>
+                {% elif stripe_status %}
+                    <p class="checkout-kicker">Processando…</p>
+                    <h1 class="checkout-result-headline">Pagamento em processamento.</h1>
+                    <p class="checkout-result-copy">
+                        A Stripe está confirmando seu pagamento. Pode levar de poucos segundos
+                        a alguns minutos. Vamos te avisar por e-mail
+                        {% if pending %}em <strong>{{ pending.email }}</strong>{% endif %}
+                        assim que confirmar — e te chamar no WhatsApp em seguida.
+                    </p>
+                {% else %}
+                    <p class="checkout-kicker checkout-kicker--success">✦ Vaga garantida</p>
+                    <h1 class="checkout-result-headline">Bem-vindo entre os 20 primeiros.</h1>
+                    <p class="checkout-result-copy">
+                        Recebemos sua inscrição. Em instantes você vai receber um e-mail
+                        {% if pending %}em <strong>{{ pending.email }}</strong>{% endif %}
+                        com o link para ativar sua conta e configurar o box.
+                    </p>
+                {% endif %}
+                <p class="checkout-result-foot">
+                    Em até 12h vamos te chamar no WhatsApp para guiar o setup juntos.
+                </p>
+
+            {% elif mode == 'canceled' %}
+                <p class="checkout-kicker">Pagamento cancelado</p>
+                <h1 class="checkout-result-headline">Você ainda tem sua vaga.</h1>
+                <p class="checkout-result-copy">
+                    Suas informações estão guardadas — quando quiser retomar, é só voltar.
+                    Se preferir conversar antes, nos chame no WhatsApp.
+                </p>
+                <a class="checkout-result-cta" href="/checkout/?plan={% if pending %}{{ pending.plan }}{% else %}annual{% endif %}">
+                    Tentar novamente
+                </a>
+
+            {% else %}
+                <p class="checkout-kicker">Recebido</p>
+                <h1 class="checkout-result-headline">Vamos te chamar no WhatsApp.</h1>
+                <p class="checkout-result-copy">
+                    Recebemos seu interesse{% if pending %}, <strong>{{ pending.full_name }}</strong>{% endif %}.
+                    Como o pagamento online ainda está em configuração final, vamos confirmar sua vaga
+                    e fazer o setup com você por WhatsApp em até 12h.
+                </p>
+                {% if pending %}
+                    <p class="checkout-result-foot">
+                        Vamos chamar no número <strong>{{ pending.phone }}</strong>.
+                    </p>
+                {% endif %}
+            {% endif %}
+
+            <a class="checkout-back-home" href="/">Voltar para a home</a>
+        </section>
+    </main>
+</body>
+</html>

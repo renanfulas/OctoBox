@@ -7,13 +7,17 @@ POR QUE ELE EXISTE:
 O QUE ESTE ARQUIVO FAZ:
 1. Redireciona a raiz para login ou dashboard.
 2. Monta a tela de visao geral de papeis e capacidades.
+3. Captura intencao de plano (Early Adopters) escolhido na landing.
 
 PONTOS CRITICOS:
 - Alteracoes erradas nos redirecionamentos mudam o fluxo inicial do sistema.
 - O contexto current_role e usado pelo layout e nao deve desaparecer.
+- O parametro `plan` da landing alimenta o checkout pos-login. Aceita apenas
+  valores da whitelist (monthly | annual). Qualquer outro valor e ignorado
+  silenciosamente para evitar redirect smuggling via querystring.
 """
 
-from urllib.parse import urlsplit
+from urllib.parse import urlencode, urlsplit
 
 from django.apps import apps
 from django.conf import settings
@@ -58,6 +62,17 @@ from .forms import AccessAuthenticationForm
 from shared_support.security.anti_cheat_throttles import LoginBruteForceThrottle
 
 
+VALID_LANDING_PLANS = ('monthly', 'annual')
+LANDING_PLAN_SESSION_KEY = 'landing_intended_plan'
+
+
+def _normalize_plan(raw_value):
+    if not raw_value:
+        return ''
+    candidate = raw_value.strip().lower()
+    return candidate if candidate in VALID_LANDING_PLANS else ''
+
+
 def _normalized_request_host(request):
     return request.get_host().split(':', 1)[0].strip().lower()
 
@@ -96,6 +111,13 @@ def _build_app_url(request, path):
     if not app_base_url:
         return path
     return f'{app_base_url}{path}'
+
+
+def _append_query(url, params):
+    if not params:
+        return url
+    separator = '&' if '?' in url else '?'
+    return f"{url}{separator}{urlencode(params)}"
 
 
 def _request_targets_app_host(request):
@@ -144,8 +166,14 @@ class AccessEntryHubView(AppHostRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         next_url = (self.request.GET.get('next') or '').strip()
         invite_token = (self.request.GET.get('invite') or '').strip()
+        intended_plan = _normalize_plan(self.request.GET.get('plan'))
+        if intended_plan:
+            self.request.session[LANDING_PLAN_SESSION_KEY] = intended_plan
+        else:
+            intended_plan = self.request.session.get(LANDING_PLAN_SESSION_KEY, '')
         context['next'] = next_url
         context['invite_token'] = invite_token
+        context['intended_plan'] = intended_plan
         context['staff_login_url'] = reverse('login-staff')
         if next_url:
             context['staff_login_url'] = f"{context['staff_login_url']}?next={next_url}"
@@ -184,8 +212,39 @@ class HomeRedirectView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['login_url'] = _build_app_url(self.request, reverse('login'))
+        login_url = _build_app_url(self.request, reverse('login'))
+        context['login_url'] = login_url
+        context['login_url_monthly'] = _append_query(login_url, {'plan': 'monthly'})
+        context['login_url_annual'] = _append_query(login_url, {'plan': 'annual'})
         context['staff_login_url'] = _build_app_url(self.request, reverse('login-staff'))
+        return context
+
+
+class LandingPreviewView(HomeRedirectView):
+    """Renderiza a landing publica em ambiente local sem o redirect de app host.
+
+    EXISTE APENAS PARA DEV/PREVIEW. A rota e registrada em access/urls.py somente
+    quando settings.DEBUG e True, evitando exposicao em producao. Util para
+    designers e devs que precisam ver a landing sem editar o hosts file.
+    """
+
+    def get(self, request, *args, **kwargs):
+        return TemplateView.get(self, request, *args, **kwargs)
+
+
+class ProductPageView(TemplateView):
+    """Pagina /produto/ — vitrine comercial de capabilities reais do OctoBox.
+
+    Conteudo construido a partir de auditoria do codigo: cada feature listada
+    aqui tem implementacao real em algum dos apps (operations, finance, students,
+    student_app, communications, integrations).
+    """
+
+    template_name = 'access/product.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['login_url'] = _build_app_url(self.request, reverse('login'))
         return context
 
 

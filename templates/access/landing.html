@@ -8,23 +8,24 @@ POR QUE ELE EXISTE:
 
 O QUE ESTE ARQUIVO FAZ:
 1. entrega um hero cinematico com video local e CTA enxuto;
-2. apresenta os modulos centrais com linguagem limpa e editorial;
-3. fecha com uma chamada simples para conhecer ou entrar no produto.
+2. apresenta as frentes centrais com linguagem limpa e editorial;
+3. fecha com pricing Early Adopters e CTA simples para a vaga.
 
 PONTOS CRITICOS:
-- a pagina deve permanecer minimalista, sem virar mosaico de marketing;
-- o hero precisa vender atmosfera sem roubar leitura do conteudo;
-- os CTAs nao devem competir entre si.
+- a pagina deve permanecer minimalista, com respiro e tranquilidade;
+- copy curta vence copy poetica em pagina B2B;
+- CTAs nao devem competir entre si, primaria sempre cyan;
+- magenta neon (Early Adopters) aparece em 1 ou 2 lugares no maximo.
 -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>OctoBox Fit | A operação premium para boxes e academias</title>
+    <title>OctoBox Fit | Gestão de boxes de CrossFit</title>
     <meta
         name="description"
-        content="OctoBox organiza recepção, financeiro, agenda e experiência do aluno em uma operação premium, clara e pronta para valorizar o seu box."
+        content="Recepção, financeiro, agenda e app do aluno em uma única plataforma. Feito para donos de boxes de CrossFit que querem crescer com previsibilidade."
     >
     {% load static %}
     <link rel="preload" href="{% static 'videos/hero-sequence/hero-master-loop-mobile.mp4' %}?v={{ static_asset_version }}" as="video" type="video/mp4" media="(max-width: 840px)">
@@ -40,9 +41,9 @@ PONTOS CRITICOS:
             <span class="landing-brand-subtitle">Fit</span>
         </a>
         <nav class="landing-nav-links" aria-label="Navegação da landing page">
-            <a href="#plataforma">Plataforma</a>
-            <a href="#modulos">Módulos</a>
-            <a href="#faq">FAQ</a>
+            <a href="/produto/">Produto</a>
+            <a href="#planos">Planos</a>
+            <a href="#faq">Perguntas</a>
         </nav>
         <a class="landing-button landing-button--ghost" href="{{ login_url }}">Entrar</a>
     </header>
@@ -66,44 +67,42 @@ PONTOS CRITICOS:
 
             <div class="landing-hero-content">
                 <p class="landing-eyebrow">OctoBox Fit</p>
-                <h1>Seu box com presença premium. Sua operação no controle.</h1>
+                <h1>Seu box, sob controle.</h1>
                 <p class="landing-hero-copy">
-                    O OctoBox transforma recepção, agenda, financeiro e relacionamento em uma experiência de operação
-                    elegante, comercial e pronta para fazer o seu box parecer maior, mais sólido e mais desejado.
+                    Recepção, financeiro, agenda e app do aluno em uma plataforma só.
+                    Feita para boxes que querem crescer com previsibilidade.
                 </p>
                 <div class="landing-hero-actions">
-                    <a class="landing-button landing-button--primary" href="#plataforma">Ver a experiência</a>
-                    <a class="landing-button landing-button--secondary" href="{{ login_url }}">Entrada oficial</a>
+                    <a class="landing-button landing-button--primary" href="#planos">Ver planos</a>
+                    <a class="landing-button landing-button--secondary" href="#produto">Ver o produto</a>
                 </div>
-                <ul class="landing-hero-pill-row" aria-label="Pilares principais do produto">
-                    <li>Recepção</li>
-                    <li>Financeiro</li>
-                    <li>Agenda</li>
-                    <li>App do aluno</li>
-                </ul>
+                <p class="landing-hero-note">
+                    <span class="landing-hero-note-dot" aria-hidden="true"></span>
+                    Programa Early Adopters · 18 de 20 vagas disponíveis
+                </p>
             </div>
         </section>
 
         <section class="landing-statement">
             <div class="landing-container landing-container--narrow">
-                <p class="landing-section-kicker">Menos improviso</p>
-                <h2>Quando a operação sobe de nível, o seu box sobe junto.</h2>
+                <p class="landing-section-kicker">Por que existe</p>
+                <h2>Menos planilha. Menos WhatsApp. Mais decisão.</h2>
                 <p class="landing-section-copy">
-                    Pense no OctoBox como a concierge de uma marca premium: por trás existe disciplina, processo e
-                    precisão. Na frente, o aluno sente organização, confiança e valor desde o primeiro contato.
+                    Tudo o que sustenta o seu box passa a viver em um lugar só:
+                    quem entrou, quem deve, quem treina hoje, quem está perto de cancelar.
                 </p>
             </div>
         </section>
 
-        <section class="landing-showcase" id="plataforma" aria-label="Visão da plataforma">
+        <section class="landing-showcase" id="produto" aria-label="Visão da plataforma">
             <div class="landing-container">
                 <article class="landing-panel landing-panel--dark">
                     <div class="landing-panel-copy">
                         <p class="landing-section-kicker">Operação</p>
-                        <h2>Uma operação que parece tão forte quanto o treino que você entrega.</h2>
+                        <h2>O que importa, primeiro.</h2>
                         <p>
-                            Owner, recepção e equipe deixam de correr atrás de planilhas, mensagens soltas e memória
-                            operacional. O que importa aparece primeiro, com leitura clara e presença de produto.
+                            Sua equipe abre o sistema e vê o que precisa ser feito agora.
+                            Sem caçar informação. Sem perguntar no grupo.
                         </p>
                     </div>
                     <div class="landing-browser-frame">
@@ -124,98 +123,156 @@ PONTOS CRITICOS:
                         >
                     </div>
                     <div class="landing-panel-copy">
-                        <p class="landing-section-kicker">Gestão</p>
-                        <h2>Visual premium. Gestão à altura da sua ambição.</h2>
+                        <p class="landing-section-kicker">Financeiro</p>
+                        <h2>Caixa cristalino, em tempo real.</h2>
                         <p>
-                            Inspirado por uma linguagem editorial, o layout mostra só o essencial: prioridade, contexto
-                            e próxima ação. Menos ruído, mais autoridade.
+                            Quem renovou, quem está em atraso, quanto entra esse mês.
+                            Tudo visível, com a próxima ação ao lado.
                         </p>
                     </div>
                 </article>
             </div>
         </section>
 
-        <section class="landing-modules" id="modulos" aria-label="Módulos principais do OctoBox">
+        <section class="landing-modules" aria-label="Frentes principais do OctoBox">
             <div class="landing-container">
                 <div class="landing-modules-head">
-                    <p class="landing-section-kicker">Fluxo completo</p>
-                    <h2>Quatro frentes do negócio, unidas na mesma assinatura.</h2>
+                    <p class="landing-section-kicker">Três frentes</p>
+                    <h2>Tudo o que o seu box precisa, em uma assinatura só.</h2>
                 </div>
 
-                <div class="landing-module-grid">
+                <div class="landing-module-grid landing-module-grid--three">
                     <article class="landing-module-card">
-                        <div class="landing-device-frame landing-device-frame--wide">
-                            <img
-                                src="{% static 'images/landing/entradas-real.png' %}"
-                                alt="Tela real da fila de entradas do app OctoBox"
-                                loading="lazy"
-                            >
-                        </div>
-                        <h3>Entradas que mostram quem merece atenção agora e para onde converter primeiro.</h3>
-                        <p>Menos troca de contexto. Mais velocidade comercial, cadência e leitura operacional.</p>
+                        <p class="landing-module-card-eyebrow">Recepção</p>
+                        <h3>Quem chega, quem volta, quem converte.</h3>
+                        <p>Atenda visitantes e leads sem perder ninguém no caminho.</p>
                     </article>
 
                     <article class="landing-module-card">
-                        <div class="landing-device-frame">
-                            <img
-                                src="{% static 'images/landing/alunos-real.png' %}"
-                                alt="Tela real da base de alunos do app OctoBox"
-                                loading="lazy"
-                            >
-                        </div>
-                        <h3>Base de alunos com status, contexto e próximo passo, sem depender da memória da equipe.</h3>
-                        <p>Plano, presença e sinais de prioridade aparecem com clareza de produto, não de planilha.</p>
+                        <p class="landing-module-card-eyebrow">Financeiro</p>
+                        <h3>Cobrança, renovação e relatórios.</h3>
+                        <p>Saiba exatamente quem deve, quanto entra e o que vence essa semana.</p>
                     </article>
 
-                    <article class="landing-module-card landing-module-card--text">
-                        <span class="landing-stat">1</span>
-                        <h3>Uma base operacional para comercial, gestão e experiência do aluno.</h3>
-                        <p>
-                            O que antes vivia espalhado em WhatsApp, caderno e planilha passa a conversar na mesma
-                            arquitetura, com acabamento de marca premium.
-                        </p>
+                    <article class="landing-module-card">
+                        <p class="landing-module-card-eyebrow">App do aluno</p>
+                        <h3>Check-in e pagamento no celular.</h3>
+                        <p>Login com Google ou Apple. O aluno acessa em segundos, sem cadastro complicado.</p>
                     </article>
                 </div>
             </div>
         </section>
 
-        <section class="landing-proof" aria-label="Benefícios comerciais do produto">
-            <div class="landing-container landing-container--narrow">
-                <p class="landing-section-kicker">Feito para boxes</p>
-                <h2>Venda melhor. Retenha melhor. Pareça o box que todos querem lembrar.</h2>
-                <div class="landing-proof-grid">
-                    <article>
-                        <h3>Menos retrabalho</h3>
-                        <p>A informação deixa de pingar em cinco lugares diferentes e volta a correr em linha reta.</p>
+        <section class="landing-pricing" id="planos" aria-label="Planos e preços do OctoBox">
+            <div class="landing-container">
+                <div class="landing-pricing-header">
+                    <p class="landing-section-kicker">Early Adopters</p>
+                    <h2>Os primeiros 20 ganham mais.</h2>
+                    <p class="landing-section-copy">
+                        Enquanto a base se estabiliza, abrimos 20 vagas com preço fundador.
+                        Você trava esse valor pelo tempo que ficar com a gente.
+                    </p>
+                    <div class="landing-pricing-counter" aria-label="Vagas disponíveis no programa Early Adopters">
+                        <span class="landing-pricing-counter-value">18</span>
+                        <span class="landing-pricing-counter-label">de 20 vagas disponíveis</span>
+                        <span class="landing-pricing-counter-bar" aria-hidden="true">
+                            <span class="landing-pricing-counter-bar-fill" style="width: 90%"></span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="landing-pricing-grid">
+                    <article class="landing-pricing-card">
+                        <header class="landing-pricing-card-head">
+                            <h3>Mensal</h3>
+                            <p class="landing-pricing-card-sub">Flexibilidade total</p>
+                        </header>
+                        <div class="landing-pricing-card-price">
+                            <span class="landing-pricing-card-currency">R$</span>
+                            <span class="landing-pricing-card-amount">97</span>
+                            <span class="landing-pricing-card-period">/mês</span>
+                        </div>
+                        <ul class="landing-pricing-card-list">
+                            <li>Tudo da plataforma incluso</li>
+                            <li>Cancele a qualquer momento</li>
+                            <li>Suporte por e-mail</li>
+                        </ul>
+                        <a class="landing-button landing-button--quiet landing-pricing-card-cta" href="/checkout/?plan=monthly" data-plan="monthly">
+                            Começar mensal
+                        </a>
                     </article>
-                    <article>
-                        <h3>Mais confiança</h3>
-                        <p>Quem atende sabe o que fazer sem depender de improviso, sorte ou memória da equipe.</p>
-                    </article>
-                    <article>
-                        <h3>Mais valor percebido</h3>
-                        <p>Seu box passa a operar com presença de marca premium, não com aparência de improviso.</p>
+
+                    <article class="landing-pricing-card landing-pricing-card--featured">
+                        <span class="landing-pricing-card-badge">✦ Mais escolhido</span>
+                        <header class="landing-pricing-card-head">
+                            <h3>Anual</h3>
+                            <p class="landing-pricing-card-sub">Economize R$ 167 no ano</p>
+                        </header>
+                        <div class="landing-pricing-card-price">
+                            <span class="landing-pricing-card-currency">R$</span>
+                            <span class="landing-pricing-card-amount">997</span>
+                            <span class="landing-pricing-card-period">/ano</span>
+                        </div>
+                        <p class="landing-pricing-card-equiv">Equivale a R$ 83 por mês</p>
+                        <ul class="landing-pricing-card-list">
+                            <li>Tudo do plano mensal</li>
+                            <li>14% de desconto travado</li>
+                            <li>Suporte prioritário no WhatsApp</li>
+                            <li>Onboarding guiado com a equipe</li>
+                        </ul>
+                        <a class="landing-button landing-button--primary landing-pricing-card-cta" href="/checkout/?plan=annual" data-plan="annual">
+                            Garantir vaga anual
+                        </a>
                     </article>
                 </div>
+
+                <p class="landing-pricing-disclaimer">
+                    Após as 20 vagas: R$ 197/mês.
+                    Você mantém o preço Early Adopter pelo tempo que ficar com a gente.
+                </p>
             </div>
         </section>
 
         <section class="landing-faq" id="faq" aria-label="Perguntas frequentes">
             <div class="landing-container landing-container--narrow">
-                <p class="landing-section-kicker">FAQ</p>
-                <h2>Direto ao ponto.</h2>
+                <p class="landing-section-kicker">Perguntas</p>
+                <h2>Antes de você perguntar.</h2>
                 <div class="landing-faq-list">
                     <article>
-                        <h3>O OctoBox é apenas para CrossFit?</h3>
-                        <p>Sim. O OctoBox foi pensado para boxes de CrossFit e estúdios de treino funcional.</p>
+                        <h3>Como funciona o programa Early Adopters?</h3>
+                        <p>
+                            Os 20 primeiros boxes assinam pelo preço fundador (R$ 97/mês ou R$ 997/ano)
+                            e mantêm esse valor pelo tempo que ficarem na plataforma. Quando as vagas esgotam,
+                            o preço passa para R$ 197/mês para novos clientes.
+                        </p>
                     </article>
                     <article>
-                        <h3>Isso substitui planilhas e parte do WhatsApp?</h3>
-                        <p>Essa é exatamente a ideia: trazer o fluxo para uma base única, rastreável e digna da operação que você quer construir.</p>
+                        <h3>Posso cancelar quando quiser?</h3>
+                        <p>
+                            Sim. Sem fidelidade, sem multa. No plano mensal você cancela a qualquer momento.
+                            No plano anual você usa até o fim do ciclo já pago.
+                        </p>
                     </article>
                     <article>
-                        <h3>Onde os alunos entram?</h3>
-                        <p>O aluno entra pelo link de cadastro enviado dentro da operação. Depois de autenticado com Google ou Apple, ele acessa o aplicativo no próprio celular.</p>
+                        <h3>O OctoBox é só para CrossFit?</h3>
+                        <p>
+                            Sim. O produto foi desenhado especificamente para boxes de CrossFit
+                            e estúdios de treino funcional.
+                        </p>
+                    </article>
+                    <article>
+                        <h3>Como o aluno acessa?</h3>
+                        <p>
+                            Pelo aplicativo no celular, com login Google ou Apple.
+                            Você envia o link de cadastro pelo próprio sistema.
+                        </p>
+                    </article>
+                    <article>
+                        <h3>Migrar planilhas e WhatsApp dá trabalho?</h3>
+                        <p>
+                            No plano anual, nossa equipe faz o onboarding com você.
+                            Ajudamos a importar a base de alunos e configurar os primeiros fluxos.
+                        </p>
                     </article>
                 </div>
             </div>
@@ -224,15 +281,16 @@ PONTOS CRITICOS:
         <section class="landing-cta" aria-label="Chamada final para acao">
             <div class="landing-container landing-container--narrow">
                 <p class="landing-section-kicker">OctoBox Fit</p>
-                <h2>Uma plataforma para dar ao seu box a presença que o seu treino já merece.</h2>
+                <h2>Garanta sua vaga entre os 20 primeiros.</h2>
                 <p>
-                    Se o caos é uma sala cheia de vozes ao mesmo tempo, o OctoBox é o sistema que devolve ritmo,
-                    clareza e presença. Sofisticado no olhar, objetivo na operação.
+                    Preço Early Adopter travado pelo tempo que você ficar.
+                    Sem fidelidade. Sem cartão para começar.
                 </p>
                 <div class="landing-hero-actions landing-hero-actions--center">
-                    <a class="landing-button landing-button--primary" href="{{ login_url }}">Conhecer a entrada oficial</a>
+                    <a class="landing-button landing-button--primary" href="/checkout/?plan=annual" data-plan="annual">Quero minha vaga</a>
                     <a class="landing-button landing-button--secondary" href="{{ staff_login_url }}">Equipe interna</a>
                 </div>
+                <p class="landing-cta-foot">Após esgotar: R$ 197/mês.</p>
             </div>
         </section>
     </main>

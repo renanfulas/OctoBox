@@ -1,0 +1,105 @@
+<!--
+ARQUIVO: pagina /obrigado/ — pos-onboarding Early Adopter.
+
+POR QUE ELE EXISTE:
+- Cria um momento de respiro entre "criou conta" e "cai no painel sozinho".
+- Mostra proximos passos concretos para o Owner nao se perder.
+- Espaco reservado para video curto explicativo (placeholder hoje).
+
+O QUE ESTE ARQUIVO FAZ:
+1. Saudacao personalizada com primeiro nome.
+2. Video player (placeholder com aspect-ratio reservado — basta apontar para o arquivo final).
+3. Tres next-steps acionaveis: cadastrar primeiro aluno, configurar plano, convidar coach.
+4. CTA primaria para o painel + footnote sobre WhatsApp em 12h.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OctoBox Fit | Bem-vindo ao seu box</title>
+    <meta name="robots" content="noindex,nofollow">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/design-system/tokens.css' %}?v={{ static_asset_version }}">
+    <link rel="stylesheet" href="{% static 'css/design-system/pages/marketing-landing.css' %}?v={{ static_asset_version }}">
+    <link rel="stylesheet" href="{% static 'css/design-system/pages/signup-checkout.css' %}?v={{ static_asset_version }}">
+    <link rel="stylesheet" href="{% static 'css/design-system/pages/signup-thank-you.css' %}?v={{ static_asset_version }}">
+</head>
+<body data-page="signup-thank-you">
+    <header class="checkout-nav">
+        <a class="checkout-brand" href="/" aria-label="OctoBox">
+            <img class="checkout-brand-icon" src="{% static 'images/brand/octobox-mark.svg' %}?v={{ static_asset_version }}" alt="">
+            <span class="checkout-brand-mark">OctoBox</span>
+            <span class="checkout-brand-subtitle">Fit</span>
+        </a>
+    </header>
+
+    <main class="thanks-shell">
+        <section class="thanks-hero">
+            <p class="thanks-kicker">✦ Sua conta está ativa</p>
+            <h1 class="thanks-headline">
+                Bem-vindo ao seu box,<br>
+                <span class="thanks-name">{{ user_first_name }}.</span>
+            </h1>
+            <p class="thanks-copy">
+                Você acabou de virar Early Adopter — preço travado, lugar garantido entre os 20 primeiros.
+                Antes de mergulhar no painel, deixa a gente te mostrar por onde começar.
+            </p>
+        </section>
+
+        <section class="thanks-video" aria-label="Vídeo de boas-vindas">
+            <div class="thanks-video-frame" role="img" aria-label="Vídeo de boas-vindas (em produção)">
+                <div class="thanks-video-poster">
+                    <span class="thanks-video-play" aria-hidden="true">▶</span>
+                    <p class="thanks-video-title">Tour de 90 segundos</p>
+                    <p class="thanks-video-sub">Em produção. Por enquanto, comece pelos próximos passos abaixo.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="thanks-steps" aria-label="Próximos passos">
+            <p class="thanks-steps-kicker">Próximos passos</p>
+            <h2 class="thanks-steps-title">Comece por aqui.</h2>
+
+            <ol class="thanks-steps-list">
+                <li class="thanks-step">
+                    <div class="thanks-step-num">1</div>
+                    <div class="thanks-step-body">
+                        <h3>Cadastre seu primeiro aluno</h3>
+                        <p>Adicione um aluno teste e veja como o cadastro, plano e cobrança conversam entre si.</p>
+                        <a class="thanks-step-link" href="{% url 'access-overview' %}">Ir para a base de alunos →</a>
+                    </div>
+                </li>
+
+                <li class="thanks-step">
+                    <div class="thanks-step-num">2</div>
+                    <div class="thanks-step-body">
+                        <h3>Configure os planos do seu box</h3>
+                        <p>Defina os planos que você cobra (mensal, trimestral, anual) e os valores correspondentes.</p>
+                        <a class="thanks-step-link" href="{% url 'access-overview' %}">Configurar planos →</a>
+                    </div>
+                </li>
+
+                <li class="thanks-step">
+                    <div class="thanks-step-num">3</div>
+                    <div class="thanks-step-body">
+                        <h3>Convide a equipe (Recepção, Coach, Manager)</h3>
+                        <p>Cada papel tem um workspace dedicado. Recepção não vê dashboard executivo, Coach não vê financeiro.</p>
+                        <a class="thanks-step-link" href="{% url 'access-overview' %}">Adicionar equipe →</a>
+                    </div>
+                </li>
+            </ol>
+        </section>
+
+        <section class="thanks-cta" aria-label="Próxima ação">
+            <a class="thanks-cta-primary" href="{% url 'access-overview' %}">Ir para o meu painel →</a>
+            <p class="thanks-cta-foot">
+                💬 Em até 12 horas vamos te chamar no WhatsApp para acompanhar o setup juntos.
+                {% if pending and pending.phone %}
+                    Vamos chamar no número <strong>{{ pending.phone }}</strong>.
+                {% endif %}
+            </p>
+        </section>
+    </main>
+</body>
+</html>
