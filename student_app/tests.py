@@ -1554,11 +1554,21 @@ class StudentAppExperienceTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-ui="student-pwa-activation"', html=False)
+        self.assertContains(response, 'data-location="home"', html=False)
         self.assertContains(response, 'Ative o que falta no app.', html=False)
         self.assertContains(response, 'data-ui="student-pwa-install-action"', html=False)
         self.assertContains(response, 'data-ui="student-pwa-notification-action"', html=False)
+        self.assertContains(response, 'data-ui="student-pwa-dismiss-action"', html=False)
 
-    def test_student_pwa_activation_rail_is_home_only(self):
+    def test_student_settings_renders_pwa_activation_rail_without_dismiss(self):
+        response = self.client.get(reverse('student-app-settings'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-ui="student-pwa-activation"', html=False)
+        self.assertContains(response, 'data-location="settings"', html=False)
+        self.assertNotContains(response, 'data-ui="student-pwa-dismiss-action"', html=False)
+
+    def test_student_pwa_activation_rail_is_hidden_outside_home_and_settings(self):
         response = self.client.get(reverse('student-app-grade'))
 
         self.assertEqual(response.status_code, 200)

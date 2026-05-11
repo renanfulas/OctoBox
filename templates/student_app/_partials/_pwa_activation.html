@@ -41,17 +41,20 @@
 <section
     class="student-pwa-activation"
     data-ui="student-pwa-activation"
+    data-location="{{ student_pwa_activation_location|default:'home' }}"
     hidden
     aria-live="polite"
 >
     <div class="student-pwa-activation__copy">
         <p class="student-eyebrow">Ativação do app</p>
         <h2>Ative o que falta no app.</h2>
+        {% if student_pwa_activation_dismissible %}
         <div class="student-pwa-activation__dismiss">
             <button type="button" class="student-button student-button--ghost" data-ui="student-pwa-dismiss-action">
                 Agora não
             </button>
         </div>
+        {% endif %}
         <p class="student-copy" data-ui="student-pwa-copy">
             Falta transformar este atalho em app de verdade no seu celular e liberar os alertas.
         </p>
