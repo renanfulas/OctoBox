@@ -205,7 +205,10 @@ img {
     display: grid;
     align-items: end;
     overflow: hidden;
-    background: #05070b;
+    background:
+        linear-gradient(180deg, rgba(4, 8, 14, 0.24) 0%, rgba(4, 8, 14, 0.78) 100%),
+        var(--landing-hero-fallback-image, none) center 26% / cover no-repeat,
+        #05070b;
 }
 
 .landing-hero-video,
@@ -1041,7 +1044,7 @@ img {
     }
 
     .landing-hero-video {
-        display: none;
+        opacity: 0;
     }
 
     .landing-button,
