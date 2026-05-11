@@ -198,7 +198,7 @@ class Command(BaseCommand):
                 user = user_model.objects.create_user(
                     username=username,
                     email=email,
-                    password='test',
+                    password='test',  # nosec B106 - disposable demo workspace user
                 )
             if user.id not in used_ids:
                 selected.append(user)
@@ -218,7 +218,7 @@ class Command(BaseCommand):
             user = user_model.objects.create_user(
                 username=username,
                 email=f'{username}@example.com',
-                password='test',
+                password='test',  # nosec B106 - disposable demo workspace user
             )
             selected.append(user)
 

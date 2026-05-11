@@ -139,7 +139,7 @@ class Command(BaseCommand):
                         Attendance(
                             student=student,
                             session=session,
-                            status=AttendanceStatus.CHECKED_IN if random.randint(0, 1) else AttendanceStatus.BOOKED,
+                            status=AttendanceStatus.CHECKED_IN if random.randint(0, 1) else AttendanceStatus.BOOKED,  # nosec B311 - fixture randomness only
                         )
                         for student in attendance_sample
                     ],

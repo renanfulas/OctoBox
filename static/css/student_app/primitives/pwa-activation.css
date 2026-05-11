@@ -11,6 +11,7 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
             color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-surface-secondary) 80%),
             color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, var(--theme-surface-strong) 88%)
         );
+
     position: relative;
     display: grid;
     order: 20;
@@ -42,6 +43,7 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 .student-pwa-activation__copy {
     display: grid;
     gap: 10px;
+    min-width: 0;
 }
 
 .student-pwa-activation__dismiss {
@@ -52,11 +54,13 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 .student-pwa-activation__cards {
     display: grid;
     gap: 12px;
+    min-width: 0;
 }
 
 .student-pwa-activation__card {
     display: grid;
     gap: 10px;
+    min-width: 0;
     padding: 14px;
     border-radius: var(--radius-card);
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, transparent);
@@ -105,10 +109,47 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 .student-pwa-activation__notes {
     display: grid;
     gap: 6px;
+    min-width: 0;
 }
 
 .student-pwa-activation__notes .student-form-note {
     margin: 0;
     font-size: 0.84rem;
     line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.student-pwa-activation__dismiss .student-button,
+.student-pwa-activation__actions .student-button {
+    max-width: 100%;
+}
+
+@media (max-width: 640px) {
+    .student-pwa-activation {
+        gap: 14px;
+        padding: 14px;
+    }
+
+    .student-pwa-activation__copy {
+        gap: 12px;
+    }
+
+    .student-pwa-activation__dismiss {
+        justify-content: stretch;
+    }
+
+    .student-pwa-activation__dismiss .student-button,
+    .student-pwa-activation__actions .student-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .student-pwa-activation__status,
+    .student-pwa-activation__actions {
+        align-items: stretch;
+    }
+
+    .student-pwa-activation__card {
+        padding: 12px;
+    }
 }

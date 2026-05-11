@@ -42,13 +42,19 @@ def init_system_view(request):
         call_command('migrate', interactive=False)
         output.append("Banco de Dados Migrado com Sucesso!")
 
-        username = "admin"
-        email = "admin@octobox.com"
-        password = "adminpassword123"
+        username = os.getenv('INIT_ADMIN_USERNAME', 'admin')
+        email = os.getenv('INIT_ADMIN_EMAIL', 'admin@octobox.com')
+        password = os.getenv('INIT_ADMIN_PASSWORD')
+
+        if not password:
+            return JsonResponse(
+                {"status": "forbidden", "reason": "INIT_ADMIN_PASSWORD nao configurado no servidor."},
+                status=403,
+            )
 
         if not User.objects.filter(username=username).exists():
             User.objects.create_superuser(username, email, password)
-            output.append(f"Usuario '{username}' criado com sucesso. Senha: '{password}'")
+            output.append(f"Usuario '{username}' criado com sucesso.")
         else:
             output.append(f"Usuario '{username}' ja existe.")
 

@@ -28,6 +28,13 @@
   var installedKey = 'octobox_pwa_installed';
   var subscribeInFlight = null;
 
+  function activationLocation() {
+    if (!activationElement || !activationElement.dataset) {
+      return 'home';
+    }
+    return activationElement.dataset.location || 'home';
+  }
+
   function isIos() {
     var userAgent = (window.navigator.userAgent || '').toLowerCase();
     var platform = (window.navigator.platform || '').toLowerCase();
@@ -321,13 +328,21 @@
   }
 
   function shouldShowActivationCard(state) {
-    if (state.isStandalone || state.wasInstalled || state.activationComplete) {
+    if (state.activationComplete || state.wasInstalled || state.isStandalone) {
       try {
         window.localStorage.removeItem(dismissKey);
       } catch (error) {
         // noop
       }
+    }
+    if (state.activationComplete || state.wasInstalled) {
       return false;
+    }
+    if (state.isStandalone) {
+      return true;
+    }
+    if (activationLocation() !== 'home') {
+      return true;
     }
     try {
       return window.localStorage.getItem(dismissKey) !== '1';
@@ -395,7 +410,8 @@
       return;
     }
 
-    var hideInstallCard = Boolean(state.isStandalone);
+    var installComplete = Boolean(state.isStandalone || state.wasInstalled);
+    var hideInstallCard = installComplete;
     var hideNotificationCard = Boolean(!state.isStandalone || state.activationComplete);
 
     activationElement.hidden = Boolean((hideInstallCard && hideNotificationCard) || !shouldShowActivationCard(state));
@@ -413,8 +429,8 @@
 
     updateStatusChip(
       installStatus,
-      state.isStandalone ? 'PWA instalado' : 'PWA pendente',
-      state.isStandalone ? 'done' : 'pending'
+      installComplete ? 'PWA instalado' : 'PWA pendente',
+      installComplete ? 'done' : 'pending'
     );
 
     if (state.notificationPermission === 'granted') {
@@ -434,8 +450,8 @@
     }
 
     if (installAction) {
-      installAction.hidden = Boolean(state.isStandalone);
-      installAction.disabled = Boolean(!state.canInstall && !isIos() && !state.isStandalone);
+      installAction.hidden = installComplete;
+      installAction.disabled = Boolean(!state.canInstall && !isIos() && !installComplete);
     }
 
     if (notificationAction) {
@@ -444,7 +460,7 @@
     }
 
     if (installNote) {
-      if (state.isStandalone) {
+      if (installComplete) {
         installNote.textContent = 'App instalado neste aparelho.';
       } else if (isIos()) {
         installNote.textContent = 'No iPhone/iPad, toque em Compartilhar e depois em Adicionar à Tela de Início.';
@@ -549,6 +565,7 @@
   });
 
   window.addEventListener('focus', refreshPushSubscriptionState);
+  window.addEventListener('pageshow', refreshPushSubscriptionState);
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden) {
       refreshPushSubscriptionState();
