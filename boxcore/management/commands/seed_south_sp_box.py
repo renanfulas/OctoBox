@@ -204,7 +204,7 @@ class Command(BaseCommand):
         if total_students < MIN_STUDENT_COUNT or total_students > MAX_STUDENT_COUNT:
             raise CommandError('Use uma quantidade entre 100 e 200 alunos para manter a simulacao coerente.')
 
-        rng = random.Random(RNG_SEED)
+        rng = random.Random(RNG_SEED)  # nosec B311 - deterministic seed data generation only
         today = timezone.localdate()
 
         with transaction.atomic():

@@ -73,7 +73,11 @@ class RoleRequiredMixin:
                         if key.startswith('HTTP_'):
                             f.write(f'  {key}={value}\n')
             except Exception:
-                pass
+                ACCESS_LOGGER.exception(
+                    'permission_debug_logging_failed user_id=%s path=%s',
+                    getattr(getattr(request, 'user', None), 'pk', None),
+                    getattr(request, 'path', None),
+                )
 
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse(
