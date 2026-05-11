@@ -1,0 +1,117 @@
+<!--
+ARQUIVO: pagina de checkout publica do programa Early Adopters.
+
+POR QUE ELE EXISTE:
+- Captura os 4 dados minimos antes de redirecionar para Stripe Checkout (hosted).
+- Mantem o acabamento visual da landing — mesma assinatura "Luxo Futurista 2050".
+
+O QUE ESTE ARQUIVO FAZ:
+1. Mostra resumo do plano escolhido (mensal ou anual) com as garantias Early Adopter.
+2. Pede email, nome, box e telefone via form Django.
+3. POSTa para a propria URL — view cria PendingSignup e redireciona para Stripe Checkout.
+
+PONTOS CRITICOS:
+- A copy do botao primario muda baseada na disponibilidade de Stripe (config dev vs prod).
+- Sem JS pesado: form HTML puro, validacoes do Django + browser.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OctoBox Fit | Garantir vaga {{ plan_display.label }}</title>
+    <meta name="description" content="Garanta sua vaga no programa Early Adopters do OctoBox. Preço fundador travado pelo tempo que você ficar com a gente.">
+    <meta name="robots" content="noindex,nofollow">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/design-system/tokens.css' %}?v={{ static_asset_version }}">
+    <link rel="stylesheet" href="{% static 'css/design-system/pages/marketing-landing.css' %}?v={{ static_asset_version }}">
+    <link rel="stylesheet" href="{% static 'css/design-system/pages/signup-checkout.css' %}?v={{ static_asset_version }}">
+</head>
+<body data-page="signup-checkout">
+    <header class="checkout-nav">
+        <a class="checkout-brand" href="/" aria-label="OctoBox, voltar para a home">
+            <img class="checkout-brand-icon" src="{% static 'images/brand/octobox-mark.svg' %}?v={{ static_asset_version }}" alt="">
+            <span class="checkout-brand-mark">OctoBox</span>
+            <span class="checkout-brand-subtitle">Fit</span>
+        </a>
+        <a class="checkout-back" href="/">← Voltar</a>
+    </header>
+
+    <main class="checkout-shell">
+        <section class="checkout-grid">
+            <aside class="checkout-summary" aria-label="Resumo do plano">
+                <p class="checkout-kicker">Early Adopters</p>
+                <h1 class="checkout-headline">Plano {{ plan_display.label }}</h1>
+
+                <div class="checkout-price">
+                    <span class="checkout-price-amount">{{ plan_display.amount }}</span>
+                    <span class="checkout-price-period">{{ plan_display.period }}</span>
+                </div>
+                {% if plan_display.savings_label %}
+                    <p class="checkout-savings">{{ plan_display.savings_label }}</p>
+                {% endif %}
+
+                <ul class="checkout-checklist">
+                    <li>Recepção, financeiro, agenda e app do aluno</li>
+                    <li>Preço travado enquanto você ficar com a gente</li>
+                    <li>Cancele a qualquer momento</li>
+                    <li>Onboarding guiado: chamamos no WhatsApp em até 12h</li>
+                </ul>
+
+                <div class="checkout-trust">
+                    <span class="checkout-trust-dot" aria-hidden="true"></span>
+                    Pagamento processado pela Stripe · cartão criptografado ponta a ponta
+                </div>
+
+                <p class="checkout-fineprint">
+                    Após as 20 vagas: {{ post_program_price }}.
+                    Você mantém o preço fundador pelo tempo que ficar.
+                </p>
+            </aside>
+
+            <div class="checkout-form-card">
+                {% if messages %}
+                    <div class="checkout-messages" role="status">
+                        {% for message in messages %}
+                            <div class="checkout-message checkout-message--{{ message.tags|default:'info' }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <p class="checkout-section-kicker">Suas informações</p>
+                <h2 class="checkout-section-title">Vamos garantir sua vaga.</h2>
+                <p class="checkout-section-copy">
+                    Apenas 4 campos. Você confirma o pagamento na próxima tela.
+                </p>
+
+                <form method="post" novalidate class="checkout-form" action="{% url 'signup-checkout' %}?plan={{ plan }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="plan" value="{{ plan }}">
+
+                    {% for field in form %}
+                        <div class="checkout-field {% if field.errors %}checkout-field--error{% endif %}">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <small class="checkout-field-help">{{ field.help_text }}</small>
+                            {% endif %}
+                            {% if field.errors %}
+                                <small class="checkout-field-error">{{ field.errors|join:" " }}</small>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <button type="submit" class="checkout-submit">
+                        Continuar para pagamento seguro →
+                    </button>
+
+                    <p class="checkout-form-foot">
+                        Ao continuar, você concorda em receber comunicação da OctoBox sobre o seu cadastro.
+                        Sem fidelidade. Sem cartão para começar a conversa — só pra confirmar a vaga.
+                    </p>
+                </form>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
