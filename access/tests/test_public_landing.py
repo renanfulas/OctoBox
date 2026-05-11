@@ -13,8 +13,11 @@ class PublicLandingViewTests(TestCase):
         response = self.client.get(reverse('home'), HTTP_HOST='www.octoboxfit.com.br')
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Seu box com presença premium. Sua operação no controle.')
+        self.assertContains(response, 'OctoBox Fit')
         self.assertContains(response, 'https://app.octoboxfit.com.br/login/')
+        self.assertContains(response, 'class="landing-hero-video"', html=False)
+        self.assertContains(response, 'poster="/static/images/landing/entradas-real.png?v=1"', html=False)
+        self.assertContains(response, "--landing-hero-fallback-image: url('/static/images/landing/entradas-real.png?v=1')", html=False)
 
     def test_home_redirects_anonymous_user_to_login_on_app_host(self):
         response = self.client.get(reverse('home'), HTTP_HOST='app.octoboxfit.com.br')

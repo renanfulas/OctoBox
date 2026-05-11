@@ -48,13 +48,14 @@ PONTOS CRITICOS:
     </header>
 
     <main>
-        <section class="landing-hero" id="topo" aria-label="Apresentação principal do OctoBox">
+        <section class="landing-hero" id="topo" aria-label="Hero principal do OctoBox" style="--landing-hero-fallback-image: url('{% static 'images/landing/entradas-real.png' %}?v={{ static_asset_version }}');">
             <video
                 aria-label="Atletas treinando com intensidade em um ambiente de box funcional"
                 autoplay
                 class="landing-hero-video"
                 loop
                 muted
+                poster="{% static 'images/landing/entradas-real.png' %}?v={{ static_asset_version }}"
                 playsinline
                 preload="metadata"
             >
