@@ -152,8 +152,121 @@ def _resolve_marketing_site_url() -> str:
     return 'https://octoboxfit.com.br'
 
 
+
+
+def _handle_invoice_payment_failed(event: PaymentWebhookEvent) -> None:
+    """Suspende o Box quando pagamento da subscription falha.
+
+    Sprint 3: implementa o fluxo de suspensao automatica por inadimplencia.
+    Box.status = SUSPENDED bloqueia acesso ao painel do Owner (verificado por
+    TenantBySessionMiddleware) mas nao deleta dados nem arquiva o schema.
+
+    Recovery: quando invoice.payment_succeeded chegar (retry Stripe), Box e reativado.
+    """
+    invoice = event.payload.get('data', {}).get('object', {})
+    subscription_id = invoice.get('subscription', '')
+    customer_id = invoice.get('customer', '')
+
+    if not subscription_id and not customer_id:
+        logger.warning(
+            '_handle_invoice_payment_failed: sem subscription_id nem customer_id. event=%s',
+            event.event_id,
+        )
+        return
+
+    from control.models import Box
+    from django.utils import timezone as dj_tz
+
+    box = None
+    if subscription_id:
+        box = Box.objects.filter(stripe_subscription_id=subscription_id).first()
+    if box is None and customer_id:
+        box = Box.objects.filter(stripe_customer_id=customer_id).first()
+
+    if box is None:
+        logger.info(
+            '_handle_invoice_payment_failed: nenhum Box encontrado. subscription=%s customer=%s event=%s',
+            subscription_id, customer_id, event.event_id,
+        )
+        return
+
+    if box.status == Box.Status.SUSPENDED:
+        logger.info('_handle_invoice_payment_failed: Box %s ja esta SUSPENDED.', box.slug)
+        return
+
+    Box.objects.filter(pk=box.pk).update(
+        status=Box.Status.SUSPENDED,
+        suspended_at=dj_tz.now(),
+    )
+    logger.warning(
+        '_handle_invoice_payment_failed: Box %s SUSPENSO por falha de pagamento. event=%s',
+        box.slug, event.event_id,
+    )
+
+    from control.models import PlatformAuditEvent
+    try:
+        PlatformAuditEvent.objects.create(
+            target_box=box,
+            kind='box.suspended_payment_failed',
+            payload={
+                'stripe_event_id': event.event_id,
+                'subscription_id': subscription_id,
+                'customer_id': customer_id,
+            },
+        )
+    except Exception:
+        logger.exception('_handle_invoice_payment_failed: falha ao registrar PlatformAuditEvent')
+
+
+def _handle_invoice_payment_succeeded(event: PaymentWebhookEvent) -> None:
+    """Reativa o Box quando um pagamento anteriormente falho e bem sucedido (retry Stripe).
+
+    Sprint 3: recovery automatico de Box SUSPENDED por falha de pagamento.
+    Nao reativa Box ARCHIVED (requer intervencao manual).
+    """
+    invoice = event.payload.get('data', {}).get('object', {})
+    subscription_id = invoice.get('subscription', '')
+    customer_id = invoice.get('customer', '')
+
+    from control.models import Box
+    from django.utils import timezone as dj_tz
+
+    box = None
+    if subscription_id:
+        box = Box.objects.filter(stripe_subscription_id=subscription_id).first()
+    if box is None and customer_id:
+        box = Box.objects.filter(stripe_customer_id=customer_id).first()
+
+    if box is None:
+        return  # nao e um box conhecido — ignorar silenciosamente
+
+    if box.status != Box.Status.SUSPENDED:
+        return  # nao estava suspenso — nada a fazer
+
+    Box.objects.filter(pk=box.pk).update(
+        status=Box.Status.ACTIVE,
+        suspended_at=None,
+    )
+    logger.info(
+        '_handle_invoice_payment_succeeded: Box %s REATIVADO apos pagamento. event=%s',
+        box.slug, event.event_id,
+    )
+
+    from control.models import PlatformAuditEvent
+    try:
+        PlatformAuditEvent.objects.create(
+            target_box=box,
+            kind='box.reactivated_payment_recovered',
+            payload={'stripe_event_id': event.event_id},
+        )
+    except Exception:
+        logger.exception('_handle_invoice_payment_succeeded: falha ao registrar PlatformAuditEvent')
+
+
 _HANDLERS = {
     'checkout.session.completed': _handle_checkout_session_completed,
+    'invoice.payment_failed': _handle_invoice_payment_failed,       # Sprint 3: suspende Box
+    'invoice.payment_succeeded': _handle_invoice_payment_succeeded, # Sprint 3: reativa Box
 }
 
 __all__ = ['route_payment_webhook_event']

@@ -21,22 +21,24 @@ from datetime import timedelta
 from django.core.cache import cache
 from django.utils import timezone
 
-from shared_support.box_runtime import get_box_runtime_slug
+# Sprint 3: get_box_runtime_slug substituido por get_active_tenant_slug (connection.schema_name)
 from student_app.application.cache_keys import (
     build_student_agenda_snapshot_cache_key,
     build_student_home_rm_snapshot_cache_key,
     build_student_home_snapshot_cache_key,
     build_student_rm_snapshot_cache_key,
+    get_active_tenant_slug,
     normalize_student_cache_box_slug,
 )
 from student_app.application.timezone import localize_box_datetime
 
 
 def resolve_student_box_slug(student=None, fallback: str | None = None) -> str:
+    # Sprint 3: prioridade: (1) connection.schema_name, (2) identity.box_root_slug, (3) fallback
+    # get_active_tenant_slug ja resolve connection.schema_name com fallback para box_root_slug
     identity = getattr(student, 'app_identity', None) if student is not None else None
-    if identity is not None and getattr(identity, 'box_root_slug', ''):
-        return normalize_student_cache_box_slug(identity.box_root_slug)
-    return normalize_student_cache_box_slug(fallback or get_box_runtime_slug())
+    identity_slug = getattr(identity, 'box_root_slug', '') if identity is not None else ''
+    return get_active_tenant_slug(fallback=identity_slug or fallback)
 
 
 def invalidate_student_agenda_snapshots(*, box_root_slug: str | None, session_scheduled_at=None):
