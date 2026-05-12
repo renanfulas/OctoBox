@@ -52,6 +52,32 @@ def _resolve_student_tenant(request, session_payload: dict) -> None:
         except Exception:
             pass
 
+
+def _has_active_membership(request, session_payload: dict) -> bool:
+    """Sprint 4 / §3.5.4: verifica StudentBoxMembership.status=ACTIVE para o tenant resolvido.
+
+    Usado pelo StudentAuthMiddleware para bloquear acesso de alunos cujo membership
+    foi suspenso, revogado ou ainda esta pendente de aprovacao.
+
+    Retorna True em caso de duvida (sessao legada sem identity_id, nenhum tenant resolvido)
+    para evitar lockout de usuarios em migracao gradual.
+    """
+    identity_id = session_payload.get('identity_id')
+    if not identity_id:
+        return True  # sessao legada sem identity_id — nao bloquear
+    tenant = getattr(request, 'tenant', None)
+    if tenant is None:
+        return True  # sem tenant resolvido — nao bloquear (evita loop de redirect)
+    try:
+        from student_identity.models import StudentBoxMembership, StudentBoxMembershipStatus
+        return StudentBoxMembership.objects.filter(
+            identity_id=identity_id,
+            box_root_slug=tenant.slug,
+            status=StudentBoxMembershipStatus.ACTIVE,
+        ).exists()
+    except Exception:
+        return True  # falha ao consultar — nao bloquear
+
 class StudentAuthMiddleware:
     def __init__(self, get_response):
         self._get_response = get_response
@@ -69,6 +95,9 @@ class StudentAuthMiddleware:
             # Sprint 2: resolve tenant do box do aluno via cookie.
             if session_payload is not None:
                 _resolve_student_tenant(request, session_payload)
+                # Sprint 4 / §3.5.4: bloqueia acesso se membership nao esta ACTIVE.
+                if not _has_active_membership(request, session_payload):
+                    return redirect(reverse('student-app-no-active-box'))
 
             if session_payload is None and not has_pending_onboarding:
                 AuditEvent.objects.create(

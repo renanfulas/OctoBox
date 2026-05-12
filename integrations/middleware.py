@@ -34,6 +34,14 @@ class WebhookIdempotencyMiddleware:
 
     def __call__(self, request):
         if request.method == 'POST' and '/api/v1/integrations/' in request.path:
+            # Sprint 4 / §13.1 fix: WebhookEvent fica em public (SHARED_APPS).
+            # Força reset para public ANTES da query de idempotência, evitando herança
+            # de search_path de request anterior de tenant (gunicorn worker reutilizado).
+            try:
+                from django.db import connection as _db_conn
+                _db_conn.set_schema_to_public()
+            except Exception:
+                pass  # fora de contexto DB (ex.: testes sem tenant) — ignorar silenciosamente
             return self.process_webhook(request)
 
         return self.get_response(request)

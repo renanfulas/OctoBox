@@ -27,6 +27,7 @@ from knowledge.views import (
 from .views import (
     ApiV1HealthView,
     ApiV1ManifestView,
+    ApiV1TenantHealthView,
     ResendInvitationWebhookView,
     StudentAutocompleteView,
 )
@@ -35,6 +36,7 @@ from .views import (
 urlpatterns = [
     path('', ApiV1ManifestView.as_view(), name='api-v1-manifest'),
     path('health/', ApiV1HealthView.as_view(), name='api-v1-health'),
+    path('health/tenant/', ApiV1TenantHealthView.as_view(), name='api-v1-health-tenant'),  # Sprint 4
     path('students/autocomplete/', StudentAutocompleteView.as_view(), name='api-v1-student-autocomplete'),
     path('finance/payment-link/<int:payment_id>/', PaymentLinkView.as_view(), name='api-v1-payment-link'),
     path('finance/freeze-student/', StudentFreezeView.as_view(), name='api-v1-finance-freeze'),
