@@ -34,12 +34,19 @@ def get_box_runtime_slug() -> str:
 
     Fallback para env var apenas quando schema_name == 'public' ou nao ha tenant ativo
     (ex.: management commands, jobs globais, modo control-plane).
+
+    GUARDA apps.ready: acessar django.db.connection durante a inicializacao dos settings
+    (antes de django.setup()) envenena o cache @cached_property de ConnectionHandler.settings
+    com o backend dummy, pois DATABASES ainda nao esta disponivel no modulo de settings
+    parcialmente carregado. Verificar apps.ready evita esse efeito colateral.
     """
     try:
-        from django.db import connection
-        schema = getattr(connection, 'schema_name', None)
-        if schema and schema not in ('public', DEFAULT_BOX_RUNTIME_SLUG):
-            return schema  # tenant ativo — schema_name e o slug canonico
+        from django.apps import apps
+        if apps.ready:
+            from django.db import connection
+            schema = getattr(connection, 'schema_name', None)
+            if schema and schema not in ('public', DEFAULT_BOX_RUNTIME_SLUG):
+                return schema  # tenant ativo — schema_name e o slug canonico
     except Exception:
         pass
     return normalize_box_runtime_slug(

@@ -71,15 +71,3 @@ else:
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
 
-# CI DIAGNOSTIC — imprime ENGINE efetivo para depurar falha de set_schema.
-# Remover após o fix ser confirmado.
-import sys as _sys
-_ci_engine = DATABASES.get('default', {}).get('ENGINE', 'NOT_SET')
-_sys.stderr.write(f'[test.py DIAG] ENGINE={_ci_engine!r}\n')
-_sys.stderr.write(f'[test.py DIAG] DATABASE_URL set={bool(os.getenv("DATABASE_URL"))}\n')
-_sys.stderr.write(f'[test.py DIAG] DJANGO_SETTINGS_MODULE={os.getenv("DJANGO_SETTINGS_MODULE")!r}\n')
-if _ci_engine not in ('django_tenants.postgresql_backend', 'django.db.backends.sqlite3'):
-    raise RuntimeError(
-        f'[test.py] ENGINE inesperado: {_ci_engine!r}. '
-        'Esperado django_tenants.postgresql_backend (PostgreSQL) ou sqlite3 (fallback).'
-    )
