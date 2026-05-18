@@ -27,7 +27,8 @@ from .notifications import build_invitation_whatsapp_url, send_invitation_email
 class StudentInvitationDeliveryActionsMixin:
     def _handle_send_email(self, request):
         invitation = (
-            StudentAppInvitation.objects.select_related('student')
+            # Sprint 2: select_related('student') removido (FK cross-schema substituida).
+            StudentAppInvitation.objects.all()
             .filter(pk=request.POST.get('invitation_id'), box_root_slug=get_box_runtime_slug())
             .first()
         )
@@ -61,7 +62,8 @@ class StudentInvitationDeliveryActionsMixin:
 
     def _handle_open_whatsapp(self, request):
         invitation = (
-            StudentAppInvitation.objects.select_related('student')
+            # Sprint 2: select_related('student') removido (FK cross-schema substituida).
+            StudentAppInvitation.objects.all()
             .filter(pk=request.POST.get('invitation_id'), box_root_slug=get_box_runtime_slug())
             .first()
         )

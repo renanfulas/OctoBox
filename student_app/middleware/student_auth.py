@@ -91,13 +91,20 @@ class StudentAuthMiddleware:
         ):
             cookie_name = get_student_session_cookie_name()
             session_payload = read_student_session_value(request.COOKIES.get(cookie_name))
-            has_pending_onboarding = bool(request.session.get(_PENDING_ONBOARDING_SESSION_KEY))
+            pending_onboarding = request.session.get(_PENDING_ONBOARDING_SESSION_KEY) or {}
+            has_pending_onboarding = bool(pending_onboarding)
             # Sprint 2: resolve tenant do box do aluno via cookie.
             if session_payload is not None:
                 _resolve_student_tenant(request, session_payload)
                 # Sprint 4 / §3.5.4: bloqueia acesso se membership nao esta ACTIVE.
                 if not _has_active_membership(request, session_payload):
                     return redirect(reverse('student-app-no-active-box'))
+            elif has_pending_onboarding:
+                # Sprint 4: pre-auth onboarding em curso (sem session cookie ainda).
+                # Resolver tenant pelo box_id armazenado no payload do OAuth callback
+                # — sem isso o view do wizard roda em public schema e quebra ao
+                # tocar modelos TENANT_APPS (boxcore_student, AuditEvent, etc.).
+                _resolve_student_tenant(request, pending_onboarding)
 
             if session_payload is None and not has_pending_onboarding:
                 AuditEvent.objects.create(

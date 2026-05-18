@@ -133,7 +133,8 @@ class StudentInvitationOperationsQueries:
         recent_invites = []
         stalled_invites = []
         for invitation in (
-            StudentAppInvitation.objects.select_related('student', 'created_by')
+            # Sprint 2: removido select_related('student') — FK cross-schema substituida.
+            StudentAppInvitation.objects.select_related('created_by')
             .prefetch_related('deliveries')
             .filter(box_root_slug=self.box_root_slug)
             .order_by('-created_at')[:12]

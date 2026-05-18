@@ -78,7 +78,9 @@ def send_intake_whatsapp_invite(*, request, role_slug: str, get_success_url):
         messages.error(request, 'Nao foi possivel preparar o convite do lead para o app agora.')
         return redirect(get_success_url(return_query))
 
-    invitation = StudentAppInvitation.objects.select_related('student').get(pk=result.invitation.id)
+    # Sprint 2: select_related('student') removido — FK cross-schema substituida
+    # por student_id/student_name denormalizado.
+    invitation = StudentAppInvitation.objects.get(pk=result.invitation.id)
     invite_url = request.build_absolute_uri(
         f"/aluno/auth/invite/{invitation.token}/"
     )

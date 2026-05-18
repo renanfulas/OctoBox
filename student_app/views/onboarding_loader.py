@@ -78,7 +78,9 @@ def _is_valid_pending_student_onboarding(pending_onboarding) -> bool:
         invitation_id = pending_onboarding.get('invitation_id')
         if not identity_id or not student_id:
             return False
-        identity = StudentIdentity.objects.select_related('student').filter(pk=identity_id).first()
+        # Sprint 2: select_related('student') ja nao se aplica (FK removida).
+        # student e cross-schema agora; eager-loading via JOIN nao funciona.
+        identity = StudentIdentity.objects.filter(pk=identity_id).first()
         if identity is None or identity.student_id != student_id or identity.box_root_slug != box_root_slug:
             return False
         if invitation_id:
