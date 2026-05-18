@@ -16,21 +16,21 @@ from .models import (
 
 @admin.register(StudentIdentity)
 class StudentIdentityAdmin(admin.ModelAdmin):
-    list_display = ('student', 'box_root_slug', 'provider', 'email', 'status', 'last_authenticated_at')
+    list_display = ('student_name', 'box_root_slug', 'provider', 'email', 'status', 'last_authenticated_at')  # Sprint 2
     list_filter = ('status', 'provider', 'box_root_slug')
     search_fields = ('student__full_name', 'email', 'provider_subject')
 
 
 @admin.register(StudentAppInvitation)
 class StudentAppInvitationAdmin(admin.ModelAdmin):
-    list_display = ('student', 'box_root_slug', 'onboarding_journey', 'invited_email', 'invitation_status', 'expires_at', 'accepted_at')
+    list_display = ('student_name', 'box_root_slug', 'onboarding_journey', 'invited_email', 'invitation_status', 'expires_at', 'accepted_at')  # Sprint 2
     list_filter = ('box_root_slug', 'onboarding_journey')
     search_fields = ('student__full_name', 'invited_email')
     readonly_fields = ('invite_url',)
     actions = ('extend_selected_invites_by_7_days', 'revoke_selected_invites')
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('student')
+        return super().get_queryset(request)  # Sprint 2: sem select_related student (cross-schema)
 
     @admin.display(description='Status')
     def invitation_status(self, obj):
@@ -60,7 +60,7 @@ class StudentAppInvitationAdmin(admin.ModelAdmin):
 
 @admin.register(StudentTransfer)
 class StudentTransferAdmin(admin.ModelAdmin):
-    list_display = ('student', 'from_box_root_slug', 'to_box_root_slug', 'status', 'effective_at')
+    list_display = ('student_id', 'from_box_root_slug', 'to_box_root_slug', 'status', 'effective_at')  # Sprint 2
     list_filter = ('status', 'from_box_root_slug', 'to_box_root_slug')
     search_fields = ('student__full_name', 'reason')
 

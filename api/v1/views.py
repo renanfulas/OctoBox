@@ -65,15 +65,51 @@ class ApiV1ManifestView(View):
 
 
 class ApiV1HealthView(View):
+    """Healthcheck público (roda em public schema — sem tenant).
+
+    Sprint 4: adicionado tenants_active para observabilidade do control plane.
+    Rota listada em PUBLIC_SCHEMA_PATHS do TenantBySessionMiddleware.
+    """
+
     def get(self, request, *args, **kwargs):
+        tenants_active = 0
+        try:
+            from control.models import Box
+            tenants_active = Box.objects.filter(status=Box.Status.ACTIVE).count()
+        except Exception:
+            pass
         return JsonResponse(
             {
                 'status': 'ok',
                 'version': 'v1',
                 'product': 'OctoBox Control',
                 'api_boundary': 'stable-entrypoint',
+                'runtime': 'control',
                 'runtime_slug': get_box_runtime_slug(),
                 'runtime_namespace': get_box_runtime_namespace(),
+                'tenants_active': tenants_active,
+                'healthy': True,
+            }
+        )
+
+
+class ApiV1TenantHealthView(LoginRequiredMixin, View):
+    """Healthcheck autenticado — reporta o tenant resolvido para o request atual.
+
+    Sprint 4: endpoint `/api/v1/health/tenant/` para smoke test por tenant.
+    Requer autenticacao (LoginRequiredMixin) pois precisa de tenant resolvido.
+    """
+
+    def get(self, request, *args, **kwargs):
+        from django.db import connection
+        schema = getattr(connection, 'schema_name', 'public')
+        tenant = getattr(request, 'tenant', None)
+        return JsonResponse(
+            {
+                'status': 'ok',
+                'tenant': schema,
+                'tenant_slug': tenant.slug if tenant else '',
+                'healthy': schema not in ('public', 'control'),
             }
         )
 

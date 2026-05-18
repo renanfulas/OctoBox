@@ -57,7 +57,11 @@ _CACHE_KEY_PREFIX = 'octobox:student_edit_lock'
 
 
 def _cache_key(student_id: int) -> str:
-    return f'{_CACHE_KEY_PREFIX}:{student_id}'
+    # Sprint 3: inclui schema_name para isolar locks por tenant.
+    # Sem isso, tenant A e tenant B podem ter student_id=42 e compartilhar lock.
+    from django.db import connection
+    tenant = getattr(connection, 'schema_name', None) or 'public'
+    return f'{_CACHE_KEY_PREFIX}:{tenant}:{student_id}'
 
 
 # -------------------------------------------------------------------

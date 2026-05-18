@@ -3,7 +3,21 @@ ARQUIVO: estado proprio da identidade do app do aluno.
 
 POR QUE ELE EXISTE:
 - separa a conta de acesso do aluno da conta interna de funcionarios.
-- ancora o vinculo single-box e o historico de transferencia sem reacoplar em boxcore.
+- ancora o vinculo multi-box e o historico de transferencia sem reacoplar em boxcore.
+
+SPRINT 2 — MUDANCAS CRITICAS:
+- Removidas FKs cross-schema (public -> tenant): StudentIdentity.student,
+  StudentBoxMembership.student, StudentAppInvitation.student, StudentTransfer.student.
+- Substituidas por student_id: IntegerField (referencia fraca, sem constraint DB).
+- Adicionados student_name: CharField (denormalizado para display sem query cross-schema).
+- Adicionado box: FK(control.Box, null=True) em todos os modelos que tinham box_root_slug.
+- box_root_slug mantido como campo legado durante transicao (Sprint 4 remove).
+
+POR QUE FK cross-schema e INVALIDA:
+  public.student_identity_studentidentity.student_id -> box_XXX.boxcore_student.id
+  Postgres nao aplica constraint referencial cross-schema. Ao trocar search_path para
+  um tenant diferente do student, identity.student falha com "relation not found".
+  Solucao: IntegerField(student_id) + schema_context explicito nos call sites.
 """
 
 from __future__ import annotations
@@ -16,11 +30,52 @@ from django.utils import timezone
 
 from model_support.base import TimeStampedModel
 from shared_support.box_runtime import get_box_runtime_slug
-from students.models import Student
 
 
 def _default_box_root_slug() -> str:
     return get_box_runtime_slug()
+
+
+def _fetch_student_in_box_schema(*, student_id, box_id=None, box_root_slug: str = ''):
+    """Sprint 2/4 compatibility shim — busca Student per-tenant a partir do
+    schema correto.
+
+    Models de identity (StudentIdentity, StudentAppInvitation,
+    StudentBoxMembership, StudentTransfer) vivem em SHARED_APPS (public).
+    Student vive em TENANT_APPS (box_xxx). A FK direta foi removida (era
+    cross-schema fragil), entao acessar `obj.student` antes era um JOIN
+    SQL ilegal. Esta funcao ativa o schema do box ANTES do lookup, evitando
+    'relation boxcore_student does not exist' quando o caller esta em
+    public (ex.: OAuth callback pre-auth).
+    """
+    if not student_id:
+        return None
+    from students.models import Student
+    schema_name = ''
+    if box_id:
+        try:
+            from control.models import Box
+            schema_name = Box.objects.values_list('schema_name', flat=True).get(pk=box_id)
+        except Exception:
+            schema_name = ''
+    if not schema_name and box_root_slug:
+        # box_root_slug historicamente armazena o schema_name (ex.: 'box_test')
+        schema_name = box_root_slug
+    if not schema_name:
+        # Sem info de box — tenta no schema corrente (degradacao aceitavel)
+        try:
+            return Student.objects.get(pk=student_id)
+        except Student.DoesNotExist:
+            return None
+    try:
+        from django_tenants.utils import schema_context
+        with schema_context(schema_name):
+            try:
+                return Student.objects.get(pk=student_id)
+            except Student.DoesNotExist:
+                return None
+    except Exception:
+        return None
 
 
 class StudentIdentityStatus(models.TextChoices):
@@ -77,9 +132,33 @@ class StudentBoxMembershipStatus(models.TextChoices):
 
 
 class StudentIdentity(TimeStampedModel):
-    student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='app_identity')
-    box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)
-    primary_box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)
+    # Sprint 2: student_id e referencia fraca (IntegerField, sem FK constraint).
+    # A FK OneToOneField(Student) foi removida — era cross-schema (public->tenant).
+    # Para buscar o Student: use schema_context(self.box.schema_name) + Student.objects.get(pk=self.student_id)
+    student_id = models.IntegerField(null=True, blank=True, db_index=True)
+    student_name = models.CharField(max_length=150, blank=True, db_index=True)  # denormalizado
+
+    # box: FK para control.Box (Sprint 2). box_root_slug mantido como campo legado (remove Sprint 4).
+    box = models.ForeignKey(
+        'control.Box',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='student_identities',
+        db_index=True,
+    )
+    box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)  # legado
+
+    primary_box = models.ForeignKey(
+        'control.Box',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='primary_student_identities',
+        db_index=True,
+    )
+    primary_box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)  # legado
+
     provider = models.CharField(max_length=16, choices=StudentIdentityProvider.choices)
     provider_subject = models.CharField(max_length=255, unique=True)
     email = models.EmailField(db_index=True)
@@ -95,7 +174,7 @@ class StudentIdentity(TimeStampedModel):
     photo_url = models.URLField(blank=True, max_length=500)
 
     class Meta:
-        ordering = ['student__full_name']
+        ordering = ['student_name']  # Sprint 2: era 'student__full_name' (cross-schema JOIN)
         constraints = [
             models.UniqueConstraint(
                 fields=['email', 'box_root_slug'],
@@ -111,14 +190,36 @@ class StudentIdentity(TimeStampedModel):
             self.status = StudentIdentityStatus.ACTIVE
             self.activated_at = now
 
+    @property
+    def student(self):
+        """Sprint 2 compatibility shim. Ver _fetch_student_in_box_schema."""
+        return _fetch_student_in_box_schema(
+            student_id=self.student_id,
+            box_id=self.box_id,
+            box_root_slug=self.box_root_slug or '',
+        )
+
     def __str__(self):
-        return f'{self.student.full_name} [{self.box_root_slug}]'
+        return f'{self.student_name or self.email} [{self.box_root_slug}]'
 
 
 class StudentBoxMembership(TimeStampedModel):
     identity = models.ForeignKey(StudentIdentity, on_delete=models.CASCADE, related_name='memberships')
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='box_memberships')
-    box_root_slug = models.CharField(max_length=64, db_index=True)
+    # Sprint 2: student_id e referencia fraca (IntegerField, sem FK constraint).
+    # A FK ForeignKey(Student) foi removida — era cross-schema (public->tenant).
+    student_id = models.IntegerField(null=True, blank=True, db_index=True)
+
+    # box: FK para control.Box (Sprint 2). box_root_slug mantido como campo legado (remove Sprint 4).
+    box = models.ForeignKey(
+        'control.Box',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='student_memberships',
+        db_index=True,
+    )
+    box_root_slug = models.CharField(max_length=64, db_index=True)  # legado
+
     status = models.CharField(
         max_length=24,
         choices=StudentBoxMembershipStatus.choices,
@@ -145,13 +246,23 @@ class StudentBoxMembership(TimeStampedModel):
     revoked_reason = models.CharField(max_length=255, blank=True)
 
     class Meta:
-        ordering = ['student__full_name', 'box_root_slug']
+        # Sprint 2: era ['student__full_name', 'box_root_slug'] — cross-schema JOIN removido
+        ordering = ['box_root_slug']
         constraints = [
             models.UniqueConstraint(
                 fields=['identity', 'box_root_slug'],
                 name='unique_student_membership_per_identity_box',
             ),
         ]
+
+    @property
+    def student(self):
+        """Sprint 2 compatibility shim — ver _fetch_student_in_box_schema."""
+        return _fetch_student_in_box_schema(
+            student_id=self.student_id,
+            box_id=getattr(self, 'box_id', None),
+            box_root_slug=getattr(self, 'box_root_slug', '') or '',
+        )
 
     def mark_active(self):
         now = timezone.now()
@@ -168,7 +279,7 @@ class StudentBoxMembership(TimeStampedModel):
         self.revoked_reason = reason
 
     def __str__(self):
-        return f'{self.student.full_name} [{self.box_root_slug}] ({self.status})'
+        return f'{self.identity.student_name} [{self.box_root_slug}] ({self.status})'
 
 
 class StudentAppInvitation(TimeStampedModel):
@@ -179,8 +290,22 @@ class StudentAppInvitation(TimeStampedModel):
         default=StudentInvitationType.INDIVIDUAL,
         db_index=True,
     )
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='app_invitations')
-    box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)
+    # Sprint 2: student_id e referencia fraca (IntegerField, sem FK constraint).
+    # A FK ForeignKey(Student) foi removida — era cross-schema (public->tenant).
+    student_id = models.IntegerField(null=True, blank=True, db_index=True)
+    student_name = models.CharField(max_length=150, blank=True)  # denormalizado
+
+    # box: FK para control.Box (Sprint 2). box_root_slug mantido como campo legado (remove Sprint 4).
+    box = models.ForeignKey(
+        'control.Box',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='student_invitations',
+        db_index=True,
+    )
+    box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)  # legado
+
     invited_email = models.EmailField(blank=True)
     onboarding_journey = models.CharField(
         max_length=32,
@@ -205,13 +330,33 @@ class StudentAppInvitation(TimeStampedModel):
     def is_expired(self) -> bool:
         return self.expires_at <= timezone.now()
 
+    @property
+    def student(self):
+        """Sprint 2 compatibility shim — ver _fetch_student_in_box_schema."""
+        return _fetch_student_in_box_schema(
+            student_id=self.student_id,
+            box_id=getattr(self, 'box_id', None),
+            box_root_slug=getattr(self, 'box_root_slug', '') or '',
+        )
+
     def __str__(self):
-        return f'Invite {self.student.full_name} [{self.box_root_slug}]'
+        return f'Invite {self.student_name or self.student_id} [{self.box_root_slug}]'
 
 
 class StudentBoxInviteLink(TimeStampedModel):
     token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
-    box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)
+
+    # box: FK para control.Box (Sprint 2). box_root_slug mantido como campo legado (remove Sprint 4).
+    box = models.ForeignKey(
+        'control.Box',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='student_invite_links',
+        db_index=True,
+    )
+    box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)  # legado
+
     expires_at = models.DateTimeField(db_index=True)
     max_uses = models.PositiveIntegerField(default=200)
     use_count = models.PositiveIntegerField(default=0)
@@ -254,9 +399,29 @@ class StudentBoxInviteLink(TimeStampedModel):
 
 class StudentTransfer(TimeStampedModel):
     identity = models.ForeignKey(StudentIdentity, on_delete=models.CASCADE, related_name='transfers')
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='app_transfers')
-    from_box_root_slug = models.CharField(max_length=64)
-    to_box_root_slug = models.CharField(max_length=64)
+    # Sprint 2: student_id e referencia fraca (IntegerField, sem FK constraint).
+    # A FK ForeignKey(Student) foi removida — era cross-schema (public->tenant).
+    student_id = models.IntegerField(null=True, blank=True, db_index=True)
+
+    from_box_root_slug = models.CharField(max_length=64)  # legado
+    to_box_root_slug = models.CharField(max_length=64)    # legado
+
+    # box FKs para controle.Box — substituem from/to_box_root_slug no Sprint 4
+    from_box = models.ForeignKey(
+        'control.Box',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='transfers_from',
+    )
+    to_box = models.ForeignKey(
+        'control.Box',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='transfers_to',
+    )
+
     status = models.CharField(
         max_length=16,
         choices=StudentTransferStatus.choices,
@@ -278,8 +443,17 @@ class StudentTransfer(TimeStampedModel):
     class Meta:
         ordering = ['-created_at']
 
+    @property
+    def student(self):
+        """Sprint 2 compatibility shim — ver _fetch_student_in_box_schema."""
+        return _fetch_student_in_box_schema(
+            student_id=self.student_id,
+            box_id=getattr(self, 'box_id', None),
+            box_root_slug=getattr(self, 'box_root_slug', '') or '',
+        )
+
     def __str__(self):
-        return f'{self.student.full_name}: {self.from_box_root_slug} -> {self.to_box_root_slug}'
+        return f'student_id={self.student_id}: {self.from_box_root_slug} -> {self.to_box_root_slug}'
 
 
 class StudentInvitationDelivery(TimeStampedModel):
@@ -309,7 +483,7 @@ class StudentInvitationDelivery(TimeStampedModel):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f'{self.invitation.student.full_name} {self.channel} {self.status}'
+        return f'{self.invitation.student_name} {self.channel} {self.status}'
 
 
 class StudentInvitationDeliveryEvent(TimeStampedModel):
@@ -323,10 +497,24 @@ class StudentInvitationDeliveryEvent(TimeStampedModel):
     class Meta:
         ordering = ['-created_at']
 
+    def __str__(self):
+        return f'{self.provider} {self.event_type}'
+
 
 class StudentPushSubscription(TimeStampedModel):
     identity = models.ForeignKey(StudentIdentity, on_delete=models.CASCADE, related_name='push_subscriptions')
-    box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)
+
+    # box: FK para control.Box (Sprint 2). box_root_slug mantido como campo legado (remove Sprint 4).
+    box = models.ForeignKey(
+        'control.Box',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='student_push_subscriptions',
+        db_index=True,
+    )
+    box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)  # legado
+
     endpoint = models.CharField(max_length=500, unique=True, db_index=True)
     subscription = models.JSONField(default=dict, blank=True)
     device_fingerprint = models.CharField(max_length=64, blank=True, db_index=True)
@@ -365,7 +553,4 @@ class StudentPushSubscription(TimeStampedModel):
         self.last_error_at = timezone.now()
 
     def __str__(self):
-        return f'{self.identity.student.full_name} push [{self.box_root_slug}]'
-
-    def __str__(self):
-        return f'{self.provider} {self.event_type}'
+        return f'{self.identity.student_name} push [{self.box_root_slug}]'

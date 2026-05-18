@@ -19,7 +19,8 @@ from __future__ import annotations
 
 from django.shortcuts import redirect
 
-from shared_support.box_runtime import get_box_runtime_slug
+# Sprint 4: get_box_runtime_slug import removido — verificacao slug-vs-runtime
+# era estruturalmente quebrada em schema-per-tenant (ver comentario abaixo).
 from student_app.onboarding_state import store_pending_student_onboarding
 
 from .funnel_events import record_student_onboarding_event
@@ -55,10 +56,22 @@ def handle_student_special_oauth_journey(
 
     box_invite_link = repository.find_box_invite_link_by_token(invite_token)
     if box_invite_link is not None:
-        if box_invite_link.box_root_slug != get_box_runtime_slug():
-            return _redirect_with_message(request, 'error', 'Este link em massa nao pertence ao box atual.')
+        # Sprint 4 schema-per-tenant: OAuth callback runs em public schema
+        # (/aluno/auth/ esta em PUBLIC_SCHEMA_PATHS). get_box_runtime_slug()
+        # retorna 'control' aqui (fallback env), enquanto link.box_root_slug
+        # foi salvo como nome do schema do tenant (ex.: 'box_endorfina') no
+        # momento da criacao do link dentro do contexto do owner.
+        # A verificacao slug-vs-runtime que existia aqui ficou estruturalmente
+        # quebrada: o link e a fonte de verdade do box-alvo. Manter so o gate
+        # de "link ainda aceita usos".
         if not box_invite_link.can_accept:
             return _redirect_with_message(request, 'error', 'Este link em massa nao esta mais disponivel para novos cadastros.')
+        # Sprint 4: ativar o tenant do link como contexto ativo para que
+        # operacoes tenant-aware downstream (AuditEvent, ContentType, etc.)
+        # encontrem suas tabelas no schema correto. /aluno/auth/ esta em
+        # PUBLIC_SCHEMA_PATHS, entao o TenantBySessionMiddleware setou public
+        # — precisamos sobrescrever aqui agora que sabemos o box alvo.
+        _activate_box_tenant(box_invite_link.box_id, box_root_slug=box_invite_link.box_root_slug)
         if result.success and result.identity is not None:
             response = redirect('student-app-home')
             attach_student_session_cookie(
@@ -72,6 +85,7 @@ def handle_student_special_oauth_journey(
         payload = {
             'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
             'box_root_slug': box_invite_link.box_root_slug,
+            'box_id': box_invite_link.box_id,
             'provider': identity_payload.provider,
             'provider_subject': identity_payload.provider_subject,
             'email': identity_payload.email,
@@ -104,6 +118,9 @@ def handle_student_special_oauth_journey(
     if invitation.onboarding_journey != StudentOnboardingJourney.IMPORTED_LEAD_INVITE:
         return None
 
+    # Sprint 4: ativar tenant do convite (ver comentario em box_invite_link acima).
+    _activate_box_tenant(invitation.box_id, box_root_slug=invitation.box_root_slug)
+
     attach_response = redirect('student-app-onboarding')
     attach_student_session_cookie(
         attach_response,
@@ -114,6 +131,7 @@ def handle_student_special_oauth_journey(
     payload = {
         'journey': invitation.onboarding_journey,
         'box_root_slug': invitation.box_root_slug,
+        'box_id': invitation.box_id,
         'identity_id': result.identity.id,
         'student_id': result.identity.student_id,
         'invitation_id': invitation.id,
@@ -131,7 +149,7 @@ def handle_student_special_oauth_journey(
         event='oauth_completed',
         target_model='student_identity.StudentAppInvitation',
         target_id=str(invitation.id),
-        target_label=invitation.student.full_name,
+        target_label=invitation.student_name,  # # Sprint 2: denorm
         description='OAuth concluido para convite individual do onboarding do aluno.',
         metadata={
             'box_root_slug': invitation.box_root_slug,
@@ -187,6 +205,39 @@ def _redirect_with_message(request, level: str, message: str):
 
     getattr(messages, level)(request, message)
     return redirect('student-identity-login')
+
+
+def _activate_box_tenant(box_id=None, *, box_root_slug: str = '') -> None:
+    """Sprint 4 schema-per-tenant: ativa o tenant identificado pelo box.
+
+    O OAuth callback corre em public schema (rota /aluno/auth/ esta em
+    PUBLIC_SCHEMA_PATHS). Apos descobrir o box-alvo via link ou convite,
+    precisamos sobrescrever o schema para tenant para que operacoes
+    tenant-aware (AuditEvent em boxcore_auditevent, etc.) encontrem as
+    tabelas no schema correto.
+
+    Aceita box_id (caminho preferido) ou box_root_slug (fallback para legado
+    onde a FK control.Box ainda nao tinha sido populada). box_root_slug
+    historicamente armazena o schema_name do tenant.
+
+    Falha silenciosamente se nenhum dos dois resolve um Box ATIVO — o caller
+    continua em public (downstream pode falhar mas com erros mais explicitos).
+    """
+    if not box_id and not box_root_slug:
+        return
+    try:
+        from control.models import Box
+        from django.db import connection
+        if box_id:
+            box = Box.objects.get(pk=box_id, status=Box.Status.ACTIVE)
+        else:
+            box = Box.objects.get(schema_name=box_root_slug, status=Box.Status.ACTIVE)
+        connection.set_tenant(box)
+    except Exception:
+        # Logging seria ideal mas evita explodir o callback em edge cases.
+        # Se o box nao puder ser ativado, downstream falhara com erros mais
+        # explicitos (table-not-found) que ja sao auto-explicativos.
+        pass
 
 
 __all__ = [

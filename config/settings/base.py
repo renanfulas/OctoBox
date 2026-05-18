@@ -234,38 +234,73 @@ if not is_local_runtime_mode() and not CSRF_TRUSTED_ORIGINS:
      import logging
      logging.getLogger('django.security').warning("CSRF_TRUSTED_ORIGINS vazia em Produção. POSTs podem falhar.")
 
-DJANGO_APPS = [
+# ---------------------------------------------------------------------------
+# django-tenants: SHARED_APPS + TENANT_APPS
+#
+# SHARED_APPS = apps que vivem em public schema (cross-tenant).
+# TENANT_APPS = apps que vivem em box_xxx schemas (per-tenant).
+#
+# INSTALLED_APPS = SHARED_APPS + TENANT_APPS (django-tenants exige esta estrutura).
+# django_tenants DEVE ser o primeiro em SHARED_APPS.
+# ---------------------------------------------------------------------------
+
+SHARED_APPS = [
+    # django-tenants obrigatório primeiro
+    'django_tenants',
+
+    # Django core (cross-tenant)
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-]
 
-LOCAL_APPS = [
-    'access.apps.AccessConfig',
-    'api.apps.ApiConfig',
-    'auditing.apps.AuditingConfig',
-    'catalog.apps.CatalogConfig',
-    'communications.apps.CommunicationsConfig',
-    'dashboard.apps.DashboardConfig',
-    'finance.apps.FinanceConfig',
-    'guide.apps.GuideConfig',
-    'jobs.apps.JobsConfig',
-    'knowledge.apps.KnowledgeConfig',
-    'integrations.apps.IntegrationsConfig',
-    'operations.apps.OperationsConfig',
-    'quick_sales.apps.QuickSalesConfig',
+    # Control plane da plataforma (Box, Domain, Membership, BoxProvisioningEvent)
+    'control.apps.ControlConfig',
+
+    # Cross-tenant por design: existem ANTES de qualquer tenant
     'signup.apps.SignupConfig',
+    'integrations.apps.IntegrationsConfig',
+
+    # Identidade do aluno cross-box (migração Sprint 2)
     'student_identity.apps.StudentIdentityConfig',
-    'student_app.apps.StudentAppConfig',
-    'students.apps.StudentsConfig',
-    'boxcore.apps.BoxcoreConfig',
+
+    # Shared support (sem modelos de domínio)
     'shared_support.apps.SharedSupportConfig',
 ]
 
-INSTALLED_APPS = [*DJANGO_APPS, *LOCAL_APPS]
+TENANT_APPS = [
+    # django.contrib.contenttypes duplicado em TENANT para FK per-tenant funcionar
+    'django.contrib.contenttypes',
+
+    # Âncora histórica de TODAS as migrations de domínio
+    'boxcore.apps.BoxcoreConfig',
+
+    # Facades de domínio (sem migrations próprias — dependem de boxcore)
+    'students.apps.StudentsConfig',
+    'finance.apps.FinanceConfig',
+    'operations.apps.OperationsConfig',
+    'auditing.apps.AuditingConfig',
+    'communications.apps.CommunicationsConfig',
+
+    # Features per-tenant
+    'dashboard.apps.DashboardConfig',
+    'access.apps.AccessConfig',
+    'catalog.apps.CatalogConfig',
+    'guide.apps.GuideConfig',
+    'knowledge.apps.KnowledgeConfig',
+    'jobs.apps.JobsConfig',
+    'quick_sales.apps.QuickSalesConfig',
+    'api.apps.ApiConfig',
+
+    # App do aluno (views + modelos per-tenant como Student, SessionWorkout)
+    'student_app.apps.StudentAppConfig',
+]
+
+# django-tenants requer que INSTALLED_APPS = list(SHARED_APPS) + TENANT_APPS
+# (sem duplicatas de SHARED_APPS em TENANT_APPS, exceto contenttypes)
+INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
 
 PROJECT_RAG_REMOTE_LLM_ENABLED = env_bool('PROJECT_RAG_REMOTE_LLM_ENABLED', False)
 PROJECT_RAG_GENERATION_PROVIDER = env_str('PROJECT_RAG_GENERATION_PROVIDER', 'openai')   # 'openai' | 'anthropic' | 'extractive'
@@ -282,26 +317,66 @@ PROJECT_RAG_EMBEDDING_BATCH_SIZE = env_int('PROJECT_RAG_EMBEDDING_BATCH_SIZE', 6
 PROJECT_RAG_EMBEDDING_MIN_SCORE = env_float('PROJECT_RAG_EMBEDDING_MIN_SCORE', 0.15)
 
 MIDDLEWARE = [
-    'integrations.middleware.WebhookIdempotencyMiddleware',
+    # C2 FIX: PrometheusBeforeMiddleware ANTES de qualquer middleware de app
+    # (antes era WebhookIdempotencyMiddleware — que fazia DB query sem tenant)
     'monitoring.prometheus_middleware.PrometheusBeforeMiddleware',
+
+    # Segurança de rede (não precisa de tenant)
     'django.middleware.security.SecurityMiddleware',
+    # Nota: o middleware customizado e `shared_support.security.RequestSecurityMiddleware`
+    # (carregado mais abaixo, depois do tenant). Referencia legada removida.
     'whitenoise.middleware.WhiteNoiseMiddleware',
+
+    # Sessão ANTES do tenant (tenant depende de session['active_box_id'])
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+
+    # Auth ANTES do tenant (TenantBySessionMiddleware precisa de request.user)
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+
+    # Tenant por sessão — seta connection.tenant para todos os requests autenticados
+    # C1 FIX: sempre chama set_tenant() ou set_schema_to_public() — nunca herda search_path
+    'control.middleware.TenantBySessionMiddleware',
+
+    # C2 FIX: WebhookIdempotencyMiddleware DEPOIS do tenant (faz DB query)
+    # Antes estava no topo — causava query sem search_path correto
+    'integrations.middleware.WebhookIdempotencyMiddleware',
+
+    # Outros middlewares de app (precisam de tenant já setado)
     'shared_support.request_timing_middleware.RequestTimingMiddleware',
     'shared_support.security.honeypot_middleware.HoneypotMiddleware',
     'shared_support.security.fingerprint_middleware.SessionFingerprintMiddleware',
     'shared_support.security.RequestSecurityMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    # Auth do aluno — resolve tenant DO ALUNO antes de qualquer query de domínio (Sprint 4)
     'student_app.middleware.student_auth.StudentAuthMiddleware',
 ]
 
 STUDENT_LOGIN_URL = '/aluno/auth/login/'
 STUDENT_APP_URL_PREFIX = '/aluno/'
 STUDENT_AUDIT_ASYNC = False
+
+# ---------------------------------------------------------------------------
+# django-tenants configuration
+# ---------------------------------------------------------------------------
+
+# Modelo que representa o tenant (Box) — deve ser o primeiro INSTALLED_APP de SHARED_APPS
+TENANT_MODEL = 'control.Box'
+
+# Modelo que mapeia domínio → tenant (Fase 2: subdomain; Fase 1: session-based)
+TENANT_DOMAIN_MODEL = 'control.Domain'
+
+# URLs para o schema public (login, signup, admin de plataforma, webhook, healthcheck)
+PUBLIC_SCHEMA_URLCONF = 'config.urls_public'
+
+# Schema name do public (padrão django-tenants)
+PUBLIC_SCHEMA_NAME = 'public'
+
+# Roteador de banco obrigatório pelo django-tenants
+DATABASE_ROUTERS = ['django_tenants.routers.TenantSyncRouter']
 
 ROOT_URLCONF = 'config.urls'
 
@@ -327,6 +402,16 @@ ASGI_APPLICATION = 'config.asgi.application'
 DATABASES = {
     'default': build_database_config(BASE_DIR / 'db.sqlite3')
 }
+
+# django-tenants exige backend customizado que adiciona schema_name à conexão.
+# Substituir o ENGINE padrão pelo backend do django-tenants quando PostgreSQL for usado.
+_default_db = DATABASES['default']
+if _default_db.get('ENGINE') in (
+    'django.db.backends.postgresql',
+    'django.db.backends.postgresql_psycopg2',
+    'django.db.backends.dummy',
+) or _default_db.get('ENGINE', '').endswith('psycopg'):
+    _default_db['ENGINE'] = 'django_tenants.postgresql_backend'
 
 AUTH_PASSWORD_VALIDATORS = [
     {

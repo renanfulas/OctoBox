@@ -120,7 +120,7 @@ def send_student_web_push_notification(
             action='student_push.delivery_failed',
             target_model='student_identity.StudentPushSubscription',
             target_id=str(subscription.id),
-            target_label=subscription.identity.student.full_name,
+            target_label=subscription.identity.student_name,  # Sprint 2: denorm
             description='Falha ao enviar notificacao push para o app do aluno.',
             metadata={
                 'box_root_slug': subscription.box_root_slug,
@@ -139,7 +139,7 @@ def send_student_web_push_notification(
         action='student_push.delivered',
         target_model='student_identity.StudentPushSubscription',
         target_id=str(subscription.id),
-        target_label=subscription.identity.student.full_name,
+        target_label=subscription.identity.student_name,  # Sprint 2: denorm
         description='Notificacao push enviada para o app do aluno.',
         metadata={
             'box_root_slug': subscription.box_root_slug,

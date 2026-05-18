@@ -18,14 +18,18 @@ from student_identity.models import (
     StudentTransfer,
     StudentTransferStatus,
 )
-from students.models import Student
+
+# Sprint 2: Student NAO e mais importado aqui diretamente.
+# student_identity e SHARED_APPS (public schema). Student e TENANT_APPS (box_xxx schema).
+# Acesso ao Student deve usar schema_context(box.schema_name) nos call sites que precisam.
+# A funcao find_student_by_id abaixo ainda funciona quando chamada com tenant ativo no request.
 
 
 def _identity_record(identity: StudentIdentity) -> StudentIdentityRecord:
     return StudentIdentityRecord(
         id=identity.id,
         student_id=identity.student_id,
-        student_name=identity.student.full_name,
+        student_name=identity.student_name,  # Sprint 2: era identity.student.full_name (cross-schema)
         email=identity.email,
         provider=identity.provider,
         box_root_slug=identity.box_root_slug,
@@ -39,7 +43,7 @@ def _invitation_record(invitation: StudentAppInvitation) -> StudentInvitationRec
         id=invitation.id,
         token=str(invitation.token),
         student_id=invitation.student_id,
-        student_name=invitation.student.full_name,
+        student_name=invitation.student_name,  # Sprint 2: era invitation.student.full_name (cross-schema)
         invite_type=invitation.invite_type,
         onboarding_journey=invitation.onboarding_journey,
         invited_email=invitation.invited_email,
@@ -67,23 +71,28 @@ class DjangoStudentIdentityRepository:
         self,
         *,
         identity: StudentIdentity,
-        student: Student,
+        student_id: int | None = None,
         box_root_slug: str,
         invitation=None,
         actor_id: int | None = None,
         status: str = StudentBoxMembershipStatus.ACTIVE,
     ) -> StudentBoxMembership:
+        # Sprint 2: 'student' FK removido de StudentBoxMembership.
+        # student_id e passado como IntegerField (referencia fraca, sem constraint DB).
+        effective_student_id = student_id or (identity.student_id)
         membership, _ = StudentBoxMembership.objects.get_or_create(
             identity=identity,
             box_root_slug=box_root_slug,
             defaults={
-                'student': student,
+                'student_id': effective_student_id,
                 'status': status,
                 'created_from_invite': invitation,
                 'approved_by_id': actor_id,
             },
         )
-        membership.student = student
+        # Atualiza student_id caso membership existente nao tenha (migracao gradual)
+        if effective_student_id and not membership.student_id:
+            membership.student_id = effective_student_id
         if invitation is not None and membership.created_from_invite_id is None:
             membership.created_from_invite = invitation
         if status == StudentBoxMembershipStatus.ACTIVE:
@@ -96,21 +105,26 @@ class DjangoStudentIdentityRepository:
         return membership
 
     def find_student_by_id(self, student_id: int):
+        # AVISO: requer tenant ativo em connection.schema_name.
+        # Se chamado sem tenant, falha com "relation boxcore_student does not exist".
+        from students.models import Student
         return Student.objects.filter(pk=student_id).first()
 
     def find_identity_by_id(self, identity_id: int):
-        return StudentIdentity.objects.select_related('student').filter(pk=identity_id).first()
+        # Sprint 2: removido select_related('student') — cross-schema
+        return StudentIdentity.objects.filter(pk=identity_id).first()
 
     def find_live_by_student_id(self, student_id: int):
+        # Sprint 2: removido select_related('student') — cross-schema
         return (
-            StudentIdentity.objects.select_related('student')
+            StudentIdentity.objects
             .filter(student_id=student_id, status__in=[StudentIdentityStatus.PENDING, StudentIdentityStatus.ACTIVE])
             .first()
         )
 
     def find_live_by_email_and_box(self, *, email: str, box_root_slug: str):
         return (
-            StudentIdentity.objects.select_related('student')
+            StudentIdentity.objects
             .filter(
                 email__iexact=(email or '').strip(),
                 box_root_slug=box_root_slug,
@@ -120,15 +134,17 @@ class DjangoStudentIdentityRepository:
         )
 
     def find_by_provider_subject(self, *, provider_subject: str):
+        # Sprint 2: removido select_related('student') — cross-schema
         return (
-            StudentIdentity.objects.select_related('student')
+            StudentIdentity.objects
             .filter(provider_subject=provider_subject)
             .first()
         )
 
     def find_invitation_by_token(self, token: str):
+        # Sprint 2: removido select_related('student') — cross-schema
         return (
-            StudentAppInvitation.objects.select_related('student')
+            StudentAppInvitation.objects
             .filter(token=token)
             .first()
         )
@@ -137,6 +153,8 @@ class DjangoStudentIdentityRepository:
         return StudentBoxInviteLink.objects.filter(token=token).first()
 
     def find_student_candidates_by_email(self, *, email: str):
+        # AVISO: requer tenant ativo em connection.schema_name.
+        from students.models import Student
         return list(Student.objects.filter(email__iexact=(email or '').strip()).order_by('id'))
 
     def count_open_box_invites_since(self, *, box_root_slug: str, since):
@@ -159,10 +177,11 @@ class DjangoStudentIdentityRepository:
         actor_id: int | None,
     ) -> StudentInvitationRecord:
         now = timezone.now()
+        # Sprint 2: filtra por student_id (IntegerField) em vez de student FK
         (
             StudentAppInvitation.objects
             .filter(
-                student=student,
+                student_id=student.id,
                 box_root_slug=box_root_slug,
                 accepted_at__isnull=True,
                 expires_at__gt=now,
@@ -170,7 +189,8 @@ class DjangoStudentIdentityRepository:
             .update(expires_at=now)
         )
         invitation = StudentAppInvitation.objects.create(
-            student=student,
+            student_id=student.id,
+            student_name=student.full_name,  # Sprint 2: denormalizado
             box_root_slug=box_root_slug,
             invite_type=invite_type,
             onboarding_journey=onboarding_journey or StudentOnboardingJourney.REGISTERED_STUDENT_INVITE,
@@ -178,7 +198,6 @@ class DjangoStudentIdentityRepository:
             expires_at=now + timedelta(days=max(1, expires_in_days)),
             created_by_id=actor_id,
         )
-        invitation = StudentAppInvitation.objects.select_related('student').get(pk=invitation.pk)
         return _invitation_record(invitation)
 
     @transaction.atomic
@@ -231,7 +250,8 @@ class DjangoStudentIdentityRepository:
         identity = self.find_live_by_student_id(student.id)
         if identity is None:
             identity = StudentIdentity(
-                student=student,
+                student_id=student.id,          # Sprint 2: IntegerField (sem FK)
+                student_name=student.full_name,  # Sprint 2: denormalizado
                 box_root_slug=box_root_slug,
                 primary_box_root_slug=box_root_slug,
                 provider=provider,
@@ -240,6 +260,8 @@ class DjangoStudentIdentityRepository:
                 invited_at=timezone.now() if invitation is not None else None,
             )
         else:
+            identity.student_id = student.id
+            identity.student_name = student.full_name  # Sprint 2: mantém denorm sincronizado
             identity.box_root_slug = box_root_slug
             identity.provider = provider
             identity.provider_subject = provider_subject
@@ -257,7 +279,7 @@ class DjangoStudentIdentityRepository:
 
         self._ensure_membership_status(
             identity=identity,
-            student=student,
+            student_id=student.id,
             box_root_slug=box_root_slug,
             invitation=invitation,
             status=membership_status,
@@ -279,7 +301,7 @@ class DjangoStudentIdentityRepository:
         identity.save(update_fields=['status', 'activated_at', 'last_authenticated_at'])
         self._ensure_membership_status(
             identity=identity,
-            student=identity.student,
+            student_id=identity.student_id,  # Sprint 2: IntegerField
             box_root_slug=identity.box_root_slug,
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -296,7 +318,7 @@ class DjangoStudentIdentityRepository:
     ) -> tuple[StudentIdentityRecord, int]:
         transfer = StudentTransfer.objects.create(
             identity=identity,
-            student=identity.student,
+            student_id=identity.student_id,  # Sprint 2: IntegerField (sem FK)
             from_box_root_slug=identity.box_root_slug,
             to_box_root_slug=to_box_root_slug,
             status=StudentTransferStatus.COMPLETED,
@@ -314,7 +336,7 @@ class DjangoStudentIdentityRepository:
         if previous_membership is None:
             previous_membership = StudentBoxMembership.objects.create(
                 identity=identity,
-                student=identity.student,
+                student_id=identity.student_id,  # Sprint 2: IntegerField
                 box_root_slug=previous_box_root_slug,
                 status=StudentBoxMembershipStatus.INACTIVE,
                 revoked_reason=reason,
@@ -331,7 +353,7 @@ class DjangoStudentIdentityRepository:
         identity.save(update_fields=['box_root_slug', 'primary_box_root_slug', 'last_authenticated_at'])
         self._ensure_membership_status(
             identity=identity,
-            student=identity.student,
+            student_id=identity.student_id,  # Sprint 2: IntegerField
             box_root_slug=to_box_root_slug,
             actor_id=actor_id,
             status=StudentBoxMembershipStatus.ACTIVE,

@@ -44,7 +44,7 @@ class IntakeCenterStudentInviteSmokeTests(TestCase):
         self.assertIsNotNone(self.intake.linked_student_id)
         self.assertEqual(self.intake.status, IntakeStatus.MATCHED)
 
-        invitation = StudentAppInvitation.objects.get(student=self.intake.linked_student)
+        invitation = StudentAppInvitation.objects.get(student_id=self.intake.linked_student.id)
         self.assertEqual(invitation.onboarding_journey, StudentOnboardingJourney.IMPORTED_LEAD_INVITE)
         self.assertEqual(invitation.created_by, self.user)
         self.assertTrue(

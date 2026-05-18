@@ -104,6 +104,13 @@ def finalize_student_oauth_callback(
             )
         return response
 
+    # Sprint 4: ativar o tenant do box da identidade antes de operacoes
+    # tenant-aware downstream (membership lookup, AuditEvent via
+    # record_student_entry_completed_journey, etc.). O OAuth callback corre
+    # em public schema (/aluno/auth/ esta em PUBLIC_SCHEMA_PATHS); aqui temos
+    # a identidade autenticada e sabemos para qual box ela pertence.
+    _activate_identity_tenant(authentication_result.identity)
+
     active_membership = StudentBoxMembership.objects.filter(
         identity_id=authentication_result.identity.id,
         box_root_slug=authentication_result.identity.box_root_slug,
@@ -166,6 +173,40 @@ def _attach_student_session(*, request, response, authentication_result):
         box_root_slug=authentication_result.identity.box_root_slug,
         device_fingerprint=build_student_device_fingerprint(request),
     )
+
+
+def _activate_identity_tenant(identity) -> None:
+    """Sprint 4: ativa o tenant do box da identidade.
+
+    Apos autenticacao bem-sucedida via OAuth, sabemos a qual box o aluno
+    pertence (via identity.box ou identity.box_root_slug). O callback corre
+    em public schema; downstream precisa tocar tabelas TENANT_APPS
+    (boxcore_auditevent, etc.). Ativar o tenant aqui evita 'relation does
+    not exist' nessas escritas.
+    """
+    schema_name = ''
+    box_id = getattr(identity, 'box_id', None)
+    if box_id:
+        try:
+            from control.models import Box
+            schema_name = Box.objects.values_list('schema_name', flat=True).get(pk=box_id)
+        except Exception:
+            schema_name = ''
+    if not schema_name:
+        schema_name = getattr(identity, 'box_root_slug', '') or ''
+    if not schema_name:
+        return
+    try:
+        from control.models import Box
+        from django.db import connection
+        box = (
+            Box.objects.filter(schema_name=schema_name, status=Box.Status.ACTIVE).first()
+            or Box.objects.filter(slug=schema_name, status=Box.Status.ACTIVE).first()
+        )
+        if box:
+            connection.set_tenant(box)
+    except Exception:
+        pass
 
 
 def _emit_student_oauth_anomaly_alerts(*, request, provider: str, authentication_result):

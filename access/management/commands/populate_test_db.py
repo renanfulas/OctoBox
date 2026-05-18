@@ -50,7 +50,46 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f"[OK] Iniciando massa de teste ({counts['students']} alunos / {counts['sessions']} aulas)."))
 
-        with transaction.atomic():
+        # Sprint 2: provisionar tenant de teste antes de popular dados.
+        # Modelos manipulados aqui (Student, ClassSession, Enrollment, Payment,
+        # MembershipPlan, Attendance) sao TENANT_APPS — so existem em schemas
+        # box_xxx, nunca em public. Usa o mesmo slug 'test' do conftest.py para
+        # que a suite pytest encontre os dados no schema esperado.
+        from django.conf import settings
+        if 'django_tenants' in settings.INSTALLED_APPS:
+            from django.core.management import call_command
+            from django.db import connection
+            from django_tenants.utils import schema_context
+            from control.models import Box
+
+            test_slug = 'test'
+            test_schema = f'box_{test_slug}'
+
+            tenant_owner, _ = get_user_model().objects.get_or_create(
+                username='__perf_tenant_owner__',
+                defaults={'email': '__perf_tenant__@example.test'},
+            )
+            box, box_created = Box.objects.get_or_create(
+                slug=test_slug,
+                defaults={
+                    'schema_name': test_schema,
+                    'display_name': 'Performance Test Tenant',
+                    'status': Box.Status.ACTIVE,
+                    'owner_user': tenant_owner,
+                },
+            )
+            with connection.cursor() as cur:
+                cur.execute(f'CREATE SCHEMA IF NOT EXISTS "{test_schema}"')
+            if box_created:
+                call_command('migrate_schemas', schema=test_schema, verbosity=0, interactive=False)
+
+            context_manager = schema_context(test_schema)
+        else:
+            # SQLite fallback (test.py removeu django_tenants). Roda em public.
+            import contextlib
+            context_manager = contextlib.nullcontext()
+
+        with context_manager, transaction.atomic():
             owner_group, _ = Group.objects.get_or_create(name='Owner')
             user_model = get_user_model()
             owner_user, created = user_model.objects.get_or_create(
