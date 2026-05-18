@@ -76,9 +76,12 @@ def _has_active_membership(request, session_payload: dict) -> bool:
         return True  # sem tenant resolvido — nao bloquear (evita loop de redirect)
     try:
         from student_identity.models import StudentBoxMembership, StudentBoxMembershipStatus
+        # Sprint 4: membership.box_root_slug guarda o schema_name do tenant
+        # (ex.: 'box_test'), nao o slug curto (tenant.slug == 'test'). Aceitar
+        # ambos por seguranca (dados legados podem ter sido salvos com slug).
         return StudentBoxMembership.objects.filter(
             identity_id=identity_id,
-            box_root_slug=tenant.slug,
+            box_root_slug__in=(tenant.schema_name, tenant.slug),
             status=StudentBoxMembershipStatus.ACTIVE,
         ).exists()
     except Exception:
