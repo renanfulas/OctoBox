@@ -333,7 +333,7 @@ class GuideViewTests(TestCase):
         )
         StudentBoxMembership.objects.create(
             identity=identity,
-            student_id=student.id, student_name=student.full_name,
+            student_id=student.id,
             box_root_slug=box_root_slug,
             status=StudentBoxMembershipStatus.PENDING_APPROVAL,
             created_from_invite=invitation,

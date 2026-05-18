@@ -72,7 +72,7 @@ class StudentAppExperienceTests(TestCase):
         )
         StudentBoxMembership.objects.create(
             identity=self.identity,
-            student_id=self.student.id, student_name=self.student.full_name,
+            student_id=self.student.id,
             box_root_slug='control',
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -317,7 +317,7 @@ class StudentAppExperienceTests(TestCase):
         )
         StudentBoxMembership.objects.create(
             identity=identity,
-            student_id=student.id, student_name=student.full_name,
+            student_id=student.id,
             box_root_slug='control',
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1270,7 +1270,7 @@ class StudentAppExperienceTests(TestCase):
         )
         StudentBoxMembership.objects.create(
             identity=second_identity,
-            student_id=second_student.id, student_name=second_student.full_name,
+            student_id=second_student.id,
             box_root_slug='control',
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1678,7 +1678,7 @@ class StudentAppExperienceTests(TestCase):
     def test_student_home_shows_box_switcher_when_multiple_memberships_exist(self):
         StudentBoxMembership.objects.create(
             identity=self.identity,
-            student_id=self.student.id, student_name=self.student.full_name,
+            student_id=self.student.id,
             box_root_slug='box-secundario',
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1692,7 +1692,7 @@ class StudentAppExperienceTests(TestCase):
     def test_switch_box_updates_active_box_in_cookie(self):
         StudentBoxMembership.objects.create(
             identity=self.identity,
-            student_id=self.student.id, student_name=self.student.full_name,
+            student_id=self.student.id,
             box_root_slug='box-secundario',
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1739,7 +1739,7 @@ class StudentAppExperienceTests(TestCase):
         current_membership.save(update_fields=['status'])
         StudentBoxMembership.objects.create(
             identity=self.identity,
-            student_id=self.student.id, student_name=self.student.full_name,
+            student_id=self.student.id,
             box_root_slug='box-secundario',
             status=StudentBoxMembershipStatus.ACTIVE,
         )

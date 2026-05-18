@@ -132,7 +132,7 @@ class StudentIdentityFlowTests(TestCase):
         )
         StudentBoxMembership.objects.create(
             identity=identity,
-            student_id=self.student.id, student_name=self.student.full_name,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1244,7 +1244,7 @@ class StudentIdentityFlowTests(TestCase):
         )
         membership = StudentBoxMembership.objects.create(
             identity=identity,
-            student_id=self.student.id, student_name=self.student.full_name,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.PENDING_APPROVAL,
             created_from_invite=invitation,
@@ -1278,7 +1278,7 @@ class StudentIdentityFlowTests(TestCase):
         )
         StudentBoxMembership.objects.create(
             identity=StudentIdentity.objects.create(
-                student_id=self.student.id, student_name=self.student.full_name,
+                student_id=self.student.id,
                 box_root_slug=get_box_runtime_slug(),
                 primary_box_root_slug=get_box_runtime_slug(),
                 provider=StudentIdentityProvider.GOOGLE,
@@ -1286,7 +1286,7 @@ class StudentIdentityFlowTests(TestCase):
                 email='aluno@example.com',
                 status=StudentIdentityStatus.ACTIVE,
             ),
-            student_id=self.student.id, student_name=self.student.full_name,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.PENDING_APPROVAL,
             created_from_invite=invitation,
@@ -1343,7 +1343,7 @@ class StudentIdentityFlowTests(TestCase):
         )
         membership = StudentBoxMembership.objects.create(
             identity=identity,
-            student_id=self.student.id, student_name=self.student.full_name,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1389,7 +1389,7 @@ class StudentIdentityFlowTests(TestCase):
         )
         membership = StudentBoxMembership.objects.create(
             identity=identity,
-            student_id=self.student.id, student_name=self.student.full_name,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1439,7 +1439,7 @@ class StudentIdentityFlowTests(TestCase):
         )
         membership = StudentBoxMembership.objects.create(
             identity=identity,
-            student_id=self.student.id, student_name=self.student.full_name,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1476,7 +1476,7 @@ class StudentIdentityFlowTests(TestCase):
         )
         membership = StudentBoxMembership.objects.create(
             identity=identity,
-            student_id=self.student.id, student_name=self.student.full_name,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1517,7 +1517,7 @@ class StudentIdentityFlowTests(TestCase):
         )
         membership = StudentBoxMembership.objects.create(
             identity=identity,
-            student_id=self.student.id, student_name=self.student.full_name,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1555,13 +1555,13 @@ class StudentIdentityFlowTests(TestCase):
         )
         target_membership = StudentBoxMembership.objects.create(
             identity=identity,
-            student_id=self.student.id, student_name=self.student.full_name,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
         fallback_membership = StudentBoxMembership.objects.create(
             identity=identity,
-            student_id=self.student.id, student_name=self.student.full_name,
+            student_id=self.student.id,
             box_root_slug='box-secundario',
             status=StudentBoxMembershipStatus.ACTIVE,
         )
