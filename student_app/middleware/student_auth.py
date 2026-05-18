@@ -40,12 +40,18 @@ def _resolve_student_tenant(request, session_payload: dict) -> None:
                 return
         except Exception:
             pass
-    # Legado: sem box_id no cookie (sessao antiga), usa box_root_slug
+    # Legado: sem box_id no cookie (sessao antiga), usa box_root_slug.
+    # Sprint 4: box_root_slug em links/convites/identidades guarda o
+    # schema_name do tenant (ex.: 'box_test'), nao o slug curto ('test').
+    # Tentar schema_name primeiro, com fallback para slug.
     box_root_slug = session_payload.get('active_box_root_slug') or session_payload.get('box_root_slug')
     if box_root_slug:
         try:
             from control.models import Box
-            box = Box.objects.filter(slug=box_root_slug, status=Box.Status.ACTIVE).first()
+            box = (
+                Box.objects.filter(schema_name=box_root_slug, status=Box.Status.ACTIVE).first()
+                or Box.objects.filter(slug=box_root_slug, status=Box.Status.ACTIVE).first()
+            )
             if box:
                 connection.set_tenant(box)
                 request.tenant = box

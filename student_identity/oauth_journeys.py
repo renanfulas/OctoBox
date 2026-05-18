@@ -71,7 +71,7 @@ def handle_student_special_oauth_journey(
         # encontrem suas tabelas no schema correto. /aluno/auth/ esta em
         # PUBLIC_SCHEMA_PATHS, entao o TenantBySessionMiddleware setou public
         # — precisamos sobrescrever aqui agora que sabemos o box alvo.
-        _activate_box_tenant(box_invite_link.box_id)
+        _activate_box_tenant(box_invite_link.box_id, box_root_slug=box_invite_link.box_root_slug)
         if result.success and result.identity is not None:
             response = redirect('student-app-home')
             attach_student_session_cookie(
@@ -119,7 +119,7 @@ def handle_student_special_oauth_journey(
         return None
 
     # Sprint 4: ativar tenant do convite (ver comentario em box_invite_link acima).
-    _activate_box_tenant(invitation.box_id)
+    _activate_box_tenant(invitation.box_id, box_root_slug=invitation.box_root_slug)
 
     attach_response = redirect('student-app-onboarding')
     attach_student_session_cookie(
@@ -207,8 +207,8 @@ def _redirect_with_message(request, level: str, message: str):
     return redirect('student-identity-login')
 
 
-def _activate_box_tenant(box_id) -> None:
-    """Sprint 4 schema-per-tenant: ativa o tenant identificado por box_id.
+def _activate_box_tenant(box_id=None, *, box_root_slug: str = '') -> None:
+    """Sprint 4 schema-per-tenant: ativa o tenant identificado pelo box.
 
     O OAuth callback corre em public schema (rota /aluno/auth/ esta em
     PUBLIC_SCHEMA_PATHS). Apos descobrir o box-alvo via link ou convite,
@@ -216,15 +216,22 @@ def _activate_box_tenant(box_id) -> None:
     tenant-aware (AuditEvent em boxcore_auditevent, etc.) encontrem as
     tabelas no schema correto.
 
-    Falha silenciosamente se box_id e None ou Box.DoesNotExist — o caller
-    decide se continua em public (degradacao aceitavel) ou aborta.
+    Aceita box_id (caminho preferido) ou box_root_slug (fallback para legado
+    onde a FK control.Box ainda nao tinha sido populada). box_root_slug
+    historicamente armazena o schema_name do tenant.
+
+    Falha silenciosamente se nenhum dos dois resolve um Box ATIVO — o caller
+    continua em public (downstream pode falhar mas com erros mais explicitos).
     """
-    if not box_id:
+    if not box_id and not box_root_slug:
         return
     try:
         from control.models import Box
         from django.db import connection
-        box = Box.objects.get(pk=box_id, status=Box.Status.ACTIVE)
+        if box_id:
+            box = Box.objects.get(pk=box_id, status=Box.Status.ACTIVE)
+        else:
+            box = Box.objects.get(schema_name=box_root_slug, status=Box.Status.ACTIVE)
         connection.set_tenant(box)
     except Exception:
         # Logging seria ideal mas evita explodir o callback em edge cases.
