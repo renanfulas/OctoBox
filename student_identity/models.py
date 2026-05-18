@@ -148,6 +148,28 @@ class StudentIdentity(TimeStampedModel):
             self.status = StudentIdentityStatus.ACTIVE
             self.activated_at = now
 
+    @property
+    def student(self):
+        """Sprint 2 compatibility shim.
+
+        A FK direta `student = ForeignKey('boxcore.Student')` foi removida (era
+        cross-schema fragil). Esta property faz o lookup via `student_id` no
+        schema do tenant ATIVO no momento da chamada.
+
+        DEBITO TECNICO: callers devem migrar para acessar `student_id` /
+        `student_name` direto, ou abrir `schema_context(self.box.schema_name)`
+        antes de consultar Student. Esta property assume que o tenant ativo
+        coincide com `self.box` — verdade em todos os fluxos atuais, mas
+        fragil se em algum dia tivermos cross-tenant joins.
+        """
+        if not self.student_id:
+            return None
+        from students.models import Student
+        try:
+            return Student.objects.get(pk=self.student_id)
+        except Student.DoesNotExist:
+            return None
+
     def __str__(self):
         return f'{self.student_name or self.email} [{self.box_root_slug}]'
 
@@ -203,6 +225,17 @@ class StudentBoxMembership(TimeStampedModel):
                 name='unique_student_membership_per_identity_box',
             ),
         ]
+
+    @property
+    def student(self):
+        """Sprint 2 compatibility shim — ver StudentIdentity.student."""
+        if not self.student_id:
+            return None
+        from students.models import Student
+        try:
+            return Student.objects.get(pk=self.student_id)
+        except Student.DoesNotExist:
+            return None
 
     def mark_active(self):
         now = timezone.now()
@@ -269,6 +302,17 @@ class StudentAppInvitation(TimeStampedModel):
     @property
     def is_expired(self) -> bool:
         return self.expires_at <= timezone.now()
+
+    @property
+    def student(self):
+        """Sprint 2 compatibility shim — ver StudentIdentity.student."""
+        if not self.student_id:
+            return None
+        from students.models import Student
+        try:
+            return Student.objects.get(pk=self.student_id)
+        except Student.DoesNotExist:
+            return None
 
     def __str__(self):
         return f'Invite {self.student_name or self.student_id} [{self.box_root_slug}]'
@@ -373,6 +417,17 @@ class StudentTransfer(TimeStampedModel):
 
     class Meta:
         ordering = ['-created_at']
+
+    @property
+    def student(self):
+        """Sprint 2 compatibility shim — ver StudentIdentity.student."""
+        if not self.student_id:
+            return None
+        from students.models import Student
+        try:
+            return Student.objects.get(pk=self.student_id)
+        except Student.DoesNotExist:
+            return None
 
     def __str__(self):
         return f'student_id={self.student_id}: {self.from_box_root_slug} -> {self.to_box_root_slug}'

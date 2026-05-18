@@ -323,7 +323,8 @@ MIDDLEWARE = [
 
     # Segurança de rede (não precisa de tenant)
     'django.middleware.security.SecurityMiddleware',
-    'shared_support.security.SecurityMiddleware',
+    # Nota: o middleware customizado e `shared_support.security.RequestSecurityMiddleware`
+    # (carregado mais abaixo, depois do tenant). Referencia legada removida.
     'whitenoise.middleware.WhiteNoiseMiddleware',
 
     # Sessão ANTES do tenant (tenant depende de session['active_box_id'])

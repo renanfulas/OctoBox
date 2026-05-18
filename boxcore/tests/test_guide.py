@@ -301,7 +301,7 @@ class GuideViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
-        invitation = StudentAppInvitation.objects.get(student=student)
+        invitation = StudentAppInvitation.objects.get(student_id=student.id)
         self.assertEqual(invitation.invited_email, 'aluno.convite@example.com')
         self.assertEqual(invitation.invite_type, StudentInvitationType.INDIVIDUAL)
         self.assertGreater(invitation.expires_at, timezone.now())
@@ -315,7 +315,7 @@ class GuideViewTests(TestCase):
         )
         box_root_slug = get_box_runtime_slug()
         identity = StudentIdentity.objects.create(
-            student=student,
+            student_id=student.id, student_name=student.full_name,
             box_root_slug=box_root_slug,
             primary_box_root_slug=box_root_slug,
             provider=StudentIdentityProvider.GOOGLE,
@@ -324,7 +324,7 @@ class GuideViewTests(TestCase):
             status=StudentIdentityStatus.ACTIVE,
         )
         invitation = StudentAppInvitation.objects.create(
-            student=student,
+            student_id=student.id, student_name=student.full_name,
             invited_email='pendente.operacional@example.com',
             invite_type=StudentInvitationType.OPEN_BOX,
             box_root_slug=box_root_slug,
@@ -333,7 +333,7 @@ class GuideViewTests(TestCase):
         )
         StudentBoxMembership.objects.create(
             identity=identity,
-            student=student,
+            student_id=student.id, student_name=student.full_name,
             box_root_slug=box_root_slug,
             status=StudentBoxMembershipStatus.PENDING_APPROVAL,
             created_from_invite=invitation,
@@ -358,7 +358,7 @@ class GuideViewTests(TestCase):
             email='janela.quente@example.com',
         )
         StudentAppInvitation.objects.create(
-            student=student,
+            student_id=student.id, student_name=student.full_name,
             invited_email='janela.quente@example.com',
             invite_type=StudentInvitationType.OPEN_BOX,
             box_root_slug=get_box_runtime_slug(),
@@ -366,7 +366,7 @@ class GuideViewTests(TestCase):
             created_by=self.user,
         )
         StudentAppInvitation.objects.create(
-            student=student,
+            student_id=student.id, student_name=student.full_name,
             invited_email='janela.quente@example.com',
             invite_type=StudentInvitationType.OPEN_BOX,
             box_root_slug=get_box_runtime_slug(),
@@ -389,7 +389,7 @@ class GuideViewTests(TestCase):
             email='status.convite@example.com',
         )
         invitation = StudentAppInvitation.objects.create(
-            student=student,
+            student_id=student.id, student_name=student.full_name,
             invited_email='status.convite@example.com',
             expires_at=timezone.now() + timezone.timedelta(days=7),
             created_by=self.user,
@@ -417,7 +417,7 @@ class GuideViewTests(TestCase):
             email='bounce.convite@example.com',
         )
         invitation = StudentAppInvitation.objects.create(
-            student=student,
+            student_id=student.id, student_name=student.full_name,
             invited_email='bounce.convite@example.com',
             expires_at=timezone.now() + timezone.timedelta(days=7),
             created_by=self.user,
@@ -448,7 +448,7 @@ class GuideViewTests(TestCase):
             email='complaint.convite@example.com',
         )
         invitation = StudentAppInvitation.objects.create(
-            student=student,
+            student_id=student.id, student_name=student.full_name,
             invited_email='complaint.convite@example.com',
             expires_at=timezone.now() + timezone.timedelta(days=7),
             created_by=self.user,
@@ -478,7 +478,7 @@ class GuideViewTests(TestCase):
             email='whatsapp.convite@example.com',
         )
         invitation = StudentAppInvitation.objects.create(
-            student=student,
+            student_id=student.id, student_name=student.full_name,
             invited_email='whatsapp.convite@example.com',
             expires_at=timezone.now() + timezone.timedelta(days=7),
             created_by=self.user,
@@ -506,7 +506,7 @@ class GuideViewTests(TestCase):
             email='travado.convite@example.com',
         )
         invitation = StudentAppInvitation.objects.create(
-            student=student,
+            student_id=student.id, student_name=student.full_name,
             invited_email='travado.convite@example.com',
             expires_at=timezone.now() + timezone.timedelta(days=7),
             created_by=self.user,
@@ -536,7 +536,7 @@ class GuideViewTests(TestCase):
             email='primeiro.complaint@example.com',
         )
         complaint_invitation = StudentAppInvitation.objects.create(
-            student=complaint_student,
+            student_id=complaint_student.id, student_name=complaint_student.full_name,
             invited_email='primeiro.complaint@example.com',
             expires_at=timezone.now() + timezone.timedelta(days=7),
             created_by=self.user,
@@ -557,7 +557,7 @@ class GuideViewTests(TestCase):
             email='depois.bounce@example.com',
         )
         bounce_invitation = StudentAppInvitation.objects.create(
-            student=bounce_student,
+            student_id=bounce_student.id, student_name=bounce_student.full_name,
             invited_email='depois.bounce@example.com',
             expires_at=timezone.now() + timezone.timedelta(days=7),
             created_by=self.user,

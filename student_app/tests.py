@@ -62,7 +62,7 @@ class StudentAppExperienceTests(TestCase):
             email='app@example.com',
         )
         self.identity = StudentIdentity.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             box_root_slug='control',
             primary_box_root_slug='control',
             provider=StudentIdentityProvider.GOOGLE,
@@ -72,7 +72,7 @@ class StudentAppExperienceTests(TestCase):
         )
         StudentBoxMembership.objects.create(
             identity=self.identity,
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             box_root_slug='control',
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -112,7 +112,7 @@ class StudentAppExperienceTests(TestCase):
 
     def test_student_routes_redirect_to_onboarding_when_pending_onboarding_exists(self):
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             box_root_slug='control',
             invited_email=self.identity.email,
             onboarding_journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
@@ -307,7 +307,7 @@ class StudentAppExperienceTests(TestCase):
             status=StudentStatus.LEAD,
         )
         identity = StudentIdentity.objects.create(
-            student=student,
+            student_id=student.id, student_name=student.full_name,
             box_root_slug='control',
             primary_box_root_slug='control',
             provider=StudentIdentityProvider.GOOGLE,
@@ -317,7 +317,7 @@ class StudentAppExperienceTests(TestCase):
         )
         StudentBoxMembership.objects.create(
             identity=identity,
-            student=student,
+            student_id=student.id, student_name=student.full_name,
             box_root_slug='control',
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -326,7 +326,7 @@ class StudentAppExperienceTests(TestCase):
             box_root_slug='control',
         )
         invitation = StudentAppInvitation.objects.create(
-            student=student,
+            student_id=student.id, student_name=student.full_name,
             box_root_slug='control',
             invited_email='lead@app.com',
             onboarding_journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
@@ -1030,7 +1030,7 @@ class StudentAppExperienceTests(TestCase):
             email='foto@example.com',
         )
         StudentIdentity.objects.create(
-            student=mate,
+            student_id=mate.id, student_name=mate.full_name,
             box_root_slug='control',
             primary_box_root_slug='control',
             provider=StudentIdentityProvider.GOOGLE,
@@ -1260,7 +1260,7 @@ class StudentAppExperienceTests(TestCase):
             email='reservada@example.com',
         )
         second_identity = StudentIdentity.objects.create(
-            student=second_student,
+            student_id=second_student.id, student_name=second_student.full_name,
             box_root_slug='control',
             primary_box_root_slug='control',
             provider=StudentIdentityProvider.GOOGLE,
@@ -1270,7 +1270,7 @@ class StudentAppExperienceTests(TestCase):
         )
         StudentBoxMembership.objects.create(
             identity=second_identity,
-            student=second_student,
+            student_id=second_student.id, student_name=second_student.full_name,
             box_root_slug='control',
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1678,7 +1678,7 @@ class StudentAppExperienceTests(TestCase):
     def test_student_home_shows_box_switcher_when_multiple_memberships_exist(self):
         StudentBoxMembership.objects.create(
             identity=self.identity,
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             box_root_slug='box-secundario',
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1692,7 +1692,7 @@ class StudentAppExperienceTests(TestCase):
     def test_switch_box_updates_active_box_in_cookie(self):
         StudentBoxMembership.objects.create(
             identity=self.identity,
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             box_root_slug='box-secundario',
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1739,7 +1739,7 @@ class StudentAppExperienceTests(TestCase):
         current_membership.save(update_fields=['status'])
         StudentBoxMembership.objects.create(
             identity=self.identity,
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             box_root_slug='box-secundario',
             status=StudentBoxMembershipStatus.ACTIVE,
         )

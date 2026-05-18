@@ -70,9 +70,11 @@ class StudentIdentityRequiredMixin:
     def _get_runtime_memberships(self, *, identity):
         all_memberships = list(StudentBoxMembership.objects.filter(identity=identity).order_by('box_root_slug'))
         if not all_memberships:
+            # Sprint 2: student/box_root_slug eram cross-schema. Agora usa
+            # student_id (referencia fraca) + student_name (denormalizado).
             fallback_membership = StudentBoxMembership.objects.create(
                 identity=identity,
-                student=identity.student,
+                student_id=identity.student_id,
                 box_root_slug=identity.primary_box_root_slug or identity.box_root_slug,
                 status=StudentBoxMembershipStatus.ACTIVE,
             )
