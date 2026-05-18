@@ -87,7 +87,10 @@ def _build_snapshots_batch(student_ids):
             'has_overdue_payment': student.id in overdue_set,
             'last_updated': now_iso
         }
-        key = f"{STUDENT_GHOST_PREFIX}{student.id}"
+        # Sprint 3: usar _ghost_key (que inclui tenant schema_name) — consistente
+        # com update_student_snapshot/prewarm_student_snapshots que tambem usam
+        # _ghost_key. Sem isso, writer e reader divergem e bate KeyError.
+        key = _ghost_key(student.id)
         payloads[key] = json.dumps(snapshot)
         
     return payloads
