@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('student_identity', '0005_studentappinvitation_invite_type'),
+        ('student_identity', '0001_initial'),
         ('student_app', '0013_studentappactivity_studentexercisemaxhistory'),
     ]
 

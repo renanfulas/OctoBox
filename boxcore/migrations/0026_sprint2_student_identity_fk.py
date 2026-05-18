@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('boxcore', '0025_classsession_status_time_index'),
-        ('student_identity', '0009_sprint2_box_fk_remove_cross_schema_student'),
+        ('student_identity', '0001_initial'),
     ]
 
     operations = [
