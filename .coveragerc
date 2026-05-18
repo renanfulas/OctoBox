@@ -1,0 +1,112 @@
+# OctoBox — configuracao de medicao de cobertura (coverage.py / pytest-cov).
+#
+# POR QUE EXISTE:
+# - Define o que conta (e o que nao conta) na metrica de cobertura.
+# - Sem este arquivo, coverage tenta incluir migrations/static/venv,
+#   diluindo a metrica e gerando ruido em diff coverage.
+#
+# COMO USAR:
+#   pytest --cov --cov-report=term-missing --cov-report=html
+#
+# Relatorios:
+# - term-missing: imprime no console linhas nao cobertas
+# - html: gera htmlcov/index.html para inspecao visual
+# - xml: gera coverage.xml para Codecov/CI annotations
+
+[run]
+# branch=True conta paths de if/else separadamente (cobertura de decisao,
+# nao so de linha). Aumenta o sinal: 90% de linhas + 70% de branches >
+# 90% de linhas sozinho.
+branch = True
+source =
+    access
+    api
+    auditing
+    boxcore
+    catalog
+    communications
+    config
+    control
+    dashboard
+    finance
+    guide
+    integrations
+    jobs
+    knowledge
+    monitoring
+    onboarding
+    operations
+    quick_sales
+    reporting
+    security
+    shared_support
+    signup
+    student_app
+    student_identity
+    students
+    model_support
+
+omit =
+    # Migrations: geradas, raramente tem logica testavel.
+    */migrations/*
+    # Settings: configuracao, nao logica de produto.
+    config/settings/*
+    config/wsgi.py
+    config/asgi.py
+    config/env_loader.py
+    # Management commands de seed/util: nao sao logica de runtime.
+    */management/commands/seed_*.py
+    */management/commands/populate_*.py
+    */management/commands/migrate_existing_data_*.py
+    # Conftest e arquivos de teste em si.
+    */tests.py
+    */tests/*
+    */test_*.py
+    conftest.py
+    # Scripts utilitarios (CI/dev).
+    scripts/*
+    deploy/*
+    load_tests/*
+    infra/*
+    # Caches e diretorios gerados.
+    */__pycache__/*
+    */node_modules/*
+    venv/*
+    .venv/*
+
+[report]
+# Excluir linhas claramente nao testaveis ou pragmaticas de descobrir.
+exclude_lines =
+    pragma: no cover
+    # Defensive imports / fallback paths.
+    raise NotImplementedError
+    raise ImportError
+    # __repr__/__str__ de debugging.
+    def __repr__\(
+    # if TYPE_CHECKING: imports de tipo apenas.
+    if TYPE_CHECKING:
+    # main blocks de scripts.
+    if __name__ == .__main__.:
+    # Defensive logging que so dispara em falha rara.
+    logger\.debug\(
+    # Codigo defensivo de bibliotecas externas (pass em except).
+    except Exception:\s*pass
+
+# Falhar a build se cobertura cair abaixo do limiar.
+# Inicialmente fica desligado (fail_under = 0) para baseline. Depois do
+# baseline medido, ajustar gradualmente: ex.: fail_under = 65 inicialmente,
+# subindo para 80 conforme novos PRs adicionam testes.
+fail_under = 0
+
+# Mostrar % de cada modulo com linhas faltantes.
+show_missing = True
+skip_empty = True
+skip_covered = False
+precision = 1
+
+[html]
+directory = htmlcov
+title = OctoBox Coverage
+
+[xml]
+output = coverage.xml

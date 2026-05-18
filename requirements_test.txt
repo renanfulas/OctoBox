@@ -1,0 +1,43 @@
+# OctoBox — dependencias de teste e qualidade.
+#
+# POR QUE EXISTE:
+# - Centraliza pacotes usados em CI/local para rodar a suite de testes,
+#   medir cobertura, gerar fakes/factories, mockar HTTP e relogio, e
+#   detectar testes order-dependentes.
+# - Mantem versoes pinadas (== em vez de >=) para que CI seja
+#   reproduzivel — qualquer mudanca de pacote vira commit explicito.
+#
+# O QUE INCLUI:
+# 1. pytest core (pytest, pytest-django, pytest-benchmark)
+# 2. cobertura (pytest-cov, coverage)
+# 3. mocks e parametrizacao auxiliares (pytest-mock, freezegun, responses)
+# 4. test data factories (factory-boy traz Faker)
+# 5. higiene da suite (pytest-randomly para detectar order-dependence)
+#
+# E2E (Playwright/Selenium) NAO esta incluido aqui — quando o plano de
+# qualidade de testes definir essa frente, adicionar pytest-playwright
+# em uma segunda iteracao.
+#
+# PONTOS CRITICOS:
+# - Versoes devem ser compativeis com Django==6.0.5 e Python 3.12.
+# - Manter sincronizado com os pacotes que os workflows CI instalam.
+
+# Core test runner.
+pytest==9.0.3
+pytest-django==4.12.0
+pytest-benchmark==5.2.3
+
+# Coverage measurement.
+pytest-cov==7.1.0
+coverage==7.14.0
+
+# Mocking helpers.
+pytest-mock==3.15.1
+freezegun==1.5.5
+responses==0.26.0
+
+# Test data factories (factory-boy traz Faker como dependencia).
+factory-boy==3.3.3
+
+# Suite hygiene: detecta testes order-dependentes ao randomizar ordem.
+pytest-randomly==4.1.0
