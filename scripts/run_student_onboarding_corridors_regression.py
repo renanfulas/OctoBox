@@ -24,7 +24,14 @@ TESTS = [
 
 
 def main() -> int:
-    command = [sys.executable, "-m", "pytest", "-q", *TESTS]
+    # --create-db --migrations: override pytest.ini's --reuse-db --nomigrations
+    # defaults. Necessario para que migrate_schemas crie as tabelas TENANT_APPS
+    # no schema do test tenant (ver conftest.py).
+    command = [
+        sys.executable, "-m", "pytest", "-q",
+        "--create-db", "--migrations",
+        *TESTS,
+    ]
     return subprocess.run(command, check=False).returncode
 
 
