@@ -39,7 +39,49 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
+import pathlib
+
 import pytest
+
+
+# === Fase 1 do plano de qualidade: skip de testes broken sem editar
+# cada arquivo. Lista mantida em tests/broken-tests.txt (1 node-id
+# por linha). Ver docs/testing/broken-tests-inventory.md.
+
+_BROKEN_TESTS_FILE = pathlib.Path(__file__).parent / 'tests' / 'broken-tests.txt'
+
+
+def _load_broken_tests() -> set[str]:
+    """Le tests/broken-tests.txt e retorna conjunto de node-ids para skip.
+
+    Linhas vazias e comecadas com # sao ignoradas. Comentario inline
+    (apos `#`) tambem e descartado.
+    """
+    if not _BROKEN_TESTS_FILE.exists():
+        return set()
+    broken: set[str] = set()
+    for raw in _BROKEN_TESTS_FILE.read_text(encoding='utf-8').splitlines():
+        line = raw.split('#', 1)[0].strip()
+        if line:
+            broken.add(line)
+    return broken
+
+
+def pytest_collection_modifyitems(config, items):
+    """Marca como skip qualquer test cujo node-id esteja em broken-tests.txt.
+
+    Fase 1 fallback documentado: gate da Fase 0 (>5% falhas) acionado,
+    entao fazemos opt-out explicito via lista versionada em vez de
+    bloquear todo o CI. Cada linha removida da lista significa que um
+    teste foi consertado.
+    """
+    broken = _load_broken_tests()
+    if not broken:
+        return
+    skip_marker = pytest.mark.skip(reason='Marked broken in tests/broken-tests.txt (Fase 1 fallback)')
+    for item in items:
+        if item.nodeid in broken:
+            item.add_marker(skip_marker)
 
 
 def _django_tenants_active() -> bool:

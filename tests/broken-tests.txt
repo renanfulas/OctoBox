@@ -1,0 +1,31 @@
+# OctoBox — Inventario de testes broken (Fase 1 fallback).
+#
+# POR QUE EXISTE:
+# - A Fase 0 do plano de qualidade de testes mediu >24% de falhas
+#   pre-existentes na suite. O plano recomenda Fase 0.5 (stabilization)
+#   antes de Fase 1 (CI full suite), mas o time optou pelo fallback:
+#   marcar tests broken explicitamente e rodar `pytest -m "not broken"`.
+#
+# - Cada linha = 1 node-id pytest que ESTA broken e deve ser PULADO
+#   automaticamente pelo conftest hook `pytest_collection_modifyitems`.
+#
+# COMO USAR:
+# - Adicionar: rode pytest, ache o node-id da falha, cole aqui.
+# - Remover (desbroken): apague a linha quando confirmar que passa.
+#
+# FORMATO DE LINHA:
+#   <node-id> [# comentario opcional explicando causa raiz]
+# Exemplo:
+#   boxcore/tests/test_api.py::ApiFoundationTests::test_api_v1_manifest_exposes_health_resource  # Sprint 4: middleware redirect /aluno/
+#
+# REGRAS:
+# - Linhas que comecam com # ou vazias sao ignoradas.
+# - Node-id = caminho/arquivo.py::Classe::metodo OU caminho/arquivo.py::funcao
+# - NAO usar wildcard ou glob (mantenha 1 node-id por linha para
+#   visibilidade).
+#
+# OBJETIVO: lista deve ENCOLHER ao longo do tempo. Fase 0.5
+# (stabilization, fasada por sprint) remove entradas conforme
+# corrige testes.
+
+# === Sera preenchido pela Fase 1 run paralelo ===
