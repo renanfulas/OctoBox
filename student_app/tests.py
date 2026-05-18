@@ -97,7 +97,7 @@ class StudentAppExperienceTests(TestCase):
         session = client.session
         session['student_pending_onboarding'] = {
             'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
-            'box_root_slug': 'control',
+            'box_root_slug': get_box_runtime_slug(),
             'provider': StudentIdentityProvider.GOOGLE,
             'provider_subject': provider_subject,
             'email': email,
@@ -122,7 +122,7 @@ class StudentAppExperienceTests(TestCase):
         session = self.client.session
         session['student_pending_onboarding'] = {
             'journey': StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
-            'box_root_slug': 'control',
+            'box_root_slug': get_box_runtime_slug(),
             'identity_id': self.identity.id,
             'student_id': self.student.id,
             'invitation_id': invitation.id,
@@ -336,7 +336,7 @@ class StudentAppExperienceTests(TestCase):
         session = client.session
         session['student_pending_onboarding'] = {
             'journey': StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
-            'box_root_slug': 'control',
+            'box_root_slug': get_box_runtime_slug(),
             'student_id': student.id,
             'identity_id': identity.id,
             'invitation_id': invitation.id,
@@ -415,7 +415,7 @@ class StudentAppExperienceTests(TestCase):
         session = client.session
         session['student_pending_onboarding'] = {
             'journey': StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
-            'box_root_slug': 'control',
+            'box_root_slug': get_box_runtime_slug(),
             'identity_id': self.identity.id,
             'student_id': another_student.id,
             'invitation_id': 999,
@@ -432,7 +432,7 @@ class StudentAppExperienceTests(TestCase):
         session = client.session
         session['student_pending_onboarding'] = {
             'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
-            'box_root_slug': 'control',
+            'box_root_slug': get_box_runtime_slug(),
             'provider': StudentIdentityProvider.GOOGLE,
             'provider_subject': 'provider-subject-mass-mismatch',
             'email': 'novo@app.com',

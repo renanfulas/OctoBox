@@ -120,3 +120,50 @@ def _tenant_schema_context(request, test_tenant):
     from django_tenants.utils import schema_context
     with schema_context(test_tenant.schema_name):
         yield
+
+
+@pytest.fixture(autouse=True)
+def _auto_membership_for_test_users(test_tenant, django_db_setup):
+    """Sprint 4: auto-associa qualquer User criado durante o teste ao
+    Box de teste via control.Membership.
+
+    Sem isso, TenantBySessionMiddleware retorna 403 para qualquer rota
+    privada de staff porque o user nao tem nenhum Membership cadastrado
+    (e o tenant nao consegue ser resolvido). Antes de schema-per-tenant
+    isso nao era problema — todos os users eram automaticamente do box
+    unico da instancia.
+
+    Implementacao: instala um post_save signal em auth.User que cria
+    Membership(box=test_tenant, role=OWNER, is_primary_box=True) para
+    qualquer user salvo. Removido no teardown.
+    """
+    if test_tenant is None:
+        yield
+        return
+
+    from django.contrib.auth import get_user_model
+    from django.db.models.signals import post_save
+    from control.models import Membership
+
+    User = get_user_model()
+
+    def _ensure_membership(sender, instance, created, **kwargs):
+        if not created:
+            return
+        try:
+            Membership.objects.get_or_create(
+                user=instance,
+                box=test_tenant,
+                defaults={
+                    'role': Membership.Role.OWNER,
+                    'is_primary_box': True,
+                },
+            )
+        except Exception:
+            pass
+
+    post_save.connect(_ensure_membership, sender=User, dispatch_uid='conftest_auto_membership')
+    try:
+        yield
+    finally:
+        post_save.disconnect(dispatch_uid='conftest_auto_membership', sender=User)

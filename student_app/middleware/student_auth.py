@@ -16,11 +16,26 @@ _PUBLIC_PREFIXES = (
     '/aluno/sw.js',
 )
 
+# Sprint 4: rotas de status do aluno (aguardando aprovacao, sem box). O
+# StudentAuthMiddleware exige sessao + tenant, mas NAO deve bloquear pela
+# verificacao "membership ACTIVE" — sao justamente as paginas para alunos
+# que ainda nao tem membership ativa (PENDING_APPROVAL ou nenhuma). Sem
+# essa excecao, alunos PENDING entram em loop de redirect porque a
+# pagina destino tambem requer membership ACTIVE.
+_MEMBERSHIP_GATE_EXEMPT_PREFIXES = (
+    '/aluno/aguardando-aprovacao/',
+    '/aluno/sem-box/',
+)
+
 _PENDING_ONBOARDING_SESSION_KEY = 'student_pending_onboarding'
 
 
 def _is_public_path(path: str) -> bool:
     return any(path.startswith(prefix) for prefix in _PUBLIC_PREFIXES)
+
+
+def _is_membership_gate_exempt(path: str) -> bool:
+    return any(path.startswith(prefix) for prefix in _MEMBERSHIP_GATE_EXEMPT_PREFIXES)
 
 
 
@@ -106,7 +121,13 @@ class StudentAuthMiddleware:
             if session_payload is not None:
                 _resolve_student_tenant(request, session_payload)
                 # Sprint 4 / §3.5.4: bloqueia acesso se membership nao esta ACTIVE.
-                if not _has_active_membership(request, session_payload):
+                # Exceto nas rotas que SAO destinadas a alunos sem membership
+                # ativa (aguardando aprovacao, sem box) — sem isso, eles
+                # entram em loop de redirect para a mesma pagina.
+                if (
+                    not _is_membership_gate_exempt(request.path)
+                    and not _has_active_membership(request, session_payload)
+                ):
                     return redirect(reverse('student-app-no-active-box'))
             elif has_pending_onboarding:
                 # Sprint 4: pre-auth onboarding em curso (sem session cookie ainda).

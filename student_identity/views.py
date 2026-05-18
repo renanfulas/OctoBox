@@ -288,6 +288,13 @@ class StudentInviteLandingView(TemplateView):
         context['invite_not_found'] = invitation is None
         context['invite_expired'] = bool(invitation and invitation.is_expired)
         context['invite_already_accepted'] = bool(invitation and invitation.accepted_at)
+        # Sprint 4 schema-per-tenant: esta view corre em public schema
+        # (/aluno/auth/ esta em PUBLIC_SCHEMA_PATHS). AuditEvent abaixo
+        # vive em TENANT_APPS — precisa do tenant ativo. Usar o box do
+        # convite como fonte de verdade.
+        if invitation is not None:
+            from student_identity.oauth_journeys import _activate_box_tenant
+            _activate_box_tenant(invitation.box_id, box_root_slug=invitation.box_root_slug)
         if invitation is not None:
             record_student_onboarding_event(
                 actor=None,
