@@ -137,7 +137,7 @@ jobs:
 
     - name: 5. Run Integrity & Performance Tests (SIE & DPA)
       run: |
-        python -m pytest tests/test_performance.py -q
+        python -m pytest --create-db --migrations tests/test_performance.py -q
       env:
         DJANGO_SECRET_KEY: 'a-dummy-secret-key-for-ci'
         PHONE_BLIND_INDEX_KEY: 'ci-only-blind-index-key'
