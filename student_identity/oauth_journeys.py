@@ -19,7 +19,8 @@ from __future__ import annotations
 
 from django.shortcuts import redirect
 
-from shared_support.box_runtime import get_box_runtime_slug
+# Sprint 4: get_box_runtime_slug import removido — verificacao slug-vs-runtime
+# era estruturalmente quebrada em schema-per-tenant (ver comentario abaixo).
 from student_app.onboarding_state import store_pending_student_onboarding
 
 from .funnel_events import record_student_onboarding_event
@@ -55,8 +56,14 @@ def handle_student_special_oauth_journey(
 
     box_invite_link = repository.find_box_invite_link_by_token(invite_token)
     if box_invite_link is not None:
-        if box_invite_link.box_root_slug != get_box_runtime_slug():
-            return _redirect_with_message(request, 'error', 'Este link em massa nao pertence ao box atual.')
+        # Sprint 4 schema-per-tenant: OAuth callback runs em public schema
+        # (/aluno/auth/ esta em PUBLIC_SCHEMA_PATHS). get_box_runtime_slug()
+        # retorna 'control' aqui (fallback env), enquanto link.box_root_slug
+        # foi salvo como nome do schema do tenant (ex.: 'box_endorfina') no
+        # momento da criacao do link dentro do contexto do owner.
+        # A verificacao slug-vs-runtime que existia aqui ficou estruturalmente
+        # quebrada: o link e a fonte de verdade do box-alvo. Manter so o gate
+        # de "link ainda aceita usos".
         if not box_invite_link.can_accept:
             return _redirect_with_message(request, 'error', 'Este link em massa nao esta mais disponivel para novos cadastros.')
         if result.success and result.identity is not None:

@@ -44,7 +44,12 @@ PUBLIC_SCHEMA_PATHS = (
     '/login/',
     '/logout/',
     '/onboarding/',
-    '/aluno/auth/',           # autenticação própria do aluno (StudentAuthMiddleware resolve depois)
+    # Sprint 4: TODO o app do aluno bypassa o staff tenant middleware.
+    # StudentAuthMiddleware (mais abaixo na chain) faz a auth via cookie
+    # proprio do aluno e resolve o tenant via session_payload.box_id.
+    # Sem isso, TenantBySessionMiddleware redirecionaria alunos anonimos
+    # para /login/ (staff) antes do StudentAuthMiddleware rodar.
+    '/aluno/',
     '/static/',
     '/favicon.ico',
     '/__debug__/',            # django-debug-toolbar
