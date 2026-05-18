@@ -1546,8 +1546,8 @@ class StudentIdentityFlowTests(TestCase):
         )
         identity = StudentIdentity.objects.create(
             student_id=self.student.id, student_name=self.student.full_name,
-            box_root_slug='control',
-            primary_box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
+            primary_box_root_slug=get_box_runtime_slug(),
             provider=StudentIdentityProvider.GOOGLE,
             provider_subject='google-revoke-fallback',
             email='aluno@example.com',

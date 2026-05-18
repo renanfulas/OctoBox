@@ -36,6 +36,48 @@ def _default_box_root_slug() -> str:
     return get_box_runtime_slug()
 
 
+def _fetch_student_in_box_schema(*, student_id, box_id=None, box_root_slug: str = ''):
+    """Sprint 2/4 compatibility shim — busca Student per-tenant a partir do
+    schema correto.
+
+    Models de identity (StudentIdentity, StudentAppInvitation,
+    StudentBoxMembership, StudentTransfer) vivem em SHARED_APPS (public).
+    Student vive em TENANT_APPS (box_xxx). A FK direta foi removida (era
+    cross-schema fragil), entao acessar `obj.student` antes era um JOIN
+    SQL ilegal. Esta funcao ativa o schema do box ANTES do lookup, evitando
+    'relation boxcore_student does not exist' quando o caller esta em
+    public (ex.: OAuth callback pre-auth).
+    """
+    if not student_id:
+        return None
+    from students.models import Student
+    schema_name = ''
+    if box_id:
+        try:
+            from control.models import Box
+            schema_name = Box.objects.values_list('schema_name', flat=True).get(pk=box_id)
+        except Exception:
+            schema_name = ''
+    if not schema_name and box_root_slug:
+        # box_root_slug historicamente armazena o schema_name (ex.: 'box_test')
+        schema_name = box_root_slug
+    if not schema_name:
+        # Sem info de box — tenta no schema corrente (degradacao aceitavel)
+        try:
+            return Student.objects.get(pk=student_id)
+        except Student.DoesNotExist:
+            return None
+    try:
+        from django_tenants.utils import schema_context
+        with schema_context(schema_name):
+            try:
+                return Student.objects.get(pk=student_id)
+            except Student.DoesNotExist:
+                return None
+    except Exception:
+        return None
+
+
 class StudentIdentityStatus(models.TextChoices):
     PENDING = 'pending', 'Pendente'
     ACTIVE = 'active', 'Ativa'
@@ -150,25 +192,12 @@ class StudentIdentity(TimeStampedModel):
 
     @property
     def student(self):
-        """Sprint 2 compatibility shim.
-
-        A FK direta `student = ForeignKey('boxcore.Student')` foi removida (era
-        cross-schema fragil). Esta property faz o lookup via `student_id` no
-        schema do tenant ATIVO no momento da chamada.
-
-        DEBITO TECNICO: callers devem migrar para acessar `student_id` /
-        `student_name` direto, ou abrir `schema_context(self.box.schema_name)`
-        antes de consultar Student. Esta property assume que o tenant ativo
-        coincide com `self.box` — verdade em todos os fluxos atuais, mas
-        fragil se em algum dia tivermos cross-tenant joins.
-        """
-        if not self.student_id:
-            return None
-        from students.models import Student
-        try:
-            return Student.objects.get(pk=self.student_id)
-        except Student.DoesNotExist:
-            return None
+        """Sprint 2 compatibility shim. Ver _fetch_student_in_box_schema."""
+        return _fetch_student_in_box_schema(
+            student_id=self.student_id,
+            box_id=self.box_id,
+            box_root_slug=self.box_root_slug or '',
+        )
 
     def __str__(self):
         return f'{self.student_name or self.email} [{self.box_root_slug}]'
@@ -228,14 +257,12 @@ class StudentBoxMembership(TimeStampedModel):
 
     @property
     def student(self):
-        """Sprint 2 compatibility shim — ver StudentIdentity.student."""
-        if not self.student_id:
-            return None
-        from students.models import Student
-        try:
-            return Student.objects.get(pk=self.student_id)
-        except Student.DoesNotExist:
-            return None
+        """Sprint 2 compatibility shim — ver _fetch_student_in_box_schema."""
+        return _fetch_student_in_box_schema(
+            student_id=self.student_id,
+            box_id=getattr(self, 'box_id', None),
+            box_root_slug=getattr(self, 'box_root_slug', '') or '',
+        )
 
     def mark_active(self):
         now = timezone.now()
@@ -305,14 +332,12 @@ class StudentAppInvitation(TimeStampedModel):
 
     @property
     def student(self):
-        """Sprint 2 compatibility shim — ver StudentIdentity.student."""
-        if not self.student_id:
-            return None
-        from students.models import Student
-        try:
-            return Student.objects.get(pk=self.student_id)
-        except Student.DoesNotExist:
-            return None
+        """Sprint 2 compatibility shim — ver _fetch_student_in_box_schema."""
+        return _fetch_student_in_box_schema(
+            student_id=self.student_id,
+            box_id=getattr(self, 'box_id', None),
+            box_root_slug=getattr(self, 'box_root_slug', '') or '',
+        )
 
     def __str__(self):
         return f'Invite {self.student_name or self.student_id} [{self.box_root_slug}]'
@@ -420,14 +445,12 @@ class StudentTransfer(TimeStampedModel):
 
     @property
     def student(self):
-        """Sprint 2 compatibility shim — ver StudentIdentity.student."""
-        if not self.student_id:
-            return None
-        from students.models import Student
-        try:
-            return Student.objects.get(pk=self.student_id)
-        except Student.DoesNotExist:
-            return None
+        """Sprint 2 compatibility shim — ver _fetch_student_in_box_schema."""
+        return _fetch_student_in_box_schema(
+            student_id=self.student_id,
+            box_id=getattr(self, 'box_id', None),
+            box_root_slug=getattr(self, 'box_root_slug', '') or '',
+        )
 
     def __str__(self):
         return f'student_id={self.student_id}: {self.from_box_root_slug} -> {self.to_box_root_slug}'

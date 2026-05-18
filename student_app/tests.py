@@ -50,6 +50,7 @@ from student_identity.models import (
     StudentOnboardingJourney,
 )
 from students.models import Student, StudentStatus
+from shared_support.box_runtime import get_box_runtime_slug
 
 
 class StudentAppExperienceTests(TestCase):
@@ -63,8 +64,8 @@ class StudentAppExperienceTests(TestCase):
         )
         self.identity = StudentIdentity.objects.create(
             student_id=self.student.id, student_name=self.student.full_name,
-            box_root_slug='control',
-            primary_box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
+            primary_box_root_slug=get_box_runtime_slug(),
             provider=StudentIdentityProvider.GOOGLE,
             provider_subject='provider-subject-app',
             email='app@example.com',
@@ -73,12 +74,12 @@ class StudentAppExperienceTests(TestCase):
         StudentBoxMembership.objects.create(
             identity=self.identity,
             student_id=self.student.id,
-            box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
         self.client.cookies['octobox_student_session'] = build_student_session_value(
             identity_id=self.identity.id,
-            box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
         )
 
     def _set_mass_onboarding_session(
@@ -89,7 +90,7 @@ class StudentAppExperienceTests(TestCase):
         email='novo@app.com',
     ):
         link = StudentBoxInviteLink.objects.create(
-            box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
             expires_at=timezone.now() + timedelta(days=3),
             max_uses=200,
         )
@@ -113,7 +114,7 @@ class StudentAppExperienceTests(TestCase):
     def test_student_routes_redirect_to_onboarding_when_pending_onboarding_exists(self):
         invitation = StudentAppInvitation.objects.create(
             student_id=self.student.id, student_name=self.student.full_name,
-            box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
             invited_email=self.identity.email,
             onboarding_journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
             expires_at=timezone.now() + timedelta(days=3),
@@ -201,7 +202,7 @@ class StudentAppExperienceTests(TestCase):
         identity = StudentIdentity.objects.get(provider_subject='provider-subject-new-mass')
         self.assertEqual(identity.email, 'novo@app.com')
         self.assertEqual(identity.student.full_name, 'Novo Aluno App')
-        membership = StudentBoxMembership.objects.get(identity=identity, box_root_slug='control')
+        membership = StudentBoxMembership.objects.get(identity=identity, box_root_slug=get_box_runtime_slug())
         self.assertEqual(membership.status, StudentBoxMembershipStatus.ACTIVE)
         self.assertTrue(
             AuditEvent.objects.filter(
@@ -308,8 +309,8 @@ class StudentAppExperienceTests(TestCase):
         )
         identity = StudentIdentity.objects.create(
             student_id=student.id, student_name=student.full_name,
-            box_root_slug='control',
-            primary_box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
+            primary_box_root_slug=get_box_runtime_slug(),
             provider=StudentIdentityProvider.GOOGLE,
             provider_subject='provider-subject-imported-lead',
             email='lead@app.com',
@@ -318,16 +319,16 @@ class StudentAppExperienceTests(TestCase):
         StudentBoxMembership.objects.create(
             identity=identity,
             student_id=student.id,
-            box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
         client.cookies['octobox_student_session'] = build_student_session_value(
             identity_id=identity.id,
-            box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
         )
         invitation = StudentAppInvitation.objects.create(
             student_id=student.id, student_name=student.full_name,
-            box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
             invited_email='lead@app.com',
             onboarding_journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
             expires_at=timezone.now() + timedelta(days=3),
@@ -383,7 +384,7 @@ class StudentAppExperienceTests(TestCase):
         client = Client()
         client.cookies['octobox_student_session'] = build_student_session_value(
             identity_id=self.identity.id,
-            box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
         )
 
         response = client.get(reverse('student-app-onboarding'), follow=True)
@@ -1031,8 +1032,8 @@ class StudentAppExperienceTests(TestCase):
         )
         StudentIdentity.objects.create(
             student_id=mate.id, student_name=mate.full_name,
-            box_root_slug='control',
-            primary_box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
+            primary_box_root_slug=get_box_runtime_slug(),
             provider=StudentIdentityProvider.GOOGLE,
             provider_subject='provider-subject-photo',
             email='foto@example.com',
@@ -1201,11 +1202,11 @@ class StudentAppExperienceTests(TestCase):
         first_result = GetStudentWorkoutDay().execute(
             student=self.student,
             session_id=session.id,
-            box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
         )
 
         cache_key = build_student_wod_snapshot_cache_key(
-            box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
             session_id=session.id,
             workout_version=3,
         )
@@ -1221,7 +1222,7 @@ class StudentAppExperienceTests(TestCase):
             second_result = GetStudentWorkoutDay().execute(
                 student=self.student,
                 session_id=session.id,
-                box_root_slug='control',
+                box_root_slug=get_box_runtime_slug(),
             )
 
         # 1: workout header (cache key lookup)
@@ -1245,7 +1246,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(first_session.attendance_status, 'Sem reserva')
 
         cache_key = build_student_agenda_snapshot_cache_key(
-            box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
             start_date=timezone.localtime().date(),
             window_days=None,
             limit=12,
@@ -1261,8 +1262,8 @@ class StudentAppExperienceTests(TestCase):
         )
         second_identity = StudentIdentity.objects.create(
             student_id=second_student.id, student_name=second_student.full_name,
-            box_root_slug='control',
-            primary_box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
+            primary_box_root_slug=get_box_runtime_slug(),
             provider=StudentIdentityProvider.GOOGLE,
             provider_subject='provider-subject-reserved',
             email='reservada@example.com',
@@ -1271,7 +1272,7 @@ class StudentAppExperienceTests(TestCase):
         StudentBoxMembership.objects.create(
             identity=second_identity,
             student_id=second_student.id,
-            box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
         Attendance.objects.create(
@@ -1301,7 +1302,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(first_session.attendance_status, 'Sem reserva')
 
         cache_key = build_student_home_snapshot_cache_key(
-            box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
             student_id=self.student.id,
             start_date=timezone.localtime().date(),
             window_days=None,
@@ -1426,7 +1427,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(first_result.rounded_load_label, '75.00 kg')
 
         cache_key = build_student_rm_snapshot_cache_key(
-            box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
             student_id=self.student.id,
         )
         self.assertIsNotNone(cache.get(cache_key))
@@ -1450,13 +1451,13 @@ class StudentAppExperienceTests(TestCase):
             one_rep_max_kg=Decimal('100.00'),
         )
 
-        first_snapshot = get_student_rm_snapshot(student=self.student, box_root_slug='control')
+        first_snapshot = get_student_rm_snapshot(student=self.student, box_root_slug=get_box_runtime_slug())
         self.assertEqual(first_snapshot['cards'][0].record.one_rep_max_kg, Decimal('100.00'))
 
         record.one_rep_max_kg = Decimal('110.00')
         record.save(update_fields=['one_rep_max_kg', 'updated_at'])
 
-        second_snapshot = get_student_rm_snapshot(student=self.student, box_root_slug='control')
+        second_snapshot = get_student_rm_snapshot(student=self.student, box_root_slug=get_box_runtime_slug())
         self.assertEqual(second_snapshot['cards'][0].record.one_rep_max_kg, Decimal('110.00'))
 
     @override_settings(REQUEST_TIMING_EXPOSE_DEBUG_HEADERS=True)
@@ -1641,7 +1642,7 @@ class StudentAppExperienceTests(TestCase):
     def test_student_push_unsubscribe_revokes_subscription(self):
         subscription = StudentPushSubscription.objects.create(
             identity=self.identity,
-            box_root_slug='control',
+            box_root_slug=get_box_runtime_slug(),
             endpoint='https://push.example.test/subscription-2',
             subscription={
                 'endpoint': 'https://push.example.test/subscription-2',
@@ -1713,7 +1714,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(payload['active_box_root_slug'], 'box-secundario')
 
     def test_student_home_redirects_to_suspended_financial_when_membership_is_suspended(self):
-        membership = StudentBoxMembership.objects.get(identity=self.identity, box_root_slug='control')
+        membership = StudentBoxMembership.objects.get(identity=self.identity, box_root_slug=get_box_runtime_slug())
         membership.status = StudentBoxMembershipStatus.SUSPENDED_FINANCIAL
         membership.save(update_fields=['status'])
 
@@ -1722,7 +1723,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertRedirects(response, reverse('student-app-suspended-financial'))
 
     def test_no_active_box_page_renders_membership_statuses(self):
-        membership = StudentBoxMembership.objects.get(identity=self.identity, box_root_slug='control')
+        membership = StudentBoxMembership.objects.get(identity=self.identity, box_root_slug=get_box_runtime_slug())
         membership.status = StudentBoxMembershipStatus.REVOKED
         membership.save(update_fields=['status'])
 
@@ -1734,7 +1735,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'Entrar em outro box com convite')
 
     def test_runtime_falls_back_to_another_active_membership_when_current_one_is_revoked(self):
-        current_membership = StudentBoxMembership.objects.get(identity=self.identity, box_root_slug='control')
+        current_membership = StudentBoxMembership.objects.get(identity=self.identity, box_root_slug=get_box_runtime_slug())
         current_membership.status = StudentBoxMembershipStatus.REVOKED
         current_membership.save(update_fields=['status'])
         StudentBoxMembership.objects.create(
@@ -1750,7 +1751,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'Box atual: box-secundario')
 
     def test_student_home_redirects_to_suspended_financial_page_when_all_memberships_are_suspended(self):
-        membership = StudentBoxMembership.objects.get(identity=self.identity, box_root_slug='control')
+        membership = StudentBoxMembership.objects.get(identity=self.identity, box_root_slug=get_box_runtime_slug())
         membership.status = StudentBoxMembershipStatus.SUSPENDED_FINANCIAL
         membership.save(update_fields=['status'])
 
@@ -1759,7 +1760,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertRedirects(response, reverse('student-app-suspended-financial'))
 
     def test_suspended_financial_page_renders_guidance(self):
-        membership = StudentBoxMembership.objects.get(identity=self.identity, box_root_slug='control')
+        membership = StudentBoxMembership.objects.get(identity=self.identity, box_root_slug=get_box_runtime_slug())
         membership.status = StudentBoxMembershipStatus.SUSPENDED_FINANCIAL
         membership.save(update_fields=['status'])
 
