@@ -1551,7 +1551,10 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(cookie['path'], '/aluno/')
         self.assertTrue(cookie['httponly'])
         payload = read_student_session_value(cookie.value)
-        self.assertEqual(payload['active_box_root_slug'], 'control')
+        # Sprint 4 schema-per-tenant: payload['active_box_root_slug'] reflete
+        # o slug do tenant ativo (em pytest: box_test; DEV legado: 'control').
+        from shared_support.box_runtime import get_box_runtime_slug
+        self.assertEqual(payload['active_box_root_slug'], get_box_runtime_slug())
         self.assertTrue(payload['device_fingerprint'])
 
     def test_student_home_renders_pwa_activation_rail(self):

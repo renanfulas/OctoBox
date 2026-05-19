@@ -25,6 +25,10 @@ _PUBLIC_PREFIXES = (
 _MEMBERSHIP_GATE_EXEMPT_PREFIXES = (
     '/aluno/aguardando-aprovacao/',
     '/aluno/sem-box/',
+    # Suspensao financeira: a pagina destino de membership SUSPENDED_FINANCIAL.
+    # Sem esta isencao, o middleware redireciona para sem-box mesmo na pagina
+    # que e o destino do redirect — entra em loop / 302.
+    '/aluno/suspenso-financeiro/',
 )
 
 _PENDING_ONBOARDING_SESSION_KEY = 'student_pending_onboarding'
