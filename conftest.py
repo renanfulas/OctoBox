@@ -56,7 +56,14 @@ def _load_broken_tests() -> set[str]:
 
     Linhas vazias e comecadas com # sao ignoradas. Comentario inline
     (apos `#`) tambem e descartado.
+
+    OVERRIDE: setar OCTOBOX_RUN_BROKEN_TESTS=1 desativa o skip e roda
+    todos os tests (incluindo broken). Usado durante Fase 0.5 para
+    diagnosticar a causa raiz de tests broken sem mexer na lista.
     """
+    import os
+    if os.environ.get('OCTOBOX_RUN_BROKEN_TESTS') == '1':
+        return set()
     if not _BROKEN_TESTS_FILE.exists():
         return set()
     broken: set[str] = set()
@@ -144,13 +151,42 @@ def test_tenant(django_db_setup, django_db_blocker):
     return box
 
 
+@pytest.fixture(scope='class', autouse=True)
+def _class_tenant_schema_context(request, test_tenant):
+    """Envolve a CLASSE TestCase inteira (incluindo setUpTestData) em
+    schema_context do test_tenant.
+
+    Fase 0.5 root cause fix: Django TestCase.setUpTestData e classmethod
+    que roda 1x antes de qualquer test method. Fixture autouse de escopo
+    'function' (versao antiga) entrava DEPOIS do setUpTestData, deixando
+    qualquer INSERT em modelo TENANT_APP dentro de setUpTestData em
+    schema public — onde a tabela nao existe. Erro tipico:
+        django.db.utils.ProgrammingError: relation "boxcore_classsession"
+        does not exist
+
+    Escopo 'class' (pytest) cobre TODO o lifecycle de uma TestCase,
+    incluindo setUpClass / setUpTestData / setUp / test method / tearDown.
+
+    Resolveu 118 ERRORED de uma vez na Fase 0.5 (61% do inventario).
+    """
+    if test_tenant is None:
+        yield
+        return
+
+    from django_tenants.utils import schema_context
+    with schema_context(test_tenant.schema_name):
+        yield
+
+
 @pytest.fixture(autouse=True)
 def _tenant_schema_context(request, test_tenant):
-    """Envolve cada test em schema_context do test_tenant.
+    """Mantem schema_context ativo per-test (alem do per-class acima).
 
-    Sem este wrap, queries ORM resolvem para public schema (default),
-    onde tabelas TENANT_APPS nao existem e queries falham com
-    'relation does not exist'.
+    Por que ambos? schema_context() faz SET search_path no nivel da
+    conexao. Em ordem aleatoria + xdist + transaction rollback do
+    pytest-django, o search_path pode ser perdido entre transactions.
+    Re-entrar per-function garante search_path correto antes de cada
+    test method rodar.
 
     Quando django_tenants nao esta ativo (SQLite fallback), test_tenant
     e None — pula o context manager e roda o test diretamente.
@@ -164,7 +200,7 @@ def _tenant_schema_context(request, test_tenant):
         yield
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(scope='class', autouse=True)
 def _auto_membership_for_test_users(test_tenant, django_db_setup):
     """Sprint 4: auto-associa qualquer User criado durante o teste ao
     Box de teste via control.Membership.
@@ -178,6 +214,12 @@ def _auto_membership_for_test_users(test_tenant, django_db_setup):
     Implementacao: instala um post_save signal em auth.User que cria
     Membership(box=test_tenant, role=OWNER, is_primary_box=True) para
     qualquer user salvo. Removido no teardown.
+
+    FASE 0.5 — escopo class: setUpTestData (classmethod do Django
+    TestCase) cria User antes de qualquer fixture function-scope rodar.
+    Sem escopo class, o signal nao estava instalado quando User era
+    criado em setUpTestData, e os tests caiam em 403 mesmo com schema
+    correto.
     """
     if test_tenant is None:
         yield
