@@ -12,12 +12,21 @@ from django.test import TestCase
 from django.utils import timezone
 
 from monitoring.beacon_snapshot import build_red_beacon_snapshot
-from monitoring.signal_mesh_runtime import SIGNAL_MESH_RUNTIME_CACHE_KEY, remember_signal_mesh_sweep
+from monitoring.signal_mesh_runtime import remember_signal_mesh_sweep
 
 
 class MonitoringBeaconSnapshotTests(TestCase):
     def setUp(self):
-        cache.delete(SIGNAL_MESH_RUNTIME_CACHE_KEY)
+        # Sprint 3 mudou signal_mesh_runtime para cache per-tenant
+        # (chave = 'signal_mesh_runtime:v1:{schema_name}'). Antes era
+        # chave global SIGNAL_MESH_RUNTIME_CACHE_KEY. cache.delete dessa
+        # constante (agora deprecated) deletava o lugar errado e estado
+        # do test anterior vazava (sintoma: AssertionError 4 != 3 quando
+        # o test esperado totalizava so 3, mas tinha 1 stale de outro
+        # test no cache per-tenant).
+        # cache.clear() e seguro em LocMemCache de teste e elimina
+        # qualquer chave per-tenant herdada.
+        cache.clear()
 
     def test_build_red_beacon_snapshot_exposes_signal_mesh_summary(self):
         now = timezone.now()
