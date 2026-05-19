@@ -1,27 +1,37 @@
 # OctoBox - Inventario de testes broken (Fase 1 fallback).
 #
 # Auto-populado a partir do JUnit XML do CI (PR #75, run 26064321312, 2026-05-18).
-# Total: 193 broken (75 failed + 118 errored) de 896 = 21.6% taxa de falha.
+# Total original: 193 broken (75 failed + 118 errored) de 896 = 21.6% taxa de falha.
 # Suite passou: 698 (77.9%). Skipped: 5.
+#
+# FASE 0.5 — Bucket A resolvido (2026-05-18):
+# Fix de class-scope fixtures no conftest cobriu setUpTestData do Django
+# TestCase. 115 dos 118 ERRORED voltaram para a suite verde.
+# Sobram: 75 FAILED (bugs individuais) + 3 stragglers ex-ERRORED + 1
+# regressao descoberta pos-fix = 79.
 #
 # COMO USAR:
 # - O conftest.py le este arquivo e marca cada node-id como skip.
 # - Adicionar: rode pytest, ache o node-id, cole aqui (1 por linha).
 # - Remover: apague a linha quando confirmar que passa.
+# - Bypass para diagnostico: OCTOBOX_RUN_BROKEN_TESTS=1 desativa o skip.
 #
 # FORMATO:
 #   path/file.py::Class::method  [# comentario opcional]
 #
-# OBJETIVO: lista DEVE ENCOLHER a cada sprint. Fase 0.5 (stabilization)
-# triaria essas entradas por causa raiz e remove conforme conserta.
+# OBJETIVO: lista DEVE ENCOLHER a cada sprint.
 
 # ============================================================================
-# FAILED - 75 testes (assertion failure ou exception em test logic)
+# Bugs individuais — Bucket B/C/D (precisam triagem 1-a-1)
 # ============================================================================
 
+
+# --- access ---
 access/tests/test_public_landing.py::PublicLandingViewTests::test_home_redirects_anonymous_user_to_login_on_app_host
 access/tests/test_public_landing.py::PublicLandingViewTests::test_home_renders_marketing_landing_for_anonymous_user
 access/tests/test_security.py::SecurityLoginTest::test_login_flow_with_csrf_and_redirect
+
+# --- boxcore ---
 boxcore/tests/test_access.py::AccessViewTests::test_home_renders_marketing_landing_for_anonymous_user
 boxcore/tests/test_api.py::ApiFoundationTests::test_api_root_exposes_available_versions
 boxcore/tests/test_api.py::ApiFoundationTests::test_api_v1_manifest_exposes_health_resource
@@ -50,8 +60,12 @@ boxcore/tests/test_reset_demo_workspace.py::ResetDemoWorkspaceCommandTests::test
 boxcore/tests/test_settings.py::SettingsHelperTests::test_build_cache_config_uses_locmem_when_no_external_cache_url_exists
 boxcore/tests/test_settings.py::SettingsHelperTests::test_build_cache_config_uses_redis_when_redis_url_exists
 boxcore/tests/test_student_source_capture_view.py::StudentSourceCaptureViewTests::test_secure_link_can_record_declared_source
+
+# --- onboarding ---
 onboarding/tests.py::IntakeCenterStudentInviteSmokeTests::test_intake_center_one_click_whatsapp_invite_creates_linked_student_invitation
 onboarding/tests.py::IntakeCenterStudentInviteSmokeTests::test_intake_center_one_click_whatsapp_invite_is_blocked_for_non_imported_sources
+
+# --- student_app ---
 student_app/tests.py::PublicWorkoutPwaTests::test_juliana_week_order_reflects_rest_on_friday
 student_app/tests.py::PublicWorkoutPwaTests::test_public_workout_manifest_is_dynamic_per_slug
 student_app/tests.py::PublicWorkoutPwaTests::test_public_workout_page_renders_install_cta
@@ -65,6 +79,7 @@ student_app/tests.py::StudentAppExperienceTests::test_invite_entry_redirects_fro
 student_app/tests.py::StudentAppExperienceTests::test_invite_entry_redirects_from_raw_token_to_invite_landing
 student_app/tests.py::StudentAppExperienceTests::test_runtime_falls_back_to_another_active_membership_when_current_one_is_revoked
 student_app/tests.py::StudentAppExperienceTests::test_student_dashboard_agenda_snapshot_keeps_attendance_personalized
+student_app/tests.py::StudentAppExperienceTests::test_student_grade_places_tomorrow_sessions_inside_amanha_section
 student_app/tests.py::StudentAppExperienceTests::test_student_home_redirects_to_suspended_financial_page_when_all_memberships_are_suspended
 student_app/tests.py::StudentAppExperienceTests::test_student_home_redirects_to_suspended_financial_when_membership_is_suspended
 student_app/tests.py::StudentAppExperienceTests::test_student_home_refreshes_student_session_cookie
@@ -77,6 +92,8 @@ student_app/tests.py::StudentAppExperienceTests::test_student_session_attendees_
 student_app/tests.py::StudentAppExperienceTests::test_suspended_financial_page_renders_guidance
 student_app/tests.py::StudentAuthMiddlewareTests::test_anonymous_access_to_student_app_root_redirects_to_student_login
 student_app/tests.py::StudentAuthMiddlewareTests::test_anonymous_access_to_student_onboarding_redirects_with_message
+
+# --- student_identity ---
 student_identity/tests.py::StudentIdentityFlowTests::test_box_invite_landing_invalid_token_creates_audit_event
 student_identity/tests.py::StudentIdentityFlowTests::test_box_invite_landing_rate_limit_blocks_second_open_in_window
 student_identity/tests.py::StudentIdentityFlowTests::test_box_invite_landing_shows_unavailable_message_when_paused
@@ -91,19 +108,8 @@ student_identity/tests.py::StudentIdentityFlowTests::test_resend_webhook_rejects
 student_identity/tests.py::StudentIdentityFlowTests::test_student_can_authenticate_with_apple_invitation_when_student_email_is_blank
 student_identity/tests.py::StudentIdentityFlowTests::test_student_can_authenticate_with_google_callback_in_same_box
 student_identity/tests.py::StudentIdentityFlowTests::test_student_login_shows_invite_context_label
-tests/test_dashboard_snapshot_serialization.py::DashboardSnapshotSerializationTests::test_dashboard_snapshot_is_json_serializable
-tests/test_request_timing_headers.py::RequestTimingHeadersTests::test_debug_headers_can_be_explicitly_enabled_for_internal_diagnostics
-tests/test_request_timing_headers.py::RequestTimingHeadersTests::test_public_responses_keep_server_timing_but_hide_internal_debug_headers_by_default
 
-# ============================================================================
-
-# ============================================================================
-# Fase 0.5: 118 ERRORED removidos em massa pelo fix de class-scope
-# fixtures no conftest (cobre setUpTestData do Django TestCase).
-# Apenas os abaixo ainda falham (bugs individuais, nao pattern de
-# setUpTestData). Sera trabalho do Bucket C.
-# ============================================================================
-
+# --- tests/ (top-level — stragglers do ex-ERRORED Bucket A) ---
 tests/test_dashboard_snapshot_serialization.py::DashboardSnapshotSerializationTests::test_dashboard_snapshot_is_json_serializable
 tests/test_request_timing_headers.py::RequestTimingHeadersTests::test_debug_headers_can_be_explicitly_enabled_for_internal_diagnostics
 tests/test_request_timing_headers.py::RequestTimingHeadersTests::test_public_responses_keep_server_timing_but_hide_internal_debug_headers_by_default
