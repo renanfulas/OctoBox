@@ -88,8 +88,24 @@ class TenantBySessionMiddleware:
         # C1 FIX: sempre resetar search_path explicitamente neste middleware.
         # Nunca confiar no search_path herdado de conexão reutilizada.
         if self._is_public_path(request.path):
+            # Save/restore: paths publicos forçam public DURANTE o request
+            # (proteção C1), mas a connection volta ao estado anterior
+            # APOS o request. Sem isso, um request a /admin/ (público)
+            # deixa a connection em public, e o próximo request reusado
+            # na mesma connection começa com search_path errado. Em prod
+            # isso e mitigado por CONN_MAX_AGE/pool, mas em testes (e em
+            # cenarios de assertRedirects que disparam segunda Client.get)
+            # o efeito vaza entre requests do mesmo teste.
+            _previous_tenant = getattr(connection, 'tenant', None)
             self._set_public(request)
-            return self.get_response(request)
+            try:
+                return self.get_response(request)
+            finally:
+                if _previous_tenant is not None:
+                    try:
+                        connection.set_tenant(_previous_tenant)
+                    except Exception:
+                        connection.set_schema_to_public()
 
         if not request.user.is_authenticated:
             # Usuário anônimo em path privado → login

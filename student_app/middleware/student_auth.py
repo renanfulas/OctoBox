@@ -137,34 +137,46 @@ class StudentAuthMiddleware:
                 _resolve_student_tenant(request, pending_onboarding)
 
             if session_payload is None and not has_pending_onboarding:
-                # Sprint 4: AuditEvent vive em TENANT_APPS (tabela
-                # boxcore_auditevent so existe em schemas box_xxx).
-                # Aqui o request e anonimo em rota privada /aluno/*, e o
-                # TenantBySessionMiddleware ja setou schema=public porque
-                # /aluno/ esta em PUBLIC_SCHEMA_PATHS. Nao temos tenant
-                # resolvivel pra ativar antes da escrita.
-                # Solucao: try/except — audit anonimo e nice-to-have, nao
-                # pode quebrar o redirect para o login. Em prod com tenant
-                # ativo (signal mesh runtime) o audit funciona normal.
+                # Sprint 4 schema-per-tenant: AuditEvent vive em TENANT_APPS.
+                # /aluno/ esta em PUBLIC_SCHEMA_PATHS, entao o middleware
+                # TenantBySessionMiddleware ja setou schema=public. Em
+                # pilot (1 box ativo) usar Center Layer facade com
+                # SINGLE_ACTIVE_BOX para ativar tenant antes da escrita.
+                # Em prod multi-tenant a strategy retorna NONE; usamos
+                # transaction.atomic como savepoint para que a falha do
+                # INSERT nao deixe a transaction principal num estado
+                # broken (caso contrario qualquer query subsequente —
+                # inclusive o teste — falha com TransactionManagementError).
+                from student_identity.facade import resolve_tenant_for_student_oauth_callback
+                from django.db import connection, transaction
+                resolve_tenant_for_student_oauth_callback(
+                    invite_token='', provider_subject='', email='',
+                )
                 try:
-                    AuditEvent.objects.create(
-                        actor=None,
-                        actor_role='',
-                        action='student_app.anonymous_access_redirected',
-                        target_model='student_app.AnonymousAccess',
-                        target_label=request.path[:120],
-                        description='Acesso anonimo a rota protegida do app do aluno redirecionado para login.',
-                        metadata={
-                            'path': request.path,
-                            'method': request.method,
-                            'ip_hash': __import__('hashlib').sha256(
-                                resolve_student_client_ip(request).encode()
-                            ).hexdigest()[:8],
-                        },
-                    )
+                    with transaction.atomic():
+                        AuditEvent.objects.create(
+                            actor=None,
+                            actor_role='',
+                            action='student_app.anonymous_access_redirected',
+                            target_model='student_app.AnonymousAccess',
+                            target_label=request.path[:120],
+                            description='Acesso anonimo a rota protegida do app do aluno redirecionado para login.',
+                            metadata={
+                                'path': request.path,
+                                'method': request.method,
+                                'ip_hash': __import__('hashlib').sha256(
+                                    resolve_student_client_ip(request).encode()
+                                ).hexdigest()[:8],
+                            },
+                        )
                 except Exception:
-                    # AuditEvent indisponivel (schema sem tabela, ou DB
-                    # transitorio). Nao bloqueia o redirect.
+                    # AuditEvent indisponivel (schema sem tabela em prod
+                    # multi-tenant sem facade resolvido). Nao bloqueia o
+                    # redirect.
+                    pass
+                    # AuditEvent indisponivel (schema sem tabela em prod
+                    # multi-tenant sem facade resolvido). Nao bloqueia o
+                    # redirect.
                     pass
                 messages.warning(
                     request,
