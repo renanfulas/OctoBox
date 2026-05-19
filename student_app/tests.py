@@ -456,7 +456,11 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'Início')
         self.assertNotContains(response, 'Abrir menu lateral')
         self.assertContains(response, 'Cross de terca')
-        self.assertContains(response, 'Box atual: control')
+        # Sprint 4 schema-per-tenant: template renderiza o slug do tenant ativo.
+        # Em DEV era estatico ('control' via BOX_RUNTIME_SLUG); em pytest o
+        # tenant ativo e box_test (conftest test_tenant fixture).
+        from shared_support.box_runtime import get_box_runtime_slug
+        self.assertContains(response, f'Box atual: {get_box_runtime_slug()}')
         self.assertNotContains(response, 'Trocar box')
         self.assertContains(response, 'Grade')
         self.assertContains(response, 'WOD')

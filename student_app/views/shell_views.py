@@ -381,7 +381,14 @@ class StudentSessionAttendeesView(StudentIdentityRequiredMixin, TemplateView):
                     AttendanceStatus.CHECKED_OUT,
                 ],
             )
-            .select_related('student__app_identity')
+            .select_related('student')
+            # Sprint 2 schema-per-tenant: 'student__app_identity' removido.
+            # app_identity virou @property (Student.app_identity em
+            # students/model_definitions.py:124) apos a inversao do FK
+            # cross-schema. Property nao e select_related-able. O acesso
+            # via s.app_identity no loop abaixo dispara 1 query por
+            # student — aceitavel para sessoes (N pequeno). Otimizar com
+            # Prefetch custom se virar gargalo.
         )
         attendees = []
         for att in attendances:
