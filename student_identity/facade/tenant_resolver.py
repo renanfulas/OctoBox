@@ -273,9 +273,25 @@ def resolve_tenant_for_student_oauth_callback(
 def resolve_tenant_for_student_invite_landing(*, invite_token: str) -> TenantResolution:
     """Resolve tenant para o landing de convite (/aluno/auth/invite/<token>).
 
-    Forma simplificada do callback: so faz sentido com invite_token.
+    Ordem de strategies (primeira que resolver vence):
+    1. invite_token via invitation
+    2. invite_token via link em massa
+    3. single active box (pilot fallback)
+
+    POR QUE O FALLBACK:
+    - Mesmo com invite_token INVALIDO, a view precisa renderizar a pagina
+      "convite invalido" e gravar um AuditEvent (TENANT_APP). Sem tenant
+      ativo, a escrita falha em public schema.
+    - Em pilot (1 box ativo) usar esse box para audit faz sentido.
+    - Em multi-tenant prod, fallback retorna NONE e o audit cai no
+      try/except do caller — comportamento aceitavel para token invalido.
     """
     resolution = _resolve_from_invite_token(invite_token)
     if resolution is not None:
         return resolution
+
+    resolution = _resolve_from_single_active_box()
+    if resolution is not None:
+        return resolution
+
     return TenantResolution(box=None, strategy=StudentAuthTenantStrategy.NONE)
