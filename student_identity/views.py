@@ -179,6 +179,18 @@ class StudentOAuthCallbackView(StudentSignInView):
         return self._handle_callback(request, provider)
 
     def _handle_callback(self, request, provider: str):
+        # Center Layer pre-rate-limit: ativa tenant via SINGLE_ACTIVE_BOX
+        # antes do rate-limit check escrever AuditEvent (TENANT_APP).
+        # /aluno/auth/* esta em PUBLIC_SCHEMA_PATHS, schema=public no
+        # entrypoint. Sem ativar tenant pelo facade, o AuditEvent do
+        # rate-limit cai num INSERT em public e quebra (relacao nao existe).
+        # Em piloto (1 box ativo) o facade resolve via SINGLE_ACTIVE_BOX.
+        # Em multi-tenant prod retorna NONE; rate-limit audit cai no
+        # try/except defensivo dentro do oauth_loader.
+        from student_identity.facade import resolve_tenant_for_student_oauth_callback
+        resolve_tenant_for_student_oauth_callback(
+            invite_token='', provider_subject='', email='',
+        )
         rate_limit_response = enforce_student_oauth_callback_rate_limit(request=request, provider=provider)
         if rate_limit_response is not None:
             return rate_limit_response
