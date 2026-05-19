@@ -41,6 +41,13 @@ PUBLIC_SCHEMA_PATHS = (
     '/signup/',
     '/financeiro/stripe/webhook/',
     '/api/v1/health/',
+    # Webhooks de integracoes externas (Resend, WhatsApp). Recebem POST
+    # de servicos terceiros que NAO tem session/auth. View interna
+    # valida assinatura HMAC. Sem isso, TenantBySessionMiddleware
+    # redireciona o POST anonimo para /login/ (302) antes da view
+    # validar a assinatura — quebra contrato de webhook (esperado 400
+    # para assinatura invalida).
+    '/api/v1/integrations/',
     '/login/',
     '/logout/',
     '/onboarding/',
@@ -50,6 +57,10 @@ PUBLIC_SCHEMA_PATHS = (
     # Sem isso, TenantBySessionMiddleware redirecionaria alunos anonimos
     # para /login/ (staff) antes do StudentAuthMiddleware rodar.
     '/aluno/',
+    # PWA publica de workouts: rotas /renan/<slug> e /renan/<slug>/sw.js
+    # sao paginas estaticas-ish acessadas SEM login (PWA pessoal por aluno).
+    # Sem isso, TenantBySessionMiddleware redireciona anonimo para /login/.
+    '/renan/',
     '/static/',
     '/favicon.ico',
     '/__debug__/',            # django-debug-toolbar

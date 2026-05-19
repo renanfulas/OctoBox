@@ -137,21 +137,35 @@ class StudentAuthMiddleware:
                 _resolve_student_tenant(request, pending_onboarding)
 
             if session_payload is None and not has_pending_onboarding:
-                AuditEvent.objects.create(
-                    actor=None,
-                    actor_role='',
-                    action='student_app.anonymous_access_redirected',
-                    target_model='student_app.AnonymousAccess',
-                    target_label=request.path[:120],
-                    description='Acesso anonimo a rota protegida do app do aluno redirecionado para login.',
-                    metadata={
-                        'path': request.path,
-                        'method': request.method,
-                        'ip_hash': __import__('hashlib').sha256(
-                            resolve_student_client_ip(request).encode()
-                        ).hexdigest()[:8],
-                    },
-                )
+                # Sprint 4: AuditEvent vive em TENANT_APPS (tabela
+                # boxcore_auditevent so existe em schemas box_xxx).
+                # Aqui o request e anonimo em rota privada /aluno/*, e o
+                # TenantBySessionMiddleware ja setou schema=public porque
+                # /aluno/ esta em PUBLIC_SCHEMA_PATHS. Nao temos tenant
+                # resolvivel pra ativar antes da escrita.
+                # Solucao: try/except — audit anonimo e nice-to-have, nao
+                # pode quebrar o redirect para o login. Em prod com tenant
+                # ativo (signal mesh runtime) o audit funciona normal.
+                try:
+                    AuditEvent.objects.create(
+                        actor=None,
+                        actor_role='',
+                        action='student_app.anonymous_access_redirected',
+                        target_model='student_app.AnonymousAccess',
+                        target_label=request.path[:120],
+                        description='Acesso anonimo a rota protegida do app do aluno redirecionado para login.',
+                        metadata={
+                            'path': request.path,
+                            'method': request.method,
+                            'ip_hash': __import__('hashlib').sha256(
+                                resolve_student_client_ip(request).encode()
+                            ).hexdigest()[:8],
+                        },
+                    )
+                except Exception:
+                    # AuditEvent indisponivel (schema sem tabela, ou DB
+                    # transitorio). Nao bloqueia o redirect.
+                    pass
                 messages.warning(
                     request,
                     'Para acessar esta pagina, entre com sua conta Google ou Apple primeiro.',
