@@ -210,6 +210,22 @@ class StudentOAuthCallbackView(StudentSignInView):
             )
             return redirect('student-identity-login')
 
+        # CENTER LAYER (docs/architecture/center-layer.md):
+        # Resolve o tenant ANTES de qualquer query TENANT_APPS abaixo.
+        # Estrategias em ordem (primeira que resolver vence):
+        #   1. invite_token (invitation OU link em massa)
+        #   2. provider_subject -> existing identity
+        #   3. email -> existing identity (so se houver 1 candidate)
+        # Sem isso, AuthenticateStudentWithProvider.execute() chama
+        # find_student_candidates_by_email() que tenta Student.objects.filter()
+        # em public schema (boxcore_student so existe em box_xxx).
+        from student_identity.facade import resolve_tenant_for_student_oauth_callback
+        resolve_tenant_for_student_oauth_callback(
+            invite_token=callback_input.invite_token,
+            provider_subject=identity_payload.provider_subject,
+            email=identity_payload.email,
+        )
+
         result = authenticate_student_oauth_identity(
             authenticate_identity=self.authenticate_identity,
             identity_payload=identity_payload,
