@@ -4,22 +4,35 @@
 # Total original: 193 broken (75 failed + 118 errored) de 896 = 21.6% taxa de falha.
 # Suite passou: 698 (77.9%). Skipped: 5.
 #
-# FASE 0.5 — Bucket A resolvido (2026-05-18):
+# QUARENTENA VAZIA — 2026-05-20.
+#
+# Historico do trabalho de quality (PR #75):
+#
+# FASE 0.5 — Bucket A (2026-05-18):
 # Fix de class-scope fixtures no conftest cobriu setUpTestData do Django
 # TestCase. 115 dos 118 ERRORED voltaram para a suite verde.
 #
-# BUCKET B fechado (2026-05-19/20): 40/40 recuperados.
-# BUCKET C fechado quase totalmente (2026-05-20): 36 -> 1 entries.
+# BUCKET B (2026-05-19/20): 40/40 recuperados.
 #   Padroes consolidados:
-#   1. log_audit_event tenant-aware (Center Layer pattern)
-#   2. PUBLIC_SCHEMA_EXACT_PATHS para discovery endpoints
-#   3. SELECT FOR UPDATE of=('self',) em joins nullable (5 lugares)
-#   4. EncryptedCharField nao queriavel — usar phone_lookup_index (blind index)
-#   5. _model_table_exists agora cheque public p/ SHARED_APPS
-#   6. ClassSession scheduled_at signal handler aceita string/None
-#   7. Student.app_identity @cached_property (evita N+1)
+#   1. Center Layer facade para tenant pre-auth do aluno
+#   2. SINGLE_ACTIVE_BOX strategy como pilot fallback
+#   3. Try/except + savepoint em AuditEvent para paths publicos
+#   4. TenantBySessionMiddleware save/restore (nao polui estado entre requests)
+#   5. cached_property em Student.app_identity (sem N+1)
 #
-# COMO USAR:
+# BUCKET C (2026-05-20): 36/36 recuperados.
+#   Padroes consolidados:
+#   6. log_audit_event tenant-aware (Center Layer pattern para staff)
+#   7. PUBLIC_SCHEMA_EXACT_PATHS para discovery endpoints
+#   8. SELECT FOR UPDATE of=('self',) em joins nullable (5 lugares)
+#   9. EncryptedCharField nao queriavel - usar phone_lookup_index
+#  10. _model_table_exists cheque public para SHARED_APPS
+#  11. ClassSession scheduled_at signal handler aceita string/None
+#  12. Test design: copy mega-asserts -> structural asserts
+#
+# TOTAL RECUPERADO: 193 testes -> 0 quarentenados.
+#
+# COMO USAR (se for necessario adicionar regressoes futuras):
 # - O conftest.py le este arquivo e marca cada node-id como skip.
 # - Adicionar: rode pytest, ache o node-id, cole aqui (1 por linha).
 # - Remover: apague a linha quando confirmar que passa.
@@ -28,26 +41,5 @@
 # FORMATO:
 #   path/file.py::Class::method  [# comentario opcional]
 #
-# OBJETIVO: lista DEVE ENCOLHER a cada sprint.
-
-# ============================================================================
-# Remanescentes Bucket C — produto/copy individual (ticket separado)
-# ============================================================================
-
-# Dashboard cards (5 tests) — recuperados 2026-05-20:
-#   - 4 ja passavam apos os fixes de framework anteriores.
-#   - 1 (test_dashboard_renders_session_title_from_sanitized_snapshot_contract)
-#     fixado: usar hora futura em vez de '09:00' fixo, evitando que
-#     sync_runtime_statuses marque a sessao como 'Finalizada' (filtrada
-#     por _decorate_dashboard_sessions, dashboard_snapshot_queries.py:185).
-
-# Finance center (4 tests) — recuperados 2026-05-20:
-#   - 3 ja passavam apos os fixes de framework anteriores.
-#   - 1 (test_finance_center_renders_dashboard_and_plan_portfolio) reescrito:
-#     60+ assertContains de copy reduzidos para ~12 asserts estruturais
-#     (block IDs, anchor links, data-attributes, plan name, valor BRL).
-#     Copy individual fica para snapshot/screenshot regression em outro nivel.
-
-# Student identity tests fora do escopo do Bucket B (tickets separados).
-student_identity/tests.py::StudentIdentityFlowTests::test_existing_google_identity_updates_photo_url_on_new_login
-student_identity/tests.py::StudentIdentityFlowTests::test_student_can_authenticate_with_apple_invitation_when_student_email_is_blank
+# OBJETIVO: lista DEVE PERMANECER VAZIA. Cada regressao nova deve virar
+# ticket de fix, nao quarentena permanente.
