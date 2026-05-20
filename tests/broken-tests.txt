@@ -39,18 +39,23 @@
 # Remanescentes abaixo: bugs de produto que precisam decisao individual
 # (status enum drift, copy reformulada, queries/SQL diversos). Cada um
 # vira ticket separado depois do merge do PR #75.
+# Bucket C cluster cedilha/copy reformulada (2026-05-20):
+#   - 5 dashboard testes: cedilha em 'Cobranças'/'Presença' + copy reformulada
+#     do reading_panel (presentation.py:573/618). Fonte tinha inconsistencia
+#     entre dashboard_snapshot_panels.py (sem cedilha) e _queries.py (com).
+#   - 3 finance testes: copy de 'Resumo do recorte ativo', 'Filtros do
+#     financeiro', 'Aguardando a primeira adesão', 'último recorte salvo para'.
+#   - 1 catalog_services (Cobranças em atraso): mesma padronizacao de cedilha
+#     no source (operational_queue.py).
 boxcore/tests/test_catalog.py::CatalogViewTests::test_class_grid_allows_exact_monthly_limit_in_single_batch
 boxcore/tests/test_catalog_services.py::CatalogServiceTests::test_finance_communication_handler_blocks_duplicate_same_day_message
 boxcore/tests/test_catalog_services.py::CatalogServiceTests::test_sync_student_intake_links_latest_matching_lead_by_phone
-boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_keeps_routine_session_out_of_emergency_card
-boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_overdue_metric_card_keeps_only_neon_when_clean
-boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_overdue_metric_card_restores_click_to_go_when_there_is_pressure
-boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_renders_reading_list_metrics_and_sessions_for_authenticated_user
-boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_renders_session_title_from_sanitized_snapshot_contract
-boxcore/tests/test_finance.py::FinanceCenterTests::test_finance_center_can_create_plan
-boxcore/tests/test_finance.py::FinanceCenterTests::test_finance_center_filters_by_plan_and_method
+# test_finance_center_renders_dashboard_and_plan_portfolio: 60+ assertContains
+# verificando UI quase como screenshot. Trabalho disproporcional (cada string
+# precisa busca-substituicao individual com ground-truth em template). Mais
+# eficiente reescrever como teste de regressao especifica (sem o gigante
+# assertContains) em ticket separado.
 boxcore/tests/test_finance.py::FinanceCenterTests::test_finance_center_renders_dashboard_and_plan_portfolio
-boxcore/tests/test_finance.py::FinanceCenterTests::test_finance_center_restores_last_filter_state_from_session
 boxcore/tests/test_import_students.py::ImportStudentsCsvCommandTests::test_import_creates_and_updates_students_by_phone
 boxcore/tests/test_onboarding.py::IntakeCenterViewTests::test_intake_center_kpis_link_to_server_scoped_queue_filters
 boxcore/tests/test_onboarding.py::IntakeCenterViewTests::test_owner_can_create_intake_inside_intake_center

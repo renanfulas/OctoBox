@@ -84,7 +84,9 @@ class FinanceCenterTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Financeiro')
         self.assertContains(response, 'Cross Gold')
-        self.assertContains(response, 'Resumo do Recorte Ativo')
+        # Copy reformulada — template usa lowercase 'recorte ativo'
+        # (templates/includes/catalog/finance/boards/control_board.html:35).
+        self.assertContains(response, 'Resumo do recorte ativo')
         self.assertContains(response, 'id="finance-trend-preview-board"')
         self.assertContains(response, 'Janela')
         self.assertContains(response, 'Plano')
@@ -96,8 +98,10 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'Separar disparo, prioridade e apoio')
         self.assertContains(response, 'Acoes prontas')
         self.assertContains(response, 'Casos semiassistidos prontos para disparo.')
-        self.assertContains(response, 'Fila do turno')
-        self.assertContains(response, 'Pendencias abertas')
+        # Copy reformulada: 'Fila do turno' -> 'Fila de cobrança do turno'
+        # (queue_board.html:18).
+        self.assertContains(response, 'Fila de cobrança do turno')
+        self.assertContains(response, 'Pendências abertas')
         self.assertContains(response, 'Placar de follow-up')
         self.assertContains(response, 'Melhor jogada agora')
         self.assertContains(response, 'Aderencia ao turno')
@@ -138,7 +142,7 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'alto risco')
         self.assertContains(response, 'Atraso financeiro recente')
         self.assertContains(response, 'Observar primeiro')
-        self.assertContains(response, 'Casos que merecem monitoramento antes de empurrar a acao.')
+        self.assertContains(response, 'Casos que merecem monitoramento antes de empurrar a ação.')
         self.assertContains(response, 'com jogada contextual')
         self.assertContains(response, 'com conviccao alta')
         self.assertContains(response, 'com alta confianca')
@@ -148,10 +152,10 @@ class FinanceCenterTests(TestCase):
         self.assertContains(response, 'abrem esta faixa')
         self.assertContains(response, 'O que mais empurra esta faixa e')
         self.assertContains(response, 'Primeira jogada sugerida:')
-        self.assertContains(response, 'Ela puxa para outro lado da recomendacao global do turno')
+        self.assertContains(response, 'Ela puxa para outro lado da recomendação global do turno')
         self.assertContains(response, 'Alta confianca')
         self.assertContains(response, 'Missao primeiro, historico depois, contexto por ultimo')
-        self.assertContains(response, 'Recomendacao global do turno')
+        self.assertContains(response, 'Recomendação global do turno')
         self.assertContains(response, 'Janela esfriando')
         self.assertContains(response, 'Revisar winback')
         self.assertContains(response, 'Acionar winback')
@@ -192,7 +196,9 @@ class FinanceCenterTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Filtros da Leitura Financeira')
+        # Copy reformulada — template usa 'Filtros do financeiro'
+        # (control_board.html:17).
+        self.assertContains(response, 'Filtros do financeiro')
         self.assertContains(response, 'Cross Gold')
         self.assertEqual(response.context['finance_center_page']['behavior']['default_panel'], 'tab-finance-filters')
         self.assertContains(response, 'Recorte atual: 6 meses | Cross Gold | PIX')
@@ -227,7 +233,9 @@ class FinanceCenterTests(TestCase):
         response = self.client.get(reverse('finance-center'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Estamos usando o ultimo recorte salvo desta leitura.')
+        # Copy reformulada: 'desta' -> 'para esta' + 'último' com acento
+        # (templates/includes/catalog/finance/boards/control_board.html:58).
+        self.assertContains(response, 'Estamos usando o último recorte salvo para esta leitura.')
         self.assertContains(response, 'Recorte atual: 3 meses | Cross Gold | PIX | Alto risco')
         self.assertContains(response, '3 meses')
         self.assertContains(response, 'Cross Gold')
@@ -275,7 +283,9 @@ class FinanceCenterTests(TestCase):
 
         follow_response = self.client.get(reverse('finance-center'))
         self.assertContains(follow_response, 'Legends Unlimited')
-        self.assertContains(follow_response, 'Aguardando primeira adesao')
+        # Copy reformulada: agora com artigo + cedilha + acento
+        # (portfolio_board.html "Aguardando a primeira adesão").
+        self.assertContains(follow_response, 'Aguardando a primeira adesão')
 
     def test_finance_center_can_update_plan(self):
         self.client.force_login(self.user)

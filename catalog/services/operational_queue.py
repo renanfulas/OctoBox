@@ -49,10 +49,14 @@ def build_operational_queue_snapshot(*, limit=9):
 
 
 def build_operational_queue_metrics(queue):
+	# Bug fix: labels inconsistentes entre dashboard/ (com cedilha) e
+	# este modulo (sem cedilha). Tests bateram nas duas convencoes e
+	# falhavam dependendo do ponto de entrada. Padronizamos cedilha
+	# para casar com dashboard_snapshot_panels.py:172.
 	return {
-		'Vencendo nos proximos dias': sum(1 for item in queue if item['kind'] == 'upcoming'),
-		'Cobrancas em atraso': sum(1 for item in queue if item['kind'] == 'overdue'),
-		'Chance de reativacao': sum(1 for item in queue if item['kind'] == 'reactivation'),
+		'Vencendo nos próximos dias': sum(1 for item in queue if item['kind'] == 'upcoming'),
+		'Cobranças em atraso': sum(1 for item in queue if item['kind'] == 'overdue'),
+		'Chance de reativação': sum(1 for item in queue if item['kind'] == 'reactivation'),
 	}
 
 

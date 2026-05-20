@@ -375,9 +375,9 @@ class CatalogServiceTests(TestCase):
         self.assertTrue(any(item['kind'] == 'upcoming' and item['payment'].id == upcoming_payment.id for item in queue))
         self.assertTrue(any(item['kind'] == 'overdue' and item['payment'].id == overdue_payment.id for item in queue))
         self.assertTrue(any(item['kind'] == 'reactivation' and item['enrollment'].id == canceled_enrollment.id for item in queue))
-        self.assertEqual(metrics['Vencendo nos proximos dias'], 1)
-        self.assertEqual(metrics['Cobrancas em atraso'], 1)
-        self.assertEqual(metrics['Chance de reativacao'], 1)
+        self.assertEqual(metrics['Vencendo nos próximos dias'], 1)
+        self.assertEqual(metrics['Cobranças em atraso'], 1)
+        self.assertEqual(metrics['Chance de reativação'], 1)
 
     def test_sync_student_intake_links_latest_matching_lead_by_phone(self):
         self.intake.delete()

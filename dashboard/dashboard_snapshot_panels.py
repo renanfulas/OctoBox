@@ -222,7 +222,7 @@ def build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, tod
         },
         'attendance': {
             'card_class': 'dashboard-kpi-card kpi-green is-rail',
-            'eyebrow': 'Presenca no mes',
+            'eyebrow': 'Presença no mês',
             'kicker': 'Compromisso que voltou',
             'display_value': metrics['attendance_this_month'],
             'data_action': 'blink-sidebar-alunos',
