@@ -27,19 +27,20 @@
 
 
 # --- access ---
-access/tests/test_public_landing.py::PublicLandingViewTests::test_home_redirects_anonymous_user_to_login_on_app_host
-access/tests/test_public_landing.py::PublicLandingViewTests::test_home_renders_marketing_landing_for_anonymous_user
-access/tests/test_security.py::SecurityLoginTest::test_login_flow_with_csrf_and_redirect
+# Bucket C 2026-05-20: 3 access tests recuperados (security login + 2 public_landing).
+# Mover ja-recuperados para a secao "recuperados". Vazio aqui.
 
 # --- boxcore ---
-boxcore/tests/test_access.py::AccessViewTests::test_home_renders_marketing_landing_for_anonymous_user
-boxcore/tests/test_api.py::ApiFoundationTests::test_api_root_exposes_available_versions
-boxcore/tests/test_api.py::ApiFoundationTests::test_api_v1_manifest_exposes_health_resource
-boxcore/tests/test_audit.py::AuditTrailTests::test_login_creates_audit_event
-boxcore/tests/test_audit.py::AuditTrailTests::test_logout_creates_audit_event
+# Bucket C 2026-05-20: ~13 boxcore testes recuperados via 3 padroes:
+#   1. log_audit_event tenant-aware (test_audit + login signals)
+#   2. PUBLIC_SCHEMA_EXACT_PATHS para /api/ + /api/v1/ (test_api)
+#   3. SELECT FOR UPDATE of=('self',) no payment regeneration (1 test)
+#   4. Copy updates + test design (settings, access marketing)
+# Remanescentes abaixo: bugs de produto que precisam decisao individual
+# (status enum drift, copy reformulada, queries/SQL diversos). Cada um
+# vira ticket separado depois do merge do PR #75.
 boxcore/tests/test_catalog.py::CatalogViewTests::test_class_grid_allows_exact_monthly_limit_in_single_batch
 boxcore/tests/test_catalog_services.py::CatalogServiceTests::test_finance_communication_handler_blocks_duplicate_same_day_message
-boxcore/tests/test_catalog_services.py::CatalogServiceTests::test_regenerate_payment_creates_next_payment
 boxcore/tests/test_catalog_services.py::CatalogServiceTests::test_sync_student_intake_links_latest_matching_lead_by_phone
 boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_keeps_routine_session_out_of_emergency_card
 boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_overdue_metric_card_keeps_only_neon_when_clean
@@ -57,8 +58,6 @@ boxcore/tests/test_onboarding.py::IntakeCenterViewTests::test_reception_can_reje
 boxcore/tests/test_page_payloads.py::PagePayloadBridgeContractTests::test_sync_static_to_staticfiles_copies_selected_subtrees
 boxcore/tests/test_reset_demo_workspace.py::ResetDemoWorkspaceCommandTests::test_reset_demo_workspace_replaces_existing_business_data
 boxcore/tests/test_reset_demo_workspace.py::ResetDemoWorkspaceCommandTests::test_reset_demo_workspace_supports_reception_conversion_scenario
-boxcore/tests/test_settings.py::SettingsHelperTests::test_build_cache_config_uses_locmem_when_no_external_cache_url_exists
-boxcore/tests/test_settings.py::SettingsHelperTests::test_build_cache_config_uses_redis_when_redis_url_exists
 boxcore/tests/test_student_source_capture_view.py::StudentSourceCaptureViewTests::test_secure_link_can_record_declared_source
 
 # --- onboarding ---
